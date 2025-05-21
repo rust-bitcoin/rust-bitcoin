@@ -169,16 +169,7 @@ impl From<SocketAddr> for AddrV2 {
     fn from(addr: SocketAddr) -> Self {
         match addr {
             SocketAddr::V4(sock) => AddrV2::Ipv4(*sock.ip()),
-            SocketAddr::V6(sock) => {
-                // CJDNS uses the IPv6 network `fc00::/8`
-                // All CJDNS addresses must have `0xfc00` as the first and second octets
-                let ip = *sock.ip();
-                if ip.octets()[0] == 0xfc && ip.octets()[1] == 0x00 {
-                    AddrV2::Cjdns(ip)
-                } else {
-                    AddrV2::Ipv6(ip)
-                }
-            }
+            SocketAddr::V6(sock) => AddrV2::Ipv6(*sock.ip()),
         }
     }
 }
@@ -759,19 +750,6 @@ mod test {
         let addr = AddrV2::from(socket);
 
         assert_eq!(addr, AddrV2::Ipv6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1)));
-    }
-
-    #[test]
-    fn socketaddr_to_addrv2_cjdns() {
-        let socket = SocketAddr::V6(SocketAddrV6::new(
-            Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1),
-            8333,
-            0,
-            0,
-        ));
-        let addr = AddrV2::from(socket);
-
-        assert_eq!(addr, AddrV2::Cjdns(Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1)));
     }
 
     #[test]
