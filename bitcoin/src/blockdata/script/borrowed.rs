@@ -289,8 +289,8 @@ crate::internal_macros::define_extension_trait! {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: Script::minimal_non_dust
-        fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> Option<Amount> {
-            self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu_ceil() * 4)
+        fn minimal_non_dust_custom(&self, dust_relay: FeeRate) -> Option<Amount> {
+            self.minimal_non_dust_internal(dust_relay.to_sat_per_kvb())
         }
 
         /// Counts the sigops for this Script using accurate counting.
@@ -407,10 +407,10 @@ mod sealed {
 
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptExtPriv impl for Script {
-        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> Option<Amount> {
+        fn minimal_non_dust_internal(&self, dust_relay_fee_rate_per_kvb: u64) -> Option<Amount> {
             // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
             // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
-            let sats = dust_relay_fee
+            let sats = dust_relay_fee_rate_per_kvb
                 .checked_mul(if self.is_op_return() {
                     0
                 } else if self.is_witness_program() {
