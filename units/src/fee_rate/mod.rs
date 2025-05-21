@@ -11,12 +11,24 @@ use core::ops;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-/// Fee rate.
-///
-/// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection
-/// against mixing up the types as well as basic formatting features.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct FeeRate(u64);
+mod encapsulate {
+    /// Fee rate.
+    ///
+    /// This is an integer newtype representing fee rate. It provides protection
+    /// against mixing up the types, conversion functions, and basic formatting.
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+    pub struct FeeRate(u64);
+
+    impl FeeRate {
+        /// Constructs a new [`FeeRate`] from satoshis per 1,000,000 virtual bytes.
+        pub(crate) const fn from_sat_per_mvb(sat_mvb: u64) -> Self { Self(sat_mvb) }
+
+        /// Converts to sat/MvB.
+        pub(crate) const fn to_sat_per_mvb(self) -> u64 { self.0 }
+    }
+}
+#[doc(inline)]
+pub use encapsulate::FeeRate;
 
 impl FeeRate {
     /// 0 sat/kwu.
@@ -39,9 +51,6 @@ impl FeeRate {
 
     /// Fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_u32(3);
-
-    /// Constructs a new [`FeeRate`] from satoshis per 1,000,000 virtual bytes.
-    pub(crate) const fn from_sat_per_mvb(sat_mvb: u64) -> Self { Self(sat_mvb) }
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
     pub const fn from_sat_per_kwu(sat_kwu: u64) -> Option<Self> {
@@ -79,9 +88,6 @@ impl FeeRate {
             None => None,
         }
     }
-
-    /// Converts to sat/MvB.
-    pub(crate) const fn to_sat_per_mvb(self) -> u64 { self.0 }
 
     /// Converts to sat/kwu rounding down.
     pub const fn to_sat_per_kwu_floor(self) -> u64 { self.to_sat_per_mvb() / 4_000 }
