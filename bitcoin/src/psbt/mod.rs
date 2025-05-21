@@ -20,6 +20,7 @@ use std::collections::{HashMap, HashSet};
 
 use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
+use units::NumOpResult;
 
 use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
@@ -130,7 +131,7 @@ impl Psbt {
     /// 1000 sats/vByte. 25k sats/vByte is obviously a mistake at this point.
     ///
     /// [`extract_tx`]: Psbt::extract_tx
-    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_unchecked(25_000);
+    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_u32(25_000);
 
     /// An alias for [`extract_tx_fee_rate_limit`].
     ///
@@ -209,11 +210,14 @@ impl Psbt {
         let tx = self.internal_extract_tx();
 
         // Now that the extracted Transaction is made, decide how to return it.
-        let fee_rate =
-            FeeRate::from_sat_per_kwu(fee.to_sat().saturating_mul(1000) / tx.weight().to_wu());
-        // Prefer to return an AbsurdFeeRate error when both trigger.
-        if fee_rate > max_fee_rate {
-            return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
+        match fee / tx.weight() {
+            NumOpResult::Valid(fee_rate) => {
+                // Prefer to return an AbsurdFeeRate error when both trigger.
+                if fee_rate > max_fee_rate {
+                    return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
+                }
+            }
+            NumOpResult::Error(_) => unreachable!("weight() is always non-zero"),
         }
 
         Ok(tx)
@@ -1133,7 +1137,7 @@ impl fmt::Display for ExtractTxError {
 
         match *self {
             AbsurdFeeRate { fee_rate, .. } =>
-                write!(f, "an absurdly high fee rate of {} sat/kwu", fee_rate.to_sat_per_kwu()),
+                write!(f, "an absurdly high fee rate of {} sat/kwu", fee_rate.to_sat_per_kwu_floor()),
             MissingInputValue { .. } => write!(
                 f,
                 "one of the inputs lacked value information (witness_utxo or non_witness_utxo)"
@@ -1305,9 +1309,14 @@ mod tests {
     use crate::Sequence;
 
     /// Fee rate in sat/kwu for a high-fee PSBT with an input=5_000_000_000_000, output=1000
-    const ABSURD_FEE_RATE: FeeRate = FeeRate::from_sat_per_kwu(15_060_240_960_843);
-    /// Fee rate which is just below absurd threshold (1 sat/kwu less)
-    const JUST_BELOW_ABSURD_FEE_RATE: FeeRate = FeeRate::from_sat_per_kwu(15_060_240_960_842);
+    const ABSURD_FEE_RATE: FeeRate = match FeeRate::from_sat_per_kwu(15_060_240_960_843) {
+        Some(fee_rate) => fee_rate,
+        None => panic!("unreachable - no unwrap in Rust 1.63 in const")
+    };
+    const JUST_BELOW_ABSURD_FEE_RATE: FeeRate = match FeeRate::from_sat_per_kwu(15_060_240_960_842) {
+        Some(fee_rate) => fee_rate,
+        None => panic!("unreachable - no unwrap in Rust 1.63 in const")
+    };
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
@@ -1426,7 +1435,7 @@ mod tests {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
-            Err(FeeRate::from_sat_per_kwu(6250003)) // 6250000 is 25k sat/vbyte
+            Err(FeeRate::from_sat_per_kwu(6250003).unwrap()) // 6250000 is 25k sat/vbyte
         );
 
         // Lowering the input satoshis by 1 lowers the sat/kwu by 3
