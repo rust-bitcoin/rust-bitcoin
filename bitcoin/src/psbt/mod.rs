@@ -1356,9 +1356,15 @@ mod tests {
     use crate::Sequence;
 
     /// Fee rate in sat/kwu for a high-fee PSBT with an input=5_000_000_000_000, output=1000
-    const ABSURD_FEE_RATE: FeeRate = FeeRate::from_sat_per_kwu(15_060_240_960_843);
-    /// Fee rate which is just below absurd threshold (1 sat/kwu less)
-    const JUST_BELOW_ABSURD_FEE_RATE: FeeRate = FeeRate::from_sat_per_kwu(15_060_240_960_842);
+    const ABSURD_FEE_RATE: FeeRate = match FeeRate::from_sat_per_kwu(15_060_240_960_843) {
+        Some(fee_rate) => fee_rate,
+        None => panic!("unreachable - no unwrap in Rust 1.63 in const"),
+    };
+    const JUST_BELOW_ABSURD_FEE_RATE: FeeRate = match FeeRate::from_sat_per_kwu(15_060_240_960_842)
+    {
+        Some(fee_rate) => fee_rate,
+        None => panic!("unreachable - no unwrap in Rust 1.63 in const"),
+    };
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
@@ -1475,7 +1481,7 @@ mod tests {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
-            Err(FeeRate::from_sat_per_kwu(6250003)) // 6250000 is 25k sat/vbyte
+            Err(FeeRate::from_sat_per_kwu(6250003).unwrap()) // 6250000 is 25k sat/vbyte
         );
 
         // Lowering the input satoshis by 1 lowers the sat/kwu by 3
