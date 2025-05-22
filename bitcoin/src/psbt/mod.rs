@@ -20,6 +20,7 @@ use std::collections::{HashMap, HashSet};
 
 use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
+use units::NumOpResult;
 
 use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
@@ -209,11 +210,14 @@ impl Psbt {
         let tx = self.internal_extract_tx();
 
         // Now that the extracted Transaction is made, decide how to return it.
-        let fee_rate =
-            FeeRate::from_sat_per_kwu(fee.to_sat().saturating_mul(1000) / tx.weight().to_wu());
-        // Prefer to return an AbsurdFeeRate error when both trigger.
-        if fee_rate > max_fee_rate {
-            return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
+        match fee / tx.weight() {
+            NumOpResult::Valid(fee_rate) => {
+                // Prefer to return an AbsurdFeeRate error when both trigger.
+                if fee_rate > max_fee_rate {
+                    return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
+                }
+            }
+            NumOpResult::Error(_) => unreachable!("weight() is always non-zero"),
         }
 
         Ok(tx)
