@@ -257,8 +257,8 @@ mod tests {
 
         assert_eq!(one.checked_add(two).unwrap(), three);
 
-        let f = FeeRate::from_sat_per_kwu(u64::MAX).checked_add(one);
-        assert!(f.is_none());
+        let fee_rate = FeeRate::from_sat_per_kwu(u64::MAX).checked_add(one);
+        assert!(fee_rate.is_none());
     }
 
     #[test]
@@ -268,8 +268,8 @@ mod tests {
         let three = FeeRate::from_sat_per_kwu(3);
         assert_eq!(three.checked_sub(two).unwrap(), one);
 
-        let f = FeeRate::ZERO.checked_sub(one);
-        assert!(f.is_none());
+        let fee_rate = FeeRate::ZERO.checked_sub(one);
+        assert!(fee_rate.is_none());
     }
 
     #[test]
