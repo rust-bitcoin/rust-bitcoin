@@ -18,6 +18,24 @@ use NumOpResult as R;
 use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, OptionExt, Weight};
 
 impl Amount {
+    /// Checked weight floor division.
+    ///
+    /// Be aware that integer division loses the remainder if no exact division
+    /// can be made. See also [`Self::checked_div_by_weight_ceil`].
+    ///
+    /// Returns [`None`] if overflow occurred.
+    #[must_use]
+    pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
+        // No `?` operator in const context.
+        match self.to_sat().checked_mul(1_000) {
+            Some(res) => match res.checked_div(weight.to_wu()) {
+                Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
     /// Checked weight ceiling division.
     ///
     /// Be aware that integer division loses the remainder if no exact division
@@ -50,24 +68,6 @@ impl Amount {
             }
         }
         None
-    }
-
-    /// Checked weight floor division.
-    ///
-    /// Be aware that integer division loses the remainder if no exact division
-    /// can be made. See also [`Self::checked_div_by_weight_ceil`].
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
-        // No `?` operator in const context.
-        match self.to_sat().checked_mul(1_000) {
-            Some(res) => match res.checked_div(weight.to_wu()) {
-                Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
-                None => None,
-            },
-            None => None,
-        }
     }
 
     /// Checked fee rate floor division.
