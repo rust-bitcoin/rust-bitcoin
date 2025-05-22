@@ -377,10 +377,9 @@ impl ParseError {
     ) -> fmt::Result {
         use core::num::IntErrorKind;
 
-        use ParseError as E;
 
         match self {
-            E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
+            Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
             {
                 // Outputs "failed to parse <input_string> as absolute Height/MedianTimePast (<subject> is above limit <upper_bound>)"
@@ -392,7 +391,7 @@ impl ParseError {
                     upper_bound
                 )
             }
-            E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
+            Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::NegOverflow =>
             {
                 // Outputs "failed to parse <input_string> as absolute Height/MedianTimePast (<subject> is below limit <lower_bound>)"
@@ -404,7 +403,7 @@ impl ParseError {
                     lower_bound
                 )
             }
-            E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
+            Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
                 write!(
                     f,
                     "{} ({})",
@@ -412,10 +411,10 @@ impl ParseError {
                     subject
                 )
             }
-            E::Conversion(value) if *value < i64::from(lower_bound) => {
+            Self::Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
             }
-            E::Conversion(value) => {
+            Self::Conversion(value) => {
                 write!(f, "{} {} is above limit {}", subject, value, upper_bound)
             }
         }
@@ -426,17 +425,16 @@ impl ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use core::num::IntErrorKind;
 
-        use ParseError as E;
 
         match self {
-            E::ParseInt(ParseIntError { source, .. })
+            Self::ParseInt(ParseIntError { source, .. })
                 if *source.kind() == IntErrorKind::PosOverflow =>
                 None,
-            E::ParseInt(ParseIntError { source, .. })
+            Self::ParseInt(ParseIntError { source, .. })
                 if *source.kind() == IntErrorKind::NegOverflow =>
                 None,
-            E::ParseInt(ParseIntError { source, .. }) => Some(source),
-            E::Conversion(_) => None,
+            Self::ParseInt(ParseIntError { source, .. }) => Some(source),
+            Self::Conversion(_) => None,
         }
     }
 }

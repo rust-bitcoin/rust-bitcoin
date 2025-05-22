@@ -337,11 +337,9 @@ impl From<Infallible> for ParseDenominationError {
 
 impl fmt::Display for ParseDenominationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseDenominationError as E;
-
         match *self {
-            E::Unknown(ref e) => write_err!(f, "denomination parse error"; e),
-            E::PossiblyConfusing(ref e) => write_err!(f, "denomination parse error"; e),
+            Self::Unknown(ref e) => write_err!(f, "denomination parse error"; e),
+            Self::PossiblyConfusing(ref e) => write_err!(f, "denomination parse error"; e),
         }
     }
 }
@@ -349,10 +347,9 @@ impl fmt::Display for ParseDenominationError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseDenominationError as E;
 
         match *self {
-            E::Unknown(_) | E::PossiblyConfusing(_) => None,
+            Self::Unknown(_) | Self::PossiblyConfusing(_) => None,
         }
     }
 }
