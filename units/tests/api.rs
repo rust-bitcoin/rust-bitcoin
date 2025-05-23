@@ -273,6 +273,7 @@ fn dyn_compatible() {
     // If this builds then traits are dyn compatible.
     struct Traits {
         a: Box<dyn CheckedSum<Amount>>,
+        b: Box<dyn CheckedSum<Weight>>,
         // These traits are explicitly not dyn compatible.
         // b: Box<dyn amount::serde::SerdeAmount>,
         // c: Box<dyn amount::serde::SerdeAmountForOpt>,

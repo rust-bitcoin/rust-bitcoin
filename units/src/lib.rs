@@ -78,11 +78,12 @@ pub trait CheckedSum<R>: sealed::Sealed<R> {
 }
 
 mod sealed {
-    use super::{Amount, SignedAmount};
+    use super::{Amount, SignedAmount, Weight};
 
     /// Used to seal the `CheckedSum` trait
     pub trait Sealed<A> {}
 
     impl<T> Sealed<Amount> for T where T: Iterator<Item = Amount> {}
     impl<T> Sealed<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
+    impl<T> Sealed<Weight> for T where T: Iterator<Item = Weight> {}
 }
