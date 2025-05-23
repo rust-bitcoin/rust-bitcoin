@@ -400,3 +400,15 @@ macro_rules! impl_array_newtype {
     };
 }
 pub(crate) use impl_array_newtype;
+
+#[cfg(feature = "std")]
+macro_rules! impl_sourceless_error {
+    ($e:ident) => {
+        impl std::error::Error for $e {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        }
+    };
+}
+
+#[cfg(feature = "std")]
+pub(crate) use impl_sourceless_error;

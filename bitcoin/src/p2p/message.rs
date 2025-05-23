@@ -12,6 +12,7 @@ use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
+use crate::internal_macros::impl_sourceless_error;
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{
@@ -144,9 +145,7 @@ impl fmt::Display for CommandStringError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for CommandStringError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(CommandStringError);
 
 /// A Network message using the v1 p2p protocol.
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -4,6 +4,8 @@
 
 use core::ops::{Deref, DerefMut};
 
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 use crate::prelude::{Borrow, BorrowMut};
 use crate::script;
 
@@ -453,6 +455,4 @@ mod error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for PushBytesError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(PushBytesError);

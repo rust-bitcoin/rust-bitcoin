@@ -21,6 +21,8 @@ use units::NumOpResult;
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
@@ -580,9 +582,7 @@ impl fmt::Display for InputsIndexError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for InputsIndexError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-}
+impl_sourceless_error!(InputsIndexError);
 
 impl From<IndexOutOfBoundsError> for InputsIndexError {
     fn from(e: IndexOutOfBoundsError) -> Self { Self(e) }
@@ -599,9 +599,7 @@ impl fmt::Display for OutputsIndexError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for OutputsIndexError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-}
+impl_sourceless_error!(OutputsIndexError);
 
 impl From<IndexOutOfBoundsError> for OutputsIndexError {
     fn from(e: IndexOutOfBoundsError) -> Self { Self(e) }
@@ -624,9 +622,7 @@ impl fmt::Display for IndexOutOfBoundsError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for IndexOutOfBoundsError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(IndexOutOfBoundsError);
 
 impl Encodable for Version {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {

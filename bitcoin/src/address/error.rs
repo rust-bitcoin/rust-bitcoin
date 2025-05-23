@@ -6,6 +6,8 @@ use core::fmt;
 use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 use crate::prelude::String;
 use crate::script::{witness_program, witness_version};
 use crate::Network;
@@ -71,9 +73,7 @@ impl fmt::Display for UnknownAddressTypeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for UnknownAddressTypeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(UnknownAddressTypeError);
 
 /// Address parsing error.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -142,9 +142,7 @@ impl fmt::Display for UnknownHrpError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for UnknownHrpError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(UnknownHrpError);
 
 /// Address's network differs from required one.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -239,9 +237,7 @@ impl fmt::Display for ParseBech32Error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ParseBech32Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-}
+impl_sourceless_error!(ParseBech32Error);
 
 /// Base58 related error.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -27,6 +27,8 @@ use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX}
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
 use crate::{transaction, Amount, Script, Sequence, Transaction, TxOut};
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -273,9 +275,7 @@ impl fmt::Display for PrevoutsSizeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for PrevoutsSizeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(PrevoutsSizeError);
 
 /// A single prevout was been provided but all prevouts are needed without `ANYONECANPAY`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -289,9 +289,7 @@ impl fmt::Display for PrevoutsKindError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for PrevoutsKindError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(PrevoutsKindError);
 
 /// [`Prevouts`] index related errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -553,9 +551,7 @@ impl fmt::Display for InvalidSighashTypeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for InvalidSighashTypeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(InvalidSighashTypeError);
 
 /// This type is consensus valid but an input including it would prevent the transaction from
 /// being relayed on today's Bitcoin network.
@@ -569,9 +565,7 @@ impl fmt::Display for NonStandardSighashTypeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for NonStandardSighashTypeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(NonStandardSighashTypeError);
 
 /// Error returned for failure during parsing one of the sighash types.
 ///
@@ -590,9 +584,7 @@ impl fmt::Display for SighashTypeParseError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for SighashTypeParseError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(SighashTypeParseError);
 
 impl<R: Borrow<Transaction>> SighashCache<R> {
     /// Constructs a new `SighashCache` from an unsigned transaction.
@@ -1328,9 +1320,7 @@ impl fmt::Display for SingleMissingOutputError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for SingleMissingOutputError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(SingleMissingOutputError);
 
 /// Annex must be at least one byte long and the first bytes must be `0x50`.
 #[derive(Debug, Clone, PartialEq, Eq)]

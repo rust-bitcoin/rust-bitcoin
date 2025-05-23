@@ -26,6 +26,8 @@ use core::str::FromStr;
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 
 use crate::constants::ChainHash;
 use crate::p2p::Magic;
@@ -301,9 +303,7 @@ impl fmt::Display for ParseNetworkError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ParseNetworkError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(ParseNetworkError);
 
 impl FromStr for Network {
     type Err = ParseNetworkError;
@@ -340,9 +340,7 @@ impl fmt::Display for UnknownChainHashError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for UnknownChainHashError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(UnknownChainHashError);
 
 impl TryFrom<ChainHash> for Network {
     type Error = UnknownChainHashError;

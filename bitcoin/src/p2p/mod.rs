@@ -26,6 +26,8 @@ use core::{fmt, ops};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::network::{Network, Params, TestnetVersion};
@@ -372,9 +374,7 @@ impl fmt::Display for ParseMagicError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ParseMagicError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.error) }
-}
+impl_sourceless_error!(ParseMagicError);
 
 /// Error in creating a Network from Magic bytes.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -388,9 +388,7 @@ impl fmt::Display for UnknownMagicError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for UnknownMagicError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(UnknownMagicError);
 
 #[cfg(test)]
 mod tests {

@@ -14,6 +14,8 @@ use crate::consensus::encode;
 #[cfg(doc)]
 use crate::consensus_validation;
 use crate::internal_macros::define_extension_trait;
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 use crate::script::Script;
 use crate::transaction::{OutPoint, Transaction, TxOut};
 
@@ -224,9 +226,7 @@ impl fmt::Display for BitcoinconsensusError {
 }
 
 #[cfg(all(feature = "std", feature = "bitcoinconsensus"))]
-impl std::error::Error for BitcoinconsensusError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-}
+impl_sourceless_error!(BitcoinconsensusError);
 
 /// An error during transaction validation.
 #[derive(Debug, Clone, PartialEq, Eq)]

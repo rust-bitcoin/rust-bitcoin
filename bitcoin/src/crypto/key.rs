@@ -19,6 +19,8 @@ use io::{Read, Write};
 
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
+#[cfg(feature = "std")]
+use crate::internal_macros::impl_sourceless_error;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
 use crate::script::{self, ScriptBuf};
@@ -1279,9 +1281,7 @@ impl fmt::Display for UncompressedPublicKeyError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for UncompressedPublicKeyError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl_sourceless_error!(UncompressedPublicKeyError);
 
 /// Decoded base58 data was an invalid length.
 #[derive(Debug, Clone, PartialEq, Eq)]
