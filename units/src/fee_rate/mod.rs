@@ -131,10 +131,6 @@ impl FeeRate {
     }
 }
 
-impl From<FeeRate> for u64 {
-    fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
-}
-
 crate::internal_macros::impl_op_for_references! {
     impl ops::Add<FeeRate> for FeeRate {
         type Output = FeeRate;
@@ -194,12 +190,6 @@ mod tests {
     use core::num::NonZeroU64;
 
     use super::*;
-
-    #[test]
-    fn sanity_check() {
-        let fee_rate: u64 = u64::from(FeeRate::from_sat_per_kwu(100));
-        assert_eq!(fee_rate, 100_u64);
-    }
 
     #[test]
     #[allow(clippy::op_ref)]
