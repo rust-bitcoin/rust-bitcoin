@@ -11,8 +11,8 @@
 //! custom type that can be used in such places you might want to do the following:
 //!
 //! ```
-//! use bitcoin::network::Params;
-//! use bitcoin::{p2p, Script, ScriptBuf, Network, Target};
+//! use bitcoin::network::{self, Params};
+//! use bitcoin::{Script, ScriptBuf, Network, Target};
 //!
 //! const POW_TARGET_SPACING: u64 = 120; // Two minutes.
 //! const MAGIC: [u8; 4] = [1, 2, 3, 4];
@@ -40,7 +40,7 @@
 //!     }
 //!
 //!     /// Returns the custom magic bytes.
-//!     pub fn magic(&self) -> p2p::Magic { p2p::Magic::from_bytes(self.magic) }
+//!     pub fn magic(&self) -> network::Magic { network::Magic::from_bytes(self.magic) }
 //!
 //!     /// Returns the custom signet challenge script.
 //!     pub fn challenge_script(&self) -> &Script { &self.challenge_script }

@@ -13,10 +13,10 @@ use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
 use crate::merkle_tree::MerkleBlock;
+use crate::network::Magic;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
-    Magic,
 };
 use crate::prelude::{Box, Cow, String, ToOwned, Vec};
 use crate::{block, consensus, transaction};
