@@ -131,7 +131,7 @@ impl Psbt {
     /// 1000 sats/vByte. 25k sats/vByte is obviously a mistake at this point.
     ///
     /// [`extract_tx`]: Psbt::extract_tx
-    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_unchecked(25_000);
+    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_u32(25_000);
 
     /// An alias for [`extract_tx_fee_rate_limit`].
     ///
