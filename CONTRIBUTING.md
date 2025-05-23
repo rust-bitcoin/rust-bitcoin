@@ -419,7 +419,7 @@ hacking on this codebase. Consider the following format, not all sections will b
 ///
 /// ### Relevant BIPs
 ///
-/// * [BIP X - FooBar in Bitcoin](https://github.com/bitcoin/bips/blob/master/bip-0000.mediawiki)
+/// * [BIP X - FooBar in Bitcoin](https://github.com/bitcoin/bips/blob/master/bip-0001.mediawiki)
 pub struct FooBar {
     /// The version in use.
     pub version: Version
