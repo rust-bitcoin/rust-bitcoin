@@ -1404,6 +1404,12 @@ fn num_op_result_ops() {
     let res: NumOpResult<Amount> = sat + sat;
     let sres: NumOpResult<SignedAmount> = ssat + ssat;
 
+    let mut x = res;
+    x += sat;
+
+    let mut x = sres;
+    x += ssat;
+
     macro_rules! check_op {
         ($(let _ = $lhs:ident $op:tt $rhs:ident);* $(;)?) => {
             $(
