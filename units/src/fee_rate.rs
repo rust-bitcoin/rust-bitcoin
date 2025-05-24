@@ -37,10 +37,10 @@ impl FeeRate {
     /// Minimum fee rate required to broadcast a transaction.
     ///
     /// The value matches the default Bitcoin Core policy at the time of library release.
-    pub const BROADCAST_MIN: FeeRate = FeeRate::from_sat_per_vb_unchecked(1);
+    pub const BROADCAST_MIN: FeeRate = FeeRate::from_sat_per_vb_u32(1);
 
     /// Fee rate used to compute dust amount.
-    pub const DUST: FeeRate = FeeRate::from_sat_per_vb_unchecked(3);
+    pub const DUST: FeeRate = FeeRate::from_sat_per_vb_u32(3);
 
     /// Constructs `FeeRate` from satoshis per 1000 weight units.
     pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self { FeeRate(sat_kwu) }
@@ -57,7 +57,14 @@ impl FeeRate {
         Some(FeeRate(sat_vb.checked_mul(1000 / 4)?))
     }
 
+    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes.
+    pub const fn from_sat_per_vb_u32(sat_vb: u32) -> Self {
+        let sat_vb = sat_vb as u64; // No `Into` in const context.
+        FeeRate(sat_vb * (1000 / 4))
+    }
+
     /// Constructs `FeeRate` from satoshis per virtual bytes without overflow check.
+    #[deprecated(since = "0.32.7", note = "use from_sat_per_vb_u32 instead")]
     pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self { FeeRate(sat_vb * (1000 / 4)) }
 
     /// Returns raw fee rate.
@@ -168,16 +175,17 @@ mod tests {
     fn fee_rate_from_sat_per_vb_overflow_test() {
         let fee_rate = FeeRate::from_sat_per_vb(u64::MAX);
         assert!(fee_rate.is_none());
-    }
+    } 
 
     #[test]
-    fn from_sat_per_vb_unchecked_test() {
-        let fee_rate = FeeRate::from_sat_per_vb_unchecked(10);
+    fn from_sat_per_vb_u32() {
+        let fee_rate = FeeRate::from_sat_per_vb_u32(10);
         assert_eq!(FeeRate(2500), fee_rate);
     }
 
     #[test]
     #[cfg(debug_assertions)]
+    #[allow(deprecated)]        // Keep test until we remove the function.
     #[should_panic]
     fn from_sat_per_vb_unchecked_panic_test() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
 
