@@ -377,7 +377,6 @@ impl ParseError {
     ) -> fmt::Result {
         use core::num::IntErrorKind;
 
-
         match self {
             Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
@@ -424,7 +423,6 @@ impl ParseError {
     #[cfg(feature = "std")]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use core::num::IntErrorKind;
-
 
         match self {
             Self::ParseInt(ParseIntError { source, .. })
