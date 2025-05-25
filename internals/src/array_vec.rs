@@ -212,7 +212,7 @@ mod verification {
         }
     }
 
-    #[kani::unwind(16)] // One grater than 15.
+    #[kani::unwind(16)] // One greater than 15.
     #[kani::proof]
     fn no_out_of_bounds_upto_cap() {
         const CAP: usize = 15;
