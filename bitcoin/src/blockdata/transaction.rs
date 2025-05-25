@@ -12,6 +12,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
@@ -928,7 +930,7 @@ pub const fn predict_weight_from_slices(
 /// This helper type collects information about an input to be used in [`predict_weight`] function.
 /// It can only be created using the [`new`](InputWeightPrediction::new) function or using other
 /// associated constants/methods.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct InputWeightPrediction {
     script_size: usize,
     witness_size: usize,
@@ -1139,6 +1141,37 @@ mod sealed {
     impl Sealed for super::TxIn {}
     impl Sealed for super::TxOut {}
     impl Sealed for super::Version {}
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for InputWeightPrediction {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // limit script size to 1MB block size.
+        let input_script_len = u.int_in_range(0..=1024)?;
+        let remaining = 1024 - input_script_len;
+
+        // create witness data if there is remaining space.
+        let mut witness_length = u.int_in_range(0..=remaining * 4)?;
+        let mut witness_element_lengths = Vec::new();
+
+        // build vec of random witness element lengths.
+        while witness_length > 0 {
+            let elem = u.int_in_range(1..=witness_length)?;
+            witness_element_lengths.push(elem);
+            witness_length -= elem;
+        }
+
+        match u.int_in_range(0..=7)? {
+            0 => Ok(InputWeightPrediction::P2WPKH_MAX),
+            1 => Ok(InputWeightPrediction::NESTED_P2WPKH_MAX),
+            2 => Ok(InputWeightPrediction::P2PKH_COMPRESSED_MAX),
+            3 => Ok(InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX),
+            4 => Ok(InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH),
+            5 => Ok(InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH),
+            6 => Ok(InputWeightPrediction::new(input_script_len, witness_element_lengths)),
+            _ => Ok(InputWeightPrediction::from_slice(input_script_len, &witness_element_lengths)),
+        }
+    }
 }
 
 #[cfg(test)]
