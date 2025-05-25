@@ -19,26 +19,17 @@ fn do_test(data: &[u8]) {
 
     if let Ok(ip_addr) = IpAddr::try_from(addr_v2.clone()) {
         let round_trip: AddrV2 = AddrV2::from(ip_addr);
-        assert_eq!(
-            addr_v2, round_trip,
-            "AddrV2 -> IpAddr -> AddrV2 should round-trip correctly"
-        );
+        assert_eq!(addr_v2, round_trip, "AddrV2 -> IpAddr -> AddrV2 should round-trip correctly");
     }
 
     if let Ok(ip_addr) = Ipv4Addr::try_from(addr_v2.clone()) {
         let round_trip: AddrV2 = AddrV2::from(ip_addr);
-        assert_eq!(
-            addr_v2, round_trip,
-            "AddrV2 -> Ipv4Addr -> AddrV2 should round-trip correctly"
-        );
+        assert_eq!(addr_v2, round_trip, "AddrV2 -> Ipv4Addr -> AddrV2 should round-trip correctly");
     }
 
     if let Ok(ip_addr) = Ipv6Addr::try_from(addr_v2.clone()) {
         let round_trip: AddrV2 = AddrV2::from(ip_addr);
-        assert_eq!(
-            addr_v2, round_trip,
-            "AddrV2 -> Ipv6Addr -> AddrV2 should round-trip correctly"
-        );
+        assert_eq!(addr_v2, round_trip, "AddrV2 -> Ipv6Addr -> AddrV2 should round-trip correctly");
     }
 
     if let Ok(socket_addr) = SocketAddr::try_from(addr_v2.clone()) {

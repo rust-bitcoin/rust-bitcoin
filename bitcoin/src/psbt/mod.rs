@@ -749,12 +749,11 @@ impl serde::Serialize for Psbt {
 impl<'de> serde::Deserialize<'de> for Psbt {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>
+        D: serde::Deserializer<'de>,
     {
         struct Visitor;
 
-        impl<'de> serde::de::Visitor<'de> for Visitor
-        {
+        impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = Psbt;
 
             fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -762,8 +761,7 @@ impl<'de> serde::Deserialize<'de> for Psbt {
             }
 
             fn visit_bytes<E: serde::de::Error>(self, bytes: &[u8]) -> Result<Self::Value, E> {
-                Psbt::deserialize(bytes)
-                    .map_err(|e| serde::de::Error::custom(e))
+                Psbt::deserialize(bytes).map_err(|e| serde::de::Error::custom(e))
             }
 
             fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<Self::Value, E> {
@@ -900,11 +898,11 @@ impl GetKey for $map<PublicKey, PrivateKey> {
             KeyRequest::XOnlyPubkey(xonly) => {
                 let pubkey_even = xonly.public_key(secp256k1::Parity::Even);
                 let key = self.get(&pubkey_even).cloned();
-               
+              
                 if key.is_some() {
                     return Ok(key);
                 }
-               
+              
                 let pubkey_odd = xonly.public_key(secp256k1::Parity::Odd);
                 if let Some(priv_key) = self.get(&pubkey_odd).copied() {
                     let negated_priv_key  = priv_key.negate();
@@ -937,18 +935,18 @@ impl GetKey for $map<XOnlyPublicKey, PrivateKey> {
             KeyRequest::XOnlyPubkey(xonly) => Ok(self.get(xonly).cloned()),
             KeyRequest::Pubkey(pk) => {
                 let (xonly, parity) = pk.inner.x_only_public_key();
-               
+              
                 if let Some(mut priv_key) = self.get(&XOnlyPublicKey::from(xonly)).cloned() {
                     let computed_pk = priv_key.public_key(&secp);
                     let (_, computed_parity) = computed_pk.inner.x_only_public_key();
-                   
+                  
                     if computed_parity != parity {
                         priv_key = priv_key.negate();
                     }
-                   
+                  
                     return Ok(Some(priv_key));
                 }
-               
+              
                 Ok(None)
             },
             KeyRequest::Bip32(_) => Err(GetKeyError::NotSupported),
@@ -1456,17 +1454,15 @@ mod tests {
             Err(ABSURD_FEE_RATE)
         );
         assert_eq!(
-            psbt.clone()
-                .extract_tx_with_fee_rate_limit(JUST_BELOW_ABSURD_FEE_RATE)
-                .map_err(|e| match e {
+            psbt.clone().extract_tx_with_fee_rate_limit(JUST_BELOW_ABSURD_FEE_RATE).map_err(|e| {
+                match e {
                     ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                     _ => panic!(""),
-                }),
+                }
+            }),
             Err(ABSURD_FEE_RATE)
         );
-        assert!(psbt
-            .extract_tx_with_fee_rate_limit(ABSURD_FEE_RATE)
-            .is_ok());
+        assert!(psbt.extract_tx_with_fee_rate_limit(ABSURD_FEE_RATE).is_ok());
 
         // Testing that extract_tx will error at 25k sat/vbyte (6250000 sat/kwu)
         assert_eq!(
