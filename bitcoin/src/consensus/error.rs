@@ -7,6 +7,7 @@ use core::fmt;
 
 use hex::error::{InvalidCharError, OddLengthStringError};
 use hex::DisplayHex as _;
+use internals::error::ParseErrorContext;
 use internals::write_err;
 
 #[cfg(doc)]
@@ -198,7 +199,6 @@ impl fmt::Display for ParseError {
     }
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use ParseError::*;
@@ -210,6 +210,84 @@ impl std::error::Error for ParseError {
             | NonMinimalVarInt
             | ParseFailed(_)
             | UnsupportedSegwitFlag(_) => None,
+        }
+    }
+}
+
+impl ParseErrorContext for ParseError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use ParseError::*;
+        match self {
+            MissingData => Box::new("more bytes"),
+            OversizedVectorAllocation { max, .. } => {
+                // Helper struct to capture max value for display
+                struct MaxDisplay(usize);
+                impl fmt::Display for MaxDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "a vector size less than or equal to {}", self.0)
+                    }
+                }
+                Box::new(MaxDisplay(*max))
+            }
+            InvalidChecksum { .. } => Box::new("a correct checksum"),
+            NonMinimalVarInt => Box::new("a minimally encoded VarInt"),
+            ParseFailed(s) => {
+                // Helper struct to capture string ref for display
+                struct StrDisplay(&'static str);
+                impl fmt::Display for StrDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        // The ParseFailed message often *is* the expectation
+                        write!(f, "valid data for: {}", self.0)
+                    }
+                }
+                Box::new(StrDisplay(s))
+            }
+            UnsupportedSegwitFlag(_) => Box::new("a supported SegWit version flag"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use ParseError::*;
+        match self {
+            MissingData => Some(Box::new("Unexpected end of input data.")),
+            OversizedVectorAllocation { requested, max } => {
+                struct HelpDisplay(usize, usize);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Requested vector size {} exceeds maximum allowed {}.", self.0, self.1)
+                    }
+                }
+                Some(Box::new(HelpDisplay(*requested, *max)))
+            }
+            InvalidChecksum { expected, actual } => {
+                struct HelpDisplay([u8;4], [u8;4]);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Checksum mismatch: expected {:x?}, got {:x?}. Data may be corrupted.", self.0, self.1)
+                    }
+                }
+                Some(Box::new(HelpDisplay(*expected, *actual)))
+            }
+            NonMinimalVarInt => Some(Box::new("VarInts must be encoded using the shortest possible representation.")),
+            ParseFailed(s) => Some(Box::new(format!("Parsing failed: {}", s))),
+            UnsupportedSegwitFlag(flag) => {
+                struct HelpDisplay(u8);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "SegWit flag {} is not supported.", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(*flag)))
+            }
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        use ParseError::*;
+        match self {
+            NonMinimalVarInt => Some("See BIP62 (Rule 5) for VarInt encoding rules."),
+            UnsupportedSegwitFlag(_) => Some("Supported SegWit versions depend on network rules (e.g., v0 for BIP141, v1 for BIP341 Taproot). Ensure the version used is active."),
+            _ => None,
         }
     }
 }
