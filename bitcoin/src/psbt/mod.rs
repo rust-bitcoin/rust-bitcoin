@@ -1339,6 +1339,8 @@ mod tests {
         secp256k1::{All, SecretKey},
     };
 
+    use std::str::FromStr;
+
     use super::*;
     use crate::address::script_pubkey::ScriptExt as _;
     use crate::bip32::ChildNumber;
@@ -2231,6 +2233,49 @@ mod tests {
         assert!(!psbt.proprietary.is_empty());
         let rtt = hex_psbt(&psbt.serialize_hex()).unwrap();
         assert!(!rtt.proprietary.is_empty());
+    }
+
+    // Deserialize MuSig2 PSBT participant keys according to BIP-373
+    #[test]
+    fn serialize_and_deserialize_musig2_participants() {
+        // XXX: Does not cover PSBT_IN_MUSIG2_PUB_NONCE, PSBT_IN_MUSIG2_PARTIAL_SIG (yet)
+
+        let expected_in_agg_pk  = secp256k1::PublicKey::from_str("021401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e00").unwrap();
+        let expected_in_pubkeys = vec![
+            secp256k1::PublicKey::from_str("02bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a").unwrap(),
+            secp256k1::PublicKey::from_str("0355212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e2").unwrap(),
+        ];
+
+        let expected_out_agg_pk = secp256k1::PublicKey::from_str("0364934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba5").unwrap();
+
+        let expected_out_pubkeys = vec![
+            secp256k1::PublicKey::from_str("02841d69a8b80ae23a8090e6f3765540ea5efd8c287b1307c983a6e2a3a171b525").unwrap(),
+            secp256k1::PublicKey::from_str("02bad833849a98cdfb0a0749609ddccab16ad54485ecc67f828df4bdc4f2b90d4c").unwrap(),
+        ];
+
+        const PSBT_HEX: &str = "70736274ff01005e02000000017b42be5ea467afe0d0571dc4a91bef97ff9605a590c0b8d5892323946414d1810000000000ffffffff01f0b9f50500000000225120bc7e18f55e2c7a28d78cadac1bc72c248372375d269bafe6b315bc40505d07e5000000000001012b00e1f50500000000225120de564ebf8ff7bd9bb41bd88264c04b1713ebb9dc8df36319091d2eabb16cda6221161401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e000500eb4cbe62211655212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e20500755abbf92116bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a05002a33dfd90117201401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e00221a021401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e004202bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a0355212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e20001052064934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba5210764934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba50500fa4c6afa22080364934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba54202841d69a8b80ae23a8090e6f3765540ea5efd8c287b1307c983a6e2a3a171b52502bad833849a98cdfb0a0749609ddccab16ad54485ecc67f828df4bdc4f2b90d4c00";
+
+        let psbt = hex_psbt(PSBT_HEX).unwrap();
+
+        assert_eq!(psbt.inputs[0].musig2_participant_pubkeys.len(), 1);
+        assert_eq!(
+            psbt.inputs[0].musig2_participant_pubkeys.iter().next().unwrap(),
+            (&expected_in_agg_pk, &expected_in_pubkeys)
+        );
+
+        assert_eq!(psbt.outputs[0].musig2_participant_pubkeys.len(), 1);
+        assert_eq!(
+            psbt.outputs[0].musig2_participant_pubkeys.iter().next().unwrap(),
+            (&expected_out_agg_pk, &expected_out_pubkeys)
+        );
+
+        // Check round trip de/serialization
+        assert_eq!(psbt.serialize_hex(), PSBT_HEX);
+
+        const PSBT_TRUNCATED_MUSIG_PARTICIPANTS_HEX: &str = "70736274ff01005e0200000001f034711ce319b1db76ce73440f2cb64a7e3a02e75c936b8d8a4958a024ea8d870000000000ffffffff01f0b9f50500000000225120bc7e18f55e2c7a28d78cadac1bc72c248372375d269bafe6b315bc40505d07e5000000000001012b00e1f50500000000225120de564ebf8ff7bd9bb41bd88264c04b1713ebb9dc8df36319091d2eabb16cda6221161401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e000500eb4cbe62211655212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e20500755abbf92116bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a05002a33dfd90117201401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e00221a021401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e002a02bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a0355212dff7b3d7e810001052064934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba5210764934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba50500fa4c6afa22080364934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba52a02841d69a8b80ae23a8090e6f3765540ea5efd8c287b1307c983a6e2a3a171b52502bad833849a98cdfb00";
+
+        hex_psbt(PSBT_TRUNCATED_MUSIG_PARTICIPANTS_HEX)
+            .expect_err("Deserializing PSBT with truncated musig participants should error");
     }
 
     // PSBTs taken from BIP 174 test vectors.
