@@ -7,11 +7,10 @@
 
 use io::{BufRead, Write};
 
-use crate::block::BlockHash;
-use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::internal_macros::impl_consensus_encoding;
-use crate::p2p;
-use crate::transaction::{Txid, Wtxid};
+use bitcoin::block::BlockHash;
+use bitcoin::consensus::encode::{self, Decodable, Encodable};
+use bitcoin::transaction::{Txid, Wtxid};
+use crate::impl_consensus_encoding;
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -127,7 +126,7 @@ pub struct GetHeadersMessage {
 impl GetBlocksMessage {
     /// Construct a new `getblocks` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
-        GetBlocksMessage { version: p2p::PROTOCOL_VERSION, locator_hashes, stop_hash }
+        GetBlocksMessage { version: crate::PROTOCOL_VERSION, locator_hashes, stop_hash }
     }
 }
 
@@ -136,7 +135,7 @@ impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 impl GetHeadersMessage {
     /// Construct a new `getheaders` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
-        GetHeadersMessage { version: p2p::PROTOCOL_VERSION, locator_hashes, stop_hash }
+        GetHeadersMessage { version: crate::PROTOCOL_VERSION, locator_hashes, stop_hash }
     }
 }
 
@@ -147,7 +146,7 @@ mod tests {
     use hex_lit::hex;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use bitcoin::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn getblocks_message() {

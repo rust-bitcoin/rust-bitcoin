@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use bitcoin::consensus::Decodable;
-use bitcoin::p2p::address::AddrV2;
+use p2p::address::AddrV2;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {

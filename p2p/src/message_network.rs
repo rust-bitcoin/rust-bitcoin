@@ -8,11 +8,10 @@
 use hashes::sha256d;
 use io::{BufRead, Write};
 
-use crate::consensus::{self, encode, Decodable, Encodable, ReadExt};
-use crate::internal_macros::impl_consensus_encoding;
-use crate::p2p;
-use crate::p2p::address::Address;
-use crate::p2p::ServiceFlags;
+use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::impl_consensus_encoding;
+use crate::address::Address;
+use crate::ServiceFlags;
 use crate::prelude::{Cow, String};
 
 // Some simple messages
@@ -61,7 +60,7 @@ impl VersionMessage {
         start_height: i32,
     ) -> VersionMessage {
         VersionMessage {
-            version: p2p::PROTOCOL_VERSION,
+            version: crate::PROTOCOL_VERSION,
             services,
             timestamp,
             receiver,
@@ -126,7 +125,7 @@ impl Decodable for RejectReason {
             0x41 => RejectReason::Dust,
             0x42 => RejectReason::Fee,
             0x43 => RejectReason::Checkpoint,
-            _ => return Err(consensus::parse_failed_error("unknown reject code")),
+            _ => return Err(crate::parse_failed_error("unknown reject code")),
         })
     }
 }
@@ -151,7 +150,7 @@ mod tests {
     use hex_lit::hex;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use bitcoin::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn version_message_test() {

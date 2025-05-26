@@ -6,8 +6,8 @@
 
 use io::{BufRead, Write};
 
-use crate::consensus::{self, encode, Decodable, Encodable, ReadExt};
-use crate::internal_macros::impl_consensus_encoding;
+use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::impl_consensus_encoding;
 
 /// `filterload` message sets the current bloom filter
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -52,7 +52,7 @@ impl Decodable for BloomFlags {
             0 => BloomFlags::None,
             1 => BloomFlags::All,
             2 => BloomFlags::PubkeyOnly,
-            _ => return Err(consensus::parse_failed_error("unknown bloom flag")),
+            _ => return Err(crate::parse_failed_error("unknown bloom flag")),
         })
     }
 }
