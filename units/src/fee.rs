@@ -31,10 +31,14 @@ impl Amount {
             return None;
         }
 
-        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
-        let fee_rate = sats / wu;
-
-        FeeRate::from_sat_per_kwu(fee_rate)
+        // Mul by 1,000 because we use per/kwu.
+        match self.to_sat().checked_mul(1_000) {
+            Some(sats) => {
+                let fee_rate = sats / wu;
+                FeeRate::from_sat_per_kwu(fee_rate)
+            }
+            None => None,
+        }
     }
 
     /// Checked weight ceiling division.
