@@ -56,16 +56,21 @@ impl Amount {
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
-    pub fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
+    pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
         if wu == 0 {
             return None;
         }
 
-        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
-        let fee_rate = (sats + wu - 1) / wu;
-
-        FeeRate::from_sat_per_kwu(fee_rate)
+        // Mul by 1,000 because we use per/kwu.
+        if let Some(sats) = self.to_sat().checked_mul(1_000) {
+            // No need to used checked arithmetic because wu is non-zero.
+            if let Some(bump) = sats.checked_add(wu - 1) {
+                let fee_rate = bump / wu;
+                return FeeRate::from_sat_per_kwu(fee_rate);
+            }
+        }
+        None
     }
 
     /// Checked fee rate floor division.
@@ -76,7 +81,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
-    pub fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
+    pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
         match self.to_sat().checked_mul(1000) {
             Some(amount_msats) => match amount_msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
                 Some(wu) => Some(Weight::from_wu(wu)),
@@ -93,7 +98,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
-    pub fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
+    pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
         // Use ceil because result is used as the divisor.
         let rate = fee_rate.to_sat_per_kwu_ceil();
         match self.to_sat().checked_mul(1000) {
@@ -122,8 +127,12 @@ impl FeeRate {
     /// If the calculation would overflow we saturate to [`Amount::MAX`]. Since such a fee can never
     /// be paid this is meaningful as an error case while still removing the possibility of silently
     /// wrapping.
-    pub fn to_fee(self, weight: Weight) -> Amount {
-        self.checked_mul_by_weight(weight).unwrap_or(Amount::MAX)
+    pub const fn to_fee(self, weight: Weight) -> Amount {
+        // No `unwrap_or()` in const context.
+        match self.checked_mul_by_weight(weight) {
+            Some(fee) => fee,
+            None => Amount::MAX,
+        }
     }
 
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
@@ -150,13 +159,18 @@ impl FeeRate {
     /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
+    pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
         let wu = weight.to_wu();
-        let fee_kwu = self.to_sat_per_kwu_floor().checked_mul(wu)?;
-        let bump = fee_kwu.checked_add(999)?; // We do ceil division.
-        let fee = bump / 1_000;
-
-        Amount::from_sat(fee).ok()
+        if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
+            // Bump by 999 to do ceil division using kwu.
+            if let Some(bump) = fee_kwu.checked_add(999) {
+                let fee = bump / 1_000;
+                if let Ok(fee_amount) = Amount::from_sat(fee) {
+                    return Some(fee_amount);
+                }
+            }
+        }
+        None
     }
 }
 
@@ -332,7 +346,7 @@ impl Weight {
     /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
+    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
         fee_rate.checked_mul_by_weight(self)
     }
 }
