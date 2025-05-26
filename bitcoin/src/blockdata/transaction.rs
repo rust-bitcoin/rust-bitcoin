@@ -1656,7 +1656,7 @@ mod tests {
         let fee_rate = FeeRate::from_sat_per_kwu(10).unwrap();
         let effective_value = effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value);
 
-        // 10 sat/kwu * 272 wu = 4 sats (rounding up)
+        // 10 sat/kwu * 272 wu = 3 sats (rounding up)
         let expected_fee = "3 sats".parse::<SignedAmount>().unwrap();
         let expected_effective_value = (value.to_signed() - expected_fee).unwrap();
         assert_eq!(effective_value, expected_effective_value);
