@@ -31,25 +31,25 @@ mod encapsulate {
 pub use encapsulate::FeeRate;
 
 impl FeeRate {
-    /// 0 sat/kwu.
+    /// The zero fee rate.
     ///
     /// Equivalent to [`MIN`](Self::MIN), may better express intent in some contexts.
     pub const ZERO: FeeRate = FeeRate::from_sat_per_mvb(0);
 
-    /// Minimum possible value (0 sat/kwu).
+    /// The minimum possible value.
     ///
     /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
     pub const MIN: FeeRate = FeeRate::ZERO;
 
-    /// Maximum possible value.
+    /// The maximum possible value.
     pub const MAX: FeeRate = FeeRate::from_sat_per_mvb(u64::MAX);
 
-    /// Minimum fee rate required to broadcast a transaction.
+    /// The minimum fee rate required to broadcast a transaction.
     ///
     /// The value matches the default Bitcoin Core policy at the time of library release.
     pub const BROADCAST_MIN: FeeRate = FeeRate::from_sat_per_vb_u32(1);
 
-    /// Fee rate used to compute dust amount.
+    /// The fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_u32(3);
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
