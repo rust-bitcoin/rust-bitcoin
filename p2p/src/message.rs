@@ -11,15 +11,16 @@ use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
-use crate::merkle_tree::MerkleBlock;
-use crate::p2p::address::{AddrV2Message, Address};
-use crate::p2p::{
+use bitcoin::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
+use bitcoin::merkle_tree::MerkleBlock;
+use crate::impl_vec_wrapper;
+use crate::address::{AddrV2Message, Address};
+use crate::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
     Magic,
 };
 use crate::prelude::{Box, Cow, String, ToOwned, Vec};
-use crate::{block, consensus, transaction};
+use bitcoin::{block, transaction};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -143,7 +144,6 @@ impl fmt::Display for CommandStringError {
     }
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for CommandStringError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
@@ -163,6 +163,22 @@ pub struct V2NetworkMessage {
     payload: NetworkMessage,
 }
 
+/// A list of inventory items
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct InventoryPayload(pub Vec<message_blockdata::Inventory>);
+
+/// A list of legacy p2p addresses
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct AddrPayload(pub Vec<(u32, Address)>);
+
+/// A list of inventory items
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct AddrV2Payload(pub Vec<AddrV2Message>);
+
+impl_vec_wrapper!(InventoryPayload, message_blockdata::Inventory);
+impl_vec_wrapper!(AddrPayload, (u32, Address));
+impl_vec_wrapper!(AddrV2Payload, AddrV2Message);
+
 /// A Network message payload. Proper documentation is available on at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -172,13 +188,13 @@ pub enum NetworkMessage {
     /// `verack`
     Verack,
     /// `addr`
-    Addr(Vec<(u32, Address)>),
+    Addr(AddrPayload),
     /// `inv`
-    Inv(Vec<message_blockdata::Inventory>),
+    Inv(InventoryPayload),
     /// `getdata`
-    GetData(Vec<message_blockdata::Inventory>),
+    GetData(InventoryPayload),
     /// `notfound`
-    NotFound(Vec<message_blockdata::Inventory>),
+    NotFound(InventoryPayload),
     /// `getblocks`
     GetBlocks(message_blockdata::GetBlocksMessage),
     /// `getheaders`
@@ -236,7 +252,7 @@ pub enum NetworkMessage {
     /// `wtxidrelay`
     WtxidRelay,
     /// `addrv2`
-    AddrV2(Vec<AddrV2Message>),
+    AddrV2(AddrV2Payload),
     /// `sendaddrv2`
     SendAddrV2,
 
@@ -299,8 +315,8 @@ impl NetworkMessage {
 
     /// Return the CommandString for the message command.
     pub fn command(&self) -> CommandString {
-        match *self {
-            NetworkMessage::Unknown { command: ref c, .. } => c.clone(),
+        match self {
+            NetworkMessage::Unknown { command: c, .. } => c.clone(),
             _ => CommandString::try_from_static(self.cmd()).expect("cmd returns valid commands"),
         }
     }
@@ -377,36 +393,36 @@ impl Encodable for HeaderSerializationWrapper<'_> {
 impl Encodable for NetworkMessage {
     fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
         match self {
-            NetworkMessage::Version(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Addr(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Inv(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetData(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::NotFound(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetBlocks(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Headers(ref dat) =>
+            NetworkMessage::Version(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Addr(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Inv(dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetData(dat) => dat.consensus_encode(writer),
+            NetworkMessage::NotFound(dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetBlocks(dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetHeaders(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Tx(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Block(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Headers(dat) =>
                 HeaderSerializationWrapper(dat).consensus_encode(writer),
-            NetworkMessage::Ping(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Pong(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FilterLoad(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FilterAdd(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFilters(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFilter(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFCheckpt(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFCheckpt(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::SendCmpct(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CmpctBlock(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetBlockTxn(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::BlockTxn(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Alert(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Reject(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FeeFilter(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::AddrV2(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Ping(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Pong(dat) => dat.consensus_encode(writer),
+            NetworkMessage::MerkleBlock(dat) => dat.consensus_encode(writer),
+            NetworkMessage::FilterLoad(dat) => dat.consensus_encode(writer),
+            NetworkMessage::FilterAdd(dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetCFilters(dat) => dat.consensus_encode(writer),
+            NetworkMessage::CFilter(dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetCFHeaders(dat) => dat.consensus_encode(writer),
+            NetworkMessage::CFHeaders(dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetCFCheckpt(dat) => dat.consensus_encode(writer),
+            NetworkMessage::CFCheckpt(dat) => dat.consensus_encode(writer),
+            NetworkMessage::SendCmpct(dat) => dat.consensus_encode(writer),
+            NetworkMessage::CmpctBlock(dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetBlockTxn(dat) => dat.consensus_encode(writer),
+            NetworkMessage::BlockTxn(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Alert(dat) => dat.consensus_encode(writer),
+            NetworkMessage::Reject(dat) => dat.consensus_encode(writer),
+            NetworkMessage::FeeFilter(dat) => dat.consensus_encode(writer),
+            NetworkMessage::AddrV2(dat) => dat.consensus_encode(writer),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
@@ -414,7 +430,7 @@ impl Encodable for NetworkMessage {
             | NetworkMessage::WtxidRelay
             | NetworkMessage::FilterClear
             | NetworkMessage::SendAddrV2 => Ok(0),
-            NetworkMessage::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
+            NetworkMessage::Unknown { payload: data, .. } => data.consensus_encode(writer),
         }
     }
 }
@@ -501,7 +517,7 @@ impl Decodable for HeaderDeserializationWrapper {
         for _ in 0..len {
             ret.push(Decodable::consensus_decode(r)?);
             if u8::consensus_decode(r)? != 0u8 {
-                return Err(consensus::parse_failed_error(
+                return Err(crate::parse_failed_error(
                     "Headers message should not contain transactions",
                 ));
             }
@@ -580,7 +596,7 @@ impl Decodable for RawNetworkMessage {
             "cfheaders" => NetworkMessage::CFHeaders(
                 Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
-            "getcfcheckpt" => NetworkMessage::GetCFCheckpt(
+           "getcfcheckpt" => NetworkMessage::GetCFCheckpt(
                 Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
             "cfcheckpt" => NetworkMessage::CFCheckpt(
@@ -701,21 +717,21 @@ mod test {
     use units::BlockHeight;
 
     use super::*;
-    use crate::bip152::BlockTransactionsRequest;
-    use crate::bip158::{FilterHash, FilterHeader};
-    use crate::block::{Block, BlockHash};
-    use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use crate::p2p::address::AddrV2;
-    use crate::p2p::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
-    use crate::p2p::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
-    use crate::p2p::message_compact_blocks::{GetBlockTxn, SendCmpct};
-    use crate::p2p::message_filter::{
+    use bitcoin::bip152::BlockTransactionsRequest;
+    use bitcoin::bip158::{FilterHash, FilterHeader};
+    use bitcoin::block::{Block, BlockHash};
+    use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
+    use crate::address::AddrV2;
+    use crate::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
+    use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
+    use crate::message_compact_blocks::{GetBlockTxn, SendCmpct};
+    use crate::message_filter::{
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
-    use crate::p2p::message_network::{Reject, RejectReason, VersionMessage};
-    use crate::p2p::ServiceFlags;
-    use crate::script::ScriptBuf;
-    use crate::transaction::{Transaction, Txid};
+    use crate::message_network::{Reject, RejectReason, VersionMessage};
+    use crate::ServiceFlags;
+    use bitcoin::script::ScriptBuf;
+    use bitcoin::transaction::{Transaction, Txid};
 
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
 
@@ -723,7 +739,7 @@ mod test {
     fn full_round_ser_der_raw_network_message() {
         let version_msg: VersionMessage = deserialize(&hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001")).unwrap();
         let tx: Transaction = deserialize(&hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000")).unwrap();
-        let block: Block = deserialize(&include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw")[..]).unwrap();
+        let block: Block = deserialize(&include_bytes!("../../bitcoin/tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw")[..]).unwrap();
         let header: block::Header = deserialize(&hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b")).unwrap();
         let script: ScriptBuf =
             deserialize(&hex!("1976a91431a420903c05a0a7de2de40c9f02ebedbacdc17288ac")).unwrap();
@@ -734,17 +750,17 @@ mod test {
         let msgs = [
             NetworkMessage::Version(version_msg),
             NetworkMessage::Verack,
-            NetworkMessage::Addr(vec![(
+            NetworkMessage::Addr(AddrPayload(vec![(
                 45,
                 Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
-            )]),
-            NetworkMessage::Inv(vec![Inventory::Block(BlockHash::from_byte_array(
+            )])),
+            NetworkMessage::Inv(InventoryPayload(vec![Inventory::Block(BlockHash::from_byte_array(
                 hash([8u8; 32]).to_byte_array(),
-            ))]),
-            NetworkMessage::GetData(vec![Inventory::Transaction(Txid::from_byte_array(
+            ))])),
+            NetworkMessage::GetData(InventoryPayload(vec![Inventory::Transaction(Txid::from_byte_array(
                 hash([45u8; 32]).to_byte_array(),
-            ))]),
-            NetworkMessage::NotFound(vec![Inventory::Error([0u8; 32])]),
+            ))])),
+            NetworkMessage::NotFound(InventoryPayload(vec![Inventory::Error([0u8; 32])])),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(
                 vec![
                     BlockHash::from_byte_array(hash([1u8; 32]).to_byte_array()),
@@ -826,12 +842,12 @@ mod test {
             }),
             NetworkMessage::FeeFilter(1000),
             NetworkMessage::WtxidRelay,
-            NetworkMessage::AddrV2(vec![AddrV2Message {
+            NetworkMessage::AddrV2(AddrV2Payload(vec![AddrV2Message {
                 addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)),
                 port: 0,
                 services: ServiceFlags::NONE,
                 time: 0,
-            }]),
+            }])),
             NetworkMessage::SendAddrV2,
             NetworkMessage::CmpctBlock(cmptblock),
             NetworkMessage::GetBlockTxn(GetBlockTxn {

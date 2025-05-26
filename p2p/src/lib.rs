@@ -4,38 +4,144 @@
 //!
 //! This module defines support for (de)serialization and network transport
 //! of Bitcoin data and Bitcoin p2p network messages.
+extern crate alloc;
 
-#[cfg(feature = "std")]
 pub mod address;
-#[cfg(feature = "std")]
 pub mod message;
-#[cfg(feature = "std")]
 pub mod message_blockdata;
-#[cfg(feature = "std")]
 pub mod message_bloom;
-#[cfg(feature = "std")]
 pub mod message_compact_blocks;
-#[cfg(feature = "std")]
 pub mod message_filter;
-#[cfg(feature = "std")]
 pub mod message_network;
 
 use core::str::FromStr;
 use core::{fmt, ops};
 
 use hex::FromHex;
-use internals::{impl_to_hex_from_lower_hex, write_err};
+use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::network::{Network, Params, TestnetVersion};
-use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
+use bitcoin::consensus::encode::{self, Decodable, Encodable, WriteExt};
+use bitcoin::network::{Network, Params, TestnetVersion};
+use std::borrow::{Borrow, BorrowMut, ToOwned};
 
 #[rustfmt::skip]
 #[doc(inline)]
-#[cfg(feature = "std")]
 pub use self::address::Address;
 
+#[rustfmt::skip]
+#[allow(unused_imports)]
+mod prelude {
+    pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, rc, sync};
+
+    pub use std::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
+
+    pub use io::sink;
+
+    pub use hex::DisplayHex;
+}
+
+pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
+    data: &[u8],
+    w: &mut W,
+) -> Result<usize, io::Error> {
+    Ok(w.emit_compact_size(data.len())? + w.emit_slice(data)?)
+}
+
+pub(crate) fn parse_failed_error(msg: &'static str) -> bitcoin::consensus::encode::Error {
+    bitcoin::consensus::encode::Error::Parse(bitcoin::consensus::encode::ParseError::ParseFailed(msg))
+}
+
+macro_rules! impl_consensus_encoding {
+    ($thing:ident, $($field:ident),+) => (
+        impl bitcoin::consensus::Encodable for $thing {
+            #[inline]
+            fn consensus_encode<W: io::Write + ?Sized>(
+                &self,
+                w: &mut W,
+            ) -> core::result::Result<usize, io::Error> {
+                let mut len = 0;
+                $(len += self.$field.consensus_encode(w)?;)+
+                Ok(len)
+            }
+        }
+
+        impl bitcoin::consensus::Decodable for $thing {
+
+            #[inline]
+            fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
+                r: &mut R,
+            ) -> core::result::Result<$thing, bitcoin::consensus::encode::Error> {
+                Ok($thing {
+                    $($field: bitcoin::consensus::Decodable::consensus_decode_from_finite_reader(r)?),+
+                })
+            }
+
+            #[inline]
+            fn consensus_decode<R: io::BufRead + ?Sized>(
+                r: &mut R,
+            ) -> core::result::Result<$thing, bitcoin::consensus::encode::Error> {
+                let mut r = r.take(internals::ToU64::to_u64(bitcoin::consensus::encode::MAX_VEC_SIZE));
+                Ok($thing {
+                    $($field: bitcoin::consensus::Decodable::consensus_decode(&mut r)?),+
+                })
+            }
+        }
+    );
+}
+pub(crate) use impl_consensus_encoding;
+
+macro_rules! impl_vec_wrapper {
+    ($wrapper: ident, $type: ty) => {
+        impl Encodable for $wrapper {
+            #[inline]
+            fn consensus_encode<W: Write + ?Sized>(
+                &self,
+                w: &mut W,
+            ) -> core::result::Result<usize, io::Error> {
+                let mut len = 0;
+                len += w.emit_compact_size(self.0.len())?;
+                for c in self.0.iter() {
+                    len += c.consensus_encode(w)?;
+                }
+                Ok(len)
+            }
+        }
+
+        impl Decodable for $wrapper {
+            #[inline]
+            fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+                r: &mut R,
+            ) -> core::result::Result<$wrapper, bitcoin::consensus::encode::Error> {
+                let len = r.read_compact_size()?;
+                // Do not allocate upfront more items than if the sequence of type
+                // occupied roughly quarter a block. This should never be the case
+                // for normal data, but even if that's not true - `push` will just
+                // reallocate.
+                // Note: OOM protection relies on reader eventually running out of
+                // data to feed us.
+                let max_capacity = bitcoin::consensus::encode::MAX_VEC_SIZE / 4 / core::mem::size_of::<$type>();
+                let mut ret = Vec::with_capacity(core::cmp::min(len as usize, max_capacity));
+                for _ in 0..len {
+                    ret.push(Decodable::consensus_decode_from_finite_reader(r)?);
+                }
+                Ok($wrapper(ret))
+            }
+        }
+    };
+}
+
+pub(crate) use impl_vec_wrapper;
+
+macro_rules! write_err {
+    ($writer:expr, $string:literal $(, $args:expr)*; $source:expr) => {
+        {
+            write!($writer, $string $(, $args)*)
+        }
+    }
+}
+
+pub(crate) use write_err;
 /// Version of the protocol as appearing in network message headers.
 ///
 /// This constant is used to signal to other peers which features you support. Increasing it implies
@@ -162,7 +268,7 @@ impl fmt::Display for ServiceFlags {
             if !first {
                 write!(f, "|")?;
             }
-            write!(f, "0x{:x}", flags)?;
+            write!(f, "0x{flags:x}")?;
         }
         write!(f, ")")
     }
@@ -235,7 +341,7 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
     /// Returns the magic bytes for the network defined by `params`.
-    pub fn from_params(params: impl AsRef<Params>) -> Self { params.as_ref().network.into() }
+    pub fn from_params(params: impl AsRef<Params>) -> Result<Self, UnknownNetworkError> { params.as_ref().network.try_into() }
 }
 
 impl FromStr for Magic {
@@ -251,12 +357,15 @@ impl FromStr for Magic {
 
 macro_rules! generate_network_magic_conversion {
     ($(Network::$network:ident$((TestnetVersion::$testnet_version:ident))? => Magic::$magic:ident,)*) => {
-        impl From<Network> for Magic {
-            fn from(network: Network) -> Magic {
+        impl TryFrom<Network> for Magic {
+            type Error = UnknownNetworkError;
+
+            fn try_from(network: Network) -> Result<Self, Self::Error> {
                 match network {
                     $(
-                        Network::$network$((TestnetVersion::$testnet_version))? => Magic::$magic,
+                        Network::$network$((TestnetVersion::$testnet_version))? => Ok(Magic::$magic),
                     )*
+                    _ => Err(UnknownNetworkError(network)),
                 }
             }
         }
@@ -275,6 +384,7 @@ macro_rules! generate_network_magic_conversion {
         }
     };
 }
+
 // Generate conversion functions for all known networks.
 // `Network -> Magic` and `Magic -> Network`
 generate_network_magic_conversion! {
@@ -371,7 +481,6 @@ impl fmt::Display for ParseMagicError {
     }
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for ParseMagicError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.error) }
 }
@@ -387,8 +496,22 @@ impl fmt::Display for UnknownMagicError {
     }
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for UnknownMagicError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
+
+/// Error in creating Magic bytes from a network.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct UnknownNetworkError(Network);
+
+impl fmt::Display for UnknownNetworkError{
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "unknown network {}", self.0)
+    }
+}
+
+impl std::error::Error for UnknownNetworkError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
