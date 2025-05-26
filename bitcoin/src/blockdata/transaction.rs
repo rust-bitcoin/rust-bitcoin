@@ -776,6 +776,7 @@ impl Decodable for Transaction {
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
 /// * `input_weight_prediction` - the predicted input weight.
+/// * `value` - The value of the output we are spending.
 ///
 /// # Returns
 ///
