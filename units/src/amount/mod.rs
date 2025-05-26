@@ -26,6 +26,7 @@ use core::str::FromStr;
 use arbitrary::{Arbitrary, Unstructured};
 
 use self::error::{MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner};
+use crate::CheckedSum;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -593,13 +594,6 @@ enum DisplayStyle {
     DynamicDenomination,
 }
 
-/// Calculates the sum over the iterator using checked arithmetic.
-pub trait CheckedSum<R>: sealed::Sealed<R> {
-    /// Calculates the sum over the iterator using checked arithmetic. If an
-    /// overflow happens it returns [`None`].
-    fn checked_sum(self) -> Option<R>;
-}
-
 impl<T> CheckedSum<Amount> for T
 where
     T: Iterator<Item = Amount>,
@@ -614,16 +608,6 @@ where
     fn checked_sum(mut self) -> Option<SignedAmount> {
         self.try_fold(SignedAmount::ZERO, SignedAmount::checked_add)
     }
-}
-
-mod sealed {
-    use super::{Amount, SignedAmount};
-
-    /// Used to seal the `CheckedSum` trait
-    pub trait Sealed<A> {}
-
-    impl<T> Sealed<Amount> for T where T: Iterator<Item = Amount> {}
-    impl<T> Sealed<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
 }
 
 #[cfg(feature = "arbitrary")]
