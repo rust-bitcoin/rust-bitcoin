@@ -219,18 +219,18 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn feerate_div_nonzero() {
-        let rate = FeeRate::from_sat_per_kwu(200).unwrap();
+        let rate = FeeRate::from_sat_per_mvb(200);
         let divisor = NonZeroU64::new(2).unwrap();
-        assert_eq!(rate / divisor, FeeRate::from_sat_per_kwu(100).unwrap());
-        assert_eq!(&rate / &divisor, FeeRate::from_sat_per_kwu(100).unwrap());
+        assert_eq!(rate / divisor, FeeRate::from_sat_per_mvb(100));
+        assert_eq!(&rate / &divisor, FeeRate::from_sat_per_mvb(100));
     }
 
     #[test]
     #[allow(clippy::op_ref)]
     fn addition() {
-        let one = FeeRate::from_sat_per_kwu(1).unwrap();
-        let two = FeeRate::from_sat_per_kwu(2).unwrap();
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
+        let one = FeeRate::from_sat_per_mvb(1);
+        let two = FeeRate::from_sat_per_mvb(2);
+        let three = FeeRate::from_sat_per_mvb(3);
 
         assert!(one + two == three);
         assert!(&one + two == three);
@@ -241,9 +241,9 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn subtract() {
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
-        let seven = FeeRate::from_sat_per_kwu(7).unwrap();
-        let ten = FeeRate::from_sat_per_kwu(10).unwrap();
+        let three = FeeRate::from_sat_per_mvb(3);
+        let seven = FeeRate::from_sat_per_mvb(7);
+        let ten = FeeRate::from_sat_per_mvb(10);
 
         assert_eq!(ten - seven, three);
         assert_eq!(&ten - seven, three);
@@ -253,31 +253,31 @@ mod tests {
 
     #[test]
     fn add_assign() {
-        let mut f = FeeRate::from_sat_per_kwu(1).unwrap();
-        f += FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(3).unwrap());
+        let mut f = FeeRate::from_sat_per_mvb(1);
+        f += FeeRate::from_sat_per_mvb(2);
+        assert_eq!(f, FeeRate::from_sat_per_mvb(3));
 
-        let mut f = FeeRate::from_sat_per_kwu(1).unwrap();
-        f += &FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(3).unwrap());
+        let mut f = FeeRate::from_sat_per_mvb(1);
+        f += &FeeRate::from_sat_per_mvb(2);
+        assert_eq!(f, FeeRate::from_sat_per_mvb(3));
     }
 
     #[test]
     fn sub_assign() {
-        let mut f = FeeRate::from_sat_per_kwu(3).unwrap();
-        f -= FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(1).unwrap());
+        let mut f = FeeRate::from_sat_per_mvb(3);
+        f -= FeeRate::from_sat_per_mvb(2);
+        assert_eq!(f, FeeRate::from_sat_per_mvb(1));
 
-        let mut f = FeeRate::from_sat_per_kwu(3).unwrap();
-        f -= &FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(1).unwrap());
+        let mut f = FeeRate::from_sat_per_mvb(3);
+        f -= &FeeRate::from_sat_per_mvb(2);
+        assert_eq!(f, FeeRate::from_sat_per_mvb(1));
     }
 
     #[test]
     fn checked_add() {
-        let one = FeeRate::from_sat_per_kwu(1).unwrap();
-        let two = FeeRate::from_sat_per_kwu(2).unwrap();
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
+        let one = FeeRate::from_sat_per_mvb(1);
+        let two = FeeRate::from_sat_per_mvb(2);
+        let three = FeeRate::from_sat_per_mvb(3);
 
         assert_eq!(one.checked_add(two).unwrap(), three);
 
@@ -288,9 +288,9 @@ mod tests {
 
     #[test]
     fn checked_sub() {
-        let one = FeeRate::from_sat_per_kwu(1).unwrap();
-        let two = FeeRate::from_sat_per_kwu(2).unwrap();
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
+        let one = FeeRate::from_sat_per_mvb(1);
+        let two = FeeRate::from_sat_per_mvb(2);
+        let three = FeeRate::from_sat_per_mvb(3);
         assert_eq!(three.checked_sub(two).unwrap(), one);
 
         let fee_rate = FeeRate::ZERO.checked_sub(one);
