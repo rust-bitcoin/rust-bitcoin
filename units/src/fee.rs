@@ -86,13 +86,12 @@ impl Amount {
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
     pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
-        match self.to_sat().checked_mul(1000) {
-            Some(amount_msats) => match amount_msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
-                Some(wu) => Some(Weight::from_wu(wu)),
-                None => None,
-            },
-            None => None,
+        if let Some(msats) = self.to_sat().checked_mul(1000) {
+            if let Some(wu) = msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
+                return Some(Weight::from_wu(wu));
+            }
         }
+        None
     }
 
     /// Checked fee rate ceiling division.
@@ -105,19 +104,18 @@ impl Amount {
     pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
         // Use ceil because result is used as the divisor.
         let rate = fee_rate.to_sat_per_kwu_ceil();
-        match self.to_sat().checked_mul(1000) {
-            Some(amount_msats) => match rate.checked_sub(1) {
-                Some(rate_minus_one) => match amount_msats.checked_add(rate_minus_one) {
-                    Some(rounded_msats) => match rounded_msats.checked_div(rate) {
-                        Some(wu) => Some(Weight::from_wu(wu)),
-                        None => None,
-                    },
-                    None => None,
-                },
-                None => None,
-            },
-            None => None,
+        if rate == 0 {
+            return None;
         }
+
+        if let Some(msats) = self.to_sat().checked_mul(1000) {
+            // No need to used checked arithmetic because rate is non-zero.
+            if let Some(bump) = msats.checked_add(rate - 1) {
+                let wu = bump / rate;
+                return Some(Weight::from_wu(wu));
+            }
+        }
+        None
     }
 }
 
