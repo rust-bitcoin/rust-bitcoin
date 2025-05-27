@@ -106,6 +106,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-p2p-messages"
+version = "0.1.0"
+
+[[package]]
 name = "bitcoin-primitives"
 version = "0.101.0"
 dependencies = [
