@@ -249,40 +249,32 @@ impl FromStr for Magic {
     }
 }
 
-macro_rules! generate_network_magic_conversion {
-    ($(Network::$network:ident$((TestnetVersion::$testnet_version:ident))? => Magic::$magic:ident,)*) => {
-        impl From<Network> for Magic {
-            fn from(network: Network) -> Magic {
-                match network {
-                    $(
-                        Network::$network$((TestnetVersion::$testnet_version))? => Magic::$magic,
-                    )*
-                }
-            }
+impl From<Network> for Magic {
+    fn from(network: Network) -> Self {
+        match network {
+            Network::Bitcoin => Magic::BITCOIN,
+            Network::Testnet(TestnetVersion::V3) => Magic::TESTNET3,
+            Network::Testnet(TestnetVersion::V4) => Magic::TESTNET4,
+            Network::Signet => Magic::SIGNET,
+            Network::Regtest => Magic::REGTEST,
+            // Remember to add the `TryFrom<Magic>` for new networks
         }
-
-        impl TryFrom<Magic> for Network {
-            type Error = UnknownMagicError;
-
-            fn try_from(magic: Magic) -> Result<Self, Self::Error> {
-                match magic {
-                    $(
-                        Magic::$magic => Ok(Network::$network$((TestnetVersion::$testnet_version))?),
-                    )*
-                    _ => Err(UnknownMagicError(magic)),
-                }
-            }
-        }
-    };
+    }
 }
-// Generate conversion functions for all known networks.
-// `Network -> Magic` and `Magic -> Network`
-generate_network_magic_conversion! {
-    Network::Bitcoin => Magic::BITCOIN,
-    Network::Testnet(TestnetVersion::V3) => Magic::TESTNET3,
-    Network::Testnet(TestnetVersion::V4) => Magic::TESTNET4,
-    Network::Signet => Magic::SIGNET,
-    Network::Regtest => Magic::REGTEST,
+
+impl TryFrom<Magic> for Network {
+    type Error = UnknownMagicError;
+
+    fn try_from(magic: Magic) -> Result<Self, Self::Error> {
+        match magic {
+            Magic::BITCOIN => Ok(Network::Bitcoin),
+            Magic::TESTNET3 => Ok(Network::Testnet(TestnetVersion::V3)),
+            Magic::TESTNET4 => Ok(Network::Testnet(TestnetVersion::V4)),
+            Magic::SIGNET => Ok(Network::Signet),
+            Magic::REGTEST => Ok(Network::Regtest),
+            _ => Err(UnknownMagicError(magic)),
+        }
+    }
 }
 
 impl fmt::Display for Magic {
