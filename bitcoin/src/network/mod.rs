@@ -364,7 +364,6 @@ impl TryFrom<ChainHash> for Network {
 mod tests {
     use super::{Network, TestnetVersion};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::p2p::ServiceFlags;
 
     #[test]
     fn serialize_deserialize() {
@@ -407,47 +406,6 @@ mod tests {
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
         assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
         assert!("fakenet".parse::<Network>().is_err());
-    }
-
-    #[test]
-    fn service_flags() {
-        let all = [
-            ServiceFlags::NETWORK,
-            ServiceFlags::GETUTXO,
-            ServiceFlags::BLOOM,
-            ServiceFlags::WITNESS,
-            ServiceFlags::COMPACT_FILTERS,
-            ServiceFlags::NETWORK_LIMITED,
-            ServiceFlags::P2P_V2,
-        ];
-
-        let mut flags = ServiceFlags::NONE;
-        for f in all.iter() {
-            assert!(!flags.has(*f));
-        }
-
-        flags |= ServiceFlags::WITNESS;
-        assert_eq!(flags, ServiceFlags::WITNESS);
-
-        let mut flags2 = flags | ServiceFlags::GETUTXO;
-        for f in all.iter() {
-            assert_eq!(flags2.has(*f), *f == ServiceFlags::WITNESS || *f == ServiceFlags::GETUTXO);
-        }
-
-        flags2 ^= ServiceFlags::WITNESS;
-        assert_eq!(flags2, ServiceFlags::GETUTXO);
-
-        flags2 |= ServiceFlags::COMPACT_FILTERS;
-        flags2 ^= ServiceFlags::GETUTXO;
-        assert_eq!(flags2, ServiceFlags::COMPACT_FILTERS);
-
-        // Test formatting.
-        assert_eq!("ServiceFlags(NONE)", ServiceFlags::NONE.to_string());
-        assert_eq!("ServiceFlags(WITNESS)", ServiceFlags::WITNESS.to_string());
-        let flag = ServiceFlags::WITNESS | ServiceFlags::BLOOM | ServiceFlags::NETWORK;
-        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS)", flag.to_string());
-        let flag = ServiceFlags::WITNESS | 0xf0.into();
-        assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
     }
 
     #[test]
