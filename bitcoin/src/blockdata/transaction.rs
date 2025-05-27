@@ -1065,16 +1065,23 @@ impl InputWeightPrediction {
         T::Item: Borrow<u32>,
     {
         let (count, total_size) = witness_element_lengths.into_iter().fold(
-            (0usize, 0),
+            (0u32, 0u32),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + compact_size::encoded_size(elem_len) as u32;
-                (count + 1, total_size + elem_size)
+                let elem_size =
+                    elem_len.saturating_add(compact_size::encoded_size(elem_len) as u32);
+                (count + 1, total_size.saturating_add(elem_size))
             },
         );
-        let witness_size =
-            if count > 0 { total_size + compact_size::encoded_size(count) as u32 } else { 0 };
-        let script_size = input_script_len + compact_size::encoded_size(input_script_len) as u32;
+
+        let witness_size = if count > 0 {
+            total_size.saturating_add(compact_size::encoded_size(count) as u32)
+        } else {
+            0
+        };
+
+        let script_size =
+            input_script_len.saturating_add(compact_size::encoded_size(input_script_len) as u32);
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1086,22 +1093,25 @@ impl InputWeightPrediction {
     /// `new` and thus is intended to be only used in `const` context.
     pub const fn from_slice(input_script_len: u32, witness_element_lengths: &[u32]) -> Self {
         let mut i = 0;
-        let mut total_size = 0;
+        let mut total_size: u32 = 0;
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = elem_len + compact_size::encoded_size_const(elem_len as u64) as u32;
-            total_size += elem_size;
+            let elem_size =
+                elem_len.saturating_add(compact_size::encoded_size_const(elem_len as u64) as u32);
+            total_size = total_size.saturating_add(elem_size);
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size
-                + compact_size::encoded_size_const(witness_element_lengths.len() as u64) as u32
+            total_size.saturating_add(compact_size::encoded_size_const(
+                witness_element_lengths.len() as u64,
+            ) as u32)
         } else {
             0
         };
-        let script_size =
-            input_script_len + compact_size::encoded_size_const(input_script_len as u64) as u32;
+
+        let script_size = input_script_len
+            .saturating_add(compact_size::encoded_size_const(input_script_len as u64) as u32);
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1127,8 +1137,7 @@ impl InputWeightPrediction {
     ///
     /// See also [`InputWeightPrediction::total_weight`]
     pub const fn witness_weight(&self) -> Weight {
-        let wu = self.script_size * 4 + self.witness_size;
-        let wu = wu as u64; // Can't use `ToU64` in const context.
+        let wu = self.script_size as u64 * 4 + self.witness_size as u64;
         Weight::from_wu(wu)
     }
 }
