@@ -11,6 +11,7 @@
 //! This module provides the structures and functions needed to support transactions.
 
 use core::fmt;
+use core::ops::Deref;
 
 use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
@@ -28,6 +29,7 @@ use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
 use crate::{Amount, FeeRate, SignedAmount};
+use crate::blockdata::block::CoinbaseError;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -1127,6 +1129,46 @@ impl InputWeightPrediction {
         let wu = self.script_size * 4 + self.witness_size;
         let wu = wu as u64; // Can't use `ToU64` in const context.
         Weight::from_wu(wu)
+    }
+}
+
+/// A wrapper type for the coinbase transaction of a block.
+///
+/// This type exists to distinguish coinbase transactions from regular ones at the type level.
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[repr(transparent)]
+pub struct Coinbase(Transaction);
+
+impl Coinbase {
+    /// Computes the [`Txid`] of this coinbase transaction.
+    pub fn compute_txid(&self) -> Txid {
+        self.0.compute_txid()
+    }
+
+    /// Computes the [`Wtxid`] of this coinbase transaction.
+    pub fn compute_wtxid(&self) -> Wtxid {
+        self.0.compute_wtxid()
+    }
+}
+
+impl Deref for Coinbase {
+    type Target = Transaction;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+
+impl<'a> TryFrom<&'a Transaction> for &'a Coinbase {
+    type Error = CoinbaseError;
+
+    fn try_from(tx: &'a Transaction) -> Result<Self, Self::Error> {
+        if tx.is_coinbase() {
+            Ok(unsafe { &*(tx as *const Transaction as *const Coinbase) })
+        } else {
+            Err(CoinbaseError::InvalidCoinbase)
+        }
     }
 }
 

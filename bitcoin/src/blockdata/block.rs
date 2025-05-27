@@ -505,6 +505,42 @@ impl std::error::Error for ValidationError {
     }
 }
 
+/// An error when accessing the coinbase transaction.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum CoinbaseError {
+    /// Block has no transactions.
+    NoTransactions,
+    /// Transaction is not a valid coinbase transaction.
+    InvalidCoinbase,
+}
+
+impl From<Infallible> for CoinbaseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for CoinbaseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use CoinbaseError::*;
+
+        match *self {
+            NoTransactions => write!(f, "block has no transactions"),
+            InvalidCoinbase => write!(f, "transaction is not a valid coinbase transaction"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CoinbaseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use CoinbaseError::*;
+
+        match *self {
+            NoTransactions | InvalidCoinbase => None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use hex_lit::hex;
