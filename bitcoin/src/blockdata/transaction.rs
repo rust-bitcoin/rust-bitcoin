@@ -1157,22 +1157,6 @@ mod sealed {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for InputWeightPrediction {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        // limit script size to 4Mwu block size.
-        let max_block = Weight::MAX_BLOCK.to_wu() as u32;
-        let input_script_len: u32 = u.int_in_range(0..=max_block)?;
-        let remaining: u32 = max_block - input_script_len;
-
-        // create witness data if there is remaining space.
-        let mut witness_length: u32 = u.int_in_range(0..=remaining)?;
-        let mut witness_element_lengths: Vec<u32> = Vec::new();
-
-        // build vec of random witness element lengths.
-        while witness_length > 0 {
-            let elem: u32 = u.int_in_range(1..=witness_length)?;
-            witness_element_lengths.push(elem);
-            witness_length -= elem;
-        }
-
         match u.int_in_range(0..=7)? {
             0 => Ok(InputWeightPrediction::P2WPKH_MAX),
             1 => Ok(InputWeightPrediction::NESTED_P2WPKH_MAX),
@@ -1180,11 +1164,16 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
             3 => Ok(InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX),
             4 => Ok(InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH),
             5 => Ok(InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH),
-            6 => Ok(InputWeightPrediction::new(input_script_len as u32, witness_element_lengths)),
-            _ => Ok(InputWeightPrediction::from_slice(
-                input_script_len as u32,
-                &witness_element_lengths,
-            )),
+            6 => {
+                let input_script_len: u32 = u32::arbitrary(u)?;
+                let witness_element_lengths: Vec<u32> = Vec::arbitrary(u)?;
+                Ok(InputWeightPrediction::new(input_script_len, witness_element_lengths))
+            }
+            _ => {
+                let input_script_len: u32 = u32::arbitrary(u)?;
+                let witness_element_lengths: Vec<u32> = Vec::arbitrary(u)?;
+                Ok(InputWeightPrediction::from_slice(input_script_len, &witness_element_lengths))
+            }
         }
     }
 }
