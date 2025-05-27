@@ -493,7 +493,7 @@ mod test {
     use hex_lit::hex;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::{consensus::encode::{deserialize, serialize}, p2p::message::AddrV2Payload};
 
     #[test]
     fn serialize_address() {
@@ -706,10 +706,10 @@ mod test {
     #[test]
     fn addrv2message() {
         let raw = hex!("0261bc6649019902abab208d79627683fd4804010409090909208d");
-        let addresses: Vec<AddrV2Message> = deserialize(&raw).unwrap();
+        let addresses: AddrV2Payload = deserialize(&raw).unwrap();
 
         assert_eq!(
-            addresses,
+            addresses.0,
             vec![
                 AddrV2Message {
                     services: ServiceFlags::NETWORK,
