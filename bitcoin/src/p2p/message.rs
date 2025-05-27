@@ -163,6 +163,18 @@ pub struct V2NetworkMessage {
     payload: NetworkMessage,
 }
 
+/// A list of inventory items.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct InventoryPayload(pub Vec<message_blockdata::Inventory>);
+
+/// A list of legacy p2p address messages.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct AddrPayload(pub Vec<(u32, Address)>);
+
+/// A list of v2 address messages.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct AddrV2Payload(pub Vec<AddrV2Message>);
+
 /// A Network message payload. Proper documentation is available on at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 #[derive(Clone, PartialEq, Eq, Debug)]
