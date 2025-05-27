@@ -2062,6 +2062,35 @@ mod tests {
         let pretty_txid = "0x0000000000000000000000000000000000000000000000000000000000000000";
         assert_eq!(pretty_txid, format!("{:#}", &outpoint.txid));
     }
+
+    #[test]
+    fn coinbase_try_from_valid_coinbase() {
+        use crate::constants;
+        use crate::network::Network;
+
+        let genesis = constants::genesis_block(Network::Bitcoin);
+        let coinbase_tx = &genesis.transactions()[0];
+        
+        // Test that we can convert a valid coinbase transaction
+        let coinbase_ref: Result<&Coinbase, _> = coinbase_tx.try_into();
+        assert!(coinbase_ref.is_ok());
+        
+        let coinbase = coinbase_ref.unwrap();
+        assert_eq!(coinbase.compute_txid(), coinbase_tx.compute_txid());
+        assert_eq!(coinbase.compute_wtxid(), coinbase_tx.compute_wtxid());
+    }
+
+    #[test]
+    fn coinbase_try_from_invalid_coinbase() {
+        let tx_bytes = hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000");
+        let tx: Transaction = deserialize(&tx_bytes).unwrap();
+        assert!(!tx.is_coinbase());
+        
+        // Test that we get an error when trying to convert a non-coinbase transaction
+        let coinbase_ref: Result<&Coinbase, _> = (&tx).try_into();
+        assert!(coinbase_ref.is_err());
+        assert_eq!(coinbase_ref.unwrap_err(), CoinbaseError::InvalidCoinbase);
+    }
 }
 
 #[cfg(bench)]
