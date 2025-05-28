@@ -932,8 +932,8 @@ pub const fn predict_weight_from_slices(
 /// associated constants/methods.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct InputWeightPrediction {
-    script_size: usize,
-    witness_size: usize,
+    script_size: u32,
+    witness_size: u32,
 }
 
 impl InputWeightPrediction {
@@ -1010,7 +1010,7 @@ impl InputWeightPrediction {
     /// The function panics in const context and debug builds if `bytes_to_grind` is higher than 62.
     ///
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const fn ground_p2wpkh(bytes_to_grind: usize) -> Self {
+    pub const fn ground_p2wpkh(bytes_to_grind: u32) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
         InputWeightPrediction::from_slice(0, &[der_signature_size, 33])
@@ -1031,7 +1031,7 @@ impl InputWeightPrediction {
     ///
     /// [nested P2WPKH]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh-nested-in-bip16-p2sh
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const fn ground_nested_p2wpkh(bytes_to_grind: usize) -> Self {
+    pub const fn ground_nested_p2wpkh(bytes_to_grind: u32) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
         InputWeightPrediction::from_slice(23, &[der_signature_size, 33])
@@ -1051,7 +1051,7 @@ impl InputWeightPrediction {
     /// The function panics in const context and debug builds if `bytes_to_grind` is higher than 62.
     ///
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const fn ground_p2pkh_compressed(bytes_to_grind: usize) -> Self {
+    pub const fn ground_p2pkh_compressed(bytes_to_grind: u32) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
 
@@ -1059,22 +1059,22 @@ impl InputWeightPrediction {
     }
 
     /// Computes the prediction for a single input.
-    pub fn new<T>(input_script_len: usize, witness_element_lengths: T) -> Self
+    pub fn new<T>(input_script_len: u32, witness_element_lengths: T) -> Self
     where
         T: IntoIterator,
-        T::Item: Borrow<usize>,
+        T::Item: Borrow<u32>,
     {
         let (count, total_size) = witness_element_lengths.into_iter().fold(
             (0usize, 0),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + compact_size::encoded_size(elem_len);
+                let elem_size = elem_len + compact_size::encoded_size(elem_len) as u32;
                 (count + 1, total_size + elem_size)
             },
         );
         let witness_size =
-            if count > 0 { total_size + compact_size::encoded_size(count) } else { 0 };
-        let script_size = input_script_len + compact_size::encoded_size(input_script_len);
+            if count > 0 { total_size + compact_size::encoded_size(count) as u32 } else { 0 };
+        let script_size = input_script_len + compact_size::encoded_size(input_script_len) as u32;
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1084,23 +1084,24 @@ impl InputWeightPrediction {
     /// This is a `const` version of [`new`](Self::new) which only allows slices due to current Rust
     /// limitations around `const fn`. Because of these limitations it may be less efficient than
     /// `new` and thus is intended to be only used in `const` context.
-    pub const fn from_slice(input_script_len: usize, witness_element_lengths: &[usize]) -> Self {
+    pub const fn from_slice(input_script_len: u32, witness_element_lengths: &[u32]) -> Self {
         let mut i = 0;
         let mut total_size = 0;
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = elem_len + compact_size::encoded_size_const(elem_len as u64);
+            let elem_size = elem_len + compact_size::encoded_size_const(elem_len as u64) as u32;
             total_size += elem_size;
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size + compact_size::encoded_size_const(witness_element_lengths.len() as u64)
+            total_size
+                + compact_size::encoded_size_const(witness_element_lengths.len() as u64) as u32
         } else {
             0
         };
         let script_size =
-            input_script_len + compact_size::encoded_size_const(input_script_len as u64);
+            input_script_len + compact_size::encoded_size_const(input_script_len as u64) as u32;
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1147,17 +1148,17 @@ mod sealed {
 impl<'a> Arbitrary<'a> for InputWeightPrediction {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // limit script size to 4Mwu block size.
-        let max_block = Weight::MAX_BLOCK.to_wu() as usize;
-        let input_script_len = u.int_in_range(0..=max_block)?;
-        let remaining = max_block - input_script_len;
+        let max_block = Weight::MAX_BLOCK.to_wu() as u32;
+        let input_script_len: u32 = u.int_in_range(0..=max_block)?;
+        let remaining: u32 = max_block - input_script_len;
 
         // create witness data if there is remaining space.
-        let mut witness_length = u.int_in_range(0..=remaining)?;
-        let mut witness_element_lengths = Vec::new();
+        let mut witness_length: u32 = u.int_in_range(0..=remaining)?;
+        let mut witness_element_lengths: Vec<u32> = Vec::new();
 
         // build vec of random witness element lengths.
         while witness_length > 0 {
-            let elem = u.int_in_range(1..=witness_length)?;
+            let elem: u32 = u.int_in_range(1..=witness_length)?;
             witness_element_lengths.push(elem);
             witness_length -= elem;
         }
@@ -1169,8 +1170,11 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
             3 => Ok(InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX),
             4 => Ok(InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH),
             5 => Ok(InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH),
-            6 => Ok(InputWeightPrediction::new(input_script_len, witness_element_lengths)),
-            _ => Ok(InputWeightPrediction::from_slice(input_script_len, &witness_element_lengths)),
+            6 => Ok(InputWeightPrediction::new(input_script_len as u32, witness_element_lengths)),
+            _ => Ok(InputWeightPrediction::from_slice(
+                input_script_len as u32,
+                &witness_element_lengths,
+            )),
         }
     }
 }
