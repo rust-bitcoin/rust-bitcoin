@@ -1068,20 +1068,21 @@ impl InputWeightPrediction {
             (0u32, 0u32),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size =
-                    elem_len.saturating_add(compact_size::encoded_size(elem_len) as u32);
+                let encoded_size = compact_size::encoded_size(elem_len) as u32;
+                let elem_size = elem_len.saturating_add(encoded_size);
                 (count + 1, total_size.saturating_add(elem_size))
             },
         );
 
         let witness_size = if count > 0 {
-            total_size.saturating_add(compact_size::encoded_size(count) as u32)
+            let encoded_size = compact_size::encoded_size(count) as u32;
+            total_size.saturating_add(encoded_size)
         } else {
             0
         };
 
-        let script_size =
-            input_script_len.saturating_add(compact_size::encoded_size(input_script_len) as u32);
+        let encoded_size = compact_size::encoded_size(input_script_len) as u32;
+        let script_size = input_script_len.saturating_add(encoded_size);
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1097,21 +1098,21 @@ impl InputWeightPrediction {
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size =
-                elem_len.saturating_add(compact_size::encoded_size_const(elem_len as u64) as u32);
+            let encoded_size = compact_size::encoded_size_const(elem_len as u64) as u32;
+            let elem_size = elem_len.saturating_add(encoded_size);
             total_size = total_size.saturating_add(elem_size);
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size.saturating_add(compact_size::encoded_size_const(
-                witness_element_lengths.len() as u64,
-            ) as u32)
+            let encoded_size =
+                compact_size::encoded_size_const(witness_element_lengths.len() as u64) as u32;
+            total_size.saturating_add(encoded_size)
         } else {
             0
         };
 
-        let script_size = input_script_len
-            .saturating_add(compact_size::encoded_size_const(input_script_len as u64) as u32);
+        let encoded_size = compact_size::encoded_size_const(input_script_len as u64) as u32;
+        let script_size = input_script_len.saturating_add(encoded_size);
 
         InputWeightPrediction { script_size, witness_size }
     }
