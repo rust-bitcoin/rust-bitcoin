@@ -15,7 +15,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, BlockMtp,
-    BlockMtpInterval, BlockTime, FeeRate, SignedAmount, Weight,
+    BlockMtpInterval, BlockTime, CheckedSum, FeeRate, SignedAmount, Weight,
 };
 
 /// A struct that includes all public non-error enums.
@@ -272,7 +272,8 @@ fn regression_default() {
 fn dyn_compatible() {
     // If this builds then traits are dyn compatible.
     struct Traits {
-        a: Box<dyn amount::CheckedSum<Amount>>,
+        a: Box<dyn CheckedSum<Amount>>,
+        b: Box<dyn CheckedSum<Weight>>,
         // These traits are explicitly not dyn compatible.
         // b: Box<dyn amount::serde::SerdeAmount>,
         // c: Box<dyn amount::serde::SerdeAmountForOpt>,

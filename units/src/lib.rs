@@ -69,3 +69,21 @@ pub(crate) use self::result::OptionExt;
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
+
+/// Calculates the sum over the iterator using checked arithmetic.
+pub trait CheckedSum<R>: sealed::Sealed<R> {
+    /// Calculates the sum over the iterator using checked arithmetic. If an
+    /// overflow happens it returns [`None`].
+    fn checked_sum(self) -> Option<R>;
+}
+
+mod sealed {
+    use super::{Amount, SignedAmount, Weight};
+
+    /// Used to seal the `CheckedSum` trait
+    pub trait Sealed<A> {}
+
+    impl<T> Sealed<Amount> for T where T: Iterator<Item = Amount> {}
+    impl<T> Sealed<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
+    impl<T> Sealed<Weight> for T where T: Iterator<Item = Weight> {}
+}

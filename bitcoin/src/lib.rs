@@ -204,14 +204,15 @@ pub mod amount {
 
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(inline)]
+    pub use units::CheckedSum;
+    #[cfg(feature = "serde")]
+    pub use units::amount::serde;
     pub use units::amount::{
-        Amount, CheckedSum, Denomination, Display, InvalidCharacterError, MissingDenominationError,
+        Amount, Denomination, Display, InvalidCharacterError, MissingDenominationError,
         MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
         PossiblyConfusingDenominationError, SignedAmount, TooPreciseError,
         UnknownDenominationError,
     };
-    #[cfg(feature = "serde")]
-    pub use units::amount::serde;
 
     impl Decodable for Amount {
         #[inline]
