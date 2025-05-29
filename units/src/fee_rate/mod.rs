@@ -62,7 +62,7 @@ impl FeeRate {
     pub fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
         // 1 vb == 4 wu
         // 1 sat/vb == 1/4 sat/wu
-        // sat_vb sat/vb * 1000 / 4 == sat/kwu
+        // sat/vb * 1000 / 4 == sat/kwu
         Some(FeeRate::from_sat_per_kwu(sat_vb.checked_mul(1000 / 4)?))
     }
 
