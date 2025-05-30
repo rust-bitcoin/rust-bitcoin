@@ -18,7 +18,7 @@ use core::fmt;
 /// `CompactTarget` and `Target` is lossy *in both directions* (there are multiple `CompactTarget`
 /// values that map to the same `Target` value). Ordering and equality for this type are defined in
 /// terms of the underlying `u32`.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CompactTarget(u32);
 
