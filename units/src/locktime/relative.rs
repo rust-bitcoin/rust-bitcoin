@@ -14,7 +14,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[doc(hidden)]
 pub type Height = NumberOfBlocks;
 
-/// A relative lock time lock-by-blockheight value.
+/// A relative lock time lock-by-height value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NumberOfBlocks(u16);
 
@@ -54,29 +54,27 @@ impl NumberOfBlocks {
         self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
     }
 
-    /// Determines whether a relative‐height locktime has matured, taking into account
-    /// both the chain tip and the height at which the UTXO was confirmed.
+    /// Returns true if an output locked by height can be spent in the next block.
     ///
-    /// If you have two height intervals `x` and `y`, and want to know whether `x`
-    /// is satisfied by `y`, use `x >= y`.
+    /// # Errors
     ///
-    /// # Parameters
-    /// - `self` – the relative block‐height delay (`h`) required after confirmation.
-    /// - `chain_tip` – the height of the current chain tip
-    /// - `utxo_mined_at` – the height of the UTXO’s confirmation block
-    ///
-    /// # Returns
-    /// - `true` if a UTXO locked by `self` can be spent in a block after `chain_tip`.
-    /// - `false` if the UTXO is still locked at `chain_tip`.
+    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockHeight,
         utxo_mined_at: crate::BlockHeight,
-    ) -> bool {
-        chain_tip
-            .checked_sub(utxo_mined_at)
-            .and_then(|diff: crate::BlockHeightInterval| diff.try_into().ok())
-            .map_or(false, |diff: Self| diff >= self)
+    ) -> Result<bool, InvalidHeightError> {
+        match chain_tip.checked_sub(utxo_mined_at) {
+            Some(diff) => {
+                if diff.to_u32() == u32::MAX {
+                    // Weird but ok none the less - protects against overflow below.
+                    return Ok(true);
+                }
+                // +1 because the next block will have height 1 higher than `chain_tip`.
+                Ok(u32::from(self.to_height()) <= diff.to_u32() + 1)
+            }
+            None => Err(InvalidHeightError { chain_tip, utxo_mined_at }),
+        }
     }
 }
 
@@ -117,9 +115,9 @@ impl<'de> Deserialize<'de> for NumberOfBlocks {
 #[doc(hidden)]
 pub type Time = NumberOf512Seconds;
 
-/// A relative lock time lock-by-blocktime value.
+/// A relative lock time lock-by-time value.
 ///
-/// For BIP 68 relative lock-by-blocktime locks, time is measured in 512 second intervals.
+/// For BIP 68 relative lock-by-time locks, time is measured in 512 second intervals.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NumberOf512Seconds(u16);
 
@@ -133,7 +131,8 @@ impl NumberOf512Seconds {
     /// The maximum relative block time (33,554,432 seconds or approx 388 days).
     pub const MAX: Self = NumberOf512Seconds(u16::MAX);
 
-    /// Constructs a new [`NumberOf512Seconds`] using time intervals where each interval is equivalent to 512 seconds.
+    /// Constructs a new [`NumberOf512Seconds`] using time intervals where each interval is
+    /// equivalent to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
@@ -144,8 +143,8 @@ impl NumberOf512Seconds {
     #[must_use]
     pub const fn to_512_second_intervals(self) -> u16 { self.0 }
 
-    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second
-    /// interval with truncating division.
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into a 512
+    /// second interval using truncating division.
     ///
     /// # Errors
     ///
@@ -161,8 +160,8 @@ impl NumberOf512Seconds {
         }
     }
 
-    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second
-    /// intervals with ceiling division.
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into a 512
+    /// second interval using ceiling division.
     ///
     /// # Errors
     ///
@@ -201,29 +200,24 @@ impl NumberOf512Seconds {
         (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
     }
 
-    /// Determines whether a relative‑time lock has matured, taking into account both
-    /// the UTXO’s Median Time Past at confirmation and the required delay.
+    /// Returns true if an output locked by time can be spent in the next block.
     ///
-    /// If you have two MTP intervals `x` and `y`, and want to know whether `x`
-    /// is satisfied by `y`, use `x >= y`.
+    /// # Errors
     ///
-    /// # Parameters
-    /// - `self` – the relative time delay (`t`) in 512‑second intervals.
-    /// - `chain_tip` – the MTP of the current chain tip
-    /// - `utxo_mined_at` – the MTP of the UTXO’s confirmation block
-    ///
-    /// # Returns
-    /// - `true` if the relative‐time lock has expired by the tip’s MTP
-    /// - `false` if the lock has not yet expired by the tip’s MTP
+    /// If `chain_tip` as not _after_ `utxo_mined_at` i.e., if you get the args mixed up.
     pub fn is_satisfied_by(
         self,
         chain_tip: crate::BlockMtp,
         utxo_mined_at: crate::BlockMtp,
-    ) -> bool {
-        chain_tip
-            .checked_sub(utxo_mined_at)
-            .and_then(|diff: crate::BlockMtpInterval| diff.to_relative_mtp_interval_floor().ok())
-            .map_or(false, |diff: Self| diff >= self)
+    ) -> Result<bool, InvalidTimeError> {
+        match chain_tip.checked_sub(utxo_mined_at) {
+            Some(diff) => {
+                // The locktime check in Core during block validation uses the MTP of the previous
+                // block - which is `chain_tip` here.
+                Ok(self.to_seconds() <= diff.to_u32())
+            }
+            None => Err(InvalidTimeError { chain_tip, utxo_mined_at }),
+        }
     }
 }
 
@@ -287,6 +281,44 @@ impl fmt::Display for TimeOverflowError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for TimeOverflowError {}
+
+/// Error returned when `NumberOfBlocks::is_satisfied_by` is incorrectly called.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidHeightError {
+    /// The `chain_tip` argument.
+    pub(crate) chain_tip: crate::BlockHeight,
+    /// The `utxo_mined_at` argument.
+    pub(crate) utxo_mined_at: crate::BlockHeight,
+}
+
+impl fmt::Display for InvalidHeightError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidHeightError {}
+
+/// Error returned when `NumberOf512Seconds::is_satisfied_by` is incorrectly called.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidTimeError {
+    /// The `chain_tip` argument.
+    pub(crate) chain_tip: crate::BlockMtp,
+    /// The `utxo_mined_at` argument.
+    pub(crate) utxo_mined_at: crate::BlockMtp,
+}
+
+impl fmt::Display for InvalidTimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidTimeError {}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for NumberOfBlocks {
@@ -426,24 +458,24 @@ mod tests {
         let time_lock = NumberOf512Seconds::from_512_second_intervals(10);
         let chain_state1 = BlockMtp::new(timestamps);
         let utxo_state1 = BlockMtp::new(utxo_timestamps);
-        assert!(time_lock.is_satisfied_by(chain_state1, utxo_state1));
+        assert!(time_lock.is_satisfied_by(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_mtp < utxo_mtp + required_seconds)
         let chain_state2 = BlockMtp::new(timestamps2);
         let utxo_state2 = BlockMtp::new(utxo_timestamps2);
-        assert!(!time_lock.is_satisfied_by(chain_state2, utxo_state2));
+        assert!(!time_lock.is_satisfied_by(chain_state2, utxo_state2).unwrap());
 
         // Test case 3: Test with a larger value (100 intervals = 51200 seconds)
         let larger_lock = NumberOf512Seconds::from_512_second_intervals(100);
         let chain_state3 = BlockMtp::new(timestamps3);
         let utxo_state3 = BlockMtp::new(utxo_timestamps3);
-        assert!(larger_lock.is_satisfied_by(chain_state3, utxo_state3));
+        assert!(larger_lock.is_satisfied_by(chain_state3, utxo_state3).unwrap());
 
         // Test case 4: Overflow handling - tests that is_satisfied_by handles overflow gracefully
         let max_time_lock = NumberOf512Seconds::MAX;
         let chain_state4 = BlockMtp::new(timestamps);
         let utxo_state4 = BlockMtp::new(utxo_timestamps);
-        assert!(!max_time_lock.is_satisfied_by(chain_state4, utxo_state4));
+        assert!(!max_time_lock.is_satisfied_by(chain_state4, utxo_state4).unwrap());
     }
 
     #[test]
@@ -453,19 +485,19 @@ mod tests {
         let height_lock = NumberOfBlocks(10);
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
-        let chain_state1 = BlockHeight::from_u32(100);
+        let chain_state1 = BlockHeight::from_u32(89);
         let utxo_state1 = BlockHeight::from_u32(80);
-        assert!(height_lock.is_satisfied_by(chain_state1, utxo_state1));
+        assert!(height_lock.is_satisfied_by(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_height < utxo_height + required)
-        let chain_state2 = BlockHeight::from_u32(89);
+        let chain_state2 = BlockHeight::from_u32(88);
         let utxo_state2 = BlockHeight::from_u32(80);
-        assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2));
+        assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2).unwrap());
 
         // Test case 3: Overflow handling - tests that is_satisfied_by handles overflow gracefully
         let max_height_lock = NumberOfBlocks::MAX;
         let chain_state3 = BlockHeight::from_u32(1000);
         let utxo_state3 = BlockHeight::from_u32(80);
-        assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3));
+        assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3).unwrap());
     }
 }

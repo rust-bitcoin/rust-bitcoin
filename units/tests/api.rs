@@ -139,11 +139,13 @@ struct Errors {
     x: locktime::absolute::ConversionError,
     y: locktime::absolute::Height,
     z: locktime::absolute::ParseHeightError,
-    _a: locktime::absolute::ParseTimeError,
-    _b: locktime::relative::TimeOverflowError,
-    _e: parse::ParseIntError,
-    _f: parse::PrefixedHexError,
-    _g: parse::UnprefixedHexError,
+    aa: locktime::absolute::ParseTimeError,
+    ab: locktime::relative::TimeOverflowError,
+    ac: locktime::relative::InvalidHeightError,
+    ad: locktime::relative::InvalidTimeError,
+    ae: parse::ParseIntError,
+    af: parse::PrefixedHexError,
+    ag: parse::UnprefixedHexError,
 }
 
 #[test]

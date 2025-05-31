@@ -63,7 +63,7 @@ fn serde_regression_absolute_lock_time_height() {
 #[test]
 fn serde_regression_absolute_lock_time_time() {
     let seconds: u32 = 1653195600; // May 22nd, 5am UTC.
-    let t = absolute::LockTime::from_time(seconds).expect("valid time");
+    let t = absolute::LockTime::from_mtp(seconds).expect("valid time");
     let got = serialize(&t).unwrap();
 
     let want = include_bytes!("data/serde/absolute_lock_time_seconds_bincode") as &[_];

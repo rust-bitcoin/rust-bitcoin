@@ -124,7 +124,7 @@ impl_u32_wrapper! {
     /// Block interval is an integer type representing a difference between the heights of two blocks.
     ///
     /// This type is not meant for constructing relative height based timelocks. It is a general
-    /// purpose block interval abstraction. For locktimes please see [`locktime::relative::Height`].
+    /// purpose block interval abstraction. For locktimes please see [`locktime::relative::NumberOfBlocks`].
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct BlockHeightInterval(u32);

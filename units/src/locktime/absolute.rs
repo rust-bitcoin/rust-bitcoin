@@ -83,6 +83,17 @@ impl Height {
     /// Converts this [`Height`] to a raw `u32` value.
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
+
+    /// Returns true if a transaction with this locktime can be included in the next block.
+    ///
+    /// `self` is value of the `LockTime` and if `height` is the current chain tip then
+    /// a transaction with this lock can be broadcast for inclusion in the next block.
+    #[inline]
+    pub fn is_satisfied_by(self, height: Height) -> bool {
+        // Use u64 so that there can be no overflow.
+        let next_block_height = u64::from(height.to_u32()) + 1;
+        u64::from(self.to_u32()) <= next_block_height
+    }
 }
 
 impl fmt::Display for Height {
@@ -217,6 +228,18 @@ impl MedianTimePast {
     /// Converts this [`MedianTimePast`] to a raw `u32` value.
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
+
+    /// Returns true if a transaction with this locktime can be included in the next block.
+    ///
+    /// `self`is the value of the `LockTime` and if `time` is the median time past of the block at
+    /// the chain tip then a transaction with this lock can be broadcast for inclusion in the next
+    /// block.
+    #[inline]
+    pub fn is_satisfied_by(self, time: MedianTimePast) -> bool {
+        // The locktime check in Core during block validation uses the MTP
+        // of the previous block - which is the expected to be `time` here.
+        self <= time
+    }
 }
 
 impl fmt::Display for MedianTimePast {
@@ -326,7 +349,7 @@ impl std::error::Error for ConversionError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-/// Describes the two types of locking, lock-by-blockheight and lock-by-blocktime.
+/// Describes the two types of locking, lock-by-height and lock-by-time.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 enum LockTimeUnit {
     /// Lock by blockheight.
@@ -341,9 +364,9 @@ impl fmt::Display for LockTimeUnit {
 
         match *self {
             L::Blocks =>
-                write!(f, "expected lock-by-blockheight (must be < {})", LOCK_TIME_THRESHOLD),
+                write!(f, "expected lock-by-height (must be < {})", LOCK_TIME_THRESHOLD),
             L::Seconds =>
-                write!(f, "expected lock-by-blocktime (must be >= {})", LOCK_TIME_THRESHOLD),
+                write!(f, "expected lock-by-time (must be >= {})", LOCK_TIME_THRESHOLD),
         }
     }
 }
@@ -553,8 +576,8 @@ mod tests {
         let blocks = LockTimeUnit::Blocks;
         let seconds = LockTimeUnit::Seconds;
 
-        assert_eq!(format!("{}", blocks), "expected lock-by-blockheight (must be < 500000000)");
-        assert_eq!(format!("{}", seconds), "expected lock-by-blocktime (must be >= 500000000)");
+        assert_eq!(format!("{}", blocks), "expected lock-by-height (must be < 500000000)");
+        assert_eq!(format!("{}", seconds), "expected lock-by-time (must be >= 500000000)");
     }
 
     #[test]

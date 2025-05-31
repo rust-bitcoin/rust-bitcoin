@@ -32,7 +32,7 @@ pub mod locktime {
     pub mod absolute {
         //! Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY.
         //!
-        //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+        //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
         //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
         use io::{BufRead, Write};
@@ -66,12 +66,12 @@ pub mod locktime {
     pub mod relative {
         //! Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY.
         //!
-        //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+        //! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
         //! whether bit 22 of the `u32` consensus value is set.
 
         /// Re-export everything from the `primitives::locktime::relative` module.
         pub use primitives::locktime::relative::{
-            DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError, LockTime,
+            DisabledLockTimeError, InvalidHeightError, InvalidTimeError, LockTime,
             NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
         };
 

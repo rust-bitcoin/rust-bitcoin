@@ -2,7 +2,7 @@
 
 //! Provides type [`LockTime`] that implements the logic around `nLockTime`/`OP_CHECKLOCKTIMEVERIFY`.
 //!
-//! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+//! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
 use core::fmt;
@@ -79,7 +79,7 @@ pub enum LockTime {
     /// use bitcoin_primitives::absolute;
     ///
     /// let seconds: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let n = absolute::LockTime::from_time(seconds).expect("valid time");
+    /// let n = absolute::LockTime::from_mtp(seconds).expect("valid time");
     /// assert!(n.is_block_time());
     /// assert_eq!(n.to_consensus_u32(), seconds);
     /// ```
@@ -197,8 +197,8 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::absolute;
-    /// assert!(absolute::LockTime::from_time(1653195600).is_ok());
-    /// assert!(absolute::LockTime::from_time(741521).is_err());
+    /// assert!(absolute::LockTime::from_mtp(1653195600).is_ok());
+    /// assert!(absolute::LockTime::from_mtp(741521).is_err());
     /// ```
     #[inline]
     pub fn from_mtp(n: u32) -> Result<Self, ConversionError> {
@@ -233,13 +233,21 @@ impl LockTime {
     /// is satisfied if a transaction with `nLockTime` ([`Transaction::lock_time`]) set to
     /// `height`/`time` is valid.
     ///
+    /// If `height` and `mtp` represent the current chain tip then a transaction with this
+    /// locktime can be broadcast for inclusion in the next block.
+    ///
+    /// If you do not have, or do not wish to calculate, both parameters consider using:
+    ///
+    /// * [`is_satisfied_by_height()`](absolute::LockTime::is_satisfied_by_height)
+    /// * [`is_satisfied_by_time()`](absolute::LockTime::is_satisfied_by_time)
+    ///
     /// # Examples
     ///
     /// ```no_run
     /// # use bitcoin_primitives::absolute;
     /// // Can be implemented if block chain data is available.
     /// fn get_height() -> absolute::Height { todo!("return the current block height") }
-    /// fn get_time() -> absolute::MedianTimePast { todo!("return the current block time") }
+    /// fn get_time() -> absolute::MedianTimePast { todo!("return the current block MTP") }
     ///
     /// let n = absolute::LockTime::from_consensus(741521); // `n OP_CHEKCLOCKTIMEVERIFY`.
     /// if n.is_satisfied_by(get_height(), get_time()) {
@@ -247,12 +255,43 @@ impl LockTime {
     /// }
     /// ````
     #[inline]
-    pub fn is_satisfied_by(self, height: Height, time: MedianTimePast) -> bool {
+    pub fn is_satisfied_by(self, height: Height, mtp: MedianTimePast) -> bool {
+        match self {
+            LockTime::Blocks(blocks) => blocks.is_satisfied_by(height),
+            LockTime::Seconds(time) => time.is_satisfied_by(mtp),
+        }
+    }
+
+    /// Returns true if a transaction with this locktime can be spent in the next block.
+    ///
+    /// If `height` is the current block height of the chain then a transaction with this locktime
+    /// can be broadcast for inclusion in the next block.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if this lock is not lock-by-height.
+    #[inline]
+    pub fn is_satisfied_by_height(self, height: Height) -> Result<bool, IncompatibleHeightError> {
         use LockTime as L;
 
         match self {
-            L::Blocks(n) => n <= height,
-            L::Seconds(n) => n <= time,
+            L::Blocks(blocks) => Ok(blocks.is_satisfied_by(height)),
+            L::Seconds(time) => Err(IncompatibleHeightError { lock: time, incompatible: height }),
+        }
+    }
+
+    /// Returns true if a transaction with this locktime can be included in the next block.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if this lock is not lock-by-time.
+    #[inline]
+    pub fn is_satisfied_by_time(self, mtp: MedianTimePast) -> Result<bool, IncompatibleTimeError> {
+        use LockTime as L;
+
+        match self {
+            L::Seconds(time) => Ok(time.is_satisfied_by(mtp)),
+            L::Blocks(blocks) => Err(IncompatibleTimeError { lock: blocks, incompatible: mtp }),
         }
     }
 
@@ -406,6 +445,68 @@ impl<'de> serde::Deserialize<'de> for LockTime {
         deserializer.deserialize_u32(Visitor).map(LockTime::from_consensus)
     }
 }
+
+/// Tried to satisfy a lock-by-time lock using a height value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleHeightError {
+    /// The inner value of the lock-by-time lock.
+    lock: MedianTimePast,
+    /// Attempted to satisfy a lock-by-time lock with this height.
+    incompatible: Height,
+}
+
+impl IncompatibleHeightError {
+    /// Returns the value of the lock-by-time lock.
+    pub fn lock(&self) -> MedianTimePast { self.lock }
+
+    /// Returns the height that was erroneously used to try and satisfy a lock-by-time lock.
+    pub fn incompatible(&self) -> Height { self.incompatible }
+}
+
+impl fmt::Display for IncompatibleHeightError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "tried to satisfy a lock-by-time lock {} with height: {}",
+            self.lock, self.incompatible
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleHeightError {}
+
+/// Tried to satisfy a lock-by-height lock using a height value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleTimeError {
+    /// The inner value of the lock-by-height lock.
+    lock: Height,
+    /// Attempted to satisfy a lock-by-height lock with this MTP.
+    incompatible: MedianTimePast,
+}
+
+impl IncompatibleTimeError {
+    /// Returns the value of the lock-by-height lock.
+    pub fn lock(&self) -> Height { self.lock }
+
+    /// Returns the MTP that was erroneously used to try and satisfy a lock-by-height lock.
+    pub fn incompatible(&self) -> MedianTimePast { self.incompatible }
+}
+
+impl fmt::Display for IncompatibleTimeError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "tried to satisfy a lock-by-height lock {} with MTP: {}",
+            self.lock, self.incompatible
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleTimeError {}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for LockTime {
