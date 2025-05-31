@@ -19,6 +19,7 @@ use crate::p2p::{
     Magic,
 };
 use crate::prelude::{Box, Cow, String, ToOwned, Vec};
+use crate::p2p::deser::impl_vec_wrapper;
 use crate::{block, consensus, transaction};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
@@ -163,6 +164,22 @@ pub struct V2NetworkMessage {
     payload: NetworkMessage,
 }
 
+/// A list of inventory items.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct InventoryPayload(pub Vec<message_blockdata::Inventory>);
+
+/// A list of legacy p2p address messages.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct AddrPayload(pub Vec<(u32, Address)>);
+
+/// A list of v2 address messages.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct AddrV2Payload(pub Vec<AddrV2Message>);
+
+impl_vec_wrapper!(InventoryPayload, message_blockdata::Inventory);
+impl_vec_wrapper!(AddrPayload, (u32, Address));
+impl_vec_wrapper!(AddrV2Payload, AddrV2Message);
+
 /// A Network message payload. Proper documentation is available on at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -172,13 +189,13 @@ pub enum NetworkMessage {
     /// `verack`
     Verack,
     /// `addr`
-    Addr(Vec<(u32, Address)>),
+    Addr(AddrPayload),
     /// `inv`
-    Inv(Vec<message_blockdata::Inventory>),
+    Inv(InventoryPayload),
     /// `getdata`
-    GetData(Vec<message_blockdata::Inventory>),
+    GetData(InventoryPayload),
     /// `notfound`
-    NotFound(Vec<message_blockdata::Inventory>),
+    NotFound(InventoryPayload),
     /// `getblocks`
     GetBlocks(message_blockdata::GetBlocksMessage),
     /// `getheaders`
@@ -236,7 +253,7 @@ pub enum NetworkMessage {
     /// `wtxidrelay`
     WtxidRelay,
     /// `addrv2`
-    AddrV2(Vec<AddrV2Message>),
+    AddrV2(AddrV2Payload),
     /// `sendaddrv2`
     SendAddrV2,
 
@@ -734,17 +751,17 @@ mod test {
         let msgs = [
             NetworkMessage::Version(version_msg),
             NetworkMessage::Verack,
-            NetworkMessage::Addr(vec![(
+            NetworkMessage::Addr(AddrPayload(vec![(
                 45,
                 Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
-            )]),
-            NetworkMessage::Inv(vec![Inventory::Block(BlockHash::from_byte_array(
+            )])),
+            NetworkMessage::Inv(InventoryPayload(vec![Inventory::Block(BlockHash::from_byte_array(
                 hash([8u8; 32]).to_byte_array(),
-            ))]),
-            NetworkMessage::GetData(vec![Inventory::Transaction(Txid::from_byte_array(
+            ))])),
+            NetworkMessage::GetData(InventoryPayload(vec![Inventory::Transaction(Txid::from_byte_array(
                 hash([45u8; 32]).to_byte_array(),
-            ))]),
-            NetworkMessage::NotFound(vec![Inventory::Error([0u8; 32])]),
+            ))])),
+            NetworkMessage::NotFound(InventoryPayload(vec![Inventory::Error([0u8; 32])])),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(
                 vec![
                     BlockHash::from_byte_array(hash([1u8; 32]).to_byte_array()),
@@ -826,12 +843,12 @@ mod test {
             }),
             NetworkMessage::FeeFilter(1000),
             NetworkMessage::WtxidRelay,
-            NetworkMessage::AddrV2(vec![AddrV2Message {
+            NetworkMessage::AddrV2(AddrV2Payload(vec![AddrV2Message {
                 addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)),
                 port: 0,
                 services: ServiceFlags::NONE,
                 time: 0,
-            }]),
+            }])),
             NetworkMessage::SendAddrV2,
             NetworkMessage::CmpctBlock(cmptblock),
             NetworkMessage::GetBlockTxn(GetBlockTxn {

@@ -26,11 +26,6 @@ use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::block::{self, BlockHash};
 use crate::merkle_tree::TxMerkleNode;
-#[cfg(feature = "std")]
-use crate::p2p::{
-    address::{AddrV2Message, Address},
-    message_blockdata::Inventory,
-};
 use crate::prelude::{rc, sync, Box, Cow, String, Vec};
 use crate::taproot::TapLeafHash;
 use crate::transaction::{Transaction, TxIn, TxOut};
@@ -552,13 +547,6 @@ impl_vec!(TapLeafHash);
 impl_vec!(ShortId);
 impl_vec!(PrefilledTransaction);
 
-#[cfg(feature = "std")]
-impl_vec!(Inventory);
-#[cfg(feature = "std")]
-impl_vec!((u32, Address));
-#[cfg(feature = "std")]
-impl_vec!(AddrV2Message);
-
 pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
     data: &[u8],
     w: &mut W,
@@ -765,8 +753,6 @@ mod tests {
     use core::mem::discriminant;
 
     use super::*;
-    #[cfg(feature = "std")]
-    use crate::p2p::{message_blockdata::Inventory, Address};
 
     #[test]
     fn serialize_int() {
@@ -1049,10 +1035,6 @@ mod tests {
         test_len_is_max_vec::<TxIn>();
         test_len_is_max_vec::<Vec<u8>>();
         test_len_is_max_vec::<u64>();
-        #[cfg(feature = "std")]
-        test_len_is_max_vec::<(u32, Address)>();
-        #[cfg(feature = "std")]
-        test_len_is_max_vec::<Inventory>();
     }
 
     fn test_len_is_max_vec<T>()
