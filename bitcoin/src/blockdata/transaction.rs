@@ -1010,9 +1010,9 @@ impl InputWeightPrediction {
     /// The function panics in const context and debug builds if `bytes_to_grind` is higher than 62.
     ///
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const fn ground_p2wpkh(bytes_to_grind: usize) -> Self {
+    pub const fn ground_p2wpkh(bytes_to_grind: u8) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
-        let der_signature_size = 10 + (62 - bytes_to_grind);
+        let der_signature_size = 10 + (62 - bytes_to_grind) as usize;
         InputWeightPrediction::from_slice(0, &[der_signature_size, 33])
     }
 
@@ -1031,9 +1031,9 @@ impl InputWeightPrediction {
     ///
     /// [nested P2WPKH]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh-nested-in-bip16-p2sh
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const fn ground_nested_p2wpkh(bytes_to_grind: usize) -> Self {
+    pub const fn ground_nested_p2wpkh(bytes_to_grind: u8) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
-        let der_signature_size = 10 + (62 - bytes_to_grind);
+        let der_signature_size = 10 + (62 - bytes_to_grind) as usize;
         InputWeightPrediction::from_slice(23, &[der_signature_size, 33])
     }
 
@@ -1051,10 +1051,9 @@ impl InputWeightPrediction {
     /// The function panics in const context and debug builds if `bytes_to_grind` is higher than 62.
     ///
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const fn ground_p2pkh_compressed(bytes_to_grind: usize) -> Self {
+    pub const fn ground_p2pkh_compressed(bytes_to_grind: u8) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
-        let der_signature_size = 10 + (62 - bytes_to_grind);
-
+        let der_signature_size = 10 + (62 - bytes_to_grind) as usize;
         InputWeightPrediction::from_slice(2 + 33 + der_signature_size, &[])
     }
 
