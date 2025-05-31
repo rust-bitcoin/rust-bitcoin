@@ -11,6 +11,8 @@ use core::ops;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use crate::parse::ParseIntError;
+
 mod encapsulate {
     /// Fee rate.
     ///
@@ -130,6 +132,52 @@ impl FeeRate {
             None => None,
         }
     }
+
+    fn parse<S: AsRef<str>>(s: S) -> Result<Self, ParseError> {
+        let s = s.as_ref();
+        let (value, unit) = if let Some((value, unit)) = s.split_once(' ') {
+            (value, unit)
+        } else if s == "0" {
+            ("0", "sat/kwu")
+        } else {
+            let pos = s
+                .find(|c: char| c.is_alphabetic())
+                .ok_or(ParseError(ParseErrorInner::MissingUnit))?;
+            (&s[..pos], &s[pos..])
+        };
+        match unit {
+            "sat/kwu" => crate::parse::int_from_str(value)
+                .map(Self::from_sat_per_kwu)
+                .map_err(|error| ParseError(ParseErrorInner::InvalidSatPerKwu(error))),
+            "sat/vB" => crate::parse::int_from_str(value)
+                .map(|sat| {
+                    Self::from_sat_per_vb(sat)
+                        .ok_or(ParseError(ParseErrorInner::UnsupportedSatPerVB))
+                })
+                .map_err(|_| ParseError(ParseErrorInner::UnsupportedSatPerVB))?,
+            other => Err(ParseError(ParseErrorInner::UnknownUnit(other.into()))),
+        }
+    }
+}
+
+use internals::error::InputString;
+
+impl core::str::FromStr for FeeRate {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> { Self::parse(s) }
+}
+
+/// Error returned when parsing of `FeeRate` fails.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ParseError(ParseErrorInner);
+
+#[derive(Debug, Clone, PartialEq)]
+enum ParseErrorInner {
+    MissingUnit,
+    UnknownUnit(InputString),
+    UnsupportedSatPerVB,
+    InvalidSatPerKwu(ParseIntError),
 }
 
 crate::internal_macros::impl_op_for_references! {
@@ -189,8 +237,40 @@ impl<'a> Arbitrary<'a> for FeeRate {
 #[cfg(test)]
 mod tests {
     use core::num::NonZeroU64;
+    use core::str::FromStr;
 
     use super::*;
+    use crate::fee_rate::ParseErrorInner::{MissingUnit, UnknownUnit};
+
+    #[test]
+    fn from_str_error() {
+        match FeeRate::from_str("") {
+            Err(ParseError(MissingUnit)) => (),
+            _ => panic!("unexpected result"),
+        }
+
+        match FeeRate::from_str("42") {
+            Err(ParseError(MissingUnit)) => (),
+            _ => panic!("unexpected result"),
+        }
+
+        match FeeRate::from_str("42 foo") {
+            Err(ParseError(UnknownUnit(_))) => (),
+            _ => panic!("unexpected result"),
+        }
+    }
+
+    #[test]
+    fn from_str_success() {
+        let f = FeeRate::from_str("42 sat/kwu").unwrap().to_sat_per_kwu();
+        assert_eq!(f, 42);
+
+        let f = FeeRate::from_str("42sat/kwu").unwrap().to_sat_per_kwu();
+        assert_eq!(f, 42);
+
+        let f = FeeRate::from_str("42 sat/vB").unwrap().to_sat_per_kwu();
+        assert_eq!(f, 10_500);
+    }
 
     #[test]
     #[allow(clippy::op_ref)]
