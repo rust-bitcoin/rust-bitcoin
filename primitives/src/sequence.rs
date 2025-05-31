@@ -296,8 +296,9 @@ impl<'a> Arbitrary<'a> for Sequence {
 #[cfg(feature = "alloc")]
 mod tests {
     use super::*;
+    use internals::const_casts::u16_to_u32;
 
-    const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
+    const MAXIMUM_ENCODABLE_SECONDS: u32 = u16_to_u32(u16::MAX) * 512;
 
     #[test]
     fn from_seconds_floor_success() {
