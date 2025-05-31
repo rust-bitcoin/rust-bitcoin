@@ -18,6 +18,7 @@ use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
 use primitives::Sequence;
+use units::NumOpResult;
 
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
@@ -787,6 +788,41 @@ pub fn effective_value(
     // Cannot overflow because after conversion to signed Amount::MIN - Amount::MAX
     // still fits in SignedAmount::MAX (0 - MAX = -MAX).
     (value.to_signed() - fee.to_signed()).expect("cannot overflow")
+}
+
+/// Computes the absolute value of an output given an effective value.
+///
+/// # Parameters
+///
+/// * `fee_rate` - the fee rate of the transaction being created.
+/// * `input_weight_prediction` - the predicted input weight.
+/// * `effective_value` - The value an output minus the fees to spend it.
+///
+/// # Returns
+///
+/// * [`NumOpResult::Error`] if the effective_value is negative since an absolute
+///   value must be positive.
+/// * [`NumOpResult::Error`] if fee plus effective_value causes an overflow.
+/// * [`NumOpResult::Valid`] on successful calculation.
+pub fn absolute_value(
+    fee_rate: FeeRate,
+    input_weight_prediction: InputWeightPrediction,
+    effective_value: SignedAmount,
+) -> NumOpResult<Amount> {
+    let weight = input_weight_prediction.total_weight();
+    let fee = fee_rate.to_fee(weight).to_signed();
+
+    let absolute_value = (fee + effective_value).map(|abs| {
+        abs.to_unsigned().map_err(|_e| units::NumOpError::while_doing(units::MathOp::Add))
+    });
+
+    // NumOpResult has no `?` operator.
+    let question_mark = match absolute_value {
+        NumOpResult::Valid(a) => a,
+        NumOpResult::Error(e) => return NumOpResult::Error(e),
+    };
+
+    NumOpResult::from_result(question_mark)
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
