@@ -8,6 +8,8 @@
 #[cfg(feature = "std")]
 pub mod address;
 #[cfg(feature = "std")]
+mod deser;
+#[cfg(feature = "std")]
 pub mod message;
 #[cfg(feature = "std")]
 pub mod message_blockdata;
@@ -19,8 +21,6 @@ pub mod message_compact_blocks;
 pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
-#[cfg(feature = "std")]
-mod deser;
 
 use core::str::FromStr;
 use core::{fmt, ops};

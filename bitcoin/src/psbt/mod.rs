@@ -898,11 +898,11 @@ impl GetKey for $map<PublicKey, PrivateKey> {
             KeyRequest::XOnlyPubkey(xonly) => {
                 let pubkey_even = xonly.public_key(secp256k1::Parity::Even);
                 let key = self.get(&pubkey_even).cloned();
-              
+             
                 if key.is_some() {
                     return Ok(key);
                 }
-              
+             
                 let pubkey_odd = xonly.public_key(secp256k1::Parity::Odd);
                 if let Some(priv_key) = self.get(&pubkey_odd).copied() {
                     let negated_priv_key  = priv_key.negate();
@@ -935,18 +935,18 @@ impl GetKey for $map<XOnlyPublicKey, PrivateKey> {
             KeyRequest::XOnlyPubkey(xonly) => Ok(self.get(xonly).cloned()),
             KeyRequest::Pubkey(pk) => {
                 let (xonly, parity) = pk.inner.x_only_public_key();
-              
+             
                 if let Some(mut priv_key) = self.get(&XOnlyPublicKey::from(xonly)).cloned() {
                     let computed_pk = priv_key.public_key(&secp);
                     let (_, computed_parity) = computed_pk.inner.x_only_public_key();
-                  
+                 
                     if computed_parity != parity {
                         priv_key = priv_key.negate();
                     }
-                  
+                 
                     return Ok(Some(priv_key));
                 }
-              
+             
                 Ok(None)
             },
             KeyRequest::Bip32(_) => Err(GetKeyError::NotSupported),
@@ -1326,6 +1326,8 @@ pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use hashes::{hash160, ripemd160, sha256};
     use hex::FromHex;
     use hex_lit::hex;
@@ -1338,8 +1340,6 @@ mod tests {
         crate::WitnessProgram,
         secp256k1::{All, SecretKey},
     };
-
-    use std::str::FromStr;
 
     use super::*;
     use crate::address::script_pubkey::ScriptExt as _;
@@ -2240,17 +2240,35 @@ mod tests {
     fn serialize_and_deserialize_musig2_participants() {
         // XXX: Does not cover PSBT_IN_MUSIG2_PUB_NONCE, PSBT_IN_MUSIG2_PARTIAL_SIG (yet)
 
-        let expected_in_agg_pk  = secp256k1::PublicKey::from_str("021401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e00").unwrap();
+        let expected_in_agg_pk = secp256k1::PublicKey::from_str(
+            "021401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e00",
+        )
+        .unwrap();
         let expected_in_pubkeys = vec![
-            secp256k1::PublicKey::from_str("02bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a").unwrap(),
-            secp256k1::PublicKey::from_str("0355212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e2").unwrap(),
+            secp256k1::PublicKey::from_str(
+                "02bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a",
+            )
+            .unwrap(),
+            secp256k1::PublicKey::from_str(
+                "0355212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e2",
+            )
+            .unwrap(),
         ];
 
-        let expected_out_agg_pk = secp256k1::PublicKey::from_str("0364934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba5").unwrap();
+        let expected_out_agg_pk = secp256k1::PublicKey::from_str(
+            "0364934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba5",
+        )
+        .unwrap();
 
         let expected_out_pubkeys = vec![
-            secp256k1::PublicKey::from_str("02841d69a8b80ae23a8090e6f3765540ea5efd8c287b1307c983a6e2a3a171b525").unwrap(),
-            secp256k1::PublicKey::from_str("02bad833849a98cdfb0a0749609ddccab16ad54485ecc67f828df4bdc4f2b90d4c").unwrap(),
+            secp256k1::PublicKey::from_str(
+                "02841d69a8b80ae23a8090e6f3765540ea5efd8c287b1307c983a6e2a3a171b525",
+            )
+            .unwrap(),
+            secp256k1::PublicKey::from_str(
+                "02bad833849a98cdfb0a0749609ddccab16ad54485ecc67f828df4bdc4f2b90d4c",
+            )
+            .unwrap(),
         ];
 
         const PSBT_HEX: &str = "70736274ff01005e02000000017b42be5ea467afe0d0571dc4a91bef97ff9605a590c0b8d5892323946414d1810000000000ffffffff01f0b9f50500000000225120bc7e18f55e2c7a28d78cadac1bc72c248372375d269bafe6b315bc40505d07e5000000000001012b00e1f50500000000225120de564ebf8ff7bd9bb41bd88264c04b1713ebb9dc8df36319091d2eabb16cda6221161401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e000500eb4cbe62211655212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e20500755abbf92116bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a05002a33dfd90117201401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e00221a021401301810a46a4e3f39e4603ec228ed301d9f2079767fda758dee7224b32e004202bebd7a1cef20283444b96e9ce78137e951ce48705390933896311a9abc75736a0355212dff7b3d7e8126687a62fd0435a3fb4de56d9af9ae23a1c9ca05b349c8e20001052064934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba5210764934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba50500fa4c6afa22080364934a64831bd917a2667b886671650846f021e1c025e4b2bb65e49ab3e7cba54202841d69a8b80ae23a8090e6f3765540ea5efd8c287b1307c983a6e2a3a171b52502bad833849a98cdfb0a0749609ddccab16ad54485ecc67f828df4bdc4f2b90d4c00";
