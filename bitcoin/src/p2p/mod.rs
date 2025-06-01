@@ -397,6 +397,39 @@ impl std::error::Error for UnknownMagicError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::consensus::encode::{deserialize, serialize};
+
+    #[test]
+    fn serialize_deserialize() {
+        assert_eq!(serialize(&Magic::BITCOIN), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        let magic: Magic = Network::Bitcoin.into();
+        assert_eq!(serialize(&magic), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(serialize(&Magic::TESTNET3), &[0x0b, 0x11, 0x09, 0x07]);
+        let magic: Magic = Network::Testnet(TestnetVersion::V3).into();
+        assert_eq!(serialize(&magic), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(serialize(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
+        let magic: Magic = Network::Testnet(TestnetVersion::V4).into();
+        assert_eq!(serialize(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
+        assert_eq!(serialize(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
+        let magic: Magic = Network::Signet.into();
+        assert_eq!(serialize(&magic), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(serialize(&Magic::REGTEST), &[0xfa, 0xbf, 0xb5, 0xda]);
+        let magic: Magic = Network::Regtest.into();
+        assert_eq!(serialize(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
+
+        assert_eq!(deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin.into()));
+        assert_eq!(
+            deserialize::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
+            Some(Network::Testnet(TestnetVersion::V3).into())
+        );
+        assert_eq!(
+            deserialize::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
+            Some(Network::Testnet(TestnetVersion::V4).into())
+        );
+        assert_eq!(deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.into()));
+        assert_eq!(deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.into()));
+    }
+
 
     #[test]
     fn service_flags_test() {
