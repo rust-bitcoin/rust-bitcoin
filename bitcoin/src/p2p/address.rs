@@ -138,7 +138,6 @@ pub enum AddrV2 {
     Unknown(u8, Vec<u8>),
 }
 
-
 impl TryFrom<AddrV2> for IpAddr {
     type Error = AddrV2ToIpAddrError;
 
@@ -443,7 +442,8 @@ mod test {
     use hex_lit::hex;
 
     use super::*;
-    use crate::{consensus::encode::{deserialize, serialize}, p2p::message::AddrV2Payload};
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::p2p::message::AddrV2Payload;
 
     #[test]
     fn serialize_address() {
