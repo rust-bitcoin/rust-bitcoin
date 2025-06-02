@@ -4,7 +4,7 @@
 //! BIP152  Compact Blocks network messages
 
 use crate::bip152;
-use crate::internal_macros::impl_consensus_encoding;
+use crate::p2p::deser::impl_consensus_encoding;
 
 /// sendcmpct message
 #[derive(PartialEq, Eq, Clone, Debug, Copy, PartialOrd, Ord, Hash)]
