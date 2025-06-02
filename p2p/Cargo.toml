@@ -23,6 +23,9 @@ units = { package = "bitcoin-units", path = "../units", default-features = false
 [dev-dependencies]
 hex_lit = "0.1.1"
 
+[[example]]
+name = "handshake"
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
