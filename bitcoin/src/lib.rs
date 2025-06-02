@@ -94,7 +94,6 @@ extern crate serde;
 mod internal_macros;
 
 #[macro_use]
-pub mod p2p;
 pub mod address;
 pub mod bip152;
 pub mod bip158;

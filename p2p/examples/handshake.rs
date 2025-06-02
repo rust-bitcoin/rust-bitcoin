@@ -4,8 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
 use bitcoin::consensus::{encode, Decodable};
-use bitcoin::p2p::{self, address, message, message_network, Magic};
-use bitcoin::secp256k1::rand::Rng;
+use bitcoin_p2p_messages::{self, address, message, message_network, Magic, ServiceFlags};
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the initial
@@ -71,19 +70,20 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let my_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0);
 
     // "bitfield of features to be enabled for this connection"
-    let services = p2p::ServiceFlags::NONE;
+    let services = ServiceFlags::NONE;
 
     // "standard UNIX timestamp in seconds"
     let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time error").as_secs();
 
     // "The network address of the node receiving this message"
-    let addr_recv = address::Address::new(&address, p2p::ServiceFlags::NONE);
+    let addr_recv = address::Address::new(&address, ServiceFlags::NONE);
 
     // "The network address of the node emitting this message"
-    let addr_from = address::Address::new(&my_address, p2p::ServiceFlags::NONE);
+    let addr_from = address::Address::new(&my_address, ServiceFlags::NONE);
 
     // "Node random nonce, randomly generated every time a version packet is sent. This nonce is used to detect connections to self."
-    let nonce: u64 = secp256k1::rand::thread_rng().gen();
+    // Because this crate does not include the `rand` dependency, this is a fixed value.
+    let nonce: u64 = 42;
 
     // "User Agent (0x00 if string is 0 bytes long)"
     let user_agent = String::from("rust-example");
