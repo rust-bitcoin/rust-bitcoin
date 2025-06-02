@@ -9,6 +9,7 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use internals::const_casts::u16_to_u32;
 
 #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
@@ -51,7 +52,7 @@ impl NumberOfBlocks {
         note = "use `LockTime::from` followed by `to_consensus_u32` instead"
     )]
     pub const fn to_consensus_u32(self) -> u32 {
-        self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+        u16_to_u32(self.0)
     }
 
     /// Returns true if an output locked by height can be spent in the next block.
@@ -153,8 +154,8 @@ impl NumberOf512Seconds {
     #[rustfmt::skip] // moves comments to unrelated code
     pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
         let interval = seconds / 512;
-        if interval <= u16::MAX as u32 { // infallible cast, needed by const code
-            Ok(NumberOf512Seconds::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
+        if interval <= u16_to_u32(u16::MAX) {
+            Ok(NumberOf512Seconds::from_512_second_intervals(interval as u16))
         } else {
             Err(TimeOverflowError { seconds })
         }
@@ -169,9 +170,9 @@ impl NumberOf512Seconds {
     #[inline]
     #[rustfmt::skip] // moves comments to unrelated code
     pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        if seconds <= u16::MAX as u32 * 512 {
+        if seconds <= u16_to_u32(u16::MAX) * 512 {
             let interval = (seconds + 511) / 512;
-            Ok(NumberOf512Seconds::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
+            Ok(NumberOf512Seconds::from_512_second_intervals(interval as u16))
         } else {
             Err(TimeOverflowError { seconds })
         }
@@ -180,7 +181,7 @@ impl NumberOf512Seconds {
     /// Represents the [`NumberOf512Seconds`] as an integer number of seconds.
     #[inline]
     pub const fn to_seconds(self) -> u32 {
-        self.0 as u32 * 512 // u16->u32 cast ok, const context
+        u16_to_u32(self.0) * 512
     }
 
     /// Returns the inner `u16` value.
@@ -197,7 +198,7 @@ impl NumberOf512Seconds {
         note = "use `LockTime::from` followed by `to_consensus_u32` instead"
     )]
     pub const fn to_consensus_u32(self) -> u32 {
-        (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+        (1u32 << 22) | u16_to_u32(self.0)
     }
 
     /// Returns true if an output locked by time can be spent in the next block.
@@ -354,7 +355,7 @@ mod tests {
     use super::*;
     use crate::BlockTime;
 
-    const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
+    const MAXIMUM_ENCODABLE_SECONDS: u32 = u16_to_u32(u16::MAX) * 512;
 
     #[test]
     #[allow(deprecated_in_future)]
