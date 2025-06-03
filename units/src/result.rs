@@ -161,6 +161,15 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
+    /// Returns `NumOpResult` from a `Result<T, NumOpError>`.
+    #[inline]
+    pub fn from_result(r: Result<T, NumOpError>) -> Self {
+        match r {
+            Ok(x) => R::Valid(x),
+            Err(e) => NumOpResult::Error(e),
+        }
+    }
+
     /// Calls `op` if the numeric result is `Valid`, otherwise returns the `Error` value of `self`.
     #[inline]
     pub fn and_then<F>(self, op: F) -> NumOpResult<T>
