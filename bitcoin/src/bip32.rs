@@ -1137,30 +1137,25 @@ mod tests {
 
     #[test]
     fn parse_derivation_path_valid() {
-        assert_eq!("0'".parse::<DerivationPath>(), Ok(vec![ChildNumber::ZERO_HARDENED].into()));
-        assert_eq!(
-            "0'/1".parse::<DerivationPath>(),
-            Ok(vec![ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL].into())
-        );
-        assert_eq!(
-            "0h/1/2'".parse::<DerivationPath>(),
-            Ok(vec![
+        let valid_paths = [
+            ("0'", vec![ChildNumber::ZERO_HARDENED]),
+            ("0'/1", vec![ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL]),
+            ("0h/1/2'", vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
                 ChildNumber::from_hardened_idx(2).unwrap(),
-            ]
-            .into())
-        );
-        assert_eq!(
-            "0'/1/2h/2".parse::<DerivationPath>(),
-            Ok(vec![
+            ]),
+            ("0'/1/2h/2", vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
                 ChildNumber::from_hardened_idx(2).unwrap(),
                 ChildNumber::from_normal_idx(2).unwrap(),
-            ]
-            .into())
-        );
+            ]),
+        ];
+        for (path, expected) in valid_paths {
+            assert_eq!(path.parse::<DerivationPath>().unwrap(), expected.into());
+        }
+
         let want = DerivationPath::from(vec![
             ChildNumber::ZERO_HARDENED,
             ChildNumber::ONE_NORMAL,
