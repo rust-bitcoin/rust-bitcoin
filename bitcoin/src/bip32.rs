@@ -1166,7 +1166,10 @@ mod tests {
             let prefixed = format!("m/{}", path);
             assert_eq!(prefixed.parse::<DerivationPath>().unwrap().0, expected);
         }
+    }
 
+    #[test]
+    fn parse_derivation_path_same_as_into_derivation_path() {
         let s = "0'/50/3'/5/545456";
         assert_eq!(s.parse::<DerivationPath>(), s.into_derivation_path());
         assert_eq!(s.parse::<DerivationPath>(), s.to_string().into_derivation_path());
