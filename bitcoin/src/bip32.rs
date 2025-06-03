@@ -1099,28 +1099,25 @@ mod tests {
 
     #[test]
     fn parse_derivation_path_invalid_format() {
-        assert!(matches!(
-            "n/0'/0".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
-        assert!(matches!(
-            "4/m/5".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
-        assert!(matches!(
-            "//3/0'".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
-        assert!(matches!(
-            "0h/0x".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
+        let invalid_paths = [
+            "n/0'/0",
+            "4/m/5",
+            "//3/0'",
+            "0h/0x",
+        ];
+        for path in &invalid_paths {
+            assert!(matches!(
+                path.parse::<DerivationPath>(),
+                Err(ParseChildNumberError::ParseInt(..)),
+            ));
+        }
     }
 
     #[test]
     fn parse_derivation_path_out_of_range() {
+        let invalid_path = "2147483648";
         assert_eq!(
-            "2147483648".parse::<DerivationPath>(),
+            invalid_path.parse::<DerivationPath>(),
             Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2147483648 })),
         );
     }
