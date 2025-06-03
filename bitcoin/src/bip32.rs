@@ -1151,20 +1151,21 @@ mod tests {
                 ChildNumber::from_hardened_idx(2).unwrap(),
                 ChildNumber::from_normal_idx(2).unwrap(),
             ]),
+            ("0'/1/2'/2/1000000000", vec![
+                ChildNumber::ZERO_HARDENED,
+                ChildNumber::ONE_NORMAL,
+                ChildNumber::from_hardened_idx(2).unwrap(),
+                ChildNumber::from_normal_idx(2).unwrap(),
+                ChildNumber::from_normal_idx(1000000000).unwrap(),
+            ]),
         ];
         for (path, expected) in valid_paths {
-            assert_eq!(path.parse::<DerivationPath>().unwrap(), expected.into());
+            // Access the inner private field so we don't have to clone expected.
+            assert_eq!(path.parse::<DerivationPath>().unwrap().0, expected);
+            // Test with the leading `m` for good measure.
+            let prefixed = format!("m/{}", path);
+            assert_eq!(prefixed.parse::<DerivationPath>().unwrap().0, expected);
         }
-
-        let want = DerivationPath::from(vec![
-            ChildNumber::ZERO_HARDENED,
-            ChildNumber::ONE_NORMAL,
-            ChildNumber::from_hardened_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(1000000000).unwrap(),
-        ]);
-        assert_eq!("0'/1/2'/2/1000000000".parse::<DerivationPath>().unwrap(), want);
-        assert_eq!("m/0'/1/2'/2/1000000000".parse::<DerivationPath>().unwrap(), want);
 
         let s = "0'/50/3'/5/545456";
         assert_eq!(s.parse::<DerivationPath>(), s.into_derivation_path());
