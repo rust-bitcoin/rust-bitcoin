@@ -1123,15 +1123,20 @@ mod tests {
     }
 
     #[test]
-    fn parse_derivation_path_valid() {
+    fn parse_derivation_path_valid_empty_master() {
+        // Sanity checks.
+        assert_eq!(DerivationPath::master(), DerivationPath(vec![]));
         assert_eq!(DerivationPath::master(), "".parse::<DerivationPath>().unwrap());
         assert_eq!(DerivationPath::master(), DerivationPath::default());
 
-        // Acceptable forms for a master path.
+        // Empty is the same as with an `m`.
+        assert_eq!("".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
         assert_eq!("m".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
         assert_eq!("m/".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
-        assert_eq!("".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
+    }
 
+    #[test]
+    fn parse_derivation_path_valid() {
         assert_eq!("0'".parse::<DerivationPath>(), Ok(vec![ChildNumber::ZERO_HARDENED].into()));
         assert_eq!(
             "0'/1".parse::<DerivationPath>(),
