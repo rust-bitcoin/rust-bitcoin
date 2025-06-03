@@ -1098,7 +1098,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_derivation_path() {
+    fn parse_derivation_path_invalid() {
         assert!(matches!(
             "n/0'/0".parse::<DerivationPath>(),
             Err(ParseChildNumberError::ParseInt(..)),
@@ -1119,7 +1119,10 @@ mod tests {
             "2147483648".parse::<DerivationPath>(),
             Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2147483648 })),
         );
+    }
 
+    #[test]
+    fn parse_derivation_path_valid() {
         assert_eq!(DerivationPath::master(), "".parse::<DerivationPath>().unwrap());
         assert_eq!(DerivationPath::master(), DerivationPath::default());
 
