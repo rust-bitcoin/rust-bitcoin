@@ -18,7 +18,6 @@ use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
 use primitives::Sequence;
-use units::NumOpResult;
 
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
@@ -776,19 +775,18 @@ impl Decodable for Transaction {
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
 /// * `input_weight_prediction` - the predicted input weight.
-///
-/// # Returns
-///
-/// This will return [`NumOpResult::Error`] if the fee calculation (fee_rate * weight) overflows.
-/// Otherwise, [`NumOpResult::Valid`] will wrap the successful calculation.
+/// * `value` - The value of the output we are spending.
 pub fn effective_value(
     fee_rate: FeeRate,
     input_weight_prediction: InputWeightPrediction,
     value: Amount,
-) -> NumOpResult<SignedAmount> {
+) -> SignedAmount {
     let weight = input_weight_prediction.total_weight();
+    let fee = fee_rate.to_fee(weight);
 
-    fee_rate.to_fee(weight).map(Amount::to_signed).and_then(|fee| value.to_signed() - fee) // Cannot overflow.
+    // Cannot overflow because after conversion to signed Amount::MIN - Amount::MAX
+    // still fits in SignedAmount::MAX (0 - MAX = -MAX).
+    (value.to_signed() - fee.to_signed()).expect("cannot overflow")
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
@@ -1691,11 +1689,10 @@ mod tests {
     #[test]
     fn effective_value_happy_path() {
         let value = "1 cBTC".parse::<Amount>().unwrap();
-        let fee_rate = FeeRate::from_sat_per_kwu(10);
-        let effective_value =
-            effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value).unwrap();
+        let fee_rate = FeeRate::from_sat_per_kwu(10).unwrap();
+        let effective_value = effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value);
 
-        // 10 sat/kwu * 272 wu = 4 sats (rounding up)
+        // 10 sat/kwu * 272 wu = 3 sats (rounding up)
         let expected_fee = "3 sats".parse::<SignedAmount>().unwrap();
         let expected_effective_value = (value.to_signed() - expected_fee).unwrap();
         assert_eq!(effective_value, expected_effective_value);
@@ -1705,7 +1702,8 @@ mod tests {
     fn effective_value_fee_rate_does_not_overflow() {
         let eff_value =
             effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
-        assert!(eff_value.is_error());
+        let want = SignedAmount::from_sat(-1254378597012250).unwrap(); // U64::MAX / 4_000 because of FeeRate::MAX
+        assert_eq!(eff_value, want)
     }
 
     #[test]

@@ -37,13 +37,13 @@ struct Serde {
     vb_floor: FeeRate,
     #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]
     vb_ceil: FeeRate,
-    #[serde(with = "fee_rate::serde::as_sat_per_kwu")]
+    #[serde(with = "fee_rate::serde::as_sat_per_kwu_floor")]
     kwu: FeeRate,
     #[serde(with = "fee_rate::serde::as_sat_per_vb_floor::opt")]
     opt_vb_floor: Option<FeeRate>,
     #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil::opt")]
     opt_vb_ceil: Option<FeeRate>,
-    #[serde(with = "fee_rate::serde::as_sat_per_kwu::opt")]
+    #[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::opt")]
     opt_kwu: Option<FeeRate>,
 
     a: BlockHeight,
