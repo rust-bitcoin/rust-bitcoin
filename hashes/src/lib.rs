@@ -107,6 +107,7 @@ pub mod hkdf;
 pub mod hmac;
 #[macro_use]
 pub mod macros;
+pub mod nonzero;
 pub mod ripemd160;
 pub mod sha1;
 pub mod sha256;
@@ -140,6 +141,8 @@ pub use self::{
 /// HASH-160: Alias for the [`hash160::Hash`] hash type.
 #[doc(inline)]
 pub use hash160::Hash as Hash160;
+#[doc(inline)]
+pub use nonzero::NonZero;
 /// RIPEMD-160: Alias for the [`ripemd160::Hash`] hash type.
 #[doc(inline)]
 pub use ripemd160::Hash as Ripemd160;

@@ -72,7 +72,11 @@ where
         use crate::error::FromSliceErrorInner;
 
         if sl.len() != 32 {
-            Err(crate::error::FromSliceError(FromSliceErrorInner { expected: 32, got: sl.len() }))
+            Err(crate::error::FromSliceError(FromSliceErrorInner {
+                expected: 32,
+                got: sl.len(),
+                invalid_all_zeros: None,
+            }))
         } else {
             let mut ret = [0; 32];
             ret.copy_from_slice(sl);

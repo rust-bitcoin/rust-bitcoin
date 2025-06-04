@@ -143,6 +143,7 @@ macro_rules! hash_type_no_default {
                     Err($crate::error::FromSliceError($crate::error::FromSliceErrorInner {
                         expected: $bits / 8,
                         got: sl.len(),
+                        invalid_all_zeros: None,
                     }))
                 } else {
                     let mut ret = [0; $bits / 8];
