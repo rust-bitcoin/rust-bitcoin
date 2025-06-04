@@ -187,9 +187,7 @@ impl Serialize for Vec<secp256k1::PublicKey> {
 impl Deserialize for Vec<secp256k1::PublicKey> {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         bytes.chunks(secp256k1::constants::PUBLIC_KEY_SIZE)
-            .map(|pubkey_bytes| {
-                secp256k1::PublicKey::deserialize(pubkey_bytes)
-            })
+            .map(secp256k1::PublicKey::deserialize)
             .collect()
     }
 }
