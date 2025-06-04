@@ -607,4 +607,34 @@ mod tests {
         timestamps.reverse();
         assert_eq!(MedianTimePast::new(timestamps).unwrap().to_u32(), 500_000_005);
     }
+
+    #[test]
+    fn height_is_satisfied_by() {
+        let chain_tip = Height::from_u32(100).unwrap();
+
+        // lock is satisfied if transaction can go in the next block (height <= chain_tip + 1).
+        let locktime = Height::from_u32(100).unwrap();
+        assert!(locktime.is_satisfied_by(chain_tip));
+        let locktime = Height::from_u32(101).unwrap();
+        assert!(locktime.is_satisfied_by(chain_tip));
+
+        // It is not satisfied if the lock height is after the next block.
+        let locktime = Height::from_u32(102).unwrap();
+        assert!(!locktime.is_satisfied_by(chain_tip));
+    }
+
+    #[test]
+    fn median_time_past_is_satisfied_by() {
+        let mtp = MedianTimePast::from_u32(500_000_001).unwrap();
+
+        // lock is satisfied if transaction can go in the next block (locktime <= mtp).
+        let locktime = MedianTimePast::from_u32(500_000_000).unwrap();
+        assert!(locktime.is_satisfied_by(mtp));
+        let locktime = MedianTimePast::from_u32(500_000_001).unwrap();
+        assert!(locktime.is_satisfied_by(mtp));
+
+        // It is not satisfied if the lock time is after the median time past.
+        let locktime = MedianTimePast::from_u32(500_000_002).unwrap();
+        assert!(!locktime.is_satisfied_by(mtp));
+    }
 }
