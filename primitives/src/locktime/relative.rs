@@ -42,7 +42,6 @@ pub type Time = NumberOf512Seconds;
 /// * [BIP 68 Relative lock-time using consensus-enforced sequence numbers](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
 /// * [BIP 112 CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LockTime {
     /// A block height lock time value.
     Blocks(NumberOfBlocks),
@@ -370,6 +369,27 @@ impl convert::TryFrom<Sequence> for LockTime {
 impl From<LockTime> for Sequence {
     #[inline]
     fn from(lt: LockTime) -> Sequence { lt.to_sequence() }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for LockTime {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_consensus_u32().serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for LockTime {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        u32::deserialize(deserializer)
+            .and_then(|n| Self::from_consensus(n).map_err(serde::de::Error::custom))
+    }
 }
 
 /// Error returned when a sequence number is parsed as a lock time, but its

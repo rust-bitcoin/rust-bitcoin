@@ -122,27 +122,6 @@ impl From<ParseError> for ParseHeightError {
     fn from(value: ParseError) -> Self { Self(value) }
 }
 
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Height {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let u = u32::deserialize(deserializer)?;
-        Height::from_u32(u).map_err(serde::de::Error::custom)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Height {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.to_u32().serialize(serializer)
-    }
-}
-
 #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
 #[doc(hidden)]
 pub type Time = MedianTimePast;
@@ -247,27 +226,6 @@ impl fmt::Display for MedianTimePast {
 }
 
 crate::impl_parse_str!(MedianTimePast, ParseTimeError, parser(MedianTimePast::from_u32));
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for MedianTimePast {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let u = u32::deserialize(deserializer)?;
-        MedianTimePast::from_u32(u).map_err(serde::de::Error::custom)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for MedianTimePast {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.to_u32().serialize(serializer)
-    }
-}
 
 /// Error returned when parsing block time fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -500,9 +458,6 @@ impl<'a> Arbitrary<'a> for MedianTimePast {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "serde")]
-    use internals::serde_round_trip;
-
     use super::*;
 
     #[test]
@@ -552,21 +507,6 @@ mod tests {
 
         assert!(!is_block_time(499_999_999));
         assert!(is_block_time(500_000_000));
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    pub fn encode_decode_height() {
-        serde_round_trip!(Height::ZERO);
-        serde_round_trip!(Height::MIN);
-        serde_round_trip!(Height::MAX);
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    pub fn encode_decode_time() {
-        serde_round_trip!(MedianTimePast::MIN);
-        serde_round_trip!(MedianTimePast::MAX);
     }
 
     #[test]

@@ -47,6 +47,7 @@ fn serde_regression_block() {
         "data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw"
     );
     let block: Block = deserialize(segwit).unwrap();
+
     let got = serialize(&block).unwrap();
     let want = include_bytes!("data/serde/block_bincode");
     assert_eq!(got, want)
@@ -55,6 +56,7 @@ fn serde_regression_block() {
 #[test]
 fn serde_regression_absolute_lock_time_height() {
     let t = absolute::LockTime::from_height(741521).expect("valid height");
+
     let got = serialize(&t).unwrap();
     let want = include_bytes!("data/serde/absolute_lock_time_blocks_bincode") as &[_];
     assert_eq!(got, want);
@@ -64,8 +66,8 @@ fn serde_regression_absolute_lock_time_height() {
 fn serde_regression_absolute_lock_time_time() {
     let seconds: u32 = 1653195600; // May 22nd, 5am UTC.
     let t = absolute::LockTime::from_mtp(seconds).expect("valid time");
-    let got = serialize(&t).unwrap();
 
+    let got = serialize(&t).unwrap();
     let want = include_bytes!("data/serde/absolute_lock_time_seconds_bincode") as &[_];
     assert_eq!(got, want);
 }
@@ -73,8 +75,8 @@ fn serde_regression_absolute_lock_time_time() {
 #[test]
 fn serde_regression_relative_lock_time_height() {
     let t = relative::LockTime::from(relative::Height::from(0xCAFE_u16));
-    let got = serialize(&t).unwrap();
 
+    let got = serialize(&t).unwrap();
     let want = include_bytes!("data/serde/relative_lock_time_blocks_bincode") as &[_];
     assert_eq!(got, want);
 }
@@ -82,8 +84,8 @@ fn serde_regression_relative_lock_time_height() {
 #[test]
 fn serde_regression_relative_lock_time_time() {
     let t = relative::LockTime::from(relative::Time::from_512_second_intervals(0xFACE_u16));
-    let got = serialize(&t).unwrap();
 
+    let got = serialize(&t).unwrap();
     let want = include_bytes!("data/serde/relative_lock_time_seconds_bincode") as &[_];
     assert_eq!(got, want);
 }
@@ -91,6 +93,7 @@ fn serde_regression_relative_lock_time_time() {
 #[test]
 fn serde_regression_script() {
     let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+
     let got = serialize(&script).unwrap();
     let want = include_bytes!("data/serde/script_bincode") as &[_];
     assert_eq!(got, want)
@@ -109,6 +112,7 @@ fn serde_regression_txin() {
 #[test]
 fn serde_regression_txout() {
     let txout = TxOut { value: Amount::MAX, script_pubkey: ScriptBuf::from(vec![0u8, 1u8, 2u8]) };
+
     let got = serialize(&txout).unwrap();
     let want = include_bytes!("data/serde/txout_bincode") as &[_];
     assert_eq!(got, want)
@@ -118,6 +122,7 @@ fn serde_regression_txout() {
 fn serde_regression_transaction() {
     let ser = include_bytes!("data/serde/transaction_ser");
     let tx: Transaction = deserialize(ser).unwrap();
+
     let got = serialize(&tx).unwrap();
     let want = include_bytes!("data/serde/transaction_bincode") as &[_];
     assert_eq!(got, want)
@@ -151,6 +156,7 @@ fn serde_regression_address() {
 fn serde_regression_extended_priv_key() {
     let s = include_str!("data/serde/extended_priv_key");
     let key = s.trim().parse::<Xpriv>().unwrap();
+
     let got = serialize(&key).unwrap();
     let want = include_bytes!("data/serde/extended_priv_key_bincode") as &[_];
     assert_eq!(got, want)
@@ -160,6 +166,7 @@ fn serde_regression_extended_priv_key() {
 fn serde_regression_extended_pub_key() {
     let s = include_str!("data/serde/extended_pub_key");
     let key = s.trim().parse::<Xpub>().unwrap();
+
     let got = serialize(&key).unwrap();
     let want = include_bytes!("data/serde/extended_pub_key_bincode") as &[_];
     assert_eq!(got, want)
@@ -182,8 +189,8 @@ fn serde_regression_ecdsa_sig() {
 fn serde_regression_control_block() {
     let s = include_str!("data/serde/control_block_hex");
     let block = ControlBlock::decode(&Vec::<u8>::from_hex(s.trim()).unwrap()).unwrap();
-    let got = serialize(&block).unwrap();
 
+    let got = serialize(&block).unwrap();
     let want = include_bytes!("data/serde/control_block_bincode") as &[_];
     assert_eq!(got, want)
 }
@@ -191,6 +198,7 @@ fn serde_regression_control_block() {
 #[test]
 fn serde_regression_child_number() {
     let num = ChildNumber::Normal { index: 0xDEADBEEF };
+
     let got = serialize(&num).unwrap();
     let want = include_bytes!("data/serde/child_number_bincode") as &[_];
     assert_eq!(got, want)
@@ -199,6 +207,7 @@ fn serde_regression_child_number() {
 #[test]
 fn serde_regression_private_key() {
     let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+
     let got = serialize(&sk).unwrap();
     let want = include_bytes!("data/serde/private_key_bincode") as &[_];
     assert_eq!(got, want)
@@ -208,6 +217,7 @@ fn serde_regression_private_key() {
 fn serde_regression_public_key() {
     let s = include_str!("data/serde/public_key_hex");
     let pk = s.trim().parse::<PublicKey>().unwrap();
+
     let got = serialize(&pk).unwrap();
     let want = include_bytes!("data/serde/public_key_bincode") as &[_];
     assert_eq!(got, want)
@@ -368,6 +378,7 @@ fn le_bytes() -> [u8; 32] {
 #[test]
 fn serde_regression_work() {
     let work = Work::from_le_bytes(le_bytes());
+
     let got = serialize(&work).unwrap();
     let want = include_bytes!("data/serde/u256_bincode") as &[_];
     assert_eq!(got, want)
@@ -376,6 +387,7 @@ fn serde_regression_work() {
 #[test]
 fn serde_regression_target() {
     let target = Target::from_le_bytes(le_bytes());
+
     let got = serialize(&target).unwrap();
     let want = include_bytes!("data/serde/u256_bincode") as &[_];
     assert_eq!(got, want)

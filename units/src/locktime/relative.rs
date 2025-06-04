@@ -7,8 +7,6 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
@@ -87,28 +85,6 @@ crate::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from);
 
 impl fmt::Display for NumberOfBlocks {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-#[cfg(feature = "serde")]
-impl Serialize for NumberOfBlocks {
-    #[inline]
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        u16::serialize(&self.to_height(), s)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for NumberOfBlocks {
-    #[inline]
-    fn deserialize<D>(d: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(Self::from_height(u16::deserialize(d)?))
-    }
 }
 
 #[deprecated(since = "TBD", note = "use `NumberOf512Seconds` instead")]
@@ -227,28 +203,6 @@ impl fmt::Display for NumberOf512Seconds {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-#[cfg(feature = "serde")]
-impl Serialize for NumberOf512Seconds {
-    #[inline]
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        u16::serialize(&self.to_512_second_intervals(), s)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for NumberOf512Seconds {
-    #[inline]
-    fn deserialize<D>(d: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(Self::from_512_second_intervals(u16::deserialize(d)?))
-    }
-}
-
 /// Error returned when the input time in seconds was too large to be encoded to a 16 bit 512 second interval.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TimeOverflowError {
@@ -348,9 +302,6 @@ impl<'a> Arbitrary<'a> for NumberOf512Seconds {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "serde")]
-    use internals::serde_round_trip;
-
     use super::*;
     use crate::BlockTime;
 
@@ -414,22 +365,6 @@ mod tests {
     fn from_seconds_floor_causes_time_overflow_error() {
         let result = NumberOf512Seconds::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 512);
         assert!(result.is_err());
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    pub fn encode_decode_height() {
-        serde_round_trip!(NumberOfBlocks::ZERO);
-        serde_round_trip!(NumberOfBlocks::MIN);
-        serde_round_trip!(NumberOfBlocks::MAX);
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    pub fn encode_decode_time() {
-        serde_round_trip!(NumberOf512Seconds::ZERO);
-        serde_round_trip!(NumberOf512Seconds::MIN);
-        serde_round_trip!(NumberOf512Seconds::MAX);
     }
 
     fn generate_timestamps(start: u32, step: u16) -> [BlockTime; 11] {
