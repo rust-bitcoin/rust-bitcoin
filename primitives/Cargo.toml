@@ -30,7 +30,7 @@ arrayvec = { version = "0.7", default-features = false }
 
 arbitrary = { version = "1.4", optional = true }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
-serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"], optional = true }
+serde = { version = "1.0.103", default-features = false, features = ["alloc"], optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.0"
