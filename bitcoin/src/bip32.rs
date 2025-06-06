@@ -1098,70 +1098,78 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_derivation_path() {
-        assert!(matches!(
-            "n/0'/0".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
-        assert!(matches!(
-            "4/m/5".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
-        assert!(matches!(
-            "//3/0'".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
-        assert!(matches!(
-            "0h/0x".parse::<DerivationPath>(),
-            Err(ParseChildNumberError::ParseInt(..)),
-        ));
+    fn parse_derivation_path_invalid_format() {
+        let invalid_paths = [
+            "n/0'/0",
+            "4/m/5",
+            "//3/0'",
+            "0h/0x",
+        ];
+        for path in &invalid_paths {
+            assert!(matches!(
+                path.parse::<DerivationPath>(),
+                Err(ParseChildNumberError::ParseInt(..)),
+            ));
+        }
+    }
+
+    #[test]
+    fn parse_derivation_path_out_of_range() {
+        let invalid_path = "2147483648";
         assert_eq!(
-            "2147483648".parse::<DerivationPath>(),
+            invalid_path.parse::<DerivationPath>(),
             Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2147483648 })),
         );
+    }
 
+    #[test]
+    fn parse_derivation_path_valid_empty_master() {
+        // Sanity checks.
+        assert_eq!(DerivationPath::master(), DerivationPath(vec![]));
         assert_eq!(DerivationPath::master(), "".parse::<DerivationPath>().unwrap());
         assert_eq!(DerivationPath::master(), DerivationPath::default());
 
-        // Acceptable forms for a master path.
+        // Empty is the same as with an `m`.
+        assert_eq!("".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
         assert_eq!("m".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
         assert_eq!("m/".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
-        assert_eq!("".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
+    }
 
-        assert_eq!("0'".parse::<DerivationPath>(), Ok(vec![ChildNumber::ZERO_HARDENED].into()));
-        assert_eq!(
-            "0'/1".parse::<DerivationPath>(),
-            Ok(vec![ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL].into())
-        );
-        assert_eq!(
-            "0h/1/2'".parse::<DerivationPath>(),
-            Ok(vec![
+    #[test]
+    fn parse_derivation_path_valid() {
+        let valid_paths = [
+            ("0'", vec![ChildNumber::ZERO_HARDENED]),
+            ("0'/1", vec![ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL]),
+            ("0h/1/2'", vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
                 ChildNumber::from_hardened_idx(2).unwrap(),
-            ]
-            .into())
-        );
-        assert_eq!(
-            "0'/1/2h/2".parse::<DerivationPath>(),
-            Ok(vec![
+            ]),
+            ("0'/1/2h/2", vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
                 ChildNumber::from_hardened_idx(2).unwrap(),
                 ChildNumber::from_normal_idx(2).unwrap(),
-            ]
-            .into())
-        );
-        let want = DerivationPath::from(vec![
-            ChildNumber::ZERO_HARDENED,
-            ChildNumber::ONE_NORMAL,
-            ChildNumber::from_hardened_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(1000000000).unwrap(),
-        ]);
-        assert_eq!("0'/1/2'/2/1000000000".parse::<DerivationPath>().unwrap(), want);
-        assert_eq!("m/0'/1/2'/2/1000000000".parse::<DerivationPath>().unwrap(), want);
+            ]),
+            ("0'/1/2'/2/1000000000", vec![
+                ChildNumber::ZERO_HARDENED,
+                ChildNumber::ONE_NORMAL,
+                ChildNumber::from_hardened_idx(2).unwrap(),
+                ChildNumber::from_normal_idx(2).unwrap(),
+                ChildNumber::from_normal_idx(1000000000).unwrap(),
+            ]),
+        ];
+        for (path, expected) in valid_paths {
+            // Access the inner private field so we don't have to clone expected.
+            assert_eq!(path.parse::<DerivationPath>().unwrap().0, expected);
+            // Test with the leading `m` for good measure.
+            let prefixed = format!("m/{}", path);
+            assert_eq!(prefixed.parse::<DerivationPath>().unwrap().0, expected);
+        }
+    }
 
+    #[test]
+    fn parse_derivation_path_same_as_into_derivation_path() {
         let s = "0'/50/3'/5/545456";
         assert_eq!(s.parse::<DerivationPath>(), s.into_derivation_path());
         assert_eq!(s.parse::<DerivationPath>(), s.to_string().into_derivation_path());
