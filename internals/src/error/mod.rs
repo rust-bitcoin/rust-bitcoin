@@ -4,9 +4,11 @@
 //!
 //! Error handling macros and helpers.
 
+mod context;
 pub mod input_string;
 mod parse_error;
 
+pub use context::ParseErrorContext;
 pub use input_string::InputString;
 
 /// Formats error.
