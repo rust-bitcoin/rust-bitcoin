@@ -15,6 +15,7 @@ use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
 use units::BlockTime;
 
+use super::transaction::Coinbase;
 use super::Weight;
 use crate::consensus::encode::WriteExt as _;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -259,7 +260,7 @@ pub trait BlockCheckedExt: sealed::Sealed {
     fn total_size(&self) -> usize;
 
     /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction>;
+    fn coinbase(&self) -> Result<&Coinbase, CoinbaseError>;
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error>;
@@ -294,7 +295,10 @@ impl BlockCheckedExt for Block<Checked> {
     }
 
     /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction> { self.transactions().first() }
+    fn coinbase(&self) -> Result<&Coinbase, CoinbaseError> {
+        let first_tx = self.transactions().first().ok_or(CoinbaseError::NoTransactions)?;
+        first_tx.try_into().map_err(|_| CoinbaseError::InvalidCoinbase)
+    }
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
@@ -311,7 +315,7 @@ impl BlockCheckedExt for Block<Checked> {
             return Err(Bip34Error::Unsupported);
         }
 
-        let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
+        let cb = self.coinbase().map_err(|_| Bip34Error::NoCoinbase)?;
         let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
         let push = input
             .script_sig
@@ -425,6 +429,8 @@ impl std::error::Error for InvalidBlockError {}
 pub enum Bip34Error {
     /// The block does not support BIP34 yet.
     Unsupported,
+    /// Block has no valid coinbase transaction.
+    NoCoinbase,
     /// No push was present where the BIP34 push was expected.
     NotPresent,
     /// The BIP34 push was not minimally encoded.
@@ -443,6 +449,7 @@ impl fmt::Display for Bip34Error {
 
         match *self {
             Unsupported => write!(f, "block doesn't support BIP34"),
+            NoCoinbase => write!(f, "block has no valid coinbase transaction"),
             NotPresent => write!(f, "BIP34 push not present in block's coinbase"),
             NonMinimalPush => write!(f, "byte push not minimally encoded"),
             NegativeHeight => write!(f, "negative BIP34 height"),
@@ -456,7 +463,7 @@ impl std::error::Error for Bip34Error {
         use Bip34Error::*;
 
         match *self {
-            Unsupported | NotPresent | NonMinimalPush | NegativeHeight => None,
+            Unsupported | NoCoinbase | NotPresent | NonMinimalPush | NegativeHeight => None,
         }
     }
 }
@@ -501,6 +508,42 @@ impl std::error::Error for ValidationError {
 
         match *self {
             BadProofOfWork | BadTarget => None,
+        }
+    }
+}
+
+/// An error when accessing the coinbase transaction.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum CoinbaseError {
+    /// Block has no transactions.
+    NoTransactions,
+    /// Transaction is not a valid coinbase transaction.
+    InvalidCoinbase,
+}
+
+impl From<Infallible> for CoinbaseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for CoinbaseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use CoinbaseError::*;
+
+        match *self {
+            NoTransactions => write!(f, "block has no transactions"),
+            InvalidCoinbase => write!(f, "transaction is not a valid coinbase transaction"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CoinbaseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use CoinbaseError::*;
+
+        match *self {
+            NoTransactions | InvalidCoinbase => None,
         }
     }
 }
