@@ -18,7 +18,7 @@ pub const WITNESS_SCALE_FACTOR: usize = 4;
 mod encapsulate {
     /// The weight of a transaction or block.
     ///
-    /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection
+    /// This is an integer newtype representing weight in weight units. It provides protection
     /// against mixing up types as well as basic formatting features.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     pub struct Weight(u64);
