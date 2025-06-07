@@ -10,7 +10,9 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::CheckedSum;
+use NumOpResult as R;
+
+use crate::{CheckedSum, MathOp, NumOpError as E, NumOpResult};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -106,14 +108,22 @@ impl Weight {
     pub const fn to_kwu_floor(self) -> u64 { self.to_wu() / 1000 }
 
     /// Converts to kilo weight units rounding up.
-    pub const fn to_kwu_ceil(self) -> u64 { (self.to_wu() + 999) / 1000 }
+    pub const fn to_kwu_ceil(self) -> NumOpResult<u64> {
+        match self.to_wu().checked_add(999) {
+            Some(bump) => R::Valid(bump / 1_000),
+            None => R::Error(E::while_doing(MathOp::Add)),
+        }
+    }
 
     /// Converts to vB rounding down.
     pub const fn to_vbytes_floor(self) -> u64 { self.to_wu() / Self::WITNESS_SCALE_FACTOR }
 
     /// Converts to vB rounding up.
-    pub const fn to_vbytes_ceil(self) -> u64 {
-        (self.to_wu() + Self::WITNESS_SCALE_FACTOR - 1) / Self::WITNESS_SCALE_FACTOR
+    pub const fn to_vbytes_ceil(self) -> NumOpResult<u64> {
+        match self.to_wu().checked_add(Self::WITNESS_SCALE_FACTOR - 1) {
+            Some(bump) => R::Valid(bump / Self::WITNESS_SCALE_FACTOR),
+            None => R::Error(E::while_doing(MathOp::Add)),
+        }
     }
 
     /// Checked addition.
@@ -384,8 +394,8 @@ mod tests {
 
     #[test]
     fn to_kwu_ceil() {
-        assert_eq!(Weight::from_wu(1_000).to_kwu_ceil(), 1);
-        assert_eq!(Weight::from_wu(1_001).to_kwu_ceil(), 2);
+        assert_eq!(Weight::from_wu(1_000).to_kwu_ceil().unwrap(), 1);
+        assert_eq!(Weight::from_wu(1_001).to_kwu_ceil().unwrap(), 2);
     }
 
     #[test]
@@ -396,8 +406,8 @@ mod tests {
 
     #[test]
     fn to_vb_ceil() {
-        assert_eq!(Weight::from_wu(4).to_vbytes_ceil(), 1);
-        assert_eq!(Weight::from_wu(5).to_vbytes_ceil(), 2);
+        assert_eq!(Weight::from_wu(4).to_vbytes_ceil().unwrap(), 1);
+        assert_eq!(Weight::from_wu(5).to_vbytes_ceil().unwrap(), 2);
     }
 
     #[test]

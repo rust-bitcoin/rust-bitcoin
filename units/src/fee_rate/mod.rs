@@ -11,6 +11,10 @@ use core::ops;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use NumOpResult as R;
+
+use crate::{MathOp, NumOpError as E, NumOpResult};
+
 mod encapsulate {
     /// Fee rate.
     ///
@@ -93,19 +97,34 @@ impl FeeRate {
     pub const fn to_sat_per_kwu_floor(self) -> u64 { self.to_sat_per_mvb() / 4_000 }
 
     /// Converts to sat/kwu rounding up.
-    pub const fn to_sat_per_kwu_ceil(self) -> u64 { (self.to_sat_per_mvb() + 3_999) / 4_000 }
+    pub const fn to_sat_per_kwu_ceil(self) -> NumOpResult<u64> {
+        match self.to_sat_per_mvb().checked_add(3_999) {
+            Some(bump) => R::Valid(bump / 4_000),
+            None => R::Error(E::while_doing(MathOp::Add)),
+        }
+    }
 
     /// Converts to sat/vB rounding down.
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_mvb() / 1_000_000 }
 
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.to_sat_per_mvb() + 999_999) / 1_000_000 }
+    pub const fn to_sat_per_vb_ceil(self) -> NumOpResult<u64> {
+        match self.to_sat_per_mvb().checked_add(999_999) {
+            Some(bump) => R::Valid(bump / 1_000_000),
+            None => R::Error(E::while_doing(MathOp::Add)),
+        }
+    }
 
     /// Converts to sat/kvb rounding down.
     pub const fn to_sat_per_kvb_floor(self) -> u64 { self.to_sat_per_mvb() / 1_000 }
 
     /// Converts to sat/kvb rounding up.
-    pub const fn to_sat_per_kvb_ceil(self) -> u64 { (self.to_sat_per_mvb() + 999) / 1_000 }
+    pub const fn to_sat_per_kvb_ceil(self) -> NumOpResult<u64> {
+        match self.to_sat_per_mvb().checked_add(999) {
+            Some(bump) => R::Valid(bump / 1_000),
+            None => R::Error(E::while_doing(MathOp::Add)),
+        }
+    }
 
     /// Checked multiplication.
     ///
@@ -339,7 +358,7 @@ mod tests {
         let fee_rate = FeeRate::from_sat_per_kwu(749).unwrap();
         assert_eq!(fee_rate.to_sat_per_kwu_floor(), 749);
         assert_eq!(fee_rate.to_sat_per_vb_floor(), 2);
-        assert_eq!(fee_rate.to_sat_per_vb_ceil(), 3);
+        assert_eq!(fee_rate.to_sat_per_vb_ceil().unwrap(), 3);
     }
 
     #[test]

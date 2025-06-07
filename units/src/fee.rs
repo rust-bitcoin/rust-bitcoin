@@ -87,8 +87,10 @@ impl Amount {
     #[must_use]
     pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
         if let Some(msats) = self.to_sat().checked_mul(1000) {
-            if let Some(wu) = msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
-                return Some(Weight::from_wu(wu));
+            if let NumOpResult::Valid(kwu) = fee_rate.to_sat_per_kwu_ceil() {
+                if let Some(wu) = msats.checked_div(kwu) {
+                    return Some(Weight::from_wu(wu));
+                }
             }
         }
         None
@@ -103,7 +105,10 @@ impl Amount {
     #[must_use]
     pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
         // Use ceil because result is used as the divisor.
-        let rate = fee_rate.to_sat_per_kwu_ceil();
+        let rate = match fee_rate.to_sat_per_kwu_ceil() {
+            R::Valid(rate) => rate,
+            R::Error(_) => return None,
+        };
         if rate == 0 {
             return None;
         }
