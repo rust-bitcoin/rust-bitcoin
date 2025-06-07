@@ -16,7 +16,6 @@ use crate::CheckedSum;
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 
 mod encapsulate {
-
     /// The weight of a transaction or block.
     ///
     /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection
