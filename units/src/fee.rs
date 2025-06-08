@@ -161,6 +161,7 @@ impl FeeRate {
     /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
         let wu = weight.to_wu();
         if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
@@ -348,6 +349,7 @@ impl Weight {
     /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
         fee_rate.checked_mul_by_weight(self)
     }
