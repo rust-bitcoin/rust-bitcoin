@@ -27,7 +27,8 @@ macro_rules! impl_vec_wrapper {
                 // reallocate.
                 // Note: OOM protection relies on reader eventually running out of
                 // data to feed us.
-                let max_capacity = crate::consensus::encode::MAX_VEC_SIZE / 4 / core::mem::size_of::<$type>();
+                let max_capacity =
+                    crate::consensus::encode::MAX_VEC_SIZE / 4 / core::mem::size_of::<$type>();
                 let mut ret = Vec::with_capacity(core::cmp::min(len as usize, max_capacity));
                 for _ in 0..len {
                     ret.push(Decodable::consensus_decode_from_finite_reader(r)?);

@@ -1099,12 +1099,7 @@ mod tests {
 
     #[test]
     fn parse_derivation_path_invalid_format() {
-        let invalid_paths = [
-            "n/0'/0",
-            "4/m/5",
-            "//3/0'",
-            "0h/0x",
-        ];
+        let invalid_paths = ["n/0'/0", "4/m/5", "//3/0'", "0h/0x"];
         for path in &invalid_paths {
             assert!(matches!(
                 path.parse::<DerivationPath>(),
@@ -1140,24 +1135,33 @@ mod tests {
         let valid_paths = [
             ("0'", vec![ChildNumber::ZERO_HARDENED]),
             ("0'/1", vec![ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL]),
-            ("0h/1/2'", vec![
-                ChildNumber::ZERO_HARDENED,
-                ChildNumber::ONE_NORMAL,
-                ChildNumber::from_hardened_idx(2).unwrap(),
-            ]),
-            ("0'/1/2h/2", vec![
-                ChildNumber::ZERO_HARDENED,
-                ChildNumber::ONE_NORMAL,
-                ChildNumber::from_hardened_idx(2).unwrap(),
-                ChildNumber::from_normal_idx(2).unwrap(),
-            ]),
-            ("0'/1/2'/2/1000000000", vec![
-                ChildNumber::ZERO_HARDENED,
-                ChildNumber::ONE_NORMAL,
-                ChildNumber::from_hardened_idx(2).unwrap(),
-                ChildNumber::from_normal_idx(2).unwrap(),
-                ChildNumber::from_normal_idx(1000000000).unwrap(),
-            ]),
+            (
+                "0h/1/2'",
+                vec![
+                    ChildNumber::ZERO_HARDENED,
+                    ChildNumber::ONE_NORMAL,
+                    ChildNumber::from_hardened_idx(2).unwrap(),
+                ],
+            ),
+            (
+                "0'/1/2h/2",
+                vec![
+                    ChildNumber::ZERO_HARDENED,
+                    ChildNumber::ONE_NORMAL,
+                    ChildNumber::from_hardened_idx(2).unwrap(),
+                    ChildNumber::from_normal_idx(2).unwrap(),
+                ],
+            ),
+            (
+                "0'/1/2'/2/1000000000",
+                vec![
+                    ChildNumber::ZERO_HARDENED,
+                    ChildNumber::ONE_NORMAL,
+                    ChildNumber::from_hardened_idx(2).unwrap(),
+                    ChildNumber::from_normal_idx(2).unwrap(),
+                    ChildNumber::from_normal_idx(1000000000).unwrap(),
+                ],
+            ),
         ];
         for (path, expected) in valid_paths {
             // Access the inner private field so we don't have to clone expected.
