@@ -90,13 +90,13 @@ impl BlockHeight {
     /// Attempt to subtract two [`BlockHeight`]s, returning `None` in case of overflow.
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockHeightInterval> {
-        self.0.checked_sub(other.0).map(BlockHeightInterval)
+        self.to_u32().checked_sub(other.to_u32()).map(BlockHeightInterval)
     }
 
     /// Attempt to add an interval to this [`BlockHeight`], returning `None` in case of overflow.
     #[must_use]
     pub fn checked_add(self, other: BlockHeightInterval) -> Option<Self> {
-        self.0.checked_add(other.0).map(Self)
+        self.to_u32().checked_add(other.to_u32()).map(Self)
     }
 }
 
@@ -150,11 +150,15 @@ impl BlockHeightInterval {
 
     /// Attempt to subtract two [`BlockHeightInterval`]s, returning `None` in case of overflow.
     #[must_use]
-    pub fn checked_sub(self, other: Self) -> Option<Self> { self.0.checked_sub(other.0).map(Self) }
+    pub fn checked_sub(self, other: Self) -> Option<Self> {
+        self.to_u32().checked_sub(other.to_u32()).map(Self)
+    }
 
     /// Attempt to add two [`BlockHeightInterval`]s, returning `None` in case of overflow.
     #[must_use]
-    pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
+    pub fn checked_add(self, other: Self) -> Option<Self> {
+        self.to_u32().checked_add(other.to_u32()).map(Self)
+    }
 }
 
 impl From<relative::NumberOfBlocks> for BlockHeightInterval {
@@ -223,13 +227,13 @@ impl BlockMtp {
     /// Attempt to subtract two [`BlockMtp`]s, returning `None` in case of overflow.
     #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockMtpInterval> {
-        self.0.checked_sub(other.0).map(BlockMtpInterval)
+        self.to_u32().checked_sub(other.to_u32()).map(BlockMtpInterval)
     }
 
     /// Attempt to add an interval to this [`BlockMtp`], returning `None` in case of overflow.
     #[must_use]
     pub fn checked_add(self, other: BlockMtpInterval) -> Option<Self> {
-        self.0.checked_add(other.0).map(Self)
+        self.to_u32().checked_add(other.to_u32()).map(Self)
     }
 }
 
@@ -315,11 +319,15 @@ impl BlockMtpInterval {
 
     /// Attempt to subtract two [`BlockMtpInterval`]s, returning `None` in case of overflow.
     #[must_use]
-    pub fn checked_sub(self, other: Self) -> Option<Self> { self.0.checked_sub(other.0).map(Self) }
+    pub fn checked_sub(self, other: Self) -> Option<Self> {
+        self.to_u32().checked_sub(other.to_u32()).map(Self)
+    }
 
     /// Attempt to add two [`BlockMtpInterval`]s, returning `None` in case of overflow.
     #[must_use]
-    pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
+    pub fn checked_add(self, other: Self) -> Option<Self> {
+        self.to_u32().checked_add(other.to_u32()).map(Self)
+    }
 }
 
 impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
@@ -458,7 +466,7 @@ crate::internal_macros::impl_sub_assign!(BlockMtpInterval);
 
 impl core::iter::Sum for BlockHeightInterval {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sum = iter.map(|interval| interval.0).sum();
+        let sum = iter.map(BlockHeightInterval::to_u32).sum();
         BlockHeightInterval::from_u32(sum)
     }
 }
@@ -468,14 +476,14 @@ impl<'a> core::iter::Sum<&'a BlockHeightInterval> for BlockHeightInterval {
     where
         I: Iterator<Item = &'a BlockHeightInterval>,
     {
-        let sum = iter.map(|interval| interval.0).sum();
+        let sum = iter.map(|interval| interval.to_u32()).sum();
         BlockHeightInterval::from_u32(sum)
     }
 }
 
 impl core::iter::Sum for BlockMtpInterval {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sum = iter.map(|interval| interval.0).sum();
+        let sum = iter.map(BlockMtpInterval::to_u32).sum();
         BlockMtpInterval::from_u32(sum)
     }
 }
@@ -485,7 +493,7 @@ impl<'a> core::iter::Sum<&'a BlockMtpInterval> for BlockMtpInterval {
     where
         I: Iterator<Item = &'a BlockMtpInterval>,
     {
-        let sum = iter.map(|interval| interval.0).sum();
+        let sum = iter.map(|interval| interval.to_u32()).sum();
         BlockMtpInterval::from_u32(sum)
     }
 }
