@@ -8,6 +8,8 @@
 #[cfg(feature = "std")]
 pub mod address;
 #[cfg(feature = "std")]
+mod deser;
+#[cfg(feature = "std")]
 pub mod message;
 #[cfg(feature = "std")]
 pub mod message_blockdata;
@@ -19,8 +21,6 @@ pub mod message_compact_blocks;
 pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
-#[cfg(feature = "std")]
-mod deser;
 
 use core::str::FromStr;
 use core::{fmt, ops};
@@ -409,7 +409,10 @@ mod tests {
         let magic: Magic = Network::Regtest.into();
         assert_eq!(serialize(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
 
-        assert_eq!(deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin.into()));
+        assert_eq!(
+            deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
+            Some(Network::Bitcoin.into())
+        );
         assert_eq!(
             deserialize::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
             Some(Network::Testnet(TestnetVersion::V3).into())
@@ -418,10 +421,15 @@ mod tests {
             deserialize::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
             Some(Network::Testnet(TestnetVersion::V4).into())
         );
-        assert_eq!(deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.into()));
-        assert_eq!(deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.into()));
+        assert_eq!(
+            deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
+            Some(Network::Signet.into())
+        );
+        assert_eq!(
+            deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
+            Some(Network::Regtest.into())
+        );
     }
-
 
     #[test]
     fn service_flags_test() {

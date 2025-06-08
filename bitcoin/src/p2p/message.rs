@@ -14,12 +14,12 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
+use crate::p2p::deser::impl_vec_wrapper;
 use crate::p2p::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
     Magic,
 };
 use crate::prelude::{Box, Cow, String, ToOwned, Vec};
-use crate::p2p::deser::impl_vec_wrapper;
 use crate::{block, consensus, transaction};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
@@ -755,12 +755,12 @@ mod test {
                 45,
                 Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
             )])),
-            NetworkMessage::Inv(InventoryPayload(vec![Inventory::Block(BlockHash::from_byte_array(
-                hash([8u8; 32]).to_byte_array(),
-            ))])),
-            NetworkMessage::GetData(InventoryPayload(vec![Inventory::Transaction(Txid::from_byte_array(
-                hash([45u8; 32]).to_byte_array(),
-            ))])),
+            NetworkMessage::Inv(InventoryPayload(vec![Inventory::Block(
+                BlockHash::from_byte_array(hash([8u8; 32]).to_byte_array()),
+            )])),
+            NetworkMessage::GetData(InventoryPayload(vec![Inventory::Transaction(
+                Txid::from_byte_array(hash([45u8; 32]).to_byte_array()),
+            )])),
             NetworkMessage::NotFound(InventoryPayload(vec![Inventory::Error([0u8; 32])])),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(
                 vec![

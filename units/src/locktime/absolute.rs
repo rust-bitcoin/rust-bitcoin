@@ -321,10 +321,8 @@ impl fmt::Display for LockTimeUnit {
         use LockTimeUnit as L;
 
         match *self {
-            L::Blocks =>
-                write!(f, "expected lock-by-height (must be < {})", LOCK_TIME_THRESHOLD),
-            L::Seconds =>
-                write!(f, "expected lock-by-time (must be >= {})", LOCK_TIME_THRESHOLD),
+            L::Blocks => write!(f, "expected lock-by-height (must be < {})", LOCK_TIME_THRESHOLD),
+            L::Seconds => write!(f, "expected lock-by-time (must be >= {})", LOCK_TIME_THRESHOLD),
         }
     }
 }
