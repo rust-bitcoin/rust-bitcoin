@@ -62,7 +62,7 @@ impl FeeRate {
         }
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes,
+    /// Constructs a new [`FeeRate`] from satoshis per virtual byte,
     /// returning `None` if overflow occurred.
     pub const fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
         // No `map()` in const context.
