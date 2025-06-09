@@ -779,7 +779,7 @@ impl TapTree {
 
     /// Returns [`TapTreeIter<'_>`] iterator for a Taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
-    pub fn script_leaves(&self) -> ScriptLeaves { ScriptLeaves { leaf_iter: self.0.leaf_nodes() } }
+    pub fn script_leaves(&self) -> ScriptLeaves<'_> { ScriptLeaves { leaf_iter: self.0.leaf_nodes() } }
 
     /// Returns the root [`TapNodeHash`] of this tree.
     pub fn root_hash(&self) -> TapNodeHash { self.0.hash }
@@ -951,7 +951,7 @@ impl NodeInfo {
     }
 
     /// Creates an iterator over all leaves (including hidden leaves) in the tree.
-    pub fn leaf_nodes(&self) -> LeafNodes { LeafNodes { leaf_iter: self.leaves.iter() } }
+    pub fn leaf_nodes(&self) -> LeafNodes<'_> { LeafNodes { leaf_iter: self.leaves.iter() } }
 
     /// Returns the root [`TapNodeHash`] of this node info.
     pub fn node_hash(&self) -> TapNodeHash { self.hash }

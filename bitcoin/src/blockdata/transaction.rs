@@ -404,7 +404,7 @@ impl TransactionExt for Transaction {
 
     fn is_lock_time_enabled(&self) -> bool { self.input.iter().any(|i| i.enables_lock_time()) }
 
-    fn script_pubkey_lens(&self) -> TxOutToScriptPubkeyLengthIter {
+    fn script_pubkey_lens(&self) -> TxOutToScriptPubkeyLengthIter<'_> {
         TxOutToScriptPubkeyLengthIter { inner: self.output.iter() }
     }
 
@@ -517,11 +517,11 @@ impl TransactionExtPriv for Transaction {
                 1
             } else if witness_program.is_p2wsh() {
                 // Treat the last item of the witness as the witnessScript
-                return witness
+                witness
                     .last()
                     .map(Script::from_bytes)
                     .map(|s| s.count_sigops())
-                    .unwrap_or(0);
+                    .unwrap_or(0)
             } else {
                 0
             }

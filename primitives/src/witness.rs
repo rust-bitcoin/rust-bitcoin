@@ -111,7 +111,7 @@ impl Witness {
     /// Returns a struct implementing [`Iterator`].
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[inline]
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter { inner: self.content.as_slice(), indices_start: self.indices_start, current_index: 0 }
     }
 
