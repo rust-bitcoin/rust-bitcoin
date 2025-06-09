@@ -404,7 +404,7 @@ impl TransactionExt for Transaction {
 
     fn is_lock_time_enabled(&self) -> bool { self.input.iter().any(|i| i.enables_lock_time()) }
 
-    fn script_pubkey_lens(&self) -> TxOutToScriptPubkeyLengthIter {
+    fn script_pubkey_lens(&self) -> TxOutToScriptPubkeyLengthIter<'_> {
         TxOutToScriptPubkeyLengthIter { inner: self.output.iter() }
     }
 

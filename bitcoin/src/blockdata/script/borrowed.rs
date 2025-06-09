@@ -331,7 +331,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
         #[inline]
-        fn instructions(&self) -> Instructions {
+        fn instructions(&self) -> Instructions<'_> {
             Instructions { data: self.as_bytes().iter(), enforce_minimal: false }
         }
 
@@ -340,7 +340,7 @@ crate::internal_macros::define_extension_trait! {
         /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
         /// is not minimal.
         #[inline]
-        fn instructions_minimal(&self) -> Instructions {
+        fn instructions_minimal(&self) -> Instructions<'_> {
             Instructions { data: self.as_bytes().iter(), enforce_minimal: true }
         }
 
@@ -352,7 +352,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
         #[inline]
-        fn instruction_indices(&self) -> InstructionIndices {
+        fn instruction_indices(&self) -> InstructionIndices<'_> {
             InstructionIndices::from_instructions(self.instructions())
         }
 
@@ -361,7 +361,7 @@ crate::internal_macros::define_extension_trait! {
         /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
         /// returned if a push is not minimal.
         #[inline]
-        fn instruction_indices_minimal(&self) -> InstructionIndices {
+        fn instruction_indices_minimal(&self) -> InstructionIndices<'_> {
             InstructionIndices::from_instructions(self.instructions_minimal())
         }
 
