@@ -88,11 +88,13 @@ impl BlockHeight {
     pub const fn to_u32(self) -> u32 { self.0 }
 
     /// Attempt to subtract two [`BlockHeight`]s, returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockHeightInterval> {
         self.0.checked_sub(other.0).map(BlockHeightInterval)
     }
 
     /// Attempt to add an interval to this [`BlockHeight`], returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_add(self, other: BlockHeightInterval) -> Option<Self> {
         self.0.checked_add(other.0).map(Self)
     }
@@ -147,9 +149,11 @@ impl BlockHeightInterval {
     pub const fn to_u32(self) -> u32 { self.0 }
 
     /// Attempt to subtract two [`BlockHeightInterval`]s, returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<Self> { self.0.checked_sub(other.0).map(Self) }
 
     /// Attempt to add two [`BlockHeightInterval`]s, returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
@@ -217,11 +221,13 @@ impl BlockMtp {
     }
 
     /// Attempt to subtract two [`BlockMtp`]s, returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<BlockMtpInterval> {
         self.0.checked_sub(other.0).map(BlockMtpInterval)
     }
 
     /// Attempt to add an interval to this [`BlockMtp`], returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_add(self, other: BlockMtpInterval) -> Option<Self> {
         self.0.checked_add(other.0).map(Self)
     }
@@ -308,9 +314,11 @@ impl BlockMtpInterval {
     }
 
     /// Attempt to subtract two [`BlockMtpInterval`]s, returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_sub(self, other: Self) -> Option<Self> { self.0.checked_sub(other.0).map(Self) }
 
     /// Attempt to add two [`BlockMtpInterval`]s, returning `None` in case of overflow.
+    #[must_use]
     pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
