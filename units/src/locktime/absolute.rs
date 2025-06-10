@@ -114,7 +114,7 @@ impl fmt::Display for ParseHeightError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseHeightError {
-    // To be consistent with `write_err` we need to **not** return source in case of overflow
+    // To be consistent with `write_err` we need to **not** return source if overflow occurred
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { self.0.source() }
 }
 
@@ -239,7 +239,7 @@ impl fmt::Display for ParseTimeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseTimeError {
-    // To be consistent with `write_err` we need to **not** return source in case of overflow
+    // To be consistent with `write_err` we need to **not** return source if overflow occurred
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { self.0.source() }
 }
 
@@ -398,7 +398,7 @@ impl ParseError {
         }
     }
 
-    // To be consistent with `write_err` we need to **not** return source in case of overflow
+    // To be consistent with `write_err` we need to **not** return source if overflow occurred
     #[cfg(feature = "std")]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use core::num::IntErrorKind;

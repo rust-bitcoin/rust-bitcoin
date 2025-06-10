@@ -52,7 +52,8 @@ impl FeeRate {
     /// The fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_u32(3);
 
-    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
+    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units,
+    /// returning `None` if overflow occurred.
     pub const fn from_sat_per_kwu(sat_kwu: u64) -> Option<Self> {
         // No `map()` in const context.
         match sat_kwu.checked_mul(4_000) {
@@ -61,11 +62,8 @@ impl FeeRate {
         }
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`None`] on arithmetic overflow.
+    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes,
+    /// returning `None` if overflow occurred.
     pub const fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
         // No `map()` in const context.
         match sat_vb.checked_mul(1_000_000) {
@@ -80,7 +78,8 @@ impl FeeRate {
         FeeRate::from_sat_per_mvb(sat_vb * 1_000_000)
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
+    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes),
+    /// returning `None` if overflow occurred.
     pub const fn from_sat_per_kvb(sat_kvb: u64) -> Option<Self> {
         // No `map()` in const context.
         match sat_kvb.checked_mul(1_000) {
@@ -109,7 +108,7 @@ impl FeeRate {
 
     /// Checked multiplication.
     ///
-    /// Computes `self * rhs` returning [`None`] if overflow occurred.
+    /// Computes `self * rhs`, returning [`None`] if overflow occurred.
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
@@ -133,7 +132,7 @@ impl FeeRate {
 
     /// Checked addition.
     ///
-    /// Computes `self + rhs` returning [`None`] if overflow occurred.
+    /// Computes `self + rhs` returning [`None`] is case of overflow.
     #[must_use]
     pub const fn checked_add(self, rhs: FeeRate) -> Option<Self> {
         // No `map()` in const context.
@@ -145,7 +144,7 @@ impl FeeRate {
 
     /// Checked subtraction.
     ///
-    /// Computes `self - rhs` returning [`None`] if overflow occurred.
+    /// Computes `self - rhs`, returning [`None`] if overflow occurred.
     #[must_use]
     pub const fn checked_sub(self, rhs: FeeRate) -> Option<Self> {
         // No `map()` in const context.

@@ -16,11 +16,10 @@ use crate::CheckedSum;
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 
 mod encapsulate {
-
     /// The weight of a transaction or block.
     ///
-    /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection
-    /// against mixing up types as well as basic formatting features.
+    /// This is an integer newtype representing weight in weight units. It provides protection
+    /// against mixing up the types, conversion functions, and basic formatting.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     pub struct Weight(u64);
 
@@ -38,7 +37,7 @@ mod encapsulate {
 pub use encapsulate::Weight;
 
 impl Weight {
-    /// 0 wu.
+    /// Zero weight units (wu).
     ///
     /// Equivalent to [`MIN`](Self::MIN), may better express intent in some contexts.
     pub const ZERO: Weight = Weight::from_wu(0);
