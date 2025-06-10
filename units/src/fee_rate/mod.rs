@@ -10,10 +10,9 @@ use core::ops;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-
 use NumOpResult as R;
 
-use crate::{Amount,MathOp, NumOpError as E, NumOpResult};
+use crate::{Amount, MathOp, NumOpError as E, NumOpResult};
 
 mod encapsulate {
     /// Fee rate.
@@ -56,14 +55,10 @@ impl FeeRate {
     /// The fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_u32(3);
 
-    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units,
-    /// returning `None` if overflow occurred.
-    pub const fn from_sat_per_kwu(sat_kwu: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match (sat_kwu as u64).checked_mul(4_000) {
-            Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
-            None => None,
-        }
+    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
+    pub const fn from_sat_per_kwu(sat_kwu: u32) -> Self {
+        let fee_rate = (sat_kwu as u64) * 4_000; // No `Into` in const context.
+        FeeRate::from_sat_per_mvb(fee_rate)
     }
 
     /// Constructs a new [`FeeRate`] from amount per 1000 weight units.
@@ -249,18 +244,18 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn feerate_div_nonzero() {
-        let rate = FeeRate::from_sat_per_kwu(200).unwrap();
+        let rate = FeeRate::from_sat_per_kwu(200);
         let divisor = NonZeroU64::new(2).unwrap();
-        assert_eq!(rate / divisor, FeeRate::from_sat_per_kwu(100).unwrap());
-        assert_eq!(&rate / &divisor, FeeRate::from_sat_per_kwu(100).unwrap());
+        assert_eq!(rate / divisor, FeeRate::from_sat_per_kwu(100));
+        assert_eq!(&rate / &divisor, FeeRate::from_sat_per_kwu(100));
     }
 
     #[test]
     #[allow(clippy::op_ref)]
     fn addition() {
-        let one = FeeRate::from_sat_per_kwu(1).unwrap();
-        let two = FeeRate::from_sat_per_kwu(2).unwrap();
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
+        let one = FeeRate::from_sat_per_kwu(1);
+        let two = FeeRate::from_sat_per_kwu(2);
+        let three = FeeRate::from_sat_per_kwu(3);
 
         assert!(one + two == three);
         assert!(&one + two == three);
@@ -271,9 +266,9 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn subtract() {
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
-        let seven = FeeRate::from_sat_per_kwu(7).unwrap();
-        let ten = FeeRate::from_sat_per_kwu(10).unwrap();
+        let three = FeeRate::from_sat_per_kwu(3);
+        let seven = FeeRate::from_sat_per_kwu(7);
+        let ten = FeeRate::from_sat_per_kwu(10);
 
         assert_eq!(ten - seven, three);
         assert_eq!(&ten - seven, three);
@@ -283,31 +278,31 @@ mod tests {
 
     #[test]
     fn add_assign() {
-        let mut f = FeeRate::from_sat_per_kwu(1).unwrap();
-        f += FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(3).unwrap());
+        let mut f = FeeRate::from_sat_per_kwu(1);
+        f += FeeRate::from_sat_per_kwu(2);
+        assert_eq!(f, FeeRate::from_sat_per_kwu(3));
 
-        let mut f = FeeRate::from_sat_per_kwu(1).unwrap();
-        f += &FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(3).unwrap());
+        let mut f = FeeRate::from_sat_per_kwu(1);
+        f += &FeeRate::from_sat_per_kwu(2);
+        assert_eq!(f, FeeRate::from_sat_per_kwu(3));
     }
 
     #[test]
     fn sub_assign() {
-        let mut f = FeeRate::from_sat_per_kwu(3).unwrap();
-        f -= FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(1).unwrap());
+        let mut f = FeeRate::from_sat_per_kwu(3);
+        f -= FeeRate::from_sat_per_kwu(2);
+        assert_eq!(f, FeeRate::from_sat_per_kwu(1));
 
-        let mut f = FeeRate::from_sat_per_kwu(3).unwrap();
-        f -= &FeeRate::from_sat_per_kwu(2).unwrap();
-        assert_eq!(f, FeeRate::from_sat_per_kwu(1).unwrap());
+        let mut f = FeeRate::from_sat_per_kwu(3);
+        f -= &FeeRate::from_sat_per_kwu(2);
+        assert_eq!(f, FeeRate::from_sat_per_kwu(1));
     }
 
     #[test]
     fn checked_add() {
-        let one = FeeRate::from_sat_per_kwu(1).unwrap();
-        let two = FeeRate::from_sat_per_kwu(2).unwrap();
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
+        let one = FeeRate::from_sat_per_kwu(1);
+        let two = FeeRate::from_sat_per_kwu(2);
+        let three = FeeRate::from_sat_per_kwu(3);
 
         assert_eq!(one.checked_add(two).unwrap(), three);
 
@@ -318,9 +313,9 @@ mod tests {
 
     #[test]
     fn checked_sub() {
-        let one = FeeRate::from_sat_per_kwu(1).unwrap();
-        let two = FeeRate::from_sat_per_kwu(2).unwrap();
-        let three = FeeRate::from_sat_per_kwu(3).unwrap();
+        let one = FeeRate::from_sat_per_kwu(1);
+        let two = FeeRate::from_sat_per_kwu(2);
+        let three = FeeRate::from_sat_per_kwu(3);
         assert_eq!(three.checked_sub(two).unwrap(), one);
 
         let fee_rate = FeeRate::ZERO.checked_sub(one);
@@ -339,7 +334,7 @@ mod tests {
     #[test]
     fn fee_rate_from_sat_per_vb() {
         let fee_rate = FeeRate::from_sat_per_vb(10).expect("expected feerate in sat/kwu");
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(2500).unwrap());
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(2500));
     }
 
     #[test]
@@ -357,7 +352,7 @@ mod tests {
     #[test]
     fn from_sat_per_vb_u32() {
         let fee_rate = FeeRate::from_sat_per_vb_u32(10);
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(2500).unwrap());
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(2500));
     }
 
     #[test]
@@ -366,7 +361,7 @@ mod tests {
 
     #[test]
     fn raw_feerate() {
-        let fee_rate = FeeRate::from_sat_per_kwu(749).unwrap();
+        let fee_rate = FeeRate::from_sat_per_kwu(749);
         assert_eq!(fee_rate.to_sat_per_kwu_floor(), 749);
         assert_eq!(fee_rate.to_sat_per_vb_floor(), 2);
         assert_eq!(fee_rate.to_sat_per_vb_ceil(), 3);
@@ -374,25 +369,21 @@ mod tests {
 
     #[test]
     fn checked_mul() {
-        let fee_rate = FeeRate::from_sat_per_kwu(10)
-            .unwrap()
-            .checked_mul(10)
-            .expect("expected feerate in sat/kwu");
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(100).unwrap());
+        let fee_rate =
+            FeeRate::from_sat_per_kwu(10).checked_mul(10).expect("expected feerate in sat/kwu");
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(100));
 
-        let fee_rate = FeeRate::from_sat_per_kwu(10).unwrap().checked_mul(u64::MAX);
+        let fee_rate = FeeRate::from_sat_per_kwu(10).checked_mul(u64::MAX);
         assert!(fee_rate.is_none());
     }
 
     #[test]
     fn checked_div() {
-        let fee_rate = FeeRate::from_sat_per_kwu(10)
-            .unwrap()
-            .checked_div(10)
-            .expect("expected feerate in sat/kwu");
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1).unwrap());
+        let fee_rate =
+            FeeRate::from_sat_per_kwu(10).checked_div(10).expect("expected feerate in sat/kwu");
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
 
-        let fee_rate = FeeRate::from_sat_per_kwu(10).unwrap().checked_div(0);
+        let fee_rate = FeeRate::from_sat_per_kwu(10).checked_div(0);
         assert!(fee_rate.is_none());
     }
 

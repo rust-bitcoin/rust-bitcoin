@@ -216,10 +216,8 @@ impl Psbt {
                 Ok(tx)
             }
             // We hit this if fee * 4,000 overflows.
-            NumOpResult::Error(_) => Err(ExtractTxError::AbsurdFeeRate {
-                fee_rate: FeeRate::MAX,
-                tx,
-            }),
+            NumOpResult::Error(_) =>
+                Err(ExtractTxError::AbsurdFeeRate { fee_rate: FeeRate::MAX, tx }),
         }
     }
 
@@ -1445,14 +1443,16 @@ mod tests {
 
         // We cannot create an expected fee rate to test against because `FeeRate::from_sat_per_mvb` is private.
         // Large fee rate errors if we pass in 1 sat/vb so just use this to get the error fee rate returned.
-        let error_fee_rate = psbt.clone().extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_vb_u32(1)).map_err(|e| {
-            match e {
+        let error_fee_rate = psbt
+            .clone()
+            .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_vb_u32(1))
+            .map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
-            }
-        }).unwrap_err();
+            })
+            .unwrap_err();
 
-        // These all error because of overflow when calculating the fee / weight. 
+        // These all error because of overflow when calculating the fee / weight.
         assert_eq!(
             psbt.clone().extract_tx().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
@@ -1488,7 +1488,7 @@ mod tests {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
-            Err(FeeRate::from_sat_per_kwu(6250003).unwrap()) // 6250000 is 25k sat/vbyte
+            Err(FeeRate::from_sat_per_kwu(6250003)) // 6250000 is 25k sat/vbyte
         );
 
         // Lowering the input satoshis by 1 lowers the sat/kwu by 3
