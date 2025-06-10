@@ -60,7 +60,7 @@ impl FeeRate {
     /// returning `None` if overflow occurred.
     pub const fn from_sat_per_kwu(sat_kwu: u64) -> Option<Self> {
         // No `map()` in const context.
-        match sat_kwu.checked_mul(4_000) {
+        match (sat_kwu as u64).checked_mul(4_000) {
             Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
             None => None,
         }

@@ -15,39 +15,36 @@ use core::ops;
 
 use NumOpResult as R;
 
-use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, OptionExt, Weight};
+use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, Weight};
 
 impl Amount {
     /// Checked weight floor division.
     ///
     /// Be aware that integer division loses the remainder if no exact division
-    /// can be made. See also [`Self::checked_div_by_weight_ceil`].
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
+    /// can be made. See also [`Self::div_by_weight_ceil`].
+    pub const fn div_by_weight_floor(self, weight: Weight) -> NumOpResult<FeeRate> {
         let wu = weight.to_wu();
-        if wu == 0 {
-            return None;
-        }
 
         // Mul by 1,000 because we use per/kwu.
-        match self.to_sat().checked_mul(1_000) {
-            Some(sats) => {
-                let fee_rate = sats / wu;
-                FeeRate::from_sat_per_kwu(fee_rate)
+        if let Some(sats) = self.to_sat().checked_mul(1_000) {
+            match sats.checked_div(wu) {
+                Some(fee_rate) => {
+                    if let Ok(amount) = Amount::from_sat(fee_rate) {
+                        return FeeRate::from_per_kwu(amount);
+                    }
+                }
+                None => return R::Error(E::while_doing(MathOp::Div)),
             }
-            None => None,
         }
+        // We have to use MathOp::Mul because Div implies div by zero.
+        R::Error(E::while_doing(MathOp::Mul))
     }
 
     /// Checked weight ceiling division.
     ///
     /// Be aware that integer division loses the remainder if no exact division
     /// can be made. This method rounds up ensuring the transaction fee rate is
-    /// sufficient. See also [`Self::checked_div_by_weight_floor`].
-    ///
-    /// Returns [`None`] if overflow occurred.
+    /// sufficient. See also [`Self::div_by_weight_floor`].
     ///
     /// # Examples
     ///
@@ -55,15 +52,14 @@ impl Amount {
     /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
     /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
-    /// let fee_rate = amount.checked_div_by_weight_ceil(weight);
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// let fee_rate = amount.div_by_weight_ceil(weight).expect("valid fee rate");
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34).expect("valid fee rate"));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
-    #[must_use]
-    pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
+    pub const fn div_by_weight_ceil(self, weight: Weight) -> NumOpResult<FeeRate> {
         let wu = weight.to_wu();
         if wu == 0 {
-            return None;
+            return R::Error(E::while_doing(MathOp::Div))
         }
 
         // Mul by 1,000 because we use per/kwu.
@@ -71,10 +67,13 @@ impl Amount {
             // No need to used checked arithmetic because wu is non-zero.
             if let Some(bump) = sats.checked_add(wu - 1) {
                 let fee_rate = bump / wu;
-                return FeeRate::from_sat_per_kwu(fee_rate);
+                if let Ok(amount) = Amount::from_sat(fee_rate) {
+                    return FeeRate::from_per_kwu(amount);
+                }
             }
         }
-        None
+        // We have to use MathOp::Mul because Div implies div by zero.
+        R::Error(E::while_doing(MathOp::Mul))
     }
 
     /// Checked fee rate floor division.
@@ -82,40 +81,34 @@ impl Amount {
     /// Computes the maximum weight that would result in a fee less than or equal to this amount
     /// at the given `fee_rate`. Uses floor division to ensure the resulting weight doesn't cause
     /// the fee to exceed the amount.
-    ///
-    /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
-    #[must_use]
-    pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
-        if let Some(msats) = self.to_sat().checked_mul(1000) {
+    pub const fn div_by_fee_rate_floor(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
+        if let Some(msats) = self.to_sat().checked_mul(1000) { // Cannot overflow.
             if let Some(wu) = msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
-                return Some(Weight::from_wu(wu));
+                return R::Valid(Weight::from_wu(wu));
             }
         }
-        None
+        R::Error(E::while_doing(MathOp::Div))
     }
 
     /// Checked fee rate ceiling division.
     ///
     /// Computes the minimum weight that would result in a fee greater than or equal to this amount
     /// at the given `fee_rate`. Uses ceiling division to ensure the resulting weight is sufficient.
-    ///
-    /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
-    #[must_use]
-    pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
+    pub const fn div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
         // Use ceil because result is used as the divisor.
         let rate = fee_rate.to_sat_per_kwu_ceil();
         if rate == 0 {
-            return None;
+            return R::Error(E::while_doing(MathOp::Div));
         }
 
         if let Some(msats) = self.to_sat().checked_mul(1000) {
             // No need to used checked arithmetic because rate is non-zero.
             if let Some(bump) = msats.checked_add(rate - 1) {
                 let wu = bump / rate;
-                return Some(Weight::from_wu(wu));
+                return NumOpResult::Valid(Weight::from_wu(wu));
             }
         }
-        None
+        R::Error(E::while_doing(MathOp::Add))
     }
 }
 
@@ -262,7 +255,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<FeeRate>;
 
         fn div(self, rhs: Weight) -> Self::Output {
-            self.checked_div_by_weight_floor(rhs).valid_or_error(MathOp::Div)
+            self.div_by_weight_floor(rhs)
         }
     }
     impl ops::Div<Weight> for NumOpResult<Amount> {
@@ -303,7 +296,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Weight>;
 
         fn div(self, rhs: FeeRate) -> Self::Output {
-            self.checked_div_by_fee_rate_floor(rhs).valid_or_error(MathOp::Div)
+            self.div_by_fee_rate_floor(rhs)
         }
     }
     impl ops::Div<FeeRate> for NumOpResult<Amount> {
@@ -439,12 +432,12 @@ mod tests {
         assert_eq!(weight, Weight::from_wu(333_333));
 
         // Verify that ceiling division gives different result
-        let ceil_weight = amount.checked_div_by_fee_rate_ceil(fee_rate).unwrap();
+        let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
         assert_eq!(ceil_weight, Weight::from_wu(333_334));
 
         // Test that division by zero returns None
         let zero_rate = FeeRate::from_sat_per_kwu(0).unwrap();
-        assert!(amount.checked_div_by_fee_rate_floor(zero_rate).is_none());
-        assert!(amount.checked_div_by_fee_rate_ceil(zero_rate).is_none());
+        assert!(amount.div_by_fee_rate_floor(zero_rate).is_error());
+        assert!(amount.div_by_fee_rate_ceil(zero_rate).is_error());
     }
 }

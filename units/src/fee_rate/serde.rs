@@ -33,15 +33,17 @@ pub mod as_sat_per_kwu_floor {
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use crate::FeeRate;
+    use crate::{Amount, FeeRate};
 
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
         u64::serialize(&f.to_sat_per_kwu_floor(), s)
     }
 
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        FeeRate::from_sat_per_kwu(u64::deserialize(d)?)
-            .ok_or_else(|| serde::de::Error::custom("overflowed sats/kwu"))
+        let sat = u64::deserialize(d)?;
+        FeeRate::from_per_kwu(Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("overflowed amount"))?)
+            .into_result()
+            .map_err(|_| serde::de::Error::custom("overflowed amount calculating sats/kwu"))
     }
 
     pub mod opt {
