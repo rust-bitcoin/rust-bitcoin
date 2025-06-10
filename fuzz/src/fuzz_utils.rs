@@ -35,3 +35,16 @@ pub fn consume_u64(data: &mut &[u8]) -> u64 {
         u64_bytes[7],
     ])
 }
+
+#[allow(dead_code)]
+pub fn consume_u32(data: &mut &[u8]) -> u32 {
+    // We need at least 4 bytes to read a u32
+    if data.len() < 4 {
+        return 0;
+    }
+
+    let (u32_bytes, rest) = data.split_at(4);
+    *data = rest;
+
+    u32::from_le_bytes([u32_bytes[0], u32_bytes[1], u32_bytes[2], u32_bytes[3]])
+}
