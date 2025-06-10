@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn fee_wu() {
-        let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(2);
         let weight = Weight::from_vb(3).unwrap();
         assert_eq!(fee_rate.to_fee(weight), Amount::from_sat_u32(6));
     }
@@ -369,7 +369,6 @@ mod tests {
     fn checked_weight_mul() {
         let weight = Weight::from_vb(10).unwrap();
         let fee: Amount = FeeRate::from_sat_per_vb(10)
-            .unwrap()
             .checked_mul_by_weight(weight)
             .expect("expected Amount");
         assert_eq!(Amount::from_sat_u32(100), fee);
@@ -378,7 +377,7 @@ mod tests {
         assert!(fee.is_none());
 
         let weight = Weight::from_vb(3).unwrap();
-        let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(3);
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         assert_eq!(Amount::from_sat_u32(9), fee);
 
@@ -393,7 +392,7 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn multiply() {
-        let two = FeeRate::from_sat_per_vb(2).unwrap();
+        let two = FeeRate::from_sat_per_vb(2);
         let three = Weight::from_vb(3).unwrap();
         let six = Amount::from_sat_u32(6);
 

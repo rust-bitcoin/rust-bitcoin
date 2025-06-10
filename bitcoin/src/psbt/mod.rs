@@ -128,7 +128,7 @@ impl Psbt {
     /// 1000 sats/vByte. 25k sats/vByte is obviously a mistake at this point.
     ///
     /// [`extract_tx`]: Psbt::extract_tx
-    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_u32(25_000);
+    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb(25_000);
 
     /// An alias for [`extract_tx_fee_rate_limit`].
     ///
@@ -1445,7 +1445,7 @@ mod tests {
         // Large fee rate errors if we pass in 1 sat/vb so just use this to get the error fee rate returned.
         let error_fee_rate = psbt
             .clone()
-            .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_vb_u32(1))
+            .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_vb(1))
             .map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
