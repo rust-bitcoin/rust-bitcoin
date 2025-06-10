@@ -213,11 +213,14 @@ impl Psbt {
                 if fee_rate > max_fee_rate {
                     return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
                 }
+                Ok(tx)
             }
-            NumOpResult::Error(_) => unreachable!("weight() is always non-zero"),
+            // We hit this if fee * 4,000 overflows.
+            NumOpResult::Error(_) => Err(ExtractTxError::AbsurdFeeRate {
+                fee_rate: FeeRate::MAX,
+                tx,
+            }),
         }
-
-        Ok(tx)
     }
 
     /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
