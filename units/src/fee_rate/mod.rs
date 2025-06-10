@@ -87,12 +87,9 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes),
     /// returning `None` if overflow occurred.
-    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match sat_kvb.checked_mul(1_000) {
-            Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
-            None => None,
-        }
+    pub const fn from_sat_per_kvb(sat_kvb: u32) -> Self {
+        let fee_rate = (sat_kvb as u64) * 1_000; // No `Into` in const context.
+        FeeRate::from_sat_per_mvb(fee_rate)
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
@@ -296,7 +293,6 @@ mod tests {
 
         assert_eq!(one.checked_add(two).unwrap(), three);
 
-        assert!(FeeRate::from_sat_per_kvb(u64::MAX).is_none()); // sanity check.
         let fee_rate = FeeRate::from_sat_per_mvb(u64::MAX).checked_add(one);
         assert!(fee_rate.is_none());
     }
@@ -329,7 +325,7 @@ mod tests {
 
     #[test]
     fn fee_rate_from_sat_per_kvb() {
-        let fee_rate = FeeRate::from_sat_per_kvb(11).unwrap();
+        let fee_rate = FeeRate::from_sat_per_kvb(11);
         assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(11_000));
     }
 
