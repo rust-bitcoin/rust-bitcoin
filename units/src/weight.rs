@@ -171,8 +171,8 @@ impl Weight {
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
-        fee_rate.checked_mul_by_weight(self)
+    pub const fn mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
+        fee_rate.mul_by_weight(self)
     }
 }
 
