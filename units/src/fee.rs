@@ -10,6 +10,18 @@
 //!
 //! We provide `fee.checked_div_by_weight_ceil(weight)` to calculate a minimum threshold fee rate
 //! required to pay at least `fee` for transaction with `weight`.
+//!
+//! We support various `core::ops` traits all of which return [`NumOpResult<T>`].
+//!
+//! For specific methods see:
+//!
+//! * [`Amount::checked_div_by_weight_floor`]
+//! * [`Amount::checked_div_by_weight_ceil`]
+//! * [`Amount::checked_div_by_fee_rate_floor`]
+//! * [`Amount::checked_div_by_fee_rate_ceil`]
+//! * [`Weight::checked_mul_by_fee_rate`]
+//! * [`FeeRate::checked_mul_by_weight`]
+//! * [`FeeRate::to_fee`]
 
 use core::ops;
 
