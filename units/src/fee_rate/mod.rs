@@ -196,7 +196,7 @@ impl FeeRate {
     /// wrapping.
     pub const fn to_fee(self, weight: Weight) -> Amount {
         // No `unwrap_or()` in const context.
-        match self.checked_mul_by_weight(weight) {
+        match self.mul_by_weight(weight) {
             Some(fee) => fee,
             None => Amount::MAX,
         }
@@ -208,7 +208,7 @@ impl FeeRate {
     /// This is equivalent to `Self::checked_mul_by_weight()`.
     #[must_use]
     #[deprecated(since = "TBD", note = "use `to_fee()` instead")]
-    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
+    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.mul_by_weight(weight) }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
     /// if an overflow occurred.
@@ -227,7 +227,7 @@ impl FeeRate {
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
+    pub const fn mul_by_weight(self, weight: Weight) -> Option<Amount> {
         let wu = weight.to_wu();
         if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
             // Bump by 999 to do ceil division using kwu.

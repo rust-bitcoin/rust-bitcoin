@@ -411,7 +411,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
+    pub const fn div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
         if wu == 0 {
             return None;
@@ -441,12 +441,12 @@ impl Amount {
     /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
     /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
-    /// let fee_rate = amount.checked_div_by_weight_ceil(weight);
+    /// let fee_rate = amount.div_by_weight_ceil(weight);
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
-    pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
+    pub const fn div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
         if wu == 0 {
             return None;
@@ -471,7 +471,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
-    pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
+    pub const fn div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
         if let Some(msats) = self.to_sat().checked_mul(1000) {
             if let Some(wu) = msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
                 return Some(Weight::from_wu(wu));
@@ -487,7 +487,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
-    pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
+    pub const fn div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
         // Use ceil because result is used as the divisor.
         let rate = fee_rate.to_sat_per_kwu_ceil();
         if rate == 0 {

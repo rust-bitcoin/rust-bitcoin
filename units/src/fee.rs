@@ -8,19 +8,19 @@
 //! Either the weight or fee rate can be calculated if one knows the total fee and either of the
 //! other values. Note however that such calculations truncate (as for integer division).
 //!
-//! We provide `fee.checked_div_by_weight_ceil(weight)` to calculate a minimum threshold fee rate
+//! We provide `fee.div_by_weight_ceil(weight)` to calculate a minimum threshold fee rate
 //! required to pay at least `fee` for transaction with `weight`.
 //!
 //! We support various `core::ops` traits all of which return [`NumOpResult<T>`].
 //!
 //! For specific methods see:
 //!
-//! * [`Amount::checked_div_by_weight_floor`]
-//! * [`Amount::checked_div_by_weight_ceil`]
-//! * [`Amount::checked_div_by_fee_rate_floor`]
-//! * [`Amount::checked_div_by_fee_rate_ceil`]
-//! * [`Weight::checked_mul_by_fee_rate`]
-//! * [`FeeRate::checked_mul_by_weight`]
+//! * [`Amount::div_by_weight_floor`]
+//! * [`Amount::div_by_weight_ceil`]
+//! * [`Amount::div_by_fee_rate_floor`]
+//! * [`Amount::div_by_fee_rate_ceil`]
+//! * [`Weight::mul_by_fee_rate`]
+//! * [`FeeRate::mul_by_weight`]
 //! * [`FeeRate::to_fee`]
 
 use core::ops;
@@ -33,7 +33,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<FeeRate> for Weight {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: FeeRate) -> Self::Output {
-            match rhs.checked_mul_by_weight(self) {
+            match rhs.mul_by_weight(self) {
                 Some(amount) => R::Valid(amount),
                 None => R::Error(E::while_doing(MathOp::Mul)),
             }
@@ -73,7 +73,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<Weight> for FeeRate {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: Weight) -> Self::Output {
-            match self.checked_mul_by_weight(rhs) {
+            match self.mul_by_weight(rhs) {
                 Some(amount) => R::Valid(amount),
                 None => R::Error(E::while_doing(MathOp::Mul)),
             }
@@ -114,7 +114,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<FeeRate>;
 
         fn div(self, rhs: Weight) -> Self::Output {
-            self.checked_div_by_weight_floor(rhs).valid_or_error(MathOp::Div)
+            self.div_by_weight_floor(rhs).valid_or_error(MathOp::Div)
         }
     }
     impl ops::Div<Weight> for NumOpResult<Amount> {
@@ -155,7 +155,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Weight>;
 
         fn div(self, rhs: FeeRate) -> Self::Output {
-            self.checked_div_by_fee_rate_floor(rhs).valid_or_error(MathOp::Div)
+            self.div_by_fee_rate_floor(rhs).valid_or_error(MathOp::Div)
         }
     }
     impl ops::Div<FeeRate> for NumOpResult<Amount> {
@@ -211,25 +211,25 @@ mod tests {
     }
 
     #[test]
-    fn checked_weight_mul() {
+    fn weight_mul() {
         let weight = Weight::from_vb(10).unwrap();
         let fee: Amount = FeeRate::from_sat_per_vb(10)
             .unwrap()
-            .checked_mul_by_weight(weight)
+            .mul_by_weight(weight)
             .expect("expected Amount");
         assert_eq!(Amount::from_sat_u32(100), fee);
 
-        let fee = FeeRate::from_sat_per_kwu(10).unwrap().checked_mul_by_weight(Weight::MAX);
+        let fee = FeeRate::from_sat_per_kwu(10).unwrap().mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
 
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
-        let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
+        let fee = fee_rate.mul_by_weight(weight).unwrap();
         assert_eq!(Amount::from_sat_u32(9), fee);
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864).unwrap();
-        let fee = weight.checked_mul_by_fee_rate(fee_rate).unwrap();
+        let fee = weight.mul_by_fee_rate(fee_rate).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
         assert_eq!(fee, Amount::from_sat_u32(330));
@@ -277,12 +277,12 @@ mod tests {
         assert_eq!(weight, Weight::from_wu(333_333));
 
         // Verify that ceiling division gives different result
-        let ceil_weight = amount.checked_div_by_fee_rate_ceil(fee_rate).unwrap();
+        let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
         assert_eq!(ceil_weight, Weight::from_wu(333_334));
 
         // Test that division by zero returns None
         let zero_rate = FeeRate::from_sat_per_kwu(0).unwrap();
-        assert!(amount.checked_div_by_fee_rate_floor(zero_rate).is_none());
-        assert!(amount.checked_div_by_fee_rate_ceil(zero_rate).is_none());
+        assert!(amount.div_by_fee_rate_floor(zero_rate).is_none());
+        assert!(amount.div_by_fee_rate_ceil(zero_rate).is_none());
     }
 }
