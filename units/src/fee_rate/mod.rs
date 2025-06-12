@@ -11,6 +11,10 @@ use core::ops;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use NumOpResult as R;
+
+use crate::{Amount,MathOp, NumOpError as E, NumOpResult};
+
 mod encapsulate {
     /// Fee rate.
     ///
@@ -62,13 +66,31 @@ impl FeeRate {
         }
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes,
+    /// Constructs a new [`FeeRate`] from amount per 1000 weight units.
+    pub const fn from_per_kwu(rate: Amount) -> NumOpResult<Self> {
+        // No `map()` in const context.
+        match rate.checked_mul(4_000) {
+            Some(per_mvb) => R::Valid(FeeRate::from_sat_per_mvb(per_mvb.to_sat())),
+            None => R::Error(E::while_doing(MathOp::Mul)),
+        }
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per virtual byte,
     /// returning `None` if overflow occurred.
     pub const fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
         // No `map()` in const context.
         match sat_vb.checked_mul(1_000_000) {
             Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
             None => None,
+        }
+    }
+
+    /// Constructs a new [`FeeRate`] from amount per virtual byte.
+    pub const fn from_per_vb(rate: Amount) -> NumOpResult<Self> {
+        // No `map()` in const context.
+        match rate.checked_mul(1_000_000) {
+            Some(per_mvb) => R::Valid(FeeRate::from_sat_per_mvb(per_mvb.to_sat())),
+            None => R::Error(E::while_doing(MathOp::Mul)),
         }
     }
 
@@ -85,6 +107,15 @@ impl FeeRate {
         match sat_kvb.checked_mul(1_000) {
             Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
             None => None,
+        }
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
+    pub const fn from_per_kvb(rate: Amount) -> NumOpResult<Self> {
+        // No `map()` in const context.
+        match rate.checked_mul(1_000) {
+            Some(per_mvb) => R::Valid(FeeRate::from_sat_per_mvb(per_mvb.to_sat())),
+            None => R::Error(E::while_doing(MathOp::Mul)),
         }
     }
 
