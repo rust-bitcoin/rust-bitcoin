@@ -279,7 +279,7 @@ fn amount_checked_div_by_weight_ceil() {
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864).unwrap());
 
     let fee_rate = Amount::ONE_SAT.div_by_weight_ceil(Weight::ZERO);
-    assert!(fee_rate.is_none());
+    assert!(fee_rate.is_error());
 }
 
 #[cfg(feature = "alloc")]
@@ -297,7 +297,7 @@ fn amount_checked_div_by_weight_floor() {
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863).unwrap());
 
     let fee_rate = Amount::ONE_SAT.div_by_weight_floor(Weight::ZERO);
-    assert!(fee_rate.is_none());
+    assert!(fee_rate.is_error());
 }
 
 #[cfg(feature = "alloc")]
@@ -325,8 +325,8 @@ fn amount_checked_div_by_fee_rate() {
 
     // Test division by zero
     let zero_fee_rate = FeeRate::from_sat_per_kwu(0).unwrap();
-    assert!(amount.div_by_fee_rate_floor(zero_fee_rate).is_none());
-    assert!(amount.div_by_fee_rate_ceil(zero_fee_rate).is_none());
+    assert!(amount.div_by_fee_rate_floor(zero_fee_rate).is_error());
+    assert!(amount.div_by_fee_rate_ceil(zero_fee_rate).is_error());
 
     // Test with maximum amount
     let max_amount = Amount::MAX;

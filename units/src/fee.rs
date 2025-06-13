@@ -27,7 +27,7 @@ use core::ops;
 
 use NumOpResult as R;
 
-use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, OptionExt, Weight};
+use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, Weight};
 
 crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<FeeRate> for Weight {
@@ -114,7 +114,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<FeeRate>;
 
         fn div(self, rhs: Weight) -> Self::Output {
-            self.div_by_weight_floor(rhs).valid_or_error(MathOp::Div)
+            self.div_by_weight_floor(rhs)
         }
     }
     impl ops::Div<Weight> for NumOpResult<Amount> {
@@ -155,7 +155,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Weight>;
 
         fn div(self, rhs: FeeRate) -> Self::Output {
-            self.div_by_fee_rate_floor(rhs).valid_or_error(MathOp::Div)
+            self.div_by_fee_rate_floor(rhs)
         }
     }
     impl ops::Div<FeeRate> for NumOpResult<Amount> {
@@ -213,10 +213,8 @@ mod tests {
     #[test]
     fn weight_mul() {
         let weight = Weight::from_vb(10).unwrap();
-        let fee: Amount = FeeRate::from_sat_per_vb(10)
-            .unwrap()
-            .mul_by_weight(weight)
-            .expect("expected Amount");
+        let fee: Amount =
+            FeeRate::from_sat_per_vb(10).unwrap().mul_by_weight(weight).expect("expected Amount");
         assert_eq!(Amount::from_sat_u32(100), fee);
 
         let fee = FeeRate::from_sat_per_kwu(10).unwrap().mul_by_weight(Weight::MAX);
@@ -282,7 +280,7 @@ mod tests {
 
         // Test that division by zero returns None
         let zero_rate = FeeRate::from_sat_per_kwu(0).unwrap();
-        assert!(amount.div_by_fee_rate_floor(zero_rate).is_none());
-        assert!(amount.div_by_fee_rate_ceil(zero_rate).is_none());
+        assert!(amount.div_by_fee_rate_floor(zero_rate).is_error());
+        assert!(amount.div_by_fee_rate_ceil(zero_rate).is_error());
     }
 }

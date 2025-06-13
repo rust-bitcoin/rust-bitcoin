@@ -10,7 +10,6 @@ use core::ops;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-
 use NumOpResult as R;
 
 use crate::{Amount, MathOp, NumOpError as E, NumOpResult, Weight};

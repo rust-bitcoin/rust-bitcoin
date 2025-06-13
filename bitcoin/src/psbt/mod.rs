@@ -1348,17 +1348,6 @@ mod tests {
     use crate::witness::Witness;
     use crate::Sequence;
 
-    /// Fee rate in sat/kwu for a high-fee PSBT with an input=5_000_000_000_000, output=1000
-    const ABSURD_FEE_RATE: FeeRate = match FeeRate::from_sat_per_kwu(15_060_240_960_843) {
-        Some(fee_rate) => fee_rate,
-        None => panic!("unreachable - no unwrap in Rust 1.63 in const"),
-    };
-    const JUST_BELOW_ABSURD_FEE_RATE: FeeRate = match FeeRate::from_sat_per_kwu(15_060_240_960_842)
-    {
-        Some(fee_rate) => fee_rate,
-        None => panic!("unreachable - no unwrap in Rust 1.63 in const"),
-    };
-
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
         let r = Vec::from_hex(s);
@@ -1442,31 +1431,43 @@ mod tests {
 
     #[test]
     fn psbt_high_fee_checks() {
-        let psbt = psbt_with_values(5_000_000_000_000, 1000);
+        let psbt = psbt_with_values(Amount::MAX.to_sat(), 1000);
+
+        // We cannot create an expected fee rate to test against because `FeeRate::from_sat_per_mvb` is private.
+        // Large fee rate errors if we pass in 1 sat/vb so just use this to get the error fee rate returned.
+        let error_fee_rate = psbt
+            .clone()
+            .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_vb_u32(1))
+            .map_err(|e| match e {
+                ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
+                _ => panic!(""),
+            })
+            .unwrap_err();
+
+        // In `internal_extract_tx_with_fee_rate_limit` when we do fee / weight
+        // we manually saturate to `FeeRate::MAX`.
+        assert!(psbt.clone().extract_tx_with_fee_rate_limit(FeeRate::MAX).is_ok());
+
+        // These error because the fee rate is above the limit as expected.
         assert_eq!(
             psbt.clone().extract_tx().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
-            Err(ABSURD_FEE_RATE)
+            Err(error_fee_rate)
         );
         assert_eq!(
             psbt.clone().extract_tx_fee_rate_limit().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
-            Err(ABSURD_FEE_RATE)
+            Err(error_fee_rate)
         );
-        assert_eq!(
-            psbt.clone().extract_tx_with_fee_rate_limit(JUST_BELOW_ABSURD_FEE_RATE).map_err(|e| {
-                match e {
-                    ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
-                    _ => panic!(""),
-                }
-            }),
-            Err(ABSURD_FEE_RATE)
-        );
-        assert!(psbt.extract_tx_with_fee_rate_limit(ABSURD_FEE_RATE).is_ok());
+
+        // No one is using an ~50 BTC fee so if we can handle this
+        // then the `FeeRate` restrictions are fine for PSBT usage.
+        let psbt = psbt_with_values(Amount::from_btc_u16(50).to_sat(), 1000); // fee = 50 BTC - 1000 sats
+        assert!(psbt.extract_tx_with_fee_rate_limit(FeeRate::MAX).is_ok());
 
         // Testing that extract_tx will error at 25k sat/vbyte (6250000 sat/kwu)
         assert_eq!(
