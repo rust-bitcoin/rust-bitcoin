@@ -68,8 +68,8 @@ hashes::impl_serde_for_newtype!(XKeyIdentifier);
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct Xpriv {
-    /// The network this key is to be used on
-    pub network: NetworkKind,
+    /// The network kind this key is to be used on
+    pub network_kind: NetworkKind,
     /// How many derivations this key is from the master (which is 0)
     pub depth: u8,
     /// Fingerprint of the parent key (0 for master)
@@ -88,7 +88,7 @@ internals::serde_string_impl!(Xpriv, "a BIP-32 extended private key");
 impl fmt::Debug for Xpriv {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Xpriv")
-            .field("network", &self.network)
+            .field("network", &self.network_kind)
             .field("depth", &self.depth)
             .field("parent_fingerprint", &self.parent_fingerprint)
             .field("child_number", &self.child_number)
@@ -102,7 +102,7 @@ impl fmt::Debug for Xpriv {
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
 pub struct Xpub {
     /// The network kind this key is to be used on
-    pub network: NetworkKind,
+    pub network_kind: NetworkKind,
     /// How many derivations this key is from the master (which is 0)
     pub depth: u8,
     /// Fingerprint of the parent key
@@ -662,13 +662,13 @@ impl fmt::Display for ParseChildNumberError {
 
 impl Xpriv {
     /// Constructs a new master key from a seed value
-    pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Xpriv {
+    pub fn new_master(network_kind: NetworkKind, seed: &[u8]) -> Xpriv {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
         engine.input(seed);
         let hmac = engine.finalize();
 
         Xpriv {
-            network: network.into(),
+            network_kind,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
@@ -686,7 +686,7 @@ impl Xpriv {
 
     /// Constructs a new ECDSA compressed private key matching internal secret key representation.
     pub fn to_private_key(self) -> PrivateKey {
-        PrivateKey { compressed: true, network: self.network, inner: self.private_key }
+        PrivateKey { compressed: true, network: self.network_kind, inner: self.private_key }
     }
 
     /// Constructs a new extended public key from this extended private key.
@@ -758,7 +758,7 @@ impl Xpriv {
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
         Ok(Xpriv {
-            network: self.network,
+            network_kind: self.network_kind,
             depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
@@ -769,10 +769,10 @@ impl Xpriv {
 
     /// Decoding extended private key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<Xpriv, ParseError> {
-        let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
+        let Common { network_kind, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
 
-        let network = match network {
+        let network_kind = match network_kind {
             VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PRIVATE => NetworkKind::Test,
             unknown => return Err(ParseError::UnknownVersion(unknown)),
@@ -784,7 +784,7 @@ impl Xpriv {
         }
 
         Ok(Xpriv {
-            network,
+            network_kind,
             depth,
             parent_fingerprint,
             child_number,
@@ -796,7 +796,7 @@ impl Xpriv {
     /// Extended private key binary encoding according to BIP 32
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
+        ret[0..4].copy_from_slice(&match self.network_kind {
             NetworkKind::Main => VERSION_BYTES_MAINNET_PRIVATE,
             NetworkKind::Test => VERSION_BYTES_TESTNETS_PRIVATE,
         });
@@ -830,7 +830,7 @@ impl Xpub {
     /// Constructs a new extended public key from an extended private key.
     pub fn from_xpriv<C: secp256k1::Signing>(secp: &Secp256k1<C>, xpriv: &Xpriv) -> Xpub {
         Xpub {
-            network: xpriv.network,
+            network_kind: xpriv.network_kind,
             depth: xpriv.depth,
             parent_fingerprint: xpriv.parent_fingerprint,
             child_number: xpriv.child_number,
@@ -916,7 +916,7 @@ impl Xpub {
             self.public_key.add_exp_tweak(secp, &sk.into()).expect("cryptographically unreachable");
 
         Ok(Xpub {
-            network: self.network,
+            network_kind: self.network_kind,
             depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
@@ -927,17 +927,17 @@ impl Xpub {
 
     /// Decoding extended public key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<Xpub, ParseError> {
-        let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
+        let Common { network_kind, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
 
-        let network = match network {
+        let network_kind = match network_kind {
             VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PUBLIC => NetworkKind::Test,
             unknown => return Err(ParseError::UnknownVersion(unknown)),
         };
 
         Ok(Xpub {
-            network,
+            network_kind,
             depth,
             parent_fingerprint,
             child_number,
@@ -949,7 +949,7 @@ impl Xpub {
     /// Extended public key binary encoding according to BIP 32
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
+        ret[0..4].copy_from_slice(&match self.network_kind {
             NetworkKind::Main => VERSION_BYTES_MAINNET_PUBLIC,
             NetworkKind::Test => VERSION_BYTES_TESTNETS_PUBLIC,
         });
@@ -1047,7 +1047,7 @@ impl std::error::Error for InvalidBase58PayloadLengthError {}
 
 // Helps unify decoding
 struct Common {
-    network: [u8; 4],
+    network_kind: [u8; 4],
     depth: u8,
     parent_fingerprint: Fingerprint,
     child_number: ChildNumber,
@@ -1061,7 +1061,7 @@ impl Common {
         let data: &[u8; 78] =
             data.try_into().map_err(|_| ParseError::WrongExtendedKeyLength(data.len()))?;
 
-        let (&network, data) = data.split_array::<4, 74>();
+        let (&network_kind, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
         let (&parent_fingerprint, data) = data.split_array::<4, 69>();
         let (&child_number, data) = data.split_array::<4, 65>();
@@ -1078,7 +1078,7 @@ impl Common {
         }
 
         Ok(Common {
-            network,
+            network_kind,
             depth,
             parent_fingerprint: parent_fingerprint.into(),
             child_number: u32::from_be_bytes(child_number).into(),
