@@ -10,172 +10,24 @@
 //!
 //! We provide `fee.checked_div_by_weight_ceil(weight)` to calculate a minimum threshold fee rate
 //! required to pay at least `fee` for transaction with `weight`.
+//!
+//! We support various `core::ops` traits all of which return [`NumOpResult<T>`].
+//!
+//! For specific methods see:
+//!
+//! * [`Amount::checked_div_by_weight_floor`]
+//! * [`Amount::checked_div_by_weight_ceil`]
+//! * [`Amount::checked_div_by_fee_rate_floor`]
+//! * [`Amount::checked_div_by_fee_rate_ceil`]
+//! * [`Weight::checked_mul_by_fee_rate`]
+//! * [`FeeRate::checked_mul_by_weight`]
+//! * [`FeeRate::to_fee`]
 
 use core::ops;
 
 use NumOpResult as R;
 
 use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, OptionExt, Weight};
-
-impl Amount {
-    /// Checked weight floor division.
-    ///
-    /// Be aware that integer division loses the remainder if no exact division
-    /// can be made. See also [`Self::checked_div_by_weight_ceil`].
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
-        let wu = weight.to_wu();
-        if wu == 0 {
-            return None;
-        }
-
-        // Mul by 1,000 because we use per/kwu.
-        match self.to_sat().checked_mul(1_000) {
-            Some(sats) => {
-                let fee_rate = sats / wu;
-                FeeRate::from_sat_per_kwu(fee_rate)
-            }
-            None => None,
-        }
-    }
-
-    /// Checked weight ceiling division.
-    ///
-    /// Be aware that integer division loses the remainder if no exact division
-    /// can be made. This method rounds up ensuring the transaction fee rate is
-    /// sufficient. See also [`Self::checked_div_by_weight_floor`].
-    ///
-    /// Returns [`None`] if overflow occurred.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
-    /// let amount = Amount::from_sat(10)?;
-    /// let weight = Weight::from_wu(300);
-    /// let fee_rate = amount.checked_div_by_weight_ceil(weight);
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
-    /// # Ok::<_, amount::OutOfRangeError>(())
-    /// ```
-    #[must_use]
-    pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
-        let wu = weight.to_wu();
-        if wu == 0 {
-            return None;
-        }
-
-        // Mul by 1,000 because we use per/kwu.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            // No need to used checked arithmetic because wu is non-zero.
-            if let Some(bump) = sats.checked_add(wu - 1) {
-                let fee_rate = bump / wu;
-                return FeeRate::from_sat_per_kwu(fee_rate);
-            }
-        }
-        None
-    }
-
-    /// Checked fee rate floor division.
-    ///
-    /// Computes the maximum weight that would result in a fee less than or equal to this amount
-    /// at the given `fee_rate`. Uses floor division to ensure the resulting weight doesn't cause
-    /// the fee to exceed the amount.
-    ///
-    /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
-    #[must_use]
-    pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
-        if let Some(msats) = self.to_sat().checked_mul(1000) {
-            if let Some(wu) = msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
-                return Some(Weight::from_wu(wu));
-            }
-        }
-        None
-    }
-
-    /// Checked fee rate ceiling division.
-    ///
-    /// Computes the minimum weight that would result in a fee greater than or equal to this amount
-    /// at the given `fee_rate`. Uses ceiling division to ensure the resulting weight is sufficient.
-    ///
-    /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
-    #[must_use]
-    pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
-        // Use ceil because result is used as the divisor.
-        let rate = fee_rate.to_sat_per_kwu_ceil();
-        if rate == 0 {
-            return None;
-        }
-
-        if let Some(msats) = self.to_sat().checked_mul(1000) {
-            // No need to used checked arithmetic because rate is non-zero.
-            if let Some(bump) = msats.checked_add(rate - 1) {
-                let wu = bump / rate;
-                return Some(Weight::from_wu(wu));
-            }
-        }
-        None
-    }
-}
-
-impl FeeRate {
-    /// Calculates the fee by multiplying this fee rate by weight.
-    ///
-    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
-    /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
-    /// enough instead of falling short if rounded down.
-    ///
-    /// If the calculation would overflow we saturate to [`Amount::MAX`]. Since such a fee can never
-    /// be paid this is meaningful as an error case while still removing the possibility of silently
-    /// wrapping.
-    pub const fn to_fee(self, weight: Weight) -> Amount {
-        // No `unwrap_or()` in const context.
-        match self.checked_mul_by_weight(weight) {
-            Some(fee) => fee,
-            None => Amount::MAX,
-        }
-    }
-
-    /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
-    /// if an overflow occurred.
-    ///
-    /// This is equivalent to `Self::checked_mul_by_weight()`.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "use `to_fee()` instead")]
-    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
-
-    /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
-    /// if an overflow occurred.
-    ///
-    /// This is equivalent to converting `vb` to [`Weight`] using [`Weight::from_vb`] and then calling
-    /// `Self::fee_wu(weight)`.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "use Weight::from_vb and then `to_fee()` instead")]
-    pub fn fee_vb(self, vb: u64) -> Option<Amount> { Weight::from_vb(vb).map(|w| self.to_fee(w)) }
-
-    /// Checked weight multiplication.
-    ///
-    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
-    /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
-    /// enough instead of falling short if rounded down.
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
-        let wu = weight.to_wu();
-        if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
-            // Bump by 999 to do ceil division using kwu.
-            if let Some(bump) = fee_kwu.checked_add(999) {
-                let fee = bump / 1_000;
-                if let Ok(fee_amount) = Amount::from_sat(fee) {
-                    return Some(fee_amount);
-                }
-            }
-        }
-        None
-    }
-}
 
 crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<FeeRate> for Weight {
@@ -338,20 +190,6 @@ crate::internal_macros::impl_op_for_references! {
                 R::Error(e) => NumOpResult::Error(e),
             }
         }
-    }
-}
-
-impl Weight {
-    /// Checked fee rate multiplication.
-    ///
-    /// Computes the absolute fee amount for a given [`FeeRate`] at this weight. When the resulting
-    /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
-    /// enough instead of falling short if rounded down.
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
-        fee_rate.checked_mul_by_weight(self)
     }
 }
 
