@@ -27,17 +27,12 @@ use core::ops;
 
 use NumOpResult as R;
 
-use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, Weight};
+use crate::{Amount, FeeRate, NumOpResult, Weight};
 
 crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<FeeRate> for Weight {
         type Output = NumOpResult<Amount>;
-        fn mul(self, rhs: FeeRate) -> Self::Output {
-            match rhs.mul_by_weight(self) {
-                Some(amount) => R::Valid(amount),
-                None => R::Error(E::while_doing(MathOp::Mul)),
-            }
-        }
+        fn mul(self, rhs: FeeRate) -> Self::Output { rhs.mul_by_weight(self) }
     }
     impl ops::Mul<FeeRate> for NumOpResult<Weight> {
         type Output = NumOpResult<Amount>;
@@ -72,12 +67,7 @@ crate::internal_macros::impl_op_for_references! {
 
     impl ops::Mul<Weight> for FeeRate {
         type Output = NumOpResult<Amount>;
-        fn mul(self, rhs: Weight) -> Self::Output {
-            match self.mul_by_weight(rhs) {
-                Some(amount) => R::Valid(amount),
-                None => R::Error(E::while_doing(MathOp::Mul)),
-            }
-        }
+        fn mul(self, rhs: Weight) -> Self::Output { self.mul_by_weight(rhs) }
     }
     impl ops::Mul<Weight> for NumOpResult<FeeRate> {
         type Output = NumOpResult<Amount>;
@@ -218,7 +208,7 @@ mod tests {
         assert_eq!(Amount::from_sat_u32(100), fee);
 
         let fee = FeeRate::from_sat_per_kwu(10).unwrap().mul_by_weight(Weight::MAX);
-        assert!(fee.is_none());
+        assert!(fee.is_error());
 
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
