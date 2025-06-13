@@ -196,8 +196,8 @@ impl FeeRate {
     pub const fn to_fee(self, weight: Weight) -> Amount {
         // No `unwrap_or()` in const context.
         match self.mul_by_weight(weight) {
-            Some(fee) => fee,
-            None => Amount::MAX,
+            NumOpResult::Valid(fee) => fee,
+            NumOpResult::Error(_) => Amount::MAX,
         }
     }
 
@@ -207,7 +207,7 @@ impl FeeRate {
     /// This is equivalent to `Self::checked_mul_by_weight()`.
     #[must_use]
     #[deprecated(since = "TBD", note = "use `to_fee()` instead")]
-    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.mul_by_weight(weight) }
+    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.mul_by_weight(weight).ok() }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
     /// if an overflow occurred.
@@ -223,21 +223,18 @@ impl FeeRate {
     /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
     /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
     /// enough instead of falling short if rounded down.
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn mul_by_weight(self, weight: Weight) -> Option<Amount> {
+    pub const fn mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
         let wu = weight.to_wu();
         if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
             // Bump by 999 to do ceil division using kwu.
             if let Some(bump) = fee_kwu.checked_add(999) {
                 let fee = bump / 1_000;
                 if let Ok(fee_amount) = Amount::from_sat(fee) {
-                    return Some(fee_amount);
+                    return NumOpResult::Valid(fee_amount);
                 }
             }
         }
-        None
+        NumOpResult::Error(E::while_doing(MathOp::Mul))
     }
 }
 

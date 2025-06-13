@@ -10,7 +10,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{Amount, CheckedSum, FeeRate};
+use crate::{Amount, CheckedSum, FeeRate, NumOpResult};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -168,10 +168,7 @@ impl Weight {
     /// Computes the absolute fee amount for a given [`FeeRate`] at this weight. When the resulting
     /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
     /// enough instead of falling short if rounded down.
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
+    pub const fn mul_by_fee_rate(self, fee_rate: FeeRate) -> NumOpResult<Amount> {
         fee_rate.mul_by_weight(self)
     }
 }
