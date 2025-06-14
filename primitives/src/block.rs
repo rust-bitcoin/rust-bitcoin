@@ -76,6 +76,12 @@ impl Block<Unchecked> {
         Block { header, transactions, witness_root: None, marker: PhantomData::<Unchecked> }
     }
 
+    /// Adds a transaction to the block.
+    #[inline]
+    pub fn push_transaction(&mut self, transaction: Transaction) {
+        self.transactions.push(transaction);
+    }
+
     /// Ignores block validation logic and just assumes you know what you are doing.
     ///
     /// You should only use this function if you trust the block i.e., it comes from a trusted node.
