@@ -9,7 +9,7 @@ use crate::bip32::Xpub;
 use crate::consensus::encode;
 use crate::prelude::Box;
 use crate::psbt::raw;
-use crate::transaction::Transaction;
+use crate::{key, ecdsa, taproot, Txid, Transaction, OutPoint};
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -80,26 +80,26 @@ pub enum Error {
     NegativeFee,
     /// Integer overflow in fee calculation
     FeeOverflow,
-    /// Non-witness UTXO (which is a complete transaction) has [`crate::Txid`] that
+    /// Non-witness UTXO (which is a complete transaction) has `Txid` that
     /// does not match the transaction input.
     IncorrectNonWitnessUtxo {
         /// The index of the input in question.
         index: usize,
         /// The outpoint of the input, as it appears in the unsigned transaction.
-        input_outpoint: crate::OutPoint,
-        /// The ['crate::Txid`] of the non-witness UTXO.
-        non_witness_utxo_txid: crate::Txid,
+        input_outpoint: OutPoint,
+        /// The [`Txid`] of the non-witness UTXO.
+        non_witness_utxo_txid: Txid,
     },
     /// Parsing error indicating invalid public keys
-    InvalidPublicKey(crate::crypto::key::FromSliceError),
+    InvalidPublicKey(key::FromSliceError),
     /// Parsing error indicating invalid secp256k1 public keys
     InvalidSecp256k1PublicKey(secp256k1::Error),
     /// Parsing error indicating invalid xonly public keys
     InvalidXOnlyPublicKey,
     /// Parsing error indicating invalid ECDSA signatures
-    InvalidEcdsaSignature(crate::crypto::ecdsa::DecodeError),
+    InvalidEcdsaSignature(ecdsa::DecodeError),
     /// Parsing error indicating invalid Taproot signatures
-    InvalidTaprootSignature(crate::crypto::taproot::SigFromSliceError),
+    InvalidTaprootSignature(taproot::SigFromSliceError),
     /// Parsing error indicating invalid control block
     InvalidControlBlock,
     /// Parsing error indicating invalid leaf version
@@ -107,7 +107,7 @@ pub enum Error {
     /// Parsing error indicating a Taproot error
     Taproot(&'static str),
     /// Taproot tree deserialization error
-    TapTree(crate::taproot::IncompleteBuilderError),
+    TapTree(taproot::IncompleteBuilderError),
     /// Error related to an xpub key
     XPubKey(&'static str),
     /// Error related to PSBT version
