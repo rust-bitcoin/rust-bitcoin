@@ -482,11 +482,19 @@ impl fmt::Display for DerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.0.iter();
         if let Some(first_element) = iter.next() {
-            write!(f, "{}", first_element)?;
+            if f.alternate() {
+                write!(f, "{:#}", first_element)?;
+            } else {
+                write!(f, "{}", first_element)?;
+            }
         }
         for cn in iter {
             f.write_str("/")?;
-            write!(f, "{}", cn)?;
+            if f.alternate() {
+                write!(f, "{:#}", cn)?;
+            } else {
+                write!(f, "{}", cn)?;
+            }
         }
         Ok(())
     }
@@ -1106,6 +1114,13 @@ mod tests {
                 Err(ParseChildNumberError::ParseInt(..)),
             ));
         }
+    }
+
+    #[test]
+    fn test_derivation_path_display() {
+        let path = DerivationPath::from_str("m/84'/0'/0'/0/0").unwrap();
+        assert_eq!(format!("{}", path), "84'/0'/0'/0/0");
+        assert_eq!(format!("{:#}", path), "84h/0h/0h/0/0");
     }
 
     #[test]
