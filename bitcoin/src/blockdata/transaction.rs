@@ -517,11 +517,7 @@ impl TransactionExtPriv for Transaction {
                 1
             } else if witness_program.is_p2wsh() {
                 // Treat the last item of the witness as the witnessScript
-                witness
-                    .last()
-                    .map(Script::from_bytes)
-                    .map(|s| s.count_sigops())
-                    .unwrap_or(0)
+                witness.last().map(Script::from_bytes).map(|s| s.count_sigops()).unwrap_or(0)
             } else {
                 0
             }
