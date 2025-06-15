@@ -190,12 +190,12 @@ mod tests {
     #[test]
     fn fee_rate_div_by_weight() {
         let fee_rate = (Amount::from_sat_u32(329) / Weight::from_wu(381)).unwrap();
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863).unwrap());
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
     }
 
     #[test]
     fn fee_wu() {
-        let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(2);
         let weight = Weight::from_vb(3).unwrap();
         assert_eq!(fee_rate.to_fee(weight), Amount::from_sat_u32(6));
     }
@@ -204,19 +204,19 @@ mod tests {
     fn weight_mul() {
         let weight = Weight::from_vb(10).unwrap();
         let fee: Amount =
-            FeeRate::from_sat_per_vb(10).unwrap().mul_by_weight(weight).expect("expected Amount");
+            FeeRate::from_sat_per_vb(10).mul_by_weight(weight).expect("expected Amount");
         assert_eq!(Amount::from_sat_u32(100), fee);
 
-        let fee = FeeRate::from_sat_per_kwu(10).unwrap().mul_by_weight(Weight::MAX);
+        let fee = FeeRate::from_sat_per_kwu(10).mul_by_weight(Weight::MAX);
         assert!(fee.is_error());
 
         let weight = Weight::from_vb(3).unwrap();
-        let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(3);
         let fee = fee_rate.mul_by_weight(weight).unwrap();
         assert_eq!(Amount::from_sat_u32(9), fee);
 
         let weight = Weight::from_wu(381);
-        let fee_rate = FeeRate::from_sat_per_kwu(864).unwrap();
+        let fee_rate = FeeRate::from_sat_per_kwu(864);
         let fee = weight.mul_by_fee_rate(fee_rate).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
@@ -226,7 +226,7 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn multiply() {
-        let two = FeeRate::from_sat_per_vb(2).unwrap();
+        let two = FeeRate::from_sat_per_vb(2);
         let three = Weight::from_vb(3).unwrap();
         let six = Amount::from_sat_u32(6);
 
@@ -243,9 +243,9 @@ mod tests {
     fn amount_div_by_fee_rate() {
         // Test exact division
         let amount = Amount::from_sat_u32(1000);
-        let fee_rate = FeeRate::from_sat_per_kwu(2).unwrap();
-        let weight = (amount / fee_rate).unwrap();
-        assert_eq!(weight, Weight::from_wu(500_000));
+        let fee_rate = FeeRate::from_sat_per_kwu(2);
+        let weight = amount / fee_rate;
+        assert_eq!(weight.unwrap(), Weight::from_wu(500_000));
 
         // Test reference division
         let weight_ref = (&amount / fee_rate).unwrap();
@@ -257,19 +257,19 @@ mod tests {
 
         // Test truncation behavior
         let amount = Amount::from_sat_u32(1000);
-        let fee_rate = FeeRate::from_sat_per_kwu(3).unwrap();
-        let weight = (amount / fee_rate).unwrap();
+        let fee_rate = FeeRate::from_sat_per_kwu(3);
+        let weight = amount / fee_rate;
         // 1000 * 1000 = 1,000,000 msats
         // 1,000,000 / 3 = 333,333.33... wu
         // Should truncate down to 333,333 wu
-        assert_eq!(weight, Weight::from_wu(333_333));
+        assert_eq!(weight.unwrap(), Weight::from_wu(333_333));
 
         // Verify that ceiling division gives different result
         let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
         assert_eq!(ceil_weight, Weight::from_wu(333_334));
 
         // Test that division by zero returns None
-        let zero_rate = FeeRate::from_sat_per_kwu(0).unwrap();
+        let zero_rate = FeeRate::from_sat_per_kwu(0);
         assert!(amount.div_by_fee_rate_floor(zero_rate).is_error());
         assert!(amount.div_by_fee_rate_ceil(zero_rate).is_error());
     }

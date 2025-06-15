@@ -58,7 +58,7 @@ use crate::{Amount, FeeRate, SignedAmount, Weight};
 /// let a = Amount::from_sat(123).expect("valid amount");
 /// let b = Amount::from_sat(467).expect("valid amount");
 /// // Fee rate for transaction.
-/// let fee_rate = FeeRate::from_sat_per_vb(1).unwrap();
+/// let fee_rate = FeeRate::from_sat_per_vb(1);
 ///
 /// // Somewhat contrived example to show addition operator chained with division.
 /// let max_fee = a + b;
