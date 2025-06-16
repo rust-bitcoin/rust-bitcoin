@@ -33,15 +33,19 @@ pub mod as_sat_per_kwu_floor {
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use crate::FeeRate;
+    use crate::{Amount, FeeRate};
 
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
         u64::serialize(&f.to_sat_per_kwu_floor(), s)
     }
 
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        FeeRate::from_sat_per_kwu(u64::deserialize(d)?)
-            .ok_or_else(|| serde::de::Error::custom("overflowed sats/kwu"))
+        let sat = u64::deserialize(d)?;
+        FeeRate::from_per_kwu(
+            Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("amount out of range"))?,
+        )
+        .into_result()
+        .map_err(|_| serde::de::Error::custom("fee rate too big for sats/kwu"))
     }
 
     pub mod opt {
@@ -100,8 +104,7 @@ pub mod as_sat_per_vb_floor {
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use crate::fee_rate::serde::OverflowError;
-    use crate::fee_rate::FeeRate;
+    use crate::{Amount, FeeRate};
 
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
         u64::serialize(&f.to_sat_per_vb_floor(), s)
@@ -109,9 +112,12 @@ pub mod as_sat_per_vb_floor {
 
     // Errors on overflow.
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-            .ok_or(OverflowError)
-            .map_err(serde::de::Error::custom)
+        let sat = u64::deserialize(d)?;
+        FeeRate::from_per_vb(
+            Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("amount out of range"))?,
+        )
+        .into_result()
+        .map_err(|_| serde::de::Error::custom("fee rate too big for sats/vb"))
     }
 
     pub mod opt {
@@ -171,8 +177,7 @@ pub mod as_sat_per_vb_ceil {
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use crate::fee_rate::serde::OverflowError;
-    use crate::fee_rate::FeeRate;
+    use crate::{Amount, FeeRate};
 
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
         u64::serialize(&f.to_sat_per_vb_ceil(), s)
@@ -180,9 +185,12 @@ pub mod as_sat_per_vb_ceil {
 
     // Errors on overflow.
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-            .ok_or(OverflowError)
-            .map_err(serde::de::Error::custom)
+        let sat = u64::deserialize(d)?;
+        FeeRate::from_per_vb(
+            Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("amount out of range"))?,
+        )
+        .into_result()
+        .map_err(|_| serde::de::Error::custom("fee rate too big for sats/vb"))
     }
 
     pub mod opt {
