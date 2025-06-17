@@ -1085,8 +1085,9 @@ impl InputWeightPrediction {
             (0usize, 0u32),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = Self::saturate_to_u32(elem_len) + Self::encoded_size(elem_len);
-                (count + 1, total_size + elem_size)
+                let elem_size =
+                    Self::saturate_to_u32(elem_len).saturating_add(Self::encoded_size(elem_len));
+                (count + 1, total_size.saturating_add(elem_size))
             },
         );
         let witness_size = if count > 0 { total_size + Self::encoded_size(count) } else { 0 };
@@ -1103,21 +1104,22 @@ impl InputWeightPrediction {
     /// `new` and thus is intended to be only used in `const` context.
     pub const fn from_slice(input_script_len: usize, witness_element_lengths: &[usize]) -> Self {
         let mut i = 0;
-        let mut total_size = 0;
+        let mut total_size: u32 = 0;
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = Self::saturate_to_u32(elem_len) + Self::encoded_size(elem_len);
-            total_size += elem_size;
+            let elem_size =
+                Self::saturate_to_u32(elem_len).saturating_add(Self::encoded_size(elem_len));
+            total_size = total_size.saturating_add(elem_size);
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size + Self::encoded_size(witness_element_lengths.len())
+            total_size.saturating_add(Self::encoded_size(witness_element_lengths.len()))
         } else {
             0
         };
-        let script_size =
-            Self::saturate_to_u32(input_script_len) + Self::encoded_size(input_script_len);
+        let script_size = Self::saturate_to_u32(input_script_len)
+            .saturating_add(Self::encoded_size(input_script_len));
 
         InputWeightPrediction { script_size, witness_size }
     }
