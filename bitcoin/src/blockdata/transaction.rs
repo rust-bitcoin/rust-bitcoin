@@ -995,7 +995,7 @@ impl InputWeightPrediction {
         let el = u32::try_from(elem).unwrap_or(u32::MAX);
         // unwrap ok, range of encoded_size is 0..0xFFFFFFFF.
         let encoded_size = u32::try_from(compact_size::encoded_size(encode)).unwrap();
-        el + encoded_size
+        el.saturating_add(encoded_size)
     }
 
     const fn add_to_encoded_size_const(elem: usize, encode: usize) -> u32 {
@@ -1004,7 +1004,7 @@ impl InputWeightPrediction {
         // cast ok, range of encoded_size is 0..0xFFFFFFFF.
         // cast ok (inner), supported usize is u32 and u64 which fit u64.
         let encoded_size = compact_size::encoded_size_const(encode as u64) as u32;
-        el + encoded_size
+        el.saturating_add(encoded_size)
     }
 
     /// Input weight prediction corresponding to spending of P2WPKH output using [signature
@@ -1080,7 +1080,7 @@ impl InputWeightPrediction {
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
                 let elem_size = Self::add_to_encoded_size(elem_len, elem_len);
-                (count + 1, total_size + elem_size)
+                (count + 1, total_size.saturating_add(elem_size))
             },
         );
         // cast ok, usize is at least 32 bits
@@ -1105,7 +1105,7 @@ impl InputWeightPrediction {
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
             let elem_size = Self::add_to_encoded_size_const(elem_len, elem_len);
-            total_size += elem_size;
+            total_size = total_size.saturating_add(elem_size);
             i += 1;
         }
 
