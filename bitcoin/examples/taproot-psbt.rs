@@ -298,7 +298,7 @@ fn generate_bip86_key_spend_tx(
                 .ok_or("missing Taproot key origin")?;
 
             let secret_key =
-                master_xpriv.derive_xpriv(secp, &derivation_path)?.to_private_key().inner;
+                master_xpriv.derive_xpriv(secp, derivation_path)?.to_private_key().inner;
             sign_psbt_taproot(
                 secret_key,
                 input.tap_internal_key.unwrap(),
@@ -540,7 +540,7 @@ impl BenefactorWallet {
                     .ok_or("missing Taproot key origin")?;
                 let secret_key = self
                     .master_xpriv
-                    .derive_xpriv(&self.secp, &derivation_path)
+                    .derive_xpriv(&self.secp, derivation_path)
                     .expect("derivation path is short")
                     .to_private_key()
                     .inner;
@@ -664,11 +664,8 @@ impl BeneficiaryWallet {
         for (x_only_pubkey, (leaf_hashes, (_, derivation_path))) in
             &psbt.inputs[0].tap_key_origins.clone()
         {
-            let secret_key = self
-                .master_xpriv
-                .derive_xpriv(&self.secp, &derivation_path)?
-                .to_private_key()
-                .inner;
+            let secret_key =
+                self.master_xpriv.derive_xpriv(&self.secp, derivation_path)?.to_private_key().inner;
             for lh in leaf_hashes {
                 let sighash_type = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(
