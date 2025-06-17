@@ -990,6 +990,15 @@ impl InputWeightPrediction {
     /// [`InputWeightPrediction::new`].
     pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[65]);
 
+    fn add_to_encoded_size(elem: usize, encode: usize) -> usize {
+        elem + compact_size::encoded_size(encode)
+    }
+
+    const fn add_to_encoded_size_const(elem: usize, encode: usize) -> usize {
+        // cast ok, supported usize is u32 and u64 which fit u64.
+        elem + compact_size::encoded_size_const(encode as u64)
+    }
+
     /// Input weight prediction corresponding to spending of P2WPKH output using [signature
     /// grinding].
     ///
@@ -1062,13 +1071,12 @@ impl InputWeightPrediction {
             (0usize, 0),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + compact_size::encoded_size(elem_len);
+                let elem_size = Self::add_to_encoded_size(elem_len, elem_len);
                 (count + 1, total_size + elem_size)
             },
         );
-        let witness_size =
-            if count > 0 { total_size + compact_size::encoded_size(count) } else { 0 };
-        let script_size = input_script_len + compact_size::encoded_size(input_script_len);
+        let witness_size = if count > 0 { Self::add_to_encoded_size(total_size, count) } else { 0 };
+        let script_size = Self::add_to_encoded_size(input_script_len, input_script_len);
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1084,17 +1092,16 @@ impl InputWeightPrediction {
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = elem_len + compact_size::encoded_size_const(elem_len as u64);
+            let elem_size = Self::add_to_encoded_size_const(elem_len, elem_len);
             total_size += elem_size;
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size + compact_size::encoded_size_const(witness_element_lengths.len() as u64)
+            Self::add_to_encoded_size_const(total_size, witness_element_lengths.len())
         } else {
             0
         };
-        let script_size =
-            input_script_len + compact_size::encoded_size_const(input_script_len as u64);
+        let script_size = Self::add_to_encoded_size_const(input_script_len, input_script_len);
 
         InputWeightPrediction { script_size, witness_size }
     }
