@@ -65,11 +65,12 @@ impl Height {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::Height;
+    /// use bitcoin_units::locktime::absolute;
     ///
     /// let h: u32 = 741521;
-    /// let height = Height::from_u32(h).expect("invalid height value");
-    /// assert_eq!(height.to_consensus_u32(), h);
+    /// let height = absolute::Height::from_u32(h)?;
+    /// assert_eq!(height.to_u32(), h);
+    /// # Ok::<_, absolute::ConversionError>(())
     /// ```
     #[inline]
     pub const fn from_u32(n: u32) -> Result<Height, ConversionError> {
@@ -81,6 +82,14 @@ impl Height {
     }
 
     /// Converts this [`Height`] to a raw `u32` value.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_units::locktime::absolute;
+    ///
+    /// assert_eq!(absolute::Height::MAX.to_u32(), 499_999_999);
+    /// ```
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
@@ -189,11 +198,12 @@ impl MedianTimePast {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::MedianTimePast;
+    /// use bitcoin_units::locktime::absolute;
     ///
     /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let time = MedianTimePast::from_u32(t).expect("invalid time value");
-    /// assert_eq!(time.to_consensus_u32(), t);
+    /// let time = absolute::MedianTimePast::from_u32(t)?;
+    /// assert_eq!(time.to_u32(), t);
+    /// # Ok::<_, absolute::ConversionError>(())
     /// ```
     #[inline]
     pub const fn from_u32(n: u32) -> Result<Self, ConversionError> {
@@ -205,6 +215,14 @@ impl MedianTimePast {
     }
 
     /// Converts this [`MedianTimePast`] to a raw `u32` value.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_units::locktime::absolute;
+    ///
+    /// assert_eq!(absolute::MedianTimePast::MIN.to_u32(), 500_000_000);
+    /// ```
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
