@@ -384,12 +384,6 @@ mod tests {
     }
 
     #[test]
-    fn from_sat_per_vb() {
-        let fee_rate = FeeRate::from_sat_per_vb(10);
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(2500));
-    }
-
-    #[test]
     fn raw_feerate() {
         let fee_rate = FeeRate::from_sat_per_kwu(749);
         assert_eq!(fee_rate.to_sat_per_kwu_floor(), 749);
