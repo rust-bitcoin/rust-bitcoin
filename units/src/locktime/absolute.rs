@@ -228,7 +228,7 @@ impl MedianTimePast {
 
     /// Returns true if a transaction with this locktime can be included in the next block.
     ///
-    /// `self`is the value of the `LockTime` and if `time` is the median time past of the block at
+    /// `self` is the value of the `LockTime` and if `time` is the median time past of the block at
     /// the chain tip then a transaction with this lock can be broadcast for inclusion in the next
     /// block.
     #[inline]
