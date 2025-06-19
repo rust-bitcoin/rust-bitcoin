@@ -16,7 +16,7 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(doc)]
 use crate::locktime;
@@ -44,6 +44,28 @@ macro_rules! impl_u32_wrapper {
             fn from(height: $newtype) -> Self { height.to_u32() }
         }
 
+        #[cfg(feature = "serde")]
+        impl Serialize for $newtype {
+            #[inline]
+            fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+            where
+                S: Serializer,
+            {
+                u32::serialize(&self.to_u32(), s)
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<'de> Deserialize<'de> for $newtype {
+            #[inline]
+            fn deserialize<D>(d: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                Ok(Self::from_u32(u32::deserialize(d)?))
+            }
+        }
+
         #[cfg(feature = "arbitrary")]
         impl<'a> Arbitrary<'a> for $newtype {
             fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -67,7 +89,6 @@ impl_u32_wrapper! {
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct BlockHeight(u32);
 }
 
@@ -128,7 +149,6 @@ impl_u32_wrapper! {
     /// This type is not meant for constructing relative height based timelocks. It is a general
     /// purpose block interval abstraction. For locktimes please see [`locktime::relative::NumberOfBlocks`].
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct BlockHeightInterval(u32);
 }
 
@@ -191,7 +211,6 @@ impl_u32_wrapper! {
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct BlockMtp(u32);
 }
 
@@ -265,7 +284,6 @@ impl_u32_wrapper! {
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct BlockMtpInterval(u32);
 }
 
