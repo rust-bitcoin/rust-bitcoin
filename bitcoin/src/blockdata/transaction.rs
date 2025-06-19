@@ -990,13 +990,21 @@ impl InputWeightPrediction {
     /// [`InputWeightPrediction::new`].
     pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[65]);
 
-    fn add_to_encoded_size(elem: usize, encode: usize) -> usize {
-        elem + compact_size::encoded_size(encode)
+    fn add_to_encoded_size(elem: usize, encode: usize) -> u32 {
+        // unwrap ok, if greater than u32::MAX then do not cast; instead use u32::MAX.
+        let el = u32::try_from(elem).unwrap_or(u32::MAX);
+        // unwrap ok, range of encoded_size is 0..0xFFFFFFFF.
+        let encoded_size = u32::try_from(compact_size::encoded_size(encode)).unwrap();
+        el + encoded_size
     }
 
-    const fn add_to_encoded_size_const(elem: usize, encode: usize) -> usize {
-        // cast ok, supported usize is u32 and u64 which fit u64.
-        elem + compact_size::encoded_size_const(encode as u64)
+    const fn add_to_encoded_size_const(elem: usize, encode: usize) -> u32 {
+        // cast ok, if greater than u32::MAX then do not cast; instead use u32::MAX.
+        let el = if elem > u32::MAX as usize { u32::MAX } else { elem as u32 };
+        // cast ok, range of encoded_size is 0..0xFFFFFFFF.
+        // cast ok (inner), supported usize is u32 and u64 which fit u64.
+        let encoded_size = compact_size::encoded_size_const(encode as u64) as u32;
+        el + encoded_size
     }
 
     /// Input weight prediction corresponding to spending of P2WPKH output using [signature
@@ -1068,16 +1076,20 @@ impl InputWeightPrediction {
         T::Item: Borrow<usize>,
     {
         let (count, total_size) = witness_element_lengths.into_iter().fold(
-            (0usize, 0),
+            (0usize, 0u32),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
                 let elem_size = Self::add_to_encoded_size(elem_len, elem_len);
                 (count + 1, total_size + elem_size)
             },
         );
-        let witness_size = if count > 0 { Self::add_to_encoded_size(total_size, count) } else { 0 };
+        // cast ok, usize is at least 32 bits
+        let witness_size =
+            if count > 0 { Self::add_to_encoded_size(total_size as usize, count) } else { 0 };
         let script_size = Self::add_to_encoded_size(input_script_len, input_script_len);
 
+        let script_size = u32::try_into(script_size).unwrap(); // unwrap ok, u32 fits supported usize.
+        let witness_size = u32::try_into(witness_size).unwrap(); // unwrap ok, u32 fits supported usize.
         InputWeightPrediction { script_size, witness_size }
     }
 
@@ -1088,7 +1100,7 @@ impl InputWeightPrediction {
     /// `new` and thus is intended to be only used in `const` context.
     pub const fn from_slice(input_script_len: usize, witness_element_lengths: &[usize]) -> Self {
         let mut i = 0;
-        let mut total_size = 0;
+        let mut total_size: u32 = 0;
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
@@ -1096,13 +1108,17 @@ impl InputWeightPrediction {
             total_size += elem_size;
             i += 1;
         }
+
         let witness_size = if !witness_element_lengths.is_empty() {
-            Self::add_to_encoded_size_const(total_size, witness_element_lengths.len())
+            // cast ok, usize is at least 32 bits
+            Self::add_to_encoded_size_const(total_size as usize, witness_element_lengths.len())
         } else {
             0
         };
         let script_size = Self::add_to_encoded_size_const(input_script_len, input_script_len);
 
+        let script_size = script_size as usize; // cast ok, u32 fits supported usize.
+        let witness_size = witness_size as usize; // cast ok, u32 fits supported usize.
         InputWeightPrediction { script_size, witness_size }
     }
 
