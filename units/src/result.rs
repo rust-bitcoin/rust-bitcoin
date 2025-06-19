@@ -5,6 +5,8 @@
 use core::convert::Infallible;
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use NumOpResult as R;
 
 use crate::{Amount, FeeRate, SignedAmount, Weight};
@@ -316,6 +318,32 @@ impl fmt::Display for MathOp {
             MathOp::Rem => write!(f, "rem"),
             MathOp::Neg => write!(f, "neg"),
             MathOp::_DoNotUse(infallible) => match infallible {},
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a, T: Arbitrary<'a>> Arbitrary<'a> for NumOpResult<T> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=1)?;
+        match choice {
+            0 => Ok(NumOpResult::Valid(T::arbitrary(u)?)),
+            _ => Ok(NumOpResult::Error(NumOpError(MathOp::arbitrary(u)?))),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for MathOp {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=5)?;
+        match choice {
+            0 => Ok(MathOp::Add),
+            1 => Ok(MathOp::Sub),
+            2 => Ok(MathOp::Mul),
+            3 => Ok(MathOp::Div),
+            4 => Ok(MathOp::Rem),
+            _ => Ok(MathOp::Neg),
         }
     }
 }
