@@ -2398,6 +2398,27 @@ mod tests {
     }
 
     #[test]
+    fn get_key_xpriv_bip32_parent() {
+        let secp = Secp256k1::new();
+
+        let seed = hex!("000102030405060708090a0b0c0d0e0f");
+        let parent_xpriv: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed);
+        let path: DerivationPath = "m/1/2/3".parse().unwrap();
+        let path_prefix: DerivationPath = "m/1".parse().unwrap();
+
+        let expected_private_key =
+            parent_xpriv.derive_xpriv(&secp, &path).unwrap().to_private_key();
+
+        let derived_xpriv = parent_xpriv.derive_xpriv(&secp, &path_prefix).unwrap();
+
+        let derived_key = derived_xpriv
+            .get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(&secp), path.clone())), &secp)
+            .unwrap();
+
+        assert_eq!(derived_key, Some(expected_private_key));
+    }
+
+    #[test]
     fn fee() {
         let output_0_val = Amount::from_sat_u32(99_999_699);
         let output_1_val = Amount::from_sat_u32(100_000_000);
