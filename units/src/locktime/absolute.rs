@@ -153,7 +153,8 @@ impl MedianTimePast {
     /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = MedianTimePast(u32::MAX);
 
-    /// Constructs an [`MedianTimePast`] by computing the median‐time‐past from the last 11 block timestamps
+    /// Constructs an [`MedianTimePast`] by computing the median-time-past from the last
+    /// 11 block timestamps.
     ///
     /// Because block timestamps are not monotonic, this function internally sorts them;
     /// it is therefore not important what order they appear in the array; use whatever
