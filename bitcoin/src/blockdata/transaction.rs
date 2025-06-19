@@ -1124,11 +1124,14 @@ impl InputWeightPrediction {
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    /// Note that this functions return value is bounded at (U32::MAX * 2) * 4 weight units.  This is done to avoid
+    /// calculations that exceed u64::MAX.
     #[deprecated(since = "TBD", note = "use `InputWeightPrediction::witness_weight()` instead")]
     pub const fn weight(&self) -> Weight { Self::witness_weight(self) }
 
     /// Computes the signature, prevout (txid, index), and sequence weights of this weight
-    /// prediction.
+    /// prediction. Note that this functions return value is bounded at 160 + (U32::MAX * 2) * 4
+    /// weight units.  This is done to avoid calculations that exceed u64::MAX.
     ///
     /// See also [`InputWeightPrediction::witness_weight`]
     pub const fn total_weight(&self) -> Weight {
@@ -1140,6 +1143,8 @@ impl InputWeightPrediction {
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    /// Note that this functions return value bounded at (U32::MAX * 2) * 4 weight units.  This is done to avoid
+    /// calculations that exceed u64::MAX.
     ///
     /// See also [`InputWeightPrediction::total_weight`]
     pub const fn witness_weight(&self) -> Weight {
