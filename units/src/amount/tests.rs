@@ -259,6 +259,7 @@ fn checked_arithmetic() {
 #[test]
 fn positive_sub() {
     assert_eq!(ssat(10).positive_sub(ssat(7)).unwrap(), ssat(3));
+    assert_eq!(ssat(10).positive_sub(ssat(10)).unwrap(), ssat(0));
     assert!(ssat(-10).positive_sub(ssat(7)).is_none());
     assert!(ssat(10).positive_sub(ssat(-7)).is_none());
     assert!(ssat(10).positive_sub(ssat(11)).is_none());
