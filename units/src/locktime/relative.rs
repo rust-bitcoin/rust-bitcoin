@@ -211,18 +211,6 @@ pub struct TimeOverflowError {
     pub(crate) seconds: u32,
 }
 
-impl TimeOverflowError {
-    /// Constructs a new `TimeOverflowError` using `seconds`.
-    ///
-    /// # Panics
-    ///
-    /// If `seconds` would not actually overflow a `u16`.
-    pub fn new(seconds: u32) -> Self {
-        assert!(u16::try_from((seconds + 511) / 512).is_err());
-        Self { seconds }
-    }
-}
-
 impl fmt::Display for TimeOverflowError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
