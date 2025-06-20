@@ -990,6 +990,23 @@ impl InputWeightPrediction {
     /// [`InputWeightPrediction::new`].
     pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[65]);
 
+    fn add_to_encoded_size(elem: usize, encode: usize) -> u32 {
+        // unwrap ok, if greater than u32::MAX then do not cast; instead use u32::MAX.
+        let el = u32::try_from(elem).unwrap_or(u32::MAX);
+        // unwrap ok, range of encoded_size is 0..0xFFFFFFFF.
+        let encoded_size = u32::try_from(compact_size::encoded_size(encode)).unwrap();
+        el.saturating_add(encoded_size)
+    }
+
+    const fn add_to_encoded_size_const(elem: usize, encode: usize) -> u32 {
+        // cast ok, if greater than u32::MAX then do not cast; instead use u32::MAX.
+        let el = if elem > u32::MAX as usize { u32::MAX } else { elem as u32 };
+        // cast ok, range of encoded_size is 0..0xFFFFFFFF.
+        // cast ok (inner), supported usize is u32 and u64 which fit u64.
+        let encoded_size = compact_size::encoded_size_const(encode as u64) as u32;
+        el.saturating_add(encoded_size)
+    }
+
     /// Input weight prediction corresponding to spending of P2WPKH output using [signature
     /// grinding].
     ///
@@ -1059,17 +1076,20 @@ impl InputWeightPrediction {
         T::Item: Borrow<usize>,
     {
         let (count, total_size) = witness_element_lengths.into_iter().fold(
-            (0usize, 0),
+            (0usize, 0u32),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + compact_size::encoded_size(elem_len);
-                (count + 1, total_size + elem_size)
+                let elem_size = Self::add_to_encoded_size(elem_len, elem_len);
+                (count + 1, total_size.saturating_add(elem_size))
             },
         );
+        // cast ok, usize is at least 32 bits
         let witness_size =
-            if count > 0 { total_size + compact_size::encoded_size(count) } else { 0 };
-        let script_size = input_script_len + compact_size::encoded_size(input_script_len);
+            if count > 0 { Self::add_to_encoded_size(total_size as usize, count) } else { 0 };
+        let script_size = Self::add_to_encoded_size(input_script_len, input_script_len);
 
+        let script_size = u32::try_into(script_size).unwrap(); // unwrap ok, u32 fits supported usize.
+        let witness_size = u32::try_into(witness_size).unwrap(); // unwrap ok, u32 fits supported usize.
         InputWeightPrediction { script_size, witness_size }
     }
 
@@ -1080,32 +1100,38 @@ impl InputWeightPrediction {
     /// `new` and thus is intended to be only used in `const` context.
     pub const fn from_slice(input_script_len: usize, witness_element_lengths: &[usize]) -> Self {
         let mut i = 0;
-        let mut total_size = 0;
+        let mut total_size: u32 = 0;
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = elem_len + compact_size::encoded_size_const(elem_len as u64);
-            total_size += elem_size;
+            let elem_size = Self::add_to_encoded_size_const(elem_len, elem_len);
+            total_size = total_size.saturating_add(elem_size);
             i += 1;
         }
+
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size + compact_size::encoded_size_const(witness_element_lengths.len() as u64)
+            // cast ok, usize is at least 32 bits
+            Self::add_to_encoded_size_const(total_size as usize, witness_element_lengths.len())
         } else {
             0
         };
-        let script_size =
-            input_script_len + compact_size::encoded_size_const(input_script_len as u64);
+        let script_size = Self::add_to_encoded_size_const(input_script_len, input_script_len);
 
+        let script_size = script_size as usize; // cast ok, u32 fits supported usize.
+        let witness_size = witness_size as usize; // cast ok, u32 fits supported usize.
         InputWeightPrediction { script_size, witness_size }
     }
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    /// Note that this functions return value is bounded at (U32::MAX * 2) * 4 weight units.  This is done to avoid
+    /// calculations that exceed u64::MAX.
     #[deprecated(since = "TBD", note = "use `InputWeightPrediction::witness_weight()` instead")]
     pub const fn weight(&self) -> Weight { Self::witness_weight(self) }
 
     /// Computes the signature, prevout (txid, index), and sequence weights of this weight
-    /// prediction.
+    /// prediction. Note that this functions return value is bounded at 160 + (U32::MAX * 2) * 4
+    /// weight units.  This is done to avoid calculations that exceed u64::MAX.
     ///
     /// See also [`InputWeightPrediction::witness_weight`]
     pub const fn total_weight(&self) -> Weight {
@@ -1117,6 +1143,8 @@ impl InputWeightPrediction {
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    /// Note that this functions return value bounded at (U32::MAX * 2) * 4 weight units.  This is done to avoid
+    /// calculations that exceed u64::MAX.
     ///
     /// See also [`InputWeightPrediction::total_weight`]
     pub const fn witness_weight(&self) -> Weight {
@@ -1140,22 +1168,6 @@ mod sealed {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for InputWeightPrediction {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        // limit script size to 4Mwu block size.
-        let max_block = Weight::MAX_BLOCK.to_wu() as usize;
-        let input_script_len = u.int_in_range(0..=max_block)?;
-        let remaining = max_block - input_script_len;
-
-        // create witness data if there is remaining space.
-        let mut witness_length = u.int_in_range(0..=remaining)?;
-        let mut witness_element_lengths = Vec::new();
-
-        // build vec of random witness element lengths.
-        while witness_length > 0 {
-            let elem = u.int_in_range(1..=witness_length)?;
-            witness_element_lengths.push(elem);
-            witness_length -= elem;
-        }
-
         match u.int_in_range(0..=7)? {
             0 => Ok(InputWeightPrediction::P2WPKH_MAX),
             1 => Ok(InputWeightPrediction::NESTED_P2WPKH_MAX),
@@ -1163,8 +1175,16 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
             3 => Ok(InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX),
             4 => Ok(InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH),
             5 => Ok(InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH),
-            6 => Ok(InputWeightPrediction::new(input_script_len, witness_element_lengths)),
-            _ => Ok(InputWeightPrediction::from_slice(input_script_len, &witness_element_lengths)),
+            6 => {
+                let input_script_len = usize::arbitrary(u)?;
+                let witness_element_lengths: Vec<usize> = Vec::arbitrary(u)?;
+                Ok(InputWeightPrediction::new(input_script_len, witness_element_lengths))
+            }
+            _ => {
+                let input_script_len = usize::arbitrary(u)?;
+                let witness_element_lengths: Vec<usize> = Vec::arbitrary(u)?;
+                Ok(InputWeightPrediction::from_slice(input_script_len, &witness_element_lengths))
+            }
         }
     }
 }
