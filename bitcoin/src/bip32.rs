@@ -193,6 +193,29 @@ impl ChildNumber {
             ChildNumber::Hardened { index: idx } => ChildNumber::from_hardened_idx(idx + 1),
         }
     }
+
+    /// Formats the child number using the provided formatting function.
+    ///
+    /// For hardened child numbers appends a `'` or `hardened_alt_suffix`
+    /// depending on the formatter.
+    fn format_with<F>(
+        &self,
+        f: &mut fmt::Formatter,
+        format_fn: F,
+        hardened_alt_suffix: &str,
+    ) -> fmt::Result
+    where
+        F: Fn(&u32, &mut fmt::Formatter) -> fmt::Result,
+    {
+        match *self {
+            ChildNumber::Hardened { index } => {
+                format_fn(&index, f)?;
+                let alt = f.alternate();
+                f.write_str(if alt { hardened_alt_suffix } else { "'" })
+            }
+            ChildNumber::Normal { index } => format_fn(&index, f),
+        }
+    }
 }
 
 impl From<u32> for ChildNumber {
@@ -216,14 +239,31 @@ impl From<ChildNumber> for u32 {
 
 impl fmt::Display for ChildNumber {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ChildNumber::Hardened { index } => {
-                fmt::Display::fmt(&index, f)?;
-                let alt = f.alternate();
-                f.write_str(if alt { "h" } else { "'" })
-            }
-            ChildNumber::Normal { index } => fmt::Display::fmt(&index, f),
-        }
+        self.format_with(f, fmt::Display::fmt, "h")
+    }
+}
+
+impl fmt::LowerHex for ChildNumber {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.format_with(f, fmt::LowerHex::fmt, "h")
+    }
+}
+
+impl fmt::UpperHex for ChildNumber {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.format_with(f, fmt::UpperHex::fmt, "H")
+    }
+}
+
+impl fmt::Octal for ChildNumber {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.format_with(f, fmt::Octal::fmt, "h")
+    }
+}
+
+impl fmt::Binary for ChildNumber {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.format_with(f, fmt::Binary::fmt, "h")
     }
 }
 
@@ -1121,6 +1161,54 @@ mod tests {
         let path = DerivationPath::from_str("m/84'/0'/0'/0/0").unwrap();
         assert_eq!(format!("{}", path), "84'/0'/0'/0/0");
         assert_eq!(format!("{:#}", path), "84h/0h/0h/0/0");
+    }
+
+    #[test]
+    fn test_lowerhex_formatting() {
+        let normal = Normal { index: 42 };
+        let hardened = Hardened { index: 42 };
+
+        assert_eq!(format!("{:x}", normal), "2a");
+        assert_eq!(format!("{:#x}", normal), "0x2a");
+
+        assert_eq!(format!("{:x}", hardened), "2a'");
+        assert_eq!(format!("{:#x}", hardened), "0x2ah");
+    }
+
+    #[test]
+    fn test_upperhex_formatting() {
+        let normal = Normal { index: 42 };
+        let hardened = Hardened { index: 42 };
+        
+        assert_eq!(format!("{:X}", normal), "2A");
+        assert_eq!(format!("{:#X}", normal), "0x2A");
+
+        assert_eq!(format!("{:X}", hardened), "2A'");
+        assert_eq!(format!("{:#X}", hardened), "0x2AH");
+    }
+
+    #[test]
+    fn test_octal_formatting() {
+        let normal = Normal { index: 42 };
+        let hardened = Hardened { index: 42 };
+
+        assert_eq!(format!("{:o}", normal), "52");
+        assert_eq!(format!("{:#o}", normal), "0o52");
+
+        assert_eq!(format!("{:o}", hardened), "52'");
+        assert_eq!(format!("{:#o}", hardened), "0o52h");
+    }
+
+    #[test]
+    fn test_binary_formatting() {
+        let normal = Normal { index: 42 };
+        let hardened = Hardened { index: 42 };
+
+        assert_eq!(format!("{:b}", normal), "101010");
+        assert_eq!(format!("{:#b}", normal), "0b101010");
+
+        assert_eq!(format!("{:b}", hardened), "101010'");
+        assert_eq!(format!("{:#b}", hardened), "0b101010h");
     }
 
     #[test]
