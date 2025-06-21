@@ -57,10 +57,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 name = "bip32"
 
 [[example]]
-name = "handshake"
-required-features = ["rand-std"]
-
-[[example]]
 name = "ecdsa-psbt"
 required-features = ["std", "bitcoinconsensus"]
 
