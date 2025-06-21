@@ -308,6 +308,13 @@ mod tests {
     }
 
     #[test]
+    fn from_512_second_intervals_roundtrip() {
+        let intervals = 100_u16;
+        let locktime = NumberOf512Seconds::from_512_second_intervals(intervals);
+        assert_eq!(locktime.to_512_second_intervals(), intervals);
+    }
+    
+    #[test]
     fn from_seconds_ceil_success() {
         let actual = NumberOf512Seconds::from_seconds_ceil(100).unwrap();
         let expected = NumberOf512Seconds(1_u16);
