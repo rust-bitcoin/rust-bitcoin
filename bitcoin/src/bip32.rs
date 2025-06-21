@@ -756,7 +756,7 @@ impl Xpriv {
     pub fn derive_priv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        path: &P,
+        path: P,
     ) -> Result<Xpriv, DerivationError> {
         self.derive_xpriv(secp, path)
     }
@@ -767,7 +767,7 @@ impl Xpriv {
     pub fn derive_xpriv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        path: &P,
+        path: P,
     ) -> Result<Xpriv, DerivationError> {
         let mut sk: Xpriv = *self;
         for cnum in path.as_ref() {
@@ -910,7 +910,7 @@ impl Xpub {
     pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        path: &P,
+        path: P,
     ) -> Result<Xpub, DerivationError> {
         self.derive_xpub(secp, path)
     }
@@ -921,7 +921,7 @@ impl Xpub {
     pub fn derive_xpub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        path: &P,
+        path: P,
     ) -> Result<Xpub, DerivationError> {
         let mut pk: Xpub = *self;
         for cnum in path.as_ref() {

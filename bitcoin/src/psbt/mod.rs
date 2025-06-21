@@ -814,7 +814,7 @@ impl GetKey for Xpriv {
             KeyRequest::XOnlyPubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 let key = if self.fingerprint(secp) == *fingerprint {
-                    let k = self.derive_xpriv(secp, &path).map_err(GetKeyError::Bip32)?;
+                    let k = self.derive_xpriv(secp, path).map_err(GetKeyError::Bip32)?;
                     Some(k.to_private_key())
                 } else if self.parent_fingerprint == *fingerprint
                     && !path.is_empty()
