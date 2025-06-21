@@ -65,11 +65,12 @@ impl Height {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::Height;
+    /// use bitcoin_units::locktime::absolute;
     ///
     /// let h: u32 = 741521;
-    /// let height = Height::from_u32(h).expect("invalid height value");
-    /// assert_eq!(height.to_consensus_u32(), h);
+    /// let height = absolute::Height::from_u32(h)?;
+    /// assert_eq!(height.to_u32(), h);
+    /// # Ok::<_, absolute::ConversionError>(())
     /// ```
     #[inline]
     pub const fn from_u32(n: u32) -> Result<Height, ConversionError> {
@@ -81,6 +82,14 @@ impl Height {
     }
 
     /// Converts this [`Height`] to a raw `u32` value.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_units::locktime::absolute;
+    ///
+    /// assert_eq!(absolute::Height::MAX.to_u32(), 499_999_999);
+    /// ```
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
@@ -144,7 +153,8 @@ impl MedianTimePast {
     /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = MedianTimePast(u32::MAX);
 
-    /// Constructs an [`MedianTimePast`] by computing the median‐time‐past from the last 11 block timestamps
+    /// Constructs an [`MedianTimePast`] by computing the median-time-past from the last
+    /// 11 block timestamps.
     ///
     /// Because block timestamps are not monotonic, this function internally sorts them;
     /// it is therefore not important what order they appear in the array; use whatever
@@ -189,11 +199,12 @@ impl MedianTimePast {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::MedianTimePast;
+    /// use bitcoin_units::locktime::absolute;
     ///
     /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let time = MedianTimePast::from_u32(t).expect("invalid time value");
-    /// assert_eq!(time.to_consensus_u32(), t);
+    /// let time = absolute::MedianTimePast::from_u32(t)?;
+    /// assert_eq!(time.to_u32(), t);
+    /// # Ok::<_, absolute::ConversionError>(())
     /// ```
     #[inline]
     pub const fn from_u32(n: u32) -> Result<Self, ConversionError> {
@@ -205,12 +216,20 @@ impl MedianTimePast {
     }
 
     /// Converts this [`MedianTimePast`] to a raw `u32` value.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin_units::locktime::absolute;
+    ///
+    /// assert_eq!(absolute::MedianTimePast::MIN.to_u32(), 500_000_000);
+    /// ```
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 
     /// Returns true if a transaction with this locktime can be included in the next block.
     ///
-    /// `self`is the value of the `LockTime` and if `time` is the median time past of the block at
+    /// `self` is the value of the `LockTime` and if `time` is the median time past of the block at
     /// the chain tip then a transaction with this lock can be broadcast for inclusion in the next
     /// block.
     #[inline]
