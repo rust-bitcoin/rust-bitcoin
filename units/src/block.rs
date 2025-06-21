@@ -6,7 +6,7 @@
 //!
 //! These are general types for abstracting over block heights, they are not designed to use with
 //! lock times. If you are creating lock times you should be using the
-//! [`locktime::absolute::Height`] and [`locktime::relative::Height`] types.
+//! [`locktime::absolute::Height`] and [`locktime::relative::NumberOfBlocks`] types.
 //!
 //! The difference between these types and the locktime types is that these types are thin wrappers
 //! whereas the locktime types contain more complex locktime specific abstractions.

@@ -12,39 +12,49 @@
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
-use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
+use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, BlockMtp,
-    BlockMtpInterval, BlockTime, CheckedSum, FeeRate, SignedAmount, Weight,
+    amount, block, fee_rate, locktime, parse, time, weight, Amount, BlockHeight,
+    BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, CheckedSum, FeeRate, MathOp,
+    NumOpResult, SignedAmount, Weight,
 };
 
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Enums {
     a: amount::Denomination,
+    b: NumOpResult<Amount>,
+    c: MathOp,
 }
 
 impl Enums {
-    fn new() -> Self { Self { a: amount::Denomination::Bitcoin } }
+    fn new() -> Self {
+        Self {
+            a: amount::Denomination::Bitcoin,
+            b: NumOpResult::Valid(Amount::MAX),
+            c: MathOp::Add,
+        }
+    }
 }
 
 /// A struct that includes all public non-error structs.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Structs {
-    a: Amount,
+    // Full path to show alphabetic sort order.
+    a: amount::Amount,
     b: amount::Display,
-    c: SignedAmount,
-    d: BlockHeight,
-    e: BlockInterval,
-    f: FeeRate,
-    g: absolute::Height,
-    h: absolute::MedianTimePast,
-    i: relative::Height,
-    j: relative::Time,
-    k: Weight,
-    l: BlockTime,
-    m: BlockMtp,
-    n: BlockMtpInterval,
+    c: amount::SignedAmount,
+    d: block::BlockHeight,
+    e: block::BlockHeightInterval,
+    f: block::BlockMtp,
+    g: block::BlockMtpInterval,
+    h: fee_rate::FeeRate,
+    i: locktime::absolute::Height,
+    j: locktime::absolute::MedianTimePast,
+    k: locktime::relative::NumberOf512Seconds,
+    l: locktime::relative::NumberOfBlocks,
+    m: time::BlockTime,
+    n: weight::Weight,
 }
 
 impl Structs {
@@ -54,16 +64,16 @@ impl Structs {
             b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::MAX,
             d: BlockHeight::MAX,
-            e: BlockInterval::MAX,
-            f: FeeRate::MAX,
-            g: absolute::Height::MAX,
-            h: absolute::MedianTimePast::MAX,
-            i: relative::Height::MAX,
-            j: relative::Time::MAX,
-            k: Weight::MAX,
-            l: BlockTime::from_u32(u32::MAX),
-            m: BlockMtp::MAX,
-            n: BlockMtpInterval::MAX,
+            e: BlockHeightInterval::MAX,
+            f: BlockMtp::MAX,
+            g: BlockMtpInterval::MAX,
+            h: FeeRate::MAX,
+            i: absolute::Height::MAX,
+            j: absolute::MedianTimePast::MAX,
+            k: relative::NumberOf512Seconds::MAX,
+            l: relative::NumberOfBlocks::MAX,
+            m: BlockTime::from_u32(u32::MAX),
+            n: Weight::MAX,
         }
     }
 }
@@ -83,19 +93,21 @@ impl Types {
 // C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct CommonTraits {
-    a: Amount,
-    c: SignedAmount,
-    d: BlockHeight,
-    e: BlockInterval,
-    f: FeeRate,
-    g: absolute::Height,
-    h: absolute::MedianTimePast,
-    i: relative::Height,
-    j: relative::Time,
-    k: Weight,
-    l: BlockTime,
-    m: BlockMtp,
-    n: BlockMtpInterval,
+    // Full path to show alphabetic sort order.
+    a: amount::Amount,
+    // b: amount::Display,
+    c: amount::SignedAmount,
+    d: block::BlockHeight,
+    e: block::BlockHeightInterval,
+    f: block::BlockMtp,
+    g: block::BlockMtpInterval,
+    h: fee_rate::FeeRate,
+    i: locktime::absolute::Height,
+    j: locktime::absolute::MedianTimePast,
+    k: locktime::relative::NumberOf512Seconds,
+    l: locktime::relative::NumberOfBlocks,
+    m: time::BlockTime,
+    n: weight::Weight,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -103,10 +115,10 @@ struct CommonTraits {
 struct Default {
     a: Amount,
     b: SignedAmount,
-    c: BlockInterval,
-    d: relative::Height,
-    e: relative::Time,
-    f: BlockMtpInterval,
+    c: BlockHeightInterval,
+    d: BlockMtpInterval,
+    e: relative::NumberOf512Seconds,
+    f: relative::NumberOfBlocks,
 }
 
 /// A struct that includes all public error types.
@@ -124,28 +136,18 @@ struct Errors {
     i: amount::PossiblyConfusingDenominationError,
     j: amount::TooPreciseError,
     k: amount::UnknownDenominationError,
-    l: amount::InputTooLargeError,
-    m: amount::InvalidCharacterError,
-    n: amount::MissingDenominationError,
-    o: amount::MissingDigitsError,
-    p: amount::OutOfRangeError,
-    q: amount::ParseAmountError,
-    r: amount::ParseDenominationError,
-    s: amount::ParseError,
-    t: amount::PossiblyConfusingDenominationError,
-    u: amount::TooPreciseError,
-    v: amount::UnknownDenominationError,
-    w: block::TooBigForRelativeHeightError,
-    x: locktime::absolute::ConversionError,
-    y: locktime::absolute::Height,
-    z: locktime::absolute::ParseHeightError,
-    aa: locktime::absolute::ParseTimeError,
-    ab: locktime::relative::TimeOverflowError,
-    ac: locktime::relative::InvalidHeightError,
-    ad: locktime::relative::InvalidTimeError,
-    ae: parse::ParseIntError,
-    af: parse::PrefixedHexError,
-    ag: parse::UnprefixedHexError,
+    l: block::TooBigForRelativeHeightError,
+    #[cfg(feature = "serde")]
+    m: fee_rate::serde::OverflowError,
+    n: locktime::absolute::ConversionError,
+    o: locktime::absolute::ParseHeightError,
+    p: locktime::absolute::ParseTimeError,
+    q: locktime::relative::InvalidHeightError,
+    r: locktime::relative::InvalidTimeError,
+    s: locktime::relative::TimeOverflowError,
+    t: parse::ParseIntError,
+    u: parse::PrefixedHexError,
+    v: parse::UnprefixedHexError,
 }
 
 #[test]
@@ -156,8 +158,8 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
-        SignedAmount, Weight,
+        Amount, BlockHeight, BlockHeightInterval, BlockInterval, BlockMtp, BlockMtpInterval,
+        BlockTime, FeeRate, MathOp, NumOpError, NumOpResult, SignedAmount, Weight,
     };
 }
 
@@ -173,11 +175,15 @@ fn api_can_use_all_types_from_module_amount() {
 
 #[test]
 fn api_can_use_all_types_from_module_block() {
-    use bitcoin_units::block::{BlockHeight, BlockHeightInterval, TooBigForRelativeHeightError};
+    use bitcoin_units::block::{
+        BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, TooBigForRelativeHeightError,
+    };
 }
 
 #[test]
 fn api_can_use_all_types_from_module_fee_rate() {
+    #[cfg(feature = "serde")]
+    use bitcoin_units::fee_rate::serde::OverflowError;
     use bitcoin_units::fee_rate::FeeRate;
 }
 
@@ -190,7 +196,10 @@ fn api_can_use_all_types_from_module_locktime_absolute() {
 
 #[test]
 fn api_can_use_all_types_from_module_locktime_relative() {
-    use bitcoin_units::locktime::relative::{Height, Time, TimeOverflowError};
+    use bitcoin_units::locktime::relative::{
+        Height, InvalidHeightError, InvalidTimeError, NumberOf512Seconds, NumberOfBlocks, Time,
+        TimeOverflowError,
+    };
 }
 
 #[test]
@@ -262,10 +271,10 @@ fn regression_default() {
     let want = Default {
         a: Amount::ZERO,
         b: SignedAmount::ZERO,
-        c: BlockInterval::ZERO,
-        d: relative::Height::ZERO,
-        e: relative::Time::ZERO,
-        f: BlockMtpInterval::ZERO,
+        c: BlockHeightInterval::ZERO,
+        d: BlockMtpInterval::ZERO,
+        e: relative::NumberOf512Seconds::ZERO,
+        f: relative::NumberOfBlocks::ZERO,
     };
     assert_eq!(got, want);
 }
@@ -279,7 +288,7 @@ fn dyn_compatible() {
         // These traits are explicitly not dyn compatible.
         // b: Box<dyn amount::serde::SerdeAmount>,
         // c: Box<dyn amount::serde::SerdeAmountForOpt>,
-        // d: Box<dyn parse::Integer>,
+        // d: Box<dyn parse::Integer>, // Because of core::num::ParseIntError
     }
 }
 
@@ -300,16 +309,16 @@ impl<'a> Arbitrary<'a> for Structs {
             b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::arbitrary(u)?,
             d: BlockHeight::arbitrary(u)?,
-            e: BlockInterval::arbitrary(u)?,
-            f: FeeRate::arbitrary(u)?,
-            g: absolute::Height::arbitrary(u)?,
-            h: absolute::MedianTimePast::arbitrary(u)?,
-            i: relative::Height::arbitrary(u)?,
-            j: relative::Time::arbitrary(u)?,
-            k: Weight::arbitrary(u)?,
-            l: BlockTime::arbitrary(u)?,
-            m: BlockMtp::arbitrary(u)?,
-            n: BlockMtpInterval::arbitrary(u)?,
+            e: BlockHeightInterval::arbitrary(u)?,
+            f: BlockMtp::arbitrary(u)?,
+            g: BlockMtpInterval::arbitrary(u)?,
+            h: FeeRate::arbitrary(u)?,
+            i: absolute::Height::arbitrary(u)?,
+            j: absolute::MedianTimePast::arbitrary(u)?,
+            k: relative::NumberOf512Seconds::arbitrary(u)?,
+            l: relative::NumberOfBlocks::arbitrary(u)?,
+            m: BlockTime::arbitrary(u)?,
+            n: Weight::arbitrary(u)?,
         };
         Ok(a)
     }
@@ -318,7 +327,11 @@ impl<'a> Arbitrary<'a> for Structs {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Enums {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Enums { a: amount::Denomination::arbitrary(u)? };
+        let a = Enums {
+            a: amount::Denomination::arbitrary(u)?,
+            b: NumOpResult::<Amount>::arbitrary(u)?,
+            c: MathOp::arbitrary(u)?,
+        };
         Ok(a)
     }
 }

@@ -20,7 +20,7 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use units::locktime::relative::TimeOverflowError;
+use units::locktime::relative::{NumberOf512Seconds, TimeOverflowError};
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 use crate::locktime::relative;
@@ -156,11 +156,8 @@ impl Sequence {
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
     pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
-        if let Ok(interval) = u16::try_from(seconds / 512) {
-            Ok(Sequence::from_512_second_intervals(interval))
-        } else {
-            Err(TimeOverflowError::new(seconds))
-        }
+        let intervals = NumberOf512Seconds::from_seconds_floor(seconds)?;
+        Ok(Sequence::from_512_second_intervals(intervals.to_512_second_intervals()))
     }
 
     /// Constructs a new relative lock-time from seconds, converting the seconds into 512 second
@@ -169,11 +166,8 @@ impl Sequence {
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
     pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
-            Ok(Sequence::from_512_second_intervals(interval))
-        } else {
-            Err(TimeOverflowError::new(seconds))
-        }
+        let intervals = NumberOf512Seconds::from_seconds_ceil(seconds)?;
+        Ok(Sequence::from_512_second_intervals(intervals.to_512_second_intervals()))
     }
 
     /// Constructs a new sequence from a u32 value.
