@@ -4,6 +4,7 @@
 //! BIP152  Compact Blocks network messages
 
 use bitcoin::bip152;
+
 use crate::consensus::impl_consensus_encoding;
 
 /// sendcmpct message

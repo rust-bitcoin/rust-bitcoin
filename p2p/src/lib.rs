@@ -16,27 +16,25 @@
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
 pub mod address;
+mod consensus;
 pub mod message;
 pub mod message_blockdata;
 pub mod message_bloom;
 pub mod message_compact_blocks;
 pub mod message_filter;
 pub mod message_network;
-mod consensus;
 
 extern crate alloc;
 
 use core::str::FromStr;
 use core::{fmt, ops};
-
 use std::borrow::{Borrow, BorrowMut, ToOwned};
-
-use hex::FromHex;
-use internals::impl_to_hex_from_lower_hex;
-use io::{BufRead, Write};
 
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::network::{Network, Params, TestnetVersion};
+use hex::FromHex;
+use internals::impl_to_hex_from_lower_hex;
+use io::{BufRead, Write};
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -243,7 +241,9 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
     /// Returns the magic bytes for the network defined by `params`.
-    pub fn from_params(params: impl AsRef<Params>) -> Option<Self> { params.as_ref().network.try_into().ok() }
+    pub fn from_params(params: impl AsRef<Params>) -> Option<Self> {
+        params.as_ref().network.try_into().ok()
+    }
 }
 
 impl FromStr for Magic {
@@ -409,8 +409,9 @@ impl std::error::Error for UnknownNetworkError {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use bitcoin::consensus::encode::{deserialize, serialize};
+
+    use super::*;
 
     #[test]
     fn serialize_deserialize() {
@@ -430,7 +431,10 @@ mod tests {
         let magic: Magic = Network::Regtest.try_into().unwrap();
         assert_eq!(serialize(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
 
-        assert_eq!(deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Network::Bitcoin.try_into().ok());
+        assert_eq!(
+            deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
+            Network::Bitcoin.try_into().ok()
+        );
         assert_eq!(
             deserialize::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
             Network::Testnet(TestnetVersion::V3).try_into().ok()
@@ -439,10 +443,15 @@ mod tests {
             deserialize::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
             Network::Testnet(TestnetVersion::V4).try_into().ok()
         );
-        assert_eq!(deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Network::Signet.try_into().ok());
-        assert_eq!(deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Network::Regtest.try_into().ok());
+        assert_eq!(
+            deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
+            Network::Signet.try_into().ok()
+        );
+        assert_eq!(
+            deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
+            Network::Regtest.try_into().ok()
+        );
     }
-
 
     #[test]
     fn service_flags_test() {

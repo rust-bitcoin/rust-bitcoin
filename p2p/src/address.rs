@@ -8,9 +8,9 @@
 use core::{fmt, iter};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
+use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use io::{BufRead, Read, Write};
 
-use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use crate::ServiceFlags;
 
 /// A message which can be sent on the Bitcoin network
@@ -206,7 +206,8 @@ impl Encodable for AddrV2 {
             network: u8,
             bytes: &[u8],
         ) -> Result<usize, io::Error> {
-            Ok(network.consensus_encode(w)? + crate::consensus::consensus_encode_with_size(bytes, w)?)
+            Ok(network.consensus_encode(w)?
+                + crate::consensus::consensus_encode_with_size(bytes, w)?)
         }
         Ok(match *self {
             AddrV2::Ipv4(ref addr) => encode_addr(w, 1, &addr.octets())?,

@@ -6,23 +6,22 @@
 //! are used for (de)serializing Bitcoin objects for transmission on the network.
 
 use core::{fmt, iter};
-use std::borrow::Cow;
+use std::borrow::{Cow, ToOwned};
 use std::boxed::Box;
-use std::borrow::ToOwned;
 
+use bitcoin::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
+use bitcoin::merkle_tree::MerkleBlock;
+use bitcoin::{block, transaction};
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
-use bitcoin::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
-use bitcoin::merkle_tree::MerkleBlock;
 use crate::address::{AddrV2Message, Address};
 use crate::consensus::impl_vec_wrapper;
 use crate::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
     Magic,
 };
-use bitcoin::{block, transaction};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -715,16 +714,16 @@ impl Decodable for V2NetworkMessage {
 mod test {
     use std::net::Ipv4Addr;
 
-    use hex_lit::hex;
-    use units::BlockHeight;
-
-    use super::*;
     use bitcoin::bip152::BlockTransactionsRequest;
     use bitcoin::bip158::{FilterHash, FilterHeader};
     use bitcoin::block::{Block, BlockHash};
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
     use bitcoin::script::ScriptBuf;
     use bitcoin::transaction::{Transaction, Txid};
+    use hex_lit::hex;
+    use units::BlockHeight;
+
+    use super::*;
     use crate::address::AddrV2;
     use crate::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};

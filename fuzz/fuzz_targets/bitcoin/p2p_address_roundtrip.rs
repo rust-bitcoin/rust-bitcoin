@@ -2,8 +2,8 @@ use std::convert::TryFrom;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use bitcoin::consensus::Decodable;
-use p2p::address::AddrV2;
 use honggfuzz::fuzz;
+use p2p::address::AddrV2;
 
 fn do_test(data: &[u8]) {
     if data.len() < 2 {

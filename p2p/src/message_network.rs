@@ -6,10 +6,10 @@
 //! capabilities.
 use std::borrow::Cow;
 
+use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
 use hashes::sha256d;
 use io::{BufRead, Write};
 
-use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::address::Address;
 use crate::consensus::impl_consensus_encoding;
 use crate::ServiceFlags;
@@ -147,10 +147,10 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {
+    use bitcoin::consensus::encode::{deserialize, serialize};
     use hex_lit::hex;
 
     use super::*;
-    use bitcoin::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn version_message_test() {

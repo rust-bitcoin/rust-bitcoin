@@ -4,10 +4,10 @@
 //!
 //! This module describes BIP157 Client Side Block Filtering network messages.
 
-use units::BlockHeight;
-
 use bitcoin::bip158::{FilterHash, FilterHeader};
 use bitcoin::block::BlockHash;
+use units::BlockHeight;
+
 use crate::consensus::impl_consensus_encoding;
 
 /// getcfilters message

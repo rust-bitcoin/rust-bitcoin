@@ -9,7 +9,9 @@ pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
 }
 
 pub(crate) fn parse_failed_error(msg: &'static str) -> bitcoin::consensus::encode::Error {
-    bitcoin::consensus::encode::Error::Parse(bitcoin::consensus::encode::ParseError::ParseFailed(msg))
+    bitcoin::consensus::encode::Error::Parse(bitcoin::consensus::encode::ParseError::ParseFailed(
+        msg,
+    ))
 }
 
 macro_rules! impl_consensus_encoding {
