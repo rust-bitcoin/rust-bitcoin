@@ -30,7 +30,7 @@ impl NumberOfBlocks {
     #[inline]
     pub const fn from_height(blocks: u16) -> Self { Self(blocks) }
 
-    /// Express the [`Height`] as a count of blocks.
+    /// Express the [`NumberOfBlocks`] as a count of blocks.
     #[inline]
     #[must_use]
     pub const fn to_height(self) -> u16 { self.0 }
