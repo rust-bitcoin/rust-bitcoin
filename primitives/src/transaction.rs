@@ -729,9 +729,20 @@ mod tests {
         // Check the number of bytes OutPoint contributes to the transaction is equal to SIZE
         let outpoint_size = outpoint.txid.as_byte_array().len() + outpoint.vout.to_le_bytes().len();
         assert_eq!(outpoint_size, OutPoint::SIZE);
+    }
 
-        // Check TooLong error
-        outpoint_str.push_str("0000000000");
+    #[test]
+    #[cfg(feature = "hex")]
+    fn outpoint_from_str_too_long() {
+        // Check edge case: length exactly 75
+        let mut outpoint_str = "0".repeat(64);
+        outpoint_str.push_str(":1234567890");
+        assert_eq!(outpoint_str.len(), 75);
+        assert!(outpoint_str.parse::<OutPoint>().is_ok());
+
+        // Check TooLong error (length 76)
+        outpoint_str.push('0');
+        assert_eq!(outpoint_str.len(), 76);
         let outpoint: Result<OutPoint, ParseOutPointError> = outpoint_str.parse();
         assert_eq!(outpoint, Err(ParseOutPointError::TooLong));
     }
