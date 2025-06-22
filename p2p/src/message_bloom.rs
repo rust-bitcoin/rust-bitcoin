@@ -4,9 +4,9 @@
 //!
 //! This module describes BIP37 Connection Bloom filtering network messages.
 
+use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
 use io::{BufRead, Write};
 
-use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::consensus::impl_consensus_encoding;
 
 /// `filterload` message sets the current bloom filter

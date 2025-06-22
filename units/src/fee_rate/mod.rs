@@ -402,9 +402,8 @@ mod tests {
 
     #[test]
     fn checked_mul() {
-        let fee_rate = FeeRate::from_sat_per_kwu(10)
-            .checked_mul(10)
-            .expect("expected feerate in sat/kwu");
+        let fee_rate =
+            FeeRate::from_sat_per_kwu(10).checked_mul(10).expect("expected feerate in sat/kwu");
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(100));
 
         let fee_rate = FeeRate::from_sat_per_kwu(10).checked_mul(u64::MAX);
@@ -413,9 +412,8 @@ mod tests {
 
     #[test]
     fn checked_div() {
-        let fee_rate = FeeRate::from_sat_per_kwu(10)
-            .checked_div(10)
-            .expect("expected feerate in sat/kwu");
+        let fee_rate =
+            FeeRate::from_sat_per_kwu(10).checked_div(10).expect("expected feerate in sat/kwu");
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
 
         let fee_rate = FeeRate::from_sat_per_kwu(10).checked_div(0);

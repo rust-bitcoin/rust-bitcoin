@@ -1179,7 +1179,7 @@ mod tests {
     fn test_upperhex_formatting() {
         let normal = Normal { index: 42 };
         let hardened = Hardened { index: 42 };
-        
+
         assert_eq!(format!("{:X}", normal), "2A");
         assert_eq!(format!("{:#X}", normal), "0x2A");
 
