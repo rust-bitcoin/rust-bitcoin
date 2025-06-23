@@ -1667,6 +1667,7 @@ mod tests {
             },
             unsigned_tx: {
                 let mut unsigned = tx.clone();
+                unsigned.input[0].previous_output.txid = tx.compute_txid();
                 unsigned.input[0].script_sig = ScriptBuf::new();
                 unsigned.input[0].witness = Witness::default();
                 unsigned
