@@ -24,9 +24,7 @@ main() {
     need_nightly
     need_cargo_public_api
 
-    generate_api_files "hashes"
-    generate_api_files "io"
-    generate_api_files "primitives"
+    # Only the crates that have a 1.0.0-alpha release ready to go.
     generate_api_files "units"
 
     check_for_changes
