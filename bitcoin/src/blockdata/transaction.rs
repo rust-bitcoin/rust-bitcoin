@@ -1179,6 +1179,14 @@ impl Coinbase {
         Self(tx)
     }
 
+    /// Returns the first input of this coinbase transaction.
+    ///
+    /// This method is infallible because a valid coinbase transaction is guaranteed
+    /// to have exactly one input.
+    pub fn first_input(&self) -> &TxIn {
+        &self.0.input[0]
+    }
+
     /// Returns a reference to the underlying transaction.
     ///
     /// Warning: The coinbase input contains dummy prevouts that should not be treated as real prevouts.

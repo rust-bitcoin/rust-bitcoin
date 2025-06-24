@@ -15,6 +15,7 @@ use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
 use units::BlockTime;
 
+use super::transaction::Coinbase;
 use super::Weight;
 use crate::consensus::encode::WriteExt as _;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -258,8 +259,11 @@ pub trait BlockCheckedExt: sealed::Sealed {
     /// > including base data and witness data.
     fn total_size(&self) -> usize;
 
-    /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction>;
+    /// Returns the coinbase transaction.
+    ///
+    /// This method is infallible for checked blocks because validation ensures
+    /// that a valid coinbase transaction is always present.
+    fn coinbase(&self) -> &Coinbase;
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error>;
@@ -293,8 +297,10 @@ impl BlockCheckedExt for Block<Checked> {
         size
     }
 
-    /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction> { self.transactions().first() }
+    fn coinbase(&self) -> &Coinbase {
+        let first_tx = &self.transactions()[0];
+        Coinbase::assume_coinbase_ref(first_tx)
+    }
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
@@ -311,8 +317,8 @@ impl BlockCheckedExt for Block<Checked> {
             return Err(Bip34Error::Unsupported);
         }
 
-        let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
-        let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
+        let cb = self.coinbase();
+        let input = cb.first_input();
         let push = input
             .script_sig
             .instructions_minimal()
@@ -539,7 +545,7 @@ mod tests {
         let block = block.assume_checked(None);
 
         let cb_txid = "d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38";
-        assert_eq!(block.coinbase().unwrap().compute_txid().to_string(), cb_txid);
+        assert_eq!(block.coinbase().compute_txid().to_string(), cb_txid);
 
         assert_eq!(block.bip34_block_height(), Ok(100_000));
 
