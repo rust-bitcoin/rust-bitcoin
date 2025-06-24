@@ -2094,6 +2094,25 @@ mod tests {
         let pretty_txid = "0x0000000000000000000000000000000000000000000000000000000000000000";
         assert_eq!(pretty_txid, format!("{:#}", &outpoint.txid));
     }
+
+    #[test]
+    fn coinbase_assume_methods() {
+        use crate::constants;
+        use crate::network::Network;
+
+        let genesis = constants::genesis_block(Network::Bitcoin);
+        let coinbase_tx = &genesis.transactions()[0];
+
+        // Test that we can create a Coinbase reference using assume_first_transaction_ref
+        let coinbase_ref = Coinbase::assume_first_transaction_ref(coinbase_tx);
+        assert_eq!(coinbase_ref.compute_txid(), coinbase_tx.compute_txid());
+        assert_eq!(coinbase_ref.compute_wtxid(), coinbase_tx.compute_wtxid());
+
+        // Test that we can create a Coinbase using assume_first_transaction
+        let coinbase_owned = Coinbase::assume_first_transaction(coinbase_tx.clone());
+        assert_eq!(coinbase_owned.compute_txid(), coinbase_tx.compute_txid());
+        assert_eq!(coinbase_owned.compute_wtxid(), coinbase_tx.compute_wtxid());
+    }
 }
 
 #[cfg(bench)]
