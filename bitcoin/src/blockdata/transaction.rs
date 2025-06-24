@@ -1169,6 +1169,43 @@ internals::transparent_newtype! {
         pub fn assume_coinbase_ref(inner: &_) -> &Self;
     }
 }
+
+impl Coinbase {
+    /// Creates a `Coinbase` wrapper assuming this transaction is a coinbase transaction.
+    ///
+    /// This method does not validate that the transaction is actually a coinbase transaction.
+    /// The caller must ensure that this transaction is indeed a valid coinbase transaction.
+    pub fn assume_coinbase(tx: Transaction) -> Self {
+        Self(tx)
+    }
+
+
+    /// Returns a reference to the underlying transaction.
+    ///
+    /// Warning: The coinbase input contains a dummy prevout that should not be treated as a real prevout.
+    #[doc(alias = "as_inner")]
+    pub fn as_transaction(&self) -> &Transaction { &self.0 }
+
+    /// Returns the underlying transaction.
+    ///
+    /// Warning: The coinbase input contains a dummy prevout that should not be treated as a real prevout.
+    #[doc(alias = "into_inner")]
+    pub fn into_transaction(self) -> Transaction { self.0 }
+
+    /// Computes the [`Txid`] of this coinbase transaction.
+    pub fn compute_txid(&self) -> Txid {
+        self.0.compute_txid()
+    }
+
+    /// Returns the wtxid of this coinbase transaction.
+    /// 
+    /// For coinbase transactions, this is always `Wtxid::COINBASE`.
+    #[doc(alias = "compute_wtxid")]
+    pub fn wtxid(&self) -> Wtxid {
+        Wtxid::COINBASE
+    }
+}
+
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::Transaction {}
