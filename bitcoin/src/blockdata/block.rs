@@ -258,8 +258,11 @@ pub trait BlockCheckedExt: sealed::Sealed {
     /// > including base data and witness data.
     fn total_size(&self) -> usize;
 
-    /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction>;
+    /// Returns the coinbase transaction.
+    ///
+    /// This method is infallible for checked blocks because validation ensures
+    /// that a valid coinbase transaction is always present.
+    fn coinbase(&self) -> &Coinbase;
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error>;
@@ -293,8 +296,13 @@ impl BlockCheckedExt for Block<Checked> {
         size
     }
 
-    /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction> { self.transactions().first() }
+    /// Returns the coinbase transaction.
+    ///
+    /// This method is infallible because validation ensures a valid coinbase transaction is always present.
+    fn coinbase(&self) -> &Coinbase {
+        let first_tx = &self.transactions()[0];
+        Coinbase::assume_first_transaction_ref(first_tx)
+    }
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
