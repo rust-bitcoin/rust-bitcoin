@@ -118,6 +118,14 @@ impl BlockUncheckedExt for Block<Unchecked> {
     fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
         let (header, transactions) = self.into_parts();
 
+        if transactions.is_empty() {
+            return Err(InvalidBlockError::NoTransactions);
+        }
+
+        if !transactions[0].is_coinbase() {
+            return Err(InvalidBlockError::InvalidCoinbase);
+        }
+
         if !check_merkle_root(&header, &transactions) {
             return Err(InvalidBlockError::InvalidMerkleRoot);
         }
@@ -405,6 +413,10 @@ pub enum InvalidBlockError {
     InvalidMerkleRoot,
     /// The witness commitment in coinbase transaction does not match the calculated witness_root.
     InvalidWitnessCommitment,
+    /// Block has no transactions (missing coinbase).
+    NoTransactions,
+    /// The first transaction is not a valid coinbase transaction.
+    InvalidCoinbase,
 }
 
 impl From<Infallible> for InvalidBlockError {
@@ -418,6 +430,8 @@ impl fmt::Display for InvalidBlockError {
         match *self {
             InvalidMerkleRoot => write!(f, "header Merkle root does not match the calculated Merkle root"),
             InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
+            NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
+            InvalidCoinbase => write!(f, "the first transaction is not a valid coinbase transaction"),
         }
     }
 }
