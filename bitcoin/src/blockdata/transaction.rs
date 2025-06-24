@@ -1138,6 +1138,40 @@ internals::transparent_newtype! {
         pub fn from_ref(inner: &_) -> &Self;
     }
 }
+
+impl Coinbase {
+    /// Creates a `Coinbase` wrapper assuming this transaction is the first in a block.
+    ///
+    /// This method does not validate that the transaction is actually a coinbase transaction.
+    /// The caller must ensure that this transaction is indeed the first transaction in a valid block.
+    pub fn assume_first_transaction(tx: Transaction) -> Self {
+        Self(tx)
+    }
+
+    /// Creates a `Coinbase` reference assuming this transaction is the first in a block.
+    ///
+    /// This method does not validate that the transaction is actually a coinbase transaction.
+    /// The caller must ensure that this transaction is indeed the first transaction in a valid block.
+    pub fn assume_first_transaction_ref(tx: &Transaction) -> &Self {
+        Self::from_ref(tx)
+    }
+
+    /// Returns a reference to the inner transaction.
+    pub fn inner(&self) -> &Transaction {
+        &self.0
+    }
+
+    /// Computes the [`Txid`] of this coinbase transaction.
+    pub fn compute_txid(&self) -> Txid {
+        self.0.compute_txid()
+    }
+
+    /// Computes the [`Wtxid`] of this coinbase transaction.
+    pub fn compute_wtxid(&self) -> Wtxid {
+        self.0.compute_wtxid()
+    }
+}
+
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::Transaction {}
