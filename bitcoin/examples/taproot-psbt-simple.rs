@@ -65,7 +65,7 @@ fn get_external_address_xpriv<C: Signing>(
     let external_index = ChildNumber::ZERO_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_xpriv(secp, &[external_index, idx]).expect("only deriving two more steps")
+    child_xpriv.derive_xpriv(secp, [external_index, idx]).expect("only deriving two more steps")
 }
 
 // Derive the internal address xpriv.
@@ -81,7 +81,7 @@ fn get_internal_address_xpriv<C: Signing>(
     let internal_index = ChildNumber::ONE_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_xpriv(secp, &[internal_index, idx]).expect("only deriving two more steps")
+    child_xpriv.derive_xpriv(secp, [internal_index, idx]).expect("only deriving two more steps")
 }
 
 // Get the Taproot Key Origin.

@@ -21,7 +21,7 @@ use std::collections::{HashMap, HashSet};
 use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
-use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
+use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
@@ -814,14 +814,13 @@ impl GetKey for Xpriv {
             KeyRequest::XOnlyPubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 let key = if self.fingerprint(secp) == *fingerprint {
-                    let k = self.derive_xpriv(secp, &path).map_err(GetKeyError::Bip32)?;
+                    let k = self.derive_xpriv(secp, path).map_err(GetKeyError::Bip32)?;
                     Some(k.to_private_key())
                 } else if self.parent_fingerprint == *fingerprint
                     && !path.is_empty()
                     && path[0] == self.child_number
                 {
-                    let path = DerivationPath::from_iter(path.into_iter().skip(1).copied());
-                    let k = self.derive_xpriv(secp, &path).map_err(GetKeyError::Bip32)?;
+                    let k = self.derive_xpriv(secp, &path[1..]).map_err(GetKeyError::Bip32)?;
                     Some(k.to_private_key())
                 } else {
                     None
@@ -1330,7 +1329,7 @@ mod tests {
     #[cfg(feature = "rand-std")]
     use {
         crate::address::script_pubkey::ScriptBufExt as _,
-        crate::bip32::{DerivationPath, Fingerprint},
+        crate::bip32::Fingerprint,
         crate::locktime,
         crate::witness_version::WitnessVersion,
         crate::WitnessProgram,
@@ -1339,7 +1338,7 @@ mod tests {
 
     use super::*;
     use crate::address::script_pubkey::ScriptExt as _;
-    use crate::bip32::ChildNumber;
+    use crate::bip32::{ChildNumber, DerivationPath};
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
@@ -2395,6 +2394,27 @@ mod tests {
             secp256k1::Parity::Even,
             "Key should be normalized to have even parity, even when original had odd parity"
         );
+    }
+
+    #[test]
+    fn get_key_xpriv_bip32_parent() {
+        let secp = Secp256k1::new();
+
+        let seed = hex!("000102030405060708090a0b0c0d0e0f");
+        let parent_xpriv: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed);
+        let path: DerivationPath = "m/1/2/3".parse().unwrap();
+        let path_prefix: DerivationPath = "m/1".parse().unwrap();
+
+        let expected_private_key =
+            parent_xpriv.derive_xpriv(&secp, &path).unwrap().to_private_key();
+
+        let derived_xpriv = parent_xpriv.derive_xpriv(&secp, &path_prefix).unwrap();
+
+        let derived_key = derived_xpriv
+            .get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(&secp), path.clone())), &secp)
+            .unwrap();
+
+        assert_eq!(derived_key, Some(expected_private_key));
     }
 
     #[test]
