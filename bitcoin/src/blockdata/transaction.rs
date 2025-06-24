@@ -932,8 +932,8 @@ pub const fn predict_weight_from_slices(
 /// associated constants/methods.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct InputWeightPrediction {
-    script_size: usize,
-    witness_size: usize,
+    script_size: u32,
+    witness_size: u32,
 }
 
 impl InputWeightPrediction {
@@ -995,6 +995,23 @@ impl InputWeightPrediction {
     /// If the input in your transaction uses Taproot key spend you can use this instead of
     /// [`InputWeightPrediction::new`].
     pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[65]);
+
+    const fn saturate_to_u32(x: usize) -> u32 {
+        if x > u32::MAX as usize {
+            u32::MAX
+        } else {
+            x as u32 //cast ok, condition prevents larger than u32::MAX.
+        }
+    }
+
+    const fn encoded_size(value: usize) -> u32 {
+        match value {
+            0..=0xFC => 1,
+            0xFD..=0xFFFF => 3,
+            0x10000..=0xFFFFFFFF => 5,
+            _ => 9,
+        }
+    }
 
     /// Input weight prediction corresponding to spending of P2WPKH output using [signature
     /// grinding].
@@ -1065,16 +1082,16 @@ impl InputWeightPrediction {
         T::Item: Borrow<usize>,
     {
         let (count, total_size) = witness_element_lengths.into_iter().fold(
-            (0usize, 0),
+            (0usize, 0u32),
             |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + compact_size::encoded_size(elem_len);
+                let elem_size = Self::saturate_to_u32(elem_len) + Self::encoded_size(elem_len);
                 (count + 1, total_size + elem_size)
             },
         );
-        let witness_size =
-            if count > 0 { total_size + compact_size::encoded_size(count) } else { 0 };
-        let script_size = input_script_len + compact_size::encoded_size(input_script_len);
+        let witness_size = if count > 0 { total_size + Self::encoded_size(count) } else { 0 };
+        let script_size =
+            Self::saturate_to_u32(input_script_len) + Self::encoded_size(input_script_len);
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1090,17 +1107,17 @@ impl InputWeightPrediction {
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = elem_len + compact_size::encoded_size_const(elem_len as u64);
+            let elem_size = Self::saturate_to_u32(elem_len) + Self::encoded_size(elem_len);
             total_size += elem_size;
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size + compact_size::encoded_size_const(witness_element_lengths.len() as u64)
+            total_size + Self::encoded_size(witness_element_lengths.len())
         } else {
             0
         };
         let script_size =
-            input_script_len + compact_size::encoded_size_const(input_script_len as u64);
+            Self::saturate_to_u32(input_script_len) + Self::encoded_size(input_script_len);
 
         InputWeightPrediction { script_size, witness_size }
     }
