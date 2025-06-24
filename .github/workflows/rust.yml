@@ -296,7 +296,7 @@ jobs:
 
   Kani:
     name: Kani codegen - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubunt-24.04
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
@@ -304,3 +304,21 @@ jobs:
         uses: model-checking/kani-github-action@v1.1
         with:
           args: "--only-codegen"
+
+  API:
+    needs: Prepare
+    name: API - nightly toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
+      - name: "Install cargo-public-api"
+        run: cargo install cargo-public-api@0.35.0 --locked
+      - name: "Run API checker script"
+        run: ./contrib/check-for-api-changes.sh

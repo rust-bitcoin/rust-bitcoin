@@ -1,8 +1,46 @@
-# Unreleased
+# 1.0.0 - 2025-02-24
 
-- TODO: Make a comment about `Amount::MAX_MONEY` including breaking serde
+BOOM! A long time in the making but here goes, our first 1.0 crate release.
 
-- Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+This changelog is a rolling description of everything that will eventually end up in `v1.0`.
+
+* Introduce limit to `Amount`
+  * Prepare to enforce `MAX_MONEY` invariant [#4164](https://github.com/rust-bitcoin/rust-bitcoin/pull/4164)
+  * Enforce `MAX_MONEY` invariant in amount types [#4157](https://github.com/rust-bitcoin/rust-bitcoin/pull/4157)
+* New `NumOpResult` type
+  * Introduce monadic `NumOpResult` type [#4007](https://github.com/rust-bitcoin/rust-bitcoin/pull/4007)
+  * Add impls for `NumOpResult` div and mul [#4337](https://github.com/rust-bitcoin/rust-bitcoin/pull/4337)
+  * Use `NumOpResult` instead of `Option` [#4428](https://github.com/rust-bitcoin/rust-bitcoin/pull/4428)
+  * Return `NumOpResult` when implementing `Div` [#4312](https://github.com/rust-bitcoin/rust-bitcoin/pull/4312)
+* Heavily modify `fee_rate` module:
+  * Make `FeeRate` use MvB internally [#4534](https://github.com/rust-bitcoin/rust-bitcoin/pull/4534)
+  * Add `FeeRate` addition and subtraction traits [#3381](https://github.com/rust-bitcoin/rust-bitcoin/pull/3381)
+  * Remove `Display`/`FromStr` for `FeeRate` [#4512](https://github.com/rust-bitcoin/rust-bitcoin/pull/4512)
+  * Implement `serde` modules for `FeeRate` [#3666](https://github.com/rust-bitcoin/rust-bitcoin/pull/3666)
+* Fix and improve `locktime` modules
+  * Modify locktime `serde` implementations [#4511](https://github.com/rust-bitcoin/rust-bitcoin/pull/4511)
+  * Improve lock times - fix off-by-one bug [#4468](https://github.com/rust-bitcoin/rust-bitcoin/pull/4468)
+  * Do lock time renames [#4462](https://github.com/rust-bitcoin/rust-bitcoin/pull/4462)
+* Make block-related types have private inner fields [#4508](https://github.com/rust-bitcoin/rust-bitcoin/pull/4508)
+* `Timestamp`/`BlockTime`
+  * Add `Timestamp` newtype [#4092](https://github.com/rust-bitcoin/rust-bitcoin/pull/4092)
+  * Rename then new `Timestamp` type to `BlockTime` [#4219](https://github.com/rust-bitcoin/rust-bitcoin/pull/4219)
+* Add µBTC as a recognized str form of a `MicroBitcoin` `Denomination` [#3943](https://github.com/rust-bitcoin/rust-bitcoin/pull/3943)
+* Remove `InputString` from the public API [#3905](https://github.com/rust-bitcoin/rust-bitcoin/pull/3905)
+* Hide the remaining public macros [#3867](https://github.com/rust-bitcoin/rust-bitcoin/pull/3867)
+* Change method return type for `to_unsigned()` [#3769](https://github.com/rust-bitcoin/rust-bitcoin/pull/3769)
+* Change paramater type used for whole bitcoin [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
+* Add `Weight::to_kwu_ceil` [#3740](https://github.com/rust-bitcoin/rust-bitcoin/pull/3740)
+* Replace `String` with `InputString` [#3559](https://github.com/rust-bitcoin/rust-bitcoin/pull/3559)
+
+## Changes relate to error types
+
+* Close the hex parse errors [#3673](https://github.com/rust-bitcoin/rust-bitcoin/pull/3673)
+
+## Improved support for `Arbitrary`
+
+* Implement `Arbitrary` for `units` types [#3777](https://github.com/rust-bitcoin/rust-bitcoin/pull/3777)
+* Add `Arbitrary` to `Weight` [#3257](https://github.com/rust-bitcoin/rust-bitcoin/pull/3257)
 
 # 0.2.0 - 2024-09-18
 
