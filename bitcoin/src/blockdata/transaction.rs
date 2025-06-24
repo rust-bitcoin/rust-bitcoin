@@ -309,7 +309,7 @@ pub trait TransactionExt: sealed::Sealed {
     /// This is useful in combination with [`predict_weight`] if you have the transaction already
     /// constructed with a dummy value in the fee output which you'll adjust after calculating the
     /// weight.
-    fn script_pubkey_lens(&self) -> TxOutToScriptPubkeyLengthIter;
+    fn script_pubkey_lens(&self) -> TxOutToScriptPubkeyLengthIter<'_>;
 
     /// Counts the total number of sigops.
     ///
