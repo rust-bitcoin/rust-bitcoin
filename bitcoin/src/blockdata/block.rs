@@ -328,8 +328,8 @@ impl BlockCheckedExt for Block<Checked> {
             return Err(Bip34Error::Unsupported);
         }
 
-        let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
-        let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
+        let cb = self.coinbase();
+        let input = cb.as_inner().input.first().ok_or(Bip34Error::NotPresent)?;
         let push = input
             .script_sig
             .instructions_minimal()
