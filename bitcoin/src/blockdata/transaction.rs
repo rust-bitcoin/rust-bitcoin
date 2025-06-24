@@ -1126,6 +1126,18 @@ impl InputWeightPrediction {
     }
 }
 
+internals::transparent_newtype! {
+    /// A wrapper type for the coinbase transaction of a block.
+    ///
+    /// This type exists to distinguish coinbase transactions from regular ones at the type level.
+    #[derive(Clone, PartialEq, Eq, Debug, Hash)]
+    pub struct Coinbase(Transaction);
+
+    impl Coinbase {
+        /// Creates a reference to `Coinbase` from a reference to the inner `Transaction`.
+        pub fn from_ref(inner: &_) -> &Self;
+    }
+}
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::Transaction {}
