@@ -80,6 +80,16 @@ pub enum Error {
     NegativeFee,
     /// Integer overflow in fee calculation
     FeeOverflow,
+    /// Non-witness UTXO (which is a complete transaction) has [`crate::Txid`] that
+    /// does not match the transaction input.
+    IncorrectNonWitnessUtxo {
+        /// The index of the input in question.
+        index: usize,
+        /// The outpoint of the input, as it appears in the unsigned transaction.
+        input_outpoint: crate::OutPoint,
+        /// The ['crate::Txid`] of the non-witness UTXO.
+        non_witness_utxo_txid: crate::Txid,
+    },
     /// Parsing error indicating invalid public keys
     InvalidPublicKey(crate::crypto::key::FromSliceError),
     /// Parsing error indicating invalid secp256k1 public keys
@@ -154,6 +164,13 @@ impl fmt::Display for Error {
                 write_err!(f, "error parsing bitcoin consensus encoded object"; e),
             NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             FeeOverflow => f.write_str("integer overflow in fee calculation"),
+            IncorrectNonWitnessUtxo { index, input_outpoint, non_witness_utxo_txid } => {
+                write!(
+                    f,
+                    "non-witness utxo txid is {}, which does not match input {}'s outpoint {}",
+                    non_witness_utxo_txid, index, input_outpoint
+                )
+            }
             InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
             InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
             InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
@@ -200,6 +217,7 @@ impl std::error::Error for Error {
             | CombineInconsistentKeySources(_)
             | NegativeFee
             | FeeOverflow
+            | IncorrectNonWitnessUtxo { .. }
             | InvalidPublicKey(_)
             | InvalidSecp256k1PublicKey(_)
             | InvalidXOnlyPublicKey

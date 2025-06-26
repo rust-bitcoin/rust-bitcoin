@@ -1666,6 +1666,7 @@ mod tests {
             },
             unsigned_tx: {
                 let mut unsigned = tx.clone();
+                unsigned.input[0].previous_output.txid = tx.compute_txid();
                 unsigned.input[0].script_sig = ScriptBuf::new();
                 unsigned.input[0].witness = Witness::default();
                 unsigned
@@ -2108,6 +2109,28 @@ mod tests {
             assert!(!psbt.inputs[0].tap_script_sigs.is_empty());
             assert!(!psbt.inputs[0].tap_key_origins.is_empty());
             rtt_psbt(psbt);
+        }
+    }
+
+    #[test]
+    fn invalid_vector_4617() {
+        let err = hex_psbt("70736274ff01007374ff0103010000000000000000002e2873007374ff0107736205000000000000000000000000000000000006060005feffffff74ff01000a000000000000002cc760008530b38dac0100030500000074ff01070100000000000000000000000000c0316888e006000600050000736274ff00d90001007374ff41030100000000000a0a06002e2873007374ff01070100000000000000000000000000000000ff0000060600050000736274ff01000a0080000000000024c7600005193b1e400700030500000074ff0107010000000000a9c7df3f07000570ed62c76004c3ca95c5f90200010742420a0a000000000000").unwrap_err();
+        match err {
+            Error::IncorrectNonWitnessUtxo { index: 0, input_outpoint, non_witness_utxo_txid } => {
+                assert_eq!(
+                    input_outpoint,
+                    "00000000000000000000000562730701ff74730073282e000000000000000000:0"
+                        .parse()
+                        .unwrap(),
+                );
+                assert_eq!(
+                    non_witness_utxo_txid,
+                    "9ed45fd3f73b038649bee6e763dbd70868745c48a0d2b0299f42c68f957995f4"
+                        .parse()
+                        .unwrap(),
+                );
+            }
+            _ => panic!("expected output hash mismatch error, got {}", err),
         }
     }
 
