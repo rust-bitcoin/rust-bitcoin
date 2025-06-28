@@ -469,7 +469,7 @@ impl_our! {
     impl Write for std::process::ChildStdin
 }
 
-// No ide why other &ChildStd* are not implemented
+// No idea why other &ChildStd* are not implemented
 impl_our! {
     impl Write for &'_ std::process::ChildStdin
 }
