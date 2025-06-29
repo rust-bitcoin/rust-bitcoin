@@ -313,7 +313,7 @@ mod tests {
         let locktime = NumberOf512Seconds::from_512_second_intervals(intervals);
         assert_eq!(locktime.to_512_second_intervals(), intervals);
     }
-    
+
     #[test]
     fn from_seconds_ceil_success() {
         let actual = NumberOf512Seconds::from_seconds_ceil(100).unwrap();
