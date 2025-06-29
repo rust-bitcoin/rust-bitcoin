@@ -672,7 +672,7 @@ impl From<Infallible> for IndexOutOfRangeError {
 
 impl fmt::Display for IndexOutOfRangeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "index {} out of range [0, 2^31 - 1] (do you have an hardened child number, rather than an index?)", self.index)
+        write!(f, "index {} out of range [0, 2^31 - 1] (do you have a hardened child number, rather than an index?)", self.index)
     }
 }
 
