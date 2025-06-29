@@ -227,6 +227,10 @@ fn add() {
     assert!(ssat(-127) + ssat(179) == ssat(52).into());
     assert!(ssat(127) + ssat(-179) == ssat(-52).into());
     assert!(ssat(-127) + ssat(-179) == ssat(-306).into());
+
+    // Implemented using generic impl.
+    assert!(res(127) + sat(179) == sat(306).into());
+    assert!(sres(127) + ssat(179) == ssat(306).into());
 }
 
 #[test]
@@ -240,6 +244,10 @@ fn sub() {
     assert!(ssat(-127) - ssat(179) == ssat(-306).into());
     assert!(ssat(127) - ssat(-179) == ssat(306).into());
     assert!(ssat(-127) - ssat(-179) == ssat(52).into());
+
+    // Implemented using generic impl.
+    assert!(res(179) - sat(127) == sat(52).into());
+    assert!(sres(179) - ssat(127) == ssat(52).into());
 }
 
 #[test]
