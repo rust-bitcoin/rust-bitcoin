@@ -1135,7 +1135,10 @@ internals::transparent_newtype! {
 
     impl Coinbase {
         /// Creates a reference to `Coinbase` from a reference to the inner `Transaction`.
-        pub fn from_ref(inner: &_) -> &Self;
+        ///
+        /// This method does not validate that the transaction is actually a coinbase transaction.
+        /// The caller must ensure that the transaction is indeed a valid coinbase transaction
+        pub fn assume_coinbase_ref(inner: &_) -> &Self;
     }
 }
 
@@ -1153,13 +1156,14 @@ impl Coinbase {
     /// This method does not validate that the transaction is actually a coinbase transaction.
     /// The caller must ensure that this transaction is indeed the first transaction in a valid block.
     pub fn assume_first_transaction_ref(tx: &Transaction) -> &Self {
-        Self::from_ref(tx)
+        Self::assume_coinbase_ref(tx)
     }
 
     /// Returns a reference to the inner transaction.
-    pub fn inner(&self) -> &Transaction {
-        &self.0
-    }
+    pub fn as_inner(&self) -> &Transaction { &self.0 }
+
+    /// Returns the inner transaction.
+    pub fn into_inner(self) -> Transaction { self.0 }
 
     /// Computes the [`Txid`] of this coinbase transaction.
     pub fn compute_txid(&self) -> Txid {

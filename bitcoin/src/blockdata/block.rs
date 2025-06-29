@@ -329,7 +329,7 @@ impl BlockCheckedExt for Block<Checked> {
         }
 
         let cb = self.coinbase();
-        let input = cb.inner().input.first().ok_or(Bip34Error::NotPresent)?;
+        let input = cb.as_inner().input.first().ok_or(Bip34Error::NotPresent)?;
         let push = input
             .script_sig
             .instructions_minimal()
@@ -857,8 +857,8 @@ mod tests {
         assert_eq!(coinbase.compute_txid(), expected_txid);
         assert_eq!(coinbase.compute_wtxid(), genesis.transactions()[0].compute_wtxid());
 
-        // Test that inner() returns the correct transaction
-        assert_eq!(coinbase.inner(), &genesis.transactions()[0]);
+        // Test that as_inner() returns the correct transaction
+        assert_eq!(coinbase.as_inner(), &genesis.transactions()[0]);
     }
 
     #[test]
@@ -915,7 +915,7 @@ mod tests {
 
         // Test that coinbase method returns a Coinbase type
         let coinbase = block.coinbase();
-        assert!(coinbase.inner().is_coinbase());
+        assert!(coinbase.as_inner().is_coinbase());
 
         // Test that the coinbase transaction ID matches expected
         let cb_txid = "d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38";
