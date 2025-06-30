@@ -5,7 +5,7 @@
 //! This module defines the `NetworkMessage` and `RawNetworkMessage` types that
 //! are used for (de)serializing Bitcoin objects for transmission on the network.
 
-use core::{fmt, iter};
+use core::fmt;
 use std::borrow::{Cow, ToOwned};
 use std::boxed::Box;
 
@@ -114,14 +114,15 @@ impl Decodable for CommandString {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(r)?;
-        let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| {
-            if u > 0 {
-                Some(u as char)
-            } else {
-                None
-            }
-        }));
-        Ok(CommandString(rv))
+
+        // Find the last non-null byte and trim null padding from the end
+        let trimmed = &rawbytes[..rawbytes.iter().rposition(|&b| b != 0).map_or(0, |i| i + 1)];
+
+        if !trimmed.is_ascii() {
+            return Err(crate::consensus::parse_failed_error("Command string must be ASCII"));
+        }
+
+        Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
     }
 }
 
@@ -892,9 +893,18 @@ mod test {
         assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
         assert_eq!(cs.unwrap(), CommandString::try_from_static("Andrew").unwrap());
 
-        let short_cs: Result<CommandString, _> =
-            deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
-        assert!(short_cs.is_err());
+        // Test that embedded null bytes are preserved while trailing nulls are trimmed
+        let cs: Result<CommandString, _> =
+            deserialize(&[0, 0x41u8, 0x6e, 0x64, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]);
+        assert!(cs.is_ok());
+        assert_eq!(cs.as_ref().unwrap().to_string(), "\0And\0rew".to_owned());
+        assert_eq!(cs.unwrap(), CommandString::try_from_static("\0And\0rew").unwrap());
+
+        // Invalid CommandString, must be ASCII
+        assert!(deserialize::<CommandString>(&[0, 0x41u8, 0x6e, 0xa4, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]).is_err());
+
+        // Invalid CommandString, must be 12 bytes
+        assert!(deserialize::<CommandString>(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]).is_err());
     }
 
     #[test]
