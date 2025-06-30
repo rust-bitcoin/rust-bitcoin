@@ -114,13 +114,13 @@ impl Decodable for CommandString {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(r)?;
-        let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| {
-            if u > 0 {
-                Some(u as char)
-            } else {
-                None
-            }
-        }));
+
+        // Find the last non-null byte to trim null padding from the end
+        // Bitcoin protocol commands are null-padded to 12 bytes
+        let end_pos = rawbytes.iter().rposition(|&b| b != 0).map(|pos| pos + 1).unwrap_or(0);
+
+        let rv = iter::FromIterator::from_iter(rawbytes[..end_pos].iter().map(|&u| u as char));
+
         Ok(CommandString(rv))
     }
 }
@@ -891,6 +891,13 @@ mod test {
         assert!(cs.is_ok());
         assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
         assert_eq!(cs.unwrap(), CommandString::try_from_static("Andrew").unwrap());
+
+        // Test that embedded null bytes are preserved while trailing nulls are trimmed
+        let cs: Result<CommandString, _> =
+            deserialize(&[0, 0x41u8, 0x6e, 0x64, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]);
+        assert!(cs.is_ok());
+        assert_eq!(cs.as_ref().unwrap().to_string(), "\0And\0rew".to_owned());
+        assert_eq!(cs.unwrap(), CommandString::try_from_static("\0And\0rew").unwrap());
 
         let short_cs: Result<CommandString, _> =
             deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
