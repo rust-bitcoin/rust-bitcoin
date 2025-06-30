@@ -5,6 +5,7 @@ use core::ops::Deref;
 
 use hex::FromHex as _;
 use internals::ToU64 as _;
+use primitives::script::{Context, ScriptPubkey};
 
 use super::{opcode_to_verify, Builder, Instruction, PushBytes, ScriptExtPriv as _};
 use crate::consensus;
@@ -16,180 +17,210 @@ use crate::prelude::Vec;
 #[doc(inline)]
 pub use primitives::script::ScriptBuf;
 
-crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`ScriptBuf`] type.
-    pub trait ScriptBufExt impl for ScriptBuf {
-        /// Constructs a new script builder
-        fn builder() -> Builder { Builder::new() }
+/// Extension functionality for the [`ScriptBuf`] type.
+pub trait ScriptBufExt: Sized + sealed::Sealed {
+    /// Constructs a new script builder
+    fn builder() -> Builder<ScriptPubkey>;
 
-        /// Generates OP_RETURN-type of scriptPubkey for the given data.
-        fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
-            Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
-        }
+    /// Generates OP_RETURN-type of scriptPubkey for the given data.
+    fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self;
 
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        fn from_hex_prefixed(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
-            consensus::encode::deserialize_hex(s)
-        }
+    /// Constructs a new [`ScriptBuf`] from a hex string.
+    ///
+    /// The input string is expected to be consensus encoded i.e., includes the length prefix.
+    fn from_hex_prefixed(s: &str) -> Result<Self, consensus::FromHexError>;
 
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        #[deprecated(since = "TBD", note = "use `from_hex_string_no_length_prefix()` instead")]
-        fn from_hex(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
-            Self::from_hex_no_length_prefix(s)
-        }
+    /// Constructs a new [`ScriptBuf`] from a hex string.
+    ///
+    /// This is **not** consensus encoding. If your hex string is a consensus encoded script
+    /// then use `ScriptBuf::from_hex_prefixed`.
+    fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::HexToBytesError>;
 
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-        /// then use `ScriptBuf::from_hex_prefixed`.
-        fn from_hex_no_length_prefix(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
-            let v = Vec::from_hex(s)?;
-            Ok(ScriptBuf::from_bytes(v))
-        }
+    /// Adds a single opcode to the script.
+    fn push_opcode(&mut self, data: Opcode);
 
-        /// Adds a single opcode to the script.
-        fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
+    /// Adds instructions to push some arbitrary data onto the stack.
+    fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T);
 
-        /// Adds instructions to push some arbitrary data onto the stack.
-        fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
-            let bytes = data.as_ref().as_bytes();
-            if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
-                match bytes[0] {
-                    0x81 => { self.push_opcode(OP_PUSHNUM_NEG1); },
-                    0 => { self.push_opcode(OP_PUSHBYTES_0); },
-                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))); },
-                    _ => {}, // unreachable arm
-                }
-            } else {
-                self.push_slice_non_minimal(data);
-            }
-        }
+    /// Adds instructions to push some arbitrary data onto the stack without minimality.
+    ///
+    /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
+    ///
+    /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+    fn push_slice_non_minimal<T: AsRef<PushBytes>>(&mut self, data: T);
 
-        /// Adds instructions to push some arbitrary data onto the stack without minimality.
-        ///
-        /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
-        ///
-        /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-        fn push_slice_non_minimal<T: AsRef<PushBytes>>(&mut self, data: T) {
-            let data = data.as_ref();
-            self.reserve(ScriptBuf::reserved_len_for_slice(data.len()));
-            self.push_slice_no_opt(data);
-        }
+    /// Add a single instruction to the script.
+    ///
+    /// # Panics
+    ///
+    /// The method panics if the instruction is a data push with length greater or equal to
+    /// 0x100000000.
+    fn push_instruction(&mut self, instruction: Instruction<'_>);
 
-        /// Add a single instruction to the script.
-        ///
-        /// # Panics
-        ///
-        /// The method panics if the instruction is a data push with length greater or equal to
-        /// 0x100000000.
-        fn push_instruction(&mut self, instruction: Instruction<'_>) {
-            match instruction {
-                Instruction::Op(opcode) => self.push_opcode(opcode),
-                Instruction::PushBytes(bytes) => self.push_slice(bytes),
-            }
-        }
+    /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
+    fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>);
 
-        /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
-        fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
-            match instruction {
-                Instruction::Op(opcode) => self.push_opcode(opcode),
-                Instruction::PushBytes(bytes) => self.push_slice_no_opt(bytes),
-            }
-        }
+    /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
+    ///
+    /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
+    /// in the script right after. To save space this function appends `VERIFY` only if
+    /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
+    /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
+    ///
+    /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
+    /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
+    /// semantics.
+    ///
+    /// This function needs to iterate over the script to find the last instruction. Prefer
+    /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
+    /// multiple times.
+    fn scan_and_push_verify(&mut self);
+}
 
-        /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
-        ///
-        /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
-        /// in the script right after. To save space this function appends `VERIFY` only if
-        /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
-        /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
-        ///
-        /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
-        /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
-        /// semantics.
-        ///
-        /// This function needs to iterate over the script to find the last instruction. Prefer
-        /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
-        /// multiple times.
-        fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
+impl<C: Context> ScriptBufExt for ScriptBuf<C> {
+    fn builder() -> Builder<ScriptPubkey> { Builder::new() }
+
+    fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
+        Builder::<C>::new().push_opcode(OP_RETURN).push_slice(data).into_script()
     }
+
+    fn from_hex_prefixed(s: &str) -> Result<ScriptBuf<C>, consensus::FromHexError> {
+        consensus::encode::deserialize_hex(s)
+    }
+
+    fn from_hex_no_length_prefix(s: &str) -> Result<ScriptBuf<C>, hex::HexToBytesError> {
+        let v = Vec::from_hex(s)?;
+        Ok(ScriptBuf::<C>::from_bytes(v))
+    }
+
+    fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
+
+    fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
+        let bytes = data.as_ref().as_bytes();
+        if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
+            match bytes[0] {
+                0x81 => {
+                    self.push_opcode(OP_PUSHNUM_NEG1);
+                }
+                0 => {
+                    self.push_opcode(OP_PUSHBYTES_0);
+                }
+                1..=16 => {
+                    self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1)));
+                }
+                _ => {} // unreachable arm
+            }
+        } else {
+            self.push_slice_non_minimal(data);
+        }
+    }
+
+    fn push_slice_non_minimal<T: AsRef<PushBytes>>(&mut self, data: T) {
+        let data = data.as_ref();
+        self.reserve(ScriptBuf::<C>::reserved_len_for_slice(data.len()));
+        self.push_slice_no_opt(data);
+    }
+
+    fn push_instruction(&mut self, instruction: Instruction<'_>) {
+        match instruction {
+            Instruction::Op(opcode) => self.push_opcode(opcode),
+            Instruction::PushBytes(bytes) => self.push_slice(bytes),
+        }
+    }
+
+    fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
+        match instruction {
+            Instruction::Op(opcode) => self.push_opcode(opcode),
+            Instruction::PushBytes(bytes) => self.push_slice_no_opt(bytes),
+        }
+    }
+
+    fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
 }
 
 mod sealed {
+    use primitives::script::Context;
+
     pub trait Sealed {}
-    impl Sealed for super::ScriptBuf {}
+    impl<C: Context> Sealed for super::ScriptBuf<C> {}
 }
 
-crate::internal_macros::define_extension_trait! {
-    pub(crate) trait ScriptBufExtPriv impl for ScriptBuf {
-        /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
-        ///
-        /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
-        fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_> {
-            let vec = core::mem::take(self).into_bytes();
-            ScriptBufAsVec(self, vec)
-        }
+pub(crate) trait ScriptBufExtPriv<C: Context> {
+    /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
+    ///
+    /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
+    fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_, C>;
 
-        /// Pushes the slice without reserving
-        fn push_slice_no_opt(&mut self, data: &PushBytes) {
-            let mut this = self.as_byte_vec();
-            // Start with a PUSH opcode
-            match data.len().to_u64() {
-                n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
-                    this.push(n as u8);
-                }
-                n if n < 0x100 => {
-                    this.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
-                    this.push(n as u8);
-                }
-                n if n < 0x10000 => {
-                    this.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
-                    this.push((n % 0x100) as u8);
-                    this.push((n / 0x100) as u8);
-                }
-                // `PushBytes` enforces len < 0x100000000
-                n => {
-                    this.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
-                    this.push((n % 0x100) as u8);
-                    this.push(((n / 0x100) % 0x100) as u8);
-                    this.push(((n / 0x10000) % 0x100) as u8);
-                    this.push((n / 0x1000000) as u8);
-                }
-            }
-            // Then push the raw bytes
-            this.extend_from_slice(data.as_bytes());
-        }
+    /// Pushes the slice without reserving
+    fn push_slice_no_opt(&mut self, data: &PushBytes);
 
-        /// Computes the sum of `len` and the length of an appropriate push opcode.
-        fn reserved_len_for_slice(len: usize) -> usize {
-            len + match len {
-                0..=0x4b => 1,
-                0x4c..=0xff => 2,
-                0x100..=0xffff => 3,
-                // we don't care about oversized, the other fn will panic anyway
-                _ => 5,
+    /// Computes the sum of `len` and the length of an appropriate push opcode.
+    fn reserved_len_for_slice(len: usize) -> usize;
+
+    /// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
+    /// alternative.
+    ///
+    /// See the public fn [`Self::scan_and_push_verify`] to learn more.
+    fn push_verify(&mut self, last_opcode: Option<Opcode>);
+}
+
+impl<C: Context> ScriptBufExtPriv<C> for ScriptBuf<C> {
+    fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_, C> {
+        let vec = core::mem::take(self).into_bytes();
+        ScriptBufAsVec(self, vec)
+    }
+
+    fn push_slice_no_opt(&mut self, data: &PushBytes) {
+        let mut this = self.as_byte_vec();
+        // Start with a PUSH opcode
+        match data.len().to_u64() {
+            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
+                this.push(n as u8);
+            }
+            n if n < 0x100 => {
+                this.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
+                this.push(n as u8);
+            }
+            n if n < 0x10000 => {
+                this.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
+                this.push((n % 0x100) as u8);
+                this.push((n / 0x100) as u8);
+            }
+            // `PushBytes` enforces len < 0x100000000
+            n => {
+                this.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
+                this.push((n % 0x100) as u8);
+                this.push(((n / 0x100) % 0x100) as u8);
+                this.push(((n / 0x10000) % 0x100) as u8);
+                this.push((n / 0x1000000) as u8);
             }
         }
+        // Then push the raw bytes
+        this.extend_from_slice(data.as_bytes());
+    }
 
-        /// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
-        /// alternative.
-        ///
-        /// See the public fn [`Self::scan_and_push_verify`] to learn more.
-        fn push_verify(&mut self, last_opcode: Option<Opcode>) {
-            match opcode_to_verify(last_opcode) {
-                Some(opcode) => {
-                    self.as_byte_vec().pop();
-                    self.push_opcode(opcode);
-                }
-                None => self.push_opcode(OP_VERIFY),
+    fn reserved_len_for_slice(len: usize) -> usize {
+        len + match len {
+            0..=0x4b => 1,
+            0x4c..=0xff => 2,
+            0x100..=0xffff => 3,
+            // we don't care about oversized, the other fn will panic anyway
+            _ => 5,
+        }
+    }
+
+    fn push_verify(&mut self, last_opcode: Option<Opcode>) {
+        match opcode_to_verify(last_opcode) {
+            Some(opcode) => {
+                self.as_byte_vec().pop();
+                self.push_opcode(opcode);
             }
+            None => self.push_opcode(OP_VERIFY),
         }
     }
 }
 
-impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
+impl<'a, C: Context> core::iter::FromIterator<Instruction<'a>> for ScriptBuf<C> {
     fn from_iter<T>(iter: T) -> Self
     where
         T: IntoIterator<Item = Instruction<'a>>,
@@ -200,7 +231,7 @@ impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
     }
 }
 
-impl<'a> Extend<Instruction<'a>> for ScriptBuf {
+impl<'a, C: Context> Extend<Instruction<'a>> for ScriptBuf<C> {
     fn extend<T>(&mut self, iter: T)
     where
         T: IntoIterator<Item = Instruction<'a>>,
@@ -241,19 +272,19 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 /// In reality the backing `Vec<u8>` is swapped with an empty one and this is holding both the
 /// reference and the vec. The vec is put back when this drops so it also covers panics. (But not
 /// leaks, which is OK since we never leak.)
-pub(crate) struct ScriptBufAsVec<'a>(&'a mut ScriptBuf, Vec<u8>);
+pub(crate) struct ScriptBufAsVec<'a, C: Context>(&'a mut ScriptBuf<C>, Vec<u8>);
 
-impl core::ops::Deref for ScriptBufAsVec<'_> {
+impl<C: Context> core::ops::Deref for ScriptBufAsVec<'_, C> {
     type Target = Vec<u8>;
 
     fn deref(&self) -> &Self::Target { &self.1 }
 }
 
-impl core::ops::DerefMut for ScriptBufAsVec<'_> {
+impl<C: Context> core::ops::DerefMut for ScriptBufAsVec<'_, C> {
     fn deref_mut(&mut self) -> &mut Self::Target { &mut self.1 }
 }
 
-impl Drop for ScriptBufAsVec<'_> {
+impl<C: Context> Drop for ScriptBufAsVec<'_, C> {
     fn drop(&mut self) {
         let vec = core::mem::take(&mut self.1);
         *(self.0) = ScriptBuf::from_bytes(vec);

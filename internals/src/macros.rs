@@ -38,6 +38,27 @@ macro_rules! impl_to_hex_from_lower_hex {
     };
 }
 
+/// TODO: Docs
+#[macro_export]
+macro_rules! impl_to_hex_from_lower_hex_new {
+    (impl$(<$($gen1:ident: $gent:path),*>)? $t:ident$(<$($gen2:ident),*>)? {
+        pub fn to_hex(&self) -> alloc::string::String {
+            let len = $len_fn:expr;
+        }
+    }) => {
+        impl$(<$($gen1: $gent),*>)? $t$(<$($gen2),*>)? {
+            /// Gets the hex representation of this type
+            pub fn to_hex(&self) -> alloc::string::String {
+                use core::fmt::Write;
+                let len = $len_fn;
+                let mut hex_string = alloc::string::String::with_capacity(len(self));
+                write!(&mut hex_string, "{:x}", self).expect("writing to string shouldn't fail");
+                hex_string
+            }
+        }
+    };
+}
+
 /// Creates a transparent wrapper around an inner type and soundly implements reference casts.
 ///
 /// This macro takes care of several issues related to newtypes that need to allow casting their

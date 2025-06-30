@@ -210,7 +210,7 @@ impl WatchOnly {
         let pk = self.input_xpub.to_public_key();
         let wpkh = pk.wpubkey_hash();
 
-        let redeem_script = ScriptBuf::new_p2wpkh(wpkh);
+        let redeem_script = ScriptBuf::new_p2wpkh(wpkh).into_redeem_script();
         input.redeem_script = Some(redeem_script);
 
         let fingerprint = self.master_fingerprint;

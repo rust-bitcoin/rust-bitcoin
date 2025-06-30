@@ -5,46 +5,26 @@
 use internals::array::ArrayExt;
 use secp256k1::{Secp256k1, Verification};
 
-use crate::internal_macros::define_extension_trait;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
-    XOnlyPublicKey,
 };
 use crate::opcodes::all::*;
+use crate::script::ext::*;
 use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash,
+    self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptPubkey,
     WScriptHash, WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
-define_extension_trait! {
-    /// Extension functionality to add scriptPubkey support to the [`Builder`] type.
-    pub trait BuilderExt impl for Builder {
-        /// Adds instructions to push a public key onto the stack.
-        fn push_key(self, key: PublicKey) -> Builder {
-            if key.compressed {
-                self.push_slice(key.inner.serialize())
-            } else {
-                self.push_slice(key.inner.serialize_uncompressed())
-            }
-        }
-
-        /// Adds instructions to push an XOnly public key onto the stack.
-        fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Builder {
-            self.push_slice(x_only_key.serialize())
-        }
-    }
-}
-
-define_extension_trait! {
+crate::internal_macros::define_extension_trait! {
     /// Extension functionality to add scriptPubkey support to the [`Script`] type.
-    pub trait ScriptExt impl for Script {
+    pub trait ScriptExt impl for Script<ScriptPubkey> {
         /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
         /// script").
-        fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
-            self.wscript_hash().map(ScriptBuf::new_p2wsh)
+        fn to_p2wsh(&self) -> Result<ScriptBuf<ScriptPubkey>, WitnessScriptSizeError> {
+            self.as_witness_script().wscript_hash().map(ScriptBuf::new_p2wsh)
         }
 
         /// Computes P2TR output with a given internal key and a single script spending path equal to
@@ -53,23 +33,23 @@ define_extension_trait! {
             &self,
             secp: &Secp256k1<C>,
             internal_key: K,
-        ) -> ScriptBuf {
+        ) -> ScriptBuf<ScriptPubkey> {
             let internal_key = internal_key.into();
-            let leaf_hash = self.tapscript_leaf_hash();
+            let leaf_hash = self.as_tap_script().tapscript_leaf_hash();
             let merkle_root = TapNodeHash::from(leaf_hash);
             ScriptBuf::new_p2tr(secp, internal_key, Some(merkle_root))
         }
 
         /// Computes the P2SH output corresponding to this redeem script.
-        fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
-            self.script_hash().map(ScriptBuf::new_p2sh)
+        fn to_p2sh(&self) -> Result<ScriptBuf<ScriptPubkey>, RedeemScriptSizeError> {
+            self.as_redeem_script().script_hash().map(ScriptBuf::new_p2sh)
         }
 
         /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
         /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
         ///
         /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-        fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
+        fn p2wpkh_script_code(&self) -> Option<ScriptBuf<ScriptPubkey>> {
             if self.is_p2wpkh() {
                 // The `self` script is 0x00, 0x14, <pubkey_hash>
                 let bytes = <[u8; 20]>::try_from(&self.as_bytes()[2..]).expect("length checked in is_p2wpkh()");
@@ -97,8 +77,8 @@ define_extension_trait! {
     }
 }
 
-define_extension_trait! {
-    pub(crate) trait ScriptExtPrivate impl for Script {
+crate::internal_macros::define_extension_trait! {
+    pub(crate) trait ScriptExtPrivate impl for Script<ScriptPubkey> {
         /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
         fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
             if let Ok(bytes) = <&[u8; 67]>::try_from(self.as_bytes()) {
@@ -116,17 +96,17 @@ define_extension_trait! {
     }
 }
 
-define_extension_trait! {
+crate::internal_macros::define_extension_trait! {
     /// Extension functionality to add scriptPubkey support to the [`ScriptBuf`] type.
-    pub trait ScriptBufExt impl for ScriptBuf {
+    pub trait ScriptBufExt impl for ScriptBuf<ScriptPubkey> {
         /// Generates P2PK-type of scriptPubkey.
         fn new_p2pk(pubkey: PublicKey) -> Self {
-            Builder::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()
+            Builder::<ScriptPubkey>::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()
         }
 
         /// Generates P2PKH-type of scriptPubkey.
         fn new_p2pkh(pubkey_hash: PubkeyHash) -> Self {
-            Builder::new()
+            Builder::<ScriptPubkey>::new()
                 .push_opcode(OP_DUP)
                 .push_opcode(OP_HASH160)
                 .push_slice(pubkey_hash)
@@ -137,7 +117,7 @@ define_extension_trait! {
 
         /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
         fn new_p2sh(script_hash: ScriptHash) -> Self {
-            Builder::new()
+            Builder::<ScriptPubkey>::new()
                 .push_opcode(OP_HASH160)
                 .push_slice(script_hash)
                 .push_opcode(OP_EQUAL)
@@ -182,7 +162,7 @@ define_extension_trait! {
 
         /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
         fn new_witness_program(witness_program: &WitnessProgram) -> Self {
-            Builder::new()
+            Builder::<ScriptPubkey>::new()
                 .push_opcode(witness_program.version().into())
                 .push_slice(witness_program.program())
                 .into_script()
@@ -197,19 +177,21 @@ define_extension_trait! {
 pub(super) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
     version: WitnessVersion,
     program: T,
-) -> ScriptBuf {
+) -> ScriptBuf<ScriptPubkey> {
     let program = program.as_ref();
     debug_assert!(program.len() >= 2 && program.len() <= 40);
     // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.
     debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
-    Builder::new().push_opcode(version.into()).push_slice(program).into_script()
+    Builder::<ScriptPubkey>::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
 mod sealed {
+    use primitives::script::Context;
+
     pub trait Sealed {}
-    impl Sealed for super::Script {}
-    impl Sealed for super::ScriptBuf {}
-    impl Sealed for super::Builder {}
+    impl<C: Context> Sealed for super::Script<C> {}
+    impl<C: Context> Sealed for super::ScriptBuf<C> {}
+    impl<C: Context> Sealed for super::Builder<C> {}
 }
 
 #[cfg(test)]

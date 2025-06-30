@@ -57,6 +57,16 @@ mod tests;
 pub mod witness_program;
 pub mod witness_version;
 
+/// Re-export all the script extension traits so users can do `use bitcoin::script::ext::*`.
+pub mod ext {
+    pub use super::borrowed::{
+        ScriptExt, ScriptExtRedeemScript, ScriptExtScriptPubkey, ScriptExtScriptSig,
+        ScriptExtTapScript, ScriptExtWitnessScript,
+    };
+    pub use super::owned::ScriptBufExt;
+    pub(crate) use crate::script::ScriptExtPriv;
+}
+
 use core::convert::Infallible;
 use core::fmt;
 
@@ -81,11 +91,12 @@ pub use self::{
 };
 #[doc(inline)]
 pub use primitives::script::{
-    RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    Context, RedeemScript, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptPubkey,
+    ScriptSig, TapScript, Unknown, WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
-pub(crate) use self::owned::ScriptBufExtPriv;
+// ScriptBufExtPriv is generic and should be used with qualification
 
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
@@ -94,7 +105,7 @@ impl_asref_push_bytes!(ScriptHash, WScriptHash);
 /// The `scriptCode` is described in [BIP143].
 ///
 /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
+pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf<ScriptPubkey> {
     Builder::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
@@ -192,21 +203,21 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
     })
 }
 
-impl Encodable for Script {
+impl<C: Context> Encodable for Script<C> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
     }
 }
 
-impl Encodable for ScriptBuf {
+impl<C: Context> Encodable for ScriptBuf<C> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.as_script().consensus_encode(w)
     }
 }
 
-impl Decodable for ScriptBuf {
+impl<C: Context> Decodable for ScriptBuf<C> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,

@@ -6,7 +6,7 @@ use bitcoin::bip32::{DerivationPath, Fingerprint};
 use bitcoin::consensus::encode::serialize_hex;
 use bitcoin::opcodes::all::OP_CHECKSIG;
 use bitcoin::psbt::{GetKey, Input, KeyRequest, PsbtSighashType, SignError};
-use bitcoin::script::ScriptExt as _;
+use bitcoin::script::{ScriptPubkey, WitnessScript};
 use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
@@ -56,9 +56,9 @@ fn psbt_sign_taproot() {
     //
 
     // Create three basic scripts to test script path spend.
-    let script1 = create_basic_single_sig_script(secp, sk_path[0].0); // m/86'/1'/0'/0/0
-    let script2 = create_basic_single_sig_script(secp, sk_path[1].0); // m/86'/1'/0'/0/1
-    let script3 = create_basic_single_sig_script(secp, sk_path[2].0); // m/86'/1'/0'/0/2
+    let script1 = create_basic_single_sig_script(secp, sk_path[0].0).into_witness_script(); // m/86'/1'/0'/0/0
+    let script2 = create_basic_single_sig_script(secp, sk_path[1].0).into_witness_script(); // m/86'/1'/0'/0/1
+    let script3 = create_basic_single_sig_script(secp, sk_path[2].0).into_witness_script(); // m/86'/1'/0'/0/2
 
     // Just use one of the secret keys for the key path spend.
     let kp = Keypair::from_seckey_str(secp, sk_path[2].0).expect("failed to create keypair");
@@ -167,7 +167,10 @@ fn psbt_sign_taproot() {
     }
 }
 
-fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) -> ScriptBuf {
+fn create_basic_single_sig_script(
+    secp: &Secp256k1<secp256k1::All>,
+    sk: &str,
+) -> ScriptBuf<ScriptPubkey> {
     let kp = Keypair::from_seckey_str(secp, sk).expect("failed to create keypair");
     let x_only_pubkey = kp.x_only_public_key().0;
     script::Builder::new()
@@ -178,9 +181,9 @@ fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) ->
 
 fn create_taproot_tree<K: Into<XOnlyPublicKey>>(
     secp: &Secp256k1<secp256k1::All>,
-    script1: ScriptBuf,
-    script2: ScriptBuf,
-    script3: ScriptBuf,
+    script1: ScriptBuf<WitnessScript>,
+    script2: ScriptBuf<WitnessScript>,
+    script3: ScriptBuf<WitnessScript>,
     internal_key: K,
 ) -> TaprootSpendInfo {
     let internal_key = internal_key.into();
@@ -274,7 +277,7 @@ fn create_psbt_for_taproot_script_path_spend<K: Into<XOnlyPublicKey>>(
     tree: TaprootSpendInfo,
     x_only_pubkey_of_signing_key: K,
     signing_key_path: &str,
-    use_script: ScriptBuf,
+    use_script: ScriptBuf<WitnessScript>,
 ) -> Psbt {
     let x_only_pubkey_of_signing_key = x_only_pubkey_of_signing_key.into();
     let utxo_value = 6280;

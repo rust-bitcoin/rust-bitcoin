@@ -124,7 +124,10 @@ pub use primitives::{
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget, // No `pow` module outside of `primitives`.
-    script::{Script, ScriptBuf},
+    script::{
+        Context as ScriptContext, RedeemScript, Script, ScriptBuf, ScriptPubkey, ScriptSig,
+        TapScript, Unknown as ScriptUnknown, WitnessScript,
+    },
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,

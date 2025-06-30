@@ -26,7 +26,7 @@ use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
-use crate::script::ScriptExt as _;
+use crate::script::ext::*;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TransactionExt as _, TxOut};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
@@ -520,8 +520,11 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             Sh => {
-                let script_code =
-                    input.redeem_script.as_ref().ok_or(SignError::MissingRedeemScript)?;
+                let script_code = input
+                    .redeem_script
+                    .as_ref()
+                    .ok_or(SignError::MissingRedeemScript)?
+                    .as_script_pubkey();
                 let sighash = cache
                     .legacy_signature_hash(input_index, script_code, hash_ty.to_u32())
                     .expect("input checked above");
@@ -532,7 +535,8 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
-                let redeem_script = input.redeem_script.as_ref().expect("checked above");
+                let redeem_script =
+                    input.redeem_script.as_ref().expect("checked above").as_script_pubkey();
                 let sighash =
                     cache.p2wpkh_signature_hash(input_index, redeem_script, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
@@ -684,10 +688,20 @@ impl Psbt {
         }
 
         if spk.is_p2sh() {
-            if input.redeem_script.as_ref().map(|s| s.is_p2wpkh()).unwrap_or(false) {
+            if input
+                .redeem_script
+                .as_ref()
+                .map(|s| s.as_script_pubkey().is_p2wpkh())
+                .unwrap_or(false)
+            {
                 return Ok(OutputType::ShWpkh);
             }
-            if input.redeem_script.as_ref().map(|x| x.is_p2wsh()).unwrap_or(false) {
+            if input
+                .redeem_script
+                .as_ref()
+                .map(|x| x.as_script_pubkey().is_p2wsh())
+                .unwrap_or(false)
+            {
                 return Ok(OutputType::ShWsh);
             }
             return Ok(OutputType::Sh);
@@ -1342,7 +1356,7 @@ mod tests {
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
-    use crate::script::{ScriptBuf, ScriptBufExt as _};
+    use crate::script::ScriptBuf;
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
     use crate::Sequence;
@@ -1901,12 +1915,12 @@ mod tests {
             )
             .unwrap();
 
-            assert!(redeem_script.is_p2wpkh());
+            assert!(redeem_script.as_script_pubkey().is_p2wpkh());
             assert_eq!(
-                redeem_script.to_p2sh().unwrap(),
+                redeem_script.as_script_pubkey().to_p2sh().unwrap(),
                 psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
             );
-            assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
+            assert_eq!(redeem_script.as_script_pubkey().to_p2sh().unwrap(), expected_out);
 
             for output in psbt.outputs {
                 assert_eq!(output.get_pairs().len(), 0)
@@ -1949,12 +1963,12 @@ mod tests {
             )
             .unwrap();
 
-            assert!(redeem_script.is_p2wpkh());
+            assert!(redeem_script.as_script_pubkey().is_p2wpkh());
             assert_eq!(
-                redeem_script.to_p2sh().unwrap(),
+                redeem_script.as_script_pubkey().to_p2sh().unwrap(),
                 psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
             );
-            assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
+            assert_eq!(redeem_script.as_script_pubkey().to_p2sh().unwrap(), expected_out);
 
             for output in psbt.outputs {
                 assert!(!output.get_pairs().is_empty())
@@ -1976,13 +1990,13 @@ mod tests {
             )
             .unwrap();
 
-            assert!(redeem_script.is_p2wsh());
+            assert!(redeem_script.as_script_pubkey().is_p2wsh());
             assert_eq!(
-                redeem_script.to_p2sh().unwrap(),
+                redeem_script.as_script_pubkey().to_p2sh().unwrap(),
                 psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey
             );
 
-            assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
+            assert_eq!(redeem_script.as_script_pubkey().to_p2sh().unwrap(), expected_out);
         }
 
         #[test]

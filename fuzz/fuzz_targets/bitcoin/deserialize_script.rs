@@ -1,6 +1,7 @@
 use bitcoin::address::Address;
 use bitcoin::consensus::encode;
-use bitcoin::script::{self, ScriptExt as _};
+use bitcoin::script::ext::*;
+use bitcoin::script::{self, ScriptPubkey};
 use bitcoin::{FeeRate, Network};
 use bitcoin_fuzz::fuzz_utils::{consume_random_bytes, consume_u32};
 use honggfuzz::fuzz;
@@ -8,7 +9,7 @@ use honggfuzz::fuzz;
 fn do_test(data: &[u8]) {
     let mut new_data = data;
     let bytes = consume_random_bytes(&mut new_data);
-    let s: Result<script::ScriptBuf, _> = encode::deserialize(bytes);
+    let s: Result<script::ScriptBuf<ScriptPubkey>, _> = encode::deserialize(bytes);
     if let Ok(script) = s {
         let _: Result<Vec<script::Instruction>, script::Error> = script.instructions().collect();
 

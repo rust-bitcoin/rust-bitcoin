@@ -77,14 +77,15 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 
 use std::collections::BTreeMap;
 
-use bitcoin::address::script_pubkey::{BuilderExt as _, ScriptBufExt as _};
+use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::consensus_validation::TransactionExt as _;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
-use bitcoin::script::{ScriptBufExt as _, ScriptExt as _};
+use bitcoin::script::ext::*;
+use bitcoin::script::{ScriptPubkey, TapScript};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
@@ -369,14 +370,15 @@ impl BenefactorWallet {
     fn time_lock_script(
         locktime: absolute::LockTime,
         beneficiary_key: XOnlyPublicKey,
-    ) -> ScriptBuf {
-        script::Builder::new()
+    ) -> ScriptBuf<TapScript> {
+        script::Builder::<ScriptPubkey>::new()
             .push_lock_time(locktime)
             .push_opcode(OP_CLTV)
             .push_opcode(OP_DROP)
             .push_x_only_key(beneficiary_key)
             .push_opcode(OP_CHECKSIG)
             .into_script()
+            .into_tap_script() // Alternatively we could call this at the call site.
     }
 
     fn create_inheritance_funding_tx(

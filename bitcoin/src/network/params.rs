@@ -11,14 +11,14 @@
 //! custom type that can be used in such places you might want to do the following:
 //!
 //! ```
-//! use bitcoin::network::Params;
-//! use bitcoin::{Script, ScriptBuf, Network, Target};
+//! use bitcoin::script::{Script, ScriptBuf, ScriptPubkey};
+//! use bitcoin::{Network, Params, Target};
 //!
 //! const POW_TARGET_SPACING: u64 = 120; // Two minutes.
 //!
 //! pub struct CustomParams {
 //!     params: Params,
-//!     challenge_script: ScriptBuf,
+//!     challenge_script: ScriptBuf<ScriptPubkey>,
 //! }
 //!
 //! impl CustomParams {
@@ -37,7 +37,7 @@
 //!     }
 //!
 //!     /// Returns the custom signet challenge script.
-//!     pub fn challenge_script(&self) -> &Script { &self.challenge_script }
+//!     pub fn challenge_script(&self) -> &Script<ScriptPubkey> { &self.challenge_script }
 //! }
 //!
 //! impl AsRef<Params> for CustomParams {

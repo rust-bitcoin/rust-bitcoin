@@ -63,11 +63,12 @@ use crate::crypto::key::{
 };
 use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
+use crate::script::ext::*;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash, WScriptHash,
-    WitnessScriptSizeError,
+    self, RedeemScript, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptPubkey,
+    WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
@@ -508,7 +509,7 @@ impl Address {
     /// these days.
     #[inline]
     pub fn p2sh(
-        redeem_script: &Script,
+        redeem_script: &Script<RedeemScript>,
         network: impl Into<NetworkKind>,
     ) -> Result<Address, RedeemScriptSizeError> {
         let hash = redeem_script.script_hash()?;
@@ -545,7 +546,7 @@ impl Address {
 
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script.
     pub fn p2wsh(
-        witness_script: &Script,
+        witness_script: &Script<WitnessScript>,
         hrp: impl Into<KnownHrp>,
     ) -> Result<Address, WitnessScriptSizeError> {
         let program = WitnessProgram::p2wsh(witness_script)?;
@@ -563,7 +564,7 @@ impl Address {
     ///
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwsh(
-        witness_script: &Script,
+        witness_script: &Script<WitnessScript>,
         network: impl Into<NetworkKind>,
     ) -> Result<Address, WitnessScriptSizeError> {
         let hash = witness_script.wscript_hash()?;
@@ -682,7 +683,7 @@ impl Address {
 
     /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
     pub fn from_script(
-        script: &Script,
+        script: &Script<ScriptPubkey>,
         params: impl AsRef<Params>,
     ) -> Result<Address, FromScriptError> {
         let network = params.as_ref().network;
@@ -706,7 +707,7 @@ impl Address {
     }
 
     /// Generates a script pubkey spending to this address.
-    pub fn script_pubkey(&self) -> ScriptBuf {
+    pub fn script_pubkey(&self) -> ScriptBuf<ScriptPubkey> {
         use AddressInner::*;
         match *self.inner() {
             P2pkh { hash, network: _ } => ScriptBuf::new_p2pkh(hash),
@@ -773,7 +774,7 @@ impl Address {
 
     /// Returns true if the address creates a particular script
     /// This function doesn't make any allocations.
-    pub fn matches_script_pubkey(&self, script: &Script) -> bool {
+    pub fn matches_script_pubkey(&self, script: &Script<ScriptPubkey>) -> bool {
         use AddressInner::*;
         match *self.inner() {
             P2pkh { ref hash, network: _ } if script.is_p2pkh() =>
@@ -949,7 +950,7 @@ impl Address<NetworkUnchecked> {
     }
 }
 
-impl From<Address> for ScriptBuf {
+impl From<Address> for ScriptBuf<ScriptPubkey> {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
 
@@ -1022,7 +1023,6 @@ mod tests {
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, TestnetVersion};
-    use crate::script::ScriptBufExt as _;
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(
