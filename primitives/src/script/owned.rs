@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::Script;
+use super::{Any, Context, Script};
 use crate::prelude::{Box, Vec};
 
 /// An owned, growable script.
@@ -27,7 +28,9 @@ use crate::prelude::{Box, Vec};
 /// [`examples/script.rs`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/script.rs>
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct ScriptBuf(Vec<u8>);
+pub struct ScriptBuf<C = Any>(PhantomData<C>, Vec<u8>)
+where
+    C: Context;
 
 impl ScriptBuf {
     /// Constructs a new empty script.
@@ -39,15 +42,15 @@ impl ScriptBuf {
     /// This method doesn't (re)allocate. `bytes` is just the script bytes **not** consensus
     /// encoding (i.e no length prefix).
     #[inline]
-    pub const fn from_bytes(bytes: Vec<u8>) -> Self { Self(bytes) }
+    pub const fn from_bytes(bytes: Vec<u8>) -> Self { Self(PhantomData, bytes) }
 
     /// Returns a reference to unsized script.
     #[inline]
-    pub fn as_script(&self) -> &Script { Script::from_bytes(&self.0) }
+    pub fn as_script(&self) -> &Script { Script::from_bytes(&self.1) }
 
     /// Returns a mutable reference to unsized script.
     #[inline]
-    pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.0) }
+    pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.1) }
 
     /// Converts the script into a byte vector.
     ///
@@ -57,7 +60,7 @@ impl ScriptBuf {
     ///
     /// Just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub fn into_bytes(self) -> Vec<u8> { self.0 }
+    pub fn into_bytes(self) -> Vec<u8> { self.1 }
 
     /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
     ///
@@ -88,7 +91,7 @@ impl ScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     #[inline]
-    pub fn reserve(&mut self, additional_len: usize) { self.0.reserve(additional_len); }
+    pub fn reserve(&mut self, additional_len: usize) { self.1.reserve(additional_len); }
 
     /// Pre-allocates exactly `additional_len` bytes if needed.
     ///
@@ -104,13 +107,13 @@ impl ScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     #[inline]
-    pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
+    pub fn reserve_exact(&mut self, additional_len: usize) { self.1.reserve_exact(additional_len); }
 
     /// Returns the number of **bytes** available for writing without reallocation.
     ///
     /// It is guaranteed that `script.capacity() >= script.len()` always holds.
     #[inline]
-    pub fn capacity(&self) -> usize { self.0.capacity() }
+    pub fn capacity(&self) -> usize { self.1.capacity() }
 }
 
 impl Deref for ScriptBuf {

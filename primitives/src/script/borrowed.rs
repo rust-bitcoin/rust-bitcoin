@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::marker::PhantomData;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
@@ -7,7 +8,7 @@ use core::ops::{
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::ScriptBuf;
+use super::{Any, Context, ScriptBuf};
 use crate::prelude::{Box, ToOwned, Vec};
 
 internals::transparent_newtype! {
@@ -62,9 +63,9 @@ internals::transparent_newtype! {
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
     ///
     #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
-    pub struct Script([u8]);
+    pub struct Script<C = Any>(PhantomData<C>, [u8]) where C: Context;
 
-    impl Script {
+    impl<C> Script<C> {
         /// Treat byte slice as `Script`
         pub const fn from_bytes(bytes: &_) -> &Self;
 
@@ -98,13 +99,13 @@ impl Script {
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub const fn as_bytes(&self) -> &[u8] { &self.0 }
+    pub const fn as_bytes(&self) -> &[u8] { &self.1 }
 
     /// Returns the script data as a mutable byte slice.
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
+    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.1 }
 
     /// Returns a copy of the script data.
     ///

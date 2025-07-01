@@ -229,6 +229,19 @@ impl fmt::Display for WitnessScriptSizeError {
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessScriptSizeError {}
 
+// Keeps `Context` trait private so downstream cannot implement it.
+mod private {
+    /// Context that the associated script is used in e.g., Segwit v0, Taproot etc.
+    pub trait Context: Default {}
+
+    /// Marker for scripts without any known script context.
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct Any {}
+
+    impl Context for Any {}
+}
+pub use private::{Any, Context};
+
 // We keep all the `Script` and `ScriptBuf` impls together since its easier to see side-by-side.
 
 impl From<ScriptBuf> for Box<Script> {
