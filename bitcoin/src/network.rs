@@ -32,11 +32,19 @@ use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
 
 /// The cryptocurrency network to act on.
+///
+/// This is the finite enumeration of the current networks defined by Bitcoin Core v29, nothing less
+/// and nothing more. If Bitcoin Core defines a new network your software will likely need to change
+/// but in order to make usage of this type ergonomic right now the type is not `non_exhaustive`.
+///
+/// If you are a library writer, in order to make your APIs more maintainable and more interoperable
+/// with the wider ecosystem, consider using [`Params`] and/or [`NetworkKind`] instead of this type.
+// For extensive discussion on the usage of `non_exhaustive` please see:
+// https://github.com/rust-bitcoin/rust-bitcoin/issues/2225
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
-#[non_exhaustive]
 pub enum Network {
     /// Mainnet Bitcoin.
     Bitcoin,
