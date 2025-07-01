@@ -8,7 +8,7 @@ use core::ops::{
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::{Any, Context, ScriptBuf};
+use super::{Any, Context, ScriptBuf, ScriptPubkey, RedeemScript};
 use crate::prelude::{Box, ToOwned, Vec};
 
 internals::transparent_newtype! {
@@ -140,6 +140,19 @@ impl<C: Context> Script<C> {
     }
 }
 
+impl Script<ScriptPubkey> {
+    /// Returns this scriptPubkey as a `Script<RedeemScript>`.
+    pub fn as_redeem_script(&self) -> &Script<RedeemScript> { Script::from_bytes(self.as_bytes()) }
+}
+
+impl Script<RedeemScript> {
+    /// Returns this redeemPubkey as a `Script<ScriptPubkey>`.
+    pub fn as_script_pubkey(&self) -> &Script<ScriptPubkey> { Script::from_bytes(self.as_bytes()) }
+
+    /// Returns the maximum size according to standardness rules.
+    pub const fn max_standard_size(&self) -> usize { super::MAX_REDEEM_SCRIPT_SIZE }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for &'a Script {
     #[inline]
@@ -231,5 +244,13 @@ mod tests {
         assert_eq!(script[..].as_bytes(), &[1, 2, 3, 4, 5]);
         assert_eq!(script[1..=3].as_bytes(), &[2, 3, 4]);
         assert_eq!(script[..=2].as_bytes(), &[1, 2, 3]);
+    }
+
+    #[test]
+    fn can_call_redeem_script_methods() {
+        let dummy = [0_u8; 128];
+        let s = Script::<RedeemScript>::from_bytes(&dummy);
+        let _ = s.max_standard_size();
+        let _ = s.as_script_pubkey().as_redeem_script();
     }
 }

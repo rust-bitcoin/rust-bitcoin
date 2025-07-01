@@ -238,9 +238,22 @@ mod private {
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct Any {}
 
+    /// Marker for scripts that are used as a scriptPubkey.
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct ScriptPubkey {}
+
+    /// Marker for scripts that are used as a redeemScript.
+    ///
+    /// A `RedeemScript` _is_ a `ScriptPubkey` but used in P2SH outputs.
+    /// See API on [`ScriptBuf<RedeemScript>`] for usage.
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct RedeemScript {}
+
     impl Context for Any {}
+    impl Context for ScriptPubkey {}
+    impl Context for RedeemScript {}
 }
-pub use private::{Any, Context};
+pub use private::{Any, Context, RedeemScript, ScriptPubkey};
 
 // We keep all the `Script` and `ScriptBuf` impls together since its easier to see side-by-side.
 

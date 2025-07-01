@@ -6,7 +6,7 @@ use core::ops::{Deref, DerefMut};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::{Any, Context, Script};
+use super::{Any, Context, RedeemScript, Script, ScriptPubkey};
 use crate::prelude::{Box, Vec};
 
 /// An owned, growable script.
@@ -116,6 +116,24 @@ impl<C: Context> ScriptBuf<C> {
     pub fn capacity(&self) -> usize { self.1.capacity() }
 }
 
+impl ScriptBuf<ScriptPubkey> {
+    /// Converts this scriptPubkey into a `ScriptBuf<RedeemScript>`.
+    pub fn into_redeem_script(self) -> ScriptBuf<RedeemScript> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+}
+
+impl ScriptBuf<RedeemScript> {
+    /// Converts this redeemScript into a [`ScriptPubkey`].
+    pub fn into_script_pubkey(self) -> ScriptBuf<ScriptPubkey> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Returns the maximum size according to standardness rules.
+    // FIXME: Why doesn't deref coercion work.
+    pub const fn max_standard_size(&self) -> usize { super::MAX_REDEEM_SCRIPT_SIZE }
+}
+
 impl Deref for ScriptBuf {
     type Target = Script;
 
@@ -199,5 +217,12 @@ mod tests {
         let mut script = ScriptBuf::<Any>::new();
         script.reserve_exact(10);
         assert!(script.capacity() >= 10);
+    }
+
+    #[test]
+    fn can_call_redeem_script_methods() {
+        let s = ScriptBuf::<RedeemScript>::new();
+        let _ = s.max_standard_size();
+        let _ = s.into_script_pubkey().into_redeem_script();
     }
 }
