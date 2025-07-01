@@ -32,7 +32,7 @@ pub struct ScriptBuf<C = Any>(PhantomData<C>, Vec<u8>)
 where
     C: Context;
 
-impl ScriptBuf {
+impl<C: Context> ScriptBuf<C> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> Self { Self::from_bytes(Vec::new()) }
@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn script_buf_as_script() {
         let bytes = vec![1, 2, 3];
-        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script = ScriptBuf::<Any>::from_bytes(bytes.clone());
         let script_ref = script.as_script();
         assert_eq!(script_ref.as_bytes(), bytes);
     }
@@ -168,7 +168,7 @@ mod tests {
     #[test]
     fn script_buf_into_bytes() {
         let bytes = vec![1, 2, 3];
-        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script = ScriptBuf::<Any>::from_bytes(bytes.clone());
         let result = script.into_bytes();
         assert_eq!(result, bytes);
     }
@@ -176,27 +176,27 @@ mod tests {
     #[test]
     fn script_buf_into_boxed_script() {
         let bytes = vec![1, 2, 3];
-        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script = ScriptBuf::<Any>::from_bytes(bytes.clone());
         let boxed_script = script.into_boxed_script();
         assert_eq!(boxed_script.as_bytes(), bytes);
     }
 
     #[test]
     fn script_buf_capacity() {
-        let script = ScriptBuf::with_capacity(10);
+        let script = ScriptBuf::<Any>::with_capacity(10);
         assert!(script.capacity() >= 10);
     }
 
     #[test]
     fn script_buf_reserve() {
-        let mut script = ScriptBuf::new();
+        let mut script = ScriptBuf::<Any>::new();
         script.reserve(10);
         assert!(script.capacity() >= 10);
     }
 
     #[test]
     fn script_buf_reserve_exact() {
-        let mut script = ScriptBuf::new();
+        let mut script = ScriptBuf::<Any>::new();
         script.reserve_exact(10);
         assert!(script.capacity() >= 10);
     }
