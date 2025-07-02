@@ -201,6 +201,11 @@ impl Sequence {
     /// BIP-68 only uses the low 16 bits for relative lock value.
     #[inline]
     fn low_u16(self) -> u16 { self.0 as u16 }
+
+    /// Gets the hex representation of this sequence number.
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    #[inline]
+    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
 impl Default for Sequence {
@@ -219,15 +224,13 @@ impl fmt::Display for Sequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-#[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
-    8 - sequence.0.leading_zeros() as usize / 4
-});
 
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
@@ -345,14 +348,10 @@ mod tests {
     }
 
     #[test]
-    fn sequence_formatting() {
+    fn sequence_from() {
         let sequence = Sequence(0x7FFF_FFFF);
-        assert_eq!(format!("{:x}", sequence), "7fffffff");
-        assert_eq!(format!("{:X}", sequence), "7FFFFFFF");
-
-        // Test From<Sequence> for u32
-        let sequence_u32: u32 = sequence.into();
-        assert_eq!(sequence_u32, 0x7FFF_FFFF);
+        let got = u32::from(sequence);
+        assert_eq!(got, 0x7FFF_FFFF);
     }
 
     #[test]
@@ -360,5 +359,20 @@ mod tests {
         let sequence = Sequence(0x7FFF_FFFF);
         let want: u32 = 0x7FFF_FFFF;
         assert_eq!(format!("{}", sequence), want.to_string());
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn sequence_hex_foramtting() {
+        let sequence = Sequence(0x7FFF_FFFF);
+        assert_eq!(format!("{:x}", sequence), "7fffffff");
+        assert_eq!(format!("{:X}", sequence), "7FFFFFFF");
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn sequence_to_hex() {
+        let sequence = Sequence(0x7FFF_FFFF);
+        assert_eq!(sequence.to_hex(), "7fffffff".to_string());
     }
 }
