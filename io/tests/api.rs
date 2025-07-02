@@ -130,7 +130,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
 }
 
 #[test]
-fn all_non_error_tyes_implement_send_sync() {
+fn all_non_error_types_implement_send_sync() {
     fn assert_send<T: Send>() {}
     fn assert_sync<T: Sync>() {}
 
