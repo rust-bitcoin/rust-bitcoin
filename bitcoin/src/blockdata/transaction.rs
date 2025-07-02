@@ -1142,7 +1142,7 @@ impl InputWeightPrediction {
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
-    /// 
+    ///
     /// This function's internal arithmetic saturates at u32::MAX, so the return value of this
     /// function may be inaccurate for extremely large witness predictions.
     ///
