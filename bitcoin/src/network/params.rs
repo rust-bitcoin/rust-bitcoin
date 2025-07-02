@@ -62,11 +62,10 @@
 
 use units::{BlockHeight, BlockHeightInterval};
 
-use crate::network::Network;
+use super::{Network, TestnetVersion};
 #[cfg(doc)]
 use crate::pow::CompactTarget;
 use crate::pow::Target;
-use crate::TestnetVersion;
 
 /// Parameters that influence chain consensus.
 #[non_exhaustive]
