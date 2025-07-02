@@ -25,6 +25,8 @@ exclude_re = [
     "SignedAmount::checked_abs", # Deprecated
     "NumberOfBlocks::value", # Deprecated
     "NumberOf512Seconds::to_consensus_u32", # Deprecated
+    "MedianTimePast::to_consensus_u32", # Deprecated
+    "Height::to_consensus_u32", # Deprecated
 
     # primitives
     "Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
