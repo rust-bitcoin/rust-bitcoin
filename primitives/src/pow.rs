@@ -30,16 +30,18 @@ impl CompactTarget {
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     #[inline]
     pub fn to_consensus(self) -> u32 { self.0 }
+
+    /// Gets the hex representation of this [`CompactTarget`].
+    #[cfg(feature = "alloc")]
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-#[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| {
-    8 - compact_target.0.leading_zeros() as usize / 4
-});
 
 impl fmt::UpperHex for CompactTarget {
     #[inline]

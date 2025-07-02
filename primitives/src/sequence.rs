@@ -25,7 +25,7 @@ use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 use crate::locktime::relative;
 #[cfg(all(doc, feature = "alloc"))]
-use crate::transaction::Transaction;
+use crate::Transaction;
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -178,6 +178,12 @@ impl Sequence {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
 
+    /// Gets the hex representation of this [`Sequence`].
+    #[cfg(feature = "alloc")]
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
+
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
     pub fn to_relative_lock_time(self) -> Option<relative::LockTime> {
@@ -223,10 +229,6 @@ impl fmt::LowerHex for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-#[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
-    8 - sequence.0.leading_zeros() as usize / 4
-});
 
 impl fmt::UpperHex for Sequence {
     #[inline]
