@@ -25,6 +25,23 @@ mod encapsulate {
     /// conversion to various denominations. The [`SignedAmount`] type does not implement [`serde`]
     /// traits but we do provide modules for serializing as satoshis or bitcoin.
     ///
+    /// # The 21M limit
+    ///
+    /// Since Bitcoin itself is limited to 2 100 000 000 000 000 satoshis (a bit less in practice)
+    /// this type also implements the same restriction. While this may be surprising it actually
+    /// provides many benefits:
+    ///
+    /// * Conversions from unsigned to signed are infallible
+    /// * Negation is infallible
+    /// * Absolute value is infallible (though `unsigned_abs` is usually beter anyway)
+    /// * Conversion to float is lossless
+    /// * Division cannot overflow, so it has to be div-by-zero; thus division by `NonZeroU64` is
+    ///   completely infallible
+    /// * Infallible conversion to `i64` allows directly storing in SQL databases
+    /// * It's possible to more efficiently sum amounts using SIMD
+    ///
+    /// Note that this signed type also restricts the minimum to -21M BTC.
+    ///
     /// # Numeric operations
     ///
     /// This type implements several arithmetic operations from [`core::ops`].
