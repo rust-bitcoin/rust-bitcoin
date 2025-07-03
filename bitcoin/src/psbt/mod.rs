@@ -1328,7 +1328,6 @@ mod tests {
     use hex_lit::hex;
     #[cfg(feature = "rand-std")]
     use {
-        crate::address::script_pubkey::ScriptBufExt as _,
         crate::bip32::Fingerprint,
         crate::locktime,
         crate::witness_version::WitnessVersion,

@@ -2,9 +2,9 @@
 
 //! Demonstrate creating a transaction that spends to and from p2tr outputs.
 
-use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::key::{Keypair, TapTweak, TweakedKeypair, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
+use bitcoin::script::ScriptBufExt as _;
 use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing, Verification};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::witness::WitnessExt as _;

@@ -1,5 +1,4 @@
-use bitcoin::address::script_pubkey::ScriptBufExt as _;
-use bitcoin::script::ScriptExt as _;
+use bitcoin::script::{ScriptBufExt as _, ScriptExt as _};
 use bitcoin::{
     consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptBuf, Transaction,
 };

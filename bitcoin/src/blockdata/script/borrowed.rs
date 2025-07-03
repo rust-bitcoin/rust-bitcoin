@@ -12,15 +12,15 @@ use super::{
     Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScriptSizeError,
     ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
-use crate::address::script_pubkey::ScriptBufExt as _;
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
+use crate::script::{self, ScriptBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
-use crate::{script, Amount, FeeRate, ScriptBuf};
+use crate::{Amount, FeeRate, ScriptBuf};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
