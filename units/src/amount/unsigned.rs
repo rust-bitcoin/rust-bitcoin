@@ -27,13 +27,12 @@ mod encapsulate {
     /// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
     /// but we do provide modules for serializing as satoshis or bitcoin.
     ///
-    /// **Warning!**
+    /// # Numeric operations
     ///
     /// This type implements several arithmetic operations from [`core::ops`].
-    /// To prevent errors due to an overflow when using these operations,
-    /// it is advised to instead use the checked arithmetic methods whose names
-    /// start with `checked_`. The operations from [`core::ops`] that [`Amount`]
-    /// implements will panic when an overflow occurs.
+    /// To prevent errors due to an overflow when using these operations, it returns the
+    /// `NumOpResult` type which enforces checked arithmetic. The resulting type itself implements
+    /// the traits so you can write code like `a + b + c` and only check the result afterwards.
     ///
     /// # Examples
     ///
