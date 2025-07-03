@@ -3,9 +3,7 @@
 use hex_lit::hex;
 
 use super::*;
-use crate::address::script_pubkey::{
-    BuilderExt as _, ScriptBufExt as _, ScriptExt as _, ScriptExtPrivate as _,
-};
+use crate::address::script_pubkey::{ScriptBufExt as _, ScriptExt as _, ScriptExtPrivate as _};
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::{opcodes, Amount, FeeRate};
