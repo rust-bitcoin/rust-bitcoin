@@ -55,6 +55,17 @@ mod push_bytes;
 #[cfg(test)]
 mod tests;
 
+pub mod ext {
+    //! Re-export the script extension traits so downstream can use wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! use bitcoin::script::ext::*;
+    //! ```
+    pub use super::borrowed::ScriptExt;
+    pub use super::owned::ScriptBufExt;
+}
 pub mod witness_program;
 pub mod witness_version;
 
