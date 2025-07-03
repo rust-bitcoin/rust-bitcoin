@@ -93,6 +93,33 @@ extern crate serde;
 
 mod internal_macros;
 
+pub mod ext {
+    //! Re-export all the extension traits so downstream can use wildcard imports.
+    //!
+    //! As part of stabilizing `primitives` and `units` we created a bunch of extension traits in
+    //! `rust-bitcoin` to hold all then API that we are not yet ready to stabilize. This module
+    //! re-exports all of them to improve ergonomics for users comfortable with wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! // Wildcard import all of the extension crates.
+    //! use bitcoin::ext::*;
+    //!
+    //! // If, for some reason, you want the name to be in scope access it via the module. E.g.
+    //! use bitcoin::script::ScriptExt;
+    //! ```
+    #[rustfmt::skip] // Use terse custom grouping.
+    pub use crate::{
+        block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
+        pow::CompactTargetExt as _,
+        script::{ScriptExt as _, ScriptBufExt as _},
+        transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
+        witness::WitnessExt as _,
+    };
+    #[cfg(feature = "bitcoinconsensus")]
+    pub use crate::consensus_validation::{ScriptExt as _, TransactionExt as _};
+}
 #[macro_use]
 pub mod address;
 pub mod bip152;
