@@ -26,13 +26,9 @@ mod encapsulate {
     /// conversion to various denominations. The [`SignedAmount`] type does not implement [`serde`]
     /// traits but we do provide modules for serializing as satoshis or bitcoin.
     ///
-    /// **Warning!**
-    ///
-    /// This type implements several arithmetic operations from [`core::ops`].
-    /// To prevent errors due to an overflow when using these operations,
-    /// it is advised to instead use the checked arithmetic methods whose names
-    /// start with `checked_`. The operations from [`core::ops`] that [`SignedAmount`]
-    /// implements will panic when an overflow occurs.
+    /// The type is limited to 21 million bitcoins and provides a convenient way to handle
+    /// arithmetic errors. See the [module documentation](crate::amount) for rationale and further
+    /// guidance.
     ///
     /// # Examples
     ///
@@ -49,6 +45,8 @@ mod encapsulate {
     /// }
     /// # }
     /// ```
+    ///
+    /// [`NumOpResult`]: crate::result::NumOpResult
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SignedAmount(i64);
 
