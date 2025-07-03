@@ -133,11 +133,13 @@ impl Amount {
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too precise, negative, or greater than 21,000,000.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     ///
     /// # Examples
     ///
@@ -219,7 +221,9 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -238,7 +242,9 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in Bitcoin.
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -254,11 +260,13 @@ impl Amount {
 
     /// Converts this [`Amount`] in floating-point notation in the given [`Denomination`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. It an be avoided by using an integer number of satoshis or string-encoded btc
+    /// in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too big, too precise or negative.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     #[inline]
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
