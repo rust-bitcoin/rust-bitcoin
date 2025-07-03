@@ -14,7 +14,8 @@
 //! // Exactly the same as `use bitcoin::{amount, Amount}`.
 //! use bitcoin_units::{amount, Amount};
 //!
-//! let _amount = Amount::from_sat(1_000)?;
+//! let amount = Amount::from_sat(1_000)?;
+//! # let _ = amount;
 //! # Ok::<_, amount::OutOfRangeError>(())
 //! ```
 
