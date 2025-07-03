@@ -126,7 +126,9 @@ impl SignedAmount {
     ///
     /// If the amount is too big (positive or negative) or too precise.
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -198,7 +200,9 @@ impl SignedAmount {
 
     /// Expresses this [`SignedAmount`] as a floating-point value in the given [`Denomination`].
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -216,7 +220,9 @@ impl SignedAmount {
 
     /// Expresses this [`SignedAmount`] as a floating-point value in Bitcoin.
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -231,11 +237,13 @@ impl SignedAmount {
 
     /// Converts this [`SignedAmount`] in floating-point notation in the given [`Denomination`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too big (positive or negative) or too precise.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
         // This is inefficient, but the safest way to deal with this. The parsing logic is safe.
