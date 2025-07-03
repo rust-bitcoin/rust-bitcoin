@@ -3,20 +3,24 @@
 use core::fmt;
 
 use hex::DisplayHex as _;
+use internals::array::ArrayExt; // For `split_first`.
 use internals::ToU64 as _;
+use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{
     Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScriptSizeError,
     ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
+use crate::address::script_pubkey::ScriptBufExt as _;
 use crate::consensus::{self, Encodable};
+use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
-use crate::taproot::{LeafVersion, TapLeafHash};
-use crate::{Amount, FeeRate};
+use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
+use crate::{script, Amount, FeeRate, ScriptBuf};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -48,6 +52,60 @@ crate::internal_macros::define_extension_trait! {
         #[inline]
         fn tapscript_leaf_hash(&self) -> TapLeafHash {
             TapLeafHash::from_script(self, LeafVersion::TapScript)
+        }
+
+        /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+        /// script").
+        fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
+            self.wscript_hash().map(ScriptBuf::new_p2wsh)
+        }
+
+        /// Computes P2TR output with a given internal key and a single script spending path equal to
+        /// the current script, assuming that the script is a Tapscript.
+        fn to_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
+            &self,
+            secp: &Secp256k1<C>,
+            internal_key: K,
+        ) -> ScriptBuf {
+            let internal_key = internal_key.into();
+            let leaf_hash = self.tapscript_leaf_hash();
+            let merkle_root = TapNodeHash::from(leaf_hash);
+            ScriptBuf::new_p2tr(secp, internal_key, Some(merkle_root))
+        }
+
+        /// Computes the P2SH output corresponding to this redeem script.
+        fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
+            self.script_hash().map(ScriptBuf::new_p2sh)
+        }
+
+        /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
+        /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
+        ///
+        /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+        fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
+            if self.is_p2wpkh() {
+                // The `self` script is 0x00, 0x14, <pubkey_hash>
+                let bytes = <[u8; 20]>::try_from(&self.as_bytes()[2..]).expect("length checked in is_p2wpkh()");
+                let wpkh = WPubkeyHash::from_byte_array(bytes);
+                Some(script::p2wpkh_script_code(wpkh))
+            } else {
+                None
+            }
+        }
+
+        /// Checks whether a script pubkey is a P2PK output.
+        ///
+        /// You can obtain the public key, if its valid,
+        /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
+        fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
+
+        /// Returns the public key if this script is P2PK with a **valid** public key.
+        ///
+        /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
+        /// This happens when the public key is invalid (e.g. the point not being on the curve).
+        /// In this situation the script is unspendable.
+        fn p2pk_public_key(&self) -> Option<PublicKey> {
+            PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
         }
 
         /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
@@ -407,6 +465,21 @@ mod sealed {
 
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptExtPriv impl for Script {
+        /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
+        fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
+            if let Ok(bytes) = <&[u8; 67]>::try_from(self.as_bytes()) {
+                let (&first, bytes) = bytes.split_first::<66>();
+                let (&last, pubkey) = bytes.split_last::<65>();
+                (first == OP_PUSHBYTES_65.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
+            } else if let Ok(bytes) = <&[u8; 35]>::try_from(self.as_bytes()) {
+                let (&first, bytes) = bytes.split_first::<34>();
+                let (&last, pubkey) = bytes.split_last::<33>();
+                (first == OP_PUSHBYTES_33.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
+            } else {
+                None
+            }
+        }
+
         fn minimal_non_dust_internal(&self, dust_relay_fee_rate_per_kvb: u64) -> Option<Amount> {
             // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
             // otherwise allow users to create transactions which likely can never be broadcast/confirmed.

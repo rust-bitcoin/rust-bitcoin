@@ -20,9 +20,9 @@ use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use internals::write_err;
 use io::Write;
 
-use crate::address::script_pubkey::ScriptExt as _;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
+use crate::script::ScriptExt as _;
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;

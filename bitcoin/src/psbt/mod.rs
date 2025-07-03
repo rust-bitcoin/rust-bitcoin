@@ -1337,7 +1337,6 @@ mod tests {
     };
 
     use super::*;
-    use crate::address::script_pubkey::ScriptExt as _;
     use crate::bip32::{ChildNumber, DerivationPath};
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
