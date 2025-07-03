@@ -176,7 +176,7 @@ impl Psbt {
         let mut tx: Transaction = self.unsigned_tx;
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
-            vin.script_sig = psbtin.final_script_sig.unwrap_or_default();
+            vin.script_sig = psbtin.final_script_sig.unwrap_or_default().into_script_sig();
             vin.witness = psbtin.final_script_witness.unwrap_or_default();
         }
 
@@ -515,7 +515,7 @@ impl Psbt {
         match self.output_type(input_index)? {
             Bare => {
                 let sighash = cache
-                    .legacy_signature_hash(input_index, spk, hash_ty.to_u32())
+                    .legacy_signature_hash(input_index, spk.as_context_unknown(), hash_ty.to_u32())
                     .expect("input checked above");
                 Ok((Message::from(sighash), hash_ty))
             }
@@ -528,7 +528,12 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             Wpkh => {
-                let sighash = cache.p2wpkh_signature_hash(input_index, spk, utxo.value, hash_ty)?;
+                let sighash = cache.p2wpkh_signature_hash(
+                    input_index,
+                    spk.as_context_unknown(),
+                    utxo.value,
+                    hash_ty,
+                )?;
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
@@ -671,19 +676,19 @@ impl Psbt {
         let spk = utxo.script_pubkey.clone();
 
         // Anything that is not SegWit and is not p2sh is `Bare`.
-        if !(spk.is_witness_program() || spk.is_p2sh()) {
+        if !(spk.as_context_unknown().is_witness_program() || spk.as_context_unknown().is_p2sh()) {
             return Ok(OutputType::Bare);
         }
 
-        if spk.is_p2wpkh() {
+        if spk.as_context_unknown().is_p2wpkh() {
             return Ok(OutputType::Wpkh);
         }
 
-        if spk.is_p2wsh() {
+        if spk.as_context_unknown().is_p2wsh() {
             return Ok(OutputType::Wsh);
         }
 
-        if spk.is_p2sh() {
+        if spk.as_context_unknown().is_p2sh() {
             if input.redeem_script.as_ref().map(|s| s.is_p2wpkh()).unwrap_or(false) {
                 return Ok(OutputType::ShWpkh);
             }
@@ -693,7 +698,7 @@ impl Psbt {
             return Ok(OutputType::Sh);
         }
 
-        if spk.is_p2tr() {
+        if spk.as_context_unknown().is_p2tr() {
             return Ok(OutputType::Tr);
         }
 
@@ -1340,7 +1345,7 @@ mod tests {
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
-    use crate::script::{ScriptBuf, ScriptBufExt as _};
+    use crate::script::{ScriptBuf, ScriptBufExt as _, ScriptPubkeyBuf, ScriptSigBuf};
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
     use crate::Sequence;
@@ -1367,7 +1372,7 @@ mod tests {
                             .unwrap(),
                         vout: 0,
                     },
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
@@ -1376,7 +1381,8 @@ mod tests {
                     script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                         "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
                     )
-                    .unwrap(),
+                    .unwrap()
+                    .into_script_pubkey(),
                 }],
             },
             xpub: Default::default(),
@@ -1390,7 +1396,8 @@ mod tests {
                     script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                         "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
                     )
-                    .unwrap(),
+                    .unwrap()
+                    .into_script_pubkey(),
                 }),
                 ..Default::default()
             }],
@@ -1543,7 +1550,7 @@ mod tests {
                             .unwrap(),
                         vout: 0,
                     },
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
@@ -1553,14 +1560,16 @@ mod tests {
                         script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                             "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
                         )
-                        .unwrap(),
+                        .unwrap()
+                        .into_script_pubkey(),
                     },
                     TxOut {
                         value: Amount::from_sat_u32(100_000_000),
                         script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                             "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
                         )
-                        .unwrap(),
+                        .unwrap()
+                        .into_script_pubkey(),
                     },
                 ],
             },
@@ -1617,7 +1626,8 @@ mod tests {
                 script_sig: ScriptBuf::from_hex_no_length_prefix(
                     "160014be18d152a9b012039daf3da7de4f53349eecb985",
                 )
-                .unwrap(),
+                .unwrap()
+                .into_script_sig(),
                 sequence: Sequence::MAX,
                 witness: Witness::from_slice(&[hex!(
                     "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"
@@ -1628,7 +1638,8 @@ mod tests {
                 script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                     "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
                 )
-                .unwrap(),
+                .unwrap()
+                .into_script_pubkey(),
             }],
         };
         let unknown: BTreeMap<raw::Key, Vec<u8>> =
@@ -1665,7 +1676,7 @@ mod tests {
             unsigned_tx: {
                 let mut unsigned = tx.clone();
                 unsigned.input[0].previous_output.txid = tx.compute_txid();
-                unsigned.input[0].script_sig = ScriptBuf::new();
+                unsigned.input[0].script_sig = ScriptSigBuf::new();
                 unsigned.input[0].witness = Witness::default();
                 unsigned
             },
@@ -1677,7 +1688,7 @@ mod tests {
                     non_witness_utxo: Some(tx),
                     witness_utxo: Some(TxOut {
                         value: Amount::from_sat(190_303_501_938).unwrap(),
-                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap().into_script_pubkey(),
                     }),
                     sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<PsbtSighashType>().unwrap()),
                     redeem_script: Some(vec![0x51].into()),
@@ -1794,7 +1805,7 @@ mod tests {
                                 txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                                 vout: 0,
                             },
-                            script_sig: ScriptBuf::new(),
+                            script_sig: ScriptSigBuf::new(),
                             sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                             witness: Witness::default(),
                         }
@@ -1802,11 +1813,11 @@ mod tests {
                     output: vec![
                         TxOut {
                             value: Amount::from_sat_u32(99_999_699),
-                            script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
+                            script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap().into_script_pubkey(),
                         },
                         TxOut {
                             value: Amount::from_sat_u32(100_000_000),
-                            script_pubkey: ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+                            script_pubkey: ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap().into_script_pubkey(),
                         },
                     ],
                 },
@@ -1826,7 +1837,7 @@ mod tests {
                                         txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap().into_script_sig(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").as_slice(),
@@ -1838,7 +1849,7 @@ mod tests {
                                         txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
+                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap().into_script_sig(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").as_slice(),
@@ -1849,11 +1860,11 @@ mod tests {
                             output: vec![
                                 TxOut {
                                     value: Amount::from_sat_u32(200_000_000),
-                                    script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
+                                    script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap().into_script_pubkey(),
                                 },
                                 TxOut {
                                     value: Amount::from_sat(190_303_501_938).unwrap(),
-                                    script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                                    script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap().into_script_pubkey(),
                                 },
                             ],
                         }),
@@ -1901,8 +1912,8 @@ mod tests {
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
-                redeem_script.to_p2sh().unwrap(),
-                psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
+                redeem_script.to_p2sh().unwrap().as_script(),
+                psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey.as_context_unknown()
             );
             assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
 
@@ -1924,6 +1935,7 @@ mod tests {
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.compute_txid());
             assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
                 .script_pubkey
+                .as_context_unknown()
                 .is_p2pkh());
             assert_eq!(
                 psbt.inputs[0].sighash_type.as_ref().unwrap().ecdsa_hash_ty().unwrap(),
@@ -1949,8 +1961,8 @@ mod tests {
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
-                redeem_script.to_p2sh().unwrap(),
-                psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
+                redeem_script.to_p2sh().unwrap().as_script(),
+                psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey.as_context_unknown()
             );
             assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
 
@@ -1976,8 +1988,8 @@ mod tests {
 
             assert!(redeem_script.is_p2wsh());
             assert_eq!(
-                redeem_script.to_p2sh().unwrap(),
-                psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey
+                redeem_script.to_p2sh().unwrap().as_script(),
+                psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey.as_context_unknown()
             );
 
             assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
@@ -2155,7 +2167,7 @@ mod tests {
                             txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                             vout: 0,
                         },
-                        script_sig: ScriptBuf::new(),
+                        script_sig: ScriptSigBuf::new(),
                         sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                         witness: Witness::default(),
                     }
@@ -2163,11 +2175,11 @@ mod tests {
                 output: vec![
                     TxOut {
                         value: Amount::from_sat_u32(99_999_699),
-                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap().into_script_pubkey(),
                     },
                     TxOut {
                         value: Amount::from_sat_u32(100_000_000),
-                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap().into_script_pubkey(),
                     },
                 ],
             },
@@ -2187,7 +2199,7 @@ mod tests {
                                     txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap().into_script_sig(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").as_slice(),
@@ -2199,7 +2211,7 @@ mod tests {
                                     txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
+                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap().into_script_sig(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").as_slice(),
@@ -2210,11 +2222,11 @@ mod tests {
                         output: vec![
                             TxOut {
                                 value: Amount::from_sat_u32(200_000_000),
-                                script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
+                                script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap().into_script_pubkey(),
                             },
                             TxOut {
                                 value: Amount::from_sat(190_303_501_938).unwrap(),
-                                script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                                script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap().into_script_pubkey(),
                             },
                         ],
                     }),
@@ -2461,11 +2473,11 @@ mod tests {
                 output: vec![
                     TxOut {
                         value: output_0_val,
-                        script_pubkey:  ScriptBuf::new()
+                        script_pubkey:  ScriptPubkeyBuf::new()
                     },
                     TxOut {
                         value: output_1_val,
-                        script_pubkey:  ScriptBuf::new()
+                        script_pubkey:  ScriptPubkeyBuf::new()
                     },
                 ],
             },
@@ -2500,11 +2512,11 @@ mod tests {
                         output: vec![
                             TxOut {
                                 value: prev_output_val,
-                                script_pubkey:  ScriptBuf::new()
+                                script_pubkey:  ScriptPubkeyBuf::new()
                             },
                             TxOut {
                                 value: Amount::from_sat(190_303_501_938).unwrap(),
-                                script_pubkey:  ScriptBuf::new()
+                                script_pubkey:  ScriptPubkeyBuf::new()
                             },
                         ],
                     }),
@@ -2550,14 +2562,14 @@ mod tests {
             version: transaction::Version::TWO,
             lock_time: locktime::absolute::LockTime::ZERO,
             input: vec![TxIn::EMPTY_COINBASE],
-            output: vec![TxOut { value: Amount::ZERO, script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: Amount::ZERO, script_pubkey: ScriptPubkeyBuf::new() }],
         };
 
         let mut psbt = Psbt::from_unsigned_tx(tx).unwrap();
         psbt.inputs[0].tap_internal_key = Some(internal_key);
         psbt.inputs[0].witness_utxo = Some(transaction::TxOut {
             value: Amount::from_sat_u32(10),
-            script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None),
+            script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None).into_script_pubkey(),
         });
 
         let mut key_map: HashMap<PublicKey, PrivateKey> = HashMap::new();
@@ -2583,14 +2595,14 @@ mod tests {
             version: transaction::Version::TWO,
             lock_time: locktime::absolute::LockTime::ZERO,
             input: vec![TxIn::EMPTY_COINBASE],
-            output: vec![TxOut { value: Amount::ZERO, script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: Amount::ZERO, script_pubkey: ScriptPubkeyBuf::new() }],
         };
 
         let mut psbt = Psbt::from_unsigned_tx(tx).unwrap();
         psbt.inputs[0].tap_internal_key = Some(internal_key);
         psbt.inputs[0].witness_utxo = Some(transaction::TxOut {
             value: Amount::from_sat_u32(10),
-            script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None),
+            script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None).into_script_pubkey(),
         });
 
         let mut xonly_key_map: HashMap<XOnlyPublicKey, PrivateKey> = HashMap::new();
@@ -2613,7 +2625,7 @@ mod tests {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::EMPTY_COINBASE, TxIn::EMPTY_COINBASE],
-            output: vec![TxOut { value: Amount::ZERO, script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: Amount::ZERO, script_pubkey: ScriptPubkeyBuf::new() }],
         };
         let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).unwrap();
 
@@ -2627,7 +2639,7 @@ mod tests {
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             value: Amount::from_sat_u32(10),
-            script_pubkey: ScriptBuf::new_p2wpkh(pk.wpubkey_hash().unwrap()),
+            script_pubkey: ScriptBuf::new_p2wpkh(pk.wpubkey_hash().unwrap()).into_script_pubkey(),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
@@ -2639,7 +2651,7 @@ mod tests {
         let unknown_prog = WitnessProgram::new(WitnessVersion::V4, &[0xaa; 34]).unwrap();
         let txout_unknown_future = TxOut {
             value: Amount::from_sat_u32(10),
-            script_pubkey: ScriptBuf::new_witness_program(&unknown_prog),
+            script_pubkey: ScriptBuf::new_witness_program(&unknown_prog).into_script_pubkey(),
         };
         psbt.inputs[1].witness_utxo = Some(txout_unknown_future);
 

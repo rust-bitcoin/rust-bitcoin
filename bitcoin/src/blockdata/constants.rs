@@ -90,8 +90,9 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
                 .push_int_unchecked(486604799)
                 .push_int_non_minimal(4)
                 .push_slice(b"03/May/2024 000000000000000000001ebd58c244970b3aa9d783bb001011fbe8ea8e98e00e")
-                .into_script(),
-                script::Builder::new().push_slice(TESTNET4_GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script(),
+                .into_script()
+                .into_script_sig(),
+                script::Builder::new().push_slice(TESTNET4_GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script().into_script_pubkey(),
 
             ),
             _ => (
@@ -99,8 +100,9 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
                 .push_int_unchecked(486604799)
                 .push_int_non_minimal(4)
                 .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
-                .into_script(),
-                script::Builder::new().push_slice(GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script(),
+                .into_script()
+                .into_script_sig(),
+                script::Builder::new().push_slice(GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script().into_script_pubkey(),
             ),
         }
     };

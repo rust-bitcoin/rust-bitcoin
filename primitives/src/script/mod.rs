@@ -25,8 +25,8 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::Script,
-    owned::ScriptBuf,
+    borrowed::{Script, ScriptSig, ScriptPubkey, RedeemScript, WitnessScript, TapScript},
+    owned::{ScriptBuf, ScriptSigBuf, ScriptPubkeyBuf, RedeemScriptBuf, WitnessScriptBuf, TapScriptBuf},
 };
 
 /// The maximum allowed redeem script size for a P2SH output.
@@ -69,13 +69,13 @@ impl ScriptHash {
     ///
     /// ref: [BIP-16](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
     #[inline]
-    pub fn from_script(redeem_script: &Script) -> Result<Self, RedeemScriptSizeError> {
-        if redeem_script.len() > MAX_REDEEM_SCRIPT_SIZE {
-            return Err(RedeemScriptSizeError { size: redeem_script.len() });
+    pub fn from_script(script: &RedeemScript) -> Result<Self, RedeemScriptSizeError> {
+        if script.len() > MAX_REDEEM_SCRIPT_SIZE {
+            return Err(RedeemScriptSizeError { size: script.len() });
         }
 
         // We've just checked the length
-        Ok(ScriptHash::from_script_unchecked(redeem_script))
+        Ok(ScriptHash::from_script_unchecked(script))
     }
 
     /// Constructs a new `ScriptHash` from any script irrespective of script size.
@@ -85,7 +85,7 @@ impl ScriptHash {
     ///
     /// [BIP-16]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
     #[inline]
-    pub fn from_script_unchecked(script: &Script) -> Self {
+    pub fn from_script_unchecked(script: &RedeemScript) -> Self {
         ScriptHash(hash160::Hash::hash(script.as_bytes()))
     }
 }
@@ -100,13 +100,13 @@ impl WScriptHash {
     ///
     /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     #[inline]
-    pub fn from_script(witness_script: &Script) -> Result<Self, WitnessScriptSizeError> {
-        if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {
-            return Err(WitnessScriptSizeError { size: witness_script.len() });
+    pub fn from_script(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
+        if script.len() > MAX_WITNESS_SCRIPT_SIZE {
+            return Err(WitnessScriptSizeError { size: script.len() });
         }
 
         // We've just checked the length
-        Ok(WScriptHash::from_script_unchecked(witness_script))
+        Ok(WScriptHash::from_script_unchecked(script))
     }
 
     /// Constructs a new `WScriptHash` from any script irrespective of script size.
@@ -116,63 +116,55 @@ impl WScriptHash {
     ///
     /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     #[inline]
-    pub fn from_script_unchecked(script: &Script) -> Self {
+    pub fn from_script_unchecked(script: &WitnessScript) -> Self {
         WScriptHash(sha256::Hash::hash(script.as_bytes()))
     }
 }
 
-impl TryFrom<ScriptBuf> for ScriptHash {
+impl TryFrom<RedeemScriptBuf> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
     #[inline]
-    fn try_from(redeem_script: ScriptBuf) -> Result<Self, Self::Error> {
-        Self::from_script(&redeem_script)
-    }
+    fn try_from(script: RedeemScriptBuf) -> Result<Self, Self::Error> { Self::from_script(&script) }
 }
 
-impl TryFrom<&ScriptBuf> for ScriptHash {
+impl TryFrom<&RedeemScriptBuf> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
     #[inline]
-    fn try_from(redeem_script: &ScriptBuf) -> Result<Self, Self::Error> {
-        Self::from_script(redeem_script)
-    }
+    fn try_from(script: &RedeemScriptBuf) -> Result<Self, Self::Error> { Self::from_script(script) }
 }
 
-impl TryFrom<&Script> for ScriptHash {
+impl TryFrom<&RedeemScript> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
     #[inline]
-    fn try_from(redeem_script: &Script) -> Result<Self, Self::Error> {
-        Self::from_script(redeem_script)
-    }
+    fn try_from(script: &RedeemScript) -> Result<Self, Self::Error> { Self::from_script(script) }
 }
 
-impl TryFrom<ScriptBuf> for WScriptHash {
+impl TryFrom<WitnessScriptBuf> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
     #[inline]
-    fn try_from(witness_script: ScriptBuf) -> Result<Self, Self::Error> {
-        Self::from_script(&witness_script)
+    fn try_from(script: WitnessScriptBuf) -> Result<Self, Self::Error> {
+        Self::from_script(&script)
     }
 }
 
-impl TryFrom<&ScriptBuf> for WScriptHash {
+impl TryFrom<&WitnessScriptBuf> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
     #[inline]
-    fn try_from(witness_script: &ScriptBuf) -> Result<Self, Self::Error> {
-        Self::from_script(witness_script)
+    fn try_from(script: &WitnessScriptBuf) -> Result<Self, Self::Error> {
+        Self::from_script(script)
     }
 }
 
-impl TryFrom<&Script> for WScriptHash {
+impl TryFrom<&WitnessScript> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
     #[inline]
-    fn try_from(witness_script: &Script) -> Result<Self, Self::Error> {
-        Self::from_script(witness_script)
-    }
+    fn try_from(script: &WitnessScript) -> Result<Self, Self::Error> { Self::from_script(script) }
 }
 
 /// Error while hashing a redeem script.
@@ -229,21 +221,105 @@ impl fmt::Display for WitnessScriptSizeError {
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessScriptSizeError {}
 
+/// Marker for scripts that are used as a scriptSig.
+///
+/// This type is not intended to be use directly, instead use [`ScriptSig`] or [`ScriptSigBuf`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ScriptSigTag {}
+
+/// Marker for scripts that are used as a scriptPubkey.
+///
+/// This type is not intended to be use directly, instead use [`ScriptPubkey`] or [`ScriptPubkeyBuf`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ScriptPubkeyTag {}
+
+/// Marker for scripts that are used as a redeemScript i.e., P2SH.
+///
+/// This type is not intended to be use directly, instead use [`RedeemScript`] or [`RedeemScriptBuf`].
+///
+/// A `RedeemScript` is a `ScriptPubkey` that is used during the second round of verification
+/// of a P2SH output.
+///
+/// Can be explicitly converted to/from a [`ScriptPubkey`]. See [`RedeemScript::as_script_pubkey`]
+/// and [`RedeemScriptBuf::into_script_pubkey`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RedeemScriptTag {}
+
+/// Marker for scripts that are used as a witness stack script i.e., P2WSH and P2SH-P2WSH.
+///
+/// This type is not intended to be use directly, instead use [`WitnessScript`] or [`WitnessScriptBuf`].
+///
+/// A `WitnessScript` is a `ScriptPubkey` that is used during the second round of verification
+/// of a P2WSH output. Witness scripts have slightly different semantics to pre-segwit scripts.
+/// See [BIP-141 New Script Semantics].
+///
+/// Can be explicitly converted to/from a [`ScriptPubkey`]. See [`WitnessScript::as_script_pubkey`]
+/// and [`WitnessScriptBuf::into_script_pubkey`].
+///
+/// [BIP-141 New Script Semantics]: <https://en.bitcoin.it/wiki/BIP_0141#New_script_semantics>
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WitnessScriptTag {}
+
+/// Marker for scripts that are used as a Tapscript i.e., used in a Taproot script path spend.
+///
+/// This type is not intended to be use directly, instead use [`TapScript`] or [`TapScriptBuf`].
+///
+/// A `TapScript` is a `ScriptPubkey` that is used when verifying Taproot script path spends as
+/// defined by [BIP-341], "Call the second-to-last stack element s, the script." (see [BIP-341
+/// Script validation rules]).
+///
+/// Can be explicitly converted to/from a [`ScriptPubkey`]. See [`TapScript::as_script_pubkey`] and
+/// [`TapScriptBuf::into_script_pubkey`]
+///
+/// [BIP-141]: <https://en.bitcoin.it/wiki/BIP_0341>
+/// [BIP-141 Script validation rules]: <https://en.bitcoin.it/wiki/BIP_0341#Script_validation_rules>
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TapScriptTag {}
+
+/// Marker for scripts for which the context is unknown.
+///
+/// This type is not intended to be use directly, instead use [`Script`] or [`ScriptBuf`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ContextUnknownTag {}
+
+/// Context that the associated script is used in e.g., scriptPubkey.
+///
+/// This trait is used to define script context tags. It does not define any behaviour and is not
+/// implementable by downstream users.  
+pub trait Context: sealed::Context + Sync + Send + Sized + Unpin + Copy {}
+
+impl Context for ScriptPubkeyTag {}
+impl Context for ScriptSigTag {}
+impl Context for RedeemScriptTag {}
+impl Context for WitnessScriptTag {}
+impl Context for TapScriptTag {}
+impl Context for ContextUnknownTag {}
+
+mod sealed {
+    pub trait Context {}
+    impl Context for super::ScriptPubkeyTag {}
+    impl Context for super::ScriptSigTag {}
+    impl Context for super::RedeemScriptTag {}
+    impl Context for super::WitnessScriptTag {}
+    impl Context for super::TapScriptTag {}
+    impl Context for super::ContextUnknownTag {}
+}
+
 // We keep all the `Script` and `ScriptBuf` impls together since its easier to see side-by-side.
 
-impl From<ScriptBuf> for Box<Script> {
+impl<C: Context> From<owned::tmp::ScriptBuf<C>> for Box<borrowed::tmp::Script<C>> {
     #[inline]
-    fn from(v: ScriptBuf) -> Self { v.into_boxed_script() }
+    fn from(v: owned::tmp::ScriptBuf<C>) -> Self { v.into_boxed_script() }
 }
 
-impl From<ScriptBuf> for Cow<'_, Script> {
+impl<C: Context> From<owned::tmp::ScriptBuf<C>> for Cow<'_, borrowed::tmp::Script<C>> {
     #[inline]
-    fn from(value: ScriptBuf) -> Self { Cow::Owned(value) }
+    fn from(value: owned::tmp::ScriptBuf<C>) -> Self { Cow::Owned(value) }
 }
 
-impl<'a> From<Cow<'a, Script>> for ScriptBuf {
+impl<'a, C: Context> From<Cow<'a, borrowed::tmp::Script<C>>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn from(value: Cow<'a, Script>) -> Self {
+    fn from(value: Cow<'a, borrowed::tmp::Script<C>>) -> Self {
         match value {
             Cow::Owned(owned) => owned,
             Cow::Borrowed(borrwed) => borrwed.into(),
@@ -251,9 +327,9 @@ impl<'a> From<Cow<'a, Script>> for ScriptBuf {
     }
 }
 
-impl<'a> From<Cow<'a, Script>> for Box<Script> {
+impl<'a, C: Context> From<Cow<'a, borrowed::tmp::Script<C>>> for Box<borrowed::tmp::Script<C>> {
     #[inline]
-    fn from(value: Cow<'a, Script>) -> Self {
+    fn from(value: Cow<'a, borrowed::tmp::Script<C>>) -> Self {
         match value {
             Cow::Owned(owned) => owned.into(),
             Cow::Borrowed(borrwed) => borrwed.into(),
@@ -261,84 +337,88 @@ impl<'a> From<Cow<'a, Script>> for Box<Script> {
     }
 }
 
-impl<'a> From<&'a Script> for Box<Script> {
+impl<'a, C: Context> From<&'a borrowed::tmp::Script<C>> for Box<borrowed::tmp::Script<C>> {
     #[inline]
-    fn from(value: &'a Script) -> Self { value.to_owned().into() }
+    fn from(value: &'a borrowed::tmp::Script<C>) -> Self { value.to_owned().into() }
 }
 
-impl<'a> From<&'a Script> for ScriptBuf {
+impl<'a, C: Context> From<&'a borrowed::tmp::Script<C>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn from(value: &'a Script) -> Self { value.to_owned() }
+    fn from(value: &'a borrowed::tmp::Script<C>) -> Self { value.to_owned() }
 }
 
-impl<'a> From<&'a Script> for Cow<'a, Script> {
+impl<'a, C: Context> From<&'a borrowed::tmp::Script<C>> for Cow<'a, borrowed::tmp::Script<C>> {
     #[inline]
-    fn from(value: &'a Script) -> Self { Cow::Borrowed(value) }
+    fn from(value: &'a borrowed::tmp::Script<C>) -> Self { Cow::Borrowed(value) }
 }
 
 /// Note: This will fail to compile on old Rust for targets that don't support atomics
 #[cfg(target_has_atomic = "ptr")]
-impl<'a> From<&'a Script> for Arc<Script> {
+impl<'a, C: Context> From<&'a borrowed::tmp::Script<C>> for Arc<borrowed::tmp::Script<C>> {
     #[inline]
-    fn from(value: &'a Script) -> Self { Script::from_arc_bytes(Arc::from(value.as_bytes())) }
+    fn from(value: &'a borrowed::tmp::Script<C>) -> Self {
+        borrowed::tmp::Script::from_arc_bytes(Arc::from(value.as_bytes()))
+    }
 }
 
-impl<'a> From<&'a Script> for Rc<Script> {
+impl<'a, C: Context> From<&'a borrowed::tmp::Script<C>> for Rc<borrowed::tmp::Script<C>> {
     #[inline]
-    fn from(value: &'a Script) -> Self { Script::from_rc_bytes(Rc::from(value.as_bytes())) }
+    fn from(value: &'a borrowed::tmp::Script<C>) -> Self {
+        borrowed::tmp::Script::from_rc_bytes(Rc::from(value.as_bytes()))
+    }
 }
 
-impl From<Vec<u8>> for ScriptBuf {
+impl<C: Context> From<Vec<u8>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn from(v: Vec<u8>) -> Self { ScriptBuf::from_bytes(v) }
+    fn from(v: Vec<u8>) -> Self { owned::tmp::ScriptBuf::from_bytes(v) }
 }
 
-impl From<ScriptBuf> for Vec<u8> {
+impl<C: Context> From<owned::tmp::ScriptBuf<C>> for Vec<u8> {
     #[inline]
-    fn from(v: ScriptBuf) -> Self { v.into_bytes() }
+    fn from(v: owned::tmp::ScriptBuf<C>) -> Self { v.into_bytes() }
 }
 
-impl AsRef<Script> for Script {
+impl<C: Context> AsRef<borrowed::tmp::Script<C>> for borrowed::tmp::Script<C> {
     #[inline]
     fn as_ref(&self) -> &Self { self }
 }
 
-impl AsRef<Script> for ScriptBuf {
+impl<C: Context> AsRef<borrowed::tmp::Script<C>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn as_ref(&self) -> &Script { self }
+    fn as_ref(&self) -> &borrowed::tmp::Script<C> { self }
 }
 
-impl AsRef<[u8]> for Script {
-    #[inline]
-    fn as_ref(&self) -> &[u8] { self.as_bytes() }
-}
-
-impl AsRef<[u8]> for ScriptBuf {
+impl<C: Context> AsRef<[u8]> for borrowed::tmp::Script<C> {
     #[inline]
     fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
-impl AsMut<Script> for Script {
+impl<C: Context> AsRef<[u8]> for owned::tmp::ScriptBuf<C> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] { self.as_bytes() }
+}
+
+impl<C: Context> AsMut<borrowed::tmp::Script<C>> for borrowed::tmp::Script<C> {
     #[inline]
     fn as_mut(&mut self) -> &mut Self { self }
 }
 
-impl AsMut<Script> for ScriptBuf {
+impl<C: Context> AsMut<borrowed::tmp::Script<C>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn as_mut(&mut self) -> &mut Script { self }
+    fn as_mut(&mut self) -> &mut borrowed::tmp::Script<C> { self }
 }
 
-impl AsMut<[u8]> for Script {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
-}
-
-impl AsMut<[u8]> for ScriptBuf {
+impl<C: Context> AsMut<[u8]> for borrowed::tmp::Script<C> {
     #[inline]
     fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
 }
 
-impl fmt::Debug for Script {
+impl<C: Context> AsMut<[u8]> for owned::tmp::ScriptBuf<C> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
+}
+
+impl<C: Context> fmt::Debug for borrowed::tmp::Script<C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("Script(")?;
         fmt::Display::fmt(self, f)?;
@@ -346,12 +426,12 @@ impl fmt::Debug for Script {
     }
 }
 
-impl fmt::Debug for ScriptBuf {
+impl<C: Context> fmt::Debug for owned::tmp::ScriptBuf<C> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(self.as_script(), f) }
 }
 
-impl fmt::Display for Script {
+impl<C: Context> fmt::Display for borrowed::tmp::Script<C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // This has to be a macro because it needs to break the loop
         macro_rules! read_push_data_len {
@@ -424,13 +504,13 @@ impl fmt::Display for Script {
     }
 }
 
-impl fmt::Display for ScriptBuf {
+impl<C: Context> fmt::Display for owned::tmp::ScriptBuf<C> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_script(), f) }
 }
 
 #[cfg(feature = "hex")]
-impl fmt::LowerHex for Script {
+impl<C: Context> fmt::LowerHex for borrowed::tmp::Script<C> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
@@ -438,13 +518,13 @@ impl fmt::LowerHex for Script {
 }
 
 #[cfg(feature = "hex")]
-impl fmt::LowerHex for ScriptBuf {
+impl<C: Context> fmt::LowerHex for owned::tmp::ScriptBuf<C> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
 
 #[cfg(feature = "hex")]
-impl fmt::UpperHex for Script {
+impl<C: Context> fmt::UpperHex for borrowed::tmp::Script<C> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::UpperHex::fmt(&self.as_bytes().as_hex(), f)
@@ -452,47 +532,47 @@ impl fmt::UpperHex for Script {
 }
 
 #[cfg(feature = "hex")]
-impl fmt::UpperHex for ScriptBuf {
+impl<C: Context> fmt::UpperHex for owned::tmp::ScriptBuf<C> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(self.as_script(), f) }
 }
 
-impl Borrow<Script> for ScriptBuf {
+impl<C: Context> Borrow<borrowed::tmp::Script<C>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn borrow(&self) -> &Script { self }
+    fn borrow(&self) -> &borrowed::tmp::Script<C> { self }
 }
 
-impl BorrowMut<Script> for ScriptBuf {
+impl<C: Context> BorrowMut<borrowed::tmp::Script<C>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn borrow_mut(&mut self) -> &mut Script { self }
+    fn borrow_mut(&mut self) -> &mut borrowed::tmp::Script<C> { self }
 }
 
-impl PartialEq<ScriptBuf> for Script {
+impl<C: Context> PartialEq<owned::tmp::ScriptBuf<C>> for borrowed::tmp::Script<C> {
     #[inline]
-    fn eq(&self, other: &ScriptBuf) -> bool { self.eq(other.as_script()) }
+    fn eq(&self, other: &owned::tmp::ScriptBuf<C>) -> bool { self.as_bytes().eq(other.as_bytes()) }
 }
 
-impl PartialEq<Script> for ScriptBuf {
+impl<C: Context> PartialEq<borrowed::tmp::Script<C>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn eq(&self, other: &Script) -> bool { self.as_script().eq(other) }
+    fn eq(&self, other: &borrowed::tmp::Script<C>) -> bool { self.as_bytes().eq(other.as_bytes()) }
 }
 
-impl PartialOrd<Script> for ScriptBuf {
+impl<C: Context> PartialOrd<borrowed::tmp::Script<C>> for owned::tmp::ScriptBuf<C> {
     #[inline]
-    fn partial_cmp(&self, other: &Script) -> Option<Ordering> {
-        self.as_script().partial_cmp(other)
+    fn partial_cmp(&self, other: &borrowed::tmp::Script<C>) -> Option<Ordering> {
+        self.as_bytes().partial_cmp(other.as_bytes())
     }
 }
 
-impl PartialOrd<ScriptBuf> for Script {
+impl<C: Context> PartialOrd<owned::tmp::ScriptBuf<C>> for borrowed::tmp::Script<C> {
     #[inline]
-    fn partial_cmp(&self, other: &ScriptBuf) -> Option<Ordering> {
-        self.partial_cmp(other.as_script())
+    fn partial_cmp(&self, other: &owned::tmp::ScriptBuf<C>) -> Option<Ordering> {
+        self.as_bytes().partial_cmp(other.as_bytes())
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for Script {
+impl<C: Context> serde::Serialize for borrowed::tmp::Script<C> {
     /// User-facing serialization for `Script`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -508,14 +588,17 @@ impl serde::Serialize for Script {
 
 /// Can only deserialize borrowed bytes.
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for &'de Script {
+impl<'de, C: Context> serde::Deserialize<'de> for &'de borrowed::tmp::Script<C> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        struct Visitor;
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = &'de Script;
+        use core::marker::PhantomData;
+
+        struct Visitor<C>(PhantomData<C>);
+
+        impl<'de, C: Context + 'de> serde::de::Visitor<'de> for Visitor<C> {
+            type Value = &'de borrowed::tmp::Script<C>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("borrowed bytes")
@@ -525,24 +608,23 @@ impl<'de> serde::Deserialize<'de> for &'de Script {
             where
                 E: serde::de::Error,
             {
-                Ok(Script::from_bytes(v))
+                Ok(borrowed::tmp::Script::from_bytes(v))
             }
         }
 
         if deserializer.is_human_readable() {
             use crate::serde::de::Error;
-
             return Err(D::Error::custom(
                 "deserialization of `&Script` from human-readable formats is not possible",
             ));
         }
 
-        deserializer.deserialize_bytes(Visitor)
+        deserializer.deserialize_bytes(Visitor(std::marker::PhantomData))
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for ScriptBuf {
+impl<C: Context> serde::Serialize for owned::tmp::ScriptBuf<C> {
     /// User-facing serialization for `Script`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -553,7 +635,7 @@ impl serde::Serialize for ScriptBuf {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for ScriptBuf {
+impl<'de, C: Context> serde::Deserialize<'de> for owned::tmp::ScriptBuf<C> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -561,50 +643,43 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
         use core::fmt::Formatter;
 
         use hex::FromHex;
-
         if deserializer.is_human_readable() {
-            struct Visitor;
-            impl serde::de::Visitor<'_> for Visitor {
-                type Value = ScriptBuf;
-
+            struct Visitor<C>(std::marker::PhantomData<C>);
+            impl<C: Context> serde::de::Visitor<'_> for Visitor<C> {
+                type Value = owned::tmp::ScriptBuf<C>;
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
                     formatter.write_str("a script hex")
                 }
-
                 fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
                 where
                     E: serde::de::Error,
                 {
                     let v = Vec::from_hex(v).map_err(E::custom)?;
-                    Ok(ScriptBuf::from(v))
+                    Ok(owned::tmp::ScriptBuf::from(v))
                 }
             }
-            deserializer.deserialize_str(Visitor)
+            deserializer.deserialize_str(Visitor(std::marker::PhantomData))
         } else {
-            struct BytesVisitor;
-
-            impl serde::de::Visitor<'_> for BytesVisitor {
-                type Value = ScriptBuf;
-
+            struct BytesVisitor<C>(std::marker::PhantomData<C>);
+            impl<C: Context> serde::de::Visitor<'_> for BytesVisitor<C> {
+                type Value = owned::tmp::ScriptBuf<C>;
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
                     formatter.write_str("a script Vec<u8>")
                 }
-
                 fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
                 where
                     E: serde::de::Error,
                 {
-                    Ok(ScriptBuf::from(v.to_vec()))
+                    Ok(owned::tmp::ScriptBuf::from(v.to_vec()))
                 }
-
                 fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
                 where
                     E: serde::de::Error,
                 {
-                    Ok(ScriptBuf::from(v))
+                    Ok(owned::tmp::ScriptBuf::from(v))
                 }
             }
-            deserializer.deserialize_byte_buf(BytesVisitor)
+            deserializer.deserialize_byte_buf(BytesVisitor(std::marker::PhantomData))
         }
     }
 }
@@ -616,38 +691,38 @@ mod tests {
     #[test]
     fn scriptbuf_from_vec_u8() {
         let vec = vec![0x51, 0x52, 0x53];
-        let script_buf: ScriptBuf = vec.clone().into();
+        let script_buf: ScriptPubkeyBuf = vec.clone().into();
         let result: Vec<u8> = script_buf.into();
         assert_eq!(result, vec);
     }
 
     #[test]
     fn scriptbuf_as_ref() {
-        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let script_buf = ScriptPubkeyBuf::from(vec![0x51, 0x52, 0x53]);
         let script_ref: &[u8] = script_buf.as_ref();
         assert_eq!(script_ref, &[0x51, 0x52, 0x53]);
 
-        let script_ref: &Script = script_buf.as_ref();
+        let script_ref: &ScriptPubkey = script_buf.as_ref();
         assert_eq!(script_ref.as_bytes(), &[0x51, 0x52, 0x53]);
     }
 
     #[test]
     fn scriptbuf_as_mut() {
-        let mut script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let mut script_buf = ScriptPubkeyBuf::from(vec![0x51, 0x52, 0x53]);
 
         let script_mut: &mut [u8] = script_buf.as_mut();
         script_mut[0] = 0x50;
         assert_eq!(script_mut, [0x50, 0x52, 0x53]);
 
-        let script_mut: &mut Script = script_buf.as_mut();
+        let script_mut: &mut ScriptPubkey = script_buf.as_mut();
         script_mut.as_mut_bytes()[1] = 0x51;
         assert_eq!(script_buf.as_bytes(), &[0x50, 0x51, 0x53]);
     }
 
     #[test]
     fn scriptbuf_borrow_mut() {
-        let mut script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
-        let script_mut: &mut Script = script_buf.borrow_mut();
+        let mut script_buf = ScriptPubkeyBuf::from(vec![0x51, 0x52, 0x53]);
+        let script_mut: &mut ScriptPubkey = script_buf.borrow_mut();
         script_mut.as_mut_bytes()[0] = 0x50;
 
         assert_eq!(script_buf.as_bytes(), &[0x50, 0x52, 0x53]);
@@ -656,11 +731,11 @@ mod tests {
     #[test]
     #[allow(clippy::useless_asref)]
     fn script_as_ref() {
-        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
+        let script = ScriptPubkey::from_bytes(&[0x51, 0x52, 0x53]);
         let script_ref: &[u8] = script.as_ref();
         assert_eq!(script_ref, &[0x51, 0x52, 0x53]);
 
-        let script_ref: &Script = script.as_ref();
+        let script_ref: &ScriptPubkey = script.as_ref();
         assert_eq!(script_ref.as_bytes(), &[0x51, 0x52, 0x53]);
     }
 
@@ -668,23 +743,23 @@ mod tests {
     #[allow(clippy::useless_asref)]
     fn script_as_mut() {
         let bytes = &mut [0x51, 0x52, 0x53];
-        let script = Script::from_bytes_mut(bytes);
+        let script = ScriptPubkey::from_bytes_mut(bytes);
 
         let script_mut: &mut [u8] = script.as_mut();
         script_mut[0] = 0x50;
         assert_eq!(script_mut, [0x50, 0x52, 0x53]);
 
-        let script_mut: &mut Script = script.as_mut();
+        let script_mut: &mut ScriptPubkey = script.as_mut();
         script_mut.as_mut_bytes()[1] = 0x51;
         assert_eq!(script.as_bytes(), &[0x50, 0x51, 0x53]);
     }
 
     #[test]
     fn partial_ord() {
-        let script_small = Script::from_bytes(&[0x51, 0x52, 0x53]);
-        let script_big = Script::from_bytes(&[0x54, 0x55, 0x56]);
-        let script_buf_small = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
-        let script_buf_big = ScriptBuf::from(vec![0x54, 0x55, 0x56]);
+        let script_small = ScriptPubkey::from_bytes(&[0x51, 0x52, 0x53]);
+        let script_big = ScriptPubkey::from_bytes(&[0x54, 0x55, 0x56]);
+        let script_buf_small = ScriptPubkeyBuf::from(vec![0x51, 0x52, 0x53]);
+        let script_buf_big = ScriptPubkeyBuf::from(vec![0x54, 0x55, 0x56]);
 
         assert!(script_small == &script_buf_small);
         assert!(script_buf_small == *script_small);
@@ -699,93 +774,93 @@ mod tests {
 
     #[test]
     fn script_hash_from_script() {
-        let script = Script::from_bytes(&[0x51; 520]);
+        let script = RedeemScript::from_bytes(&[0x51; 520]);
         assert!(ScriptHash::from_script(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 521]);
+        let script = RedeemScript::from_bytes(&[0x51; 521]);
         assert!(ScriptHash::from_script(script).is_err());
     }
 
     #[test]
     fn script_hash_from_script_unchecked() {
-        let script = Script::from_bytes(&[0x51; 521]);
+        let script = RedeemScript::from_bytes(&[0x51; 521]);
         let hash = ScriptHash::from_script_unchecked(script);
         assert_eq!(hash, ScriptHash(hash160::Hash::hash(script.as_bytes())));
     }
 
     #[test]
     fn wscript_hash_from_script() {
-        let script = Script::from_bytes(&[0x51; 10_000]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_000]);
         assert!(WScriptHash::from_script(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 10_001]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_001]);
         assert!(WScriptHash::from_script(script).is_err());
     }
 
     #[test]
     fn wscript_hash_from_script_unchecked() {
-        let script = Script::from_bytes(&[0x51; 10_001]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_001]);
         let hash = WScriptHash::from_script_unchecked(script);
         assert_eq!(hash, WScriptHash(sha256::Hash::hash(script.as_bytes())));
     }
 
     #[test]
     fn try_from_scriptbuf_for_scripthash() {
-        let script = ScriptBuf::from(vec![0x51; 520]);
+        let script = RedeemScriptBuf::from(vec![0x51; 520]);
         assert!(ScriptHash::try_from(script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 521]);
+        let script = RedeemScriptBuf::from(vec![0x51; 521]);
         assert!(ScriptHash::try_from(script).is_err());
     }
 
     #[test]
     fn try_from_scriptbuf_ref_for_scripthash() {
-        let script = ScriptBuf::from(vec![0x51; 520]);
+        let script = RedeemScriptBuf::from(vec![0x51; 520]);
         assert!(ScriptHash::try_from(&script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 521]);
+        let script = RedeemScriptBuf::from(vec![0x51; 521]);
         assert!(ScriptHash::try_from(&script).is_err());
     }
 
     #[test]
     fn try_from_script_for_scripthash() {
-        let script = Script::from_bytes(&[0x51; 520]);
+        let script = RedeemScript::from_bytes(&[0x51; 520]);
         assert!(ScriptHash::try_from(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 521]);
+        let script = RedeemScript::from_bytes(&[0x51; 521]);
         assert!(ScriptHash::try_from(script).is_err());
     }
 
     #[test]
     fn try_from_scriptbuf_for_wscript_hash() {
-        let script = ScriptBuf::from(vec![0x51; 10_000]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_000]);
         assert!(WScriptHash::try_from(script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_001]);
         assert!(WScriptHash::try_from(script).is_err());
     }
 
     #[test]
     fn try_from_scriptbuf_ref_for_wscript_hash() {
-        let script = ScriptBuf::from(vec![0x51; 10_000]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_000]);
         assert!(WScriptHash::try_from(&script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_001]);
         assert!(WScriptHash::try_from(&script).is_err());
     }
 
     #[test]
     fn try_from_script_for_wscript_hash() {
-        let script = Script::from_bytes(&[0x51; 10_000]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_000]);
         assert!(WScriptHash::try_from(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 10_001]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_001]);
         assert!(WScriptHash::try_from(script).is_err());
     }
 
     #[test]
     fn script_display() {
-        let script = Script::from_bytes(&[0x00, 0xa1, 0xb2]);
+        let script = ScriptPubkey::from_bytes(&[0x00, 0xa1, 0xb2]);
         assert_eq!(format!("{}", script), "OP_0 OP_LESSTHANOREQUAL OP_CSV");
 
         #[cfg(feature = "hex")]
@@ -813,7 +888,7 @@ mod tests {
 
     #[test]
     fn scriptbuf_display() {
-        let script_buf = ScriptBuf::from(vec![0x00, 0xa1, 0xb2]);
+        let script_buf = ScriptPubkeyBuf::from(vec![0x00, 0xa1, 0xb2]);
         assert_eq!(format!("{}", script_buf), "OP_0 OP_LESSTHANOREQUAL OP_CSV");
 
         #[cfg(feature = "hex")]
@@ -826,54 +901,54 @@ mod tests {
 
     #[test]
     fn cow_script_to_scriptbuf() {
-        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
-        let cow_borrowed: Cow<Script> = Cow::Borrowed(script);
-        let script_buf: ScriptBuf = cow_borrowed.into();
+        let script = ScriptPubkey::from_bytes(&[0x51, 0x52, 0x53]);
+        let cow_borrowed: Cow<ScriptPubkey> = Cow::Borrowed(script);
+        let script_buf: ScriptPubkeyBuf = cow_borrowed.into();
         assert_eq!(script_buf.as_bytes(), &[0x51, 0x52, 0x53]);
     }
 
     #[test]
     fn cow_scriptbuf_to_script() {
-        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
-        let cow_owned: Cow<Script> = Cow::Owned(script_buf.clone());
-        let script: &Script = cow_owned.borrow();
+        let script_buf = ScriptPubkeyBuf::from(vec![0x51, 0x52, 0x53]);
+        let cow_owned: Cow<ScriptPubkey> = Cow::Owned(script_buf.clone());
+        let script: &ScriptPubkey = cow_owned.borrow();
         assert_eq!(script.as_bytes(), &[0x51, 0x52, 0x53]);
     }
 
     #[test]
     fn cow_scriptbuf_to_box_script() {
-        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
-        let cow_owned: Cow<Script> = Cow::Owned(script_buf.clone());
-        let boxed_script: Box<Script> = cow_owned.into();
+        let script_buf = ScriptPubkeyBuf::from(vec![0x51, 0x52, 0x53]);
+        let cow_owned: Cow<ScriptPubkey> = Cow::Owned(script_buf.clone());
+        let boxed_script: Box<ScriptPubkey> = cow_owned.into();
         let script_buf2 = boxed_script.into_script_buf();
         assert_eq!(script_buf2, script_buf);
     }
 
     #[test]
     fn cow_owned_to_scriptbuf() {
-        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
-        let cow_owned: Cow<Script> = Cow::Owned(script_buf.clone());
-        let script_buf_2: ScriptBuf = cow_owned.into();
+        let script_buf = ScriptPubkeyBuf::from(vec![0x51, 0x52, 0x53]);
+        let cow_owned: Cow<ScriptPubkey> = Cow::Owned(script_buf.clone());
+        let script_buf_2: ScriptPubkeyBuf = cow_owned.into();
         assert_eq!(script_buf_2, script_buf);
     }
 
     #[test]
     fn cow_script_to_box_script() {
-        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
-        let cow_borrowed: Cow<Script> = Cow::Borrowed(script);
-        let boxed_script: Box<Script> = cow_borrowed.into();
+        let script = ScriptPubkey::from_bytes(&[0x51, 0x52, 0x53]);
+        let cow_borrowed: Cow<ScriptPubkey> = Cow::Borrowed(script);
+        let boxed_script: Box<ScriptPubkey> = cow_borrowed.into();
         assert_eq!(boxed_script.as_bytes(), &[0x51, 0x52, 0x53]);
 
-        let cow_owned: Cow<Script> = Cow::from(script.to_owned());
+        let cow_owned: Cow<ScriptPubkey> = Cow::from(script.to_owned());
         assert_eq!(cow_owned.as_ref().as_bytes(), &[0x51, 0x52, 0x53]);
 
-        let cow_from_script: Cow<Script> = Cow::from(script);
+        let cow_from_script: Cow<ScriptPubkey> = Cow::from(script);
         assert_eq!(cow_from_script.as_ref().as_bytes(), &[0x51, 0x52, 0x53]);
     }
 
     #[test]
     fn redeem_script_size_error() {
-        let script = ScriptBuf::from(vec![0x51; 521]);
+        let script = RedeemScriptBuf::from(vec![0x51; 521]);
         let result = ScriptHash::try_from(script);
 
         let err = result.unwrap_err();
@@ -885,7 +960,7 @@ mod tests {
 
     #[test]
     fn witness_script_size_error() {
-        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_001]);
         let result = WScriptHash::try_from(script);
 
         let err = result.unwrap_err();
@@ -898,8 +973,8 @@ mod tests {
     #[test]
     #[cfg(target_has_atomic = "ptr")]
     fn script_to_arc() {
-        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
-        let arc_script: Arc<Script> = Arc::from(script);
+        let script = ScriptPubkey::from_bytes(&[0x51, 0x52, 0x53]);
+        let arc_script: Arc<ScriptPubkey> = Arc::from(script);
 
         assert_eq!(arc_script.as_bytes(), script.as_bytes());
         assert_eq!(Arc::strong_count(&arc_script), 1);
@@ -907,8 +982,8 @@ mod tests {
 
     #[test]
     fn script_to_rc() {
-        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
-        let rc_script: Rc<Script> = Rc::from(script);
+        let script = ScriptPubkey::from_bytes(&[0x51, 0x52, 0x53]);
+        let rc_script: Rc<ScriptPubkey> = Rc::from(script);
 
         assert_eq!(rc_script.as_bytes(), script.as_bytes());
         assert_eq!(Rc::strong_count(&rc_script), 1);
@@ -916,18 +991,18 @@ mod tests {
 
     #[test]
     fn pushdata_end_conditions() {
-        let push_past_end_script = Script::from_bytes(&[0x4c, 0x02]);
+        let push_past_end_script = ScriptPubkey::from_bytes(&[0x4c, 0x02]);
         let formatted_script = format!("{}", push_past_end_script);
         assert!(formatted_script.contains("<push past end>"));
 
-        let unexpected_end_script = Script::from_bytes(&[0x4c]);
+        let unexpected_end_script = ScriptPubkey::from_bytes(&[0x4c]);
         let formatted_script = format!("{}", unexpected_end_script);
         assert!(formatted_script.contains("<unexpected end>"));
     }
 
     #[test]
     fn legacy_opcode() {
-        let script = Script::from_bytes(&[0x03, 0xaa, 0xbb, 0xcc]);
+        let script = ScriptPubkey::from_bytes(&[0x03, 0xaa, 0xbb, 0xcc]);
         assert_eq!(format!("{}", script), "OP_PUSHBYTES_3 aabbcc");
     }
 
@@ -935,7 +1010,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn script_to_hex() {
-        let script = Script::from_bytes(&[0xa1, 0xb2, 0xc3]);
+        let script = ScriptPubkey::from_bytes(&[0xa1, 0xb2, 0xc3]);
         let hex = script.to_hex();
         assert_eq!(hex, "a1b2c3");
     }
@@ -944,7 +1019,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn scriptbuf_to_hex() {
-        let script = ScriptBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
+        let script = ScriptPubkeyBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
         let hex = script.to_hex();
         assert_eq!(hex, "a1b2c3");
     }

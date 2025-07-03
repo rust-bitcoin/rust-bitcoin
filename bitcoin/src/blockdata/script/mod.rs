@@ -80,9 +80,14 @@ pub use self::{
     owned::ScriptBufExt,
     push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
 };
+#[rustfmt::skip]                // Use custom format.
 #[doc(inline)]
 pub use primitives::script::{
-    RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    Context, ScriptHash, WScriptHash,
+    Script, ScriptSig, ScriptPubkey, RedeemScript, WitnessScript, TapScript,
+    ScriptBuf, ScriptSigBuf, ScriptPubkeyBuf, RedeemScriptBuf, WitnessScriptBuf, TapScriptBuf,
+    ContextUnknownTag, ScriptSigTag, ScriptPubkeyTag, RedeemScriptTag, WitnessScriptTag, TapScriptTag,
+    RedeemScriptSizeError, WitnessScriptSizeError, // TODO: Implement error re-export policy.
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
@@ -208,7 +213,21 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
+// TODO: If we remove the Script/ScriptBuf alias (ContextUnknown) we can make these generic.
+
 impl Encodable for Script {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
+    }
+}
+impl Encodable for ScriptSig {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
+    }
+}
+impl Encodable for ScriptPubkey {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
@@ -216,6 +235,18 @@ impl Encodable for Script {
 }
 
 impl Encodable for ScriptBuf {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_script().consensus_encode(w)
+    }
+}
+impl Encodable for ScriptSigBuf {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_script().consensus_encode(w)
+    }
+}
+impl Encodable for ScriptPubkeyBuf {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.as_script().consensus_encode(w)
@@ -229,6 +260,24 @@ impl Decodable for ScriptBuf {
     ) -> Result<Self, encode::Error> {
         let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
         Ok(ScriptBuf::from_bytes(v))
+    }
+}
+impl Decodable for ScriptSigBuf {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, encode::Error> {
+        let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
+        Ok(ScriptSigBuf::from_bytes(v))
+    }
+}
+impl Decodable for ScriptPubkeyBuf {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, encode::Error> {
+        let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
+        Ok(ScriptPubkeyBuf::from_bytes(v))
     }
 }
 

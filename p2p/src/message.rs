@@ -901,10 +901,16 @@ mod test {
         assert_eq!(cs.unwrap(), CommandString::try_from_static("\0And\0rew").unwrap());
 
         // Invalid CommandString, must be ASCII
-        assert!(deserialize::<CommandString>(&[0, 0x41u8, 0x6e, 0xa4, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]).is_err());
+        assert!(deserialize::<CommandString>(&[
+            0, 0x41u8, 0x6e, 0xa4, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0
+        ])
+        .is_err());
 
         // Invalid CommandString, must be 12 bytes
-        assert!(deserialize::<CommandString>(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]).is_err());
+        assert!(deserialize::<CommandString>(&[
+            0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0
+        ])
+        .is_err());
     }
 
     #[test]

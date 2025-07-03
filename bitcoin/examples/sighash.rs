@@ -67,7 +67,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
     //In the P2SH case we get scriptPubKey from scriptSig of the spending input.
     //The scriptSig that corresponds to an M of N multisig should be: PUSHBYTES_0 PUSHBYTES_K0 <sig0><sighashflag0> ... PUSHBYTES_Km <sigM><sighashflagM> PUSHBYTES_X <scriptPubKey>
     //Here we assume that we have an M of N multisig scriptPubKey.
-    let mut instructions: Vec<_> = script_sig.instructions().collect();
+    let mut instructions: Vec<_> = script_sig.as_context_unknown().instructions().collect();
     let script_pubkey_p2sh;
     let script_pubkey_bytes = match script_pubkey_bytes_opt {
         //In the P2MS case, the scriptPubKey is in the referenced output, passed into this function

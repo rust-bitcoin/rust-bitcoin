@@ -35,13 +35,15 @@ crate::internal_macros::define_extension_trait! {
         /// Returns 160-bit hash of the script for P2SH outputs.
         #[inline]
         fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
-            ScriptHash::from_script(self)
+            // TODO: Later we will move this method to a separate extension trait and not call `as_redeem_scipt`.
+            ScriptHash::from_script(self.as_script_pubkey().as_redeem_script())
         }
 
         /// Returns 256-bit hash of the script for P2WSH outputs.
         #[inline]
         fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
-            WScriptHash::from_script(self)
+            // TODO: Later we will move this method to a separate extension trait and not call `as_witness_scipt`.
+            WScriptHash::from_script(self.as_script_pubkey().as_witness_script())
         }
 
         /// Computes leaf hash of tapscript.

@@ -38,8 +38,8 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Witness,
+    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf, ScriptSigBuf,
+    Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
 type Result<T> = std::result::Result<T, Error>;
@@ -186,13 +186,19 @@ impl WatchOnly {
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn {
                 previous_output: OutPoint { txid: INPUT_UTXO_TXID.parse()?, vout: INPUT_UTXO_VOUT },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence::MAX, // Disable LockTime and RBF.
                 witness: Witness::default(),
             }],
             output: vec![
-                TxOut { value: to_amount, script_pubkey: to_address.script_pubkey() },
-                TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
+                TxOut {
+                    value: to_amount,
+                    script_pubkey: to_address.script_pubkey().into_script_pubkey(),
+                },
+                TxOut {
+                    value: change_amount,
+                    script_pubkey: change_address.script_pubkey().into_script_pubkey(),
+                },
             ],
         };
 
@@ -275,7 +281,8 @@ fn input_derivation_path() -> Result<DerivationPath> {
 
 fn previous_output() -> TxOut {
     let script_pubkey = ScriptBuf::from_hex_no_length_prefix(INPUT_UTXO_SCRIPT_PUBKEY)
-        .expect("failed to parse input utxo scriptPubkey");
+        .expect("failed to parse input utxo scriptPubkey")
+        .into_script_pubkey();
     let amount = INPUT_UTXO_VALUE.parse::<Amount>().expect("failed to parse input utxo value");
 
     TxOut { value: amount, script_pubkey }

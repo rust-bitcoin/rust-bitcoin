@@ -15,10 +15,13 @@
 
 use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
-use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
+use bitcoin_primitives::script::{
+    self, RedeemScript, RedeemScriptBuf, Script, ScriptBuf, ScriptHash, ScriptPubkey,
+    ScriptPubkeyBuf, WScriptHash, WitnessScript, WitnessScriptBuf,
+};
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, Script, ScriptBuf,
-    Sequence, Transaction, TxIn, TxOut, Txid, Witness, Wtxid,
+    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, Sequence,
+    Transaction, TxIn, TxOut, Txid, Witness, Wtxid,
 };
 use hashes::sha256t;
 
@@ -59,7 +62,10 @@ struct Structs<'a> {
     // w: witness::Iter<'a>,
 }
 
-static SCRIPT: ScriptBuf = ScriptBuf::new();
+// Dummy scripts.
+static SCRIPT_PUBKEY: ScriptPubkeyBuf = ScriptPubkeyBuf::new();
+static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
+static WITNESS_SCRIPT: WitnessScriptBuf = WitnessScriptBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
 /// Public structs that derive common traits.
@@ -256,10 +262,10 @@ fn api_all_non_error_types_have_non_empty_debug() {
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
         pow::CompactTarget::from_consensus(0x1d00_ffff);
-        SCRIPT.as_script();
-        ScriptHash::from_script(&SCRIPT).unwrap();
-        WScriptHash::from_script(&SCRIPT).unwrap();
-        SCRIPT.clone();
+        SCRIPT_PUBKEY.as_script();
+        ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
+        WScriptHash::from_script(&WITNESS_SCRIPT).unwrap();
+        SCRIPT_PUBKEY.clone();
         Sequence::arbitrary(&mut u).unwrap();
         Transaction::arbitrary(&mut u).unwrap();
         TxIn::arbitrary(&mut u).unwrap();

@@ -9,11 +9,11 @@ use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::opcodes::OP_0;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
-use bitcoin::script::{PushBytes, ScriptBufExt as _};
+use bitcoin::script::{PushBytes, ScriptBufExt as _, ScriptSigBuf};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
-    absolute, script, transaction, NetworkKind, OutPoint, PrivateKey,
-    PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    absolute, script, transaction, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
+    Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
 #[track_caller]
@@ -166,7 +166,7 @@ fn create_transaction() -> Transaction {
                     txid: input_0.txid.parse().expect("failed to parse txid"),
                     vout: input_0.index,
                 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence::MAX, // Disable nSequence.
                 witness: Witness::default(),
             },
@@ -175,7 +175,7 @@ fn create_transaction() -> Transaction {
                     txid: input_1.txid.parse().expect("failed to parse txid"),
                     vout: input_1.index,
                 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence::MAX,
                 witness: Witness::default(),
             },
@@ -185,13 +185,15 @@ fn create_transaction() -> Transaction {
                 value: Amount::from_str_in(output_0.amount, Denomination::Bitcoin)
                     .expect("failed to parse amount"),
                 script_pubkey: ScriptBuf::from_hex_no_length_prefix(output_0.script_pubkey)
-                    .expect("failed to parse script"),
+                    .expect("failed to parse script")
+                    .into_script_pubkey(),
             },
             TxOut {
                 value: Amount::from_str_in(output_1.amount, Denomination::Bitcoin)
                     .expect("failed to parse amount"),
                 script_pubkey: ScriptBuf::from_hex_no_length_prefix(output_1.script_pubkey)
-                    .expect("failed to parse script"),
+                    .expect("failed to parse script")
+                    .into_script_pubkey(),
             },
         ],
     }

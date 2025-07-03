@@ -32,7 +32,7 @@ use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::{
     consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
-    Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 // The master xpriv, from which we derive the keys we control.
@@ -108,7 +108,10 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         vout: 0,
     };
 
-    let utxo_1 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_1, script_pubkey: script_pubkey_1 };
+    let utxo_1 = TxOut {
+        value: DUMMY_UTXO_AMOUNT_INPUT_1,
+        script_pubkey: script_pubkey_1.into_script_pubkey(),
+    };
 
     let script_pubkey_2 = "bc1qy7swwpejlw7a2rp774pa8rymh8tw3xvd2x2xkd"
         .parse::<Address<_>>()
@@ -122,7 +125,10 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         vout: 1,
     };
 
-    let utxo_2 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_2, script_pubkey: script_pubkey_2 };
+    let utxo_2 = TxOut {
+        value: DUMMY_UTXO_AMOUNT_INPUT_2,
+        script_pubkey: script_pubkey_2.into_script_pubkey(),
+    };
     vec![(out_point_1, utxo_1), (out_point_2, utxo_2)]
 }
 
@@ -157,19 +163,20 @@ fn main() {
         .into_iter()
         .map(|(outpoint, _)| TxIn {
             previous_output: outpoint,
-            script_sig: ScriptBuf::default(),
+            script_sig: ScriptSigBuf::default(),
             sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
             witness: Witness::default(),
         })
         .collect();
 
     // The spend output is locked to a key controlled by the receiver.
-    let spend = TxOut { value: SPEND_AMOUNT, script_pubkey: address.script_pubkey() };
+    let spend =
+        TxOut { value: SPEND_AMOUNT, script_pubkey: address.script_pubkey().into_script_pubkey() };
 
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2wpkh(pk_change.wpubkey_hash()), // Change comes back to us.
+        script_pubkey: ScriptBuf::new_p2wpkh(pk_change.wpubkey_hash()).into_script_pubkey(), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.

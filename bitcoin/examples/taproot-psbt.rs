@@ -87,8 +87,8 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, Transaction,
-    TxIn, TxOut, Witness,
+    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, ScriptSigBuf,
+    Transaction, TxIn, TxOut, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -118,8 +118,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Set these fields with valid data for the UTXO from step 5 above
         UTXO_1,
         vec![
-            TxOut { value: amount_to_send, script_pubkey: to_address.script_pubkey() },
-            TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
+            TxOut {
+                value: amount_to_send,
+                script_pubkey: to_address.script_pubkey().into_script_pubkey(),
+            },
+            TxOut {
+                value: change_amount,
+                script_pubkey: change_address.script_pubkey().into_script_pubkey(),
+            },
         ],
     )?);
     println!(
@@ -232,7 +238,7 @@ fn generate_bip86_key_spend_tx(
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint { txid: input_utxo.txid.parse()?, vout: input_utxo.vout },
-            script_sig: ScriptBuf::new(),
+            script_sig: ScriptSigBuf::new(),
             sequence: bitcoin::Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
@@ -255,7 +261,8 @@ fn generate_bip86_key_spend_tx(
     let mut input = Input {
         witness_utxo: {
             let script_pubkey = ScriptBuf::from_hex_no_length_prefix(input_utxo.script_pubkey)
-                .expect("failed to parse input utxo scriptPubkey");
+                .expect("failed to parse input utxo scriptPubkey")
+                .into_script_pubkey();
             Some(TxOut { value: from_amount, script_pubkey })
         },
         tap_key_origins: origins,
@@ -272,7 +279,8 @@ fn generate_bip86_key_spend_tx(
     for input in [&input_utxo].iter() {
         input_txouts.push(TxOut {
             value: input.amount,
-            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input.script_pubkey)?,
+            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input.script_pubkey)?
+                .into_script_pubkey(),
         });
     }
 
@@ -330,7 +338,9 @@ fn generate_bip86_key_spend_tx(
     tx.verify(|_| {
         Some(TxOut {
             value: from_amount,
-            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input_utxo.script_pubkey).unwrap(),
+            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input_utxo.script_pubkey)
+                .unwrap()
+                .into_script_pubkey(),
         })
     })
     .expect("failed to verify transaction");
@@ -411,7 +421,8 @@ impl BenefactorWallet {
             &self.secp,
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
-        );
+        )
+        .into_script_pubkey();
         let value = (input_utxo.amount - ABSOLUTE_FEES)
             .expect("ABSOLUTE_FEES must be set below input amount");
 
@@ -429,7 +440,7 @@ impl BenefactorWallet {
             lock_time,
             input: vec![TxIn {
                 previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                 witness: Witness::default(),
             }],
@@ -511,7 +522,8 @@ impl BenefactorWallet {
                 &self.secp,
                 taproot_spend_info.internal_key(),
                 taproot_spend_info.merkle_root(),
-            );
+            )
+            .into_script_pubkey();
 
             psbt.unsigned_tx.output =
                 vec![TxOut { script_pubkey: output_script_pubkey.clone(), value: output_value }];
@@ -579,7 +591,7 @@ impl BenefactorWallet {
                 lock_time,
                 input: vec![TxIn {
                     previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                     witness: Witness::default(),
                 }],
@@ -651,7 +663,7 @@ impl BeneficiaryWallet {
             psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey.clone();
         psbt.unsigned_tx.lock_time = lock_time;
         psbt.unsigned_tx.output = vec![TxOut {
-            script_pubkey: to_address.script_pubkey(),
+            script_pubkey: to_address.script_pubkey().into_script_pubkey(),
             value: (input_value - ABSOLUTE_FEES)
                 .expect("ABSOLUTE_FEES must be set below input amount"),
         }];

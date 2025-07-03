@@ -174,7 +174,7 @@ crate::internal_macros::define_extension_trait! {
         /// Returns the total number of bytes that this output contributes to a transaction.
         ///
         /// There is no difference between base size vs total size for outputs.
-        fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey) }
+        fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey.as_context_unknown()) }
 
         /// Constructs a new `TxOut` with given script and the smallest possible `value` that is **not** dust
         /// per current Core policy.
@@ -186,7 +186,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
         fn minimal_non_dust(script_pubkey: ScriptBuf) -> TxOut {
-            TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
+            TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey: script_pubkey.into_script_pubkey() }
         }
 
         /// Constructs a new `TxOut` with given script and the smallest possible `value` that is **not** dust
@@ -201,7 +201,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust`]: TxOut::minimal_non_dust
         fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Option<TxOut> {
-            Some(TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey })
+            Some(TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey: script_pubkey.into_script_pubkey()})
         }
     }
 }
@@ -474,10 +474,12 @@ impl TransactionExtPriv for Transaction {
         let mut count: usize = 0;
         for input in &self.input {
             // 0 for p2wpkh, p2wsh, and p2sh (including wrapped SegWit).
-            count = count.saturating_add(input.script_sig.count_sigops_legacy());
+            count =
+                count.saturating_add(input.script_sig.as_context_unknown().count_sigops_legacy());
         }
         for output in &self.output {
-            count = count.saturating_add(output.script_pubkey.count_sigops_legacy());
+            count = count
+                .saturating_add(output.script_pubkey.as_context_unknown().count_sigops_legacy());
         }
         count
     }
@@ -489,8 +491,8 @@ impl TransactionExtPriv for Transaction {
     {
         fn count_sigops(prevout: &TxOut, input: &TxIn) -> usize {
             let mut count: usize = 0;
-            if prevout.script_pubkey.is_p2sh() {
-                if let Some(redeem) = input.script_sig.last_pushdata() {
+            if prevout.script_pubkey.as_context_unknown().is_p2sh() {
+                if let Some(redeem) = input.script_sig.as_context_unknown().last_pushdata() {
                     count =
                         count.saturating_add(Script::from_bytes(redeem.as_bytes()).count_sigops());
                 }
@@ -527,12 +529,15 @@ impl TransactionExtPriv for Transaction {
             let script_sig = &input.script_sig;
             let witness = &input.witness;
 
-            let witness_program = if prevout.script_pubkey.is_witness_program() {
-                &prevout.script_pubkey
-            } else if prevout.script_pubkey.is_p2sh() && script_sig.is_push_only() {
+            let witness_program = if prevout.script_pubkey.as_context_unknown().is_witness_program()
+            {
+                &prevout.script_pubkey.as_context_unknown()
+            } else if prevout.script_pubkey.as_context_unknown().is_p2sh()
+                && script_sig.as_context_unknown().is_push_only()
+            {
                 // If prevout is P2SH and scriptSig is push only
                 // then we wrap the last push (redeemScript) in a Script
-                if let Some(push_bytes) = script_sig.last_pushdata() {
+                if let Some(push_bytes) = script_sig.as_context_unknown().last_pushdata() {
                     Script::from_bytes(push_bytes.as_bytes())
                 } else {
                     return 0;
@@ -1200,6 +1205,7 @@ mod tests {
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::constants::WITNESS_SCALE_FACTOR;
+    use crate::script::{ScriptPubkeyBuf, ScriptSigBuf};
     use crate::sighash::EcdsaSighashType;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
@@ -1445,10 +1451,10 @@ mod tests {
             "c3573dbea28ce24425c59a189391937e00d255150fa973d59d61caf3a06b601d"
         );
         // changing sigs does not affect it
-        tx.input[0].script_sig = ScriptBuf::new();
+        tx.input[0].script_sig = ScriptSigBuf::new();
         assert_eq!(old_ntxid, tx.compute_ntxid());
         // changing pks does
-        tx.output[0].script_pubkey = ScriptBuf::new();
+        tx.output[0].script_pubkey = ScriptPubkeyBuf::new();
         assert!(old_ntxid != tx.compute_ntxid());
     }
 

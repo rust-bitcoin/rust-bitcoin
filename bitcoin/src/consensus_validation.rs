@@ -104,7 +104,7 @@ where
     for (idx, input) in tx.input.iter().enumerate() {
         if let Some(output) = spent(&input.previous_output) {
             verify_script_with_flags(
-                &output.script_pubkey,
+                &output.script_pubkey.as_context_unknown(),
                 idx,
                 output.value,
                 serialized_tx.as_slice(),
