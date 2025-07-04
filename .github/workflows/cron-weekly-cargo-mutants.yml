@@ -22,13 +22,15 @@ jobs:
         run: |
           if [ -s mutants.out/missed.txt ]; then
             echo "New missed mutants found"
+            MUTANTS_VERSION=$(cargo mutants --version)
             gh issue create \
             --title "New Mutants Found" \
             --body "$(cat <<EOF
           Displaying up to the first 10 mutants:
-
+          \`\`\`
           $(head -n 10 mutants.out/missed.txt)
-
+          \`\`\`
+          Running cargo mutants version: ${MUTANTS_VERSION}
           For the complete list, please check the [mutants.out artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
           EOF
           )"

@@ -10,7 +10,6 @@ exclude_re = [
     ".*Error",
     "deserialize", # Skip serde mutation tests
     "Iterator", # Mutating operations in an iterator can result in an infinite loop
-    "match arm", "match guard", # New addition in cargo-mutants 25.0.1 deletes match arms and replaces match guards even in excluded functions
 
     # ----------------------------------Crate-specific exclusions----------------------------------
     # Units
