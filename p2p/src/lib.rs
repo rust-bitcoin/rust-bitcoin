@@ -23,6 +23,7 @@ pub mod message_bloom;
 pub mod message_compact_blocks;
 pub mod message_filter;
 pub mod message_network;
+pub mod network_ext;
 
 extern crate alloc;
 
@@ -39,6 +40,10 @@ use io::{BufRead, Write};
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::address::Address;
+
+#[rustfmt::skip]
+#[doc(inline)]
+pub use network_ext::NetworkExt;
 
 /// Version of the protocol as appearing in network message headers.
 ///
