@@ -803,6 +803,21 @@ mod tests {
     }
 
     #[test]
+    fn script_display_pushdata() {
+        // OP_PUSHDATA1
+        let script = Script::from_bytes(&[0x4c, 0x02, 0xab, 0xcd]);
+        assert_eq!(format!("{}", script), "OP_PUSHDATA1 abcd");
+
+        // OP_PUSHDATA2
+        let script = Script::from_bytes(&[0x4d, 0x02, 0x00, 0x12, 0x34]);
+        assert_eq!(format!("{}", script), "OP_PUSHDATA2 1234");
+
+        // OP_PUSHDATA4
+        let script = Script::from_bytes(&[0x4e, 0x02, 0x00, 0x00, 0x00, 0x56, 0x78]);
+        assert_eq!(format!("{}", script), "OP_PUSHDATA4 5678");
+    }
+
+    #[test]
     fn scriptbuf_display() {
         let script_buf = ScriptBuf::from(vec![0x00, 0xa1, 0xb2]);
         assert_eq!(format!("{}", script_buf), "OP_0 OP_LESSTHANOREQUAL OP_CSV");

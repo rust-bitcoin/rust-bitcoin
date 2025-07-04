@@ -52,8 +52,14 @@ fn sanity_check() {
 
 #[test]
 fn check_if_num_is_too_precise() {
-    assert_eq!(is_too_precise("1234", 3).unwrap(), 3);
-    assert_eq!(is_too_precise("1234.1234", 3).unwrap(), 3);
+    // Has decimal, not too precise
+    assert_eq!(is_too_precise("1234.5678", 4), Some(0));
+    // Has decimal, is too precise
+    assert_eq!(is_too_precise("1234.5678", 3), Some(3));
+    // No decimal, not too precise
+    assert_eq!(is_too_precise("1234", 4), Some(0));
+    // No decimal, is too precise
+    assert_eq!(is_too_precise("1234", 2), Some(3));
 }
 
 #[test]
