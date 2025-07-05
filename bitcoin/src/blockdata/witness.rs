@@ -6,6 +6,7 @@
 
 use internals::compact_size;
 use io::{BufRead, Write};
+use primitives::WitnessScript;
 
 use crate::consensus::encode::{self, Error, ReadExt, WriteExt, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable};
@@ -13,7 +14,8 @@ use crate::crypto::ecdsa;
 use crate::crypto::key::SerializedXOnlyPublicKey;
 use crate::prelude::Vec;
 #[cfg(doc)]
-use crate::script::ScriptExt as _;
+use crate::script::ext::ScriptExtScriptPubkey as _;
+use crate::script::TapScript;
 use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
 use crate::Script;
 
@@ -136,7 +138,7 @@ crate::internal_macros::define_extension_trait! {
         }
 
         /// Finishes constructing the P2TR script spend witness by pushing the required items.
-        fn push_p2tr_script_spend(&mut self, script: &Script, control_block: &ControlBlock<impl AsRef<TaprootMerkleBranch>>, annex: Option<&[u8]>) {
+        fn push_p2tr_script_spend(&mut self, script: &Script<TapScript>, control_block: &ControlBlock<impl AsRef<TaprootMerkleBranch>>, annex: Option<&[u8]>) {
             self.push(script.as_bytes());
             self.push(&*control_block.encode_to_arrayvec());
             if let Some(annex) = annex {
@@ -157,8 +159,8 @@ crate::internal_macros::define_extension_trait! {
         /// merely gets the second to last or third to last element depending on
         /// the first byte of the last element being equal to 0x50.
         ///
-        /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
-        fn tapscript(&self) -> Option<&Script> {
+        /// See [`Script<ScriptPubkey>::is_p2tr`] to check whether this is actually a Taproot witness.
+        fn tapscript(&self) -> Option<&Script<TapScript>> {
             match P2TrSpend::from_witness(self) {
                 // Note: the method is named "tapscript" but historically it was actually returning
                 // leaf script. This is broken but we now keep the behavior the same to not subtly
@@ -174,7 +176,7 @@ crate::internal_macros::define_extension_trait! {
         /// merely gets the second to last or third to last element depending on
         /// the first byte of the last element being equal to 0x50 and the associated
         /// version.
-        fn taproot_leaf_script(&self) -> Option<LeafScript<&Script>> {
+        fn taproot_leaf_script(&self) -> Option<LeafScript<&Script<TapScript>>> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { leaf_script, control_block, .. }) => {
                     Some(LeafScript { version: control_block.leaf_version, script: leaf_script, })
@@ -189,7 +191,7 @@ crate::internal_macros::define_extension_trait! {
         /// merely gets the last or second to last element depending on the first
         /// byte of the last element being equal to 0x50.
         ///
-        /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
+        /// See [`Script<ScriptPubkey>::is_p2tr`] to check whether this is actually a Taproot witness.
         fn taproot_control_block(&self) -> Option<BorrowedControlBlock<'_>> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { control_block, .. }) => Some(control_block),
@@ -201,7 +203,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// This does not guarantee that this represents a P2TR [`Witness`].
         ///
-        /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
+        /// See [`Script<ScriptPubkey>::is_p2tr`] to check whether this is actually a Taproot witness.
         fn taproot_annex(&self) -> Option<&[u8]> {
             P2TrSpend::from_witness(self)?.annex()
         }
@@ -210,8 +212,8 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// This does not guarantee that this represents a P2WS [`Witness`].
         ///
-        /// See [`Script::is_p2wsh`] to check whether this is actually a P2WSH witness.
-        fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
+        /// See [`Script<ScriptPubkey>::is_p2wsh`] to check whether this is actually a P2WSH witness.
+        fn witness_script(&self) -> Option<&Script<WitnessScript>> { self.last().map(Script::<WitnessScript>::from_bytes) }
 
     }
 }
@@ -234,7 +236,7 @@ enum P2TrSpend<'a> {
         annex: Option<&'a [u8]>,
     },
     Script {
-        leaf_script: &'a Script,
+        leaf_script: &'a Script<TapScript>,
         control_block: BorrowedControlBlock<'a>,
         annex: Option<&'a [u8]>,
     },

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::Script;
+use super::{Context, RedeemScript, Script, ScriptPubkey, TapScript, WitnessScript, Unknown};
 use crate::prelude::{Box, Vec};
 
 /// An owned, growable script.
@@ -27,9 +28,11 @@ use crate::prelude::{Box, Vec};
 /// [`examples/script.rs`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/script.rs>
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct ScriptBuf(Vec<u8>);
+pub struct ScriptBuf<C>(PhantomData<C>, Vec<u8>)
+where
+    C: Context;
 
-impl ScriptBuf {
+impl<C: Context> ScriptBuf<C> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> Self { Self::from_bytes(Vec::new()) }
@@ -39,15 +42,15 @@ impl ScriptBuf {
     /// This method doesn't (re)allocate. `bytes` is just the script bytes **not** consensus
     /// encoding (i.e no length prefix).
     #[inline]
-    pub const fn from_bytes(bytes: Vec<u8>) -> Self { Self(bytes) }
+    pub const fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(PhantomData, bytes) }
 
     /// Returns a reference to unsized script.
     #[inline]
-    pub fn as_script(&self) -> &Script { Script::from_bytes(&self.0) }
+    pub fn as_script(&self) -> &Script<C> { Script::<C>::from_bytes(&self.1) }
 
     /// Returns a mutable reference to unsized script.
     #[inline]
-    pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.0) }
+    pub fn as_mut_script(&mut self) -> &mut Script<C> { Script::from_bytes_mut(&mut self.1) }
 
     /// Converts the script into a byte vector.
     ///
@@ -57,7 +60,7 @@ impl ScriptBuf {
     ///
     /// Just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub fn into_bytes(self) -> Vec<u8> { self.0 }
+    pub fn into_bytes(self) -> Vec<u8> { self.1 }
 
     /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
     ///
@@ -67,7 +70,7 @@ impl ScriptBuf {
     /// reallocation can be avoided.
     #[must_use]
     #[inline]
-    pub fn into_boxed_script(self) -> Box<Script> {
+    pub fn into_boxed_script(self) -> Box<Script<C>> {
         Script::from_boxed_bytes(self.into_bytes().into_boxed_slice())
     }
 
@@ -88,7 +91,7 @@ impl ScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     #[inline]
-    pub fn reserve(&mut self, additional_len: usize) { self.0.reserve(additional_len); }
+    pub fn reserve(&mut self, additional_len: usize) { self.1.reserve(additional_len); }
 
     /// Pre-allocates exactly `additional_len` bytes if needed.
     ///
@@ -104,29 +107,95 @@ impl ScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     #[inline]
-    pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
+    pub fn reserve_exact(&mut self, additional_len: usize) { self.1.reserve_exact(additional_len); }
 
     /// Returns the number of **bytes** available for writing without reallocation.
     ///
     /// It is guaranteed that `script.capacity() >= script.len()` always holds.
     #[inline]
-    pub fn capacity(&self) -> usize { self.0.capacity() }
+    pub fn capacity(&self) -> usize { self.1.capacity() }
 }
 
-impl Deref for ScriptBuf {
-    type Target = Script;
+impl ScriptBuf<ScriptPubkey> {
+    /// Converts this scriptPubkey into a `ScriptBuf<RedeemScript>`.
+    pub fn into_redeem_script(self) -> ScriptBuf<RedeemScript> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Converts this scriptPubkey into a `ScriptBuf<WitnessScript>`.
+    pub fn into_witness_script(self) -> ScriptBuf<WitnessScript> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Converts this scriptPubkey into a `ScriptBuf<TapScript>`.
+    pub fn into_tap_script(self) -> ScriptBuf<TapScript> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+}
+
+impl ScriptBuf<RedeemScript> {
+    /// Returns the maximum size according to standardness rules.
+    pub const fn max_standard_size() -> usize { super::MAX_REDEEM_SCRIPT_SIZE }
+
+    /// Converts this redeemScript into a [`ScriptPubkey`].
+    pub fn into_script_pubkey(self) -> ScriptBuf<ScriptPubkey> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+}
+
+impl ScriptBuf<WitnessScript> {
+    /// Returns the maximum size according to standardness rules.
+    pub const fn max_standard_size() -> usize { super::MAX_WITNESS_SCRIPT_SIZE }
+
+    /// Converts this witnessScript into a `ScriptBuf<ScriptPubkey>`.
+    pub fn into_script_pubkey(self) -> ScriptBuf<ScriptPubkey> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+}
+
+impl ScriptBuf<TapScript> {
+    /// Converts this Tapscript into a `ScriptBuf<ScriptPubkey>`.
+    pub fn into_script_pubkey(self) -> ScriptBuf<ScriptPubkey> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+}
+
+impl ScriptBuf<Unknown> {
+    /// Adds context to this script so it can be used as a scriptPubkey.
+    pub fn into_script_pubkey(self) -> ScriptBuf<ScriptPubkey> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Adds context to this script so it can be used as a redeemScript.
+    pub fn into_redeem_script(self) -> ScriptBuf<RedeemScript> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Adds context to this script so it can be used as a witnessScript.
+    pub fn into_witness_script(self) -> ScriptBuf<WitnessScript> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+
+    /// Converts this scriptPubkey into a `ScriptBuf<TapScript>`.
+    pub fn into_tap_script(self) -> ScriptBuf<TapScript> {
+        ScriptBuf::from_bytes(self.into_bytes())
+    }
+}
+
+impl<C: Context> Deref for ScriptBuf<C> {
+    type Target = Script<C>;
 
     #[inline]
     fn deref(&self) -> &Self::Target { self.as_script() }
 }
 
-impl DerefMut for ScriptBuf {
+impl<C: Context> DerefMut for ScriptBuf<C> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for ScriptBuf {
+impl<'a, C: Context> Arbitrary<'a> for ScriptBuf<C> {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = Vec::<u8>::arbitrary(u)?;
@@ -137,18 +206,19 @@ impl<'a> Arbitrary<'a> for ScriptBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ScriptPubkey;
 
     #[test]
     fn script_buf_from_bytes() {
         let bytes = vec![1, 2, 3];
-        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script = ScriptBuf::<ScriptPubkey>::from_bytes(bytes.clone());
         assert_eq!(script.as_bytes(), bytes);
     }
 
     #[test]
     fn script_buf_as_script() {
         let bytes = vec![1, 2, 3];
-        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script = ScriptBuf::<ScriptPubkey>::from_bytes(bytes.clone());
         let script_ref = script.as_script();
         assert_eq!(script_ref.as_bytes(), bytes);
     }
@@ -156,7 +226,7 @@ mod tests {
     #[test]
     fn script_buf_as_mut_script() {
         let bytes = vec![1, 2, 3];
-        let mut script = ScriptBuf::from_bytes(bytes.clone());
+        let mut script = ScriptBuf::<ScriptPubkey>::from_bytes(bytes.clone());
         let script_mut_ref = script.as_mut_script();
         script_mut_ref.as_mut_bytes()[0] = 4;
         assert_eq!(script.as_mut_bytes(), vec![4, 2, 3]);
@@ -165,7 +235,7 @@ mod tests {
     #[test]
     fn script_buf_into_bytes() {
         let bytes = vec![1, 2, 3];
-        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script = ScriptBuf::<ScriptPubkey>::from_bytes(bytes.clone());
         let result = script.into_bytes();
         assert_eq!(result, bytes);
     }
@@ -173,27 +243,27 @@ mod tests {
     #[test]
     fn script_buf_into_boxed_script() {
         let bytes = vec![1, 2, 3];
-        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script = ScriptBuf::<ScriptPubkey>::from_bytes(bytes.clone());
         let boxed_script = script.into_boxed_script();
         assert_eq!(boxed_script.as_bytes(), bytes);
     }
 
     #[test]
     fn script_buf_capacity() {
-        let script = ScriptBuf::with_capacity(10);
+        let script = ScriptBuf::<ScriptPubkey>::with_capacity(10);
         assert!(script.capacity() >= 10);
     }
 
     #[test]
     fn script_buf_reserve() {
-        let mut script = ScriptBuf::new();
+        let mut script = ScriptBuf::<ScriptPubkey>::new();
         script.reserve(10);
         assert!(script.capacity() >= 10);
     }
 
     #[test]
     fn script_buf_reserve_exact() {
-        let mut script = ScriptBuf::new();
+        let mut script = ScriptBuf::<ScriptPubkey>::new();
         script.reserve_exact(10);
         assert!(script.capacity() >= 10);
     }

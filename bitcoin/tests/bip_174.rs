@@ -8,7 +8,7 @@ use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::opcodes::OP_0;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
-use bitcoin::script::{PushBytes, ScriptBufExt as _};
+use bitcoin::script::{PushBytes, RedeemScript, ScriptBufExt as _, WitnessScript};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
     absolute, script, transaction, Amount, Denomination, NetworkKind, OutPoint, PrivateKey,
@@ -22,7 +22,12 @@ fn hex_psbt(s: &str) -> Psbt {
 }
 
 #[track_caller]
-fn hex_script(s: &str) -> ScriptBuf {
+fn hex_redeem_script(s: &str) -> ScriptBuf<RedeemScript> {
+    ScriptBuf::from_hex_no_length_prefix(s).expect("valid hex digits")
+}
+
+#[track_caller]
+fn hex_witness_script(s: &str) -> ScriptBuf<WitnessScript> {
     ScriptBuf::from_hex_no_length_prefix(s).expect("valid hex digits")
 }
 
@@ -238,7 +243,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let v = Vec::from_hex(previous_tx_1).unwrap();
     let tx: Transaction = deserialize(&v).unwrap();
     input_0.non_witness_utxo = Some(tx);
-    input_0.redeem_script = Some(hex_script(redeem_script_0));
+    input_0.redeem_script = Some(hex_redeem_script(redeem_script_0));
     input_0.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![0, 1]);
 
     let mut input_1 = psbt.inputs[1].clone();
@@ -247,8 +252,8 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let tx: Transaction = deserialize(&v).unwrap();
     input_1.witness_utxo = Some(tx.output[1].clone());
 
-    input_1.redeem_script = Some(hex_script(redeem_script_1));
-    input_1.witness_script = Some(hex_script(witness_script));
+    input_1.redeem_script = Some(hex_redeem_script(redeem_script_1));
+    input_1.witness_script = Some(hex_witness_script(witness_script));
     input_1.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![2, 3]);
 
     psbt.inputs = vec![input_0, input_1];

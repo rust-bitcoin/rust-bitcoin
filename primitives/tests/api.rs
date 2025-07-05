@@ -15,7 +15,9 @@
 
 use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
-use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
+use bitcoin_primitives::script::{
+    self, RedeemScript, ScriptHash, ScriptPubkey, WScriptHash, WitnessScript,
+};
 use bitcoin_primitives::{
     absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, Script, ScriptBuf,
     Sequence, Transaction, TxIn, TxOut, Txid, Witness, Wtxid,
@@ -43,10 +45,10 @@ struct Structs<'a> {
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
     i: pow::CompactTarget,
-    j: &'a Script,
+    j: &'a Script<ScriptPubkey>,
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
+    m: ScriptBuf<ScriptPubkey>,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -59,7 +61,10 @@ struct Structs<'a> {
     // w: witness::Iter<'a>,
 }
 
-static SCRIPT: ScriptBuf = ScriptBuf::new();
+// Dummy scripts.
+static SCRIPT_PUBKEY: ScriptBuf<ScriptPubkey> = ScriptBuf::new();
+static REDEEM_SCRIPT: ScriptBuf<RedeemScript> = ScriptBuf::new();
+static WITNESS_SCRIPT: ScriptBuf<WitnessScript> = ScriptBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
 /// Public structs that derive common traits.
@@ -78,7 +83,7 @@ struct CommonTraits {
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
+    m: ScriptBuf<ScriptPubkey>,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -106,7 +111,7 @@ struct Clone<'a> {
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
+    m: ScriptBuf<ScriptPubkey>,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -135,7 +140,7 @@ struct Ord {
     // j: &'a Script,  // Doesn't implement `Clone`.
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
+    m: ScriptBuf<ScriptPubkey>,
     n: Sequence,
     o: Transaction,
     p: TxIn,
@@ -152,8 +157,8 @@ struct Ord {
 #[derive(Default, Debug, PartialEq, Eq)] // C-COMMON-TRAITS: `Default` (others just so we can test).
 struct Default {
     a: block::Version,
-    b: &'static Script,
-    c: ScriptBuf,
+    b: &'static Script<ScriptPubkey>,
+    c: ScriptBuf<ScriptPubkey>,
     d: Sequence,
     e: Witness,
 }
@@ -256,10 +261,10 @@ fn api_all_non_error_types_have_non_empty_debug() {
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
         pow::CompactTarget::from_consensus(0x1d00_ffff);
-        SCRIPT.as_script();
-        ScriptHash::from_script(&SCRIPT).unwrap();
-        WScriptHash::from_script(&SCRIPT).unwrap();
-        SCRIPT.clone();
+        SCRIPT_PUBKEY.as_script();
+        ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
+        WScriptHash::from_script(&WITNESS_SCRIPT).unwrap();
+        SCRIPT_PUBKEY.clone();
         Sequence::arbitrary(&mut u).unwrap();
         Transaction::arbitrary(&mut u).unwrap();
         TxIn::arbitrary(&mut u).unwrap();

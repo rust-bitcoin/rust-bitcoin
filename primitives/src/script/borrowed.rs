@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::marker::PhantomData;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
@@ -7,7 +8,7 @@ use core::ops::{
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::ScriptBuf;
+use super::{Context, RedeemScript, ScriptBuf, ScriptPubkey, TapScript, WitnessScript};
 use crate::prelude::{Box, ToOwned, Vec};
 
 internals::transparent_newtype! {
@@ -62,9 +63,9 @@ internals::transparent_newtype! {
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
     ///
     #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
-    pub struct Script([u8]);
+    pub struct Script<C>(PhantomData<C>, [u8]) where C: Context;
 
-    impl Script {
+    impl<C> Script<C> {
         /// Treat byte slice as `Script`
         pub const fn from_bytes(bytes: &_) -> &Self;
 
@@ -77,19 +78,19 @@ internals::transparent_newtype! {
     }
 }
 
-impl Default for &Script {
+impl<C: Context + 'static> Default for &Script<C> {
     #[inline]
-    fn default() -> Self { Script::new() }
+    fn default() -> Self { Script::<C>::new() }
 }
 
-impl ToOwned for Script {
-    type Owned = ScriptBuf;
+impl<C: Context> ToOwned for Script<C> {
+    type Owned = ScriptBuf<C>;
 
     #[inline]
     fn to_owned(&self) -> Self::Owned { ScriptBuf::from_bytes(self.to_vec()) }
 }
 
-impl Script {
+impl<C: Context> Script<C> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> &'static Self { Self::from_bytes(&[]) }
@@ -98,13 +99,13 @@ impl Script {
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub const fn as_bytes(&self) -> &[u8] { &self.0 }
+    pub const fn as_bytes(&self) -> &[u8] { &self.1 }
 
     /// Returns the script data as a mutable byte slice.
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
+    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.1 }
 
     /// Returns a copy of the script data.
     ///
@@ -128,7 +129,7 @@ impl Script {
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use]
     #[inline]
-    pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
+    pub fn into_script_buf(self: Box<Self>) -> ScriptBuf<C> {
         let rw = Box::into_raw(self) as *mut [u8];
         // SAFETY: copied from `std`
         // The pointer was just created from a box without deallocating
@@ -139,8 +140,36 @@ impl Script {
     }
 }
 
+impl Script<ScriptPubkey> {
+    /// Returns this scriptPubkey as a `Script<RedeemScript>`.
+    pub fn as_redeem_script(&self) -> &Script<RedeemScript> { Script::from_bytes(self.as_bytes()) }
+
+    /// Returns this scriptPubkey as a `Script<WitnessScript>`.
+    pub fn as_witness_script(&self) -> &Script<WitnessScript> {
+        Script::from_bytes(self.as_bytes())
+    }
+
+    /// Returns this scriptPubkey as a `Script<TapScript>`.
+    pub fn as_tap_script(&self) -> &Script<TapScript> { Script::from_bytes(self.as_bytes()) }
+}
+
+impl Script<RedeemScript> {
+    /// Returns this redeemPubkey as a `Script<ScriptPubkey>`.
+    pub fn as_script_pubkey(&self) -> &Script<ScriptPubkey> { Script::from_bytes(self.as_bytes()) }
+}
+
+impl Script<WitnessScript> {
+    /// Returns this witnessScript as a `Script<ScriptPubkey>`.
+    pub fn as_script_pubkey(&self) -> &Script<ScriptPubkey> { Script::from_bytes(self.as_bytes()) }
+}
+
+impl Script<TapScript> {
+    /// Returns this Tapscript as a `Script<ScriptPubkey>`.
+    pub fn as_script_pubkey(&self) -> &Script<ScriptPubkey> { Script::from_bytes(self.as_bytes()) }
+}
+
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for &'a Script {
+impl<'a, C: Context> Arbitrary<'a> for &'a Script<C> {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = <&'a [u8]>::arbitrary(u)?;
@@ -152,7 +181,7 @@ macro_rules! delegate_index {
     ($($type:ty),* $(,)?) => {
         $(
             /// Script subslicing operation - read [slicing safety](#slicing-safety)!
-            impl Index<$type> for Script {
+            impl<C: Context> Index<$type> for Script<C> {
                 type Output = Self;
 
                 #[inline]
@@ -177,52 +206,53 @@ delegate_index!(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ScriptPubkey;
 
     #[test]
     fn script_from_bytes() {
-        let script = Script::from_bytes(&[1, 2, 3]);
+        let script = Script::<ScriptPubkey>::from_bytes(&[1, 2, 3]);
         assert_eq!(script.as_bytes(), [1, 2, 3]);
     }
 
     #[test]
     fn script_from_bytes_mut() {
         let bytes = &mut [1, 2, 3];
-        let script = Script::from_bytes_mut(bytes);
+        let script = Script::<ScriptPubkey>::from_bytes_mut(bytes);
         script.as_mut_bytes()[0] = 4;
         assert_eq!(script.as_mut_bytes(), [4, 2, 3]);
     }
 
     #[test]
     fn script_to_vec() {
-        let script = Script::from_bytes(&[1, 2, 3]);
+        let script = Script::<ScriptPubkey>::from_bytes(&[1, 2, 3]);
         assert_eq!(script.to_vec(), vec![1, 2, 3]);
     }
 
     #[test]
     fn script_len() {
-        let script = Script::from_bytes(&[1, 2, 3]);
+        let script = Script::<ScriptPubkey>::from_bytes(&[1, 2, 3]);
         assert_eq!(script.len(), 3);
     }
 
     #[test]
     fn script_is_empty() {
-        let script: &Script = Default::default();
+        let script: &Script<ScriptPubkey> = Default::default();
         assert!(script.is_empty());
 
-        let script = Script::from_bytes(&[1, 2, 3]);
+        let script = Script::<ScriptPubkey>::from_bytes(&[1, 2, 3]);
         assert!(!script.is_empty());
     }
 
     #[test]
     fn script_to_owned() {
-        let script = Script::from_bytes(&[1, 2, 3]);
+        let script = Script::<ScriptPubkey>::from_bytes(&[1, 2, 3]);
         let script_buf = script.to_owned();
         assert_eq!(script_buf.as_bytes(), [1, 2, 3]);
     }
 
     #[test]
     fn test_index() {
-        let script = Script::from_bytes(&[1, 2, 3, 4, 5]);
+        let script = Script::<ScriptPubkey>::from_bytes(&[1, 2, 3, 4, 5]);
 
         assert_eq!(script[1..3].as_bytes(), &[2, 3]);
         assert_eq!(script[2..].as_bytes(), &[3, 4, 5]);

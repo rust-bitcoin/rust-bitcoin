@@ -203,14 +203,14 @@ fn main() {
     psbt.inputs = vec![
         Input {
             witness_utxo: Some(utxos[0].clone()),
-            redeem_script: Some(ScriptBuf::new_p2wpkh(wpkhs[0])),
+            redeem_script: Some(ScriptBuf::new_p2wpkh(wpkhs[0]).into_redeem_script()),
             bip32_derivation: bip32_derivations[0].clone(),
             sighash_type: Some(ty),
             ..Default::default()
         },
         Input {
             witness_utxo: Some(utxos[1].clone()),
-            redeem_script: Some(ScriptBuf::new_p2wpkh(wpkhs[1])),
+            redeem_script: Some(ScriptBuf::new_p2wpkh(wpkhs[1]).into_redeem_script()),
             bip32_derivation: bip32_derivations[1].clone(),
             sighash_type: Some(ty),
             ..Default::default()

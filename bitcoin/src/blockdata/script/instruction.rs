@@ -2,7 +2,8 @@
 
 use internals::script::{self, PushDataLenLen};
 
-use super::{Error, PushBytes, Script, ScriptBuf, ScriptBufExtPriv as _};
+use super::owned::ScriptBufExtPriv;
+use super::{Error, PushBytes, Script, ScriptBuf, Unknown};
 use crate::opcodes::{self, Opcode};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
@@ -56,7 +57,8 @@ impl Instruction<'_> {
     pub(super) fn script_serialized_len(&self) -> usize {
         match self {
             Instruction::Op(_) => 1,
-            Instruction::PushBytes(bytes) => ScriptBuf::reserved_len_for_slice(bytes.len()),
+            Instruction::PushBytes(bytes) =>
+                ScriptBuf::<Unknown>::reserved_len_for_slice(bytes.len()),
         }
     }
 
@@ -90,7 +92,7 @@ impl<'a> Instructions<'a> {
     /// Views the remaining script as a slice.
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
-    pub fn as_script(&self) -> &'a Script { Script::from_bytes(self.data.as_slice()) }
+    pub fn as_script(&self) -> &'a Script<Unknown> { Script::from_bytes(self.data.as_slice()) }
 
     /// Sets the iterator to end so that it won't iterate any longer.
     pub(super) fn kill(&mut self) {
@@ -209,9 +211,10 @@ pub struct InstructionIndices<'a> {
 impl<'a> InstructionIndices<'a> {
     /// Views the remaining script as a slice.
     ///
-    /// This is analogous to what [`core::str::Chars::as_str`] does.
+    /// This is analogous to what [`core::str::Chars::as_str`] does. If you know the context use one
+    /// of the conversion functions e.g., [`Script<Unknown>::as_script_pubkey`].
     #[inline]
-    pub fn as_script(&self) -> &'a Script { self.instructions.as_script() }
+    pub fn as_script(&self) -> &'a Script<Unknown> { self.instructions.as_script() }
 
     /// Constructs a new `Self` setting `pos` to 0.
     pub(super) fn from_instructions(instructions: Instructions<'a>) -> Self {

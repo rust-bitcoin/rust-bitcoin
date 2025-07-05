@@ -31,13 +31,13 @@ use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::{raw, Input, Output, Psbt, PsbtSighashType};
-use bitcoin::script::ScriptBufExt as _;
+use bitcoin::script::ext::*;
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
     ecdsa, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ScriptBuf, ScriptUnknown, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
@@ -92,7 +92,7 @@ fn serde_regression_relative_lock_time_time() {
 
 #[test]
 fn serde_regression_script() {
-    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+    let script = ScriptBuf::<ScriptUnknown>::from(vec![0u8, 1u8, 2u8]);
 
     let got = serialize(&script).unwrap();
     let want = include_bytes!("data/serde/script_bincode") as &[_];

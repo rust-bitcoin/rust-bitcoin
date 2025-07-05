@@ -14,7 +14,7 @@ use crate::consensus::encode;
 #[cfg(doc)]
 use crate::consensus_validation;
 use crate::internal_macros::define_extension_trait;
-use crate::script::Script;
+use crate::script::{Script, ScriptPubkey};
 use crate::transaction::{OutPoint, Transaction, TxOut};
 
 /// Verifies spend of an input script.
@@ -30,7 +30,7 @@ use crate::transaction::{OutPoint, Transaction, TxOut};
 ///
 /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
 pub fn verify_script(
-    script: &Script,
+    script: &Script<ScriptPubkey>,
     index: usize,
     amount: Amount,
     spending_tx: &[u8],
@@ -55,7 +55,7 @@ pub fn verify_script(
 ///
 /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
 pub fn verify_script_with_flags<F: Into<u32>>(
-    script: &Script,
+    script: &Script<ScriptPubkey>,
     index: usize,
     amount: Amount,
     spending_tx: &[u8],
@@ -119,7 +119,7 @@ where
 
 define_extension_trait! {
     /// Extension functionality to add validation support to the [`Script`] type.
-    pub trait ScriptExt impl for Script {
+    pub trait ScriptExt impl for Script<ScriptPubkey> {
         /// Verifies spend of an input script.
         ///
         /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
@@ -202,8 +202,10 @@ impl TransactionExt for Transaction {
 }
 
 mod sealed {
+    use primitives::script::Context;
+
     pub trait Sealed {}
-    impl Sealed for super::Script {}
+    impl<C: Context> Sealed for super::Script<C> {}
     impl Sealed for super::Transaction {}
 }
 

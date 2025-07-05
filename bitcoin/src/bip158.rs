@@ -50,7 +50,7 @@ use crate::block::{Block, BlockHash, Checked};
 use crate::consensus::{ReadExt, WriteExt};
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::{BTreeSet, Borrow, Vec};
-use crate::script::{Script, ScriptExt as _};
+use crate::script::{Script, ScriptExt as _, ScriptPubkey};
 use crate::transaction::OutPoint;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
@@ -140,7 +140,7 @@ impl BlockFilter {
     ) -> Result<BlockFilter, Error>
     where
         M: Fn(&OutPoint) -> Result<S, Error>,
-        S: Borrow<Script>,
+        S: Borrow<Script<ScriptPubkey>>,
     {
         let mut out = Vec::new();
         let mut writer = BlockFilterWriter::new(&mut out, block);
@@ -217,7 +217,7 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
     pub fn add_input_scripts<M, S>(&mut self, script_for_coin: M) -> Result<(), Error>
     where
         M: Fn(&OutPoint) -> Result<S, Error>,
-        S: Borrow<Script>,
+        S: Borrow<Script<ScriptPubkey>>,
     {
         for script in self
             .block

@@ -4,6 +4,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
+use primitives::{RedeemScript, ScriptSig, TapScript, WitnessScript};
 
 use crate::bip32::KeySource;
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
@@ -83,15 +84,15 @@ pub struct Input {
     /// must use the sighash type.
     pub sighash_type: Option<PsbtSighashType>,
     /// The redeem script for this input.
-    pub redeem_script: Option<ScriptBuf>,
+    pub redeem_script: Option<ScriptBuf<RedeemScript>>,
     /// The witness script for this input.
-    pub witness_script: Option<ScriptBuf>,
+    pub witness_script: Option<ScriptBuf<WitnessScript>>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
-    pub final_script_sig: Option<ScriptBuf>,
+    pub final_script_sig: Option<ScriptBuf<ScriptSig>>,
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
     pub final_script_witness: Option<Witness>,
@@ -108,7 +109,7 @@ pub struct Input {
     /// Map of `<xonlypubkey>|<leafhash>` with signature.
     pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), taproot::Signature>,
     /// Map of Control blocks to Script version pair.
-    pub tap_scripts: BTreeMap<ControlBlock, (ScriptBuf, LeafVersion)>,
+    pub tap_scripts: BTreeMap<ControlBlock, (ScriptBuf<TapScript>, LeafVersion)>,
     /// Map of tap root x only keys to origin info and leaf hashes contained in it.
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Taproot Internal key.
@@ -283,12 +284,12 @@ impl Input {
             }
             PSBT_IN_REDEEM_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.redeem_script <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.redeem_script <= <raw_key: _>|<raw_value: ScriptBuf<RedeemScript>>
                 }
             }
             PSBT_IN_WITNESS_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.witness_script <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.witness_script <= <raw_key: _>|<raw_value: ScriptBuf<WitnessScript>>
                 }
             }
             PSBT_IN_BIP32_DERIVATION => {
@@ -298,7 +299,7 @@ impl Input {
             }
             PSBT_IN_FINAL_SCRIPTSIG => {
                 impl_psbt_insert_pair! {
-                    self.final_script_sig <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.final_script_sig <= <raw_key: _>|<raw_value: ScriptBuf<ScriptSig>>
                 }
             }
             PSBT_IN_FINAL_SCRIPTWITNESS => {
@@ -338,7 +339,7 @@ impl Input {
             }
             PSBT_IN_TAP_LEAF_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.tap_scripts <= <raw_key: ControlBlock>|< raw_value: (ScriptBuf, LeafVersion)>
+                    self.tap_scripts <= <raw_key: ControlBlock>|< raw_value: (ScriptBuf<TapScript>, LeafVersion)>
                 }
             }
             PSBT_IN_TAP_BIP32_DERIVATION => {

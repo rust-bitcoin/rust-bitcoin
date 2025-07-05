@@ -23,6 +23,7 @@ use io::Write;
 use crate::address::script_pubkey::ScriptExt as _;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
+use crate::script::{Context, ScriptPubkey, WitnessScript};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
@@ -159,8 +160,8 @@ const KEY_VERSION_0: u8 = 0u8;
 ///
 /// This can be hashed into a [`TapLeafHash`].
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct ScriptPath<'s> {
-    script: &'s Script,
+pub struct ScriptPath<'s, C: Context> {
+    script: &'s Script<C>,
     leaf_version: LeafVersion,
 }
 
@@ -329,13 +330,15 @@ impl std::error::Error for PrevoutsIndexError {
     }
 }
 
-impl<'s> ScriptPath<'s> {
+impl<'s, C: Context> ScriptPath<'s, C> {
     /// Constructs a new `ScriptPath` structure.
-    pub fn new(script: &'s Script, leaf_version: LeafVersion) -> Self {
+    pub fn new(script: &'s Script<C>, leaf_version: LeafVersion) -> Self {
         ScriptPath { script, leaf_version }
     }
     /// Constructs a new `ScriptPath` structure using default leaf version value.
-    pub fn with_defaults(script: &'s Script) -> Self { Self::new(script, LeafVersion::TapScript) }
+    pub fn with_defaults(script: &'s Script<C>) -> Self {
+        Self::new(script, LeafVersion::TapScript)
+    }
     /// Computes the leaf hash for this `ScriptPath`.
     pub fn leaf_hash(&self) -> TapLeafHash {
         let mut enc = sha256t::Hash::<TapLeafTag>::engine();
@@ -351,8 +354,8 @@ impl<'s> ScriptPath<'s> {
     }
 }
 
-impl<'s> From<ScriptPath<'s>> for TapLeafHash {
-    fn from(script_path: ScriptPath<'s>) -> TapLeafHash { script_path.leaf_hash() }
+impl<'s, C: Context> From<ScriptPath<'s, C>> for TapLeafHash {
+    fn from(script_path: ScriptPath<'s, C>) -> TapLeafHash { script_path.leaf_hash() }
 }
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
@@ -818,7 +821,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         writer: &mut W,
         input_index: usize,
-        script_code: &Script,
+        script_code: &Script<ScriptPubkey>,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
@@ -875,7 +878,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     pub fn p2wpkh_signature_hash(
         &mut self,
         input_index: usize,
-        script_pubkey: &Script,
+        script_pubkey: &Script<ScriptPubkey>,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, P2wpkhError> {
@@ -900,7 +903,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     pub fn p2wsh_signature_hash(
         &mut self,
         input_index: usize,
-        witness_script: &Script,
+        witness_script: &Script<WitnessScript>,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
@@ -908,7 +911,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
             input_index,
-            witness_script,
+            witness_script.as_script_pubkey(),
             value,
             sighash_type,
         )
@@ -942,7 +945,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &self,
         writer: &mut W,
         input_index: usize,
-        script_pubkey: &Script,
+        script_pubkey: &Script<ScriptPubkey>,
         sighash_type: U,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
@@ -967,7 +970,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             self_: &Transaction,
             writer: &mut W,
             input_index: usize,
-            script_pubkey: &Script,
+            script_pubkey: &Script<ScriptPubkey>,
             sighash_type: u32,
         ) -> Result<(), io::Error> {
             use crate::consensus::encode::WriteExt;
@@ -989,7 +992,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     if n == input_index {
                         script_pubkey.consensus_encode(writer)?;
                     } else {
-                        Script::new().consensus_encode(writer)?;
+                        Script::<ScriptPubkey>::new().consensus_encode(writer)?;
                     }
                     if n != input_index
                         && (sighash == EcdsaSighashType::Single
@@ -1062,7 +1065,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     pub fn legacy_signature_hash(
         &self,
         input_index: usize,
-        script_pubkey: &Script,
+        script_pubkey: &Script<ScriptPubkey>,
         sighash_type: u32,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
@@ -1832,7 +1835,8 @@ mod tests {
 
         let leaf_hash = match (script_hex, script_leaf_hash) {
             (Some(script_hex), _) => {
-                let script_inner = ScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
+                let script_inner =
+                    ScriptBuf::<WitnessScript>::from_hex_no_length_prefix(script_hex).unwrap();
                 Some(ScriptPath::with_defaults(&script_inner).leaf_hash())
             }
             (_, Some(script_leaf_hash)) => Some(script_leaf_hash.parse::<TapLeafHash>().unwrap()),
@@ -1887,7 +1891,7 @@ mod tests {
         #[derive(serde::Deserialize)]
         struct UtxoSpent {
             #[serde(rename = "scriptPubKey")]
-            script_pubkey: ScriptBuf,
+            script_pubkey: ScriptBuf<ScriptPubkey>,
             #[serde(rename = "amountSats")]
             #[serde(with = "crate::amount::serde::as_sat")]
             value: Amount,
@@ -2167,7 +2171,7 @@ mod tests {
     // Note, if you are looking at the test vectors in BIP-143 and wondering why there is a `cf`
     // prepended to all the script_code hex it is the length byte, it gets added when we consensus
     // encode a script.
-    fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, ScriptBuf, Amount) {
+    fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, ScriptBuf<WitnessScript>, Amount) {
         let tx = deserialize::<Transaction>(&hex!(
             "010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000\
              ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f\

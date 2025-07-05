@@ -3,18 +3,18 @@
 use hex_lit::hex;
 
 use super::*;
-use crate::address::script_pubkey::{
-    BuilderExt as _, ScriptBufExt as _, ScriptExt as _, ScriptExtPrivate as _,
-};
+use crate::address::script_pubkey::{ScriptBufExt as _, ScriptExt as _, ScriptExtPrivate as _};
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
+use crate::script::ext::*;
+use crate::script::{ScriptPubkey, Unknown};
 use crate::{opcodes, Amount, FeeRate};
 
 #[test]
 #[rustfmt::skip]
 fn script() {
     let mut comp = vec![];
-    let mut script = Builder::new();
+    let mut script = Builder::<ScriptPubkey>::new();
     assert_eq!(script.as_bytes(), &comp[..]);
 
     // small ints
@@ -69,7 +69,8 @@ fn script() {
 fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = key_str.parse::<PublicKey>().unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk =
+        Script::<ScriptPubkey>::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
     assert_eq!(actual.to_vec(), key.to_vec());
 }
@@ -78,20 +79,20 @@ fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
 fn p2pk_pubkey_bytes_no_checksig_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = key_str.parse::<PublicKey>().unwrap();
-    let no_checksig = Script::builder().push_key(key).into_script();
+    let no_checksig = Script::<ScriptPubkey>::builder().push_key(key).into_script();
     assert_eq!(no_checksig.p2pk_pubkey_bytes(), None);
 }
 
 #[test]
 fn p2pk_pubkey_bytes_empty_script_returns_none() {
-    let empty_script = Script::builder().into_script();
+    let empty_script = Script::<ScriptPubkey>::builder().into_script();
     assert!(empty_script.p2pk_pubkey_bytes().is_none());
 }
 
 #[test]
 fn p2pk_pubkey_bytes_no_key_returns_none() {
     // scripts with no key should return None
-    let no_push_bytes = Script::builder().push_opcode(OP_CHECKSIG).into_script();
+    let no_push_bytes = Script::<ScriptPubkey>::builder().push_opcode(OP_CHECKSIG).into_script();
     assert!(no_push_bytes.p2pk_pubkey_bytes().is_none());
 }
 
@@ -99,7 +100,8 @@ fn p2pk_pubkey_bytes_no_key_returns_none() {
 fn p2pk_pubkey_bytes_different_op_code_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = key_str.parse::<PublicKey>().unwrap();
-    let different_op_code = Script::builder().push_key(key).push_opcode(OP_NOP).into_script();
+    let different_op_code =
+        Script::<ScriptPubkey>::builder().push_key(key).push_opcode(OP_NOP).into_script();
     assert!(different_op_code.p2pk_pubkey_bytes().is_none());
 }
 
@@ -107,16 +109,20 @@ fn p2pk_pubkey_bytes_different_op_code_returns_none() {
 fn p2pk_pubkey_bytes_incorrect_key_size_returns_none() {
     // 63 byte key
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
-    let invalid_p2pk_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+    let invalid_p2pk_script = Script::<ScriptPubkey>::builder()
+        .push_slice(malformed_key)
+        .push_opcode(OP_CHECKSIG)
+        .into_script();
     assert!(invalid_p2pk_script.p2pk_pubkey_bytes().is_none());
 }
 
 #[test]
 fn p2pk_pubkey_bytes_invalid_key_returns_some() {
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
-    let invalid_key_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+    let invalid_key_script = Script::<ScriptPubkey>::builder()
+        .push_slice(malformed_key)
+        .push_opcode(OP_CHECKSIG)
+        .into_script();
     assert!(invalid_key_script.p2pk_pubkey_bytes().is_some());
 }
 
@@ -124,7 +130,8 @@ fn p2pk_pubkey_bytes_invalid_key_returns_some() {
 fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
     let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
     let key = compressed_key_str.parse::<PublicKey>().unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk =
+        Script::<ScriptPubkey>::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
     assert_eq!(actual.to_vec(), key.to_vec());
 }
@@ -133,7 +140,8 @@ fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
 fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = key_str.parse::<PublicKey>().unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk =
+        Script::<ScriptPubkey>::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_public_key().unwrap();
     assert_eq!(actual, key);
 }
@@ -142,19 +150,19 @@ fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
 fn p2pk_public_key_no_checksig_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = key_str.parse::<PublicKey>().unwrap();
-    let no_checksig = Script::builder().push_key(key).into_script();
+    let no_checksig = Script::<ScriptPubkey>::builder().push_key(key).into_script();
     assert_eq!(no_checksig.p2pk_public_key(), None);
 }
 
 #[test]
 fn p2pk_public_key_empty_script_returns_none() {
-    let empty_script = Script::builder().into_script();
+    let empty_script = Script::<ScriptPubkey>::builder().into_script();
     assert!(empty_script.p2pk_public_key().is_none());
 }
 
 #[test]
 fn p2pk_public_key_no_key_returns_none() {
-    let no_push_bytes = Script::builder().push_opcode(OP_CHECKSIG).into_script();
+    let no_push_bytes = Script::<ScriptPubkey>::builder().push_opcode(OP_CHECKSIG).into_script();
     assert!(no_push_bytes.p2pk_public_key().is_none());
 }
 
@@ -162,23 +170,28 @@ fn p2pk_public_key_no_key_returns_none() {
 fn p2pk_public_key_different_op_code_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = key_str.parse::<PublicKey>().unwrap();
-    let different_op_code = Script::builder().push_key(key).push_opcode(OP_NOP).into_script();
+    let different_op_code =
+        Script::<ScriptPubkey>::builder().push_key(key).push_opcode(OP_NOP).into_script();
     assert!(different_op_code.p2pk_public_key().is_none());
 }
 
 #[test]
 fn p2pk_public_key_incorrect_size_returns_none() {
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
-    let malformed_key_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+    let malformed_key_script = Script::<ScriptPubkey>::builder()
+        .push_slice(malformed_key)
+        .push_opcode(OP_CHECKSIG)
+        .into_script();
     assert!(malformed_key_script.p2pk_public_key().is_none());
 }
 
 #[test]
 fn p2pk_public_key_invalid_key_returns_none() {
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
-    let invalid_key_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+    let invalid_key_script = Script::<ScriptPubkey>::builder()
+        .push_slice(malformed_key)
+        .push_opcode(OP_CHECKSIG)
+        .into_script();
     assert!(invalid_key_script.p2pk_public_key().is_none());
 }
 
@@ -186,7 +199,8 @@ fn p2pk_public_key_invalid_key_returns_none() {
 fn p2pk_public_key_compressed_key_returns_some() {
     let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
     let key = compressed_key_str.parse::<PublicKey>().unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk =
+        Script::<ScriptPubkey>::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_public_key().unwrap();
     assert_eq!(actual, key);
 }
@@ -198,14 +212,14 @@ fn script_x_only_key() {
     // From: https://github.com/bitcoin-core/btcdeb/blob/e8c2750c4a4702768c52d15640ed03bf744d2601/doc/tapscript-example.md?plain=1#L43
     const KEYSTR: &str = "209997a497d964fc1a62885b05a51166a65a90df00492c8d7cf61d6accf54803be";
     let x_only_key = KEYSTR[2..].parse::<XOnlyPublicKey>().unwrap();
-    let script = Builder::new().push_x_only_key(x_only_key);
+    let script = Builder::<ScriptPubkey>::new().push_x_only_key(x_only_key);
     assert_eq!(script.into_bytes(), &hex!(KEYSTR) as &[u8]);
 }
 
 #[test]
 fn script_builder() {
     // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
-    let script = Builder::new()
+    let script = Builder::<ScriptPubkey>::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
         .push_slice(hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
@@ -220,7 +234,7 @@ fn script_builder() {
 
 #[test]
 fn script_builder_with_capacity() {
-    let script = Builder::with_capacity(42);
+    let script = Builder::<ScriptSig>::with_capacity(42);
 
     assert!(script.into_script().capacity() >= 42);
 }
@@ -238,21 +252,24 @@ fn script_generators() {
     let wpubkey_hash = pubkey.wpubkey_hash().unwrap();
     assert!(ScriptBuf::new_p2wpkh(wpubkey_hash).is_p2wpkh());
 
-    let script = Builder::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();
-    let script_hash = script.script_hash().expect("script is less than 520 bytes");
+    let script =
+        Builder::<ScriptPubkey>::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();
+    let script_hash =
+        script.as_redeem_script().script_hash().expect("script is less than 520 bytes");
     let p2sh = ScriptBuf::new_p2sh(script_hash);
     assert!(p2sh.is_p2sh());
     assert_eq!(script.to_p2sh().unwrap(), p2sh);
 
-    let wscript_hash = script.wscript_hash().expect("script is less than 10,000 bytes");
-    let p2wsh = ScriptBuf::new_p2wsh(wscript_hash);
+    let wscript_hash =
+        script.as_witness_script().wscript_hash().expect("script is less than 10,000 bytes");
+    let p2wsh = ScriptBuf::<ScriptPubkey>::new_p2wsh(wscript_hash);
     assert!(p2wsh.is_p2wsh());
     assert_eq!(script.to_p2wsh().unwrap(), p2wsh);
 
     // Test data are taken from the second output of
     // 2ccb3a1f745eb4eefcf29391460250adda5fab78aaddb902d25d3cd97d9d8e61 transaction
     let data = hex!("aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
-    let op_return = ScriptBuf::new_op_return(data);
+    let op_return = ScriptBuf::<ScriptPubkey>::new_op_return(data);
     assert!(op_return.is_op_return());
     assert_eq!(
         op_return.to_hex_string_no_length_prefix(),
@@ -262,49 +279,52 @@ fn script_generators() {
 
 #[test]
 fn script_builder_verify() {
-    let simple = Builder::new().push_verify().into_script();
+    let simple = Builder::<ScriptPubkey>::new().push_verify().into_script();
     assert_eq!(simple.to_hex_string_no_length_prefix(), "69");
-    let simple2 = Builder::from(vec![]).push_verify().into_script();
+    let simple2 = Builder::<ScriptPubkey>::from(vec![]).push_verify().into_script();
     assert_eq!(simple2.to_hex_string_no_length_prefix(), "69");
 
-    let nonverify = Builder::new().push_verify().push_verify().into_script();
+    let nonverify = Builder::<ScriptPubkey>::new().push_verify().push_verify().into_script();
     assert_eq!(nonverify.to_hex_string_no_length_prefix(), "6969");
-    let nonverify2 = Builder::from(vec![0x69]).push_verify().into_script();
+    let nonverify2 = Builder::<ScriptPubkey>::from(vec![0x69]).push_verify().into_script();
     assert_eq!(nonverify2.to_hex_string_no_length_prefix(), "6969");
 
-    let equal = Builder::new().push_opcode(OP_EQUAL).push_verify().into_script();
+    let equal = Builder::<ScriptPubkey>::new().push_opcode(OP_EQUAL).push_verify().into_script();
     assert_eq!(equal.to_hex_string_no_length_prefix(), "88");
-    let equal2 = Builder::from(vec![0x87]).push_verify().into_script();
+    let equal2 = Builder::<ScriptPubkey>::from(vec![0x87]).push_verify().into_script();
     assert_eq!(equal2.to_hex_string_no_length_prefix(), "88");
 
-    let numequal = Builder::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();
+    let numequal =
+        Builder::<ScriptPubkey>::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();
     assert_eq!(numequal.to_hex_string_no_length_prefix(), "9d");
-    let numequal2 = Builder::from(vec![0x9c]).push_verify().into_script();
+    let numequal2 = Builder::<ScriptPubkey>::from(vec![0x9c]).push_verify().into_script();
     assert_eq!(numequal2.to_hex_string_no_length_prefix(), "9d");
 
-    let checksig = Builder::new().push_opcode(OP_CHECKSIG).push_verify().into_script();
+    let checksig =
+        Builder::<ScriptPubkey>::new().push_opcode(OP_CHECKSIG).push_verify().into_script();
     assert_eq!(checksig.to_hex_string_no_length_prefix(), "ad");
-    let checksig2 = Builder::from(vec![0xac]).push_verify().into_script();
+    let checksig2 = Builder::<ScriptPubkey>::from(vec![0xac]).push_verify().into_script();
     assert_eq!(checksig2.to_hex_string_no_length_prefix(), "ad");
 
-    let checkmultisig = Builder::new().push_opcode(OP_CHECKMULTISIG).push_verify().into_script();
+    let checkmultisig =
+        Builder::<ScriptPubkey>::new().push_opcode(OP_CHECKMULTISIG).push_verify().into_script();
     assert_eq!(checkmultisig.to_hex_string_no_length_prefix(), "af");
-    let checkmultisig2 = Builder::from(vec![0xae]).push_verify().into_script();
+    let checkmultisig2 = Builder::<ScriptPubkey>::from(vec![0xae]).push_verify().into_script();
     assert_eq!(checkmultisig2.to_hex_string_no_length_prefix(), "af");
 
-    let trick_slice = Builder::new()
+    let trick_slice = Builder::<ScriptPubkey>::new()
         .push_slice([0xae]) // OP_CHECKMULTISIG
         .push_verify()
         .into_script();
     assert_eq!(trick_slice.to_hex_string_no_length_prefix(), "01ae69");
-    let trick_slice2 = Builder::from(vec![0x01, 0xae]).push_verify().into_script();
+    let trick_slice2 = Builder::<ScriptPubkey>::from(vec![0x01, 0xae]).push_verify().into_script();
     assert_eq!(trick_slice2.to_hex_string_no_length_prefix(), "01ae69");
 }
 
 #[test]
 fn script_serialize() {
     let hex_script = hex!("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52");
-    let script: Result<ScriptBuf, _> = deserialize(&hex_script);
+    let script: Result<ScriptBuf<ScriptPubkey>, _> = deserialize(&hex_script);
     assert!(script.is_ok());
     assert_eq!(serialize(&script.unwrap()), &hex_script as &[u8]);
 }
@@ -394,11 +414,11 @@ fn non_minimal_scriptints() {
 fn script_hashes() {
     let script = ScriptBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap();
     assert_eq!(
-        script.script_hash().unwrap().to_string(),
+        script.as_redeem_script().script_hash().unwrap().to_string(),
         "8292bcfbef1884f73c813dfe9c82fd7e814291ea"
     );
     assert_eq!(
-        script.wscript_hash().unwrap().to_string(),
+        script.as_witness_script().wscript_hash().unwrap().to_string(),
         "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324"
     );
     assert_eq!(
@@ -415,15 +435,15 @@ fn script_hashes() {
 #[test]
 fn provably_unspendable() {
     // p2pk
-    assert!(!ScriptBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_op_return());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_op_return());
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_op_return());
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_op_return());
     // p2pkhash
-    assert!(!ScriptBuf::from_hex_no_length_prefix(
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix(
         "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
     )
     .unwrap()
     .is_op_return());
-    assert!(ScriptBuf::from_hex_no_length_prefix(
+    assert!(ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix(
         "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
     )
     .unwrap()
@@ -432,33 +452,33 @@ fn provably_unspendable() {
 
 #[test]
 fn op_return() {
-    assert!(ScriptBuf::from_hex_no_length_prefix(
+    assert!(ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix(
         "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
     )
     .unwrap()
     .is_op_return());
-    assert!(!ScriptBuf::from_hex_no_length_prefix(
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix(
         "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
     )
     .unwrap()
     .is_op_return());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("").unwrap().is_op_return());
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("").unwrap().is_op_return());
 }
 
 #[test]
 fn standard_op_return() {
-    assert!(ScriptBuf::from_hex_no_length_prefix(
+    assert!(ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix(
         "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
     )
     .unwrap()
     .is_standard_op_return());
-    assert!(ScriptBuf::from_hex_no_length_prefix("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e")
+    assert!(ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e")
         .unwrap()
         .is_standard_op_return());
-    assert!(ScriptBuf::from_hex_no_length_prefix("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e21")
+    assert!(ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e21")
         .unwrap()
         .is_standard_op_return());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e21524f42")
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e21524f42")
         .unwrap()
         .is_standard_op_return());
 }
@@ -468,44 +488,44 @@ fn multisig() {
     // First multisig? 1-of-2
     // In block 164467, txid 60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1
     assert!(
-        ScriptBuf::from_hex_no_length_prefix("514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae")
+        ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae")
             .unwrap()
             .is_multisig()
     );
     // 2-of-2
     assert!(
-        ScriptBuf::from_hex_no_length_prefix("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae")
+        ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae")
             .unwrap()
             .is_multisig()
     );
 
     // Extra opcode after OP_CHECKMULTISIG
     assert!(
-        !ScriptBuf::from_hex_no_length_prefix("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae52")
+        !ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae52")
             .unwrap()
             .is_multisig()
     );
     // Required sigs > num pubkeys
     assert!(
-        !ScriptBuf::from_hex_no_length_prefix("5321021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae")
+        !ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("5321021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae")
             .unwrap()
             .is_multisig()
     );
     // Num pubkeys != pushnum
     assert!(
-        !ScriptBuf::from_hex_no_length_prefix("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f453ae")
+        !ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f453ae")
             .unwrap()
             .is_multisig()
     );
 
     // Taproot hash from another test
-    assert!(!ScriptBuf::from_hex_no_length_prefix(
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix(
         "20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac"
     )
     .unwrap()
     .is_multisig());
     // OP_RETURN from another test
-    assert!(!ScriptBuf::from_hex_no_length_prefix(
+    assert!(!ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix(
         "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
     )
     .unwrap()
@@ -517,55 +537,67 @@ fn multisig() {
 fn script_json_serialize() {
     use serde_json;
 
-    let original = ScriptBuf::from_hex_no_length_prefix("827651a0698faaa9a8a7a687").unwrap();
+    let original =
+        ScriptBuf::<ScriptPubkey>::from_hex_no_length_prefix("827651a0698faaa9a8a7a687").unwrap();
     let json = serde_json::to_value(&original).unwrap();
     assert_eq!(json, serde_json::Value::String("827651a0698faaa9a8a7a687".to_owned()));
-    let des = serde_json::from_value::<ScriptBuf>(json).unwrap();
+    let des = serde_json::from_value::<ScriptBuf<ScriptPubkey>>(json).unwrap();
     assert_eq!(original, des);
 }
 
 #[test]
 fn script_asm() {
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("6363636363686868686800").unwrap().to_string(),
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("6363636363686868686800")
+            .unwrap()
+            .to_string(),
         "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0"
     );
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac").unwrap().to_string(),
+    assert_eq!(ScriptBuf::<Unknown>::from_hex_no_length_prefix("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac").unwrap().to_string(),
                "OP_PUSHBYTES_33 02715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699 OP_CHECKSIG");
     // Elements Alpha peg-out transaction with some signatures removed for brevity. Mainly to test PUSHDATA1
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap().to_string(),
+    assert_eq!(ScriptBuf::<Unknown>::from_hex_no_length_prefix("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap().to_string(),
                "OP_0 OP_PUSHBYTES_71 304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401 OP_0 OP_PUSHDATA1 552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae");
     // Various weird scripts found in transaction 6d7ed9914625c73c0288694a6819196a27ef6c08f98e1270d975a8e65a3dc09a
     // which triggered overflow bugs on 32-bit machines in script formatting in the past.
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("01").unwrap().to_string(),
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("01").unwrap().to_string(),
         "OP_PUSHBYTES_1 <push past end>"
     );
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("0201").unwrap().to_string(),
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("0201").unwrap().to_string(),
         "OP_PUSHBYTES_2 <push past end>"
     );
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("4c").unwrap().to_string(), "<unexpected end>");
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("4c0201").unwrap().to_string(),
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("4c").unwrap().to_string(),
+        "<unexpected end>"
+    );
+    assert_eq!(
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("4c0201").unwrap().to_string(),
         "OP_PUSHDATA1 <push past end>"
     );
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("4d").unwrap().to_string(), "<unexpected end>");
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("4dffff01").unwrap().to_string(),
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("4d").unwrap().to_string(),
+        "<unexpected end>"
+    );
+    assert_eq!(
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("4dffff01").unwrap().to_string(),
         "OP_PUSHDATA2 <push past end>"
     );
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("4effffffff01").unwrap().to_string(),
+        ScriptBuf::<Unknown>::from_hex_no_length_prefix("4effffffff01").unwrap().to_string(),
         "OP_PUSHDATA4 <push past end>"
     );
 }
 
 #[test]
 fn script_buf_collect() {
-    assert_eq!(&core::iter::empty::<Instruction<'_>>().collect::<ScriptBuf>(), Script::new());
-    let script = ScriptBuf::from_hex_no_length_prefix("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap();
-    assert_eq!(script.instructions().collect::<Result<ScriptBuf, _>>().unwrap(), script);
+    assert_eq!(
+        &core::iter::empty::<Instruction<'_>>().collect::<ScriptBuf<Unknown>>(),
+        Script::new()
+    );
+    let script = ScriptBuf::<Unknown>::from_hex_no_length_prefix("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap();
+    assert_eq!(script.instructions().collect::<Result<ScriptBuf<Unknown>, _>>().unwrap(), script);
 }
 
 #[test]
@@ -656,12 +688,12 @@ macro_rules! unwrap_all {
 
 #[test]
 fn iterator() {
-    let zero = ScriptBuf::from_hex_no_length_prefix("00").unwrap();
-    let zeropush = ScriptBuf::from_hex_no_length_prefix("0100").unwrap();
+    let zero = ScriptBuf::<Unknown>::from_hex_no_length_prefix("00").unwrap();
+    let zeropush = ScriptBuf::<Unknown>::from_hex_no_length_prefix("0100").unwrap();
 
-    let nonminimal = ScriptBuf::from_hex_no_length_prefix("4c0169b2").unwrap(); // PUSHDATA1 for no reason
-    let minimal = ScriptBuf::from_hex_no_length_prefix("0169b2").unwrap(); // minimal
-    let nonminimal_alt = ScriptBuf::from_hex_no_length_prefix("026900b2").unwrap(); // non-minimal number but minimal push (should be OK)
+    let nonminimal = ScriptBuf::<Unknown>::from_hex_no_length_prefix("4c0169b2").unwrap(); // PUSHDATA1 for no reason
+    let minimal = ScriptBuf::<Unknown>::from_hex_no_length_prefix("0169b2").unwrap(); // minimal
+    let nonminimal_alt = ScriptBuf::<Unknown>::from_hex_no_length_prefix("026900b2").unwrap(); // non-minimal number but minimal push (should be OK)
 
     let v_zero: Result<Vec<_>, Error> = zero.instruction_indices_minimal().collect();
     let v_zeropush: Result<Vec<_>, Error> = zeropush.instruction_indices_minimal().collect();
@@ -714,10 +746,10 @@ fn iterator() {
 
 #[test]
 fn script_ord() {
-    let script_1 = Builder::new().push_slice([1, 2, 3, 4]).into_script();
-    let script_2 = Builder::new().push_int_unchecked(10).into_script();
-    let script_3 = Builder::new().push_int_unchecked(15).into_script();
-    let script_4 = Builder::new().push_opcode(OP_RETURN).into_script();
+    let script_1 = Builder::<ScriptPubkey>::new().push_slice([1, 2, 3, 4]).into_script();
+    let script_2 = Builder::<ScriptPubkey>::new().push_int_unchecked(10).into_script();
+    let script_3 = Builder::<ScriptPubkey>::new().push_int_unchecked(15).into_script();
+    let script_4 = Builder::<ScriptPubkey>::new().push_opcode(OP_RETURN).into_script();
 
     assert!(script_1 < script_2);
     assert!(script_2 < script_3);
@@ -747,7 +779,8 @@ fn bitcoinconsensus() {
 fn default_dust_value() {
     // Check that our dust_value() calculator correctly calculates the dust limit on common
     // well-known scriptPubKey types.
-    let script_p2wpkh = Builder::new().push_int_unchecked(0).push_slice([42; 20]).into_script();
+    let script_p2wpkh =
+        Builder::<ScriptPubkey>::new().push_int_unchecked(0).push_slice([42; 20]).into_script();
     assert!(script_p2wpkh.is_p2wpkh());
     assert_eq!(script_p2wpkh.minimal_non_dust(), Amount::from_sat_u32(294));
     assert_eq!(
@@ -755,7 +788,7 @@ fn default_dust_value() {
         Some(Amount::from_sat_u32(588))
     );
 
-    let script_p2pkh = Builder::new()
+    let script_p2pkh = Builder::<ScriptPubkey>::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
         .push_slice([42; 20])
@@ -773,7 +806,7 @@ fn default_dust_value() {
 #[test]
 fn script_get_sigop_count() {
     assert_eq!(
-        Builder::new()
+        Builder::<ScriptPubkey>::new()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
             .push_slice([42; 20])
@@ -783,7 +816,7 @@ fn script_get_sigop_count() {
         0
     );
     assert_eq!(
-        Builder::new()
+        Builder::<ScriptPubkey>::new()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
             .push_slice([42; 20])
@@ -794,7 +827,7 @@ fn script_get_sigop_count() {
         1
     );
     assert_eq!(
-        Builder::new()
+        Builder::<ScriptPubkey>::new()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
             .push_slice([42; 20])
@@ -805,7 +838,7 @@ fn script_get_sigop_count() {
             .count_sigops(),
         1
     );
-    let multi = Builder::new()
+    let multi = Builder::<ScriptPubkey>::new()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -815,7 +848,7 @@ fn script_get_sigop_count() {
         .into_script();
     assert_eq!(multi.count_sigops(), 3);
     assert_eq!(multi.count_sigops_legacy(), 20);
-    let multi_verify = Builder::new()
+    let multi_verify = Builder::<ScriptPubkey>::new()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -826,7 +859,7 @@ fn script_get_sigop_count() {
         .into_script();
     assert_eq!(multi_verify.count_sigops(), 3);
     assert_eq!(multi_verify.count_sigops_legacy(), 20);
-    let multi_nopushnum_pushdata = Builder::new()
+    let multi_nopushnum_pushdata = Builder::<ScriptPubkey>::new()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -835,7 +868,7 @@ fn script_get_sigop_count() {
         .into_script();
     assert_eq!(multi_nopushnum_pushdata.count_sigops(), 20);
     assert_eq!(multi_nopushnum_pushdata.count_sigops_legacy(), 20);
-    let multi_nopushnum_op = Builder::new()
+    let multi_nopushnum_op = Builder::<ScriptPubkey>::new()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -849,7 +882,7 @@ fn script_get_sigop_count() {
 #[test]
 #[cfg(feature = "serde")]
 fn script_serde_human_and_not() {
-    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+    let script = ScriptBuf::<Unknown>::from(vec![0u8, 1u8, 2u8]);
 
     // Serialize
     let json = serde_json::to_string(&script).unwrap();
@@ -858,13 +891,13 @@ fn script_serde_human_and_not() {
     assert_eq!(bincode, [3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2]); // bincode adds u64 for length, serde_cbor use varint
 
     // Deserialize
-    assert_eq!(script, serde_json::from_str::<ScriptBuf>(&json).unwrap());
-    assert_eq!(script, bincode::deserialize::<ScriptBuf>(&bincode).unwrap());
+    assert_eq!(script, serde_json::from_str::<ScriptBuf<Unknown>>(&json).unwrap());
+    assert_eq!(script, bincode::deserialize::<ScriptBuf<Unknown>>(&bincode).unwrap());
 }
 
 #[test]
 fn instructions_are_fused() {
-    let script = ScriptBuf::new();
+    let script = ScriptBuf::<Unknown>::new();
     let mut instructions = script.instructions();
     assert!(instructions.next().is_none());
     assert!(instructions.next().is_none());
@@ -874,7 +907,7 @@ fn instructions_are_fused() {
 
 #[test]
 fn script_extend() {
-    fn cmp_scripts(new_script: &Script, orig_script: &[Instruction<'_>]) {
+    fn cmp_scripts(new_script: &Script<ScriptPubkey>, orig_script: &[Instruction<'_>]) {
         let mut new_instr = new_script.instructions();
         let mut orig_instr = orig_script.iter().cloned();
         for (new, orig) in new_instr.by_ref().zip(orig_instr.by_ref()) {
@@ -890,7 +923,7 @@ fn script_extend() {
         Instruction::Op(OP_EQUALVERIFY),
         Instruction::Op(OP_CHECKSIG),
     ];
-    let new_script = script_5_items.iter().cloned().collect::<ScriptBuf>();
+    let new_script = script_5_items.iter().cloned().collect::<ScriptBuf<ScriptPubkey>>();
     cmp_scripts(&new_script, &script_5_items);
 
     let script_6_items = [
@@ -901,7 +934,7 @@ fn script_extend() {
         Instruction::Op(OP_CHECKSIG),
         Instruction::Op(OP_NOP),
     ];
-    let new_script = script_6_items.iter().cloned().collect::<ScriptBuf>();
+    let new_script = script_6_items.iter().cloned().collect::<ScriptBuf<ScriptPubkey>>();
     cmp_scripts(&new_script, &script_6_items);
 
     let script_7_items = [
@@ -912,7 +945,7 @@ fn script_extend() {
         Instruction::Op(OP_CHECKSIG),
         Instruction::Op(OP_NOP),
     ];
-    let new_script = script_7_items.iter().cloned().collect::<ScriptBuf>();
+    let new_script = script_7_items.iter().cloned().collect::<ScriptBuf<ScriptPubkey>>();
     cmp_scripts(&new_script, &script_7_items);
 }
 
@@ -975,7 +1008,7 @@ fn instruction_script_num_parse() {
     // script_num() is predicated on OP_0/OP_FALSE (0x00)
     // being treated as an empty PushBytes
     assert_eq!(
-        Script::from_bytes(&[0x00]).instructions().next(),
+        Script::<Unknown>::from_bytes(&[0x00]).instructions().next(),
         Some(Ok(Instruction::PushBytes(PushBytes::empty()))),
     );
 }
@@ -983,5 +1016,14 @@ fn instruction_script_num_parse() {
 #[test]
 fn script_push_int_overflow() {
     // Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
-    assert_eq!(Builder::new().push_int(i32::MIN), Err(Error::NumericOverflow));
+    assert_eq!(Builder::<ScriptSig>::new().push_int(i32::MIN), Err(Error::NumericOverflow));
+}
+
+#[test]
+fn can_call_builder_for_all_known_contexts() {
+    let _ = ScriptBuf::<ScriptPubkey>::builder();
+    let _ = ScriptBuf::<ScriptSig>::builder();
+    let _ = ScriptBuf::<RedeemScript>::builder();
+    let _ = ScriptBuf::<WitnessScript>::builder();
+    let _ = ScriptBuf::<TapScript>::builder();
 }

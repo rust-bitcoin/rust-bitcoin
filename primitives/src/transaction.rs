@@ -34,7 +34,7 @@ use crate::locktime::absolute;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
-use crate::script::ScriptBuf;
+use crate::script::{ScriptBuf, ScriptPubkey, ScriptSig};
 #[cfg(feature = "alloc")]
 use crate::sequence::Sequence;
 #[cfg(feature = "alloc")]
@@ -321,7 +321,7 @@ pub struct TxIn {
     pub previous_output: OutPoint,
     /// The script which pushes values on the stack which will cause
     /// the referenced output's script to be accepted.
-    pub script_sig: ScriptBuf,
+    pub script_sig: ScriptBuf<ScriptSig>,
     /// The sequence number, which suggests to miners which of two
     /// conflicting transactions should be preferred, or 0xFFFFFFFF
     /// to ignore this feature. This is generally never used since
@@ -365,7 +365,7 @@ pub struct TxOut {
     #[cfg_attr(feature = "serde", serde(with = "crate::amount::serde::as_sat"))]
     pub value: Amount,
     /// The script which must be satisfied for the output to be spent.
-    pub script_pubkey: ScriptBuf,
+    pub script_pubkey: ScriptBuf<ScriptPubkey>,
 }
 
 /// A reference to a transaction output.

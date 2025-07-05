@@ -17,6 +17,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
+use primitives::script::{RedeemScript, ScriptPubkey, WitnessScript};
 use primitives::Sequence;
 
 use super::Weight;
@@ -24,7 +25,8 @@ use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
-use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
+use crate::script::ext::*;
+use crate::script::{Script, ScriptBuf};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
@@ -185,7 +187,7 @@ crate::internal_macros::define_extension_trait! {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
-        fn minimal_non_dust(script_pubkey: ScriptBuf) -> TxOut {
+        fn minimal_non_dust(script_pubkey: ScriptBuf<ScriptPubkey>) -> TxOut {
             TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
         }
 
@@ -200,14 +202,14 @@ crate::internal_macros::define_extension_trait! {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: TxOut::minimal_non_dust
-        fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Option<TxOut> {
+        fn minimal_non_dust_custom(script_pubkey: ScriptBuf<ScriptPubkey>, dust_relay_fee: FeeRate) -> Option<TxOut> {
             Some(TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey })
         }
     }
 }
 
 /// Returns the total number of bytes that this script pubkey would contribute to a transaction.
-fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
+fn size_from_script_pubkey(script_pubkey: &Script<ScriptPubkey>) -> usize {
     let len = script_pubkey.len();
     Amount::SIZE + compact_size::encoded_size(len) + len
 }
@@ -491,8 +493,9 @@ impl TransactionExtPriv for Transaction {
             let mut count: usize = 0;
             if prevout.script_pubkey.is_p2sh() {
                 if let Some(redeem) = input.script_sig.last_pushdata() {
-                    count =
-                        count.saturating_add(Script::from_bytes(redeem.as_bytes()).count_sigops());
+                    count = count.saturating_add(
+                        Script::<RedeemScript>::from_bytes(redeem.as_bytes()).count_sigops(),
+                    );
                 }
             }
             count
@@ -512,12 +515,19 @@ impl TransactionExtPriv for Transaction {
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
     {
-        fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script) -> usize {
+        fn count_sigops_with_witness_program(
+            witness: &Witness,
+            witness_program: &Script<ScriptPubkey>,
+        ) -> usize {
             if witness_program.is_p2wpkh() {
                 1
             } else if witness_program.is_p2wsh() {
                 // Treat the last item of the witness as the witnessScript
-                witness.last().map(Script::from_bytes).map(|s| s.count_sigops()).unwrap_or(0)
+                witness
+                    .last()
+                    .map(Script::<WitnessScript>::from_bytes)
+                    .map(|s| s.count_sigops())
+                    .unwrap_or(0)
             } else {
                 0
             }
@@ -533,7 +543,7 @@ impl TransactionExtPriv for Transaction {
                 // If prevout is P2SH and scriptSig is push only
                 // then we wrap the last push (redeemScript) in a Script
                 if let Some(push_bytes) = script_sig.last_pushdata() {
-                    Script::from_bytes(push_bytes.as_bytes())
+                    Script::<ScriptPubkey>::from_bytes(push_bytes.as_bytes())
                 } else {
                     return 0;
                 }

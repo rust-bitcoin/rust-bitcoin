@@ -4,19 +4,22 @@ use core::fmt;
 
 use primitives::relative;
 
-use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
+use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf, ScriptPubkey};
+use crate::blockdata::script::owned::ScriptBufExtPriv;
+use crate::key::{PublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
-use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _};
+use crate::script::ext::*;
+use crate::script::Context;
 use crate::Sequence;
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]
-pub struct Builder(ScriptBuf, Option<Opcode>);
+pub struct Builder<C: Context>(ScriptBuf<C>, Option<Opcode>);
 
-impl Builder {
+impl<C: Context> Builder<C> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> Self { Builder(ScriptBuf::new(), None) }
@@ -33,6 +36,29 @@ impl Builder {
     /// Checks whether the script is the empty script.
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
+    /// Adds a single opcode to the script.
+    pub fn push_opcode(mut self, data: Opcode) -> Builder<C> {
+        self.0.push_opcode(data);
+        self.1 = Some(data);
+        self
+    }
+
+    /// Adds instructions to push a public key onto the stack.
+    ///
+    /// Because p2pk uses this for scriptSig this is implemented on `Builder` for all script contexts.
+    pub fn push_key(self, key: PublicKey) -> Builder<C> {
+        if key.compressed {
+            self.push_slice(key.inner.serialize())
+        } else {
+            self.push_slice(key.inner.serialize_uncompressed())
+        }
+    }
+
+    /// Adds instructions to push an XOnly public key onto the stack.
+    pub fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Builder<C> {
+        self.push_slice(x_only_key.serialize())
+    }
+
     /// Adds instructions to push an integer onto the stack.
     ///
     /// Integers are encoded as little-endian signed-magnitude numbers, but there are dedicated
@@ -41,7 +67,7 @@ impl Builder {
     /// # Errors
     ///
     /// Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
-    pub fn push_int(self, n: i32) -> Result<Builder, Error> {
+    pub fn push_int(self, n: i32) -> Result<Builder<C>, Error> {
         if n == i32::MIN {
             // ref: https://github.com/bitcoin/bitcoin/blob/cac846c2fbf6fc69bfc288fd387aa3f68d84d584/src/script/script.h#L230
             Err(Error::NumericOverflow)
@@ -65,7 +91,7 @@ impl Builder {
     /// > throwing an exception if arithmetic is done or the result is interpreted as an integer.
     ///
     /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
-    pub fn push_int_unchecked(self, n: i64) -> Builder {
+    pub fn push_int_unchecked(self, n: i64) -> Builder<C> {
         match n {
             -1 => self.push_opcode(OP_PUSHNUM_NEG1),
             0 => self.push_opcode(OP_PUSHBYTES_0),
@@ -77,14 +103,14 @@ impl Builder {
     /// Adds instructions to push an integer onto the stack without optimization.
     ///
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
-    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Builder {
+    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Builder<C> {
         let mut buf = [0u8; 8];
         let len = write_scriptint(&mut buf, data);
         self.push_slice_non_minimal(&<&PushBytes>::from(&buf)[..len])
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice<T: AsRef<PushBytes>>(self, data: T) -> Builder {
+    pub fn push_slice<T: AsRef<PushBytes>>(self, data: T) -> Builder<C> {
         let bytes = data.as_ref().as_bytes();
         if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
             match bytes[0] {
@@ -103,19 +129,26 @@ impl Builder {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(mut self, data: T) -> Builder {
+    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(mut self, data: T) -> Builder<C> {
         self.0.push_slice_non_minimal(data);
         self.1 = None;
         self
     }
 
-    /// Adds a single opcode to the script.
-    pub fn push_opcode(mut self, data: Opcode) -> Builder {
-        self.0.push_opcode(data);
-        self.1 = Some(data);
-        self
-    }
+    /// Converts the `Builder` into `ScriptBuf`.
+    pub fn into_script(self) -> ScriptBuf<C> { self.0 }
 
+    /// Converts the `Builder` into script bytes
+    pub fn into_bytes(self) -> Vec<u8> { self.0.into() }
+
+    /// Returns the internal script
+    pub fn as_script(&self) -> &Script<C> { &self.0 }
+
+    /// Returns script bytes
+    pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
+}
+
+impl Builder<ScriptPubkey> {
     /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
     ///
     /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
@@ -126,7 +159,7 @@ impl Builder {
     /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
     /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
     /// semantics.
-    pub fn push_verify(mut self) -> Builder {
+    pub fn push_verify(mut self) -> Builder<ScriptPubkey> {
         // "duplicated code" because we need to update `1` field
         match opcode_to_verify(self.1) {
             Some(opcode) => {
@@ -138,7 +171,7 @@ impl Builder {
     }
 
     /// Adds instructions to push an absolute lock time onto the stack.
-    pub fn push_lock_time(self, lock_time: absolute::LockTime) -> Builder {
+    pub fn push_lock_time(self, lock_time: absolute::LockTime) -> Builder<ScriptPubkey> {
         self.push_int_unchecked(lock_time.to_consensus_u32().into())
     }
 
@@ -146,7 +179,7 @@ impl Builder {
     ///
     /// This is used when creating scripts that use CHECKSEQUENCEVERIFY (CSV) to enforce
     /// relative time locks.
-    pub fn push_relative_lock_time(self, lock_time: relative::LockTime) -> Builder {
+    pub fn push_relative_lock_time(self, lock_time: relative::LockTime) -> Builder<ScriptPubkey> {
         self.push_int_unchecked(lock_time.to_consensus_u32().into())
     }
 
@@ -162,40 +195,28 @@ impl Builder {
         since = "TBD",
         note = "Use push_relative_lock_time instead for working with timelocks in scripts"
     )]
-    pub fn push_sequence(self, sequence: Sequence) -> Builder {
+    pub fn push_sequence(self, sequence: Sequence) -> Builder<ScriptPubkey> {
         self.push_int_unchecked(sequence.to_consensus_u32().into())
     }
-
-    /// Converts the `Builder` into `ScriptBuf`.
-    pub fn into_script(self) -> ScriptBuf { self.0 }
-
-    /// Converts the `Builder` into script bytes
-    pub fn into_bytes(self) -> Vec<u8> { self.0.into() }
-
-    /// Returns the internal script
-    pub fn as_script(&self) -> &Script { &self.0 }
-
-    /// Returns script bytes
-    pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
 }
 
-impl Default for Builder {
-    fn default() -> Builder { Builder::new() }
+impl<C: Context> Default for Builder<C> {
+    fn default() -> Builder<C> { Builder::new() }
 }
 
 /// Constructs a new builder from an existing vector.
-impl From<Vec<u8>> for Builder {
-    fn from(v: Vec<u8>) -> Builder {
+impl<C: Context> From<Vec<u8>> for Builder<C> {
+    fn from(v: Vec<u8>) -> Builder<C> {
         let script = ScriptBuf::from(v);
         let last_op = script.last_opcode();
         Builder(script, last_op)
     }
 }
 
-impl fmt::Display for Builder {
+impl<C: Context> fmt::Display for Builder<C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-impl fmt::Debug for Builder {
+impl<C: Context> fmt::Debug for Builder<C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
 }

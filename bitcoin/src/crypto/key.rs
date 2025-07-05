@@ -21,7 +21,7 @@ use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
-use crate::script::{self, ScriptBuf};
+use crate::script::{self, ScriptBuf, ScriptPubkey};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -185,7 +185,9 @@ impl PublicKey {
     }
 
     /// Returns the script code used to spend a P2WPKH input.
-    pub fn p2wpkh_script_code(&self) -> Result<ScriptBuf, UncompressedPublicKeyError> {
+    pub fn p2wpkh_script_code(
+        &self,
+    ) -> Result<ScriptBuf<ScriptPubkey>, UncompressedPublicKeyError> {
         let key = CompressedPublicKey::try_from(*self)?;
         Ok(key.p2wpkh_script_code())
     }
@@ -404,7 +406,7 @@ impl CompressedPublicKey {
     }
 
     /// Returns the script code used to spend a P2WPKH input.
-    pub fn p2wpkh_script_code(&self) -> ScriptBuf {
+    pub fn p2wpkh_script_code(&self) -> ScriptBuf<ScriptPubkey> {
         script::p2wpkh_script_code(self.wpubkey_hash())
     }
 
