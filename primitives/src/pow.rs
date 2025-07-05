@@ -30,17 +30,20 @@ impl CompactTarget {
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     #[inline]
     pub fn to_consensus(self) -> u32 { self.0 }
+
+    /// Gets the hex representation of this [`CompactTarget`].
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    #[inline]
+    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-#[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| {
-    8 - compact_target.0.leading_zeros() as usize / 4
-});
 
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
@@ -61,10 +64,23 @@ mod tests {
     }
 
     #[test]
+    fn compact_target_to_consensus() {
+        let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
+        assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
     fn compact_target_formatting() {
         let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
         assert_eq!(format!("{:x}", compact_target), "1d00ffff");
         assert_eq!(format!("{:X}", compact_target), "1D00FFFF");
-        assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn compact_target_to_hex() {
+        let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
+        assert_eq!(compact_target.to_hex(), "1d00ffff".to_string());
     }
 }

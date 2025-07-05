@@ -137,6 +137,16 @@ impl Script {
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf::from_bytes(Vec::from(inner))
     }
+
+    /// Gets the hex representation of this script.
+    ///
+    /// # Returns
+    ///
+    /// Just the script bytes in hexadecimal **not** consensus encoding (i.e. does not include a
+    /// length prefix).
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    #[inline]
+    pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
 #[cfg(feature = "arbitrary")]
