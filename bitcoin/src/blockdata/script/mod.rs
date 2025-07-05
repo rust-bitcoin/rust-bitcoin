@@ -54,6 +54,18 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
+
+pub mod ext {
+    //! Re-export the script extension traits so downstream can use wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! use bitcoin::script::ext::*;
+    //! ```
+    pub use super::borrowed::ScriptExt;
+    pub use super::owned::ScriptBufExt;
+}
 pub mod witness_program;
 pub mod witness_version;
 
@@ -62,6 +74,7 @@ use core::fmt;
 
 use io::{BufRead, Write};
 
+use self::witness_version::WitnessVersion;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::key::WPubkeyHash;
@@ -190,6 +203,21 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
         OP_CHECKMULTISIG => Some(OP_CHECKMULTISIGVERIFY),
         _ => None,
     })
+}
+
+/// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
+/// Does not do any checks on version or program length.
+///
+/// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
+pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
+    version: WitnessVersion,
+    program: T,
+) -> ScriptBuf {
+    let program = program.as_ref();
+    debug_assert!(program.len() >= 2 && program.len() <= 40);
+    // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.
+    debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
+    Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
 impl Encodable for Script {

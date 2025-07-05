@@ -40,7 +40,6 @@
 //! ```
 
 pub mod error;
-pub mod script_pubkey;
 
 use core::fmt;
 use core::marker::PhantomData;
@@ -52,7 +51,6 @@ use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt;
 use secp256k1::{Secp256k1, Verification};
 
-use crate::address::script_pubkey::ScriptBufExt as _;
 use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
     SCRIPT_ADDRESS_PREFIX_TEST,
@@ -66,8 +64,8 @@ use crate::prelude::{String, ToOwned};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash, WScriptHash,
-    WitnessScriptSizeError,
+    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptBufExt as _, ScriptExt as _, ScriptHash,
+    WScriptHash, WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
@@ -714,7 +712,7 @@ impl Address {
             Segwit { ref program, hrp: _ } => {
                 let prog = program.program();
                 let version = program.version();
-                script_pubkey::new_witness_program_unchecked(version, prog)
+                script::new_witness_program_unchecked(version, prog)
             }
         }
     }
@@ -1022,7 +1020,6 @@ mod tests {
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, TestnetVersion};
-    use crate::script::ScriptBufExt as _;
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(

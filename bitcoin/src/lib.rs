@@ -93,6 +93,33 @@ extern crate serde;
 
 mod internal_macros;
 
+pub mod ext {
+    //! Re-export all the extension traits so downstream can use wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! // Wildcard import all of the extension crates.
+    //! use bitcoin::ext::*;
+    //!
+    //! // Import the traits from a specific module.
+    //! use bitcoin::pow::ext::*;
+    //! use bitcoin::script::ext::*;
+    //! use bitcoin::transaction::ext::*;
+    //! use bitcoin::witness::ext::*;
+    //!
+    //! // Or if you don't want to clutter the namespace.
+    //! use bitcoin::script::ScriptExt as _;
+    //! ```
+    #[rustfmt::skip] // Use terse custom grouping.
+    pub use self::{
+        pow::CompactTargetExt,
+        script::{ScriptExt, ScriptBufExt},
+        transaction::{TxidExt, WtxidExt, OutPointExt, TxInExt, TxOutExt},
+        witness::WitnessExt,
+    };
+}
+
 #[macro_use]
 pub mod address;
 pub mod bip152;

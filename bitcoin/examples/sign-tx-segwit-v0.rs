@@ -2,9 +2,9 @@
 
 //! Demonstrate creating a transaction that spends to and from p2wpkh outputs.
 
-use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::key::WPubkeyHash;
 use bitcoin::locktime::absolute;
+use bitcoin::script::ScriptBufExt as _;
 use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing};
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
 use bitcoin::witness::WitnessExt as _;

@@ -4,6 +4,17 @@
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
 
+pub mod ext {
+    //! Re-export the witness extension traits so downstream can use wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! use bitcoin::witness::ext::*;
+    //! ```
+    pub use super::WitnessExt;
+}
+
 use internals::compact_size;
 use io::{BufRead, Write};
 

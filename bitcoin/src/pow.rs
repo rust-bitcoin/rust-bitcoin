@@ -5,6 +5,17 @@
 //! Provides the [`Work`] and [`Target`] types that are used in proof-of-work calculations. The
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 
+pub mod ext {
+    //! Re-export the extension traits so downstream can use wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! use bitcoin::pow::ext::*;
+    //! ```
+    pub use super::CompactTargetExt;
+}
+
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
 

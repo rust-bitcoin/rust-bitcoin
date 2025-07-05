@@ -10,6 +10,17 @@
 //!
 //! This module provides the structures and functions needed to support transactions.
 
+pub mod ext {
+    //! Re-export the transaction extension traits so downstream can use wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! use bitcoin::transaction::ext::*;
+    //! ```
+    pub use super::{OutPointExt, TxInExt, TxOutExt, TxidExt, WtxidExt};
+}
+
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
