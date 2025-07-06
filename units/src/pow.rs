@@ -44,16 +44,17 @@ impl CompactTarget {
         let target = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(target))
     }
+
+    /// Gets the hex representation of this [`CompactTarget`].
+    #[cfg(feature = "alloc")]
+    #[inline]
+    pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-#[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| {
-    8 - compact_target.0.leading_zeros() as usize / 4
-});
 
 impl fmt::UpperHex for CompactTarget {
     #[inline]
