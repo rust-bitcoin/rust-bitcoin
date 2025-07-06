@@ -1328,7 +1328,6 @@ mod tests {
     use hex_lit::hex;
     #[cfg(feature = "rand-std")]
     use {
-        crate::address::script_pubkey::ScriptBufExt as _,
         crate::bip32::Fingerprint,
         crate::locktime,
         crate::witness_version::WitnessVersion,
@@ -1337,7 +1336,6 @@ mod tests {
     };
 
     use super::*;
-    use crate::address::script_pubkey::ScriptExt as _;
     use crate::bip32::{ChildNumber, DerivationPath};
     use crate::locktime::absolute;
     use crate::network::NetworkKind;

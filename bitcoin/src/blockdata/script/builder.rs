@@ -5,6 +5,7 @@ use core::fmt;
 use primitives::relative;
 
 use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
+use crate::key::{PublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
@@ -135,6 +136,20 @@ impl Builder {
             }
             None => self.push_opcode(OP_VERIFY),
         }
+    }
+
+    /// Adds instructions to push a public key onto the stack.
+    pub fn push_key(self, key: PublicKey) -> Builder {
+        if key.compressed {
+            self.push_slice(key.inner.serialize())
+        } else {
+            self.push_slice(key.inner.serialize_uncompressed())
+        }
+    }
+
+    /// Adds instructions to push an XOnly public key onto the stack.
+    pub fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Builder {
+        self.push_slice(x_only_key.serialize())
     }
 
     /// Adds instructions to push an absolute lock time onto the stack.
