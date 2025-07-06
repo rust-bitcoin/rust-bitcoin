@@ -4,6 +4,8 @@
 
 use core::fmt;
 
+use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
+
 /// Encoding of 256-bit target as 32-bit float.
 ///
 /// This is used to encode a target into the block header. Satoshi made this part of consensus code
@@ -30,6 +32,18 @@ impl CompactTarget {
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     #[inline]
     pub fn to_consensus(self) -> u32 { self.0 }
+
+    /// Constructs a new `CompactTarget` from a prefixed hex string.
+    pub fn from_hex(s: &str) -> Result<CompactTarget, PrefixedHexError> {
+        let target = parse::hex_u32_prefixed(s)?;
+        Ok(Self::from_consensus(target))
+    }
+
+    /// Constructs a new `CompactTarget` from an unprefixed hex string.
+    pub fn from_unprefixed_hex(s: &str) -> Result<CompactTarget, UnprefixedHexError> {
+        let target = parse::hex_u32_unprefixed(s)?;
+        Ok(Self::from_consensus(target))
+    }
 }
 
 impl fmt::LowerHex for CompactTarget {
