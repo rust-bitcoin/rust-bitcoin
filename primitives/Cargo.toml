@@ -20,7 +20,7 @@ std = ["alloc", "hashes/std", "hex?/std", "internals/std", "units/std", "arrayve
 alloc = ["hashes/alloc", "hex?/alloc", "internals/alloc", "units/alloc"]
 serde = ["dep:serde", "hashes/serde", "hex?/serde", "internals/serde", "units/serde", "alloc", "hex"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
-hex = ["dep:hex", "hashes/hex", "internals/hex"]
+hex = ["dep:hex", "hashes/hex", "internals/hex", "units/hex"]
 
 [dependencies]
 hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false }

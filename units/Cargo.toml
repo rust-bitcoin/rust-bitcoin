@@ -13,14 +13,16 @@ rust-version = "1.63.0"
 exclude = ["tests", "contrib"]
 
 [features]
-default = ["std"]
-std = ["alloc", "internals/std"]
-alloc = ["internals/alloc","serde?/alloc"]
+default = ["std", "hex"]
+std = ["alloc", "hex?std", "internals/std"]
+alloc = ["internals/alloc", "hex?/alloc", "serde?/alloc"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0" }
 
 arbitrary = { version = "1.4", optional = true }
+# We intentionally do not enable hex in `internals` (currently unneeded).
+hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
 serde = { version = "1.0.103", default-features = false, optional = true }
 
 [dev-dependencies]
