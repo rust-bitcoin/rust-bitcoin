@@ -12,8 +12,8 @@ use std::panic;
 
 use super::*;
 #[cfg(feature = "alloc")]
-use crate::{FeeRate, Weight};
-use crate::{MathOp, NumOpResult};
+use crate::{FeeRate, MathOp, Weight};
+use crate::NumOpResult;
 
 #[track_caller]
 fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
