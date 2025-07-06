@@ -173,12 +173,14 @@ struct Errors {
 
 #[test]
 fn api_can_use_units_modules_from_crate_root() {
-    use bitcoin_primitives::{amount, block, fee_rate, locktime, weight};
+    use bitcoin_primitives::{amount, block, fee_rate, locktime, pow, weight};
 }
 
 #[test]
 fn api_can_use_units_types_from_crate_root() {
-    use bitcoin_primitives::{Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
+    use bitcoin_primitives::{
+        Amount, BlockHeight, BlockInterval, CompactTarget, FeeRate, SignedAmount, Weight,
+    };
 }
 
 #[test]
@@ -194,15 +196,15 @@ fn api_can_use_all_units_types_from_module_amount() {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_primitives::{
-        block, locktime, merkle_tree, pow, script, sequence, transaction, witness,
+        block, locktime, merkle_tree, script, sequence, transaction, witness,
     };
 }
 
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_primitives::{
-        Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, Script, ScriptBuf,
-        Sequence, Transaction, TransactionVersion, TxIn, TxMerkleNode, TxOut, Txid, Witness,
+        Block, BlockHash, BlockHeader, BlockVersion, OutPoint, Script, ScriptBuf, Sequence,
+        Transaction, TransactionVersion, TxIn, TxMerkleNode, TxOut, Txid, Witness,
         WitnessCommitment, WitnessMerkleNode, Wtxid,
     };
 }
@@ -220,6 +222,11 @@ fn api_can_use_all_types_from_module_script() {
     use bitcoin_primitives::script::{
         RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
     };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_pow() {
+    use bitcoin_primitives::pow::CompactTarget;
 }
 
 // `Debug` representation is never empty (C-DEBUG-NONEMPTY).

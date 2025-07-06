@@ -61,7 +61,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn compact_target_formatting() {
+        use alloc::format;
+
         let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
         assert_eq!(format!("{:x}", compact_target), "1d00ffff");
         assert_eq!(format!("{:X}", compact_target), "1D00FFFF");

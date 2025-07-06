@@ -123,7 +123,6 @@ pub use primitives::{
         WitnessCommitment,
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
-    pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{Script, ScriptBuf},
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
@@ -134,6 +133,7 @@ pub use units::{
     amount::{Amount, Denomination, SignedAmount},
     block::{BlockHeight, BlockHeightInterval, BlockMtp},
     fee_rate::FeeRate,
+    pow::CompactTarget,
     time::{self, BlockTime},
     weight::Weight,
 };

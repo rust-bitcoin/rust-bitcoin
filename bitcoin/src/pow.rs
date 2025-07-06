@@ -19,7 +19,7 @@ use crate::network::Params;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::CompactTarget;
+pub use units::CompactTarget;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
