@@ -20,7 +20,8 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use units::locktime::relative::{NumberOf512Seconds, TimeOverflowError};
+use units::locktime::relative::error::TimeOverflowError;
+use units::locktime::relative::NumberOf512Seconds;
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 use crate::locktime::relative;

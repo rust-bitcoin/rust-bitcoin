@@ -10,14 +10,16 @@ use core::{convert, fmt};
 use internals::write_err;
 use units::{BlockHeight, BlockMtp};
 
-use crate::Sequence;
-
 #[cfg(all(doc, feature = "alloc"))]
 use crate::relative;
+use crate::Sequence;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::relative::{NumberOfBlocks, NumberOf512Seconds, TimeOverflowError, InvalidHeightError, InvalidTimeError};
+pub use units::locktime::relative::{
+    error::{TimeOverflowError, InvalidHeightError, InvalidTimeError},
+    NumberOfBlocks, NumberOf512Seconds,
+};
 
 #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]

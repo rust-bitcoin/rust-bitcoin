@@ -130,7 +130,7 @@ impl From<absolute::Height> for BlockHeight {
 }
 
 impl TryFrom<BlockHeight> for absolute::Height {
-    type Error = absolute::ConversionError;
+    type Error = absolute::error::ConversionError;
 
     /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
     ///
@@ -265,7 +265,7 @@ impl From<absolute::MedianTimePast> for BlockMtp {
 }
 
 impl TryFrom<BlockMtp> for absolute::MedianTimePast {
-    type Error = absolute::ConversionError;
+    type Error = absolute::error::ConversionError;
 
     /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
     ///
@@ -315,7 +315,7 @@ impl BlockMtpInterval {
     #[inline]
     pub const fn to_relative_mtp_interval_floor(
         self,
-    ) -> Result<relative::NumberOf512Seconds, relative::TimeOverflowError> {
+    ) -> Result<relative::NumberOf512Seconds, relative::error::TimeOverflowError> {
         relative::NumberOf512Seconds::from_seconds_floor(self.to_u32())
     }
 
@@ -331,7 +331,7 @@ impl BlockMtpInterval {
     #[inline]
     pub const fn to_relative_mtp_interval_ceil(
         self,
-    ) -> Result<relative::NumberOf512Seconds, relative::TimeOverflowError> {
+    ) -> Result<relative::NumberOf512Seconds, relative::error::TimeOverflowError> {
         relative::NumberOf512Seconds::from_seconds_ceil(self.to_u32())
     }
 

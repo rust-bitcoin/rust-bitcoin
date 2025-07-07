@@ -139,12 +139,12 @@ struct Errors {
     l: block::TooBigForRelativeHeightError,
     #[cfg(feature = "serde")]
     m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
+    n: locktime::absolute::error::ConversionError,
+    o: locktime::absolute::error::ParseHeightError,
+    p: locktime::absolute::error::ParseTimeError,
+    q: locktime::relative::error::InvalidHeightError,
+    r: locktime::relative::error::InvalidTimeError,
+    s: locktime::relative::error::TimeOverflowError,
     t: parse::ParseIntError,
     u: parse::PrefixedHexError,
     v: parse::UnprefixedHexError,
@@ -189,17 +189,18 @@ fn api_can_use_all_types_from_module_fee_rate() {
 
 #[test]
 fn api_can_use_all_types_from_module_locktime_absolute() {
-    use bitcoin_units::locktime::absolute::{
-        ConversionError, Height, MedianTimePast, ParseHeightError, ParseTimeError,
+    use bitcoin_units::locktime::absolute::error::{
+        ConversionError, ParseHeightError, ParseTimeError,
     };
+    use bitcoin_units::locktime::absolute::{Height, MedianTimePast};
 }
 
 #[test]
 fn api_can_use_all_types_from_module_locktime_relative() {
-    use bitcoin_units::locktime::relative::{
-        Height, InvalidHeightError, InvalidTimeError, NumberOf512Seconds, NumberOfBlocks, Time,
-        TimeOverflowError,
+    use bitcoin_units::locktime::relative::error::{
+        InvalidHeightError, InvalidTimeError, TimeOverflowError,
     };
+    use bitcoin_units::locktime::relative::{Height, NumberOf512Seconds, NumberOfBlocks, Time};
 }
 
 #[test]
