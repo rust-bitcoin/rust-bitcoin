@@ -16,7 +16,11 @@ use crate::absolute;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, ParseTimeError, MedianTimePast, LOCK_TIME_THRESHOLD};
+pub use units::locktime::absolute::{
+    Height, MedianTimePast, LOCK_TIME_THRESHOLD
+};
+#[doc(inline)]
+pub use units::locktime::absolute::error::{ConversionError, ParseHeightError, ParseTimeError};
 
 #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
 #[doc(hidden)]
