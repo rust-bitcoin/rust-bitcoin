@@ -11,6 +11,7 @@ use core::{convert, fmt};
 use arbitrary::{Arbitrary, Unstructured};
 
 use internals::write_err;
+use units::{BlockHeight, BlockMtp};
 
 use crate::Sequence;
 
@@ -20,7 +21,6 @@ use crate::relative;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use units::locktime::relative::{NumberOfBlocks, NumberOf512Seconds, TimeOverflowError, InvalidHeightError, InvalidTimeError};
-use units::{BlockHeight, BlockMtp};
 
 #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
