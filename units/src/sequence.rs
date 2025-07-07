@@ -122,6 +122,11 @@ impl Sequence {
     }
 
     /// Constructs a new `Sequence` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a locktime or it does not include
+    /// the `0x` prefix.
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
@@ -129,6 +134,11 @@ impl Sequence {
     }
 
     /// Constructs a new `Sequence` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a locktime or if it includes the
+    /// `0x` prefix.
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
@@ -152,6 +162,11 @@ impl Sequence {
     /// interval with floor division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if `seconds` cannot be encoded in 16 bits. See
+    /// [`NumberOf512Seconds::from_seconds_floor`].
     #[inline]
     pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
         let intervals = NumberOf512Seconds::from_seconds_floor(seconds)?;
@@ -162,6 +177,11 @@ impl Sequence {
     /// interval with ceiling division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if `seconds` cannot be encoded in 16 bits. See
+    /// [`NumberOf512Seconds::from_seconds_ceil`].
     #[inline]
     pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
         let intervals = NumberOf512Seconds::from_seconds_ceil(seconds)?;

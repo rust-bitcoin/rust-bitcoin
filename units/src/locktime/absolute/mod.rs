@@ -112,6 +112,11 @@ impl LockTime {
 
     /// Constructs a new `LockTime` from a prefixed hex string.
     ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a locktime or it does not include
+    /// the `0x` prefix.
+    ///
     /// # Examples
     ///
     /// ```
@@ -129,6 +134,11 @@ impl LockTime {
     }
 
     /// Constructs a new `LockTime` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a locktime or if it includes the
+    /// `0x` prefix.
     ///
     /// # Examples
     ///
@@ -177,6 +187,11 @@ impl LockTime {
     ///
     /// See [`LOCK_TIME_THRESHOLD`] for definition of a valid height value.
     ///
+    /// # Errors
+    ///
+    /// If `n` does not represent a block height within the valid range for a locktime:
+    /// `[0, 499_999_999]`.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -208,6 +223,10 @@ impl LockTime {
     /// [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     ///
     /// See [`LOCK_TIME_THRESHOLD`] for definition of a valid time value.
+    ///
+    /// # Errors
+    ///
+    /// If `n` is not in the allowable range of MTPs in a locktime: `[500_000_000, 2^32 - 1]`.
     ///
     /// # Examples
     ///
