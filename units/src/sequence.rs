@@ -20,11 +20,10 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use units::locktime::relative::{NumberOf512Seconds, TimeOverflowError};
-use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
-use crate::locktime::relative;
-use crate::Transaction;
+use crate::locktime::relative::error::TimeOverflowError;
+use crate::locktime::relative::{self, NumberOf512Seconds};
+use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -177,12 +176,6 @@ impl Sequence {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
 
-    /// Gets the hex representation of this [`Sequence`].
-    #[cfg(feature = "alloc")]
-    #[inline]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
-
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
     pub fn to_relative_lock_time(self) -> Option<relative::LockTime> {
@@ -228,6 +221,10 @@ impl fmt::LowerHex for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
+    8 - sequence.0.leading_zeros() as usize / 4
+});
 
 impl fmt::UpperHex for Sequence {
     #[inline]
@@ -243,7 +240,7 @@ impl fmt::Debug for Sequence {
 }
 
 #[cfg(feature = "alloc")]
-units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+crate::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
@@ -290,6 +287,8 @@ impl<'a> Arbitrary<'a> for Sequence {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
+    use alloc::format;
+
     use super::*;
 
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
@@ -346,6 +345,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn sequence_formatting() {
         let sequence = Sequence(0x7FFF_FFFF);
         assert_eq!(format!("{:x}", sequence), "7fffffff");
@@ -357,7 +357,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn sequence_display() {
+        use alloc::string::ToString;
+
         let sequence = Sequence(0x7FFF_FFFF);
         let want: u32 = 0x7FFF_FFFF;
         assert_eq!(format!("{}", sequence), want.to_string());
