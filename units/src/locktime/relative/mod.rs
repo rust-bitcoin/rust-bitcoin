@@ -61,6 +61,10 @@ impl LockTime {
     /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
     /// you want to preserve the full value, you should use the [`Sequence`] type instead.
     ///
+    /// # Errors
+    ///
+    /// If `n`, interpreted as a [`Sequence`] number does not encode a relative lock time.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -106,6 +110,11 @@ impl LockTime {
     ///
     /// This method will **not** round-trip with [`Self::to_sequence`]. See the
     /// docs for [`Self::from_consensus`] for more information.
+    ///
+    /// # Errors
+    ///
+    /// If `n` does not encode a relative lock time.
+    ///
     /// # Examples
     ///
     /// ```rust
