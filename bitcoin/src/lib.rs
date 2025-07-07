@@ -192,6 +192,8 @@ mod prelude {
     pub use hex::DisplayHex;
 }
 
+// We create this manually to control _exactly_ how re-exports show up in HTML
+// and also to implement consensus traits.
 pub mod amount {
     //! Bitcoin amounts.
     //!
@@ -202,16 +204,13 @@ pub mod amount {
     use crate::io::{BufRead, Write};
 
     #[rustfmt::skip]            // Keep public re-exports separate.
+    // Error types that appear directly in the API - no doc inlining.
+    #[doc(no_inline)]
+    pub use units::amount::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
     #[doc(inline)]
-    pub use units::CheckedSum;
-    #[cfg(feature = "serde")]
+    pub use units::amount::{error, Amount, Denomination, Display, SignedAmount};
+    #[cfg(feature = "serde")]   // No need to doc inline modules.
     pub use units::amount::serde;
-    pub use units::amount::{
-        Amount, Denomination, Display, InvalidCharacterError, MissingDenominationError,
-        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, SignedAmount, TooPreciseError,
-        UnknownDenominationError,
-    };
 
     impl Decodable for Amount {
         #[inline]

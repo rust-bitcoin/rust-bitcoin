@@ -51,7 +51,7 @@ pub mod witness;
 
 #[doc(inline)]
 pub use units::{
-    amount::{self, Amount, SignedAmount},
+    amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::{self, FeeRate},
     time::{self, BlockTime},
@@ -81,6 +81,23 @@ pub use self::{
     sequence::Sequence,
     transaction::{OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
+
+// We create this manually to control _exactly_ how re-exports show up in HTML.
+pub mod amount {
+    //! Bitcoin amounts.
+    //!
+    //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
+    //! We refer to the documentation on the types for more information.
+
+    #[rustfmt::skip]            // Keep public re-exports separate.
+    // Error types that appear directly in the API - no doc inlining.
+    #[doc(no_inline)]
+    pub use units::amount::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
+    #[doc(inline)]
+    pub use units::amount::{error, Amount, Denomination, Display, SignedAmount};
+    #[cfg(feature = "serde")]   // No need to doc inline modules.
+    pub use units::amount::serde;
+}
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

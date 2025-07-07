@@ -5,7 +5,7 @@
 //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
 //! We refer to the documentation on the types for more information.
 
-mod error;
+pub mod error;
 mod result;
 #[cfg(feature = "serde")]
 pub mod serde;
@@ -25,20 +25,22 @@ use core::str::FromStr;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use self::error::{MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner};
+use self::error::{
+    InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
+    MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner, PossiblyConfusingDenominationError,
+    TooPreciseError, UnknownDenominationError,
+};
 use crate::CheckedSum;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::{
-        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
-    },
     signed::SignedAmount,
     unsigned::Amount,
 };
+// Error types that appear directly in the API - no doc inlining.
+#[doc(no_inline)]
+pub use self::error::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
 
 /// A set of denominations in which amounts can be expressed.
 ///

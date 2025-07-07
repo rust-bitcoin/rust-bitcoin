@@ -183,11 +183,13 @@ fn api_can_use_units_types_from_crate_root() {
 
 #[test]
 fn api_can_use_all_units_types_from_module_amount() {
+    use bitcoin_primitives::amount::error::{
+        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
+        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
+    };
     use bitcoin_primitives::amount::{
-        Amount, Denomination, Display, InputTooLargeError, InvalidCharacterError,
-        MissingDenominationError, MissingDigitsError, OutOfRangeError, ParseAmountError,
-        ParseDenominationError, ParseError, PossiblyConfusingDenominationError, SignedAmount,
-        TooPreciseError, UnknownDenominationError,
+        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
+        ParseError, SignedAmount,
     };
 }
 
