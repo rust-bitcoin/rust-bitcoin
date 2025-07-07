@@ -19,7 +19,9 @@ use crate::relative;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::relative::{NumberOfBlocks, NumberOf512Seconds, TimeOverflowError, InvalidHeightError, InvalidTimeError};
+pub use units::locktime::relative::{NumberOfBlocks, NumberOf512Seconds};
+#[doc(no_inline)]
+pub use units::locktime::relative::error::{TimeOverflowError, InvalidHeightError, InvalidTimeError};
 
 #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
