@@ -10,8 +10,9 @@ use core::{convert, fmt};
 use internals::write_err;
 
 use crate::Sequence;
+
 #[cfg(all(doc, feature = "alloc"))]
-use crate::{relative, TxIn};
+use crate::relative;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -28,8 +29,8 @@ pub type Time = NumberOf512Seconds;
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
-/// Used for sequence numbers (`nSequence` in Bitcoin Core and [`TxIn::sequence`]
-/// in this library) and also for the argument to opcode `OP_CHECKSEQUENCEVERIFY`.
+/// Used for sequence numbers (`nSequence` in Bitcoin Core and `TxIn::sequence`
+/// in `rust-bitcoin`) and also for the argument to opcode `OP_CHECKSEQUENCEVERIFY`.
 ///
 /// # Note on ordering
 ///
