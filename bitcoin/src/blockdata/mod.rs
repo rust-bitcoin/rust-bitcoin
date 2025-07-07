@@ -41,7 +41,7 @@ pub mod locktime {
 
         /// Re-export everything from the `primitives::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
-        pub use primitives::locktime::absolute::{ConversionError, Height, LockTime, ParseHeightError, ParseTimeError, MedianTimePast};
+        pub use primitives::locktime::absolute::{error, Height, LockTime, MedianTimePast};
 
         #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
         #[doc(hidden)]
@@ -70,9 +70,7 @@ pub mod locktime {
         //! whether bit 22 of the `u32` consensus value is set.
 
         /// Re-export everything from the `primitives::locktime::relative` module.
-        pub use primitives::locktime::relative::{
-            error, LockTime, NumberOf512Seconds, NumberOfBlocks,
-        };
+        pub use primitives::locktime::relative::{error, LockTime, NumberOf512Seconds, NumberOfBlocks};
 
         #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
         #[doc(hidden)]

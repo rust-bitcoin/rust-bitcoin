@@ -7,8 +7,70 @@ use core::fmt;
 
 use internals::error::InputString;
 
-use super::LOCK_TIME_THRESHOLD;
+use super::{Height, MedianTimePast, LOCK_TIME_THRESHOLD};
 use crate::parse::ParseIntError;
+
+/// Tried to satisfy a lock-by-time lock using a height value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleHeightError {
+    /// The inner value of the lock-by-time lock.
+    pub(super) lock: MedianTimePast,
+    /// Attempted to satisfy a lock-by-time lock with this height.
+    pub(super) incompatible: Height,
+}
+
+impl IncompatibleHeightError {
+    /// Returns the value of the lock-by-time lock.
+    pub fn lock(&self) -> MedianTimePast { self.lock }
+
+    /// Returns the height that was erroneously used to try and satisfy a lock-by-time lock.
+    pub fn incompatible(&self) -> Height { self.incompatible }
+}
+
+impl fmt::Display for IncompatibleHeightError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "tried to satisfy a lock-by-time lock {} with height: {}",
+            self.lock, self.incompatible
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleHeightError {}
+
+/// Tried to satisfy a lock-by-height lock using a height value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleTimeError {
+    /// The inner value of the lock-by-height lock.
+    pub(super) lock: Height,
+    /// Attempted to satisfy a lock-by-height lock with this MTP.
+    pub(super) incompatible: MedianTimePast,
+}
+
+impl IncompatibleTimeError {
+    /// Returns the value of the lock-by-height lock.
+    pub fn lock(&self) -> Height { self.lock }
+
+    /// Returns the MTP that was erroneously used to try and satisfy a lock-by-height lock.
+    pub fn incompatible(&self) -> MedianTimePast { self.incompatible }
+}
+
+impl fmt::Display for IncompatibleTimeError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "tried to satisfy a lock-by-height lock {} with MTP: {}",
+            self.lock, self.incompatible
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleTimeError {}
 
 /// Error returned when parsing block height fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -200,12 +262,12 @@ impl fmt::Display for LockTimeUnit {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     #[cfg(feature = "alloc")]
     fn locktime_unit_display() {
         use alloc::format;
+        use super::LockTimeUnit;
+
         let blocks = LockTimeUnit::Blocks;
         let seconds = LockTimeUnit::Seconds;
 
