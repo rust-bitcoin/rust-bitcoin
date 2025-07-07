@@ -20,10 +20,10 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use units::locktime::relative::{NumberOf512Seconds, TimeOverflowError};
-use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
-use crate::locktime::relative;
+use crate::locktime::relative::error::TimeOverflowError;
+use crate::locktime::relative::{self, NumberOf512Seconds};
+use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -242,7 +242,7 @@ impl fmt::Debug for Sequence {
 }
 
 #[cfg(feature = "alloc")]
-units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+crate::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
@@ -289,6 +289,8 @@ impl<'a> Arbitrary<'a> for Sequence {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
+    use alloc::format;
+
     use super::*;
 
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
@@ -345,6 +347,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn sequence_formatting() {
         let sequence = Sequence(0x7FFF_FFFF);
         assert_eq!(format!("{:x}", sequence), "7fffffff");
@@ -356,7 +359,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn sequence_display() {
+        use alloc::string::ToString;
+
         let sequence = Sequence(0x7FFF_FFFF);
         let want: u32 = 0x7FFF_FFFF;
         assert_eq!(format!("{}", sequence), want.to_string());
