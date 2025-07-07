@@ -12,7 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 #[cfg(all(doc, feature = "alloc"))]
-use crate::{absolute, Transaction};
+use crate::absolute;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -25,8 +25,8 @@ pub type Time = MedianTimePast;
 /// An absolute lock time value, representing either a block height or a UNIX timestamp (seconds
 /// since epoch).
 ///
-/// Used for transaction lock time (`nLockTime` in Bitcoin Core and [`Transaction::lock_time`]
-/// in this library) and also for the argument to opcode `OP_CHECKLOCKTIMEVERIFY`.
+/// Used for transaction lock time (`nLockTime` in Bitcoin Core and `Transaction::lock_time`
+/// in `rust-bitcoin`) and also for the argument to opcode `OP_CHECKLOCKTIMEVERIFY`.
 ///
 /// # Note on ordering
 ///
@@ -34,7 +34,7 @@ pub type Time = MedianTimePast;
 /// ordering on locktimes. In order to compare locktimes, instead of using `<` or `>` we provide the
 /// [`LockTime::is_satisfied_by`] API.
 ///
-/// For [`Transaction`], which has a locktime field, we implement a total ordering to make
+/// For transaction, which has a locktime field, we implement a total ordering to make
 /// it easy to store transactions in sorted data structures, and use the locktime's 32-bit integer
 /// consensus encoding to order it.
 ///
@@ -87,7 +87,7 @@ pub enum LockTime {
 }
 
 impl LockTime {
-    /// If [`Transaction::lock_time`] is set to zero it is ignored, in other words a
+    /// If transaction lock time is set to zero it is ignored, in other words a
     /// transaction with nLocktime==0 is able to be included immediately in any block.
     pub const ZERO: LockTime = LockTime::Blocks(Height::ZERO);
 
@@ -230,8 +230,7 @@ impl LockTime {
     /// blocktime based lock it is checked against `time`.
     ///
     /// A 'timelock constraint' refers to the `n` from `n OP_CHEKCLOCKTIMEVERIFY`, this constraint
-    /// is satisfied if a transaction with `nLockTime` ([`Transaction::lock_time`]) set to
-    /// `height`/`time` is valid.
+    /// is satisfied if a transaction with `nLockTime` set to `height`/`time` is valid.
     ///
     /// If `height` and `mtp` represent the current chain tip then a transaction with this
     /// locktime can be broadcast for inclusion in the next block.
