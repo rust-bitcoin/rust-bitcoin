@@ -218,7 +218,7 @@ impl Hash {
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
 }
 
-/// Load an u64 using up to 7 bytes of a byte slice.
+/// Load a u64 using up to 7 bytes of a byte slice.
 ///
 /// Unsafe because: unchecked indexing at `start..start+len`.
 #[inline]
