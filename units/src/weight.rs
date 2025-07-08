@@ -10,7 +10,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{Amount, CheckedSum, FeeRate, NumOpResult};
+use crate::{Amount, FeeRate, NumOpResult};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -249,13 +249,6 @@ impl ops::DivAssign<u64> for Weight {
 
 impl ops::RemAssign<u64> for Weight {
     fn rem_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() % rhs); }
-}
-
-impl<T> CheckedSum<Weight> for T
-where
-    T: Iterator<Item = Weight>,
-{
-    fn checked_sum(mut self) -> Option<Weight> { self.try_fold(Weight::ZERO, Weight::checked_add) }
 }
 
 impl core::iter::Sum for Weight {
@@ -540,17 +533,5 @@ mod tests {
         let mut weight = Weight::from_wu(10);
         weight %= 3;
         assert_eq!(weight, Weight::from_wu(1));
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn checked_sum_weights() {
-        assert_eq!([].into_iter().checked_sum(), Some(Weight::ZERO));
-
-        let sum = alloc::vec![0, 1, 2].iter().map(|&w| Weight::from_wu(w)).checked_sum().unwrap();
-        assert_eq!(sum, Weight::from_wu(3));
-
-        let sum = alloc::vec![1, u64::MAX].iter().map(|&w| Weight::from_wu(w)).checked_sum();
-        assert!(sum.is_none());
     }
 }
