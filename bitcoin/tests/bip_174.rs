@@ -3,6 +3,7 @@
 
 use std::collections::BTreeMap;
 
+use bitcoin::amount::{Amount, Denomination};
 use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
@@ -11,7 +12,7 @@ use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::{PushBytes, ScriptBufExt as _};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
-    absolute, script, transaction, Amount, Denomination, NetworkKind, OutPoint, PrivateKey,
+    absolute, script, transaction, NetworkKind, OutPoint, PrivateKey,
     PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
