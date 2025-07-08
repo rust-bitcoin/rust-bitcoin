@@ -26,7 +26,6 @@ use core::str::FromStr;
 use arbitrary::{Arbitrary, Unstructured};
 
 use self::error::{MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner};
-use crate::CheckedSum;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -592,22 +591,6 @@ impl fmt::Display for Display {
 enum DisplayStyle {
     FixedDenomination { denomination: Denomination, show_denomination: bool },
     DynamicDenomination,
-}
-
-impl<T> CheckedSum<Amount> for T
-where
-    T: Iterator<Item = Amount>,
-{
-    fn checked_sum(mut self) -> Option<Amount> { self.try_fold(Amount::ZERO, Amount::checked_add) }
-}
-
-impl<T> CheckedSum<SignedAmount> for T
-where
-    T: Iterator<Item = SignedAmount>,
-{
-    fn checked_sum(mut self) -> Option<SignedAmount> {
-        self.try_fold(SignedAmount::ZERO, SignedAmount::checked_add)
-    }
 }
 
 #[cfg(feature = "arbitrary")]
