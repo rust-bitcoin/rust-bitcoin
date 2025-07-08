@@ -24,6 +24,9 @@ pub const MIN_SIZE: usize = 2;
 /// The maximum byte size of a segregated witness program.
 pub const MAX_SIZE: usize = 40;
 
+/// The P2A program which is given by 0x4e73.
+pub(crate) const P2A_PROGRAM: [u8;2] = [78, 115];
+
 /// The segregated witness program.
 ///
 /// The segregated witness program is technically only the program bytes _excluding_ the witness
@@ -100,6 +103,13 @@ impl WitnessProgram {
         WitnessProgram::new_p2tr(pubkey)
     }
 
+    internals::const_tools::cond_const! {
+        /// Constructs a new pay to anchor address
+        pub const(in rust_v_1_61 = "1.61") fn p2a() -> Self {
+            WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM)}
+        }
+    }
+
     /// Returns the witness program version.
     pub fn version(&self) -> WitnessVersion { self.version }
 
@@ -123,6 +133,11 @@ impl WitnessProgram {
 
     /// Returns true if this witness program is for a P2TR output.
     pub fn is_p2tr(&self) -> bool { self.version == WitnessVersion::V1 && self.program.len() == 32 }
+
+    /// Returns true if this is a pay to anchor output.
+    pub fn is_p2a(&self) -> bool {
+        self.version == WitnessVersion::V1 && self.program == P2A_PROGRAM
+    }
 }
 
 /// Witness program error.

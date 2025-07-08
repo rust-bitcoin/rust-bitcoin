@@ -8,7 +8,7 @@ use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
-use crate::blockdata::script::witness_program::WitnessProgram;
+use crate::blockdata::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
@@ -130,6 +130,11 @@ impl ScriptBuf {
         ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
     }
 
+    /// Generates pay to anchor output.
+    pub fn new_p2a() -> Self {
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, P2A_PROGRAM)
+    }
+
     /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
     pub fn new_witness_program(witness_program: &WitnessProgram) -> Self {
         Builder::new()
@@ -141,14 +146,15 @@ impl ScriptBuf {
     /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
     /// Does not do any checks on version or program length.
     ///
-    /// Convenience method used by `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
+    /// Convenience method used by `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`,
+    /// and `new_p2a`.
     pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
         version: WitnessVersion,
         program: T,
     ) -> Self {
         let program = program.as_ref();
         debug_assert!(program.len() >= 2 && program.len() <= 40);
-        // In segwit v0, the program must be 20 or 32 bytes long.
+        // In SegWit v0, the program must be either 20 (P2WPKH) bytes or 32 (P2WSH) bytes long
         debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
         Builder::new().push_opcode(version.into()).push_slice(program).into_script()
     }
