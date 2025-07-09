@@ -841,68 +841,47 @@ fn to_string_with_denomination_from_str_roundtrip() {
 
 #[test]
 fn sum_amounts() {
-    assert_eq!([].iter().sum::<NumOpResult<Amount>>(), Amount::ZERO.into());
-    assert_eq!([].iter().sum::<NumOpResult<SignedAmount>>(), SignedAmount::ZERO.into());
-
-    let results =
-        [NumOpResult::Valid(sat(42)), NumOpResult::Valid(sat(1337)), NumOpResult::Valid(sat(21))];
-    assert_eq!(results.iter().sum::<NumOpResult<Amount>>(), NumOpResult::Valid(sat(1400)));
-
-    let signed_results = [
-        NumOpResult::Valid(ssat(42)),
-        NumOpResult::Valid(ssat(1337)),
-        NumOpResult::Valid(ssat(21)),
-    ];
-    assert_eq!(
-        signed_results.iter().sum::<NumOpResult<SignedAmount>>(),
-        NumOpResult::Valid(ssat(1400))
-    );
+    let empty: [NumOpResult<Amount>; 0] = [];
+    assert_eq!(empty.into_iter().sum::<NumOpResult<_>>(), NumOpResult::Valid(Amount::ZERO));
+    let empty: [NumOpResult<SignedAmount>; 0] = [];
+    assert_eq!(empty.into_iter().sum::<NumOpResult<_>>(), NumOpResult::Valid(SignedAmount::ZERO));
 
     let amounts = [sat(42), sat(1337), sat(21)];
-    assert_eq!(
-        amounts.iter().map(|a| NumOpResult::Valid(*a)).sum::<NumOpResult<Amount>>(),
-        sat(1400).into(),
-    );
-    assert_eq!(
-        amounts.into_iter().map(NumOpResult::Valid).sum::<NumOpResult<Amount>>(),
-        sat(1400).into(),
-    );
-
-    let amounts = [ssat(-42), ssat(1337), ssat(21)];
-    assert_eq!(
-        amounts.iter().map(NumOpResult::from).sum::<NumOpResult<SignedAmount>>(),
-        ssat(1316).into(),
-    );
-    assert_eq!(
-        amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<SignedAmount>>(),
-        ssat(1316).into()
-    );
-}
-
-#[test]
-fn checked_sum_amounts() {
-    assert_eq!([].into_iter().checked_sum(), Some(Amount::ZERO));
-    assert_eq!([].into_iter().checked_sum(), Some(SignedAmount::ZERO));
-
-    let amounts = [sat(42), sat(1337), sat(21)];
-    let sum = amounts.into_iter().checked_sum();
-    assert_eq!(sum, Some(sat(1400)));
+    let sum = amounts
+        .into_iter()
+        .map(NumOpResult::from)
+        .sum::<NumOpResult<Amount>>()
+        .unwrap();
+    assert_eq!(sum, sat(1400));
 
     let amounts = [Amount::MAX_MONEY, sat(1337), sat(21)];
-    let sum = amounts.into_iter().checked_sum();
-    assert_eq!(sum, None);
+    assert!(amounts
+        .into_iter()
+        .map(NumOpResult::from)
+        .sum::<NumOpResult<Amount>>()
+        .is_error());
 
     let amounts = [SignedAmount::MIN, ssat(-1), ssat(21)];
-    let sum = amounts.into_iter().checked_sum();
-    assert_eq!(sum, None);
+    assert!(amounts
+        .into_iter()
+        .map(NumOpResult::from)
+        .sum::<NumOpResult<SignedAmount>>()
+        .is_error());
 
     let amounts = [SignedAmount::MAX, ssat(1), ssat(21)];
-    let sum = amounts.into_iter().checked_sum();
-    assert_eq!(sum, None);
+    assert!(amounts
+        .into_iter()
+        .map(NumOpResult::from)
+        .sum::<NumOpResult<SignedAmount>>()
+        .is_error());
 
     let amounts = [ssat(42), ssat(3301), ssat(21)];
-    let sum = amounts.into_iter().checked_sum();
-    assert_eq!(sum, Some(ssat(3364)));
+    let sum = amounts
+        .into_iter()
+        .map(NumOpResult::from)
+        .sum::<NumOpResult<SignedAmount>>()
+        .unwrap();
+    assert_eq!(sum, ssat(3364));
 }
 
 #[test]
