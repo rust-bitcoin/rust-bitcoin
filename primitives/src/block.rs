@@ -14,12 +14,11 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
-use units::BlockTime;
+use units::{BlockTime, CompactTarget};
 
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "alloc")]
 use crate::merkle_tree::WitnessMerkleNode;
-use crate::pow::CompactTarget;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]

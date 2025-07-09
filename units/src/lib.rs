@@ -51,6 +51,7 @@ pub mod fee;
 pub mod fee_rate;
 pub mod locktime;
 pub mod parse;
+pub mod pow;
 pub mod time;
 pub mod weight;
 
@@ -60,6 +61,7 @@ pub use self::{
     amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
+    pow::CompactTarget,
     result::{NumOpError, NumOpResult, MathOp},
     time::BlockTime,
     weight::Weight
