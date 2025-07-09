@@ -7,7 +7,7 @@ use hex::FromHex as _;
 use internals::ToU64 as _;
 use secp256k1::{Secp256k1, Verification};
 
-use super::{opcode_to_verify, Builder, Instruction, PushBytes, ScriptExtPriv as _};
+use super::{opcode_to_verify, Builder, Instruction, PushBytes, ScriptBuf, ScriptExtPriv as _};
 use crate::consensus;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
@@ -19,10 +19,6 @@ use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{self, ScriptHash, WScriptHash};
 use crate::taproot::TapNodeHash;
-
-#[rustfmt::skip]            // Keep public re-exports separate.
-#[doc(inline)]
-pub use primitives::script::ScriptBuf;
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
