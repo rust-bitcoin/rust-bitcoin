@@ -7,6 +7,9 @@
 
 use core::{convert, fmt};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use internals::write_err;
 
 use crate::Sequence;
@@ -513,6 +516,17 @@ impl std::error::Error for IsSatisfiedByTimeError {
         match *self {
             E::Satisfaction(ref e) => Some(e),
             E::Incompatible(_) => None,
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for LockTime {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=1)?;
+        match choice {
+            0 => Ok(LockTime::Blocks(NumberOfBlocks::arbitrary(u)?)),
+            _ => Ok(LockTime::Time(NumberOf512Seconds::arbitrary(u)?))
         }
     }
 }
