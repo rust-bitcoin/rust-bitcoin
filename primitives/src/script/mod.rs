@@ -436,18 +436,12 @@ impl fmt::LowerHex for Script {
         fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
     }
 }
-#[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-internals::impl_to_hex_from_lower_hex!(Script, |script: &Self| script.len() * 2);
 
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for ScriptBuf {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
-#[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &Self| script_buf.len() * 2);
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Script {
