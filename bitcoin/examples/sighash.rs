@@ -1,4 +1,4 @@
-use bitcoin::script::{ScriptBufExt as _, ScriptExt as _};
+use bitcoin::ext::*;
 use bitcoin::{
     consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptBuf, Transaction,
 };
