@@ -539,8 +539,7 @@ fn fmt_satoshi_in(
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
 /// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
-/// padding, alignment... The formatting works like floats from `core` but note that precision will
-/// **never** be lossy - that means no rounding.
+/// padding, alignment... The formatting works like floats from `core`.
 ///
 /// Note: This implementation is currently **unstable**. The only thing that we can promise is that
 /// unless the precision is changed, this will display an accurate, human-readable number, and the
