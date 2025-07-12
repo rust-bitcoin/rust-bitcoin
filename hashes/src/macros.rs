@@ -356,7 +356,7 @@ macro_rules! hash_newtype_struct {
 // duplicates/conflicts and report an error.
 //
 // FYI, no, we can't use a helper macro to first filter all `hash_newtype` attributes. We would be
-// attempting to match on macros instead. So we must write `hashe_newtype` in each branch.
+// attempting to match on macros instead. So we must write `hash_newtype` in each branch.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! hash_newtype_get_direction {
