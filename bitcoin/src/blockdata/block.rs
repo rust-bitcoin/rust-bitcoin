@@ -30,8 +30,10 @@ use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use primitives::block::{Block, Checked, Unchecked, Validation, Version, BlockHash, Header, WitnessCommitment};
+#[doc(no_inline)]
+pub use units::block::TooBigForRelativeHeightError;
 #[doc(inline)]
-pub use units::block::{BlockHeight, BlockHeightInterval, TooBigForRelativeHeightError};
+pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval};
 
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
