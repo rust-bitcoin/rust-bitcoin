@@ -14,8 +14,8 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse, time, weight, Amount, BlockHeight,
-    BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, MathOp, NumOpResult,
+    amount, block, fee_rate, locktime, parse, result, time, weight, Amount, BlockHeight,
+    BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult,
     SignedAmount, Weight,
 };
 
@@ -24,7 +24,7 @@ use bitcoin_units::{
 struct Enums {
     a: amount::Denomination,
     b: NumOpResult<Amount>,
-    c: MathOp,
+    c: result::MathOp,
 }
 
 impl Enums {
@@ -32,7 +32,7 @@ impl Enums {
         Self {
             a: amount::Denomination::Bitcoin,
             b: NumOpResult::Valid(Amount::MAX),
-            c: MathOp::Add,
+            c: result::MathOp::Add,
         }
     }
 }
@@ -159,7 +159,7 @@ fn api_can_use_modules_from_crate_root() {
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
         Amount, BlockHeight, BlockHeightInterval, BlockInterval, BlockMtp, BlockMtpInterval,
-        BlockTime, FeeRate, MathOp, NumOpError, NumOpResult, SignedAmount, Weight,
+        BlockTime, FeeRate, NumOpResult, SignedAmount, Weight,
     };
 }
 
@@ -334,7 +334,7 @@ impl<'a> Arbitrary<'a> for Enums {
         let a = Enums {
             a: amount::Denomination::arbitrary(u)?,
             b: NumOpResult::<Amount>::arbitrary(u)?,
-            c: MathOp::arbitrary(u)?,
+            c: result::MathOp::arbitrary(u)?,
         };
         Ok(a)
     }
