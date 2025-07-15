@@ -2086,7 +2086,6 @@ pub mod bitcoin_units::absolute
 pub mod bitcoin_units::absolute::error
 pub mod bitcoin_units::amount
 pub mod bitcoin_units::block
-pub mod bitcoin_units::fee
 pub mod bitcoin_units::fee_rate
 pub mod bitcoin_units::locktime
 pub mod bitcoin_units::locktime::absolute

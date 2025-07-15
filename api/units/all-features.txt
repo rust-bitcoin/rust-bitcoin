@@ -2249,7 +2249,6 @@ pub mod bitcoin_units::amount::serde::as_sat::opt
 pub mod bitcoin_units::amount::serde::as_str
 pub mod bitcoin_units::amount::serde::as_str::opt
 pub mod bitcoin_units::block
-pub mod bitcoin_units::fee
 pub mod bitcoin_units::fee_rate
 pub mod bitcoin_units::fee_rate::serde
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor
