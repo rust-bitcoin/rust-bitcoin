@@ -10,7 +10,6 @@ use core::{default, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::const_casts;
-
 use NumOpResult as R;
 
 use super::error::{ParseAmountErrorInner, ParseErrorInner};

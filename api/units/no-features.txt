@@ -1,11 +1,12 @@
 #[non_exhaustive] pub enum bitcoin_units::amount::Denomination
 #[non_exhaustive] pub enum bitcoin_units::amount::ParseDenominationError
+#[non_exhaustive] pub enum bitcoin_units::amount::error::ParseDenominationError
 #[non_exhaustive] pub enum bitcoin_units::result::MathOp
 #[non_exhaustive] pub struct bitcoin_units::absolute::ConversionError
 #[non_exhaustive] pub struct bitcoin_units::absolute::error::ConversionError
-#[non_exhaustive] pub struct bitcoin_units::amount::MissingDenominationError
-#[non_exhaustive] pub struct bitcoin_units::amount::PossiblyConfusingDenominationError(_)
-#[non_exhaustive] pub struct bitcoin_units::amount::UnknownDenominationError(_)
+#[non_exhaustive] pub struct bitcoin_units::amount::error::MissingDenominationError
+#[non_exhaustive] pub struct bitcoin_units::amount::error::PossiblyConfusingDenominationError(_)
+#[non_exhaustive] pub struct bitcoin_units::amount::error::UnknownDenominationError(_)
 #[non_exhaustive] pub struct bitcoin_units::locktime::absolute::ConversionError
 #[non_exhaustive] pub struct bitcoin_units::locktime::absolute::error::ConversionError
 #[non_exhaustive] pub struct bitcoin_units::parse::ParseIntError
@@ -17,7 +18,7 @@ impl bitcoin_units::SignedAmount
 impl bitcoin_units::Weight
 impl bitcoin_units::amount::Denomination
 impl bitcoin_units::amount::Display
-impl bitcoin_units::amount::OutOfRangeError
+impl bitcoin_units::amount::error::OutOfRangeError
 impl bitcoin_units::block::BlockHeight
 impl bitcoin_units::block::BlockHeightInterval
 impl bitcoin_units::block::BlockMtp
@@ -51,17 +52,17 @@ impl core::clone::Clone for bitcoin_units::SignedAmount
 impl core::clone::Clone for bitcoin_units::Weight
 impl core::clone::Clone for bitcoin_units::amount::Denomination
 impl core::clone::Clone for bitcoin_units::amount::Display
-impl core::clone::Clone for bitcoin_units::amount::InputTooLargeError
-impl core::clone::Clone for bitcoin_units::amount::InvalidCharacterError
-impl core::clone::Clone for bitcoin_units::amount::MissingDenominationError
-impl core::clone::Clone for bitcoin_units::amount::MissingDigitsError
-impl core::clone::Clone for bitcoin_units::amount::OutOfRangeError
-impl core::clone::Clone for bitcoin_units::amount::ParseAmountError
-impl core::clone::Clone for bitcoin_units::amount::ParseDenominationError
-impl core::clone::Clone for bitcoin_units::amount::ParseError
-impl core::clone::Clone for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::clone::Clone for bitcoin_units::amount::TooPreciseError
-impl core::clone::Clone for bitcoin_units::amount::UnknownDenominationError
+impl core::clone::Clone for bitcoin_units::amount::error::InputTooLargeError
+impl core::clone::Clone for bitcoin_units::amount::error::InvalidCharacterError
+impl core::clone::Clone for bitcoin_units::amount::error::MissingDenominationError
+impl core::clone::Clone for bitcoin_units::amount::error::MissingDigitsError
+impl core::clone::Clone for bitcoin_units::amount::error::OutOfRangeError
+impl core::clone::Clone for bitcoin_units::amount::error::ParseAmountError
+impl core::clone::Clone for bitcoin_units::amount::error::ParseDenominationError
+impl core::clone::Clone for bitcoin_units::amount::error::ParseError
+impl core::clone::Clone for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::clone::Clone for bitcoin_units::amount::error::TooPreciseError
+impl core::clone::Clone for bitcoin_units::amount::error::UnknownDenominationError
 impl core::clone::Clone for bitcoin_units::block::BlockHeight
 impl core::clone::Clone for bitcoin_units::block::BlockHeightInterval
 impl core::clone::Clone for bitcoin_units::block::BlockMtp
@@ -97,17 +98,17 @@ impl core::cmp::Eq for bitcoin_units::FeeRate
 impl core::cmp::Eq for bitcoin_units::SignedAmount
 impl core::cmp::Eq for bitcoin_units::Weight
 impl core::cmp::Eq for bitcoin_units::amount::Denomination
-impl core::cmp::Eq for bitcoin_units::amount::InputTooLargeError
-impl core::cmp::Eq for bitcoin_units::amount::InvalidCharacterError
-impl core::cmp::Eq for bitcoin_units::amount::MissingDenominationError
-impl core::cmp::Eq for bitcoin_units::amount::MissingDigitsError
-impl core::cmp::Eq for bitcoin_units::amount::OutOfRangeError
-impl core::cmp::Eq for bitcoin_units::amount::ParseAmountError
-impl core::cmp::Eq for bitcoin_units::amount::ParseDenominationError
-impl core::cmp::Eq for bitcoin_units::amount::ParseError
-impl core::cmp::Eq for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::cmp::Eq for bitcoin_units::amount::TooPreciseError
-impl core::cmp::Eq for bitcoin_units::amount::UnknownDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::error::InputTooLargeError
+impl core::cmp::Eq for bitcoin_units::amount::error::InvalidCharacterError
+impl core::cmp::Eq for bitcoin_units::amount::error::MissingDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::error::MissingDigitsError
+impl core::cmp::Eq for bitcoin_units::amount::error::OutOfRangeError
+impl core::cmp::Eq for bitcoin_units::amount::error::ParseAmountError
+impl core::cmp::Eq for bitcoin_units::amount::error::ParseDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::error::ParseError
+impl core::cmp::Eq for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::error::TooPreciseError
+impl core::cmp::Eq for bitcoin_units::amount::error::UnknownDenominationError
 impl core::cmp::Eq for bitcoin_units::block::BlockHeight
 impl core::cmp::Eq for bitcoin_units::block::BlockHeightInterval
 impl core::cmp::Eq for bitcoin_units::block::BlockMtp
@@ -157,17 +158,17 @@ impl core::cmp::PartialEq for bitcoin_units::FeeRate
 impl core::cmp::PartialEq for bitcoin_units::SignedAmount
 impl core::cmp::PartialEq for bitcoin_units::Weight
 impl core::cmp::PartialEq for bitcoin_units::amount::Denomination
-impl core::cmp::PartialEq for bitcoin_units::amount::InputTooLargeError
-impl core::cmp::PartialEq for bitcoin_units::amount::InvalidCharacterError
-impl core::cmp::PartialEq for bitcoin_units::amount::MissingDenominationError
-impl core::cmp::PartialEq for bitcoin_units::amount::MissingDigitsError
-impl core::cmp::PartialEq for bitcoin_units::amount::OutOfRangeError
-impl core::cmp::PartialEq for bitcoin_units::amount::ParseAmountError
-impl core::cmp::PartialEq for bitcoin_units::amount::ParseDenominationError
-impl core::cmp::PartialEq for bitcoin_units::amount::ParseError
-impl core::cmp::PartialEq for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::cmp::PartialEq for bitcoin_units::amount::TooPreciseError
-impl core::cmp::PartialEq for bitcoin_units::amount::UnknownDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::InputTooLargeError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::InvalidCharacterError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::MissingDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::MissingDigitsError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::OutOfRangeError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::ParseAmountError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::ParseDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::ParseError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::TooPreciseError
+impl core::cmp::PartialEq for bitcoin_units::amount::error::UnknownDenominationError
 impl core::cmp::PartialEq for bitcoin_units::block::BlockHeight
 impl core::cmp::PartialEq for bitcoin_units::block::BlockHeightInterval
 impl core::cmp::PartialEq for bitcoin_units::block::BlockMtp
@@ -219,18 +220,18 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::result::NumOp
 impl core::convert::From<bitcoin_units::BlockTime> for u32
 impl core::convert::From<bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 impl core::convert::From<bitcoin_units::Weight> for u64
-impl core::convert::From<bitcoin_units::amount::InputTooLargeError> for bitcoin_units::amount::ParseAmountError
-impl core::convert::From<bitcoin_units::amount::InputTooLargeError> for bitcoin_units::amount::ParseError
-impl core::convert::From<bitcoin_units::amount::InvalidCharacterError> for bitcoin_units::amount::ParseAmountError
-impl core::convert::From<bitcoin_units::amount::InvalidCharacterError> for bitcoin_units::amount::ParseError
-impl core::convert::From<bitcoin_units::amount::MissingDigitsError> for bitcoin_units::amount::ParseAmountError
-impl core::convert::From<bitcoin_units::amount::MissingDigitsError> for bitcoin_units::amount::ParseError
-impl core::convert::From<bitcoin_units::amount::OutOfRangeError> for bitcoin_units::amount::ParseAmountError
-impl core::convert::From<bitcoin_units::amount::OutOfRangeError> for bitcoin_units::amount::ParseError
-impl core::convert::From<bitcoin_units::amount::ParseAmountError> for bitcoin_units::amount::ParseError
-impl core::convert::From<bitcoin_units::amount::ParseDenominationError> for bitcoin_units::amount::ParseError
-impl core::convert::From<bitcoin_units::amount::TooPreciseError> for bitcoin_units::amount::ParseAmountError
-impl core::convert::From<bitcoin_units::amount::TooPreciseError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::error::InputTooLargeError> for bitcoin_units::amount::error::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::error::InputTooLargeError> for bitcoin_units::amount::error::ParseError
+impl core::convert::From<bitcoin_units::amount::error::InvalidCharacterError> for bitcoin_units::amount::error::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::error::InvalidCharacterError> for bitcoin_units::amount::error::ParseError
+impl core::convert::From<bitcoin_units::amount::error::MissingDigitsError> for bitcoin_units::amount::error::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::error::MissingDigitsError> for bitcoin_units::amount::error::ParseError
+impl core::convert::From<bitcoin_units::amount::error::OutOfRangeError> for bitcoin_units::amount::error::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::error::OutOfRangeError> for bitcoin_units::amount::error::ParseError
+impl core::convert::From<bitcoin_units::amount::error::ParseAmountError> for bitcoin_units::amount::error::ParseError
+impl core::convert::From<bitcoin_units::amount::error::ParseDenominationError> for bitcoin_units::amount::error::ParseError
+impl core::convert::From<bitcoin_units::amount::error::TooPreciseError> for bitcoin_units::amount::error::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::error::TooPreciseError> for bitcoin_units::amount::error::ParseError
 impl core::convert::From<bitcoin_units::block::BlockHeight> for u32
 impl core::convert::From<bitcoin_units::block::BlockHeightInterval> for u32
 impl core::convert::From<bitcoin_units::block::BlockMtp> for u32
@@ -248,9 +249,9 @@ impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units:
 impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units::parse::UnprefixedHexError
 impl core::convert::From<bitcoin_units::parse::ParseIntError> for core::num::error::ParseIntError
 impl core::convert::From<bitcoin_units::sequence::Sequence> for u32
-impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseAmountError
-impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseDenominationError
-impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseAmountError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseDenominationError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse::PrefixedHexError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse::UnprefixedHexError
 impl core::convert::From<u16> for bitcoin_units::locktime::relative::NumberOfBlocks
@@ -288,17 +289,17 @@ impl core::fmt::Debug for bitcoin_units::SignedAmount
 impl core::fmt::Debug for bitcoin_units::Weight
 impl core::fmt::Debug for bitcoin_units::amount::Denomination
 impl core::fmt::Debug for bitcoin_units::amount::Display
-impl core::fmt::Debug for bitcoin_units::amount::InputTooLargeError
-impl core::fmt::Debug for bitcoin_units::amount::InvalidCharacterError
-impl core::fmt::Debug for bitcoin_units::amount::MissingDenominationError
-impl core::fmt::Debug for bitcoin_units::amount::MissingDigitsError
-impl core::fmt::Debug for bitcoin_units::amount::OutOfRangeError
-impl core::fmt::Debug for bitcoin_units::amount::ParseAmountError
-impl core::fmt::Debug for bitcoin_units::amount::ParseDenominationError
-impl core::fmt::Debug for bitcoin_units::amount::ParseError
-impl core::fmt::Debug for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::fmt::Debug for bitcoin_units::amount::TooPreciseError
-impl core::fmt::Debug for bitcoin_units::amount::UnknownDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::error::InputTooLargeError
+impl core::fmt::Debug for bitcoin_units::amount::error::InvalidCharacterError
+impl core::fmt::Debug for bitcoin_units::amount::error::MissingDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::error::MissingDigitsError
+impl core::fmt::Debug for bitcoin_units::amount::error::OutOfRangeError
+impl core::fmt::Debug for bitcoin_units::amount::error::ParseAmountError
+impl core::fmt::Debug for bitcoin_units::amount::error::ParseDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::error::ParseError
+impl core::fmt::Debug for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::error::TooPreciseError
+impl core::fmt::Debug for bitcoin_units::amount::error::UnknownDenominationError
 impl core::fmt::Debug for bitcoin_units::block::BlockHeight
 impl core::fmt::Debug for bitcoin_units::block::BlockHeightInterval
 impl core::fmt::Debug for bitcoin_units::block::BlockMtp
@@ -333,16 +334,16 @@ impl core::fmt::Display for bitcoin_units::SignedAmount
 impl core::fmt::Display for bitcoin_units::Weight
 impl core::fmt::Display for bitcoin_units::amount::Denomination
 impl core::fmt::Display for bitcoin_units::amount::Display
-impl core::fmt::Display for bitcoin_units::amount::InputTooLargeError
-impl core::fmt::Display for bitcoin_units::amount::InvalidCharacterError
-impl core::fmt::Display for bitcoin_units::amount::MissingDigitsError
-impl core::fmt::Display for bitcoin_units::amount::OutOfRangeError
-impl core::fmt::Display for bitcoin_units::amount::ParseAmountError
-impl core::fmt::Display for bitcoin_units::amount::ParseDenominationError
-impl core::fmt::Display for bitcoin_units::amount::ParseError
-impl core::fmt::Display for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::fmt::Display for bitcoin_units::amount::TooPreciseError
-impl core::fmt::Display for bitcoin_units::amount::UnknownDenominationError
+impl core::fmt::Display for bitcoin_units::amount::error::InputTooLargeError
+impl core::fmt::Display for bitcoin_units::amount::error::InvalidCharacterError
+impl core::fmt::Display for bitcoin_units::amount::error::MissingDigitsError
+impl core::fmt::Display for bitcoin_units::amount::error::OutOfRangeError
+impl core::fmt::Display for bitcoin_units::amount::error::ParseAmountError
+impl core::fmt::Display for bitcoin_units::amount::error::ParseDenominationError
+impl core::fmt::Display for bitcoin_units::amount::error::ParseError
+impl core::fmt::Display for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::fmt::Display for bitcoin_units::amount::error::TooPreciseError
+impl core::fmt::Display for bitcoin_units::amount::error::UnknownDenominationError
 impl core::fmt::Display for bitcoin_units::block::BlockHeight
 impl core::fmt::Display for bitcoin_units::block::BlockHeightInterval
 impl core::fmt::Display for bitcoin_units::block::BlockMtp
@@ -403,7 +404,7 @@ impl core::marker::Copy for bitcoin_units::FeeRate
 impl core::marker::Copy for bitcoin_units::SignedAmount
 impl core::marker::Copy for bitcoin_units::Weight
 impl core::marker::Copy for bitcoin_units::amount::Denomination
-impl core::marker::Copy for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Copy for bitcoin_units::amount::error::OutOfRangeError
 impl core::marker::Copy for bitcoin_units::block::BlockHeight
 impl core::marker::Copy for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Copy for bitcoin_units::block::BlockMtp
@@ -424,17 +425,17 @@ impl core::marker::Freeze for bitcoin_units::SignedAmount
 impl core::marker::Freeze for bitcoin_units::Weight
 impl core::marker::Freeze for bitcoin_units::amount::Denomination
 impl core::marker::Freeze for bitcoin_units::amount::Display
-impl core::marker::Freeze for bitcoin_units::amount::InputTooLargeError
-impl core::marker::Freeze for bitcoin_units::amount::InvalidCharacterError
-impl core::marker::Freeze for bitcoin_units::amount::MissingDenominationError
-impl core::marker::Freeze for bitcoin_units::amount::MissingDigitsError
-impl core::marker::Freeze for bitcoin_units::amount::OutOfRangeError
-impl core::marker::Freeze for bitcoin_units::amount::ParseAmountError
-impl core::marker::Freeze for bitcoin_units::amount::ParseDenominationError
-impl core::marker::Freeze for bitcoin_units::amount::ParseError
-impl core::marker::Freeze for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::marker::Freeze for bitcoin_units::amount::TooPreciseError
-impl core::marker::Freeze for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Freeze for bitcoin_units::amount::error::InputTooLargeError
+impl core::marker::Freeze for bitcoin_units::amount::error::InvalidCharacterError
+impl core::marker::Freeze for bitcoin_units::amount::error::MissingDenominationError
+impl core::marker::Freeze for bitcoin_units::amount::error::MissingDigitsError
+impl core::marker::Freeze for bitcoin_units::amount::error::OutOfRangeError
+impl core::marker::Freeze for bitcoin_units::amount::error::ParseAmountError
+impl core::marker::Freeze for bitcoin_units::amount::error::ParseDenominationError
+impl core::marker::Freeze for bitcoin_units::amount::error::ParseError
+impl core::marker::Freeze for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::marker::Freeze for bitcoin_units::amount::error::TooPreciseError
+impl core::marker::Freeze for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Freeze for bitcoin_units::block::BlockHeight
 impl core::marker::Freeze for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Freeze for bitcoin_units::block::BlockMtp
@@ -471,17 +472,17 @@ impl core::marker::Send for bitcoin_units::SignedAmount
 impl core::marker::Send for bitcoin_units::Weight
 impl core::marker::Send for bitcoin_units::amount::Denomination
 impl core::marker::Send for bitcoin_units::amount::Display
-impl core::marker::Send for bitcoin_units::amount::InputTooLargeError
-impl core::marker::Send for bitcoin_units::amount::InvalidCharacterError
-impl core::marker::Send for bitcoin_units::amount::MissingDenominationError
-impl core::marker::Send for bitcoin_units::amount::MissingDigitsError
-impl core::marker::Send for bitcoin_units::amount::OutOfRangeError
-impl core::marker::Send for bitcoin_units::amount::ParseAmountError
-impl core::marker::Send for bitcoin_units::amount::ParseDenominationError
-impl core::marker::Send for bitcoin_units::amount::ParseError
-impl core::marker::Send for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::marker::Send for bitcoin_units::amount::TooPreciseError
-impl core::marker::Send for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Send for bitcoin_units::amount::error::InputTooLargeError
+impl core::marker::Send for bitcoin_units::amount::error::InvalidCharacterError
+impl core::marker::Send for bitcoin_units::amount::error::MissingDenominationError
+impl core::marker::Send for bitcoin_units::amount::error::MissingDigitsError
+impl core::marker::Send for bitcoin_units::amount::error::OutOfRangeError
+impl core::marker::Send for bitcoin_units::amount::error::ParseAmountError
+impl core::marker::Send for bitcoin_units::amount::error::ParseDenominationError
+impl core::marker::Send for bitcoin_units::amount::error::ParseError
+impl core::marker::Send for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::marker::Send for bitcoin_units::amount::error::TooPreciseError
+impl core::marker::Send for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Send for bitcoin_units::block::BlockHeight
 impl core::marker::Send for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Send for bitcoin_units::block::BlockMtp
@@ -517,17 +518,17 @@ impl core::marker::StructuralPartialEq for bitcoin_units::FeeRate
 impl core::marker::StructuralPartialEq for bitcoin_units::SignedAmount
 impl core::marker::StructuralPartialEq for bitcoin_units::Weight
 impl core::marker::StructuralPartialEq for bitcoin_units::amount::Denomination
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::InputTooLargeError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::InvalidCharacterError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::MissingDenominationError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::MissingDigitsError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::OutOfRangeError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseAmountError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseDenominationError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::TooPreciseError
-impl core::marker::StructuralPartialEq for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::InputTooLargeError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::InvalidCharacterError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::MissingDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::MissingDigitsError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::OutOfRangeError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::ParseAmountError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::ParseDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::ParseError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::TooPreciseError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockHeight
 impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockHeightInterval
 impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockMtp
@@ -564,17 +565,17 @@ impl core::marker::Sync for bitcoin_units::SignedAmount
 impl core::marker::Sync for bitcoin_units::Weight
 impl core::marker::Sync for bitcoin_units::amount::Denomination
 impl core::marker::Sync for bitcoin_units::amount::Display
-impl core::marker::Sync for bitcoin_units::amount::InputTooLargeError
-impl core::marker::Sync for bitcoin_units::amount::InvalidCharacterError
-impl core::marker::Sync for bitcoin_units::amount::MissingDenominationError
-impl core::marker::Sync for bitcoin_units::amount::MissingDigitsError
-impl core::marker::Sync for bitcoin_units::amount::OutOfRangeError
-impl core::marker::Sync for bitcoin_units::amount::ParseAmountError
-impl core::marker::Sync for bitcoin_units::amount::ParseDenominationError
-impl core::marker::Sync for bitcoin_units::amount::ParseError
-impl core::marker::Sync for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::marker::Sync for bitcoin_units::amount::TooPreciseError
-impl core::marker::Sync for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Sync for bitcoin_units::amount::error::InputTooLargeError
+impl core::marker::Sync for bitcoin_units::amount::error::InvalidCharacterError
+impl core::marker::Sync for bitcoin_units::amount::error::MissingDenominationError
+impl core::marker::Sync for bitcoin_units::amount::error::MissingDigitsError
+impl core::marker::Sync for bitcoin_units::amount::error::OutOfRangeError
+impl core::marker::Sync for bitcoin_units::amount::error::ParseAmountError
+impl core::marker::Sync for bitcoin_units::amount::error::ParseDenominationError
+impl core::marker::Sync for bitcoin_units::amount::error::ParseError
+impl core::marker::Sync for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::marker::Sync for bitcoin_units::amount::error::TooPreciseError
+impl core::marker::Sync for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Sync for bitcoin_units::block::BlockHeight
 impl core::marker::Sync for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Sync for bitcoin_units::block::BlockMtp
@@ -611,17 +612,17 @@ impl core::marker::Unpin for bitcoin_units::SignedAmount
 impl core::marker::Unpin for bitcoin_units::Weight
 impl core::marker::Unpin for bitcoin_units::amount::Denomination
 impl core::marker::Unpin for bitcoin_units::amount::Display
-impl core::marker::Unpin for bitcoin_units::amount::InputTooLargeError
-impl core::marker::Unpin for bitcoin_units::amount::InvalidCharacterError
-impl core::marker::Unpin for bitcoin_units::amount::MissingDenominationError
-impl core::marker::Unpin for bitcoin_units::amount::MissingDigitsError
-impl core::marker::Unpin for bitcoin_units::amount::OutOfRangeError
-impl core::marker::Unpin for bitcoin_units::amount::ParseAmountError
-impl core::marker::Unpin for bitcoin_units::amount::ParseDenominationError
-impl core::marker::Unpin for bitcoin_units::amount::ParseError
-impl core::marker::Unpin for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::marker::Unpin for bitcoin_units::amount::TooPreciseError
-impl core::marker::Unpin for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::error::InputTooLargeError
+impl core::marker::Unpin for bitcoin_units::amount::error::InvalidCharacterError
+impl core::marker::Unpin for bitcoin_units::amount::error::MissingDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::error::MissingDigitsError
+impl core::marker::Unpin for bitcoin_units::amount::error::OutOfRangeError
+impl core::marker::Unpin for bitcoin_units::amount::error::ParseAmountError
+impl core::marker::Unpin for bitcoin_units::amount::error::ParseDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::error::ParseError
+impl core::marker::Unpin for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::error::TooPreciseError
+impl core::marker::Unpin for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Unpin for bitcoin_units::block::BlockHeight
 impl core::marker::Unpin for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Unpin for bitcoin_units::block::BlockMtp
@@ -884,17 +885,17 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::SignedAmount
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::Weight
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Denomination
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Display
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::InputTooLargeError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::InvalidCharacterError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::MissingDenominationError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::MissingDigitsError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::OutOfRangeError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseAmountError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseDenominationError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::TooPreciseError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::UnknownDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::InputTooLargeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::InvalidCharacterError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::MissingDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::MissingDigitsError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::OutOfRangeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::ParseAmountError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::ParseDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::ParseError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::TooPreciseError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::UnknownDenominationError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeight
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeightInterval
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockMtp
@@ -931,17 +932,17 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::SignedAmount
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::Weight
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Denomination
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Display
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::InputTooLargeError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::InvalidCharacterError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::MissingDenominationError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::MissingDigitsError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::OutOfRangeError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseAmountError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseDenominationError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::PossiblyConfusingDenominationError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::TooPreciseError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::UnknownDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::InputTooLargeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::InvalidCharacterError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::MissingDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::MissingDigitsError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::OutOfRangeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::ParseAmountError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::ParseDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::ParseError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::TooPreciseError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::UnknownDenominationError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeight
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeightInterval
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockMtp
@@ -1096,8 +1097,10 @@ pub bitcoin_units::amount::Denomination::CentiBitcoin
 pub bitcoin_units::amount::Denomination::MicroBitcoin
 pub bitcoin_units::amount::Denomination::MilliBitcoin
 pub bitcoin_units::amount::Denomination::Satoshi
-pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::PossiblyConfusingDenominationError)
-pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::UnknownDenominationError)
+pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::error::PossiblyConfusingDenominationError)
+pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::error::UnknownDenominationError)
+pub bitcoin_units::amount::error::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::error::PossiblyConfusingDenominationError)
+pub bitcoin_units::amount::error::ParseDenominationError::Unknown(bitcoin_units::amount::error::UnknownDenominationError)
 pub bitcoin_units::locktime::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
 pub bitcoin_units::locktime::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::MedianTimePast)
 pub bitcoin_units::locktime::relative::IsSatisfiedByError::Blocks(bitcoin_units::locktime::relative::error::InvalidHeightError)
@@ -1211,7 +1214,7 @@ pub const fn bitcoin_units::Amount::div_by_fee_rate_floor(self, fee_rate: bitcoi
 pub const fn bitcoin_units::Amount::div_by_weight_ceil(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>
 pub const fn bitcoin_units::Amount::div_by_weight_floor(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>
 pub const fn bitcoin_units::Amount::from_btc_u16(whole_bitcoin: u16) -> Self
-pub const fn bitcoin_units::Amount::from_sat(satoshi: u64) -> core::result::Result<Self, bitcoin_units::amount::OutOfRangeError>
+pub const fn bitcoin_units::Amount::from_sat(satoshi: u64) -> core::result::Result<Self, bitcoin_units::amount::error::OutOfRangeError>
 pub const fn bitcoin_units::Amount::from_sat_u32(satoshi: u32) -> Self
 pub const fn bitcoin_units::Amount::to_sat(self) -> u64
 pub const fn bitcoin_units::BlockTime::from_u32(t: u32) -> Self
@@ -1242,7 +1245,7 @@ pub const fn bitcoin_units::SignedAmount::checked_mul(self, rhs: i64) -> core::o
 pub const fn bitcoin_units::SignedAmount::checked_rem(self, rhs: i64) -> core::option::Option<Self>
 pub const fn bitcoin_units::SignedAmount::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::SignedAmount::from_btc_i16(whole_bitcoin: i16) -> Self
-pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> core::result::Result<Self, bitcoin_units::amount::OutOfRangeError>
+pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> core::result::Result<Self, bitcoin_units::amount::error::OutOfRangeError>
 pub const fn bitcoin_units::SignedAmount::from_sat_i32(satoshi: i32) -> Self
 pub const fn bitcoin_units::SignedAmount::to_sat(self) -> i64
 pub const fn bitcoin_units::Weight::checked_add(self, rhs: Self) -> core::option::Option<Self>
@@ -1484,8 +1487,8 @@ pub fn bitcoin_units::Amount::eq(&self, other: &bitcoin_units::Amount) -> bool
 pub fn bitcoin_units::Amount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::Amount::from_int_btc<T: core::convert::Into<u16>>(whole_bitcoin: T) -> Self
 pub fn bitcoin_units::Amount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
-pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::ParseError>
+pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
+pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
 pub fn bitcoin_units::Amount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::Amount::mul(self, rhs: &u64) -> Self::Output
 pub fn bitcoin_units::Amount::mul(self, rhs: u64) -> Self::Output
@@ -1550,8 +1553,8 @@ pub fn bitcoin_units::SignedAmount::fmt(&self, f: &mut core::fmt::Formatter<'_>)
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 pub fn bitcoin_units::SignedAmount::from_int_btc<T: core::convert::Into<i16>>(whole_bitcoin: T) -> Self
 pub fn bitcoin_units::SignedAmount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-pub fn bitcoin_units::SignedAmount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
-pub fn bitcoin_units::SignedAmount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::ParseError>
+pub fn bitcoin_units::SignedAmount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
+pub fn bitcoin_units::SignedAmount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
 pub fn bitcoin_units::SignedAmount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::SignedAmount::is_negative(self) -> bool
 pub fn bitcoin_units::SignedAmount::is_positive(self) -> bool
@@ -1567,7 +1570,7 @@ pub fn bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::SignedAmount)
 pub fn bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
 pub fn bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
 pub fn bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
-pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::OutOfRangeError>
+pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
 pub fn bitcoin_units::Weight::add(self, rhs: &bitcoin_units::Weight) -> Self::Output
 pub fn bitcoin_units::Weight::add(self, rhs: bitcoin_units::Weight) -> Self::Output
@@ -1614,57 +1617,57 @@ pub fn bitcoin_units::amount::Denomination::hash<__H: core::hash::Hasher>(&self,
 pub fn bitcoin_units::amount::Display::clone(&self) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::amount::Display::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::amount::Display::show_denomination(self) -> Self
-pub fn bitcoin_units::amount::InputTooLargeError::clone(&self) -> bitcoin_units::amount::InputTooLargeError
-pub fn bitcoin_units::amount::InputTooLargeError::eq(&self, other: &bitcoin_units::amount::InputTooLargeError) -> bool
-pub fn bitcoin_units::amount::InputTooLargeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::InvalidCharacterError::clone(&self) -> bitcoin_units::amount::InvalidCharacterError
-pub fn bitcoin_units::amount::InvalidCharacterError::eq(&self, other: &bitcoin_units::amount::InvalidCharacterError) -> bool
-pub fn bitcoin_units::amount::InvalidCharacterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::MissingDenominationError::clone(&self) -> bitcoin_units::amount::MissingDenominationError
-pub fn bitcoin_units::amount::MissingDenominationError::eq(&self, other: &bitcoin_units::amount::MissingDenominationError) -> bool
-pub fn bitcoin_units::amount::MissingDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::MissingDigitsError::clone(&self) -> bitcoin_units::amount::MissingDigitsError
-pub fn bitcoin_units::amount::MissingDigitsError::eq(&self, other: &bitcoin_units::amount::MissingDigitsError) -> bool
-pub fn bitcoin_units::amount::MissingDigitsError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::OutOfRangeError::clone(&self) -> bitcoin_units::amount::OutOfRangeError
-pub fn bitcoin_units::amount::OutOfRangeError::eq(&self, other: &bitcoin_units::amount::OutOfRangeError) -> bool
-pub fn bitcoin_units::amount::OutOfRangeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::OutOfRangeError::is_above_max(self) -> bool
-pub fn bitcoin_units::amount::OutOfRangeError::is_below_min(self) -> bool
-pub fn bitcoin_units::amount::OutOfRangeError::valid_range(self) -> (i64, u64)
-pub fn bitcoin_units::amount::ParseAmountError::clone(&self) -> bitcoin_units::amount::ParseAmountError
-pub fn bitcoin_units::amount::ParseAmountError::eq(&self, other: &bitcoin_units::amount::ParseAmountError) -> bool
-pub fn bitcoin_units::amount::ParseAmountError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::ParseAmountError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::InputTooLargeError) -> Self
-pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::InvalidCharacterError) -> Self
-pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::MissingDigitsError) -> Self
-pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::OutOfRangeError) -> Self
-pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::TooPreciseError) -> Self
-pub fn bitcoin_units::amount::ParseDenominationError::clone(&self) -> bitcoin_units::amount::ParseDenominationError
-pub fn bitcoin_units::amount::ParseDenominationError::eq(&self, other: &bitcoin_units::amount::ParseDenominationError) -> bool
-pub fn bitcoin_units::amount::ParseDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::ParseDenominationError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_units::amount::ParseError::clone(&self) -> bitcoin_units::amount::ParseError
-pub fn bitcoin_units::amount::ParseError::eq(&self, other: &bitcoin_units::amount::ParseError) -> bool
-pub fn bitcoin_units::amount::ParseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::InputTooLargeError) -> Self
-pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::InvalidCharacterError) -> Self
-pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::MissingDigitsError) -> Self
-pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::OutOfRangeError) -> Self
-pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::ParseAmountError) -> Self
-pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::ParseDenominationError) -> Self
-pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::TooPreciseError) -> Self
-pub fn bitcoin_units::amount::ParseError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::clone(&self) -> bitcoin_units::amount::PossiblyConfusingDenominationError
-pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::eq(&self, other: &bitcoin_units::amount::PossiblyConfusingDenominationError) -> bool
-pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::TooPreciseError::clone(&self) -> bitcoin_units::amount::TooPreciseError
-pub fn bitcoin_units::amount::TooPreciseError::eq(&self, other: &bitcoin_units::amount::TooPreciseError) -> bool
-pub fn bitcoin_units::amount::TooPreciseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::UnknownDenominationError::clone(&self) -> bitcoin_units::amount::UnknownDenominationError
-pub fn bitcoin_units::amount::UnknownDenominationError::eq(&self, other: &bitcoin_units::amount::UnknownDenominationError) -> bool
-pub fn bitcoin_units::amount::UnknownDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::InputTooLargeError::clone(&self) -> bitcoin_units::amount::error::InputTooLargeError
+pub fn bitcoin_units::amount::error::InputTooLargeError::eq(&self, other: &bitcoin_units::amount::error::InputTooLargeError) -> bool
+pub fn bitcoin_units::amount::error::InputTooLargeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::InvalidCharacterError::clone(&self) -> bitcoin_units::amount::error::InvalidCharacterError
+pub fn bitcoin_units::amount::error::InvalidCharacterError::eq(&self, other: &bitcoin_units::amount::error::InvalidCharacterError) -> bool
+pub fn bitcoin_units::amount::error::InvalidCharacterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::MissingDenominationError::clone(&self) -> bitcoin_units::amount::error::MissingDenominationError
+pub fn bitcoin_units::amount::error::MissingDenominationError::eq(&self, other: &bitcoin_units::amount::error::MissingDenominationError) -> bool
+pub fn bitcoin_units::amount::error::MissingDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::MissingDigitsError::clone(&self) -> bitcoin_units::amount::error::MissingDigitsError
+pub fn bitcoin_units::amount::error::MissingDigitsError::eq(&self, other: &bitcoin_units::amount::error::MissingDigitsError) -> bool
+pub fn bitcoin_units::amount::error::MissingDigitsError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::OutOfRangeError::clone(&self) -> bitcoin_units::amount::error::OutOfRangeError
+pub fn bitcoin_units::amount::error::OutOfRangeError::eq(&self, other: &bitcoin_units::amount::error::OutOfRangeError) -> bool
+pub fn bitcoin_units::amount::error::OutOfRangeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::OutOfRangeError::is_above_max(self) -> bool
+pub fn bitcoin_units::amount::error::OutOfRangeError::is_below_min(self) -> bool
+pub fn bitcoin_units::amount::error::OutOfRangeError::valid_range(self) -> (i64, u64)
+pub fn bitcoin_units::amount::error::ParseAmountError::clone(&self) -> bitcoin_units::amount::error::ParseAmountError
+pub fn bitcoin_units::amount::error::ParseAmountError::eq(&self, other: &bitcoin_units::amount::error::ParseAmountError) -> bool
+pub fn bitcoin_units::amount::error::ParseAmountError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::ParseAmountError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::InputTooLargeError) -> Self
+pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::InvalidCharacterError) -> Self
+pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::MissingDigitsError) -> Self
+pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::OutOfRangeError) -> Self
+pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::TooPreciseError) -> Self
+pub fn bitcoin_units::amount::error::ParseDenominationError::clone(&self) -> bitcoin_units::amount::error::ParseDenominationError
+pub fn bitcoin_units::amount::error::ParseDenominationError::eq(&self, other: &bitcoin_units::amount::error::ParseDenominationError) -> bool
+pub fn bitcoin_units::amount::error::ParseDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::ParseDenominationError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::amount::error::ParseError::clone(&self) -> bitcoin_units::amount::error::ParseError
+pub fn bitcoin_units::amount::error::ParseError::eq(&self, other: &bitcoin_units::amount::error::ParseError) -> bool
+pub fn bitcoin_units::amount::error::ParseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::ParseError::from(e: bitcoin_units::amount::error::InputTooLargeError) -> Self
+pub fn bitcoin_units::amount::error::ParseError::from(e: bitcoin_units::amount::error::InvalidCharacterError) -> Self
+pub fn bitcoin_units::amount::error::ParseError::from(e: bitcoin_units::amount::error::MissingDigitsError) -> Self
+pub fn bitcoin_units::amount::error::ParseError::from(e: bitcoin_units::amount::error::OutOfRangeError) -> Self
+pub fn bitcoin_units::amount::error::ParseError::from(e: bitcoin_units::amount::error::ParseAmountError) -> Self
+pub fn bitcoin_units::amount::error::ParseError::from(e: bitcoin_units::amount::error::ParseDenominationError) -> Self
+pub fn bitcoin_units::amount::error::ParseError::from(e: bitcoin_units::amount::error::TooPreciseError) -> Self
+pub fn bitcoin_units::amount::error::ParseError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::amount::error::PossiblyConfusingDenominationError::clone(&self) -> bitcoin_units::amount::error::PossiblyConfusingDenominationError
+pub fn bitcoin_units::amount::error::PossiblyConfusingDenominationError::eq(&self, other: &bitcoin_units::amount::error::PossiblyConfusingDenominationError) -> bool
+pub fn bitcoin_units::amount::error::PossiblyConfusingDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::TooPreciseError::clone(&self) -> bitcoin_units::amount::error::TooPreciseError
+pub fn bitcoin_units::amount::error::TooPreciseError::eq(&self, other: &bitcoin_units::amount::error::TooPreciseError) -> bool
+pub fn bitcoin_units::amount::error::TooPreciseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::UnknownDenominationError::clone(&self) -> bitcoin_units::amount::error::UnknownDenominationError
+pub fn bitcoin_units::amount::error::UnknownDenominationError::eq(&self, other: &bitcoin_units::amount::error::UnknownDenominationError) -> bool
+pub fn bitcoin_units::amount::error::UnknownDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::block::BlockHeight::add(self, rhs: &bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeight::add(self, rhs: bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeight::checked_add(self, other: bitcoin_units::block::BlockHeightInterval) -> core::option::Option<Self>
@@ -2022,6 +2025,7 @@ pub mod bitcoin_units
 pub mod bitcoin_units::absolute
 pub mod bitcoin_units::absolute::error
 pub mod bitcoin_units::amount
+pub mod bitcoin_units::amount::error
 pub mod bitcoin_units::block
 pub mod bitcoin_units::fee_rate
 pub mod bitcoin_units::locktime
@@ -2058,14 +2062,17 @@ pub struct bitcoin_units::absolute::error::ParseHeightError(_)
 pub struct bitcoin_units::absolute::error::ParseTimeError(_)
 pub struct bitcoin_units::amount::Amount(_)
 pub struct bitcoin_units::amount::Display
-pub struct bitcoin_units::amount::InputTooLargeError
-pub struct bitcoin_units::amount::InvalidCharacterError
-pub struct bitcoin_units::amount::MissingDigitsError
 pub struct bitcoin_units::amount::OutOfRangeError
 pub struct bitcoin_units::amount::ParseAmountError(_)
 pub struct bitcoin_units::amount::ParseError(_)
 pub struct bitcoin_units::amount::SignedAmount(_)
-pub struct bitcoin_units::amount::TooPreciseError
+pub struct bitcoin_units::amount::error::InputTooLargeError
+pub struct bitcoin_units::amount::error::InvalidCharacterError
+pub struct bitcoin_units::amount::error::MissingDigitsError
+pub struct bitcoin_units::amount::error::OutOfRangeError
+pub struct bitcoin_units::amount::error::ParseAmountError(_)
+pub struct bitcoin_units::amount::error::ParseError(_)
+pub struct bitcoin_units::amount::error::TooPreciseError
 pub struct bitcoin_units::block::BlockHeight(_)
 pub struct bitcoin_units::block::BlockHeightInterval(_)
 pub struct bitcoin_units::block::BlockMtp(_)
@@ -2178,8 +2185,8 @@ pub type &i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::result::Num
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Amount>>::Output
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Weight>>::Output
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::result::NumOpResult<bitcoin_units::Amount>>>::Output
-pub type bitcoin_units::Amount::Err = bitcoin_units::amount::ParseError
-pub type bitcoin_units::Amount::Error = bitcoin_units::amount::OutOfRangeError
+pub type bitcoin_units::Amount::Err = bitcoin_units::amount::error::ParseError
+pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add<bitcoin_units::result::NumOpResult<bitcoin_units::Amount>>>::Output
 pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add>::Output
 pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<bitcoin_units::FeeRate>>::Output
@@ -2205,7 +2212,7 @@ pub type bitcoin_units::FeeRate::Output = <bitcoin_units::FeeRate as core::ops::
 pub type bitcoin_units::FeeRate::Output = <bitcoin_units::FeeRate as core::ops::arith::Sub>::Output
 pub type bitcoin_units::FeeRate::Output = bitcoin_units::FeeRate
 pub type bitcoin_units::FeeRate::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
-pub type bitcoin_units::SignedAmount::Err = bitcoin_units::amount::ParseError
+pub type bitcoin_units::SignedAmount::Err = bitcoin_units::amount::error::ParseError
 pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Add<bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>>>::Output
 pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Add>::Output
 pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Div<core::num::nonzero::NonZero<i64>>>::Output
@@ -2233,7 +2240,7 @@ pub type bitcoin_units::Weight::Output = <bitcoin_units::Weight as core::ops::ar
 pub type bitcoin_units::Weight::Output = bitcoin_units::Weight
 pub type bitcoin_units::Weight::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub type bitcoin_units::Weight::Output = u64
-pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::ParseDenominationError
+pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::error::ParseDenominationError
 pub type bitcoin_units::block::BlockHeight::Err = bitcoin_units::parse::ParseIntError
 pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse::ParseIntError
 pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Add<bitcoin_units::block::BlockHeightInterval>>::Output

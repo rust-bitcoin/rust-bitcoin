@@ -547,9 +547,7 @@ impl NumberOf512Seconds {
 
     /// Represents the [`NumberOf512Seconds`] as an integer number of seconds.
     #[inline]
-    pub const fn to_seconds(self) -> u32 {
-        const_casts::u16_to_u32(self.0) * 512
-    }
+    pub const fn to_seconds(self) -> u32 { const_casts::u16_to_u32(self.0) * 512 }
 
     /// Returns the inner `u16` value.
     #[inline]
