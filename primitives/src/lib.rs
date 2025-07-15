@@ -54,6 +54,8 @@ pub use units::{
     fee_rate::{self, FeeRate},
     locktime::{self, absolute, relative},
     sequence::{self, Sequence},
+    parse,
+    result::{self, NumOpResult},
     time::{self, BlockTime},
     weight::{self, Weight},
 };
