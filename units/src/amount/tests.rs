@@ -10,6 +10,7 @@ use core::num::{NonZeroI64, NonZeroU64};
 #[cfg(feature = "std")]
 use std::panic;
 
+use super::error::{TooPreciseError, UnknownDenominationError};
 use super::*;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
