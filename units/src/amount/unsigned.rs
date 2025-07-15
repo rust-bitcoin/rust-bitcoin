@@ -16,7 +16,8 @@ use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
-use crate::{FeeRate, MathOp, NumOpError as E, NumOpResult, Weight};
+use crate::result::{MathOp, NumOpError as E, NumOpResult};
+use crate::{FeeRate, Weight};
 
 mod encapsulate {
     use super::OutOfRangeError;
