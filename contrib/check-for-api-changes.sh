@@ -9,7 +9,7 @@ set -euo pipefail
 REPO_DIR=$(git rev-parse --show-toplevel)
 API_DIR="$REPO_DIR/api"
 
-NIGHTLY=$(cat nightly-version)
+NIGHTLY=$(cat "$REPO_DIR/nightly-version")
 # Our docs have broken intra doc links if all features are not enabled.
 RUSTDOCFLAGS="-A rustdoc::broken_intra_doc_links"
 
@@ -24,9 +24,7 @@ main() {
     need_nightly
     need_cargo_public_api
 
-    generate_api_files "hashes"
-    generate_api_files "io"
-    generate_api_files "primitives"
+    # Just check crates that are stabilising.
     generate_api_files "units"
 
     check_for_changes
