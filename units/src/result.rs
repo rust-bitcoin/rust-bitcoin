@@ -350,7 +350,7 @@ impl<'a> Arbitrary<'a> for MathOp {
 
 #[cfg(test)]
 mod tests {
-    use crate::MathOp;
+    use crate::result::MathOp;
 
     #[test]
     fn mathop_predicates() {
