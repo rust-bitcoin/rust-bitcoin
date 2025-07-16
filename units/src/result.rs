@@ -325,10 +325,9 @@ impl fmt::Display for MathOp {
 #[cfg(feature = "arbitrary")]
 impl<'a, T: Arbitrary<'a>> Arbitrary<'a> for NumOpResult<T> {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=1)?;
-        match choice {
-            0 => Ok(NumOpResult::Valid(T::arbitrary(u)?)),
-            _ => Ok(NumOpResult::Error(NumOpError(MathOp::arbitrary(u)?))),
+        match bool::arbitrary(u)? {
+            true => Ok(NumOpResult::Valid(T::arbitrary(u)?)),
+            false => Ok(NumOpResult::Error(NumOpError(MathOp::arbitrary(u)?))),
         }
     }
 }
