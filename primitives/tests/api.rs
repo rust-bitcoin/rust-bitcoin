@@ -63,7 +63,7 @@ static SCRIPT: ScriptBuf = ScriptBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
 /// Public structs that derive common traits.
-// C-COMMON-TRAITS excluding `Debug`, `Default`, `Display`, `Ord`, `PartialOrd, `Hash`.
+// C-COMMON-TRAITS excluding `Debug`, `Default`, `Display`, `Ord`, `PartialOrd`, `Hash`.
 #[derive(Clone, PartialEq, Eq)]
 struct CommonTraits {
     a: block::Block<Checked>,
