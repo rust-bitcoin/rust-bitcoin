@@ -206,7 +206,7 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
     pub fn add_output_scripts(&mut self) {
         for transaction in self.block.transactions() {
             for output in &transaction.output {
-                if !output.script_pubkey.is_op_return() {
+                if !output.script_pubkey.as_context_unknown().is_op_return() {
                     self.add_element(output.script_pubkey.as_bytes());
                 }
             }

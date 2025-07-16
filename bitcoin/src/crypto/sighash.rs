@@ -1538,12 +1538,12 @@ mod tests {
     use super::*;
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
-    use crate::script::{ScriptBuf, ScriptBufExt as _};
+    use crate::script::{ScriptBuf, ScriptBufExt as _, ScriptPubkeyBuf};
     use crate::TxIn;
 
     extern crate serde_json;
 
-    const DUMMY_TXOUT: TxOut = TxOut { value: Amount::MIN, script_pubkey: ScriptBuf::new() };
+    const DUMMY_TXOUT: TxOut = TxOut { value: Amount::MIN, script_pubkey: ScriptPubkeyBuf::new() };
 
     #[test]
     fn sighash_single_bug() {
@@ -1976,7 +1976,10 @@ mod tests {
             .given
             .utxos_spent
             .into_iter()
-            .map(|txo| TxOut { value: txo.value, script_pubkey: txo.script_pubkey })
+            .map(|txo| TxOut {
+                value: txo.value,
+                script_pubkey: txo.script_pubkey.into_script_pubkey(),
+            })
             .collect::<Vec<_>>();
 
         // Test intermediary

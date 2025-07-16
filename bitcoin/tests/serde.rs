@@ -37,7 +37,7 @@ use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder}
 use bitcoin::witness::Witness;
 use bitcoin::{
     ecdsa, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ScriptBuf, ScriptSigBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
@@ -111,7 +111,10 @@ fn serde_regression_txin() {
 
 #[test]
 fn serde_regression_txout() {
-    let txout = TxOut { value: Amount::MAX, script_pubkey: ScriptBuf::from(vec![0u8, 1u8, 2u8]) };
+    let txout = TxOut {
+        value: Amount::MAX,
+        script_pubkey: ScriptBuf::from(vec![0u8, 1u8, 2u8]).into_script_pubkey(),
+    };
 
     let got = serialize(&txout).unwrap();
     let want = include_bytes!("data/serde/txout_bincode") as &[_];
@@ -238,7 +241,8 @@ fn serde_regression_psbt() {
             script_sig: ScriptBuf::from_hex_no_length_prefix(
                 "160014be18d152a9b012039daf3da7de4f53349eecb985",
             )
-            .unwrap(),
+            .unwrap()
+            .into_script_sig(),
             sequence: Sequence::from_consensus(4294967295),
             witness: Witness::from_slice(&[Vec::from_hex(
                 "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105",
@@ -250,7 +254,8 @@ fn serde_regression_psbt() {
             script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                 "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
             )
-            .unwrap(),
+            .unwrap()
+            .into_script_pubkey(),
         }],
     };
     let unknown: BTreeMap<raw::Key, Vec<u8>> =
@@ -286,7 +291,7 @@ fn serde_regression_psbt() {
         unsigned_tx: {
             let mut unsigned = tx.clone();
             unsigned.input[0].previous_output.txid = tx.compute_txid();
-            unsigned.input[0].script_sig = ScriptBuf::new();
+            unsigned.input[0].script_sig = ScriptSigBuf::new();
             unsigned.input[0].witness = Witness::default();
             unsigned
         },
@@ -297,7 +302,7 @@ fn serde_regression_psbt() {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {
                 value: Amount::from_sat(190_303_501_938).unwrap(),
-                script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap().into_script_pubkey(),
             }),
             sighash_type: Some(PsbtSighashType::from("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap())),
             redeem_script: Some(vec![0x51].into()),

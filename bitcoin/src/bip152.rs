@@ -412,10 +412,11 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::locktime::absolute;
     use crate::merkle_tree::TxMerkleNode;
+    use crate::script::{ScriptPubkeyBuf, ScriptSigBuf};
     use crate::transaction::OutPointExt;
     use crate::{
-        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptBuf, Sequence,
-        TxIn, TxOut, Txid, Witness,
+        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, Sequence, TxIn,
+        TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -425,11 +426,11 @@ mod test {
             lock_time: absolute::LockTime::from_consensus(2),
             input: vec![TxIn {
                 previous_output: OutPoint::new(dummy_txid, 0),
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptPubkeyBuf::new() }],
         }
     }
 

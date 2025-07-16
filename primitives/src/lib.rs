@@ -64,11 +64,16 @@ pub type BlockInterval = BlockHeightInterval;
 
 #[doc(inline)]
 #[cfg(feature = "alloc")]
+#[rustfmt::skip]                // To control the format of script re-exports.
 pub use self::{
     block::{
         Block, Checked as BlockChecked, Unchecked as BlockUnchecked, Validation as BlockValidation,
     },
-    script::{Script, ScriptBuf},
+    script::{
+        Context as ScriptContext, // We do not re-export the context tags.
+        Script, ScriptSig, ScriptPubkey, RedeemScript, WitnessScript, TapScript,
+        ScriptBuf, ScriptSigBuf, ScriptPubkeyBuf, RedeemScriptBuf, WitnessScriptBuf, TapScriptBuf,
+    },
     transaction::{Transaction, TxIn, TxOut},
     witness::Witness,
 };

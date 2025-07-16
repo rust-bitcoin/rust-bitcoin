@@ -329,6 +329,7 @@ impl BlockCheckedExt for Block<Checked> {
         let input = cb.first_input();
         let push = input
             .script_sig
+            .as_context_unknown()
             .instructions_minimal()
             .next()
             .ok_or(Bip34Error::NotPresent)?

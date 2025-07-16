@@ -39,7 +39,12 @@
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::incompatible_msrv)] // Has FPs and we're testing it which is more reliable anyway.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
+#![allow(clippy::uninlined_format_args)]
+// Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
+
+// Attributes are not handled correctly in `define_extension_trait` so we cannot allow
+// the lint warning for `as_context_unknown`.
+#![allow(deprecated_in_future)] // TODO: REMOVE THIS BEFORE RELEASE.
 
 // We only support machines with index size of 4 bytes or more.
 //
@@ -93,6 +98,33 @@ extern crate serde;
 
 mod internal_macros;
 
+pub mod ext {
+    //! Re-export all the extension traits so downstream can use wildcard imports.
+    //!
+    //! As part of stabilizing `primitives` and `units` we created a bunch of extension traits in
+    //! `rust-bitcoin` to hold all then API that we are not yet ready to stabilize. This module
+    //! re-exports all of them to improve ergonomics for users comfortable with wildcard imports.
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! // Wildcard import all of the extension crates.
+    //! use bitcoin::ext::*;
+    //!
+    //! // If, for some reason, you want the name to be in scope access it via the module. E.g.
+    //! use bitcoin::script::ScriptExt;
+    //! ```
+    #[rustfmt::skip] // Use terse custom grouping.
+    pub use crate::{
+        block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
+        pow::CompactTargetExt as _,
+        script::{ScriptExt as _, ScriptBufExt as _},
+        transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
+        witness::WitnessExt as _,
+    };
+    #[cfg(feature = "bitcoinconsensus")]
+    pub use crate::consensus_validation::{ScriptExt as _, TransactionExt as _};
+}
 #[macro_use]
 pub mod address;
 pub mod bip152;
@@ -116,6 +148,7 @@ pub mod taproot;
 // Re-export the type from where it is defined but the module from the highest place up the stack
 // that it is available in the event that we add some functionality there.
 #[doc(inline)]
+#[rustfmt::skip]                // To control the format of script re-exports.
 pub use primitives::{
     block::{
         Block, BlockHash, Checked as BlockChecked, Header as BlockHeader,
@@ -124,7 +157,11 @@ pub use primitives::{
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget, // No `pow` module outside of `primitives`.
-    script::{Script, ScriptBuf},
+    script::{
+        Context as ScriptContext,
+        Script, ScriptSig, ScriptPubkey, RedeemScript, WitnessScript, TapScript,
+        ScriptBuf, ScriptSigBuf, ScriptPubkeyBuf, RedeemScriptBuf, WitnessScriptBuf, TapScriptBuf,
+    },
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,

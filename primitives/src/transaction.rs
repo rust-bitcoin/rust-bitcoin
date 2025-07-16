@@ -34,7 +34,7 @@ use crate::locktime::absolute;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
-use crate::script::ScriptBuf;
+use crate::script::{ScriptPubkeyBuf, ScriptSigBuf};
 #[cfg(feature = "alloc")]
 use crate::sequence::Sequence;
 #[cfg(feature = "alloc")]
@@ -149,7 +149,7 @@ impl Transaction {
                 .input
                 .iter()
                 .map(|txin| TxIn {
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     witness: Witness::default(),
                     ..*txin
                 })
@@ -321,7 +321,7 @@ pub struct TxIn {
     pub previous_output: OutPoint,
     /// The script which pushes values on the stack which will cause
     /// the referenced output's script to be accepted.
-    pub script_sig: ScriptBuf,
+    pub script_sig: ScriptSigBuf,
     /// The sequence number, which suggests to miners which of two
     /// conflicting transactions should be preferred, or 0xFFFFFFFF
     /// to ignore this feature. This is generally never used since
@@ -340,7 +340,7 @@ impl TxIn {
     /// An empty transaction input with the previous output as for a coinbase transaction.
     pub const EMPTY_COINBASE: TxIn = TxIn {
         previous_output: OutPoint::COINBASE_PREVOUT,
-        script_sig: ScriptBuf::new(),
+        script_sig: ScriptSigBuf::new(),
         sequence: Sequence::MAX,
         witness: Witness::new(),
     };
@@ -365,7 +365,7 @@ pub struct TxOut {
     #[cfg_attr(feature = "serde", serde(with = "crate::amount::serde::as_sat"))]
     pub value: Amount,
     /// The script which must be satisfied for the output to be spent.
-    pub script_pubkey: ScriptBuf,
+    pub script_pubkey: ScriptPubkeyBuf,
 }
 
 /// A reference to a transaction output.
@@ -607,7 +607,7 @@ impl<'a> Arbitrary<'a> for TxIn {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(TxIn {
             previous_output: OutPoint::arbitrary(u)?,
-            script_sig: ScriptBuf::arbitrary(u)?,
+            script_sig: ScriptSigBuf::arbitrary(u)?,
             sequence: Sequence::arbitrary(u)?,
             witness: Witness::arbitrary(u)?,
         })
@@ -618,7 +618,7 @@ impl<'a> Arbitrary<'a> for TxIn {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
+        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptPubkeyBuf::arbitrary(u)? })
     }
 }
 
@@ -676,14 +676,14 @@ mod tests {
                 txid: Txid::from_byte_array([0xAA; 32]), // Arbitrary invalid dummy value.
                 vout: 0,
             },
-            script_sig: ScriptBuf::new(),
+            script_sig: ScriptSigBuf::new(),
             sequence: Sequence::MAX,
             witness: Witness::new(),
         };
 
         let txout = TxOut {
             value: Amount::from_sat(123_456_789).unwrap(),
-            script_pubkey: ScriptBuf::new(),
+            script_pubkey: ScriptPubkeyBuf::new(),
         };
 
         let tx_orig = Transaction {
