@@ -1154,6 +1154,65 @@ impl InputWeightPrediction {
     }
 }
 
+internals::transparent_newtype! {
+    /// A wrapper type for the coinbase transaction of a block.
+    ///
+    /// This type exists to distinguish coinbase transactions from regular ones at the type level.
+    #[derive(Clone, PartialEq, Eq, Debug, Hash)]
+    pub struct Coinbase(Transaction);
+
+    impl Coinbase {
+        /// Creates a reference to `Coinbase` from a reference to the inner `Transaction`.
+        ///
+        /// This method does not validate that the transaction is actually a coinbase transaction.
+        /// The caller must ensure that the transaction is indeed a valid coinbase transaction
+        pub fn assume_coinbase_ref(inner: &_) -> &Self;
+    }
+}
+
+impl Coinbase {
+    /// Creates a `Coinbase` wrapper assuming this transaction is a coinbase transaction.
+    ///
+    /// This method does not validate that the transaction is actually a coinbase transaction.
+    /// The caller must ensure that this transaction is indeed a valid coinbase transaction.
+    pub fn assume_coinbase(tx: Transaction) -> Self {
+        Self(tx)
+    }
+
+    /// Returns the first input of this coinbase transaction.
+    ///
+    /// This method is infallible because a valid coinbase transaction is guaranteed
+    /// to have exactly one input.
+    pub fn first_input(&self) -> &TxIn {
+        &self.0.input[0]
+    }
+
+    /// Returns a reference to the underlying transaction.
+    ///
+    /// Warning: The coinbase input contains dummy prevouts that should not be treated as real prevouts.
+    #[doc(alias = "as_inner")]
+    pub fn as_transaction(&self) -> &Transaction { &self.0 }
+
+    /// Returns the underlying transaction.
+    ///
+    /// Warning: The coinbase input contains dummy prevouts that should not be treated as real prevouts.
+    #[doc(alias = "into_inner")]
+    pub fn into_transaction(self) -> Transaction { self.0 }
+
+    /// Computes the [`Txid`] of this coinbase transaction.
+    pub fn compute_txid(&self) -> Txid {
+        self.0.compute_txid()
+    }
+
+    /// Returns the wtxid of this coinbase transaction.
+    ///
+    /// For coinbase transactions, this is always `Wtxid::COINBASE`.
+    #[doc(alias = "compute_wtxid")]
+    pub const fn wtxid(&self) -> Wtxid {
+        Wtxid::COINBASE
+    }
+}
+
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::Transaction {}
@@ -2067,6 +2126,25 @@ mod tests {
 
         let pretty_txid = "0x0000000000000000000000000000000000000000000000000000000000000000";
         assert_eq!(pretty_txid, format!("{:#}", &outpoint.txid));
+    }
+
+    #[test]
+    fn coinbase_assume_methods() {
+        use crate::constants;
+        use crate::network::Network;
+
+        let genesis = constants::genesis_block(Network::Bitcoin);
+        let coinbase_tx = &genesis.transactions()[0];
+
+        // Test that we can create a Coinbase reference using assume_coinbase_ref
+        let coinbase_ref = Coinbase::assume_coinbase_ref(coinbase_tx);
+        assert_eq!(coinbase_ref.compute_txid(), coinbase_tx.compute_txid());
+        assert_eq!(coinbase_ref.wtxid(), Wtxid::COINBASE);
+
+        // Test that we can create a Coinbase using assume_coinbase
+        let coinbase_owned = Coinbase::assume_coinbase(coinbase_tx.clone());
+        assert_eq!(coinbase_owned.compute_txid(), coinbase_tx.compute_txid());
+        assert_eq!(coinbase_owned.wtxid(), Wtxid::COINBASE);
     }
 }
 

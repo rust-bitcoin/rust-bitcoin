@@ -15,6 +15,7 @@ use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
 use units::BlockTime;
 
+use super::transaction::Coinbase;
 use super::Weight;
 use crate::consensus::encode::WriteExt as _;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -116,6 +117,14 @@ pub trait BlockUncheckedExt: sealed::Sealed {
 impl BlockUncheckedExt for Block<Unchecked> {
     fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
         let (header, transactions) = self.into_parts();
+
+        if transactions.is_empty() {
+            return Err(InvalidBlockError::NoTransactions);
+        }
+
+        if !transactions[0].is_coinbase() {
+            return Err(InvalidBlockError::InvalidCoinbase);
+        }
 
         if !check_merkle_root(&header, &transactions) {
             return Err(InvalidBlockError::InvalidMerkleRoot);
@@ -258,8 +267,11 @@ pub trait BlockCheckedExt: sealed::Sealed {
     /// > including base data and witness data.
     fn total_size(&self) -> usize;
 
-    /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction>;
+    /// Returns the coinbase transaction.
+    ///
+    /// This method is infallible for checked blocks because validation ensures
+    /// that a valid coinbase transaction is always present.
+    fn coinbase(&self) -> &Coinbase;
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error>;
@@ -293,8 +305,10 @@ impl BlockCheckedExt for Block<Checked> {
         size
     }
 
-    /// Returns the coinbase transaction, if one is present.
-    fn coinbase(&self) -> Option<&Transaction> { self.transactions().first() }
+    fn coinbase(&self) -> &Coinbase {
+        let first_tx = &self.transactions()[0];
+        Coinbase::assume_coinbase_ref(first_tx)
+    }
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
@@ -311,8 +325,8 @@ impl BlockCheckedExt for Block<Checked> {
             return Err(Bip34Error::Unsupported);
         }
 
-        let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
-        let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
+        let cb = self.coinbase();
+        let input = cb.first_input();
         let push = input
             .script_sig
             .instructions_minimal()
@@ -399,6 +413,10 @@ pub enum InvalidBlockError {
     InvalidMerkleRoot,
     /// The witness commitment in coinbase transaction does not match the calculated witness_root.
     InvalidWitnessCommitment,
+    /// Block has no transactions (missing coinbase).
+    NoTransactions,
+    /// The first transaction is not a valid coinbase transaction.
+    InvalidCoinbase,
 }
 
 impl From<Infallible> for InvalidBlockError {
@@ -412,6 +430,8 @@ impl fmt::Display for InvalidBlockError {
         match *self {
             InvalidMerkleRoot => write!(f, "header Merkle root does not match the calculated Merkle root"),
             InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
+            NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
+            InvalidCoinbase => write!(f, "the first transaction is not a valid coinbase transaction"),
         }
     }
 }
@@ -513,7 +533,10 @@ mod tests {
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
+    use crate::script::ScriptBuf;
+    use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
     use crate::{block, CompactTarget, Network, TestnetVersion};
+    use crate::{Amount, Sequence, Witness};
 
     #[test]
     fn static_vector() {
@@ -539,7 +562,7 @@ mod tests {
         let block = block.assume_checked(None);
 
         let cb_txid = "d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38";
-        assert_eq!(block.coinbase().unwrap().compute_txid().to_string(), cb_txid);
+        assert_eq!(block.coinbase().compute_txid().to_string(), cb_txid);
 
         assert_eq!(block.bip34_block_height(), Ok(100_000));
 
@@ -760,6 +783,140 @@ mod tests {
         assert!(!segwit_signal.is_signalling_soft_fork(0));
         assert!(segwit_signal.is_signalling_soft_fork(1));
         assert!(!segwit_signal.is_signalling_soft_fork(2));
+    }
+
+    #[test]
+    fn block_validation_no_transactions() {
+        let header = header();
+        let transactions = Vec::new(); // Empty transactions
+
+        let block = Block::new_unchecked(header, transactions);
+        match block.validate() {
+            Err(InvalidBlockError::NoTransactions) => (),
+            other => panic!("Expected NoTransactions error, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn block_validation_invalid_coinbase() {
+        let header = header();
+
+        // Create a non-coinbase transaction (has a real previous output, not all zeros)
+        let non_coinbase_tx = Transaction {
+            version: primitives::transaction::Version::TWO,
+            lock_time: crate::absolute::LockTime::ZERO,
+            input: vec![TxIn {
+                previous_output: OutPoint {
+                    txid: Txid::from_byte_array([1; 32]), // Not all zeros
+                    vout: 0,
+                },
+                script_sig: ScriptBuf::new(),
+                sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
+                witness: Witness::new(),
+            }],
+            output: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+        };
+
+        let transactions = vec![non_coinbase_tx];
+        let block = Block::new_unchecked(header, transactions);
+
+        match block.validate() {
+            Err(InvalidBlockError::InvalidCoinbase) => (),
+            other => panic!("Expected InvalidCoinbase error, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn block_validation_success_with_coinbase() {
+        use crate::constants;
+
+        // Use the genesis block which has a valid coinbase
+        let genesis = constants::genesis_block(Network::Bitcoin);
+
+        let header = *genesis.header();
+        let transactions = genesis.transactions().to_vec();
+
+        let unchecked_block = Block::new_unchecked(header, transactions);
+        let validated_block = unchecked_block.validate();
+
+        assert!(validated_block.is_ok(), "Genesis block should validate successfully");
+    }
+
+    #[test]
+    fn checked_block_coinbase_method() {
+        use crate::constants;
+
+        let genesis = constants::genesis_block(Network::Bitcoin);
+        let coinbase = genesis.coinbase();
+
+        // Test that coinbase method returns the expected transaction
+        let expected_txid = genesis.transactions()[0].compute_txid();
+        assert_eq!(coinbase.compute_txid(), expected_txid);
+        assert_eq!(coinbase.wtxid(), Wtxid::COINBASE);
+
+        // Test that as_inner() returns the correct transaction
+        assert_eq!(coinbase.as_transaction(), &genesis.transactions()[0]);
+    }
+
+    #[test]
+    fn block_new_checked_validation() {
+        use crate::constants;
+
+        // Test successful validation with genesis block
+        let genesis = constants::genesis_block(Network::Bitcoin);
+        let header = *genesis.header();
+        let transactions = genesis.transactions().to_vec();
+
+        let checked_block = Block::new_checked(header, transactions.clone());
+        assert!(checked_block.is_ok(), "Genesis block should validate via new_checked");
+
+        // Test validation failure with empty transactions
+        let empty_result = Block::new_checked(header, Vec::new());
+        match empty_result {
+            Err(InvalidBlockError::NoTransactions) => (),
+            other => panic!("Expected NoTransactions error, got: {:?}", other),
+        }
+
+        // Test validation failure with invalid coinbase
+        let non_coinbase_tx = Transaction {
+            version: primitives::transaction::Version::TWO,
+            lock_time: crate::absolute::LockTime::ZERO,
+            input: vec![TxIn {
+                previous_output: OutPoint {
+                    txid: Txid::from_byte_array([1; 32]), // Not all zeros
+                    vout: 0,
+                },
+                script_sig: ScriptBuf::new(),
+                sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
+                witness: Witness::new(),
+            }],
+            output: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+        };
+
+        let invalid_coinbase_result = Block::new_checked(header, vec![non_coinbase_tx]);
+        match invalid_coinbase_result {
+            Err(InvalidBlockError::InvalidCoinbase) => (),
+            other => panic!("Expected InvalidCoinbase error, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn coinbase_bip34_height_with_coinbase_type() {
+        // testnet block 100,000
+        const BLOCK_HEX: &str = "0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703a08601000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000";
+        let block: Block = deserialize(&hex!(BLOCK_HEX)).unwrap();
+        let block = block.assume_checked(None);
+
+        // Test that BIP34 height extraction works with the Coinbase type
+        assert_eq!(block.bip34_block_height(), Ok(100_000));
+
+        // Test that coinbase method returns a Coinbase type
+        let coinbase = block.coinbase();
+        assert!(coinbase.as_transaction().is_coinbase());
+
+        // Test that the coinbase transaction ID matches expected
+        let cb_txid = "d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38";
+        assert_eq!(coinbase.compute_txid().to_string(), cb_txid);
     }
 }
 
