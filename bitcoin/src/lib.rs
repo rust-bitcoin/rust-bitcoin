@@ -132,7 +132,7 @@ pub use primitives::{
 #[doc(inline)]
 pub use units::{
     amount::{Amount, SignedAmount},
-    block::{BlockHeight, BlockHeightInterval, BlockMtp},
+    block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     time::{self, BlockTime},
     weight::Weight,
@@ -206,12 +206,11 @@ pub mod amount {
     pub use units::CheckedSum;
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
-    pub use units::amount::{
-        Amount, Denomination, Display, InvalidCharacterError, MissingDenominationError,
-        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, SignedAmount, TooPreciseError,
-        UnknownDenominationError,
-    };
+    #[doc(inline)]
+    pub use units::amount::{Amount, Denomination, Display, SignedAmount};
+    #[rustfmt::skip]  // Keep error re-exports below `amount` re-exports.
+    #[doc(no_inline)] // So as not to clutter the HTML docs.
+    pub use units::amount::error::{self, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
 
     impl Decodable for Amount {
         #[inline]

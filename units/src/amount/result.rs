@@ -9,7 +9,7 @@ use NumOpResult as R;
 
 use super::{Amount, SignedAmount};
 use crate::internal_macros::{impl_div_assign, impl_mul_assign};
-use crate::{MathOp, NumOpError, NumOpResult, OptionExt};
+use crate::result::{MathOp, NumOpError, NumOpResult, OptionExt};
 
 impl From<Amount> for NumOpResult<Amount> {
     fn from(a: Amount) -> Self { Self::Valid(a) }
