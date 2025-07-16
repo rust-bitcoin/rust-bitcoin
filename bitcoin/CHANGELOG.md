@@ -1,3 +1,8 @@
+# 0.32.7 - 2025-07-08
+
+- Backport - Remove `non_exhaustive` from `Network` [#4658](https://github.com/rust-bitcoin/rust-bitcoin/pull/4658)
+- Backport: Add support for pay to anchor outputs [#4691](https://github.com/rust-bitcoin/rust-bitcoin/pull/4691)
+
 # 0.32.6 - 2025-05-06
 
 - Backport - Fix `is_invalid_use_of_sighash_single()` incompatibility with Bitcoin Core [#4122](https://github.com/rust-bitcoin/rust-bitcoin/pull/4122)
