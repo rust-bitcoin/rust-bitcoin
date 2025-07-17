@@ -111,7 +111,7 @@ fn serde_as_sat() {
         &[
             serde_test::Token::Struct { name: "T", len: 2 },
             serde_test::Token::Str("amt"),
-            serde_test::Token::U64(123_456_789),
+            serde_test::Token::I64(123_456_789),
             serde_test::Token::Str("samt"),
             serde_test::Token::I64(-123_456_789),
             serde_test::Token::StructEnd,
