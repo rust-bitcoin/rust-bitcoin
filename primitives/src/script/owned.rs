@@ -111,6 +111,18 @@ impl ScriptBuf {
     /// It is guaranteed that `script.capacity() >= script.len()` always holds.
     #[inline]
     pub fn capacity(&self) -> usize { self.0.capacity() }
+
+    /// Gets the hex representation of this script.
+    ///
+    /// # Returns
+    ///
+    /// Just the script bytes in hexadecimal **not** consensus encoding of the script i.e., the
+    /// string will not include a length prefix.
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
 impl Deref for ScriptBuf {
