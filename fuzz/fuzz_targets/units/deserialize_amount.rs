@@ -1,21 +1,22 @@
+use arbitrary::{Arbitrary, Unstructured};
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let data_str = String::from_utf8_lossy(data);
+    let mut u = Unstructured::new(data);
 
     // signed
-    let samt = match data_str.parse::<bitcoin::amount::SignedAmount>() {
+    let samt = match bitcoin::SignedAmount::arbitrary(&mut u) {
         Ok(amt) => amt,
         Err(_) => return,
     };
-    let samt_roundtrip = match samt.to_string().parse::<bitcoin::amount::SignedAmount>() {
+    let samt_roundtrip = match samt.to_string().parse::<bitcoin::SignedAmount>() {
         Ok(amt) => amt,
         Err(_) => return,
     };
     assert_eq!(samt, samt_roundtrip);
 
     // unsigned
-    let amt = match data_str.parse::<bitcoin::amount::Amount>() {
+    let amt = match bitcoin::Amount::arbitrary(&mut u) {
         Ok(amt) => amt,
         Err(_) => return,
     };
