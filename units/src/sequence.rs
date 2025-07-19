@@ -3,7 +3,7 @@
 //! Bitcoin transaction input sequence number.
 //!
 //! The sequence field is used for:
-//! - Indicating whether absolute lock-time (specified in `lock_time` field of [`Transaction`]) is enabled.
+//! - Indicating whether absolute lock-time (specified in `lock_time` field of `Transaction`) is enabled.
 //! - Indicating and encoding [BIP-68] relative lock-times.
 //! - Indicating whether a transaction opts-in to [BIP-125] replace-by-fee.
 //!
@@ -20,12 +20,10 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use units::locktime::relative::{NumberOf512Seconds, TimeOverflowError};
-use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
-use crate::locktime::relative;
-#[cfg(all(doc, feature = "alloc"))]
-use crate::Transaction;
+use crate::locktime::relative::error::TimeOverflowError;
+use crate::locktime::relative::{self, NumberOf512Seconds};
+use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -72,7 +70,7 @@ impl Sequence {
     /// BIP-68 relative lock time type flag mask.
     pub(super) const LOCK_TYPE_MASK: u32 = 0x0040_0000;
 
-    /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
+    /// Returns `true` if the sequence number enables absolute lock-time (`Transaction::lock_time`).
     #[inline]
     pub fn enables_absolute_lock_time(self) -> bool { self != Sequence::MAX }
 
@@ -124,6 +122,11 @@ impl Sequence {
     }
 
     /// Constructs a new `Sequence` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a locktime or it does not include
+    /// the `0x` prefix.
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
@@ -131,6 +134,11 @@ impl Sequence {
     }
 
     /// Constructs a new `Sequence` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a locktime or if it includes the
+    /// `0x` prefix.
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
@@ -154,6 +162,11 @@ impl Sequence {
     /// interval with floor division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if `seconds` cannot be encoded in 16 bits. See
+    /// [`NumberOf512Seconds::from_seconds_floor`].
     #[inline]
     pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
         let intervals = NumberOf512Seconds::from_seconds_floor(seconds)?;
@@ -164,6 +177,11 @@ impl Sequence {
     /// interval with ceiling division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if `seconds` cannot be encoded in 16 bits. See
+    /// [`NumberOf512Seconds::from_seconds_ceil`].
     #[inline]
     pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
         let intervals = NumberOf512Seconds::from_seconds_ceil(seconds)?;
@@ -177,12 +195,6 @@ impl Sequence {
     /// Returns the inner 32bit integer value of Sequence.
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
-
-    /// Gets the hex representation of this [`Sequence`].
-    #[cfg(feature = "alloc")]
-    #[inline]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
@@ -229,6 +241,10 @@ impl fmt::LowerHex for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
+    8 - sequence.0.leading_zeros() as usize / 4
+});
 
 impl fmt::UpperHex for Sequence {
     #[inline]
@@ -244,7 +260,7 @@ impl fmt::Debug for Sequence {
 }
 
 #[cfg(feature = "alloc")]
-units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+crate::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
@@ -291,6 +307,8 @@ impl<'a> Arbitrary<'a> for Sequence {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
+    use alloc::format;
+
     use super::*;
 
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
@@ -347,6 +365,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn sequence_formatting() {
         let sequence = Sequence(0x7FFF_FFFF);
         assert_eq!(format!("{:x}", sequence), "7fffffff");
@@ -358,7 +377,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn sequence_display() {
+        use alloc::string::ToString;
+
         let sequence = Sequence(0x7FFF_FFFF);
         let want: u32 = 0x7FFF_FFFF;
         assert_eq!(format!("{}", sequence), want.to_string());
