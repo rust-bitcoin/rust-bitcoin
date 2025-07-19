@@ -23,7 +23,9 @@ cargo-fuzz = true
 
 [dependencies]
 honggfuzz = { version = "0.5.55", default-features = false }
-bitcoin = { path = "../bitcoin", features = [ "serde" ] }
+bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
+p2p = { path = "../p2p", package = "bitcoin-p2p-messages" }
+arbitrary = { version = "1.4" }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
 serde_json = "1.0"
