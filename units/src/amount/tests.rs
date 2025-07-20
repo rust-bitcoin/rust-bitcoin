@@ -847,19 +847,11 @@ fn sum_amounts() {
     assert_eq!(empty.into_iter().sum::<NumOpResult<_>>(), NumOpResult::Valid(SignedAmount::ZERO));
 
     let amounts = [sat(42), sat(1337), sat(21)];
-    let sum = amounts
-        .into_iter()
-        .map(NumOpResult::from)
-        .sum::<NumOpResult<Amount>>()
-        .unwrap();
+    let sum = amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<Amount>>().unwrap();
     assert_eq!(sum, sat(1400));
 
     let amounts = [Amount::MAX_MONEY, sat(1337), sat(21)];
-    assert!(amounts
-        .into_iter()
-        .map(NumOpResult::from)
-        .sum::<NumOpResult<Amount>>()
-        .is_error());
+    assert!(amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<Amount>>().is_error());
 
     let amounts = [SignedAmount::MIN, ssat(-1), ssat(21)];
     assert!(amounts
@@ -876,11 +868,8 @@ fn sum_amounts() {
         .is_error());
 
     let amounts = [ssat(42), ssat(3301), ssat(21)];
-    let sum = amounts
-        .into_iter()
-        .map(NumOpResult::from)
-        .sum::<NumOpResult<SignedAmount>>()
-        .unwrap();
+    let sum =
+        amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<SignedAmount>>().unwrap();
     assert_eq!(sum, ssat(3364));
 }
 

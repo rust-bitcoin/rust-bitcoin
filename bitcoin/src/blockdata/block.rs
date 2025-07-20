@@ -535,8 +535,7 @@ mod tests {
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
     use crate::script::ScriptBuf;
     use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
-    use crate::{block, CompactTarget, Network, TestnetVersion};
-    use crate::{Amount, Sequence, Witness};
+    use crate::{block, Amount, CompactTarget, Network, Sequence, TestnetVersion, Witness};
 
     #[test]
     fn static_vector() {
