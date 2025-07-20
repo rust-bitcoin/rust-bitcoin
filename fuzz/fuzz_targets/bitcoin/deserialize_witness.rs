@@ -1,12 +1,18 @@
 use bitcoin::consensus::{deserialize, serialize};
 use bitcoin::witness::Witness;
 use honggfuzz::fuzz;
+use arbitrary::{Arbitrary, Unstructured};
 
 fn do_test(data: &[u8]) {
-    let w: Result<Witness, _> = deserialize(data);
+    let mut u = Unstructured::new(data);
+
+    let w = Witness::arbitrary(&mut u);
     if let Ok(witness) = w {
         let serialized = serialize(&witness);
-        assert_eq!(data, &serialized[..]);
+        let deserialized: Result<Witness, _> = deserialize(serialized.as_slice());
+
+        assert!(deserialized.is_ok());
+        assert_eq!(deserialized.unwrap(), witness);
     }
 }
 
