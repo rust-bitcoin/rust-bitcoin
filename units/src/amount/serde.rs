@@ -74,11 +74,11 @@ pub mod as_sat {
 
     pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<A, D::Error>
     where
-        A: TryFrom<SignedAmount>, <A as TryFrom<SignedAmount>>::Error: core::fmt::Display
+        A: TryFrom<SignedAmount>,
+        <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
     {
         let sat = i64::deserialize(d)?;
-        let amount = SignedAmount::from_sat(sat)
-            .map_err(serde::de::Error::custom)?;
+        let amount = SignedAmount::from_sat(sat).map_err(serde::de::Error::custom)?;
 
         A::try_from(amount).map_err(serde::de::Error::custom)
     }
@@ -112,13 +112,15 @@ pub mod as_sat {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>, <A as TryFrom<SignedAmount>>::Error: core::fmt::Display
+            A: TryFrom<SignedAmount>,
+            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
         {
             struct VisitOptAmt<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitOptAmt<X>
             where
-                X: TryFrom<SignedAmount>, <X as TryFrom<SignedAmount>>::Error: core::fmt::Display
+                X: TryFrom<SignedAmount>,
+                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
             {
                 type Value = Option<X>;
 
@@ -169,7 +171,8 @@ pub mod as_btc {
 
     pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<A, D::Error>
     where
-        A: TryFrom<SignedAmount>, <A as TryFrom<SignedAmount>>::Error: core::fmt::Display
+        A: TryFrom<SignedAmount>,
+        <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
     {
         let btc = f64::deserialize(d)?;
         let amount = SignedAmount::from_btc(btc)
@@ -208,13 +211,15 @@ pub mod as_btc {
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>, <A as TryFrom<SignedAmount>>::Error: core::fmt::Display
+            A: TryFrom<SignedAmount>,
+            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
         {
             struct VisitOptAmt<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitOptAmt<X>
             where
-                X: TryFrom<SignedAmount>, <X as TryFrom<SignedAmount>>::Error: core::fmt::Display
+                X: TryFrom<SignedAmount>,
+                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
             {
                 type Value = Option<X>;
 
@@ -251,6 +256,7 @@ pub mod as_str {
     //! [`SignedAmount`]: crate::SignedAmount
 
     use alloc::string::String;
+
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     use super::DisplayFullError;
@@ -266,7 +272,8 @@ pub mod as_str {
 
     pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<A, D::Error>
     where
-        A: TryFrom<SignedAmount>, <A as TryFrom<SignedAmount>>::Error: core::fmt::Display
+        A: TryFrom<SignedAmount>,
+        <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
     {
         let btc = String::deserialize(d)?;
         let amount = SignedAmount::from_str_in(&btc, Denomination::Bitcoin)
@@ -290,10 +297,7 @@ pub mod as_str {
         use crate::amount::{Denomination, SignedAmount};
 
         #[allow(clippy::ref_option)] // API forced by serde.
-        pub fn serialize<A, S: Serializer>(
-            a: &Option<A>,
-            s: S,
-        ) -> Result<S::Ok, S::Error>
+        pub fn serialize<A, S: Serializer>(a: &Option<A>, s: S) -> Result<S::Ok, S::Error>
         where
             A: Into<SignedAmount> + Copy,
         {
@@ -306,17 +310,17 @@ pub mod as_str {
             }
         }
 
-        pub fn deserialize<'d, A, D: Deserializer<'d>>(
-            d: D,
-        ) -> Result<Option<A>, D::Error>
+        pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Option<A>, D::Error>
         where
-            A: TryFrom<SignedAmount>, <A as TryFrom<SignedAmount>>::Error: core::fmt::Display
+            A: TryFrom<SignedAmount>,
+            <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
         {
             struct VisitOptAmt<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitOptAmt<X>
             where
-                X: TryFrom<SignedAmount>, <X as TryFrom<SignedAmount>>::Error: core::fmt::Display
+                X: TryFrom<SignedAmount>,
+                <X as TryFrom<SignedAmount>>::Error: core::fmt::Display,
             {
                 type Value = Option<X>;
 
@@ -346,7 +350,7 @@ pub mod as_str {
 #[cfg(test)]
 mod tests {
 
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     use crate::amount::{self, Amount, SignedAmount};
 

@@ -59,7 +59,6 @@ pub enum TestnetVersion {
     V4,
 }
 
-
 /// The cryptocurrency network to act on.
 ///
 /// This is an exhaustive enum, meaning that we cannot add any future networks without defining a

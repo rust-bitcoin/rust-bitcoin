@@ -1175,17 +1175,13 @@ impl Coinbase {
     ///
     /// This method does not validate that the transaction is actually a coinbase transaction.
     /// The caller must ensure that this transaction is indeed a valid coinbase transaction.
-    pub fn assume_coinbase(tx: Transaction) -> Self {
-        Self(tx)
-    }
+    pub fn assume_coinbase(tx: Transaction) -> Self { Self(tx) }
 
     /// Returns the first input of this coinbase transaction.
     ///
     /// This method is infallible because a valid coinbase transaction is guaranteed
     /// to have exactly one input.
-    pub fn first_input(&self) -> &TxIn {
-        &self.0.input[0]
-    }
+    pub fn first_input(&self) -> &TxIn { &self.0.input[0] }
 
     /// Returns a reference to the underlying transaction.
     ///
@@ -1200,17 +1196,13 @@ impl Coinbase {
     pub fn into_transaction(self) -> Transaction { self.0 }
 
     /// Computes the [`Txid`] of this coinbase transaction.
-    pub fn compute_txid(&self) -> Txid {
-        self.0.compute_txid()
-    }
+    pub fn compute_txid(&self) -> Txid { self.0.compute_txid() }
 
     /// Returns the wtxid of this coinbase transaction.
     ///
     /// For coinbase transactions, this is always `Wtxid::COINBASE`.
     #[doc(alias = "compute_wtxid")]
-    pub const fn wtxid(&self) -> Wtxid {
-        Wtxid::COINBASE
-    }
+    pub const fn wtxid(&self) -> Wtxid { Wtxid::COINBASE }
 }
 
 mod sealed {

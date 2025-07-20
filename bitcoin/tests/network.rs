@@ -5,9 +5,7 @@ use bitcoin::network::{Network, NetworkKind, TestnetVersion};
 #[test]
 fn can_match_exhaustively_on_network() {
     // Returns true if `n` is mainnet.
-    fn is_mainnet(n: Network) -> bool {
-        matches!(n, Network::Bitcoin)
-    }
+    fn is_mainnet(n: Network) -> bool { matches!(n, Network::Bitcoin) }
 
     assert!(is_mainnet(Network::Bitcoin));
 }
@@ -15,9 +13,7 @@ fn can_match_exhaustively_on_network() {
 #[test]
 fn can_match_exhaustively_on_testnet() {
     // Returns true if `n` is any testnet.
-    fn is_testnet(n: Network) -> bool {
-        matches!(n, Network::Testnet(_))
-    }
+    fn is_testnet(n: Network) -> bool { matches!(n, Network::Testnet(_)) }
 
     assert!(is_testnet(Network::Testnet(TestnetVersion::V3)));
 }
@@ -25,21 +21,16 @@ fn can_match_exhaustively_on_testnet() {
 #[test]
 fn can_use_network_kind() {
     // Returns true if `n` is any mainnet.
-    fn is_mainnet(n: Network) -> bool {
-        NetworkKind::from(n).is_mainnet()
-    }
+    fn is_mainnet(n: Network) -> bool { NetworkKind::from(n).is_mainnet() }
 
     // Returns true if `n` is a any testnet.
-    fn is_testnet(n: Network) -> bool {
-        !NetworkKind::from(n).is_mainnet()
-    }
+    fn is_testnet(n: Network) -> bool { !NetworkKind::from(n).is_mainnet() }
 
     assert!(is_mainnet(Network::Bitcoin));
     assert!(!is_testnet(Network::Bitcoin));
 
     assert!(is_testnet(Network::Testnet(TestnetVersion::V3)));
     assert!(!is_mainnet(Network::Testnet(TestnetVersion::V3)));
-
 }
 
 #[test]
