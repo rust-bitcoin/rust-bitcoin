@@ -20,12 +20,12 @@ pub struct Builder(ScriptBuf, Option<Opcode>);
 impl Builder {
     /// Constructs a new empty script.
     #[inline]
-    pub const fn new() -> Self { Builder(ScriptBuf::new(), None) }
+    pub const fn new() -> Self { Self(ScriptBuf::new(), None) }
 
     /// Constructs a new empty script builder with at least the specified capacity.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Builder(ScriptBuf::with_capacity(capacity), None)
+        Self(ScriptBuf::with_capacity(capacity), None)
     }
 
     /// Returns the length in bytes of the script.
@@ -42,7 +42,7 @@ impl Builder {
     /// # Errors
     ///
     /// Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
-    pub fn push_int(self, n: i32) -> Result<Builder, Error> {
+    pub fn push_int(self, n: i32) -> Result<Self, Error> {
         if n == i32::MIN {
             // ref: https://github.com/bitcoin/bitcoin/blob/cac846c2fbf6fc69bfc288fd387aa3f68d84d584/src/script/script.h#L230
             Err(Error::NumericOverflow)
@@ -66,7 +66,7 @@ impl Builder {
     /// > throwing an exception if arithmetic is done or the result is interpreted as an integer.
     ///
     /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
-    pub fn push_int_unchecked(self, n: i64) -> Builder {
+    pub fn push_int_unchecked(self, n: i64) -> Self {
         match n {
             -1 => self.push_opcode(OP_PUSHNUM_NEG1),
             0 => self.push_opcode(OP_PUSHBYTES_0),
@@ -78,14 +78,14 @@ impl Builder {
     /// Adds instructions to push an integer onto the stack without optimization.
     ///
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
-    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Builder {
+    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Self {
         let mut buf = [0u8; 8];
         let len = write_scriptint(&mut buf, data);
         self.push_slice_non_minimal(&<&PushBytes>::from(&buf)[..len])
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice<T: AsRef<PushBytes>>(self, data: T) -> Builder {
+    pub fn push_slice<T: AsRef<PushBytes>>(self, data: T) -> Self {
         let bytes = data.as_ref().as_bytes();
         if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
             match bytes[0] {
@@ -104,14 +104,14 @@ impl Builder {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(mut self, data: T) -> Builder {
+    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(mut self, data: T) -> Self {
         self.0.push_slice_non_minimal(data);
         self.1 = None;
         self
     }
 
     /// Adds a single opcode to the script.
-    pub fn push_opcode(mut self, data: Opcode) -> Builder {
+    pub fn push_opcode(mut self, data: Opcode) -> Self {
         self.0.push_opcode(data);
         self.1 = Some(data);
         self
@@ -127,7 +127,7 @@ impl Builder {
     /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
     /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
     /// semantics.
-    pub fn push_verify(mut self) -> Builder {
+    pub fn push_verify(mut self) -> Self {
         // "duplicated code" because we need to update `1` field
         match opcode_to_verify(self.1) {
             Some(opcode) => {
@@ -139,7 +139,7 @@ impl Builder {
     }
 
     /// Adds instructions to push a public key onto the stack.
-    pub fn push_key(self, key: PublicKey) -> Builder {
+    pub fn push_key(self, key: PublicKey) -> Self {
         if key.compressed {
             self.push_slice(key.inner.serialize())
         } else {
@@ -148,12 +148,12 @@ impl Builder {
     }
 
     /// Adds instructions to push an XOnly public key onto the stack.
-    pub fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Builder {
+    pub fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Self {
         self.push_slice(x_only_key.serialize())
     }
 
     /// Adds instructions to push an absolute lock time onto the stack.
-    pub fn push_lock_time(self, lock_time: absolute::LockTime) -> Builder {
+    pub fn push_lock_time(self, lock_time: absolute::LockTime) -> Self {
         self.push_int_unchecked(lock_time.to_consensus_u32().into())
     }
 
@@ -161,7 +161,7 @@ impl Builder {
     ///
     /// This is used when creating scripts that use CHECKSEQUENCEVERIFY (CSV) to enforce
     /// relative time locks.
-    pub fn push_relative_lock_time(self, lock_time: relative::LockTime) -> Builder {
+    pub fn push_relative_lock_time(self, lock_time: relative::LockTime) -> Self {
         self.push_int_unchecked(lock_time.to_consensus_u32().into())
     }
 
@@ -177,7 +177,7 @@ impl Builder {
         since = "TBD",
         note = "Use push_relative_lock_time instead for working with timelocks in scripts"
     )]
-    pub fn push_sequence(self, sequence: Sequence) -> Builder {
+    pub fn push_sequence(self, sequence: Sequence) -> Self {
         self.push_int_unchecked(sequence.to_consensus_u32().into())
     }
 
@@ -195,15 +195,15 @@ impl Builder {
 }
 
 impl Default for Builder {
-    fn default() -> Builder { Builder::new() }
+    fn default() -> Self { Self::new() }
 }
 
 /// Constructs a new builder from an existing vector.
 impl From<Vec<u8>> for Builder {
-    fn from(v: Vec<u8>) -> Builder {
+    fn from(v: Vec<u8>) -> Self {
         let script = ScriptBuf::from(v);
         let last_op = script.last_opcode();
-        Builder(script, last_op)
+        Self(script, last_op)
     }
 }
 
