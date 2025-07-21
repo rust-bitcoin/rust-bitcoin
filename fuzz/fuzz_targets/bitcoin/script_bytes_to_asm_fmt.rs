@@ -1,6 +1,5 @@
-use std::fmt;
+use std::fmt::{self, Write as _};
 
-use bitcoin::script::ScriptExt as _;
 use honggfuzz::fuzz;
 
 // faster than String, we don't need to actually produce the value, just check absence of panics
@@ -14,7 +13,8 @@ impl fmt::Write for NullWriter {
 
 fn do_test(data: &[u8]) {
     let mut writer = NullWriter;
-    bitcoin::Script::from_bytes(data).fmt_asm(&mut writer).unwrap();
+    let script = bitcoin::Script::from_bytes(data);
+    write!(writer, "{script}").unwrap();
 }
 
 fn main() {
