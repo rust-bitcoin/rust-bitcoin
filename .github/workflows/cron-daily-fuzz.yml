@@ -35,7 +35,7 @@ jobs:
           hashes_sha256,
           hashes_sha512,
           hashes_sha512_256,
-          units_deserialize_amount,
+          units_parse_amount,
         ]
     steps:
       - name: Install test dependencies

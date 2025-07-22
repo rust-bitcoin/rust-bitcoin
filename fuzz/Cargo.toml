@@ -90,5 +90,5 @@ name = "hashes_sha512_256"
 path = "fuzz_targets/hashes/sha512_256.rs"
 
 [[bin]]
-name = "units_deserialize_amount"
-path = "fuzz_targets/units/deserialize_amount.rs"
+name = "units_parse_amount"
+path = "fuzz_targets/units/parse_amount.rs"
