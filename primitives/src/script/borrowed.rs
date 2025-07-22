@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::marker::PhantomData;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
@@ -62,9 +63,9 @@ internals::transparent_newtype! {
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
     ///
     #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
-    pub struct GenericScript([u8]);
+    pub struct GenericScript<T>(PhantomData<T>, [u8]);
 
-    impl GenericScript {
+    impl<T> GenericScript<T> {
         /// Treat byte slice as `GenericScript`
         pub const fn from_bytes(bytes: &_) -> &Self;
 
@@ -77,19 +78,19 @@ internals::transparent_newtype! {
     }
 }
 
-impl Default for &GenericScript {
+impl<T: 'static> Default for &GenericScript<T> {
     #[inline]
     fn default() -> Self { GenericScript::new() }
 }
 
-impl ToOwned for GenericScript {
-    type Owned = GenericScriptBuf;
+impl<T> ToOwned for GenericScript<T> {
+    type Owned = GenericScriptBuf<T>;
 
     #[inline]
     fn to_owned(&self) -> Self::Owned { GenericScriptBuf::from_bytes(self.to_vec()) }
 }
 
-impl GenericScript {
+impl<T> GenericScript<T> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> &'static Self { Self::from_bytes(&[]) }
@@ -98,13 +99,13 @@ impl GenericScript {
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub const fn as_bytes(&self) -> &[u8] { &self.0 }
+    pub const fn as_bytes(&self) -> &[u8] { &self.1 }
 
     /// Returns the script data as a mutable byte slice.
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
+    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.1 }
 
     /// Returns a copy of the script data.
     ///
@@ -128,7 +129,7 @@ impl GenericScript {
     /// Converts a [`Box<GenericScript>`](Box) into a [`GenericScriptBuf`] without copying or allocating.
     #[must_use]
     #[inline]
-    pub fn into_script_buf(self: Box<Self>) -> GenericScriptBuf {
+    pub fn into_script_buf(self: Box<Self>) -> GenericScriptBuf<T> {
         let rw = Box::into_raw(self) as *mut [u8];
         // SAFETY: copied from `std`
         // The pointer was just created from a box without deallocating
@@ -152,7 +153,7 @@ impl GenericScript {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for &'a GenericScript {
+impl<'a, T> Arbitrary<'a> for &'a GenericScript<T> {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = <&'a [u8]>::arbitrary(u)?;
@@ -164,7 +165,7 @@ macro_rules! delegate_index {
     ($($type:ty),* $(,)?) => {
         $(
             /// [`GenericScript`] subslicing operation - read [slicing safety](#slicing-safety)!
-            impl Index<$type> for GenericScript {
+            impl<T> Index<$type> for GenericScript<T> {
                 type Output = Self;
 
                 #[inline]

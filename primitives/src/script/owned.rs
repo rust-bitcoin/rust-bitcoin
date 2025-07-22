@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::Script;
+use super::GenericScript;
 use crate::prelude::{Box, Vec};
 
 /// An owned, growable script.
 ///
 /// `GenericScriptBuf` is the most common script type that has the ownership over the contents of the
-/// script. It has a close relationship with its borrowed counterpart, [`Script`].
+/// script. It has a close relationship with its borrowed counterpart, [`GenericScript`].
 ///
 /// Just as other similar types, this implements [`Deref`], so [deref coercions] apply. Also note
-/// that all the safety/validity restrictions that apply to [`Script`] apply to `GenericScriptBuf` as well.
+/// that all the safety/validity restrictions that apply to [`GenericScript`] apply to `GenericScriptBuf` as well.
 ///
 /// # Hexadecimal strings
 ///
@@ -26,10 +27,10 @@ use crate::prelude::{Box, Vec};
 ///
 /// [`examples/script.rs`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/script.rs>
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
-#[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct GenericScriptBuf(Vec<u8>);
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub struct GenericScriptBuf<T>(PhantomData<T>, Vec<u8>);
 
-impl GenericScriptBuf {
+impl<T> GenericScriptBuf<T> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> Self { Self::from_bytes(Vec::new()) }
@@ -39,15 +40,17 @@ impl GenericScriptBuf {
     /// This method doesn't (re)allocate. `bytes` is just the script bytes **not** consensus
     /// encoding (i.e no length prefix).
     #[inline]
-    pub const fn from_bytes(bytes: Vec<u8>) -> Self { Self(bytes) }
+    pub const fn from_bytes(bytes: Vec<u8>) -> Self { Self(PhantomData, bytes) }
 
     /// Returns a reference to unsized script.
     #[inline]
-    pub fn as_script(&self) -> &Script { Script::from_bytes(&self.0) }
+    pub fn as_script(&self) -> &GenericScript<T> { GenericScript::from_bytes(&self.1) }
 
     /// Returns a mutable reference to unsized script.
     #[inline]
-    pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.0) }
+    pub fn as_mut_script(&mut self) -> &mut GenericScript<T> {
+        GenericScript::from_bytes_mut(&mut self.1)
+    }
 
     /// Converts the script into a byte vector.
     ///
@@ -57,9 +60,9 @@ impl GenericScriptBuf {
     ///
     /// Just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub fn into_bytes(self) -> Vec<u8> { self.0 }
+    pub fn into_bytes(self) -> Vec<u8> { self.1 }
 
-    /// Converts this `GenericScriptBuf` into a [boxed](Box) [`Script`].
+    /// Converts this `GenericScriptBuf` into a [boxed](Box) [`GenericScript`].
     ///
     /// This method reallocates if the capacity is greater than length of the script but should not
     /// when they are equal. If you know beforehand that you need to create a script of exact size
@@ -67,15 +70,13 @@ impl GenericScriptBuf {
     /// reallocation can be avoided.
     #[must_use]
     #[inline]
-    pub fn into_boxed_script(self) -> Box<Script> {
-        Script::from_boxed_bytes(self.into_bytes().into_boxed_slice())
+    pub fn into_boxed_script(self) -> Box<GenericScript<T>> {
+        GenericScript::from_boxed_bytes(self.into_bytes().into_boxed_slice())
     }
 
     /// Constructs a new empty script with at least the specified capacity.
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self {
-        GenericScriptBuf::from_bytes(Vec::with_capacity(capacity))
-    }
+    pub fn with_capacity(capacity: usize) -> Self { Self::from_bytes(Vec::with_capacity(capacity)) }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
     ///
@@ -88,7 +89,7 @@ impl GenericScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     #[inline]
-    pub fn reserve(&mut self, additional_len: usize) { self.0.reserve(additional_len); }
+    pub fn reserve(&mut self, additional_len: usize) { self.1.reserve(additional_len); }
 
     /// Pre-allocates exactly `additional_len` bytes if needed.
     ///
@@ -104,13 +105,13 @@ impl GenericScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     #[inline]
-    pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
+    pub fn reserve_exact(&mut self, additional_len: usize) { self.1.reserve_exact(additional_len); }
 
     /// Returns the number of **bytes** available for writing without reallocation.
     ///
     /// It is guaranteed that `script.capacity() >= script.len()` always holds.
     #[inline]
-    pub fn capacity(&self) -> usize { self.0.capacity() }
+    pub fn capacity(&self) -> usize { self.1.capacity() }
 
     /// Gets the hex representation of this script.
     ///
@@ -125,24 +126,29 @@ impl GenericScriptBuf {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
-impl Deref for GenericScriptBuf {
-    type Target = Script;
+// Cannot derive due to generics.
+impl<T> Default for GenericScriptBuf<T> {
+    fn default() -> Self { Self(PhantomData, Vec::new()) }
+}
+
+impl<T> Deref for GenericScriptBuf<T> {
+    type Target = GenericScript<T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target { self.as_script() }
 }
 
-impl DerefMut for GenericScriptBuf {
+impl<T> DerefMut for GenericScriptBuf<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for GenericScriptBuf {
+impl<'a, T> Arbitrary<'a> for GenericScriptBuf<T> {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = Vec::<u8>::arbitrary(u)?;
-        Ok(GenericScriptBuf::from_bytes(v))
+        Ok(Self::from_bytes(v))
     }
 }
 

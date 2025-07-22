@@ -82,7 +82,8 @@ pub use self::{
 };
 #[doc(inline)]
 pub use primitives::script::{
-    RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, Tag, WScriptHash, Whatever,
+    WitnessScriptSizeError,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;

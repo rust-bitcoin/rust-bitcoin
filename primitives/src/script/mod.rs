@@ -4,10 +4,13 @@
 
 mod borrowed;
 mod owned;
+mod tag;
 
 use core::cmp::Ordering;
 use core::convert::Infallible;
 use core::fmt;
+#[cfg(feature = "serde")]
+use core::marker::PhantomData;
 
 use hashes::{hash160, sha256};
 #[cfg(feature = "hex")]
@@ -27,13 +30,14 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::GenericScript,
     owned::GenericScriptBuf,
+    tag::{Tag, Whatever},
 };
 
 /// Placeholder doc (will be replaced in later commit)
-pub type Script = GenericScript;
+pub type Script = GenericScript<Whatever>;
 
 /// Placeholder doc (will be replaced in later commit)
-pub type ScriptBuf = GenericScriptBuf;
+pub type ScriptBuf = GenericScriptBuf<Whatever>;
 
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
@@ -237,19 +241,19 @@ impl std::error::Error for WitnessScriptSizeError {}
 
 // We keep all the `GenericScript` and `GenericScriptBuf` impls together since it's easier to see side-by-side.
 
-impl From<GenericScriptBuf> for Box<GenericScript> {
+impl<T> From<GenericScriptBuf<T>> for Box<GenericScript<T>> {
     #[inline]
-    fn from(v: GenericScriptBuf) -> Self { v.into_boxed_script() }
+    fn from(v: GenericScriptBuf<T>) -> Self { v.into_boxed_script() }
 }
 
-impl From<GenericScriptBuf> for Cow<'_, GenericScript> {
+impl<T> From<GenericScriptBuf<T>> for Cow<'_, GenericScript<T>> {
     #[inline]
-    fn from(value: GenericScriptBuf) -> Self { Cow::Owned(value) }
+    fn from(value: GenericScriptBuf<T>) -> Self { Cow::Owned(value) }
 }
 
-impl<'a> From<Cow<'a, GenericScript>> for GenericScriptBuf {
+impl<'a, T> From<Cow<'a, GenericScript<T>>> for GenericScriptBuf<T> {
     #[inline]
-    fn from(value: Cow<'a, GenericScript>) -> Self {
+    fn from(value: Cow<'a, GenericScript<T>>) -> Self {
         match value {
             Cow::Owned(owned) => owned,
             Cow::Borrowed(borrowed) => borrowed.into(),
@@ -257,9 +261,9 @@ impl<'a> From<Cow<'a, GenericScript>> for GenericScriptBuf {
     }
 }
 
-impl<'a> From<Cow<'a, GenericScript>> for Box<GenericScript> {
+impl<'a, T> From<Cow<'a, GenericScript<T>>> for Box<GenericScript<T>> {
     #[inline]
-    fn from(value: Cow<'a, GenericScript>) -> Self {
+    fn from(value: Cow<'a, GenericScript<T>>) -> Self {
         match value {
             Cow::Owned(owned) => owned.into(),
             Cow::Borrowed(borrowed) => borrowed.into(),
@@ -267,88 +271,88 @@ impl<'a> From<Cow<'a, GenericScript>> for Box<GenericScript> {
     }
 }
 
-impl<'a> From<&'a GenericScript> for Box<GenericScript> {
+impl<'a, T> From<&'a GenericScript<T>> for Box<GenericScript<T>> {
     #[inline]
-    fn from(value: &'a GenericScript) -> Self { value.to_owned().into() }
+    fn from(value: &'a GenericScript<T>) -> Self { value.to_owned().into() }
 }
 
-impl<'a> From<&'a GenericScript> for GenericScriptBuf {
+impl<'a, T> From<&'a GenericScript<T>> for GenericScriptBuf<T> {
     #[inline]
-    fn from(value: &'a GenericScript) -> Self { value.to_owned() }
+    fn from(value: &'a GenericScript<T>) -> Self { value.to_owned() }
 }
 
-impl<'a> From<&'a GenericScript> for Cow<'a, GenericScript> {
+impl<'a, T> From<&'a GenericScript<T>> for Cow<'a, GenericScript<T>> {
     #[inline]
-    fn from(value: &'a GenericScript) -> Self { Cow::Borrowed(value) }
+    fn from(value: &'a GenericScript<T>) -> Self { Cow::Borrowed(value) }
 }
 
 /// Note: This will fail to compile on old Rust for targets that don't support atomics
 #[cfg(target_has_atomic = "ptr")]
-impl<'a> From<&'a GenericScript> for Arc<GenericScript> {
+impl<'a, T> From<&'a GenericScript<T>> for Arc<GenericScript<T>> {
     #[inline]
-    fn from(value: &'a GenericScript) -> Self {
+    fn from(value: &'a GenericScript<T>) -> Self {
         GenericScript::from_arc_bytes(Arc::from(value.as_bytes()))
     }
 }
 
-impl<'a> From<&'a GenericScript> for Rc<GenericScript> {
+impl<'a, T> From<&'a GenericScript<T>> for Rc<GenericScript<T>> {
     #[inline]
-    fn from(value: &'a GenericScript) -> Self {
+    fn from(value: &'a GenericScript<T>) -> Self {
         GenericScript::from_rc_bytes(Rc::from(value.as_bytes()))
     }
 }
 
-impl From<Vec<u8>> for GenericScriptBuf {
+impl<T> From<Vec<u8>> for GenericScriptBuf<T> {
     #[inline]
-    fn from(v: Vec<u8>) -> Self { GenericScriptBuf::from_bytes(v) }
+    fn from(v: Vec<u8>) -> Self { Self::from_bytes(v) }
 }
 
-impl From<GenericScriptBuf> for Vec<u8> {
+impl<T> From<GenericScriptBuf<T>> for Vec<u8> {
     #[inline]
-    fn from(v: GenericScriptBuf) -> Self { v.into_bytes() }
+    fn from(v: GenericScriptBuf<T>) -> Self { v.into_bytes() }
 }
 
-impl AsRef<GenericScript> for GenericScript {
+impl<T> AsRef<GenericScript<T>> for GenericScript<T> {
     #[inline]
     fn as_ref(&self) -> &Self { self }
 }
 
-impl AsRef<GenericScript> for GenericScriptBuf {
+impl<T> AsRef<GenericScript<T>> for GenericScriptBuf<T> {
     #[inline]
-    fn as_ref(&self) -> &GenericScript { self }
+    fn as_ref(&self) -> &GenericScript<T> { self }
 }
 
-impl AsRef<[u8]> for GenericScript {
-    #[inline]
-    fn as_ref(&self) -> &[u8] { self.as_bytes() }
-}
-
-impl AsRef<[u8]> for GenericScriptBuf {
+impl<T> AsRef<[u8]> for GenericScript<T> {
     #[inline]
     fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
-impl AsMut<GenericScript> for GenericScript {
+impl<T> AsRef<[u8]> for GenericScriptBuf<T> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] { self.as_bytes() }
+}
+
+impl<T> AsMut<GenericScript<T>> for GenericScript<T> {
     #[inline]
     fn as_mut(&mut self) -> &mut Self { self }
 }
 
-impl AsMut<GenericScript> for GenericScriptBuf {
+impl<T> AsMut<GenericScript<T>> for GenericScriptBuf<T> {
     #[inline]
-    fn as_mut(&mut self) -> &mut GenericScript { self }
+    fn as_mut(&mut self) -> &mut GenericScript<T> { self }
 }
 
-impl AsMut<[u8]> for GenericScript {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
-}
-
-impl AsMut<[u8]> for GenericScriptBuf {
+impl<T> AsMut<[u8]> for GenericScript<T> {
     #[inline]
     fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
 }
 
-impl fmt::Debug for GenericScript {
+impl<T> AsMut<[u8]> for GenericScriptBuf<T> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
+}
+
+impl<T> fmt::Debug for GenericScript<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("GenericScript(")?;
         fmt::Display::fmt(self, f)?;
@@ -356,12 +360,12 @@ impl fmt::Debug for GenericScript {
     }
 }
 
-impl fmt::Debug for GenericScriptBuf {
+impl<T> fmt::Debug for GenericScriptBuf<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(self.as_script(), f) }
 }
 
-impl fmt::Display for GenericScript {
+impl<T> fmt::Display for GenericScript<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // This has to be a macro because it needs to break the loop
         macro_rules! read_push_data_len {
@@ -434,13 +438,13 @@ impl fmt::Display for GenericScript {
     }
 }
 
-impl fmt::Display for GenericScriptBuf {
+impl<T> fmt::Display for GenericScriptBuf<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_script(), f) }
 }
 
 #[cfg(feature = "hex")]
-impl fmt::LowerHex for GenericScript {
+impl<T> fmt::LowerHex for GenericScript<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
@@ -448,13 +452,13 @@ impl fmt::LowerHex for GenericScript {
 }
 
 #[cfg(feature = "hex")]
-impl fmt::LowerHex for GenericScriptBuf {
+impl<T> fmt::LowerHex for GenericScriptBuf<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
 
 #[cfg(feature = "hex")]
-impl fmt::UpperHex for GenericScript {
+impl<T> fmt::UpperHex for GenericScript<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::UpperHex::fmt(&self.as_bytes().as_hex(), f)
@@ -462,47 +466,47 @@ impl fmt::UpperHex for GenericScript {
 }
 
 #[cfg(feature = "hex")]
-impl fmt::UpperHex for GenericScriptBuf {
+impl<T> fmt::UpperHex for GenericScriptBuf<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(self.as_script(), f) }
 }
 
-impl Borrow<GenericScript> for GenericScriptBuf {
+impl<T> Borrow<GenericScript<T>> for GenericScriptBuf<T> {
     #[inline]
-    fn borrow(&self) -> &GenericScript { self }
+    fn borrow(&self) -> &GenericScript<T> { self }
 }
 
-impl BorrowMut<GenericScript> for GenericScriptBuf {
+impl<T> BorrowMut<GenericScript<T>> for GenericScriptBuf<T> {
     #[inline]
-    fn borrow_mut(&mut self) -> &mut GenericScript { self }
+    fn borrow_mut(&mut self) -> &mut GenericScript<T> { self }
 }
 
-impl PartialEq<GenericScriptBuf> for GenericScript {
+impl<T: PartialEq> PartialEq<GenericScriptBuf<T>> for GenericScript<T> {
     #[inline]
-    fn eq(&self, other: &GenericScriptBuf) -> bool { self.eq(other.as_script()) }
+    fn eq(&self, other: &GenericScriptBuf<T>) -> bool { self.eq(other.as_script()) }
 }
 
-impl PartialEq<GenericScript> for GenericScriptBuf {
+impl<T: PartialEq> PartialEq<GenericScript<T>> for GenericScriptBuf<T> {
     #[inline]
-    fn eq(&self, other: &GenericScript) -> bool { self.as_script().eq(other) }
+    fn eq(&self, other: &GenericScript<T>) -> bool { self.as_script().eq(other) }
 }
 
-impl PartialOrd<GenericScript> for GenericScriptBuf {
+impl<T: PartialOrd> PartialOrd<GenericScript<T>> for GenericScriptBuf<T> {
     #[inline]
-    fn partial_cmp(&self, other: &GenericScript) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &GenericScript<T>) -> Option<Ordering> {
         self.as_script().partial_cmp(other)
     }
 }
 
-impl PartialOrd<GenericScriptBuf> for GenericScript {
+impl<T: PartialOrd> PartialOrd<GenericScriptBuf<T>> for GenericScript<T> {
     #[inline]
-    fn partial_cmp(&self, other: &GenericScriptBuf) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &GenericScriptBuf<T>) -> Option<Ordering> {
         self.partial_cmp(other.as_script())
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for GenericScript {
+impl<T> serde::Serialize for GenericScript<T> {
     /// User-facing serialization for `GenericScript`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -518,14 +522,14 @@ impl serde::Serialize for GenericScript {
 
 /// Can only deserialize borrowed bytes.
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for &'de GenericScript {
+impl<'de, T> serde::Deserialize<'de> for &'de GenericScript<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        struct Visitor;
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = &'de GenericScript;
+        struct Visitor<T>(PhantomData<T>);
+        impl<'de, T: 'de> serde::de::Visitor<'de> for Visitor<T> {
+            type Value = &'de GenericScript<T>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("borrowed bytes")
@@ -547,12 +551,12 @@ impl<'de> serde::Deserialize<'de> for &'de GenericScript {
             ));
         }
 
-        deserializer.deserialize_bytes(Visitor)
+        deserializer.deserialize_bytes(Visitor(PhantomData))
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for GenericScriptBuf {
+impl<T> serde::Serialize for GenericScriptBuf<T> {
     /// User-facing serialization for `GenericScript`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -563,7 +567,7 @@ impl serde::Serialize for GenericScriptBuf {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for GenericScriptBuf {
+impl<'de, T> serde::Deserialize<'de> for GenericScriptBuf<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -573,9 +577,9 @@ impl<'de> serde::Deserialize<'de> for GenericScriptBuf {
         use hex::FromHex;
 
         if deserializer.is_human_readable() {
-            struct Visitor;
-            impl serde::de::Visitor<'_> for Visitor {
-                type Value = GenericScriptBuf;
+            struct Visitor<T>(PhantomData<T>);
+            impl<T> serde::de::Visitor<'_> for Visitor<T> {
+                type Value = GenericScriptBuf<T>;
 
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
                     formatter.write_str("a script hex")
@@ -589,12 +593,12 @@ impl<'de> serde::Deserialize<'de> for GenericScriptBuf {
                     Ok(GenericScriptBuf::from(v))
                 }
             }
-            deserializer.deserialize_str(Visitor)
+            deserializer.deserialize_str(Visitor(PhantomData))
         } else {
-            struct BytesVisitor;
+            struct BytesVisitor<T>(PhantomData<T>);
 
-            impl serde::de::Visitor<'_> for BytesVisitor {
-                type Value = GenericScriptBuf;
+            impl<T> serde::de::Visitor<'_> for BytesVisitor<T> {
+                type Value = GenericScriptBuf<T>;
 
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
                     formatter.write_str("a script Vec<u8>")
@@ -614,7 +618,7 @@ impl<'de> serde::Deserialize<'de> for GenericScriptBuf {
                     Ok(GenericScriptBuf::from(v))
                 }
             }
-            deserializer.deserialize_byte_buf(BytesVisitor)
+            deserializer.deserialize_byte_buf(BytesVisitor(PhantomData))
         }
     }
 }
