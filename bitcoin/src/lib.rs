@@ -114,7 +114,7 @@ pub mod ext {
     pub use crate::{
         block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
         pow::CompactTargetExt as _,
-        script::{GenericScriptExt as _, GenericScriptBufExt as _, ScriptExt as _, ScriptBufExt as _},
+        script::{GenericScriptExt as _, GenericScriptBufExt as _, ScriptExt as _, ScriptBufExt as _, ScriptSigExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
         witness::WitnessExt as _,
     };
@@ -152,7 +152,7 @@ pub use primitives::{
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget, // No `pow` module outside of `primitives`.
-    script::{Script, ScriptBuf},
+    script::{Script, ScriptBuf, ScriptSig, ScriptSigBuf},
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,

@@ -30,7 +30,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::GenericScript,
     owned::GenericScriptBuf,
-    tag::{Tag, Whatever},
+    tag::{Tag, ScriptSigTag, Whatever},
 };
 
 /// Placeholder doc (will be replaced in later commit)
@@ -38,6 +38,12 @@ pub type Script = GenericScript<Whatever>;
 
 /// Placeholder doc (will be replaced in later commit)
 pub type ScriptBuf = GenericScriptBuf<Whatever>;
+
+/// A reference to a script signature (scriptSig).
+pub type ScriptSig = GenericScript<ScriptSigTag>;
+
+/// A script signature (scriptSig).
+pub type ScriptSigBuf = GenericScriptBuf<ScriptSigTag>;
 
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;

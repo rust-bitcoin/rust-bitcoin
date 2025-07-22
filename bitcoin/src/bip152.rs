@@ -460,8 +460,8 @@ mod test {
     use crate::merkle_tree::TxMerkleNode;
     use crate::transaction::OutPointExt;
     use crate::{
-        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptBuf, Sequence,
-        TxIn, TxOut, Txid, Witness,
+        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptBuf,
+        ScriptSigBuf, Sequence, TxIn, TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -471,7 +471,7 @@ mod test {
             lock_time: absolute::LockTime::from_consensus(2),
             inputs: vec![TxIn {
                 previous_output: OutPoint::new(dummy_txid, 0),
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],

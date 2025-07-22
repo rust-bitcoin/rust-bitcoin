@@ -12,7 +12,7 @@ use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{error, raw, Error};
-use crate::script::ScriptBuf;
+use crate::script::{ScriptBuf, ScriptSigBuf};
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
     TapSighashType,
@@ -91,7 +91,7 @@ pub struct Input {
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
-    pub final_script_sig: Option<ScriptBuf>,
+    pub final_script_sig: Option<ScriptSigBuf>,
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
     pub final_script_witness: Option<Witness>,
@@ -298,7 +298,7 @@ impl Input {
             }
             PSBT_IN_FINAL_SCRIPTSIG => {
                 impl_psbt_insert_pair! {
-                    self.final_script_sig <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.final_script_sig <= <raw_key: _>|<raw_value: ScriptSigBuf>
                 }
             }
             PSBT_IN_FINAL_SCRIPTWITNESS => {

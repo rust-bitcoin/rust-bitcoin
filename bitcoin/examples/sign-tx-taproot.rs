@@ -8,8 +8,8 @@ use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{rand, Secp256k1, SecretKey, Signing, Verification};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
-    Txid, Witness,
+    transaction, Address, Amount, Network, OutPoint, ScriptBuf, ScriptSigBuf, Sequence,
+    Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 const DUMMY_UTXO_AMOUNT: Amount = Amount::from_sat_u32(20_000_000);
@@ -33,7 +33,7 @@ fn main() {
     // The input for the transaction we are constructing.
     let input = TxIn {
         previous_output: dummy_out_point, // The dummy output we are spending.
-        script_sig: ScriptBuf::default(), // For a p2tr script_sig is empty.
+        script_sig: ScriptSigBuf::default(), // For a p2tr script_sig is empty.
         sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
         witness: Witness::default(), // Filled in after signing.
     };

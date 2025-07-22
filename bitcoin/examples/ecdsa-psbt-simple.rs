@@ -32,7 +32,7 @@ use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::{
     consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
-    Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 // The master xpriv, from which we derive the keys we control.
@@ -157,7 +157,7 @@ fn main() {
         .into_iter()
         .map(|(outpoint, _)| TxIn {
             previous_output: outpoint,
-            script_sig: ScriptBuf::default(),
+            script_sig: ScriptSigBuf::default(),
             sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
             witness: Witness::default(),
         })

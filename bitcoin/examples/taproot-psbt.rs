@@ -87,8 +87,8 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, Transaction,
-    TxIn, TxOut, Witness,
+    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, ScriptSigBuf,
+    Transaction, TxIn, TxOut, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -232,7 +232,7 @@ fn generate_bip86_key_spend_tx(
         lock_time: absolute::LockTime::ZERO,
         inputs: vec![TxIn {
             previous_output: OutPoint { txid: input_utxo.txid.parse()?, vout: input_utxo.vout },
-            script_sig: ScriptBuf::new(),
+            script_sig: ScriptSigBuf::new(),
             sequence: bitcoin::Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
@@ -429,7 +429,7 @@ impl BenefactorWallet {
             lock_time,
             inputs: vec![TxIn {
                 previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                 witness: Witness::default(),
             }],
@@ -579,7 +579,7 @@ impl BenefactorWallet {
                 lock_time,
                 inputs: vec![TxIn {
                     previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                     witness: Witness::default(),
                 }],

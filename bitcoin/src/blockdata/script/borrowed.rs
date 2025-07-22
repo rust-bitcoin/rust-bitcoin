@@ -10,7 +10,7 @@ use secp256k1::{Secp256k1, Verification};
 use super::witness_version::WitnessVersion;
 use super::{
     Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes,
-    RedeemScriptSizeError, Script, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    RedeemScriptSizeError, Script, ScriptHash, ScriptSig, WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -27,6 +27,55 @@ internal_macros::define_extension_trait! {
     pub trait GenericScriptExt<T> impl<T> for GenericScript<T> {
         /// Constructs a new script builder
         fn builder() -> Builder<T> { Builder::new() }
+
+        /// Counts the sigops for this Script using accurate counting.
+        ///
+        /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
+        /// This method uses "accurate" counting. This means that OP_CHECKMULTISIG and its
+        /// verify variant count for N sigops where N is the number of pubkeys used in the
+        /// multisig. However, it will count for 20 sigops if CHECKMULTISIG is not preceded by an
+        /// OP_PUSHNUM from 1 - 16 (this would be an invalid script)
+        ///
+        /// Bitcoin Core uses accurate counting for sigops contained within redeemScripts (P2SH)
+        /// and witnessScripts (P2WSH) only. It uses legacy for sigops in scriptSigs and scriptPubkeys.
+        ///
+        /// (Note: Taproot scripts don't count toward the sigop count of the block,
+        /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
+        /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
+        fn count_sigops(&self) -> usize { self.count_sigops_internal(true) }
+
+        /// Counts the sigops for this Script using legacy counting.
+        ///
+        /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
+        /// This method uses "legacy" counting. This means that OP_CHECKMULTISIG and its
+        /// verify variant count for 20 sigops.
+        ///
+        /// Bitcoin Core uses legacy counting for sigops contained within scriptSigs and
+        /// scriptPubkeys. It uses accurate for redeemScripts (P2SH) and witnessScripts (P2WSH).
+        ///
+        /// (Note: Taproot scripts don't count toward the sigop count of the block,
+        /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
+        /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
+        fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
+
+        /// Checks whether a script is push only.
+        ///
+        /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
+        /// are considered push operations.
+        #[inline]
+        fn is_push_only(&self) -> bool {
+            for inst in self.instructions() {
+                match inst {
+                    Err(_) => return false,
+                    Ok(Instruction::PushBytes(_)) => {}
+                    Ok(Instruction::Op(op)) if op.to_u8() <= 0x60 => {}
+                    // From Bitcoin Core
+                    // if (opcode > OP_PUSHNUM_16 (0x60)) return false
+                    Ok(Instruction::Op(_)) => return false,
+                }
+            }
+            true
+        }
 
         /// Returns an iterator over script bytes.
         #[inline]
@@ -203,25 +252,6 @@ crate::internal_macros::define_extension_trait! {
                 && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
         }
 
-        /// Checks whether a script is push only.
-        ///
-        /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
-        /// are considered push operations.
-        #[inline]
-        fn is_push_only(&self) -> bool {
-            for inst in self.instructions() {
-                match inst {
-                    Err(_) => return false,
-                    Ok(Instruction::PushBytes(_)) => {}
-                    Ok(Instruction::Op(op)) if op.to_u8() <= 0x60 => {}
-                    // From Bitcoin Core
-                    // if (opcode > OP_PUSHNUM_16 (0x60)) return false
-                    Ok(Instruction::Op(_)) => return false,
-                }
-            }
-            true
-        }
-
         /// Checks whether a script pubkey is a bare multisig output.
         ///
         /// In a bare multisig pubkey script the keys are not hashed, the script
@@ -342,25 +372,6 @@ crate::internal_macros::define_extension_trait! {
             }
         }
 
-        /// Get redeemScript following BIP-0016 rules regarding P2SH spending.
-        ///
-        /// This does not guarantee that this represents a P2SH input [`Script`].
-        /// It merely gets the last push of the script.
-        ///
-        /// Use [`Script::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
-        fn redeem_script(&self) -> Option<&Script> {
-            // Script must consist entirely of pushes.
-            if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
-                return None;
-            }
-
-            if let Some(Ok(Instruction::PushBytes(b))) = self.instructions().last() {
-                Some(Script::from_bytes(b.as_bytes()))
-            } else {
-                None
-            }
-        }
-
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today’s Bitcoin network.
         #[deprecated(since = "0.32.0", note = "use `minimal_non_dust` etc. instead")]
@@ -394,36 +405,6 @@ crate::internal_macros::define_extension_trait! {
         fn minimal_non_dust_custom(&self, dust_relay: FeeRate) -> Option<Amount> {
             self.minimal_non_dust_internal(dust_relay.to_sat_per_kvb_ceil())
         }
-
-        /// Counts the sigops for this Script using accurate counting.
-        ///
-        /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
-        /// This method uses "accurate" counting. This means that OP_CHECKMULTISIG and its
-        /// verify variant count for N sigops where N is the number of pubkeys used in the
-        /// multisig. However, it will count for 20 sigops if CHECKMULTISIG is not preceded by an
-        /// OP_PUSHNUM from 1 - 16 (this would be an invalid script)
-        ///
-        /// Bitcoin Core uses accurate counting for sigops contained within redeemScripts (P2SH)
-        /// and witnessScripts (P2WSH) only. It uses legacy for sigops in scriptSigs and scriptPubkeys.
-        ///
-        /// (Note: Taproot scripts don't count toward the sigop count of the block,
-        /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
-        /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-        fn count_sigops(&self) -> usize { self.count_sigops_internal(true) }
-
-        /// Counts the sigops for this Script using legacy counting.
-        ///
-        /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
-        /// This method uses "legacy" counting. This means that OP_CHECKMULTISIG and its
-        /// verify variant count for 20 sigops.
-        ///
-        /// Bitcoin Core uses legacy counting for sigops contained within scriptSigs and
-        /// scriptPubkeys. It uses accurate for redeemScripts (P2SH) and witnessScripts (P2WSH).
-        ///
-        /// (Note: Taproot scripts don't count toward the sigop count of the block,
-        /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
-        /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-        fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
 
         /// Writes the human-readable assembly representation of the script to the formatter.
         #[deprecated(since = "TBD", note = "use the script's `Display` impl instead")]
@@ -465,14 +446,67 @@ mod sealed {
     impl<T> Sealed for super::GenericScript<T> {}
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     pub(crate) trait GenericScriptExtPriv<T> impl<T> for GenericScript<T> {
+        fn count_sigops_internal(&self, accurate: bool) -> usize {
+            let mut n = 0;
+            let mut pushnum_cache = None;
+            for inst in self.instructions() {
+                match inst {
+                    Ok(Instruction::Op(opcode)) => {
+                        match opcode {
+                            // p2pk, p2pkh
+                            OP_CHECKSIG | OP_CHECKSIGVERIFY => {
+                                n += 1;
+                            }
+                            OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
+                                match (accurate, pushnum_cache) {
+                                    (true, Some(pushnum)) => {
+                                        // Add the number of pubkeys in the multisig as sigop count
+                                        n += usize::from(pushnum);
+                                    }
+                                    _ => {
+                                        // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
+                                        // https://github.com/bitcoin/bitcoin/blob/v25.0/src/script/script.h#L29-L30
+                                        n += 20;
+                                    }
+                                }
+                            }
+                            _ => {
+                                pushnum_cache = opcode.decode_pushnum();
+                            }
+                        }
+                    }
+                    Ok(Instruction::PushBytes(_)) => {
+                        pushnum_cache = None;
+                    }
+                    // In Bitcoin Core it does `if (!GetOp(pc, opcode)) break;`
+                    Err(_) => break,
+                }
+            }
+
+            n
+        }
+
         /// Iterates the script to find the last opcode.
         ///
         /// Returns `None` is the instruction is data push or if the script is empty.
         fn last_opcode(&self) -> Option<Opcode> {
             match self.instructions().last() {
                 Some(Ok(Instruction::Op(op))) => Some(op),
+                _ => None,
+            }
+        }
+
+        /// Iterates the script to find the last pushdata.
+        ///
+        /// Returns `None` if the instruction is an opcode or if the script is empty.
+        fn last_pushdata(&self) -> Option<&PushBytes> {
+            match self.instructions().last() {
+                // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
+                Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
+                // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
+                // However we are only interested in the pushdata so we can ignore them.
                 _ => None,
             }
         }
@@ -517,57 +551,28 @@ internal_macros::define_extension_trait! {
 
             Amount::from_sat(sats).ok()
         }
+    }
+}
 
-        fn count_sigops_internal(&self, accurate: bool) -> usize {
-            let mut n = 0;
-            let mut pushnum_cache = None;
-            for inst in self.instructions() {
-                match inst {
-                    Ok(Instruction::Op(opcode)) => {
-                        match opcode {
-                            // p2pk, p2pkh
-                            OP_CHECKSIG | OP_CHECKSIGVERIFY => {
-                                n += 1;
-                            }
-                            OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
-                                match (accurate, pushnum_cache) {
-                                    (true, Some(pushnum)) => {
-                                        // Add the number of pubkeys in the multisig as sigop count
-                                        n += usize::from(pushnum);
-                                    }
-                                    _ => {
-                                        // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
-                                        // https://github.com/bitcoin/bitcoin/blob/v25.0/src/script/script.h#L29-L30
-                                        n += 20;
-                                    }
-                                }
-                            }
-                            _ => {
-                                pushnum_cache = opcode.decode_pushnum();
-                            }
-                        }
-                    }
-                    Ok(Instruction::PushBytes(_)) => {
-                        pushnum_cache = None;
-                    }
-                    // In Bitcoin Core it does `if (!GetOp(pc, opcode)) break;`
-                    Err(_) => break,
-                }
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`ScriptSig`] type.
+    pub trait ScriptSigExt impl for ScriptSig {
+        /// Get redeemScript following BIP-0016 rules regarding P2SH spending.
+        ///
+        /// This does not guarantee that this represents a P2SH input [`Script`].
+        /// It merely gets the last push of the script.
+        ///
+        /// Use [`Script::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
+        fn redeem_script(&self) -> Option<&Script> {
+            // Script must consist entirely of pushes.
+            if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
+                return None;
             }
 
-            n
-        }
-
-        /// Iterates the script to find the last pushdata.
-        ///
-        /// Returns `None` if the instruction is an opcode or if the script is empty.
-        fn last_pushdata(&self) -> Option<&PushBytes> {
-            match self.instructions().last() {
-                // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
-                Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
-                // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
-                // However we are only interested in the pushdata so we can ignore them.
-                _ => None,
+            if let Some(Ok(Instruction::PushBytes(b))) = self.instructions().last() {
+                Some(Script::from_bytes(b.as_bytes()))
+            } else {
+                None
             }
         }
     }

@@ -5,6 +5,7 @@ use hex_lit::hex;
 use super::*;
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
+use crate::script::borrowed::ScriptExtPriv as _;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::{opcodes, Amount, FeeRate};
@@ -206,7 +207,7 @@ fn script_x_only_key() {
 #[test]
 fn script_builder() {
     // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
-    let script = Builder::new()
+    let script = Script::builder()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
         .push_slice(hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
@@ -774,7 +775,7 @@ fn default_dust_value() {
 #[test]
 fn script_get_sigop_count() {
     assert_eq!(
-        Builder::new()
+        Script::builder()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
             .push_slice([42; 20])
@@ -784,7 +785,7 @@ fn script_get_sigop_count() {
         0
     );
     assert_eq!(
-        Builder::new()
+        Script::builder()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
             .push_slice([42; 20])
@@ -795,7 +796,7 @@ fn script_get_sigop_count() {
         1
     );
     assert_eq!(
-        Builder::new()
+        Script::builder()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
             .push_slice([42; 20])
@@ -806,7 +807,7 @@ fn script_get_sigop_count() {
             .count_sigops(),
         1
     );
-    let multi = Builder::new()
+    let multi = Script::builder()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -816,7 +817,7 @@ fn script_get_sigop_count() {
         .into_script();
     assert_eq!(multi.count_sigops(), 3);
     assert_eq!(multi.count_sigops_legacy(), 20);
-    let multi_verify = Builder::new()
+    let multi_verify = Script::builder()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -827,7 +828,7 @@ fn script_get_sigop_count() {
         .into_script();
     assert_eq!(multi_verify.count_sigops(), 3);
     assert_eq!(multi_verify.count_sigops_legacy(), 20);
-    let multi_nopushnum_pushdata = Builder::new()
+    let multi_nopushnum_pushdata = Script::builder()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -836,7 +837,7 @@ fn script_get_sigop_count() {
         .into_script();
     assert_eq!(multi_nopushnum_pushdata.count_sigops(), 20);
     assert_eq!(multi_nopushnum_pushdata.count_sigops_legacy(), 20);
-    let multi_nopushnum_op = Builder::new()
+    let multi_nopushnum_op = Script::builder()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
         .push_slice([3; 33])

@@ -10,8 +10,8 @@ use bitcoin::script::ScriptExt as _;
 use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
-    absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
+    absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptBuf,
+    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
 use secp256k1::{Keypair, Secp256k1, Signing};
 
@@ -212,7 +212,7 @@ fn create_psbt_for_taproot_key_path_spend(
         lock_time: absolute::LockTime::ZERO,
         inputs: vec![TxIn {
             previous_output: OutPoint { txid: prev_tx_id.parse().unwrap(), vout: 0 },
-            script_sig: ScriptBuf::new(),
+            script_sig: ScriptSigBuf::new(),
             sequence: Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
@@ -290,7 +290,7 @@ fn create_psbt_for_taproot_script_path_spend<K: Into<XOnlyPublicKey>>(
         lock_time: absolute::LockTime::ZERO,
         inputs: vec![TxIn {
             previous_output: OutPoint { txid: prev_tx_id.parse().unwrap(), vout: 0 },
-            script_sig: ScriptBuf::new(),
+            script_sig: ScriptSigBuf::new(),
             sequence: Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],

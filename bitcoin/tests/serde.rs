@@ -33,7 +33,7 @@ use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder}
 use bitcoin::witness::Witness;
 use bitcoin::{
     ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
-    Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ScriptSigBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
 #[test]
@@ -203,7 +203,7 @@ fn serde_regression_psbt() {
                     .unwrap(),
                 vout: 1,
             },
-            script_sig: ScriptBuf::from_hex_no_length_prefix(
+            script_sig: ScriptSigBuf::from_hex_no_length_prefix(
                 "160014be18d152a9b012039daf3da7de4f53349eecb985",
             )
             .unwrap(),
@@ -254,7 +254,7 @@ fn serde_regression_psbt() {
         unsigned_tx: {
             let mut unsigned = tx.clone();
             unsigned.inputs[0].previous_output.txid = tx.compute_txid();
-            unsigned.inputs[0].script_sig = ScriptBuf::new();
+            unsigned.inputs[0].script_sig = ScriptSigBuf::new();
             unsigned.inputs[0].witness = Witness::default();
             unsigned
         },

@@ -21,7 +21,9 @@ use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
-use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
+use crate::script::{
+    GenericScriptExt as _, GenericScriptExtPriv as _, Script, ScriptBuf, ScriptExt as _,
+};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
@@ -1243,6 +1245,7 @@ mod tests {
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::constants::WITNESS_SCALE_FACTOR;
+    use crate::script::ScriptSigBuf;
     use crate::sighash::EcdsaSighashType;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
@@ -1488,7 +1491,7 @@ mod tests {
             "c3573dbea28ce24425c59a189391937e00d255150fa973d59d61caf3a06b601d"
         );
         // changing sigs does not affect it
-        tx.inputs[0].script_sig = ScriptBuf::new();
+        tx.inputs[0].script_sig = ScriptSigBuf::new();
         assert_eq!(old_ntxid, tx.compute_ntxid());
         // changing pks does
         tx.outputs[0].script_pubkey = ScriptBuf::new();

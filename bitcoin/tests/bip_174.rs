@@ -13,7 +13,7 @@ use bitcoin::script::{GenericScriptBufExt as _, PushBytes};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
     absolute, script, transaction, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
-    Sequence, Transaction, TxIn, TxOut, Witness,
+    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
 #[track_caller]
@@ -166,7 +166,7 @@ fn create_transaction() -> Transaction {
                     txid: input_0.txid.parse().expect("failed to parse txid"),
                     vout: input_0.index,
                 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence::MAX, // Disable nSequence.
                 witness: Witness::default(),
             },
@@ -175,7 +175,7 @@ fn create_transaction() -> Transaction {
                     txid: input_1.txid.parse().expect("failed to parse txid"),
                     vout: input_1.index,
                 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence::MAX,
                 witness: Witness::default(),
             },

@@ -13,3 +13,8 @@ pub trait Tag {}
 pub enum Whatever {}
 
 impl Tag for Whatever {}
+
+/// A script signature (scriptSig).
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub enum ScriptSigTag {}
+impl Tag for ScriptSigTag {}

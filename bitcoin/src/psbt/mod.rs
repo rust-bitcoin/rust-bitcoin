@@ -1343,7 +1343,7 @@ mod tests {
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
-    use crate::script::{GenericScriptBufExt as _, ScriptBuf};
+    use crate::script::{GenericScriptBufExt as _, ScriptBuf, ScriptSigBuf};
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
     use crate::Sequence;
@@ -1370,7 +1370,7 @@ mod tests {
                             .unwrap(),
                         vout: 0,
                     },
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
@@ -1546,7 +1546,7 @@ mod tests {
                             .unwrap(),
                         vout: 0,
                     },
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
@@ -1617,7 +1617,7 @@ mod tests {
                         .unwrap(),
                     vout: 1,
                 },
-                script_sig: ScriptBuf::from_hex_no_length_prefix(
+                script_sig: ScriptSigBuf::from_hex_no_length_prefix(
                     "160014be18d152a9b012039daf3da7de4f53349eecb985",
                 )
                 .unwrap(),
@@ -1668,7 +1668,7 @@ mod tests {
             unsigned_tx: {
                 let mut unsigned = tx.clone();
                 unsigned.inputs[0].previous_output.txid = tx.compute_txid();
-                unsigned.inputs[0].script_sig = ScriptBuf::new();
+                unsigned.inputs[0].script_sig = ScriptSigBuf::new();
                 unsigned.inputs[0].witness = Witness::default();
                 unsigned
             },
@@ -1797,7 +1797,7 @@ mod tests {
                                 txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                                 vout: 0,
                             },
-                            script_sig: ScriptBuf::new(),
+                            script_sig: ScriptSigBuf::new(),
                             sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                             witness: Witness::default(),
                         }
@@ -1829,7 +1829,7 @@ mod tests {
                                         txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+                                    script_sig: ScriptSigBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").as_slice(),
@@ -1841,7 +1841,7 @@ mod tests {
                                         txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
+                                    script_sig: ScriptSigBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").as_slice(),
@@ -2158,7 +2158,7 @@ mod tests {
                             txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                             vout: 0,
                         },
-                        script_sig: ScriptBuf::new(),
+                        script_sig: ScriptSigBuf::new(),
                         sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                         witness: Witness::default(),
                     }
@@ -2190,7 +2190,7 @@ mod tests {
                                     txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+                                script_sig: ScriptSigBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").as_slice(),
@@ -2202,7 +2202,7 @@ mod tests {
                                     txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
+                                script_sig: ScriptSigBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").as_slice(),

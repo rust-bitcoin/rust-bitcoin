@@ -56,9 +56,10 @@ impl Instruction<'_> {
     pub(super) fn script_serialized_len(&self) -> usize {
         match self {
             Instruction::Op(_) => 1,
-            // In a later commit this `super::ScriptBuf` will become a specific tagged
-            // script. It doesn't matter which one. But Rust insists that we pick one.
-            Instruction::PushBytes(bytes) => super::ScriptBuf::reserved_len_for_slice(bytes.len()),
+            // The use of `ScriptSigBuf` here is arbitrary. Rust insists that we pick
+            // a specific tagged script type.
+            Instruction::PushBytes(bytes) =>
+                super::ScriptSigBuf::reserved_len_for_slice(bytes.len()),
         }
     }
 
