@@ -9,11 +9,13 @@ use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::{opcodes, Amount, FeeRate};
 
+type Tag = primitives::script::Whatever;
+
 #[test]
 #[rustfmt::skip]
 fn script() {
     let mut comp = vec![];
-    let mut script = Builder::new();
+    let mut script = Builder::<Tag>::new();
     assert_eq!(script.as_bytes(), &comp[..]);
 
     // small ints
@@ -197,7 +199,7 @@ fn script_x_only_key() {
     // From: https://github.com/bitcoin-core/btcdeb/blob/e8c2750c4a4702768c52d15640ed03bf744d2601/doc/tapscript-example.md?plain=1#L43
     const KEYSTR: &str = "209997a497d964fc1a62885b05a51166a65a90df00492c8d7cf61d6accf54803be";
     let x_only_key = KEYSTR[2..].parse::<XOnlyPublicKey>().unwrap();
-    let script = Builder::new().push_x_only_key(x_only_key);
+    let script = Builder::<Tag>::new().push_x_only_key(x_only_key);
     assert_eq!(script.into_bytes(), &hex!(KEYSTR) as &[u8]);
 }
 
@@ -219,7 +221,7 @@ fn script_builder() {
 
 #[test]
 fn script_builder_with_capacity() {
-    let script = Builder::with_capacity(42);
+    let script = Builder::<Tag>::with_capacity(42);
 
     assert!(script.into_script().capacity() >= 42);
 }
@@ -713,7 +715,7 @@ fn iterator() {
 
 #[test]
 fn script_ord() {
-    let script_1 = Builder::new().push_slice([1, 2, 3, 4]).into_script();
+    let script_1 = Builder::<Tag>::new().push_slice([1, 2, 3, 4]).into_script();
     let script_2 = Builder::new().push_int_unchecked(10).into_script();
     let script_3 = Builder::new().push_int_unchecked(15).into_script();
     let script_4 = Builder::new().push_opcode(OP_RETURN).into_script();
@@ -982,7 +984,7 @@ fn instruction_script_num_parse() {
 #[test]
 fn script_push_int_overflow() {
     // Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
-    assert_eq!(Builder::new().push_int(i32::MIN), Err(Error::NumericOverflow));
+    assert_eq!(Builder::<Tag>::new().push_int(i32::MIN), Err(Error::NumericOverflow));
 }
 
 #[test]

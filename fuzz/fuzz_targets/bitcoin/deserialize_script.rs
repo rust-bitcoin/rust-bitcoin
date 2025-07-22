@@ -1,6 +1,6 @@
 use bitcoin::address::Address;
 use bitcoin::consensus::encode;
-use bitcoin::script::{self, ScriptExt as _};
+use bitcoin::script::{self, GenericScriptExt as _, ScriptExt as _};
 use bitcoin::{FeeRate, Network};
 use bitcoin_fuzz::fuzz_utils::{consume_random_bytes, consume_u32};
 use honggfuzz::fuzz;

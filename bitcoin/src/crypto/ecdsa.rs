@@ -100,8 +100,9 @@ impl FromStr for Signature {
 /// This avoids allocation and allows proving maximum size of the signature (73 bytes).
 /// The type can be used largely as a byte slice. It implements all standard traits one would
 /// expect and has familiar methods.
+///
 /// However, the usual use case is to push it into a script. This can be done directly passing it
-/// into [`push_slice`](crate::script::ScriptBuf::push_slice).
+/// into [`push_slice`](crate::script::GenericScriptBufExt::push_slice).
 #[derive(Copy, Clone)]
 pub struct SerializedSignature {
     data: [u8; MAX_SIG_LEN],

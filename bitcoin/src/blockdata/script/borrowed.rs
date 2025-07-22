@@ -9,8 +9,8 @@ use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{
-    Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScriptSizeError,
-    Script, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes,
+    RedeemScriptSizeError, Script, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -24,14 +24,62 @@ use crate::{internal_macros, Amount, FeeRate, ScriptBuf};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
-    pub trait ScriptExt impl for Script {
+    pub trait GenericScriptExt<T> impl<T> for GenericScript<T> {
+        /// Constructs a new script builder
+        fn builder() -> Builder<T> { Builder::new() }
+
         /// Returns an iterator over script bytes.
         #[inline]
         fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
 
-        /// Constructs a new script builder
-        fn builder() -> Builder { Builder::new() }
+        /// Iterates over the script instructions.
+        ///
+        /// Each returned item is a nested enum covering opcodes, datapushes and errors.
+        /// At most one error will be returned and then the iterator will end. To instead iterate over
+        /// the script as sequence of bytes call the [`bytes`](Self::bytes) method.
+        ///
+        /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
+        #[inline]
+        fn instructions(&self) -> Instructions<'_> {
+            Instructions { data: self.as_bytes().iter(), enforce_minimal: false }
+        }
 
+        /// Iterates over the script instructions while enforcing minimal pushes.
+        ///
+        /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
+        /// is not minimal.
+        #[inline]
+        fn instructions_minimal(&self) -> Instructions<'_> {
+            Instructions { data: self.as_bytes().iter(), enforce_minimal: true }
+        }
+
+        /// Iterates over the script instructions and their indices.
+        ///
+        /// Unless the script contains an error, the returned item consists of an index pointing to the
+        /// position in the script where the instruction begins and the decoded instruction - either an
+        /// opcode or data push.
+        ///
+        /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
+        #[inline]
+        fn instruction_indices(&self) -> InstructionIndices<'_> {
+            InstructionIndices::from_instructions(self.instructions())
+        }
+
+        /// Iterates over the script instructions and their indices while enforcing minimal pushes.
+        ///
+        /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
+        /// returned if a push is not minimal.
+        #[inline]
+        fn instruction_indices_minimal(&self) -> InstructionIndices<'_> {
+            InstructionIndices::from_instructions(self.instructions_minimal())
+        }
+
+    }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Script`] type.
+    pub trait ScriptExt impl for Script {
         /// Returns 160-bit hash of the script for P2SH outputs.
         #[inline]
         fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
@@ -377,48 +425,6 @@ internal_macros::define_extension_trait! {
         /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
         fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
 
-        /// Iterates over the script instructions.
-        ///
-        /// Each returned item is a nested enum covering opcodes, datapushes and errors.
-        /// At most one error will be returned and then the iterator will end. To instead iterate over
-        /// the script as sequence of bytes call the [`bytes`](Self::bytes) method.
-        ///
-        /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
-        #[inline]
-        fn instructions(&self) -> Instructions<'_> {
-            Instructions { data: self.as_bytes().iter(), enforce_minimal: false }
-        }
-
-        /// Iterates over the script instructions while enforcing minimal pushes.
-        ///
-        /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
-        /// is not minimal.
-        #[inline]
-        fn instructions_minimal(&self) -> Instructions<'_> {
-            Instructions { data: self.as_bytes().iter(), enforce_minimal: true }
-        }
-
-        /// Iterates over the script instructions and their indices.
-        ///
-        /// Unless the script contains an error, the returned item consists of an index pointing to the
-        /// position in the script where the instruction begins and the decoded instruction - either an
-        /// opcode or data push.
-        ///
-        /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
-        #[inline]
-        fn instruction_indices(&self) -> InstructionIndices<'_> {
-            InstructionIndices::from_instructions(self.instructions())
-        }
-
-        /// Iterates over the script instructions and their indices while enforcing minimal pushes.
-        ///
-        /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
-        /// returned if a push is not minimal.
-        #[inline]
-        fn instruction_indices_minimal(&self) -> InstructionIndices<'_> {
-            InstructionIndices::from_instructions(self.instructions_minimal())
-        }
-
         /// Writes the human-readable assembly representation of the script to the formatter.
         #[deprecated(since = "TBD", note = "use the script's `Display` impl instead")]
         fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
@@ -456,7 +462,21 @@ internal_macros::define_extension_trait! {
 
 mod sealed {
     pub trait Sealed {}
-    impl Sealed for super::Script {}
+    impl<T> Sealed for super::GenericScript<T> {}
+}
+
+crate::internal_macros::define_extension_trait! {
+    pub(crate) trait GenericScriptExtPriv<T> impl<T> for GenericScript<T> {
+        /// Iterates the script to find the last opcode.
+        ///
+        /// Returns `None` is the instruction is data push or if the script is empty.
+        fn last_opcode(&self) -> Option<Opcode> {
+            match self.instructions().last() {
+                Some(Ok(Instruction::Op(op))) => Some(op),
+                _ => None,
+            }
+        }
+    }
 }
 
 internal_macros::define_extension_trait! {
@@ -536,16 +556,6 @@ internal_macros::define_extension_trait! {
             }
 
             n
-        }
-
-        /// Iterates the script to find the last opcode.
-        ///
-        /// Returns `None` is the instruction is data push or if the script is empty.
-        fn last_opcode(&self) -> Option<Opcode> {
-            match self.instructions().last() {
-                Some(Ok(Instruction::Op(op))) => Some(op),
-                _ => None,
-            }
         }
 
         /// Iterates the script to find the last pushdata.

@@ -2,27 +2,31 @@
 
 use core::fmt;
 
-use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
+use super::{opcode_to_verify, write_scriptint, Error, GenericScript, GenericScriptBuf, PushBytes};
 use crate::key::{PublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
-use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _};
+use crate::script::{
+    GenericScriptBufExt as _, GenericScriptBufExtPriv as _, GenericScriptExtPriv as _,
+};
 use crate::{relative, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]
-pub struct Builder(ScriptBuf, Option<Opcode>);
+pub struct Builder<T>(GenericScriptBuf<T>, Option<Opcode>);
 
-impl Builder {
+impl<T> Builder<T> {
     /// Constructs a new empty script.
     #[inline]
-    pub const fn new() -> Self { Self(ScriptBuf::new(), None) }
+    pub const fn new() -> Self { Self(GenericScriptBuf::new(), None) }
 
     /// Constructs a new empty script builder with at least the specified capacity.
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self { Self(ScriptBuf::with_capacity(capacity), None) }
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(GenericScriptBuf::with_capacity(capacity), None)
+    }
 
     /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }
@@ -81,7 +85,7 @@ impl Builder {
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice<T: AsRef<PushBytes>>(self, data: T) -> Self {
+    pub fn push_slice<D: AsRef<PushBytes>>(self, data: D) -> Self {
         let bytes = data.as_ref().as_bytes();
         if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
             match bytes[0] {
@@ -100,7 +104,7 @@ impl Builder {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(mut self, data: T) -> Self {
+    pub fn push_slice_non_minimal<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice_non_minimal(data);
         self.1 = None;
         self
@@ -178,35 +182,35 @@ impl Builder {
     }
 
     /// Converts the `Builder` into `ScriptBuf`.
-    pub fn into_script(self) -> ScriptBuf { self.0 }
+    pub fn into_script(self) -> GenericScriptBuf<T> { self.0 }
 
     /// Converts the `Builder` into script bytes
     pub fn into_bytes(self) -> Vec<u8> { self.0.into() }
 
     /// Returns the internal script
-    pub fn as_script(&self) -> &Script { &self.0 }
+    pub fn as_script(&self) -> &GenericScript<T> { &self.0 }
 
     /// Returns script bytes
     pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
 }
 
-impl Default for Builder {
+impl<T> Default for Builder<T> {
     fn default() -> Self { Self::new() }
 }
 
 /// Constructs a new builder from an existing vector.
-impl From<Vec<u8>> for Builder {
+impl<T> From<Vec<u8>> for Builder<T> {
     fn from(v: Vec<u8>) -> Self {
-        let script = ScriptBuf::from(v);
+        let script = GenericScriptBuf::from(v);
         let last_op = script.last_opcode();
         Self(script, last_op)
     }
 }
 
-impl fmt::Display for Builder {
+impl<T> fmt::Display for Builder<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-impl fmt::Debug for Builder {
+impl<T> fmt::Debug for Builder<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
 }

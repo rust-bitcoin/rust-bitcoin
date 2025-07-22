@@ -7,7 +7,10 @@ use hex::FromHex as _;
 use internals::ToU64 as _;
 use secp256k1::{Secp256k1, Verification};
 
-use super::{opcode_to_verify, Builder, Instruction, PushBytes, ScriptBuf, ScriptExtPriv as _};
+use super::{
+    opcode_to_verify, Builder, GenericScriptBuf, GenericScriptExtPriv as _, Instruction, PushBytes,
+    ScriptBuf,
+};
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
@@ -22,10 +25,81 @@ use crate::{consensus, internal_macros};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
-    pub trait ScriptBufExt impl for ScriptBuf {
+    pub trait GenericScriptBufExt<T> impl<T> for GenericScriptBuf<T> {
         /// Constructs a new script builder
-        fn builder() -> Builder { Builder::new() }
+        fn builder() -> Builder<T> { Builder::new() }
 
+        /// Adds a single opcode to the script.
+        fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
+
+        /// Adds instructions to push some arbitrary data onto the stack.
+        fn push_slice<D: AsRef<PushBytes>>(&mut self, data: D) {
+            let bytes = data.as_ref().as_bytes();
+            if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
+                match bytes[0] {
+                    0x81 => { self.push_opcode(OP_PUSHNUM_NEG1); },
+                    0 => { self.push_opcode(OP_PUSHBYTES_0); },
+                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))); },
+                    _ => {}, // unreachable arm
+                }
+            } else {
+                self.push_slice_non_minimal(data);
+            }
+        }
+
+        /// Adds instructions to push some arbitrary data onto the stack without minimality.
+        ///
+        /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
+        ///
+        /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+        fn push_slice_non_minimal<D: AsRef<PushBytes>>(&mut self, data: D) {
+            let data = data.as_ref();
+            self.reserve(ScriptBuf::reserved_len_for_slice(data.len()));
+            self.push_slice_no_opt(data);
+        }
+
+        /// Add a single instruction to the script.
+        ///
+        /// # Panics
+        ///
+        /// The method panics if the instruction is a data push with length greater or equal to
+        /// 0x100000000.
+        fn push_instruction(&mut self, instruction: Instruction<'_>) {
+            match instruction {
+                Instruction::Op(opcode) => self.push_opcode(opcode),
+                Instruction::PushBytes(bytes) => self.push_slice(bytes),
+            }
+        }
+
+        /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
+        fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
+            match instruction {
+                Instruction::Op(opcode) => self.push_opcode(opcode),
+                Instruction::PushBytes(bytes) => self.push_slice_no_opt(bytes),
+            }
+        }
+
+        /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
+        ///
+        /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
+        /// in the script right after. To save space this function appends `VERIFY` only if
+        /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
+        /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
+        ///
+        /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
+        /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
+        /// semantics.
+        ///
+        /// This function needs to iterate over the script to find the last instruction. Prefer
+        /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
+        /// multiple times.
+        fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
+    }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`ScriptBuf`] type.
+    pub trait ScriptBufExt impl for ScriptBuf {
         /// Generates OP_RETURN-type of scriptPubkey for the given data.
         fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
             Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
@@ -121,86 +195,20 @@ internal_macros::define_extension_trait! {
             let v = Vec::from_hex(s)?;
             Ok(ScriptBuf::from_bytes(v))
         }
-
-        /// Adds a single opcode to the script.
-        fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
-
-        /// Adds instructions to push some arbitrary data onto the stack.
-        fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
-            let bytes = data.as_ref().as_bytes();
-            if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
-                match bytes[0] {
-                    0x81 => { self.push_opcode(OP_PUSHNUM_NEG1); },
-                    0 => { self.push_opcode(OP_PUSHBYTES_0); },
-                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))); },
-                    _ => {}, // unreachable arm
-                }
-            } else {
-                self.push_slice_non_minimal(data);
-            }
-        }
-
-        /// Adds instructions to push some arbitrary data onto the stack without minimality.
-        ///
-        /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
-        ///
-        /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-        fn push_slice_non_minimal<T: AsRef<PushBytes>>(&mut self, data: T) {
-            let data = data.as_ref();
-            self.reserve(ScriptBuf::reserved_len_for_slice(data.len()));
-            self.push_slice_no_opt(data);
-        }
-
-        /// Add a single instruction to the script.
-        ///
-        /// # Panics
-        ///
-        /// The method panics if the instruction is a data push with length greater or equal to
-        /// 0x100000000.
-        fn push_instruction(&mut self, instruction: Instruction<'_>) {
-            match instruction {
-                Instruction::Op(opcode) => self.push_opcode(opcode),
-                Instruction::PushBytes(bytes) => self.push_slice(bytes),
-            }
-        }
-
-        /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
-        fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
-            match instruction {
-                Instruction::Op(opcode) => self.push_opcode(opcode),
-                Instruction::PushBytes(bytes) => self.push_slice_no_opt(bytes),
-            }
-        }
-
-        /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
-        ///
-        /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
-        /// in the script right after. To save space this function appends `VERIFY` only if
-        /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
-        /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
-        ///
-        /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
-        /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
-        /// semantics.
-        ///
-        /// This function needs to iterate over the script to find the last instruction. Prefer
-        /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
-        /// multiple times.
-        fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
     }
 }
 
 mod sealed {
     pub trait Sealed {}
-    impl Sealed for super::ScriptBuf {}
+    impl<T> Sealed for super::GenericScriptBuf<T> {}
 }
 
 internal_macros::define_extension_trait! {
-    pub(crate) trait ScriptBufExtPriv impl for ScriptBuf {
+    pub(crate) trait GenericScriptBufExtPriv<T> impl<T> for GenericScriptBuf<T> {
         /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
         ///
         /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
-        fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_> {
+        fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_, T> {
             let vec = core::mem::take(self).into_bytes();
             ScriptBufAsVec(self, vec)
         }
@@ -314,21 +322,21 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 /// In reality the backing `Vec<u8>` is swapped with an empty one and this is holding both the
 /// reference and the vec. The vec is put back when this drops so it also covers panics. (But not
 /// leaks, which is OK since we never leak.)
-pub(crate) struct ScriptBufAsVec<'a>(&'a mut ScriptBuf, Vec<u8>);
+pub(crate) struct ScriptBufAsVec<'a, T>(&'a mut GenericScriptBuf<T>, Vec<u8>);
 
-impl core::ops::Deref for ScriptBufAsVec<'_> {
+impl<T> core::ops::Deref for ScriptBufAsVec<'_, T> {
     type Target = Vec<u8>;
 
     fn deref(&self) -> &Self::Target { &self.1 }
 }
 
-impl core::ops::DerefMut for ScriptBufAsVec<'_> {
+impl<T> core::ops::DerefMut for ScriptBufAsVec<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target { &mut self.1 }
 }
 
-impl Drop for ScriptBufAsVec<'_> {
+impl<T> Drop for ScriptBufAsVec<'_, T> {
     fn drop(&mut self) {
         let vec = core::mem::take(&mut self.1);
-        *(self.0) = ScriptBuf::from_bytes(vec);
+        *(self.0) = GenericScriptBuf::from_bytes(vec);
     }
 }
