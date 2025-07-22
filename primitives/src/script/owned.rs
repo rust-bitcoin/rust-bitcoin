@@ -10,11 +10,11 @@ use crate::prelude::{Box, Vec};
 
 /// An owned, growable script.
 ///
-/// `ScriptBuf` is the most common script type that has the ownership over the contents of the
+/// `GenericScriptBuf` is the most common script type that has the ownership over the contents of the
 /// script. It has a close relationship with its borrowed counterpart, [`Script`].
 ///
 /// Just as other similar types, this implements [`Deref`], so [deref coercions] apply. Also note
-/// that all the safety/validity restrictions that apply to [`Script`] apply to `ScriptBuf` as well.
+/// that all the safety/validity restrictions that apply to [`Script`] apply to `GenericScriptBuf` as well.
 ///
 /// # Hexadecimal strings
 ///
@@ -27,9 +27,9 @@ use crate::prelude::{Box, Vec};
 /// [`examples/script.rs`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/script.rs>
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct ScriptBuf(Vec<u8>);
+pub struct GenericScriptBuf(Vec<u8>);
 
-impl ScriptBuf {
+impl GenericScriptBuf {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> Self { Self::from_bytes(Vec::new()) }
@@ -59,7 +59,7 @@ impl ScriptBuf {
     #[inline]
     pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
-    /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
+    /// Converts this `GenericScriptBuf` into a [boxed](Box) [`Script`].
     ///
     /// This method reallocates if the capacity is greater than length of the script but should not
     /// when they are equal. If you know beforehand that you need to create a script of exact size
@@ -74,7 +74,7 @@ impl ScriptBuf {
     /// Constructs a new empty script with at least the specified capacity.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        ScriptBuf::from_bytes(Vec::with_capacity(capacity))
+        GenericScriptBuf::from_bytes(Vec::with_capacity(capacity))
     }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
@@ -125,24 +125,24 @@ impl ScriptBuf {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
-impl Deref for ScriptBuf {
+impl Deref for GenericScriptBuf {
     type Target = Script;
 
     #[inline]
     fn deref(&self) -> &Self::Target { self.as_script() }
 }
 
-impl DerefMut for ScriptBuf {
+impl DerefMut for GenericScriptBuf {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for ScriptBuf {
+impl<'a> Arbitrary<'a> for GenericScriptBuf {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = Vec::<u8>::arbitrary(u)?;
-        Ok(ScriptBuf::from_bytes(v))
+        Ok(GenericScriptBuf::from_bytes(v))
     }
 }
 
@@ -151,7 +151,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::vec;
 
-    use super::*;
+    use super::super::ScriptBuf;
 
     #[test]
     fn script_buf_from_bytes() {
