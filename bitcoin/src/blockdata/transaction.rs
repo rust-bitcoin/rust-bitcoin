@@ -1750,6 +1750,13 @@ impl<'a> Arbitrary<'a> for Version {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Wtxid {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Wtxid::from_byte_array(u.arbitrary()?))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;

@@ -497,6 +497,13 @@ impl<'a> Arbitrary<'a> for Block {
 }
 
 #[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for BlockHash {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(BlockHash::from_byte_array(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Header {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Header {
