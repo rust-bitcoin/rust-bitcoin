@@ -4,6 +4,9 @@
 //!
 //! This module describes BIP157 Client Side Block Filtering network messages.
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use bitcoin::bip158::{FilterHash, FilterHeader};
 use bitcoin::block::BlockHash;
 use units::BlockHeight;
@@ -81,3 +84,67 @@ pub struct CFCheckpt {
     pub filter_headers: Vec<FilterHeader>,
 }
 impl_consensus_encoding!(CFCheckpt, filter_type, stop_hash, filter_headers);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for GetCFilters {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(GetCFilters{
+            filter_type: u.arbitrary()?,
+            start_height: u.arbitrary()?,
+            stop_hash: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for CFilter {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(CFilter{
+            filter_type: u.arbitrary()?,
+            block_hash: u.arbitrary()?,
+            filter: Vec::<u8>::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for GetCFHeaders {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(GetCFHeaders{
+            filter_type: u.arbitrary()?,
+            start_height: u.arbitrary()?,
+            stop_hash: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for CFHeaders {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(CFHeaders{
+            filter_type: u.arbitrary()?,
+            stop_hash: u.arbitrary()?,
+            previous_filter_header: u.arbitrary()?,
+            filter_hashes: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for GetCFCheckpt {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(GetCFCheckpt{ filter_type: u.arbitrary()?, stop_hash: u.arbitrary()? })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for CFCheckpt {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(CFCheckpt{
+            filter_type: u.arbitrary()?,
+            stop_hash: u.arbitrary()?,
+            filter_headers: Vec::<FilterHeader>::arbitrary(u)?,
+        })
+    }
+}
+
