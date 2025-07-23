@@ -549,6 +549,24 @@ impl<'a> Arbitrary<'a> for TxMerkleNode {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PartialMerkleTree {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(PartialMerkleTree {
+            num_transactions: u.arbitrary()?,
+            bits: Vec::<bool>::arbitrary(u)?,
+            hashes: Vec::<TxMerkleNode>::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for MerkleBlock {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(MerkleBlock { header: u.arbitrary()?, txn: u.arbitrary()? })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use hex::test_hex_unwrap as hex;
