@@ -12,6 +12,8 @@
 use core::convert::Infallible;
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
@@ -507,6 +509,24 @@ impl std::error::Error for MerkleBlockError {
             | NotEnoughBits | NotAllBitsConsumed | NotAllHashesConsumed | BitsArrayOverflow
             | HashesArrayOverflow | IdenticalHashesFound => None,
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PartialMerkleTree {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(PartialMerkleTree {
+            num_transactions: u.arbitrary()?,
+            bits: Vec::<bool>::arbitrary(u)?,
+            hashes: Vec::<TxMerkleNode>::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for MerkleBlock {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(MerkleBlock { header: u.arbitrary()?, txn: u.arbitrary()? })
     }
 }
 
