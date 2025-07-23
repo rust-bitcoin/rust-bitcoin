@@ -6,6 +6,9 @@
 
 use alloc::vec::Vec;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
 use io::{BufRead, Write};
 
@@ -67,3 +70,33 @@ pub struct FilterAdd {
 }
 
 impl_consensus_encoding!(FilterAdd, data);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for BloomFlags {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=2)? {
+            0 => Ok(BloomFlags::None),
+            1 => Ok(BloomFlags::All),
+            _ => Ok(BloomFlags::PubkeyOnly)
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FilterAdd {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(FilterAdd{ data: Vec::<u8>::arbitrary(u)? })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FilterLoad {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(FilterLoad{
+            filter: Vec::<u8>::arbitrary(u)?,
+            hash_funcs: u.arbitrary()?,
+            tweak: u.arbitrary()?,
+            flags: u.arbitrary()?,
+        })
+    }
+}
