@@ -733,7 +733,7 @@ mod test {
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
     use crate::message_network::{Reject, RejectReason, VersionMessage};
-    use crate::ServiceFlags;
+    use crate::{ProtocolVersion, ServiceFlags};
 
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
 
@@ -1047,7 +1047,7 @@ mod test {
         let msg = msg.unwrap();
         assert_eq!(msg.magic, Magic::BITCOIN);
         if let NetworkMessage::Version(version_msg) = msg.payload {
-            assert_eq!(version_msg.version, 70015);
+            assert_eq!(version_msg.version, ProtocolVersion::INVALID_CB_NO_BAN_VERSION);
             assert_eq!(
                 version_msg.services,
                 ServiceFlags::NETWORK
@@ -1085,7 +1085,7 @@ mod test {
         ]).unwrap();
 
         if let NetworkMessage::Version(version_msg) = msg.payload {
-            assert_eq!(version_msg.version, 70015);
+            assert_eq!(version_msg.version, ProtocolVersion::INVALID_CB_NO_BAN_VERSION);
             assert_eq!(
                 version_msg.services,
                 ServiceFlags::NETWORK
@@ -1131,7 +1131,7 @@ mod test {
         assert_eq!(consumed, data.to_vec().len() - 2);
         assert_eq!(msg.magic, Magic::BITCOIN);
         if let NetworkMessage::Version(version_msg) = msg.payload {
-            assert_eq!(version_msg.version, 70015);
+            assert_eq!(version_msg.version, ProtocolVersion::INVALID_CB_NO_BAN_VERSION);
             assert_eq!(
                 version_msg.services,
                 ServiceFlags::NETWORK
