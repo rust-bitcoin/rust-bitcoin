@@ -75,6 +75,7 @@ version = "0.0.0"
 name = "bitcoin-fuzz"
 version = "0.0.1"
 dependencies = [
+ "arbitrary",
  "bitcoin",
  "bitcoin-p2p-messages",
  "honggfuzz",

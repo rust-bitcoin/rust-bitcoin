@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Sort order is affected by locale. See `man sort`.
+# > Set LC_ALL=C to get the traditional sort order that uses native byte values.
+export LC_ALL=C
+
 REPO_DIR=$(git rev-parse --show-toplevel)
 
 listTargetFiles() {
