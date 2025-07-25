@@ -70,7 +70,7 @@ fn from_str_zero() {
         for v in &["0", "000"] {
             let s = format!("{} {}", v, denom);
             match s.parse::<Amount>() {
-                Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
+                Err(e) => panic!("failed to create amount from {}: {:?}", s, e),
                 Ok(amount) => assert_eq!(amount, Amount::ZERO),
             }
         }
