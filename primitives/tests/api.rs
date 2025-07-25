@@ -163,10 +163,10 @@ struct Default {
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
     a: transaction::ParseOutPointError,
-    b: relative::DisabledLockTimeError,
-    c: relative::IsSatisfiedByError,
-    d: relative::IsSatisfiedByHeightError,
-    e: relative::IsSatisfiedByTimeError,
+    b: relative::error::DisabledLockTimeError,
+    c: relative::error::IsSatisfiedByError,
+    d: relative::error::IsSatisfiedByHeightError,
+    e: relative::error::IsSatisfiedByTimeError,
     f: script::RedeemScriptSizeError,
     g: script::WitnessScriptSizeError,
 }
@@ -209,9 +209,10 @@ fn api_can_use_types_from_crate_root() {
 
 #[test]
 fn api_can_use_all_types_from_module_locktime() {
-    use bitcoin_primitives::locktime::relative::{
-        DisabledLockTimeError, InvalidHeightError, InvalidTimeError, LockTime,
+    use bitcoin_primitives::locktime::relative::error::{
+        DisabledLockTimeError, InvalidHeightError, InvalidTimeError,
     };
+    use bitcoin_primitives::locktime::relative::LockTime;
     use bitcoin_primitives::locktime::{absolute, relative};
 }
 
