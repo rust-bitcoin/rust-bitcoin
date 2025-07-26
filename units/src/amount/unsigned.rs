@@ -27,13 +27,27 @@ mod encapsulate {
     /// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
     /// but we do provide modules for serializing as satoshis or bitcoin.
     ///
-    /// **Warning!**
+    /// # The 21M limit
+    ///
+    /// Since Bitcoin itself is limited to 2 100 000 000 000 000 satoshis (a bit less in practice)
+    /// this type also implements the same restriction. While this may be surprising it actually
+    /// provides many benefits:
+    ///
+    /// * Conversions from unsigned to signed are infallible
+    /// * Negation is infallible
+    /// * Absolute value is infallible (though `unsigned_abs` is usually beter anyway)
+    /// * Conversion to float is lossless
+    /// * Division cannot overflow, so it has to be div-by-zero; thus division by `NonZeroU64` is
+    ///   completely infallible
+    /// * Infallible conversion to `i64` allows directly storing in SQL databases
+    /// * It's possible to more efficiently sum amounts using SIMD
+    ///
+    /// # Numeric operations
     ///
     /// This type implements several arithmetic operations from [`core::ops`].
-    /// To prevent errors due to an overflow when using these operations,
-    /// it is advised to instead use the checked arithmetic methods whose names
-    /// start with `checked_`. The operations from [`core::ops`] that [`Amount`]
-    /// implements will panic when an overflow occurs.
+    /// To prevent errors due to an overflow when using these operations, it returns the
+    /// `NumOpResult` type which enforces checked arithmetic. The resulting type itself implements
+    /// the traits so you can write code like `a + b + c` and only check the result afterwards.
     ///
     /// # Examples
     ///
@@ -124,11 +138,13 @@ impl Amount {
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too precise, negative, or greater than 21,000,000.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     ///
     /// # Examples
     ///
@@ -205,7 +221,9 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -223,7 +241,9 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in Bitcoin.
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -238,11 +258,13 @@ impl Amount {
 
     /// Converts this [`Amount`] in floating-point notation in the given [`Denomination`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too big, too precise or negative.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
         if value < 0.0 {
