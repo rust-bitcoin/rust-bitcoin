@@ -4,7 +4,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
 use bitcoin::consensus::{encode, Decodable};
-use bitcoin_p2p_messages::{self, address, message, message_network, Magic, ServiceFlags};
+use bitcoin_p2p_messages::{
+    self, address, message, message_network, Magic, ProtocolVersion, ServiceFlags,
+};
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the initial
@@ -93,6 +95,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
 
     // Construct the message
     message::NetworkMessage::Version(message_network::VersionMessage::new(
+        ProtocolVersion::default(),
         services,
         timestamp as i64,
         addr_recv,
