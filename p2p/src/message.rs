@@ -246,7 +246,7 @@ pub enum NetworkMessage {
     /// BIP152 blocktxn
     BlockTxn(message_compact_blocks::BlockTxn),
     /// `alert`
-    Alert(Vec<u8>),
+    Alert(message_network::Alert),
     /// `reject`
     Reject(message_network::Reject),
     /// `feefilter`
@@ -732,7 +732,7 @@ mod test {
     use crate::message_filter::{
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
-    use crate::message_network::{Reject, RejectReason, VersionMessage};
+    use crate::message_network::{Alert, Reject, RejectReason, VersionMessage};
     use crate::ServiceFlags;
 
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
@@ -835,7 +835,7 @@ mod test {
                     FilterHeader::from_byte_array(hash([99u8; 32]).to_byte_array()),
                 ],
             }),
-            NetworkMessage::Alert(vec![45, 66, 3, 2, 6, 8, 9, 12, 3, 130]),
+            NetworkMessage::Alert(Alert::final_alert()),
             NetworkMessage::Reject(Reject {
                 message: "Test reject".into(),
                 ccode: RejectReason::Duplicate,
