@@ -9,6 +9,8 @@ use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::ToU64 as _;
@@ -401,6 +403,46 @@ impl BlockTransactions {
                 txs
             },
         })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ShortId {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(ShortId(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PrefilledTransaction {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(PrefilledTransaction { idx: u.arbitrary()?, tx: u.arbitrary()? })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for HeaderAndShortIds {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(HeaderAndShortIds {
+            header: u.arbitrary()?,
+            nonce: u.arbitrary()?,
+            short_ids: Vec::<ShortId>::arbitrary(u)?,
+            prefilled_txs: Vec::<PrefilledTransaction>::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for BlockTransactions {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(BlockTransactions { block_hash: u.arbitrary()?, transactions: Vec::<Transaction>::arbitrary(u)? })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(BlockTransactionsRequest { block_hash: u.arbitrary()?, indexes: Vec::<u64>::arbitrary(u)? })
     }
 }
 
