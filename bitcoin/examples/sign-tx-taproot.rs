@@ -2,8 +2,8 @@
 
 //! Demonstrate creating a transaction that spends to and from p2tr outputs.
 
-use bitcoin::key::{Keypair, TapTweak, TweakedKeypair, UntweakedPublicKey};
 use bitcoin::ext::*;
+use bitcoin::key::{Keypair, TapTweak, TweakedKeypair, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing, Verification};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
