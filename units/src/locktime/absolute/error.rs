@@ -266,6 +266,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn locktime_unit_display() {
         use alloc::format;
+
         use super::LockTimeUnit;
 
         let blocks = LockTimeUnit::Blocks;
