@@ -112,6 +112,7 @@ impl SignedAmount {
     ///
     /// Accepts an `i32` which is guaranteed to be in range for the type, but which can only
     /// represent roughly -21.47 to 21.47 BTC.
+    #[allow(clippy::missing_panics_doc)]
     pub const fn from_sat_i32(satoshi: i32) -> Self {
         let sats = satoshi as i64; // cannot use i64::from in a constfn
         match Self::from_sat(sats) {
@@ -316,6 +317,7 @@ impl SignedAmount {
     ///
     /// This function never overflows or panics, unlike `i64::abs()`.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn abs(self) -> Self {
         // `i64::abs()` can never overflow because SignedAmount::MIN == -MAX_MONEY.
         match Self::from_sat(self.to_sat().abs()) {

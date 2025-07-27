@@ -114,6 +114,7 @@ impl Amount {
     ///
     /// Accepts an `u32` which is guaranteed to be in range for the type, but which can only
     /// represent roughly 0 to 42.95 BTC.
+    #[allow(clippy::missing_panics_doc)]
     pub const fn from_sat_u32(satoshi: u32) -> Self {
         let sats = satoshi as u64; // cannot use i64::from in a constfn
         match Self::from_sat(sats) {
