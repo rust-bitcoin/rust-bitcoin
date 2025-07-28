@@ -4,7 +4,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
 use bitcoin::consensus::{encode, Decodable};
-use bitcoin_p2p_messages::{self, address, message, message_network, Magic, ServiceFlags};
+use bitcoin_p2p_messages::{
+    self, address, message, message_network, Magic, ProtocolVersion, ServiceFlags,
+};
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the initial
@@ -70,7 +72,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let my_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0);
 
     // The version of the p2p protocol this client will use
-    let protocol_version = 70001;
+    let protocol_version = ProtocolVersion::BIP0031_VERSION;
 
     // "bitfield of features to be enabled for this connection"
     let services = ServiceFlags::NONE;

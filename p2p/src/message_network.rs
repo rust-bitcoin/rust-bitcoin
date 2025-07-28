@@ -12,7 +12,7 @@ use io::{BufRead, Write};
 
 use crate::address::Address;
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
-use crate::ServiceFlags;
+use crate::{ProtocolVersion, ServiceFlags};
 
 // Some simple messages
 
@@ -20,7 +20,7 @@ use crate::ServiceFlags;
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct VersionMessage {
     /// The P2P network protocol version
-    pub version: u32,
+    pub version: ProtocolVersion,
     /// A bitmask describing the services supported by this node
     pub services: ServiceFlags,
     /// The time at which the `version` message was sent
@@ -51,7 +51,7 @@ pub struct VersionMessage {
 impl VersionMessage {
     /// Constructs a new `version` message with `relay` set to false
     pub fn new(
-        version: u32,
+        version: ProtocolVersion,
         services: ServiceFlags,
         timestamp: i64,
         receiver: Address,
@@ -184,7 +184,7 @@ mod tests {
         let decode: Result<VersionMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.version, 70002);
+        assert_eq!(real_decode.version.0, 70002);
         assert_eq!(real_decode.services, ServiceFlags::NETWORK);
         assert_eq!(real_decode.timestamp, 1401217254);
         // address decodes should be covered by Address tests
