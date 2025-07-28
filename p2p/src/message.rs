@@ -17,7 +17,7 @@ use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::address::{AddrV2Message, Address};
-use crate::consensus::impl_vec_wrapper;
+use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
     Magic,
@@ -158,6 +158,21 @@ pub struct RawNetworkMessage {
     payload_len: u32,
     checksum: [u8; 4],
 }
+
+/// A v1 message header used to describe the incoming payload.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct V1MessageHeader {
+    /// The network magic, a unique 4 byte sequence.
+    pub magic: Magic,
+    /// The "command" used to describe the payload.
+    pub command: CommandString,
+    /// The length of the payload.
+    pub length: u32,
+    /// A checksum to the afformentioned data.
+    pub checksum: [u8; 4],
+}
+
+impl_consensus_encoding!(V1MessageHeader, magic, command, length, checksum);
 
 /// A Network message using the v2 p2p protocol defined in BIP324.
 #[derive(Clone, Debug, PartialEq, Eq)]
