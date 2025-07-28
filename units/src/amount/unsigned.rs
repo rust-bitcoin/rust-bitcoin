@@ -118,7 +118,8 @@ impl Amount {
         let sats = satoshi as u64; // cannot use i64::from in a constfn
         match Self::from_sat(sats) {
             Ok(amount) => amount,
-            Err(_) => panic!("unreachable - 65,536 BTC is within range"),
+            Err(_) =>
+                panic!("unreachable - u32 input [0 to 4,294,967,295 satoshis] is within range"),
         }
     }
 
