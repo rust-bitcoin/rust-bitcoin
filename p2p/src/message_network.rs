@@ -39,7 +39,7 @@ pub struct VersionMessage {
     /// you may just set it to 0.
     pub nonce: u64,
     /// A string describing the peer's software
-    pub user_agent: String,
+    pub user_agent: UserAgent,
     /// The height of the maximum-work blockchain that the peer is aware of
     pub start_height: i32,
     /// Whether the receiving peer should relay messages to the sender; used
@@ -57,7 +57,7 @@ impl VersionMessage {
         receiver: Address,
         sender: Address,
         nonce: u64,
-        user_agent: String,
+        user_agent: UserAgent,
         start_height: i32,
     ) -> VersionMessage {
         VersionMessage {
@@ -353,7 +353,11 @@ mod tests {
         assert_eq!(real_decode.timestamp, 1401217254);
         // address decodes should be covered by Address tests
         assert_eq!(real_decode.nonce, 16735069437859780935);
-        assert_eq!(real_decode.user_agent, "/Satoshi:0.9.99/".to_string());
+        assert_eq!(real_decode.user_agent, UserAgent::new("Satoshi", UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 0,
+            minor: 9,
+            revision: 99
+        })));
         assert_eq!(real_decode.start_height, 302892);
         assert!(real_decode.relay);
 
