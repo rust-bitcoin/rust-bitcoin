@@ -192,7 +192,9 @@ fn api_can_use_all_types_from_module_locktime_absolute() {
     use bitcoin_units::locktime::absolute::error::{
         ConversionError as _, ParseHeightError as _, ParseTimeError as _,
     };
-    use bitcoin_units::locktime::absolute::{Height, MedianTimePast, ConversionError, ParseHeightError, ParseTimeError};
+    use bitcoin_units::locktime::absolute::{
+        ConversionError, Height, MedianTimePast, ParseHeightError, ParseTimeError,
+    };
 }
 
 #[test]
@@ -200,7 +202,10 @@ fn api_can_use_all_types_from_module_locktime_relative() {
     use bitcoin_units::locktime::relative::error::{
         InvalidHeightError as _, InvalidTimeError as _, TimeOverflowError as _,
     };
-    use bitcoin_units::locktime::relative::{Height, NumberOf512Seconds, NumberOfBlocks, Time, InvalidHeightError, InvalidTimeError, TimeOverflowError};
+    use bitcoin_units::locktime::relative::{
+        Height, InvalidHeightError, InvalidTimeError, NumberOf512Seconds, NumberOfBlocks, Time,
+        TimeOverflowError,
+    };
 }
 
 #[test]
