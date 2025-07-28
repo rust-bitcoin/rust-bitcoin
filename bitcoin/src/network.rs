@@ -59,11 +59,19 @@ impl From<Network> for NetworkKind {
 }
 
 /// The cryptocurrency network to act on.
+///
+/// This is an exhaustive enum, meaning that we cannot add any future networks without defining a
+/// new, incompatible version of this type. If you are using this type directly and wish to support the
+/// new network, this will be a breaking change to your APIs and likely require changes in your code.
+///
+/// If you are concerned about forward compatibility, consider using `T: Into<Params>` instead of
+/// this type as a parameter to functions in your public API, or directly using the `Params` type.
+// For extensive discussion on the usage of `non_exhaustive` please see:
+// https://github.com/rust-bitcoin/rust-bitcoin/issues/2225
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
-#[non_exhaustive]
 pub enum Network {
     /// Mainnet Bitcoin.
     Bitcoin,
