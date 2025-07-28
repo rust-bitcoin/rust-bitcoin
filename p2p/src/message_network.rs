@@ -51,6 +51,7 @@ pub struct VersionMessage {
 impl VersionMessage {
     /// Constructs a new `version` message with `relay` set to false
     pub fn new(
+        version: u32,
         services: ServiceFlags,
         timestamp: i64,
         receiver: Address,
@@ -60,7 +61,7 @@ impl VersionMessage {
         start_height: i32,
     ) -> VersionMessage {
         VersionMessage {
-            version: crate::PROTOCOL_VERSION,
+            version,
             services,
             timestamp,
             receiver,

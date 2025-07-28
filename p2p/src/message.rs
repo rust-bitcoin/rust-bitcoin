@@ -793,20 +793,22 @@ mod test {
                 Txid::from_byte_array(hash([45u8; 32]).to_byte_array()),
             )])),
             NetworkMessage::NotFound(InventoryPayload(vec![Inventory::Error([0u8; 32])])),
-            NetworkMessage::GetBlocks(GetBlocksMessage::new(
-                vec![
+            NetworkMessage::GetBlocks(GetBlocksMessage {
+                version: 70001,
+                locator_hashes: vec![
                     BlockHash::from_byte_array(hash([1u8; 32]).to_byte_array()),
                     BlockHash::from_byte_array(hash([4u8; 32]).to_byte_array()),
                 ],
-                BlockHash::from_byte_array(hash([5u8; 32]).to_byte_array()),
-            )),
-            NetworkMessage::GetHeaders(GetHeadersMessage::new(
-                vec![
+                stop_hash: BlockHash::from_byte_array(hash([5u8; 32]).to_byte_array()),
+            }),
+            NetworkMessage::GetHeaders(GetHeadersMessage {
+                version: 70001,
+                locator_hashes: vec![
                     BlockHash::from_byte_array(hash([10u8; 32]).to_byte_array()),
                     BlockHash::from_byte_array(hash([40u8; 32]).to_byte_array()),
                 ],
-                BlockHash::from_byte_array(hash([50u8; 32]).to_byte_array()),
-            )),
+                stop_hash: BlockHash::from_byte_array(hash([50u8; 32]).to_byte_array()),
+            }),
             NetworkMessage::MemPool,
             NetworkMessage::Tx(tx),
             NetworkMessage::Block(block),

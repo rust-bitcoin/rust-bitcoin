@@ -123,21 +123,7 @@ pub struct GetHeadersMessage {
     pub stop_hash: BlockHash,
 }
 
-impl GetBlocksMessage {
-    /// Construct a new `getblocks` message
-    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
-        GetBlocksMessage { version: crate::PROTOCOL_VERSION, locator_hashes, stop_hash }
-    }
-}
-
 impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
-
-impl GetHeadersMessage {
-    /// Construct a new `getheaders` message
-    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
-        GetHeadersMessage { version: crate::PROTOCOL_VERSION, locator_hashes, stop_hash }
-    }
-}
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 

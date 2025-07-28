@@ -69,6 +69,9 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     // Building version message, see https://en.bitcoin.it/wiki/Protocol_documentation#version
     let my_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0);
 
+    // The version of the p2p protocol this client will use
+    let protocol_version = 70001;
+
     // "bitfield of features to be enabled for this connection"
     let services = ServiceFlags::NONE;
 
@@ -93,6 +96,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
 
     // Construct the message
     message::NetworkMessage::Version(message_network::VersionMessage::new(
+        protocol_version,
         services,
         timestamp as i64,
         addr_recv,
