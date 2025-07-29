@@ -209,27 +209,27 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
-impl Encodable for Script {
+impl<T> Encodable for GenericScript<T> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
     }
 }
 
-impl Encodable for ScriptBuf {
+impl<T> Encodable for GenericScriptBuf<T> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.as_script().consensus_encode(w)
     }
 }
 
-impl Decodable for ScriptBuf {
+impl<T> Decodable for GenericScriptBuf<T> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
-        Ok(ScriptBuf::from_bytes(v))
+        Ok(Self::from_bytes(v))
     }
 }
 

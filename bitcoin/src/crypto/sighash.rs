@@ -1537,7 +1537,7 @@ mod tests {
     use super::*;
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
-    use crate::script::{ScriptBuf, ScriptBufExt as _};
+    use crate::script::{GenericScriptBufExt as _, ScriptBuf};
     use crate::TxIn;
 
     extern crate serde_json;

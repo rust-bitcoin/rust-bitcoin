@@ -18,7 +18,7 @@ use crate::crypto::{ecdsa, taproot};
 use crate::io::Write;
 use crate::prelude::{DisplayHex, String, Vec};
 use crate::psbt::{Error, Psbt};
-use crate::script::ScriptBuf;
+use crate::script::GenericScriptBuf;
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
@@ -152,11 +152,11 @@ impl_psbt_hash_de_serialize!(sha256d::Hash);
 // Taproot
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
 
-impl Serialize for ScriptBuf {
+impl<T> Serialize for GenericScriptBuf<T> {
     fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }
 
-impl Deserialize for ScriptBuf {
+impl<T> Deserialize for GenericScriptBuf<T> {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> { Ok(Self::from(bytes.to_vec())) }
 }
 
@@ -346,7 +346,7 @@ impl Deserialize for ControlBlock {
 }
 
 // Versioned ScriptBuf
-impl Serialize for (ScriptBuf, LeafVersion) {
+impl<T> Serialize for (GenericScriptBuf<T>, LeafVersion) {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.0.len() + 1);
         buf.extend(self.0.as_bytes());
@@ -355,13 +355,13 @@ impl Serialize for (ScriptBuf, LeafVersion) {
     }
 }
 
-impl Deserialize for (ScriptBuf, LeafVersion) {
+impl<T> Deserialize for (GenericScriptBuf<T>, LeafVersion) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.is_empty() {
             return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
         }
         // The last byte is LeafVersion.
-        let script = ScriptBuf::deserialize(&bytes[..bytes.len() - 1])?;
+        let script = GenericScriptBuf::deserialize(&bytes[..bytes.len() - 1])?;
         let leaf_ver = LeafVersion::from_consensus(bytes[bytes.len() - 1])
             .map_err(|_| Error::InvalidLeafVersion)?;
         Ok((script, leaf_ver))
@@ -415,7 +415,8 @@ impl Deserialize for TapTree {
         let mut bytes_iter = bytes.iter();
         while let Some(depth) = bytes_iter.next() {
             let version = bytes_iter.next().ok_or(Error::Taproot("invalid Taproot Builder"))?;
-            let (script, consumed) = deserialize_partial::<ScriptBuf>(bytes_iter.as_slice())?;
+            let (script, consumed) =
+                deserialize_partial::<GenericScriptBuf<_>>(bytes_iter.as_slice())?;
             if consumed > 0 {
                 bytes_iter.nth(consumed - 1);
             }
@@ -435,7 +436,8 @@ fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_r
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::script::ScriptBufExt as _;
+    use crate::script::GenericScriptBufExt as _;
+    use crate::ScriptBuf;
 
     // Composes tree matching a given depth map, filled with dumb script leafs,
     // each of which consists of a single push-int op code, with int value

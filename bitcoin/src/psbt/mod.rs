@@ -1332,6 +1332,7 @@ mod tests {
     use {
         crate::bip32::Fingerprint,
         crate::locktime,
+        crate::script::ScriptBufExt as _,
         crate::witness_version::WitnessVersion,
         crate::WitnessProgram,
         secp256k1::{All, SecretKey},
@@ -1342,7 +1343,7 @@ mod tests {
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
-    use crate::script::{ScriptBuf, ScriptBufExt as _};
+    use crate::script::{GenericScriptBufExt as _, ScriptBuf};
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
     use crate::Sequence;

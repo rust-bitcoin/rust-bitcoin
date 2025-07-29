@@ -94,6 +94,34 @@ internal_macros::define_extension_trait! {
         /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
         /// multiple times.
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
+
+        /// Constructs a new [`ScriptBuf`] from a hex string.
+        ///
+        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
+        fn from_hex_prefixed(s: &str) -> Result<Self, consensus::FromHexError>
+            where Self: Sized
+        {
+            consensus::encode::deserialize_hex(s)
+        }
+
+        /// Constructs a new [`ScriptBuf`] from a hex string.
+        #[deprecated(since = "TBD", note = "use `from_hex_string_no_length_prefix()` instead")]
+        fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError>
+            where Self: Sized
+        {
+            Self::from_hex_no_length_prefix(s)
+        }
+
+        /// Constructs a new [`ScriptBuf`] from a hex string.
+        ///
+        /// This is **not** consensus encoding. If your hex string is a consensus encoded script
+        /// then use `ScriptBuf::from_hex_prefixed`.
+        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::HexToBytesError>
+            where Self: Sized
+        {
+            let v = Vec::from_hex(s)?;
+            Ok(Self::from_bytes(v))
+        }
     }
 }
 
@@ -172,28 +200,6 @@ crate::internal_macros::define_extension_trait! {
                 .push_opcode(witness_program.version().into())
                 .push_slice(witness_program.program())
                 .into_script()
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        fn from_hex_prefixed(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
-            consensus::encode::deserialize_hex(s)
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        #[deprecated(since = "TBD", note = "use `from_hex_string_no_length_prefix()` instead")]
-        fn from_hex(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
-            Self::from_hex_no_length_prefix(s)
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-        /// then use `ScriptBuf::from_hex_prefixed`.
-        fn from_hex_no_length_prefix(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
-            let v = Vec::from_hex(s)?;
-            Ok(ScriptBuf::from_bytes(v))
         }
     }
 }

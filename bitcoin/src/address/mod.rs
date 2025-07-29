@@ -1020,6 +1020,7 @@ mod tests {
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, TestnetVersion};
+    use crate::script::GenericScriptBufExt as _;
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(
