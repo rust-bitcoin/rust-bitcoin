@@ -249,7 +249,7 @@ macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident$(<$($gen:ident: $gent:path),*>)?($($params:tt)*) $( -> $ret:ty )? $body:block
+            fn $fn:ident$(<$($gen:ident: $gent:path),*>)?($($params:tt)*) $( -> $ret:ty )? $(where $wherety:ident $(= $whereeq:ident)? $(: $wherebound:ident)?)? $body:block
         )*
     }) => {
         #[cfg_attr(docsrs, doc(notable_trait))]
@@ -258,7 +258,7 @@ macro_rules! define_extension_trait {
                 $crate::internal_macros::only_doc_attrs! {
                     { $(#[$($fn_attrs)*])* },
                     {
-                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )?;
+                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret)? $(where $wherety $(= $whereeq)? $(: $wherebound)?)?;
                     }
                 }
             )*
@@ -269,7 +269,7 @@ macro_rules! define_extension_trait {
                 $crate::internal_macros::only_non_doc_attrs! {
                     { $(#[$($fn_attrs)*])* },
                     {
-                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )? $body
+                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )? $(where $wherety $(= $whereeq)? $(: $wherebound)?)? $body
                     }
                 }
             )*
