@@ -10,7 +10,8 @@ use secp256k1::{Secp256k1, Verification};
 use super::witness_version::WitnessVersion;
 use super::{
     Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes,
-    RedeemScriptSizeError, Script, ScriptHash, ScriptSig, WScriptHash, WitnessScriptSizeError,
+    RedeemScriptSizeError, Script, ScriptHash, ScriptPubKey, ScriptSig, WScriptHash,
+    WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -18,9 +19,9 @@ use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
-use crate::script::{self, ScriptBufExt as _};
+use crate::script::{self, ScriptPubKeyBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
-use crate::{internal_macros, Amount, FeeRate, ScriptBuf};
+use crate::{internal_macros, Amount, FeeRate, ScriptBuf, ScriptPubKeyBuf};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
@@ -123,52 +124,52 @@ internal_macros::define_extension_trait! {
             InstructionIndices::from_instructions(self.instructions_minimal())
         }
 
-    }
-}
+        /// Writes the human-readable assembly representation of the script to the formatter.
+        #[deprecated(since = "TBD", note = "use the script's `Display` impl instead")]
+        fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+            write!(f, "{}", self)
+        }
 
-crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Script`] type.
-    pub trait ScriptExt impl for Script {
+        /// Returns the human-readable assembly representation of the script.
+        #[deprecated(since = "TBD", note = "use `to_string()` instead")]
+        fn to_asm_string(&self) -> String { self.to_string() }
+
+        /// Consensus encodes the script as lower-case hex.
+        #[deprecated(since = "TBD", note = "use `to_hex_string_no_length_prefix` instead")]
+        fn to_hex_string(&self) -> String { self.to_hex_string_no_length_prefix() }
+
+        /// Consensus encodes the script as lower-case hex.
+        ///
+        /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
+        /// `to_hex_string_no_length_prefix`.
+        fn to_hex_string_prefixed(&self) -> String { consensus::encode::serialize_hex(self) }
+
+        /// Encodes the script as lower-case hex.
+        ///
+        /// This is **not** consensus encoding. The returned hex string will not include the length
+        /// prefix. See `to_hex_string_prefixed`.
+        fn to_hex_string_no_length_prefix(&self) -> String {
+            self.as_bytes().to_lower_hex_string()
+        }
+
+        /// Returns the first opcode of the script (if there is any).
+        fn first_opcode(&self) -> Option<Opcode> {
+            self.as_bytes().first().copied().map(From::from)
+        }
+
+        // These methods should exist for only ScriptPubKey and RedeemScript. When we
+        // introduce RedeemScript we'll also introduce another marker trait to limit
+        // them. For now just put them on every Script type.
+
         /// Returns 160-bit hash of the script for P2SH outputs.
         #[inline]
         fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
             ScriptHash::from_script(self)
         }
 
-        /// Returns 256-bit hash of the script for P2WSH outputs.
-        #[inline]
-        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
-            WScriptHash::from_script(self)
-        }
-
-        /// Computes leaf hash of tapscript.
-        #[inline]
-        fn tapscript_leaf_hash(&self) -> TapLeafHash {
-            TapLeafHash::from_script(self, LeafVersion::TapScript)
-        }
-
-        /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
-        /// script").
-        fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
-            self.wscript_hash().map(ScriptBuf::new_p2wsh)
-        }
-
-        /// Computes P2TR output with a given internal key and a single script spending path equal to
-        /// the current script, assuming that the script is a Tapscript.
-        fn to_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
-            &self,
-            secp: &Secp256k1<C>,
-            internal_key: K,
-        ) -> ScriptBuf {
-            let internal_key = internal_key.into();
-            let leaf_hash = self.tapscript_leaf_hash();
-            let merkle_root = TapNodeHash::from(leaf_hash);
-            ScriptBuf::new_p2tr(secp, internal_key, Some(merkle_root))
-        }
-
         /// Computes the P2SH output corresponding to this redeem script.
-        fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
-            self.script_hash().map(ScriptBuf::new_p2sh)
+        fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptSizeError> {
+            self.script_hash().map(ScriptPubKeyBuf::new_p2sh)
         }
 
         /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
@@ -184,21 +185,6 @@ crate::internal_macros::define_extension_trait! {
             } else {
                 None
             }
-        }
-
-        /// Checks whether a script pubkey is a P2PK output.
-        ///
-        /// You can obtain the public key, if its valid,
-        /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
-        fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
-
-        /// Returns the public key if this script is P2PK with a **valid** public key.
-        ///
-        /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
-        /// This happens when the public key is invalid (e.g. the point not being on the curve).
-        /// In this situation the script is unspendable.
-        fn p2pk_public_key(&self) -> Option<PublicKey> {
-            PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
         }
 
         /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
@@ -230,6 +216,78 @@ crate::internal_macros::define_extension_trait! {
             }
 
             WitnessVersion::try_from(ver_opcode).ok()
+        }
+
+        /// Checks whether a script pubkey is a P2WSH output.
+        #[inline]
+        fn is_p2wsh(&self) -> bool {
+            self.len() == 34
+                && self.witness_version() == Some(WitnessVersion::V0)
+                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a P2WPKH output.
+        #[inline]
+        fn is_p2wpkh(&self) -> bool {
+            self.len() == 22
+                && self.witness_version() == Some(WitnessVersion::V0)
+                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
+        }
+    }
+}
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Script`] type.
+    pub trait ScriptExt impl for Script {
+        /// Returns 256-bit hash of the script for P2WSH outputs.
+        #[inline]
+        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
+            WScriptHash::from_script(self)
+        }
+
+        /// Computes leaf hash of tapscript.
+        #[inline]
+        fn tapscript_leaf_hash(&self) -> TapLeafHash {
+            TapLeafHash::from_script(self, LeafVersion::TapScript)
+        }
+
+        /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+        /// script").
+        fn to_p2wsh(&self) -> Result<ScriptPubKeyBuf, WitnessScriptSizeError> {
+            self.wscript_hash().map(ScriptPubKeyBuf::new_p2wsh)
+      }
+
+        /// Computes P2TR output with a given internal key and a single script spending path equal to
+        /// the current script, assuming that the script is a Tapscript.
+        fn to_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
+            &self,
+            secp: &Secp256k1<C>,
+            internal_key: K,
+        ) -> ScriptPubKeyBuf {
+            let internal_key = internal_key.into();
+            let leaf_hash = self.tapscript_leaf_hash();
+            let merkle_root = TapNodeHash::from(leaf_hash);
+            ScriptPubKeyBuf::new_p2tr(secp, internal_key, Some(merkle_root))
+        }
+    }
+}
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Script`] type.
+    pub trait ScriptPubKeyExt impl for ScriptPubKey {
+        /// Checks whether a script pubkey is a P2PK output.
+        ///
+        /// You can obtain the public key, if its valid,
+        /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
+        fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
+
+        /// Returns the public key if this script is P2PK with a **valid** public key.
+        ///
+        /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
+        /// This happens when the public key is invalid (e.g. the point not being on the curve).
+        /// In this situation the script is unspendable.
+        fn p2pk_public_key(&self) -> Option<PublicKey> {
+            PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
         }
 
         /// Checks whether a script pubkey is a P2SH output.
@@ -308,22 +366,6 @@ crate::internal_macros::define_extension_trait! {
         /// Checks whether a script pubkey is a Segregated Witness (SegWit) program.
         #[inline]
         fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
-
-        /// Checks whether a script pubkey is a P2WSH output.
-        #[inline]
-        fn is_p2wsh(&self) -> bool {
-            self.len() == 34
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2WPKH output.
-        #[inline]
-        fn is_p2wpkh(&self) -> bool {
-            self.len() == 22
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
-        }
 
         /// Checks whether a script pubkey is a P2TR output.
         #[inline]
@@ -405,39 +447,6 @@ crate::internal_macros::define_extension_trait! {
         fn minimal_non_dust_custom(&self, dust_relay: FeeRate) -> Option<Amount> {
             self.minimal_non_dust_internal(dust_relay.to_sat_per_kvb_ceil())
         }
-
-        /// Writes the human-readable assembly representation of the script to the formatter.
-        #[deprecated(since = "TBD", note = "use the script's `Display` impl instead")]
-        fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-            write!(f, "{}", self)
-        }
-
-        /// Returns the human-readable assembly representation of the script.
-        #[deprecated(since = "TBD", note = "use `to_string()` instead")]
-        fn to_asm_string(&self) -> String { self.to_string() }
-
-        /// Consensus encodes the script as lower-case hex.
-        #[deprecated(since = "TBD", note = "use `to_hex_string_no_length_prefix` instead")]
-        fn to_hex_string(&self) -> String { self.to_hex_string_no_length_prefix() }
-
-        /// Consensus encodes the script as lower-case hex.
-        ///
-        /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
-        /// `to_hex_string_no_length_prefix`.
-        fn to_hex_string_prefixed(&self) -> String { consensus::encode::serialize_hex(self) }
-
-        /// Encodes the script as lower-case hex.
-        ///
-        /// This is **not** consensus encoding. The returned hex string will not include the length
-        /// prefix. See `to_hex_string_prefixed`.
-        fn to_hex_string_no_length_prefix(&self) -> String {
-            self.as_bytes().to_lower_hex_string()
-        }
-
-        /// Returns the first opcode of the script (if there is any).
-        fn first_opcode(&self) -> Option<Opcode> {
-            self.as_bytes().first().copied().map(From::from)
-        }
     }
 }
 
@@ -514,7 +523,7 @@ internal_macros::define_extension_trait! {
 }
 
 internal_macros::define_extension_trait! {
-    pub(crate) trait ScriptExtPriv impl for Script {
+    pub(crate) trait ScriptPubKeyExtPriv impl for ScriptPubKey {
         /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
         fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
             if let Ok(bytes) = <&[u8; 67]>::try_from(self.as_bytes()) {

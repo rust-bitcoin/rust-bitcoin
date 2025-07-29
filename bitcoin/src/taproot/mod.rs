@@ -1695,7 +1695,7 @@ mod test {
     use super::*;
     use crate::script::GenericScriptBufExt as _;
     use crate::sighash::TapSighashTag;
-    use crate::{Address, KnownHrp};
+    use crate::{Address, KnownHrp, ScriptPubKeyBuf};
     extern crate serde_json;
 
     #[cfg(feature = "serde")]
@@ -2095,7 +2095,7 @@ mod test {
                 .unwrap();
             let expected_tweak =
                 arr["intermediary"]["tweak"].as_str().unwrap().parse::<TapTweakHash>().unwrap();
-            let expected_spk = ScriptBuf::from_hex_no_length_prefix(
+            let expected_spk = ScriptPubKeyBuf::from_hex_no_length_prefix(
                 arr["expected"]["scriptPubKey"].as_str().unwrap(),
             )
             .unwrap();

@@ -22,7 +22,8 @@ use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{
-    GenericScriptExt as _, GenericScriptExtPriv as _, Script, ScriptBuf, ScriptExt as _,
+    GenericScriptExt as _, GenericScriptExtPriv as _, Script, ScriptPubKey, ScriptPubKeyBuf,
+    ScriptPubKeyExt as _,
 };
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
@@ -184,7 +185,7 @@ internal_macros::define_extension_trait! {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
-        fn minimal_non_dust(script_pubkey: ScriptBuf) -> TxOut {
+        fn minimal_non_dust(script_pubkey: ScriptPubKeyBuf) -> TxOut {
             TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
         }
 
@@ -199,14 +200,14 @@ internal_macros::define_extension_trait! {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: TxOut::minimal_non_dust
-        fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Option<TxOut> {
+        fn minimal_non_dust_custom(script_pubkey: ScriptPubKeyBuf, dust_relay_fee: FeeRate) -> Option<TxOut> {
             Some(TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey })
         }
     }
 }
 
 /// Returns the total number of bytes that this script pubkey would contribute to a transaction.
-fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
+fn size_from_script_pubkey(script_pubkey: &ScriptPubKey) -> usize {
     let len = script_pubkey.len();
     Amount::SIZE + compact_size::encoded_size(len) + len
 }
@@ -511,7 +512,10 @@ impl TransactionExtPriv for Transaction {
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
     {
-        fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script) -> usize {
+        fn count_sigops_with_witness_program(
+            witness: &Witness,
+            witness_program: &ScriptPubKey,
+        ) -> usize {
             if witness_program.is_p2wpkh() {
                 1
             } else if witness_program.is_p2wsh() {
@@ -530,9 +534,11 @@ impl TransactionExtPriv for Transaction {
                 &prevout.script_pubkey
             } else if prevout.script_pubkey.is_p2sh() && script_sig.is_push_only() {
                 // If prevout is P2SH and scriptSig is push only
-                // then we wrap the last push (redeemScript) in a Script
+                // then we wrap the last push (redeemScript) in a Script; we use a ScriptPubKey to keep our types
+                // consistent although strictly speaking it should
+                // be a RedeemScript.
                 if let Some(push_bytes) = script_sig.last_pushdata() {
-                    Script::from_bytes(push_bytes.as_bytes())
+                    ScriptPubKey::from_bytes(push_bytes.as_bytes())
                 } else {
                     return 0;
                 }
@@ -1494,7 +1500,7 @@ mod tests {
         tx.inputs[0].script_sig = ScriptSigBuf::new();
         assert_eq!(old_ntxid, tx.compute_ntxid());
         // changing pks does
-        tx.outputs[0].script_pubkey = ScriptBuf::new();
+        tx.outputs[0].script_pubkey = ScriptPubKeyBuf::new();
         assert!(old_ntxid != tx.compute_ntxid());
     }
 

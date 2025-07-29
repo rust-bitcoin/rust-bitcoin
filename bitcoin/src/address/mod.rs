@@ -64,8 +64,9 @@ use crate::prelude::{String, ToOwned};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptBufExt as _, ScriptExt as _, ScriptHash,
-    WScriptHash, WitnessScriptSizeError,
+    self, GenericScriptExt as _, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash,
+    ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WScriptHash,
+    WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
@@ -536,7 +537,7 @@ impl Address {
     ///
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
-        let builder = script::Builder::new().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
+        let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
         Address::p2sh_from_hash(script_hash, network)
     }
@@ -565,7 +566,7 @@ impl Address {
         network: impl Into<NetworkKind>,
     ) -> Result<Address, WitnessScriptSizeError> {
         let hash = witness_script.wscript_hash()?;
-        let builder = script::Builder::new().push_int_unchecked(0).push_slice(hash);
+        let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(hash);
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
         Ok(Address::p2sh_from_hash(script_hash, network))
     }
@@ -680,7 +681,7 @@ impl Address {
 
     /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
     pub fn from_script(
-        script: &Script,
+        script: &ScriptPubKey,
         params: impl AsRef<Params>,
     ) -> Result<Address, FromScriptError> {
         let network = params.as_ref().network;
@@ -704,11 +705,11 @@ impl Address {
     }
 
     /// Generates a script pubkey spending to this address.
-    pub fn script_pubkey(&self) -> ScriptBuf {
+    pub fn script_pubkey(&self) -> ScriptPubKeyBuf {
         use AddressInner::*;
         match *self.inner() {
-            P2pkh { hash, network: _ } => ScriptBuf::new_p2pkh(hash),
-            P2sh { hash, network: _ } => ScriptBuf::new_p2sh(hash),
+            P2pkh { hash, network: _ } => ScriptPubKeyBuf::new_p2pkh(hash),
+            P2sh { hash, network: _ } => ScriptPubKeyBuf::new_p2sh(hash),
             Segwit { ref program, hrp: _ } => {
                 let prog = program.program();
                 let version = program.version();
@@ -771,7 +772,7 @@ impl Address {
 
     /// Returns true if the address creates a particular script
     /// This function doesn't make any allocations.
-    pub fn matches_script_pubkey(&self, script: &Script) -> bool {
+    pub fn matches_script_pubkey(&self, script: &ScriptPubKey) -> bool {
         use AddressInner::*;
         match *self.inner() {
             P2pkh { ref hash, network: _ } if script.is_p2pkh() =>
@@ -947,7 +948,7 @@ impl Address<NetworkUnchecked> {
     }
 }
 
-impl From<Address> for ScriptBuf {
+impl From<Address> for ScriptPubKeyBuf {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
 
@@ -1020,7 +1021,7 @@ mod tests {
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, TestnetVersion};
-    use crate::script::GenericScriptBufExt as _;
+    use crate::script::{GenericScriptBufExt as _, ScriptBuf};
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(
@@ -1053,7 +1054,7 @@ mod tests {
 
         assert_eq!(
             addr.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix(
+            ScriptPubKeyBuf::from_hex_no_length_prefix(
                 "76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"
             )
             .unwrap()
@@ -1085,8 +1086,10 @@ mod tests {
 
         assert_eq!(
             addr.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087")
-                .unwrap(),
+            ScriptPubKeyBuf::from_hex_no_length_prefix(
+                "a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087"
+            )
+            .unwrap(),
         );
         assert_eq!(&addr.to_string(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
@@ -1238,7 +1241,7 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix(
+            ScriptPubKeyBuf::from_hex_no_length_prefix(
                 "76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"
             )
             .unwrap()
@@ -1255,8 +1258,10 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087")
-                .unwrap()
+            ScriptPubKeyBuf::from_hex_no_length_prefix(
+                "a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087"
+            )
+            .unwrap()
         );
 
         let addr: Address<NetworkUnchecked> =
@@ -1286,7 +1291,7 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix(
+            ScriptPubKeyBuf::from_hex_no_length_prefix(
                 "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
             )
             .unwrap()
@@ -1305,8 +1310,10 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("001454d26dddb59c7073c6a197946ea1841951fa7a74")
-                .unwrap()
+            ScriptPubKeyBuf::from_hex_no_length_prefix(
+                "001454d26dddb59c7073c6a197946ea1841951fa7a74"
+            )
+            .unwrap()
         );
     }
 
@@ -1485,15 +1492,17 @@ mod tests {
     fn fail_address_from_script() {
         use crate::witness_program;
 
-        let bad_p2wpkh =
-            ScriptBuf::from_hex_no_length_prefix("15000014dbc5b0a8f9d4353b4b54c3db48846bb15abfec")
-                .unwrap();
-        let bad_p2wsh = ScriptBuf::from_hex_no_length_prefix(
+        let bad_p2wpkh = ScriptPubKeyBuf::from_hex_no_length_prefix(
+            "15000014dbc5b0a8f9d4353b4b54c3db48846bb15abfec",
+        )
+        .unwrap();
+        let bad_p2wsh = ScriptPubKeyBuf::from_hex_no_length_prefix(
             "00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623",
         )
         .unwrap();
         let invalid_segwitv0_script =
-            ScriptBuf::from_hex_no_length_prefix("001161458e330389cd0437ee9fe3641d70cc18").unwrap();
+            ScriptPubKeyBuf::from_hex_no_length_prefix("001161458e330389cd0437ee9fe3641d70cc18")
+                .unwrap();
         let expected = Err(FromScriptError::UnrecognizedScript);
 
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
@@ -1582,7 +1591,7 @@ mod tests {
         // This test-vector is borrowed from the bitcoin source code.
         let address_str = "bcrt1pfeesnyr2tx";
 
-        let script = ScriptBuf::new_p2a();
+        let script = ScriptPubKeyBuf::new_p2a();
         let address_unchecked = address_str.parse().unwrap();
         let address = Address::from_script(&script, Network::Regtest).unwrap();
         assert_eq!(address.as_unchecked(), &address_unchecked);

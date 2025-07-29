@@ -209,7 +209,7 @@ internal_macros::define_extension_trait! {
         /// Unlike the Taproot case, we do no validation to determine whether this is a
         /// witness script: it may be a Taproot control block, annex, or some other kind
         /// of object. If you are not certain whether the output being spent is Segwit v0,
-        /// use [`Script::is_p2wsh`] on the output's script.
+        /// use [`crate::script::GenericScriptExt::is_p2wsh`] on the output's script.
         fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
 
     }

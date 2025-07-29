@@ -32,7 +32,7 @@ use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::{
     consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
-    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+    ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 // The master xpriv, from which we derive the keys we control.
@@ -169,7 +169,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2wpkh(pk_change.wpubkey_hash()), // Change comes back to us.
+        script_pubkey: ScriptPubKeyBuf::new_p2wpkh(pk_change.wpubkey_hash()), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.

@@ -9,7 +9,7 @@ use secp256k1::{Secp256k1, Verification};
 
 use super::{
     opcode_to_verify, Builder, GenericScriptBuf, GenericScriptExtPriv as _, Instruction, PushBytes,
-    ScriptBuf,
+    ScriptBuf, ScriptPubKeyBuf,
 };
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
@@ -122,12 +122,20 @@ internal_macros::define_extension_trait! {
             let v = Vec::from_hex(s)?;
             Ok(Self::from_bytes(v))
         }
+
+        // This belongs only on RedeemScript and ScriptPubKey
+        /// Generates P2WPKH-type of scriptPubkey.
+        fn new_p2wpkh(pubkey_hash: WPubkeyHash) -> Self {
+            // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
+            script::new_witness_program_unchecked(WitnessVersion::V0, pubkey_hash)
+        }
+
     }
 }
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
-    pub trait ScriptBufExt impl for ScriptBuf {
+    pub trait ScriptPubKeyBufExt impl for ScriptPubKeyBuf {
         /// Generates OP_RETURN-type of scriptPubkey for the given data.
         fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
             Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
@@ -156,12 +164,6 @@ crate::internal_macros::define_extension_trait! {
                 .push_slice(script_hash)
                 .push_opcode(OP_EQUAL)
                 .into_script()
-        }
-
-        /// Generates P2WPKH-type of scriptPubkey.
-        fn new_p2wpkh(pubkey_hash: WPubkeyHash) -> Self {
-            // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-            script::new_witness_program_unchecked(WitnessVersion::V0, pubkey_hash)
         }
 
         /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.

@@ -114,12 +114,12 @@ pub mod ext {
     pub use crate::{
         block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
         pow::CompactTargetExt as _,
-        script::{GenericScriptExt as _, GenericScriptBufExt as _, ScriptExt as _, ScriptBufExt as _, ScriptSigExt as _},
+        script::{GenericScriptExt as _, GenericScriptBufExt as _, ScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, ScriptSigExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
         witness::WitnessExt as _,
     };
     #[cfg(feature = "bitcoinconsensus")]
-    pub use crate::consensus_validation::{ScriptExt as _, TransactionExt as _};
+    pub use crate::consensus_validation::{ScriptPubKeyExt as _, TransactionExt as _};
 }
 #[macro_use]
 pub mod address;
@@ -152,7 +152,7 @@ pub use primitives::{
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget, // No `pow` module outside of `primitives`.
-    script::{Script, ScriptBuf, ScriptSig, ScriptSigBuf},
+    script::{Script, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf},
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,

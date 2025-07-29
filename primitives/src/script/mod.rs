@@ -30,7 +30,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::GenericScript,
     owned::GenericScriptBuf,
-    tag::{Tag, ScriptSigTag, Whatever},
+    tag::{Tag, ScriptPubKeyTag, ScriptSigTag, Whatever},
 };
 
 /// Placeholder doc (will be replaced in later commit)
@@ -39,8 +39,14 @@ pub type Script = GenericScript<Whatever>;
 /// Placeholder doc (will be replaced in later commit)
 pub type ScriptBuf = GenericScriptBuf<Whatever>;
 
+/// A reference to a script public key (scriptPubKey).
+pub type ScriptPubKey = GenericScript<ScriptPubKeyTag>;
+
 /// A reference to a script signature (scriptSig).
 pub type ScriptSig = GenericScript<ScriptSigTag>;
+
+/// A script public key (scriptPubKey).
+pub type ScriptPubKeyBuf = GenericScriptBuf<ScriptPubKeyTag>;
 
 /// A script signature (scriptSig).
 pub type ScriptSigBuf = GenericScriptBuf<ScriptSigTag>;
@@ -85,7 +91,7 @@ impl ScriptHash {
     ///
     /// ref: [BIP-16](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
     #[inline]
-    pub fn from_script(redeem_script: &Script) -> Result<Self, RedeemScriptSizeError> {
+    pub fn from_script<T>(redeem_script: &GenericScript<T>) -> Result<Self, RedeemScriptSizeError> {
         if redeem_script.len() > MAX_REDEEM_SCRIPT_SIZE {
             return Err(RedeemScriptSizeError { size: redeem_script.len() });
         }
@@ -101,7 +107,7 @@ impl ScriptHash {
     ///
     /// [BIP-16]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
     #[inline]
-    pub fn from_script_unchecked(script: &Script) -> Self {
+    pub fn from_script_unchecked<T>(script: &GenericScript<T>) -> Self {
         ScriptHash(hash160::Hash::hash(script.as_bytes()))
     }
 }

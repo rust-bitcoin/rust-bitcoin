@@ -1,6 +1,6 @@
 use bitcoin::ext::*;
 use bitcoin::{
-    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptBuf, Transaction,
+    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptPubKeyBuf, Transaction,
 };
 use hex_lit::hex;
 
@@ -38,7 +38,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let pk = CompressedPublicKey::from_slice(pk_bytes).expect("failed to parse pubkey");
     let wpkh = pk.wpubkey_hash();
     println!("Script pubkey hash: {wpkh:x}");
-    let spk = ScriptBuf::new_p2wpkh(wpkh);
+    let spk = ScriptPubKeyBuf::new_p2wpkh(wpkh);
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache

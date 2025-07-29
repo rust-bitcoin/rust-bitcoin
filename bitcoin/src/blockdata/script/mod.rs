@@ -74,16 +74,17 @@ use crate::OutPoint;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::{GenericScriptExt, ScriptExt, ScriptSigExt},
+    borrowed::{GenericScriptExt, ScriptExt, ScriptPubKeyExt, ScriptSigExt},
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
-    owned::{GenericScriptBufExt, ScriptBufExt},
+    owned::{GenericScriptBufExt, ScriptPubKeyBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
 };
 #[doc(inline)]
 pub use primitives::script::{
     GenericScript, GenericScriptBuf, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash,
-    ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, WScriptHash, Whatever, WitnessScriptSizeError,
+    ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag,
+    WScriptHash, Whatever, WitnessScriptSizeError,
 };
 
 pub(crate) use self::borrowed::GenericScriptExtPriv;
@@ -198,10 +199,10 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
 /// Does not do any checks on version or program length.
 ///
 /// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
-pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
+pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     version: WitnessVersion,
     program: T,
-) -> ScriptBuf {
+) -> GenericScriptBuf<Tg> {
     let program = program.as_ref();
     debug_assert!(program.len() >= 2 && program.len() <= 40);
     // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.

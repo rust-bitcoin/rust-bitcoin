@@ -36,7 +36,7 @@ use units::{Amount, Weight};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
-use crate::script::{ScriptBuf, ScriptSigBuf};
+use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
 #[cfg(feature = "alloc")]
 use crate::witness::Witness;
 
@@ -350,7 +350,7 @@ pub struct TxOut {
     /// The value of the output, in satoshis.
     pub value: Amount,
     /// The script which must be satisfied for the output to be spent.
-    pub script_pubkey: ScriptBuf,
+    pub script_pubkey: ScriptPubKeyBuf,
 }
 
 /// A reference to a transaction output.
@@ -616,7 +616,7 @@ impl<'a> Arbitrary<'a> for TxIn {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
+        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptPubKeyBuf::arbitrary(u)? })
     }
 }
 
@@ -691,7 +691,7 @@ mod tests {
 
         let txout = TxOut {
             value: Amount::from_sat(123_456_789).unwrap(),
-            script_pubkey: ScriptBuf::new(),
+            script_pubkey: ScriptPubKeyBuf::new(),
         };
 
         let tx_orig = Transaction {

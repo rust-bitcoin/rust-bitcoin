@@ -18,3 +18,8 @@ impl Tag for Whatever {}
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum ScriptSigTag {}
 impl Tag for ScriptSigTag {}
+
+/// A script public key (scriptPubKey).
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub enum ScriptPubKeyTag {}
+impl Tag for ScriptPubKeyTag {}

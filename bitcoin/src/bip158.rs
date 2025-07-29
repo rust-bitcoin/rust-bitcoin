@@ -19,7 +19,7 @@
 //! # Examples
 //!
 //! ```ignore
-//! fn get_script_for_coin(coin: &OutPoint) -> Result<ScriptBuf, BlockFilterError> {
+//! fn get_script_for_coin(coin: &OutPoint) -> Result<ScriptPubKeyBuf, BlockFilterError> {
 //!   // get utxo ...
 //! }
 //!
@@ -31,7 +31,7 @@
 //!
 //! // read and evaluate a filter
 //!
-//! let query: Iterator<Item=ScriptBuf> = // .. some scripts you care about
+//! let query: Iterator<Item=ScriptPubKeyBuf> = // .. some scripts you care about
 //! if filter.match_any(&block_hash, &mut query.map(|s| s.as_bytes())) {
 //!   // get this block
 //! }
@@ -52,7 +52,7 @@ use crate::block::{Block, BlockHash, Checked};
 use crate::consensus::{ReadExt, WriteExt};
 use crate::internal_macros;
 use crate::prelude::{BTreeSet, Borrow, Vec};
-use crate::script::{Script, ScriptExt as _};
+use crate::script::{ScriptPubKey, ScriptPubKeyExt as _};
 use crate::transaction::OutPoint;
 
 /// Golomb encoding parameter as in BIP-0158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
@@ -142,7 +142,7 @@ impl BlockFilter {
     ) -> Result<BlockFilter, Error>
     where
         M: Fn(&OutPoint) -> Result<S, Error>,
-        S: Borrow<Script>,
+        S: Borrow<ScriptPubKey>,
     {
         let mut out = Vec::new();
         let mut writer = BlockFilterWriter::new(&mut out, block);
@@ -219,7 +219,7 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
     pub fn add_input_scripts<M, S>(&mut self, script_for_coin: M) -> Result<(), Error>
     where
         M: Fn(&OutPoint) -> Result<S, Error>,
-        S: Borrow<Script>,
+        S: Borrow<ScriptPubKey>,
     {
         for script in self
             .block
@@ -599,7 +599,7 @@ mod test {
 
     use super::*;
     use crate::consensus::encode::deserialize;
-    use crate::ScriptBuf;
+    use crate::ScriptPubKeyBuf;
 
     #[test]
     fn blockfilters() {
@@ -627,7 +627,7 @@ mod test {
                 for input in tx.inputs.iter() {
                     txmap.insert(
                         input.previous_output,
-                        ScriptBuf::from(hex(si.next().unwrap().as_str().unwrap())),
+                        ScriptPubKeyBuf::from(hex(si.next().unwrap().as_str().unwrap())),
                     );
                 }
             }

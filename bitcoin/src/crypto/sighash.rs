@@ -22,11 +22,11 @@ use io::Write;
 
 use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
-use crate::script::ScriptExt as _;
+use crate::script::GenericScriptExt as _;
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
-use crate::{transaction, Amount, Script, Sequence, Transaction, TxOut};
+use crate::{transaction, Amount, Script, ScriptPubKey, Sequence, Transaction, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -871,10 +871,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// `script_pubkey` is the `scriptPubkey` (native SegWit) of the spend transaction
     /// ([`TxOut::script_pubkey`]) or the `redeemScript` (wrapped SegWit).
-    pub fn p2wpkh_signature_hash(
+    pub fn p2wpkh_signature_hash<T>(
         &mut self,
         input_index: usize,
-        script_pubkey: &Script,
+        script_pubkey: &crate::script::GenericScript<T>,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, P2wpkhError> {
@@ -937,11 +937,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<W: Write + ?Sized, U: Into<u32>>(
+    pub fn legacy_encode_signing_data_to<W: Write + ?Sized, U: Into<u32>, T>(
         &self,
         writer: &mut W,
         input_index: usize,
-        script_pubkey: &Script,
+        script_pubkey: &crate::script::GenericScript<T>,
         sighash_type: U,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
@@ -962,11 +962,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        fn encode_signing_data_to_inner<W: Write + ?Sized>(
+        fn encode_signing_data_to_inner<W: Write + ?Sized, T>(
             self_: &Transaction,
             writer: &mut W,
             input_index: usize,
-            script_pubkey: &Script,
+            script_pubkey: &crate::script::GenericScript<T>,
             sighash_type: u32,
         ) -> Result<(), io::Error> {
             use crate::consensus::encode::WriteExt;
@@ -988,7 +988,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     if n == input_index {
                         script_pubkey.consensus_encode(writer)?;
                     } else {
-                        Script::new().consensus_encode(writer)?;
+                        ScriptPubKey::new().consensus_encode(writer)?;
                     }
                     if n != input_index
                         && (sighash == EcdsaSighashType::Single
@@ -1058,10 +1058,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
     /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
     /// have the information to determine.
-    pub fn legacy_signature_hash(
+    pub fn legacy_signature_hash<T>(
         &self,
         input_index: usize,
-        script_pubkey: &Script,
+        script_pubkey: &crate::script::GenericScript<T>,
         sighash_type: u32,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
@@ -1537,12 +1537,12 @@ mod tests {
     use super::*;
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
-    use crate::script::{GenericScriptBufExt as _, ScriptBuf};
+    use crate::script::{GenericScriptBufExt as _, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf};
     use crate::TxIn;
 
     extern crate serde_json;
 
-    const DUMMY_TXOUT: TxOut = TxOut { value: Amount::MIN, script_pubkey: ScriptBuf::new() };
+    const DUMMY_TXOUT: TxOut = TxOut { value: Amount::MIN, script_pubkey: ScriptPubKeyBuf::new() };
 
     #[test]
     fn sighash_single_bug() {
@@ -1553,7 +1553,7 @@ mod tests {
             inputs: vec![TxIn::EMPTY_COINBASE, TxIn::EMPTY_COINBASE],
             outputs: vec![DUMMY_TXOUT],
         };
-        let script = ScriptBuf::new();
+        let script = ScriptPubKeyBuf::new();
         let cache = SighashCache::new(&tx);
 
         let sighash_single = 3;
@@ -1583,7 +1583,7 @@ mod tests {
             expected_result: &str,
         ) {
             let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
-            let script = ScriptBuf::from(Vec::from_hex(script).unwrap());
+            let script = ScriptPubKeyBuf::from(Vec::from_hex(script).unwrap());
             let mut raw_expected = Vec::from_hex(expected_result).unwrap();
             raw_expected.reverse();
             let bytes = <[u8; 32]>::try_from(&raw_expected[..]).unwrap();
@@ -1790,7 +1790,7 @@ mod tests {
             }))
         );
         assert_eq!(
-            c.legacy_signature_hash(10, Script::new(), 0u32),
+            c.legacy_signature_hash(10, ScriptPubKey::new(), 0u32),
             Err(InputsIndexError(IndexOutOfBoundsError {
                 index: 10,
                 length: 1
@@ -1886,7 +1886,7 @@ mod tests {
         #[derive(serde::Deserialize)]
         struct UtxoSpent {
             #[serde(rename = "scriptPubKey")]
-            script_pubkey: ScriptBuf,
+            script_pubkey: ScriptPubKeyBuf,
             #[serde(rename = "amountSats")]
             #[serde(with = "crate::amount::serde::as_sat")]
             value: Amount,
@@ -2091,9 +2091,10 @@ mod tests {
             ),
         ).unwrap();
 
-        let spk =
-            ScriptBuf::from_hex_no_length_prefix("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1")
-                .unwrap();
+        let spk = ScriptPubKeyBuf::from_hex_no_length_prefix(
+            "00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1",
+        )
+        .unwrap();
         let value = Amount::from_sat_u32(600_000_000);
 
         let mut cache = SighashCache::new(&tx);
@@ -2133,14 +2134,15 @@ mod tests {
             ),
         ).unwrap();
 
-        let redeem_script =
-            ScriptBuf::from_hex_no_length_prefix("001479091972186c449eb1ded22b78e40d009bdf0089")
-                .unwrap();
+        let spk = ScriptPubKeyBuf::from_hex_no_length_prefix(
+            "001479091972186c449eb1ded22b78e40d009bdf0089",
+        )
+        .unwrap();
         let value = Amount::from_sat_u32(1_000_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.p2wpkh_signature_hash(0, &redeem_script, value, EcdsaSighashType::All).unwrap(),
+            cache.p2wpkh_signature_hash(0, &spk, value, EcdsaSighashType::All).unwrap(),
             "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),

@@ -18,7 +18,8 @@ use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
 use bitcoin_primitives::{
     absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, Script, ScriptBuf,
-    ScriptSig, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness, Wtxid,
+    ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut,
+    Txid, Witness, Wtxid,
 };
 use hashes::sha256t;
 
@@ -44,10 +45,12 @@ struct Structs<'a> {
     h: merkle_tree::WitnessMerkleNode,
     i: pow::CompactTarget,
     j: &'a Script,
+    j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
     o: Transaction,
@@ -63,6 +66,7 @@ struct Structs<'a> {
 
 static SCRIPT: ScriptBuf = ScriptBuf::new();
 static SCRIPT_SIG: ScriptSigBuf = ScriptSigBuf::new();
+static SCRIPT_PUB_KEY: ScriptPubKeyBuf = ScriptPubKeyBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
 /// Public structs that derive common traits.
@@ -82,6 +86,7 @@ struct CommonTraits {
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
     o: Transaction,
@@ -111,6 +116,7 @@ struct Clone<'a> {
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
     o: Transaction,
@@ -141,6 +147,7 @@ struct Ord {
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
     o: Transaction,
@@ -159,8 +166,10 @@ struct Ord {
 struct Default {
     a: block::Version,
     b: &'static Script,
+    b2: &'static ScriptPubKey,
     b3: &'static ScriptSig,
     c: ScriptBuf,
+    c2: ScriptPubKeyBuf,
     c3: ScriptSigBuf,
     d: Sequence,
     e: Witness,
@@ -217,8 +226,9 @@ fn api_can_use_modules_from_crate_root() {
 fn api_can_use_types_from_crate_root() {
     use bitcoin_primitives::{
         Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, Script, ScriptBuf,
-        ScriptSig, ScriptSigBuf, Sequence, Transaction, TransactionVersion, TxIn, TxMerkleNode,
-        TxOut, Txid, Witness, WitnessCommitment, WitnessMerkleNode, Wtxid,
+        ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, Transaction,
+        TransactionVersion, TxIn, TxMerkleNode, TxOut, Txid, Witness, WitnessCommitment,
+        WitnessMerkleNode, Wtxid,
     };
 }
 
@@ -234,8 +244,8 @@ fn api_can_use_all_types_from_module_locktime() {
 #[test]
 fn api_can_use_all_types_from_module_script() {
     use bitcoin_primitives::script::{
-        RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptSig, ScriptSigBuf, WScriptHash,
-        WitnessScriptSizeError,
+        RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptPubKey, ScriptPubKeyBuf,
+        ScriptSig, ScriptSigBuf, WScriptHash, WitnessScriptSizeError,
     };
 }
 
@@ -275,10 +285,12 @@ fn api_all_non_error_types_have_non_empty_debug() {
         pow::CompactTarget::from_consensus(0x1d00_ffff);
         SCRIPT.as_script();
         SCRIPT_SIG.as_script();
+        SCRIPT_PUB_KEY.as_script();
         ScriptHash::from_script(&SCRIPT).unwrap();
         WScriptHash::from_script(&SCRIPT).unwrap();
         SCRIPT.clone();
         SCRIPT_SIG.clone();
+        SCRIPT_PUB_KEY.clone();
         Sequence::arbitrary(&mut u).unwrap();
         Transaction::arbitrary(&mut u).unwrap();
         TxIn::arbitrary(&mut u).unwrap();
@@ -314,8 +326,10 @@ fn regression_default() {
     let want = Default {
         a: block::Version::NO_SOFT_FORK_SIGNALLING,
         b: Script::from_bytes(&[]),
+        b2: ScriptPubKey::from_bytes(&[]),
         b3: ScriptSig::from_bytes(&[]),
         c: ScriptBuf::from_bytes(Vec::new()),
+        c2: ScriptPubKeyBuf::from_bytes(Vec::new()),
         c3: ScriptSigBuf::from_bytes(Vec::new()),
         d: Sequence::MAX,
         e: Witness::new(),

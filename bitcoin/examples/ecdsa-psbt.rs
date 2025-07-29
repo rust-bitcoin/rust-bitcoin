@@ -38,8 +38,8 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf, ScriptSigBuf,
-    Sequence, Transaction, TxIn, TxOut, Witness,
+    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf,
+    ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
 type Result<T> = std::result::Result<T, Error>;
@@ -274,7 +274,7 @@ fn input_derivation_path() -> Result<DerivationPath> {
 }
 
 fn previous_output() -> TxOut {
-    let script_pubkey = ScriptBuf::from_hex_no_length_prefix(INPUT_UTXO_SCRIPT_PUBKEY)
+    let script_pubkey = ScriptPubKeyBuf::from_hex_no_length_prefix(INPUT_UTXO_SCRIPT_PUBKEY)
         .expect("failed to parse input utxo scriptPubkey");
     let amount = INPUT_UTXO_VALUE.parse::<Amount>().expect("failed to parse input utxo value");
 

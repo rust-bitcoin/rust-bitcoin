@@ -8,7 +8,7 @@ use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing};
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, ScriptBuf, ScriptSigBuf, Sequence,
+    transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf, ScriptSigBuf, Sequence,
     Transaction, TxIn, TxOut, Txid, Witness,
 };
 
@@ -44,7 +44,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2wpkh(wpkh), // Change comes back to us.
+        script_pubkey: ScriptPubKeyBuf::new_p2wpkh(wpkh), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.
@@ -117,7 +117,7 @@ fn receivers_address() -> Address {
 /// This output is locked to keys that we control, in a real application this would be a valid
 /// output taken from a transaction that appears in the chain.
 fn dummy_unspent_transaction_output(wpkh: WPubkeyHash) -> (OutPoint, TxOut) {
-    let script_pubkey = ScriptBuf::new_p2wpkh(wpkh);
+    let script_pubkey = ScriptPubKeyBuf::new_p2wpkh(wpkh);
 
     let out_point = OutPoint {
         txid: Txid::from_byte_array([0xFF; 32]), // Arbitrary invalid dummy value.

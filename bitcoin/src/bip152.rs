@@ -460,7 +460,7 @@ mod test {
     use crate::merkle_tree::TxMerkleNode;
     use crate::transaction::OutPointExt;
     use crate::{
-        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptBuf,
+        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptPubKeyBuf,
         ScriptSigBuf, Sequence, TxIn, TxOut, Txid, Witness,
     };
 
@@ -475,7 +475,7 @@ mod test {
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            outputs: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
         }
     }
 
