@@ -2,10 +2,13 @@
 #[non_exhaustive] pub enum bitcoin_units::amount::Denomination
 #[non_exhaustive] pub enum bitcoin_units::amount::ParseDenominationError
 #[non_exhaustive] pub struct bitcoin_units::NumOpError(_)
+#[non_exhaustive] pub struct bitcoin_units::absolute::ConversionError
+#[non_exhaustive] pub struct bitcoin_units::absolute::error::ConversionError
 #[non_exhaustive] pub struct bitcoin_units::amount::MissingDenominationError
 #[non_exhaustive] pub struct bitcoin_units::amount::PossiblyConfusingDenominationError(_)
 #[non_exhaustive] pub struct bitcoin_units::amount::UnknownDenominationError(_)
 #[non_exhaustive] pub struct bitcoin_units::locktime::absolute::ConversionError
+#[non_exhaustive] pub struct bitcoin_units::locktime::absolute::error::ConversionError
 #[non_exhaustive] pub struct bitcoin_units::parse::ParseIntError
 impl bitcoin_units::Amount
 impl bitcoin_units::BlockTime
@@ -22,9 +25,14 @@ impl bitcoin_units::block::BlockHeightInterval
 impl bitcoin_units::block::BlockMtp
 impl bitcoin_units::block::BlockMtpInterval
 impl bitcoin_units::locktime::absolute::Height
+impl bitcoin_units::locktime::absolute::LockTime
 impl bitcoin_units::locktime::absolute::MedianTimePast
+impl bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl bitcoin_units::locktime::relative::LockTime
 impl bitcoin_units::locktime::relative::NumberOf512Seconds
 impl bitcoin_units::locktime::relative::NumberOfBlocks
+impl bitcoin_units::locktime::relative::error::DisabledLockTimeError
 impl bitcoin_units::parse::Integer for i128
 impl bitcoin_units::parse::Integer for i16
 impl bitcoin_units::parse::Integer for i32
@@ -35,6 +43,7 @@ impl bitcoin_units::parse::Integer for u16
 impl bitcoin_units::parse::Integer for u32
 impl bitcoin_units::parse::Integer for u64
 impl bitcoin_units::parse::Integer for u8
+impl bitcoin_units::sequence::Sequence
 impl core::clone::Clone for bitcoin_units::Amount
 impl core::clone::Clone for bitcoin_units::BlockTime
 impl core::clone::Clone for bitcoin_units::FeeRate
@@ -60,19 +69,28 @@ impl core::clone::Clone for bitcoin_units::block::BlockHeightInterval
 impl core::clone::Clone for bitcoin_units::block::BlockMtp
 impl core::clone::Clone for bitcoin_units::block::BlockMtpInterval
 impl core::clone::Clone for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::clone::Clone for bitcoin_units::locktime::absolute::ConversionError
 impl core::clone::Clone for bitcoin_units::locktime::absolute::Height
+impl core::clone::Clone for bitcoin_units::locktime::absolute::LockTime
 impl core::clone::Clone for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::clone::Clone for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::clone::Clone for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::clone::Clone for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::clone::Clone for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::clone::Clone for bitcoin_units::locktime::relative::LockTime
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::clone::Clone for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::clone::Clone for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::clone::Clone for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::clone::Clone for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::clone::Clone for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::clone::Clone for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::clone::Clone for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::clone::Clone for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::clone::Clone for bitcoin_units::parse::ParseIntError
 impl core::clone::Clone for bitcoin_units::parse::PrefixedHexError
 impl core::clone::Clone for bitcoin_units::parse::UnprefixedHexError
+impl core::clone::Clone for bitcoin_units::sequence::Sequence
 impl core::cmp::Eq for bitcoin_units::Amount
 impl core::cmp::Eq for bitcoin_units::BlockTime
 impl core::cmp::Eq for bitcoin_units::FeeRate
@@ -97,19 +115,28 @@ impl core::cmp::Eq for bitcoin_units::block::BlockHeightInterval
 impl core::cmp::Eq for bitcoin_units::block::BlockMtp
 impl core::cmp::Eq for bitcoin_units::block::BlockMtpInterval
 impl core::cmp::Eq for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::cmp::Eq for bitcoin_units::locktime::absolute::ConversionError
 impl core::cmp::Eq for bitcoin_units::locktime::absolute::Height
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::LockTime
 impl core::cmp::Eq for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::cmp::Eq for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::cmp::Eq for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::cmp::Eq for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::cmp::Eq for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::LockTime
 impl core::cmp::Eq for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::cmp::Eq for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::cmp::Eq for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::cmp::Eq for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::cmp::Eq for bitcoin_units::parse::ParseIntError
 impl core::cmp::Eq for bitcoin_units::parse::PrefixedHexError
 impl core::cmp::Eq for bitcoin_units::parse::UnprefixedHexError
+impl core::cmp::Eq for bitcoin_units::sequence::Sequence
 impl core::cmp::Ord for bitcoin_units::Amount
 impl core::cmp::Ord for bitcoin_units::BlockTime
 impl core::cmp::Ord for bitcoin_units::FeeRate
@@ -123,6 +150,7 @@ impl core::cmp::Ord for bitcoin_units::locktime::absolute::Height
 impl core::cmp::Ord for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::cmp::Ord for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::cmp::Ord for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::cmp::Ord for bitcoin_units::sequence::Sequence
 impl core::cmp::PartialEq for bitcoin_units::Amount
 impl core::cmp::PartialEq for bitcoin_units::BlockTime
 impl core::cmp::PartialEq for bitcoin_units::FeeRate
@@ -147,19 +175,28 @@ impl core::cmp::PartialEq for bitcoin_units::block::BlockHeightInterval
 impl core::cmp::PartialEq for bitcoin_units::block::BlockMtp
 impl core::cmp::PartialEq for bitcoin_units::block::BlockMtpInterval
 impl core::cmp::PartialEq for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::ConversionError
 impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::Height
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::LockTime
 impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::cmp::PartialEq for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::cmp::PartialEq for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::LockTime
 impl core::cmp::PartialEq for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::cmp::PartialEq for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::cmp::PartialEq for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::cmp::PartialEq for bitcoin_units::parse::ParseIntError
 impl core::cmp::PartialEq for bitcoin_units::parse::PrefixedHexError
 impl core::cmp::PartialEq for bitcoin_units::parse::UnprefixedHexError
+impl core::cmp::PartialEq for bitcoin_units::sequence::Sequence
 impl core::cmp::PartialOrd for bitcoin_units::Amount
 impl core::cmp::PartialOrd for bitcoin_units::BlockTime
 impl core::cmp::PartialOrd for bitcoin_units::FeeRate
@@ -173,6 +210,7 @@ impl core::cmp::PartialOrd for bitcoin_units::locktime::absolute::Height
 impl core::cmp::PartialOrd for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::cmp::PartialOrd for bitcoin_units::sequence::Sequence
 impl core::convert::AsRef<core::num::error::ParseIntError> for bitcoin_units::parse::ParseIntError
 impl core::convert::From<&bitcoin_units::Amount> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
 impl core::convert::From<&bitcoin_units::SignedAmount> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
@@ -198,12 +236,18 @@ impl core::convert::From<bitcoin_units::block::BlockHeightInterval> for u32
 impl core::convert::From<bitcoin_units::block::BlockMtp> for u32
 impl core::convert::From<bitcoin_units::block::BlockMtpInterval> for u32
 impl core::convert::From<bitcoin_units::locktime::absolute::Height> for bitcoin_units::block::BlockHeight
+impl core::convert::From<bitcoin_units::locktime::absolute::Height> for bitcoin_units::locktime::absolute::LockTime
 impl core::convert::From<bitcoin_units::locktime::absolute::MedianTimePast> for bitcoin_units::block::BlockMtp
+impl core::convert::From<bitcoin_units::locktime::absolute::MedianTimePast> for bitcoin_units::locktime::absolute::LockTime
+impl core::convert::From<bitcoin_units::locktime::relative::LockTime> for bitcoin_units::sequence::Sequence
 impl core::convert::From<bitcoin_units::locktime::relative::NumberOf512Seconds> for bitcoin_units::block::BlockMtpInterval
+impl core::convert::From<bitcoin_units::locktime::relative::NumberOf512Seconds> for bitcoin_units::locktime::relative::LockTime
 impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::block::BlockHeightInterval
+impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::locktime::relative::LockTime
 impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units::parse::PrefixedHexError
 impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units::parse::UnprefixedHexError
 impl core::convert::From<bitcoin_units::parse::ParseIntError> for core::num::error::ParseIntError
+impl core::convert::From<bitcoin_units::sequence::Sequence> for u32
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseAmountError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseDenominationError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseError
@@ -221,6 +265,7 @@ impl core::convert::TryFrom<&str> for bitcoin_units::block::BlockHeightInterval
 impl core::convert::TryFrom<&str> for bitcoin_units::block::BlockMtp
 impl core::convert::TryFrom<&str> for bitcoin_units::block::BlockMtpInterval
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::Height
+impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::LockTime
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks
@@ -228,12 +273,14 @@ impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amou
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeightInterval> for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::convert::TryFrom<bitcoin_units::block::BlockMtp> for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::convert::TryFrom<bitcoin_units::sequence::Sequence> for bitcoin_units::locktime::relative::LockTime
 impl core::default::Default for bitcoin_units::Amount
 impl core::default::Default for bitcoin_units::SignedAmount
 impl core::default::Default for bitcoin_units::block::BlockHeightInterval
 impl core::default::Default for bitcoin_units::block::BlockMtpInterval
 impl core::default::Default for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::default::Default for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::default::Default for bitcoin_units::sequence::Sequence
 impl core::fmt::Debug for bitcoin_units::Amount
 impl core::fmt::Debug for bitcoin_units::BlockTime
 impl core::fmt::Debug for bitcoin_units::FeeRate
@@ -259,19 +306,28 @@ impl core::fmt::Debug for bitcoin_units::block::BlockHeightInterval
 impl core::fmt::Debug for bitcoin_units::block::BlockMtp
 impl core::fmt::Debug for bitcoin_units::block::BlockMtpInterval
 impl core::fmt::Debug for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::fmt::Debug for bitcoin_units::locktime::absolute::ConversionError
 impl core::fmt::Debug for bitcoin_units::locktime::absolute::Height
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::LockTime
 impl core::fmt::Debug for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::fmt::Debug for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::fmt::Debug for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::fmt::Debug for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::fmt::Debug for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::LockTime
 impl core::fmt::Debug for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::fmt::Debug for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::fmt::Debug for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::fmt::Debug for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::fmt::Debug for bitcoin_units::parse::ParseIntError
 impl core::fmt::Debug for bitcoin_units::parse::PrefixedHexError
 impl core::fmt::Debug for bitcoin_units::parse::UnprefixedHexError
+impl core::fmt::Debug for bitcoin_units::sequence::Sequence
 impl core::fmt::Display for bitcoin_units::Amount
 impl core::fmt::Display for bitcoin_units::MathOp
 impl core::fmt::Display for bitcoin_units::NumOpError
@@ -294,19 +350,30 @@ impl core::fmt::Display for bitcoin_units::block::BlockHeightInterval
 impl core::fmt::Display for bitcoin_units::block::BlockMtp
 impl core::fmt::Display for bitcoin_units::block::BlockMtpInterval
 impl core::fmt::Display for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::fmt::Display for bitcoin_units::locktime::absolute::ConversionError
 impl core::fmt::Display for bitcoin_units::locktime::absolute::Height
+impl core::fmt::Display for bitcoin_units::locktime::absolute::LockTime
 impl core::fmt::Display for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::fmt::Display for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::fmt::Display for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::fmt::Display for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::fmt::Display for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::fmt::Display for bitcoin_units::locktime::relative::LockTime
 impl core::fmt::Display for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::fmt::Display for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::fmt::Display for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::fmt::Display for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::fmt::Display for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::fmt::Display for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::fmt::Display for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::fmt::Display for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::fmt::Display for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::fmt::Display for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::fmt::Display for bitcoin_units::parse::ParseIntError
 impl core::fmt::Display for bitcoin_units::parse::PrefixedHexError
 impl core::fmt::Display for bitcoin_units::parse::UnprefixedHexError
+impl core::fmt::Display for bitcoin_units::sequence::Sequence
+impl core::fmt::LowerHex for bitcoin_units::sequence::Sequence
+impl core::fmt::UpperHex for bitcoin_units::sequence::Sequence
 impl core::hash::Hash for bitcoin_units::Amount
 impl core::hash::Hash for bitcoin_units::BlockTime
 impl core::hash::Hash for bitcoin_units::FeeRate
@@ -318,9 +385,12 @@ impl core::hash::Hash for bitcoin_units::block::BlockHeightInterval
 impl core::hash::Hash for bitcoin_units::block::BlockMtp
 impl core::hash::Hash for bitcoin_units::block::BlockMtpInterval
 impl core::hash::Hash for bitcoin_units::locktime::absolute::Height
+impl core::hash::Hash for bitcoin_units::locktime::absolute::LockTime
 impl core::hash::Hash for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::hash::Hash for bitcoin_units::locktime::relative::LockTime
 impl core::hash::Hash for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::hash::Hash for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::hash::Hash for bitcoin_units::sequence::Sequence
 impl core::iter::traits::accum::Sum for bitcoin_units::FeeRate
 impl core::iter::traits::accum::Sum for bitcoin_units::NumOpResult<bitcoin_units::Amount>
 impl core::iter::traits::accum::Sum for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
@@ -341,9 +411,12 @@ impl core::marker::Copy for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Copy for bitcoin_units::block::BlockMtp
 impl core::marker::Copy for bitcoin_units::block::BlockMtpInterval
 impl core::marker::Copy for bitcoin_units::locktime::absolute::Height
+impl core::marker::Copy for bitcoin_units::locktime::absolute::LockTime
 impl core::marker::Copy for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::marker::Copy for bitcoin_units::locktime::relative::LockTime
 impl core::marker::Copy for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Copy for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::marker::Copy for bitcoin_units::sequence::Sequence
 impl core::marker::Freeze for bitcoin_units::Amount
 impl core::marker::Freeze for bitcoin_units::BlockTime
 impl core::marker::Freeze for bitcoin_units::FeeRate
@@ -369,19 +442,28 @@ impl core::marker::Freeze for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Freeze for bitcoin_units::block::BlockMtp
 impl core::marker::Freeze for bitcoin_units::block::BlockMtpInterval
 impl core::marker::Freeze for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::marker::Freeze for bitcoin_units::locktime::absolute::ConversionError
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::Height
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::LockTime
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::marker::Freeze for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::marker::Freeze for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::marker::Freeze for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::marker::Freeze for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::LockTime
 impl core::marker::Freeze for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Freeze for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::marker::Freeze for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::marker::Freeze for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::marker::Freeze for bitcoin_units::parse::ParseIntError
 impl core::marker::Freeze for bitcoin_units::parse::PrefixedHexError
 impl core::marker::Freeze for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Freeze for bitcoin_units::sequence::Sequence
 impl core::marker::Send for bitcoin_units::Amount
 impl core::marker::Send for bitcoin_units::BlockTime
 impl core::marker::Send for bitcoin_units::FeeRate
@@ -407,19 +489,28 @@ impl core::marker::Send for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Send for bitcoin_units::block::BlockMtp
 impl core::marker::Send for bitcoin_units::block::BlockMtpInterval
 impl core::marker::Send for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::marker::Send for bitcoin_units::locktime::absolute::ConversionError
 impl core::marker::Send for bitcoin_units::locktime::absolute::Height
+impl core::marker::Send for bitcoin_units::locktime::absolute::LockTime
 impl core::marker::Send for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::marker::Send for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::marker::Send for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::marker::Send for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::marker::Send for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::marker::Send for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::marker::Send for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::marker::Send for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::marker::Send for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::marker::Send for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::marker::Send for bitcoin_units::locktime::relative::LockTime
 impl core::marker::Send for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Send for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::marker::Send for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Send for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::marker::Send for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::marker::Send for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::marker::Send for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::marker::Send for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::marker::Send for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::marker::Send for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::marker::Send for bitcoin_units::parse::ParseIntError
 impl core::marker::Send for bitcoin_units::parse::PrefixedHexError
 impl core::marker::Send for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Send for bitcoin_units::sequence::Sequence
 impl core::marker::StructuralPartialEq for bitcoin_units::Amount
 impl core::marker::StructuralPartialEq for bitcoin_units::BlockTime
 impl core::marker::StructuralPartialEq for bitcoin_units::FeeRate
@@ -444,19 +535,28 @@ impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockHeightInte
 impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockMtp
 impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockMtpInterval
 impl core::marker::StructuralPartialEq for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::ConversionError
 impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::Height
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::LockTime
 impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::LockTime
 impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::marker::StructuralPartialEq for bitcoin_units::parse::ParseIntError
 impl core::marker::StructuralPartialEq for bitcoin_units::parse::PrefixedHexError
 impl core::marker::StructuralPartialEq for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::StructuralPartialEq for bitcoin_units::sequence::Sequence
 impl core::marker::Sync for bitcoin_units::Amount
 impl core::marker::Sync for bitcoin_units::BlockTime
 impl core::marker::Sync for bitcoin_units::FeeRate
@@ -482,19 +582,28 @@ impl core::marker::Sync for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Sync for bitcoin_units::block::BlockMtp
 impl core::marker::Sync for bitcoin_units::block::BlockMtpInterval
 impl core::marker::Sync for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::marker::Sync for bitcoin_units::locktime::absolute::ConversionError
 impl core::marker::Sync for bitcoin_units::locktime::absolute::Height
+impl core::marker::Sync for bitcoin_units::locktime::absolute::LockTime
 impl core::marker::Sync for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::marker::Sync for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::marker::Sync for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::marker::Sync for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::marker::Sync for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::marker::Sync for bitcoin_units::locktime::relative::LockTime
 impl core::marker::Sync for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Sync for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::marker::Sync for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Sync for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::marker::Sync for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::marker::Sync for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::marker::Sync for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::marker::Sync for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::marker::Sync for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::marker::Sync for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::marker::Sync for bitcoin_units::parse::ParseIntError
 impl core::marker::Sync for bitcoin_units::parse::PrefixedHexError
 impl core::marker::Sync for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Sync for bitcoin_units::sequence::Sequence
 impl core::marker::Unpin for bitcoin_units::Amount
 impl core::marker::Unpin for bitcoin_units::BlockTime
 impl core::marker::Unpin for bitcoin_units::FeeRate
@@ -520,19 +629,28 @@ impl core::marker::Unpin for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Unpin for bitcoin_units::block::BlockMtp
 impl core::marker::Unpin for bitcoin_units::block::BlockMtpInterval
 impl core::marker::Unpin for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::marker::Unpin for bitcoin_units::locktime::absolute::ConversionError
 impl core::marker::Unpin for bitcoin_units::locktime::absolute::Height
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::LockTime
 impl core::marker::Unpin for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::marker::Unpin for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::marker::Unpin for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::marker::Unpin for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::marker::Unpin for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::LockTime
 impl core::marker::Unpin for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Unpin for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::marker::Unpin for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::marker::Unpin for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::marker::Unpin for bitcoin_units::parse::ParseIntError
 impl core::marker::Unpin for bitcoin_units::parse::PrefixedHexError
 impl core::marker::Unpin for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Unpin for bitcoin_units::sequence::Sequence
 impl core::ops::arith::Add for bitcoin_units::Amount
 impl core::ops::arith::Add for bitcoin_units::FeeRate
 impl core::ops::arith::Add for bitcoin_units::SignedAmount
@@ -784,19 +902,28 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeig
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockMtp
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockMtpInterval
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::ConversionError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::Height
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::LockTime
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::LockTime
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::ParseIntError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::PrefixedHexError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::UnprefixedHexError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::sequence::Sequence
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::Amount
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::BlockTime
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::FeeRate
@@ -822,19 +949,28 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeightI
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockMtp
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockMtpInterval
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::TooBigForRelativeHeightError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::ConversionError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::Height
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::LockTime
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::MedianTimePast
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::ParseHeightError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::ParseTimeError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::InvalidHeightError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::InvalidTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::LockTime
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::NumberOfBlocks
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::TimeOverflowError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::ParseIntError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::PrefixedHexError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::UnprefixedHexError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::sequence::Sequence
 impl core::str::traits::FromStr for bitcoin_units::Amount
 impl core::str::traits::FromStr for bitcoin_units::SignedAmount
 impl core::str::traits::FromStr for bitcoin_units::Weight
@@ -844,6 +980,7 @@ impl core::str::traits::FromStr for bitcoin_units::block::BlockHeightInterval
 impl core::str::traits::FromStr for bitcoin_units::block::BlockMtp
 impl core::str::traits::FromStr for bitcoin_units::block::BlockMtpInterval
 impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height
+impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::LockTime
 impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks
@@ -929,9 +1066,6 @@ impl<T: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin_units::NumOpResul
 impl<T: core::fmt::Debug> bitcoin_units::NumOpResult<T>
 impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_units::NumOpResult<T>
 impl<T: core::marker::Copy> core::marker::Copy for bitcoin_units::NumOpResult<T>
-impl<T> bitcoin_units::CheckedSum<bitcoin_units::Amount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::Amount>
-impl<T> bitcoin_units::CheckedSum<bitcoin_units::SignedAmount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::SignedAmount>
-impl<T> bitcoin_units::CheckedSum<bitcoin_units::Weight> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::Weight>
 impl<T> bitcoin_units::NumOpResult<T>
 impl<T> core::marker::Freeze for bitcoin_units::NumOpResult<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for bitcoin_units::NumOpResult<T> where T: core::marker::Send
@@ -960,6 +1094,8 @@ pub bitcoin_units::MathOp::Rem
 pub bitcoin_units::MathOp::Sub
 pub bitcoin_units::NumOpResult::Error(bitcoin_units::NumOpError)
 pub bitcoin_units::NumOpResult::Valid(T)
+pub bitcoin_units::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
+pub bitcoin_units::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::MedianTimePast)
 pub bitcoin_units::amount::Denomination::Bit
 pub bitcoin_units::amount::Denomination::Bitcoin
 pub bitcoin_units::amount::Denomination::CentiBitcoin
@@ -968,6 +1104,36 @@ pub bitcoin_units::amount::Denomination::MilliBitcoin
 pub bitcoin_units::amount::Denomination::Satoshi
 pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::PossiblyConfusingDenominationError)
 pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::UnknownDenominationError)
+pub bitcoin_units::locktime::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
+pub bitcoin_units::locktime::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::MedianTimePast)
+pub bitcoin_units::locktime::relative::IsSatisfiedByError::Blocks(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::locktime::relative::IsSatisfiedByError::Time(bitcoin_units::locktime::relative::error::InvalidTimeError)
+pub bitcoin_units::locktime::relative::IsSatisfiedByHeightError::Incompatible(bitcoin_units::locktime::relative::NumberOf512Seconds)
+pub bitcoin_units::locktime::relative::IsSatisfiedByHeightError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::locktime::relative::IsSatisfiedByTimeError::Incompatible(bitcoin_units::locktime::relative::NumberOfBlocks)
+pub bitcoin_units::locktime::relative::IsSatisfiedByTimeError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidTimeError)
+pub bitcoin_units::locktime::relative::LockTime::Blocks(bitcoin_units::locktime::relative::NumberOfBlocks)
+pub bitcoin_units::locktime::relative::LockTime::Time(bitcoin_units::locktime::relative::NumberOf512Seconds)
+pub bitcoin_units::locktime::relative::error::IsSatisfiedByError::Blocks(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::locktime::relative::error::IsSatisfiedByError::Time(bitcoin_units::locktime::relative::error::InvalidTimeError)
+pub bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError::Incompatible(bitcoin_units::locktime::relative::NumberOf512Seconds)
+pub bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError::Incompatible(bitcoin_units::locktime::relative::NumberOfBlocks)
+pub bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidTimeError)
+pub bitcoin_units::relative::IsSatisfiedByError::Blocks(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::relative::IsSatisfiedByError::Time(bitcoin_units::locktime::relative::error::InvalidTimeError)
+pub bitcoin_units::relative::IsSatisfiedByHeightError::Incompatible(bitcoin_units::locktime::relative::NumberOf512Seconds)
+pub bitcoin_units::relative::IsSatisfiedByHeightError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::relative::IsSatisfiedByTimeError::Incompatible(bitcoin_units::locktime::relative::NumberOfBlocks)
+pub bitcoin_units::relative::IsSatisfiedByTimeError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidTimeError)
+pub bitcoin_units::relative::LockTime::Blocks(bitcoin_units::locktime::relative::NumberOfBlocks)
+pub bitcoin_units::relative::LockTime::Time(bitcoin_units::locktime::relative::NumberOf512Seconds)
+pub bitcoin_units::relative::error::IsSatisfiedByError::Blocks(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::relative::error::IsSatisfiedByError::Time(bitcoin_units::locktime::relative::error::InvalidTimeError)
+pub bitcoin_units::relative::error::IsSatisfiedByHeightError::Incompatible(bitcoin_units::locktime::relative::NumberOf512Seconds)
+pub bitcoin_units::relative::error::IsSatisfiedByHeightError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidHeightError)
+pub bitcoin_units::relative::error::IsSatisfiedByTimeError::Incompatible(bitcoin_units::locktime::relative::NumberOfBlocks)
+pub bitcoin_units::relative::error::IsSatisfiedByTimeError::Satisfaction(bitcoin_units::locktime::relative::error::InvalidTimeError)
 pub const bitcoin_units::Amount::FIFTY_BTC: Self
 pub const bitcoin_units::Amount::MAX: Self
 pub const bitcoin_units::Amount::MAX_MONEY: Self
@@ -994,6 +1160,7 @@ pub const bitcoin_units::Weight::MIN: bitcoin_units::Weight
 pub const bitcoin_units::Weight::MIN_TRANSACTION: bitcoin_units::Weight
 pub const bitcoin_units::Weight::WITNESS_SCALE_FACTOR: u64
 pub const bitcoin_units::Weight::ZERO: bitcoin_units::Weight
+pub const bitcoin_units::absolute::LOCK_TIME_THRESHOLD: u32
 pub const bitcoin_units::amount::Denomination::BTC: Self
 pub const bitcoin_units::amount::Denomination::SAT: Self
 pub const bitcoin_units::block::BlockHeight::MAX: Self
@@ -1012,14 +1179,25 @@ pub const bitcoin_units::locktime::absolute::Height::MAX: Self
 pub const bitcoin_units::locktime::absolute::Height::MIN: Self
 pub const bitcoin_units::locktime::absolute::Height::ZERO: Self
 pub const bitcoin_units::locktime::absolute::LOCK_TIME_THRESHOLD: u32
+pub const bitcoin_units::locktime::absolute::LockTime::SIZE: usize
+pub const bitcoin_units::locktime::absolute::LockTime::ZERO: bitcoin_units::locktime::absolute::LockTime
 pub const bitcoin_units::locktime::absolute::MedianTimePast::MAX: Self
 pub const bitcoin_units::locktime::absolute::MedianTimePast::MIN: Self
+pub const bitcoin_units::locktime::relative::LockTime::SIZE: usize
+pub const bitcoin_units::locktime::relative::LockTime::ZERO: bitcoin_units::locktime::relative::LockTime
 pub const bitcoin_units::locktime::relative::NumberOf512Seconds::MAX: Self
 pub const bitcoin_units::locktime::relative::NumberOf512Seconds::MIN: Self
 pub const bitcoin_units::locktime::relative::NumberOf512Seconds::ZERO: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MAX: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MIN: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::ZERO: Self
+pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_AND_RBF: Self
+pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_NO_RBF: Self
+pub const bitcoin_units::sequence::Sequence::ENABLE_RBF_NO_LOCKTIME: Self
+pub const bitcoin_units::sequence::Sequence::FINAL: Self
+pub const bitcoin_units::sequence::Sequence::MAX: Self
+pub const bitcoin_units::sequence::Sequence::SIZE: usize
+pub const bitcoin_units::sequence::Sequence::ZERO: Self
 pub const bitcoin_units::weight::WITNESS_SCALE_FACTOR: usize
 pub const fn bitcoin_units::Amount::checked_add(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::Amount::checked_div(self, rhs: u64) -> core::option::Option<Self>
@@ -1082,6 +1260,8 @@ pub const fn bitcoin_units::Weight::to_kwu_floor(self) -> u64
 pub const fn bitcoin_units::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::Weight::to_vbytes_floor(self) -> u64
 pub const fn bitcoin_units::Weight::to_wu(self) -> u64
+pub const fn bitcoin_units::absolute::is_block_height(n: u32) -> bool
+pub const fn bitcoin_units::absolute::is_block_time(n: u32) -> bool
 pub const fn bitcoin_units::block::BlockHeight::from_u32(inner: u32) -> Self
 pub const fn bitcoin_units::block::BlockHeight::to_u32(self) -> u32
 pub const fn bitcoin_units::block::BlockHeightInterval::from_u32(inner: u32) -> Self
@@ -1089,18 +1269,28 @@ pub const fn bitcoin_units::block::BlockHeightInterval::to_u32(self) -> u32
 pub const fn bitcoin_units::block::BlockMtp::from_u32(inner: u32) -> Self
 pub const fn bitcoin_units::block::BlockMtp::to_u32(self) -> u32
 pub const fn bitcoin_units::block::BlockMtpInterval::from_u32(inner: u32) -> Self
-pub const fn bitcoin_units::block::BlockMtpInterval::to_relative_mtp_interval_ceil(self) -> core::result::Result<bitcoin_units::locktime::relative::NumberOf512Seconds, bitcoin_units::locktime::relative::TimeOverflowError>
-pub const fn bitcoin_units::block::BlockMtpInterval::to_relative_mtp_interval_floor(self) -> core::result::Result<bitcoin_units::locktime::relative::NumberOf512Seconds, bitcoin_units::locktime::relative::TimeOverflowError>
+pub const fn bitcoin_units::block::BlockMtpInterval::to_relative_mtp_interval_ceil(self) -> core::result::Result<bitcoin_units::locktime::relative::NumberOf512Seconds, bitcoin_units::locktime::relative::error::TimeOverflowError>
+pub const fn bitcoin_units::block::BlockMtpInterval::to_relative_mtp_interval_floor(self) -> core::result::Result<bitcoin_units::locktime::relative::NumberOf512Seconds, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::block::BlockMtpInterval::to_u32(self) -> u32
-pub const fn bitcoin_units::locktime::absolute::Height::from_u32(n: u32) -> core::result::Result<bitcoin_units::locktime::absolute::Height, bitcoin_units::locktime::absolute::ConversionError>
+pub const fn bitcoin_units::locktime::absolute::Height::from_u32(n: u32) -> core::result::Result<bitcoin_units::locktime::absolute::Height, bitcoin_units::locktime::absolute::error::ConversionError>
 pub const fn bitcoin_units::locktime::absolute::Height::to_u32(self) -> u32
-pub const fn bitcoin_units::locktime::absolute::MedianTimePast::from_u32(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ConversionError>
+pub const fn bitcoin_units::locktime::absolute::LockTime::is_block_height(self) -> bool
+pub const fn bitcoin_units::locktime::absolute::LockTime::is_block_time(self) -> bool
+pub const fn bitcoin_units::locktime::absolute::LockTime::is_same_unit(self, other: bitcoin_units::locktime::absolute::LockTime) -> bool
+pub const fn bitcoin_units::locktime::absolute::MedianTimePast::from_u32(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
 pub const fn bitcoin_units::locktime::absolute::MedianTimePast::to_u32(self) -> u32
 pub const fn bitcoin_units::locktime::absolute::is_block_height(n: u32) -> bool
 pub const fn bitcoin_units::locktime::absolute::is_block_time(n: u32) -> bool
+pub const fn bitcoin_units::locktime::relative::LockTime::from_512_second_intervals(intervals: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::LockTime::from_height(n: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
+pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
+pub const fn bitcoin_units::locktime::relative::LockTime::is_block_height(self) -> bool
+pub const fn bitcoin_units::locktime::relative::LockTime::is_block_time(self) -> bool
+pub const fn bitcoin_units::locktime::relative::LockTime::is_same_unit(self, other: bitcoin_units::locktime::relative::LockTime) -> bool
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_512_second_intervals(intervals: u16) -> Self
-pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
-pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
+pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_512_second_intervals(self) -> u16
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_seconds(self) -> u32
@@ -1108,6 +1298,22 @@ pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_height(bloc
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_height(self) -> u16
 pub enum bitcoin_units::NumOpResult<T>
+pub enum bitcoin_units::absolute::LockTime
+pub enum bitcoin_units::locktime::absolute::LockTime
+pub enum bitcoin_units::locktime::relative::IsSatisfiedByError
+pub enum bitcoin_units::locktime::relative::IsSatisfiedByHeightError
+pub enum bitcoin_units::locktime::relative::IsSatisfiedByTimeError
+pub enum bitcoin_units::locktime::relative::LockTime
+pub enum bitcoin_units::locktime::relative::error::IsSatisfiedByError
+pub enum bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+pub enum bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+pub enum bitcoin_units::relative::IsSatisfiedByError
+pub enum bitcoin_units::relative::IsSatisfiedByHeightError
+pub enum bitcoin_units::relative::IsSatisfiedByTimeError
+pub enum bitcoin_units::relative::LockTime
+pub enum bitcoin_units::relative::error::IsSatisfiedByError
+pub enum bitcoin_units::relative::error::IsSatisfiedByHeightError
+pub enum bitcoin_units::relative::error::IsSatisfiedByTimeError
 pub fn &bitcoin_units::Amount::add(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn &bitcoin_units::Amount::add(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
 pub fn &bitcoin_units::Amount::add(self, rhs: bitcoin_units::Amount) -> Self::Output
@@ -1248,9 +1454,6 @@ pub fn &u64::mul(self, rhs: &bitcoin_units::Weight) -> Self::Output
 pub fn &u64::mul(self, rhs: bitcoin_units::Amount) -> Self::Output
 pub fn &u64::mul(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
 pub fn &u64::mul(self, rhs: bitcoin_units::Weight) -> Self::Output
-pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::Amount>
-pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::SignedAmount>
-pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::Weight>
 pub fn bitcoin_units::Amount::add(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn bitcoin_units::Amount::add(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
 pub fn bitcoin_units::Amount::add(self, rhs: bitcoin_units::Amount) -> Self::Output
@@ -1299,7 +1502,6 @@ pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) ->
 pub fn bitcoin_units::BlockTime::from(t: u32) -> Self
 pub fn bitcoin_units::BlockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::BlockTime::partial_cmp(&self, other: &bitcoin_units::BlockTime) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_units::CheckedSum::checked_sum(self) -> core::option::Option<R>
 pub fn bitcoin_units::FeeRate::add(self, rhs: &bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::FeeRate::add(self, rhs: bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::FeeRate::add_assign(&mut self, rhs: &bitcoin_units::FeeRate)
@@ -1626,44 +1828,82 @@ pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: &str) -> core::result
 pub fn bitcoin_units::block::TooBigForRelativeHeightError::clone(&self) -> bitcoin_units::block::TooBigForRelativeHeightError
 pub fn bitcoin_units::block::TooBigForRelativeHeightError::eq(&self, other: &bitcoin_units::block::TooBigForRelativeHeightError) -> bool
 pub fn bitcoin_units::block::TooBigForRelativeHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::locktime::absolute::ConversionError::clone(&self) -> bitcoin_units::locktime::absolute::ConversionError
-pub fn bitcoin_units::locktime::absolute::ConversionError::eq(&self, other: &bitcoin_units::locktime::absolute::ConversionError) -> bool
-pub fn bitcoin_units::locktime::absolute::ConversionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::locktime::absolute::Height::clone(&self) -> bitcoin_units::locktime::absolute::Height
 pub fn bitcoin_units::locktime::absolute::Height::cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::absolute::Height::eq(&self, other: &bitcoin_units::locktime::absolute::Height) -> bool
 pub fn bitcoin_units::locktime::absolute::Height::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::locktime::absolute::Height::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ParseHeightError>
+pub fn bitcoin_units::locktime::absolute::Height::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseHeightError>
 pub fn bitcoin_units::locktime::absolute::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::absolute::Height::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::absolute::Height::is_satisfied_by(self, height: bitcoin_units::locktime::absolute::Height) -> bool
 pub fn bitcoin_units::locktime::absolute::Height::partial_cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::locktime::absolute::Height::try_from(h: bitcoin_units::block::BlockHeight) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::Height::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::LockTime::clone(&self) -> bitcoin_units::locktime::absolute::LockTime
+pub fn bitcoin_units::locktime::absolute::LockTime::eq(&self, other: &bitcoin_units::locktime::absolute::LockTime) -> bool
+pub fn bitcoin_units::locktime::absolute::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::LockTime::from(h: bitcoin_units::locktime::absolute::Height) -> Self
+pub fn bitcoin_units::locktime::absolute::LockTime::from(t: bitcoin_units::locktime::absolute::MedianTimePast) -> Self
+pub fn bitcoin_units::locktime::absolute::LockTime::from_consensus(n: u32) -> Self
+pub fn bitcoin_units::locktime::absolute::LockTime::from_height(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
+pub fn bitcoin_units::locktime::absolute::LockTime::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_units::locktime::absolute::LockTime::from_mtp(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
+pub fn bitcoin_units::locktime::absolute::LockTime::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::absolute::LockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_units::locktime::absolute::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::locktime::absolute::LockTime::is_implied_by(self, other: bitcoin_units::locktime::absolute::LockTime) -> bool
+pub fn bitcoin_units::locktime::absolute::LockTime::is_satisfied_by(self, height: bitcoin_units::locktime::absolute::Height, mtp: bitcoin_units::locktime::absolute::MedianTimePast) -> bool
+pub fn bitcoin_units::locktime::absolute::LockTime::is_satisfied_by_height(self, height: bitcoin_units::locktime::absolute::Height) -> core::result::Result<bool, bitcoin_units::locktime::absolute::error::IncompatibleHeightError>
+pub fn bitcoin_units::locktime::absolute::LockTime::is_satisfied_by_time(self, mtp: bitcoin_units::locktime::absolute::MedianTimePast) -> core::result::Result<bool, bitcoin_units::locktime::absolute::error::IncompatibleTimeError>
+pub fn bitcoin_units::locktime::absolute::LockTime::to_consensus_u32(self) -> u32
+pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::clone(&self) -> bitcoin_units::locktime::absolute::MedianTimePast
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::cmp(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::eq(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> bool
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ParseTimeError>
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseTimeError>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::is_satisfied_by(self, time: bitcoin_units::locktime::absolute::MedianTimePast) -> bool
-pub fn bitcoin_units::locktime::absolute::MedianTimePast::new(timestamps: [bitcoin_units::BlockTime; 11]) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ConversionError>
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::new(timestamps: [bitcoin_units::BlockTime; 11]) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::partial_cmp(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(h: bitcoin_units::block::BlockMtp) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: &str) -> core::result::Result<Self, Self::Error>
-pub fn bitcoin_units::locktime::absolute::ParseHeightError::clone(&self) -> bitcoin_units::locktime::absolute::ParseHeightError
-pub fn bitcoin_units::locktime::absolute::ParseHeightError::eq(&self, other: &bitcoin_units::locktime::absolute::ParseHeightError) -> bool
-pub fn bitcoin_units::locktime::absolute::ParseHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::locktime::absolute::ParseTimeError::clone(&self) -> bitcoin_units::locktime::absolute::ParseTimeError
-pub fn bitcoin_units::locktime::absolute::ParseTimeError::eq(&self, other: &bitcoin_units::locktime::absolute::ParseTimeError) -> bool
-pub fn bitcoin_units::locktime::absolute::ParseTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::locktime::relative::InvalidHeightError::clone(&self) -> bitcoin_units::locktime::relative::InvalidHeightError
-pub fn bitcoin_units::locktime::relative::InvalidHeightError::eq(&self, other: &bitcoin_units::locktime::relative::InvalidHeightError) -> bool
-pub fn bitcoin_units::locktime::relative::InvalidHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::locktime::relative::InvalidTimeError::clone(&self) -> bitcoin_units::locktime::relative::InvalidTimeError
-pub fn bitcoin_units::locktime::relative::InvalidTimeError::eq(&self, other: &bitcoin_units::locktime::relative::InvalidTimeError) -> bool
-pub fn bitcoin_units::locktime::relative::InvalidTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::error::ConversionError::clone(&self) -> bitcoin_units::locktime::absolute::error::ConversionError
+pub fn bitcoin_units::locktime::absolute::error::ConversionError::eq(&self, other: &bitcoin_units::locktime::absolute::error::ConversionError) -> bool
+pub fn bitcoin_units::locktime::absolute::error::ConversionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleHeightError::clone(&self) -> bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleHeightError::eq(&self, other: &bitcoin_units::locktime::absolute::error::IncompatibleHeightError) -> bool
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleHeightError::incompatible(&self) -> bitcoin_units::locktime::absolute::Height
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleHeightError::lock(&self) -> bitcoin_units::locktime::absolute::MedianTimePast
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleTimeError::clone(&self) -> bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleTimeError::eq(&self, other: &bitcoin_units::locktime::absolute::error::IncompatibleTimeError) -> bool
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleTimeError::incompatible(&self) -> bitcoin_units::locktime::absolute::MedianTimePast
+pub fn bitcoin_units::locktime::absolute::error::IncompatibleTimeError::lock(&self) -> bitcoin_units::locktime::absolute::Height
+pub fn bitcoin_units::locktime::absolute::error::ParseHeightError::clone(&self) -> bitcoin_units::locktime::absolute::error::ParseHeightError
+pub fn bitcoin_units::locktime::absolute::error::ParseHeightError::eq(&self, other: &bitcoin_units::locktime::absolute::error::ParseHeightError) -> bool
+pub fn bitcoin_units::locktime::absolute::error::ParseHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::error::ParseTimeError::clone(&self) -> bitcoin_units::locktime::absolute::error::ParseTimeError
+pub fn bitcoin_units::locktime::absolute::error::ParseTimeError::eq(&self, other: &bitcoin_units::locktime::absolute::error::ParseTimeError) -> bool
+pub fn bitcoin_units::locktime::absolute::error::ParseTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::LockTime::clone(&self) -> bitcoin_units::locktime::relative::LockTime
+pub fn bitcoin_units::locktime::relative::LockTime::eq(&self, other: &bitcoin_units::locktime::relative::LockTime) -> bool
+pub fn bitcoin_units::locktime::relative::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::LockTime::from(h: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self
+pub fn bitcoin_units::locktime::relative::LockTime::from(t: bitcoin_units::locktime::relative::NumberOf512Seconds) -> Self
+pub fn bitcoin_units::locktime::relative::LockTime::from_consensus(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
+pub fn bitcoin_units::locktime::relative::LockTime::from_sequence(n: bitcoin_units::sequence::Sequence) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
+pub fn bitcoin_units::locktime::relative::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by(self, other: bitcoin_units::locktime::relative::LockTime) -> bool
+pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by_sequence(self, other: bitcoin_units::sequence::Sequence) -> bool
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by(self, chain_tip_height: bitcoin_units::block::BlockHeight, chain_tip_mtp: bitcoin_units::block::BlockMtp, utxo_mined_at_height: bitcoin_units::block::BlockHeight, utxo_mined_at_mtp: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_height(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError>
+pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_time(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError>
+pub fn bitcoin_units::locktime::relative::LockTime::to_consensus_u32(self) -> u32
+pub fn bitcoin_units::locktime::relative::LockTime::to_sequence(self) -> bitcoin_units::sequence::Sequence
+pub fn bitcoin_units::locktime::relative::LockTime::try_from(seq: bitcoin_units::sequence::Sequence) -> core::result::Result<bitcoin_units::locktime::relative::LockTime, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::clone(&self) -> bitcoin_units::locktime::relative::NumberOf512Seconds
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::cmp(&self, other: &bitcoin_units::locktime::relative::NumberOf512Seconds) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::default() -> bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -1671,7 +1911,7 @@ pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::eq(&self, other: &
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::InvalidTimeError>
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::partial_cmp(&self, other: &bitcoin_units::locktime::relative::NumberOf512Seconds) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::clone(&self) -> bitcoin_units::locktime::relative::NumberOfBlocks
@@ -1682,13 +1922,32 @@ pub fn bitcoin_units::locktime::relative::NumberOfBlocks::fmt(&self, f: &mut cor
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from(value: u16) -> Self
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::InvalidHeightError>
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::partial_cmp(&self, other: &bitcoin_units::locktime::relative::NumberOfBlocks) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(h: bitcoin_units::block::BlockHeightInterval) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: &str) -> core::result::Result<Self, Self::Error>
-pub fn bitcoin_units::locktime::relative::TimeOverflowError::clone(&self) -> bitcoin_units::locktime::relative::TimeOverflowError
-pub fn bitcoin_units::locktime::relative::TimeOverflowError::eq(&self, other: &bitcoin_units::locktime::relative::TimeOverflowError) -> bool
-pub fn bitcoin_units::locktime::relative::TimeOverflowError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::error::DisabledLockTimeError::clone(&self) -> bitcoin_units::locktime::relative::error::DisabledLockTimeError
+pub fn bitcoin_units::locktime::relative::error::DisabledLockTimeError::disabled_locktime_value(&self) -> u32
+pub fn bitcoin_units::locktime::relative::error::DisabledLockTimeError::eq(&self, other: &bitcoin_units::locktime::relative::error::DisabledLockTimeError) -> bool
+pub fn bitcoin_units::locktime::relative::error::DisabledLockTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::error::InvalidHeightError::clone(&self) -> bitcoin_units::locktime::relative::error::InvalidHeightError
+pub fn bitcoin_units::locktime::relative::error::InvalidHeightError::eq(&self, other: &bitcoin_units::locktime::relative::error::InvalidHeightError) -> bool
+pub fn bitcoin_units::locktime::relative::error::InvalidHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::error::InvalidTimeError::clone(&self) -> bitcoin_units::locktime::relative::error::InvalidTimeError
+pub fn bitcoin_units::locktime::relative::error::InvalidTimeError::eq(&self, other: &bitcoin_units::locktime::relative::error::InvalidTimeError) -> bool
+pub fn bitcoin_units::locktime::relative::error::InvalidTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByError::clone(&self) -> bitcoin_units::locktime::relative::error::IsSatisfiedByError
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByError::eq(&self, other: &bitcoin_units::locktime::relative::error::IsSatisfiedByError) -> bool
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError::clone(&self) -> bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError::eq(&self, other: &bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError) -> bool
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError::clone(&self) -> bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError::eq(&self, other: &bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError) -> bool
+pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::clone(&self) -> bitcoin_units::locktime::relative::error::TimeOverflowError
+pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::eq(&self, other: &bitcoin_units::locktime::relative::error::TimeOverflowError) -> bool
+pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::parse::ParseIntError::as_ref(&self) -> &core::num::error::ParseIntError
 pub fn bitcoin_units::parse::ParseIntError::clone(&self) -> bitcoin_units::parse::ParseIntError
 pub fn bitcoin_units::parse::ParseIntError::eq(&self, other: &bitcoin_units::parse::ParseIntError) -> bool
@@ -1714,6 +1973,29 @@ pub fn bitcoin_units::parse::hex_u32_prefixed(s: &str) -> core::result::Result<u
 pub fn bitcoin_units::parse::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
 pub fn bitcoin_units::parse::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin_units::parse::int_from_str<T: bitcoin_units::parse::Integer>(s: &str) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::sequence::Sequence::clone(&self) -> bitcoin_units::sequence::Sequence
+pub fn bitcoin_units::sequence::Sequence::cmp(&self, other: &bitcoin_units::sequence::Sequence) -> core::cmp::Ordering
+pub fn bitcoin_units::sequence::Sequence::default() -> Self
+pub fn bitcoin_units::sequence::Sequence::enables_absolute_lock_time(self) -> bool
+pub fn bitcoin_units::sequence::Sequence::eq(&self, other: &bitcoin_units::sequence::Sequence) -> bool
+pub fn bitcoin_units::sequence::Sequence::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::sequence::Sequence::from(lt: bitcoin_units::locktime::relative::LockTime) -> bitcoin_units::sequence::Sequence
+pub fn bitcoin_units::sequence::Sequence::from_512_second_intervals(intervals: u16) -> Self
+pub fn bitcoin_units::sequence::Sequence::from_consensus(n: u32) -> Self
+pub fn bitcoin_units::sequence::Sequence::from_height(height: u16) -> Self
+pub fn bitcoin_units::sequence::Sequence::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_units::sequence::Sequence::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
+pub fn bitcoin_units::sequence::Sequence::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
+pub fn bitcoin_units::sequence::Sequence::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_units::sequence::Sequence::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::sequence::Sequence::is_final(self) -> bool
+pub fn bitcoin_units::sequence::Sequence::is_height_locked(self) -> bool
+pub fn bitcoin_units::sequence::Sequence::is_rbf(self) -> bool
+pub fn bitcoin_units::sequence::Sequence::is_relative_lock_time(self) -> bool
+pub fn bitcoin_units::sequence::Sequence::is_time_locked(self) -> bool
+pub fn bitcoin_units::sequence::Sequence::partial_cmp(&self, other: &bitcoin_units::sequence::Sequence) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::sequence::Sequence::to_consensus_u32(self) -> u32
+pub fn bitcoin_units::sequence::Sequence::to_relative_lock_time(self) -> core::option::Option<bitcoin_units::locktime::relative::LockTime>
 pub fn core::num::error::ParseIntError::from(value: bitcoin_units::parse::ParseIntError) -> Self
 pub fn i64::mul(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
 pub fn i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
@@ -1723,6 +2005,7 @@ pub fn u32::from(height: bitcoin_units::block::BlockHeight) -> Self
 pub fn u32::from(height: bitcoin_units::block::BlockHeightInterval) -> Self
 pub fn u32::from(height: bitcoin_units::block::BlockMtp) -> Self
 pub fn u32::from(height: bitcoin_units::block::BlockMtpInterval) -> Self
+pub fn u32::from(sequence: bitcoin_units::sequence::Sequence) -> u32
 pub fn u32::from(t: bitcoin_units::BlockTime) -> Self
 pub fn u64::from(value: bitcoin_units::Weight) -> Self
 pub fn u64::mul(self, rhs: &bitcoin_units::Amount) -> Self::Output
@@ -1732,14 +2015,21 @@ pub fn u64::mul(self, rhs: bitcoin_units::Amount) -> Self::Output
 pub fn u64::mul(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
 pub fn u64::mul(self, rhs: bitcoin_units::Weight) -> Self::Output
 pub mod bitcoin_units
+pub mod bitcoin_units::absolute
+pub mod bitcoin_units::absolute::error
 pub mod bitcoin_units::amount
 pub mod bitcoin_units::block
 pub mod bitcoin_units::fee
 pub mod bitcoin_units::fee_rate
 pub mod bitcoin_units::locktime
 pub mod bitcoin_units::locktime::absolute
+pub mod bitcoin_units::locktime::absolute::error
 pub mod bitcoin_units::locktime::relative
+pub mod bitcoin_units::locktime::relative::error
 pub mod bitcoin_units::parse
+pub mod bitcoin_units::relative
+pub mod bitcoin_units::relative::error
+pub mod bitcoin_units::sequence
 pub mod bitcoin_units::time
 pub mod bitcoin_units::weight
 pub struct bitcoin_units::Amount(_)
@@ -1749,8 +2039,19 @@ pub struct bitcoin_units::BlockMtp(_)
 pub struct bitcoin_units::BlockMtpInterval(_)
 pub struct bitcoin_units::BlockTime(_)
 pub struct bitcoin_units::FeeRate(_)
+pub struct bitcoin_units::Sequence(pub u32)
 pub struct bitcoin_units::SignedAmount(_)
 pub struct bitcoin_units::Weight(_)
+pub struct bitcoin_units::absolute::Height(_)
+pub struct bitcoin_units::absolute::IncompatibleHeightError
+pub struct bitcoin_units::absolute::IncompatibleTimeError
+pub struct bitcoin_units::absolute::MedianTimePast(_)
+pub struct bitcoin_units::absolute::ParseHeightError(_)
+pub struct bitcoin_units::absolute::ParseTimeError(_)
+pub struct bitcoin_units::absolute::error::IncompatibleHeightError
+pub struct bitcoin_units::absolute::error::IncompatibleTimeError
+pub struct bitcoin_units::absolute::error::ParseHeightError(_)
+pub struct bitcoin_units::absolute::error::ParseTimeError(_)
 pub struct bitcoin_units::amount::Amount(_)
 pub struct bitcoin_units::amount::Display
 pub struct bitcoin_units::amount::InputTooLargeError
@@ -1768,19 +2069,40 @@ pub struct bitcoin_units::block::BlockMtpInterval(_)
 pub struct bitcoin_units::block::TooBigForRelativeHeightError(_)
 pub struct bitcoin_units::fee_rate::FeeRate(_)
 pub struct bitcoin_units::locktime::absolute::Height(_)
+pub struct bitcoin_units::locktime::absolute::IncompatibleHeightError
+pub struct bitcoin_units::locktime::absolute::IncompatibleTimeError
 pub struct bitcoin_units::locktime::absolute::MedianTimePast(_)
 pub struct bitcoin_units::locktime::absolute::ParseHeightError(_)
 pub struct bitcoin_units::locktime::absolute::ParseTimeError(_)
+pub struct bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+pub struct bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+pub struct bitcoin_units::locktime::absolute::error::ParseHeightError(_)
+pub struct bitcoin_units::locktime::absolute::error::ParseTimeError(_)
+pub struct bitcoin_units::locktime::relative::DisabledLockTimeError(_)
 pub struct bitcoin_units::locktime::relative::InvalidHeightError
 pub struct bitcoin_units::locktime::relative::InvalidTimeError
 pub struct bitcoin_units::locktime::relative::NumberOf512Seconds(_)
 pub struct bitcoin_units::locktime::relative::NumberOfBlocks(_)
 pub struct bitcoin_units::locktime::relative::TimeOverflowError
+pub struct bitcoin_units::locktime::relative::error::DisabledLockTimeError(_)
+pub struct bitcoin_units::locktime::relative::error::InvalidHeightError
+pub struct bitcoin_units::locktime::relative::error::InvalidTimeError
+pub struct bitcoin_units::locktime::relative::error::TimeOverflowError
 pub struct bitcoin_units::parse::PrefixedHexError(_)
 pub struct bitcoin_units::parse::UnprefixedHexError(_)
+pub struct bitcoin_units::relative::DisabledLockTimeError(_)
+pub struct bitcoin_units::relative::InvalidHeightError
+pub struct bitcoin_units::relative::InvalidTimeError
+pub struct bitcoin_units::relative::NumberOf512Seconds(_)
+pub struct bitcoin_units::relative::NumberOfBlocks(_)
+pub struct bitcoin_units::relative::TimeOverflowError
+pub struct bitcoin_units::relative::error::DisabledLockTimeError(_)
+pub struct bitcoin_units::relative::error::InvalidHeightError
+pub struct bitcoin_units::relative::error::InvalidTimeError
+pub struct bitcoin_units::relative::error::TimeOverflowError
+pub struct bitcoin_units::sequence::Sequence(pub u32)
 pub struct bitcoin_units::time::BlockTime(_)
 pub struct bitcoin_units::weight::Weight(_)
-pub trait bitcoin_units::CheckedSum<R>: bitcoin_units::sealed::Sealed<R>
 pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + bitcoin_units::parse::sealed::Sealed
 pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::Amount>>>::Output
 pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add>::Output
@@ -1957,12 +2279,15 @@ pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse::P
 pub type bitcoin_units::block::BlockMtpInterval::Output = <bitcoin_units::block::BlockMtpInterval as core::ops::arith::Add>::Output
 pub type bitcoin_units::block::BlockMtpInterval::Output = <bitcoin_units::block::BlockMtpInterval as core::ops::arith::Sub>::Output
 pub type bitcoin_units::block::BlockMtpInterval::Output = bitcoin_units::block::BlockMtpInterval
-pub type bitcoin_units::locktime::absolute::Height::Err = bitcoin_units::locktime::absolute::ParseHeightError
-pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::ConversionError
-pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::ParseHeightError
-pub type bitcoin_units::locktime::absolute::MedianTimePast::Err = bitcoin_units::locktime::absolute::ParseTimeError
-pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::ConversionError
-pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::ParseTimeError
+pub type bitcoin_units::locktime::absolute::Height::Err = bitcoin_units::locktime::absolute::error::ParseHeightError
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ConversionError
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
+pub type bitcoin_units::locktime::absolute::LockTime::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::absolute::MedianTimePast::Err = bitcoin_units::locktime::absolute::error::ParseTimeError
+pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ConversionError
+pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
+pub type bitcoin_units::locktime::relative::LockTime::Error = bitcoin_units::locktime::relative::error::DisabledLockTimeError
 pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Err = bitcoin_units::parse::ParseIntError
 pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse::ParseIntError
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Err = bitcoin_units::parse::ParseIntError
