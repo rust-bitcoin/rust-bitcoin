@@ -721,7 +721,7 @@ impl Xpriv {
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_byte_array(
-                hmac.as_byte_array().split_array::<32, 32>().0,
+                *hmac.as_byte_array().split_array::<32, 32>().0,
             )
             .expect("cryptographically unreachable"),
             chain_code: ChainCode::from_hmac(hmac),
@@ -745,7 +745,7 @@ impl Xpriv {
     /// Constructs a new BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
-        Keypair::from_seckey_slice(secp, &self.private_key[..])
+        Keypair::from_seckey_byte_array(secp, self.private_key.secret_bytes())
             .expect("BIP32 internal private key representation is broken")
     }
 
@@ -800,7 +800,7 @@ impl Xpriv {
         engine.input(&u32::from(i).to_be_bytes());
         let hmac: Hmac<sha512::Hash> = engine.finalize();
         let sk =
-            secp256k1::SecretKey::from_byte_array(hmac.as_byte_array().split_array::<32, 32>().0)
+            secp256k1::SecretKey::from_byte_array(*hmac.as_byte_array().split_array::<32, 32>().0)
                 .expect("statistically impossible to hit");
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
@@ -837,7 +837,7 @@ impl Xpriv {
             parent_fingerprint,
             child_number,
             chain_code,
-            private_key: secp256k1::SecretKey::from_byte_array(private_key)?,
+            private_key: secp256k1::SecretKey::from_byte_array(*private_key)?,
         })
     }
 
@@ -944,7 +944,7 @@ impl Xpub {
 
                 let hmac = engine.finalize();
                 let private_key = secp256k1::SecretKey::from_byte_array(
-                    hmac.as_byte_array().split_array::<32, 32>().0,
+                    *hmac.as_byte_array().split_array::<32, 32>().0,
                 )
                 .expect("cryptographically unreachable");
                 let chain_code = ChainCode::from_hmac(hmac);
