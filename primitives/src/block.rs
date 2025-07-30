@@ -25,6 +25,13 @@ use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
 use crate::transaction::Transaction;
 
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval};
+// Re-export errors that appear directly in the API - but no doc inline.
+#[doc(no_inline)]
+pub use units::block::TooBigForRelativeHeightError;
+
 /// Marker for whether or not a block has been validated.
 ///
 /// We define valid as:
