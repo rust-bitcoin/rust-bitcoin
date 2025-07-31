@@ -16,10 +16,14 @@ use core::cmp;
 #[cfg(feature = "hex")]
 use core::convert::Infallible;
 use core::fmt;
+#[cfg(feature = "std")]
+use std::io::{self, Write};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
+#[cfg(all(feature = "std", feature = "hex"))]
+use hex::DisplayHex as _;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
 #[cfg(feature = "hex")]
@@ -33,6 +37,8 @@ use units::sequence::Sequence;
 #[cfg(feature = "alloc")]
 use units::{Amount, Weight};
 
+#[cfg(all(feature = "std", feature = "hex"))]
+use crate::prelude::String;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
@@ -177,6 +183,113 @@ impl Transaction {
         // `Transaction` docs for full explanation).
         self.inputs.is_empty()
     }
+
+    /// Consensus encodes a transaction.
+    #[cfg(feature = "std")]
+    #[allow(clippy::missing_panics_doc)] // Does not panic.
+    pub fn consensus_encode(&self) -> Vec<u8> {
+        let mut encoder = Vec::new();
+        let len =
+            self.consensus_encode_to_writer(&mut encoder).expect("in-memory writers don't error");
+        debug_assert_eq!(len, encoder.len());
+        encoder
+    }
+
+    /// Consensus encodes a transaction as a hex string.
+    #[cfg(all(feature = "std", feature = "hex"))]
+    pub fn consensus_encode_hex(&self) -> String { self.consensus_encode().to_lower_hex_string() }
+
+    /// Consensus encodes transaction to writer.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes written on success. The only errors returned are errors propagated from
+    /// the writer.
+    #[cfg(feature = "std")]
+    pub fn consensus_encode_to_writer<W: Write + ?Sized>(
+        &self,
+        w: &mut W,
+    ) -> Result<usize, io::Error> {
+        let mut len = 0;
+
+        len += w.write(&self.version.0.to_le_bytes())?; // Same as `encode::emit_i32`.
+
+        if self.uses_segwit_serialization() {
+            // BIP-0141 (SegWit) transaction serialization also includes marker and flag.
+            len += w.write(&[SEGWIT_MARKER])?;
+            len += w.write(&[SEGWIT_FLAG])?;
+        }
+
+        // Encode inputs (excluding witness data) with leading compact size encoded int.
+        let input_len = self.inputs.len();
+        len += w.write(compact_size::encode(input_len).as_slice())?;
+        for input in &self.inputs {
+            // Encode each input same as we do in `Encodable for TxIn`.
+            len += w.write(input.previous_output.txid.as_byte_array())?;
+            len += w.write(&input.previous_output.vout.to_le_bytes())?;
+
+            let script_sig_bytes = input.script_sig.as_bytes();
+            len += w.write(compact_size::encode(script_sig_bytes.len()).as_slice())?;
+            len += w.write(script_sig_bytes)?;
+
+            len += w.write(&input.sequence.0.to_le_bytes())?;
+        }
+
+        // Encode outputs with leading compact size encoded int.
+        let output_len = self.outputs.len();
+        len += w.write(compact_size::encode(output_len).as_slice())?;
+        for output in &self.outputs {
+            // Encode each output same as we do in `Encodable for TxOut`.
+            len += w.write(&output.value.to_sat().to_le_bytes())?;
+
+            let script_pubkey_bytes = output.script_pubkey.as_bytes();
+            len += w.write(compact_size::encode(script_pubkey_bytes.len()).as_slice())?;
+            len += w.write(script_pubkey_bytes)?;
+        }
+
+        if self.uses_segwit_serialization() {
+            // BIP-141 (SegWit) transaction serialization also includes the witness data.
+            for input in &self.inputs {
+                // Same as `Encodable for Witness`.
+                len += w.write(compact_size::encode(input.witness.len()).as_slice())?;
+                for element in &input.witness {
+                    len += w.write(compact_size::encode(element.len()).as_slice())?;
+                    len += w.write(element)?;
+                }
+            }
+        }
+
+        // Same as `Encodable for absolute::LockTime`.
+        len += w.write(&self.lock_time.to_consensus_u32().to_le_bytes())?;
+
+        Ok(len)
+    }
+
+    /// Decodes a consensus encoded transaction from a vector, will error if said decoding doesn't
+    /// consume the entire vector.
+    pub fn consensus_decode(data: &[u8]) -> Result<Transaction, ()> {
+        let (rv, consumed) = Self::consensus_decode_partial(data)?; // TODO: Return parse error.
+
+        // Fail if data are not consumed entirely.
+        if consumed == data.len() {
+            Ok(rv)
+        } else {
+            Err(()) // TODO: Return nconsumed error.
+        }
+    }
+
+    /// Decodes a consensus encoded transaction from a hex string, will error if said decoding
+    /// doesn't consume the entire vector.
+    pub fn consensus_decode_hex(_: &str) -> Result<Transaction, ()> { todo!() }
+
+    /// Decodes a consensus encoded transaction from a slice, but will not report an error if said
+    /// decoding doesn't consume the entire vector.
+    ///
+    /// # Returns
+    ///
+    /// The transaction along with the number of bytes consumed during deserialization.
+    // TODO: Add a new and improved `ParseError`.
+    pub fn consensus_decode_partial(_: &[u8]) -> Result<(Transaction, usize), ()> { todo!() }
 }
 
 #[cfg(feature = "alloc")]
@@ -659,8 +772,7 @@ mod tests {
         assert!(Version::THREE.is_standard());
     }
 
-    #[test]
-    fn transaction_functions() {
+    fn dummy_transaction() -> Transaction {
         let txin = TxIn {
             previous_output: OutPoint {
                 txid: Txid::from_byte_array([0xAA; 32]), // Arbitrary invalid dummy value.
@@ -676,12 +788,17 @@ mod tests {
             script_pubkey: ScriptBuf::new(),
         };
 
-        let tx_orig = Transaction {
+        Transaction {
             version: Version::ONE,
             lock_time: absolute::LockTime::from_consensus(1_738_968_231), // The time this was written
             inputs: vec![txin.clone()],
             outputs: vec![txout.clone()],
-        };
+        }
+    }
+
+    #[test]
+    fn transaction_functions() {
+        let tx_orig = dummy_transaction();
 
         // Test changing the transaction
         let mut tx = tx_orig.clone();
@@ -697,6 +814,18 @@ mod tests {
 
         // Test partial ord
         assert!(tx > tx_orig);
+    }
+
+    #[test]
+    fn encoding() {
+        let tx = dummy_transaction();
+        let txid = tx.compute_txid(); 
+
+        let mut enc = sha256d::Hash::engine();
+        tx.consensus_encode_to_writer(&mut enc).unwrap();
+        let manual = sha256d::Hash::from_engine(enc);
+
+        assert_eq!(manual.as_byte_array(), txid.as_byte_array());
     }
 
     #[test]

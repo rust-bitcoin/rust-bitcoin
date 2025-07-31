@@ -10,16 +10,24 @@
 use core::fmt;
 #[cfg(feature = "alloc")]
 use core::marker::PhantomData;
+#[cfg(feature = "std")]
+use std::io::{self, Write};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
+#[cfg(all(feature = "std", feature = "hex"))]
+use hex::DisplayHex as _;
+#[cfg(feature = "std")]
+use internals::compact_size;
 use units::BlockTime;
 
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "alloc")]
 use crate::merkle_tree::WitnessMerkleNode;
 use crate::pow::CompactTarget;
+#[cfg(all(feature = "std", feature = "hex"))]
+use crate::prelude::String;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
@@ -116,6 +124,42 @@ impl Block<Checked> {
     /// validation process.
     #[inline]
     pub fn cached_witness_root(&self) -> Option<WitnessMerkleNode> { self.witness_root }
+
+    /// Consensus encodes a block.
+    #[cfg(feature = "std")]
+    #[allow(clippy::missing_panics_doc)] // Does not panic.
+    pub fn consensus_encode(&self) -> Vec<u8> {
+        let mut encoder = Vec::new();
+        let len =
+            self.consensus_encode_to_writer(&mut encoder).expect("in-memory writers don't error");
+        debug_assert_eq!(len, encoder.len());
+        encoder
+    }
+
+    /// Consensus encodes a block as a hex string.
+    #[cfg(all(feature = "std", feature = "hex"))]
+    pub fn consensus_encode_hex(&self) -> String { self.consensus_encode().to_lower_hex_string() }
+
+    /// Consensus encodes block to writer.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes written on success. The only errors returned are errors propagated from
+    /// the writer.
+    #[cfg(feature = "std")]
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.header().consensus_encode_to_writer(w)?;
+
+        let transactions = self.transactions();
+        len += w.write(compact_size::encode(transactions.len()).as_slice())?;
+
+        for c in transactions {
+            len += c.consensus_encode_to_writer(w)?;
+        }
+
+        Ok(len)
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -208,6 +252,25 @@ impl Header {
         engine.input(&self.nonce.to_le_bytes());
 
         BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
+    }
+
+    /// Consensus encodes header to writer.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes written on success. The only errors returned are errors propagated from
+    /// the writer.
+    #[cfg(feature = "std")]
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+
+        len += w.write(&self.version.to_consensus().to_le_bytes())?; // Same as `encode::emit_i32`.
+        len += w.write(self.prev_blockhash.as_byte_array())?;
+        len += w.write(&self.time.to_u32().to_le_bytes())?; // Same as `encode::emit_u32`.
+        len += w.write(&self.bits.to_consensus().to_le_bytes())?;
+        len += w.write(&self.nonce.to_le_bytes())?;
+
+        Ok(len)
     }
 }
 

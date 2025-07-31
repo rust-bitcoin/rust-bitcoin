@@ -360,7 +360,7 @@ impl Encodable for Block<Unchecked> {
         // TODO: Should we be able to encode without cloning?
         // This is ok, we decode as unchecked anyway.
         let block = self.clone().assume_checked(None);
-        block.consensus_encode(w)
+        Encodable::consensus_encode(&block, w)
     }
 }
 
@@ -373,7 +373,7 @@ impl Encodable for Block<Checked> {
         let transactions = self.transactions();
         len += w.emit_compact_size(transactions.len())?;
         for c in transactions.iter() {
-            len += c.consensus_encode(w)?;
+            len += Encodable::consensus_encode(c, w)?;
         }
 
         Ok(len)

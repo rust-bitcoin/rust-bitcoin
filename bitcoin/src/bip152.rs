@@ -82,7 +82,7 @@ impl convert::AsRef<Transaction> for PrefilledTransaction {
 impl Encodable for PrefilledTransaction {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        Ok(w.emit_compact_size(self.idx)? + self.tx.consensus_encode(w)?)
+        Ok(w.emit_compact_size(self.idx)? + Encodable::consensus_encode(&self.tx, w)?)
     }
 }
 
@@ -93,7 +93,7 @@ impl Decodable for PrefilledTransaction {
         let idx = u16::try_from(idx).map_err(|_| {
             consensus::parse_failed_error("BIP152 prefilled tx index out of bounds")
         })?;
-        let tx = Transaction::consensus_decode(r)?;
+        let tx = Decodable::consensus_decode(r)?;
         Ok(PrefilledTransaction { idx, tx })
     }
 }

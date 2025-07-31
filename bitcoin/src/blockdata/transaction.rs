@@ -1254,7 +1254,7 @@ mod tests {
         let raw_tx = hex!(SOME_TX);
         let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
 
-        let size = tx.consensus_encode(&mut &mut buf[..]).unwrap();
+        let size = Encodable::consensus_encode(&tx, &mut &mut buf[..]).unwrap();
         assert_eq!(size, SOME_TX.len() / 2);
         assert_eq!(raw_tx, &buf[..size]);
     }
@@ -1963,7 +1963,7 @@ mod tests {
              5d5aca00000000"
         );
 
-        let tx = Transaction::consensus_decode::<&[u8]>(&mut tx_raw.as_ref()).unwrap();
+        let tx: Transaction = Decodable::consensus_decode::<&[u8]>(&mut tx_raw.as_ref()).unwrap();
         let input_weights = vec![
             InputWeightPrediction::P2WPKH_MAX,
             InputWeightPrediction::ground_p2wpkh(1),
@@ -2136,7 +2136,7 @@ mod benches {
         let mut data = Vec::with_capacity(SOME_TX.len());
 
         bh.iter(|| {
-            let result = tx.consensus_encode(&mut data);
+            let result = Encodable::consensus_encode(&tx, &mut data);
             black_box(&result);
             data.clear();
         });
@@ -2147,7 +2147,7 @@ mod benches {
         let tx: Transaction = encode::deserialize_hex(SOME_TX).unwrap();
 
         bh.iter(|| {
-            let size = tx.consensus_encode(&mut sink());
+            let size = Encodable::consensus_encode(&tx, &mut sink());
             black_box(&size);
         });
     }

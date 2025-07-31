@@ -419,7 +419,7 @@ impl Encodable for NetworkMessage {
             NetworkMessage::NotFound(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::GetBlocks(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::GetHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Tx(ref dat) => Encodable::consensus_encode(&dat, writer),
             NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Headers(ref dat) =>
                 dat.consensus_encode(writer),
