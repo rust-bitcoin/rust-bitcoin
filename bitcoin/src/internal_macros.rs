@@ -246,14 +246,14 @@ pub(crate) use only_non_doc_attrs;
 
 /// Defines a trait `$trait_name` and implements it for `ty`, used to define extension traits.
 macro_rules! define_extension_trait {
-    ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
+    ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident$(<$traitgen:ident $(= $traitdefault:ty)?>)? impl$(<$implgen:ident $(= $impldefault:ty)?>)? for $ty:ident$(<$tygen:ident $(= $tydefault:ty)?>)? {
         $(
             $(#[$($fn_attrs:tt)*])*
             fn $fn:ident$(<$($gen:ident: $gent:path),*>)?($($params:tt)*) $( -> $ret:ty )? $(where $wherety:ident $(= $whereeq:ident)? $(: $wherebound:ident)?)? $body:block
         )*
     }) => {
         #[cfg_attr(docsrs, doc(notable_trait))]
-        $(#[$($trait_attrs)*])* $trait_vis trait $trait_name: sealed::Sealed {
+        $(#[$($trait_attrs)*])* $trait_vis trait $trait_name$(<$traitgen $(= $traitdefault)?>)?: sealed::Sealed {
             $(
                 $crate::internal_macros::only_doc_attrs! {
                     { $(#[$($fn_attrs)*])* },
@@ -264,7 +264,7 @@ macro_rules! define_extension_trait {
             )*
         }
 
-        impl $trait_name for $ty {
+        impl$(<$implgen $(= $impldefault)?>)? $trait_name$(<$traitgen $(= $traitdefault)?>)? for $ty$(<$tygen $(= $tydefault)?>)? {
             $(
                 $crate::internal_macros::only_non_doc_attrs! {
                     { $(#[$($fn_attrs)*])* },
