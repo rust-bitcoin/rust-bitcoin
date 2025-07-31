@@ -12,6 +12,7 @@ use core::{convert, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use internals::const_casts;
 
 #[cfg(doc)]
 use crate::relative;
@@ -547,7 +548,7 @@ impl NumberOf512Seconds {
     /// Represents the [`NumberOf512Seconds`] as an integer number of seconds.
     #[inline]
     pub const fn to_seconds(self) -> u32 {
-        self.0 as u32 * 512 // u16->u32 cast ok, const context
+        const_casts::u16_to_u32(self.0) * 512
     }
 
     /// Returns the inner `u16` value.
