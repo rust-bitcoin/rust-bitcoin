@@ -203,7 +203,7 @@ impl ChainHash {
         101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0,
     ]);
     /// `ChainHash` for testnet3 bitcoin.
-    #[deprecated(since = "0.33.0", note = "use `TESTNET3` instead")]
+    #[deprecated(since = "TBD", note = "use `TESTNET3` instead")]
     pub const TESTNET: Self = Self([
         67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151,
         32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0,

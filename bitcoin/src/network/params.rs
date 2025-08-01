@@ -121,7 +121,7 @@ pub struct Params {
 /// [using-statics-or-consts]: <https://doc.rust-lang.org/reference/items/static-items.html#using-statics-or-consts>
 pub static MAINNET: Params = Params::MAINNET;
 /// The testnet3 parameters.
-#[deprecated(since = "0.33.0", note = "use `TESTNET3` instead")]
+#[deprecated(since = "TBD", note = "use `TESTNET3` instead")]
 pub static TESTNET: Params = Params::TESTNET3;
 /// The testnet3 parameters.
 pub static TESTNET3: Params = Params::TESTNET3;
@@ -155,7 +155,7 @@ impl Params {
     };
 
     /// The testnet3 parameters.
-    #[deprecated(since = "0.33.0", note = "use `TESTNET3` instead")]
+    #[deprecated(since = "TBD", note = "use `TESTNET3` instead")]
     pub const TESTNET: Params = Params {
         network: Network::Testnet(TestnetVersion::V3),
         bip16_time: 1333238400,                      // Apr 1 2012
