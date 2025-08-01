@@ -147,20 +147,20 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 /// A deprecated message type that was used to notify users of system changes. Due to a number of
 /// vulerabilities, alerts are no longer used. A final alert was sent as of Bitcoin Core 0.14.0,
-/// and is sent to any node that is advertising a potentially vulerable protocol version.
+/// and is sent to any node that is advertising a potentially vulnerable protocol version.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Alert(Vec<u8>);
 
 impl Alert {
     const FINAL_ALERT: [u8; 96] = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 127, 0, 0, 0, 0, 255, 255, 255, 127, 254, 255, 255, 127, 1, 255, 255, 255, 127, 0, 0, 0, 0, 255, 255, 255, 127, 0, 255, 255, 255, 127, 0, 47, 85, 82, 71, 69, 78, 84, 58, 32, 65, 108, 101, 114, 116, 32, 107, 101, 121, 32, 99, 111, 109, 112, 114, 111, 109, 105, 115, 101, 100, 44, 32, 117, 112, 103, 114, 97, 100, 101, 32, 114, 101, 113, 117, 105, 114, 101, 100, 0];
 
-    /// Build the final alert to send to a potentially vulerable peer.
+    /// Build the final alert to send to a potentially vulnerable peer.
     pub fn final_alert() -> Self {
         Self(Self::FINAL_ALERT.into())
     }
 
     /// The final alert advertised by Bitcoin Core. This alert is sent if the advertised protocol
-    /// version is vulerable to the alert-system vulerablities.
+    /// version is vulnerable to the alert-system vulerablities.
     pub fn is_final_alert(&self) -> bool {
         self.0.eq(&Self::FINAL_ALERT)
     }
