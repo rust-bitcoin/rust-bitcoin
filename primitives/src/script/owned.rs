@@ -150,6 +150,9 @@ impl<'a> Arbitrary<'a> for ScriptBuf {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")]
+    use alloc::{vec};
+
     #[test]
     fn script_buf_from_bytes() {
         let bytes = vec![1, 2, 3];

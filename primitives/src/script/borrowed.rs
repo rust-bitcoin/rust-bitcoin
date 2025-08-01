@@ -190,6 +190,9 @@ delegate_index!(
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")]
+    use alloc::{vec};
+
     #[test]
     fn script_from_bytes() {
         let script = Script::from_bytes(&[1, 2, 3]);
