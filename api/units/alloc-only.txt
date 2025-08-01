@@ -1515,6 +1515,7 @@ pub fn bitcoin_units::Amount::mul(self, rhs: u64) -> Self::Output
 pub fn bitcoin_units::Amount::partial_cmp(&self, other: &bitcoin_units::Amount) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::Amount::rem(self, modulus: u64) -> Self::Output
 pub fn bitcoin_units::Amount::rem(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::Amount::signed_sub(self, rhs: bitcoin_units::Amount) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
 pub fn bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Output
