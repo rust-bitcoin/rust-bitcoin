@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! # Rust Bitcoin Hashes Library
+//! Rust Bitcoin Hashes Library
 //!
 //! This library implements the hash functions needed by Bitcoin. As an ancillary thing, it exposes
 //! hexadecimal serialization and deserialization, since these are needed to display hashes.
