@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! # Rust Bitcoin Library
+//! Rust Bitcoin Library
 //!
 //! This is a library that supports the Bitcoin network protocol and associated primitives. It is
 //! designed for Rust programs built to work with the Bitcoin network.

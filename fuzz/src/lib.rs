@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! # Fuzzing
+//! Fuzzing
 
 pub mod fuzz_utils;

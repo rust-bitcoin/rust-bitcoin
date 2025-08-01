@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! # Rust Bitcoin - primitive types
+//! Rust Bitcoin - primitive types
 //!
 //! Primitive data types that are used throughout the [`rust-bitcoin`] ecosystem.
 //!

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! # ChaCha20 - Poly1305
+//! ChaCha20 - Poly1305
 //!
 //! Combine the ChaCha20 stream cipher with the Poly1305 message authentication code
 //! to form an authenticated encryption with additional data (AEAD) algorithm.
