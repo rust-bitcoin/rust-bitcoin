@@ -11,7 +11,7 @@
 
 // NB: This crate is empty if `alloc` is not enabled.
 #![cfg(feature = "alloc")]
-#![cfg_attr(all(not(test), not(feature = "std")), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc(test(attr(warn(unused))))]
