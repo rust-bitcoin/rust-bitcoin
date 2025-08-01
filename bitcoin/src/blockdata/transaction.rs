@@ -779,10 +779,8 @@ pub fn effective_value(
 ) -> SignedAmount {
     let weight = input_weight_prediction.total_weight();
     let fee = fee_rate.to_fee(weight);
-
-    // Cannot overflow because after conversion to signed Amount::MIN - Amount::MAX
-    // still fits in SignedAmount::MAX (0 - MAX = -MAX).
-    (value.to_signed() - fee.to_signed()).expect("cannot overflow")
+  
+    value.signed_sub(fee)
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
