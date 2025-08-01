@@ -9,11 +9,15 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{Decodable, Encodable, ReadExt as _, WriteExt as _};
 #[cfg(feature = "hex")]
 use hex::{error::HexToBytesError, FromHex};
 use internals::compact_size;
 use internals::slice::SliceExt;
 use internals::wrap_debug::WrapDebug;
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 
 use crate::prelude::{Box, Vec};
 
@@ -414,6 +418,111 @@ impl<T: AsRef<[u8]>> FromIterator<T> for Witness {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let v: Vec<Vec<u8>> = iter.into_iter().map(|item| Vec::from(item.as_ref())).collect();
         Self::from(v)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Witness {
+    // `self.content` includes the varints so encoding here includes them, as expected.
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut written = w.emit_compact_size(self.len())?;
+
+        for element in self.iter() {
+            written += crate::consensus_encode_with_size(element, w)?
+        }
+
+        Ok(written)
+    }
+}
+
+#[cfg(feature = "alloc")] // TODO: Remove this.
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for Witness {
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        use alloc::vec;
+
+        let witness_elements = r.read_compact_size()? as usize;
+        // Minimum size of witness element is 1 byte, so if the count is
+        // greater than MAX_VEC_SIZE we must return an error.
+        if witness_elements > consensus_encoding_unbuffered_io::MAX_VEC_SIZE {
+            return Err(consensus_encoding_unbuffered_io::ParseError::OversizedVectorAllocation {
+                requested: witness_elements,
+                max: consensus_encoding_unbuffered_io::MAX_VEC_SIZE,
+            }
+            .into());
+        }
+        if witness_elements == 0 {
+            Ok(Witness::default())
+        } else {
+            // Leave space at the head for element positions.
+            // We will rotate them to the end of the Vec later.
+            let witness_index_space = witness_elements * 4;
+            let mut cursor = witness_index_space;
+
+            // this number should be determined as high enough to cover most witness, and low enough
+            // to avoid wasting space without reallocating
+            let mut content = vec![0u8; cursor + 128];
+
+            for i in 0..witness_elements {
+                let element_size = r.read_compact_size()? as usize;
+                let element_size_len = compact_size::encoded_size(element_size);
+                let required_len = cursor
+                    .checked_add(element_size)
+                    .ok_or(consensus_encoding_unbuffered_io::Error::Parse(
+                        consensus_encoding_unbuffered_io::ParseError::OversizedVectorAllocation {
+                            requested: usize::MAX,
+                            max: consensus_encoding_unbuffered_io::MAX_VEC_SIZE,
+                        },
+                    ))?
+                    .checked_add(element_size_len)
+                    .ok_or(consensus_encoding_unbuffered_io::Error::Parse(
+                        consensus_encoding_unbuffered_io::ParseError::OversizedVectorAllocation {
+                            requested: usize::MAX,
+                            max: consensus_encoding_unbuffered_io::MAX_VEC_SIZE,
+                        },
+                    ))?;
+
+                if required_len
+                    > consensus_encoding_unbuffered_io::MAX_VEC_SIZE + witness_index_space
+                {
+                    return Err(
+                        consensus_encoding_unbuffered_io::ParseError::OversizedVectorAllocation {
+                            requested: required_len,
+                            max: consensus_encoding_unbuffered_io::MAX_VEC_SIZE,
+                        }
+                        .into(),
+                    );
+                }
+
+                // We will do content.rotate_left(witness_index_space) later.
+                // Encode the position's value AFTER we rotate left.
+                encode_cursor(&mut content, 0, i, cursor - witness_index_space);
+
+                resize_if_needed(&mut content, required_len);
+                cursor += (&mut content[cursor..cursor + element_size_len])
+                    .emit_compact_size(element_size)?;
+                r.read_exact(&mut content[cursor..cursor + element_size])?;
+                cursor += element_size;
+            }
+            content.truncate(cursor);
+            // Index space is now at the end of the Vec
+            content.rotate_left(witness_index_space);
+            let indices_start = cursor - witness_index_space;
+            Ok(Witness::from_parts__unstable(content, witness_elements, indices_start))
+        }
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
+    if required_len >= vec.len() {
+        let mut new_len = vec.len().max(1);
+        while new_len <= required_len {
+            new_len *= 2;
+        }
+        vec.resize(new_len, 0);
     }
 }
 

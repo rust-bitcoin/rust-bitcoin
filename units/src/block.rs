@@ -15,6 +15,10 @@ use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{Decodable, Encodable};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -42,6 +46,27 @@ macro_rules! impl_u32_wrapper {
 
         impl From<$newtype> for u32 {
             fn from(height: $newtype) -> Self { height.to_u32() }
+        }
+
+        #[cfg(feature = "consensus-encoding-unbuffered-io")]
+        impl Decodable for $newtype {
+            #[inline]
+            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+                let inner = u32::consensus_decode(r)?;
+                Ok($newtype::from(inner))
+            }
+        }
+
+        #[cfg(feature = "consensus-encoding-unbuffered-io")]
+        impl Encodable for $newtype {
+            #[inline]
+            fn consensus_encode<W: Write + ?Sized>(
+                &self,
+                w: &mut W,
+            ) -> Result<usize, io::Error> {
+                let inner = self.to_u32();
+                inner.consensus_encode(w)
+            }
         }
 
         #[cfg(feature = "serde")]

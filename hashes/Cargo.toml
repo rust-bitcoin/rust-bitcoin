@@ -17,6 +17,7 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["alloc", "hex?/std"]
 alloc = ["hex?/alloc"]
+hex = ["dep:hex", "internals/hex"]
 serde = ["dep:serde", "hex"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []

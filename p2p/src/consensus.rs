@@ -34,7 +34,7 @@ macro_rules! impl_consensus_encoding {
         impl bitcoin::consensus::Decodable for $thing {
 
             #[inline]
-            fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
+            fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
                 r: &mut R,
             ) -> core::result::Result<$thing, bitcoin::consensus::encode::Error> {
                 Ok($thing {
@@ -43,7 +43,7 @@ macro_rules! impl_consensus_encoding {
             }
 
             #[inline]
-            fn consensus_decode<R: io::BufRead + ?Sized>(
+            fn consensus_decode<R: io::Read + ?Sized>(
                 r: &mut R,
             ) -> core::result::Result<$thing, bitcoin::consensus::encode::Error> {
                 let mut r = r.take(internals::ToU64::to_u64(bitcoin::consensus::encode::MAX_VEC_SIZE));
@@ -76,7 +76,7 @@ macro_rules! impl_vec_wrapper {
 
         impl bitcoin::consensus::encode::Decodable for $wrapper {
             #[inline]
-            fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
+            fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
                 r: &mut R,
             ) -> core::result::Result<$wrapper, bitcoin::consensus::encode::Error> {
                 let len = r.read_compact_size()?;

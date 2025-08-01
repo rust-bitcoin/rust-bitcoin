@@ -12,16 +12,16 @@ use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
 
+use consensus_encoding_unbuffered_io::{Decodable, Encodable};
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
 use hex::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
 use internals::{impl_to_hex_from_lower_hex, write_err};
-use io::Write;
+use io::{Read, Write};
 use secp256k1::{Scalar, Secp256k1};
 
-use crate::consensus::Encodable;
 use crate::crypto::key::{
     SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
 };
@@ -138,6 +138,20 @@ impl From<LeafNode> for TapNodeHash {
 
 impl From<&LeafNode> for TapNodeHash {
     fn from(leaf: &LeafNode) -> TapNodeHash { leaf.node_hash() }
+}
+
+impl Encodable for TapLeafHash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for TapLeafHash {
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        Ok(Self::from_byte_array(<<Self as hashes::Hash>::Bytes>::consensus_decode(r)?))
+    }
 }
 
 impl TapNodeHash {

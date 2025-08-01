@@ -14,7 +14,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::ToU64 as _;
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use crate::internal_macros::{self, impl_array_newtype, impl_array_newtype_stringify};
@@ -88,7 +88,7 @@ impl Encodable for PrefilledTransaction {
 
 impl Decodable for PrefilledTransaction {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let idx = r.read_compact_size()?;
         let idx = u16::try_from(idx).map_err(|_| {
             consensus::parse_failed_error("BIP152 prefilled tx index out of bounds")
@@ -145,7 +145,7 @@ impl Encodable for ShortId {
 
 impl Decodable for ShortId {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
         Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
@@ -170,7 +170,7 @@ pub struct HeaderAndShortIds {
 }
 
 impl Decodable for HeaderAndShortIds {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let header_short_ids = HeaderAndShortIds {
             header: Decodable::consensus_decode(r)?,
             nonce: Decodable::consensus_decode(r)?,
@@ -307,7 +307,7 @@ impl Encodable for BlockTransactionsRequest {
 }
 
 impl Decodable for BlockTransactionsRequest {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(BlockTransactionsRequest {
             block_hash: BlockHash::consensus_decode(r)?,
             indexes: {

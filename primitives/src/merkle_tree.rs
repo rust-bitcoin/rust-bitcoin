@@ -6,6 +6,9 @@
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use crate::internal_macros;
+
 hashes::hash_newtype! {
     /// A hash of the Merkle tree branch or root for transactions.
     pub struct TxMerkleNode(sha256d::Hash);
@@ -19,6 +22,11 @@ hashes::impl_hex_for_newtype!(TxMerkleNode, WitnessMerkleNode);
 hashes::impl_debug_only_for_newtype!(TxMerkleNode, WitnessMerkleNode);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TxMerkleNode, WitnessMerkleNode);
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+internal_macros::impl_hashencode!(TxMerkleNode);
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+internal_macros::impl_hashencode!(WitnessMerkleNode);
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxMerkleNode {

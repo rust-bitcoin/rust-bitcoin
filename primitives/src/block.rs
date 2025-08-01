@@ -13,9 +13,15 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{Decodable, Encodable};
 use hashes::{sha256d, HashEngine as _};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 use units::BlockTime;
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use crate::internal_macros;
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "alloc")]
 use crate::merkle_tree::WitnessMerkleNode;
@@ -135,6 +141,61 @@ impl From<Block> for BlockHash {
 impl From<&Block> for BlockHash {
     #[inline]
     fn from(block: &Block) -> BlockHash { block.block_hash() }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Block<Unchecked> {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        // TODO: Should we be able to encode without cloning?
+        // This is ok, we decode as unchecked anyway.
+        let block = self.clone().assume_checked(None);
+        block.consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Block<Checked> {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        use crate::consensus_encoding_unbuffered_io::WriteExt as _;
+
+        let mut len = 0;
+        len += self.header().consensus_encode(w)?;
+
+        let transactions = self.transactions();
+        len += w.emit_compact_size(transactions.len())?;
+        for c in transactions.iter() {
+            len += c.consensus_encode(w)?;
+        }
+
+        Ok(len)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for Block<Unchecked> {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Block, consensus_encoding_unbuffered_io::Error> {
+        let header = Decodable::consensus_decode_from_finite_reader(r)?;
+        let transactions = Decodable::consensus_decode_from_finite_reader(r)?;
+
+        Ok(Block::new_unchecked(header, transactions))
+    }
+
+    #[inline]
+    fn consensus_decode<R: io::Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Block, consensus_encoding_unbuffered_io::Error> {
+        let mut r =
+            r.take(internals::ToU64::to_u64(consensus_encoding_unbuffered_io::MAX_VEC_SIZE));
+        let header = Decodable::consensus_decode(&mut r)?;
+        let transactions = Decodable::consensus_decode(&mut r)?;
+
+        Ok(Block::new_unchecked(header, transactions))
+    }
 }
 
 /// Marker that the block's merkle root has been successfully validated.
@@ -257,6 +318,10 @@ impl From<&Header> for BlockHash {
     fn from(header: &Header) -> BlockHash { header.block_hash() }
 }
 
+#[rustfmt::skip]
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
+
 /// Bitcoin block version number.
 ///
 /// Originally used as a protocol version, but repurposed for soft-fork signaling.
@@ -329,6 +394,22 @@ impl Default for Version {
     fn default() -> Version { Self::NO_SOFT_FORK_SIGNALLING }
 }
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Version {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_consensus().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for Version {
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        Decodable::consensus_decode(r).map(Version::from_consensus)
+    }
+}
+
 hashes::hash_newtype! {
     /// A bitcoin block hash.
     pub struct BlockHash(sha256d::Hash);
@@ -342,6 +423,9 @@ hashes::impl_hex_for_newtype!(BlockHash, WitnessCommitment);
 hashes::impl_debug_only_for_newtype!(BlockHash, WitnessCommitment);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(BlockHash, WitnessCommitment);
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+internal_macros::impl_hashencode!(BlockHash);
 
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.

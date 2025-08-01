@@ -34,6 +34,10 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+/// Re-export the `consensus-encoding-unbuffered-io` crate.
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+pub extern crate consensus_encoding_unbuffered_io;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.
@@ -71,3 +75,12 @@ pub use self::{
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
+
+/// Constructs a new `Error::ParseFailed` error.
+// This whole variant should go away because of the inner string.
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+pub(crate) fn parse_failed_error(msg: &'static str) -> consensus_encoding_unbuffered_io::Error {
+    consensus_encoding_unbuffered_io::Error::Parse(
+        consensus_encoding_unbuffered_io::ParseError::ParseFailed(msg),
+    )
+}

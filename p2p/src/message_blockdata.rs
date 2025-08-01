@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use bitcoin::block::BlockHash;
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::transaction::{Txid, Wtxid};
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 use crate::consensus::impl_consensus_encoding;
 use crate::ProtocolVersion;
@@ -83,7 +83,7 @@ impl Encodable for Inventory {
 
 impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let inv_type: u32 = Decodable::consensus_decode(r)?;
         Ok(match inv_type {
             0 => Inventory::Error(Decodable::consensus_decode(r)?),

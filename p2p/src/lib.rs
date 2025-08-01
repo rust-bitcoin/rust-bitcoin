@@ -44,7 +44,7 @@ use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::network::{Network, Params, TestnetVersion};
 use hex::FromHex;
 use internals::impl_to_hex_from_lower_hex;
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -110,7 +110,7 @@ impl Encodable for ProtocolVersion {
 
 impl Decodable for ProtocolVersion {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(ProtocolVersion(Decodable::consensus_decode(r)?))
     }
 }
@@ -267,7 +267,7 @@ impl Encodable for ServiceFlags {
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(ServiceFlags(Decodable::consensus_decode(r)?))
     }
 }
@@ -373,7 +373,7 @@ impl Encodable for Magic {
 }
 
 impl Decodable for Magic {
-    fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
         Ok(Magic(Decodable::consensus_decode(reader)?))
     }
 }

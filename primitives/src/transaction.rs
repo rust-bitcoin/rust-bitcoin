@@ -19,11 +19,15 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{Decodable, Encodable};
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
 #[cfg(feature = "hex")]
 use internals::write_err;
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 #[cfg(feature = "alloc")]
 use units::locktime::absolute;
 #[cfg(feature = "hex")]
@@ -33,6 +37,8 @@ use units::sequence::Sequence;
 #[cfg(feature = "alloc")]
 use units::{Amount, Weight};
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use crate::internal_macros;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
@@ -220,6 +226,77 @@ impl From<&Transaction> for Wtxid {
     fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
 }
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Transaction {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.version.consensus_encode(w)?;
+
+        // Legacy transaction serialization format only includes inputs and outputs.
+        if !self.uses_segwit_serialization() {
+            len += self.inputs.consensus_encode(w)?;
+            len += self.outputs.consensus_encode(w)?;
+        } else {
+            // BIP-141 (SegWit) transaction serialization also includes marker, flag, and witness data.
+            len += SEGWIT_MARKER.consensus_encode(w)?;
+            len += SEGWIT_FLAG.consensus_encode(w)?;
+            len += self.inputs.consensus_encode(w)?;
+            len += self.outputs.consensus_encode(w)?;
+            for input in &self.inputs {
+                len += input.witness.consensus_encode(w)?;
+            }
+        }
+        len += self.lock_time.consensus_encode(w)?;
+        Ok(len)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for Transaction {
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        let version = Version::consensus_decode_from_finite_reader(r)?;
+        let inputs = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
+        // SegWit
+        if inputs.is_empty() {
+            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
+            match segwit_flag {
+                // BIP144 input witnesses
+                1 => {
+                    let mut inputs = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
+                    let outputs = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
+                    for txin in inputs.iter_mut() {
+                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
+                    }
+                    if !inputs.is_empty() && inputs.iter().all(|input| input.witness.is_empty()) {
+                        Err(crate::parse_failed_error("witness flag set but no witnesses present"))
+                    } else {
+                        Ok(Transaction {
+                            version,
+                            inputs,
+                            outputs,
+                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
+                        })
+                    }
+                }
+                // We don't support anything else
+                x =>
+                    Err(consensus_encoding_unbuffered_io::ParseError::UnsupportedSegwitFlag(x)
+                        .into()),
+            }
+        // non-SegWit
+        } else {
+            Ok(Transaction {
+                version,
+                inputs,
+                outputs: Decodable::consensus_decode_from_finite_reader(r)?,
+                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
+            })
+        }
+    }
+}
+
 // Duplicated in `bitcoin`.
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 #[cfg(feature = "alloc")]
@@ -229,6 +306,7 @@ const SEGWIT_MARKER: u8 = 0x00;
 const SEGWIT_FLAG: u8 = 0x01;
 
 // This is equivalent to consensus encoding but hashes the fields manually.
+// Needed because encoding is behind a feature flag.
 #[cfg(feature = "alloc")]
 fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256d::Hash {
     use hashes::HashEngine as _;
@@ -328,6 +406,32 @@ impl TxIn {
     };
 }
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for TxIn {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.previous_output.consensus_encode(w)?;
+        len += self.script_sig.consensus_encode(w)?;
+        len += self.sequence.consensus_encode(w)?;
+        Ok(len)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for TxIn {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        Ok(TxIn {
+            previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
+            script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
+            sequence: Decodable::consensus_decode_from_finite_reader(r)?,
+            witness: Witness::default(),
+        })
+    }
+}
+
 /// Bitcoin transaction output.
 ///
 /// Defines new coins to be created as a result of the transaction,
@@ -347,6 +451,9 @@ pub struct TxOut {
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptBuf,
 }
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+internal_macros::impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 /// A reference to a transaction output.
 ///
@@ -372,6 +479,26 @@ impl OutPoint {
     /// This is used as the dummy input for coinbase transactions because they don't have any
     /// previous outputs. In other words, does not point to a real transaction.
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for OutPoint {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let len = self.txid.consensus_encode(w)?;
+        Ok(len + self.vout.consensus_encode(w)?)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for OutPoint {
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        Ok(OutPoint {
+            txid: Decodable::consensus_decode(r)?,
+            vout: Decodable::consensus_decode(r)?,
+        })
+    }
 }
 
 #[cfg(feature = "hex")]
@@ -495,6 +622,11 @@ hashes::impl_debug_only_for_newtype!(Txid, Wtxid);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(Txid, Wtxid);
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+internal_macros::impl_hashencode!(Txid);
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+internal_macros::impl_hashencode!(Wtxid);
+
 impl Txid {
     /// The `Txid` used in a coinbase prevout.
     ///
@@ -566,6 +698,22 @@ impl fmt::Display for Version {
 impl From<Version> for u32 {
     #[inline]
     fn from(version: Version) -> Self { version.0 }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Version {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_u32().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for Version {
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        Decodable::consensus_decode(r).map(Version::maybe_non_standard)
+    }
 }
 
 #[cfg(feature = "arbitrary")]

@@ -5,24 +5,61 @@
 //! This module defines structures, functions, and traits that are needed to
 //! conform to Bitcoin consensus.
 
-pub mod encode;
-mod error;
 #[cfg(feature = "serde")]
 pub mod serde;
+#[cfg(test)]
+mod tests;
 
 use core::fmt;
 
 use io::{BufRead, Read};
 
-use crate::consensus;
-
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use self::{
-    encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
+pub use consensus_encoding_unbuffered_io::{
+    deserialize, deserialize_hex, deserialize_partial, serialize, serialize_hex, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE,
     error::{Error, FromHexError, DecodeError, ParseError, DeserializeError},
 };
-pub(crate) use self::error::parse_failed_error;
+
+// This exists for backward compatibility. Issue to make it private can now just delete it.
+// https://github.com/rust-bitcoin/rust-bitcoin/issues/2779
+pub mod encode {
+    //! Bitcoin consensus-encodable types.
+    //!
+    //! This is basically a replacement of the `Encodable` trait which does
+    //! normalization of endianness etc., to ensure that the encoding matches
+    //! the network consensus encoding.
+    //!
+    //! Essentially, anything that must go on the _disk_ or _network_ must be
+    //! encoded using the `Encodable` trait, since this data must be the same for
+    //! all systems. Any data going to the _user_ e.g., over JSONRPC, should use the
+    //! ordinary `Encodable` trait. (This should also be the same across systems, of
+    //! course, but has some critical differences from the network format e.g.,
+    //! scripts come with an opcode decode, hashes are big-endian, numbers are
+    //! typically big-endian decimals, etc.)
+
+    use io::Write;
+
+    #[rustfmt::skip]                // Keep public re-exports separate.
+    #[doc(inline)]
+    pub use consensus_encoding_unbuffered_io::{
+        deserialize, deserialize_hex, deserialize_partial, serialize, serialize_hex, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE,
+        error::{Error, FromHexError, DecodeError, ParseError, DeserializeError},
+    };
+
+    pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
+        data: &[u8],
+        w: &mut W,
+    ) -> Result<usize, io::Error> {
+        Ok(w.emit_compact_size(data.len())? + w.emit_slice(data)?)
+    }
+}
+
+/// Constructs a new `Error::ParseFailed` error.
+// This whole variant should go away because of the inner string.
+pub(crate) fn parse_failed_error(msg: &'static str) -> Error {
+    Error::Parse(ParseError::ParseFailed(msg))
+}
 
 struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
     iterator: core::iter::Fuse<I>,
@@ -42,10 +79,11 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
             (Ok(value), None) => Ok(value),
             (Ok(_), Some(error)) => panic!("{} silently ate the error: {:?}", core::any::type_name::<T>(), error),
 
-            (Err(consensus::encode::Error::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
-            (Err(consensus::encode::Error::Parse(parse_error)), None) => Err(DecodeError::Parse(parse_error)),
-            (Err(consensus::encode::Error::Io(io_error)), de_error) => panic!("unexpected I/O error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
+            (Err(Error::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
+            (Err(Error::Parse(parse_error)), None) => Err(DecodeError::Parse(parse_error)),
+            (Err(Error::Io(io_error)), de_error) => panic!("unexpected I/O error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
             (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` I/O error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
+            (Err(_), None) => panic!("should be unreachable non_exhaustive catchall"),
         }
     }
 }

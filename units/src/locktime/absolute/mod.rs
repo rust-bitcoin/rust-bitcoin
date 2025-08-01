@@ -12,7 +12,11 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{Decodable, Encodable};
 use internals::error::InputString;
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 
 use self::error::ParseError;
 #[cfg(doc)]
@@ -438,6 +442,25 @@ impl fmt::Display for LockTime {
                 L::Seconds(ref t) => fmt::Display::fmt(t, f),
             }
         }
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for LockTime {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let v = self.to_consensus_u32();
+        v.consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for LockTime {
+    #[inline]
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        u32::consensus_decode(r).map(LockTime::from_consensus)
     }
 }
 

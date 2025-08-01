@@ -9,7 +9,11 @@ use core::{default, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{Decodable, Encodable};
 use internals::const_casts;
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 use NumOpResult as R;
 
 use super::error::{ParseAmountErrorInner, ParseErrorInner};
@@ -560,6 +564,25 @@ impl TryFrom<SignedAmount> for Amount {
     type Error = OutOfRangeError;
 
     fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for Amount {
+    #[inline]
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        Amount::from_sat(Decodable::consensus_decode(r)?)
+            .map_err(|_| crate::parse_failed_error("amount is greater than Amount::MAX_MONEY"))
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Amount {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_sat().consensus_encode(w)
+    }
 }
 
 #[cfg(feature = "arbitrary")]

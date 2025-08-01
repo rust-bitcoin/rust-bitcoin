@@ -18,7 +18,7 @@ use bitcoin::merkle_tree::MerkleBlock;
 use bitcoin::{block, transaction};
 use hashes::sha256d;
 use internals::ToU64 as _;
-use io::{self, BufRead, Read, Write};
+use io::{self, Read, Write};
 use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
@@ -117,7 +117,7 @@ impl Encodable for CommandString {
 
 impl Decodable for CommandString {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(r)?;
 
         // Find the last non-null byte and trim null padding from the end
@@ -548,7 +548,7 @@ impl HeadersMessage {
 
 impl Decodable for HeadersMessage {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let len = r.read_compact_size()?;
@@ -567,13 +567,13 @@ impl Decodable for HeadersMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
 impl Decodable for RawNetworkMessage {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let magic = Decodable::consensus_decode_from_finite_reader(r)?;
@@ -679,13 +679,13 @@ impl Decodable for RawNetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
 impl Decodable for V2NetworkMessage {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let short_id: u8 = Decodable::consensus_decode_from_finite_reader(r)?;
@@ -758,7 +758,7 @@ impl Decodable for V2NetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
@@ -800,7 +800,7 @@ impl Encodable for CheckedData {
 
 impl Decodable for CheckedData {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let len = u32::consensus_decode_from_finite_reader(r)? as usize;

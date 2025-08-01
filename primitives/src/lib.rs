@@ -32,6 +32,15 @@ extern crate std;
 #[macro_use]
 extern crate serde;
 
+/// Re-export the `consensus-encoding-unbuffered-io` crate.
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+pub extern crate consensus_encoding_unbuffered_io;
+
+extern crate hashes;
+
+#[cfg(feature = "io")]
+extern crate io;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.
@@ -40,6 +49,7 @@ pub mod _export {
     }
 }
 
+mod internal_macros;
 mod opcodes;
 
 pub mod block;
@@ -85,6 +95,25 @@ pub use self::{
     pow::CompactTarget,
     transaction::{OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+pub(crate) fn consensus_encode_with_size<W: io::Write + ?Sized>(
+    data: &[u8],
+    w: &mut W,
+) -> Result<usize, io::Error> {
+    use consensus_encoding_unbuffered_io::WriteExt as _;
+
+    Ok(w.emit_compact_size(data.len())? + w.emit_slice(data)?)
+}
+
+/// Constructs a new `Error::ParseFailed` error.
+// This whole variant should go away because of the inner string.
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+pub(crate) fn parse_failed_error(msg: &'static str) -> consensus_encoding_unbuffered_io::Error {
+    consensus_encoding_unbuffered_io::Error::Parse(
+        consensus_encoding_unbuffered_io::ParseError::ParseFailed(msg),
+    )
+}
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
