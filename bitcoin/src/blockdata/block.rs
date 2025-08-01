@@ -12,13 +12,10 @@ use core::fmt;
 
 use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};
-use io::{BufRead, Write};
-use units::BlockTime;
 
 use super::transaction::Coinbase;
 use super::Weight;
-use crate::consensus::encode::WriteExt as _;
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::encode::Encodable as _;
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::{Target, Work};
@@ -36,10 +33,6 @@ pub use units::block::{BlockHeight, BlockHeightInterval, TooBigForRelativeHeight
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
-
-internal_macros::impl_hashencode!(BlockHash);
-
-internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Header`] type.
@@ -76,30 +69,6 @@ internal_macros::define_extension_trait! {
 
         /// Returns the total work of the block.
         fn work(&self) -> Work { self.target().to_work() }
-    }
-}
-
-impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_consensus().consensus_encode(w)
-    }
-}
-
-impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version::from_consensus)
-    }
-}
-
-impl Encodable for BlockTime {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_u32().consensus_encode(w)
-    }
-}
-
-impl Decodable for BlockTime {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(BlockTime::from_u32)
     }
 }
 
@@ -351,53 +320,6 @@ fn block_base_size(transactions: &[Transaction]) -> usize {
     size
 }
 
-impl Encodable for Block<Unchecked> {
-    #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        // TODO: Should we be able to encode without cloning?
-        // This is ok, we decode as unchecked anyway.
-        let block = self.clone().assume_checked(None);
-        block.consensus_encode(w)
-    }
-}
-
-impl Encodable for Block<Checked> {
-    #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.header().consensus_encode(w)?;
-
-        let transactions = self.transactions();
-        len += w.emit_compact_size(transactions.len())?;
-        for c in transactions.iter() {
-            len += c.consensus_encode(w)?;
-        }
-
-        Ok(len)
-    }
-}
-
-impl Decodable for Block<Unchecked> {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Block, encode::Error> {
-        let header = Decodable::consensus_decode_from_finite_reader(r)?;
-        let transactions = Decodable::consensus_decode_from_finite_reader(r)?;
-
-        Ok(Block::new_unchecked(header, transactions))
-    }
-
-    #[inline]
-    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Block, encode::Error> {
-        let mut r = r.take(internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
-        let header = Decodable::consensus_decode(&mut r)?;
-        let transactions = Decodable::consensus_decode(&mut r)?;
-
-        Ok(Block::new_unchecked(header, transactions))
-    }
-}
-
 mod sealed {
     /// Seals the extension traits.
     pub trait Sealed {}
@@ -532,10 +454,11 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
     use crate::script::ScriptBuf;
     use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
-    use crate::{block, Amount, CompactTarget, Network, Sequence, TestnetVersion, Witness};
+    use crate::{block, Amount, BlockTime, CompactTarget, Network, Sequence, TestnetVersion, Witness};
 
     #[test]
     fn static_vector() {
@@ -925,7 +848,7 @@ mod benches {
     use test::{black_box, Bencher};
 
     use super::Block;
-    use crate::consensus::{deserialize, Decodable, Encodable};
+    use crate::consensus::{deserialize, Decodable as _};
 
     #[bench]
     pub fn bench_stream_reader(bh: &mut Bencher) {

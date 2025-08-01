@@ -14,14 +14,18 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std"]
-alloc = ["internals/alloc","serde?/alloc"]
+std = ["alloc", "consensus-encoding?/std", "internals/std"]
+alloc = ["consensus-encoding?/alloc", "internals/alloc","serde?/alloc"]
+consensus-encoding = ["dep:consensus-encoding", "io"]
+hex = ["consensus-encoding?/hex"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0" }
 
-serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 arbitrary = { version = "1.4", optional = true }
+consensus-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", default-features = false, optional = true }
+io = { package = "bitcoin-io", path = "../io", default-features = false, optional = true }
+serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0", features = ["test-serde"] }

@@ -36,7 +36,7 @@ fn encode_decode_from_stdlib_type() {
     let _bytes_written = data.consensus_encode(&mut v).expect("failed to encode to writer");
 
     // Slices implement `std::io::Read`.
-    let mut reader = v.as_ref();
+    let mut reader: &[u8] = v.as_ref();
 
     let _: OutPoint =
         Decodable::consensus_decode(&mut reader).expect("failed to decode from reader");

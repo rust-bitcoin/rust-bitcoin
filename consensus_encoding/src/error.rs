@@ -5,10 +5,12 @@
 use core::convert::Infallible;
 use core::fmt;
 
+#[cfg(feature = "hex")]
 use hex::error::{InvalidCharError, OddLengthStringError};
 use internals::write_err;
 
 #[cfg(doc)]
+#[cfg(feature = "alloc")]
 use super::IterReader;
 
 /// Error deserializing from a slice.
@@ -218,6 +220,7 @@ impl std::error::Error for ParseError {
 
 /// Hex deserialization error.
 #[derive(Debug)]
+#[cfg(feature = "hex")]
 pub enum FromHexError {
     /// Purported hex string had odd length.
     OddLengthString(OddLengthStringError),
@@ -225,6 +228,7 @@ pub enum FromHexError {
     Decode(DecodeError<InvalidCharError>),
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromHexError::*;
@@ -238,6 +242,7 @@ impl fmt::Display for FromHexError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "hex")]
 impl std::error::Error for FromHexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use FromHexError::*;
@@ -249,6 +254,7 @@ impl std::error::Error for FromHexError {
     }
 }
 
+#[cfg(feature = "hex")]
 impl From<OddLengthStringError> for FromHexError {
     #[inline]
     fn from(e: OddLengthStringError) -> Self { Self::OddLengthString(e) }
@@ -256,11 +262,13 @@ impl From<OddLengthStringError> for FromHexError {
 
 /// Constructs a new `Error::ParseFailed` error.
 // This whole variant should go away because of the inner string.
+#[cfg(feature = "alloc")]
 pub(crate) fn parse_failed_error(msg: &'static str) -> Error {
     Error::Parse(ParseError::ParseFailed(msg))
 }
 
 #[cfg(test)]
+#[cfg(feature = "alloc")]
 mod tests {
     use super::*;
 
@@ -272,7 +280,7 @@ mod tests {
         };
 
         let want = "invalid checksum: expected deadbeef, actual cafebabe";
-        let got = format!("{}", e);
+        let got = alloc::format!("{}", e);
         assert_eq!(want, got);
     }
 }

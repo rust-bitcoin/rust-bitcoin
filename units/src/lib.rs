@@ -72,3 +72,10 @@ pub(crate) use self::result::OptionExt;
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
+
+/// Constructs a new `Error::ParseFailed` error.
+// This whole variant should go away because of the inner string.
+#[cfg(feature = "consensus-encoding")]
+pub(crate) fn parse_failed_error(msg: &'static str) -> consensus_encoding::Error {
+    consensus_encoding::Error::Parse(consensus_encoding::ParseError::ParseFailed(msg))
+}

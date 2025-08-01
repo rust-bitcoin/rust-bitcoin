@@ -20,15 +20,12 @@ use hashes::{sha256d, HashEngine as _};
 
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
-use crate::{internal_macros, Txid, Wtxid};
+use crate::{Txid, Wtxid};
 
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 pub use primitives::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
-
-internal_macros::impl_hashencode!(TxMerkleNode);
-internal_macros::impl_hashencode!(WitnessMerkleNode);
 
 /// A node in a Merkle tree of transactions or witness data within a block.
 ///

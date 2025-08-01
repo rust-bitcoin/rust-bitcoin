@@ -4,11 +4,11 @@
 # disable verify unused vars, despite the fact that they are used when sourced
 # shellcheck disable=SC2034
 
-# Test these features with "std" enabled.
-FEATURES_WITH_STD="serde arbitrary consensus-encoding"
+# Test all these features with "std" enabled.
+FEATURES_WITH_STD="hex"
 
-# Test these features without "std" enabled.
-FEATURES_WITHOUT_STD="alloc serde arbitrary consensus-encoding"
+# Test all these features without "std" enabled.
+FEATURES_WITHOUT_STD="alloc hex"
 
 # Run these examples.
 EXAMPLES=""

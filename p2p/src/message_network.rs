@@ -8,7 +8,7 @@ use std::borrow::Cow;
 
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
 use hashes::sha256d;
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 use crate::address::Address;
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
@@ -116,7 +116,7 @@ impl Encodable for RejectReason {
 }
 
 impl Decodable for RejectReason {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
             0x01 => RejectReason::Malformed,
             0x10 => RejectReason::Invalid,

@@ -137,6 +137,11 @@ pub mod serde_macros {
 use core::fmt::{self, Write as _};
 use core::{convert, hash};
 
+#[cfg(feature = "consensus-encoding")]
+use consensus_encoding::{Decodable, Encodable};
+#[cfg(feature = "consensus-encoding")]
+use io::{Read, Write};
+
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
@@ -285,6 +290,34 @@ pub fn debug_hex(bytes: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
         f.write_char(char::from(upper))?;
     }
     Ok(())
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Encodable for sha256d::Hash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_byte_array().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Decodable for sha256d::Hash {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Encodable for sha256::Hash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_byte_array().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Decodable for sha256::Hash {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+    }
 }
 
 #[cfg(test)]
