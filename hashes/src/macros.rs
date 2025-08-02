@@ -220,9 +220,9 @@ macro_rules! impl_debug_only_for_newtype {
 ///
 /// # Parameters
 ///
-/// * `ty` - The bytelike type to implement the traits on.
-/// * `$len` - The number of bytes this type has.
-/// * `$gen: $gent` - generic type(s) and trait bound(s).
+/// * `ty` - the bytelike type to implement the traits on.
+/// * `$len` - the number of bytes this type has.
+/// * `$gen: $gent` - the generic type(s) and trait bound(s).
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_bytelike_traits {

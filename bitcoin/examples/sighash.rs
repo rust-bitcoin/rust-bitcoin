@@ -16,9 +16,9 @@ use hex_lit::hex;
 ///
 /// # Parameters
 ///
-/// * `raw_tx` - spending tx hex
-/// * `inp_idx` - spending tx input index
-/// * `amount` - ref tx output value in sats
+/// * `raw_tx` - the spending tx hex
+/// * `inp_idx` - the spending tx input index
+/// * `amount` - the ref tx output value in sats
 fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
@@ -55,9 +55,9 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 ///
 /// # Parameters
 ///
-/// * `raw_tx` - spending tx hex
-/// * `inp_idx` - spending tx input index
-/// * `script_pubkey_bytes_opt` - Option with scriptPubKey bytes. If None, it's p2sh case, i.e., reftx output's scriptPubKey.type is "scripthash". In this case scriptPubkey is extracted from the spending transaction's scriptSig. If Some(), it's p2ms case, i.e., reftx output's scriptPubKey.type is "multisig", and the scriptPubkey is supplied from the referenced output.
+/// * `raw_tx` - the spending tx hex
+/// * `inp_idx` - the spending tx input index
+/// * `script_pubkey_bytes_opt` - the Option with scriptPubKey bytes. If None, it's p2sh case, i.e., reftx output's scriptPubKey.type is "scripthash". In this case scriptPubkey is extracted from the spending transaction's scriptSig. If Some(), it's p2ms case, i.e., reftx output's scriptPubKey.type is "multisig", and the scriptPubkey is supplied from the referenced output.
 fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt: Option<&[u8]>) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
@@ -100,9 +100,9 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
 ///
 /// # Parameters
 ///
-/// * `raw_tx` - spending tx hex
-/// * `inp_idx` - spending tx input index
-/// * `amount` - ref tx output value in sats
+/// * `raw_tx` - the spending tx hex
+/// * `inp_idx` - the spending tx input index
+/// * `amount` - the ref tx output value in sats
 fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
