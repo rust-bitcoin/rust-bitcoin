@@ -494,23 +494,23 @@ impl Encodable for [u16; 8] {
     }
 }
 
+impl<T: Encodable> Encodable for Vec<T> {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(
+        &self,
+        w: &mut W,
+    ) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += w.emit_compact_size(self.len())?;
+        for c in self.iter() {
+            len += c.consensus_encode(w)?;
+        }
+        Ok(len)
+    }
+}
+
 macro_rules! impl_vec {
     ($type: ty) => {
-        impl Encodable for Vec<$type> {
-            #[inline]
-            fn consensus_encode<W: Write + ?Sized>(
-                &self,
-                w: &mut W,
-            ) -> core::result::Result<usize, io::Error> {
-                let mut len = 0;
-                len += w.emit_compact_size(self.len())?;
-                for c in self.iter() {
-                    len += c.consensus_encode(w)?;
-                }
-                Ok(len)
-            }
-        }
-
         impl Decodable for Vec<$type> {
             #[inline]
             fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
@@ -582,13 +582,6 @@ fn read_bytes_from_finite_reader<D: Read + ?Sized>(
     }
 
     Ok(ret)
-}
-
-impl Encodable for Vec<u8> {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        consensus_encode_with_size(self, w)
-    }
 }
 
 impl Decodable for Vec<u8> {
