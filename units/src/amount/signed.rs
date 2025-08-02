@@ -95,6 +95,7 @@ mod encapsulate {
 }
 #[doc(inline)]
 pub use encapsulate::SignedAmount;
+use internals::const_casts;
 
 impl SignedAmount {
     /// The zero amount.
@@ -152,7 +153,7 @@ impl SignedAmount {
     /// in const context.
     #[allow(clippy::missing_panics_doc)]
     pub const fn from_btc_i16(whole_bitcoin: i16) -> Self {
-        let btc = whole_bitcoin as i64; // Can't call `into` in const context.
+        let btc = const_casts::i16_to_i64(whole_bitcoin);
         let sats = btc * 100_000_000;
 
         match Self::from_sat(sats) {

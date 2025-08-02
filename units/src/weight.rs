@@ -51,7 +51,7 @@ impl Weight {
     pub const MAX: Weight = Weight::from_wu(u64::MAX);
 
     /// The factor that non-witness serialization data is multiplied by during weight calculation.
-    pub const WITNESS_SCALE_FACTOR: u64 = WITNESS_SCALE_FACTOR as u64;
+    pub const WITNESS_SCALE_FACTOR: u64 = WITNESS_SCALE_FACTOR as u64; // this value is 4
 
     /// The maximum allowed weight for a block, see BIP 141 (network rule).
     pub const MAX_BLOCK: Weight = Weight::from_wu(4_000_000);

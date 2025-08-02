@@ -32,6 +32,7 @@ mod encapsulate {
 }
 #[doc(inline)]
 pub use encapsulate::FeeRate;
+use internals::const_casts;
 
 impl FeeRate {
     /// The zero fee rate.
@@ -57,7 +58,7 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
     pub const fn from_sat_per_kwu(sat_kwu: u32) -> Self {
-        let fee_rate = (sat_kwu as u64) * 4_000; // No `Into` in const context.
+        let fee_rate = (const_casts::u32_to_u64(sat_kwu)) * 4_000;
         FeeRate::from_sat_per_mvb(fee_rate)
     }
 
@@ -72,7 +73,7 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
     pub const fn from_sat_per_vb(sat_vb: u32) -> Self {
-        let fee_rate = (sat_vb as u64) * 1_000_000; // No `Into` in const context.
+        let fee_rate = (const_casts::u32_to_u64(sat_vb)) * 1_000_000;
         FeeRate::from_sat_per_mvb(fee_rate)
     }
 
@@ -87,7 +88,7 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     pub const fn from_sat_per_kvb(sat_kvb: u32) -> Self {
-        let fee_rate = (sat_kvb as u64) * 1_000; // No `Into` in const context.
+        let fee_rate = (const_casts::u32_to_u64(sat_kvb)) * 1_000;
         FeeRate::from_sat_per_mvb(fee_rate)
     }
 
