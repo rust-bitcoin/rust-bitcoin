@@ -15,6 +15,7 @@ use bitcoin::{block, transaction};
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{BufRead, Write};
+use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
@@ -265,7 +266,7 @@ pub enum NetworkMessage {
     /// `reject`
     Reject(message_network::Reject),
     /// `feefilter`
-    FeeFilter(i64),
+    FeeFilter(FeeRate),
     /// `wtxidrelay`
     WtxidRelay,
     /// `addrv2`
@@ -438,7 +439,7 @@ impl Encodable for NetworkMessage {
             NetworkMessage::BlockTxn(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Alert(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Reject(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FeeFilter(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::FeeFilter(ref dat) => dat.to_sat_per_kvb_ceil().consensus_encode(writer),
             NetworkMessage::AddrV2(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
@@ -623,9 +624,16 @@ impl Decodable for RawNetworkMessage {
                 NetworkMessage::Reject(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "alert" =>
                 NetworkMessage::Alert(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
-            "feefilter" => NetworkMessage::FeeFilter(
-                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
-            ),
+            "feefilter" => {
+                NetworkMessage::FeeFilter(
+                    u64::consensus_decode_from_finite_reader(&mut mem_d)?
+                        .try_into()
+                        .ok()
+                        // Given some absurdly large value, using the maximum conveys that no
+                        // transactions should be relayed to this peer.
+                        .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb)
+                )
+            },
             "sendcmpct" => NetworkMessage::SendCmpct(
                 Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
@@ -684,7 +692,14 @@ impl Decodable for V2NetworkMessage {
             2u8 => NetworkMessage::Block(Decodable::consensus_decode_from_finite_reader(r)?),
             3u8 => NetworkMessage::BlockTxn(Decodable::consensus_decode_from_finite_reader(r)?),
             4u8 => NetworkMessage::CmpctBlock(Decodable::consensus_decode_from_finite_reader(r)?),
-            5u8 => NetworkMessage::FeeFilter(Decodable::consensus_decode_from_finite_reader(r)?),
+            5u8 => NetworkMessage::FeeFilter(
+                u64::consensus_decode_from_finite_reader(r)?
+                    .try_into()
+                    .ok()
+                    // Given some absurdly large value, using the maximum conveys that no
+                    // transactions should be relayed to this peer.
+                    .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb)
+            ),
             6u8 => NetworkMessage::FilterAdd(Decodable::consensus_decode_from_finite_reader(r)?),
             7u8 => NetworkMessage::FilterClear,
             8u8 => NetworkMessage::FilterLoad(Decodable::consensus_decode_from_finite_reader(r)?),
@@ -857,7 +872,7 @@ mod test {
                 reason: "Cause".into(),
                 hash: hash([255u8; 32]),
             }),
-            NetworkMessage::FeeFilter(1000),
+            NetworkMessage::FeeFilter(FeeRate::BROADCAST_MIN),
             NetworkMessage::WtxidRelay,
             NetworkMessage::AddrV2(AddrV2Payload(vec![AddrV2Message {
                 addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)),
