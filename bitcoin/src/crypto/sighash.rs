@@ -277,7 +277,7 @@ impl std::error::Error for PrevoutsSizeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-/// A single prevout was been provided but all prevouts are needed without `ANYONECANPAY`.
+/// A single prevout was provided but all prevouts are needed without `ANYONECANPAY`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct PrevoutsKindError;
@@ -343,8 +343,8 @@ impl<'s> ScriptPath<'s> {
         self.leaf_version
             .to_consensus()
             .consensus_encode(&mut enc)
-            .expect("writing to hash enging should never fail");
-        self.script.consensus_encode(&mut enc).expect("writing to hash enging should never fail");
+            .expect("writing to hash engine should never fail");
+        self.script.consensus_encode(&mut enc).expect("writing to hash engine should never fail");
 
         let inner = sha256t::Hash::<TapLeafTag>::from_engine(enc);
         TapLeafHash::from_byte_array(inner.to_byte_array())
