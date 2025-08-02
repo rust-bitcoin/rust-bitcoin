@@ -143,7 +143,7 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
 /// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
-/// * `fn`: The infallible conversion function to call to convert from an integer.
+/// * `fn`: the infallible conversion function to call to convert from an integer.
 ///
 /// # Errors
 ///
@@ -208,7 +208,7 @@ macro_rules! impl_parse_str_from_int_infallible {
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
 /// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
-/// * `inner_fn`: The fallible conversion function to call to convert from a string reference.
+/// * `inner_fn`: the fallible conversion function to call to convert from a string reference.
 ///
 /// # Errors
 ///

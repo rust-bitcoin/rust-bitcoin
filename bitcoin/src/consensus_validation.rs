@@ -24,9 +24,9 @@ use crate::transaction::{OutPoint, Transaction, TxOut};
 ///
 /// # Parameters
 ///
-///  * `index` - The input index in spending which is spending this transaction.
-///  * `amount` - The amount this script guards.
-///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
+///  * `index` - the input index in spending which is spending this transaction.
+///  * `amount` - the amount this script guards.
+///  * `spending_tx` - the transaction that attempts to spend the output holding this script.
 ///
 /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
 pub fn verify_script(
@@ -48,10 +48,10 @@ pub fn verify_script(
 ///
 /// # Parameters
 ///
-///  * `index` - The input index in spending which is spending this transaction.
-///  * `amount` - The amount this script guards.
-///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
-///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
+///  * `index` - the input index in spending which is spending this transaction.
+///  * `amount` - the amount this script guards.
+///  * `spending_tx` - the transaction that attempts to spend the output holding this script.
+///  * `flags` - the verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
 ///
 /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
 pub fn verify_script_with_flags<F: Into<u32>>(
@@ -126,9 +126,9 @@ define_extension_trait! {
         ///
         /// # Parameters
         ///
-        ///  * `index` - The input index in spending which is spending this transaction.
-        ///  * `amount` - The amount this script guards.
-        ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
+        ///  * `index` - the input index in spending which is spending this transaction.
+        ///  * `amount` - the amount this script guards.
+        ///  * `spending_tx` - the transaction that attempts to spend the output holding this script.
         ///
         /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
         fn verify(
@@ -144,10 +144,10 @@ define_extension_trait! {
         ///
         /// # Parameters
         ///
-        ///  * `index` - The input index in spending which is spending this transaction.
-        ///  * `amount` - The amount this script guards.
-        ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
-        ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
+        ///  * `index` - the input index in spending which is spending this transaction.
+        ///  * `amount` - the amount this script guards.
+        ///  * `spending_tx` - the transaction that attempts to spend the output holding this script.
+        ///  * `flags` - the verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
         ///
         /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
         fn verify_with_flags(

@@ -8,10 +8,10 @@
 ///
 /// # Parameters
 ///
-/// * `$bits` - number of bits this hash type has
+/// * `$bits` - the number of bits this hash type has
 /// * `$reverse` - `bool`  - `true` if the hash type should be displayed backwards, `false`
 ///   otherwise.
-/// * `$gen: $gent` - generic type(s) and trait bound(s)
+/// * `$gen: $gent` - the generic type(s) and trait bound(s)
 ///
 /// Restrictions on usage:
 ///
@@ -57,7 +57,7 @@ pub(crate) use hash_trait_impls;
 ///
 /// * `$bits` - the number of bits of the hash type
 /// * `$reverse` - `true` if the hash should be displayed backwards, `false` otherwise
-/// * `$doc` - doc string to put on the type
+/// * `$doc` - the doc string to put on the type
 ///
 /// Restrictions on usage:
 ///
