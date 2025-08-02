@@ -41,7 +41,7 @@ use io::{BufRead, Write};
 #[doc(inline)]
 pub use self::{address::Address, network_ext::NetworkExt};
 
-/// Version of the protocol as appearing in network message headers.
+/// Version of the protocol as appearing in network version handshakes and some message headers.
 ///
 /// This constant is used to signal to other peers which features you support. Increasing it implies
 /// that your software also supports every feature prior to this version. Doing so without support
@@ -58,7 +58,52 @@ pub use self::{address::Address, network_ext::NetworkExt};
 /// 70001 - Support bloom filter messages `filterload`, `filterclear` `filteradd`, `merkleblock` and FILTERED_BLOCK inventory type
 /// 60002 - Support `mempool` message
 /// 60001 - Support `pong` message and nonce in `ping` message
-pub const PROTOCOL_VERSION: u32 = 70001;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ProtocolVersion(u32);
+
+impl ProtocolVersion {
+    /// Support receiving `wtxidrelay` message between `version` and `verack` message
+    pub const WTXID_RELAY_VERSION: ProtocolVersion = ProtocolVersion(70016);
+    /// Support receiving invalid compact blocks from a peer without banning them
+    pub const INVALID_CB_NO_BAN_VERSION: ProtocolVersion = ProtocolVersion(70015);
+    /// Support compact block messages `sendcmpct`, `cmpctblock`, `getblocktxn` and `blocktxn`
+    pub const SHORT_IDS_BLOCKS_VERSION: ProtocolVersion = ProtocolVersion(70014);
+    /// Support `feefilter` message
+    pub const FEEFILTER_VERSION: ProtocolVersion = ProtocolVersion(70013);
+    /// Support `sendheaders` message and announce new blocks via headers rather than inv
+    pub const SENDHEADERS_VERSION: ProtocolVersion = ProtocolVersion(70012);
+    /// Support `pong` message and nonce in `ping` message
+    pub const BIP0031_VERSION: ProtocolVersion = ProtocolVersion(60000);
+    /// All connections will be terminated below this version.
+    pub const MIN_PEER_PROTO_VERSION: ProtocolVersion = ProtocolVersion(31800);
+}
+
+impl ProtocolVersion {
+    /// Construct a protocol version that is not well-known.
+    pub fn from_nonstandard(version: u32) -> Self {
+        Self(version)
+    }
+}
+
+impl From<ProtocolVersion> for u32 {
+    fn from(version: ProtocolVersion) -> Self {
+        version.0
+    }
+}
+
+impl Encodable for ProtocolVersion {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
+    }
+}
+
+impl Decodable for ProtocolVersion {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(ProtocolVersion(Decodable::consensus_decode(r)?))
+    }
+}
 
 /// Flags to indicate which network services a node supports.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
