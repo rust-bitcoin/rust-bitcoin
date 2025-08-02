@@ -68,7 +68,6 @@ use crate::internal_macros::impl_asref_push_bytes;
 use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
-use crate::prelude::Vec;
 use crate::OutPoint;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -227,7 +226,7 @@ impl Decodable for ScriptBuf {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
-        let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
+        let v = encode::consensus_decode_byte_vector(r)?;
         Ok(ScriptBuf::from_bytes(v))
     }
 }

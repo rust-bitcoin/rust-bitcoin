@@ -20,7 +20,7 @@ use io::{BufRead, Write};
 use primitives::Sequence;
 
 use super::Weight;
-use crate::consensus::{self, encode, Decodable, Encodable};
+use crate::consensus::{self, encode, Decodable, Encodable, ReadExt as _};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
@@ -721,7 +721,7 @@ impl Decodable for Transaction {
         let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
         // SegWit
         if input.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
+            let segwit_flag = r.read_u8()?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {

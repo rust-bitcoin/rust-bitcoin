@@ -88,7 +88,7 @@ impl Key {
 
         let mut key_data = Vec::with_capacity(key_byte_size as usize);
         for _ in 0..key_byte_size {
-            key_data.push(Decodable::consensus_decode(r)?);
+            key_data.push(r.read_u8()?);
         }
 
         Ok(Key { type_value, key_data })
@@ -129,7 +129,7 @@ impl Deserialize for Pair {
 
 impl Pair {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
+        Ok(Pair { key: Key::decode(r)?, value: encode::consensus_decode_byte_vector(r)? })
     }
 }
 
@@ -151,7 +151,7 @@ where
     Subtype: Copy + From<u64> + Into<u64>,
 {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        let prefix = Vec::<u8>::consensus_decode(r)?;
+        let prefix = encode::consensus_decode_byte_vector(r)?;
         let subtype = Subtype::from(r.read_compact_size()?);
 
         // The limit is a DOS protection mechanism the exact value is not

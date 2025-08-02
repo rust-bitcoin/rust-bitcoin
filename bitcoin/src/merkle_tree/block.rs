@@ -439,7 +439,7 @@ impl Decodable for PartialMerkleTree {
         }
         let mut bits = vec![false; nb_bytes_for_bits * 8];
         for chunk in bits.chunks_mut(8) {
-            let byte = u8::consensus_decode(r)?;
+            let byte = r.read_u8()?;
             for (i, bit) in chunk.iter_mut().enumerate() {
                 *bit = (byte & (1 << i)) != 0;
             }
