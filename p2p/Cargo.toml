@@ -15,6 +15,7 @@ exclude = ["tests", "contrib"]
 [features]
 default = ["std"]
 std = ["hashes/std", "hex/std", "internals/std", "io/std", "units/std", "bitcoin/std"]
+arbitrary = ["dep:arbitrary", "bitcoin/arbitrary"]
 
 [dependencies]
 bitcoin = { path = "../bitcoin/", default-features = false }
@@ -23,6 +24,8 @@ hex = { package = "hex-conservative", version = "0.3.0", default-features = fals
 internals = { package = "bitcoin-internals", path = "../internals", default-features = false }
 io = { package = "bitcoin-io", path = "../io", default-features = false }
 units = { package = "bitcoin-units", path = "../units", default-features = false }
+
+arbitrary = { version = "1.4", optional = true }
 
 [dev-dependencies]
 hex_lit = "0.1.1"
