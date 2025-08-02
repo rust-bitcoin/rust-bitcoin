@@ -2034,7 +2034,7 @@ mod tests {
     }
 
     #[test]
-    // needless_borrows_for_generic_args incorrecctly identifies &[] as a needless borrow
+    // needless_borrows_for_generic_args incorrectly identifies &[] as a needless borrow
     #[allow(clippy::needless_borrows_for_generic_args)]
     fn weight_prediction_new() {
         let p2wpkh_max = InputWeightPrediction::new(0, [72, 33]);
