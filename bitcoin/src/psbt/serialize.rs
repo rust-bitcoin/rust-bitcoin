@@ -12,7 +12,7 @@ use internals::slice::SliceExt;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
-use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
+use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable, ReadExt as _};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::io::Write;
@@ -90,7 +90,7 @@ impl Psbt {
         }
 
         const PSBT_SERPARATOR: u8 = 0xff_u8;
-        let separator: u8 = Decodable::consensus_decode(r)?;
+        let separator: u8 = r.read_u8()?;
         if separator != PSBT_SERPARATOR {
             return Err(Error::InvalidSeparator);
         }

@@ -222,7 +222,7 @@ impl Encodable for AddrV2 {
 
 impl Decodable for AddrV2 {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        let network_id = u8::consensus_decode(r)?;
+        let network_id = r.read_u8()?;
         let len = r.read_compact_size()?;
         if len > 512 {
             return Err(crate::consensus::parse_failed_error("IP must be <= 512 bytes"));
