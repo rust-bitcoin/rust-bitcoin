@@ -393,6 +393,9 @@ impl<'a> Arbitrary<'a> for Version {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")] 
+    use alloc::{format, vec};
+
     fn dummy_header() -> Header {
         Header {
             version: Version::ONE,
@@ -550,6 +553,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn header_debug() {
         let header = dummy_header();
         let expected = format!(
