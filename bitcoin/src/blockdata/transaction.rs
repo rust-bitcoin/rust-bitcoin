@@ -779,7 +779,7 @@ pub fn effective_value(
 ) -> SignedAmount {
     let weight = input_weight_prediction.total_weight();
     let fee = fee_rate.to_fee(weight);
-  
+
     value.signed_sub(fee)
 }
 

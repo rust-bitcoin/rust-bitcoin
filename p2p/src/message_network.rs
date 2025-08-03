@@ -152,18 +152,20 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 pub struct Alert(Vec<u8>);
 
 impl Alert {
-    const FINAL_ALERT: [u8; 96] = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 127, 0, 0, 0, 0, 255, 255, 255, 127, 254, 255, 255, 127, 1, 255, 255, 255, 127, 0, 0, 0, 0, 255, 255, 255, 127, 0, 255, 255, 255, 127, 0, 47, 85, 82, 71, 69, 78, 84, 58, 32, 65, 108, 101, 114, 116, 32, 107, 101, 121, 32, 99, 111, 109, 112, 114, 111, 109, 105, 115, 101, 100, 44, 32, 117, 112, 103, 114, 97, 100, 101, 32, 114, 101, 113, 117, 105, 114, 101, 100, 0];
+    const FINAL_ALERT: [u8; 96] = [
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 127, 0, 0, 0, 0, 255, 255, 255, 127,
+        254, 255, 255, 127, 1, 255, 255, 255, 127, 0, 0, 0, 0, 255, 255, 255, 127, 0, 255, 255,
+        255, 127, 0, 47, 85, 82, 71, 69, 78, 84, 58, 32, 65, 108, 101, 114, 116, 32, 107, 101, 121,
+        32, 99, 111, 109, 112, 114, 111, 109, 105, 115, 101, 100, 44, 32, 117, 112, 103, 114, 97,
+        100, 101, 32, 114, 101, 113, 117, 105, 114, 101, 100, 0,
+    ];
 
     /// Build the final alert to send to a potentially vulnerable peer.
-    pub fn final_alert() -> Self {
-        Self(Self::FINAL_ALERT.into())
-    }
+    pub fn final_alert() -> Self { Self(Self::FINAL_ALERT.into()) }
 
     /// The final alert advertised by Bitcoin Core. This alert is sent if the advertised protocol
     /// version is vulnerable to the alert-system vulerablities.
-    pub fn is_final_alert(&self) -> bool {
-        self.0.eq(&Self::FINAL_ALERT)
-    }
+    pub fn is_final_alert(&self) -> bool { self.0.eq(&Self::FINAL_ALERT) }
 }
 
 impl_vec_wrapper!(Alert, Vec<u8>);

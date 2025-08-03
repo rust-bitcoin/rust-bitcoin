@@ -6,9 +6,9 @@
 //! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 
 use core::fmt;
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
@@ -197,7 +197,7 @@ impl<'a> Arbitrary<'a> for ProprietaryKey {
         Ok(ProprietaryKey {
             prefix: Vec::<u8>::arbitrary(u)?,
             subtype: u64::arbitrary(u)?,
-            key: Vec::<u8>::arbitrary(u)?
+            key: Vec::<u8>::arbitrary(u)?,
         })
     }
 }

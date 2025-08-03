@@ -405,7 +405,7 @@ impl Amount {
         SignedAmount::from_sat(self.to_sat() as i64) // Cast ok, signed amount and amount share positive range.
             .expect("range of Amount is within range of SignedAmount")
     }
-   
+
     /// Infallibly subtracts one `Amount` from another returning a [`SignedAmount`].
     ///
     /// Since `SignedAmount::MIN` is equivalent to `-Amount::MAX` subtraction of two signed amounts
