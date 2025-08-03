@@ -439,7 +439,8 @@ impl Encodable for NetworkMessage {
             NetworkMessage::BlockTxn(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Alert(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Reject(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FeeFilter(ref dat) => dat.to_sat_per_kvb_ceil().consensus_encode(writer),
+            NetworkMessage::FeeFilter(ref dat) =>
+                dat.to_sat_per_kvb_ceil().consensus_encode(writer),
             NetworkMessage::AddrV2(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
@@ -631,9 +632,9 @@ impl Decodable for RawNetworkMessage {
                         .ok()
                         // Given some absurdly large value, using the maximum conveys that no
                         // transactions should be relayed to this peer.
-                        .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb)
+                        .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb),
                 )
-            },
+            }
             "sendcmpct" => NetworkMessage::SendCmpct(
                 Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
@@ -698,7 +699,7 @@ impl Decodable for V2NetworkMessage {
                     .ok()
                     // Given some absurdly large value, using the maximum conveys that no
                     // transactions should be relayed to this peer.
-                    .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb)
+                    .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb),
             ),
             6u8 => NetworkMessage::FilterAdd(Decodable::consensus_decode_from_finite_reader(r)?),
             7u8 => NetworkMessage::FilterClear,
