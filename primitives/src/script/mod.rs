@@ -246,7 +246,7 @@ impl<'a> From<Cow<'a, Script>> for ScriptBuf {
     fn from(value: Cow<'a, Script>) -> Self {
         match value {
             Cow::Owned(owned) => owned,
-            Cow::Borrowed(borrwed) => borrwed.into(),
+            Cow::Borrowed(borrowed) => borrowed.into(),
         }
     }
 }
@@ -256,7 +256,7 @@ impl<'a> From<Cow<'a, Script>> for Box<Script> {
     fn from(value: Cow<'a, Script>) -> Self {
         match value {
             Cow::Owned(owned) => owned.into(),
-            Cow::Borrowed(borrwed) => borrwed.into(),
+            Cow::Borrowed(borrowed) => borrowed.into(),
         }
     }
 }
