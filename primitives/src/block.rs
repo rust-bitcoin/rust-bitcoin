@@ -61,7 +61,7 @@ where
     header: Header,
     /// List of transactions contained in the block
     transactions: Vec<Transaction>,
-    /// Cached witness root if its been computed.
+    /// Cached witness root if it's been computed.
     #[cfg_attr(feature = "serde", serde(skip_serializing))]
     witness_root: Option<WitnessMerkleNode>,
     /// Validation marker.
@@ -450,7 +450,7 @@ mod tests {
         let header = dummy_header();
 
         // Calculate the size of the block header in bytes from the sum of the serialized lengths
-        // it's fields: version, prev_blockhash, merkle_root, time, bits, nonce.
+        // its fields: version, prev_blockhash, merkle_root, time, bits, nonce.
         let header_size = header.version.to_consensus().to_le_bytes().len()
             + header.prev_blockhash.as_byte_array().len()
             + header.merkle_root.as_byte_array().len()

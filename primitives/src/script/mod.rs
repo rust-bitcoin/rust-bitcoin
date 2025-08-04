@@ -229,7 +229,7 @@ impl fmt::Display for WitnessScriptSizeError {
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessScriptSizeError {}
 
-// We keep all the `Script` and `ScriptBuf` impls together since its easier to see side-by-side.
+// We keep all the `Script` and `ScriptBuf` impls together since it's easier to see side-by-side.
 
 impl From<ScriptBuf> for Box<Script> {
     #[inline]
