@@ -15,15 +15,16 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
-pub mod address;
 mod consensus;
+mod network_ext;
+
+pub mod address;
 pub mod message;
 pub mod message_blockdata;
 pub mod message_bloom;
 pub mod message_compact_blocks;
 pub mod message_filter;
 pub mod message_network;
-mod network_ext;
 
 extern crate alloc;
 

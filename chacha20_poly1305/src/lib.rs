@@ -28,6 +28,7 @@ extern crate test;
 
 #[cfg(bench)]
 mod benches;
+
 pub mod chacha20;
 pub mod poly1305;
 

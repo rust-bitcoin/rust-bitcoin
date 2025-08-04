@@ -34,9 +34,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-mod internal_macros;
-mod result;
-
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.
@@ -44,6 +41,9 @@ pub mod _export {
         pub use core::*;
     }
 }
+
+mod internal_macros;
+mod result;
 
 pub mod amount;
 pub mod block;
