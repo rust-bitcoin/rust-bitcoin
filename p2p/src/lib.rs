@@ -40,7 +40,7 @@ use io::{BufRead, Write};
 
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::{address::Address, network_ext::NetworkExt};
+pub use self::{address::Address, message::CheckedData, network_ext::NetworkExt};
 
 /// Version of the protocol as appearing in network version handshakes and some message headers.
 ///
