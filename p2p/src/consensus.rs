@@ -1,6 +1,9 @@
+#[cfg(feature = "std")]
 use bitcoin::consensus::encode::WriteExt;
+#[cfg(feature = "std")]
 use io::Write;
 
+#[cfg(feature = "std")]
 pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
     data: &[u8],
     w: &mut W,
@@ -53,6 +56,7 @@ macro_rules! impl_consensus_encoding {
 }
 pub(crate) use impl_consensus_encoding;
 
+#[cfg(feature = "std")]
 macro_rules! impl_vec_wrapper {
     ($wrapper: ident, $type: ty) => {
         impl bitcoin::consensus::encode::Encodable for $wrapper {
@@ -94,4 +98,5 @@ macro_rules! impl_vec_wrapper {
     };
 }
 
+#[cfg(feature = "std")]
 pub(crate) use impl_vec_wrapper;

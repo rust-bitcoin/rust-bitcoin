@@ -4,6 +4,8 @@
 //!
 //! This module describes BIP157 Client Side Block Filtering network messages.
 
+use alloc::vec::Vec;
+
 use bitcoin::bip158::{FilterHash, FilterHeader};
 use bitcoin::block::BlockHash;
 use units::BlockHeight;

@@ -4,6 +4,8 @@
 //!
 //! This module describes BIP37 Connection Bloom filtering network messages.
 
+use alloc::vec::Vec;
+
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
 use io::{BufRead, Write};
 

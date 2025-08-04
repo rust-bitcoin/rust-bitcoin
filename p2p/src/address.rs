@@ -5,6 +5,8 @@
 //! This module defines the structures and functions needed to encode
 //! network addresses in Bitcoin messages.
 
+use alloc::vec;
+use alloc::vec::Vec;
 use core::{fmt, iter};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
@@ -442,6 +444,7 @@ impl std::error::Error for AddrV2ToIpv6AddrError {}
 
 #[cfg(test)]
 mod test {
+    use alloc::{format, vec};
     use std::net::IpAddr;
 
     use bitcoin::consensus::encode::{deserialize, serialize};

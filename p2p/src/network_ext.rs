@@ -51,6 +51,8 @@ impl NetworkExt for Network {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use super::*;
 
     #[test]
