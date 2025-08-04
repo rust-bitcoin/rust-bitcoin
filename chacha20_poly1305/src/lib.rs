@@ -78,8 +78,8 @@ impl ChaCha20Poly1305 {
     ///
     /// # Parameters
     ///
-    /// - `content` - Plaintext to be encrypted in place.
-    /// - `aad`     - Optional metadata covered by the authentication tag.
+    /// - `content` - the plaintext to be encrypted in place.
+    /// - `aad`     - the optional metadata covered by the authentication tag.
     ///
     /// # Returns
     ///
