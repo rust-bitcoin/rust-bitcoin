@@ -11,6 +11,7 @@ use bitcoin::transaction::{Txid, Wtxid};
 use io::{BufRead, Write};
 
 use crate::consensus::impl_consensus_encoding;
+use crate::ProtocolVersion;
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -101,7 +102,7 @@ impl Decodable for Inventory {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GetBlocksMessage {
     /// The protocol version
-    pub version: u32,
+    pub version: ProtocolVersion,
     /// Locator hashes --- ordered newest to oldest. The remote peer will
     /// reply with its longest known chain, starting from a locator hash
     /// if possible and block 1 otherwise.
@@ -114,7 +115,7 @@ pub struct GetBlocksMessage {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GetHeadersMessage {
     /// The protocol version
-    pub version: u32,
+    pub version: ProtocolVersion,
     /// Locator hashes --- ordered newest to oldest. The remote peer will
     /// reply with its longest known chain, starting from a locator hash
     /// if possible and block 1 otherwise.
@@ -123,21 +124,7 @@ pub struct GetHeadersMessage {
     pub stop_hash: BlockHash,
 }
 
-impl GetBlocksMessage {
-    /// Construct a new `getblocks` message
-    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
-        GetBlocksMessage { version: crate::PROTOCOL_VERSION, locator_hashes, stop_hash }
-    }
-}
-
 impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
-
-impl GetHeadersMessage {
-    /// Construct a new `getheaders` message
-    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
-        GetHeadersMessage { version: crate::PROTOCOL_VERSION, locator_hashes, stop_hash }
-    }
-}
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
@@ -156,7 +143,7 @@ mod tests {
         let decode: Result<GetBlocksMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.version, 70002);
+        assert_eq!(real_decode.version.0, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
         assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
         assert_eq!(real_decode.stop_hash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
@@ -172,7 +159,7 @@ mod tests {
         let decode: Result<GetHeadersMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.version, 70002);
+        assert_eq!(real_decode.version.0, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
         assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
         assert_eq!(real_decode.stop_hash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
