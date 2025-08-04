@@ -17,6 +17,7 @@ use super::{
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
 use crate::{FeeRate, MathOp, NumOpError as E, NumOpResult, Weight};
+use internals::const_casts;
 
 mod encapsulate {
     use super::OutOfRangeError;
@@ -116,7 +117,7 @@ impl Amount {
     /// represent roughly 0 to 42.95 BTC.
     #[allow(clippy::missing_panics_doc)]
     pub const fn from_sat_u32(satoshi: u32) -> Self {
-        let sats = satoshi as u64; // cannot use i64::from in a constfn
+        let sats = const_casts::u32_to_u64(satoshi);
         match Self::from_sat(sats) {
             Ok(amount) => amount,
             Err(_) => panic!("unreachable - 65,536 BTC is within range"),
@@ -154,7 +155,7 @@ impl Amount {
     /// in const context.
     #[allow(clippy::missing_panics_doc)]
     pub const fn from_btc_u16(whole_bitcoin: u16) -> Self {
-        let btc = whole_bitcoin as u64; // Can't call `into` in const context.
+        let btc = const_casts::u16_to_u64(whole_bitcoin);
         let sats = btc * 100_000_000;
 
         match Self::from_sat(sats) {

@@ -15,7 +15,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
-use internals::{compact_size, write_err, ToU64};
+use internals::{compact_size, const_casts, write_err, ToU64};
 use io::{BufRead, Write};
 use primitives::Sequence;
 
@@ -1147,7 +1147,7 @@ impl InputWeightPrediction {
     /// See also [`InputWeightPrediction::total_weight`]
     pub const fn witness_weight(&self) -> Weight {
         let wu = self.script_size * 4 + self.witness_size;
-        let wu = wu as u64; // Can't use `ToU64` in const context.
+        let wu = const_casts::u32_to_u64(wu);
         Weight::from_wu(wu)
     }
 }

@@ -55,6 +55,7 @@ pub mod wrap_debug;
 #[cfg(feature = "serde")]
 #[macro_use]
 pub mod serde;
+pub mod const_casts;
 
 /// A conversion trait for unsigned integer types smaller than or equal to 64-bits.
 ///
