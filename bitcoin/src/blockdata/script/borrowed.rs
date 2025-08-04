@@ -20,9 +20,9 @@ use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
 use crate::script::{self, ScriptBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
-use crate::{Amount, FeeRate, ScriptBuf};
+use crate::{internal_macros, Amount, FeeRate, ScriptBuf};
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
     pub trait ScriptExt impl for Script {
         /// Returns an iterator over script bytes.
@@ -459,7 +459,7 @@ mod sealed {
     impl Sealed for super::Script {}
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     pub(crate) trait ScriptExtPriv impl for Script {
         /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
         fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {

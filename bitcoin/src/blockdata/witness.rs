@@ -15,7 +15,7 @@ use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
 use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
-use crate::Script;
+use crate::{internal_macros, Script};
 
 type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a SerializedXOnlyPublicKey>;
 
@@ -112,7 +112,7 @@ impl Encodable for Witness {
     }
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Witness`] type.
     pub trait WitnessExt impl for Witness {
         /// Constructs a new witness required to spend a P2WPKH output.

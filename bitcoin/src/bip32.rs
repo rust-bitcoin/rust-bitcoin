@@ -16,9 +16,9 @@ use internals::write_err;
 use secp256k1::Secp256k1;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
-use crate::internal_macros::{impl_array_newtype, impl_array_newtype_stringify};
 use crate::network::NetworkKind;
 use crate::prelude::{String, Vec};
+use crate::internal_macros;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -40,8 +40,8 @@ pub type ExtendedPrivKey = Xpriv;
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-impl_array_newtype!(ChainCode, u8, 32);
-impl_array_newtype_stringify!(ChainCode, 32);
+internal_macros::impl_array_newtype!(ChainCode, u8, 32);
+internal_macros::impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
@@ -52,8 +52,8 @@ impl ChainCode {
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-impl_array_newtype!(Fingerprint, u8, 4);
-impl_array_newtype_stringify!(Fingerprint, 4);
+internal_macros::impl_array_newtype!(Fingerprint, u8, 4);
+internal_macros::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
     /// Extended key identifier as defined in BIP-32.
