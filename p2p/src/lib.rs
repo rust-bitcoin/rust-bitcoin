@@ -16,9 +16,11 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
+mod consensus;
+mod network_ext;
+
 #[cfg(feature = "std")]
 pub mod address;
-mod consensus;
 #[cfg(feature = "std")]
 pub mod message;
 pub mod message_blockdata;
@@ -27,7 +29,6 @@ pub mod message_compact_blocks;
 pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
-mod network_ext;
 
 extern crate alloc;
 #[cfg(feature = "std")]
