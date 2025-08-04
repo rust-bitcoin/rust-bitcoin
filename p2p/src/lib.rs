@@ -52,7 +52,7 @@ pub use self::network_ext::NetworkExt;
 #[cfg(feature = "std")]
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::address::Address;
+pub use self::{address::Address, message::CheckedData};
 
 /// Version of the protocol as appearing in network version handshakes and some message headers.
 ///
