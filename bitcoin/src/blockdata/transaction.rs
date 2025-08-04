@@ -21,21 +21,20 @@ use primitives::Sequence;
 
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{Amount, FeeRate, SignedAmount};
+use crate::{internal_macros, Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
 pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Txid, Wtxid, Version, TxIn, TxOut};
 
-impl_hashencode!(Txid);
-impl_hashencode!(Wtxid);
+internal_macros::impl_hashencode!(Txid);
+internal_macros::impl_hashencode!(Wtxid);
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Txid`] type.
@@ -637,7 +636,7 @@ impl Decodable for Version {
     }
 }
 
-impl_consensus_encoding!(TxOut, value, script_pubkey);
+crate::internal_macros::impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {

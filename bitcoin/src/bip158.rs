@@ -50,10 +50,10 @@ use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
 use crate::consensus::{ReadExt, WriteExt};
-use crate::internal_macros::impl_hashencode;
 use crate::prelude::{BTreeSet, Borrow, Vec};
 use crate::script::{Script, ScriptExt as _};
 use crate::transaction::OutPoint;
+use crate::internal_macros;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -70,8 +70,8 @@ hashes::impl_hex_for_newtype!(FilterHash, FilterHeader);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(FilterHash, FilterHeader);
 
-impl_hashencode!(FilterHash);
-impl_hashencode!(FilterHeader);
+internal_macros::impl_hashencode!(FilterHash);
+internal_macros::impl_hashencode!(FilterHeader);
 
 /// Errors for blockfilter.
 #[derive(Debug)]
