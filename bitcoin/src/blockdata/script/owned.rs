@@ -19,8 +19,9 @@ use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{self, ScriptHash, WScriptHash};
 use crate::taproot::TapNodeHash;
+use crate::internal_macros;
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
     pub trait ScriptBufExt impl for ScriptBuf {
         /// Constructs a new script builder
@@ -195,7 +196,7 @@ mod sealed {
     impl Sealed for super::ScriptBuf {}
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     pub(crate) trait ScriptBufExtPriv impl for ScriptBuf {
         /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
         ///

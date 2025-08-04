@@ -41,7 +41,7 @@ internal_macros::impl_hashencode!(BlockHash);
 
 internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Header`] type.
     pub trait HeaderExt impl for Header {
         /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.

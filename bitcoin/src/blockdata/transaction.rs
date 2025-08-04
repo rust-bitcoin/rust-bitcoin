@@ -36,7 +36,7 @@ pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Txi
 internal_macros::impl_hashencode!(Txid);
 internal_macros::impl_hashencode!(Wtxid);
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Txid`] type.
     pub trait TxidExt impl for Txid {
         /// The "all zeros" TXID.
@@ -45,7 +45,7 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Wtxid`] type.
     pub trait WtxidExt impl for Wtxid {
         /// The "all zeros" wTXID.
@@ -66,7 +66,7 @@ const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
 const SEGWIT_FLAG: u8 = 0x01;
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`OutPoint`] type.
     pub trait OutPointExt impl for OutPoint {
         /// Constructs a new [`OutPoint`].
@@ -89,7 +89,7 @@ crate::internal_macros::define_extension_trait! {
 const TX_IN_BASE_WEIGHT: Weight =
     Weight::from_vb_unchecked(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TxIn`] type.
     pub trait TxInExt impl for TxIn {
         /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
@@ -151,7 +151,7 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TxOut`] type.
     pub trait TxOutExt impl for TxOut {
         /// The weight of this output.
