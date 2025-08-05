@@ -16,8 +16,8 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std", "hex"]
-std = ["alloc", "hashes/std", "hex?/std", "internals/std", "units/std", "arrayvec/std"]
-alloc = ["hashes/alloc", "hex?/alloc", "internals/alloc", "units/alloc"]
+std = ["alloc", "hashes/std", "hex?/std", "internals/std", "io?/std", "units/std", "arrayvec/std"]
+alloc = ["hashes/alloc", "hex?/alloc", "io?/alloc", "internals/alloc", "units/alloc"]
 serde = ["dep:serde", "hashes/serde", "hex?/serde", "internals/serde", "units/serde", "alloc", "hex"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
 hex = ["dep:hex", "hashes/hex", "internals/hex"]
@@ -30,6 +30,7 @@ arrayvec = { version = "0.7", default-features = false }
 
 arbitrary = { version = "1.4", optional = true }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+io = { package = "bitcoin-io", path = "../io", default-features = false, optional = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"], optional = true }
 
 [dev-dependencies]
