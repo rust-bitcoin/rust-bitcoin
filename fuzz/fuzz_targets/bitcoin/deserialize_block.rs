@@ -1,27 +1,29 @@
+use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::block::{self, Block, BlockCheckedExt as _};
 use honggfuzz::fuzz;
+use bitcoin::consensus::{deserialize, serialize};
 
 fn do_test(data: &[u8]) {
-    let block_result: Result<bitcoin::block::Block, _> =
-        bitcoin::consensus::encode::deserialize(data);
+    let mut u = Unstructured::new(data);
+    let b = Block::arbitrary(&mut u);
 
-    match block_result {
-        Err(_) => {}
-        Ok(block) => {
-            let ser = bitcoin::consensus::encode::serialize(&block);
-            assert_eq!(&ser[..], data);
+    if let Ok(block) = b {
+        let serialized = serialize(&block);
+        let deserialized: Result<Block, _> = deserialize(serialized.as_slice());
 
-            // Manually call all compute functions with unchecked block data.
-            let (header, transactions) = block.into_parts();
-            block::compute_merkle_root(&transactions);
-            block::compute_witness_commitment(&transactions, &[]); // TODO: Is empty slice ok?
-            block::compute_witness_root(&transactions);
+        assert!(deserialized.is_ok(), "Fuzz error: {:?}", deserialized.err().unwrap());
+        assert_eq!(deserialized.unwrap(), block);
 
-            if let Ok(block) = Block::new_checked(header, transactions) {
-                let _ = block.bip34_block_height();
-                block.block_hash();
-                block.weight();
-            }
+        // Manually call all compute functions with unchecked block data.
+        let (header, transactions) = block.into_parts();
+        block::compute_merkle_root(&transactions);
+        block::compute_witness_commitment(&transactions, &[]); // TODO: Is empty slice ok?
+        block::compute_witness_root(&transactions);
+
+        if let Ok(block) = Block::new_checked(header, transactions) {
+            let _ = block.bip34_block_height();
+            block.block_hash();
+            block.weight();
         }
     }
 }
