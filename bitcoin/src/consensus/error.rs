@@ -192,7 +192,7 @@ impl fmt::Display for ParseError {
                 "invalid checksum: expected {:x}{:x}{:x}{:x}, actual {:x}{:x}{:x}{:x}",
                 e[0], e[1], e[2], e[3], a[0], a[1], a[2], a[3],
             ),
-            NonMinimalVarInt => write!(f, "non-minimal varint"),
+            NonMinimalCompactSize => write!(f, "non-minimal compact size"),
             ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported SegWit version: {}", swflag),

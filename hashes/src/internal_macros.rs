@@ -150,7 +150,6 @@ pub(crate) use hash_type_no_default;
 
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
-        // `bitcoin_io::Write` is implemented in `bitcoin_io`.
         #[cfg(feature = "std")]
         impl<$($bounded_ty: $bounds),*> std::io::Write for $ty {
             #[inline]
@@ -160,6 +159,18 @@ macro_rules! impl_write {
 
             #[inline]
             fn flush(&mut self) -> std::io::Result<()> {
+                $flush_fn(self)
+            }
+        }
+
+        #[cfg(feature = "io")]
+        impl<$($bounded_ty: $bounds),*> $crate::io::Write for $ty {
+            #[inline]
+            fn write(&mut self, buf: &[u8]) -> $crate::io::Result<usize> {
+                $write_fn(self, buf)}
+
+            #[inline]
+            fn flush(&mut self) -> $crate::io::Result<()> {
                 $flush_fn(self)
             }
         }
