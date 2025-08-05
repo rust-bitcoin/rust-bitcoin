@@ -67,7 +67,7 @@ impl Encodable for Inventory {
             };
         }
         Ok(match *self {
-            Inventory::Error(_) => encode_inv!(0, [0; 32]),
+            Inventory::Error(ref e) => encode_inv!(0, e),
             Inventory::Transaction(ref t) => encode_inv!(1, t),
             Inventory::Block(ref b) => encode_inv!(2, b),
             Inventory::CompactBlock(ref b) => encode_inv!(4, b),
