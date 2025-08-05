@@ -29,15 +29,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-#[cfg(feature = "hashes")]
-pub extern crate hashes;
-
 #[cfg(feature = "std")]
 mod bridge;
 mod error;
-
-#[cfg(feature = "hashes")]
-mod hash;
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
@@ -48,8 +42,6 @@ pub use bridge::{FromStd, ToStd};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
-#[cfg(feature = "hashes")]
-pub use self::hash::hash_reader;
 
 /// Result type returned by functions in this crate.
 pub type Result<T> = core::result::Result<T, Error>;

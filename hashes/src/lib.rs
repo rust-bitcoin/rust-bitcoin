@@ -89,6 +89,10 @@ extern crate test;
 #[cfg(feature = "hex")]
 pub extern crate hex;
 
+/// Re-export the `bitcoin-io` crate.
+#[cfg(feature = "io")]
+pub extern crate io;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of core::*
@@ -260,6 +264,28 @@ pub fn debug_hex(bytes: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
         f.write_char(char::from(upper))?;
     }
     Ok(())
+}
+
+/// Hashes data from a reader.
+#[cfg(feature = "io")]
+pub fn hash_reader<T>(reader: &mut impl io::BufRead) -> Result<T::Hash, io::Error>
+where
+    T: HashEngine + Default,
+{
+    let mut engine = T::default();
+    loop {
+        let bytes = reader.fill_buf()?;
+
+        let read = bytes.len();
+        // Empty slice means EOF.
+        if read == 0 {
+            break;
+        }
+
+        engine.input(bytes);
+        reader.consume(read);
+    }
+    Ok(engine.finalize())
 }
 
 #[cfg(test)]
