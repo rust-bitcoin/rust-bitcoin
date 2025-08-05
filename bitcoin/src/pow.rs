@@ -1077,7 +1077,9 @@ pub mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pow::test_utils::{u128_to_work, u32_to_target, u64_to_target};
+    #[cfg(feature = "std")]
+    use crate::pow::test_utils::u128_to_work;
+    use crate::pow::test_utils::{u32_to_target, u64_to_target};
     use crate::BlockTime;
 
     impl U256 {
