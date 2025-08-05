@@ -6,7 +6,6 @@ use core::convert::Infallible;
 use core::fmt;
 
 use hex::error::{InvalidCharError, OddLengthStringError};
-use hex::DisplayHex as _;
 use internals::write_err;
 
 #[cfg(doc)]
@@ -189,7 +188,10 @@ impl fmt::Display for ParseError {
             OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
             InvalidChecksum { expected: ref e, actual: ref a } =>
-                write!(f, "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
+                write!(f, "invalid checksum: expected {:x}{:x}{:x}{:x}, actual {:x}{:x}{:x}{:x}",
+                       e[0], e[1], e[2], e[3],
+                       a[0], a[1], a[2], a[3],
+                ),
             NonMinimalVarInt => write!(f, "non-minimal varint"),
             ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             UnsupportedSegwitFlag(ref swflag) =>
