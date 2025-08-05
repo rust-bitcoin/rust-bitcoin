@@ -257,3 +257,44 @@ impl From<OddLengthStringError> for FromHexError {
 pub(crate) fn parse_failed_error(msg: &'static str) -> Error {
     Error::Parse(ParseError::ParseFailed(msg))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn invalid_checksum_display() {
+        let e = ParseError::InvalidChecksum {
+            expected: [0xde, 0xad, 0xbe, 0xef],
+            actual: [0xca, 0xfe, 0xba, 0xbe],
+        };
+
+        let want = "invalid checksum: expected deadbeef, actual cafebabe";
+        let got = format!("{}", e);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn invalid_checksum_display_expected_leading_zeros() {
+        let e = ParseError::InvalidChecksum {
+            expected: [0x00, 0x00, 0x00, 0x0f],
+            actual: [0xca, 0xfe, 0xba, 0xbe],
+        };
+
+        let want = "invalid checksum: expected 0000000f, actual cafebabe";
+        let got = format!("{}", e);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn invalid_checksum_display_actual_leading_zeros() {
+        let e = ParseError::InvalidChecksum {
+            expected: [0xde, 0xad, 0xbe, 0xef],
+            actual: [0x00, 0x00, 0x00, 0x0e],
+        };
+
+        let want = "invalid checksum: expected deadbeef, actual 0000000e";
+        let got = format!("{}", e);
+        assert_eq!(got, want);
+    }
+}
