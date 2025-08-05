@@ -5,13 +5,13 @@ use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let mut u = Unstructured::new(data);
-
     let w = Witness::arbitrary(&mut u);
+
     if let Ok(witness) = w {
         let serialized = serialize(&witness);
         let deserialized: Result<Witness, _> = deserialize(serialized.as_slice());
 
-        assert!(deserialized.is_ok());
+        assert!(deserialized.is_ok(), "Fuzz error: {:?}", deserialized.err().unwrap());
         assert_eq!(deserialized.unwrap(), witness);
     }
 }
