@@ -31,8 +31,8 @@ impl Map for Psbt {
                 // without witnesses.
                 let mut ret = Vec::new();
                 ret.extend(encode::serialize(&self.unsigned_tx.version));
-                ret.extend(encode::serialize(&self.unsigned_tx.input));
-                ret.extend(encode::serialize(&self.unsigned_tx.output));
+                ret.extend(encode::serialize(&self.unsigned_tx.inputs));
+                ret.extend(encode::serialize(&self.unsigned_tx.outputs));
                 ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
                 ret
             },
@@ -96,8 +96,8 @@ impl Psbt {
                                     // properly.
                                     tx = Some(Transaction {
                                         version: Decodable::consensus_decode(&mut decoder)?,
-                                        input: Decodable::consensus_decode(&mut decoder)?,
-                                        output: Decodable::consensus_decode(&mut decoder)?,
+                                        inputs: Decodable::consensus_decode(&mut decoder)?,
+                                        outputs: Decodable::consensus_decode(&mut decoder)?,
                                         lock_time: Decodable::consensus_decode(&mut decoder)?,
                                     });
 
