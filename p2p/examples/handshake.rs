@@ -42,7 +42,7 @@ fn main() {
         let read_stream = stream.try_clone().unwrap();
         let mut stream_reader = BufReader::new(read_stream);
         loop {
-            // Loop an retrieve new messages
+            // Loop and retrieve new messages
             let reply = message::RawNetworkMessage::consensus_decode(&mut stream_reader).unwrap();
             match reply.payload() {
                 message::NetworkMessage::Version(_) => {
