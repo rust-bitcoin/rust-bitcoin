@@ -168,8 +168,8 @@ pub enum ParseError {
         /// The invalid checksum.
         actual: [u8; 4],
     },
-    /// VarInt was encoded in a non-minimal way.
-    NonMinimalVarInt,
+    /// CompactSize was encoded in a non-minimal way.
+    NonMinimalCompactSize,
     /// Parsing error.
     ParseFailed(&'static str),
     /// Unsupported SegWit flag.
@@ -190,7 +190,7 @@ impl fmt::Display for ParseError {
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
             InvalidChecksum { expected: ref e, actual: ref a } =>
                 write!(f, "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
-            NonMinimalVarInt => write!(f, "non-minimal varint"),
+            NonMinimalCompactSize => write!(f, "non-minimal compact size"),
             ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported SegWit version: {}", swflag),
@@ -207,7 +207,7 @@ impl std::error::Error for ParseError {
             MissingData
             | OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
-            | NonMinimalVarInt
+            | NonMinimalCompactSize
             | ParseFailed(_)
             | UnsupportedSegwitFlag(_) => None,
         }
