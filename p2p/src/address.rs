@@ -35,6 +35,12 @@ impl Address {
         };
         Address { address, port, services }
     }
+    
+    /// Build an useless address that cannot be connected to. One may find this desirable if it is
+    /// known the data will be ignored by the recipient.
+    pub const fn useless() -> Address {
+        Address { services: ServiceFlags::NONE, address: [0; 8], port: 0 }
+    }
 
     /// Extract socket address from an [Address] message.
     /// This will return [io::Error] [io::ErrorKind::AddrNotAvailable]
