@@ -7,7 +7,7 @@
 //! - Indicating and encoding [BIP-68] relative lock-times.
 //! - Indicating whether a transaction opts-in to [BIP-125] replace-by-fee.
 //!
-//! Note that transactions spending an output with `OP_CHECKLOCKTIMEVERIFY`MUST NOT use
+//! Note that transactions spending an output with `OP_CHECKLOCKTIMEVERIFY` MUST NOT use
 //! `Sequence::MAX` for the corresponding input. [BIP-65]
 //!
 //! [BIP-65]: <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
@@ -63,7 +63,7 @@ impl Sequence {
     /// if any of it's inputs have a `Sequence` number less than this value
     /// (Explicit Signalling [BIP-125]).
     ///
-    /// [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki]>
+    /// [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
     const MIN_NO_RBF: Self = Sequence(0xFFFF_FFFE);
     /// BIP-68 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x8000_0000;
@@ -92,7 +92,7 @@ impl Sequence {
     /// - [BIP-112]: "BIP 68 prevents a non-final transaction from being selected for inclusion in a
     ///   block until the corresponding input has reached the specified age"
     ///
-    /// [BIP-112]: <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
+    /// [BIP-112]: <https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki>
     #[inline]
     pub fn is_final(self) -> bool { !self.enables_absolute_lock_time() }
 
