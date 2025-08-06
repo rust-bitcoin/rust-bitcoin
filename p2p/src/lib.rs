@@ -15,15 +15,16 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
-pub mod address;
 mod consensus;
+mod network_ext;
+
+pub mod address;
 pub mod message;
 pub mod message_blockdata;
 pub mod message_bloom;
 pub mod message_compact_blocks;
 pub mod message_filter;
 pub mod message_network;
-mod network_ext;
 
 extern crate alloc;
 
@@ -35,11 +36,11 @@ use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::network::{Network, Params, TestnetVersion};
 use hex::FromHex;
 use internals::impl_to_hex_from_lower_hex;
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::{address::Address, network_ext::NetworkExt};
+pub use self::{address::Address, message::CheckedData, network_ext::NetworkExt};
 
 /// Version of the protocol as appearing in network version handshakes and some message headers.
 ///
@@ -100,7 +101,7 @@ impl Encodable for ProtocolVersion {
 
 impl Decodable for ProtocolVersion {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(ProtocolVersion(Decodable::consensus_decode(r)?))
     }
 }
@@ -257,7 +258,7 @@ impl Encodable for ServiceFlags {
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(ServiceFlags(Decodable::consensus_decode(r)?))
     }
 }
@@ -363,7 +364,7 @@ impl Encodable for Magic {
 }
 
 impl Decodable for Magic {
-    fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
         Ok(Magic(Decodable::consensus_decode(reader)?))
     }
 }

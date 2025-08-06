@@ -4,6 +4,11 @@
 
 use core::fmt;
 
+#[cfg(feature = "consensus-encoding")]
+use consensus_encoding::{Decodable, Encodable};
+#[cfg(feature = "consensus-encoding")]
+use io::{Read, Write};
+
 /// Encoding of 256-bit target as 32-bit float.
 ///
 /// This is used to encode a target into the block header. Satoshi made this part of consensus code
@@ -46,6 +51,22 @@ impl fmt::LowerHex for CompactTarget {
 impl fmt::UpperHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Encodable for CompactTarget {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_consensus().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Decodable for CompactTarget {
+    #[inline]
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        u32::consensus_decode(r).map(CompactTarget::from_consensus)
+    }
 }
 
 #[cfg(test)]

@@ -10,7 +10,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::ToU64 as _;
-use io::{BufRead, Write};
+use io::{BufRead, Read, Write};
 
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
@@ -150,7 +150,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u64> + Into<u64>,
 {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
         let subtype = Subtype::from(r.read_compact_size()?);
 

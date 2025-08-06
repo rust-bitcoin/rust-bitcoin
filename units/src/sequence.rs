@@ -18,6 +18,10 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding")]
+use consensus_encoding::{Decodable, Encodable};
+#[cfg(feature = "consensus-encoding")]
+use io::{Read, Write};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -263,6 +267,20 @@ impl fmt::Debug for Sequence {
 
 #[cfg(feature = "alloc")]
 crate::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+
+#[cfg(feature = "consensus-encoding")]
+impl Encodable for Sequence {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Decodable for Sequence {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Decodable::consensus_decode(r).map(Sequence)
+    }
+}
 
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]

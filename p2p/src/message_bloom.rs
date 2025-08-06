@@ -5,7 +5,7 @@
 //! This module describes BIP37 Connection Bloom filtering network messages.
 
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 use crate::consensus::impl_consensus_encoding;
 
@@ -47,7 +47,7 @@ impl Encodable for BloomFlags {
 }
 
 impl Decodable for BloomFlags {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
             0 => BloomFlags::None,
             1 => BloomFlags::All,

@@ -9,13 +9,11 @@ use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
 
 use internals::impl_to_hex_from_lower_hex;
-use io::{BufRead, Write};
 use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::block::{BlockHash, Header};
-use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::internal_macros::define_extension_trait;
 use crate::network::Params;
+use crate::internal_macros;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -332,7 +330,7 @@ impl Target {
 do_impl!(Target);
 impl_to_hex_from_lower_hex!(Target, |_| 64);
 
-define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
     pub trait CompactTargetExt impl for CompactTarget {
         /// Constructs a new `CompactTarget` from a prefixed hex string.
@@ -434,20 +432,6 @@ mod sealed {
 
 impl From<CompactTarget> for Target {
     fn from(c: CompactTarget) -> Self { Target::from_compact(c) }
-}
-
-impl Encodable for CompactTarget {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_consensus().consensus_encode(w)
-    }
-}
-
-impl Decodable for CompactTarget {
-    #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(CompactTarget::from_consensus)
-    }
 }
 
 /// Big-endian 256 bit integer type.

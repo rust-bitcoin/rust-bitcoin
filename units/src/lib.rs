@@ -34,9 +34,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-mod internal_macros;
-mod result;
-
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.
@@ -44,6 +41,9 @@ pub mod _export {
         pub use core::*;
     }
 }
+
+mod internal_macros;
+mod result;
 
 pub mod amount;
 pub mod block;
@@ -72,3 +72,10 @@ pub(crate) use self::result::OptionExt;
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
+
+/// Constructs a new `Error::ParseFailed` error.
+// This whole variant should go away because of the inner string.
+#[cfg(feature = "consensus-encoding")]
+pub(crate) fn parse_failed_error(msg: &'static str) -> consensus_encoding::Error {
+    consensus_encoding::Error::Parse(consensus_encoding::ParseError::ParseFailed(msg))
+}

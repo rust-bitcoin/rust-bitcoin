@@ -89,6 +89,10 @@ extern crate test;
 #[cfg(feature = "hex")]
 pub extern crate hex;
 
+/// Re-export the `bitcoin-io` crate.
+#[cfg(feature = "io")]
+pub extern crate io;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of core::*
@@ -100,6 +104,8 @@ pub mod _export {
 #[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
 mod error;
 mod internal_macros;
+#[cfg(feature = "io")]
+mod io_support;
 
 pub mod cmp;
 pub mod hash160;
@@ -130,6 +136,11 @@ pub mod serde_macros {
 
 use core::fmt::{self, Write as _};
 use core::{convert, hash};
+
+#[cfg(feature = "consensus-encoding")]
+use consensus_encoding::{Decodable, Encodable};
+#[cfg(feature = "consensus-encoding")]
+use io::{Read, Write};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -164,6 +175,9 @@ pub use sha512_256::Hash as Sha512_256;
 /// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
 #[doc(inline)]
 pub use siphash24::Hash as Siphash24;
+#[cfg(feature = "io")]
+#[doc(inline)]
+pub use io_support::hash_reader;
 
 /// Attempted to create a hash from an invalid length slice.
 #[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
@@ -276,6 +290,34 @@ pub fn debug_hex(bytes: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
         f.write_char(char::from(upper))?;
     }
     Ok(())
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Encodable for sha256d::Hash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_byte_array().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Decodable for sha256d::Hash {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Encodable for sha256::Hash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_byte_array().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding")]
+impl Decodable for sha256::Hash {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+    }
 }
 
 #[cfg(test)]

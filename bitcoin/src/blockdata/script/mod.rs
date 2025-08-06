@@ -60,15 +60,11 @@ pub mod witness_version;
 use core::convert::Infallible;
 use core::fmt;
 
-use io::{BufRead, Write};
-
 use self::witness_version::WitnessVersion;
-use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
-use crate::prelude::Vec;
 use crate::OutPoint;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -206,30 +202,6 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
     // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.
     debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
-}
-
-impl Encodable for Script {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
-    }
-}
-
-impl Encodable for ScriptBuf {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.as_script().consensus_encode(w)
-    }
-}
-
-impl Decodable for ScriptBuf {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
-        Ok(ScriptBuf::from_bytes(v))
-    }
 }
 
 /// Ways that a script might fail. Not everything is split up as

@@ -16,28 +16,22 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::{compact_size, const_casts, write_err, ToU64};
-use io::{BufRead, Write};
 use primitives::Sequence;
 
 use super::Weight;
-use crate::consensus::{self, encode, Decodable, Encodable};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{Amount, FeeRate, SignedAmount};
+use crate::{internal_macros, Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
 pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Txid, Wtxid, Version, TxIn, TxOut};
 
-impl_hashencode!(Txid);
-impl_hashencode!(Wtxid);
-
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Txid`] type.
     pub trait TxidExt impl for Txid {
         /// The "all zeros" TXID.
@@ -46,7 +40,7 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Wtxid`] type.
     pub trait WtxidExt impl for Wtxid {
         /// The "all zeros" wTXID.
@@ -61,13 +55,7 @@ pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
 impl TxIdentifier for Txid {}
 impl TxIdentifier for Wtxid {}
 
-// Duplicated in `primitives`.
-/// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
-const SEGWIT_MARKER: u8 = 0x00;
-/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
-const SEGWIT_FLAG: u8 = 0x01;
-
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`OutPoint`] type.
     pub trait OutPointExt impl for OutPoint {
         /// Constructs a new [`OutPoint`].
@@ -90,7 +78,7 @@ crate::internal_macros::define_extension_trait! {
 const TX_IN_BASE_WEIGHT: Weight =
     Weight::from_vb_unchecked(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TxIn`] type.
     pub trait TxInExt impl for TxIn {
         /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
@@ -152,7 +140,7 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TxOut`] type.
     pub trait TxOutExt impl for TxOut {
         /// The weight of this output.
@@ -623,139 +611,6 @@ impl fmt::Display for IndexOutOfBoundsError {
 #[cfg(feature = "std")]
 impl std::error::Error for IndexOutOfBoundsError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
-
-impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_u32().consensus_encode(w)
-    }
-}
-
-impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version::maybe_non_standard)
-    }
-}
-
-impl_consensus_encoding!(TxOut, value, script_pubkey);
-
-impl Encodable for OutPoint {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = self.txid.consensus_encode(w)?;
-        Ok(len + self.vout.consensus_encode(w)?)
-    }
-}
-impl Decodable for OutPoint {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(OutPoint {
-            txid: Decodable::consensus_decode(r)?,
-            vout: Decodable::consensus_decode(r)?,
-        })
-    }
-}
-
-impl Encodable for TxIn {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.previous_output.consensus_encode(w)?;
-        len += self.script_sig.consensus_encode(w)?;
-        len += self.sequence.consensus_encode(w)?;
-        Ok(len)
-    }
-}
-impl Decodable for TxIn {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        Ok(TxIn {
-            previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
-            script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
-            sequence: Decodable::consensus_decode_from_finite_reader(r)?,
-            witness: Witness::default(),
-        })
-    }
-}
-
-impl Encodable for Sequence {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
-
-impl Decodable for Sequence {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Sequence)
-    }
-}
-
-impl Encodable for Transaction {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.version.consensus_encode(w)?;
-
-        // Legacy transaction serialization format only includes inputs and outputs.
-        if !self.uses_segwit_serialization() {
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-        } else {
-            // BIP-141 (SegWit) transaction serialization also includes marker, flag, and witness data.
-            len += SEGWIT_MARKER.consensus_encode(w)?;
-            len += SEGWIT_FLAG.consensus_encode(w)?;
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-            for input in &self.input {
-                len += input.witness.consensus_encode(w)?;
-            }
-        }
-        len += self.lock_time.consensus_encode(w)?;
-        Ok(len)
-    }
-}
-
-impl Decodable for Transaction {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let version = Version::consensus_decode_from_finite_reader(r)?;
-        let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-        // SegWit
-        if input.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
-            match segwit_flag {
-                // BIP144 input witnesses
-                1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
-                    for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
-                    }
-                    if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
-                        Err(consensus::parse_failed_error(
-                            "witness flag set but no witnesses present",
-                        ))
-                    } else {
-                        Ok(Transaction {
-                            version,
-                            input,
-                            output,
-                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-                        })
-                    }
-                }
-                // We don't support anything else
-                x => Err(encode::ParseError::UnsupportedSegwitFlag(x).into()),
-            }
-        // non-SegWit
-        } else {
-            Ok(Transaction {
-                version,
-                input,
-                output: Decodable::consensus_decode_from_finite_reader(r)?,
-                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-            })
-        }
-    }
 }
 
 /// Computes the value of an output accounting for the cost of spending it.
@@ -1247,7 +1102,7 @@ mod tests {
     use units::parse;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize, Decodable, Encodable as _};
     use crate::constants::WITNESS_SCALE_FACTOR;
     use crate::sighash::EcdsaSighashType;
 

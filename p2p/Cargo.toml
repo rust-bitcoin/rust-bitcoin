@@ -14,6 +14,7 @@ exclude = ["tests", "contrib"]
 
 [dependencies]
 bitcoin = { path = "../bitcoin/" }
+consensus-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", default-features = false, features = ["std"] }
 hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false, features = ["std"] }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["std"] }
 internals = { package = "bitcoin-internals", path = "../internals", features = ["std"] }
