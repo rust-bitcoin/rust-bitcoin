@@ -53,6 +53,8 @@ pub use units::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::{self, FeeRate},
     locktime::{self, absolute, relative},
+    parse,
+    result::{self, NumOpResult},
     sequence::{self, Sequence},
     time::{self, BlockTime},
     weight::{self, Weight},
