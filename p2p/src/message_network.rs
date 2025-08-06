@@ -39,7 +39,7 @@ pub struct VersionMessage {
     /// you may just set it to 0.
     pub nonce: u64,
     /// A string describing the peer's software
-    pub user_agent: String,
+    pub user_agent: UserAgent,
     /// The height of the maximum-work blockchain that the peer is aware of
     pub start_height: i32,
     /// Whether the receiving peer should relay messages to the sender; used
@@ -57,7 +57,7 @@ impl VersionMessage {
         receiver: Address,
         sender: Address,
         nonce: u64,
-        user_agent: String,
+        user_agent: UserAgent,
         start_height: i32,
     ) -> VersionMessage {
         VersionMessage {
@@ -86,6 +86,168 @@ impl_consensus_encoding!(
     start_height,
     relay
 );
+
+/// A bitcoin user agent defined by BIP-14. The user agent is sent in the version message when a
+/// connection between two peers is established. It is intended to advertise client software in a
+/// well-defined format.
+///
+/// ref: <https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki>
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UserAgent {
+    user_agent: String,
+}
+
+impl_consensus_encoding!(UserAgent, user_agent);
+
+impl UserAgent {
+    const MAX_USER_AGENT_LEN: usize = 256;
+
+    fn panic_invalid_chars(agent_str: &str) {
+        if agent_str.chars().any(|c| matches!(c, '/' | '(' | ')' | ':')) {
+            panic!("user agent configuration cannot contain: / ( ) :");
+        }
+    }
+
+    fn panic_max_len(agent_str: &str) {
+        if agent_str.chars().count() > Self::MAX_USER_AGENT_LEN {
+            panic!("user agent cannot exceed 256 characters.");
+        }
+    }
+    /// Build a new user agent from the lowest level client software. For example: `Satoshi` is
+    /// used by Bitcoin Core.
+    ///
+    /// # Panics
+    ///
+    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 characters.
+    pub fn new<S: AsRef<str>>(client_name: S, client_version: UserAgentVersion) -> Self {
+        let parsed_name = client_name.as_ref();
+        Self::panic_invalid_chars(parsed_name);
+        let agent = format!("/{parsed_name}:{client_version}/");
+        Self::panic_max_len(&agent);
+        Self { user_agent: agent }
+    }
+
+    /// Build a user agent, ignoring BIP-14 recommendations.
+    pub fn from_nonstandard<S: ToString>(agent: S) -> Self {
+        Self {
+            user_agent: agent.to_string()
+        }
+    }
+
+    /// Add a client to the user agent string. Examples may include the name of a wallet software.
+    ///
+    /// # Panics
+    ///
+    /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 characters.
+    #[must_use]
+    pub fn add_client<S: AsRef<str>>(mut self, client_name: S, client_version: UserAgentVersion) -> Self {
+        let parsed_name = client_name.as_ref();
+        Self::panic_invalid_chars(parsed_name);
+        let agent = format!("{parsed_name}:{client_version}/");
+        self.user_agent.push_str(&agent);
+        Self::panic_max_len(&self.user_agent);
+        self
+    }
+}
+
+impl std::fmt::Display for UserAgent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.user_agent.fmt(f)
+    }
+}
+
+impl From<UserAgent> for String {
+    fn from(agent: UserAgent) -> Self {
+        agent.user_agent
+    }
+}
+
+/// A software version field for inclusion in a user agent specified by BIP-14.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UserAgentVersion {
+    version: ClientSoftwareVersion,
+    comments: Option<String>,
+}
+
+impl UserAgentVersion {
+    /// Create a user agent client version associated with a name.
+    pub const fn new(software_version: ClientSoftwareVersion) -> Self {
+        Self {
+            version: software_version,
+            comments: None,
+        }
+    }
+
+    /// Add a comment to the version. Typical comments describe the operating system or platform
+    /// that is executing the program, however these may be any comment.
+    ///
+    /// An example may include `Android`.
+    ///
+    /// # Panics
+    ///
+    /// If the client name contains one of: `/ ( ) :`
+    #[must_use]
+    pub fn push_comment<S: AsRef<str>>(mut self, comment: S) -> Self {
+        let parsed_comment = comment.as_ref();
+        UserAgent::panic_invalid_chars(parsed_comment);
+        match self.comments {
+            Some(mut comment) => {
+                let semi_colon_delimeter = format!("; {parsed_comment}");
+                comment.push_str(&semi_colon_delimeter);
+                self.comments = Some(comment);
+            },
+            None => self.comments = Some(parsed_comment.to_string())
+        }
+        self
+    }
+}
+
+impl std::fmt::Display for UserAgentVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut software_version = self.version.to_string();
+        if let Some(comments) = &self.comments {
+            let comments = format!("({comments})");
+            software_version.push_str(&comments);
+        }
+        software_version.fmt(f)
+    }
+}
+
+/// Software tagged by version number or date for inclusion in a user agent field.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ClientSoftwareVersion {
+    /// Semantic versioning release.
+    SemVer {
+        /// X.0.0
+        major: u16,
+        /// 0.X.0
+        minor: u16,
+        /// 0.0.X
+        revision: u16,
+    },
+    /// The release date of a software.
+    Date {
+        /// Year, represented as 4 digits
+        yyyy: u16,
+        /// The month
+        mm: u8,
+        /// The day
+        dd: u8,
+    }
+}
+
+impl std::fmt::Display for ClientSoftwareVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Date { yyyy, mm, dd } => {
+                format!("{yyyy}{mm:02}{dd:02}").fmt(f)
+            },
+            Self::SemVer { major, minor, revision } => {
+                format!("{major}.{minor}.{revision}").fmt(f)
+            }
+        }
+    }
+}
 
 /// message rejection reason as a code
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -191,7 +353,11 @@ mod tests {
         assert_eq!(real_decode.timestamp, 1401217254);
         // address decodes should be covered by Address tests
         assert_eq!(real_decode.nonce, 16735069437859780935);
-        assert_eq!(real_decode.user_agent, "/Satoshi:0.9.99/".to_string());
+        assert_eq!(real_decode.user_agent, UserAgent::new("Satoshi", UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 0,
+            minor: 9,
+            revision: 99
+        })));
         assert_eq!(real_decode.start_height, 302892);
         assert!(real_decode.relay);
 
@@ -240,5 +406,55 @@ mod tests {
         let alert_hex = hex!("60010000000000000000000000ffffff7f00000000ffffff7ffeffff7f01ffffff7f00000000ffffff7f00ffffff7f002f555247454e543a20416c657274206b657920636f6d70726f6d697365642c207570677261646520726571756972656400");
         let alert: Alert = deserialize(&alert_hex).unwrap();
         assert!(alert.is_final_alert());
+    }
+
+    #[test]
+    fn test_user_agent() {
+        let client_name = "Satoshi";
+        let client_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 5,
+            minor: 12,
+            revision: 0
+        });
+        let user_agent = UserAgent::new(client_name, client_version);
+        assert_eq!("/Satoshi:5.12.0/", user_agent.to_string());
+        let wallet_name = "bitcoin-qt";
+        let wallet_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 0,
+            minor: 8,
+            revision: 0
+        });
+        let user_agent = user_agent.add_client(wallet_name, wallet_version);
+        assert_eq!("/Satoshi:5.12.0/bitcoin-qt:0.8.0/", user_agent.to_string());
+        let client_name = "BitcoinJ";
+        let client_version = UserAgentVersion::new(ClientSoftwareVersion::Date {
+            yyyy: 2011,
+            mm: 1,
+            dd: 28
+        });
+        let user_agent = UserAgent::new(client_name, client_version);
+        assert_eq!("/BitcoinJ:20110128/", user_agent.to_string());
+        let wallet_name = "Electrum";
+        let wallet_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 0,
+            minor: 9,
+            revision: 0
+        });
+        let wallet_version = wallet_version.push_comment("Ubuntu");
+        let wallet_version = wallet_version.push_comment("24");
+        let user_agent = user_agent.add_client(wallet_name, wallet_version);
+        assert_eq!("/BitcoinJ:20110128/Electrum:0.9.0(Ubuntu; 24)/", user_agent.to_string());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_incorrect_user_agent() {
+        let client_name = "Satoshi/";
+        let client_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+            major: 5,
+            minor: 12,
+            revision: 0
+        });
+        UserAgent::new(client_name, client_version);
     }
 }
