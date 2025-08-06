@@ -51,7 +51,7 @@ const EXTENDED_MASTER_PRIVATE_KEY: &str = "tprv8ZgxMBicQKsPeSHZFZWT8zxie2dXWcwem
 const INPUT_UTXO_TXID: &str = "295f06639cde6039bf0c3dbf4827f0e3f2b2c2b476408e2f9af731a8d7a9c7fb";
 const INPUT_UTXO_VOUT: u32 = 0;
 const INPUT_UTXO_SCRIPT_PUBKEY: &str = "00149891eeb8891b3e80a2a1ade180f143add23bf5de";
-const INPUT_UTXO_VALUE: &str = "50 BTC";
+const INPUT_UTXO_AMOUNT: &str = "50 BTC";
 // Get this from the descriptor,
 // "wpkh([97f17dca/0'/0'/0']02749483607dafb30c66bd93ece4474be65745ce538c2d70e8e246f17e7a4e0c0c)#m9n56cx0".
 const INPUT_UTXO_DERIVATION_PATH: &str = "0h/0h/0h";
@@ -191,8 +191,8 @@ impl WatchOnly {
                 witness: Witness::default(),
             }],
             outputs: vec![
-                TxOut { value: to_amount, script_pubkey: to_address.script_pubkey() },
-                TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
+                TxOut { amount: to_amount, script_pubkey: to_address.script_pubkey() },
+                TxOut { amount: change_amount, script_pubkey: change_address.script_pubkey() },
             ],
         };
 
@@ -276,9 +276,9 @@ fn input_derivation_path() -> Result<DerivationPath> {
 fn previous_output() -> TxOut {
     let script_pubkey = ScriptPubKeyBuf::from_hex_no_length_prefix(INPUT_UTXO_SCRIPT_PUBKEY)
         .expect("failed to parse input utxo scriptPubkey");
-    let amount = INPUT_UTXO_VALUE.parse::<Amount>().expect("failed to parse input utxo value");
+    let amount = INPUT_UTXO_AMOUNT.parse::<Amount>().expect("failed to parse input utxo amount");
 
-    TxOut { value: amount, script_pubkey }
+    TxOut { amount, script_pubkey }
 }
 
 struct Error(Box<dyn std::error::Error>);

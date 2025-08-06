@@ -119,7 +119,7 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         vout: 0,
     };
 
-    let utxo_1 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_1, script_pubkey: script_pubkey_1 };
+    let utxo_1 = TxOut { amount: DUMMY_UTXO_AMOUNT_INPUT_1, script_pubkey: script_pubkey_1 };
 
     let script_pubkey_2 = "bc1pfd0jmmdnp278vppcw68tkkmquxtq50xchy7f6wdmjtjm7fgsr8dszdcqce"
         .parse::<Address<_>>()
@@ -133,7 +133,7 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         vout: 1,
     };
 
-    let utxo_2 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_2, script_pubkey: script_pubkey_2 };
+    let utxo_2 = TxOut { amount: DUMMY_UTXO_AMOUNT_INPUT_2, script_pubkey: script_pubkey_2 };
     vec![(out_point_1, utxo_1), (out_point_2, utxo_2)]
 }
 
@@ -185,11 +185,11 @@ fn main() {
         .collect();
 
     // The spend output is locked to a key controlled by the receiver.
-    let spend = TxOut { value: SPEND_AMOUNT, script_pubkey: address.script_pubkey() };
+    let spend = TxOut { amount: SPEND_AMOUNT, script_pubkey: address.script_pubkey() };
 
     // The change output is locked to a key controlled by us.
     let change = TxOut {
-        value: CHANGE_AMOUNT,
+        amount: CHANGE_AMOUNT,
         script_pubkey: ScriptPubKeyBuf::new_p2tr(&secp, pk_change, None), // Change comes back to us.
     };
 

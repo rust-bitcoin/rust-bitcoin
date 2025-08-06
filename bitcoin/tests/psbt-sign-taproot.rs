@@ -200,9 +200,9 @@ fn create_psbt_for_taproot_key_path_spend(
     to_address: Address,
     tree: TaprootSpendInfo,
 ) -> Psbt {
-    let send_value = 6400;
+    let send_amount = 6400;
     let out_puts = vec![TxOut {
-        value: Amount::from_sat(send_value).unwrap(),
+        amount: Amount::from_sat(send_amount).unwrap(),
         script_pubkey: to_address.script_pubkey(),
     }];
     let prev_tx_id = "06980ca116f74c7845a897461dd0e1d15b114130176de5004957da516b4dee3a";
@@ -236,11 +236,11 @@ fn create_psbt_for_taproot_key_path_spend(
         ),
     );
 
-    let utxo_value = 6588;
+    let utxo_amount = 6588;
     let mut input = Input {
         witness_utxo: {
             let script_pubkey = from_address.script_pubkey();
-            Some(TxOut { value: Amount::from_sat(utxo_value).unwrap(), script_pubkey })
+            Some(TxOut { amount: Amount::from_sat(utxo_amount).unwrap(), script_pubkey })
         },
         tap_key_origins: origins,
         ..Default::default()
@@ -276,12 +276,12 @@ fn create_psbt_for_taproot_script_path_spend<K: Into<XOnlyPublicKey>>(
     use_script: TapScriptBuf,
 ) -> Psbt {
     let x_only_pubkey_of_signing_key = x_only_pubkey_of_signing_key.into();
-    let utxo_value = 6280;
-    let send_value = 6000;
+    let utxo_amount = 6280;
+    let send_amount = 6000;
     let mfp = "73c5da0a";
 
     let out_puts = vec![TxOut {
-        value: Amount::from_sat(send_value).unwrap(),
+        amount: Amount::from_sat(send_amount).unwrap(),
         script_pubkey: to_address.script_pubkey(),
     }];
     let prev_tx_id = "9d7c6770fca57285babab60c51834cfcfd10ad302119cae842d7216b4ac9a376";
@@ -320,7 +320,7 @@ fn create_psbt_for_taproot_script_path_spend<K: Into<XOnlyPublicKey>>(
     let mut input = Input {
         witness_utxo: {
             let script_pubkey = from_address.script_pubkey();
-            Some(TxOut { value: Amount::from_sat(utxo_value).unwrap(), script_pubkey })
+            Some(TxOut { amount: Amount::from_sat(utxo_amount).unwrap(), script_pubkey })
         },
         tap_key_origins: origins,
         tap_scripts,
