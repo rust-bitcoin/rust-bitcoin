@@ -95,5 +95,9 @@ required-features = ["std"]
 name = "script"
 required-features = ["std"]
 
+[[example]]
+name = "serde"
+required-features = ["std", "serde"]
+
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)'] }
