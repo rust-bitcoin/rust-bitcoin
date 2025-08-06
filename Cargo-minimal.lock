@@ -162,6 +162,7 @@ dependencies = [
 name = "bitcoin_hashes"
 version = "0.16.0"
 dependencies = [
+ "arbitrary",
  "bitcoin-internals",
  "hex-conservative 0.3.0",
  "serde",
