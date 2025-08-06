@@ -111,7 +111,7 @@ internal_macros::define_extension_trait! {
         ///
         /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
         /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
-        /// the input length `VarInt` to increase its encoding length.
+        /// the input length `CompactSize` to increase its encoding length.
         fn legacy_weight(&self) -> Weight {
             Weight::from_non_witness_data_size(self.base_size().to_u64())
         }
@@ -124,7 +124,7 @@ internal_macros::define_extension_trait! {
         ///
         /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
         /// might increase more than `TxIn::segwit_weight`. This happens when:
-        /// - the new input added causes the input length `VarInt` to increase its encoding length
+        /// - the new input added causes the input length `CompactSize` to increase its encoding length
         /// - the new input is the first segwit input added - this will add an additional 2WU to the
         ///   transaction weight to take into account the SegWit marker
         fn segwit_weight(&self) -> Weight {
@@ -158,7 +158,7 @@ internal_macros::define_extension_trait! {
         ///
         /// Keep in mind that when adding a [`TxOut`] to a [`Transaction`] the total weight of the
         /// transaction might increase more than `TxOut::weight`. This happens when the new output added
-        /// causes the output length `VarInt` to increase its encoding length.
+        /// causes the output length `CompactSize` to increase its encoding length.
         ///
         /// # Panics
         ///
@@ -764,7 +764,7 @@ impl Decodable for Transaction {
 ///
 /// Note: the effective value of a [`Transaction`] may increase less than the effective value of
 /// a [`TxOut`] when adding another [`TxOut`] to the transaction. This happens when the new
-/// [`TxOut`] added causes the output length `VarInt` to increase its encoding length.
+/// [`TxOut`] added causes the output length `CompactSize` to increase its encoding length.
 ///
 /// # Parameters
 ///

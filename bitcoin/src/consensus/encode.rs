@@ -221,7 +221,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFF => {
                 let x = self.read_u64()?;
                 if x < 0x1_0000_0000 { // I.e., would have fit in a `u32`.
-                    Err(ParseError::NonMinimalVarInt.into())
+                    Err(ParseError::NonMinimalCompactSize.into())
                 } else {
                     Ok(x)
                 }
@@ -229,7 +229,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFE => {
                 let x = self.read_u32()?;
                 if x < 0x1_0000 { // I.e., would have fit in a `u16`.
-                    Err(ParseError::NonMinimalVarInt.into())
+                    Err(ParseError::NonMinimalCompactSize.into())
                 } else {
                     Ok(x as u64)
                 }
@@ -237,7 +237,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFD => {
                 let x = self.read_u16()?;
                 if x < 0xFD {   // Could have been encoded as a `u8`.
-                    Err(ParseError::NonMinimalVarInt.into())
+                    Err(ParseError::NonMinimalCompactSize.into())
                 } else {
                     Ok(x as u64)
                 }
@@ -779,50 +779,50 @@ mod tests {
             discriminant(
                 &test_varint_encode(0xFF, &(0x100000000_u64 - 1).to_le_bytes()).unwrap_err()
             ),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(&test_varint_encode(0xFE, &(0x10000_u64 - 1).to_le_bytes()).unwrap_err()),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(&test_varint_encode(0xFD, &(0xFD_u64 - 1).to_le_bytes()).unwrap_err()),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
 
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]).unwrap_err()),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]).unwrap_err()),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(
                 &deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
                     .unwrap_err()
             ),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
         assert_eq!(
             discriminant(
                 &deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00])
                     .unwrap_err()
             ),
-            discriminant(&ParseError::NonMinimalVarInt.into())
+            discriminant(&ParseError::NonMinimalCompactSize.into())
         );
 
         let mut vec_256 = vec![0; 259];

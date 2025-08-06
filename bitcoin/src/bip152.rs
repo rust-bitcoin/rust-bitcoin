@@ -295,7 +295,7 @@ impl Encodable for BlockTransactionsRequest {
     /// contains an entry with the value [`u64::MAX`] as `u64` overflows during differential encoding.
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.block_hash.consensus_encode(w)?;
-        // Manually encode indexes because they are differentially encoded VarInts.
+        // Manually encode indexes because they are differentially encoded as CompactSize.
         len += w.emit_compact_size(self.indexes.len())?;
         let mut last_idx = 0;
         for idx in &self.indexes {
@@ -311,7 +311,7 @@ impl Decodable for BlockTransactionsRequest {
         Ok(BlockTransactionsRequest {
             block_hash: BlockHash::consensus_decode(r)?,
             indexes: {
-                // Manually decode indexes because they are differentially encoded VarInts.
+                // Manually decode indexes because they are differentially encoded as CompactSize.
                 let nb_indexes = r.read_compact_size()? as usize;
 
                 // Since the number of indices ultimately represent transactions,
@@ -530,16 +530,16 @@ mod test {
     #[test]
     fn getblocktx_differential_encoding_de_and_serialization() {
         let testcases = vec![
-            // differentially encoded VarInts, indices
+            // differentially encoded CompactSizes, indices
             (vec![4, 0, 5, 1, 10], vec![0, 6, 8, 19]),
             (vec![1, 0], vec![0]),
             (vec![5, 0, 0, 0, 0, 0], vec![0, 1, 2, 3, 4]),
             (vec![3, 1, 1, 1], vec![1, 3, 5]),
-            (vec![3, 0, 0, 253, 0, 1], vec![0, 1, 258]), // .., 253, 0, 1] == VarInt(256)
+            (vec![3, 0, 0, 253, 0, 1], vec![0, 1, 258]), // .., 253, 0, 1] == CompactSize(256)
         ];
         let deser_errorcases = vec![
-            vec![2, 255, 254, 255, 255, 255, 255, 255, 255, 255, 0], // .., 255, 254, .., 255] == VarInt(u64::MAX-1)
-            vec![1, 255, 255, 255, 255, 255, 255, 255, 255, 255], // .., 255, 255, .., 255] == VarInt(u64::MAX)
+            vec![2, 255, 254, 255, 255, 255, 255, 255, 255, 255, 0], // .., 255, 254, .., 255] == CompactSize(u64::MAX-1)
+            vec![1, 255, 255, 255, 255, 255, 255, 255, 255, 255], // .., 255, 255, .., 255] == CompactSize(u64::MAX)
         ];
         for testcase in testcases {
             {
