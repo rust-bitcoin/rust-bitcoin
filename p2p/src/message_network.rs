@@ -309,7 +309,7 @@ pub struct Reject {
 impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 /// A deprecated message type that was used to notify users of system changes. Due to a number of
-/// vulerabilities, alerts are no longer used. A final alert was sent as of Bitcoin Core 0.14.0,
+/// vulnerabilities, alerts are no longer used. A final alert was sent as of Bitcoin Core 0.14.0,
 /// and is sent to any node that is advertising a potentially vulnerable protocol version.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Alert(Vec<u8>);
