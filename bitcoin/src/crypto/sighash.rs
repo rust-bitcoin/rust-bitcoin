@@ -2025,8 +2025,11 @@ mod tests {
                 .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
                 .unwrap();
 
-            let key_spend_sig =
-                secp.sign_schnorr_with_aux_rand(&sighash.to_byte_array(), &tweaked_keypair, &[0u8; 32]);
+            let key_spend_sig = secp.sign_schnorr_with_aux_rand(
+                &sighash.to_byte_array(),
+                &tweaked_keypair,
+                &[0u8; 32],
+            );
 
             assert_eq!(expected.internal_pubkey, internal_key);
             assert_eq!(expected.tweak, tweak);

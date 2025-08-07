@@ -1,6 +1,6 @@
 use arbitrary::{Arbitrary, Unstructured};
-use honggfuzz::fuzz;
 use bitcoin::Weight;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let mut u = Unstructured::new(data);
@@ -33,7 +33,9 @@ fn do_test(data: &[u8]) {
     }
 
     // Constructors that return a Weight
-    for constructor in [Weight::from_wu, Weight::from_witness_data_size,  Weight::from_non_witness_data_size] {
+    for constructor in
+        [Weight::from_wu, Weight::from_witness_data_size, Weight::from_non_witness_data_size]
+    {
         if let Ok(val) = u.arbitrary() {
             constructor(val);
         } else {
