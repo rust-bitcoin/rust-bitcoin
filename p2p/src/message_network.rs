@@ -4,7 +4,11 @@
 //!
 //! This module defines network messages which describe peers and their
 //! capabilities.
-use std::borrow::Cow;
+
+use alloc::borrow::Cow;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
 use hashes::sha256d;
@@ -335,6 +339,8 @@ impl_vec_wrapper!(Alert, Vec<u8>);
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use bitcoin::consensus::encode::{deserialize, serialize};
     use hex_lit::hex;
 

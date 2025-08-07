@@ -5,9 +5,11 @@
 //! This module defines the `NetworkMessage` and `RawNetworkMessage` types that
 //! are used for (de)serializing Bitcoin objects for transmission on the network.
 
+use alloc::borrow::{Cow, ToOwned};
+use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::fmt;
-use std::borrow::{Cow, ToOwned};
-use std::boxed::Box;
 
 use bitcoin::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
@@ -744,6 +746,8 @@ impl Decodable for V2NetworkMessage {
 
 #[cfg(test)]
 mod test {
+    use alloc::string::ToString;
+    use alloc::vec;
     use std::net::Ipv4Addr;
 
     use bitcoin::bip152::BlockTransactionsRequest;

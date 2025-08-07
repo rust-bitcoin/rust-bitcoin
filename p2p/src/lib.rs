@@ -2,6 +2,7 @@
 
 //! Rust Bitcoin Peer to Peer Message Types
 
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 // Coding conventions.
@@ -15,21 +16,28 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
+#[cfg(feature = "std")]
 pub mod address;
 mod consensus;
+#[cfg(feature = "std")]
 pub mod message;
 pub mod message_blockdata;
 pub mod message_bloom;
 pub mod message_compact_blocks;
 pub mod message_filter;
+#[cfg(feature = "std")]
 pub mod message_network;
 mod network_ext;
 
 extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
+use alloc::borrow::ToOwned;
+use alloc::string::String;
+use core::borrow::{Borrow, BorrowMut};
 use core::str::FromStr;
 use core::{fmt, ops};
-use std::borrow::{Borrow, BorrowMut, ToOwned};
 
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::network::{Network, Params, TestnetVersion};
@@ -39,7 +47,12 @@ use io::{BufRead, Write};
 
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::{address::Address, network_ext::NetworkExt};
+pub use self::network_ext::NetworkExt;
+
+#[cfg(feature = "std")]
+#[rustfmt::skip]
+#[doc(inline)]
+pub use self::address::Address;
 
 /// Version of the protocol as appearing in network version handshakes and some message headers.
 ///
@@ -416,6 +429,7 @@ impl fmt::Display for ParseMagicError {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for ParseMagicError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.error) }
 }
@@ -431,6 +445,7 @@ impl fmt::Display for UnknownMagicError {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for UnknownMagicError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
@@ -446,12 +461,15 @@ impl fmt::Display for UnknownNetworkError {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for UnknownNetworkError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use bitcoin::consensus::encode::{deserialize, serialize};
 
     use super::*;

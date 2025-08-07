@@ -5,6 +5,8 @@
 //! This module describes network messages which are used for passing
 //! Bitcoin data (blocks and transactions) around.
 
+use alloc::vec::Vec;
+
 use bitcoin::block::BlockHash;
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::transaction::{Txid, Wtxid};
