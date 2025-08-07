@@ -25,27 +25,27 @@ pub use primitives::CompactTarget;
 macro_rules! do_impl {
     ($ty:ident) => {
         impl $ty {
-            #[doc = "Creates `"]
+            #[doc = "Constructs `"]
             #[doc = stringify!($ty)]
             #[doc = "` from a prefixed hex string."]
             pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
                 Ok($ty(U256::from_hex(s)?))
             }
 
-            #[doc = "Creates `"]
+            #[doc = "Constructs `"]
             #[doc = stringify!($ty)]
             #[doc = "` from an unprefixed hex string."]
             pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
                 Ok($ty(U256::from_unprefixed_hex(s)?))
             }
 
-            #[doc = "Creates `"]
+            #[doc = "Constructs `"]
             #[doc = stringify!($ty)]
             #[doc = "` from a big-endian byte array."]
             #[inline]
             pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
 
-            #[doc = "Creates `"]
+            #[doc = "Constructs `"]
             #[doc = stringify!($ty)]
             #[doc = "` from a little-endian byte array."]
             #[inline]

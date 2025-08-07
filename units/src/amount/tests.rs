@@ -486,7 +486,7 @@ fn test_repeat_char() {
     assert!(buf.chars().all(|c| c == '0'));
 }
 
-// Creates individual test functions to make it easier to find which check failed.
+// Constructs individual test functions to make it easier to find which check failed.
 macro_rules! check_format_non_negative {
     ($denom:ident; $($test_name:ident, $val:literal, $format_string:literal, $expected:literal);* $(;)?) => {
         $(

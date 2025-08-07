@@ -242,7 +242,7 @@ impl_opt_ext!(Amount, SignedAmount, u64, i64, FeeRate, Weight);
 pub struct NumOpError(MathOp);
 
 impl NumOpError {
-    /// Creates a [`NumOpError`] caused by `op`.
+    /// Constructs a [`NumOpError`] caused by `op`.
     pub(crate) const fn while_doing(op: MathOp) -> Self { NumOpError(op) }
 
     /// Returns `true` if this operation error'ed due to overflow.

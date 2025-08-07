@@ -41,7 +41,7 @@ impl XOnlyPublicKey {
         XOnlyPublicKey(key.into())
     }
 
-    /// Creates an x-only public key from a keypair.
+    /// Constructs an x-only public key from a keypair.
     ///
     /// Returns the x-only public key and the parity of the full public key.
     #[inline]
@@ -50,7 +50,7 @@ impl XOnlyPublicKey {
         (XOnlyPublicKey::new(xonly), parity)
     }
 
-    /// Creates an x-only public key from a 32-byte x-coordinate.
+    /// Constructs an x-only public key from a 32-byte x-coordinate.
     ///
     /// Returns an error if the provided bytes don't represent a valid secp256k1 point x-coordinate.
     #[inline]

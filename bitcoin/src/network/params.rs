@@ -240,7 +240,7 @@ impl Params {
         no_pow_retargeting: true,
     };
 
-    /// Creates parameters set for the given network.
+    /// Constructs parameters set for the given network.
     pub const fn new(network: Network) -> Self {
         match network {
             Network::Bitcoin => Params::MAINNET,

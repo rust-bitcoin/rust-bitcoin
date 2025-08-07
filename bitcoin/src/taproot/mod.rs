@@ -952,7 +952,7 @@ impl NodeInfo {
         })
     }
 
-    /// Creates an iterator over all leaves (including hidden leaves) in the tree.
+    /// Constructs an iterator over all leaves (including hidden leaves) in the tree.
     pub fn leaf_nodes(&self) -> LeafNodes<'_> { LeafNodes { leaf_iter: self.leaves.iter() } }
 
     /// Returns the root [`TapNodeHash`] of this node info.
