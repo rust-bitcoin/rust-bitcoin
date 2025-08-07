@@ -26,6 +26,7 @@ main() {
 
     # Just check crates that are stabilising.
     generate_api_files "units"
+    generate_api_files "primitives"
 
     check_for_changes
 }
