@@ -171,7 +171,7 @@ pub struct V1MessageHeader {
     pub command: CommandString,
     /// The length of the payload.
     pub length: u32,
-    /// A checksum to the afformentioned data.
+    /// A checksum to the aforementioned data.
     pub checksum: [u8; 4],
 }
 
