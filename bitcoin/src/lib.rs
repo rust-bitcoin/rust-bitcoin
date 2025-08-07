@@ -159,7 +159,7 @@ pub use primitives::{
 #[doc(inline)]
 pub use units::{
     amount::{Amount, SignedAmount},
-    block::{BlockHeight, BlockHeightInterval, BlockMtp},
+    block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     time::{self, BlockTime},
     weight::Weight,
@@ -229,15 +229,25 @@ pub mod amount {
     use crate::io::{BufRead, Write};
 
     #[rustfmt::skip]            // Keep public re-exports separate.
-    #[doc(inline)]
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
+    #[doc(inline)]
+    pub use units::amount::{Amount, SignedAmount};
+    #[doc(no_inline)]
     pub use units::amount::{
-        Amount, Denomination, Display, InvalidCharacterError, MissingDenominationError,
-        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, SignedAmount, TooPreciseError,
-        UnknownDenominationError,
+        Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
+        ParseError,
     };
+
+    /// Error types for bitcoin amounts.
+    pub mod error {
+        pub use units::amount::error::{
+            InputTooLargeError, InvalidCharacterError, MissingDenominationError,
+            MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError,
+            ParseError, PossiblyConfusingDenominationError, TooPreciseError,
+            UnknownDenominationError,
+        };
+    }
 
     impl Decodable for Amount {
         #[inline]

@@ -9,6 +9,7 @@ use core::{default, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use internals::const_casts;
 use NumOpResult as R;
 
 use super::error::{ParseAmountErrorInner, ParseErrorInner};
@@ -16,8 +17,8 @@ use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
-use crate::{FeeRate, MathOp, NumOpError as E, NumOpResult, Weight};
-use internals::const_casts;
+use crate::result::{MathOp, NumOpError as E, NumOpResult};
+use crate::{FeeRate, Weight};
 
 mod encapsulate {
     use super::OutOfRangeError;

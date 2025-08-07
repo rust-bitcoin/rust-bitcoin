@@ -34,8 +34,8 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod fee;
 mod internal_macros;
-mod result;
 
 #[doc(hidden)]
 pub mod _export {
@@ -47,10 +47,10 @@ pub mod _export {
 
 pub mod amount;
 pub mod block;
-pub mod fee;
 pub mod fee_rate;
 pub mod locktime;
 pub mod parse;
+pub mod result;
 pub mod sequence;
 pub mod time;
 pub mod weight;
@@ -62,12 +62,11 @@ pub use self::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     locktime::{absolute, relative},
-    result::{NumOpError, NumOpResult, MathOp},
+    result::NumOpResult,
     sequence::Sequence,
     time::BlockTime,
     weight::Weight
 };
-pub(crate) use self::result::OptionExt;
 
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]

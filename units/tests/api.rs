@@ -14,9 +14,9 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse, time, weight, Amount, BlockHeight,
-    BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, MathOp, NumOpResult,
-    SignedAmount, Weight,
+    amount, block, fee_rate, locktime, parse, result, time, weight, Amount, BlockHeight,
+    BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult, SignedAmount,
+    Weight,
 };
 
 /// A struct that includes all public non-error enums.
@@ -24,7 +24,7 @@ use bitcoin_units::{
 struct Enums {
     a: amount::Denomination,
     b: NumOpResult<Amount>,
-    c: MathOp,
+    c: result::MathOp,
 }
 
 impl Enums {
@@ -32,7 +32,7 @@ impl Enums {
         Self {
             a: amount::Denomination::Bitcoin,
             b: NumOpResult::Valid(Amount::MAX),
-            c: MathOp::Add,
+            c: result::MathOp::Add,
         }
     }
 }
@@ -125,17 +125,17 @@ struct Default {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
-    a: amount::InputTooLargeError,
-    b: amount::InvalidCharacterError,
-    c: amount::MissingDenominationError,
-    d: amount::MissingDigitsError,
-    e: amount::OutOfRangeError,
-    f: amount::ParseAmountError,
-    g: amount::ParseDenominationError,
-    h: amount::ParseError,
-    i: amount::PossiblyConfusingDenominationError,
-    j: amount::TooPreciseError,
-    k: amount::UnknownDenominationError,
+    a: amount::error::InputTooLargeError,
+    b: amount::error::InvalidCharacterError,
+    c: amount::error::MissingDenominationError,
+    d: amount::error::MissingDigitsError,
+    e: amount::error::OutOfRangeError,
+    f: amount::error::ParseAmountError,
+    g: amount::error::ParseDenominationError,
+    h: amount::error::ParseError,
+    i: amount::error::PossiblyConfusingDenominationError,
+    j: amount::error::TooPreciseError,
+    k: amount::error::UnknownDenominationError,
     l: block::TooBigForRelativeHeightError,
     #[cfg(feature = "serde")]
     m: fee_rate::serde::OverflowError,
@@ -159,17 +159,24 @@ fn api_can_use_modules_from_crate_root() {
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
         Amount, BlockHeight, BlockHeightInterval, BlockInterval, BlockMtp, BlockMtpInterval,
-        BlockTime, FeeRate, MathOp, NumOpError, NumOpResult, SignedAmount, Weight,
+        BlockTime, FeeRate, NumOpResult, SignedAmount, Weight,
     };
 }
 
 #[test]
 fn api_can_use_all_types_from_module_amount() {
     use bitcoin_units::amount::{
-        Amount, Denomination, Display, InputTooLargeError, InvalidCharacterError,
-        MissingDenominationError, MissingDigitsError, OutOfRangeError, ParseAmountError,
-        ParseDenominationError, ParseError, PossiblyConfusingDenominationError, SignedAmount,
-        TooPreciseError, UnknownDenominationError,
+        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
+        ParseError, SignedAmount,
+    };
+}
+
+#[test]
+fn api_can_use_all_types_from_module_amount_error() {
+    use bitcoin_units::amount::error::{
+        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
+        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     };
 }
 
@@ -334,7 +341,7 @@ impl<'a> Arbitrary<'a> for Enums {
         let a = Enums {
             a: amount::Denomination::arbitrary(u)?,
             b: NumOpResult::<Amount>::arbitrary(u)?,
-            c: MathOp::arbitrary(u)?,
+            c: result::MathOp::arbitrary(u)?,
         };
         Ok(a)
     }

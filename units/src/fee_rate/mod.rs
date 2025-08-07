@@ -12,7 +12,8 @@ use core::ops;
 use arbitrary::{Arbitrary, Unstructured};
 use NumOpResult as R;
 
-use crate::{Amount, MathOp, NumOpError as E, NumOpResult, Weight};
+use crate::result::{MathOp, NumOpError as E, NumOpResult};
+use crate::{Amount, Weight};
 
 mod encapsulate {
     /// Fee rate.
