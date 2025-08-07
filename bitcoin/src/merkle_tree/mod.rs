@@ -51,7 +51,7 @@ pub trait MerkleNode: Copy {
 
     /// Given an iterator of leaves, compute the Merkle root.
     ///
-    /// Returns `None` iff the iterator was empty.
+    /// Returns `None` if and only if the iterator was empty.
     fn calculate_root<I: Iterator<Item = Self::Leaf>>(iter: I) -> Option<Self> {
         let mut stack = Vec::<(usize, Self)>::with_capacity(32);
         // Start with a standard Merkle tree root computation...

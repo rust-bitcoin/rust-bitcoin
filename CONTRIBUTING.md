@@ -328,7 +328,7 @@ More specifically an error should
 
 - be `non_exhaustive` unless we _really_ never want to change it.
 - have private fields unless we are very confident they won't change.
-- derive `Debug, Clone, PartialEq, Eq` (and `Copy` iff not `non_exhaustive`).
+- derive `Debug, Clone, PartialEq, Eq` (and `Copy` if and only if not `non_exhaustive`).
 - implement Display using `write_err!()` macro if a variant contains an inner error source.
 - have `Error` suffix on error types (structs and enums).
 - not have `Error` suffix on enum variants.
