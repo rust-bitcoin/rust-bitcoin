@@ -5,8 +5,6 @@
 use core::num::NonZeroU64;
 use core::{fmt, ops};
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -16,11 +14,15 @@ use crate::{Amount, FeeRate, NumOpResult};
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 
 mod encapsulate {
+    #[cfg(feature = "arbitrary")]
+    use arbitrary::Arbitrary;
+
     /// The weight of a transaction or block.
     ///
     /// This is an integer newtype representing weight in weight units. It provides protection
     /// against mixing up the types, conversion functions, and basic formatting.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct Weight(u64);
 
     impl Weight {
@@ -290,14 +292,6 @@ impl<'de> Deserialize<'de> for Weight {
         D: Deserializer<'de>,
     {
         Ok(Self::from_wu(u64::deserialize(d)?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Weight {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let w = u64::arbitrary(u)?;
-        Ok(Weight::from_wu(w))
     }
 }
 

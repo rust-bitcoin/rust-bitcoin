@@ -21,7 +21,7 @@ alloc = ["internals/alloc","serde?/alloc"]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0" }
 
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
-arbitrary = { version = "1.4", optional = true }
+arbitrary = { version = "1.4",  default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0", features = ["test-serde"] }

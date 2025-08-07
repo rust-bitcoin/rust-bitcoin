@@ -97,6 +97,7 @@ use crate::witness::Witness;
 /// transitioning from 0.29 to 0.30.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(all(feature = "alloc", feature = "arbitrary"), derive(Arbitrary))]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1, 2 (BIP 68) or 3 (BIP 431).
@@ -315,6 +316,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 /// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg(feature = "alloc")]
 pub struct TxIn {
     /// The reference to the previous output that is being used as an input.
@@ -359,6 +361,7 @@ impl TxIn {
 /// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg(feature = "alloc")]
 pub struct TxOut {
     /// The value of the output, in satoshis.
@@ -374,6 +377,7 @@ pub struct TxOut {
 ///
 /// * [COutPoint definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L26)
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct OutPoint {
     /// The referenced transaction's txid.
     pub txid: Txid,
@@ -502,9 +506,11 @@ hashes::hash_newtype! {
     /// trait operations.
     ///
     /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct Txid(sha256d::Hash);
 
     /// A bitcoin witness transaction ID.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct Wtxid(sha256d::Hash);
 }
 
@@ -589,47 +595,6 @@ impl From<Version> for u32 {
 }
 
 #[cfg(feature = "arbitrary")]
-#[cfg(feature = "alloc")]
-impl<'a> Arbitrary<'a> for Transaction {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Transaction {
-            version: Version::arbitrary(u)?,
-            lock_time: absolute::LockTime::arbitrary(u)?,
-            input: Vec::<TxIn>::arbitrary(u)?,
-            output: Vec::<TxOut>::arbitrary(u)?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-#[cfg(feature = "alloc")]
-impl<'a> Arbitrary<'a> for TxIn {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxIn {
-            previous_output: OutPoint::arbitrary(u)?,
-            script_sig: ScriptBuf::arbitrary(u)?,
-            sequence: Sequence::arbitrary(u)?,
-            witness: Witness::arbitrary(u)?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-#[cfg(feature = "alloc")]
-impl<'a> Arbitrary<'a> for TxOut {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for OutPoint {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(OutPoint { txid: Txid::arbitrary(u)?, vout: u32::arbitrary(u)? })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Version {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight the case of normal version numbers
@@ -640,22 +605,6 @@ impl<'a> Arbitrary<'a> for Version {
             2 => Ok(Version::THREE),
             _ => Ok(Version(u.arbitrary()?)),
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Txid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let arbitrary_bytes = u.arbitrary()?;
-        let t = sha256d::Hash::from_byte_array(arbitrary_bytes);
-        Ok(Txid(t))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Wtxid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Wtxid::from_byte_array(u.arbitrary()?))
     }
 }
 

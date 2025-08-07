@@ -13,7 +13,7 @@ use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary};
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
@@ -30,6 +30,7 @@ use crate::Weight;
 /// NOTE: This assumes that the given Block has *at least* 1 transaction. If the Block has 0 txs,
 /// it will hit an assertion.
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct MerkleBlock {
     /// The block header
     pub header: block::Header,
@@ -171,6 +172,7 @@ impl Decodable for MerkleBlock {
 ///
 /// The size constraints follow from this.
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct PartialMerkleTree {
     /// The total number of transactions in the block
     num_transactions: u32,
@@ -509,24 +511,6 @@ impl std::error::Error for MerkleBlockError {
             | NotEnoughBits | NotAllBitsConsumed | NotAllHashesConsumed | BitsArrayOverflow
             | HashesArrayOverflow | IdenticalHashesFound => None,
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for PartialMerkleTree {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(PartialMerkleTree {
-            num_transactions: u.arbitrary()?,
-            bits: Vec::<bool>::arbitrary(u)?,
-            hashes: Vec::<TxMerkleNode>::arbitrary(u)?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for MerkleBlock {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(MerkleBlock { header: u.arbitrary()?, txn: u.arbitrary()? })
     }
 }
 

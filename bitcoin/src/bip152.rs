@@ -10,7 +10,7 @@ use core::{convert, fmt, mem};
 use std::error;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::ToU64 as _;
@@ -61,6 +61,7 @@ impl std::error::Error for Error {
 /// A [`PrefilledTransaction`] structure is used in [`HeaderAndShortIds`] to
 /// provide a list of a few transactions explicitly.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct PrefilledTransaction {
     /// The index of the transaction in the block.
     ///
@@ -102,6 +103,7 @@ impl Decodable for PrefilledTransaction {
 
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ShortId([u8; 6]);
 impl_array_newtype!(ShortId, u8, 6);
 impl_array_newtype_stringify!(ShortId, 6);
@@ -158,6 +160,7 @@ impl Decodable for ShortId {
 /// transactions IDs used for matching already-available transactions, and a
 /// select few transactions which we expect a peer may be missing.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct HeaderAndShortIds {
     /// The header of the block being provided.
     pub header: block::Header,
@@ -281,6 +284,7 @@ impl HeaderAndShortIds {
 /// A [`BlockTransactionsRequest`] structure is used to list transaction indexes
 /// in a block being requested.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct BlockTransactionsRequest {
     ///  The blockhash of the block which the transactions being requested are in.
     pub block_hash: BlockHash,
@@ -375,6 +379,7 @@ impl error::Error for TxIndexOutOfRangeError {
 /// A [`BlockTransactions`] structure is used to provide some of the transactions
 /// in a block, as requested.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct BlockTransactions {
     ///  The blockhash of the block which the transactions being provided are in.
     pub block_hash: BlockHash,
@@ -402,52 +407,6 @@ impl BlockTransactions {
                 }
                 txs
             },
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for ShortId {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(ShortId(u.arbitrary()?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for PrefilledTransaction {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(PrefilledTransaction { idx: u.arbitrary()?, tx: u.arbitrary()? })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for HeaderAndShortIds {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(HeaderAndShortIds {
-            header: u.arbitrary()?,
-            nonce: u.arbitrary()?,
-            short_ids: Vec::<ShortId>::arbitrary(u)?,
-            prefilled_txs: Vec::<PrefilledTransaction>::arbitrary(u)?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for BlockTransactions {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(BlockTransactions {
-            block_hash: u.arbitrary()?,
-            transactions: Vec::<Transaction>::arbitrary(u)?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(BlockTransactionsRequest {
-            block_hash: u.arbitrary()?,
-            indexes: Vec::<u64>::arbitrary(u)?,
         })
     }
 }

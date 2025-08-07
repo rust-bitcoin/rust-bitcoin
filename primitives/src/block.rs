@@ -172,6 +172,7 @@ mod sealed {
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
 #[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct Header {
     /// Block version, now repurposed for soft fork signalling.
     pub version: Version,
@@ -327,8 +328,10 @@ impl Default for Version {
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct BlockHash(sha256d::Hash);
     /// A hash corresponding to the witness structure commitment in the coinbase transaction.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct WitnessCommitment(sha256d::Hash);
 }
 
@@ -351,27 +354,6 @@ impl<'a> Arbitrary<'a> for Block {
         let header = Header::arbitrary(u)?;
         let transactions = Vec::<Transaction>::arbitrary(u)?;
         Ok(Block::new_unchecked(header, transactions))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for BlockHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(BlockHash::from_byte_array(u.arbitrary()?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Header {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Header {
-            version: Version::arbitrary(u)?,
-            prev_blockhash: BlockHash::from_byte_array(u.arbitrary()?),
-            merkle_root: TxMerkleNode::from_byte_array(u.arbitrary()?),
-            time: u.arbitrary()?,
-            bits: CompactTarget::from_consensus(u.arbitrary()?),
-            nonce: u.arbitrary()?,
-        })
     }
 }
 

@@ -3,7 +3,7 @@
 use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary};
 
 use super::Script;
 use crate::prelude::{Box, Vec};
@@ -27,6 +27,7 @@ use crate::prelude::{Box, Vec};
 /// [`examples/script.rs`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/script.rs>
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScriptBuf(Vec<u8>);
 
 impl ScriptBuf {
@@ -135,15 +136,6 @@ impl Deref for ScriptBuf {
 impl DerefMut for ScriptBuf {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for ScriptBuf {
-    #[inline]
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let v = Vec::<u8>::arbitrary(u)?;
-        Ok(ScriptBuf::from_bytes(v))
-    }
 }
 
 #[cfg(test)]

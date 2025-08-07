@@ -73,6 +73,7 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 /// };
 /// ```
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub enum LockTime {
     /// A block height lock time value.
     ///
@@ -693,14 +694,6 @@ pub const fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
 
 /// Returns true if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
 pub const fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for LockTime {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let l = u32::arbitrary(u)?;
-        Ok(LockTime::from_consensus(l))
-    }
-}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Height {

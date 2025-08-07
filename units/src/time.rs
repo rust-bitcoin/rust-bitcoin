@@ -7,12 +7,13 @@
 //! This differs from other UNIX timestamps in that we only use non-negative values. The Epoch
 //! pre-dates Bitcoin so timestamps before this are not useful for block timestamps.
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 mod encapsulate {
+    #[cfg(feature = "arbitrary")]
+    use arbitrary::Arbitrary;
+
     /// A Bitcoin block timestamp.
     ///
     /// > Each block contains a Unix time timestamp. In addition to serving as a source of variation for
@@ -26,6 +27,7 @@ mod encapsulate {
     ///
     /// ref: <https://en.bitcoin.it/wiki/Block_timestamp>
     #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct BlockTime(u32);
 
     impl BlockTime {
@@ -70,15 +72,6 @@ impl<'de> Deserialize<'de> for BlockTime {
         D: Deserializer<'de>,
     {
         Ok(Self::from_u32(u32::deserialize(d)?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for BlockTime {
-    #[inline]
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let t: u32 = u.arbitrary()?;
-        Ok(BlockTime::from(t))
     }
 }
 

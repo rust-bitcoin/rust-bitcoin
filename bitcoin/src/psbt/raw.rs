@@ -8,7 +8,7 @@
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary};
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
@@ -23,6 +23,7 @@ use crate::psbt::Error;
 ///
 /// `<key> := <keylen> <keytype> <keydata>`
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u64, // Encoded as a compact size.
@@ -33,6 +34,7 @@ pub struct Key {
 /// A PSBT key-value pair in its raw byte form.
 /// `<keypair> := <key> <value>`
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct Pair {
     /// The key of this key-value pair.
     pub key: Key,
@@ -47,6 +49,7 @@ pub type ProprietaryType = u64;
 /// Proprietary keys (i.e. keys starting with 0xFC byte) with their internal
 /// structure according to BIP 174.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ProprietaryKey<Subtype = ProprietaryType>
 where
     Subtype: Copy + From<u64> + Into<u64>,
@@ -188,23 +191,5 @@ where
         }
 
         Ok(deserialize(&key.key_data)?)
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for ProprietaryKey {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(ProprietaryKey {
-            prefix: Vec::<u8>::arbitrary(u)?,
-            subtype: u64::arbitrary(u)?,
-            key: Vec::<u8>::arbitrary(u)?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Key {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Key { type_value: u.arbitrary()?, key_data: Vec::<u8>::arbitrary(u)? })
     }
 }

@@ -15,7 +15,7 @@ use core::convert::Infallible;
 use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary};
 use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use internals::write_err;
 use io::Write;
@@ -167,6 +167,7 @@ pub struct ScriptPath<'s> {
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
 /// Fixed values so they can be cast as integer types for encoding.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub enum TapSighashType {
     /// 0x0: Used when not explicitly specified, defaults to [`TapSighashType::All`]
     Default = 0x00,
@@ -360,6 +361,7 @@ impl<'s> From<ScriptPath<'s>> for TapLeafHash {
 /// Fixed values so they can be cast as integer types for encoding (see also
 /// [`TapSighashType`]).
 #[derive(PartialEq, Eq, Debug, Copy, Clone, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub enum EcdsaSighashType {
     /// 0x1: Sign all outputs.
     All = 0x01,
@@ -1494,37 +1496,6 @@ impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
         match self {
             SigningDataError::Io(error) => Some(error),
             SigningDataError::Sighash(error) => Some(error),
-        }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for EcdsaSighashType {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=5)?;
-        match choice {
-            0 => Ok(EcdsaSighashType::All),
-            1 => Ok(EcdsaSighashType::None),
-            2 => Ok(EcdsaSighashType::Single),
-            3 => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
-            4 => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
-            _ => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
-        }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for TapSighashType {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=6)?;
-        match choice {
-            0 => Ok(TapSighashType::Default),
-            1 => Ok(TapSighashType::All),
-            2 => Ok(TapSighashType::None),
-            3 => Ok(TapSighashType::Single),
-            4 => Ok(TapSighashType::AllPlusAnyoneCanPay),
-            5 => Ok(TapSighashType::NonePlusAnyoneCanPay),
-            _ => Ok(TapSighashType::SinglePlusAnyoneCanPay),
         }
     }
 }

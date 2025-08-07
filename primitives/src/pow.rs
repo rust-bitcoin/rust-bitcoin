@@ -3,6 +3,8 @@
 //! Proof-of-work related integer types.
 
 use core::fmt;
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
 
 /// Encoding of 256-bit target as 32-bit float.
 ///
@@ -20,6 +22,7 @@ use core::fmt;
 /// terms of the underlying `u32`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct CompactTarget(u32);
 
 impl CompactTarget {

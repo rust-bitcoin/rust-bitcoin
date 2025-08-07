@@ -42,7 +42,7 @@ use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary};
 use hashes::{sha256d, siphash24, HashEngine as _};
 use internals::array::ArrayExt as _;
 use internals::{write_err, ToU64 as _};
@@ -61,8 +61,10 @@ const M: u64 = 784931;
 
 hashes::hash_newtype! {
     /// Filter hash, as defined in BIP-157.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct FilterHash(sha256d::Hash);
     /// Filter header, as defined in BIP-157.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     pub struct FilterHeader(sha256d::Hash);
 }
 
@@ -573,20 +575,6 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
         } else {
             Ok(0)
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for FilterHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(FilterHash::from_byte_array(u.arbitrary()?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for FilterHeader {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(FilterHeader::from_byte_array(u.arbitrary()?))
     }
 }
 
