@@ -8,6 +8,8 @@
 use core::fmt;
 use std::borrow::{Cow, ToOwned};
 use std::boxed::Box;
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 use bitcoin::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
@@ -739,6 +741,89 @@ impl Decodable for V2NetworkMessage {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddrPayload {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(AddrPayload(Vec::<(u32, Address)>::arbitrary(u)?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddrV2Payload {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(AddrV2Payload(Vec::<AddrV2Message>::arbitrary(u)?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for InventoryPayload {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(InventoryPayload(Vec::<message_blockdata::Inventory>::arbitrary(u)?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for CommandString {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(CommandString(u.arbitrary::<String>()?.into()))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for NetworkMessage {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=36)? {
+            0 => Ok(NetworkMessage::Version(u.arbitrary()?)),
+            1 => Ok(NetworkMessage::Verack),
+            2 => Ok(NetworkMessage::Addr(u.arbitrary()?)),
+            3 => Ok(NetworkMessage::Inv(u.arbitrary()?)),
+            4 => Ok(NetworkMessage::GetData(u.arbitrary()?)),
+            5 => Ok(NetworkMessage::NotFound(u.arbitrary()?)),
+            6 => Ok(NetworkMessage::GetBlocks(u.arbitrary()?)),
+            7 => Ok(NetworkMessage::GetHeaders(u.arbitrary()?)),
+            8 => Ok(NetworkMessage::MemPool),
+            9 => Ok(NetworkMessage::Tx(u.arbitrary()?)),
+            10 => Ok(NetworkMessage::Block(u.arbitrary()?)),
+            11 => Ok(NetworkMessage::Headers(u.arbitrary()?)),
+            12 => Ok(NetworkMessage::SendHeaders),
+            13 => Ok(NetworkMessage::GetAddr),
+            14 => Ok(NetworkMessage::Ping(u.arbitrary()?)),
+            15 => Ok(NetworkMessage::Pong(u.arbitrary()?)),
+            16 => Ok(NetworkMessage::MerkleBlock(u.arbitrary()?)),
+            17 => Ok(NetworkMessage::FilterLoad(u.arbitrary()?)),
+            18 => Ok(NetworkMessage::FilterAdd(u.arbitrary()?)),
+            19 => Ok(NetworkMessage::FilterClear),
+            20 => Ok(NetworkMessage::GetCFilters(u.arbitrary()?)),
+            21 => Ok(NetworkMessage::CFilter(u.arbitrary()?)),
+            22 => Ok(NetworkMessage::GetCFHeaders(u.arbitrary()?)),
+            23 => Ok(NetworkMessage::CFHeaders(u.arbitrary()?)),
+            24 => Ok(NetworkMessage::GetCFCheckpt(u.arbitrary()?)),
+            25 => Ok(NetworkMessage::CFCheckpt(u.arbitrary()?)),
+            26 => Ok(NetworkMessage::SendCmpct(u.arbitrary()?)),
+            27 => Ok(NetworkMessage::CmpctBlock(u.arbitrary()?)),
+            28 => Ok(NetworkMessage::GetBlockTxn(u.arbitrary()?)),
+            29 => Ok(NetworkMessage::BlockTxn(u.arbitrary()?)),
+            30 => Ok(NetworkMessage::Alert(u.arbitrary()?)),
+            31 => Ok(NetworkMessage::Reject(u.arbitrary()?)),
+            32 => Ok(NetworkMessage::FeeFilter(u.arbitrary()?)),
+            33 => Ok(NetworkMessage::WtxidRelay),
+            34 => Ok(NetworkMessage::AddrV2(u.arbitrary()?)),
+            35 => Ok(NetworkMessage::SendAddrV2),
+            _ => Ok(NetworkMessage::Unknown {
+                command: u.arbitrary()?,
+                payload: Vec::<u8>::arbitrary(u)?,
+            }),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for RawNetworkMessage {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(RawNetworkMessage::new(u.arbitrary()?, u.arbitrary()?))
     }
 }
 

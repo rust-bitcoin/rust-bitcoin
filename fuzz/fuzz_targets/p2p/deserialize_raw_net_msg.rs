@@ -1,8 +1,19 @@
+use arbitrary::{Arbitrary, Unstructured};
 use honggfuzz::fuzz;
+use bitcoin::consensus::{deserialize, serialize};
+use p2p::message::RawNetworkMessage;
 
 fn do_test(data: &[u8]) {
-    let _: Result<p2p::message::RawNetworkMessage, _> =
-        bitcoin::consensus::encode::deserialize(data);
+    let mut u = Unstructured::new(data);
+    let m = RawNetworkMessage::arbitrary(&mut u);
+
+    if let Ok(message) = m {
+        let serialized = serialize(&message);
+        let deserialized: Result<RawNetworkMessage, _> = deserialize(serialized.as_slice());
+
+        assert!(deserialized.is_ok(), "Fuzz error: {:?}", deserialized.err().unwrap());
+        assert_eq!(deserialized.unwrap(), message);
+    }
 }
 
 fn main() {

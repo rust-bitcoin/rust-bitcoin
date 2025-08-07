@@ -5,6 +5,8 @@
 //! This module defines network messages which describe peers and their
 //! capabilities.
 use std::borrow::Cow;
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
 use hashes::sha256d;
@@ -332,6 +334,48 @@ impl Alert {
 }
 
 impl_vec_wrapper!(Alert, Vec<u8>);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for VersionMessage {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(VersionMessage::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for RejectReason {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=7)? {
+            0 => Ok(RejectReason::Malformed),
+            1 => Ok(RejectReason::Invalid),
+            2 => Ok(RejectReason::Obsolete),
+            3 => Ok(RejectReason::Duplicate),
+            4 => Ok(RejectReason::NonStandard),
+            5 => Ok(RejectReason::Dust),
+            6 => Ok(RejectReason::Fee),
+            _ => Ok(RejectReason::Checkpoint)
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Reject {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Reject{
+            message: u.arbitrary::<String>()?.into(),
+            ccode: u.arbitrary()?,
+            reason: u.arbitrary::<String>()?.into(),
+            hash: sha256d::Hash::from_byte_array(u.arbitrary()?),
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Alert {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Alert(Vec::<u8>::arbitrary(u)?))
+    }
+}
 
 #[cfg(test)]
 mod tests {
