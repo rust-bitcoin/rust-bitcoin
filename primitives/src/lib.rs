@@ -4,6 +4,9 @@
 //!
 //! Primitive data types that are used throughout the [`rust-bitcoin`] ecosystem.
 //!
+//! If you are using `rust-bitcoin` then you do not need to access this crate directly. Everything
+//! here is re-exported in `rust-bitcoin` at the same path.
+//!
 //! This crate can be used in a no-std environment but a lot of the functionality requires an
 //! allocator i.e., requires the `alloc` feature to be enabled.
 //!
