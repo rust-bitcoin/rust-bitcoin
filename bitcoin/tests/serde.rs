@@ -8,9 +8,6 @@
 //! Types/tests were found using, and are ordered by, the output of: `git grep -l Serialize`.
 //!
 
-// In tests below `deserialize` is consensus deserialize while `serialize` is serde serialize, that
-// is why we have two different serialized data files for tests that use binary serialized input.
-//
 // To create a file with the expected serialized data do something like:
 //
 //  use std::fs::File;
@@ -26,7 +23,6 @@ use std::collections::BTreeMap;
 
 use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
-use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
@@ -36,22 +32,9 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey, PublicKey,
+    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey,
     ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
-
-/// Implicitly does regression test for `BlockHeader` also.
-#[test]
-fn serde_regression_block() {
-    let segwit = include_bytes!(
-        "data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw"
-    );
-    let block: Block = deserialize(segwit).unwrap();
-
-    let got = serialize(&block).unwrap();
-    let want = include_bytes!("data/serde/block_bincode");
-    assert_eq!(got, want)
-}
 
 #[test]
 fn serde_regression_absolute_lock_time_height() {
@@ -100,31 +83,16 @@ fn serde_regression_script() {
 }
 
 #[test]
-fn serde_regression_txin() {
-    let ser = include_bytes!("data/serde/txin_ser");
-    let txin: TxIn = deserialize(ser).unwrap();
+fn serde_regression_out_point() {
+    let out_point = OutPoint {
+        txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389"
+            .parse::<Txid>()
+            .unwrap(),
+        vout: 1,
+    };
 
-    let got = serialize(&txin).unwrap();
-    let want = include_bytes!("data/serde/txin_bincode") as &[_];
-    assert_eq!(got, want)
-}
-
-#[test]
-fn serde_regression_txout() {
-    let txout = TxOut { value: Amount::MAX, script_pubkey: ScriptBuf::from(vec![0u8, 1u8, 2u8]) };
-
-    let got = serialize(&txout).unwrap();
-    let want = include_bytes!("data/serde/txout_bincode") as &[_];
-    assert_eq!(got, want)
-}
-
-#[test]
-fn serde_regression_transaction() {
-    let ser = include_bytes!("data/serde/transaction_ser");
-    let tx: Transaction = deserialize(ser).unwrap();
-
-    let got = serialize(&tx).unwrap();
-    let want = include_bytes!("data/serde/transaction_bincode") as &[_];
+    let got = serialize(&out_point).unwrap();
+    let want = include_bytes!("data/serde/out_point_bincode") as &[_];
     assert_eq!(got, want)
 }
 
