@@ -284,7 +284,7 @@ pub trait Decodable: Sized {
     /// * Simple types that have a fixed size (own and member fields), don't have to overwrite
     ///   this method, or be concern with it.
     /// * Types that deserialize using externally provided length should implement it:
-    ///   * Make `consensus_decode` forward to `consensus_decode_bytes_from_finite_reader` with the
+    ///   * Make `consensus_decode` forward to `consensus_decode_from_finite_reader` with the
     ///     reader wrapped by `Take`. Failure to do so, without other forms of memory exhaustion
     ///     protection might lead to resource exhaustion vulnerability.
     ///   * Put a max cap on things like `Vec::with_capacity` to avoid oversized allocations, and
