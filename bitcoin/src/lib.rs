@@ -103,6 +103,7 @@ pub mod ext {
     //! # Examples
     //!
     //! ```
+    //! # #![allow(unused_imports)] // Because that is what we are demoing.
     //! // Wildcard import all of the extension crates.
     //! use bitcoin::ext::*;
     //!
