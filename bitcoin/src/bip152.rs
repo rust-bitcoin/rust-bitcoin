@@ -18,7 +18,7 @@ use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use crate::internal_macros::{
-    impl_array_newtype, impl_array_newtype_stringify, impl_consensus_encoding,
+    self, impl_array_newtype, impl_array_newtype_stringify,
 };
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
@@ -381,7 +381,7 @@ pub struct BlockTransactions {
     ///  The transactions provided.
     pub transactions: Vec<Transaction>,
 }
-impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
+internal_macros::impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
 
 impl BlockTransactions {
     /// Constructs a new [`BlockTransactions`] from a [`BlockTransactionsRequest`] and

@@ -18,18 +18,17 @@ mod block;
 
 use hashes::{sha256d, HashEngine as _};
 
-use crate::internal_macros::impl_hashencode;
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
-use crate::{Txid, Wtxid};
+use crate::{internal_macros, Txid, Wtxid};
 
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 pub use primitives::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 
-impl_hashencode!(TxMerkleNode);
-impl_hashencode!(WitnessMerkleNode);
+internal_macros::impl_hashencode!(TxMerkleNode);
+internal_macros::impl_hashencode!(WitnessMerkleNode);
 
 /// A node in a Merkle tree of transactions or witness data within a block.
 ///

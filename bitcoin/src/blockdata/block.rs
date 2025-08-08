@@ -19,13 +19,13 @@ use super::transaction::Coinbase;
 use super::Weight;
 use crate::consensus::encode::WriteExt as _;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::{Target, Work};
 use crate::prelude::Vec;
 use crate::script::{self, ScriptExt as _};
 use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
+use crate::internal_macros;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -39,11 +39,11 @@ pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInter
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
 
-impl_hashencode!(BlockHash);
+internal_macros::impl_hashencode!(BlockHash);
 
-impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
+internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
-crate::internal_macros::define_extension_trait! {
+internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Header`] type.
     pub trait HeaderExt impl for Header {
         /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
