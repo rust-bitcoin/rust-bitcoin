@@ -11,7 +11,7 @@
 //!
 //! Scripts define Bitcoin's digital signature scheme: a signature is formed
 //! from a script (the second half of which is defined by a coin to be spent,
-//! and the first half provided by the spending transaction), and is valid iff
+//! and the first half provided by the spending transaction), and is valid if and only if
 //! the script leaves `TRUE` on the stack after being evaluated. Bitcoin's
 //! script is a stack-based assembly language similar in spirit to [Forth].
 //!

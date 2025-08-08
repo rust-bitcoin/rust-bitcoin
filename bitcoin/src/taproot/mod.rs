@@ -794,7 +794,7 @@ impl TryFrom<TaprootBuilder> for TapTree {
     ///
     /// # Returns
     ///
-    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilderError`]
+    /// A [`TapTree`] if and only if the `builder` is complete, otherwise return [`IncompleteBuilderError`]
     /// error with the content of incomplete `builder` instance.
     fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
         builder.try_into_tap_tree()
@@ -808,7 +808,7 @@ impl TryFrom<NodeInfo> for TapTree {
     ///
     /// # Returns
     ///
-    /// A [`TapTree`] iff the [`NodeInfo`] has no hidden nodes, otherwise return
+    /// A [`TapTree`] if and only if the [`NodeInfo`] has no hidden nodes, otherwise return
     /// [`HiddenNodesError`] error with the content of incomplete [`NodeInfo`] instance.
     fn try_from(node_info: NodeInfo) -> Result<Self, Self::Error> {
         if node_info.has_hidden_nodes {
