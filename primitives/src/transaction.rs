@@ -279,7 +279,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     enc.input(compact_size::encode(output_len).as_slice());
     for output in &tx.output {
         // Encode each output same as we do in `Encodable for TxOut`.
-        enc.input(&output.value.to_sat().to_le_bytes());
+        enc.input(&output.amount.to_sat().to_le_bytes());
 
         let script_pubkey_bytes = output.script_pubkey.as_bytes();
         enc.input(compact_size::encode(script_pubkey_bytes.len()).as_slice());
@@ -363,7 +363,7 @@ impl TxIn {
 pub struct TxOut {
     /// The value of the output, in satoshis.
     #[cfg_attr(feature = "serde", serde(with = "crate::amount::serde::as_sat"))]
-    pub value: Amount,
+    pub amount: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptBuf,
 }
@@ -618,7 +618,7 @@ impl<'a> Arbitrary<'a> for TxIn {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
+        Ok(TxOut { amount: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
     }
 }
 
@@ -689,7 +689,7 @@ mod tests {
         };
 
         let txout = TxOut {
-            value: Amount::from_sat(123_456_789).unwrap(),
+            amount: Amount::from_sat(123_456_789).unwrap(),
             script_pubkey: ScriptBuf::new(),
         };
 
@@ -703,9 +703,9 @@ mod tests {
         // Test changing the transaction
         let mut tx = tx_orig.clone();
         tx.inputs_mut()[0].previous_output.txid = Txid::from_byte_array([0xFF; 32]);
-        tx.outputs_mut()[0].value = Amount::from_sat(987_654_321).unwrap();
+        tx.outputs_mut()[0].amount = Amount::from_sat(987_654_321).unwrap();
         assert_eq!(tx.inputs()[0].previous_output.txid.to_byte_array(), [0xFF; 32]);
-        assert_eq!(tx.outputs()[0].value.to_sat(), 987_654_321);
+        assert_eq!(tx.outputs()[0].amount.to_sat(), 987_654_321);
 
         // Test uses_segwit_serialization
         assert!(!tx.uses_segwit_serialization());
