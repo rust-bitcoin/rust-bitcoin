@@ -96,7 +96,6 @@ use crate::witness::Witness;
 /// before this change, so users should not notice any breakage (here) when
 /// transitioning from 0.29 to 0.30.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1, 2 (BIP 68) or 3 (BIP 431).
@@ -314,7 +313,6 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 ///
 /// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(feature = "alloc")]
 pub struct TxIn {
     /// The reference to the previous output that is being used as an input.
@@ -358,11 +356,9 @@ impl TxIn {
 ///
 /// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(feature = "alloc")]
 pub struct TxOut {
     /// The value of the output, in satoshis.
-    #[cfg_attr(feature = "serde", serde(with = "crate::amount::serde::as_sat"))]
     pub value: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptBuf,
