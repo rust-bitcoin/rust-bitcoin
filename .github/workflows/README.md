@@ -29,6 +29,7 @@ Run from rust.yml unless stated otherwise. Unfortunately we are now exceeding th
 15. `WASM`
 16. `Kani`
 17. `API`
+18. `Re-exports`
 18. `Coveralls` - run by `coveralls.yml`
 19. `release` - run by `release.yml`
 20. `labeler` - run by `manage-pr.yml`
