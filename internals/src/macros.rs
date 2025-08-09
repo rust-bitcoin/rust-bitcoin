@@ -38,7 +38,7 @@ macro_rules! impl_to_hex_from_lower_hex {
     };
 }
 
-/// Creates a transparent wrapper around an inner type and soundly implements reference casts.
+/// Constructs a transparent wrapper around an inner type and soundly implements reference casts.
 ///
 /// This macro takes care of several issues related to newtypes that need to allow casting their
 /// inner types to themselves:

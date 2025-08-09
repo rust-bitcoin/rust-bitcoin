@@ -1,6 +1,6 @@
 //! Contains helpers for parsing-related errors.
 
-/// Creates an error type intended for string parsing errors.
+/// Constructs an error type intended for string parsing errors.
 ///
 /// The resulting error type has two fields: `input` and `source`. The type of `input` is
 /// [`InputString`](super::InputString), the type of `source` is specified as the second argument

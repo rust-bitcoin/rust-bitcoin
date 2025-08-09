@@ -38,7 +38,7 @@ macro_rules! sha256t_tag {
     }
 }
 
-/// Creates a new newtype around a [`Hash`] type.
+/// Constructs a new newtype around a [`Hash`] type.
 ///
 /// The syntax is similar to the usual tuple struct syntax:
 ///

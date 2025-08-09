@@ -25,7 +25,7 @@ struct Enums {
 }
 
 impl Enums {
-    /// Creates an arbitrary `Enums` instance.
+    /// Constructs an arbitrary `Enums` instance.
     fn new() -> Self { Self { a: ERROR_KIND } }
 }
 
