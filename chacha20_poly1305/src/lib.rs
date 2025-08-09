@@ -24,9 +24,11 @@ extern crate alloc;
 extern crate std;
 
 #[cfg(bench)]
-mod benches;
-#[cfg(bench)]
 extern crate test;
+
+#[cfg(bench)]
+mod benches;
+
 pub mod chacha20;
 pub mod poly1305;
 

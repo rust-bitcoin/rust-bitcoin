@@ -40,9 +40,10 @@ pub mod _export {
     }
 }
 
+mod opcodes;
+
 pub mod block;
 pub mod merkle_tree;
-mod opcodes;
 pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
