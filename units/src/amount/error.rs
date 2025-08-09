@@ -188,7 +188,7 @@ impl OutOfRangeError {
     #[cfg(test)]
     pub(crate) fn too_small() -> Self {
         Self {
-            // implied - negative() is used for the other
+            // For signed types (SignedAmount) when value is below minimum
             is_signed: true,
             is_greater_than_max: false,
         }
@@ -196,7 +196,7 @@ impl OutOfRangeError {
 
     pub(crate) fn negative() -> Self {
         Self {
-            // implied - too_small() is used for the other
+            // For unsigned types (Amount) when trying to use negative value
             is_signed: false,
             is_greater_than_max: false,
         }
