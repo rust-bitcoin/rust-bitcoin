@@ -99,14 +99,14 @@ impl Psbt {
         global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (global.unsigned_tx.input).len();
+            let inputs_len: usize = (global.unsigned_tx.inputs).len();
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
             for i in 0..inputs_len {
                 let input = Input::decode(r)?;
                 if let Some(ref tx) = input.non_witness_utxo {
-                    let input_outpoint = global.unsigned_tx.input[i].previous_output;
+                    let input_outpoint = global.unsigned_tx.inputs[i].previous_output;
                     let txid = tx.compute_txid();
                     if txid != input_outpoint.txid {
                         return Err(Error::IncorrectNonWitnessUtxo {
@@ -123,7 +123,7 @@ impl Psbt {
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (global.unsigned_tx.output).len();
+            let outputs_len: usize = (global.unsigned_tx.outputs).len();
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 

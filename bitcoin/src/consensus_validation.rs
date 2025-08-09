@@ -101,7 +101,7 @@ where
 {
     let serialized_tx = encode::serialize(tx);
     let flags: u32 = flags.into();
-    for (idx, input) in tx.input.iter().enumerate() {
+    for (idx, input) in tx.inputs.iter().enumerate() {
         if let Some(output) = spent(&input.previous_output) {
             verify_script_with_flags(
                 &output.script_pubkey,

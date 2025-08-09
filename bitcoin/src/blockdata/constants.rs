@@ -79,8 +79,8 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
     let mut ret = Transaction {
         version: transaction::Version::ONE,
         lock_time: absolute::LockTime::ZERO,
-        input: vec![],
-        output: vec![],
+        inputs: vec![],
+        outputs: vec![],
     };
 
     let (in_script, out_script) = {
@@ -105,14 +105,14 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
         }
     };
 
-    ret.input.push(TxIn {
+    ret.inputs.push(TxIn {
         previous_output: OutPoint::COINBASE_PREVOUT,
         script_sig: in_script,
         sequence: Sequence::MAX,
         witness: Witness::default(),
     });
 
-    ret.output.push(TxOut { value: Amount::FIFTY_BTC, script_pubkey: out_script });
+    ret.outputs.push(TxOut { value: Amount::FIFTY_BTC, script_pubkey: out_script });
 
     // end
     ret
@@ -277,17 +277,17 @@ mod test {
         let gen = bitcoin_genesis_tx(&Params::MAINNET);
 
         assert_eq!(gen.version, transaction::Version::ONE);
-        assert_eq!(gen.input.len(), 1);
-        assert_eq!(gen.input[0].previous_output.txid, Txid::COINBASE_PREVOUT);
-        assert_eq!(gen.input[0].previous_output.vout, 0xFFFFFFFF);
-        assert_eq!(serialize(&gen.input[0].script_sig),
+        assert_eq!(gen.inputs.len(), 1);
+        assert_eq!(gen.inputs[0].previous_output.txid, Txid::COINBASE_PREVOUT);
+        assert_eq!(gen.inputs[0].previous_output.vout, 0xFFFFFFFF);
+        assert_eq!(serialize(&gen.inputs[0].script_sig),
                    hex!("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73"));
 
-        assert_eq!(gen.input[0].sequence, Sequence::MAX);
-        assert_eq!(gen.output.len(), 1);
-        assert_eq!(serialize(&gen.output[0].script_pubkey),
+        assert_eq!(gen.inputs[0].sequence, Sequence::MAX);
+        assert_eq!(gen.outputs.len(), 1);
+        assert_eq!(serialize(&gen.outputs[0].script_pubkey),
                    hex!("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"));
-        assert_eq!(gen.output[0].value, "50 BTC".parse::<Amount>().unwrap());
+        assert_eq!(gen.outputs[0].value, "50 BTC".parse::<Amount>().unwrap());
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(

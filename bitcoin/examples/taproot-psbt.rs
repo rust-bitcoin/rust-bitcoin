@@ -230,13 +230,13 @@ fn generate_bip86_key_spend_tx(
     let tx1 = Transaction {
         version: transaction::Version::TWO,
         lock_time: absolute::LockTime::ZERO,
-        input: vec![TxIn {
+        inputs: vec![TxIn {
             previous_output: OutPoint { txid: input_utxo.txid.parse()?, vout: input_utxo.vout },
             script_sig: ScriptBuf::new(),
             sequence: bitcoin::Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
-        output: outputs,
+        outputs,
     };
     let mut psbt = Psbt::from_unsigned_tx(tx1)?;
 
@@ -427,13 +427,13 @@ impl BenefactorWallet {
         let next_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time,
-            input: vec![TxIn {
+            inputs: vec![TxIn {
                 previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
                 script_sig: ScriptBuf::new(),
                 sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                 witness: Witness::default(),
             }],
-            output: vec![],
+            outputs: vec![],
         };
         let mut next_psbt = Psbt::from_unsigned_tx(next_tx)?;
         let mut origins = BTreeMap::new();
@@ -513,7 +513,7 @@ impl BenefactorWallet {
                 taproot_spend_info.merkle_root(),
             );
 
-            psbt.unsigned_tx.output =
+            psbt.unsigned_tx.outputs =
                 vec![TxOut { script_pubkey: output_script_pubkey.clone(), value: output_value }];
             psbt.outputs = vec![Output::default()];
             psbt.unsigned_tx.lock_time = absolute::LockTime::ZERO;
@@ -577,13 +577,13 @@ impl BenefactorWallet {
             let next_tx = Transaction {
                 version: transaction::Version::TWO,
                 lock_time,
-                input: vec![TxIn {
+                inputs: vec![TxIn {
                     previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
                     script_sig: ScriptBuf::new(),
                     sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                     witness: Witness::default(),
                 }],
-                output: vec![],
+                outputs: vec![],
             };
             let mut next_psbt = Psbt::from_unsigned_tx(next_tx)?;
             let mut origins = BTreeMap::new();
@@ -650,7 +650,7 @@ impl BeneficiaryWallet {
         let input_script_pubkey =
             psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey.clone();
         psbt.unsigned_tx.lock_time = lock_time;
-        psbt.unsigned_tx.output = vec![TxOut {
+        psbt.unsigned_tx.outputs = vec![TxOut {
             script_pubkey: to_address.script_pubkey(),
             value: (input_value - ABSOLUTE_FEES)
                 .expect("ABSOLUTE_FEES must be set below input amount"),
