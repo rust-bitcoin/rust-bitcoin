@@ -1,16 +1,19 @@
+use arbitrary::{Arbitrary, Unstructured};
 use honggfuzz::fuzz;
+use bitcoin::bip152::PrefilledTransaction;
+use bitcoin::consensus::{deserialize, serialize};
 
 fn do_test(data: &[u8]) {
     // We already fuzz Transactions in `./deserialize_transaction.rs`.
-    let tx_result: Result<bitcoin::bip152::PrefilledTransaction, _> =
-        bitcoin::consensus::encode::deserialize(data);
+    let mut u = Unstructured::new(data);
+    let p = PrefilledTransaction::arbitrary(&mut u);
 
-    match tx_result {
-        Err(_) => {}
-        Ok(tx) => {
-            let ser = bitcoin::consensus::encode::serialize(&tx);
-            assert_eq!(&ser[..], data);
-        }
+    if let Ok(prefilled_tx) = p {
+        let serialized = serialize(&prefilled_tx);
+        let deserialized: Result<PrefilledTransaction, _> = deserialize(serialized.as_slice());
+
+        assert!(deserialized.is_ok(), "Fuzz error: {:?}", deserialized.err().unwrap());
+        assert_eq!(deserialized.unwrap(), prefilled_tx);
     }
 }
 
