@@ -7,24 +7,24 @@
 //! - Hashing to a writer.
 //! - Implement I/O traits for hash engines.
 
-use hashes::hmac::HmacEngine;
-use hashes::{
+use io::BufRead;
+
+use crate::hmac::HmacEngine;
+use crate::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256, siphash24,
     HashEngine as _,
 };
 
-use crate::BufRead;
-
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         // `std::io::Write` is implemented in `bitcoin_hashes` because of the orphan rule.
-        impl<$($bounded_ty: $bounds),*> crate::Write for $ty {
+        impl<$($bounded_ty: $bounds),*> io::Write for $ty {
             #[inline]
-            fn write(&mut self, buf: &[u8]) -> crate::Result<usize> {
+            fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
                 $write_fn(self, buf)}
 
             #[inline]
-            fn flush(&mut self) -> crate::Result<()> {
+            fn flush(&mut self) -> io::Result<()> {
                 $flush_fn(self)
             }
         }
@@ -35,7 +35,7 @@ pub(crate) use impl_write;
 impl_write!(
     hash160::HashEngine,
     |us: &mut hash160::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -44,7 +44,7 @@ impl_write!(
 impl_write!(
     ripemd160::HashEngine,
     |us: &mut ripemd160::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -53,7 +53,7 @@ impl_write!(
 impl_write!(
     sha1::HashEngine,
     |us: &mut sha1::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -62,7 +62,7 @@ impl_write!(
 impl_write!(
     sha256::HashEngine,
     |us: &mut sha256::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -71,7 +71,7 @@ impl_write!(
 impl_write!(
     sha256d::HashEngine,
     |us: &mut sha256d::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -80,7 +80,7 @@ impl_write!(
 impl_write!(
     sha256t::HashEngine<T>,
     |us: &mut sha256t::HashEngine<T>, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) },
@@ -90,7 +90,7 @@ impl_write!(
 impl_write!(
     sha384::HashEngine,
     |us: &mut sha384::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -99,7 +99,7 @@ impl_write!(
 impl_write!(
     sha512::HashEngine,
     |us: &mut sha512::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -108,7 +108,7 @@ impl_write!(
 impl_write!(
     sha512_256::HashEngine,
     |us: &mut sha512_256::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -117,7 +117,7 @@ impl_write!(
 impl_write!(
     siphash24::HashEngine,
     |us: &mut siphash24::HashEngine, buf| {
-        hashes::HashEngine::input(us, buf);
+        crate::HashEngine::input(us, buf);
         Ok(buf.len())
     },
     |_us| { Ok(()) }
@@ -130,13 +130,13 @@ impl_write!(
         Ok(buf.len())
     },
     |_us| { Ok(()) },
-    T: hashes::HashEngine
+    T: crate::HashEngine
 );
 
 /// Hashes data from a reader.
-pub fn hash_reader<T>(reader: &mut impl BufRead) -> Result<T::Hash, crate::Error>
+pub fn hash_reader<T>(reader: &mut impl BufRead) -> Result<T::Hash, io::Error>
 where
-    T: hashes::HashEngine + Default,
+    T: crate::HashEngine + Default,
 {
     let mut engine = T::default();
     loop {
@@ -159,10 +159,10 @@ where
 mod tests {
     use alloc::format;
 
-    use hashes::hmac;
+    use io::{Cursor, Write as _};
 
     use super::*;
-    use crate::{Cursor, Write as _};
+    use crate::hmac;
 
     macro_rules! write_test {
         ($mod:ident, $exp_empty:expr, $exp_256:expr, $exp_64k:expr,) => {
@@ -295,7 +295,7 @@ mod tests {
                     assert_eq!(got, $want);
 
                     let mut reader = Cursor::new(DATA);
-                    let hash_from_reader = $crate::hash_reader::<$module::HashEngine>(&mut reader).unwrap();
+                    let hash_from_reader = $crate::io_support::hash_reader::<$module::HashEngine>(&mut reader).unwrap();
                     assert_eq!(hash_from_reader, hash)
                 }
             )*

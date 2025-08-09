@@ -89,6 +89,10 @@ extern crate test;
 #[cfg(feature = "hex")]
 pub extern crate hex;
 
+/// Re-export the `bitcoin-io` crate.
+#[cfg(feature = "io")]
+pub extern crate io;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of core::*
@@ -100,6 +104,8 @@ pub mod _export {
 #[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
 mod error;
 mod internal_macros;
+#[cfg(feature = "io")]
+mod io_support;
 
 pub mod cmp;
 pub mod hash160;
@@ -164,6 +170,9 @@ pub use sha512_256::Hash as Sha512_256;
 /// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
 #[doc(inline)]
 pub use siphash24::Hash as Siphash24;
+#[cfg(feature = "io")]
+#[doc(inline)]
+pub use io_support::hash_reader;
 
 /// Attempted to create a hash from an invalid length slice.
 #[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
