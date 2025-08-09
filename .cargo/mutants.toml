@@ -26,6 +26,7 @@ exclude_re = [
     "NumberOf512Seconds::to_consensus_u32", # Deprecated
     "MedianTimePast::to_consensus_u32", # Deprecated
     "Height::to_consensus_u32", # Deprecated
+    "Sequence::to_hex", # Deprecated
 
     # primitives
     "Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
@@ -36,4 +37,7 @@ exclude_re = [
     "decode_cursor", # Mutating operations in decode_cursor can result in an infinite loop
     "fmt_debug", # Mutants from formatting/display changes
     "fmt_debug_pretty", # Mutants from formatting/display changes
+    "CompactTarget::to_hex", # Deprecated
+    "Script::to_hex", # Deprecated
+    "ScriptBuf::to_hex", # Deprecated
 ]

@@ -298,3 +298,55 @@ impl<'a> core::iter::Sum<&'a NumOpResult<SignedAmount>> for NumOpResult<SignedAm
         })
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sum_amount_results() {
+        let amounts = [
+            NumOpResult::Valid(Amount::from_sat_u32(100)),
+            NumOpResult::Valid(Amount::from_sat_u32(200)),
+            NumOpResult::Valid(Amount::from_sat_u32(300)),
+        ];
+
+        let sum: NumOpResult<Amount> = amounts.into_iter().sum();
+        assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
+    }
+
+    #[test]
+    fn test_sum_amount_results_with_references() {
+        let amounts = [
+            NumOpResult::Valid(Amount::from_sat_u32(100)),
+            NumOpResult::Valid(Amount::from_sat_u32(200)),
+            NumOpResult::Valid(Amount::from_sat_u32(300)),
+        ];
+
+        let sum: NumOpResult<Amount> = amounts.iter().sum();
+        assert_eq!(sum, NumOpResult::Valid(Amount::from_sat_u32(600)));
+    }
+
+    #[test]
+    fn test_sum_signed_amount_results() {
+        let amounts = [
+            NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
+            NumOpResult::Valid(SignedAmount::from_sat_i32(-50)),
+            NumOpResult::Valid(SignedAmount::from_sat_i32(200)),
+        ];
+
+        let sum: NumOpResult<SignedAmount> = amounts.into_iter().sum();
+        assert_eq!(sum, NumOpResult::Valid(SignedAmount::from_sat_i32(250)));
+    }
+
+    #[test]
+    fn test_sum_with_error_propagation() {
+        let amounts = [
+            NumOpResult::Valid(Amount::from_sat_u32(100)),
+            NumOpResult::Error(NumOpError::while_doing(MathOp::Add)),
+            NumOpResult::Valid(Amount::from_sat_u32(200)),
+        ];
+
+        let sum: NumOpResult<Amount> = amounts.into_iter().sum();
+        assert!(matches!(sum, NumOpResult::Error(_)));
+    }
+}
