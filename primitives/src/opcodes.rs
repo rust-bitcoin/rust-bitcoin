@@ -545,10 +545,12 @@ impl Ordinary {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
-
     use super::*;
 
+    #[cfg(feature = "alloc")]
+    use alloc::{collections::BTreeSet, format};
+
+    #[cfg(feature = "alloc")]
     macro_rules! roundtrip {
         ($unique:expr, $op:ident) => {
             assert_eq!($op, Opcode::from($op.to_u8()));
@@ -562,6 +564,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn formatting_works() {
         let op = all::OP_NOP;
         let s = format!("{:>10}", op);
@@ -642,8 +645,9 @@ mod tests {
 
     #[test]
     #[allow(clippy::too_many_lines)] // This is fine, we never need to read it.
+    #[cfg(feature = "alloc")]
     fn str_roundtrip() {
-        let mut unique = HashSet::new();
+        let mut unique = BTreeSet::new();
         roundtrip!(unique, OP_PUSHBYTES_0);
         roundtrip!(unique, OP_PUSHBYTES_1);
         roundtrip!(unique, OP_PUSHBYTES_2);

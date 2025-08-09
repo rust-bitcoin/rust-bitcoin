@@ -613,6 +613,9 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")]
+    use alloc::{format, vec};
+
     #[test]
     fn scriptbuf_from_vec_u8() {
         let vec = vec![0x51, 0x52, 0x53];
