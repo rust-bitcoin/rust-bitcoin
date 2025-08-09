@@ -1,4 +1,5 @@
 use core::borrow::{Borrow, BorrowMut};
+use core::slice;
 
 use internals::slice::SliceExt;
 pub use privacy_boundary::TaprootMerkleBranch;
@@ -99,7 +100,9 @@ impl TaprootMerkleBranch {
         // The lifetime of the returned reference is the same as the lifetime of the input
         // reference, the size of `TapNodeHash` is equal to `TAPROOT_CONTROL_NODE_SIZE` and the
         // alignment of `TapNodeHash` is equal to the alignment of `u8` (see tests below).
-        Self::from_hashes(unsafe { &*(nodes as *const _ as *const [TapNodeHash]) })
+        Self::from_hashes(unsafe { 
+            slice::from_raw_parts(nodes.as_ptr().cast::<TapNodeHash>(), nodes.len())
+        })
     }
 
     fn from_hashes(nodes: &[TapNodeHash]) -> Result<&Self, InvalidMerkleTreeDepthError> {
