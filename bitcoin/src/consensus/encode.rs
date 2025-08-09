@@ -14,7 +14,8 @@
 //! scripts come with an opcode decode, hashes are big-endian, numbers are
 //! typically big-endian decimals, etc.)
 
-use core::mem;
+use core::any::TypeId;
+use core::{cmp, mem, slice};
 
 use hashes::{sha256, sha256d, Hash};
 use hex::DisplayHex as _;
@@ -22,13 +23,8 @@ use internals::{compact_size, ToU64};
 use io::{BufRead, Cursor, Read, Write};
 
 use super::IterReader;
-use crate::bip152::{PrefilledTransaction, ShortId};
-use crate::bip158::{FilterHash, FilterHeader};
-use crate::block::{self, BlockHash};
-use crate::merkle_tree::TxMerkleNode;
 use crate::prelude::{rc, sync, Box, Cow, String, Vec};
 use crate::taproot::TapLeafHash;
-use crate::transaction::{Transaction, TxIn, TxOut};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use super::{Error, FromHexError, ParseError, DeserializeError};
@@ -494,58 +490,62 @@ impl Encodable for [u16; 8] {
     }
 }
 
-macro_rules! impl_vec {
-    ($type: ty) => {
-        impl Encodable for Vec<$type> {
-            #[inline]
-            fn consensus_encode<W: Write + ?Sized>(
-                &self,
-                w: &mut W,
-            ) -> core::result::Result<usize, io::Error> {
-                let mut len = 0;
-                len += w.emit_compact_size(self.len())?;
-                for c in self.iter() {
-                    len += c.consensus_encode(w)?;
-                }
-                Ok(len)
-            }
-        }
+impl<T: Encodable + 'static> Encodable for Vec<T> {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(
+        &self,
+        w: &mut W,
+    ) -> Result<usize, io::Error> {
+        if TypeId::of::<T>() == TypeId::of::<u8>() {
+            let len = self.len();
+            let ptr = self.as_ptr();
 
-        impl Decodable for Vec<$type> {
-            #[inline]
-            fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<Self, Error> {
-                let len = r.read_compact_size()?;
-                // Do not allocate upfront more items than if the sequence of type
-                // occupied roughly quarter a block. This should never be the case
-                // for normal data, but even if that's not true - `push` will just
-                // reallocate.
-                // Note: OOM protection relies on reader eventually running out of
-                // data to feed us.
-                let max_capacity = MAX_VEC_SIZE / 4 / mem::size_of::<$type>();
-                let mut ret = Vec::with_capacity(core::cmp::min(len as usize, max_capacity));
-                for _ in 0..len {
-                    ret.push(Decodable::consensus_decode_from_finite_reader(r)?);
-                }
-                Ok(ret)
+            // unsafe: We've just checked that T is `u8`.
+            let v = unsafe { 
+                slice::from_raw_parts(ptr.cast::<u8>(), len)
+            };
+            consensus_encode_with_size(v, w)
+        } else {
+            let mut len = 0;
+            len += w.emit_compact_size(self.len())?;
+            for c in self.iter() {
+                len += c.consensus_encode(w)?;
             }
+            Ok(len)
         }
-    };
+    }
 }
-impl_vec!(BlockHash);
-impl_vec!(block::Header);
-impl_vec!(FilterHash);
-impl_vec!(FilterHeader);
-impl_vec!(TxMerkleNode);
-impl_vec!(Transaction);
-impl_vec!(TxOut);
-impl_vec!(TxIn);
-impl_vec!(Vec<u8>);
-impl_vec!(u64);
-impl_vec!(TapLeafHash);
-impl_vec!(ShortId);
-impl_vec!(PrefilledTransaction);
+
+impl<T: Decodable + 'static> Decodable for Vec<T> {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Vec<T>, Error> {
+        if TypeId::of::<T>() == TypeId::of::<u8>() {
+            let len = r.read_compact_size()? as usize;
+            // most real-world vec of bytes data, wouldn't be larger than 128KiB
+            let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 };
+            let bytes = read_bytes_from_finite_reader(r, opts)?;
+
+            // unsafe: We've just checked that T is `u8` so the transmute here is a no-op.
+            unsafe { Ok(mem::transmute::<Vec<u8>, Vec<T>>(bytes)) }
+        } else {
+            let len = r.read_compact_size()?;
+            // Do not allocate upfront more items than if the sequence of type
+            // occupied roughly quarter a block. This should never be the case
+            // for normal data, but even if that's not true - `push` will just
+            // reallocate.
+            // Note: OOM protection relies on reader eventually running out of
+            // data to feed us.
+            let max_capacity = MAX_VEC_SIZE / 4 / mem::size_of::<T>();
+            let mut ret = Vec::with_capacity(cmp::min(len as usize, max_capacity));
+            for _ in 0..len {
+                ret.push(Decodable::consensus_decode_from_finite_reader(r)?);
+            }
+            Ok(ret)
+        }
+    }
+}
 
 pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
     data: &[u8],
@@ -582,23 +582,6 @@ fn read_bytes_from_finite_reader<D: Read + ?Sized>(
     }
 
     Ok(ret)
-}
-
-impl Encodable for Vec<u8> {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        consensus_encode_with_size(self, w)
-    }
-}
-
-impl Decodable for Vec<u8> {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let len = r.read_compact_size()? as usize;
-        // most real-world vec of bytes data, wouldn't be larger than 128KiB
-        let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 };
-        read_bytes_from_finite_reader(r, opts)
-    }
 }
 
 impl Encodable for Box<[u8]> {
@@ -753,6 +736,11 @@ mod tests {
     use core::mem::discriminant;
 
     use super::*;
+    use crate::bip158::FilterHash;
+    use crate::block::BlockHash;
+    use crate::merkle_tree::TxMerkleNode;
+    use crate::prelude::{Cow, Vec};
+    use crate::transaction::{Transaction, TxIn, TxOut};
 
     #[test]
     fn serialize_int() {
