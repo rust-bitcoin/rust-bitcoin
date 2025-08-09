@@ -373,7 +373,7 @@ fn consensus_error_into_serde<E: serde::de::Error>(error: ParseError) -> E {
                 expected[0], expected[1], expected[2], expected[3]
             )),
         ),
-        ParseError::NonMinimalVarInt =>
+        ParseError::NonMinimalCompactSize =>
             E::custom(format_args!("compact size was not encoded minimally")),
         ParseError::ParseFailed(msg) => E::custom(msg),
         ParseError::UnsupportedSegwitFlag(flag) =>
