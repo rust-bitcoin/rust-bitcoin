@@ -163,11 +163,11 @@ impl Decodable for MerkleBlock {
 ///   N <= 1 + matched_transactions*tree_height
 ///
 /// The serialization format:
-///  - uint32     total_transactions (4 bytes)
-///  - varint     number of hashes   (1-3 bytes)
-///  - uint256[]  hashes in depth-first order (<= 32*N bytes)
-///  - varint     number of bytes of flag bits (1-3 bytes)
-///  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (<= 2*N-1 bits)
+///  - uint32       total_transactions (4 bytes)
+///  - CompactSize  number of hashes   (1-3 bytes)
+///  - uint256[]    hashes in depth-first order (<= 32*N bytes)
+///  - CompactSize  number of bytes of flag bits (1-3 bytes)
+///  - byte[]       flag bits, packed per 8 in a byte, least significant bit first (<= 2*N-1 bits)
 ///
 /// The size constraints follow from this.
 #[derive(PartialEq, Eq, Clone, Debug)]
