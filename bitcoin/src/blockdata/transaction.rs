@@ -1159,7 +1159,7 @@ internals::transparent_newtype! {
     pub struct Coinbase(Transaction);
 
     impl Coinbase {
-        /// Creates a reference to `Coinbase` from a reference to the inner `Transaction`.
+        /// Constructs a reference to `Coinbase` from a reference to the inner `Transaction`.
         ///
         /// This method does not validate that the transaction is actually a coinbase transaction.
         /// The caller must ensure that the transaction is indeed a valid coinbase transaction
@@ -1168,7 +1168,7 @@ internals::transparent_newtype! {
 }
 
 impl Coinbase {
-    /// Creates a `Coinbase` wrapper assuming this transaction is a coinbase transaction.
+    /// Constructs a `Coinbase` wrapper assuming this transaction is a coinbase transaction.
     ///
     /// This method does not validate that the transaction is actually a coinbase transaction.
     /// The caller must ensure that this transaction is indeed a valid coinbase transaction.

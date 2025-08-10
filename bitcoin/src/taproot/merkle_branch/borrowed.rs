@@ -46,11 +46,11 @@ impl TaprootMerkleBranch {
     #[inline]
     pub fn is_empty(&self) -> bool { self.as_slice().is_empty() }
 
-    /// Creates an iterator over the node hashes.
+    /// Constructs an iterator over the node hashes.
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, TapNodeHash> { self.into_iter() }
 
-    /// Creates an iterator over the mutable node hashes.
+    /// Constructs an iterator over the mutable node hashes.
     #[inline]
     pub fn iter_mut(&mut self) -> core::slice::IterMut<'_, TapNodeHash> { self.into_iter() }
 
