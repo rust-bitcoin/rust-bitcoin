@@ -227,7 +227,7 @@ pub enum NetworkMessage {
     /// `block`
     Block(block::Block),
     /// `headers`
-    Headers(Vec<block::Header>),
+    Headers(HeadersMessage),
     /// `sendheaders`
     SendHeaders,
     /// `getaddr`
@@ -396,9 +396,7 @@ impl V2NetworkMessage {
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
-struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
-
-impl Encodable for HeaderSerializationWrapper<'_> {
+impl Encodable for HeadersMessage {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
@@ -424,7 +422,7 @@ impl Encodable for NetworkMessage {
             NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Headers(ref dat) =>
-                HeaderSerializationWrapper(dat).consensus_encode(writer),
+                dat.consensus_encode(writer),
             NetworkMessage::Ping(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Pong(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode(writer),
@@ -525,9 +523,11 @@ impl Encodable for V2NetworkMessage {
     }
 }
 
-struct HeaderDeserializationWrapper(Vec<block::Header>);
+/// A list of bitcoin block headers.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeadersMessage(pub Vec<block::Header>);
 
-impl Decodable for HeaderDeserializationWrapper {
+impl Decodable for HeadersMessage {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
@@ -544,7 +544,7 @@ impl Decodable for HeaderDeserializationWrapper {
                 ));
             }
         }
-        Ok(HeaderDeserializationWrapper(ret))
+        Ok(HeadersMessage(ret))
     }
 
     #[inline]
@@ -588,7 +588,7 @@ impl Decodable for RawNetworkMessage {
             "block" =>
                 NetworkMessage::Block(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "headers" => NetworkMessage::Headers(
-                HeaderDeserializationWrapper::consensus_decode_from_finite_reader(&mut mem_d)?.0,
+                HeadersMessage::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
             "sendheaders" => NetworkMessage::SendHeaders,
             "getaddr" => NetworkMessage::GetAddr,
@@ -712,7 +712,7 @@ impl Decodable for V2NetworkMessage {
             11u8 => NetworkMessage::GetData(Decodable::consensus_decode_from_finite_reader(r)?),
             12u8 => NetworkMessage::GetHeaders(Decodable::consensus_decode_from_finite_reader(r)?),
             13u8 => NetworkMessage::Headers(
-                HeaderDeserializationWrapper::consensus_decode_from_finite_reader(r)?.0,
+                HeadersMessage::consensus_decode_from_finite_reader(r)?,
             ),
             14u8 => NetworkMessage::Inv(Decodable::consensus_decode_from_finite_reader(r)?),
             15u8 => NetworkMessage::MemPool,
@@ -908,7 +908,7 @@ mod test {
             NetworkMessage::MemPool,
             NetworkMessage::Tx(tx),
             NetworkMessage::Block(block),
-            NetworkMessage::Headers(vec![header]),
+            NetworkMessage::Headers(HeadersMessage(vec![header])),
             NetworkMessage::SendHeaders,
             NetworkMessage::GetAddr,
             NetworkMessage::Ping(15),
