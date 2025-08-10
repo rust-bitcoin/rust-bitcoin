@@ -94,15 +94,11 @@ impl ProtocolVersion {
 
 impl ProtocolVersion {
     /// Construct a protocol version that is not well-known.
-    pub fn from_nonstandard(version: u32) -> Self {
-        Self(version)
-    }
+    pub fn from_nonstandard(version: u32) -> Self { Self(version) }
 }
 
 impl From<ProtocolVersion> for u32 {
-    fn from(version: ProtocolVersion) -> Self {
-        version.0
-    }
+    fn from(version: ProtocolVersion) -> Self { version.0 }
 }
 
 impl Encodable for ProtocolVersion {

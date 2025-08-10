@@ -19,13 +19,13 @@ use super::transaction::Coinbase;
 use super::Weight;
 use crate::consensus::encode::WriteExt as _;
 use crate::consensus::{encode, Decodable, Encodable};
+use crate::internal_macros;
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::{Target, Work};
 use crate::prelude::Vec;
 use crate::script::{self, ScriptExt as _};
 use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
-use crate::internal_macros;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -41,7 +41,15 @@ pub type BlockInterval = BlockHeightInterval;
 
 internal_macros::impl_hashencode!(BlockHash);
 
-internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
+internal_macros::impl_consensus_encoding!(
+    Header,
+    version,
+    prev_blockhash,
+    merkle_root,
+    time,
+    bits,
+    nonce
+);
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Header`] type.

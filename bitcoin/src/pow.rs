@@ -14,8 +14,8 @@ use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::network::Params;
 use crate::internal_macros;
+use crate::network::Params;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
