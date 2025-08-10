@@ -681,7 +681,7 @@ the case and how we broke both `rust-miniscript` and BDK.
 * Add BIP-158 support with `BlockFilter` and related types.
 * Add `util::misc::signed_msg_hash()` for signing messages.
 * Add `MerkleBlock` and `PartialMerkleTree` types.
-* bip32: Support serde serializaton for types and add some utility methods:
+* bip32: Support serde serialization for types and add some utility methods:
     * `ChildNumber::increment`
     * `DerivationPath::children_from`
     * `DerivationPath::normal_children`
@@ -784,7 +784,7 @@ the case and how we broke both `rust-miniscript` and BDK.
 * Use modern `as_` `to_` `into_` conventions for array-wrapping types; impl `Display` rather than `ToString` for most types
 * Change `script::Instructions` iterator [to allow rejecting non-minimal pushes](https://github.com/rust-bitcoin/rust-bitcoin/pull/136);
   fix bug where errors would iterate forever.
-* Overhaul `util::Error`; introduce `serialize::Error` [and use it for `SimpleDecoder` and `SimpleDecoder` rather
+* Overhaul `util::Error`; introduce `serialize::Error` [and use it for `SimpleDecoder` and `SimpleEncoder` rather
   than parameterizing these over their error type](https://github.com/rust-bitcoin/rust-bitcoin/pull/137).
 * Overhaul `UDecimal` and `Decimal` serialization and parsing [and fix many lingering parsing bugs](https://github.com/rust-bitcoin/rust-bitcoin/pull/142)
 * [Update to serde 1.0 and strason 0.4](https://github.com/rust-bitcoin/rust-bitcoin/pull/125)
@@ -808,7 +808,7 @@ the case and how we broke both `rust-miniscript` and BDK.
 * The in-memory blockchain was moved into a dedicated project rust-bitcoin-chain.
 * Removed old script interpreter
 * A new optional feature "bitcoinconsensus" lets this library use Bitcoin Core's native
-script verifier, wrappend into Rust by the rust-bitcoinconsenus project.
+script verifier, wrapped into Rust by the rust-bitcoinconsensus project.
 See `Transaction::verify` and `Script::verify` methods.
 * Replaced Base58 traits with `encode_slice`, `check_encode_slice`, from and `from_check` functions in the base58 module.
 * Un-reversed the Debug output for Sha256dHash
