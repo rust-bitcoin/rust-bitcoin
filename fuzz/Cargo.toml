@@ -22,12 +22,20 @@ serde_json = "1.0"
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
 
 [[bin]]
-name = "bitcoin_deser_net_msg"
-path = "fuzz_targets/bitcoin/deser_net_msg.rs"
+name = "bitcoin_arbitrary_block"
+path = "fuzz_targets/bitcoin/arbitrary_block.rs"
 
 [[bin]]
-name = "bitcoin_deserialize_address"
-path = "fuzz_targets/bitcoin/deserialize_address.rs"
+name = "bitcoin_arbitrary_script"
+path = "fuzz_targets/bitcoin/arbitrary_script.rs"
+
+[[bin]]
+name = "bitcoin_arbitrary_transaction"
+path = "fuzz_targets/bitcoin/arbitrary_transaction.rs"
+
+[[bin]]
+name = "bitcoin_deser_net_msg"
+path = "fuzz_targets/bitcoin/deser_net_msg.rs"
 
 [[bin]]
 name = "bitcoin_deserialize_block"
@@ -54,12 +62,16 @@ name = "bitcoin_deserialize_witness"
 path = "fuzz_targets/bitcoin/deserialize_witness.rs"
 
 [[bin]]
-name = "bitcoin_outpoint_string"
-path = "fuzz_targets/bitcoin/outpoint_string.rs"
-
-[[bin]]
 name = "bitcoin_p2p_address_roundtrip"
 path = "fuzz_targets/bitcoin/p2p_address_roundtrip.rs"
+
+[[bin]]
+name = "bitcoin_parse_address"
+path = "fuzz_targets/bitcoin/parse_address.rs"
+
+[[bin]]
+name = "bitcoin_parse_outpoint"
+path = "fuzz_targets/bitcoin/parse_outpoint.rs"
 
 [[bin]]
 name = "bitcoin_script_bytes_to_asm_fmt"
