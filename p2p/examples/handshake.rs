@@ -4,12 +4,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
 use bitcoin::consensus::{encode, Decodable};
+use bitcoin_p2p_messages::message_network::{ClientSoftwareVersion, UserAgent, UserAgentVersion};
 use bitcoin_p2p_messages::{
     self, address, message, message_network, Magic, ProtocolVersion, ServiceFlags,
 };
-use bitcoin_p2p_messages::message_network::{ClientSoftwareVersion, UserAgent, UserAgentVersion};
 
-const SOFTWARE_VERSION: ClientSoftwareVersion = ClientSoftwareVersion::SemVer { major: 0, minor: 1, revision: 0 };
+const SOFTWARE_VERSION: ClientSoftwareVersion =
+    ClientSoftwareVersion::SemVer { major: 0, minor: 1, revision: 0 };
 const USER_AGENT_VERSION: UserAgentVersion = UserAgentVersion::new(SOFTWARE_VERSION);
 const SOFTWARE_NAME: &str = "rust-client";
 

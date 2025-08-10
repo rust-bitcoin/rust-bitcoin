@@ -34,7 +34,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.

@@ -133,9 +133,7 @@ impl UserAgent {
 
     /// Build a user agent, ignoring BIP-14 recommendations.
     pub fn from_nonstandard<S: ToString>(agent: S) -> Self {
-        Self {
-            user_agent: agent.to_string()
-        }
+        Self { user_agent: agent.to_string() }
     }
 
     /// Add a client to the user agent string. Examples may include the name of a wallet software.
@@ -144,7 +142,11 @@ impl UserAgent {
     ///
     /// If the client name contains one of: `/ ( ) :` or the user agent exceeds 256 characters.
     #[must_use]
-    pub fn add_client<S: AsRef<str>>(mut self, client_name: S, client_version: UserAgentVersion) -> Self {
+    pub fn add_client<S: AsRef<str>>(
+        mut self,
+        client_name: S,
+        client_version: UserAgentVersion,
+    ) -> Self {
         let parsed_name = client_name.as_ref();
         Self::panic_invalid_chars(parsed_name);
         let agent = format!("{parsed_name}:{client_version}/");
@@ -155,15 +157,11 @@ impl UserAgent {
 }
 
 impl std::fmt::Display for UserAgent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.user_agent.fmt(f)
-    }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { self.user_agent.fmt(f) }
 }
 
 impl From<UserAgent> for String {
-    fn from(agent: UserAgent) -> Self {
-        agent.user_agent
-    }
+    fn from(agent: UserAgent) -> Self { agent.user_agent }
 }
 
 /// A software version field for inclusion in a user agent specified by BIP-14.
@@ -176,10 +174,7 @@ pub struct UserAgentVersion {
 impl UserAgentVersion {
     /// Create a user agent client version associated with a name.
     pub const fn new(software_version: ClientSoftwareVersion) -> Self {
-        Self {
-            version: software_version,
-            comments: None,
-        }
+        Self { version: software_version, comments: None }
     }
 
     /// Add a comment to the version. Typical comments describe the operating system or platform
@@ -199,8 +194,8 @@ impl UserAgentVersion {
                 let semi_colon_delimeter = format!("; {parsed_comment}");
                 comment.push_str(&semi_colon_delimeter);
                 self.comments = Some(comment);
-            },
-            None => self.comments = Some(parsed_comment.to_string())
+            }
+            None => self.comments = Some(parsed_comment.to_string()),
         }
         self
     }
@@ -237,18 +232,14 @@ pub enum ClientSoftwareVersion {
         mm: u8,
         /// The day
         dd: u8,
-    }
+    },
 }
 
 impl std::fmt::Display for ClientSoftwareVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Date { yyyy, mm, dd } => {
-                format!("{yyyy}{mm:02}{dd:02}").fmt(f)
-            },
-            Self::SemVer { major, minor, revision } => {
-                format!("{major}.{minor}.{revision}").fmt(f)
-            }
+            Self::Date { yyyy, mm, dd } => format!("{yyyy}{mm:02}{dd:02}").fmt(f),
+            Self::SemVer { major, minor, revision } => format!("{major}.{minor}.{revision}").fmt(f),
         }
     }
 }
@@ -359,11 +350,17 @@ mod tests {
         assert_eq!(real_decode.timestamp, 1401217254);
         // address decodes should be covered by Address tests
         assert_eq!(real_decode.nonce, 16735069437859780935);
-        assert_eq!(real_decode.user_agent, UserAgent::new("Satoshi", UserAgentVersion::new(ClientSoftwareVersion::SemVer {
-            major: 0,
-            minor: 9,
-            revision: 99
-        })));
+        assert_eq!(
+            real_decode.user_agent,
+            UserAgent::new(
+                "Satoshi",
+                UserAgentVersion::new(ClientSoftwareVersion::SemVer {
+                    major: 0,
+                    minor: 9,
+                    revision: 99
+                })
+            )
+        );
         assert_eq!(real_decode.start_height, 302892);
         assert!(real_decode.relay);
 
@@ -420,7 +417,7 @@ mod tests {
         let client_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
             major: 5,
             minor: 12,
-            revision: 0
+            revision: 0,
         });
         let user_agent = UserAgent::new(client_name, client_version);
         assert_eq!("/Satoshi:5.12.0/", user_agent.to_string());
@@ -428,23 +425,20 @@ mod tests {
         let wallet_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
             major: 0,
             minor: 8,
-            revision: 0
+            revision: 0,
         });
         let user_agent = user_agent.add_client(wallet_name, wallet_version);
         assert_eq!("/Satoshi:5.12.0/bitcoin-qt:0.8.0/", user_agent.to_string());
         let client_name = "BitcoinJ";
-        let client_version = UserAgentVersion::new(ClientSoftwareVersion::Date {
-            yyyy: 2011,
-            mm: 1,
-            dd: 28
-        });
+        let client_version =
+            UserAgentVersion::new(ClientSoftwareVersion::Date { yyyy: 2011, mm: 1, dd: 28 });
         let user_agent = UserAgent::new(client_name, client_version);
         assert_eq!("/BitcoinJ:20110128/", user_agent.to_string());
         let wallet_name = "Electrum";
         let wallet_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
             major: 0,
             minor: 9,
-            revision: 0
+            revision: 0,
         });
         let wallet_version = wallet_version.push_comment("Ubuntu");
         let wallet_version = wallet_version.push_comment("24");
@@ -459,7 +453,7 @@ mod tests {
         let client_version = UserAgentVersion::new(ClientSoftwareVersion::SemVer {
             major: 5,
             minor: 12,
-            revision: 0
+            revision: 0,
         });
         UserAgent::new(client_name, client_version);
     }

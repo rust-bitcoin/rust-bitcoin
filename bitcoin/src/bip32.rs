@@ -16,9 +16,9 @@ use internals::write_err;
 use secp256k1::Secp256k1;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
+use crate::internal_macros;
 use crate::network::NetworkKind;
 use crate::prelude::{String, Vec};
-use crate::internal_macros;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
