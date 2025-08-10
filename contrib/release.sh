@@ -3,7 +3,7 @@
 # Check that we can publish crates in their current form if there are changes on top of the tip of
 # master that imply that we are about to do a release.
 
-set -euox pipefail
+set -euo pipefail
 
 main () {
     for crate in "bitcoin" "hashes" "internals" "units"; do
