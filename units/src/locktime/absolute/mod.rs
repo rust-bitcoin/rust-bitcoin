@@ -156,7 +156,7 @@ impl LockTime {
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a new `LockTime` from an `nLockTime` value or the argument to `OP_CHEKCLOCKTIMEVERIFY`.
+    /// Constructs a new `LockTime` from an `nLockTime` value or the argument to `OP_CHECKLOCKTIMEVERIFY`.
     ///
     /// # Examples
     ///
@@ -264,7 +264,7 @@ impl LockTime {
     /// If `self` is a blockheight based lock then it is checked against `height` and if `self` is a
     /// blocktime based lock it is checked against `time`.
     ///
-    /// A 'timelock constraint' refers to the `n` from `n OP_CHEKCLOCKTIMEVERIFY`, this constraint
+    /// A 'timelock constraint' refers to the `n` from `n OP_CHECKLOCKTIMEVERIFY`, this constraint
     /// is satisfied if a transaction with `nLockTime` set to `height`/`time` is valid.
     ///
     /// If `height` and `mtp` represent the current chain tip then a transaction with this
@@ -283,7 +283,7 @@ impl LockTime {
     /// fn get_height() -> absolute::Height { todo!("return the current block height") }
     /// fn get_time() -> absolute::MedianTimePast { todo!("return the current block MTP") }
     ///
-    /// let n = absolute::LockTime::from_consensus(741521); // `n OP_CHEKCLOCKTIMEVERIFY`.
+    /// let n = absolute::LockTime::from_consensus(741521); // `n OP_CHECKLOCKTIMEVERIFY`.
     /// if n.is_satisfied_by(get_height(), get_time()) {
     ///     // Can create and mine a transaction that satisfies the OP_CLTV timelock constraint.
     /// }
