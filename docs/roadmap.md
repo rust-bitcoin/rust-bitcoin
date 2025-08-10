@@ -6,7 +6,7 @@
   * Add support for consensus encoding to `primitives`
 * Release `bitcoin v0.33.0-rc.0`
 * Split out an address crate (see [address.md])
-* BIP-32 and BIP-380 (see [bip-32.md]
+* BIP-32 and BIP-380 (see [bip-32.md])
 * PSBTv2 (see [psbt.md])
 * Make it possible for `bitcoin` to depend on `miniscript` (see [#2882])
     - Requires [bip-32.md] and [psbt.md]
