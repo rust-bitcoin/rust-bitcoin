@@ -16,6 +16,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
 use units::BlockTime;
 
+use crate::internal_macros;
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "alloc")]
 use crate::merkle_tree::WitnessMerkleNode;
@@ -337,9 +338,14 @@ hashes::hash_newtype! {
 }
 
 #[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(BlockHash, WitnessCommitment);
+internal_macros::impl_hex_string_traits!(BlockHash, 32, true);
 #[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(BlockHash, WitnessCommitment);
+internal_macros::impl_debug_only!(BlockHash, 32, true);
+
+#[cfg(feature = "hex")]
+internal_macros::impl_hex_string_traits!(WitnessCommitment, 32, true);
+#[cfg(not(feature = "hex"))]
+internal_macros::impl_debug_only!(WitnessCommitment, 32, true);
 
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.

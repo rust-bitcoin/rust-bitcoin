@@ -14,6 +14,7 @@ use hashes::{hash160, sha256};
 use hex::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
+use crate::internal_macros;
 #[allow(clippy::wildcard_imports)]
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
@@ -51,9 +52,14 @@ hashes::hash_newtype! {
 }
 
 #[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(ScriptHash, WScriptHash);
+internal_macros::impl_hex_string_traits!(ScriptHash, 20, false);
 #[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(ScriptHash, WScriptHash);
+internal_macros::impl_debug_only!(ScriptHash, 20, false);
+
+#[cfg(feature = "hex")]
+internal_macros::impl_hex_string_traits!(WScriptHash, 32, false);
+#[cfg(not(feature = "hex"))]
+internal_macros::impl_debug_only!(WScriptHash, 32, false);
 
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.

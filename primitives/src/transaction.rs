@@ -35,6 +35,8 @@ use units::sequence::Sequence;
 #[cfg(feature = "alloc")]
 use units::{Amount, Weight};
 
+#[cfg(feature = "hex")]
+use crate::internal_macros;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
@@ -605,9 +607,14 @@ hashes::hash_newtype! {
 }
 
 #[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(Txid, Wtxid);
+internal_macros::impl_hex_string_traits!(Txid, 32, true);
 #[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(Txid, Wtxid);
+internal_macros::impl_debug_only!(Txid, 32, true);
+
+#[cfg(feature = "hex")]
+internal_macros::impl_hex_string_traits!(Wtxid, 32, true);
+#[cfg(not(feature = "hex"))]
+internal_macros::impl_debug_only!(Wtxid, 32, true);
 
 impl Txid {
     /// The `Txid` used in a coinbase prevout.

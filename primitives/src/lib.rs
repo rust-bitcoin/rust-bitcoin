@@ -32,6 +32,10 @@ extern crate std;
 #[macro_use]
 extern crate serde;
 
+/// Re-export the `hex-conservative` crate.
+#[cfg(feature = "hex")]
+pub extern crate hex;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.
@@ -40,6 +44,7 @@ pub mod _export {
     }
 }
 
+mod internal_macros;
 mod opcodes;
 
 pub mod block;
@@ -51,7 +56,11 @@ pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
 
+#[cfg(not(feature = "hex"))]
+use core::fmt;
+
 #[doc(inline)]
+#[rustfmt::skip]                // Keep public re-exports separate.
 pub use units::{
     amount::{self, Amount, SignedAmount},
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
@@ -85,6 +94,23 @@ pub use self::{
     pow::CompactTarget,
     transaction::{OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
+
+/// Writes `bytes` as a `hex` string to the formatter.
+///
+/// For when we cannot rely on having the `hex` feature enabled. Ignores formatter options and just
+/// writes with plain old `f.write_char()`.
+#[cfg(not(feature = "hex"))]
+pub(crate) fn debug_hex(bytes: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
+    const HEX_TABLE: [u8; 16] = *b"0123456789abcdef";
+
+    for &b in bytes {
+        let lower = HEX_TABLE[usize::from(b >> 4)];
+        let upper = HEX_TABLE[usize::from(b & 0b00001111)];
+        f.write_char(char::from(lower))?;
+        f.write_char(char::from(upper))?;
+    }
+    Ok(())
+}
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

@@ -6,6 +6,8 @@
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 
+use crate::internal_macros;
+
 hashes::hash_newtype! {
     /// A hash of the Merkle tree branch or root for transactions.
     pub struct TxMerkleNode(sha256d::Hash);
@@ -14,9 +16,14 @@ hashes::hash_newtype! {
 }
 
 #[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(TxMerkleNode, WitnessMerkleNode);
+internal_macros::impl_hex_string_traits!(TxMerkleNode, 32, true);
 #[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(TxMerkleNode, WitnessMerkleNode);
+internal_macros::impl_debug_only!(TxMerkleNode, 32, true);
+
+#[cfg(feature = "hex")]
+internal_macros::impl_hex_string_traits!(WitnessMerkleNode, 32, true);
+#[cfg(not(feature = "hex"))]
+internal_macros::impl_debug_only!(WitnessMerkleNode, 32, true);
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxMerkleNode {
