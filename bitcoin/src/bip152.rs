@@ -240,7 +240,7 @@ impl HeaderAndShortIds {
                         1 => {
                             // strip witness for version 1
                             let mut no_witness = tx.clone();
-                            no_witness.input.iter_mut().for_each(|i| i.witness.clear());
+                            no_witness.inputs.iter_mut().for_each(|i| i.witness.clear());
                             no_witness
                         }
                         // > Transactions inside cmpctblock messages (both those used as direct
@@ -469,13 +469,13 @@ mod test {
         Transaction {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::from_consensus(2),
-            input: vec![TxIn {
+            inputs: vec![TxIn {
                 previous_output: OutPoint::new(dummy_txid, 0),
                 script_sig: ScriptBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
         }
     }
 

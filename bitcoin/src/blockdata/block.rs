@@ -189,7 +189,7 @@ fn check_merkle_root(header: &Header, transactions: &[Transaction]) -> bool {
 // Returns the Merkle root if it was computed (so it can be cached in `assume_checked`).
 fn check_witness_commitment(transactions: &[Transaction]) -> (bool, Option<WitnessMerkleNode>) {
     // Witness commitment is optional if there are no transactions using SegWit in the block.
-    if transactions.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
+    if transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
         return (true, None);
     }
 
@@ -201,7 +201,7 @@ fn check_witness_commitment(transactions: &[Transaction]) -> (bool, Option<Witne
         let coinbase = transactions[0].clone();
         if let Some(commitment) = witness_commitment_from_coinbase(&coinbase) {
             // Witness reserved value is in coinbase input witness.
-            let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
+            let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
             if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
                 if let Some((witness_root, witness_commitment)) =
                     compute_witness_commitment(transactions, witness_vec[0])
@@ -227,12 +227,12 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
 
     // Commitment is in the last output that starts with magic bytes.
     if let Some(pos) = coinbase
-        .output
+        .outputs
         .iter()
         .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
     {
         let bytes =
-            <[u8; 32]>::try_from(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+            <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
         Some(WitnessCommitment::from_byte_array(bytes))
     } else {
         None
@@ -807,7 +807,7 @@ mod tests {
         let non_coinbase_tx = Transaction {
             version: primitives::transaction::Version::TWO,
             lock_time: crate::absolute::LockTime::ZERO,
-            input: vec![TxIn {
+            inputs: vec![TxIn {
                 previous_output: OutPoint {
                     txid: Txid::from_byte_array([1; 32]), // Not all zeros
                     vout: 0,
@@ -816,7 +816,7 @@ mod tests {
                 sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
         };
 
         let transactions = vec![non_coinbase_tx];
@@ -883,7 +883,7 @@ mod tests {
         let non_coinbase_tx = Transaction {
             version: primitives::transaction::Version::TWO,
             lock_time: crate::absolute::LockTime::ZERO,
-            input: vec![TxIn {
+            inputs: vec![TxIn {
                 previous_output: OutPoint {
                     txid: Txid::from_byte_array([1; 32]), // Not all zeros
                     vout: 0,
@@ -892,7 +892,7 @@ mod tests {
                 sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
         };
 
         let invalid_coinbase_result = Block::new_checked(header, vec![non_coinbase_tx]);
