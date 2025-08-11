@@ -106,19 +106,19 @@ impl FeeRate {
     pub const fn to_sat_per_kwu_floor(self) -> u64 { self.to_sat_per_mvb() / 4_000 }
 
     /// Converts to sat/kwu rounding up.
-    pub const fn to_sat_per_kwu_ceil(self) -> u64 { (self.to_sat_per_mvb() + 3_999) / 4_000 }
+    pub const fn to_sat_per_kwu_ceil(self) -> u64 { self.to_sat_per_mvb().saturating_add(3_999) / 4_000 }
 
     /// Converts to sat/vB rounding down.
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_mvb() / 1_000_000 }
 
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.to_sat_per_mvb() + 999_999) / 1_000_000 }
+    pub const fn to_sat_per_vb_ceil(self) -> u64 { self.to_sat_per_mvb().saturating_add(999_999) / 1_000_000 }
 
     /// Converts to sat/kvb rounding down.
     pub const fn to_sat_per_kvb_floor(self) -> u64 { self.to_sat_per_mvb() / 1_000 }
 
     /// Converts to sat/kvb rounding up.
-    pub const fn to_sat_per_kvb_ceil(self) -> u64 { (self.to_sat_per_mvb() + 999) / 1_000 }
+    pub const fn to_sat_per_kvb_ceil(self) -> u64 { self.to_sat_per_mvb().saturating_add(999) / 1_000 }
 
     /// Checked multiplication.
     ///
@@ -400,6 +400,11 @@ mod tests {
         // sat/kvb: 2_000_400 / 1_000 = 2_000.4
         assert_eq!(fee_rate.to_sat_per_kvb_floor(), 2_000);
         assert_eq!(fee_rate.to_sat_per_kvb_ceil(), 2_001);
+
+        let max = FeeRate::MAX;
+        assert_eq!(max.to_sat_per_kwu_ceil(), u64::MAX / 4_000);
+        assert_eq!(max.to_sat_per_vb_ceil(), u64::MAX / 1_000_000);
+        assert_eq!(max.to_sat_per_kvb_ceil(), u64::MAX / 1_000);
     }
 
     #[test]
