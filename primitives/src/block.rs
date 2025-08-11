@@ -59,7 +59,6 @@ pub trait Validation: sealed::Validation + Sync + Send + Sized + Unpin {
 /// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
 #[cfg(feature = "alloc")]
 #[derive(PartialEq, Eq, Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Block<V = Unchecked>
 where
     V: Validation,
@@ -69,7 +68,6 @@ where
     /// List of transactions contained in the block
     transactions: Vec<Transaction>,
     /// Cached witness root if it's been computed.
-    #[cfg_attr(feature = "serde", serde(skip_serializing))]
     witness_root: Option<WitnessMerkleNode>,
     /// Validation marker.
     marker: PhantomData<V>,
@@ -178,7 +176,6 @@ mod sealed {
 ///
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
 #[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Header {
     /// Block version, now repurposed for soft fork signalling.
     pub version: Version,
