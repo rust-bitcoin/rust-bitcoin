@@ -41,15 +41,8 @@ pub type BlockInterval = BlockHeightInterval;
 
 internal_macros::impl_hashencode!(BlockHash);
 
-internal_macros::impl_consensus_encoding!(
-    Header,
-    version,
-    prev_blockhash,
-    merkle_root,
-    time,
-    bits,
-    nonce
-);
+#[rustfmt::skip]
+internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Header`] type.
