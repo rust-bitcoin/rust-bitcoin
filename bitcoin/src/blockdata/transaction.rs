@@ -14,7 +14,6 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hashes::sha256d;
 use internals::{compact_size, const_casts, write_err, ToU64};
 use io::{BufRead, Write};
 use primitives::Sequence;
@@ -31,7 +30,7 @@ use crate::{internal_macros, Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Txid, Wtxid, Version, TxIn, TxOut};
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut};
 
 internal_macros::impl_hashencode!(Txid);
 internal_macros::impl_hashencode!(Wtxid);
@@ -215,7 +214,7 @@ fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
 pub trait TransactionExt: sealed::Sealed {
     /// Computes a "normalized TXID" which does not include any signatures.
     #[deprecated(since = "0.31.0", note = "use `compute_ntxid()` instead")]
-    fn ntxid(&self) -> sha256d::Hash;
+    fn ntxid(&self) -> Ntxid;
 
     /// Computes the [`Txid`].
     #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
@@ -334,7 +333,7 @@ pub trait TransactionExt: sealed::Sealed {
 }
 
 impl TransactionExt for Transaction {
-    fn ntxid(&self) -> sha256d::Hash { self.compute_ntxid() }
+    fn ntxid(&self) -> Ntxid { self.compute_ntxid() }
 
     fn txid(&self) -> Txid { self.compute_txid() }
 
