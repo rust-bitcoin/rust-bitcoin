@@ -334,7 +334,7 @@ impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for alloc::sync::Arc<[T]>
 /// Debug implementation that displays the witness as a structured output containing:
 /// - Number of witness elements
 /// - Total bytes across all elements
-/// - List of hex-encoded witness elements if `hex` features is enabled.
+/// - List of hex-encoded witness elements if `hex` feature is enabled.
 #[allow(clippy::missing_fields_in_debug)] // We don't want to show `indices_start`.
 impl fmt::Debug for Witness {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

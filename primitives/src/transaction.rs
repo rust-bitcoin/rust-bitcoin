@@ -74,7 +74,7 @@ use crate::witness::Witness;
 ///
 /// However, in protocols where transactions may legitimately have 0 inputs, e.g.
 /// when parties are cooperatively funding a transaction, the "00 means SegWit"
-/// heuristic does not work. Since SegWit requires such a transaction be encoded
+/// heuristic does not work. Since SegWit requires such a transaction to be encoded
 /// in the original transaction format (since it has no inputs and therefore
 /// no input witnesses), a traditionally encoded transaction may have the `0001`
 /// SegWit flag in it, which confuses most SegWit parsers including the one in
