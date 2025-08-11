@@ -9,14 +9,15 @@ use alloc::borrow::{Cow, ToOwned};
 use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec::Vec;
-use core::fmt;
+use alloc::vec;
+use core::{cmp, fmt};
 
-use bitcoin::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
+use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
 use bitcoin::{block, transaction};
 use hashes::sha256d;
 use internals::ToU64 as _;
-use io::{BufRead, Write};
+use io::{self, BufRead, Read, Write};
 use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
@@ -744,6 +745,96 @@ impl Decodable for V2NetworkMessage {
     }
 }
 
+/// Data and a 4-byte checksum.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct CheckedData {
+    data: Vec<u8>,
+    checksum: [u8; 4],
+}
+
+impl CheckedData {
+    /// Constructs a new `CheckedData` computing the checksum of given data.
+    pub fn new(data: Vec<u8>) -> Self {
+        let checksum = sha2_checksum(&data);
+        Self { data, checksum }
+    }
+
+    /// Returns a reference to the raw data without the checksum.
+    pub fn data(&self) -> &[u8] { &self.data }
+
+    /// Returns the raw data without the checksum.
+    pub fn into_data(self) -> Vec<u8> { self.data }
+
+    /// Returns the checksum of the data.
+    pub fn checksum(&self) -> [u8; 4] { self.checksum }
+}
+
+impl Encodable for CheckedData {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        u32::try_from(self.data.len())
+            .expect("network message use u32 as length")
+            .consensus_encode(w)?;
+        self.checksum().consensus_encode(w)?;
+        Ok(8 + w.emit_slice(&self.data)?)
+    }
+}
+
+impl Decodable for CheckedData {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let len = u32::consensus_decode_from_finite_reader(r)? as usize;
+
+        let checksum = <[u8; 4]>::consensus_decode_from_finite_reader(r)?;
+        let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: encode::MAX_VEC_SIZE };
+        let data = read_bytes_from_finite_reader(r, opts)?;
+        let expected_checksum = sha2_checksum(&data);
+        if expected_checksum != checksum {
+            Err(encode::ParseError::InvalidChecksum { expected: expected_checksum, actual: checksum }
+                .into())
+        } else {
+            Ok(CheckedData { data, checksum })
+        }
+    }
+}
+
+struct ReadBytesFromFiniteReaderOpts {
+    len: usize,
+    chunk_size: usize,
+}
+
+/// Read `opts.len` bytes from reader, where `opts.len` could potentially be malicious.
+///
+/// This function relies on reader being bound in amount of data
+/// it returns for OOM protection. See [`Decodable::consensus_decode_from_finite_reader`].
+#[inline]
+fn read_bytes_from_finite_reader<D: Read + ?Sized>(
+    d: &mut D,
+    mut opts: ReadBytesFromFiniteReaderOpts,
+) -> Result<Vec<u8>, encode::Error> {
+    let mut ret = vec![];
+
+    assert_ne!(opts.chunk_size, 0);
+
+    while opts.len > 0 {
+        let chunk_start = ret.len();
+        let chunk_size = cmp::min(opts.len, opts.chunk_size);
+        let chunk_end = chunk_start + chunk_size;
+        ret.resize(chunk_end, 0u8);
+        d.read_slice(&mut ret[chunk_start..chunk_end])?;
+        opts.len -= chunk_size;
+    }
+
+    Ok(ret)
+}
+
+/// Does a double-SHA256 on `data` and returns the first 4 bytes.
+fn sha2_checksum(data: &[u8]) -> [u8; 4] {
+    let checksum = sha256d::hash(data);
+    let checksum = checksum.to_byte_array();
+    [checksum[0], checksum[1], checksum[2], checksum[3]]
+}
+
 #[cfg(test)]
 mod test {
     use alloc::string::ToString;
@@ -1184,5 +1275,18 @@ mod test {
         } else {
             panic!("wrong message type");
         }
+    }
+
+    #[test]
+    fn serialize_checkeddata() {
+        let cd = CheckedData::new(vec![1u8, 2, 3, 4, 5]);
+        assert_eq!(serialize(&cd), [5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn deserialize_checkeddata() {
+        let cd: Result<CheckedData, _> =
+            deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
+        assert_eq!(cd.ok(), Some(CheckedData::new(vec![1u8, 2, 3, 4, 5])));
     }
 }
