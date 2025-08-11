@@ -139,14 +139,6 @@ macro_rules! hash_newtype {
                 $newtype(<$hash>::from_byte_array(bytes))
             }
 
-            /// Copies a byte slice into a hash object.
-            #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
-            #[allow(deprecated_in_future)] // Because of `FromSliceError`.
-            #[allow(deprecated)]           // Because of `from_slice`.
-            pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
-                Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
-            }
-
             /// Returns the underlying byte array.
             pub const fn to_byte_array(self) -> <$hash as $crate::Hash>::Bytes {
                 self.0.to_byte_array()
@@ -164,13 +156,6 @@ macro_rules! hash_newtype {
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
-
-            #[inline]
-            #[allow(deprecated_in_future)] // Because of `FromSliceError`.
-            #[allow(deprecated)]           // Because of `from_slice`.
-            fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
-                Self::from_slice(sl)
-            }
 
             fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
@@ -506,7 +491,7 @@ macro_rules! serde_impl(
 
         impl<'de $(, $gen: $gent)*> $crate::serde::Deserialize<'de> for $t<$($gen),*> {
             fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> core::result::Result<$t<$($gen),*>, D::Error> {
-                use $crate::serde_macros::serde_details::{BytesVisitor, HexVisitor};
+                use $crate::macros::serde_details::{BytesVisitor, HexVisitor};
 
                 if d.is_human_readable() {
                     d.deserialize_str(HexVisitor::<Self>::default())

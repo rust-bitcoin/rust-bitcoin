@@ -208,10 +208,6 @@ impl Hash {
     }
 
     /// Returns the (little endian) 64-bit integer representation of the hash value.
-    #[deprecated(since = "0.15.0", note = "use `to_u64` instead")]
-    pub fn as_u64(&self) -> u64 { self.to_u64() }
-
-    /// Returns the (little endian) 64-bit integer representation of the hash value.
     pub fn to_u64(self) -> u64 { u64::from_le_bytes(self.0) }
 
     /// Constructs a new hash from its (little endian) 64-bit integer representation.
