@@ -608,8 +608,6 @@ hashes::hash_newtype! {
 hashes::impl_hex_for_newtype!(Txid, Wtxid);
 #[cfg(not(feature = "hex"))]
 hashes::impl_debug_only_for_newtype!(Txid, Wtxid);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(Txid, Wtxid);
 
 impl Txid {
     /// The `Txid` used in a coinbase prevout.

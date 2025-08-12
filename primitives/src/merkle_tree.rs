@@ -17,8 +17,6 @@ hashes::hash_newtype! {
 hashes::impl_hex_for_newtype!(TxMerkleNode, WitnessMerkleNode);
 #[cfg(not(feature = "hex"))]
 hashes::impl_debug_only_for_newtype!(TxMerkleNode, WitnessMerkleNode);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TxMerkleNode, WitnessMerkleNode);
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxMerkleNode {

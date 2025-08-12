@@ -340,8 +340,6 @@ hashes::hash_newtype! {
 hashes::impl_hex_for_newtype!(BlockHash, WitnessCommitment);
 #[cfg(not(feature = "hex"))]
 hashes::impl_debug_only_for_newtype!(BlockHash, WitnessCommitment);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(BlockHash, WitnessCommitment);
 
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.

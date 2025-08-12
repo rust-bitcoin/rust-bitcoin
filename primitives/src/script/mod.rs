@@ -54,8 +54,6 @@ hashes::hash_newtype! {
 hashes::impl_hex_for_newtype!(ScriptHash, WScriptHash);
 #[cfg(not(feature = "hex"))]
 hashes::impl_debug_only_for_newtype!(ScriptHash, WScriptHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(ScriptHash, WScriptHash);
 
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.
