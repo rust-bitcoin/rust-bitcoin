@@ -31,8 +31,9 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::{
-    consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
-    ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+    consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt,
+    RedeemScriptBuf, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid,
+    Witness,
 };
 
 // The master xpriv, from which we derive the keys we control.
@@ -202,14 +203,14 @@ fn main() {
     psbt.inputs = vec![
         Input {
             witness_utxo: Some(utxos[0].clone()),
-            redeem_script: Some(ScriptBuf::new_p2wpkh(wpkhs[0])),
+            redeem_script: Some(RedeemScriptBuf::new_p2wpkh(wpkhs[0])),
             bip32_derivation: bip32_derivations[0].clone(),
             sighash_type: Some(ty),
             ..Default::default()
         },
         Input {
             witness_utxo: Some(utxos[1].clone()),
-            redeem_script: Some(ScriptBuf::new_p2wpkh(wpkhs[1])),
+            redeem_script: Some(RedeemScriptBuf::new_p2wpkh(wpkhs[1])),
             bip32_derivation: bip32_derivations[1].clone(),
             sighash_type: Some(ty),
             ..Default::default()

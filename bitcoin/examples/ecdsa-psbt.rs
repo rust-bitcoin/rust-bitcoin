@@ -38,7 +38,7 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf,
+    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, RedeemScriptBuf,
     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
@@ -208,7 +208,7 @@ impl WatchOnly {
         let pk = self.input_xpub.to_public_key();
         let wpkh = pk.wpubkey_hash();
 
-        let redeem_script = ScriptBuf::new_p2wpkh(wpkh);
+        let redeem_script = RedeemScriptBuf::new_p2wpkh(wpkh);
         input.redeem_script = Some(redeem_script);
 
         let fingerprint = self.master_fingerprint;

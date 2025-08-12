@@ -240,12 +240,13 @@ fn script_generators() {
     let wpubkey_hash = pubkey.wpubkey_hash().unwrap();
     assert!(ScriptPubKeyBuf::new_p2wpkh(wpubkey_hash).is_p2wpkh());
 
-    let script = Builder::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();
+    let script = RedeemScript::builder().push_opcode(OP_NUMEQUAL).push_verify().into_script();
     let script_hash = script.script_hash().expect("script is less than 520 bytes");
     let p2sh = ScriptPubKeyBuf::new_p2sh(script_hash);
     assert!(p2sh.is_p2sh());
     assert_eq!(script.to_p2sh().unwrap(), p2sh);
 
+    let script = Script::builder().push_opcode(OP_NUMEQUAL).push_verify().into_script();
     let wscript_hash = script.wscript_hash().expect("script is less than 10,000 bytes");
     let p2wsh = ScriptPubKeyBuf::new_p2wsh(wscript_hash);
     assert!(p2wsh.is_p2wsh());
@@ -396,11 +397,12 @@ fn non_minimal_scriptints() {
 
 #[test]
 fn script_hashes() {
-    let script = ScriptBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap();
+    let script = RedeemScriptBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap();
     assert_eq!(
         script.script_hash().unwrap().to_string(),
         "8292bcfbef1884f73c813dfe9c82fd7e814291ea"
     );
+    let script = ScriptBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap();
     assert_eq!(
         script.wscript_hash().unwrap().to_string(),
         "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324"
@@ -631,7 +633,7 @@ fn p2sh_p2wsh_conversion() {
     assert_eq!(witness_script.to_p2wsh().unwrap(), expected_without);
 
     // p2sh
-    let redeem_script = ScriptBuf::from_hex_no_length_prefix("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8").unwrap();
+    let redeem_script = RedeemScriptBuf::from_hex_no_length_prefix("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8").unwrap();
     let expected_p2shout = ScriptPubKeyBuf::from_hex_no_length_prefix(
         "a91491b24bf9f5288532960ac687abb035127b1d28a587",
     )
@@ -649,7 +651,7 @@ fn p2sh_p2wsh_conversion() {
         "a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887",
     )
     .unwrap();
-    assert!(witness_script.to_p2sh().unwrap().is_p2sh());
+    // assert!(witness_script.to_p2sh().unwrap().is_p2sh()); // This is meaningless and no longer compiles
     assert_eq!(witness_script.to_p2wsh().unwrap(), expected_without);
     assert_eq!(witness_script.to_p2wsh().unwrap().to_p2sh().unwrap(), expected_out);
 }

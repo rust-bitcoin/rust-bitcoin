@@ -82,9 +82,10 @@ pub use self::{
 };
 #[doc(inline)]
 pub use primitives::script::{
-    GenericScript, GenericScriptBuf, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash,
-    ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag,
-    WScriptHash, Whatever, WitnessScriptSizeError,
+    GenericScript, GenericScriptBuf, RedeemScript, RedeemScriptBuf, RedeemScriptSizeError,
+    RedeemScriptTag, Script, ScriptBuf, ScriptHash, ScriptHashableTag, ScriptPubKey,
+    ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, WScriptHash,
+    Whatever, WitnessScriptSizeError,
 };
 
 pub(crate) use self::borrowed::GenericScriptExtPriv;

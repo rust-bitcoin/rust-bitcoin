@@ -14,6 +14,11 @@ pub enum Whatever {}
 
 impl Tag for Whatever {}
 
+/// A P2SH redeem script.
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub enum RedeemScriptTag {}
+impl Tag for RedeemScriptTag {}
+
 /// A script signature (scriptSig).
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum ScriptSigTag {}

@@ -1343,7 +1343,9 @@ mod tests {
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
-    use crate::script::{GenericScriptBufExt as _, ScriptBuf, ScriptPubKeyBuf, ScriptSigBuf};
+    use crate::script::{
+        GenericScriptBufExt as _, RedeemScriptBuf, ScriptBuf, ScriptPubKeyBuf, ScriptSigBuf,
+    };
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
     use crate::Sequence;
@@ -1513,7 +1515,7 @@ mod tests {
 
         let expected: Output = Output {
             redeem_script: Some(
-                ScriptBuf::from_hex_no_length_prefix(
+                RedeemScriptBuf::from_hex_no_length_prefix(
                     "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
                 )
                 .unwrap(),

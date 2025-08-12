@@ -9,9 +9,9 @@ use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{
-    Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes,
-    RedeemScriptSizeError, Script, ScriptHash, ScriptPubKey, ScriptSig, WScriptHash,
-    WitnessScriptSizeError,
+    Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
+    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
+    WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -157,18 +157,21 @@ internal_macros::define_extension_trait! {
             self.as_bytes().first().copied().map(From::from)
         }
 
-        // These methods should exist for only ScriptPubKey and RedeemScript. When we
-        // introduce RedeemScript we'll also introduce another marker trait to limit
-        // them. For now just put them on every Script type.
+        // These methods only exist for scriptPubKey and redeemScript, as indicated by the
+        // where clauses on them.
 
         /// Returns 160-bit hash of the script for P2SH outputs.
         #[inline]
-        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
+        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError>
+        where T: ScriptHashableTag
+        {
             ScriptHash::from_script(self)
         }
 
         /// Computes the P2SH output corresponding to this redeem script.
-        fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptSizeError> {
+        fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptSizeError>
+        where T: ScriptHashableTag
+        {
             self.script_hash().map(ScriptPubKeyBuf::new_p2sh)
         }
 
@@ -176,7 +179,9 @@ internal_macros::define_extension_trait! {
         /// for a P2WPKH output. The `scriptCode` is described in [BIP-0143].
         ///
         /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-        fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
+        fn p2wpkh_script_code(&self) -> Option<ScriptBuf>
+        where T: ScriptHashableTag
+        {
             if self.is_p2wpkh() {
                 // The `self` script is 0x00, 0x14, <pubkey_hash>
                 let bytes = <[u8; 20]>::try_from(&self.as_bytes()[2..]).expect("length checked in is_p2wpkh()");
@@ -198,7 +203,9 @@ internal_macros::define_extension_trait! {
         /// > special meaning. The value of the first push is called the "version byte". The following
         /// > byte vector pushed is called the "witness program".
         #[inline]
-        fn witness_version(&self) -> Option<WitnessVersion> {
+        fn witness_version(&self) -> Option<WitnessVersion>
+        where T: ScriptHashableTag
+        {
             let script_len = self.len();
             if !(4..=42).contains(&script_len) {
                 return None;
@@ -220,7 +227,9 @@ internal_macros::define_extension_trait! {
 
         /// Checks whether a script pubkey is a P2WSH output.
         #[inline]
-        fn is_p2wsh(&self) -> bool {
+        fn is_p2wsh(&self) -> bool
+        where T: ScriptHashableTag
+        {
             self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V0)
                 && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
@@ -228,7 +237,9 @@ internal_macros::define_extension_trait! {
 
         /// Checks whether a script pubkey is a P2WPKH output.
         #[inline]
-        fn is_p2wpkh(&self) -> bool {
+        fn is_p2wpkh(&self) -> bool
+        where T: ScriptHashableTag
+        {
             self.len() == 22
                 && self.witness_version() == Some(WitnessVersion::V0)
                 && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
@@ -572,14 +583,14 @@ internal_macros::define_extension_trait! {
         /// It merely gets the last push of the script.
         ///
         /// Use [`Script::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
-        fn redeem_script(&self) -> Option<&Script> {
+        fn redeem_script(&self) -> Option<&RedeemScript> {
             // Script must consist entirely of pushes.
             if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
                 return None;
             }
 
             if let Some(Ok(Instruction::PushBytes(b))) = self.instructions().last() {
-                Some(Script::from_bytes(b.as_bytes()))
+                Some(RedeemScript::from_bytes(b.as_bytes()))
             } else {
                 None
             }

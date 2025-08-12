@@ -12,7 +12,7 @@ use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{error, raw, Error};
-use crate::script::{ScriptBuf, ScriptSigBuf};
+use crate::script::{RedeemScriptBuf, ScriptBuf, ScriptSigBuf};
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
     TapSighashType,
@@ -83,7 +83,7 @@ pub struct Input {
     /// must use the sighash type.
     pub sighash_type: Option<PsbtSighashType>,
     /// The redeem script for this input.
-    pub redeem_script: Option<ScriptBuf>,
+    pub redeem_script: Option<RedeemScriptBuf>,
     /// The witness script for this input.
     pub witness_script: Option<ScriptBuf>,
     /// A map from public keys needed to sign this input to their corresponding
@@ -283,7 +283,7 @@ impl Input {
             }
             PSBT_IN_REDEEM_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.redeem_script <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.redeem_script <= <raw_key: _>|<raw_value: RedeemScriptBuf>
                 }
             }
             PSBT_IN_WITNESS_SCRIPT => {

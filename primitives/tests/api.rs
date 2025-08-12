@@ -17,9 +17,9 @@ use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, Script, ScriptBuf,
-    ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut,
-    Txid, Witness, Wtxid,
+    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
+    RedeemScriptBuf, Script, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
+    Sequence, Transaction, TxIn, TxOut, Txid, Witness, Wtxid,
 };
 use hashes::sha256t;
 
@@ -45,11 +45,13 @@ struct Structs<'a> {
     h: merkle_tree::WitnessMerkleNode,
     i: pow::CompactTarget,
     j: &'a Script,
+    j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
@@ -65,6 +67,7 @@ struct Structs<'a> {
 }
 
 static SCRIPT: ScriptBuf = ScriptBuf::new();
+static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
 static SCRIPT_SIG: ScriptSigBuf = ScriptSigBuf::new();
 static SCRIPT_PUB_KEY: ScriptPubKeyBuf = ScriptPubKeyBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
@@ -86,6 +89,7 @@ struct CommonTraits {
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
@@ -116,6 +120,7 @@ struct Clone<'a> {
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
@@ -147,6 +152,7 @@ struct Ord {
     k: ScriptHash,
     l: WScriptHash,
     m: ScriptBuf,
+    m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
     n: Sequence,
@@ -166,9 +172,11 @@ struct Ord {
 struct Default {
     a: block::Version,
     b: &'static Script,
+    b1: &'static RedeemScript,
     b2: &'static ScriptPubKey,
     b3: &'static ScriptSig,
     c: ScriptBuf,
+    c1: RedeemScriptBuf,
     c2: ScriptPubKeyBuf,
     c3: ScriptSigBuf,
     d: Sequence,
@@ -284,11 +292,13 @@ fn api_all_non_error_types_have_non_empty_debug() {
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
         pow::CompactTarget::from_consensus(0x1d00_ffff);
         SCRIPT.as_script();
+        REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
-        ScriptHash::from_script(&SCRIPT).unwrap();
+        ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
         WScriptHash::from_script(&SCRIPT).unwrap();
         SCRIPT.clone();
+        REDEEM_SCRIPT.clone();
         SCRIPT_SIG.clone();
         SCRIPT_PUB_KEY.clone();
         Sequence::arbitrary(&mut u).unwrap();
@@ -326,9 +336,11 @@ fn regression_default() {
     let want = Default {
         a: block::Version::NO_SOFT_FORK_SIGNALLING,
         b: Script::from_bytes(&[]),
+        b1: RedeemScript::from_bytes(&[]),
         b2: ScriptPubKey::from_bytes(&[]),
         b3: ScriptSig::from_bytes(&[]),
         c: ScriptBuf::from_bytes(Vec::new()),
+        c1: RedeemScriptBuf::from_bytes(Vec::new()),
         c2: ScriptPubKeyBuf::from_bytes(Vec::new()),
         c3: ScriptSigBuf::from_bytes(Vec::new()),
         d: Sequence::MAX,

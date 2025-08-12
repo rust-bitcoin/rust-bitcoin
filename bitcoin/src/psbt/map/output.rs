@@ -5,7 +5,7 @@ use crate::crypto::key::XOnlyPublicKey;
 use crate::prelude::{btree_map, BTreeMap, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
-use crate::script::ScriptBuf;
+use crate::script::{RedeemScriptBuf, ScriptBuf};
 use crate::taproot::{TapLeafHash, TapTree};
 
 /// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
@@ -30,7 +30,7 @@ const PSBT_OUT_PROPRIETARY: u64 = 0xFC;
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct Output {
     /// The redeem script for this output.
-    pub redeem_script: Option<ScriptBuf>,
+    pub redeem_script: Option<RedeemScriptBuf>,
     /// The witness script for this output.
     pub witness_script: Option<ScriptBuf>,
     /// A map from public keys needed to spend this output to their
@@ -57,7 +57,7 @@ impl Output {
         match raw_key.type_value {
             PSBT_OUT_REDEEM_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.redeem_script <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.redeem_script <= <raw_key: _>|<raw_value: RedeemScriptBuf>
                 }
             }
             PSBT_OUT_WITNESS_SCRIPT => {

@@ -30,7 +30,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::GenericScript,
     owned::GenericScriptBuf,
-    tag::{Tag, ScriptPubKeyTag, ScriptSigTag, Whatever},
+    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, Whatever},
 };
 
 /// Placeholder doc (will be replaced in later commit)
@@ -38,6 +38,12 @@ pub type Script = GenericScript<Whatever>;
 
 /// Placeholder doc (will be replaced in later commit)
 pub type ScriptBuf = GenericScriptBuf<Whatever>;
+
+/// A P2SH redeem script.
+pub type RedeemScriptBuf = GenericScriptBuf<RedeemScriptTag>;
+
+/// A reference to a P2SH redeem script.
+pub type RedeemScript = GenericScript<RedeemScriptTag>;
 
 /// A reference to a script public key (scriptPubKey).
 pub type ScriptPubKey = GenericScript<ScriptPubKeyTag>;
@@ -79,6 +85,27 @@ hashes::impl_debug_only_for_newtype!(ScriptHash, WScriptHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(ScriptHash, WScriptHash);
 
+/// Either a redeem script or a Segwit version 0 scriptpubkey.
+///
+/// In the case of P2SH-wrapped Segwit version outputs, we take a Segwit scriptPubKey
+/// and put it in a redeem script slot. The Bitcoin script interpreter has special
+/// logic to handle this case, which is reflected in our API in several methods
+/// relating to P2SH and signature hashing. These methods take either a normal
+/// P2SH redeem script, or a Segwit version 0 scriptpubkey.
+///
+/// Segwit version 1 (Taproot) and higher do **not** support P2SH-wrapping, and such
+/// scriptPubKeys should not be used with this trait.
+pub trait ScriptHashableTag: sealed::Sealed {}
+
+impl ScriptHashableTag for RedeemScriptTag {}
+impl ScriptHashableTag for ScriptPubKeyTag {}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::RedeemScriptTag {}
+    impl Sealed for super::ScriptPubKeyTag {}
+}
+
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.
     ///
@@ -91,7 +118,10 @@ impl ScriptHash {
     ///
     /// ref: [BIP-16](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
     #[inline]
-    pub fn from_script<T>(redeem_script: &GenericScript<T>) -> Result<Self, RedeemScriptSizeError> {
+    pub fn from_script<T>(redeem_script: &GenericScript<T>) -> Result<Self, RedeemScriptSizeError>
+    where
+        T: ScriptHashableTag,
+    {
         if redeem_script.len() > MAX_REDEEM_SCRIPT_SIZE {
             return Err(RedeemScriptSizeError { size: redeem_script.len() });
         }
@@ -143,29 +173,29 @@ impl WScriptHash {
     }
 }
 
-impl TryFrom<ScriptBuf> for ScriptHash {
+impl<T: ScriptHashableTag> TryFrom<GenericScriptBuf<T>> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
     #[inline]
-    fn try_from(redeem_script: ScriptBuf) -> Result<Self, Self::Error> {
+    fn try_from(redeem_script: GenericScriptBuf<T>) -> Result<Self, Self::Error> {
         Self::from_script(&redeem_script)
     }
 }
 
-impl TryFrom<&ScriptBuf> for ScriptHash {
+impl<T: ScriptHashableTag> TryFrom<&GenericScriptBuf<T>> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
     #[inline]
-    fn try_from(redeem_script: &ScriptBuf) -> Result<Self, Self::Error> {
+    fn try_from(redeem_script: &GenericScriptBuf<T>) -> Result<Self, Self::Error> {
         Self::from_script(redeem_script)
     }
 }
 
-impl TryFrom<&Script> for ScriptHash {
+impl<T: ScriptHashableTag> TryFrom<&GenericScript<T>> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
     #[inline]
-    fn try_from(redeem_script: &Script) -> Result<Self, Self::Error> {
+    fn try_from(redeem_script: &GenericScript<T>) -> Result<Self, Self::Error> {
         Self::from_script(redeem_script)
     }
 }
@@ -728,10 +758,10 @@ mod tests {
 
     #[test]
     fn script_hash_from_script() {
-        let script = Script::from_bytes(&[0x51; 520]);
+        let script = RedeemScript::from_bytes(&[0x51; 520]);
         assert!(ScriptHash::from_script(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 521]);
+        let script = RedeemScript::from_bytes(&[0x51; 521]);
         assert!(ScriptHash::from_script(script).is_err());
     }
 
@@ -759,29 +789,29 @@ mod tests {
     }
 
     #[test]
-    fn try_from_scriptbuf_for_scripthash() {
-        let script = ScriptBuf::from(vec![0x51; 520]);
+    fn try_from_scriptpubkeybuf_for_scripthash() {
+        let script = ScriptPubKeyBuf::from(vec![0x51; 520]);
         assert!(ScriptHash::try_from(script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 521]);
+        let script = ScriptPubKeyBuf::from(vec![0x51; 521]);
         assert!(ScriptHash::try_from(script).is_err());
     }
 
     #[test]
-    fn try_from_scriptbuf_ref_for_scripthash() {
-        let script = ScriptBuf::from(vec![0x51; 520]);
+    fn try_from_scriptpubkeybuf_ref_for_scripthash() {
+        let script = ScriptPubKeyBuf::from(vec![0x51; 520]);
         assert!(ScriptHash::try_from(&script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 521]);
+        let script = ScriptPubKeyBuf::from(vec![0x51; 521]);
         assert!(ScriptHash::try_from(&script).is_err());
     }
 
     #[test]
     fn try_from_script_for_scripthash() {
-        let script = Script::from_bytes(&[0x51; 520]);
+        let script = RedeemScript::from_bytes(&[0x51; 520]);
         assert!(ScriptHash::try_from(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 521]);
+        let script = RedeemScript::from_bytes(&[0x51; 521]);
         assert!(ScriptHash::try_from(script).is_err());
     }
 
@@ -902,7 +932,7 @@ mod tests {
 
     #[test]
     fn redeem_script_size_error() {
-        let script = ScriptBuf::from(vec![0x51; 521]);
+        let script = RedeemScriptBuf::from(vec![0x51; 521]);
         let result = ScriptHash::try_from(script);
 
         let err = result.unwrap_err();

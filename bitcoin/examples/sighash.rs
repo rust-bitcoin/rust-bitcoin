@@ -1,6 +1,7 @@
 use bitcoin::ext::*;
 use bitcoin::{
-    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptPubKeyBuf, Transaction,
+    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptPubKey, ScriptPubKeyBuf,
+    Transaction,
 };
 use hex_lit::hex;
 
@@ -78,7 +79,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
             script_pubkey_p2sh.push_bytes().unwrap().as_bytes()
         }
     };
-    let script_code = Script::from_bytes(script_pubkey_bytes);
+    let script_code = ScriptPubKey::from_bytes(script_pubkey_bytes);
     let pushbytes_0 = instructions.remove(0).unwrap();
     assert!(
         pushbytes_0.push_bytes().unwrap().as_bytes().is_empty(),
