@@ -47,6 +47,76 @@ use crate::prelude::*; // *NOT* OK
 use crate::prelude::{DisplayHex, String, Vec} // OK
 ```
 
+## Re-exports
+
+Types should _not_ be re-exported unless it is _really_ helpful. I.e., we considered re-exporting
+types from modules where they appear in the public API but decided against it.
+
+### pub extern crates
+
+Any crate `foo` which exposes a type from crate `bar` MUST publicly re-export `bar` crate at the
+root.
+
+
+For example:
+
+```rust
+/// Re-export the `hex-conservative` crate.
+pub extern crate hex;
+```
+
+Note, can use this exact doc format.
+
+### Special treatment of `bitcoin`, `primitives`, `units`
+
+`bitcoin`, `primitives`, and `units` should each be a superset of the crates below. 
+
+E.g for any `units::Foo`, there will be a `primitives::Foo`, and `bitcoin::Foo`. This goes for all
+types and modules.
+
+For these three crates:
+
+- Non-error re-exports use `doc(inline)`. 
+- Error re-exports use `doc(no_inline)`.
+- Error types that are directly in the API are re-exported.
+- Other error types are available in an `error` module.
+
+For example in `units`:
+
+```rust
+
+pub mod foo {
+    // SomeError is 'directly' in the API but FooError is not.
+    pub use self::error::SomeError;
+
+    /// A FooBar type.
+    pub struct FooBar { ... };
+
+    /// Some function.
+    pub some_function() -> SomeError { 
+        // Example rror logic
+        SomeError::Foo(FooError { ... })
+    }
+    
+    pub mod error {
+        /// Example error used 'directly' in the public API.
+        pub enum SomeError { ... };
+    
+        /// Abstracts the details of a foo-related error.
+        pub struct FooError { ... };
+    }
+}
+```
+
+Then in `primitives` (and in `bitcoin`) in `lib.rs`:
+
+```rust
+#[doc(inline)]
+pub use units::{foo, FooBar};
+#[doc(no_inline)]
+pub use units::foo::SomeError;
+```
+
 ## Return `Self`
 
 Use `Self` as the return type instead of naming the type. When constructing the return value use
@@ -88,7 +158,6 @@ impl From<foo::Error> for LongDescriptiveError {
     fn from(e: foo::Error) -> Self { Self::Foo(e) }
 }
 ```
-
 
 ## Errors
 
