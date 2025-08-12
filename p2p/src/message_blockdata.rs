@@ -130,6 +130,19 @@ impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
+/// Extend a [`BlockHash`] for requesting data from peers.
+pub trait BlockHashExt {
+    /// Return an all-zero hash. Which is used to indicate you would like the maximum amount of
+    /// data.
+    fn all_zeros() -> Self;
+}
+
+impl BlockHashExt for BlockHash {
+    fn all_zeros() -> Self {
+        BlockHash::from_byte_array([0; 32]) 
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use bitcoin::consensus::encode::{deserialize, serialize};
