@@ -644,6 +644,9 @@ impl<'a> Arbitrary<'a> for Wtxid {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")]
+    use alloc::{format, vec};
+
     #[test]
     fn sanity_check() {
         let version = Version(123);

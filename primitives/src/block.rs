@@ -397,6 +397,9 @@ impl<'a> Arbitrary<'a> for Version {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")] 
+    use alloc::{format, vec};
+
     fn dummy_header() -> Header {
         Header {
             version: Version::ONE,
@@ -554,6 +557,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn header_debug() {
         let header = dummy_header();
         let expected = format!(
@@ -571,6 +575,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
     fn header_display() {
         let seconds: u32 = 1_653_195_600; // Arbitrary timestamp: May 22nd, 5am UTC.
 

@@ -52,6 +52,9 @@ impl fmt::UpperHex for CompactTarget {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")]
+    use alloc::{format};
+
     #[test]
     fn compact_target_ordering() {
         let lower = CompactTarget::from_consensus(0x1d00_fffe);
@@ -63,6 +66,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn compact_target_formatting() {
         let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
         assert_eq!(format!("{:x}", compact_target), "1d00ffff");
