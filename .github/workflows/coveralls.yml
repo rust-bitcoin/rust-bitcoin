@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout Crate
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Checkout Toolchain
         # https://github.com/dtolnay/rust-toolchain
         uses: dtolnay/rust-toolchain@stable
