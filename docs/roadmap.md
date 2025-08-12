@@ -5,7 +5,7 @@
   * Implement script tagging
   * Add support for consensus encoding to `primitives`
 * Release `bitcoin v0.33.0-rc.0`
-* Split out an address crate (see [address.md])
+* Split out an address crate (see [addresses.md])
 * BIP-32 and BIP-380 (see [bip-32.md])
 * PSBTv2 (see [psbt.md])
 * Make it possible for `bitcoin` to depend on `miniscript` (see [#2882])
@@ -16,7 +16,7 @@
 We want to do a long release candidate cycle to give time for downstream testing and feedback on the
 API of the 1.0 crates. At a minimum this will be 6 months from the release `primitives-1.0-rc.0`.
 
-[address.md]: ./address.md
+[addresses.md]: ./addresses.md
 [bip-32.md]: ./bip-32.md
 [psbt.md]: ./psbt.md
 [#2882]: <https://github.com/rust-bitcoin/rust-bitcoin/issues/2882>
