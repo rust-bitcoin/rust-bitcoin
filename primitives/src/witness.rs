@@ -31,12 +31,14 @@ use crate::prelude::{Box, Vec};
 pub struct Witness {
     /// Contains the witness `Vec<Vec<u8>>` serialization.
     ///
-    /// Does not include the initial varint indicating the number of elements. Each element however,
-    /// does include a varint indicating the element length. The number of elements is stored in
-    /// `witness_elements`.
+    /// Does not include the initial length prefix indicating the number of elements. Each element
+    /// however, does include a [`CompactSize`] indicating the element length. The number of
+    /// elements is stored in `witness_elements`.
     ///
     /// Concatenated onto the end of `content` is the index area. This is a `4 * witness_elements`
     /// bytes area which stores the index of the start of each witness item.
+    ///
+    /// [`CompactSize`]: <https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer>
     content: Vec<u8>,
 
     /// The number of elements in the witness.

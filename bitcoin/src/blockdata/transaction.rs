@@ -111,7 +111,7 @@ internal_macros::define_extension_trait! {
         ///
         /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
         /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
-        /// the input length `VarInt` to increase its encoding length.
+        /// the input length `CompactSize` to increase its encoding length.
         fn legacy_weight(&self) -> Weight {
             Weight::from_non_witness_data_size(self.base_size().to_u64())
         }
@@ -119,12 +119,12 @@ internal_macros::define_extension_trait! {
         /// The weight of the TxIn when it's included in a SegWit transaction (i.e., a transaction
         /// having at least one SegWit input).
         ///
-        /// This always takes into account the witness, even when empty, in which
-        /// case 1WU for the witness length varint (`00`) is included.
+        /// This always takes into account the witness, even when empty (in which
+        /// case 1WU for the witness length `00` is included).
         ///
         /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
         /// might increase more than `TxIn::segwit_weight`. This happens when:
-        /// - the new input added causes the input length `VarInt` to increase its encoding length
+        /// - the new input added causes the input length `CompactSize` to increase its encoding length
         /// - the new input is the first segwit input added - this will add an additional 2WU to the
         ///   transaction weight to take into account the SegWit marker
         fn segwit_weight(&self) -> Weight {
@@ -158,7 +158,7 @@ internal_macros::define_extension_trait! {
         ///
         /// Keep in mind that when adding a [`TxOut`] to a [`Transaction`] the total weight of the
         /// transaction might increase more than `TxOut::weight`. This happens when the new output added
-        /// causes the output length `VarInt` to increase its encoding length.
+        /// causes the output length `CompactSize` to increase its encoding length.
         ///
         /// # Panics
         ///
@@ -764,7 +764,7 @@ impl Decodable for Transaction {
 ///
 /// Note: the effective value of a [`Transaction`] may increase less than the effective value of
 /// a [`TxOut`] when adding another [`TxOut`] to the transaction. This happens when the new
-/// [`TxOut`] added causes the output length `VarInt` to increase its encoding length.
+/// [`TxOut`] added causes the output length `CompactSize` to increase its encoding length.
 ///
 /// # Parameters
 ///
@@ -795,8 +795,7 @@ pub fn effective_value(
 ///   of the to-be-constructed transaction.
 ///
 /// Note that lengths of the scripts and witness elements must be non-serialized, IOW *without* the
-/// preceding compact size. The length of preceding compact size is computed and added inside the
-/// function for convenience.
+/// length prefix. The length is computed and added inside the function for convenience.
 ///
 /// If you have the transaction already constructed (except for signatures) with a dummy value for
 /// fee output you can use the return value of [`Transaction::script_pubkey_lens`] method directly
@@ -1116,7 +1115,7 @@ impl InputWeightPrediction {
     }
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
-    /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count.
     ///
     /// This function's internal arithmetic saturates at u32::MAX, so the return value of this
     /// function may be inaccurate for extremely large witness predictions.
@@ -1138,7 +1137,7 @@ impl InputWeightPrediction {
     }
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
-    /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count.
     ///
     /// This function's internal arithmetic saturates at u32::MAX, so the return value of this
     /// function may be inaccurate for extremely large witness predictions.

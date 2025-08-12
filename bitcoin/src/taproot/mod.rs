@@ -1278,9 +1278,10 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
 
     /// Serializes the control block.
     ///
-    /// This would be required when using [`ControlBlock`] as a witness element while spending an
-    /// output via script path. This serialization does not include the varint prefix that would be
-    /// applied when encoding this element as a witness.
+    /// This is required when using [`ControlBlock`] as a witness element while spending an output
+    /// via a script path. This serialization does not include the length prefix. When the
+    /// serialization returned by this function is later encoded as a witness element the length
+    /// prefix is added.
     pub fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.size());
         self.encode(&mut buf).expect("writers don't error");
