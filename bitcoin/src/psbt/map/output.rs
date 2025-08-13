@@ -5,7 +5,7 @@ use crate::crypto::key::XOnlyPublicKey;
 use crate::prelude::{btree_map, BTreeMap, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
-use crate::script::{RedeemScriptBuf, ScriptBuf};
+use crate::script::{RedeemScriptBuf, WitnessScriptBuf};
 use crate::taproot::{TapLeafHash, TapTree};
 
 /// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
@@ -32,7 +32,7 @@ pub struct Output {
     /// The redeem script for this output.
     pub redeem_script: Option<RedeemScriptBuf>,
     /// The witness script for this output.
-    pub witness_script: Option<ScriptBuf>,
+    pub witness_script: Option<WitnessScriptBuf>,
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
@@ -62,7 +62,7 @@ impl Output {
             }
             PSBT_OUT_WITNESS_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.witness_script <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.witness_script <= <raw_key: _>|<raw_value: WitnessScriptBuf>
                 }
             }
             PSBT_OUT_BIP32_DERIVATION => {

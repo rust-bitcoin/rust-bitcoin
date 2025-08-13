@@ -1344,7 +1344,7 @@ mod tests {
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::{
-        GenericScriptBufExt as _, RedeemScriptBuf, ScriptBuf, ScriptPubKeyBuf, ScriptSigBuf,
+        GenericScriptBufExt as _, RedeemScriptBuf, ScriptPubKeyBuf, ScriptSigBuf, WitnessScriptBuf,
     };
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
@@ -1521,7 +1521,7 @@ mod tests {
                 .unwrap(),
             ),
             witness_script: Some(
-                ScriptBuf::from_hex_no_length_prefix(
+                WitnessScriptBuf::from_hex_no_length_prefix(
                     "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
                 )
                 .unwrap(),

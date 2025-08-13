@@ -28,3 +28,8 @@ impl Tag for ScriptSigTag {}
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum ScriptPubKeyTag {}
 impl Tag for ScriptPubKeyTag {}
+
+/// A Segwit v0 witness script.
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub enum WitnessScriptTag {}
+impl Tag for WitnessScriptTag {}

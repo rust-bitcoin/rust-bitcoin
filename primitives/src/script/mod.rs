@@ -30,7 +30,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::GenericScript,
     owned::GenericScriptBuf,
-    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, Whatever},
+    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, Whatever, WitnessScriptTag},
 };
 
 /// Placeholder doc (will be replaced in later commit)
@@ -56,6 +56,12 @@ pub type ScriptPubKeyBuf = GenericScriptBuf<ScriptPubKeyTag>;
 
 /// A script signature (scriptSig).
 pub type ScriptSigBuf = GenericScriptBuf<ScriptSigTag>;
+
+/// A Segwit v0 witness script.
+pub type WitnessScriptBuf = GenericScriptBuf<WitnessScriptTag>;
+
+/// A reference to a Segwit v0 witness script.
+pub type WitnessScript = GenericScript<WitnessScriptTag>;
 
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
@@ -152,7 +158,7 @@ impl WScriptHash {
     ///
     /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     #[inline]
-    pub fn from_script(witness_script: &Script) -> Result<Self, WitnessScriptSizeError> {
+    pub fn from_script(witness_script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
         if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {
             return Err(WitnessScriptSizeError { size: witness_script.len() });
         }
@@ -168,7 +174,7 @@ impl WScriptHash {
     ///
     /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     #[inline]
-    pub fn from_script_unchecked(script: &Script) -> Self {
+    pub fn from_script_unchecked(script: &WitnessScript) -> Self {
         WScriptHash(sha256::Hash::hash(script.as_bytes()))
     }
 }
@@ -200,29 +206,29 @@ impl<T: ScriptHashableTag> TryFrom<&GenericScript<T>> for ScriptHash {
     }
 }
 
-impl TryFrom<ScriptBuf> for WScriptHash {
+impl TryFrom<WitnessScriptBuf> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
     #[inline]
-    fn try_from(witness_script: ScriptBuf) -> Result<Self, Self::Error> {
+    fn try_from(witness_script: WitnessScriptBuf) -> Result<Self, Self::Error> {
         Self::from_script(&witness_script)
     }
 }
 
-impl TryFrom<&ScriptBuf> for WScriptHash {
+impl TryFrom<&WitnessScriptBuf> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
     #[inline]
-    fn try_from(witness_script: &ScriptBuf) -> Result<Self, Self::Error> {
+    fn try_from(witness_script: &WitnessScriptBuf) -> Result<Self, Self::Error> {
         Self::from_script(witness_script)
     }
 }
 
-impl TryFrom<&Script> for WScriptHash {
+impl TryFrom<&WitnessScript> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
     #[inline]
-    fn try_from(witness_script: &Script) -> Result<Self, Self::Error> {
+    fn try_from(witness_script: &WitnessScript) -> Result<Self, Self::Error> {
         Self::from_script(witness_script)
     }
 }
@@ -767,23 +773,23 @@ mod tests {
 
     #[test]
     fn script_hash_from_script_unchecked() {
-        let script = Script::from_bytes(&[0x51; 521]);
+        let script = WitnessScript::from_bytes(&[0x51; 521]);
         let hash = ScriptHash::from_script_unchecked(script);
         assert_eq!(hash, ScriptHash(hash160::Hash::hash(script.as_bytes())));
     }
 
     #[test]
     fn wscript_hash_from_script() {
-        let script = Script::from_bytes(&[0x51; 10_000]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_000]);
         assert!(WScriptHash::from_script(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 10_001]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_001]);
         assert!(WScriptHash::from_script(script).is_err());
     }
 
     #[test]
     fn wscript_hash_from_script_unchecked() {
-        let script = Script::from_bytes(&[0x51; 10_001]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_001]);
         let hash = WScriptHash::from_script_unchecked(script);
         assert_eq!(hash, WScriptHash(sha256::Hash::hash(script.as_bytes())));
     }
@@ -817,28 +823,28 @@ mod tests {
 
     #[test]
     fn try_from_scriptbuf_for_wscript_hash() {
-        let script = ScriptBuf::from(vec![0x51; 10_000]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_000]);
         assert!(WScriptHash::try_from(script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_001]);
         assert!(WScriptHash::try_from(script).is_err());
     }
 
     #[test]
     fn try_from_scriptbuf_ref_for_wscript_hash() {
-        let script = ScriptBuf::from(vec![0x51; 10_000]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_000]);
         assert!(WScriptHash::try_from(&script).is_ok());
 
-        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_001]);
         assert!(WScriptHash::try_from(&script).is_err());
     }
 
     #[test]
     fn try_from_script_for_wscript_hash() {
-        let script = Script::from_bytes(&[0x51; 10_000]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_000]);
         assert!(WScriptHash::try_from(script).is_ok());
 
-        let script = Script::from_bytes(&[0x51; 10_001]);
+        let script = WitnessScript::from_bytes(&[0x51; 10_001]);
         assert!(WScriptHash::try_from(script).is_err());
     }
 
@@ -944,7 +950,7 @@ mod tests {
 
     #[test]
     fn witness_script_size_error() {
-        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        let script = WitnessScriptBuf::from(vec![0x51; 10_001]);
         let result = WScriptHash::try_from(script);
 
         let err = result.unwrap_err();

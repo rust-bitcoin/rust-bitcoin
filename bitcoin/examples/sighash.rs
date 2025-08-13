@@ -1,7 +1,7 @@
 use bitcoin::ext::*;
 use bitcoin::{
-    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptPubKey, ScriptPubKeyBuf,
-    Transaction,
+    consensus, ecdsa, sighash, Amount, CompressedPublicKey, ScriptPubKey, ScriptPubKeyBuf,
+    Transaction, WitnessScript,
 };
 use hex_lit::hex;
 
@@ -112,7 +112,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 
     //last element is called witnessScript according to BIP-0141. It supersedes scriptPubKey.
     let witness_script_bytes: &[u8] = witness.last().expect("out of bounds");
-    let witness_script = Script::from_bytes(witness_script_bytes);
+    let witness_script = WitnessScript::from_bytes(witness_script_bytes);
     let mut cache = sighash::SighashCache::new(&tx);
 
     //in an M of N multisig, the witness elements from 1 (0-based) to M-2 are signatures (with sighash flags as the last byte)

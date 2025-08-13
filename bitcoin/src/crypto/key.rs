@@ -21,7 +21,7 @@ use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
-use crate::script::{self, ScriptBuf};
+use crate::script::{self, WitnessScriptBuf};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -185,7 +185,11 @@ impl PublicKey {
     }
 
     /// Returns the script code used to spend a P2WPKH input.
-    pub fn p2wpkh_script_code(&self) -> Result<ScriptBuf, UncompressedPublicKeyError> {
+    ///
+    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+    /// should not be used as one. It is a special template defined in BIP 143 which is used
+    /// in place of a witness script for purposes of sighash computation.
+    pub fn p2wpkh_script_code(&self) -> Result<WitnessScriptBuf, UncompressedPublicKeyError> {
         let key = CompressedPublicKey::try_from(*self)?;
         Ok(key.p2wpkh_script_code())
     }
@@ -404,7 +408,11 @@ impl CompressedPublicKey {
     }
 
     /// Returns the script code used to spend a P2WPKH input.
-    pub fn p2wpkh_script_code(&self) -> ScriptBuf {
+    ///
+    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+    /// should not be used as one. It is a special template defined in BIP 143 which is used
+    /// in place of a witness script for purposes of sighash computation.
+    pub fn p2wpkh_script_code(&self) -> WitnessScriptBuf {
         script::p2wpkh_script_code(self.wpubkey_hash())
     }
 

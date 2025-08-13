@@ -64,9 +64,10 @@ use crate::prelude::{String, ToOwned};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, GenericScript, GenericScriptExt as _, RedeemScriptSizeError, Script, ScriptExt as _,
-    ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _,
-    ScriptPubKeyExt as _, WScriptHash, WitnessScriptSizeError,
+    self, GenericScript, GenericScriptExt as _, RedeemScriptSizeError, ScriptHash,
+    ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _,
+    ScriptPubKeyExt as _, WScriptHash, WitnessScript, WitnessScriptExt as _,
+    WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
@@ -544,7 +545,7 @@ impl Address {
 
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script.
     pub fn p2wsh(
-        witness_script: &Script,
+        witness_script: &WitnessScript,
         hrp: impl Into<KnownHrp>,
     ) -> Result<Address, WitnessScriptSizeError> {
         let program = WitnessProgram::p2wsh(witness_script)?;
@@ -562,7 +563,7 @@ impl Address {
     ///
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwsh(
-        witness_script: &Script,
+        witness_script: &WitnessScript,
         network: impl Into<NetworkKind>,
     ) -> Result<Address, WitnessScriptSizeError> {
         let hash = witness_script.wscript_hash()?;
@@ -1021,7 +1022,7 @@ mod tests {
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, TestnetVersion};
-    use crate::script::{GenericScriptBufExt as _, RedeemScriptBuf, ScriptBuf};
+    use crate::script::{GenericScriptBufExt as _, RedeemScriptBuf, WitnessScriptBuf};
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(
@@ -1127,7 +1128,7 @@ mod tests {
     #[test]
     fn p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
-        let script = ScriptBuf::from_hex_no_length_prefix("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
+        let script = WitnessScriptBuf::from_hex_no_length_prefix("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
         let addr = Address::p2wsh(&script, KnownHrp::Mainnet).expect("script is valid");
         assert_eq!(
             &addr.to_string(),
@@ -1152,7 +1153,7 @@ mod tests {
     #[test]
     fn p2shwsh() {
         // stolen from Bitcoin transaction f9ee2be4df05041d0e0a35d7caa3157495ca4f93b233234c9967b6901dacf7a9
-        let script = ScriptBuf::from_hex_no_length_prefix("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
+        let script = WitnessScriptBuf::from_hex_no_length_prefix("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
         let addr = Address::p2shwsh(&script, NetworkKind::Main).expect("script is valid");
         assert_eq!(&addr.to_string(), "36EqgNnsWW94SreZgBWc1ANC6wpFZwirHr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));

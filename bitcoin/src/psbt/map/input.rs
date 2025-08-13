@@ -12,7 +12,7 @@ use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{error, raw, Error};
-use crate::script::{RedeemScriptBuf, ScriptBuf, ScriptSigBuf};
+use crate::script::{RedeemScriptBuf, ScriptBuf, ScriptSigBuf, WitnessScriptBuf};
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
     TapSighashType,
@@ -85,7 +85,7 @@ pub struct Input {
     /// The redeem script for this input.
     pub redeem_script: Option<RedeemScriptBuf>,
     /// The witness script for this input.
-    pub witness_script: Option<ScriptBuf>,
+    pub witness_script: Option<WitnessScriptBuf>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
@@ -288,7 +288,7 @@ impl Input {
             }
             PSBT_IN_WITNESS_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.witness_script <= <raw_key: _>|<raw_value: ScriptBuf>
+                    self.witness_script <= <raw_key: _>|<raw_value: WitnessScriptBuf>
                 }
             }
             PSBT_IN_BIP32_DERIVATION => {

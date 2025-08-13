@@ -26,7 +26,9 @@ use crate::script::{GenericScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
-use crate::{transaction, Amount, Script, ScriptPubKey, Sequence, Transaction, TxOut};
+use crate::{
+    transaction, Amount, Script, ScriptPubKey, Sequence, Transaction, TxOut, WitnessScript,
+};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -816,7 +818,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         writer: &mut W,
         input_index: usize,
-        script_code: &Script,
+        script_code: &WitnessScript,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
@@ -899,7 +901,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     pub fn p2wsh_signature_hash(
         &mut self,
         input_index: usize,
-        witness_script: &Script,
+        witness_script: &WitnessScript,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
@@ -1537,7 +1539,9 @@ mod tests {
     use super::*;
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
-    use crate::script::{GenericScriptBufExt as _, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf};
+    use crate::script::{
+        GenericScriptBufExt as _, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, WitnessScriptBuf,
+    };
     use crate::TxIn;
 
     extern crate serde_json;
@@ -2170,7 +2174,7 @@ mod tests {
     // Note, if you are looking at the test vectors in BIP-0143 and wondering why there is a `cf`
     // prepended to all the script_code hex it is the length byte, it gets added when we consensus
     // encode a script.
-    fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, ScriptBuf, Amount) {
+    fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, WitnessScriptBuf, Amount) {
         let tx = deserialize::<Transaction>(&hex!(
             "010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000\
              ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f\
@@ -2178,7 +2182,7 @@ mod tests {
         ))
         .unwrap();
 
-        let witness_script = ScriptBuf::from_hex_no_length_prefix(
+        let witness_script = WitnessScriptBuf::from_hex_no_length_prefix(
             "56210307b8ae49ac90a048e9b53357a2354b3334e9c8bee813ecb98e99a7e07e8c3ba32103b28f0c28\
              bfab54554ae8c658ac5c3e0ce6e79ad336331f78c428dd43eea8449b21034b8113d703413d57761b8b\
              9781957b8c0ac1dfe69f492580ca4195f50376ba4a21033400f6afecb833092a9a21cfdf1ed1376e58\

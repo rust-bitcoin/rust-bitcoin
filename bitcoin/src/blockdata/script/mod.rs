@@ -74,7 +74,7 @@ use crate::OutPoint;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::{GenericScriptExt, ScriptExt, ScriptPubKeyExt, ScriptSigExt},
+    borrowed::{GenericScriptExt, ScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{GenericScriptBufExt, ScriptPubKeyBufExt},
@@ -85,7 +85,7 @@ pub use primitives::script::{
     GenericScript, GenericScriptBuf, RedeemScript, RedeemScriptBuf, RedeemScriptSizeError,
     RedeemScriptTag, Script, ScriptBuf, ScriptHash, ScriptHashableTag, ScriptPubKey,
     ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, WScriptHash,
-    Whatever, WitnessScriptSizeError,
+    Whatever, WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
 };
 
 pub(crate) use self::borrowed::GenericScriptExtPriv;
@@ -97,8 +97,12 @@ impl_asref_push_bytes!(ScriptHash, WScriptHash);
 ///
 /// The `scriptCode` is described in [BIP-0143].
 ///
+/// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+/// should not be used as one. It is a special template defined in BIP-0143 which is used
+/// in place of a witness script for purposes of sighash computation.
+///
 /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
+pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> WitnessScriptBuf {
     Builder::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)

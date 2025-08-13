@@ -11,7 +11,7 @@ use super::witness_version::WitnessVersion;
 use super::{
     Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
     RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
-    WScriptHash, WitnessScriptSizeError,
+    WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -21,7 +21,7 @@ use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
-use crate::{internal_macros, Amount, FeeRate, ScriptBuf, ScriptPubKeyBuf};
+use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
@@ -178,8 +178,12 @@ internal_macros::define_extension_trait! {
         /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
         /// for a P2WPKH output. The `scriptCode` is described in [BIP-0143].
         ///
+        /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+        /// should not be used as one. It is a special template defined in BIP 143 which is used
+        /// in place of a witness script for purposes of sighash computation.
+        ///
         /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-        fn p2wpkh_script_code(&self) -> Option<ScriptBuf>
+        fn p2wpkh_script_code(&self) -> Option<WitnessScriptBuf>
         where T: ScriptHashableTag
         {
             if self.is_p2wpkh() {
@@ -249,24 +253,29 @@ internal_macros::define_extension_trait! {
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
-    pub trait ScriptExt impl for Script {
+    pub trait WitnessScriptExt impl for WitnessScript {
         /// Returns 256-bit hash of the script for P2WSH outputs.
         #[inline]
         fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
             WScriptHash::from_script(self)
         }
 
+        /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+        /// script").
+        fn to_p2wsh(&self) -> Result<ScriptPubKeyBuf, WitnessScriptSizeError> {
+            self.wscript_hash().map(ScriptPubKeyBuf::new_p2wsh)
+        }
+    }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Script`] type.
+    pub trait ScriptExt impl for Script {
         /// Computes leaf hash of tapscript.
         #[inline]
         fn tapscript_leaf_hash(&self) -> TapLeafHash {
             TapLeafHash::from_script(self, LeafVersion::TapScript)
         }
-
-        /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
-        /// script").
-        fn to_p2wsh(&self) -> Result<ScriptPubKeyBuf, WitnessScriptSizeError> {
-            self.wscript_hash().map(ScriptPubKeyBuf::new_p2wsh)
-      }
 
         /// Computes P2TR output with a given internal key and a single script spending path equal to
         /// the current script, assuming that the script is a Tapscript.
