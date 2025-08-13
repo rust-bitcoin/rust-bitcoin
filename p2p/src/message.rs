@@ -14,7 +14,7 @@ use core::{cmp, fmt};
 
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
-use bitcoin::{block, transaction};
+use bitcoin::{block, block::HeaderExt, transaction};
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{self, BufRead, Read, Write};
@@ -227,7 +227,7 @@ pub enum NetworkMessage {
     /// `block`
     Block(block::Block),
     /// `headers`
-    Headers(Vec<block::Header>),
+    Headers(HeadersMessage),
     /// `sendheaders`
     SendHeaders,
     /// `getaddr`
@@ -396,9 +396,7 @@ impl V2NetworkMessage {
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
-struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
-
-impl Encodable for HeaderSerializationWrapper<'_> {
+impl Encodable for HeadersMessage {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
@@ -424,7 +422,7 @@ impl Encodable for NetworkMessage {
             NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Headers(ref dat) =>
-                HeaderSerializationWrapper(dat).consensus_encode(writer),
+                dat.consensus_encode(writer),
             NetworkMessage::Ping(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Pong(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode(writer),
@@ -525,9 +523,32 @@ impl Encodable for V2NetworkMessage {
     }
 }
 
-struct HeaderDeserializationWrapper(Vec<block::Header>);
+/// A list of bitcoin block headers.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeadersMessage(pub Vec<block::Header>);
 
-impl Decodable for HeaderDeserializationWrapper {
+impl HeadersMessage {
+    /// Does each header point to the previous block hash in the list.
+    pub fn is_connected(&self) -> bool {
+        self.0
+            .iter()
+            .zip(self.0.iter().skip(1))
+            .all(|(first, second)| first.block_hash().eq(&second.prev_blockhash))
+    }
+
+    /// Each header passes its own proof-of-work target.
+    pub fn all_targets_satisfied(&self) -> bool {
+        !self.0
+            .iter()
+            .any(|header| {
+                let target = header.target();
+                let valid_pow = header.validate_pow(target);
+                valid_pow.is_err()
+            })
+    }
+}
+
+impl Decodable for HeadersMessage {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
@@ -544,7 +565,7 @@ impl Decodable for HeaderDeserializationWrapper {
                 ));
             }
         }
-        Ok(HeaderDeserializationWrapper(ret))
+        Ok(HeadersMessage(ret))
     }
 
     #[inline]
@@ -588,7 +609,7 @@ impl Decodable for RawNetworkMessage {
             "block" =>
                 NetworkMessage::Block(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "headers" => NetworkMessage::Headers(
-                HeaderDeserializationWrapper::consensus_decode_from_finite_reader(&mut mem_d)?.0,
+                HeadersMessage::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
             "sendheaders" => NetworkMessage::SendHeaders,
             "getaddr" => NetworkMessage::GetAddr,
@@ -712,7 +733,7 @@ impl Decodable for V2NetworkMessage {
             11u8 => NetworkMessage::GetData(Decodable::consensus_decode_from_finite_reader(r)?),
             12u8 => NetworkMessage::GetHeaders(Decodable::consensus_decode_from_finite_reader(r)?),
             13u8 => NetworkMessage::Headers(
-                HeaderDeserializationWrapper::consensus_decode_from_finite_reader(r)?.0,
+                HeadersMessage::consensus_decode_from_finite_reader(r)?,
             ),
             14u8 => NetworkMessage::Inv(Decodable::consensus_decode_from_finite_reader(r)?),
             15u8 => NetworkMessage::MemPool,
@@ -908,7 +929,7 @@ mod test {
             NetworkMessage::MemPool,
             NetworkMessage::Tx(tx),
             NetworkMessage::Block(block),
-            NetworkMessage::Headers(vec![header]),
+            NetworkMessage::Headers(HeadersMessage(vec![header])),
             NetworkMessage::SendHeaders,
             NetworkMessage::GetAddr,
             NetworkMessage::Ping(15),
@@ -1288,5 +1309,21 @@ mod test {
         let cd: Result<CheckedData, _> =
             deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData::new(vec![1u8, 2, 3, 4, 5])));
+    }
+
+    #[test]
+    fn headers_message() {
+        let block_900_000 = deserialize::<block::Header>(
+            &hex!("00a0ab20247d4d9f582f9750344cdf62c46d81d046be960340960100000000000000000070f96945530651135839d8adc3f40e595118ec74c7ad81a3d17bb022e554fb0c937f4268743702177ad05f92")
+        ).unwrap();
+        let block_900_001 = deserialize::<block::Header>(
+            &hex!("00e000208a96960d6d1ca4ee4a283fd83da309b8d5d2bfed380501000000000000000000371c9ffd63d75fb36c57d58eb842d23c0e7ec049daf16d94cc38805c346e9d52e880426874370217973dc83b")
+        ).unwrap();
+        let block_900_002 = deserialize::<block::Header>(
+            &hex!("0400ff3ffc834fac4e1eb2ae41f1f9776e0f8e24a6090603ffa8010000000000000000002efba7e7280aa60f0a650f29e30332d52e11af57bc58cc6e71f343851f016c676182426874370217e3615653")
+        ).unwrap();
+        let headers_message = HeadersMessage(vec![block_900_000, block_900_001, block_900_002]);
+        assert!(headers_message.is_connected());
+        assert!(headers_message.all_targets_satisfied());
     }
 }
