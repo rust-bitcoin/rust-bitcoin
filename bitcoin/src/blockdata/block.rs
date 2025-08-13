@@ -122,7 +122,7 @@ pub fn compute_witness_commitment(
 ) -> Option<(WitnessMerkleNode, WitnessCommitment)> {
     compute_witness_root(transactions).map(|witness_root| {
         let mut encoder = sha256d::Hash::engine();
-        witness_root.consensus_encode(&mut encoder).expect("engines don't error");
+        witness_root.consensus_encode_infallible(&mut encoder);
         encoder.input(witness_reserved_value);
         let witness_commitment =
             WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array());

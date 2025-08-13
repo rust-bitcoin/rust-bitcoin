@@ -103,7 +103,7 @@ impl Serialize for Key {
         buf.emit_compact_size(self.type_value).expect("in-memory writers don't error");
 
         for key in &self.key_data {
-            key.consensus_encode(&mut buf).expect("in-memory writers don't error");
+            key.consensus_encode_infallible(&mut buf);
         }
 
         buf
