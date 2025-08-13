@@ -24,7 +24,7 @@ use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
 use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
 
 internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Script`] type.
+    /// Extension functionality for the [`GenericScript`] type.
     pub trait GenericScriptExt<T> impl<T> for GenericScript<T> {
         /// Constructs a new script builder
         fn builder() -> Builder<T> { Builder::new() }
@@ -252,7 +252,7 @@ internal_macros::define_extension_trait! {
 }
 
 internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Script`] type.
+    /// Extension functionality for the [`WitnessScript`] type.
     pub trait WitnessScriptExt impl for WitnessScript {
         /// Returns 256-bit hash of the script for P2WSH outputs.
         #[inline]
@@ -269,7 +269,7 @@ internal_macros::define_extension_trait! {
 }
 
 crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Script`] type.
+    /// Extension functionality for the [`TapScript`] type.
     pub trait TapScriptExt impl for TapScript {
         /// Computes leaf hash of tapscript.
         #[inline]
@@ -293,7 +293,7 @@ crate::internal_macros::define_extension_trait! {
 }
 
 internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Script`] type.
+    /// Extension functionality for the [`ScriptPubKey`] type.
     pub trait ScriptPubKeyExt impl for ScriptPubKey {
         /// Checks whether a script pubkey is a P2PK output.
         ///
@@ -447,7 +447,7 @@ internal_macros::define_extension_trait! {
         ///
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
-        /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
+        /// [`minimal_non_dust_custom`]: Self::minimal_non_dust_custom
         fn minimal_non_dust(&self) -> Amount {
             self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
                 .expect("dust_relay_fee or script length should not be absurdly large")
@@ -463,7 +463,7 @@ internal_macros::define_extension_trait! {
         ///
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
-        /// [`minimal_non_dust`]: Script::minimal_non_dust
+        /// [`minimal_non_dust`]: Self::minimal_non_dust
         fn minimal_non_dust_custom(&self, dust_relay: FeeRate) -> Option<Amount> {
             self.minimal_non_dust_internal(dust_relay.to_sat_per_kvb_ceil())
         }
@@ -588,10 +588,10 @@ internal_macros::define_extension_trait! {
     pub trait ScriptSigExt impl for ScriptSig {
         /// Get redeemScript following BIP-0016 rules regarding P2SH spending.
         ///
-        /// This does not guarantee that this represents a P2SH input [`Script`].
+        /// This does not guarantee that this represents a P2SH input [`ScriptSig`].
         /// It merely gets the last push of the script.
         ///
-        /// Use [`Script::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
+        /// Use [`ScriptPubKey::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
         fn redeem_script(&self) -> Option<&RedeemScript> {
             // Script must consist entirely of pushes.
             if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {

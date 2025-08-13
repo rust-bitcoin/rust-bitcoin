@@ -10,7 +10,7 @@
 use bitcoin::consensus::encode;
 use bitcoin::key::WPubkeyHash;
 use bitcoin::script::{self, GenericScriptBufExt as _, GenericScriptExt as _};
-use bitcoin::{ScriptBuf, WitnessScriptBuf};
+use bitcoin::WitnessScriptBuf;
 
 fn main() {
     let pk = "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".parse::<WPubkeyHash>().unwrap();
@@ -31,16 +31,16 @@ fn main() {
     println!("human-readable script: {script_code}");
 
     // We do not implement parsing scripts from human-readable format.
-    // let decoded = s.parse::<ScriptBuf>().unwrap();
+    // let decoded = s.parse::<WitnessScriptBuf>().unwrap();
 
     // This is not equivalent to consensus encoding i.e., does not include the length prefix.
     let hex_lower_hex_trait = format!("{script_code:x}");
     println!("hex created using `LowerHex`: {hex_lower_hex_trait}");
 
     // The `deserialize_hex` function requires the length prefix.
-    assert!(encode::deserialize_hex::<ScriptBuf>(&hex_lower_hex_trait).is_err());
+    assert!(encode::deserialize_hex::<WitnessScriptBuf>(&hex_lower_hex_trait).is_err());
     // And so does `from_hex_prefixed`.
-    assert!(ScriptBuf::from_hex_prefixed(&hex_lower_hex_trait).is_err());
+    assert!(WitnessScriptBuf::from_hex_prefixed(&hex_lower_hex_trait).is_err());
     // But we provide an explicit constructor that does not.
     assert_eq!(
         WitnessScriptBuf::from_hex_no_length_prefix(&hex_lower_hex_trait).unwrap(),

@@ -810,7 +810,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// [`std::io::Write`] trait.
     ///
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
-    /// [`Script::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
+    /// [`WitnessScript::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
     ///
     /// In order to sign, the data written by this function must be hashed using a double SHA256

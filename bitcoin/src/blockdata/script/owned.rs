@@ -9,7 +9,7 @@ use secp256k1::{Secp256k1, Verification};
 
 use super::{
     opcode_to_verify, Builder, GenericScriptBuf, GenericScriptExtPriv as _, Instruction, PushBytes,
-    ScriptBuf, ScriptPubKeyBuf,
+    ScriptPubKeyBuf,
 };
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
@@ -24,7 +24,7 @@ use crate::taproot::TapNodeHash;
 use crate::{consensus, internal_macros};
 
 internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`ScriptBuf`] type.
+    /// Extension functionality for the [`GenericScriptBuf`] type.
     pub trait GenericScriptBufExt<T> impl<T> for GenericScriptBuf<T> {
         /// Constructs a new script builder
         fn builder() -> Builder<T> { Builder::new() }
@@ -54,7 +54,7 @@ internal_macros::define_extension_trait! {
         /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
         fn push_slice_non_minimal<D: AsRef<PushBytes>>(&mut self, data: D) {
             let data = data.as_ref();
-            self.reserve(ScriptBuf::reserved_len_for_slice(data.len()));
+            self.reserve(Self::reserved_len_for_slice(data.len()));
             self.push_slice_no_opt(data);
         }
 
@@ -95,7 +95,7 @@ internal_macros::define_extension_trait! {
         /// multiple times.
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
 
-        /// Constructs a new [`ScriptBuf`] from a hex string.
+        /// Constructs a new [`GenericScriptBuf`] from a hex string.
         ///
         /// The input string is expected to be consensus encoded i.e., includes the length prefix.
         fn from_hex_prefixed(s: &str) -> Result<Self, consensus::FromHexError>
@@ -104,7 +104,7 @@ internal_macros::define_extension_trait! {
             consensus::encode::deserialize_hex(s)
         }
 
-        /// Constructs a new [`ScriptBuf`] from a hex string.
+        /// Constructs a new [`GenericScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_string_no_length_prefix()` instead")]
         fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError>
             where Self: Sized
@@ -112,10 +112,10 @@ internal_macros::define_extension_trait! {
             Self::from_hex_no_length_prefix(s)
         }
 
-        /// Constructs a new [`ScriptBuf`] from a hex string.
+        /// Constructs a new [`GenericScriptBuf`] from a hex string.
         ///
         /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-        /// then use `ScriptBuf::from_hex_prefixed`.
+        /// then use `GenericScriptBuf::from_hex_prefixed`.
         fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::HexToBytesError>
             where Self: Sized
         {
@@ -134,7 +134,7 @@ internal_macros::define_extension_trait! {
 }
 
 crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`ScriptBuf`] type.
+    /// Extension functionality for the [`ScriptPubKeyBuf`] type.
     pub trait ScriptPubKeyBufExt impl for ScriptPubKeyBuf {
         /// Generates OP_RETURN-type of scriptPubkey for the given data.
         fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
@@ -278,18 +278,18 @@ internal_macros::define_extension_trait! {
     }
 }
 
-impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
+impl<'a, Tg> core::iter::FromIterator<Instruction<'a>> for GenericScriptBuf<Tg> {
     fn from_iter<T>(iter: T) -> Self
     where
         T: IntoIterator<Item = Instruction<'a>>,
     {
-        let mut script = ScriptBuf::new();
+        let mut script = Self::new();
         script.extend(iter);
         script
     }
 }
 
-impl<'a> Extend<Instruction<'a>> for ScriptBuf {
+impl<'a, Tg> Extend<Instruction<'a>> for GenericScriptBuf<Tg> {
     fn extend<T>(&mut self, iter: T)
     where
         T: IntoIterator<Item = Instruction<'a>>,

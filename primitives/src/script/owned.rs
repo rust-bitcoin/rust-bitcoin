@@ -154,10 +154,11 @@ impl<'a, T> Arbitrary<'a> for GenericScriptBuf<T> {
 
 #[cfg(test)]
 mod tests {
+    // All tests should compile and pass no matter which script type you put here.
+    type ScriptBuf = super::super::ScriptSigBuf;
+
     #[cfg(feature = "alloc")]
     use alloc::vec;
-
-    use super::super::ScriptBuf;
 
     #[test]
     fn script_buf_from_bytes() {

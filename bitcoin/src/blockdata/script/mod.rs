@@ -2,8 +2,6 @@
 
 //! Bitcoin scripts.
 //!
-//! *[See also the `Script` type](Script).*
-//!
 //! This module provides the structures and functions needed to support scripts.
 //!
 //! <details>
@@ -83,10 +81,9 @@ pub use self::{
 #[doc(inline)]
 pub use primitives::script::{
     GenericScript, GenericScriptBuf, RedeemScript, RedeemScriptBuf, RedeemScriptSizeError,
-    RedeemScriptTag, Script, ScriptBuf, ScriptHash, ScriptHashableTag, ScriptPubKey,
-    ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, TapScript,
-    TapScriptBuf, WScriptHash, Whatever, WitnessScript, WitnessScriptBuf, WitnessScriptSizeError,
-    WitnessScriptTag,
+    RedeemScriptTag, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag,
+    ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf, WScriptHash,
+    WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
 };
 
 pub(crate) use self::borrowed::GenericScriptExtPriv;
@@ -94,7 +91,7 @@ pub(crate) use self::owned::GenericScriptBufExtPriv;
 
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
-/// Constructs a new [`ScriptBuf`] containing the script code used for spending a P2WPKH output.
+/// Constructs a new [`WitnessScriptBuf`] containing the script code used for spending a P2WPKH output.
 ///
 /// The `scriptCode` is described in [BIP-0143].
 ///

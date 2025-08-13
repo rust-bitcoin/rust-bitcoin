@@ -8,12 +8,6 @@
 /// Sealed trait representing a type of script.
 pub trait Tag {}
 
-/// Placeholder tag.
-#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub enum Whatever {}
-
-impl Tag for Whatever {}
-
 /// A P2SH redeem script.
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum RedeemScriptTag {}

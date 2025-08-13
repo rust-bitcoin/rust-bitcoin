@@ -155,7 +155,6 @@ internal_macros::define_extension_trait! {
         /// assumes a leaf version may be subtly broken once a new Tapscript version
         /// is deployed.
         #[deprecated(since = "TBD", note = "use taproot_leaf_script instead")]
-        /// See [`WitnessScript::is_p2tr`] to check whether this is actually a Taproot witness.
         fn tapscript(&self) -> Option<&TapScript> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { leaf_script, .. }) => Some(leaf_script),

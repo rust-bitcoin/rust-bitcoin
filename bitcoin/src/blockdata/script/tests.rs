@@ -10,7 +10,10 @@ use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::{opcodes, Amount, FeeRate};
 
-type Tag = primitives::script::Whatever;
+// Tests should compile and pass no matter what these are.
+type Tag = primitives::script::ScriptSigTag;
+type Script = crate::ScriptSig;
+type ScriptBuf = crate::ScriptSigBuf;
 
 #[test]
 #[rustfmt::skip]

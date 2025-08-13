@@ -189,10 +189,11 @@ delegate_index!(
 
 #[cfg(test)]
 mod tests {
+    // All tests should compile and pass no matter which script type you put here.
+    type Script = super::super::ScriptSig;
+
     #[cfg(feature = "alloc")]
     use alloc::{borrow::ToOwned, vec};
-
-    use super::super::Script;
 
     #[test]
     fn script_from_bytes() {

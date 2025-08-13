@@ -13,7 +13,7 @@ impl fmt::Write for NullWriter {
 
 fn do_test(data: &[u8]) {
     let mut writer = NullWriter;
-    let script = bitcoin::Script::from_bytes(data);
+    let script = bitcoin::WitnessScript::from_bytes(data);
     write!(writer, "{script}").unwrap();
 }
 

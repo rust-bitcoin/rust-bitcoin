@@ -30,14 +30,8 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::GenericScript,
     owned::GenericScriptBuf,
-    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, Whatever, WitnessScriptTag},
+    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag},
 };
-
-/// Placeholder doc (will be replaced in later commit)
-pub type Script = GenericScript<Whatever>;
-
-/// Placeholder doc (will be replaced in later commit)
-pub type ScriptBuf = GenericScriptBuf<Whatever>;
 
 /// A P2SH redeem script.
 pub type RedeemScriptBuf = GenericScriptBuf<RedeemScriptTag>;
@@ -683,6 +677,10 @@ mod tests {
     use alloc::{format, vec};
 
     use super::*;
+
+    // All tests should compile and pass no matter which script type you put here.
+    type Script = ScriptSig;
+    type ScriptBuf = ScriptSigBuf;
 
     #[test]
     fn scriptbuf_from_vec_u8() {

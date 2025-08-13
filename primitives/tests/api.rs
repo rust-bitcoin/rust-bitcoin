@@ -18,9 +18,8 @@ use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
 use bitcoin_primitives::{
     absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
-    RedeemScriptBuf, Script, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
-    Sequence, TapScript, TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript,
-    WitnessScriptBuf, Wtxid,
+    RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, TapScript,
+    TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
 };
 use hashes::sha256t;
 
@@ -45,7 +44,6 @@ struct Structs<'a> {
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
     i: pow::CompactTarget,
-    j: &'a Script,
     j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
@@ -53,7 +51,6 @@ struct Structs<'a> {
     j5: &'a WitnessScript,
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
@@ -71,7 +68,6 @@ struct Structs<'a> {
     // w: witness::Iter<'a>,
 }
 
-static SCRIPT: ScriptBuf = ScriptBuf::new();
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
 static SCRIPT_SIG: ScriptSigBuf = ScriptSigBuf::new();
 static SCRIPT_PUB_KEY: ScriptPubKeyBuf = ScriptPubKeyBuf::new();
@@ -95,7 +91,6 @@ struct CommonTraits {
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
@@ -128,7 +123,6 @@ struct Clone<'a> {
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
@@ -162,7 +156,6 @@ struct Ord {
     // j: &'a Script,  // Doesn't implement `Clone`.
     k: ScriptHash,
     l: WScriptHash,
-    m: ScriptBuf,
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
@@ -184,13 +177,11 @@ struct Ord {
 #[derive(Default, Debug, PartialEq, Eq)] // C-COMMON-TRAITS: `Default` (others just so we can test).
 struct Default {
     a: block::Version,
-    b: &'static Script,
     b1: &'static RedeemScript,
     b2: &'static ScriptPubKey,
     b3: &'static ScriptSig,
     b4: &'static TapScript,
     b5: &'static WitnessScript,
-    c: ScriptBuf,
     c1: RedeemScriptBuf,
     c2: ScriptPubKeyBuf,
     c3: ScriptSigBuf,
@@ -250,10 +241,9 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_primitives::{
-        Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, Script, ScriptBuf,
-        ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, Transaction,
-        TransactionVersion, TxIn, TxMerkleNode, TxOut, Txid, Witness, WitnessCommitment,
-        WitnessMerkleNode, Wtxid,
+        Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, ScriptPubKey,
+        ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, Transaction, TransactionVersion, TxIn,
+        TxMerkleNode, TxOut, Txid, Witness, WitnessCommitment, WitnessMerkleNode, Wtxid,
     };
 }
 
@@ -269,8 +259,8 @@ fn api_can_use_all_types_from_module_locktime() {
 #[test]
 fn api_can_use_all_types_from_module_script() {
     use bitcoin_primitives::script::{
-        RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, ScriptPubKey, ScriptPubKeyBuf,
-        ScriptSig, ScriptSigBuf, WScriptHash, WitnessScriptSizeError,
+        RedeemScriptSizeError, ScriptHash, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
+        WScriptHash, WitnessScriptSizeError,
     };
 }
 
@@ -308,7 +298,6 @@ fn api_all_non_error_types_have_non_empty_debug() {
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
         pow::CompactTarget::from_consensus(0x1d00_ffff);
-        SCRIPT.as_script();
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
@@ -316,7 +305,6 @@ fn api_all_non_error_types_have_non_empty_debug() {
         WITNESS_SCRIPT.as_script();
         ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
         WScriptHash::from_script(&WITNESS_SCRIPT).unwrap();
-        SCRIPT.clone();
         REDEEM_SCRIPT.clone();
         SCRIPT_SIG.clone();
         SCRIPT_PUB_KEY.clone();
@@ -356,13 +344,11 @@ fn regression_default() {
     let got: Default = Default::default();
     let want = Default {
         a: block::Version::NO_SOFT_FORK_SIGNALLING,
-        b: Script::from_bytes(&[]),
         b1: RedeemScript::from_bytes(&[]),
         b2: ScriptPubKey::from_bytes(&[]),
         b3: ScriptSig::from_bytes(&[]),
         b4: TapScript::from_bytes(&[]),
         b5: WitnessScript::from_bytes(&[]),
-        c: ScriptBuf::from_bytes(Vec::new()),
         c1: RedeemScriptBuf::from_bytes(Vec::new()),
         c2: ScriptPubKeyBuf::from_bytes(Vec::new()),
         c3: ScriptSigBuf::from_bytes(Vec::new()),

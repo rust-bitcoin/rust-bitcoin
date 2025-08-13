@@ -22,8 +22,8 @@ use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{
-    GenericScriptExt as _, GenericScriptExtPriv as _, Script, ScriptPubKey, ScriptPubKeyBuf,
-    ScriptPubKeyExt as _,
+    GenericScriptExt as _, GenericScriptExtPriv as _, RedeemScript, ScriptPubKey, ScriptPubKeyBuf,
+    ScriptPubKeyExt as _, WitnessScript,
 };
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
@@ -491,8 +491,8 @@ impl TransactionExtPriv for Transaction {
             let mut count: usize = 0;
             if prevout.script_pubkey.is_p2sh() {
                 if let Some(redeem) = input.script_sig.last_pushdata() {
-                    count =
-                        count.saturating_add(Script::from_bytes(redeem.as_bytes()).count_sigops());
+                    count = count
+                        .saturating_add(RedeemScript::from_bytes(redeem.as_bytes()).count_sigops());
                 }
             }
             count
@@ -520,7 +520,7 @@ impl TransactionExtPriv for Transaction {
                 1
             } else if witness_program.is_p2wsh() {
                 // Treat the last item of the witness as the witnessScript
-                witness.last().map(Script::from_bytes).map(|s| s.count_sigops()).unwrap_or(0)
+                witness.last().map(WitnessScript::from_bytes).map(|s| s.count_sigops()).unwrap_or(0)
             } else {
                 0
             }

@@ -12,7 +12,7 @@
 //
 //  use std::fs::File;
 //  use std::io::Write;
-//  let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+//  let script = WitnessScriptBuf::from(vec![0u8, 1u8, 2u8]);
 //  let got = serialize(&script).unwrap();
 //  let mut file = File::create("/tmp/script_bincode").unwrap();
 //  file.write_all(&got).unwrap();
@@ -32,7 +32,7 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
+    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey,
     ScriptPubKeyBuf, ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid,
     Work,
 };
@@ -76,7 +76,7 @@ fn serde_regression_relative_lock_time_time() {
 
 #[test]
 fn serde_regression_script() {
-    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+    let script = ScriptSigBuf::from(vec![0u8, 1u8, 2u8]);
 
     let got = serialize(&script).unwrap();
     let want = include_bytes!("data/serde/script_bincode") as &[_];
