@@ -117,17 +117,6 @@ pub mod sha512;
 pub mod sha512_256;
 pub mod siphash24;
 
-#[deprecated(since = "0.15.0", note = "use crate::macros instead")]
-pub mod serde_macros {
-    //! Macros for serde trait implementations, and supporting code.
-
-    #[cfg(feature = "serde")]
-    pub mod serde_details {
-        //! Functions used by serde impls of all hashes.
-        pub use crate::macros::serde_details::*;
-    }
-}
-
 use core::fmt::{self, Write as _};
 use core::{convert, hash};
 
@@ -226,11 +215,6 @@ pub trait Hash:
 
     /// Constructs a new hash from the underlying byte array.
     fn from_byte_array(bytes: Self::Bytes) -> Self;
-
-    /// Copies a byte slice into a hash object.
-    #[allow(deprecated_in_future)] // Because of `FromSliceError`.
-    #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
-    fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Returns the underlying byte array.
     fn to_byte_array(self) -> Self::Bytes;

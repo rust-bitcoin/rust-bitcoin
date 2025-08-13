@@ -150,12 +150,6 @@ impl Hash {
     /// Computes hash from `bytes` in `const` context.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
-    #[deprecated(since = "0.15.0", note = "use `Self::hash_unoptimized` instead")]
-    pub const fn const_hash(bytes: &[u8]) -> Self { Hash::hash_unoptimized(bytes) }
-
-    /// Computes hash from `bytes` in `const` context.
-    ///
-    /// Warning: this function is inefficient. It should be only used in `const` context.
     pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
         Hash(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
     }

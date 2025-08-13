@@ -65,21 +65,6 @@ where
     /// Constructs a new hash from the underlying byte array.
     pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self(PhantomData, bytes) }
 
-    /// Copies a byte slice into a hash object.
-    #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
-    #[allow(deprecated_in_future)] // Because of `FromSliceError`.
-    pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, crate::FromSliceError> {
-        use crate::error::FromSliceErrorInner;
-
-        if sl.len() != 32 {
-            Err(crate::error::FromSliceError(FromSliceErrorInner { expected: 32, got: sl.len() }))
-        } else {
-            let mut ret = [0; 32];
-            ret.copy_from_slice(sl);
-            Ok(Self::from_byte_array(ret))
-        }
-    }
-
     /// Produces a hash from the current state of a given engine.
     pub fn from_engine(e: HashEngine<T>) -> Self {
         Hash::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())

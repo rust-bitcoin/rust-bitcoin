@@ -123,11 +123,6 @@ impl<T: Hash> Hash for Hmac<T> {
 
     fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
 
-    #[allow(deprecated_in_future)] // Because of `FromSliceError`.
-    fn from_slice(sl: &[u8]) -> Result<Hmac<T>, crate::FromSliceError> {
-        T::from_slice(sl).map(Hmac)
-    }
-
     fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
 
     fn as_byte_array(&self) -> &Self::Bytes { self.0.as_byte_array() }
