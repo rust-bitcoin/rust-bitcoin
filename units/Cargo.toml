@@ -1,7 +1,7 @@
 [package]
 name = "bitcoin-units"
 version = "1.0.0-rc.0"
-authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Tobin C. Harding <me@tobin.cc>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
 description = "Basic Bitcoin numeric units such as amount"
