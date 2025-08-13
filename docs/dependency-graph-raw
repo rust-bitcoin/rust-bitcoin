@@ -1,0 +1,118 @@
+base58ck
+├── bitcoin_internals
+│   ├── bincode
+│   │   └── serde
+│   │       └── serde_derive
+│   │           ├── proc_macro2
+│   │           │   └── unicode_ident
+│   │           ├── quote
+│   │           │   └── proc_macro2 (*)
+│   │           └── syn
+│   │               ├── proc_macro2 (*)
+│   │               ├── quote (*)
+│   │               └── unicode_ident
+│   ├── hex_conservative
+│   │   ├── arrayvec
+│   │   └── serde (*)
+│   ├── serde (*)
+│   └── serde_json
+│       ├── itoa
+│       ├── memchr
+│       ├── ryu
+│       └── serde (*)
+└── bitcoin_hashes
+    ├── bitcoin_internals (*)
+    ├── bitcoin_io
+    │   └── bitcoin_internals (*)
+    ├── hex_conservative (*)
+    └── serde (*)
+
+bitcoin
+├── arbitrary
+├── base58ck (*)
+├── base64
+├── bech32
+├── bitcoin_consensus_encoding_unbuffered_io
+│   ├── bitcoin_internals (*)
+│   ├── bitcoin_io (*)
+│   ├── bitcoin_hashes (*)
+│   └── hex_conservative (*)
+├── bitcoin_internals (*)
+├── bitcoin_io (*)
+├── bitcoin_primitives
+│   ├── arbitrary
+│   ├── arrayvec
+│   ├── bitcoin_consensus_encoding_unbuffered_io (*)
+│   ├── bitcoin_internals (*)
+│   ├── bitcoin_io (*)
+│   ├── bitcoin_units
+│   │   ├── arbitrary
+│   │   ├── bitcoin_consensus_encoding_unbuffered_io (*)
+│   │   ├── bitcoin_internals (*)
+│   │   ├── bitcoin_io (*)
+│   │   └── serde (*)
+│   ├── bitcoin_hashes (*)
+│   ├── hex_conservative (*)
+│   └── serde (*)
+├── bitcoin_units (*)
+├── bitcoin_hashes (*)
+├── bitcoinconsensus
+├── hex_conservative (*)
+├── secp256k1
+│   ├── bitcoin_hashes
+│   │   ├── bitcoin_io
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── rand
+│   │   ├── libc
+│   │   ├── rand_chacha
+│   │   │   ├── ppv_lite86
+│   │   │   │   └── zerocopy
+│   │   │   │       ├── byteorder
+│   │   │   │       └── zerocopy_derive
+│   │   │   │           ├── proc_macro2 (*)
+│   │   │   │           ├── quote (*)
+│   │   │   │           └── syn (*)
+│   │   │   └── rand_core
+│   │   │       └── getrandom
+│   │   │           ├── cfg_if
+│   │   │           └── libc
+│   │   └── rand_core (*)
+│   ├── secp256k1_sys
+│   └── serde (*)
+└── serde (*)
+
+bitcoin_addresses
+
+bitcoin_consensus_encoding_unbuffered_io (*)
+
+bitcoin_fuzz
+├── arbitrary
+├── bitcoin (*)
+├── bitcoin_p2p_messages
+│   ├── bitcoin (*)
+│   ├── bitcoin_consensus_encoding_unbuffered_io (*)
+│   ├── bitcoin_internals (*)
+│   ├── bitcoin_io (*)
+│   ├── bitcoin_units (*)
+│   ├── bitcoin_hashes (*)
+│   └── hex_conservative (*)
+├── honggfuzz
+│   └── rustc_version
+│       └── semver
+├── serde (*)
+└── serde_json (*)
+
+bitcoin_internals (*)
+
+bitcoin_io (*)
+
+bitcoin_p2p_messages (*)
+
+bitcoin_primitives (*)
+
+bitcoin_units (*)
+
+bitcoin_hashes (*)
+
+chacha20_poly1305
