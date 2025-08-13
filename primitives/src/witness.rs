@@ -575,13 +575,12 @@ impl<'a> Arbitrary<'a> for Witness {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
     #[cfg(feature = "alloc")]
-    use alloc::{vec};
-
+    use alloc::vec;
     #[cfg(feature = "std")]
     use std::println;
+
+    use super::*;
 
     // Appends all the indices onto the end of a list of elements.
     fn append_u32_vec(elements: &[u8], indices: &[u32]) -> Vec<u8> {

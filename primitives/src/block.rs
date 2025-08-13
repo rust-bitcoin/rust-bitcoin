@@ -395,10 +395,10 @@ impl<'a> Arbitrary<'a> for Version {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    #[cfg(feature = "alloc")] 
+    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
+
+    use super::*;
 
     fn dummy_header() -> Header {
         Header {

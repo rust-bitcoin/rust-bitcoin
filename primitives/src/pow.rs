@@ -50,10 +50,10 @@ impl fmt::UpperHex for CompactTarget {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "alloc")]
-    use alloc::{format};
+    use alloc::format;
+
+    use super::*;
 
     #[test]
     fn compact_target_ordering() {

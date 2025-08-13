@@ -468,18 +468,13 @@ impl Encodable for [u16; 8] {
 
 impl<T: Encodable + 'static> Encodable for Vec<T> {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(
-        &self,
-        w: &mut W,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         if TypeId::of::<T>() == TypeId::of::<u8>() {
             let len = self.len();
             let ptr = self.as_ptr();
 
             // unsafe: We've just checked that T is `u8`.
-            let v = unsafe { 
-                slice::from_raw_parts(ptr.cast::<u8>(), len)
-            };
+            let v = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
             consensus_encode_with_size(v, w)
         } else {
             let mut len = 0;
@@ -944,8 +939,7 @@ mod tests {
 
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
         // by making sure it fails with `MissingData` and not an `OversizedVectorAllocation` Error.
-        let err =
-            deserialize::<BlockHash>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
+        let err = deserialize::<BlockHash>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
         assert_eq!(err, DeserializeError::Parse(ParseError::MissingData));
 
         test_len_is_max_vec::<u8>();
