@@ -87,8 +87,8 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, ScriptPubKeyBuf,
-    ScriptSigBuf, Transaction, TxIn, TxOut, Witness,
+    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf,
+    ScriptSigBuf, TapScriptBuf, Transaction, TxIn, TxOut, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -369,7 +369,7 @@ impl BenefactorWallet {
     fn time_lock_script(
         locktime: absolute::LockTime,
         beneficiary_key: XOnlyPublicKey,
-    ) -> ScriptBuf {
+    ) -> TapScriptBuf {
         script::Builder::new()
             .push_lock_time(locktime)
             .push_opcode(OP_CLTV)

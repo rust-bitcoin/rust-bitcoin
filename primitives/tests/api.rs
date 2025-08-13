@@ -19,7 +19,8 @@ use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
 use bitcoin_primitives::{
     absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
     RedeemScriptBuf, Script, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
-    Sequence, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
+    Sequence, TapScript, TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript,
+    WitnessScriptBuf, Wtxid,
 };
 use hashes::sha256t;
 
@@ -48,6 +49,7 @@ struct Structs<'a> {
     j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
+    j4: &'a TapScript,
     j5: &'a WitnessScript,
     k: ScriptHash,
     l: WScriptHash,
@@ -55,6 +57,7 @@ struct Structs<'a> {
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
+    m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
@@ -72,6 +75,7 @@ static SCRIPT: ScriptBuf = ScriptBuf::new();
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
 static SCRIPT_SIG: ScriptSigBuf = ScriptSigBuf::new();
 static SCRIPT_PUB_KEY: ScriptPubKeyBuf = ScriptPubKeyBuf::new();
+static TAP_SCRIPT: TapScriptBuf = TapScriptBuf::new();
 static WITNESS_SCRIPT: WitnessScriptBuf = WitnessScriptBuf::new();
 static BYTES: [u8; 32] = [0x00; 32];
 
@@ -95,6 +99,7 @@ struct CommonTraits {
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
+    m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
@@ -127,6 +132,7 @@ struct Clone<'a> {
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
+    m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
@@ -160,6 +166,7 @@ struct Ord {
     m1: RedeemScriptBuf,
     m2: ScriptPubKeyBuf,
     m3: ScriptSigBuf,
+    m4: TapScriptBuf,
     m5: WitnessScriptBuf,
     n: Sequence,
     o: Transaction,
@@ -181,11 +188,13 @@ struct Default {
     b1: &'static RedeemScript,
     b2: &'static ScriptPubKey,
     b3: &'static ScriptSig,
+    b4: &'static TapScript,
     b5: &'static WitnessScript,
     c: ScriptBuf,
     c1: RedeemScriptBuf,
     c2: ScriptPubKeyBuf,
     c3: ScriptSigBuf,
+    c4: TapScriptBuf,
     c5: WitnessScriptBuf,
     d: Sequence,
     e: Witness,
@@ -303,6 +312,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
+        TAP_SCRIPT.as_script();
         WITNESS_SCRIPT.as_script();
         ScriptHash::from_script(&REDEEM_SCRIPT).unwrap();
         WScriptHash::from_script(&WITNESS_SCRIPT).unwrap();
@@ -310,6 +320,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
         REDEEM_SCRIPT.clone();
         SCRIPT_SIG.clone();
         SCRIPT_PUB_KEY.clone();
+        TAP_SCRIPT.clone();
         WITNESS_SCRIPT.clone();
         Sequence::arbitrary(&mut u).unwrap();
         Transaction::arbitrary(&mut u).unwrap();
@@ -349,11 +360,13 @@ fn regression_default() {
         b1: RedeemScript::from_bytes(&[]),
         b2: ScriptPubKey::from_bytes(&[]),
         b3: ScriptSig::from_bytes(&[]),
+        b4: TapScript::from_bytes(&[]),
         b5: WitnessScript::from_bytes(&[]),
         c: ScriptBuf::from_bytes(Vec::new()),
         c1: RedeemScriptBuf::from_bytes(Vec::new()),
         c2: ScriptPubKeyBuf::from_bytes(Vec::new()),
         c3: ScriptSigBuf::from_bytes(Vec::new()),
+        c4: TapScriptBuf::from_bytes(Vec::new()),
         c5: WitnessScriptBuf::from_bytes(Vec::new()),
         d: Sequence::MAX,
         e: Witness::new(),

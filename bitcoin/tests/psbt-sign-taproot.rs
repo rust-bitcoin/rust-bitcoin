@@ -6,12 +6,12 @@ use bitcoin::bip32::{DerivationPath, Fingerprint};
 use bitcoin::consensus::encode::serialize_hex;
 use bitcoin::opcodes::all::OP_CHECKSIG;
 use bitcoin::psbt::{GetKey, Input, KeyRequest, PsbtSighashType, SignError};
-use bitcoin::script::ScriptExt as _;
+use bitcoin::script::TapScriptExt as _;
 use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
-    absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptBuf,
-    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
+    absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptSigBuf, Sequence,
+    TapScriptBuf, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
 use secp256k1::{Keypair, Secp256k1, Signing};
 
@@ -166,7 +166,7 @@ fn psbt_sign_taproot() {
     }
 }
 
-fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) -> ScriptBuf {
+fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) -> TapScriptBuf {
     let kp = Keypair::from_seckey_str(secp, sk).expect("failed to create keypair");
     let x_only_pubkey = kp.x_only_public_key().0;
     script::Builder::new()
@@ -177,9 +177,9 @@ fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) ->
 
 fn create_taproot_tree<K: Into<XOnlyPublicKey>>(
     secp: &Secp256k1<secp256k1::All>,
-    script1: ScriptBuf,
-    script2: ScriptBuf,
-    script3: ScriptBuf,
+    script1: TapScriptBuf,
+    script2: TapScriptBuf,
+    script3: TapScriptBuf,
     internal_key: K,
 ) -> TaprootSpendInfo {
     let internal_key = internal_key.into();
@@ -273,7 +273,7 @@ fn create_psbt_for_taproot_script_path_spend<K: Into<XOnlyPublicKey>>(
     tree: TaprootSpendInfo,
     x_only_pubkey_of_signing_key: K,
     signing_key_path: &str,
-    use_script: ScriptBuf,
+    use_script: TapScriptBuf,
 ) -> Psbt {
     let x_only_pubkey_of_signing_key = x_only_pubkey_of_signing_key.into();
     let utxo_value = 6280;

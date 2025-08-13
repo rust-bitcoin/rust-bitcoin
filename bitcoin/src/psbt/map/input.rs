@@ -12,7 +12,7 @@ use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{error, raw, Error};
-use crate::script::{RedeemScriptBuf, ScriptBuf, ScriptSigBuf, WitnessScriptBuf};
+use crate::script::{RedeemScriptBuf, ScriptSigBuf, TapScriptBuf, WitnessScriptBuf};
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
     TapSighashType,
@@ -108,7 +108,7 @@ pub struct Input {
     /// Map of `<xonlypubkey>|<leafhash>` with signature.
     pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), taproot::Signature>,
     /// Map of Control blocks to Script version pair.
-    pub tap_scripts: BTreeMap<ControlBlock, (ScriptBuf, LeafVersion)>,
+    pub tap_scripts: BTreeMap<ControlBlock, (TapScriptBuf, LeafVersion)>,
     /// Map of tap root x only keys to origin info and leaf hashes contained in it.
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Taproot Internal key.
@@ -338,7 +338,7 @@ impl Input {
             }
             PSBT_IN_TAP_LEAF_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.tap_scripts <= <raw_key: ControlBlock>|< raw_value: (ScriptBuf, LeafVersion)>
+                    self.tap_scripts <= <raw_key: ControlBlock>|< raw_value: (TapScriptBuf, LeafVersion)>
                 }
             }
             PSBT_IN_TAP_BIP32_DERIVATION => {

@@ -33,7 +33,8 @@ use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder}
 use bitcoin::witness::Witness;
 use bitcoin::{
     ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
-    ScriptPubKeyBuf, ScriptSigBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ScriptPubKeyBuf, ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid,
+    Work,
 };
 
 #[test]
@@ -321,7 +322,7 @@ fn serde_regression_taproot_sig() {
 #[test]
 fn serde_regression_taptree() {
     let ver = LeafVersion::from_consensus(0).unwrap();
-    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+    let script = TapScriptBuf::from(vec![0u8, 1u8, 2u8]);
     let mut builder = TaprootBuilder::new().add_leaf_with_ver(1, script.clone(), ver).unwrap();
     builder = builder.add_leaf(1, script).unwrap();
     let tree = TapTree::try_from(builder).unwrap();

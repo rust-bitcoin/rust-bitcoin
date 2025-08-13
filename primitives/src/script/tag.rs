@@ -29,6 +29,11 @@ impl Tag for ScriptSigTag {}
 pub enum ScriptPubKeyTag {}
 impl Tag for ScriptPubKeyTag {}
 
+/// A Segwit v1 Taproot script.
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub enum TapScriptTag {}
+impl Tag for TapScriptTag {}
+
 /// A Segwit v0 witness script.
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum WitnessScriptTag {}

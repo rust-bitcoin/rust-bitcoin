@@ -10,7 +10,7 @@ use secp256k1::{Secp256k1, Verification};
 use super::witness_version::WitnessVersion;
 use super::{
     Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
-    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
+    RedeemScriptSizeError, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig, TapScript,
     WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
@@ -270,7 +270,7 @@ internal_macros::define_extension_trait! {
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
-    pub trait ScriptExt impl for Script {
+    pub trait TapScriptExt impl for TapScript {
         /// Computes leaf hash of tapscript.
         #[inline]
         fn tapscript_leaf_hash(&self) -> TapLeafHash {

@@ -30,7 +30,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::GenericScript,
     owned::GenericScriptBuf,
-    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, Whatever, WitnessScriptTag},
+    tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, Whatever, WitnessScriptTag},
 };
 
 /// Placeholder doc (will be replaced in later commit)
@@ -56,6 +56,12 @@ pub type ScriptPubKeyBuf = GenericScriptBuf<ScriptPubKeyTag>;
 
 /// A script signature (scriptSig).
 pub type ScriptSigBuf = GenericScriptBuf<ScriptSigTag>;
+
+/// A Segwit v1 Taproot script.
+pub type TapScriptBuf = GenericScriptBuf<TapScriptTag>;
+
+/// A reference to a Segwit v1 Taproot script.
+pub type TapScript = GenericScript<TapScriptTag>;
 
 /// A Segwit v0 witness script.
 pub type WitnessScriptBuf = GenericScriptBuf<WitnessScriptTag>;

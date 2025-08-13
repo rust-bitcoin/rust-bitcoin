@@ -76,7 +76,7 @@ pub use self::{
     },
     script::{
         RedeemScript, RedeemScriptBuf, Script, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig,
-        ScriptSigBuf, WitnessScript, WitnessScriptBuf,
+        ScriptSigBuf, TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf,
     },
     transaction::{Transaction, TxIn, TxOut},
     witness::Witness,

@@ -5,7 +5,7 @@ use hex_lit::hex;
 use super::*;
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
-use crate::script::borrowed::{ScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyExtPriv as _};
+use crate::script::borrowed::{ScriptPubKeyExt as _, ScriptPubKeyExtPriv as _, TapScriptExt as _};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::{opcodes, Amount, FeeRate};
@@ -408,7 +408,7 @@ fn script_hashes() {
         "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324"
     );
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix(
+        TapScriptBuf::from_hex_no_length_prefix(
             "20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac"
         )
         .unwrap()

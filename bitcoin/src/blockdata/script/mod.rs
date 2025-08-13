@@ -74,7 +74,7 @@ use crate::OutPoint;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::{GenericScriptExt, ScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
+    borrowed::{GenericScriptExt, TapScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{GenericScriptBufExt, ScriptPubKeyBufExt},
@@ -84,8 +84,9 @@ pub use self::{
 pub use primitives::script::{
     GenericScript, GenericScriptBuf, RedeemScript, RedeemScriptBuf, RedeemScriptSizeError,
     RedeemScriptTag, Script, ScriptBuf, ScriptHash, ScriptHashableTag, ScriptPubKey,
-    ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, WScriptHash,
-    Whatever, WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
+    ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, TapScript,
+    TapScriptBuf, WScriptHash, Whatever, WitnessScript, WitnessScriptBuf, WitnessScriptSizeError,
+    WitnessScriptTag,
 };
 
 pub(crate) use self::borrowed::GenericScriptExtPriv;

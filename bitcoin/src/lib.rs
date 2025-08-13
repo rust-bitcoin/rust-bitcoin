@@ -108,13 +108,13 @@ pub mod ext {
     //! use bitcoin::ext::*;
     //!
     //! // If, for some reason, you want the name to be in scope access it via the module. E.g.
-    //! use bitcoin::script::ScriptExt;
+    //! use bitcoin::script::ScriptSigExt;
     //! ```
     #[rustfmt::skip] // Use terse custom grouping.
     pub use crate::{
         block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
         pow::CompactTargetExt as _,
-        script::{GenericScriptExt as _, GenericScriptBufExt as _, ScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
+        script::{GenericScriptExt as _, GenericScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
         witness::WitnessExt as _,
     };
@@ -154,7 +154,7 @@ pub use primitives::{
     pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{
         RedeemScript, RedeemScriptBuf, Script, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig,
-        ScriptSigBuf, WitnessScript, WitnessScriptBuf,
+        ScriptSigBuf, TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf,
     },
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},

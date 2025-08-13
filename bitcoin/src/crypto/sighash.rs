@@ -27,7 +27,7 @@ use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX}
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
 use crate::{
-    transaction, Amount, Script, ScriptPubKey, Sequence, Transaction, TxOut, WitnessScript,
+    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript,
 };
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
@@ -160,7 +160,7 @@ const KEY_VERSION_0: u8 = 0u8;
 /// This can be hashed into a [`TapLeafHash`].
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct ScriptPath<'s> {
-    script: &'s Script,
+    script: &'s TapScript,
     leaf_version: LeafVersion,
 }
 
@@ -331,11 +331,13 @@ impl std::error::Error for PrevoutsIndexError {
 
 impl<'s> ScriptPath<'s> {
     /// Constructs a new `ScriptPath` structure.
-    pub fn new(script: &'s Script, leaf_version: LeafVersion) -> Self {
+    pub fn new(script: &'s TapScript, leaf_version: LeafVersion) -> Self {
         ScriptPath { script, leaf_version }
     }
     /// Constructs a new `ScriptPath` structure using default leaf version value.
-    pub fn with_defaults(script: &'s Script) -> Self { Self::new(script, LeafVersion::TapScript) }
+    pub fn with_defaults(script: &'s TapScript) -> Self {
+        Self::new(script, LeafVersion::TapScript)
+    }
     /// Computes the leaf hash for this `ScriptPath`.
     pub fn leaf_hash(&self) -> TapLeafHash {
         let mut enc = sha256t::Hash::<TapLeafTag>::engine();
@@ -1540,7 +1542,7 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
     use crate::script::{
-        GenericScriptBufExt as _, ScriptBuf, ScriptPubKey, ScriptPubKeyBuf, WitnessScriptBuf,
+        GenericScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
     };
     use crate::TxIn;
 
@@ -1835,7 +1837,7 @@ mod tests {
 
         let leaf_hash = match (script_hex, script_leaf_hash) {
             (Some(script_hex), _) => {
-                let script_inner = ScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
+                let script_inner = TapScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
                 Some(ScriptPath::with_defaults(&script_inner).leaf_hash())
             }
             (_, Some(script_leaf_hash)) => Some(script_leaf_hash.parse::<TapLeafHash>().unwrap()),

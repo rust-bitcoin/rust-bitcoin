@@ -437,7 +437,7 @@ fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_r
 mod tests {
     use super::*;
     use crate::script::GenericScriptBufExt as _;
-    use crate::ScriptBuf;
+    use crate::TapScriptBuf;
 
     // Composes tree matching a given depth map, filled with dumb script leafs,
     // each of which consists of a single push-int op code, with int value
@@ -449,7 +449,7 @@ mod tests {
         let mut val = opcode;
         let mut builder = TaprootBuilder::new();
         for depth in depth_map {
-            let script = ScriptBuf::from_hex_no_length_prefix(&format!("{:02x}", val)).unwrap();
+            let script = TapScriptBuf::from_hex_no_length_prefix(&format!("{:02x}", val)).unwrap();
             builder = builder.add_leaf(*depth, script).unwrap();
             let (new_val, _) = val.overflowing_add(1);
             val = new_val;
@@ -464,7 +464,7 @@ mod tests {
         builder = builder
             .add_leaf_with_ver(
                 3,
-                ScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
+                TapScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
                 LeafVersion::from_consensus(0xC2).unwrap(),
             )
             .unwrap();
@@ -478,7 +478,7 @@ mod tests {
         builder = builder
             .add_leaf_with_ver(
                 3,
-                ScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
+                TapScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
                 LeafVersion::from_consensus(0xC2).unwrap(),
             )
             .unwrap();
