@@ -13,19 +13,15 @@ use core::fmt;
 use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
-use units::BlockTime;
 
-use super::transaction::Coinbase;
-use super::Weight;
-use crate::consensus::encode::WriteExt as _;
-use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros;
+use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::{Target, Work};
 use crate::prelude::Vec;
 use crate::script::{self, ScriptExt as _};
-use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
+use crate::transaction::{Coinbase, Transaction, TransactionExt as _, Wtxid};
+use crate::{internal_macros, BlockTime, Weight};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
