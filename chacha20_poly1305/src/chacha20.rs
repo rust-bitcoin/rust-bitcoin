@@ -63,7 +63,7 @@ impl UpTo3<3> for () {}
 ///
 /// In the future, a "blacklist" for the alignment option might be useful to
 /// disable it on architectures which definitely do not support SIMD in order to avoid
-/// needless memory inefficientcies.
+/// needless memory inefficiencies.
 #[derive(Clone, Copy, PartialEq)]
 struct U32x4([u32; 4]);
 
