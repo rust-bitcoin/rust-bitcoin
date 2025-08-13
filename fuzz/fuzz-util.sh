@@ -43,7 +43,7 @@ checkWindowsFiles() {
   fi
 }
 
-# Checks whether a fuzz case output some report, and dumps it in hex
+# Checks whether a fuzz case outputs some report, and dumps it in hex
 checkReport() {
   reportFile="hfuzz_workspace/$1/HONGGFUZZ.REPORT.TXT"
   if [ -f "$reportFile" ]; then

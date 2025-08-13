@@ -23,7 +23,7 @@ pub trait ArrayExt {
     ///
     /// Fails to compile if the array is empty.
     ///
-    /// Note that this method's name is intentionally shadowing the `std`'s `first` method which
+    /// Note that this method's name intentionally shadows the `std`'s `first` method which
     /// returns `Option`. The rationale is that given the known length of the array, we always know
     /// that this will not return `None` so trying to keep the `std` method around is pointless.
     /// Importing the trait will also cause compile failures - that's also intentional to expose
@@ -44,7 +44,7 @@ pub trait ArrayExt {
     ///
     /// Fails to compile if the array is empty.
     ///
-    /// Note that this method's name is intentionally shadowing the `std`'s `split_first` method which
+    /// Note that this method's name intentionally shadows the `std`'s `split_first` method which
     /// returns `Option`. The rationale is that given the known length of the array, we always know
     /// that this will not return `None` so trying to keep the `std` method around is pointless.
     /// Importing the trait will also cause compile failures - that's also intentional to expose
@@ -58,7 +58,7 @@ pub trait ArrayExt {
     ///
     /// Fails to compile if the array is empty.
     ///
-    /// Note that this method's name is intentionally shadowing the `std`'s `split_last` method which
+    /// Note that this method's name intentionally shadows the `std`'s `split_last` method which
     /// returns `Option`. The rationale is that given the known length of the array, we always know
     /// that this will not return `None` so trying to keep the `std` method around is pointless.
     /// Importing the trait will also cause compile failures - that's also intentional to expose
