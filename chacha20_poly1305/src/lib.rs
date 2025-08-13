@@ -16,7 +16,7 @@
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
+#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -66,7 +66,7 @@ impl std::error::Error for Error {
     }
 }
 
-/// Encrypt and decrypt content along with a authentication tag.
+/// Encrypt and decrypt content along with an authentication tag.
 pub struct ChaCha20Poly1305 {
     key: Key,
     nonce: Nonce,
