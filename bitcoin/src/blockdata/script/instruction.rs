@@ -2,10 +2,10 @@
 
 use internals::script::{self, PushDataLenLen};
 
-use super::{Error, GenericScriptBufExtPriv as _, PushBytes, Script, ScriptBuf};
+use super::{Error, GenericScript, GenericScriptBufExtPriv as _, PushBytes};
 use crate::opcodes::{self, Opcode};
 
-/// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
+/// A "parsed opcode" which allows iterating over a [`GenericScript`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Instruction<'a> {
     /// Push a bunch of data.
@@ -56,7 +56,9 @@ impl Instruction<'_> {
     pub(super) fn script_serialized_len(&self) -> usize {
         match self {
             Instruction::Op(_) => 1,
-            Instruction::PushBytes(bytes) => ScriptBuf::reserved_len_for_slice(bytes.len()),
+            // In a later commit this `super::ScriptBuf` will become a specific tagged
+            // script. It doesn't matter which one. But Rust insists that we pick one.
+            Instruction::PushBytes(bytes) => super::ScriptBuf::reserved_len_for_slice(bytes.len()),
         }
     }
 
@@ -90,7 +92,12 @@ impl<'a> Instructions<'a> {
     /// Views the remaining script as a slice.
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
-    pub fn as_script(&self) -> &'a Script { Script::from_bytes(self.data.as_slice()) }
+    pub fn as_script<T>(&self) -> &'a GenericScript<T> {
+        GenericScript::from_bytes(self.data.as_slice())
+    }
+
+    /// The number of remaining bytes in the script.
+    fn remaining_bytes(&self) -> usize { self.data.as_slice().len() }
 
     /// Sets the iterator to end so that it won't iterate any longer.
     pub(super) fn kill(&mut self) {
@@ -197,7 +204,7 @@ impl core::iter::FusedIterator for Instructions<'_> {}
 
 /// Iterator over script instructions with their positions.
 ///
-/// The returned indices can be used for slicing [`Script`] [safely](Script#slicing-safety).
+/// The returned indices can be used for slicing [`GenericScript`] [safely](GenericScript#slicing-safety).
 ///
 /// This is analogous to [`core::str::CharIndices`].
 #[derive(Debug, Clone)]
@@ -211,14 +218,14 @@ impl<'a> InstructionIndices<'a> {
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
     #[inline]
-    pub fn as_script(&self) -> &'a Script { self.instructions.as_script() }
+    pub fn as_script<T>(&self) -> &'a GenericScript<T> { self.instructions.as_script() }
 
     /// Constructs a new `Self` setting `pos` to 0.
     pub(super) fn from_instructions(instructions: Instructions<'a>) -> Self {
         InstructionIndices { instructions, pos: 0 }
     }
 
-    pub(super) fn remaining_bytes(&self) -> usize { self.instructions.as_script().len() }
+    pub(super) fn remaining_bytes(&self) -> usize { self.instructions.remaining_bytes() }
 
     /// Modifies the iterator using `next_fn` returning the next item.
     ///
