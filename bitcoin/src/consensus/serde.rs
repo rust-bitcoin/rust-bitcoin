@@ -378,19 +378,18 @@ fn consensus_error_into_serde<E: serde::de::Error>(error: ParseError) -> E {
         ParseError::ParseFailed(msg) => E::custom(msg),
         ParseError::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
+        _ => E::custom(format_args!("should be unreachable non_exhaustive catchall")),
     }
 }
 
-impl<E> DecodeError<E>
+fn unify_decode_error<E>(error: DecodeError<E>) -> E
 where
     E: serde::de::Error,
 {
-    fn unify(self) -> E {
-        match self {
-            DecodeError::Other(error) => error,
-            DecodeError::Unconsumed => E::custom(format_args!("got more bytes than expected")),
-            DecodeError::Parse(e) => consensus_error_into_serde(e),
-        }
+    match error {
+        DecodeError::Other(error) => error,
+        DecodeError::Unconsumed => E::custom(format_args!("got more bytes than expected")),
+        DecodeError::Parse(e) => consensus_error_into_serde(e),
     }
 }
 
@@ -497,7 +496,9 @@ impl<'de, T: Decodable> Visitor<'de> for BinVisitor<T> {
     }
 
     fn visit_seq<S: SeqAccess<'de>>(self, s: S) -> Result<T, S::Error> {
-        IterReader::new(SeqIterator(s, Default::default())).decode().map_err(DecodeError::unify)
+        IterReader::new(SeqIterator(s, Default::default()))
+            .decode()
+            .map_err(|e| unify_decode_error(e))
     }
 }
 

@@ -4,6 +4,10 @@ use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{Decodable, Encodable};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 
 use super::Script;
 use crate::prelude::{Box, Vec};
@@ -137,6 +141,25 @@ impl DerefMut for ScriptBuf {
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for ScriptBuf {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_script().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for ScriptBuf {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
+        Ok(ScriptBuf::from_bytes(v))
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ScriptBuf {
     #[inline]
@@ -148,10 +171,10 @@ impl<'a> Arbitrary<'a> for ScriptBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "alloc")]
-    use alloc::{vec};
+    use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn script_buf_from_bytes() {

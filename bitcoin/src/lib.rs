@@ -226,9 +226,6 @@ pub mod amount {
     //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
     //! We refer to the documentation on the types for more information.
 
-    use crate::consensus::{self, encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
-
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
@@ -239,32 +236,6 @@ pub mod amount {
         Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
         ParseError,
     };
-
-    /// Error types for bitcoin amounts.
-    pub mod error {
-        pub use units::amount::error::{
-            InputTooLargeError, InvalidCharacterError, MissingDenominationError,
-            MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError,
-            ParseError, PossiblyConfusingDenominationError, TooPreciseError,
-            UnknownDenominationError,
-        };
-    }
-
-    impl Decodable for Amount {
-        #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Amount::from_sat(Decodable::consensus_decode(r)?).map_err(|_| {
-                consensus::parse_failed_error("amount is greater than Amount::MAX_MONEY")
-            })
-        }
-    }
-
-    impl Encodable for Amount {
-        #[inline]
-        fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-            self.to_sat().consensus_encode(w)
-        }
-    }
 }
 
 /// Unit parsing utilities.
@@ -276,43 +247,4 @@ pub mod parse {
         hex_u32, hex_u32_unchecked, hex_u32_unprefixed, int_from_box, int_from_str,
         int_from_string, ParseIntError, PrefixedHexError, UnprefixedHexError,
     };
-}
-
-mod encode_impls {
-    //! Encodable/Decodable implementations.
-    // While we are deprecating, re-exporting, and generally moving things around just put these here.
-
-    use units::{BlockHeight, BlockHeightInterval};
-
-    use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
-
-    /// Implements Encodable and Decodable for a simple wrapper type.
-    ///
-    /// Wrapper type is required to implement `to_u32()` and `From<u32>`.
-    macro_rules! impl_encodable_for_u32_wrapper {
-        ($ty:ident) => {
-            impl Decodable for $ty {
-                #[inline]
-                fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                    let inner = u32::consensus_decode(r)?;
-                    Ok($ty::from(inner))
-                }
-            }
-
-            impl Encodable for $ty {
-                #[inline]
-                fn consensus_encode<W: Write + ?Sized>(
-                    &self,
-                    w: &mut W,
-                ) -> Result<usize, io::Error> {
-                    let inner = self.to_u32();
-                    inner.consensus_encode(w)
-                }
-            }
-        };
-    }
-
-    impl_encodable_for_u32_wrapper!(BlockHeight);
-    impl_encodable_for_u32_wrapper!(BlockHeightInterval);
 }

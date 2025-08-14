@@ -6,6 +6,10 @@ use core::ops::{
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::Encodable;
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::Write;
 
 use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
@@ -151,6 +155,14 @@ impl Script {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for Script {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        crate::consensus_encode_with_size(self.as_bytes(), w)
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for &'a Script {
     #[inline]
@@ -188,10 +200,10 @@ delegate_index!(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "alloc")]
-    use alloc::{vec};
+    use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn script_from_bytes() {

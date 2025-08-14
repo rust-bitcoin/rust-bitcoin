@@ -853,7 +853,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
             self.segwit_cache().outputs.consensus_encode(writer)?;
-        } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().outputs.len()
+        } else if sighash == EcdsaSighashType::Single
+            && input_index < self.tx.borrow().outputs.len()
         {
             let mut single_enc = LegacySighash::engine();
             self.tx.borrow().outputs[input_index].consensus_encode(&mut single_enc)?;

@@ -51,8 +51,8 @@ fn main() {
     let mut unsigned_tx = Transaction {
         version: transaction::Version::TWO,  // Post BIP-68.
         lock_time: absolute::LockTime::ZERO, // Ignore the locktime.
-        inputs: vec![input],                  // Input goes into index 0.
-        outputs: vec![spend, change],         // Outputs, order does not matter.
+        inputs: vec![input],                 // Input goes into index 0.
+        outputs: vec![spend, change],        // Outputs, order does not matter.
     };
     let input_index = 0;
 

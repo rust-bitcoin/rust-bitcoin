@@ -17,6 +17,7 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["alloc", "hex?/std"]
 alloc = ["hex?/alloc"]
+hex = ["dep:hex", "internals/hex"]
 serde = ["dep:serde", "hex"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
@@ -25,6 +26,7 @@ small-hash = []
 internals = { package = "bitcoin-internals", path = "../internals" }
 
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+io = { package = "bitcoin-io", path = "../io", default-features = false, optional = true }
 serde = { version = "1.0.103", default-features = false, optional = true }
 
 [dev-dependencies]

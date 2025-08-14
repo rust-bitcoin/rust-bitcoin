@@ -9,6 +9,10 @@
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use consensus_encoding_unbuffered_io::{self, Decodable, Encodable};
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+use io::{Read, Write};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -49,6 +53,22 @@ impl From<u32> for BlockTime {
 impl From<BlockTime> for u32 {
     #[inline]
     fn from(t: BlockTime) -> Self { t.to_u32() }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Encodable for BlockTime {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_u32().consensus_encode(w)
+    }
+}
+
+#[cfg(feature = "consensus-encoding-unbuffered-io")]
+impl Decodable for BlockTime {
+    fn consensus_decode<R: Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, consensus_encoding_unbuffered_io::Error> {
+        Decodable::consensus_decode(r).map(BlockTime::from_u32)
+    }
 }
 
 #[cfg(feature = "serde")]

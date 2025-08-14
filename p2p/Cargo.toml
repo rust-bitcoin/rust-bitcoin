@@ -14,15 +14,17 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["hashes/std", "hex/std", "internals/std", "io/std", "units/std", "bitcoin/std"]
+std = ["hashes/std", "hex/std", "internals/std", "io/std", "units/std", "bitcoin/std", "consensus-encoding-unbuffered-io?/std"]
 
 [dependencies]
-bitcoin = { path = "../bitcoin/", default-features = false }
-hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false }
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
-internals = { package = "bitcoin-internals", path = "../internals", default-features = false }
-io = { package = "bitcoin-io", path = "../io", default-features = false }
-units = { package = "bitcoin-units", path = "../units", default-features = false }
+bitcoin = { path = "../bitcoin/" }
+hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false, features = ["std"] }
+hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["std"] }
+internals = { package = "bitcoin-internals", path = "../internals", features = ["std"] }
+io = { package = "bitcoin-io", path = "../io", default-features = false, features = ["std"] }
+units = { package = "bitcoin-units", path = "../units", default-features = false, features = ["std"] }
+
+consensus-encoding-unbuffered-io = { package = "bitcoin-consensus-encoding-unbuffered-io", path = "../consensus_encoding", default-features = false, features = ["alloc"], optional = true }
 
 [dev-dependencies]
 hex_lit = "0.1.1"

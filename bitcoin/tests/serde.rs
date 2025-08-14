@@ -32,8 +32,8 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
+    Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
 #[test]

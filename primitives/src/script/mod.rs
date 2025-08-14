@@ -611,10 +611,10 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "alloc")]
     use alloc::{format, vec};
+
+    use super::*;
 
     #[test]
     fn scriptbuf_from_vec_u8() {

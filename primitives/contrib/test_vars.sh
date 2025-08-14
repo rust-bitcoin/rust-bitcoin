@@ -5,10 +5,10 @@
 # shellcheck disable=SC2034
 
 # Test these features with "std" enabled.
-FEATURES_WITH_STD="serde arbitrary"
+FEATURES_WITH_STD="serde arbitrary consensus-encoding"
 
 # Test these features without "std" enabled.
-FEATURES_WITHOUT_STD="alloc serde arbitrary"
+FEATURES_WITHOUT_STD="alloc serde arbitrary consensus-encoding"
 
 # Run these examples.
 EXAMPLES=""
