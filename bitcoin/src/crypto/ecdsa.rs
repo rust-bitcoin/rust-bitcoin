@@ -102,7 +102,7 @@ impl FromStr for Signature {
 /// expect and has familiar methods.
 ///
 /// However, the usual use case is to push it into a script. This can be done directly passing it
-/// into [`push_slice`](crate::script::GenericScriptBufExt::push_slice).
+/// into [`push_slice`](crate::script::ScriptBufExt::push_slice).
 #[derive(Copy, Clone)]
 pub struct SerializedSignature {
     data: [u8; MAX_SIG_LEN],

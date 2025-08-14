@@ -2,10 +2,10 @@
 
 use internals::script::{self, PushDataLenLen};
 
-use super::{Error, GenericScript, GenericScriptBufExtPriv as _, PushBytes};
+use super::{Error, PushBytes, Script, ScriptBufExtPriv as _};
 use crate::opcodes::{self, Opcode};
 
-/// A "parsed opcode" which allows iterating over a [`GenericScript`] in a more sensible way.
+/// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Instruction<'a> {
     /// Push a bunch of data.
@@ -93,9 +93,7 @@ impl<'a> Instructions<'a> {
     /// Views the remaining script as a slice.
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
-    pub fn as_script<T>(&self) -> &'a GenericScript<T> {
-        GenericScript::from_bytes(self.data.as_slice())
-    }
+    pub fn as_script<T>(&self) -> &'a Script<T> { Script::from_bytes(self.data.as_slice()) }
 
     /// The number of remaining bytes in the script.
     fn remaining_bytes(&self) -> usize { self.data.as_slice().len() }
@@ -205,7 +203,7 @@ impl core::iter::FusedIterator for Instructions<'_> {}
 
 /// Iterator over script instructions with their positions.
 ///
-/// The returned indices can be used for slicing [`GenericScript`] [safely](GenericScript#slicing-safety).
+/// The returned indices can be used for slicing [`Script`] [safely](Script#slicing-safety).
 ///
 /// This is analogous to [`core::str::CharIndices`].
 #[derive(Debug, Clone)]
@@ -219,7 +217,7 @@ impl<'a> InstructionIndices<'a> {
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
     #[inline]
-    pub fn as_script<T>(&self) -> &'a GenericScript<T> { self.instructions.as_script() }
+    pub fn as_script<T>(&self) -> &'a Script<T> { self.instructions.as_script() }
 
     /// Constructs a new `Self` setting `pos` to 0.
     pub(super) fn from_instructions(instructions: Instructions<'a>) -> Self {

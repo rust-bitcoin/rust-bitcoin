@@ -9,9 +9,9 @@ use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{
-    Builder, GenericScript, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
-    RedeemScriptSizeError, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig, TapScript,
-    WScriptHash, WitnessScript, WitnessScriptSizeError,
+    Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
+    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
+    TapScript, WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -24,8 +24,8 @@ use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
 use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
 
 internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`GenericScript`] type.
-    pub trait GenericScriptExt<T> impl<T> for GenericScript<T> {
+    /// Extension functionality for the [`Script`] type.
+    pub trait ScriptExt<T> impl<T> for Script<T> {
         /// Constructs a new script builder
         fn builder() -> Builder<T> { Builder::new() }
 
@@ -472,11 +472,11 @@ internal_macros::define_extension_trait! {
 
 mod sealed {
     pub trait Sealed {}
-    impl<T> Sealed for super::GenericScript<T> {}
+    impl<T> Sealed for super::Script<T> {}
 }
 
 internal_macros::define_extension_trait! {
-    pub(crate) trait GenericScriptExtPriv<T> impl<T> for GenericScript<T> {
+    pub(crate) trait ScriptExtPriv<T> impl<T> for Script<T> {
         fn count_sigops_internal(&self, accurate: bool) -> usize {
             let mut n = 0;
             let mut pushnum_cache = None;

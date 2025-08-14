@@ -22,7 +22,7 @@ use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::{Target, Work};
 use crate::prelude::Vec;
-use crate::script::{self, GenericScriptExt as _};
+use crate::script::{self, ScriptExt as _};
 use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
 use crate::{internal_macros, BlockTime};
 

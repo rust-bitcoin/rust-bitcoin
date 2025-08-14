@@ -8,7 +8,7 @@ use internals::ToU64 as _;
 use secp256k1::{Secp256k1, Verification};
 
 use super::{
-    opcode_to_verify, Builder, GenericScriptBuf, GenericScriptExtPriv as _, Instruction, PushBytes,
+    opcode_to_verify, Builder, Instruction, PushBytes, ScriptBuf, ScriptExtPriv as _,
     ScriptPubKeyBuf,
 };
 use crate::key::{
@@ -24,8 +24,8 @@ use crate::taproot::TapNodeHash;
 use crate::{consensus, internal_macros};
 
 internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`GenericScriptBuf`] type.
-    pub trait GenericScriptBufExt<T> impl<T> for GenericScriptBuf<T> {
+    /// Extension functionality for the [`ScriptBuf`] type.
+    pub trait ScriptBufExt<T> impl<T> for ScriptBuf<T> {
         /// Constructs a new script builder
         fn builder() -> Builder<T> { Builder::new() }
 
@@ -95,7 +95,7 @@ internal_macros::define_extension_trait! {
         /// multiple times.
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
 
-        /// Constructs a new [`GenericScriptBuf`] from a hex string.
+        /// Constructs a new [`ScriptBuf`] from a hex string.
         ///
         /// The input string is expected to be consensus encoded i.e., includes the length prefix.
         fn from_hex_prefixed(s: &str) -> Result<Self, consensus::FromHexError>
@@ -104,7 +104,7 @@ internal_macros::define_extension_trait! {
             consensus::encode::deserialize_hex(s)
         }
 
-        /// Constructs a new [`GenericScriptBuf`] from a hex string.
+        /// Constructs a new [`ScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_string_no_length_prefix()` instead")]
         fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError>
             where Self: Sized
@@ -112,10 +112,10 @@ internal_macros::define_extension_trait! {
             Self::from_hex_no_length_prefix(s)
         }
 
-        /// Constructs a new [`GenericScriptBuf`] from a hex string.
+        /// Constructs a new [`ScriptBuf`] from a hex string.
         ///
         /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-        /// then use `GenericScriptBuf::from_hex_prefixed`.
+        /// then use `ScriptBuf::from_hex_prefixed`.
         fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::HexToBytesError>
             where Self: Sized
         {
@@ -208,11 +208,11 @@ crate::internal_macros::define_extension_trait! {
 
 mod sealed {
     pub trait Sealed {}
-    impl<T> Sealed for super::GenericScriptBuf<T> {}
+    impl<T> Sealed for super::ScriptBuf<T> {}
 }
 
 internal_macros::define_extension_trait! {
-    pub(crate) trait GenericScriptBufExtPriv<T> impl<T> for GenericScriptBuf<T> {
+    pub(crate) trait ScriptBufExtPriv<T> impl<T> for ScriptBuf<T> {
         /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
         ///
         /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
@@ -278,7 +278,7 @@ internal_macros::define_extension_trait! {
     }
 }
 
-impl<'a, Tg> core::iter::FromIterator<Instruction<'a>> for GenericScriptBuf<Tg> {
+impl<'a, Tg> core::iter::FromIterator<Instruction<'a>> for ScriptBuf<Tg> {
     fn from_iter<T>(iter: T) -> Self
     where
         T: IntoIterator<Item = Instruction<'a>>,
@@ -289,7 +289,7 @@ impl<'a, Tg> core::iter::FromIterator<Instruction<'a>> for GenericScriptBuf<Tg> 
     }
 }
 
-impl<'a, Tg> Extend<Instruction<'a>> for GenericScriptBuf<Tg> {
+impl<'a, Tg> Extend<Instruction<'a>> for ScriptBuf<Tg> {
     fn extend<T>(&mut self, iter: T)
     where
         T: IntoIterator<Item = Instruction<'a>>,
@@ -330,7 +330,7 @@ impl<'a, Tg> Extend<Instruction<'a>> for GenericScriptBuf<Tg> {
 /// In reality the backing `Vec<u8>` is swapped with an empty one and this is holding both the
 /// reference and the vec. The vec is put back when this drops so it also covers panics. (But not
 /// leaks, which is OK since we never leak.)
-pub(crate) struct ScriptBufAsVec<'a, T>(&'a mut GenericScriptBuf<T>, Vec<u8>);
+pub(crate) struct ScriptBufAsVec<'a, T>(&'a mut ScriptBuf<T>, Vec<u8>);
 
 impl<T> core::ops::Deref for ScriptBufAsVec<'_, T> {
     type Target = Vec<u8>;
@@ -345,6 +345,6 @@ impl<T> core::ops::DerefMut for ScriptBufAsVec<'_, T> {
 impl<T> Drop for ScriptBufAsVec<'_, T> {
     fn drop(&mut self) {
         let vec = core::mem::take(&mut self.1);
-        *(self.0) = GenericScriptBuf::from_bytes(vec);
+        *(self.0) = ScriptBuf::from_bytes(vec);
     }
 }

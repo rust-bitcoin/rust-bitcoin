@@ -22,7 +22,7 @@ use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::locktime::absolute::{self, Height, MedianTimePast};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{
-    GenericScriptExt as _, GenericScriptExtPriv as _, RedeemScript, ScriptPubKey, ScriptPubKeyBuf,
+    RedeemScript, ScriptExt as _, ScriptExtPriv as _, ScriptPubKey, ScriptPubKeyBuf,
     ScriptPubKeyExt as _, WitnessScript,
 };
 #[cfg(doc)]

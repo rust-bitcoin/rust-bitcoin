@@ -8,7 +8,7 @@ use core::ops::{
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::GenericScriptBuf;
+use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
 
 internals::transparent_newtype! {
@@ -16,13 +16,13 @@ internals::transparent_newtype! {
     ///
     /// *[See also the `bitcoin::script` module](super).*
     ///
-    /// `GenericScript` is a script slice, the most primitive script type. It's usually seen in its borrowed
-    /// form `&GenericScript`. It is always encoded as a series of bytes representing the opcodes and data
+    /// `Script` is a script slice, the most primitive script type. It's usually seen in its borrowed
+    /// form `&Script`. It is always encoded as a series of bytes representing the opcodes and data
     /// pushes.
     ///
     /// # Validity
     ///
-    /// `GenericScript` does not have any validity invariants - it's essentially just a marked slice of
+    /// `Script` does not have any validity invariants - it's essentially just a marked slice of
     /// bytes. This is similar to [`Path`](std::path::Path) vs [`OsStr`](std::ffi::OsStr) where they
     /// are trivially cast-able to each-other and `Path` doesn't guarantee being a usable FS path but
     /// having a newtype still has value because of added methods, readability and basic type checking.
@@ -63,13 +63,13 @@ internals::transparent_newtype! {
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
     ///
     #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
-    pub struct GenericScript<T>(PhantomData<T>, [u8]);
+    pub struct Script<T>(PhantomData<T>, [u8]);
 
-    impl<T> GenericScript<T> {
-        /// Treat byte slice as `GenericScript`
+    impl<T> Script<T> {
+        /// Treat byte slice as `Script`
         pub const fn from_bytes(bytes: &_) -> &Self;
 
-        /// Treat mutable byte slice as `GenericScript`
+        /// Treat mutable byte slice as `Script`
         pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
 
         pub(crate) fn from_boxed_bytes(bytes: Box<_>) -> Box<Self>;
@@ -78,19 +78,19 @@ internals::transparent_newtype! {
     }
 }
 
-impl<T: 'static> Default for &GenericScript<T> {
+impl<T: 'static> Default for &Script<T> {
     #[inline]
-    fn default() -> Self { GenericScript::new() }
+    fn default() -> Self { Script::new() }
 }
 
-impl<T> ToOwned for GenericScript<T> {
-    type Owned = GenericScriptBuf<T>;
+impl<T> ToOwned for Script<T> {
+    type Owned = ScriptBuf<T>;
 
     #[inline]
-    fn to_owned(&self) -> Self::Owned { GenericScriptBuf::from_bytes(self.to_vec()) }
+    fn to_owned(&self) -> Self::Owned { ScriptBuf::from_bytes(self.to_vec()) }
 }
 
-impl<T> GenericScript<T> {
+impl<T> Script<T> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> &'static Self { Self::from_bytes(&[]) }
@@ -126,17 +126,17 @@ impl<T> GenericScript<T> {
     #[inline]
     pub const fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 
-    /// Converts a [`Box<GenericScript>`](Box) into a [`GenericScriptBuf`] without copying or allocating.
+    /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use]
     #[inline]
-    pub fn into_script_buf(self: Box<Self>) -> GenericScriptBuf<T> {
+    pub fn into_script_buf(self: Box<Self>) -> ScriptBuf<T> {
         let rw = Box::into_raw(self) as *mut [u8];
         // SAFETY: copied from `std`
         // The pointer was just created from a box without deallocating
         // Casting a transparent struct wrapping a slice to the slice pointer is sound (same
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
-        GenericScriptBuf::from_bytes(Vec::from(inner))
+        ScriptBuf::from_bytes(Vec::from(inner))
     }
 
     /// Gets the hex representation of this script.
@@ -153,19 +153,19 @@ impl<T> GenericScript<T> {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a, T> Arbitrary<'a> for &'a GenericScript<T> {
+impl<'a, T> Arbitrary<'a> for &'a Script<T> {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = <&'a [u8]>::arbitrary(u)?;
-        Ok(GenericScript::from_bytes(v))
+        Ok(Script::from_bytes(v))
     }
 }
 
 macro_rules! delegate_index {
     ($($type:ty),* $(,)?) => {
         $(
-            /// [`GenericScript`] subslicing operation - read [slicing safety](#slicing-safety)!
-            impl<T> Index<$type> for GenericScript<T> {
+            /// Script subslicing operation - read [slicing safety](#slicing-safety)!
+            impl<T> Index<$type> for Script<T> {
                 type Output = Self;
 
                 #[inline]

@@ -9,7 +9,7 @@
 
 use bitcoin::consensus::encode;
 use bitcoin::key::WPubkeyHash;
-use bitcoin::script::{self, GenericScriptBufExt as _, GenericScriptExt as _};
+use bitcoin::script::{self, ScriptBufExt as _, ScriptExt as _};
 use bitcoin::WitnessScriptBuf;
 
 fn main() {

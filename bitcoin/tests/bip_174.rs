@@ -9,7 +9,7 @@ use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::opcodes::OP_0;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
-use bitcoin::script::{GenericScriptBuf, GenericScriptBufExt as _, PushBytes};
+use bitcoin::script::{PushBytes, ScriptBuf, ScriptBufExt as _};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
     absolute, script, transaction, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptPubKeyBuf,
@@ -23,8 +23,8 @@ fn hex_psbt(s: &str) -> Psbt {
 }
 
 #[track_caller]
-fn hex_script<T>(s: &str) -> GenericScriptBuf<T> {
-    GenericScriptBuf::from_hex_no_length_prefix(s).expect("valid hex digits")
+fn hex_script<T>(s: &str) -> ScriptBuf<T> {
+    ScriptBuf::from_hex_no_length_prefix(s).expect("valid hex digits")
 }
 
 #[test]

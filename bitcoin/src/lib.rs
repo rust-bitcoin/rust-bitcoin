@@ -114,7 +114,7 @@ pub mod ext {
     pub use crate::{
         block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
         pow::CompactTargetExt as _,
-        script::{GenericScriptExt as _, GenericScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
+        script::{ScriptExt as _, ScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
         witness::WitnessExt as _,
     };

@@ -2,31 +2,27 @@
 
 use core::fmt;
 
-use super::{opcode_to_verify, write_scriptint, Error, GenericScript, GenericScriptBuf, PushBytes};
+use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
 use crate::key::{PublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
-use crate::script::{
-    GenericScriptBufExt as _, GenericScriptBufExtPriv as _, GenericScriptExtPriv as _,
-};
+use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _};
 use crate::{relative, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]
-pub struct Builder<T>(GenericScriptBuf<T>, Option<Opcode>);
+pub struct Builder<T>(ScriptBuf<T>, Option<Opcode>);
 
 impl<T> Builder<T> {
     /// Constructs a new empty script.
     #[inline]
-    pub const fn new() -> Self { Self(GenericScriptBuf::new(), None) }
+    pub const fn new() -> Self { Self(ScriptBuf::new(), None) }
 
     /// Constructs a new empty script builder with at least the specified capacity.
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self(GenericScriptBuf::with_capacity(capacity), None)
-    }
+    pub fn with_capacity(capacity: usize) -> Self { Self(ScriptBuf::with_capacity(capacity), None) }
 
     /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }
@@ -182,13 +178,13 @@ impl<T> Builder<T> {
     }
 
     /// Converts the `Builder` into `ScriptBuf`.
-    pub fn into_script(self) -> GenericScriptBuf<T> { self.0 }
+    pub fn into_script(self) -> ScriptBuf<T> { self.0 }
 
     /// Converts the `Builder` into script bytes
     pub fn into_bytes(self) -> Vec<u8> { self.0.into() }
 
     /// Returns the internal script
-    pub fn as_script(&self) -> &GenericScript<T> { &self.0 }
+    pub fn as_script(&self) -> &Script<T> { &self.0 }
 
     /// Returns script bytes
     pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
@@ -201,7 +197,7 @@ impl<T> Default for Builder<T> {
 /// Constructs a new builder from an existing vector.
 impl<T> From<Vec<u8>> for Builder<T> {
     fn from(v: Vec<u8>) -> Self {
-        let script = GenericScriptBuf::from(v);
+        let script = ScriptBuf::from(v);
         let last_op = script.last_opcode();
         Self(script, last_op)
     }

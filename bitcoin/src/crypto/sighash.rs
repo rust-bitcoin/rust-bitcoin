@@ -22,7 +22,7 @@ use io::Write;
 
 use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
-use crate::script::{GenericScriptExt as _, ScriptHashableTag};
+use crate::script::{ScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
@@ -878,7 +878,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     pub fn p2wpkh_signature_hash<T: ScriptHashableTag>(
         &mut self,
         input_index: usize,
-        script_pubkey: &crate::script::GenericScript<T>,
+        script_pubkey: &crate::script::Script<T>,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, P2wpkhError> {
@@ -945,7 +945,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &self,
         writer: &mut W,
         input_index: usize,
-        script_pubkey: &crate::script::GenericScript<T>,
+        script_pubkey: &crate::script::Script<T>,
         sighash_type: U,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
@@ -970,7 +970,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             self_: &Transaction,
             writer: &mut W,
             input_index: usize,
-            script_pubkey: &crate::script::GenericScript<T>,
+            script_pubkey: &crate::script::Script<T>,
             sighash_type: u32,
         ) -> Result<(), io::Error> {
             use crate::consensus::encode::WriteExt;
@@ -1065,7 +1065,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     pub fn legacy_signature_hash<T: ScriptHashableTag>(
         &self,
         input_index: usize,
-        script_pubkey: &crate::script::GenericScript<T>,
+        script_pubkey: &crate::script::Script<T>,
         sighash_type: u32,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
@@ -1542,7 +1542,7 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
     use crate::script::{
-        GenericScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
+        ScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
     };
     use crate::TxIn;
 

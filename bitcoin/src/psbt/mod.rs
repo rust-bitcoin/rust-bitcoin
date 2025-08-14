@@ -26,7 +26,7 @@ use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
-use crate::script::{GenericScriptExt as _, ScriptPubKeyExt as _};
+use crate::script::{ScriptExt as _, ScriptPubKeyExt as _};
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TransactionExt as _, TxOut};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighash, TapSighashType};
@@ -1344,7 +1344,7 @@ mod tests {
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::{
-        GenericScriptBufExt as _, RedeemScriptBuf, ScriptPubKeyBuf, ScriptSigBuf, WitnessScriptBuf,
+        RedeemScriptBuf, ScriptBufExt as _, ScriptPubKeyBuf, ScriptSigBuf, WitnessScriptBuf,
     };
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;

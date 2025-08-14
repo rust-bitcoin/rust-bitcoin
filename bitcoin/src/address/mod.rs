@@ -64,10 +64,9 @@ use crate::prelude::{String, ToOwned};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, GenericScript, GenericScriptExt as _, RedeemScriptSizeError, ScriptHash,
-    ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _,
-    ScriptPubKeyExt as _, WScriptHash, WitnessScript, WitnessScriptExt as _,
-    WitnessScriptSizeError,
+    self, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash, ScriptHashableTag,
+    ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WScriptHash,
+    WitnessScript, WitnessScriptExt as _, WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
@@ -508,7 +507,7 @@ impl Address {
     /// these days.
     #[inline]
     pub fn p2sh<T: ScriptHashableTag>(
-        redeem_script: &GenericScript<T>,
+        redeem_script: &Script<T>,
         network: impl Into<NetworkKind>,
     ) -> Result<Address, RedeemScriptSizeError> {
         let hash = redeem_script.script_hash()?;
@@ -1022,7 +1021,7 @@ mod tests {
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, TestnetVersion};
-    use crate::script::{GenericScriptBufExt as _, RedeemScriptBuf, WitnessScriptBuf};
+    use crate::script::{RedeemScriptBuf, ScriptBufExt as _, WitnessScriptBuf};
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(

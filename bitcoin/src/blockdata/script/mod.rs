@@ -72,22 +72,22 @@ use crate::OutPoint;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::{GenericScriptExt, TapScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
+    borrowed::{ScriptExt, TapScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
-    owned::{GenericScriptBufExt, ScriptPubKeyBufExt},
+    owned::{ScriptBufExt, ScriptPubKeyBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
 };
 #[doc(inline)]
 pub use primitives::script::{
-    GenericScript, GenericScriptBuf, RedeemScript, RedeemScriptBuf, RedeemScriptSizeError,
-    RedeemScriptTag, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag,
-    ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf, WScriptHash,
-    WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
+    RedeemScript, RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
+    ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig,
+    ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf, WScriptHash, WitnessScript,
+    WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
 };
 
-pub(crate) use self::borrowed::GenericScriptExtPriv;
-pub(crate) use self::owned::GenericScriptBufExtPriv;
+pub(crate) use self::borrowed::ScriptExtPriv;
+pub(crate) use self::owned::ScriptBufExtPriv;
 
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
@@ -205,7 +205,7 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
 pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     version: WitnessVersion,
     program: T,
-) -> GenericScriptBuf<Tg> {
+) -> ScriptBuf<Tg> {
     let program = program.as_ref();
     debug_assert!(program.len() >= 2 && program.len() <= 40);
     // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.
@@ -213,21 +213,21 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
-impl<T> Encodable for GenericScript<T> {
+impl<T> Encodable for Script<T> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
     }
 }
 
-impl<T> Encodable for GenericScriptBuf<T> {
+impl<T> Encodable for ScriptBuf<T> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.as_script().consensus_encode(w)
     }
 }
 
-impl<T> Decodable for GenericScriptBuf<T> {
+impl<T> Decodable for ScriptBuf<T> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
