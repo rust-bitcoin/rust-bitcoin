@@ -20,7 +20,7 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 // Exclude lints we don't think are valuable.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
+#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -64,7 +64,7 @@ pub use units::{
     weight::{self, Weight},
 };
 
-#[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
+#[deprecated(since = "0.101.0", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
 
