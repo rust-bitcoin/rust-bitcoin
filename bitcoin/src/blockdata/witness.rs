@@ -151,29 +151,30 @@ internal_macros::define_extension_trait! {
             self.push(signature.serialize())
         }
 
-        /// Get Tapscript following BIP341 rules regarding accounting for an annex.
+        /// Returns the leaf script if this witness is a Taproot script spend.
         ///
-        /// This does not guarantee that this represents a P2TR [`Witness`]. It
-        /// merely gets the second to last or third to last element depending on
-        /// the first byte of the last element being equal to 0x50.
-        ///
-        /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
+        /// **Deprecated** since this does not return the leaf version. Code that
+        /// assumes a leaf version may be subtly broken once a new Tapscript version
+        /// is deployed.
+        #[deprecated(since = "TBD", note = "use taproot_leaf_script instead")]
         fn tapscript(&self) -> Option<&Script> {
             match P2TrSpend::from_witness(self) {
-                // Note: the method is named "tapscript" but historically it was actually returning
-                // leaf script. This is broken but we now keep the behavior the same to not subtly
-                // break someone.
                 Some(P2TrSpend::Script { leaf_script, .. }) => Some(leaf_script),
                 _ => None,
             }
         }
 
-        /// Returns the leaf script with its version but without the merkle proof.
+        /// Returns the leaf script and version if this witness is a Taproot script spend.
         ///
-        /// This does not guarantee that this represents a P2TR [`Witness`]. It
-        /// merely gets the second to last or third to last element depending on
-        /// the first byte of the last element being equal to 0x50 and the associated
-        /// version.
+        /// This method does not include the control block or annex; to obtain those, call
+        /// [`Self::taproot_control_block`] and [`Self::taproot_annex`].
+        ///
+        /// Although this method does not have access to the output being spent, if the
+        /// transaction is valid and this method returns `Some`, you can be assured that
+        /// it is a real Taproot script spend (and not some other kind of output contrived
+        /// to have a Taproot-shaped witness).
+        /// See [BIP-0341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki),
+        /// in particular footnote 7, for more information.
         fn taproot_leaf_script(&self) -> Option<LeafScript<&Script>> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { leaf_script, control_block, .. }) => {
@@ -183,13 +184,14 @@ internal_macros::define_extension_trait! {
             }
         }
 
-        /// Get the Taproot control block following BIP341 rules.
+        /// If this witness is a Taproot script spend, return the control block.
         ///
-        /// This does not guarantee that this represents a P2TR [`Witness`]. It
-        /// merely gets the last or second to last element depending on the first
-        /// byte of the last element being equal to 0x50.
-        ///
-        /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
+        /// Although this method does not have access to the output being spent, if the
+        /// transaction is valid and this method returns `Some`, you can be assured that
+        /// it is a real Taproot script spend (and not some other kind of output contrived
+        /// to have a Taproot-shaped witness).
+        /// See [BIP-0341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki),
+        /// in particular footnote 7, for more information.
         fn taproot_control_block(&self) -> Option<BorrowedControlBlock<'_>> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { control_block, .. }) => Some(control_block),
@@ -197,20 +199,17 @@ internal_macros::define_extension_trait! {
             }
         }
 
-        /// Get the Taproot annex following BIP341 rules.
-        ///
-        /// This does not guarantee that this represents a P2TR [`Witness`].
-        ///
-        /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
+        /// If this witness is a Taproot script spend with an annex, return that.
         fn taproot_annex(&self) -> Option<&[u8]> {
             P2TrSpend::from_witness(self)?.annex()
         }
 
-        /// Get the p2wsh witness script following BIP141 rules.
+        /// Get the Segwit version 0 witness script.
         ///
-        /// This does not guarantee that this represents a P2WS [`Witness`].
-        ///
-        /// See [`Script::is_p2wsh`] to check whether this is actually a P2WSH witness.
+        /// Unlike the Taproot case, we do no validation to determine whether this is a
+        /// witness script: it may be a Taproot control block, annex, or some other kind
+        /// of object. If you are not certain whether the output being spent is Segwit v0,
+        /// use [`Script::is_p2wsh`] on the output's script.
         fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
 
     }
