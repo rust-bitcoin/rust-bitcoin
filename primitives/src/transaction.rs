@@ -17,9 +17,14 @@ use core::cmp;
 use core::convert::Infallible;
 use core::fmt;
 
+#[cfg(feature = "io")]
+use io::Write;
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
+#[cfg(feature = "hex")]
+use hex::DisplayHex as _;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
 #[cfg(feature = "hex")]
@@ -177,6 +182,63 @@ impl Transaction {
         // `Transaction` docs for full explanation).
         self.inputs.is_empty()
     }
+
+    /// Consensus encodes a transaction.
+    #[cfg(feature = "alloc")]
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut encoder = Vec::new();
+        let len = self.serialize_to_writer(&mut encoder).expect("in-memory writers don't error");
+        debug_assert_eq!(len, encoder.len());
+        encoder
+    }
+
+    /// Consensus encodes a transaction as a hex string.
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    pub fn serialize_hex(&self) -> String {
+        self.serialize().to_lower_hex_string()
+    }
+
+    /// Consensus encodes transaction to writer.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes written on success. The only errors returned are errors propagated from
+    /// the writer.
+    #[cfg(feature = "io")]
+    fn serialize_to_writer<W: Write + ?Sized>(&self, _: &mut W) -> Result<usize, io::Error> {
+        todo!()
+    }
+
+    /// Deserializes an object from a vector, will error if said deserialization
+    /// doesn't consume the entire vector.
+    pub fn deserialize(data: &[u8]) -> Result<Transaction, ()> {
+        let (rv, consumed) = Self::deserialize_partial(data)?; // TODO: Return parse error.
+
+        // Fail if data are not consumed entirely.
+        if consumed == data.len() {
+            Ok(rv)
+        } else {
+            Err(())             // TODO: Return nconsumed error.
+        }
+    }
+
+    /// Deserialize transaction from a hex string, will error if said deserialization doesn't
+    /// consume the entire vector.
+    pub fn deserialize_hex(_: &str) -> Result<Transaction, ()> {
+        todo!()
+    }
+
+    /// Deserializes transaction from a vector, but will not report an error if said deserialization
+    /// doesn't consume the entire vector.
+    ///
+    /// # Returns
+    ///
+    /// The transaction along with the number of bytes consumed during deserialization.
+    // TODO: Add a new and improved `ParseError`.
+    pub fn deserialize_partial(_: &[u8]) -> Result<(Transaction, usize), ()> {
+        todo!()
+    }
+
 }
 
 #[cfg(feature = "alloc")]
