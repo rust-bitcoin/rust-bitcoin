@@ -322,3 +322,17 @@ jobs:
         run: cargo install --locked cargo-public-api --version 0.49.0
       - name: "Run API checker script"
         run: ./contrib/check-for-api-changes.sh
+
+  Re-exports:
+    name: Check re-exports - stable toolchain
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@stable
+      - name: "Run API checker script"
+        run: contrib/generate-re-export-test.sh && cd ./primitives && cargo test --all-features
+    
