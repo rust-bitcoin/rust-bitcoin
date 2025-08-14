@@ -116,7 +116,7 @@ impl fmt::Display for IsSatisfiedByTimeError {
         match *self {
             E::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
             E::Incompatible(blocks) =>
-                write!(f, "tried to satisfy a lock-by-height locktime using blocks {}", blocks),
+                write!(f, "tried to satisfy a lock-by-time locktime using blocks {}", blocks),
         }
     }
 }
