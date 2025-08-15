@@ -6,6 +6,10 @@ base58ck
     ├── bitcoin_internals
     │   └── hex_conservative
     │       └── arrayvec
+    ├── bitcoin_io
+    │   └── bitcoin_internals
+    │       └── hex_conservative
+    │           └── arrayvec
     └── hex_conservative
         └── arrayvec
 
@@ -19,6 +23,10 @@ bitcoin
 │       ├── bitcoin_internals
 │       │   └── hex_conservative
 │       │       └── arrayvec
+│       ├── bitcoin_io
+│       │   └── bitcoin_internals
+│       │       └── hex_conservative
+│       │           └── arrayvec
 │       └── hex_conservative
 │           └── arrayvec
 ├── base64
@@ -27,13 +35,7 @@ bitcoin
 │   └── hex_conservative
 │       └── arrayvec
 ├── bitcoin_io
-│   ├── bitcoin_internals
-│   │   └── hex_conservative
-│   │       └── arrayvec
-│   └── bitcoin_hashes
-│       ├── bitcoin_internals
-│       │   └── hex_conservative
-│       │       └── arrayvec
+│   └── bitcoin_internals
 │       └── hex_conservative
 │           └── arrayvec
 ├── bitcoin_primitives
@@ -51,6 +53,10 @@ bitcoin
 │   │   ├── bitcoin_internals
 │   │   │   └── hex_conservative
 │   │   │       └── arrayvec
+│   │   ├── bitcoin_io
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
 │   │   └── hex_conservative
 │   │       └── arrayvec
 │   └── hex_conservative
@@ -64,6 +70,10 @@ bitcoin
 │   ├── bitcoin_internals
 │   │   └── hex_conservative
 │   │       └── arrayvec
+│   ├── bitcoin_io
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
 │   └── hex_conservative
 │       └── arrayvec
 ├── bitcoinconsensus
@@ -83,13 +93,7 @@ bitcoin_internals
     └── arrayvec
 
 bitcoin_io
-├── bitcoin_internals
-│   └── hex_conservative
-│       └── arrayvec
-└── bitcoin_hashes
-    ├── bitcoin_internals
-    │   └── hex_conservative
-    │       └── arrayvec
+└── bitcoin_internals
     └── hex_conservative
         └── arrayvec
 
@@ -108,6 +112,10 @@ bitcoin_primitives
 │   ├── bitcoin_internals
 │   │   └── hex_conservative
 │   │       └── arrayvec
+│   ├── bitcoin_io
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
 │   └── hex_conservative
 │       └── arrayvec
 └── hex_conservative
@@ -123,6 +131,10 @@ bitcoin_hashes
 ├── bitcoin_internals
 │   └── hex_conservative
 │       └── arrayvec
+├── bitcoin_io
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
 └── hex_conservative
     └── arrayvec
 
