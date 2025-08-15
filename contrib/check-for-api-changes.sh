@@ -16,7 +16,7 @@ RUSTDOCFLAGS="-A rustdoc::broken_intra_doc_links"
 # `sort -n -u` doesn't work for some reason.
 SORT="sort --numeric-sort"
 
-# Sort order is effected by locale. See `man sort`.
+# Sort order is affected by locale. See `man sort`.
 # > Set LC_ALL=C to get the traditional sort order that uses native byte values.
 export LC_ALL=C
 
