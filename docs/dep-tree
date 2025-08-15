@@ -1,0 +1,141 @@
+base58ck
+├── bitcoin_internals
+│   └── hex_conservative
+│       └── arrayvec
+└── bitcoin_hashes
+    ├── bitcoin_internals
+    │   └── hex_conservative
+    │       └── arrayvec
+    ├── bitcoin_io
+    │   └── bitcoin_internals
+    │       └── hex_conservative
+    │           └── arrayvec
+    └── hex_conservative
+        └── arrayvec
+
+bitcoin
+├── arbitrary
+├── base58ck
+│   ├── bitcoin_internals
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   └── bitcoin_hashes
+│       ├── bitcoin_internals
+│       │   └── hex_conservative
+│       │       └── arrayvec
+│       ├── bitcoin_io
+│       │   └── bitcoin_internals
+│       │       └── hex_conservative
+│       │           └── arrayvec
+│       └── hex_conservative
+│           └── arrayvec
+├── base64
+├── bech32
+├── bitcoin_internals
+│   └── hex_conservative
+│       └── arrayvec
+├── bitcoin_io
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
+├── bitcoin_primitives
+│   ├── arbitrary
+│   ├── arrayvec
+│   ├── bitcoin_internals
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── bitcoin_units
+│   │   ├── arbitrary
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_hashes
+│   │   ├── bitcoin_internals
+│   │   │   └── hex_conservative
+│   │   │       └── arrayvec
+│   │   ├── bitcoin_io
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   └── hex_conservative
+│       └── arrayvec
+├── bitcoin_units
+│   ├── arbitrary
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
+├── bitcoin_hashes
+│   ├── bitcoin_internals
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── bitcoin_io
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   └── hex_conservative
+│       └── arrayvec
+├── bitcoinconsensus
+├── hex_conservative
+│   └── arrayvec
+└── secp256k1
+    ├── bitcoin_hashes
+    │   ├── bitcoin_io
+    │   └── hex_conservative
+    │       └── arrayvec
+    └── secp256k1_sys
+
+bitcoin_addresses
+
+bitcoin_internals
+└── hex_conservative
+    └── arrayvec
+
+bitcoin_io
+└── bitcoin_internals
+    └── hex_conservative
+        └── arrayvec
+
+bitcoin_primitives
+├── arbitrary
+├── arrayvec
+├── bitcoin_internals
+│   └── hex_conservative
+│       └── arrayvec
+├── bitcoin_units
+│   ├── arbitrary
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
+├── bitcoin_hashes
+│   ├── bitcoin_internals
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── bitcoin_io
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   └── hex_conservative
+│       └── arrayvec
+└── hex_conservative
+    └── arrayvec
+
+bitcoin_units
+├── arbitrary
+└── bitcoin_internals
+    └── hex_conservative
+        └── arrayvec
+
+bitcoin_hashes
+├── bitcoin_internals
+│   └── hex_conservative
+│       └── arrayvec
+├── bitcoin_io
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
+└── hex_conservative
+    └── arrayvec
+
+chacha20_poly1305
