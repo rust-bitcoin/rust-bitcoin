@@ -17,7 +17,6 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::{compact_size, const_casts, write_err, ToU64};
 use io::{BufRead, Write};
-use primitives::Sequence;
 
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
@@ -27,7 +26,7 @@ use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{internal_macros, Amount, FeeRate, SignedAmount};
+use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]

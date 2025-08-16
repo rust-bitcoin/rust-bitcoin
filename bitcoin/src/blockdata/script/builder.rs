@@ -2,8 +2,6 @@
 
 use core::fmt;
 
-use primitives::relative;
-
 use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
 use crate::key::{PublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
@@ -11,7 +9,7 @@ use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
 use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _};
-use crate::Sequence;
+use crate::{relative, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]

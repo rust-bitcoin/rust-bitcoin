@@ -10,11 +10,10 @@ use bitcoin::script::ScriptExt as _;
 use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
-    absolute, script, Address, Network, OutPoint, PrivateKey, Psbt, ScriptBuf, Sequence,
+    absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
 use secp256k1::{Keypair, Secp256k1, Signing};
-use units::Amount;
 
 #[test]
 fn psbt_sign_taproot() {

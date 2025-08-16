@@ -282,10 +282,9 @@ mod encode_impls {
     //! Encodable/Decodable implementations.
     // While we are deprecating, re-exporting, and generally moving things around just put these here.
 
-    use units::{BlockHeight, BlockHeightInterval};
-
     use crate::consensus::{encode, Decodable, Encodable};
     use crate::io::{BufRead, Write};
+    use crate::{BlockHeight, BlockHeightInterval};
 
     /// Implements Encodable and Decodable for a simple wrapper type.
     ///
