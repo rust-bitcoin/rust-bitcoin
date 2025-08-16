@@ -35,6 +35,7 @@ jobs:
           hashes_sha256,
           hashes_sha512,
           hashes_sha512_256,
+          units_arbitrary_weight,
           units_parse_amount,
         ]
     steps:

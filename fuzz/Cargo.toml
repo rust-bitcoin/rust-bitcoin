@@ -90,5 +90,9 @@ name = "hashes_sha512_256"
 path = "fuzz_targets/hashes/sha512_256.rs"
 
 [[bin]]
+name = "units_arbitrary_weight"
+path = "fuzz_targets/units/arbitrary_weight.rs"
+
+[[bin]]
 name = "units_parse_amount"
 path = "fuzz_targets/units/parse_amount.rs"
