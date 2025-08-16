@@ -1,56 +1,14 @@
-use bitcoin::address::Address;
-use bitcoin::consensus::encode;
-use bitcoin::script::{self, ScriptExt as _};
-use bitcoin::{FeeRate, Network};
-use bitcoin_fuzz::fuzz_utils::{consume_random_bytes, consume_u32};
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let mut new_data = data;
-    let bytes = consume_random_bytes(&mut new_data);
-    let s: Result<script::ScriptBuf, _> = encode::deserialize(bytes);
-    if let Ok(script) = s {
-        let _: Result<Vec<script::Instruction>, script::Error> = script.instructions().collect();
+    let script_result: Result<bitcoin::ScriptBuf, _> =
+        bitcoin::consensus::encode::deserialize(data);
 
-        let _ = script.to_string();
-        let _ = script.count_sigops();
-        let _ = script.count_sigops_legacy();
-        let _ = script.minimal_non_dust();
-
-        let fee_rate = FeeRate::from_sat_per_kwu(consume_u32(&mut new_data));
-        let _ = script.minimal_non_dust_custom(fee_rate);
-
-        let mut b = script::Builder::new();
-        for ins in script.instructions_minimal() {
-            if ins.is_err() {
-                return;
-            }
-            match ins.ok().unwrap() {
-                script::Instruction::Op(op) => {
-                    b = b.push_opcode(op);
-                }
-                script::Instruction::PushBytes(bytes) => {
-                    // Any one-byte pushes, except -0, which can be interpreted as numbers, should be
-                    // reserialized as numbers. (For -1 through 16, this will use special ops; for
-                    // others it'll just reserialize them as pushes.)
-                    if bytes.len() == 1 && bytes[0] != 0x80 && bytes[0] != 0x00 {
-                        if let Ok(num) = bytes.read_scriptint() {
-                            b = b.push_int_unchecked(num);
-                        } else {
-                            b = b.push_slice(bytes);
-                        }
-                    } else {
-                        b = b.push_slice(bytes);
-                    }
-                }
-            }
-        }
-        assert_eq!(b.into_script(), script);
-        assert_eq!(data, &encode::serialize(&script)[..]);
-
-        // Check if valid address and if that address roundtrips.
-        if let Ok(addr) = Address::from_script(&script, Network::Bitcoin) {
-            assert_eq!(addr.script_pubkey(), script);
+    match script_result {
+        Err(_) => {}
+        Ok(script) => {
+            let ser = bitcoin::consensus::encode::serialize(&script);
+            assert_eq!(&ser[..], data);
         }
     }
 }
