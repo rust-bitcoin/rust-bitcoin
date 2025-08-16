@@ -13,8 +13,6 @@
 
 // SPDX-License-Identifier: CC0-1.0
 
-use bitcoin::policy::{get_virtual_tx_size, DEFAULT_BYTES_PER_SIGOP};
-
 use core::cmp;
 
 use super::constants::{MAX_BLOCK_SIGOPS_COST, WITNESS_SCALE_FACTOR};
