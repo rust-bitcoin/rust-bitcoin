@@ -475,7 +475,7 @@ mod test {
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            outputs: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
         }
     }
 

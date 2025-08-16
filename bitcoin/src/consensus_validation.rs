@@ -106,7 +106,7 @@ where
             verify_script_with_flags(
                 &output.script_pubkey,
                 idx,
-                output.value,
+                output.amount,
                 serialized_tx.as_slice(),
                 flags,
             )?;
