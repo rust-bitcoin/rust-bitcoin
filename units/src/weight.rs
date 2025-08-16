@@ -91,7 +91,7 @@ impl Weight {
     }
 
     /// Constructs a new [`Weight`] from virtual bytes without an overflow check.
-    pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
+    pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * Self::WITNESS_SCALE_FACTOR) }
 
     /// Constructs a new [`Weight`] from witness size.
     pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight::from_wu(witness_size) }
