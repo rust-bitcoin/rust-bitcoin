@@ -185,7 +185,7 @@ for review yet please mark it by prefixing the title with `WIP: `.
 
 ### CI Pipeline
 
-The CI pipeline requires approval before being run on each MR.
+The CI pipeline requires approval before being run on each PR.
 
 In order to speed up the review process the CI pipeline can be run locally using
 [act](https://github.com/nektos/act). The `fuzz` and `Cross` jobs will be skipped when using `act`
