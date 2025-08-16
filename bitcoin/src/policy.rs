@@ -51,3 +51,30 @@ pub fn get_virtual_tx_size(weight: i64, n_sigops: i64) -> i64 {
     (cmp::max(weight, n_sigops * DEFAULT_BYTES_PER_SIGOP as i64) + WITNESS_SCALE_FACTOR as i64 - 1)
         / WITNESS_SCALE_FACTOR as i64
 }
+
+
+#[test]
+fn vsize_weight_dominates() {
+	// When weight >= sigops * DEFAULT_BYTES_PER_SIGOP, vsize = ceil(weight / 4).
+	// Example: 4000 weight => 1000 vbytes.
+	assert_eq!(get_virtual_tx_size(4000, 1), 1000);
+}
+
+#[test]
+fn vsize_sigops_dominates() {
+	// When sigops * DEFAULT_BYTES_PER_SIGOP > weight, vsize = ceil((sigops * 20) / 4) = ceil(sigops * 5).
+	let n_sigops = 250i64;
+	let expected = ((n_sigops * DEFAULT_BYTES_PER_SIGOP as i64) + 3) / 4; // ceil division by 4
+	assert_eq!(get_virtual_tx_size(1000, n_sigops), expected);
+	assert_eq!(expected, 1250);
+}
+
+#[test]
+fn vsize_zero_values() {
+	assert_eq!(get_virtual_tx_size(0, 0), 0);
+	// Zero weight but non-zero sigops -> determined purely by sigops.
+	let n_sigops = 2i64;
+	let expected = ((n_sigops * DEFAULT_BYTES_PER_SIGOP as i64) + 3) / 4;
+	assert!(expected > 0);
+	assert_eq!(get_virtual_tx_size(0, n_sigops), expected);
+} 
