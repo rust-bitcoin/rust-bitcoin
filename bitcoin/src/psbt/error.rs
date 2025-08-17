@@ -9,7 +9,7 @@ use crate::bip32::Xpub;
 use crate::consensus::encode;
 use crate::prelude::Box;
 use crate::psbt::raw;
-use crate::{key, ecdsa, taproot, Txid, Transaction, OutPoint};
+use crate::{ecdsa, key, taproot, OutPoint, Transaction, Txid};
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

@@ -642,10 +642,10 @@ impl<'a> Arbitrary<'a> for Wtxid {
 #[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "alloc")]
     use alloc::{format, vec};
+
+    use super::*;
 
     #[test]
     fn sanity_check() {
