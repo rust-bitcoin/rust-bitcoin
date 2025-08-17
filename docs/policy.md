@@ -47,6 +47,15 @@ use crate::prelude::*; // *NOT* OK
 use crate::prelude::{DisplayHex, String, Vec} // OK
 ```
 
+### On re-exports
+
+We attempt to mirror the `units` and `primitives`, and `bitcoin` APIs as we go up the stack i.e.,
+`bitcoin::Foo` exists for all `primitives::Foo` (and also `primitives::Foo` exists for all
+`units::Foo`). As part of this, in this codebase, policy is to use types from the highest crate
+available i.e `use crate::Foo` not `units::Foo`.
+
+This is enforced by CI.
+
 ## Return `Self`
 
 Use `Self` as the return type instead of naming the type. When constructing the return value use
