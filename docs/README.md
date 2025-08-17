@@ -8,6 +8,6 @@ whether a change should be made at all, or the strategy for making changes, it i
 the `docs/` tree. If a PR discussion veers into this sort of strategic discussion, the PR should be put on
 hold and a PR made to the `docs/` tree or in the Discussions section to debate it before moving forward.
 
-## Depenency tree
+## Dependency tree
 
 The `./dep-tree` file was generated using `just gen-dep-tree`.
