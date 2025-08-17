@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! BIP152 Compact Blocks.
+//! BIP-0152 Compact Blocks.
 //!
 //! Implementation of compact blocks data structure and algorithms.
 
@@ -22,7 +22,7 @@ use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
 use crate::{block, consensus, Block, BlockChecked, BlockHash, Transaction};
 
-/// A BIP-152 error
+/// A BIP-0152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
@@ -91,7 +91,7 @@ impl Decodable for PrefilledTransaction {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let idx = r.read_compact_size()?;
         let idx = u16::try_from(idx).map_err(|_| {
-            consensus::parse_failed_error("BIP152 prefilled tx index out of bounds")
+            consensus::parse_failed_error("BIP-0152 prefilled tx index out of bounds")
         })?;
         let tx = Transaction::consensus_decode(r)?;
         Ok(PrefilledTransaction { idx, tx })
@@ -246,7 +246,7 @@ impl HeaderAndShortIds {
                         // > Transactions inside cmpctblock messages (both those used as direct
                         // > announcement and those in response to getdata) and in blocktxn should
                         // > include witness data, using the same format as responses to getdata
-                        // > MSG_WITNESS_TX, specified in BIP144.
+                        // > MSG_WITNESS_TX, specified in BIP-0144.
                         2 => tx.clone(),
                         _ => unreachable!(),
                     },

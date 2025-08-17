@@ -191,7 +191,7 @@ hacking on this codebase. Consider the following format, not all sections will b
 ///
 /// ### Relevant BIPs
 ///
-/// * [BIP X - FooBar in Bitcoin](https://github.com/bitcoin/bips/blob/master/bip-0001.mediawiki)
+/// * [BIP-XXXX - FooBar in Bitcoin](https://github.com/bitcoin/bips/blob/master/bip-xxxx.mediawiki)
 pub struct FooBar {
     /// The version in use.
     pub version: Version
@@ -256,6 +256,21 @@ See [Errors](#errors) section.
   compatible. These configuration conditionals are set at build time in `bitcoin/build.rs`. New
   version attributes may be added as needed.
 
+
+## BIP References
+
+When referring to Bitcoin Improvement Proposals (BIPs) in documentation, comments, and error messages, use the standardized notation `BIP-XXXX` where `XXXX` is the 4-digit BIP number with leading zeros.
+
+### Examples
+
+- Correct: `BIP-0032`, `BIP-0341`, `BIP-0014`
+- Incorrect: `BIP32`, `BIP 341`, `Bip14`, `bip_341`
+
+### Exceptions
+
+Module names, function names, variable names, and file names must keep their existing lowercase/underscore format. Do not rename them to match the formal BIP style:
+- Module names: `bip32`, `bip152` (keep lowercase)
+- Function names: `bip32_derivation`, `bip_341_tests` (keep existing format)
 
 ## Licensing
 

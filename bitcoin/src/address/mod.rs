@@ -387,12 +387,12 @@ internals::transparent_newtype! {
     ///
     /// # Relevant BIPs
     ///
-    /// * [BIP13 - Address Format for pay-to-script-hash](https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki)
-    /// * [BIP16 - Pay to Script Hash](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)
-    /// * [BIP141 - Segregated Witness (Consensus layer)](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-    /// * [BIP142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
-    /// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
-    /// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
+    /// * [BIP-0013 - Address Format for pay-to-script-hash](https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki)
+    /// * [BIP-0016 - Pay to Script Hash](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)
+    /// * [BIP-0141 - Segregated Witness (Consensus layer)](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    /// * [BIP-0142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
+    /// * [BIP-0341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
+    /// * [BIP-0350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     // The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
     // is an implementation detail and users should not rely on it in their code.
@@ -502,7 +502,7 @@ impl Address {
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script.
     ///
-    /// This address type was introduced with BIP16 and is the popular type to implement multi-sig
+    /// This address type was introduced with BIP-0016 and is the popular type to implement multi-sig
     /// these days.
     #[inline]
     pub fn p2sh(
@@ -725,7 +725,7 @@ impl Address {
     /// Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of
     /// alphanumeric mode, which is 45% more compact than the normal byte mode."
     ///
-    /// Note however that despite BIP21 explicitly stating that the `bitcoin:` prefix should be
+    /// Note however that despite BIP-0021 explicitly stating that the `bitcoin:` prefix should be
     /// parsed as case-insensitive many wallets got this wrong and don't parse correctly.
     /// [See compatibility table.](https://github.com/btcpayserver/btcpayserver/issues/2110)
     ///

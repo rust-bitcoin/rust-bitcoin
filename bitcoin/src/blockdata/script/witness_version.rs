@@ -1,11 +1,11 @@
-//! The segregated witness version byte as defined by [BIP141].
+//! The segregated witness version byte as defined by [BIP-0141].
 //!
-//! > A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte push
+//! > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte push
 //! > opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new special
 //! > meaning. The value of the first push is called the "version byte". The following byte
 //! > vector pushed is called the "witness program".
 //!
-//! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
+//! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
 use core::convert::Infallible;
 use core::fmt;

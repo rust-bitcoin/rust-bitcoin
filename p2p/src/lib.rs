@@ -130,7 +130,7 @@ impl ServiceFlags {
 
     /// GETUTXO means the node is capable of responding to the getutxo protocol request. Bitcoin
     /// Core does not support this but a patch set called Bitcoin XT does.
-    /// See BIP 64 for details on how this is implemented.
+    /// See BIP-0064 for details on how this is implemented.
     pub const GETUTXO: ServiceFlags = ServiceFlags(1 << 1);
 
     /// BLOOM means the node is capable and willing to handle bloom-filtered connections. Bitcoin
@@ -143,16 +143,16 @@ impl ServiceFlags {
     pub const WITNESS: ServiceFlags = ServiceFlags(1 << 3);
 
     /// COMPACT_FILTERS means the node will service basic block filter requests.
-    /// See BIP157 and BIP158 for details on how this is implemented.
+    /// See BIP-0157 and BIP-0158 for details on how this is implemented.
     pub const COMPACT_FILTERS: ServiceFlags = ServiceFlags(1 << 6);
 
     /// NETWORK_LIMITED means the same as NODE_NETWORK with the limitation of only serving the last
     /// 288 (2 day) blocks.
-    /// See BIP159 for details on how this is implemented.
+    /// See BIP-0159 for details on how this is implemented.
     pub const NETWORK_LIMITED: ServiceFlags = ServiceFlags(1 << 10);
 
     /// P2P_V2 indicates that the node supports the P2P v2 encrypted transport protocol.
-    /// See BIP324 for details on how this is implemented.
+    /// See BIP-0324 for details on how this is implemented.
     pub const P2P_V2: ServiceFlags = ServiceFlags(1 << 11);
 
     // NOTE: When adding new flags, remember to update the Display impl accordingly.

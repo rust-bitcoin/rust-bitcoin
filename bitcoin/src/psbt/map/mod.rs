@@ -20,7 +20,7 @@ pub(super) trait Map {
     /// Attempt to get all key-value pairs.
     fn get_pairs(&self) -> Vec<raw::Pair>;
 
-    /// Serialize Psbt binary map data according to BIP-174 specification.
+    /// Serialize Psbt binary map data according to BIP-0174 specification.
     ///
     /// <map> := <keypair>* 0x00
     ///

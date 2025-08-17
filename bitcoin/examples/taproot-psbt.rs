@@ -95,7 +95,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let secp = Secp256k1::new();
 
     println!("\n----------------");
-    println!("\nSTART EXAMPLE 1 - P2TR with a BIP86 commitment, signed with internal key\n");
+    println!("\nSTART EXAMPLE 1 - P2TR with a BIP-0086 commitment, signed with internal key\n");
 
     // Just some addresses for outputs from our wallets. Not really important.
     let to_address = "bcrt1p0p3rvwww0v9znrclp00uneq8ytre9kj922v8fxhnezm3mgsmn9usdxaefc"
@@ -415,7 +415,7 @@ impl BenefactorWallet {
         let value = (input_utxo.amount - ABSOLUTE_FEES)
             .expect("ABSOLUTE_FEES must be set below input amount");
 
-        // Spend a normal BIP86-like output as an input in our inheritance funding transaction
+        // Spend a normal BIP-0086-like output as an input in our inheritance funding transaction
         let tx = generate_bip86_key_spend_tx(
             &self.secp,
             self.master_xpriv,

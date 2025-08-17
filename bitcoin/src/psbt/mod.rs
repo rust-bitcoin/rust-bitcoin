@@ -2,7 +2,7 @@
 
 //! Partially Signed Bitcoin Transactions.
 //!
-//! Implementation of BIP174 Partially Signed Bitcoin Transaction Format as
+//! Implementation of BIP-0174 Partially Signed Bitcoin Transaction Format as
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>
 //! except we define PSBTs containing non-standard sighash types as invalid.
 
@@ -213,9 +213,9 @@ impl Psbt {
         }
     }
 
-    /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
+    /// Combines this [`Psbt`] with `other` PSBT as described by BIP-0174.
     ///
-    /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
+    /// In accordance with BIP-0174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
     pub fn combine(&mut self, other: Self) -> Result<(), Error> {
         if self.unsigned_tx != other.unsigned_tx {
             return Err(Error::UnexpectedUnsignedTx {
@@ -224,7 +224,7 @@ impl Psbt {
             });
         }
 
-        // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
+        // BIP-0174: The Combiner must remove any duplicate key-value pairs, in accordance with
         //          the specification. It can pick arbitrarily when conflicts occur.
 
         // Keeping the highest version
@@ -434,10 +434,10 @@ impl Psbt {
 
             // key path spend
             if let Some(internal_key) = input.tap_internal_key {
-                // BIP 371: The internal key does not have leaf hashes, so can be indicated with a hashes len of 0.
+                // BIP-0371: The internal key does not have leaf hashes, so can be indicated with a hashes len of 0.
 
                 // Based on input.tap_internal_key.is_some() alone, it is not sufficient to determine whether it is a key path spend.
-                // According to BIP 371, we also need to consider the condition leaf_hashes.is_empty() for a more accurate determination.
+                // According to BIP-0371, we also need to consider the condition leaf_hashes.is_empty() for a more accurate determination.
                 if internal_key == xonly && leaf_hashes.is_empty() && input.tap_key_sig.is_none() {
                     let (msg, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
                     let key_pair = Keypair::from_secret_key(secp, &sk.inner)
@@ -776,7 +776,7 @@ impl<'de> serde::Deserialize<'de> for Psbt {
 pub enum KeyRequest {
     /// Request a private key using the associated public key.
     Pubkey(PublicKey),
-    /// Request a private key using BIP-32 fingerprint and derivation path.
+    /// Request a private key using BIP-0032 fingerprint and derivation path.
     Bip32(KeySource),
     /// Request a private key using the associated x-only public key.
     XOnlyPubkey(XOnlyPublicKey),
@@ -2258,7 +2258,7 @@ mod tests {
         assert!(!rtt.proprietary.is_empty());
     }
 
-    // Deserialize MuSig2 PSBT participant keys according to BIP-373
+    // Deserialize MuSig2 PSBT participant keys according to BIP-0373
     #[test]
     fn serialize_and_deserialize_musig2_participants() {
         // XXX: Does not cover PSBT_IN_MUSIG2_PUB_NONCE, PSBT_IN_MUSIG2_PARTIAL_SIG (yet)

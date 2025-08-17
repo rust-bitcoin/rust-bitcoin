@@ -13,8 +13,8 @@
 //!
 //! # Relevant BIPS
 //!
-//! * [BIP 157 - Client Side Block Filtering](https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki)
-//! * [BIP 158 - Compact Block Filters for Light Clients](https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki)
+//! * [BIP-0157 - Client Side Block Filtering](https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki)
+//! * [BIP-0158 - Compact Block Filters for Light Clients](https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki)
 //!
 //! # Examples
 //!
@@ -55,14 +55,14 @@ use crate::prelude::{BTreeSet, Borrow, Vec};
 use crate::script::{Script, ScriptExt as _};
 use crate::transaction::OutPoint;
 
-/// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
+/// Golomb encoding parameter as in BIP-0158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
 const M: u64 = 784931;
 
 hashes::hash_newtype! {
-    /// Filter hash, as defined in BIP-157.
+    /// Filter hash, as defined in BIP-0157.
     pub struct FilterHash(sha256d::Hash);
-    /// Filter header, as defined in BIP-157.
+    /// Filter header, as defined in BIP-0157.
     pub struct FilterHeader(sha256d::Hash);
 }
 
@@ -156,7 +156,7 @@ impl BlockFilter {
 
     /// Computes this filter's ID in a chain of filters (see [BIP 157]).
     ///
-    /// [BIP 157]: <https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#Filter_Headers>
+    /// [BIP-0157]: <https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#Filter_Headers>
     pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
         FilterHash(sha256d::Hash::hash(&self.content)).filter_header(previous_filter_header)
     }

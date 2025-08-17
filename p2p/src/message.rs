@@ -178,7 +178,7 @@ pub struct V1MessageHeader {
 
 impl_consensus_encoding!(V1MessageHeader, magic, command, length, checksum);
 
-/// A Network message using the v2 p2p protocol defined in BIP324.
+/// A Network message using the v2 p2p protocol defined in BIP-0324.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct V2NetworkMessage {
     payload: NetworkMessage,
@@ -238,31 +238,31 @@ pub enum NetworkMessage {
     Pong(u64),
     /// `merkleblock`
     MerkleBlock(MerkleBlock),
-    /// BIP 37 `filterload`
+    /// BIP-0037 `filterload`
     FilterLoad(message_bloom::FilterLoad),
-    /// BIP 37 `filteradd`
+    /// BIP-0037 `filteradd`
     FilterAdd(message_bloom::FilterAdd),
-    /// BIP 37 `filterclear`
+    /// BIP-0037 `filterclear`
     FilterClear,
-    /// BIP157 getcfilters
+    /// BIP-0157 getcfilters
     GetCFilters(message_filter::GetCFilters),
-    /// BIP157 cfilter
+    /// BIP-0157 cfilter
     CFilter(message_filter::CFilter),
-    /// BIP157 getcfheaders
+    /// BIP-0157 getcfheaders
     GetCFHeaders(message_filter::GetCFHeaders),
-    /// BIP157 cfheaders
+    /// BIP-0157 cfheaders
     CFHeaders(message_filter::CFHeaders),
-    /// BIP157 getcfcheckpt
+    /// BIP-0157 getcfcheckpt
     GetCFCheckpt(message_filter::GetCFCheckpt),
-    /// BIP157 cfcheckpt
+    /// BIP-0157 cfcheckpt
     CFCheckpt(message_filter::CFCheckpt),
-    /// BIP152 sendcmpct
+    /// BIP-0152 sendcmpct
     SendCmpct(message_compact_blocks::SendCmpct),
-    /// BIP152 cmpctblock
+    /// BIP-0152 cmpctblock
     CmpctBlock(message_compact_blocks::CmpctBlock),
-    /// BIP152 getblocktxn
+    /// BIP-0152 getblocktxn
     GetBlockTxn(message_compact_blocks::GetBlockTxn),
-    /// BIP152 blocktxn
+    /// BIP-0152 blocktxn
     BlockTxn(message_compact_blocks::BlockTxn),
     /// `alert`
     Alert(message_network::Alert),

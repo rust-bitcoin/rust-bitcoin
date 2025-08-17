@@ -60,9 +60,9 @@ impl TxIdentifier for Txid {}
 impl TxIdentifier for Wtxid {}
 
 // Duplicated in `primitives`.
-/// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
+/// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
 const SEGWIT_MARKER: u8 = 0x00;
-/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
+/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-0141)
 const SEGWIT_FLAG: u8 = 0x01;
 
 internal_macros::define_extension_trait! {
@@ -99,7 +99,7 @@ internal_macros::define_extension_trait! {
         ///  ignored. If this returns false and OP_CHECKLOCKTIMEVERIFY is used in the redeem script with
         ///  this input then the script execution will fail [BIP-0065].
         ///
-        /// [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+        /// [BIP-0065](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
         fn enables_lock_time(&self) -> bool { self.sequence != Sequence::MAX }
 
         /// The weight of the TxIn when it's included in a legacy transaction (i.e., a transaction
@@ -224,7 +224,7 @@ pub trait TransactionExt: sealed::Sealed {
     #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
     fn wtxid(&self) -> Wtxid;
 
-    /// Returns the weight of this transaction, as defined by BIP-141.
+    /// Returns the weight of this transaction, as defined by BIP-0141.
     ///
     /// > Transaction weight is defined as Base transaction size * 3 + Total transaction size (ie.
     /// > the same method as calculating Block weight from Base size and Total size).
@@ -236,7 +236,7 @@ pub trait TransactionExt: sealed::Sealed {
     /// For transactions with no inputs, this function will return a value 2 less than the actual
     /// weight of the serialized transaction. The reason is that zero-input transactions, post-SegWit,
     /// cannot be unambiguously serialized; we make a choice that adds two extra bytes. For more
-    /// details see [BIP 141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    /// details see [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     /// which uses a "input count" of `0x00` as a `marker` for a SegWit-encoded transaction.
     ///
     /// If you need to use 0-input transactions, we strongly recommend you do so using the PSBT
@@ -251,20 +251,20 @@ pub trait TransactionExt: sealed::Sealed {
 
     /// Returns the total transaction size.
     ///
-    /// > Total transaction size is the transaction size in bytes serialized as described in BIP144,
+    /// > Total transaction size is the transaction size in bytes serialized as described in BIP-0144,
     /// > including base data and witness data.
     fn total_size(&self) -> usize;
 
     /// Returns the "virtual size" (vsize) of this transaction.
     ///
-    /// Will be `ceil(weight / 4.0)`. Note this implements the virtual size as per [`BIP141`], which
+    /// Will be `ceil(weight / 4.0)`. Note this implements the virtual size as per [`BIP-0141`], which
     /// is different to what is implemented in Bitcoin Core. The computation should be the same for
     /// any remotely sane transaction, and a standardness-rule-correct version is available in the
     /// [`policy`] module.
     ///
     /// > Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
     ///
-    /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+    /// [`BIP-0141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
     /// [`policy`]: crate::policy
     fn vsize(&self) -> usize;
 
@@ -277,7 +277,7 @@ pub trait TransactionExt: sealed::Sealed {
     #[doc(alias = "is_coin_base")] // method previously had this name
     fn is_coinbase(&self) -> bool;
 
-    /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
+    /// Returns `true` if the transaction itself opted in to be BIP-0125-replaceable (RBF).
     ///
     /// # Warning
     ///
@@ -297,9 +297,9 @@ pub trait TransactionExt: sealed::Sealed {
     /// transaction from being mined immediately.
     fn is_absolute_timelock_satisfied(&self, height: Height, time: MedianTimePast) -> bool;
 
-    /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
+    /// Returns `true` if this transactions nLockTime is enabled ([BIP-0065]).
     ///
-    /// [BIP-65]: https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
+    /// [BIP-0065]: https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
     fn is_lock_time_enabled(&self) -> bool;
 
     /// Returns an iterator over lengths of `script_pubkey`s in the outputs.
@@ -558,7 +558,7 @@ impl TransactionExtPriv for Transaction {
         if self.inputs.iter().any(|input| !input.witness.is_empty()) {
             return true;
         }
-        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+        // To avoid serialization ambiguity, no inputs means we use BIP-0141 serialization (see
         // `Transaction` docs for full explanation).
         self.inputs.is_empty()
     }
@@ -721,7 +721,7 @@ impl Decodable for Transaction {
         if inputs.is_empty() {
             let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
             match segwit_flag {
-                // BIP144 input witnesses
+                // BIP-0144 input witnesses
                 1 => {
                     let mut inputs = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
                     let outputs = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;

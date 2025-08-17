@@ -3,7 +3,7 @@
 //! HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
 //!
 //! Implementation based on RFC5869, but the interface is scoped
-//! to BIP324's requirements.
+//! to BIP-0324's requirements.
 
 #[cfg(feature = "alloc")]
 use alloc::vec;

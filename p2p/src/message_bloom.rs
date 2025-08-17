@@ -2,7 +2,7 @@
 
 //! Bitcoin Connection Bloom filtering network messages.
 //!
-//! This module describes BIP37 Connection Bloom filtering network messages.
+//! This module describes BIP-0037 Connection Bloom filtering network messages.
 
 use alloc::vec::Vec;
 

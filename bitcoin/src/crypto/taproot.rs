@@ -17,7 +17,7 @@ use crate::prelude::Vec;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 use crate::taproot::serialized_signature::{self, SerializedSignature};
 
-/// A BIP340-341 serialized Taproot signature with the corresponding hash type.
+/// A BIP-0340-0341 serialized Taproot signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Signature {

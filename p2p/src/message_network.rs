@@ -91,7 +91,7 @@ impl_consensus_encoding!(
     relay
 );
 
-/// A bitcoin user agent defined by BIP-14. The user agent is sent in the version message when a
+/// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
 /// connection between two peers is established. It is intended to advertise client software in a
 /// well-defined format.
 ///
@@ -131,7 +131,7 @@ impl UserAgent {
         Self { user_agent: agent }
     }
 
-    /// Build a user agent, ignoring BIP-14 recommendations.
+    /// Build a user agent, ignoring BIP-0014 recommendations.
     pub fn from_nonstandard<S: ToString>(agent: S) -> Self {
         Self { user_agent: agent.to_string() }
     }
@@ -164,7 +164,7 @@ impl From<UserAgent> for String {
     fn from(agent: UserAgent) -> Self { agent.user_agent }
 }
 
-/// A software version field for inclusion in a user agent specified by BIP-14.
+/// A software version field for inclusion in a user agent specified by BIP-0014.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UserAgentVersion {
     version: ClientSoftwareVersion,

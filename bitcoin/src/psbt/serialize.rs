@@ -3,7 +3,7 @@
 //! PSBT serialization.
 //!
 //! Traits to serialize PSBT values to and from raw bytes
-//! according to the BIP-174 specification.
+//! according to the BIP-0174 specification.
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
 use internals::compact_size;
@@ -212,7 +212,7 @@ impl Serialize for ecdsa::Signature {
 
 impl Deserialize for ecdsa::Signature {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        // NB: Since BIP-174 says "the signature as would be pushed to the stack from
+        // NB: Since BIP-0174 says "the signature as would be pushed to the stack from
         // a scriptSig or witness" we should ideally use a consensus deserialization and do
         // not error on a non-standard values. However,
         //
@@ -222,7 +222,7 @@ impl Deserialize for ecdsa::Signature {
         // EcdsaSig::from_slice(&sl[..]).to_vec = sl.
         //
         // 2) This would cause to have invalid signatures because the sighash message
-        // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
+        // also has a field sighash_u32 (See BIP-0141). For example, when signing with non-standard
         // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
         // would use check the signature assuming sighash_u32 as `0x01`.
         ecdsa::Signature::from_slice(bytes).map_err(|e| match e {

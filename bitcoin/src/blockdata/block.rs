@@ -266,7 +266,7 @@ pub trait BlockCheckedExt: sealed::Sealed {
 
     /// Returns the total block size.
     ///
-    /// > Total size is the block size in bytes with transactions serialized as described in BIP144,
+    /// > Total size is the block size in bytes with transactions serialized as described in BIP-0144,
     /// > including base data and witness data.
     fn total_size(&self) -> usize;
 
@@ -276,7 +276,7 @@ pub trait BlockCheckedExt: sealed::Sealed {
     /// that a valid coinbase transaction is always present.
     fn coinbase(&self) -> &Coinbase;
 
-    /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
+    /// Returns the block height, as encoded in the coinbase transaction according to BIP-0034.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error>;
 }
 
@@ -313,7 +313,7 @@ impl BlockCheckedExt for Block<Checked> {
         Coinbase::assume_coinbase_ref(first_tx)
     }
 
-    /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
+    /// Returns the block height, as encoded in the coinbase transaction according to BIP-0034.
     fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
         // Citing the spec:
         // Add height as the first item in the coinbase transaction's scriptSig,
@@ -442,17 +442,17 @@ impl fmt::Display for InvalidBlockError {
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidBlockError {}
 
-/// An error when looking up a BIP34 block height.
+/// An error when looking up a BIP-0034 block height.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Bip34Error {
-    /// The block does not support BIP34 yet.
+    /// The block does not support BIP-0034 yet.
     Unsupported,
-    /// No push was present where the BIP34 push was expected.
+    /// No push was present where the BIP-0034 push was expected.
     NotPresent,
-    /// The BIP34 push was not minimally encoded.
+    /// The BIP-0034 push was not minimally encoded.
     NonMinimalPush,
-    /// The BIP34 push was negative.
+    /// The BIP-0034 push was negative.
     NegativeHeight,
 }
 
@@ -465,10 +465,10 @@ impl fmt::Display for Bip34Error {
         use Bip34Error::*;
 
         match *self {
-            Unsupported => write!(f, "block doesn't support BIP34"),
-            NotPresent => write!(f, "BIP34 push not present in block's coinbase"),
+            Unsupported => write!(f, "block doesn't support BIP-0034"),
+            NotPresent => write!(f, "BIP-0034 push not present in block's coinbase"),
             NonMinimalPush => write!(f, "byte push not minimally encoded"),
-            NegativeHeight => write!(f, "negative BIP34 height"),
+            NegativeHeight => write!(f, "negative BIP-0034 height"),
         }
     }
 }
@@ -909,7 +909,7 @@ mod tests {
         let block: Block = deserialize(&hex!(BLOCK_HEX)).unwrap();
         let block = block.assume_checked(None);
 
-        // Test that BIP34 height extraction works with the Coinbase type
+        // Test that BIP-0034 height extraction works with the Coinbase type
         assert_eq!(block.bip34_block_height(), Ok(100_000));
 
         // Test that coinbase method returns a Coinbase type

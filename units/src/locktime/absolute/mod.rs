@@ -56,8 +56,8 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 ///
 /// # Relevant BIPs
 ///
-/// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
-/// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
+/// * [BIP-0065 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+/// * [BIP-0113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
 ///
 /// # Examples
 ///
@@ -218,9 +218,9 @@ impl LockTime {
     /// If the locktime is set to an MTP `T`, the transaction can be included in a block only if
     /// the MTP of last recent 11 blocks is greater than `T`.
     ///
-    /// It is possible to broadcast the transaction once the MTP is greater than `T`. See BIP-113.
+    /// It is possible to broadcast the transaction once the MTP is greater than `T`. See BIP-0113.
     ///
-    /// [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
+    /// [BIP-0113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     ///
     /// See [`LOCK_TIME_THRESHOLD`] for definition of a valid time value.
     ///
