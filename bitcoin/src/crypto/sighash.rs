@@ -91,8 +91,6 @@ hashes::impl_hex_for_newtype!(TapSighash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapSighash);
 
-impl_message_from_hash!(TapSighash);
-
 /// Efficiently calculates signature hash message for legacy, SegWit and Taproot inputs.
 #[derive(Debug)]
 pub struct SighashCache<T: Borrow<Transaction>> {
@@ -2026,9 +2024,8 @@ mod tests {
                 .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
                 .unwrap();
 
-            let msg = secp256k1::Message::from(sighash);
             let key_spend_sig =
-                secp.sign_schnorr_with_aux_rand(msg.as_ref(), &tweaked_keypair, &[0u8; 32]);
+                secp.sign_schnorr_with_aux_rand(&sighash.to_byte_array(), &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected.internal_pubkey, internal_key);
             assert_eq!(expected.tweak, tweak);
