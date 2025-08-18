@@ -148,8 +148,6 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 /// # Errors
 ///
 /// If parsing the string fails then a `units::parse::ParseIntError` is returned.
-#[macro_export]
-#[doc(hidden)] // This macro is stable but is considered internal to the `rust-bitcoin` repository.
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
         impl $crate::_export::_core::str::FromStr for $to {
@@ -191,6 +189,7 @@ macro_rules! impl_parse_str_from_int_infallible {
         }
     };
 }
+pub(crate) use impl_parse_str_from_int_infallible;
 
 /// Implements standard parsing traits for `$type` by calling through to `$inner_fn`.
 ///
@@ -213,13 +212,11 @@ macro_rules! impl_parse_str_from_int_infallible {
 /// # Errors
 ///
 /// All functions use the error returned by `$inner_fn`.
-#[macro_export]
-#[doc(hidden)] // This macro is stable but is considered internal to the `rust-bitcoin` repository.
 macro_rules! impl_parse_str {
     ($to:ty, $err:ty, $inner_fn:expr) => {
-        $crate::impl_tryfrom_str!(&str, $to, $err, $inner_fn);
+        $crate::parse::impl_tryfrom_str!(&str, $to, $err, $inner_fn);
         #[cfg(feature = "alloc")]
-        $crate::impl_tryfrom_str!(alloc::string::String, $to, $err, $inner_fn; alloc::boxed::Box<str>, $to, $err, $inner_fn);
+        $crate::parse::impl_tryfrom_str!(alloc::string::String, $to, $err, $inner_fn; alloc::boxed::Box<str>, $to, $err, $inner_fn);
 
         impl $crate::_export::_core::str::FromStr for $to {
             type Err = $err;
@@ -230,10 +227,9 @@ macro_rules! impl_parse_str {
         }
     }
 }
+pub(crate) use impl_parse_str;
 
 /// Implements `TryFrom<$from> for $to`.
-#[macro_export]
-#[doc(hidden)] // Helper macro called by `impl_parse_str`.
 macro_rules! impl_tryfrom_str {
     ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
         $(
@@ -247,6 +243,7 @@ macro_rules! impl_tryfrom_str {
         )*
     }
 }
+pub(crate) use impl_tryfrom_str;
 
 /// Removes the prefix `0x` (or `0X`) from a hex string.
 ///

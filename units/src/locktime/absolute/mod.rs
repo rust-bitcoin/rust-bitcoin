@@ -399,7 +399,7 @@ impl LockTime {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
+parse::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 
 impl From<Height> for LockTime {
     #[inline]
@@ -546,7 +546,7 @@ impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
+parse::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
 
 #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
 #[doc(hidden)]
@@ -661,7 +661,7 @@ impl fmt::Display for MedianTimePast {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(MedianTimePast, ParseTimeError, parser(MedianTimePast::from_u32));
+parse::impl_parse_str!(MedianTimePast, ParseTimeError, parser(MedianTimePast::from_u32));
 
 fn parser<T, E, S, F>(f: F) -> impl FnOnce(S) -> Result<T, E>
 where
