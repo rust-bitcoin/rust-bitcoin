@@ -29,7 +29,7 @@ use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
 use crate::script::ScriptExt as _;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TransactionExt as _, TxOut};
-use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
+use crate::{Amount, FeeRate, TapLeafHash, TapSighash, TapSighashType};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -439,15 +439,15 @@ impl Psbt {
                 // Based on input.tap_internal_key.is_some() alone, it is not sufficient to determine whether it is a key path spend.
                 // According to BIP 371, we also need to consider the condition leaf_hashes.is_empty() for a more accurate determination.
                 if internal_key == xonly && leaf_hashes.is_empty() && input.tap_key_sig.is_none() {
-                    let (msg, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
+                    let (sighash, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
                     let key_pair = Keypair::from_secret_key(secp, &sk.inner)
                         .tap_tweak(secp, input.tap_merkle_root)
                         .to_keypair();
 
                     #[cfg(feature = "rand-std")]
-                    let signature = secp.sign_schnorr(msg.as_ref(), &key_pair);
+                    let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
                     #[cfg(not(feature = "rand-std"))]
-                    let signature = secp.sign_schnorr_no_aux_rand(msg.as_ref(), &key_pair);
+                    let signature = secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
                     let signature = taproot::Signature { signature, sighash_type };
                     input.tap_key_sig = Some(signature);
@@ -468,13 +468,13 @@ impl Psbt {
                     let key_pair = Keypair::from_secret_key(secp, &sk.inner);
 
                     for lh in leaf_hashes {
-                        let (msg, sighash_type) =
+                        let (sighash, sighash_type) =
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(feature = "rand-std")]
-                        let signature = secp.sign_schnorr(msg.as_ref(), &key_pair);
+                        let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
                         #[cfg(not(feature = "rand-std"))]
-                        let signature = secp.sign_schnorr_no_aux_rand(msg.as_ref(), &key_pair);
+                        let signature = secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
                         let signature = taproot::Signature { signature, sighash_type };
                         input.tap_script_sigs.insert((xonly, lh), signature);
@@ -552,7 +552,7 @@ impl Psbt {
         }
     }
 
-    /// Returns the sighash message to sign an SCHNORR input along with the sighash type.
+    /// Returns the sighash to sign a Taproot input along with the sighash type.
     ///
     /// Uses the [`TapSighashType`] from this input if one is specified. If no sighash type is
     /// specified uses [`TapSighashType::Default`].
@@ -561,7 +561,7 @@ impl Psbt {
         input_index: usize,
         cache: &mut SighashCache<T>,
         leaf_hash: Option<TapLeafHash>,
-    ) -> Result<(Message, TapSighashType), SignError> {
+    ) -> Result<(TapSighash, TapSighashType), SignError> {
         use OutputType::*;
 
         if self.signing_algorithm(input_index)? != SigningAlgorithm::Schnorr {
@@ -606,7 +606,7 @@ impl Psbt {
                 } else {
                     cache.taproot_key_spend_signature_hash(input_index, &prev_outs, hash_ty)?
                 };
-                Ok((Message::from(sighash), hash_ty))
+                Ok((sighash, hash_ty))
             }
             _ => Err(SignError::Unsupported),
         }

@@ -5,7 +5,7 @@
 use bitcoin::ext::*;
 use bitcoin::key::{Keypair, TapTweak, TweakedKeypair, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
-use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing, Verification};
+use bitcoin::secp256k1::{rand, Secp256k1, SecretKey, Signing, Verification};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::{
     transaction, Address, Amount, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
@@ -69,8 +69,7 @@ fn main() {
 
     // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
     let tweaked: TweakedKeypair = keypair.tap_tweak(&secp, None);
-    let msg = Message::from(sighash);
-    let signature = secp.sign_schnorr(msg.as_ref(), tweaked.as_keypair());
+    let signature = secp.sign_schnorr(&sighash.to_byte_array(), tweaked.as_keypair());
 
     // Update the witness stack.
     let signature = bitcoin::taproot::Signature { signature, sighash_type };
