@@ -17,7 +17,7 @@ use internals::error::InputString;
 use self::error::ParseError;
 #[cfg(doc)]
 use crate::absolute;
-use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -120,16 +120,16 @@ impl LockTime {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::{absolute, parse};
+    /// # use bitcoin_units::{absolute, parse_int};
     /// let hex_str = "0x61cf9980"; // Unix timestamp for January 1, 2022
     /// let lock_time = absolute::LockTime::from_hex(hex_str)?;
     /// assert_eq!(lock_time.to_consensus_u32(), 0x61cf9980);
     ///
-    /// # Ok::<_, parse::PrefixedHexError>(())
+    /// # Ok::<_, parse_int::PrefixedHexError>(())
     /// ```
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let lock_time = parse::hex_u32_prefixed(s)?;
+        let lock_time = parse_int::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
@@ -143,16 +143,16 @@ impl LockTime {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::{absolute, parse};
+    /// # use bitcoin_units::{absolute, parse_int};
     /// let hex_str = "61cf9980"; // Unix timestamp for January 1, 2022
     /// let lock_time = absolute::LockTime::from_unprefixed_hex(hex_str)?;
     /// assert_eq!(lock_time.to_consensus_u32(), 0x61cf9980);
     ///
-    /// # Ok::<_, parse::UnprefixedHexError>(())
+    /// # Ok::<_, parse_int::UnprefixedHexError>(())
     /// ```
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        let lock_time = parse::hex_u32_unprefixed(s)?;
+        let lock_time = parse_int::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
@@ -399,7 +399,7 @@ impl LockTime {
     }
 }
 
-parse::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
+parse_int::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 
 impl From<Height> for LockTime {
     #[inline]
@@ -546,7 +546,7 @@ impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-parse::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
+parse_int::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
 
 #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
 #[doc(hidden)]
@@ -661,7 +661,7 @@ impl fmt::Display for MedianTimePast {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-parse::impl_parse_str!(MedianTimePast, ParseTimeError, parser(MedianTimePast::from_u32));
+parse_int::impl_parse_str!(MedianTimePast, ParseTimeError, parser(MedianTimePast::from_u32));
 
 fn parser<T, E, S, F>(f: F) -> impl FnOnce(S) -> Result<T, E>
 where
@@ -682,7 +682,7 @@ where
     S: AsRef<str> + Into<InputString>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
-    let n = i64::from_str_radix(parse::hex_remove_optional_prefix(s.as_ref()), 16)
+    let n = i64::from_str_radix(parse_int::hex_remove_optional_prefix(s.as_ref()), 16)
         .map_err(ParseError::invalid_int(s))?;
     let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
     f(n).map_err(ParseError::from).map_err(Into::into)

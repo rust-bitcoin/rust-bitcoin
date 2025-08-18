@@ -15,7 +15,7 @@ use internals::write_err;
 
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
-use crate::parse::{self, ParseIntError};
+use crate::parse_int::{self, ParseIntError};
 use crate::script::Instruction;
 
 /// Version of the segregated witness program.
@@ -82,7 +82,7 @@ impl FromStr for WitnessVersion {
     type Err = FromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = parse::int_from_str(s)?;
+        let version: u8 = parse_int::int_from_str(s)?;
         Ok(WitnessVersion::try_from(version)?)
     }
 }

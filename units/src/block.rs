@@ -34,7 +34,7 @@ macro_rules! impl_u32_wrapper {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
         }
 
-        crate::parse::impl_parse_str_from_int_infallible!($newtype, u32, from);
+        crate::parse_int::impl_parse_str_from_int_infallible!($newtype, u32, from);
 
         impl From<u32> for $newtype {
             fn from(inner: u32) -> Self { Self::from_u32(inner) }

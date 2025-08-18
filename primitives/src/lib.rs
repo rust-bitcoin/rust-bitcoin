@@ -57,7 +57,7 @@ pub use units::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::{self, FeeRate},
     locktime::{self, absolute, relative},
-    parse,
+    parse_int,
     result::{self, NumOpResult},
     sequence::{self, Sequence},
     time::{self, BlockTime},

@@ -49,7 +49,7 @@ pub mod amount;
 pub mod block;
 pub mod fee_rate;
 pub mod locktime;
-pub mod parse;
+pub mod parse_int;
 pub mod result;
 pub mod sequence;
 pub mod time;

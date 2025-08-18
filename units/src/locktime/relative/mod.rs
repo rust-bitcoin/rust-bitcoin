@@ -16,7 +16,7 @@ use internals::const_casts;
 
 #[cfg(doc)]
 use crate::relative;
-use crate::{parse, BlockHeight, BlockMtp, Sequence};
+use crate::{parse_int, BlockHeight, BlockMtp, Sequence};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -473,7 +473,7 @@ impl From<u16> for NumberOfBlocks {
     fn from(value: u16) -> Self { NumberOfBlocks(value) }
 }
 
-parse::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from);
+parse_int::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from);
 
 impl fmt::Display for NumberOfBlocks {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
@@ -587,7 +587,7 @@ impl NumberOf512Seconds {
     }
 }
 
-parse::impl_parse_str_from_int_infallible!(NumberOf512Seconds, u16, from_512_second_intervals);
+parse_int::impl_parse_str_from_int_infallible!(NumberOf512Seconds, u16, from_512_second_intervals);
 
 impl fmt::Display for NumberOf512Seconds {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }

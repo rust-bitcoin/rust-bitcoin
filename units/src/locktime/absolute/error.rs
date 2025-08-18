@@ -8,7 +8,7 @@ use core::fmt;
 use internals::error::InputString;
 
 use super::{Height, MedianTimePast, LOCK_TIME_THRESHOLD};
-use crate::parse::ParseIntError;
+use crate::parse_int::ParseIntError;
 
 /// Tried to satisfy a lock-by-time lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
