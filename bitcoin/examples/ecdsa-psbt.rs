@@ -172,7 +172,7 @@ impl WatchOnly {
         WatchOnly { account_0_xpub, input_xpub, master_fingerprint }
     }
 
-    /// Creates the PSBT, in BIP174 parlance this is the 'Creator'.
+    /// Creates the PSBT, in BIP-0174 parlance this is the 'Creator'.
     fn create_psbt<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<Psbt> {
         let to_address =
             RECEIVE_ADDRESS.parse::<Address<_>>()?.require_network(Network::Regtest)?;
@@ -201,7 +201,7 @@ impl WatchOnly {
         Ok(psbt)
     }
 
-    /// Updates the PSBT, in BIP174 parlance this is the 'Updater'.
+    /// Updates the PSBT, in BIP-0174 parlance this is the 'Updater'.
     fn update_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
         let mut input = Input { witness_utxo: Some(previous_output()), ..Default::default() };
 
@@ -225,7 +225,7 @@ impl WatchOnly {
         Ok(psbt)
     }
 
-    /// Finalizes the PSBT, in BIP174 parlance this is the 'Finalizer'.
+    /// Finalizes the PSBT, in BIP-0174 parlance this is the 'Finalizer'.
     /// This is just an example. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
     fn finalize_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
         if psbt.inputs.is_empty() {
@@ -249,7 +249,7 @@ impl WatchOnly {
         Ok(psbt)
     }
 
-    /// Returns data for the first change address (standard BIP84 derivation path
+    /// Returns data for the first change address (standard BIP-0084 derivation path
     /// "m/84h/0h/0h/1/0"). A real wallet would have access to the chain so could determine if an
     /// address has been used or not. We ignore this detail and just re-use the first change address
     /// without loss of generality.

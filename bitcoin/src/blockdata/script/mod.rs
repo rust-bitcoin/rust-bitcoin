@@ -92,9 +92,9 @@ impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
 /// Constructs a new [`ScriptBuf`] containing the script code used for spending a P2WPKH output.
 ///
-/// The `scriptCode` is described in [BIP143].
+/// The `scriptCode` is described in [BIP-0143].
 ///
-/// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+/// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
 pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
     Builder::new()
         .push_opcode(OP_DUP)

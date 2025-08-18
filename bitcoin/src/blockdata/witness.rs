@@ -250,7 +250,7 @@ impl<'a> P2TrSpend<'a> {
     /// obtained from Bitcoin Core) then it's OK to unwrap this but not vice versa - `Some` does
     /// not imply correctness.
     fn from_witness(witness: &'a Witness) -> Option<Self> {
-        // BIP341 says:
+        // BIP-0341 says:
         //   If there are at least two witness elements, and the first byte of
         //   the last element is 0x50, this last element is called annex a
         //   and is removed from the witness stack.

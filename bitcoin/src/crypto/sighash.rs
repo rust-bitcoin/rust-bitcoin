@@ -3,9 +3,9 @@
 //! Signature hash implementation (used in transaction signing).
 //!
 //! Efficient implementation of the algorithm to compute the message to be signed according to
-//! [Bip341](https://github.com/bitcoin/bips/blob/150ab6f5c3aca9da05fccc5b435e9667853407f4/bip-0341.mediawiki),
-//! [Bip143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki)
-//! and legacy (before Bip143).
+//! [BIP-0341](https://github.com/bitcoin/bips/blob/150ab6f5c3aca9da05fccc5b435e9667853407f4/bip-0341.mediawiki),
+//! [BIP-0143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki)
+//! and legacy (before BIP-0143).
 //!
 //! Computing signature hashes is required to sign a transaction and this module is designed to
 //! handle its complexity efficiently. Computing these hashes is as simple as creating
@@ -608,7 +608,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// Destroys the cache and recovers the stored transaction.
     pub fn into_transaction(self) -> R { self.tx }
 
-    /// Encodes the BIP341 signing data for any flag type into a given object implementing the
+    /// Encodes the BIP-0341 signing data for any flag type into a given object implementing the
     /// [`io::Write`] trait.
     ///
     /// In order to sign, the data written by this function must be hashed using a tagged hash. For
@@ -733,7 +733,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         Ok(())
     }
 
-    /// Computes the BIP341 sighash for any flag type.
+    /// Computes the BIP-0341 sighash for any flag type.
     pub fn taproot_signature_hash<T: Borrow<TxOut>>(
         &mut self,
         input_index: usize,
@@ -756,7 +756,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         Ok(TapSighash::from_byte_array(inner.to_byte_array()))
     }
 
-    /// Computes the BIP341 sighash for a key spend.
+    /// Computes the BIP-0341 sighash for a key spend.
     pub fn taproot_key_spend_signature_hash<T: Borrow<TxOut>>(
         &mut self,
         input_index: usize,
@@ -777,7 +777,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         Ok(TapSighash::from_byte_array(inner.to_byte_array()))
     }
 
-    /// Computes the BIP341 sighash for a script spend.
+    /// Computes the BIP-0341 sighash for a script spend.
     ///
     /// Assumes the default `OP_CODESEPARATOR` position of `0xFFFFFFFF`. Custom values can be
     /// provided through the more fine-grained API of [`SighashCache::taproot_encode_signing_data_to`].
@@ -802,7 +802,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         Ok(TapSighash::from_byte_array(inner.to_byte_array()))
     }
 
-    /// Encodes the BIP143 signing data for any flag type into a given object implementing the
+    /// Encodes the BIP-0143 signing data for any flag type into a given object implementing the
     /// [`std::io::Write`] trait.
     ///
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
@@ -866,7 +866,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         Ok(())
     }
 
-    /// Computes the BIP143 sighash to spend a p2wpkh transaction for any flag type.
+    /// Computes the BIP-0143 sighash to spend a p2wpkh transaction for any flag type.
     ///
     /// `script_pubkey` is the `scriptPubkey` (native SegWit) of the spend transaction
     /// ([`TxOut::script_pubkey`]) or the `redeemScript` (wrapped SegWit).
@@ -891,7 +891,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         Ok(SegwitV0Sighash::from_engine(enc))
     }
 
-    /// Computes the BIP143 sighash to spend a p2wsh transaction for any flag type.
+    /// Computes the BIP-0143 sighash to spend a p2wsh transaction for any flag type.
     ///
     /// `witness_script` is the script that goes into the [`Witness`],
     /// not the one that goes into `script_pubkey` of a [`TxOut`].
@@ -2101,7 +2101,7 @@ mod tests {
         );
 
         let cache = cache.segwit_cache();
-        // Parse hex into Vec because BIP143 test vector displays forwards but our sha256d::Hash displays backwards.
+        // Parse hex into Vec because BIP-0143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
             cache.prevouts.as_byte_array(),
             &Vec::from_hex("96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37")
@@ -2143,7 +2143,7 @@ mod tests {
         );
 
         let cache = cache.segwit_cache();
-        // Parse hex into Vec because BIP143 test vector displays forwards but our sha256d::Hash displays backwards.
+        // Parse hex into Vec because BIP-0143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
             cache.prevouts.as_byte_array(),
             &Vec::from_hex("b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a")
@@ -2161,7 +2161,7 @@ mod tests {
         );
     }
 
-    // Note, if you are looking at the test vectors in BIP-143 and wondering why there is a `cf`
+    // Note, if you are looking at the test vectors in BIP-0143 and wondering why there is a `cf`
     // prepended to all the script_code hex it is the length byte, it gets added when we consensus
     // encode a script.
     fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, ScriptBuf, Amount) {
@@ -2203,7 +2203,7 @@ mod tests {
         // sighash for all sighash types.
 
         let cache = cache.segwit_cache();
-        // Parse hex into Vec because BIP143 test vector displays forwards but our sha256d::Hash displays backwards.
+        // Parse hex into Vec because BIP-0143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
             cache.prevouts.as_byte_array(),
             &Vec::from_hex("74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0")

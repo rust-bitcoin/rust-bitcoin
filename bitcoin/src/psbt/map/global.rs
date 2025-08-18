@@ -135,7 +135,7 @@ impl Psbt {
                                     path.push(ChildNumber::from(index))
                                 }
                                 let derivation = DerivationPath::from(path);
-                                // Keys, according to BIP-174, must be unique
+                                // Keys, according to BIP-0174, must be unique
                                 if xpub_map
                                     .insert(xpub, (Fingerprint::from(fingerprint), derivation))
                                     .is_some()
@@ -161,7 +161,7 @@ impl Psbt {
                                         ));
                                     }
                                     version = Some(Decodable::consensus_decode(&mut decoder)?);
-                                    // We only understand version 0 PSBTs. According to BIP-174 we
+                                    // We only understand version 0 PSBTs. According to BIP-0174 we
                                     // should throw an error if we see anything other than version 0.
                                     if version != Some(0) {
                                         return Err(Error::Version(

@@ -38,8 +38,8 @@ pub use self::error::{
 ///
 /// # Relevant BIPs
 ///
-/// * [BIP 68 Relative lock-time using consensus-enforced sequence numbers](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki)
-/// * [BIP 112 CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki)
+/// * [BIP-0068 Relative lock-time using consensus-enforced sequence numbers](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki)
+/// * [BIP-0112 CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LockTime {
     /// A block height lock time value.
@@ -485,7 +485,7 @@ pub type Time = NumberOf512Seconds;
 
 /// A relative lock time lock-by-time value.
 ///
-/// For BIP 68 relative lock-by-time locks, time is measured in 512 second intervals.
+/// For BIP-0068 relative lock-by-time locks, time is measured in 512 second intervals.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NumberOf512Seconds(u16);
 

@@ -43,7 +43,7 @@ pub use crate::XOnlyPublicKey;
 
 type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
 
-// Taproot test vectors from BIP-341 state the hashes without any reversing
+// Taproot test vectors from BIP-0341 state the hashes without any reversing
 sha256t_tag! {
     pub struct TapLeafTag = hash_str("TapLeaf");
 }
@@ -66,7 +66,7 @@ sha256t_tag! {
 hash_newtype! {
     /// Tagged hash used in Taproot trees.
     ///
-    /// See BIP-340 for tagging rules.
+    /// See BIP-0340 for tagging rules.
     #[repr(transparent)]
     pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
 }
@@ -95,7 +95,7 @@ impl From<TapLeafHash> for TapNodeHash {
 }
 
 impl TapTweakHash {
-    /// Constructs a new BIP341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
+    /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
     /// `P` is the internal key and `R` is the Merkle root.
     pub fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
         internal_key: K,
@@ -222,14 +222,14 @@ type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootM
 ///
 /// If one or more of the spending conditions consist of just a single key (after aggregation), the
 /// most likely key should be made the internal key.
-/// See [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) for more details on
+/// See [BIP-0341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) for more details on
 /// choosing internal keys for a Taproot application.
 ///
 /// Note: This library currently does not support
 /// [annex](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-5).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TaprootSpendInfo {
-    /// The BIP341 internal key.
+    /// The BIP-0341 internal key.
     internal_key: UntweakedPublicKey,
     /// The Merkle root of the script tree (None if there are no scripts).
     merkle_root: Option<TapNodeHash>,
@@ -266,7 +266,7 @@ impl TaprootSpendInfo {
     /// Constructs a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
     /// the `merkle_root` if there is no script path.
     ///
-    /// *Note*: As per BIP341
+    /// *Note*: As per BIP-0341
     ///
     /// When the Merkle root is [`None`], the output key commits to an unspendable script path
     /// instead of having no script path. This is achieved by computing the output key point as
@@ -757,7 +757,7 @@ impl std::error::Error for HiddenNodesError {
 /// This is in contrast to [`NodeInfo`], which allows hidden nodes.
 /// The implementations for Eq, PartialEq and Hash compare the Merkle root of the tree
 //
-// This is a bug in BIP370 that does not specify how to share trees with hidden nodes,
+// This is a bug in BIP-0370 that does not specify how to share trees with hidden nodes,
 // for which we need a separate type.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -1358,7 +1358,7 @@ impl fmt::UpperHex for FutureLeafVersion {
 /// The leaf version for tapleafs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LeafVersion {
-    /// BIP-342 tapscript.
+    /// BIP-0342 tapscript.
     TapScript,
 
     /// Future leaf version.

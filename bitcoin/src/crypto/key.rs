@@ -30,7 +30,7 @@ pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification};
 pub use secp256k1::rand;
 pub use serialized_x_only::SerializedXOnlyPublicKey;
 
-/// A Bitcoin Schnorr X-only public key used for BIP340 signatures.
+/// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct XOnlyPublicKey(secp256k1::XOnlyPublicKey);
@@ -243,7 +243,7 @@ impl PublicKey {
     ///
     /// If every `PublicKey` in the slice is `compressed == true` then this will sort
     /// the keys in a
-    /// [BIP67](https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki)
+    /// [BIP-0067](https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki)
     /// compliant way.
     ///
     /// # Example: Using with `sort_unstable_by_key`
@@ -263,13 +263,13 @@ impl PublicKey {
     ///     pk("0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68"),
     /// ];
     /// let sorted = [
-    ///     // These first 4 keys are in a BIP67 compatible sorted order
+    ///     // These first 4 keys are in a BIP-0067 compatible sorted order
     ///     // (since they are compressed)
     ///     pk("0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68"),
     ///     pk("028bde91b10013e08949a318018fedbd896534a549a278e220169ee2a36517c7aa"),
     ///     pk("032b8324c93575034047a52e9bca05a46d8347046b91a032eff07d5de8d3f2730b"),
     ///     pk("038f47dcd43ba6d97fc9ed2e3bba09b175a45fac55f0683e8cf771e8ced4572354"),
-    ///     // Uncompressed keys are not BIP67 compliant, but are sorted
+    ///     // Uncompressed keys are not BIP-0067 compliant, but are sorted
     ///     // after compressed keys in Bitcoin Core using `sortedmulti()`
     ///     pk("045d753414fa292ea5b8f56e39cfb6a0287b2546231a5cb05c4b14ab4b463d171f5128148985b23eccb1e2905374873b1f09b9487f47afa6b1f2b0083ac8b4f7e8"),
     ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc3816753d96001fd7cba3ce5372f5c9a0d63708183033538d07b1e532fc43aaacfa"),
@@ -436,7 +436,7 @@ impl CompressedPublicKey {
     ///
     /// As the type name suggests, the key is serialized in compressed format.
     ///
-    /// Note that this can be used as a sort key to get BIP67-compliant sorting.
+    /// Note that this can be used as a sort key to get BIP-0067-compliant sorting.
     /// That's why this type doesn't have the `to_sort_key` method - it would duplicate this one.
     pub fn to_bytes(self) -> [u8; 33] { self.0.serialize() }
 
@@ -643,7 +643,7 @@ impl PrivateKey {
     ///
     /// The resulting key corresponds to the same x-only public key (identical x-coordinate)
     /// but with the opposite y-coordinate parity. This is useful for ensuring compatibility
-    /// with specific public key formats and BIP-340 requirements.
+    /// with specific public key formats and BIP-0340 requirements.
     #[inline]
     pub fn negate(&self) -> Self {
         PrivateKey {
@@ -842,10 +842,10 @@ impl<'de> serde::Deserialize<'de> for CompressedPublicKey {
         }
     }
 }
-/// Untweaked BIP-340 X-coord-only public key.
+/// Untweaked BIP-0340 X-coord-only public key.
 pub type UntweakedPublicKey = XOnlyPublicKey;
 
-/// Tweaked BIP-340 X-coord-only public key.
+/// Tweaked BIP-0340 X-coord-only public key.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]
@@ -861,10 +861,10 @@ impl fmt::Display for TweakedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-/// Untweaked BIP-340 key pair.
+/// Untweaked BIP-0340 key pair.
 pub type UntweakedKeypair = Keypair;
 
-/// Tweaked BIP-340 key pair.
+/// Tweaked BIP-0340 key pair.
 ///
 /// # Examples
 ///
@@ -885,7 +885,7 @@ pub type UntweakedKeypair = Keypair;
 #[cfg_attr(feature = "serde", serde(transparent))]
 pub struct TweakedKeypair(Keypair);
 
-/// A trait for tweaking BIP340 key types (x-only public keys and key pairs).
+/// A trait for tweaking BIP-0340 key types (x-only public keys and key pairs).
 pub trait TapTweak {
     /// Tweaked key type with optional auxiliary information.
     type TweakedAux;
@@ -1645,7 +1645,7 @@ mod tests {
             v.into_iter().map(|s: &str| s.parse::<PublicKey>().unwrap()).collect::<Vec<_>>()
         };
         let vectors = vec![
-            // Start BIP67 vectors
+            // Start BIP-0067 vectors
             // Vector 1
             Vector {
                 input: fmt(vec![

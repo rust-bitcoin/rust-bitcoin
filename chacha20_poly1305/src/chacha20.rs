@@ -251,7 +251,7 @@ impl State {
 /// The ChaCha20 stream cipher from RFC8439.
 ///
 /// The 20-round IETF version uses a 96-bit nonce and 32-bit block counter. This is the
-/// variant used in the Bitcoin ecosystem, including BIP324.
+/// variant used in the Bitcoin ecosystem, including BIP-0324.
 pub struct ChaCha20 {
     /// Secret key shared by the parties communicating.
     key: Key,

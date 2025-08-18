@@ -109,7 +109,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let witness = &inp.witness;
     println!("witness {witness:?}");
 
-    //last element is called witnessScript according to BIP141. It supersedes scriptPubKey.
+    //last element is called witnessScript according to BIP-0141. It supersedes scriptPubKey.
     let witness_script_bytes: &[u8] = witness.last().expect("out of bounds");
     let witness_script = Script::from_bytes(witness_script_bytes);
     let mut cache = sighash::SighashCache::new(&tx);

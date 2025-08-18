@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //!
-//! BIP152  Compact Blocks network messages
+//! BIP-0152  Compact Blocks network messages
 
 use bitcoin::bip152;
 

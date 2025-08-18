@@ -268,8 +268,8 @@ impl From<&Header> for BlockHash {
 ///
 /// # Relevant BIPs
 ///
-/// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
-/// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
+/// * [BIP-0009 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
+/// * [BIP-0034 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(i32);
@@ -278,13 +278,13 @@ impl Version {
     /// The original Bitcoin Block v1.
     pub const ONE: Self = Self(1);
 
-    /// BIP-34 Block v2.
+    /// BIP-0034 Block v2.
     pub const TWO: Self = Self(2);
 
-    /// BIP-9 compatible version number that does not signal for any softforks.
+    /// BIP-0009 compatible version number that does not signal for any softforks.
     pub const NO_SOFT_FORK_SIGNALLING: Self = Self(Self::USE_VERSION_BITS as i32);
 
-    /// BIP-9 soft fork signal bits mask.
+    /// BIP-0009 soft fork signal bits mask.
     const VERSION_BITS_MASK: u32 = 0x1FFF_FFFF;
 
     /// 32bit value starting with `001` to use version bits.
@@ -306,7 +306,7 @@ impl Version {
 
     /// Checks whether the version number is signalling a soft fork at the given bit.
     ///
-    /// A block is signalling for a soft fork under BIP-9 if the first 3 bits are `001` and
+    /// A block is signalling for a soft fork under BIP-0009 if the first 3 bits are `001` and
     /// the version bit for the specific soft fork is toggled on.
     pub fn is_signalling_soft_fork(self, bit: u8) -> bool {
         // Only bits [0, 28] inclusive are used for signalling.

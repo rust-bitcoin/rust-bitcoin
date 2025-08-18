@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! BIP32 implementation.
+//! BIP-0032 implementation.
 //!
-//! Implementation of BIP32 hierarchical deterministic wallets, as defined
+//! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
 use core::convert::Infallible;
@@ -56,7 +56,7 @@ internal_macros::impl_array_newtype!(Fingerprint, u8, 4);
 internal_macros::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
-    /// Extended key identifier as defined in BIP-32.
+    /// Extended key identifier as defined in BIP-0032.
     pub struct XKeyIdentifier(hash160::Hash);
 }
 
@@ -82,7 +82,7 @@ pub struct Xpriv {
     pub chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
-internals::serde_string_impl!(Xpriv, "a BIP-32 extended private key");
+internals::serde_string_impl!(Xpriv, "a BIP-0032 extended private key");
 
 #[cfg(not(feature = "std"))]
 impl fmt::Debug for Xpriv {
@@ -115,7 +115,7 @@ pub struct Xpub {
     pub chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
-internals::serde_string_impl!(Xpub, "a BIP-32 extended public key");
+internals::serde_string_impl!(Xpub, "a BIP-0032 extended public key");
 
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
@@ -315,12 +315,12 @@ pub trait IntoDerivationPath {
     fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError>;
 }
 
-/// A BIP-32 derivation path.
+/// A BIP-0032 derivation path.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct DerivationPath(Vec<ChildNumber>);
 
 #[cfg(feature = "serde")]
-internals::serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
+internals::serde_string_impl!(DerivationPath, "a BIP-0032 derivation path");
 
 impl<I> Index<I> for DerivationPath
 where
@@ -548,7 +548,7 @@ impl fmt::Debug for DerivationPath {
 /// master extended public key and a derivation path from it.
 pub type KeySource = (Fingerprint, DerivationPath);
 
-/// A BIP32 error
+/// A BIP-0032 error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ParseError {
@@ -586,7 +586,7 @@ impl fmt::Display for ParseError {
             Base58(ref e) => write_err!(f, "base58 encoding error"; e),
             InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
             InvalidPrivateKeyPrefix =>
-                f.write_str("invalid private key prefix, byte 45 must be 0 as required by BIP-32"),
+                f.write_str("invalid private key prefix, byte 45 must be 0 as required by BIP-0032"),
             NonZeroParentFingerprintForMasterKey =>
                 f.write_str("non-zero parent fingerprint in master key"),
             NonZeroChildNumberForMasterKey => f.write_str("non-zero child number in master key"),
@@ -625,7 +625,7 @@ impl From<InvalidBase58PayloadLengthError> for ParseError {
     }
 }
 
-/// A BIP32 error
+/// A BIP-0032 error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum DerivationError {
@@ -742,11 +742,11 @@ impl Xpriv {
         Xpub::from_xpriv(secp, &self)
     }
 
-    /// Constructs a new BIP340 keypair for Schnorr signatures and Taproot use matching the internal
+    /// Constructs a new BIP-0340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
         Keypair::from_seckey_slice(secp, &self.private_key[..])
-            .expect("BIP32 internal private key representation is broken")
+            .expect("BIP-0032 internal private key representation is broken")
     }
 
     /// Derives an extended private key from a path.
@@ -815,7 +815,7 @@ impl Xpriv {
         })
     }
 
-    /// Decoding extended private key from binary data according to BIP 32
+    /// Decoding extended private key from binary data according to BIP-0032
     pub fn decode(data: &[u8]) -> Result<Xpriv, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
@@ -841,7 +841,7 @@ impl Xpriv {
         })
     }
 
-    /// Extended private key binary encoding according to BIP 32
+    /// Extended private key binary encoding according to BIP-0032
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
@@ -894,12 +894,12 @@ impl Xpub {
     /// Constructs a new ECDSA compressed public key matching internal public key representation.
     pub fn to_public_key(self) -> CompressedPublicKey { CompressedPublicKey(self.public_key) }
 
-    /// Constructs a new BIP340 x-only public key for BIP-340 signatures and Taproot use matching
+    /// Constructs a new BIP-0340 x-only public key for BIP-0340 signatures and Taproot use matching
     /// the internal public key representation.
     #[deprecated(since = "TBD", note = "use `to_x_only_public_key()` instead")]
     pub fn to_x_only_pub(self) -> XOnlyPublicKey { self.to_x_only_public_key() }
 
-    /// Constructs a new BIP340 x-only public key for BIP-340 signatures and Taproot use matching
+    /// Constructs a new BIP-0340 x-only public key for BIP-0340 signatures and Taproot use matching
     /// the internal public key representation.
     pub fn to_x_only_public_key(self) -> XOnlyPublicKey { XOnlyPublicKey::from(self.public_key) }
 
@@ -973,7 +973,7 @@ impl Xpub {
         })
     }
 
-    /// Decoding extended public key from binary data according to BIP 32
+    /// Decoding extended public key from binary data according to BIP-0032
     pub fn decode(data: &[u8]) -> Result<Xpub, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
@@ -994,7 +994,7 @@ impl Xpub {
         })
     }
 
-    /// Extended public key binary encoding according to BIP 32
+    /// Extended public key binary encoding according to BIP-0032
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {

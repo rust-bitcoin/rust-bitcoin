@@ -75,9 +75,9 @@ internal_macros::define_extension_trait! {
         }
 
         /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
-        /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
+        /// for a P2WPKH output. The `scriptCode` is described in [BIP-0143].
         ///
-        /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+        /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
         fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
             if self.is_p2wpkh() {
                 // The `self` script is 0x00, 0x14, <pubkey_hash>
@@ -110,7 +110,7 @@ internal_macros::define_extension_trait! {
         ///
         /// The witness version if this script is found to conform to the SegWit rules:
         ///
-        /// > A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
+        /// > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte
         /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
         /// > special meaning. The value of the first push is called the "version byte". The following
         /// > byte vector pushed is called the "witness program".
@@ -294,7 +294,7 @@ internal_macros::define_extension_trait! {
             }
         }
 
-        /// Get redeemScript following BIP16 rules regarding P2SH spending.
+        /// Get redeemScript following BIP-0016 rules regarding P2SH spending.
         ///
         /// This does not guarantee that this represents a P2SH input [`Script`].
         /// It merely gets the last push of the script.

@@ -55,14 +55,14 @@ use crate::witness::Witness;
 /// # Serialization notes
 ///
 /// If any inputs have nonempty witnesses, the entire transaction is serialized
-/// in the post-BIP141 SegWit format which includes a list of witnesses. If all
-/// inputs have empty witnesses, the transaction is serialized in the pre-BIP141
+/// in the post-BIP-0141 SegWit format which includes a list of witnesses. If all
+/// inputs have empty witnesses, the transaction is serialized in the pre-BIP-0141
 /// format.
 ///
 /// There is one major exception to this: to avoid deserialization ambiguity,
-/// if the transaction has no inputs, it is serialized in the BIP141 style. Be
+/// if the transaction has no inputs, it is serialized in the BIP-0141 style. Be
 /// aware that this differs from the transaction format in PSBT, which _never_
-/// uses BIP141. (Ordinarily there is no conflict, since in PSBT transactions
+/// uses BIP-0141. (Ordinarily there is no conflict, since in PSBT transactions
 /// are always unsigned and therefore their inputs have empty witnesses.)
 ///
 /// The specific ambiguity is that SegWit uses the flag bytes `0001` where an old
@@ -173,7 +173,7 @@ impl Transaction {
         if self.inputs.iter().any(|input| !input.witness.is_empty()) {
             return true;
         }
-        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+        // To avoid serialization ambiguity, no inputs means we use BIP-0141 serialization (see
         // `Transaction` docs for full explanation).
         self.inputs.is_empty()
     }

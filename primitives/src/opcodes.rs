@@ -339,7 +339,7 @@ all_opcodes! {
 /// Classification context for the opcode.
 ///
 /// Some opcodes like [`OP_RESERVED`] abort the script in `ClassifyContext::Legacy` context,
-/// but will act as `OP_SUCCESSx` in `ClassifyContext::TapScript` (see BIP342 for full list).
+/// but will act as `OP_SUCCESSx` in `ClassifyContext::TapScript` (see BIP-0342 for full list).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ClassifyContext {
     /// Opcode used in tapscript context.

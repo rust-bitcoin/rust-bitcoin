@@ -72,16 +72,16 @@ use crate::{BlockHeight, BlockHeightInterval};
 pub struct Params {
     /// Network for which parameters are valid.
     pub network: Network,
-    /// Time when BIP16 becomes active.
+    /// Time when BIP-0016 becomes active.
     pub bip16_time: u32,
-    /// Block height at which BIP34 becomes active.
+    /// Block height at which BIP-0034 becomes active.
     pub bip34_height: BlockHeight,
-    /// Block height at which BIP65 becomes active.
+    /// Block height at which BIP-0065 becomes active.
     pub bip65_height: BlockHeight,
-    /// Block height at which BIP66 becomes active.
+    /// Block height at which BIP-0066 becomes active.
     pub bip66_height: BlockHeight,
     /// Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
-    /// (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
+    /// (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP-0009 deployments.
     /// Examples: 1916 for 95%, 1512 for testchains.
     pub rule_change_activation_threshold: BlockHeightInterval,
     /// Number of blocks with the same set of rules.

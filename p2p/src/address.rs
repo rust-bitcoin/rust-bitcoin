@@ -128,7 +128,7 @@ impl ToSocketAddrs for Address {
     }
 }
 
-/// Supported networks for use in BIP155 addrv2 message
+/// Supported networks for use in BIP-0155 addrv2 message
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum AddrV2 {
     /// IPV4
@@ -300,7 +300,7 @@ impl Decodable for AddrV2 {
     }
 }
 
-/// Address received from BIP155 addrv2 message
+/// Address received from BIP-0155 addrv2 message
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct AddrV2Message {
     /// Time that this node was last seen as connected to the network

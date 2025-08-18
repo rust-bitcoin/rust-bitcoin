@@ -12,13 +12,13 @@ use crate::taproot::{TapLeafHash, TapTree};
 const PSBT_OUT_REDEEM_SCRIPT: u64 = 0x00;
 /// Type: Witness ScriptBuf PSBT_OUT_WITNESS_SCRIPT = 0x01
 const PSBT_OUT_WITNESS_SCRIPT: u64 = 0x01;
-/// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
+/// Type: BIP-0032 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
 const PSBT_OUT_BIP32_DERIVATION: u64 = 0x02;
 /// Type: Taproot Internal Key PSBT_OUT_TAP_INTERNAL_KEY = 0x05
 const PSBT_OUT_TAP_INTERNAL_KEY: u64 = 0x05;
 /// Type: Taproot Tree PSBT_OUT_TAP_TREE = 0x06
 const PSBT_OUT_TAP_TREE: u64 = 0x06;
-/// Type: Taproot Key BIP 32 Derivation Path PSBT_OUT_TAP_BIP32_DERIVATION = 0x07
+/// Type: Taproot Key BIP-0032 Derivation Path PSBT_OUT_TAP_BIP32_DERIVATION = 0x07
 const PSBT_OUT_TAP_BIP32_DERIVATION: u64 = 0x07;
 /// Type: MuSig2 Public Keys Participating in Aggregate Output PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS = 0x08
 const PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS: u64 = 0x08;
