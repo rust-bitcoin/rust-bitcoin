@@ -27,7 +27,7 @@ use internals::write_err;
 #[cfg(feature = "alloc")]
 use units::locktime::absolute;
 #[cfg(feature = "hex")]
-use units::parse;
+use units::parse_int;
 #[cfg(feature = "alloc")]
 use units::sequence::Sequence;
 #[cfg(feature = "alloc")]
@@ -424,7 +424,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    parse::int_from_str(s).map_err(ParseOutPointError::Vout)
+    parse_int::int_from_str(s).map_err(ParseOutPointError::Vout)
 }
 
 /// An error in parsing an [`OutPoint`].
@@ -436,7 +436,7 @@ pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hex::HexToArrayError),
     /// Error in vout part.
-    Vout(parse::ParseIntError),
+    Vout(parse_int::ParseIntError),
     /// Error in general format.
     Format,
     /// Size exceeds max.

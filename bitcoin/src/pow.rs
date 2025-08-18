@@ -10,7 +10,7 @@ use core::{cmp, fmt};
 
 use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
-use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
+use units::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
@@ -337,13 +337,13 @@ internal_macros::define_extension_trait! {
     pub trait CompactTargetExt impl for CompactTarget {
         /// Constructs a new `CompactTarget` from a prefixed hex string.
         fn from_hex(s: &str) -> Result<CompactTarget, PrefixedHexError> {
-            let target = parse::hex_u32_prefixed(s)?;
+            let target = parse_int::hex_u32_prefixed(s)?;
             Ok(Self::from_consensus(target))
         }
 
         /// Constructs a new `CompactTarget` from an unprefixed hex string.
         fn from_unprefixed_hex(s: &str) -> Result<CompactTarget, UnprefixedHexError> {
-            let target = parse::hex_u32_unprefixed(s)?;
+            let target = parse_int::hex_u32_unprefixed(s)?;
             Ok(Self::from_consensus(target))
         }
 
@@ -465,28 +465,28 @@ impl U256 {
 
     /// Constructs a new `U256` from a prefixed hex string.
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let checked = parse::hex_remove_prefix(s)?;
+        let checked = parse_int::hex_remove_prefix(s)?;
         Ok(U256::from_hex_internal(checked)?)
     }
 
     /// Constructs a new `U256` from an unprefixed hex string.
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        let checked = parse::hex_check_unprefixed(s)?;
+        let checked = parse_int::hex_check_unprefixed(s)?;
         Ok(U256::from_hex_internal(checked)?)
     }
 
     // Caller to ensure `s` does not contain a prefix.
     fn from_hex_internal(s: &str) -> Result<Self, ParseIntError> {
         let (high, low) = if s.len() <= 32 {
-            let low = parse::hex_u128_unchecked(s)?;
+            let low = parse_int::hex_u128_unchecked(s)?;
             (0, low)
         } else {
             let high_len = s.len() - 32;
             let high_s = &s[..high_len];
             let low_s = &s[high_len..];
 
-            let high = parse::hex_u128_unchecked(high_s)?;
-            let low = parse::hex_u128_unchecked(low_s)?;
+            let high = parse_int::hex_u128_unchecked(high_s)?;
+            let low = parse_int::hex_u128_unchecked(low_s)?;
             (high, low)
         };
 
