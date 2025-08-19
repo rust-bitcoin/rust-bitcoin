@@ -27,7 +27,7 @@ pub mod serde_details {
     struct HexVisitor<ValueT>(PhantomData<ValueT>);
     use serde::{de, Serializer, Deserializer};
 
-    impl<'de, ValueT> de::Visitor<'de> for HexVisitor<ValueT>
+    impl<ValueT> de::Visitor<'_> for HexVisitor<ValueT>
     where
         ValueT: FromStr,
         <ValueT as FromStr>::Err: fmt::Display,
@@ -62,7 +62,7 @@ pub mod serde_details {
 
     struct BytesVisitor<ValueT>(PhantomData<ValueT>);
 
-    impl<'de, ValueT> de::Visitor<'de> for BytesVisitor<ValueT>
+    impl<ValueT> de::Visitor<'_> for BytesVisitor<ValueT>
     where
         ValueT: SerdeHash,
         <ValueT as FromStr>::Err: fmt::Display,

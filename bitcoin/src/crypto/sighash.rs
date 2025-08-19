@@ -280,7 +280,11 @@ impl std::error::Error for Error {
     }
 }
 
-impl<'u, T> Prevouts<'u, T>
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
+}
+
+impl<T> Prevouts<'_, T>
 where
     T: Borrow<TxOut>,
 {
@@ -1081,10 +1085,6 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     }
 }
 
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
-}
-
 /// The `Annex` struct is a slice wrapper enforcing first byte is `0x50`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Annex<'a>(&'a [u8]);
@@ -1103,7 +1103,7 @@ impl<'a> Annex<'a> {
     pub fn as_bytes(&self) -> &[u8] { self.0 }
 }
 
-impl<'a> Encodable for Annex<'a> {
+impl Encodable for Annex<'_> {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         encode::consensus_encode_with_size(self.0, w)
     }

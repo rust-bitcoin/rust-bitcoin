@@ -363,7 +363,7 @@ impl<'de> serde::Deserialize<'de> for LockTime {
         D: serde::Deserializer<'de>,
     {
         struct Visitor;
-        impl<'de> serde::de::Visitor<'de> for Visitor {
+        impl serde::de::Visitor<'_> for Visitor {
             type Value = u32;
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("a u32") }
             // We cannot just implement visit_u32 because JSON (among other things) always
