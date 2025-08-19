@@ -284,7 +284,7 @@ impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
 }
 
-impl<'u, T> Prevouts<'u, T>
+impl<T> Prevouts<'_, T>
 where
     T: Borrow<TxOut>,
 {
@@ -1184,7 +1184,7 @@ impl<'a> Annex<'a> {
     pub fn as_bytes(&self) -> &[u8] { self.0 }
 }
 
-impl<'a> Encodable for Annex<'a> {
+impl Encodable for Annex<'_> {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         encode::consensus_encode_with_size(self.0, w)
     }

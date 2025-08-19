@@ -168,7 +168,7 @@ pub mod as_core_arg {
     {
         struct NetworkVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for NetworkVisitor {
+        impl serde::de::Visitor<'_> for NetworkVisitor {
             type Value = Network;
 
             fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<Self::Value, E> {
