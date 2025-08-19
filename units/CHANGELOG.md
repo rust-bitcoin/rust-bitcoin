@@ -1,3 +1,7 @@
+# Unreleased
+
+- Do not re-export doc hidden macros
+
 # 1.0.0 - 2025-02-24
 
 BOOM! A long time in the making but here goes, our first 1.0 crate release.
