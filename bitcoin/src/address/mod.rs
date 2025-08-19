@@ -243,7 +243,7 @@ pub struct AddressEncoding<'a> {
 }
 
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
-impl<'a> fmt::Display for AddressEncoding<'a> {
+impl fmt::Display for AddressEncoding<'_> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self.payload {
             Payload::PubkeyHash(hash) => {

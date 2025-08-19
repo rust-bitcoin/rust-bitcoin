@@ -451,7 +451,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for Iter<'a> {}
+impl ExactSizeIterator for Iter<'_> {}
 
 impl<'a> IntoIterator for &'a Witness {
     type IntoIter = Iter<'a>;
