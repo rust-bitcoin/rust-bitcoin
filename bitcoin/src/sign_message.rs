@@ -104,7 +104,7 @@ mod message_signing {
         pub fn serialize(&self) -> [u8; 65] {
             let (recid, raw) = self.signature.serialize_compact();
             let mut serialized = [0u8; 65];
-            serialized[0] = i32::from(recid) as u8 + if self.compressed { 31 } else { 27 };
+            serialized[0] = recid.to_u8() + if self.compressed { 31 } else { 27 };
             serialized[1..].copy_from_slice(&raw[..]);
             serialized
         }
@@ -139,7 +139,7 @@ mod message_signing {
             msg_hash: sha256d::Hash,
         ) -> Result<PublicKey, MessageSignatureError> {
             let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
-            let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
+            let pubkey = secp_ctx.recover_ecdsa(msg, &self.signature)?;
             Ok(PublicKey { inner: pubkey, compressed: self.compressed })
         }
 
@@ -224,7 +224,7 @@ pub fn sign<C: secp256k1::Signing>(
 ) -> MessageSignature {
     let msg_hash = signed_msg_hash(msg);
     let msg_to_sign = secp256k1::Message::from_digest(msg_hash.to_byte_array());
-    let secp_sig = secp_ctx.sign_ecdsa_recoverable(&msg_to_sign, &privkey);
+    let secp_sig = secp_ctx.sign_ecdsa_recoverable(msg_to_sign, &privkey);
     MessageSignature { signature: secp_sig, compressed: true }
 }
 
