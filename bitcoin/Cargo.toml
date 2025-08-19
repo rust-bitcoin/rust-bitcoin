@@ -70,3 +70,6 @@ required-features = ["std", "bitcoinconsensus"]
 [[example]]
 name = "taproot-psbt"
 required-features = ["std", "rand-std", "bitcoinconsensus"]
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(rust_v_1_46)', 'cfg(rust_v_1_53)', 'cfg(rust_v_1_60)', 'cfg(mutate)'] }

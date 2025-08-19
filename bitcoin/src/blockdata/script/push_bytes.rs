@@ -16,7 +16,7 @@ mod primitive {
     use super::PushBytesError;
     use core::convert::{TryFrom, TryInto};
     use core::ops::{Index, Range, RangeFull, RangeFrom, RangeTo, RangeInclusive, RangeToInclusive};
-    #[cfg(feature = "rust_v_1_53")]
+    #[cfg(rust_v_1_53)]
     use core::ops::Bound;
 
     #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
@@ -99,8 +99,8 @@ mod primitive {
     }
 
     delegate_index!(Range<usize>, RangeFrom<usize>, RangeTo<usize>, RangeFull, RangeInclusive<usize>, RangeToInclusive<usize>);
-    #[cfg(feature = "rust_v_1_53")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rust_v_1_53")))]
+    #[cfg(rust_v_1_53)]
+    #[cfg_attr(docsrs, doc(cfg(rust_v_1_53)))]
     delegate_index!((Bound<usize>, Bound<usize>));
 
     impl Index<usize> for PushBytes {
