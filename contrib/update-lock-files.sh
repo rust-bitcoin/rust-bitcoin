@@ -17,14 +17,14 @@ NIGHTLY=$(cat nightly-version)
 
 # Check that all explicit direct dependency versions are not lying,
 # as in, they are not being bumped up by transitive dependency constraints.
-rm -f Cargo.lock && cargo +"$NIGHTLY" check -Z direct-minimal-versions
+rm -f Cargo.lock && cargo +"$NIGHTLY" check --all-features -Z direct-minimal-versions
 # Now that our own direct dependency versions can be trusted, check
 # against the lowest versions of the dependency tree which still
 # satisfy constraints. Use this as the minimal version lock file.
-rm -f Cargo.lock && cargo +"$NIGHTLY" check -Z minimal-versions
+rm -f Cargo.lock && cargo +"$NIGHTLY" check --all-features -Z minimal-versions
 cp -f Cargo.lock Cargo-minimal.lock
 
 # Conservatively bump of recent dependencies.
 cp -f Cargo-recent.lock Cargo.lock
-cargo check
+cargo check --all-features
 cp -f Cargo.lock Cargo-recent.lock
