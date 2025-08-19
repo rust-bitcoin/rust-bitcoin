@@ -8,13 +8,14 @@
 use alloc::borrow::{Cow, ToOwned};
 use alloc::boxed::Box;
 use alloc::string::String;
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 use core::{cmp, fmt};
 
+use bitcoin::block::HeaderExt;
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
-use bitcoin::{block, block::HeaderExt, transaction};
+use bitcoin::{block, transaction};
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{self, BufRead, Read, Write};
@@ -421,8 +422,7 @@ impl Encodable for NetworkMessage {
             NetworkMessage::GetHeaders(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Headers(ref dat) =>
-                dat.consensus_encode(writer),
+            NetworkMessage::Headers(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Ping(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Pong(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode(writer),
@@ -538,13 +538,11 @@ impl HeadersMessage {
 
     /// Each header passes its own proof-of-work target.
     pub fn all_targets_satisfied(&self) -> bool {
-        !self.0
-            .iter()
-            .any(|header| {
-                let target = header.target();
-                let valid_pow = header.validate_pow(target);
-                valid_pow.is_err()
-            })
+        !self.0.iter().any(|header| {
+            let target = header.target();
+            let valid_pow = header.validate_pow(target);
+            valid_pow.is_err()
+        })
     }
 }
 
@@ -732,9 +730,8 @@ impl Decodable for V2NetworkMessage {
             10u8 => NetworkMessage::GetBlockTxn(Decodable::consensus_decode_from_finite_reader(r)?),
             11u8 => NetworkMessage::GetData(Decodable::consensus_decode_from_finite_reader(r)?),
             12u8 => NetworkMessage::GetHeaders(Decodable::consensus_decode_from_finite_reader(r)?),
-            13u8 => NetworkMessage::Headers(
-                HeadersMessage::consensus_decode_from_finite_reader(r)?,
-            ),
+            13u8 =>
+                NetworkMessage::Headers(HeadersMessage::consensus_decode_from_finite_reader(r)?),
             14u8 => NetworkMessage::Inv(Decodable::consensus_decode_from_finite_reader(r)?),
             15u8 => NetworkMessage::MemPool,
             16u8 => NetworkMessage::MerkleBlock(Decodable::consensus_decode_from_finite_reader(r)?),
@@ -803,7 +800,9 @@ impl Encodable for CheckedData {
 
 impl Decodable for CheckedData {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, encode::Error> {
         let len = u32::consensus_decode_from_finite_reader(r)? as usize;
 
         let checksum = <[u8; 4]>::consensus_decode_from_finite_reader(r)?;
@@ -811,8 +810,11 @@ impl Decodable for CheckedData {
         let data = read_bytes_from_finite_reader(r, opts)?;
         let expected_checksum = sha2_checksum(&data);
         if expected_checksum != checksum {
-            Err(encode::ParseError::InvalidChecksum { expected: expected_checksum, actual: checksum }
-                .into())
+            Err(encode::ParseError::InvalidChecksum {
+                expected: expected_checksum,
+                actual: checksum,
+            }
+            .into())
         } else {
             Ok(CheckedData { data, checksum })
         }

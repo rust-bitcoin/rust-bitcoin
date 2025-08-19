@@ -545,10 +545,10 @@ impl Ordinary {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "alloc")]
     use alloc::{collections::BTreeSet, format};
+
+    use super::*;
 
     #[cfg(feature = "alloc")]
     macro_rules! roundtrip {

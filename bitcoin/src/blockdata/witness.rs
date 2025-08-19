@@ -492,7 +492,10 @@ mod test {
             assert_eq!(expected_wit[i], wit_el.to_lower_hex_string());
         }
         assert_eq!(expected_wit[1], tx.inputs[0].witness.last().unwrap().to_lower_hex_string());
-        assert_eq!(expected_wit[0], tx.inputs[0].witness.get_back(1).unwrap().to_lower_hex_string());
+        assert_eq!(
+            expected_wit[0],
+            tx.inputs[0].witness.get_back(1).unwrap().to_lower_hex_string()
+        );
         assert_eq!(expected_wit[0], tx.inputs[0].witness.get(0).unwrap().to_lower_hex_string());
         assert_eq!(expected_wit[1], tx.inputs[0].witness.get(1).unwrap().to_lower_hex_string());
         assert_eq!(None, tx.inputs[0].witness.get(2));

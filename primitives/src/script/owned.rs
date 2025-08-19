@@ -148,10 +148,10 @@ impl<'a> Arbitrary<'a> for ScriptBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "alloc")]
-    use alloc::{vec};
+    use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn script_buf_from_bytes() {
