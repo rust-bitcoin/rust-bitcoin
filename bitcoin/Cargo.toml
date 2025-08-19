@@ -76,3 +76,12 @@ required-features = ["std", "rand-std", "bitcoinconsensus"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(rust_v_1_53)', 'cfg(rust_v_1_60)', 'cfg(mutate)'] }
+
+# This version is in maintenance mode, just allow these lints so that we can keep CI green but make
+# minimal changes to the actual codebase.
+[lints.clippy]
+# Exclude lints we don't think are valuable.
+needless_question_mark = "allow" # https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
+manual_range_contains = "allow" # More readable than clippy's format.
+precedence = "allow"
+legacy_numeric_constants = "allow"
