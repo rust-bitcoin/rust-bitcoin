@@ -22,7 +22,7 @@ hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = fa
 internals = { package = "bitcoin-internals", path = "../internals" }
 
 [dev-dependencies]
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+hex_lit = "0.1.1"
 
 [package.metadata.docs.rs]
 all-features = true

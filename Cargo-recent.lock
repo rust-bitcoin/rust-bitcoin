@@ -20,7 +20,7 @@ version = "0.2.0"
 dependencies = [
  "bitcoin-internals",
  "bitcoin_hashes 0.16.0",
- "hex-conservative 0.3.0",
+ "hex_lit",
 ]
 
 [[package]]
