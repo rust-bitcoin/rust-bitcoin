@@ -628,6 +628,8 @@ impl Script {
 ///
 /// "push" opcodes are defined by Bitcoin Core as OP_PUSHBYTES_, OP_PUSHDATA, OP_PUSHNUM_, and
 /// OP_RESERVED i.e., everything less than OP_PUSHNUM_16 (0x60) . (TODO: Add link to core code).
+// Num is unused but this crate is in maintenance mode and we don't want lint warnings blocking CI.
+#[allow(dead_code)] 
 pub(crate) enum Push<'a> {
     /// All the OP_PUSHBYTES_ and OP_PUSHDATA_ opcodes.
     Data(&'a PushBytes),
