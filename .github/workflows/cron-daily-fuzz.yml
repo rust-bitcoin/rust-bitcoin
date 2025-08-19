@@ -18,16 +18,19 @@ jobs:
         # We only get 20 jobs at a time, we probably don't want to go
         # over that limit with fuzzing because of the hour run time.
         fuzz_target: [
+          bitcoin_arbitrary_block,
+          bitcoin_arbitrary_script,
+          bitcoin_arbitrary_transaction,
           bitcoin_deser_net_msg,
-          bitcoin_deserialize_address,
           bitcoin_deserialize_block,
           bitcoin_deserialize_prefilled_transaction,
           bitcoin_deserialize_psbt,
           bitcoin_deserialize_script,
           bitcoin_deserialize_transaction,
           bitcoin_deserialize_witness,
-          bitcoin_outpoint_string,
           bitcoin_p2p_address_roundtrip,
+          bitcoin_parse_address,
+          bitcoin_parse_outpoint,
           bitcoin_script_bytes_to_asm_fmt,
           hashes_json,
           hashes_ripemd160,
