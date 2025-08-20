@@ -50,7 +50,7 @@ use crate::witness::Witness;
 ///
 /// # Bitcoin Core References
 ///
-/// * [CTtransaction definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L279)
+/// * [CTransaction definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L279)
 ///
 /// # Serialization notes
 ///

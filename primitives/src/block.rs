@@ -261,7 +261,7 @@ impl From<&Header> for BlockHash {
 ///
 /// Originally used as a protocol version, but repurposed for soft-fork signaling.
 ///
-/// The inner value is a signed integer in Bitcoin Core for historical reasons, if version bits is
+/// The inner value is a signed integer in Bitcoin Core for historical reasons, if the version bits are
 /// being used the top three bits must be 001, this gives us a useful range of [0x20000000...0x3FFFFFFF].
 ///
 /// > When a block nVersion does not have top bits 001, it is treated as if all bits are 0 for the purposes of deployments.
