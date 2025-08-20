@@ -1,4 +1,4 @@
-/// Support for parsing strings.
+//! Support for parsing strings.
 
 // Impls a single TryFrom conversion
 #[doc(hidden)]

@@ -48,6 +48,7 @@ mod impls {
         }
 
         #[cfg(rust_v_1_55)]
+        #[allow(clippy::incompatible_msrv)] // linter does not play nicely with rust_v_1_55 cfg attribute.
         fn try_into_de_error<E>(self, expected: Option<&dyn de::Expected>) -> Result<E, Self>
         where
             E: de::Error,
