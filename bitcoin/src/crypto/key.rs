@@ -615,6 +615,7 @@ impl TapTweak for UntweakedKeypair {
     ///  * p is the internal private key
     ///  * H is the hash function
     ///  * c is the commitment data
+    ///
     /// The public key is generated from a private key by multiplying with generator point, Q = qG.
     ///
     /// # Returns
