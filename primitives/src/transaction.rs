@@ -430,6 +430,8 @@ impl Serialize for OutPoint {
     where
         S: Serializer,
     {
+        use crate::prelude::ToString;
+
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.to_string())
         } else {
@@ -592,29 +594,25 @@ impl std::error::Error for ParseOutPointError {
 }
 
 hashes::hash_newtype! {
-    /// A bitcoin transaction hash/transaction ID.
-    ///
-    /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
-    /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations.
-    ///
-    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
-
     /// A bitcoin witness transaction ID.
     pub struct Wtxid(sha256d::Hash);
 }
 
 #[cfg(feature = "hex")]
-internal_macros::impl_hex_string_traits!(Txid, 32, true);
+hashes::impl_hex_for_newtype!(Wtxid);
 #[cfg(not(feature = "hex"))]
-internal_macros::impl_debug_only!(Txid, 32, true);
+hashes::impl_debug_only_for_newtype!(Wtxid);
 
-#[cfg(feature = "hex")]
-internal_macros::impl_hex_string_traits!(Wtxid, 32, true);
-#[cfg(not(feature = "hex"))]
-internal_macros::impl_debug_only!(Wtxid, 32, true);
+/// A bitcoin transaction hash/transaction ID.
+///
+/// For compatibility with the existing Bitcoin infrastructure and historical and current
+/// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
+/// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
+/// trait operations.
+///
+/// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+#[derive(Copy, Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
+pub struct Txid(sha256d::Hash);
 
 impl Txid {
     /// The `Txid` used in a coinbase prevout.
@@ -622,7 +620,26 @@ impl Txid {
     /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
     /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
     pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
+
+    /// Constructs a new `Txid` from the underlying byte array.
+    pub const fn from_byte_array(bytes: [u8; 32]) -> Self {
+        Self(sha256d::Hash::from_byte_array(bytes))
+    }
+
+    /// Returns the underlying byte array.
+    pub const fn to_byte_array(self) -> [u8; 32] { self.0.to_byte_array() }
+
+    /// Returns a reference to the underlying byte array.
+    pub const fn as_byte_array(&self) -> &[u8; 32] { self.0.as_byte_array() }
 }
+
+#[cfg(feature = "hex")]
+internal_macros::impl_hex_string_traits!(Txid, 32, true);
+#[cfg(not(feature = "hex"))]
+internal_macros::impl_debug_only!(Txid, 32, true);
+
+// FIXME: This is doc(hidden) - inline it.
+hashes::impl_bytelike_traits!(Txid, 32);
 
 impl Wtxid {
     /// The `Wtxid` of a coinbase transaction.
