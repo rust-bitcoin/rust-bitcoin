@@ -590,7 +590,7 @@ mod test {
         assert_eq!(witness.nth(1), None);
         assert_eq!(witness.nth(2), None);
         assert_eq!(witness.nth(3), None);
-        witness.push(&vec![0u8]);
+        witness.push(vec![0u8]);
         let expected = Witness {
             witness_elements: 1,
             content: append_u32_vec(vec![1u8, 0], &[0]),
@@ -604,7 +604,7 @@ mod test {
         assert_eq!(witness.nth(2), None);
         assert_eq!(witness.nth(3), None);
         assert_eq!(&witness[0], &[0u8][..]);
-        witness.push(&vec![2u8, 3u8]);
+        witness.push(vec![2u8, 3u8]);
         let expected = Witness {
             witness_elements: 2,
             content: append_u32_vec(vec![1u8, 0, 2, 2, 3], &[0, 2]),
@@ -619,7 +619,7 @@ mod test {
         assert_eq!(witness.nth(3), None);
         assert_eq!(&witness[0], &[0u8][..]);
         assert_eq!(&witness[1], &[2u8, 3u8][..]);
-        witness.push(&vec![4u8, 5u8]);
+        witness.push(vec![4u8, 5u8]);
         let expected = Witness {
             witness_elements: 3,
             content: append_u32_vec(vec![1u8, 0, 2, 2, 3, 2, 4, 5], &[0, 2, 5]),
@@ -642,7 +642,7 @@ mod test {
         let mut witness = Witness::default();
         for i in 0..5 {
             assert_eq!(witness.iter().len(), i);
-            witness.push(&vec![0u8]);
+            witness.push(vec![0u8]);
         }
         let mut iter = witness.iter();
         for i in (0..=5).rev() {
