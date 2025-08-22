@@ -191,8 +191,8 @@ impl UserAgentVersion {
         UserAgent::panic_invalid_chars(parsed_comment);
         match self.comments {
             Some(mut comment) => {
-                let semi_colon_delimeter = format!("; {parsed_comment}");
-                comment.push_str(&semi_colon_delimeter);
+                let semi_colon_delimiter = format!("; {parsed_comment}");
+                comment.push_str(&semi_colon_delimiter);
                 self.comments = Some(comment);
             }
             None => self.comments = Some(parsed_comment.to_string()),
