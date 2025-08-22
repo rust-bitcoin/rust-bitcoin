@@ -121,11 +121,16 @@ impl Transaction {
 
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
-    /// This gives a way to identify a transaction that is "the same" as
-    /// another in the sense of having same inputs and outputs.
+    /// This function is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
+    /// applications. This method clears the `script_sig` field of each input, which in Segwit
+    /// transactions is already empty, so for Segwit transactions the ntxid will be equal to the
+    /// txid, and you should simply use the latter.
+    ///
+    /// This gives a way to identify a transaction that is "the same" as another in the sense of
+    /// having the same inputs and outputs.
     #[doc(alias = "ntxid")]
-    pub fn compute_ntxid(&self) -> sha256d::Hash {
-        let cloned_tx = Transaction {
+    pub fn compute_ntxid(&self) -> Ntxid {
+        let normalized = Transaction {
             version: self.version,
             lock_time: self.lock_time,
             inputs: self
@@ -139,7 +144,7 @@ impl Transaction {
                 .collect(),
             outputs: self.outputs.clone(),
         };
-        sha256d::Hash::from_byte_array(cloned_tx.compute_txid().to_byte_array())
+        Ntxid::from_byte_array(normalized.compute_txid().to_byte_array())
     }
 
     /// Computes the [`Txid`].
@@ -486,14 +491,27 @@ hashes::hash_newtype! {
 
     /// A bitcoin witness transaction ID.
     pub struct Wtxid(sha256d::Hash);
+
+    /// A "normalized TXID".
+    ///
+    /// Computed on a transaction that has had the signatures removed.
+    ///
+    /// This type is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
+    /// applications. This method clears the `script_sig` field of each input, which in Segwit
+    /// transactions is already empty, so for Segwit transactions the ntxid will be equal to the
+    /// txid, and you should simply use the latter.
+    ///
+    /// This gives a way to identify a transaction that is "the same" as another in the sense of
+    /// having the same inputs and outputs.
+    pub struct Ntxid(sha256d::Hash);
 }
 
 #[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(Txid, Wtxid);
+hashes::impl_hex_for_newtype!(Txid, Wtxid, Ntxid);
 #[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(Txid, Wtxid);
+hashes::impl_debug_only_for_newtype!(Txid, Wtxid, Ntxid);
 #[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(Txid, Wtxid);
+hashes::impl_serde_for_newtype!(Txid, Wtxid, Ntxid);
 
 impl Txid {
     /// The `Txid` used in a coinbase prevout.

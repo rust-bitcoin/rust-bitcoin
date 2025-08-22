@@ -83,7 +83,7 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
-    transaction::{OutPoint, Txid, Version as TransactionVersion, Wtxid},
+    transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
 
 #[rustfmt::skip]
