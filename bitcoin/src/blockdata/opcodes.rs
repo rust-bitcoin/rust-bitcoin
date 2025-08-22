@@ -185,8 +185,8 @@ all_opcodes! {
     OP_FROMALTSTACK => 0x6c, "Pop one element from the alt stack onto the main stack.";
     OP_2DROP => 0x6d, "Drops the top two stack items.";
     OP_2DUP => 0x6e, "Duplicates the top two stack items as `AB` -> `ABAB`.";
-    OP_3DUP => 0x6f, "Duplicates the two three stack items as `ABC` -> `ABCABC`.";
-    OP_2OVER => 0x70, "Copies the two stack items of items two spaces back to the front, as `xxAB` -> `ABxxAB`.";
+    OP_3DUP => 0x6f, "Duplicates the top three stack items as `ABC` -> `ABCABC`.";
+    OP_2OVER => 0x70, "Duplicates the third and fourth items from the top of the stack.";
     OP_2ROT => 0x71, "Moves the two stack items four spaces back to the front, as `xxxxAB` -> `ABxxxx`.";
     OP_2SWAP => 0x72, "Swaps the top two pairs, as `ABCD` -> `CDAB`.";
     OP_IFDUP => 0x73, "Duplicate the top stack element unless it is zero.";
