@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # we need full history for cargo semver-checks
       - name: "Install Rustup"
@@ -50,7 +50,7 @@ jobs:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Install Rustup"
         uses: dtolnay/rust-toolchain@stable
       - name: "Select stable-version"

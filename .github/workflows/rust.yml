@@ -15,7 +15,7 @@ jobs:
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Read nightly version"
         id: read_toolchain
         run: echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
@@ -29,9 +29,9 @@ jobs:
         dep: [minimal, recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: c3324024ced9bb1eb854397686919c3ff7d97e1e
@@ -53,9 +53,9 @@ jobs:
         dep: [minimal, recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: c3324024ced9bb1eb854397686919c3ff7d97e1e
@@ -78,9 +78,9 @@ jobs:
         dep: [minimal, recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: c3324024ced9bb1eb854397686919c3ff7d97e1e
@@ -104,9 +104,9 @@ jobs:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: c3324024ced9bb1eb854397686919c3ff7d97e1e
@@ -131,9 +131,9 @@ jobs:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: c3324024ced9bb1eb854397686919c3ff7d97e1e
@@ -155,9 +155,9 @@ jobs:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: c3324024ced9bb1eb854397686919c3ff7d97e1e
@@ -181,9 +181,9 @@ jobs:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: c3324024ced9bb1eb854397686919c3ff7d97e1e
@@ -202,7 +202,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
       - name: "Add architecture i386"
@@ -220,7 +220,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
       - name: "Install target"
@@ -239,7 +239,7 @@ jobs:
       CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Set up QEMU"
         run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
       - name: "Select toolchain"
@@ -268,7 +268,7 @@ jobs:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -288,7 +288,7 @@ jobs:
       # Note we do not use the recent lock file for wasm testing.
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
       - name: "Run wasm script"
@@ -299,7 +299,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Build Kani proofs"
         uses: model-checking/kani-github-action@v1.1
         with:
@@ -313,7 +313,7 @@ jobs:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
