@@ -24,6 +24,8 @@ use hashes::sha256d;
 use internals::compact_size;
 #[cfg(feature = "hex")]
 use internals::write_err;
+#[cfg(feature = "serde")]
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(feature = "alloc")]
 use units::locktime::absolute;
 #[cfg(feature = "hex")]
@@ -33,6 +35,8 @@ use units::sequence::Sequence;
 #[cfg(feature = "alloc")]
 use units::{Amount, Weight};
 
+#[cfg(feature = "hex")]
+use crate::internal_macros;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
@@ -360,8 +364,6 @@ pub struct OutPoint {
     /// The index of the referenced output in its transaction's vout.
     pub vout: u32,
 }
-#[cfg(feature = "serde")]
-internals::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
     /// The number of bytes that an outpoint contributes to the size of a transaction.
@@ -422,6 +424,124 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     parse::int_from_str(s).map_err(ParseOutPointError::Vout)
 }
 
+#[cfg(feature = "serde")]
+impl Serialize for OutPoint {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        use crate::prelude::ToString;
+
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.to_string())
+        } else {
+            use crate::serde::ser::SerializeStruct;
+
+            // We need to put 32 in little-endian at the front of the
+            // serialization and I cannot think of any other way to do it.
+            struct TxidWrapper(Txid);
+
+            #[cfg(feature = "serde")]
+            impl Serialize for TxidWrapper {
+                fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                where
+                    S: Serializer,
+                {
+                    // serialize_bytes includes the length of the slice - 32.
+                    serializer.serialize_bytes(self.0.as_byte_array())
+                }
+            }
+
+            let wrapped = TxidWrapper(self.txid);
+
+            let mut state = serializer.serialize_struct("OutPoint", 2)?;
+            state.serialize_field("txid", &wrapped)?;
+            state.serialize_field("vout", &self.vout.to_le_bytes())?;
+            state.end()
+        }
+    }
+}
+
+
+impl<'de> Deserialize<'de> for OutPoint {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            // Human readable: expect "txid:vout" string format
+            struct StringVisitor;
+            
+            impl<'de> de::Visitor<'de> for StringVisitor {
+                type Value = OutPoint;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str("a string in format 'txid:vout'")
+                }
+
+                fn visit_str<E>(self, value: &str) -> Result<OutPoint, E>
+                where
+                    E: de::Error,
+                {
+                    value.parse::<OutPoint>().map_err(de::Error::custom)
+                }
+            }
+            
+            deserializer.deserialize_str(StringVisitor)
+        } else {
+            // Binary format: expect struct with fields
+            #[derive(Deserialize)]
+            #[serde(field_identifier, rename_all = "lowercase")]
+            enum Field { Txid, Vout }
+
+            struct OutPointVisitor;
+
+            impl<'de> de::Visitor<'de> for OutPointVisitor {
+                type Value = OutPoint;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str("struct OutPoint")
+                }
+
+                fn visit_map<V>(self, mut map: V) -> Result<OutPoint, V::Error>
+                where
+                    V: de::MapAccess<'de>,
+                {
+                    let mut txid = None;
+                    let mut vout = None;
+                    
+                    while let Some(key) = map.next_key()? {
+                        match key {
+                            Field::Txid => {
+                                if txid.is_some() {
+                                    return Err(de::Error::duplicate_field("txid"));
+                                }
+                                let bytes: [u8; 32] = map.next_value()?;
+                                txid = Some(Txid::from_byte_array(bytes));
+                            }
+                            Field::Vout => {
+                                if vout.is_some() {
+                                    return Err(de::Error::duplicate_field("vout"));
+                                }
+                                let bytes: [u8; 4] = map.next_value()?;
+                                vout = Some(u32::from_le_bytes(bytes));
+                            }
+                        }
+                    }
+                    
+                    let txid = txid.ok_or_else(|| de::Error::missing_field("txid"))?;
+                    let vout = vout.ok_or_else(|| de::Error::missing_field("vout"))?;
+                    
+                    Ok(OutPoint { txid, vout })
+                }
+            }
+
+            const FIELDS: &'static [&'static str] = &["txid", "vout"];
+            deserializer.deserialize_struct("OutPoint", FIELDS, OutPointVisitor)
+        }
+    }
+}
+
 /// An error in parsing an [`OutPoint`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -474,26 +594,25 @@ impl std::error::Error for ParseOutPointError {
 }
 
 hashes::hash_newtype! {
-    /// A bitcoin transaction hash/transaction ID.
-    ///
-    /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
-    /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations.
-    ///
-    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
-
     /// A bitcoin witness transaction ID.
     pub struct Wtxid(sha256d::Hash);
 }
 
 #[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(Txid, Wtxid);
+hashes::impl_hex_for_newtype!(Wtxid);
 #[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(Txid, Wtxid);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(Txid, Wtxid);
+hashes::impl_debug_only_for_newtype!(Wtxid);
+
+/// A bitcoin transaction hash/transaction ID.
+///
+/// For compatibility with the existing Bitcoin infrastructure and historical and current
+/// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
+/// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
+/// trait operations.
+///
+/// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+#[derive(Copy, Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
+pub struct Txid(sha256d::Hash);
 
 impl Txid {
     /// The `Txid` used in a coinbase prevout.
@@ -501,7 +620,26 @@ impl Txid {
     /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
     /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
     pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
+
+    /// Constructs a new `Txid` from the underlying byte array.
+    pub const fn from_byte_array(bytes: [u8; 32]) -> Self {
+        Self(sha256d::Hash::from_byte_array(bytes))
+    }
+
+    /// Returns the underlying byte array.
+    pub const fn to_byte_array(self) -> [u8; 32] { self.0.to_byte_array() }
+
+    /// Returns a reference to the underlying byte array.
+    pub const fn as_byte_array(&self) -> &[u8; 32] { self.0.as_byte_array() }
 }
+
+#[cfg(feature = "hex")]
+internal_macros::impl_hex_string_traits!(Txid, 32, true);
+#[cfg(not(feature = "hex"))]
+internal_macros::impl_debug_only!(Txid, 32, true);
+
+// FIXME: This is doc(hidden) - inline it.
+hashes::impl_bytelike_traits!(Txid, 32);
 
 impl Wtxid {
     /// The `Wtxid` of a coinbase transaction.
