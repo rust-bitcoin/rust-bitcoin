@@ -815,7 +815,7 @@ mod tests {
                 sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: Witness::new(),
             }],
-            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { amount: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
         };
 
         let transactions = vec![non_coinbase_tx];
@@ -891,7 +891,7 @@ mod tests {
                 sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: Witness::new(),
             }],
-            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { amount: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
         };
 
         let invalid_coinbase_result = Block::new_checked(header, vec![non_coinbase_tx]);

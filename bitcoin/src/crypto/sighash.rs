@@ -684,7 +684,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let txin = &self.tx.borrow().tx_in(input_index).map_err(SigningDataError::sighash)?;
             let previous_output = prevouts.get(input_index).map_err(SigningDataError::sighash)?;
             txin.previous_output.consensus_encode(writer)?;
-            previous_output.value.consensus_encode(writer)?;
+            previous_output.amount.consensus_encode(writer)?;
             previous_output.script_pubkey.consensus_encode(writer)?;
             txin.sequence.consensus_encode(writer)?;
         } else {
@@ -817,7 +817,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         writer: &mut W,
         input_index: usize,
         script_code: &Script,
-        value: Amount,
+        amount: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
         let zero_hash = [0; 32];
@@ -845,7 +845,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let txin = &self.tx.borrow().tx_in(input_index).map_err(SigningDataError::sighash)?;
             txin.previous_output.consensus_encode(writer)?;
             script_code.consensus_encode(writer)?;
-            value.consensus_encode(writer)?;
+            amount.consensus_encode(writer)?;
             txin.sequence.consensus_encode(writer)?;
         }
 
@@ -875,7 +875,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         input_index: usize,
         script_pubkey: &Script,
-        value: Amount,
+        amount: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, P2wpkhError> {
         let script_code = script_pubkey.p2wpkh_script_code().ok_or(P2wpkhError::NotP2wpkhScript)?;
@@ -885,7 +885,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             &mut enc,
             input_index,
             &script_code,
-            value,
+            amount,
             sighash_type,
         )
         .map_err(SigningDataError::unwrap_sighash)?;
@@ -900,7 +900,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         input_index: usize,
         witness_script: &Script,
-        value: Amount,
+        amount: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
         let mut enc = SegwitV0Sighash::engine();
@@ -908,7 +908,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             &mut enc,
             input_index,
             witness_script,
-            value,
+            amount,
             sighash_type,
         )
         .map_err(SigningDataError::unwrap_sighash)?;
@@ -1123,7 +1123,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut enc_amounts = sha256::Hash::engine();
             let mut enc_script_pubkeys = sha256::Hash::engine();
             for prevout in prevouts {
-                prevout.borrow().value.consensus_encode(&mut enc_amounts).unwrap();
+                prevout.borrow().amount.consensus_encode(&mut enc_amounts).unwrap();
                 prevout.borrow().script_pubkey.consensus_encode(&mut enc_script_pubkeys).unwrap();
             }
             TaprootCache {
@@ -1542,7 +1542,7 @@ mod tests {
 
     extern crate serde_json;
 
-    const DUMMY_TXOUT: TxOut = TxOut { value: Amount::MIN, script_pubkey: ScriptBuf::new() };
+    const DUMMY_TXOUT: TxOut = TxOut { amount: Amount::MIN, script_pubkey: ScriptBuf::new() };
 
     #[test]
     fn sighash_single_bug() {
@@ -1889,7 +1889,7 @@ mod tests {
             script_pubkey: ScriptBuf,
             #[serde(rename = "amountSats")]
             #[serde(with = "crate::amount::serde::as_sat")]
-            value: Amount,
+            amount: Amount,
         }
 
         #[derive(serde::Deserialize)]
@@ -1975,7 +1975,7 @@ mod tests {
             .given
             .utxos_spent
             .into_iter()
-            .map(|txo| TxOut { value: txo.value, script_pubkey: txo.script_pubkey })
+            .map(|txo| TxOut { amount: txo.amount, script_pubkey: txo.script_pubkey })
             .collect::<Vec<_>>();
 
         // Test intermediary
@@ -2091,11 +2091,11 @@ mod tests {
         let spk =
             ScriptBuf::from_hex_no_length_prefix("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1")
                 .unwrap();
-        let value = Amount::from_sat_u32(600_000_000);
+        let amount = Amount::from_sat_u32(600_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.p2wpkh_signature_hash(1, &spk, value, EcdsaSighashType::All).unwrap(),
+            cache.p2wpkh_signature_hash(1, &spk, amount, EcdsaSighashType::All).unwrap(),
             "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),
@@ -2133,11 +2133,11 @@ mod tests {
         let redeem_script =
             ScriptBuf::from_hex_no_length_prefix("001479091972186c449eb1ded22b78e40d009bdf0089")
                 .unwrap();
-        let value = Amount::from_sat_u32(1_000_000_000);
+        let amount = Amount::from_sat_u32(1_000_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.p2wpkh_signature_hash(0, &redeem_script, value, EcdsaSighashType::All).unwrap(),
+            cache.p2wpkh_signature_hash(0, &redeem_script, amount, EcdsaSighashType::All).unwrap(),
             "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),
@@ -2183,16 +2183,16 @@ mod tests {
         )
         .unwrap();
 
-        let value = Amount::from_sat_u32(987_654_321);
-        (tx, witness_script, value)
+        let amount = Amount::from_sat_u32(987_654_321);
+        (tx, witness_script, amount)
     }
 
     #[test]
     fn bip143_p2wsh_nested_in_p2sh_sighash_type_all() {
-        let (tx, witness_script, value) = bip143_p2wsh_nested_in_p2sh_data();
+        let (tx, witness_script, amount) = bip143_p2wsh_nested_in_p2sh_data();
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.p2wsh_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache.p2wsh_signature_hash(0, &witness_script, amount, EcdsaSighashType::All).unwrap(),
             "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),
@@ -2229,11 +2229,11 @@ mod tests {
                 fn $test_name() {
                     use EcdsaSighashType::*;
 
-                    let (tx, witness_script, value) = bip143_p2wsh_nested_in_p2sh_data();
+                    let (tx, witness_script, amount) = bip143_p2wsh_nested_in_p2sh_data();
                     let mut cache = SighashCache::new(&tx);
                     assert_eq!(
                         cache
-                            .p2wsh_signature_hash(0, &witness_script, value, $sighash_type)
+                            .p2wsh_signature_hash(0, &witness_script, amount, $sighash_type)
                             .unwrap(),
                         $sighash
                             .parse::<SegwitV0Sighash>()
