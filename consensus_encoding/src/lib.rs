@@ -13,3 +13,8 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
+
+mod encode;
+
+pub use self::encode::encoders::{ArrayEncoder, BytesEncoder};
+pub use self::encode::{Encodable, Encoder};
