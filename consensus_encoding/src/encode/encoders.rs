@@ -8,6 +8,8 @@
 //! to your newtype. This avoids leaking encoding implementation details to the
 //! users of your type.
 //!
+//! For implementing these newtypes, we provide the [`encoder_newtype`] macro.
+//!
 
 /// An encoder for a single byte slice.
 use super::Encoder;

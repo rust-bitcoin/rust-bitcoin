@@ -73,6 +73,22 @@ impl<'de> Deserialize<'de> for BlockTime {
     }
 }
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`BlockTime`] type.
+    pub struct BlockTimeEncoder(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for BlockTime {
+    type Encoder<'e> = BlockTimeEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockTimeEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes())
+        )
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTime {
     #[inline]

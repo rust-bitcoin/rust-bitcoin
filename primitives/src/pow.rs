@@ -48,6 +48,20 @@ impl fmt::UpperHex for CompactTarget {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`TxMerkleNode`] type.
+    pub struct CompactTargetEncoder(encoding::ArrayEncoder<4>);
+}
+
+impl encoding::Encodable for CompactTarget {
+    type Encoder<'e> = CompactTargetEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CompactTargetEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes())
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]

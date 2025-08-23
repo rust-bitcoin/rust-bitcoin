@@ -38,3 +38,24 @@ pub trait Encoder<'e> {
     /// and just call `current_chunk` to see if it works.
     fn advance(&mut self) -> bool;
 }
+
+/// Implements a newtype around an encoder which implements the
+/// [`Encoder`] trait by forwarding to the wrapped encoder.
+#[macro_export]
+macro_rules! encoder_newtype{
+    (
+        $(#[$($struct_attr:tt)*])*
+        pub struct $name:ident$(<$lt:lifetime>)?($encoder:ty);
+    ) => {
+        $(#[$($struct_attr)*])*
+        pub struct $name$(<$lt>)?($encoder);
+
+        impl<'e $(, $lt)?> $crate::Encoder<'e> for $name$(<$lt>)? {
+            #[inline]
+            fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
+
+            #[inline]
+            fn advance(&mut self) -> bool { self.0.advance() }
+        }
+    }
+}

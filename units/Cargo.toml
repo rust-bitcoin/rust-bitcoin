@@ -18,6 +18,7 @@ std = ["alloc", "internals/std"]
 alloc = ["internals/alloc","serde?/alloc"]
 
 [dependencies]
+encoding = { package = "consensus-encoding", path = "../consensus_encoding", optional = true }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0" }
 
 serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }
