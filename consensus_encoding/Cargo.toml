@@ -18,6 +18,7 @@ std = ["alloc"]
 alloc = []
 
 [dependencies]
+hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true

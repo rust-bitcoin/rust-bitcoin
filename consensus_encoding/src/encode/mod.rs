@@ -59,3 +59,16 @@ macro_rules! encoder_newtype{
         }
     }
 }
+
+/// Encode an object into a hash engine.
+///
+/// Consumes and returns the hash engine to make it easier to call
+/// [`hashes::HashEngine::finalize`] directly on the result.
+pub fn encode_to_hash_engine<T: Encodable, H: hashes::HashEngine>(object: &T, mut engine: H) -> H {
+    let mut encoder = object.encoder();
+    while let Some(sl) = encoder.current_chunk() {
+        engine.input(sl);
+        encoder.advance();
+    }
+    engine
+}

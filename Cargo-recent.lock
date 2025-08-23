@@ -209,6 +209,9 @@ dependencies = [
 [[package]]
 name = "consensus-encoding"
 version = "0.0.0"
+dependencies = [
+ "bitcoin_hashes 0.16.0",
+]
 
 [[package]]
 name = "getrandom"
