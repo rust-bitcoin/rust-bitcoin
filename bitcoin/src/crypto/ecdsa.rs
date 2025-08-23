@@ -200,7 +200,7 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     type Item = &'a u8;
 
     #[inline]
-    fn into_iter(self) -> Self::IntoIter { (*self).iter() }
+    fn into_iter(self) -> Self::IntoIter { (**self).iter() }
 }
 
 /// Error encountered while parsing an ECDSA signature from a byte slice.
@@ -336,11 +336,12 @@ impl<'a> Arbitrary<'a> for Signature {
 mod tests {
     use super::*;
 
+    const TEST_SIGNATURE_HEX: &str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
+
     #[test]
     fn write_serialized_signature() {
-        let hex = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
         let sig = Signature {
-            signature: secp256k1::ecdsa::Signature::from_str(hex).unwrap(),
+            signature: secp256k1::ecdsa::Signature::from_str(TEST_SIGNATURE_HEX).unwrap(),
             sighash_type: EcdsaSighashType::All,
         };
 
@@ -348,5 +349,15 @@ mod tests {
         sig.serialize_to_writer(&mut buf).expect("write failed");
 
         assert_eq!(sig.to_vec(), buf)
+    }
+
+    #[test]
+    fn iterate_serialized_signature() {
+        let sig = Signature {
+            signature: secp256k1::ecdsa::Signature::from_str(TEST_SIGNATURE_HEX).unwrap(),
+            sighash_type: EcdsaSighashType::All,
+        };
+
+        assert_eq!(sig.serialize().iter().copied().collect::<Vec<u8>>(), sig.to_vec());
     }
 }
