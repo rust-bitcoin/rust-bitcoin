@@ -20,6 +20,13 @@ hashes::impl_debug_only_for_newtype!(TxMerkleNode, WitnessMerkleNode);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TxMerkleNode, WitnessMerkleNode);
 
+impl encoding::Encodable for TxMerkleNode {
+    type Encoder = encoding::ArrayEncoder<32>;
+    fn encoder(&self) -> Self::Encoder {
+        encoding::ArrayEncoder::without_length_prefix(self.to_byte_array())
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxMerkleNode {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {

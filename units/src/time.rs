@@ -73,6 +73,14 @@ impl<'de> Deserialize<'de> for BlockTime {
     }
 }
 
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for BlockTime {
+    type Encoder = encoding::ArrayEncoder<4>;
+    fn encoder(&self) -> Self::Encoder {
+        encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes())
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTime {
     #[inline]
