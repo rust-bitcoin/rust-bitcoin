@@ -19,4 +19,4 @@ mod encode;
 pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
 };
-pub use self::encode::{Encodable, Encoder};
+pub use self::encode::{encode_to_hash_engine, Encodable, Encoder};

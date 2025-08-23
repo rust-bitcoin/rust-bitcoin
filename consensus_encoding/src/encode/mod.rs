@@ -31,3 +31,15 @@ pub trait Encoder {
     /// No behavior is specified if this method is called multiple times in a row.
     fn unadvance(&mut self);
 }
+
+/// Encode an object into a hash engine.
+///
+/// Consumes and returns the hash engine to make it easier to call
+/// [`hashes::HashEngine::finalize`] directly on the result.
+pub fn encode_to_hash_engine<T: Encodable, H: hashes::HashEngine>(object: &T, mut engine: H) -> H {
+    let mut encoder = object.encoder();
+    while let Some(sl) = encoder.advance() {
+        engine.input(sl);
+    }
+    engine
+}
