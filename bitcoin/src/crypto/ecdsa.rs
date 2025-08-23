@@ -17,7 +17,7 @@ use io::Write;
 use crate::prelude::{DisplayHex, Vec};
 use crate::script::PushBytes;
 #[cfg(doc)]
-use crate::script::ScriptBufExt as _;
+use crate::script::ScriptPubKeyBufExt as _;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;
@@ -100,8 +100,9 @@ impl FromStr for Signature {
 /// This avoids allocation and allows proving maximum size of the signature (73 bytes).
 /// The type can be used largely as a byte slice. It implements all standard traits one would
 /// expect and has familiar methods.
+///
 /// However, the usual use case is to push it into a script. This can be done directly passing it
-/// into [`push_slice`](crate::script::ScriptBuf::push_slice).
+/// into [`push_slice`](crate::script::ScriptBufExt::push_slice).
 #[derive(Copy, Clone)]
 pub struct SerializedSignature {
     data: [u8; MAX_SIG_LEN],

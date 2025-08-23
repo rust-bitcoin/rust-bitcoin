@@ -12,7 +12,7 @@
 //
 //  use std::fs::File;
 //  use std::io::Write;
-//  let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+//  let script = WitnessScriptBuf::from(vec![0u8, 1u8, 2u8]);
 //  let got = serialize(&script).unwrap();
 //  let mut file = File::create("/tmp/script_bincode").unwrap();
 //  file.write_all(&got).unwrap();
@@ -32,8 +32,9 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
-    Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey,
+    ScriptPubKeyBuf, ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid,
+    Work,
 };
 
 #[test]
@@ -75,7 +76,7 @@ fn serde_regression_relative_lock_time_time() {
 
 #[test]
 fn serde_regression_script() {
-    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+    let script = ScriptSigBuf::from(vec![0u8, 1u8, 2u8]);
 
     let got = serialize(&script).unwrap();
     let want = include_bytes!("data/serde/script_bincode") as &[_];
@@ -203,7 +204,7 @@ fn serde_regression_psbt() {
                     .unwrap(),
                 vout: 1,
             },
-            script_sig: ScriptBuf::from_hex_no_length_prefix(
+            script_sig: ScriptSigBuf::from_hex_no_length_prefix(
                 "160014be18d152a9b012039daf3da7de4f53349eecb985",
             )
             .unwrap(),
@@ -215,7 +216,7 @@ fn serde_regression_psbt() {
         }],
         outputs: vec![TxOut {
             value: Amount::from_sat(190_303_501_938).unwrap(),
-            script_pubkey: ScriptBuf::from_hex_no_length_prefix(
+            script_pubkey: ScriptPubKeyBuf::from_hex_no_length_prefix(
                 "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
             )
             .unwrap(),
@@ -254,7 +255,7 @@ fn serde_regression_psbt() {
         unsigned_tx: {
             let mut unsigned = tx.clone();
             unsigned.inputs[0].previous_output.txid = tx.compute_txid();
-            unsigned.inputs[0].script_sig = ScriptBuf::new();
+            unsigned.inputs[0].script_sig = ScriptSigBuf::new();
             unsigned.inputs[0].witness = Witness::default();
             unsigned
         },
@@ -265,7 +266,7 @@ fn serde_regression_psbt() {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {
                 value: Amount::from_sat(190_303_501_938).unwrap(),
-                script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                script_pubkey: ScriptPubKeyBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
             }),
             sighash_type: Some(PsbtSighashType::from("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap())),
             redeem_script: Some(vec![0x51].into()),
@@ -321,7 +322,7 @@ fn serde_regression_taproot_sig() {
 #[test]
 fn serde_regression_taptree() {
     let ver = LeafVersion::from_consensus(0).unwrap();
-    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
+    let script = TapScriptBuf::from(vec![0u8, 1u8, 2u8]);
     let mut builder = TaprootBuilder::new().add_leaf_with_ver(1, script.clone(), ver).unwrap();
     builder = builder.add_leaf(1, script).unwrap();
     let tree = TapTree::try_from(builder).unwrap();

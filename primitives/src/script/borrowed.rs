@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::marker::PhantomData;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
@@ -62,9 +63,9 @@ internals::transparent_newtype! {
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
     ///
     #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
-    pub struct Script([u8]);
+    pub struct Script<T>(PhantomData<T>, [u8]);
 
-    impl Script {
+    impl<T> Script<T> {
         /// Treat byte slice as `Script`
         pub const fn from_bytes(bytes: &_) -> &Self;
 
@@ -77,19 +78,19 @@ internals::transparent_newtype! {
     }
 }
 
-impl Default for &Script {
+impl<T: 'static> Default for &Script<T> {
     #[inline]
     fn default() -> Self { Script::new() }
 }
 
-impl ToOwned for Script {
-    type Owned = ScriptBuf;
+impl<T> ToOwned for Script<T> {
+    type Owned = ScriptBuf<T>;
 
     #[inline]
     fn to_owned(&self) -> Self::Owned { ScriptBuf::from_bytes(self.to_vec()) }
 }
 
-impl Script {
+impl<T> Script<T> {
     /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> &'static Self { Self::from_bytes(&[]) }
@@ -98,13 +99,13 @@ impl Script {
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub const fn as_bytes(&self) -> &[u8] { &self.0 }
+    pub const fn as_bytes(&self) -> &[u8] { &self.1 }
 
     /// Returns the script data as a mutable byte slice.
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
-    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
+    pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.1 }
 
     /// Returns a copy of the script data.
     ///
@@ -128,7 +129,7 @@ impl Script {
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use]
     #[inline]
-    pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
+    pub fn into_script_buf(self: Box<Self>) -> ScriptBuf<T> {
         let rw = Box::into_raw(self) as *mut [u8];
         // SAFETY: copied from `std`
         // The pointer was just created from a box without deallocating
@@ -152,7 +153,7 @@ impl Script {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for &'a Script {
+impl<'a, T> Arbitrary<'a> for &'a Script<T> {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = <&'a [u8]>::arbitrary(u)?;
@@ -164,7 +165,7 @@ macro_rules! delegate_index {
     ($($type:ty),* $(,)?) => {
         $(
             /// Script subslicing operation - read [slicing safety](#slicing-safety)!
-            impl Index<$type> for Script {
+            impl<T> Index<$type> for Script<T> {
                 type Output = Self;
 
                 #[inline]
@@ -188,10 +189,11 @@ delegate_index!(
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
-    use alloc::vec;
+    // All tests should compile and pass no matter which script type you put here.
+    type Script = super::super::ScriptSig;
 
-    use super::*;
+    #[cfg(feature = "alloc")]
+    use alloc::{borrow::ToOwned, vec};
 
     #[test]
     fn script_from_bytes() {

@@ -12,10 +12,8 @@ use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
 use crate::crypto::key::SerializedXOnlyPublicKey;
 use crate::prelude::Vec;
-#[cfg(doc)]
-use crate::script::ScriptExt as _;
 use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
-use crate::{internal_macros, Script};
+use crate::{internal_macros, TapScript, WitnessScript};
 
 type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a SerializedXOnlyPublicKey>;
 
@@ -136,7 +134,7 @@ internal_macros::define_extension_trait! {
         }
 
         /// Finishes constructing the P2TR script spend witness by pushing the required items.
-        fn push_p2tr_script_spend(&mut self, script: &Script, control_block: &ControlBlock<impl AsRef<TaprootMerkleBranch>>, annex: Option<&[u8]>) {
+        fn push_p2tr_script_spend(&mut self, script: &TapScript, control_block: &ControlBlock<impl AsRef<TaprootMerkleBranch>>, annex: Option<&[u8]>) {
             self.push(script.as_bytes());
             self.push(&*control_block.encode_to_arrayvec());
             if let Some(annex) = annex {
@@ -157,7 +155,7 @@ internal_macros::define_extension_trait! {
         /// assumes a leaf version may be subtly broken once a new Tapscript version
         /// is deployed.
         #[deprecated(since = "TBD", note = "use taproot_leaf_script instead")]
-        fn tapscript(&self) -> Option<&Script> {
+        fn tapscript(&self) -> Option<&TapScript> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { leaf_script, .. }) => Some(leaf_script),
                 _ => None,
@@ -175,7 +173,7 @@ internal_macros::define_extension_trait! {
         /// to have a Taproot-shaped witness).
         /// See [BIP-0341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki),
         /// in particular footnote 7, for more information.
-        fn taproot_leaf_script(&self) -> Option<LeafScript<&Script>> {
+        fn taproot_leaf_script(&self) -> Option<LeafScript<&TapScript>> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { leaf_script, control_block, .. }) => {
                     Some(LeafScript { version: control_block.leaf_version, script: leaf_script, })
@@ -209,9 +207,8 @@ internal_macros::define_extension_trait! {
         /// Unlike the Taproot case, we do no validation to determine whether this is a
         /// witness script: it may be a Taproot control block, annex, or some other kind
         /// of object. If you are not certain whether the output being spent is Segwit v0,
-        /// use [`Script::is_p2wsh`] on the output's script.
-        fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
-
+        /// use [`crate::script::ScriptExt::is_p2wsh`] on the output's script.
+        fn witness_script(&self) -> Option<&WitnessScript> { self.last().map(WitnessScript::from_bytes) }
     }
 }
 
@@ -233,7 +230,7 @@ enum P2TrSpend<'a> {
         annex: Option<&'a [u8]>,
     },
     Script {
-        leaf_script: &'a Script,
+        leaf_script: &'a TapScript,
         control_block: BorrowedControlBlock<'a>,
         annex: Option<&'a [u8]>,
     },
@@ -276,7 +273,7 @@ impl<'a> P2TrSpend<'a> {
                 let control_block = witness.get_back(1).expect("len > 1");
                 let control_block = BorrowedControlBlock::decode_borrowed(control_block).ok()?;
                 let spend = P2TrSpend::Script {
-                    leaf_script: Script::from_bytes(witness.get_back(2).expect("len > 2")),
+                    leaf_script: TapScript::from_bytes(witness.get_back(2).expect("len > 2")),
                     control_block,
                     annex: witness.last(),
                 };
@@ -286,7 +283,7 @@ impl<'a> P2TrSpend<'a> {
                 let control_block = witness.last().expect("len > 0");
                 let control_block = BorrowedControlBlock::decode_borrowed(control_block).ok()?;
                 let spend = P2TrSpend::Script {
-                    leaf_script: Script::from_bytes(witness.get_back(1).expect("len > 1")),
+                    leaf_script: TapScript::from_bytes(witness.get_back(1).expect("len > 1")),
                     control_block,
                     annex: None,
                 };
@@ -396,8 +393,8 @@ mod test {
         let witness_annex = Witness::from([tapscript.as_slice(), &control_block, &annex]);
 
         // With or without annex, the tapscript should be returned.
-        assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
-        assert_eq!(witness_annex.tapscript(), Some(Script::from_bytes(&tapscript[..])));
+        assert_eq!(witness.tapscript(), Some(TapScript::from_bytes(&tapscript[..])));
+        assert_eq!(witness_annex.tapscript(), Some(TapScript::from_bytes(&tapscript[..])));
     }
 
     #[test]
@@ -411,8 +408,10 @@ mod test {
         let witness = Witness::from([tapscript.as_slice(), &control_block]);
         let witness_annex = Witness::from([tapscript.as_slice(), &control_block, &annex]);
 
-        let expected_leaf_script =
-            LeafScript { version: LeafVersion::TapScript, script: Script::from_bytes(&tapscript) };
+        let expected_leaf_script = LeafScript {
+            version: LeafVersion::TapScript,
+            script: TapScript::from_bytes(&tapscript),
+        };
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_leaf_script().unwrap(), expected_leaf_script);

@@ -9,8 +9,9 @@ use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{
-    Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScriptSizeError,
-    Script, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScript,
+    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
+    TapScript, WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
 use crate::consensus::{self, Encodable};
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -18,334 +19,15 @@ use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
-use crate::script::{self, ScriptBufExt as _};
+use crate::script::{self, ScriptPubKeyBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
-use crate::{internal_macros, Amount, FeeRate, ScriptBuf};
+use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Script`] type.
-    pub trait ScriptExt impl for Script {
-        /// Returns an iterator over script bytes.
-        #[inline]
-        fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
-
+    pub trait ScriptExt<T> impl<T> for Script<T> {
         /// Constructs a new script builder
-        fn builder() -> Builder { Builder::new() }
-
-        /// Returns 160-bit hash of the script for P2SH outputs.
-        #[inline]
-        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
-            ScriptHash::from_script(self)
-        }
-
-        /// Returns 256-bit hash of the script for P2WSH outputs.
-        #[inline]
-        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
-            WScriptHash::from_script(self)
-        }
-
-        /// Computes leaf hash of tapscript.
-        #[inline]
-        fn tapscript_leaf_hash(&self) -> TapLeafHash {
-            TapLeafHash::from_script(self, LeafVersion::TapScript)
-        }
-
-        /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
-        /// script").
-        fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
-            self.wscript_hash().map(ScriptBuf::new_p2wsh)
-        }
-
-        /// Computes P2TR output with a given internal key and a single script spending path equal to
-        /// the current script, assuming that the script is a Tapscript.
-        fn to_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
-            &self,
-            secp: &Secp256k1<C>,
-            internal_key: K,
-        ) -> ScriptBuf {
-            let internal_key = internal_key.into();
-            let leaf_hash = self.tapscript_leaf_hash();
-            let merkle_root = TapNodeHash::from(leaf_hash);
-            ScriptBuf::new_p2tr(secp, internal_key, Some(merkle_root))
-        }
-
-        /// Computes the P2SH output corresponding to this redeem script.
-        fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
-            self.script_hash().map(ScriptBuf::new_p2sh)
-        }
-
-        /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
-        /// for a P2WPKH output. The `scriptCode` is described in [BIP-0143].
-        ///
-        /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-        fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
-            if self.is_p2wpkh() {
-                // The `self` script is 0x00, 0x14, <pubkey_hash>
-                let bytes = <[u8; 20]>::try_from(&self.as_bytes()[2..]).expect("length checked in is_p2wpkh()");
-                let wpkh = WPubkeyHash::from_byte_array(bytes);
-                Some(script::p2wpkh_script_code(wpkh))
-            } else {
-                None
-            }
-        }
-
-        /// Checks whether a script pubkey is a P2PK output.
-        ///
-        /// You can obtain the public key, if its valid,
-        /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
-        fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
-
-        /// Returns the public key if this script is P2PK with a **valid** public key.
-        ///
-        /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
-        /// This happens when the public key is invalid (e.g. the point not being on the curve).
-        /// In this situation the script is unspendable.
-        fn p2pk_public_key(&self) -> Option<PublicKey> {
-            PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
-        }
-
-        /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
-        ///
-        /// # Returns
-        ///
-        /// The witness version if this script is found to conform to the SegWit rules:
-        ///
-        /// > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte
-        /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
-        /// > special meaning. The value of the first push is called the "version byte". The following
-        /// > byte vector pushed is called the "witness program".
-        #[inline]
-        fn witness_version(&self) -> Option<WitnessVersion> {
-            let script_len = self.len();
-            if !(4..=42).contains(&script_len) {
-                return None;
-            }
-
-            let ver_opcode = Opcode::from(self.as_bytes()[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
-            let push_opbyte = self.as_bytes()[1]; // Second byte push opcode 2-40 bytes
-
-            if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
-                return None;
-            }
-            // Check that the rest of the script has the correct size
-            if script_len - 2 != push_opbyte as usize {
-                return None;
-            }
-
-            WitnessVersion::try_from(ver_opcode).ok()
-        }
-
-        /// Checks whether a script pubkey is a P2SH output.
-        #[inline]
-        fn is_p2sh(&self) -> bool {
-            self.len() == 23
-                && self.as_bytes()[0] == OP_HASH160.to_u8()
-                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
-                && self.as_bytes()[22] == OP_EQUAL.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2PKH output.
-        #[inline]
-        fn is_p2pkh(&self) -> bool {
-            self.len() == 25
-                && self.as_bytes()[0] == OP_DUP.to_u8()
-                && self.as_bytes()[1] == OP_HASH160.to_u8()
-                && self.as_bytes()[2] == OP_PUSHBYTES_20.to_u8()
-                && self.as_bytes()[23] == OP_EQUALVERIFY.to_u8()
-                && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
-        }
-
-        /// Checks whether a script is push only.
-        ///
-        /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
-        /// are considered push operations.
-        #[inline]
-        fn is_push_only(&self) -> bool {
-            for inst in self.instructions() {
-                match inst {
-                    Err(_) => return false,
-                    Ok(Instruction::PushBytes(_)) => {}
-                    Ok(Instruction::Op(op)) if op.to_u8() <= 0x60 => {}
-                    // From Bitcoin Core
-                    // if (opcode > OP_PUSHNUM_16 (0x60)) return false
-                    Ok(Instruction::Op(_)) => return false,
-                }
-            }
-            true
-        }
-
-        /// Checks whether a script pubkey is a bare multisig output.
-        ///
-        /// In a bare multisig pubkey script the keys are not hashed, the script
-        /// is of the form:
-        ///
-        ///    `2 <pubkey1> <pubkey2> <pubkey3> 3 OP_CHECKMULTISIG`
-        #[inline]
-        fn is_multisig(&self) -> bool {
-            let required_sigs;
-
-            let mut instructions = self.instructions();
-            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
-                if let Some(pushnum) = op.decode_pushnum() {
-                    required_sigs = pushnum;
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-
-            let mut num_pubkeys: u8 = 0;
-            while let Some(Ok(instruction)) = instructions.next() {
-                match instruction {
-                    Instruction::PushBytes(_) => {
-                        num_pubkeys += 1;
-                    }
-                    Instruction::Op(op) => {
-                        if let Some(pushnum) = op.decode_pushnum() {
-                            if pushnum != num_pubkeys {
-                                return false;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-
-            if required_sigs > num_pubkeys {
-                return false;
-            }
-
-            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
-                if op != OP_CHECKMULTISIG {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-
-            instructions.next().is_none()
-        }
-
-        /// Checks whether a script pubkey is a Segregated Witness (SegWit) program.
-        #[inline]
-        fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
-
-        /// Checks whether a script pubkey is a P2WSH output.
-        #[inline]
-        fn is_p2wsh(&self) -> bool {
-            self.len() == 34
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2WPKH output.
-        #[inline]
-        fn is_p2wpkh(&self) -> bool {
-            self.len() == 22
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2TR output.
-        #[inline]
-        fn is_p2tr(&self) -> bool {
-            self.len() == 34
-                && self.witness_version() == Some(WitnessVersion::V1)
-                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
-        }
-
-        /// Check if this is a consensus-valid OP_RETURN output.
-        ///
-        /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
-        /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
-        #[inline]
-        fn is_op_return(&self) -> bool {
-            match self.as_bytes().first() {
-                Some(b) => *b == OP_RETURN.to_u8(),
-                None => false,
-            }
-        }
-
-        /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
-        ///
-        /// What this function considers to be standard may change without warning pending Bitcoin Core
-        /// changes.
-        #[inline]
-        fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.len() <= MAX_OP_RETURN_RELAY }
-
-        /// Checks whether a script is trivially known to have no satisfying input.
-        ///
-        /// This method has potentially confusing semantics and an unclear purpose, so it's going to be
-        /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
-        #[deprecated(since = "0.32.0", note = "use `is_op_return` instead")]
-        #[inline]
-        fn is_provably_unspendable(&self) -> bool {
-            use crate::opcodes::Class::{IllegalOp, ReturnOp};
-
-            match self.as_bytes().first() {
-                Some(b) => {
-                    let first = Opcode::from(*b);
-                    let class = first.classify(opcodes::ClassifyContext::Legacy);
-
-                    class == ReturnOp || class == IllegalOp
-                }
-                None => false,
-            }
-        }
-
-        /// Get redeemScript following BIP-0016 rules regarding P2SH spending.
-        ///
-        /// This does not guarantee that this represents a P2SH input [`Script`].
-        /// It merely gets the last push of the script.
-        ///
-        /// Use [`Script::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
-        fn redeem_script(&self) -> Option<&Script> {
-            // Script must consist entirely of pushes.
-            if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
-                return None;
-            }
-
-            if let Some(Ok(Instruction::PushBytes(b))) = self.instructions().last() {
-                Some(Script::from_bytes(b.as_bytes()))
-            } else {
-                None
-            }
-        }
-
-        /// Returns the minimum value an output with this script should have in order to be
-        /// broadcastable on today’s Bitcoin network.
-        #[deprecated(since = "0.32.0", note = "use `minimal_non_dust` etc. instead")]
-        fn dust_value(&self) -> Amount { self.minimal_non_dust() }
-
-        /// Returns the minimum value an output with this script should have in order to be
-        /// broadcastable on today's Bitcoin network.
-        ///
-        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-        /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
-        ///
-        /// To use a custom value, use [`minimal_non_dust_custom`].
-        ///
-        /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
-        fn minimal_non_dust(&self) -> Amount {
-            self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
-                .expect("dust_relay_fee or script length should not be absurdly large")
-        }
-
-        /// Returns the minimum value an output with this script should have in order to be
-        /// broadcastable on today's Bitcoin network.
-        ///
-        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-        /// This function lets you set the fee rate used in dust calculation.
-        ///
-        /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
-        ///
-        /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
-        ///
-        /// [`minimal_non_dust`]: Script::minimal_non_dust
-        fn minimal_non_dust_custom(&self, dust_relay: FeeRate) -> Option<Amount> {
-            self.minimal_non_dust_internal(dust_relay.to_sat_per_kvb_ceil())
-        }
+        fn builder() -> Builder<T> { Builder::new() }
 
         /// Counts the sigops for this Script using accurate counting.
         ///
@@ -376,6 +58,29 @@ internal_macros::define_extension_trait! {
         /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
         /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
         fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
+
+        /// Checks whether a script is push only.
+        ///
+        /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
+        /// are considered push operations.
+        #[inline]
+        fn is_push_only(&self) -> bool {
+            for inst in self.instructions() {
+                match inst {
+                    Err(_) => return false,
+                    Ok(Instruction::PushBytes(_)) => {}
+                    Ok(Instruction::Op(op)) if op.to_u8() <= 0x60 => {}
+                    // From Bitcoin Core
+                    // if (opcode > OP_PUSHNUM_16 (0x60)) return false
+                    Ok(Instruction::Op(_)) => return false,
+                }
+            }
+            true
+        }
+
+        /// Returns an iterator over script bytes.
+        #[inline]
+        fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
 
         /// Iterates over the script instructions.
         ///
@@ -451,53 +156,327 @@ internal_macros::define_extension_trait! {
         fn first_opcode(&self) -> Option<Opcode> {
             self.as_bytes().first().copied().map(From::from)
         }
-    }
-}
 
-mod sealed {
-    pub trait Sealed {}
-    impl Sealed for super::Script {}
-}
+        // These methods only exist for scriptPubKey and redeemScript, as indicated by the
+        // where clauses on them.
 
-internal_macros::define_extension_trait! {
-    pub(crate) trait ScriptExtPriv impl for Script {
-        /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
-        fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
-            if let Ok(bytes) = <&[u8; 67]>::try_from(self.as_bytes()) {
-                let (&first, bytes) = bytes.split_first::<66>();
-                let (&last, pubkey) = bytes.split_last::<65>();
-                (first == OP_PUSHBYTES_65.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
-            } else if let Ok(bytes) = <&[u8; 35]>::try_from(self.as_bytes()) {
-                let (&first, bytes) = bytes.split_first::<34>();
-                let (&last, pubkey) = bytes.split_last::<33>();
-                (first == OP_PUSHBYTES_33.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
+        /// Returns 160-bit hash of the script for P2SH outputs.
+        #[inline]
+        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError>
+        where T: ScriptHashableTag
+        {
+            ScriptHash::from_script(self)
+        }
+
+        /// Computes the P2SH output corresponding to this redeem script.
+        fn to_p2sh(&self) -> Result<ScriptPubKeyBuf, RedeemScriptSizeError>
+        where T: ScriptHashableTag
+        {
+            self.script_hash().map(ScriptPubKeyBuf::new_p2sh)
+        }
+
+        /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
+        /// for a P2WPKH output. The `scriptCode` is described in [BIP-0143].
+        ///
+        /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+        /// should not be used as one. It is a special template defined in BIP 143 which is used
+        /// in place of a witness script for purposes of sighash computation.
+        ///
+        /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+        fn p2wpkh_script_code(&self) -> Option<WitnessScriptBuf>
+        where T: ScriptHashableTag
+        {
+            if self.is_p2wpkh() {
+                // The `self` script is 0x00, 0x14, <pubkey_hash>
+                let bytes = <[u8; 20]>::try_from(&self.as_bytes()[2..]).expect("length checked in is_p2wpkh()");
+                let wpkh = WPubkeyHash::from_byte_array(bytes);
+                Some(script::p2wpkh_script_code(wpkh))
             } else {
                 None
             }
         }
 
-        fn minimal_non_dust_internal(&self, dust_relay_fee_rate_per_kvb: u64) -> Option<Amount> {
-            // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
-            // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
-            let sats = dust_relay_fee_rate_per_kvb
-                .checked_mul(if self.is_op_return() {
-                    0
-                } else if self.is_witness_program() {
-                    32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
-                    8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
-                } else {
-                    32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
-                    8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
-                })?
-                / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
-                        // Note: We ensure the division happens at the end, since Core performs the division at the end.
-                        //       This will make sure none of the implicit floor operations mess with the value.
+        /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
+        ///
+        /// # Returns
+        ///
+        /// The witness version if this script is found to conform to the SegWit rules:
+        ///
+        /// > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte
+        /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
+        /// > special meaning. The value of the first push is called the "version byte". The following
+        /// > byte vector pushed is called the "witness program".
+        #[inline]
+        fn witness_version(&self) -> Option<WitnessVersion>
+        where T: ScriptHashableTag
+        {
+            let script_len = self.len();
+            if !(4..=42).contains(&script_len) {
+                return None;
+            }
 
-            Amount::from_sat(sats).ok()
+            let ver_opcode = Opcode::from(self.as_bytes()[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+            let push_opbyte = self.as_bytes()[1]; // Second byte push opcode 2-40 bytes
+
+            if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
+                return None;
+            }
+            // Check that the rest of the script has the correct size
+            if script_len - 2 != push_opbyte as usize {
+                return None;
+            }
+
+            WitnessVersion::try_from(ver_opcode).ok()
         }
 
+        /// Checks whether a script pubkey is a P2WSH output.
+        #[inline]
+        fn is_p2wsh(&self) -> bool
+        where T: ScriptHashableTag
+        {
+            self.len() == 34
+                && self.witness_version() == Some(WitnessVersion::V0)
+                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a P2WPKH output.
+        #[inline]
+        fn is_p2wpkh(&self) -> bool
+        where T: ScriptHashableTag
+        {
+            self.len() == 22
+                && self.witness_version() == Some(WitnessVersion::V0)
+                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
+        }
+    }
+}
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`WitnessScript`] type.
+    pub trait WitnessScriptExt impl for WitnessScript {
+        /// Returns 256-bit hash of the script for P2WSH outputs.
+        #[inline]
+        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
+            WScriptHash::from_script(self)
+        }
+
+        /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+        /// script").
+        fn to_p2wsh(&self) -> Result<ScriptPubKeyBuf, WitnessScriptSizeError> {
+            self.wscript_hash().map(ScriptPubKeyBuf::new_p2wsh)
+        }
+    }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapScript`] type.
+    pub trait TapScriptExt impl for TapScript {
+        /// Computes leaf hash of tapscript.
+        #[inline]
+        fn tapscript_leaf_hash(&self) -> TapLeafHash {
+            TapLeafHash::from_script(self, LeafVersion::TapScript)
+        }
+
+        /// Computes P2TR output with a given internal key and a single script spending path equal to
+        /// the current script, assuming that the script is a Tapscript.
+        fn to_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
+            &self,
+            secp: &Secp256k1<C>,
+            internal_key: K,
+        ) -> ScriptPubKeyBuf {
+            let internal_key = internal_key.into();
+            let leaf_hash = self.tapscript_leaf_hash();
+            let merkle_root = TapNodeHash::from(leaf_hash);
+            ScriptPubKeyBuf::new_p2tr(secp, internal_key, Some(merkle_root))
+        }
+    }
+}
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`ScriptPubKey`] type.
+    pub trait ScriptPubKeyExt impl for ScriptPubKey {
+        /// Checks whether a script pubkey is a P2PK output.
+        ///
+        /// You can obtain the public key, if its valid,
+        /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
+        fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
+
+        /// Returns the public key if this script is P2PK with a **valid** public key.
+        ///
+        /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
+        /// This happens when the public key is invalid (e.g. the point not being on the curve).
+        /// In this situation the script is unspendable.
+        fn p2pk_public_key(&self) -> Option<PublicKey> {
+            PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
+        }
+
+        /// Checks whether a script pubkey is a P2SH output.
+        #[inline]
+        fn is_p2sh(&self) -> bool {
+            self.len() == 23
+                && self.as_bytes()[0] == OP_HASH160.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[22] == OP_EQUAL.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a P2PKH output.
+        #[inline]
+        fn is_p2pkh(&self) -> bool {
+            self.len() == 25
+                && self.as_bytes()[0] == OP_DUP.to_u8()
+                && self.as_bytes()[1] == OP_HASH160.to_u8()
+                && self.as_bytes()[2] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[23] == OP_EQUALVERIFY.to_u8()
+                && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a bare multisig output.
+        ///
+        /// In a bare multisig pubkey script the keys are not hashed, the script
+        /// is of the form:
+        ///
+        ///    `2 <pubkey1> <pubkey2> <pubkey3> 3 OP_CHECKMULTISIG`
+        #[inline]
+        fn is_multisig(&self) -> bool {
+            let required_sigs;
+
+            let mut instructions = self.instructions();
+            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
+                if let Some(pushnum) = op.decode_pushnum() {
+                    required_sigs = pushnum;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            let mut num_pubkeys: u8 = 0;
+            while let Some(Ok(instruction)) = instructions.next() {
+                match instruction {
+                    Instruction::PushBytes(_) => {
+                        num_pubkeys += 1;
+                    }
+                    Instruction::Op(op) => {
+                        if let Some(pushnum) = op.decode_pushnum() {
+                            if pushnum != num_pubkeys {
+                                return false;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if required_sigs > num_pubkeys {
+                return false;
+            }
+
+            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
+                if op != OP_CHECKMULTISIG {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            instructions.next().is_none()
+        }
+
+        /// Checks whether a script pubkey is a Segregated Witness (SegWit) program.
+        #[inline]
+        fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
+
+        /// Checks whether a script pubkey is a P2TR output.
+        #[inline]
+        fn is_p2tr(&self) -> bool {
+            self.len() == 34
+                && self.witness_version() == Some(WitnessVersion::V1)
+                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
+        }
+
+        /// Check if this is a consensus-valid OP_RETURN output.
+        ///
+        /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
+        /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
+        #[inline]
+        fn is_op_return(&self) -> bool {
+            match self.as_bytes().first() {
+                Some(b) => *b == OP_RETURN.to_u8(),
+                None => false,
+            }
+        }
+
+        /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
+        ///
+        /// What this function considers to be standard may change without warning pending Bitcoin Core
+        /// changes.
+        #[inline]
+        fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.len() <= MAX_OP_RETURN_RELAY }
+
+        /// Checks whether a script is trivially known to have no satisfying input.
+        ///
+        /// This method has potentially confusing semantics and an unclear purpose, so it's going to be
+        /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
+        #[deprecated(since = "0.32.0", note = "use `is_op_return` instead")]
+        #[inline]
+        fn is_provably_unspendable(&self) -> bool {
+            use crate::opcodes::Class::{IllegalOp, ReturnOp};
+
+            match self.as_bytes().first() {
+                Some(b) => {
+                    let first = Opcode::from(*b);
+                    let class = first.classify(opcodes::ClassifyContext::Legacy);
+
+                    class == ReturnOp || class == IllegalOp
+                }
+                None => false,
+            }
+        }
+
+        /// Returns the minimum value an output with this script should have in order to be
+        /// broadcastable on today’s Bitcoin network.
+        #[deprecated(since = "0.32.0", note = "use `minimal_non_dust` etc. instead")]
+        fn dust_value(&self) -> Amount { self.minimal_non_dust() }
+
+        /// Returns the minimum value an output with this script should have in order to be
+        /// broadcastable on today's Bitcoin network.
+        ///
+        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+        /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
+        ///
+        /// To use a custom value, use [`minimal_non_dust_custom`].
+        ///
+        /// [`minimal_non_dust_custom`]: Self::minimal_non_dust_custom
+        fn minimal_non_dust(&self) -> Amount {
+            self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
+                .expect("dust_relay_fee or script length should not be absurdly large")
+        }
+
+        /// Returns the minimum value an output with this script should have in order to be
+        /// broadcastable on today's Bitcoin network.
+        ///
+        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+        /// This function lets you set the fee rate used in dust calculation.
+        ///
+        /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
+        ///
+        /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
+        ///
+        /// [`minimal_non_dust`]: Self::minimal_non_dust
+        fn minimal_non_dust_custom(&self, dust_relay: FeeRate) -> Option<Amount> {
+            self.minimal_non_dust_internal(dust_relay.to_sat_per_kvb_ceil())
+        }
+    }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl<T> Sealed for super::Script<T> {}
+}
+
+internal_macros::define_extension_trait! {
+    pub(crate) trait ScriptExtPriv<T> impl<T> for Script<T> {
         fn count_sigops_internal(&self, accurate: bool) -> usize {
             let mut n = 0;
             let mut pushnum_cache = None;
@@ -558,6 +537,71 @@ internal_macros::define_extension_trait! {
                 // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
                 // However we are only interested in the pushdata so we can ignore them.
                 _ => None,
+            }
+        }
+    }
+}
+
+internal_macros::define_extension_trait! {
+    pub(crate) trait ScriptPubKeyExtPriv impl for ScriptPubKey {
+        /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
+        fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
+            if let Ok(bytes) = <&[u8; 67]>::try_from(self.as_bytes()) {
+                let (&first, bytes) = bytes.split_first::<66>();
+                let (&last, pubkey) = bytes.split_last::<65>();
+                (first == OP_PUSHBYTES_65.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
+            } else if let Ok(bytes) = <&[u8; 35]>::try_from(self.as_bytes()) {
+                let (&first, bytes) = bytes.split_first::<34>();
+                let (&last, pubkey) = bytes.split_last::<33>();
+                (first == OP_PUSHBYTES_33.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
+            } else {
+                None
+            }
+        }
+
+        fn minimal_non_dust_internal(&self, dust_relay_fee_rate_per_kvb: u64) -> Option<Amount> {
+            // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
+            // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
+            let sats = dust_relay_fee_rate_per_kvb
+                .checked_mul(if self.is_op_return() {
+                    0
+                } else if self.is_witness_program() {
+                    32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
+                    8 + // The serialized size of the TxOut's amount field
+                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                } else {
+                    32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
+                    8 + // The serialized size of the TxOut's amount field
+                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                })?
+                / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
+                        // Note: We ensure the division happens at the end, since Core performs the division at the end.
+                        //       This will make sure none of the implicit floor operations mess with the value.
+
+            Amount::from_sat(sats).ok()
+        }
+    }
+}
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`ScriptSig`] type.
+    pub trait ScriptSigExt impl for ScriptSig {
+        /// Get redeemScript following BIP-0016 rules regarding P2SH spending.
+        ///
+        /// This does not guarantee that this represents a P2SH input [`ScriptSig`].
+        /// It merely gets the last push of the script.
+        ///
+        /// Use [`ScriptPubKey::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
+        fn redeem_script(&self) -> Option<&RedeemScript> {
+            // Script must consist entirely of pushes.
+            if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
+                return None;
+            }
+
+            if let Some(Ok(Instruction::PushBytes(b))) = self.instructions().last() {
+                Some(RedeemScript::from_bytes(b.as_bytes()))
+            } else {
+                None
             }
         }
     }

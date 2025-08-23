@@ -152,11 +152,11 @@ impl_psbt_hash_de_serialize!(sha256d::Hash);
 // Taproot
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
 
-impl Serialize for ScriptBuf {
+impl<T> Serialize for ScriptBuf<T> {
     fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }
 
-impl Deserialize for ScriptBuf {
+impl<T> Deserialize for ScriptBuf<T> {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> { Ok(Self::from(bytes.to_vec())) }
 }
 
@@ -346,7 +346,7 @@ impl Deserialize for ControlBlock {
 }
 
 // Versioned ScriptBuf
-impl Serialize for (ScriptBuf, LeafVersion) {
+impl<T> Serialize for (ScriptBuf<T>, LeafVersion) {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.0.len() + 1);
         buf.extend(self.0.as_bytes());
@@ -355,7 +355,7 @@ impl Serialize for (ScriptBuf, LeafVersion) {
     }
 }
 
-impl Deserialize for (ScriptBuf, LeafVersion) {
+impl<T> Deserialize for (ScriptBuf<T>, LeafVersion) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.is_empty() {
             return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
@@ -415,7 +415,7 @@ impl Deserialize for TapTree {
         let mut bytes_iter = bytes.iter();
         while let Some(depth) = bytes_iter.next() {
             let version = bytes_iter.next().ok_or(Error::Taproot("invalid Taproot Builder"))?;
-            let (script, consumed) = deserialize_partial::<ScriptBuf>(bytes_iter.as_slice())?;
+            let (script, consumed) = deserialize_partial::<ScriptBuf<_>>(bytes_iter.as_slice())?;
             if consumed > 0 {
                 bytes_iter.nth(consumed - 1);
             }
@@ -436,6 +436,7 @@ fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_r
 mod tests {
     use super::*;
     use crate::script::ScriptBufExt as _;
+    use crate::TapScriptBuf;
 
     // Composes tree matching a given depth map, filled with dumb script leafs,
     // each of which consists of a single push-int op code, with int value
@@ -447,7 +448,7 @@ mod tests {
         let mut val = opcode;
         let mut builder = TaprootBuilder::new();
         for depth in depth_map {
-            let script = ScriptBuf::from_hex_no_length_prefix(&format!("{:02x}", val)).unwrap();
+            let script = TapScriptBuf::from_hex_no_length_prefix(&format!("{:02x}", val)).unwrap();
             builder = builder.add_leaf(*depth, script).unwrap();
             let (new_val, _) = val.overflowing_add(1);
             val = new_val;
@@ -462,7 +463,7 @@ mod tests {
         builder = builder
             .add_leaf_with_ver(
                 3,
-                ScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
+                TapScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
                 LeafVersion::from_consensus(0xC2).unwrap(),
             )
             .unwrap();
@@ -476,7 +477,7 @@ mod tests {
         builder = builder
             .add_leaf_with_ver(
                 3,
-                ScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
+                TapScriptBuf::from_hex_no_length_prefix("b9").unwrap(),
                 LeafVersion::from_consensus(0xC2).unwrap(),
             )
             .unwrap();

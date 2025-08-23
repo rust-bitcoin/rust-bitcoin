@@ -2,8 +2,6 @@
 
 //! Bitcoin scripts.
 //!
-//! *[See also the `Script` type](Script).*
-//!
 //! This module provides the structures and functions needed to support scripts.
 //!
 //! <details>
@@ -74,15 +72,18 @@ use crate::OutPoint;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::ScriptExt,
+    borrowed::{ScriptExt, TapScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
-    owned::ScriptBufExt,
+    owned::{ScriptBufExt, ScriptPubKeyBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
 };
 #[doc(inline)]
 pub use primitives::script::{
-    RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    RedeemScript, RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
+    ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig,
+    ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf, WScriptHash, WitnessScript,
+    WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
@@ -90,12 +91,16 @@ pub(crate) use self::owned::ScriptBufExtPriv;
 
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
-/// Constructs a new [`ScriptBuf`] containing the script code used for spending a P2WPKH output.
+/// Constructs a new [`WitnessScriptBuf`] containing the script code used for spending a P2WPKH output.
 ///
 /// The `scriptCode` is described in [BIP-0143].
 ///
+/// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+/// should not be used as one. It is a special template defined in BIP-0143 which is used
+/// in place of a witness script for purposes of sighash computation.
+///
 /// [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
+pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> WitnessScriptBuf {
     Builder::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
@@ -197,10 +202,10 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
 /// Does not do any checks on version or program length.
 ///
 /// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
-pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
+pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
     version: WitnessVersion,
     program: T,
-) -> ScriptBuf {
+) -> ScriptBuf<Tg> {
     let program = program.as_ref();
     debug_assert!(program.len() >= 2 && program.len() <= 40);
     // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.
@@ -208,27 +213,27 @@ pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
-impl Encodable for Script {
+impl<T> Encodable for Script<T> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
     }
 }
 
-impl Encodable for ScriptBuf {
+impl<T> Encodable for ScriptBuf<T> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.as_script().consensus_encode(w)
     }
 }
 
-impl Decodable for ScriptBuf {
+impl<T> Decodable for ScriptBuf<T> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
-        Ok(ScriptBuf::from_bytes(v))
+        Ok(Self::from_bytes(v))
     }
 }
 

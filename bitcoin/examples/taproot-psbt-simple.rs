@@ -29,8 +29,9 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::{
-    consensus, transaction, Address, Amount, Network, OutPoint, Psbt, ScriptBuf, Sequence,
-    TapLeafHash, TapSighashType, Transaction, TxIn, TxOut, Txid, Witness, XOnlyPublicKey,
+    consensus, transaction, Address, Amount, Network, OutPoint, Psbt, ScriptPubKeyBuf,
+    ScriptSigBuf, Sequence, TapLeafHash, TapSighashType, Transaction, TxIn, TxOut, Txid, Witness,
+    XOnlyPublicKey,
 };
 
 // The master xpriv, from which we derive the keys we control.
@@ -177,7 +178,7 @@ fn main() {
         .into_iter()
         .map(|(outpoint, _)| TxIn {
             previous_output: outpoint,
-            script_sig: ScriptBuf::default(),
+            script_sig: ScriptSigBuf::default(),
             sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
             witness: Witness::default(),
         })
@@ -189,7 +190,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2tr(&secp, pk_change, None), // Change comes back to us.
+        script_pubkey: ScriptPubKeyBuf::new_p2tr(&secp, pk_change, None), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.

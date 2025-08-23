@@ -87,8 +87,8 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, Transaction,
-    TxIn, TxOut, Witness,
+    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf,
+    ScriptSigBuf, TapScriptBuf, Transaction, TxIn, TxOut, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -232,7 +232,7 @@ fn generate_bip86_key_spend_tx(
         lock_time: absolute::LockTime::ZERO,
         inputs: vec![TxIn {
             previous_output: OutPoint { txid: input_utxo.txid.parse()?, vout: input_utxo.vout },
-            script_sig: ScriptBuf::new(),
+            script_sig: ScriptSigBuf::new(),
             sequence: bitcoin::Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
@@ -254,8 +254,9 @@ fn generate_bip86_key_spend_tx(
 
     let mut input = Input {
         witness_utxo: {
-            let script_pubkey = ScriptBuf::from_hex_no_length_prefix(input_utxo.script_pubkey)
-                .expect("failed to parse input utxo scriptPubkey");
+            let script_pubkey =
+                ScriptPubKeyBuf::from_hex_no_length_prefix(input_utxo.script_pubkey)
+                    .expect("failed to parse input utxo scriptPubkey");
             Some(TxOut { value: from_amount, script_pubkey })
         },
         tap_key_origins: origins,
@@ -272,7 +273,7 @@ fn generate_bip86_key_spend_tx(
     for input in [&input_utxo].iter() {
         input_txouts.push(TxOut {
             value: input.amount,
-            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input.script_pubkey)?,
+            script_pubkey: ScriptPubKeyBuf::from_hex_no_length_prefix(input.script_pubkey)?,
         });
     }
 
@@ -330,7 +331,8 @@ fn generate_bip86_key_spend_tx(
     tx.verify(|_| {
         Some(TxOut {
             value: from_amount,
-            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input_utxo.script_pubkey).unwrap(),
+            script_pubkey: ScriptPubKeyBuf::from_hex_no_length_prefix(input_utxo.script_pubkey)
+                .unwrap(),
         })
     })
     .expect("failed to verify transaction");
@@ -367,7 +369,7 @@ impl BenefactorWallet {
     fn time_lock_script(
         locktime: absolute::LockTime,
         beneficiary_key: XOnlyPublicKey,
-    ) -> ScriptBuf {
+    ) -> TapScriptBuf {
         script::Builder::new()
             .push_lock_time(locktime)
             .push_opcode(OP_CLTV)
@@ -407,7 +409,7 @@ impl BenefactorWallet {
             .finalize(&self.secp, internal_keypair.x_only_public_key().0)
             .expect("should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
-        let script_pubkey = ScriptBuf::new_p2tr(
+        let script_pubkey = ScriptPubKeyBuf::new_p2tr(
             &self.secp,
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
@@ -429,7 +431,7 @@ impl BenefactorWallet {
             lock_time,
             inputs: vec![TxIn {
                 previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                 witness: Witness::default(),
             }],
@@ -507,7 +509,7 @@ impl BenefactorWallet {
                 .expect("should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();
-            let output_script_pubkey = ScriptBuf::new_p2tr(
+            let output_script_pubkey = ScriptPubKeyBuf::new_p2tr(
                 &self.secp,
                 taproot_spend_info.internal_key(),
                 taproot_spend_info.merkle_root(),
@@ -579,7 +581,7 @@ impl BenefactorWallet {
                 lock_time,
                 inputs: vec![TxIn {
                     previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
-                    script_sig: ScriptBuf::new(),
+                    script_sig: ScriptSigBuf::new(),
                     sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                     witness: Witness::default(),
                 }],

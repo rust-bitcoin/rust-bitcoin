@@ -535,7 +535,7 @@ mod tests {
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
-    use crate::script::ScriptBuf;
+    use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
     use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
     use crate::{block, Amount, CompactTarget, Network, Sequence, TestnetVersion, Witness};
 
@@ -811,11 +811,11 @@ mod tests {
                     txid: Txid::from_byte_array([1; 32]), // Not all zeros
                     vout: 0,
                 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: Witness::new(),
             }],
-            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptPubKeyBuf::new() }],
         };
 
         let transactions = vec![non_coinbase_tx];
@@ -887,11 +887,11 @@ mod tests {
                     txid: Txid::from_byte_array([1; 32]), // Not all zeros
                     vout: 0,
                 },
-                script_sig: ScriptBuf::new(),
+                script_sig: ScriptSigBuf::new(),
                 sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: Witness::new(),
             }],
-            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptBuf::new() }],
+            outputs: vec![TxOut { value: Amount::ONE_BTC, script_pubkey: ScriptPubKeyBuf::new() }],
         };
 
         let invalid_coinbase_result = Block::new_checked(header, vec![non_coinbase_tx]);

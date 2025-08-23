@@ -1,6 +1,7 @@
 use bitcoin::ext::*;
 use bitcoin::{
-    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptBuf, Transaction,
+    consensus, ecdsa, sighash, Amount, CompressedPublicKey, ScriptPubKey, ScriptPubKeyBuf,
+    Transaction, WitnessScript,
 };
 use hex_lit::hex;
 
@@ -38,7 +39,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let pk = CompressedPublicKey::from_slice(pk_bytes).expect("failed to parse pubkey");
     let wpkh = pk.wpubkey_hash();
     println!("Script pubkey hash: {wpkh:x}");
-    let spk = ScriptBuf::new_p2wpkh(wpkh);
+    let spk = ScriptPubKeyBuf::new_p2wpkh(wpkh);
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache
@@ -78,7 +79,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
             script_pubkey_p2sh.push_bytes().unwrap().as_bytes()
         }
     };
-    let script_code = Script::from_bytes(script_pubkey_bytes);
+    let script_code = ScriptPubKey::from_bytes(script_pubkey_bytes);
     let pushbytes_0 = instructions.remove(0).unwrap();
     assert!(
         pushbytes_0.push_bytes().unwrap().as_bytes().is_empty(),
@@ -111,7 +112,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 
     //last element is called witnessScript according to BIP-0141. It supersedes scriptPubKey.
     let witness_script_bytes: &[u8] = witness.last().expect("out of bounds");
-    let witness_script = Script::from_bytes(witness_script_bytes);
+    let witness_script = WitnessScript::from_bytes(witness_script_bytes);
     let mut cache = sighash::SighashCache::new(&tx);
 
     //in an M of N multisig, the witness elements from 1 (0-based) to M-2 are signatures (with sighash flags as the last byte)

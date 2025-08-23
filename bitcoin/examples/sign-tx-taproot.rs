@@ -8,8 +8,8 @@ use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{rand, Secp256k1, SecretKey, Signing, Verification};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
-    Txid, Witness,
+    transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf, ScriptSigBuf, Sequence,
+    Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 const DUMMY_UTXO_AMOUNT: Amount = Amount::from_sat_u32(20_000_000);
@@ -33,7 +33,7 @@ fn main() {
     // The input for the transaction we are constructing.
     let input = TxIn {
         previous_output: dummy_out_point, // The dummy output we are spending.
-        script_sig: ScriptBuf::default(), // For a p2tr script_sig is empty.
+        script_sig: ScriptSigBuf::default(), // For a p2tr script_sig is empty.
         sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
         witness: Witness::default(), // Filled in after signing.
     };
@@ -44,7 +44,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None), // Change comes back to us.
+        script_pubkey: ScriptPubKeyBuf::new_p2tr(&secp, internal_key, None), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.
@@ -116,7 +116,7 @@ fn dummy_unspent_transaction_output<C: Verification, K: Into<UntweakedPublicKey>
     internal_key: K,
 ) -> (OutPoint, TxOut) {
     let internal_key = internal_key.into();
-    let script_pubkey = ScriptBuf::new_p2tr(secp, internal_key, None);
+    let script_pubkey = ScriptPubKeyBuf::new_p2tr(secp, internal_key, None);
 
     let out_point = OutPoint {
         txid: Txid::from_byte_array([0xFF; 32]), // Arbitrary invalid dummy value.
