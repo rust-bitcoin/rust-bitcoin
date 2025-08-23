@@ -48,6 +48,13 @@ impl fmt::UpperHex for CompactTarget {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
+impl encoding::Encodable for CompactTarget {
+    type Encoder = encoding::ArrayEncoder<4>;
+    fn encoder(&self) -> Self::Encoder {
+        encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]

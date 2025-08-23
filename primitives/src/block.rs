@@ -13,6 +13,7 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::Encodable;
 use hashes::{sha256d, HashEngine as _};
 use units::BlockTime;
 
@@ -247,6 +248,28 @@ impl fmt::Debug for Header {
     }
 }
 
+impl Encodable for Header {
+    type Encoder = encoding::Encoder6<
+        <Version as Encodable>::Encoder,
+        <BlockHash as Encodable>::Encoder,
+        <TxMerkleNode as Encodable>::Encoder,
+        <BlockTime as Encodable>::Encoder,
+        <CompactTarget as Encodable>::Encoder,
+        encoding::ArrayEncoder<4>,
+    >;
+
+    fn encoder(&self) -> Self::Encoder {
+        encoding::Encoder6::new(
+            self.version.encoder(),
+            self.prev_blockhash.encoder(),
+            self.merkle_root.encoder(),
+            self.time.encoder(),
+            self.bits.encoder(),
+            encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+        )
+    }
+}
+
 impl From<Header> for BlockHash {
     #[inline]
     fn from(header: Header) -> BlockHash { header.block_hash() }
@@ -336,6 +359,13 @@ hashes::hash_newtype! {
     pub struct WitnessCommitment(sha256d::Hash);
 }
 
+impl Encodable for Version {
+    type Encoder = encoding::ArrayEncoder<4>;
+    fn encoder(&self) -> Self::Encoder {
+        encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes())
+    }
+}
+
 #[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(BlockHash, WitnessCommitment);
 #[cfg(not(feature = "hex"))]
@@ -346,6 +376,13 @@ hashes::impl_serde_for_newtype!(BlockHash, WitnessCommitment);
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.
     pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);
+}
+
+impl Encodable for BlockHash {
+    type Encoder = encoding::ArrayEncoder<32>;
+    fn encoder(&self) -> Self::Encoder {
+        encoding::ArrayEncoder::without_length_prefix(self.to_byte_array())
+    }
 }
 
 #[cfg(feature = "arbitrary")]
