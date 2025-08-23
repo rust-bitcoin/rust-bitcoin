@@ -25,10 +25,10 @@ small-hash = []
 internals = { package = "bitcoin-internals", path = "../internals" }
 
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
-serde = { version = "1.0.103", default-features = false, optional = true }
+serde = { version = "1.0.195", default-features = false, optional = true }
 
 [dev-dependencies]
-serde_test = "1.0"
+serde_test = "1.0.19"
 
 [package.metadata.docs.rs]
 all-features = true
