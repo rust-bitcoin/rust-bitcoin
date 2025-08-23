@@ -16,5 +16,7 @@
 
 mod encode;
 
-pub use self::encode::encoders::{ArrayEncoder, BytesEncoder};
+pub use self::encode::encoders::{
+    ArrayEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
+};
 pub use self::encode::{Encodable, Encoder};
