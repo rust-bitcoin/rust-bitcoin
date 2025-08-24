@@ -6,7 +6,6 @@ use core::convert::Infallible;
 use core::fmt;
 
 use hex::error::{InvalidCharError, OddLengthStringError};
-use hex::DisplayHex as _;
 use internals::write_err;
 
 #[cfg(doc)]
@@ -188,8 +187,11 @@ impl fmt::Display for ParseError {
             MissingData => write!(f, "missing data (early end of file or slice too short)"),
             OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
-            InvalidChecksum { expected: ref e, actual: ref a } =>
-                write!(f, "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
+            InvalidChecksum { expected: ref e, actual: ref a } => write!(
+                f,
+                "invalid checksum: expected {:02x}{:02x}{:02x}{:02x}, actual {:02x}{:02x}{:02x}{:02x}",
+                e[0], e[1], e[2], e[3], a[0], a[1], a[2], a[3],
+            ),
             NonMinimalCompactSize => write!(f, "non-minimal compact size"),
             ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             UnsupportedSegwitFlag(ref swflag) =>
@@ -256,4 +258,45 @@ impl From<OddLengthStringError> for FromHexError {
 // This whole variant should go away because of the inner string.
 pub(crate) fn parse_failed_error(msg: &'static str) -> Error {
     Error::Parse(ParseError::ParseFailed(msg))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn invalid_checksum_display() {
+        let e = ParseError::InvalidChecksum {
+            expected: [0xde, 0xad, 0xbe, 0xef],
+            actual: [0xca, 0xfe, 0xba, 0xbe],
+        };
+
+        let want = "invalid checksum: expected deadbeef, actual cafebabe";
+        let got = format!("{}", e);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn invalid_checksum_display_expected_leading_zeros() {
+        let e = ParseError::InvalidChecksum {
+            expected: [0x00, 0x00, 0x00, 0x0f],
+            actual: [0xca, 0xfe, 0xba, 0xbe],
+        };
+
+        let want = "invalid checksum: expected 0000000f, actual cafebabe";
+        let got = format!("{}", e);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn invalid_checksum_display_actual_leading_zeros() {
+        let e = ParseError::InvalidChecksum {
+            expected: [0xde, 0xad, 0xbe, 0xef],
+            actual: [0x00, 0x00, 0x00, 0x0e],
+        };
+
+        let want = "invalid checksum: expected deadbeef, actual 0000000e";
+        let got = format!("{}", e);
+        assert_eq!(got, want);
+    }
 }
