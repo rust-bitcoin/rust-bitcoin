@@ -33,8 +33,7 @@ fn do_test(data: &[u8]) {
     }
 
     // Constructors that return a Weight
-    for constructor in
-        [Weight::from_wu, Weight::from_witness_data_size, Weight::from_non_witness_data_size]
+    for constructor in [Weight::from_wu]
     {
         if let Ok(val) = u.arbitrary() {
             constructor(val);

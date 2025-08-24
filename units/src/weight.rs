@@ -95,14 +95,6 @@ impl Weight {
         Weight::from_wu(vb * Self::WITNESS_SCALE_FACTOR)
     }
 
-    /// Constructs a new [`Weight`] from witness size.
-    pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight::from_wu(witness_size) }
-
-    /// Constructs a new [`Weight`] from non-witness size.
-    pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
-        Weight::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
-    }
-
     /// Converts to kilo weight units rounding down.
     pub const fn to_kwu_floor(self) -> u64 { self.to_wu() / 1000 }
 
@@ -362,22 +354,6 @@ mod tests {
     #[cfg(debug_assertions)]
     #[should_panic = "attempt to multiply with overflow"]
     fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
-
-    #[test]
-    fn from_witness_data_size() {
-        let witness_data_size = 1;
-        let got = Weight::from_witness_data_size(witness_data_size);
-        let want = Weight::from_wu(witness_data_size);
-        assert_eq!(got, want);
-    }
-
-    #[test]
-    fn from_non_witness_data_size() {
-        let non_witness_data_size = 1;
-        let got = Weight::from_non_witness_data_size(non_witness_data_size);
-        let want = Weight::from_wu(non_witness_data_size * 4);
-        assert_eq!(got, want);
-    }
 
     #[test]
     fn to_kwu_floor() {

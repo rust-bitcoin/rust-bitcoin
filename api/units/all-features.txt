@@ -1355,11 +1355,9 @@ pub const fn bitcoin_units::Weight::checked_div(self, rhs: u64) -> core::option:
 pub const fn bitcoin_units::Weight::checked_mul(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::Weight::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::Weight::from_kwu(wu: u64) -> core::option::Option<Self>
-pub const fn bitcoin_units::Weight::from_non_witness_data_size(non_witness_size: u64) -> Self
 pub const fn bitcoin_units::Weight::from_vb(vb: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::Weight::from_vb_unchecked(vb: u64) -> Self
 pub const fn bitcoin_units::Weight::from_vb_unwrap(vb: u64) -> bitcoin_units::Weight
-pub const fn bitcoin_units::Weight::from_witness_data_size(witness_size: u64) -> Self
 pub const fn bitcoin_units::Weight::from_wu(wu: u64) -> Self
 pub const fn bitcoin_units::Weight::mul_by_fee_rate(self, fee_rate: bitcoin_units::FeeRate) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::Weight::to_kwu_ceil(self) -> u64
