@@ -295,6 +295,18 @@ panics that could theoretically occur because of bugs in our code must not be do
 Example code within the rustdocs should compile and lint with `just lint` without any errors or
 warnings.
 
+### Links
+
+We favour links at the bottom of the docs section:
+
+```rust
+    /// it is a real Taproot script spend (and not some other kind of output contrived
+    /// to have a Taproot-shaped witness). See [BIP-0341] in particular footnote 7, for
+    /// more information.
+    ///
+    /// [BIP-0341]: <https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki>
+```
+
 ## Derives
 
 We try to use standard set of derives if it makes sense:
