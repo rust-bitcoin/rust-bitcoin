@@ -74,7 +74,7 @@ The codebase is maintained using the "contributor workflow" where everyone
 without exception contributes patch proposals using "pull requests". This
 facilitates social contribution, easy testing and peer review.
 
-To contribute a patch, the workflow is a as follows:
+To contribute a patch, the workflow is as follows:
 
 1. Fork Repository
 2. Create topic branch
