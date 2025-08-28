@@ -116,6 +116,7 @@ pub mod sha384;
 pub mod sha512;
 pub mod sha512_256;
 pub mod siphash24;
+pub mod sha3_256;
 
 use core::fmt::{self, Write as _};
 use core::{convert, hash};
@@ -153,6 +154,8 @@ pub use sha512_256::Hash as Sha512_256;
 /// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
 #[doc(inline)]
 pub use siphash24::Hash as Siphash24;
+/// SHA3-256: Alias for the [`sha3_256::Hash`] hash type.
+pub use sha3_256::Hash as Sha3_256;
 
 /// Attempted to create a hash from an invalid length slice.
 #[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
