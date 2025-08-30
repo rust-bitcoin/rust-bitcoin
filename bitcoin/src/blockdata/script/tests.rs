@@ -71,6 +71,39 @@ fn script() {
 }
 
 #[test]
+#[rustfmt::skip]
+fn script_buf_push_int() {
+    let mut comp = vec![];
+    let mut script = ScriptBuf::new();
+    assert_eq!(script.as_bytes(), &comp[..]);
+
+    // small ints
+    script.push_int_unchecked(1);  comp.push(81u8); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_unchecked(0);  comp.push(0u8);  assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_unchecked(4);  comp.push(84u8); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_unchecked(-1); comp.push(79u8); assert_eq!(script.as_bytes(), &comp[..]);
+    // forced scriptint
+    script.push_int_non_minimal(4); comp.extend([1u8, 4].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    // big ints
+    script.push_int_unchecked(17); comp.extend([1u8, 17].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_unchecked(10000); comp.extend([2u8, 16, 39].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    // notice the sign bit set here, hence the extra zero/128 at the end
+    script.push_int_unchecked(10000000); comp.extend([4u8, 128, 150, 152, 0].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_unchecked(-10000000); comp.extend([4u8, 128, 150, 152, 128].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+
+    script.push_int(0).unwrap(); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_non_minimal(0); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    // OP_1..16
+    for n in 1..=16 {
+        script.push_int(n.into()).unwrap();  comp.extend([0x50 + n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+        script.push_int_non_minimal(n.into());  comp.extend([1, n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    }
+
+    script.push_int(-1).unwrap(); comp.extend([0x4f].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_non_minimal(-1); comp.extend([1, 0x81].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+}
+
+#[test]
 fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = key_str.parse::<PublicKey>().unwrap();
