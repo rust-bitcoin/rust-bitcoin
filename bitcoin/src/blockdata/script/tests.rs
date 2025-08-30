@@ -57,6 +57,12 @@ fn script() {
     script = script.push_int(-1).unwrap(); comp.extend([0x4f].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     script = script.push_int_non_minimal(-1); comp.extend([1, 0x81].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
 
+    script = script.push_int(0x7fffffff).unwrap(); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0x7F].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_int_unchecked(0x7fffffff); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0x7F].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+
+    script = script.push_int(-0x7fffffff).unwrap(); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0xFF].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_int_unchecked(-0x7fffffff); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0xFF].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+
     // keys
     const KEYSTR1: &str = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
     let key = KEYSTR1[2..].parse::<PublicKey>().unwrap();
@@ -101,6 +107,12 @@ fn script_buf_push_int() {
 
     script.push_int(-1).unwrap(); comp.extend([0x4f].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     script.push_int_non_minimal(-1); comp.extend([1, 0x81].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+
+    script.push_int(0x7fffffff).unwrap(); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0x7F].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_unchecked(0x7fffffff); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0x7F].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+
+    script.push_int(-0x7fffffff).unwrap(); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0xFF].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script.push_int_unchecked(-0x7fffffff); comp.extend([4u8, 0xFF, 0xFF, 0xFF, 0xFF].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
 }
 
 #[test]
