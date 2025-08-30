@@ -145,7 +145,7 @@ pub fn encode(data: &[u8]) -> String {
     } else {
         format_iter(&mut res, data.iter().copied(), &mut Vec::with_capacity(reserve_len))
     }
-    .expect("string doesn't error");
+    .expect("writing to string should never fail");
     res
 }
 
@@ -154,7 +154,7 @@ pub fn encode(data: &[u8]) -> String {
 /// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 pub fn encode_check(data: &[u8]) -> String {
     let mut res = String::with_capacity(encoded_check_reserve_len(data.len()));
-    encode_check_to_writer(&mut res, data).expect("string doesn't fail");
+    encode_check_to_writer(&mut res, data).expect("writing to string should never fail");
     res
 }
 
