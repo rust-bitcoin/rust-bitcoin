@@ -29,7 +29,7 @@ The reason for splitting this out is so that other crates can depend on keys wit
 (Note plural for crate name and singular for current module name, in line with what we did for
 `address` module and `addresses` crate.)
 
-Current public types in `bitcoin::cryto::key`:
+Current public types in `bitcoin::crypto::key`:
 
 - `XOnlyPublicKey`
 - `PublicKey`
@@ -50,7 +50,7 @@ Looking at `bitcoin::crypto::key` there are some obvious things that will need f
 
 #### `NetworkKind`
 
-Currently we are using `bitcoin::network::NetworkKind` in `PriviateKey`.
+Currently we are using `bitcoin::network::NetworkKind` in `PrivateKey`.
 
 - Used to get the first byte of WIF format
 - Passed to functions that create addresses e.g., `Address::p2pkh(key, network)`
