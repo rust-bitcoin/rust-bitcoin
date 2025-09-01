@@ -271,7 +271,7 @@ impl PartialMerkleTree {
             self.traverse_and_extract(height, 0, &mut bits_used, &mut hash_used, matches, indexes)?;
         // Verify that all bits were consumed (except for the padding caused by
         // serializing it as a byte sequence)
-        if (bits_used + 7) / 8 != (self.bits.len() as u32 + 7) / 8 {
+        if bits_used.div_ceil(8) != self.bits.len().div_ceil(8) as u32 {
             return Err(NotAllBitsConsumed);
         }
         // Verify that all hashes were consumed
@@ -409,7 +409,7 @@ impl Encodable for PartialMerkleTree {
         let mut ret = self.num_transactions.consensus_encode(w)?;
         ret += self.hashes.consensus_encode(w)?;
 
-        let nb_bytes_for_bits = (self.bits.len() + 7) / 8;
+        let nb_bytes_for_bits = self.bits.len().div_ceil(8);
         ret += w.emit_compact_size(nb_bytes_for_bits)?;
         for chunk in self.bits.chunks(8) {
             let mut byte = 0u8;
@@ -588,7 +588,7 @@ mod tests {
         let mut height = 1;
         let mut ntx = tx_count;
         while ntx > 1 {
-            ntx = (ntx + 1) / 2;
+            ntx = ntx.div_ceil(2);
             height += 1;
         }
 
@@ -616,7 +616,7 @@ mod tests {
 
             // Verify PartialMerkleTree's size guarantees
             let n = cmp::min(tx_count, 1 + match_txid1.len() * height);
-            assert!(serialized.len() <= 10 + (258 * n + 7) / 8);
+            assert!(serialized.len() <= 10 + (258 * n).div_ceil(8));
 
             // Deserialize into a tester copy
             let pmt2: PartialMerkleTree =
