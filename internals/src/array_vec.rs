@@ -42,15 +42,20 @@ mod safety_boundary {
         }
 
         /// Returns a reference to the underlying data.
-        #[allow(clippy::incompatible_msrv)] // Clippy doesn't play nicely with `cond_const!`.
         pub const fn as_slice(&self) -> &[T] {
-            let ptr = &self.data as *const _ as *const T;
+            // transmute needed; see https://github.com/rust-lang/rust/issues/63569
+            // SAFETY: self.len is chosen such that everything is initialized up to len,
+            //  and MaybeUninit<T> has the same representation as T.
+            let ptr = self.data.as_ptr().cast::<T>();
             unsafe { core::slice::from_raw_parts(ptr, self.len) }
         }
 
         /// Returns a mutable reference to the underlying data.
         pub fn as_mut_slice(&mut self) -> &mut [T] {
-            unsafe { &mut *(&mut self.data[..self.len] as *mut _ as *mut [T]) }
+            // SAFETY: self.len is chosen such that everything is initialized up to len,
+            //  and MaybeUninit<T> has the same representation as T.
+            let ptr = self.data.as_mut_ptr().cast::<T>();
+            unsafe { core::slice::from_raw_parts_mut(ptr, self.len) }
         }
 
         /// Adds an element into `self`.
@@ -73,7 +78,10 @@ mod safety_boundary {
             let new_len = self.len.checked_add(slice.len()).expect("integer/buffer overflow");
             assert!(new_len <= CAP, "buffer overflow");
             // SAFETY: MaybeUninit<T> has the same layout as T
-            let slice = unsafe { &*(slice as *const _ as *const [MaybeUninit<T>]) };
+            let slice = unsafe {
+                let ptr = slice.as_ptr();
+                core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
+            };
             self.data[self.len..new_len].copy_from_slice(slice);
             self.len = new_len;
         }
