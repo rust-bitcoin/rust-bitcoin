@@ -51,10 +51,10 @@ fn write_macro(mut macro_file: impl io::Write, msrv_minor: u64, minor: u64) -> i
     writeln!(macro_file, "/// Example:")?;
     writeln!(macro_file, "/// ```")?;
     writeln!(macro_file, "/// bitcoin_internals::rust_version! {{")?;
-    writeln!(macro_file, "///     if >= 1.70 {{")?;
-    writeln!(macro_file, "///         println!(\"This is Rust 1.70+\");")?;
+    writeln!(macro_file, "///     if >= 1.78 {{")?;
+    writeln!(macro_file, "///         println!(\"This is Rust 1.78+\");")?;
     writeln!(macro_file, "///     }} else {{")?;
-    writeln!(macro_file, "///         println!(\"This is Rust < 1.70\");")?;
+    writeln!(macro_file, "///         println!(\"This is Rust < 1.78\");")?;
     writeln!(macro_file, "///     }}")?;
     writeln!(macro_file, "/// }}")?;
     writeln!(macro_file, "/// ```")?;

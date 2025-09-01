@@ -12,8 +12,6 @@ pub use safety_boundary::ArrayVec;
 mod safety_boundary {
     use core::mem::MaybeUninit;
 
-    use crate::const_tools::cond_const;
-
     /// A growable contiguous collection backed by array.
     #[derive(Copy)]
     pub struct ArrayVec<T: Copy, const CAP: usize> {
@@ -43,14 +41,11 @@ mod safety_boundary {
             Self { len: slice.len(), data }
         }
 
-        // from_raw_parts is const-unstable until 1.64
-        cond_const! {
-            /// Returns a reference to the underlying data.
-            #[allow(clippy::incompatible_msrv)] // Clippy doesn't play nicely with `cond_const!`.
-            pub const(in 1.64) fn as_slice(&self) -> &[T] {
-                let ptr = &self.data as *const _ as *const T;
-                unsafe { core::slice::from_raw_parts(ptr, self.len) }
-            }
+        /// Returns a reference to the underlying data.
+        #[allow(clippy::incompatible_msrv)] // Clippy doesn't play nicely with `cond_const!`.
+        pub const fn as_slice(&self) -> &[T] {
+            let ptr = &self.data as *const _ as *const T;
+            unsafe { core::slice::from_raw_parts(ptr, self.len) }
         }
 
         /// Returns a mutable reference to the underlying data.
