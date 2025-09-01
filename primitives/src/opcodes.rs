@@ -55,7 +55,7 @@ macro_rules! all_opcodes {
             /// Empty stack is also `FALSE`.
             pub const OP_FALSE: Opcode = OP_PUSHBYTES_0;
             /// Number 1 is also TRUE.
-            pub const OP_TRUE: Opcode = OP_PUSHNUM_1;
+            pub const OP_TRUE: Opcode = OP_1;
             /// Previously called `OP_NOP2`.
             pub const OP_NOP2: Opcode = OP_CLTV;
             /// Previously called `OP_NOP3`.
@@ -454,8 +454,8 @@ impl Opcode {
             (OP_1NEGATE, _) => Class::PushNum(-1),
 
             // 16 opcodes of PushNum class
-            (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code =>
-                Class::PushNum(1 + i32::from(self.code) - i32::from(OP_PUSHNUM_1.code)),
+            (op, _) if op.code >= OP_1.code && op.code <= OP_16.code =>
+                Class::PushNum(1 + i32::from(self.code) - i32::from(OP_1.code)),
 
             // 76 opcodes of PushBytes class
             (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(u32::from(self.code)),
@@ -471,7 +471,7 @@ impl Opcode {
 
     /// Decodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
     ///
-    /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
+    /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_16` are covered.
     ///
     /// # Returns
     ///
@@ -479,8 +479,8 @@ impl Opcode {
     #[inline]
     #[must_use]
     pub const fn decode_pushnum(self) -> Option<u8> {
-        const START: u8 = OP_PUSHNUM_1.code;
-        const END: u8 = OP_PUSHNUM_16.code;
+        const START: u8 = OP_1.code;
+        const END: u8 = OP_16.code;
         match self.code {
             START..=END => Some(self.code - START + 1),
             _ => None,
@@ -633,11 +633,11 @@ mod tests {
     fn decode_pushnum() {
         // Test all possible opcodes
         // - Sanity check
-        assert_eq!(OP_PUSHNUM_1.code, 0x51_u8);
-        assert_eq!(OP_PUSHNUM_16.code, 0x60_u8);
+        assert_eq!(OP_1.code, 0x51_u8);
+        assert_eq!(OP_16.code, 0x60_u8);
         for i in 0x00..=0xff_u8 {
             let expected = match i {
-                // OP_PUSHNUM_1 ..= OP_PUSHNUM_16
+                // OP_1 ..= OP_16
                 0x51..=0x60 => Some(i - 0x50),
                 _ => None,
             };
@@ -647,22 +647,22 @@ mod tests {
         // Test the named opcode constants
         // - This is the OP right before PUSHNUMs start
         assert!(OP_RESERVED.decode_pushnum().is_none());
-        assert_eq!(OP_PUSHNUM_1.decode_pushnum().expect("pushnum"), 1);
-        assert_eq!(OP_PUSHNUM_2.decode_pushnum().expect("pushnum"), 2);
-        assert_eq!(OP_PUSHNUM_3.decode_pushnum().expect("pushnum"), 3);
-        assert_eq!(OP_PUSHNUM_4.decode_pushnum().expect("pushnum"), 4);
-        assert_eq!(OP_PUSHNUM_5.decode_pushnum().expect("pushnum"), 5);
-        assert_eq!(OP_PUSHNUM_6.decode_pushnum().expect("pushnum"), 6);
-        assert_eq!(OP_PUSHNUM_7.decode_pushnum().expect("pushnum"), 7);
-        assert_eq!(OP_PUSHNUM_8.decode_pushnum().expect("pushnum"), 8);
-        assert_eq!(OP_PUSHNUM_9.decode_pushnum().expect("pushnum"), 9);
-        assert_eq!(OP_PUSHNUM_10.decode_pushnum().expect("pushnum"), 10);
-        assert_eq!(OP_PUSHNUM_11.decode_pushnum().expect("pushnum"), 11);
-        assert_eq!(OP_PUSHNUM_12.decode_pushnum().expect("pushnum"), 12);
-        assert_eq!(OP_PUSHNUM_13.decode_pushnum().expect("pushnum"), 13);
-        assert_eq!(OP_PUSHNUM_14.decode_pushnum().expect("pushnum"), 14);
-        assert_eq!(OP_PUSHNUM_15.decode_pushnum().expect("pushnum"), 15);
-        assert_eq!(OP_PUSHNUM_16.decode_pushnum().expect("pushnum"), 16);
+        assert_eq!(OP_1.decode_pushnum().expect("pushnum"), 1);
+        assert_eq!(OP_2.decode_pushnum().expect("pushnum"), 2);
+        assert_eq!(OP_3.decode_pushnum().expect("pushnum"), 3);
+        assert_eq!(OP_4.decode_pushnum().expect("pushnum"), 4);
+        assert_eq!(OP_5.decode_pushnum().expect("pushnum"), 5);
+        assert_eq!(OP_6.decode_pushnum().expect("pushnum"), 6);
+        assert_eq!(OP_7.decode_pushnum().expect("pushnum"), 7);
+        assert_eq!(OP_8.decode_pushnum().expect("pushnum"), 8);
+        assert_eq!(OP_9.decode_pushnum().expect("pushnum"), 9);
+        assert_eq!(OP_10.decode_pushnum().expect("pushnum"), 10);
+        assert_eq!(OP_11.decode_pushnum().expect("pushnum"), 11);
+        assert_eq!(OP_12.decode_pushnum().expect("pushnum"), 12);
+        assert_eq!(OP_13.decode_pushnum().expect("pushnum"), 13);
+        assert_eq!(OP_14.decode_pushnum().expect("pushnum"), 14);
+        assert_eq!(OP_15.decode_pushnum().expect("pushnum"), 15);
+        assert_eq!(OP_16.decode_pushnum().expect("pushnum"), 16);
         // - This is the OP right after PUSHNUMs end
         assert!(OP_NOP.decode_pushnum().is_none());
     }
