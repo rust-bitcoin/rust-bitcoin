@@ -215,7 +215,7 @@ impl Witness {
     }
 
     /// Returns a struct implementing [`Iterator`].
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter {
             inner: self.content.as_slice(),
             indices_start: self.indices_start,

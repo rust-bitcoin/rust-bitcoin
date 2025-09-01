@@ -346,7 +346,7 @@ impl Script {
     ///
     /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
     #[inline]
-    pub fn instructions(&self) -> Instructions {
+    pub fn instructions(&self) -> Instructions<'_> {
         Instructions {
             data: self.0.iter(),
             enforce_minimal: false,
@@ -358,7 +358,7 @@ impl Script {
     /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
     /// is not minimal.
     #[inline]
-    pub fn instructions_minimal(&self) -> Instructions {
+    pub fn instructions_minimal(&self) -> Instructions<'_> {
         Instructions {
             data: self.0.iter(),
             enforce_minimal: true,
@@ -373,7 +373,7 @@ impl Script {
     ///
     /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
     #[inline]
-    pub fn instruction_indices(&self) -> InstructionIndices {
+    pub fn instruction_indices(&self) -> InstructionIndices<'_> {
         InstructionIndices::from_instructions(self.instructions())
     }
 
@@ -382,7 +382,7 @@ impl Script {
     /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
     /// returned if a push is not minimal.
     #[inline]
-    pub fn instruction_indices_minimal(&self) -> InstructionIndices {
+    pub fn instruction_indices_minimal(&self) -> InstructionIndices<'_> {
         InstructionIndices::from_instructions(self.instructions_minimal())
     }
 
