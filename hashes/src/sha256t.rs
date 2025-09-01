@@ -52,9 +52,7 @@ impl<T: Tag> Hash<T> {
 
 impl<T: Tag> Copy for Hash<T> {}
 impl<T: Tag> Clone for Hash<T> {
-    fn clone(&self) -> Self {
-        Hash(self.0, self.1)
-    }
+    fn clone(&self) -> Self { *self }
 }
 impl<T: Tag> PartialEq for Hash<T> {
     fn eq(&self, other: &Hash<T>) -> bool {
@@ -69,7 +67,7 @@ impl<T: Tag> Default for Hash<T> {
 }
 impl<T: Tag> PartialOrd for Hash<T> {
     fn partial_cmp(&self, other: &Hash<T>) -> Option<cmp::Ordering> {
-        Some(cmp::Ord::cmp(self, other))
+        Some(self.cmp(other))
     }
 }
 impl<T: Tag> Ord for Hash<T> {
