@@ -1,4 +1,4 @@
-msrv = "1.63.0"
+msrv = "1.74.0"
 too-many-arguments-threshold = 13
 avoid-breaking-exported-api = false
 doc-valid-idents = ["SegWit", "OpenSSL"]
