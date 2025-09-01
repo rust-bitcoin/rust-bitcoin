@@ -53,13 +53,65 @@ macro_rules! all_opcodes {
             /// Empty stack is also FALSE.
             pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
             /// Number 1 is also TRUE.
-            pub static OP_TRUE: Opcode = OP_PUSHNUM_1;
+            pub static OP_TRUE: Opcode = OP_1;
             /// Previously called OP_NOP2.
             pub static OP_NOP2: Opcode = OP_CLTV;
             /// Previously called OP_NOP3.
             pub static OP_NOP3: Opcode = OP_CSV;
-        }
 
+            /// Push the array `0x81` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_NEG1 instead")]
+            pub static OP_PUSHNUM_NEG1: Opcode = OP_NEG1;
+            /// Push the array `0x01` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_1 instead")]
+            pub static OP_PUSHNUM_1: Opcode = OP_1;
+            /// Push the array `0x02` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_2 instead")]
+            pub static OP_PUSHNUM_2: Opcode = OP_2;
+            /// Push the array `0x03` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_3 instead")]
+            pub static OP_PUSHNUM_3: Opcode = OP_3;
+            /// Push the array `0x04` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_4 instead")]
+            pub static OP_PUSHNUM_4: Opcode = OP_4;
+            /// Push the array `0x05` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_5 instead")]
+            pub static OP_PUSHNUM_5: Opcode = OP_5;
+            /// Push the array `0x06` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_6 instead")]
+            pub static OP_PUSHNUM_6: Opcode = OP_6;
+            /// Push the array `0x07` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_7 instead")]
+            pub static OP_PUSHNUM_7: Opcode = OP_7;
+            /// Push the array `0x08` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_8 instead")]
+            pub static OP_PUSHNUM_8: Opcode = OP_8;
+            /// Push the array `0x09` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_9 instead")]
+            pub static OP_PUSHNUM_9: Opcode = OP_9;
+            /// Push the array `0x0a` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_10 instead")]
+            pub static OP_PUSHNUM_10: Opcode = OP_10;
+            /// Push the array `0x0b` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_11 instead")]
+            pub static OP_PUSHNUM_11: Opcode = OP_11;
+            /// Push the array `0x0c` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_12 instead")]
+            pub static OP_PUSHNUM_12: Opcode = OP_12;
+            /// Push the array `0x0d` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_13 instead")]
+            pub static OP_PUSHNUM_13: Opcode = OP_13;
+            /// Push the array `0x0e` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_14 instead")]
+            pub static OP_PUSHNUM_14: Opcode = OP_14;
+            /// Push the array `0x0f` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_15 instead")]
+            pub static OP_PUSHNUM_15: Opcode = OP_15;
+            /// Push the array `0x10` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_16 instead")]
+            pub static OP_PUSHNUM_16: Opcode = OP_16;
+        }
+        
         impl fmt::Display for Opcode {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                  match *self {
@@ -152,24 +204,24 @@ all_opcodes! {
     OP_PUSHDATA1 => 0x4c, "Read the next byte as N; push the next N bytes as an array onto the stack.";
     OP_PUSHDATA2 => 0x4d, "Read the next 2 bytes as N; push the next N bytes as an array onto the stack.";
     OP_PUSHDATA4 => 0x4e, "Read the next 4 bytes as N; push the next N bytes as an array onto the stack.";
-    OP_PUSHNUM_NEG1 => 0x4f, "Push the array `0x81` onto the stack.";
+    OP_NEG1 => 0x4f, "Push the array `0x81` onto the stack.";
     OP_RESERVED => 0x50, "Synonym for `OP_RETURN`.";
-    OP_PUSHNUM_1 => 0x51, "Push the array `0x01` onto the stack.";
-    OP_PUSHNUM_2 => 0x52, "Push the array `0x02` onto the stack.";
-    OP_PUSHNUM_3 => 0x53, "Push the array `0x03` onto the stack.";
-    OP_PUSHNUM_4 => 0x54, "Push the array `0x04` onto the stack.";
-    OP_PUSHNUM_5 => 0x55, "Push the array `0x05` onto the stack.";
-    OP_PUSHNUM_6 => 0x56, "Push the array `0x06` onto the stack.";
-    OP_PUSHNUM_7 => 0x57, "Push the array `0x07` onto the stack.";
-    OP_PUSHNUM_8 => 0x58, "Push the array `0x08` onto the stack.";
-    OP_PUSHNUM_9 => 0x59, "Push the array `0x09` onto the stack.";
-    OP_PUSHNUM_10 => 0x5a, "Push the array `0x0a` onto the stack.";
-    OP_PUSHNUM_11 => 0x5b, "Push the array `0x0b` onto the stack.";
-    OP_PUSHNUM_12 => 0x5c, "Push the array `0x0c` onto the stack.";
-    OP_PUSHNUM_13 => 0x5d, "Push the array `0x0d` onto the stack.";
-    OP_PUSHNUM_14 => 0x5e, "Push the array `0x0e` onto the stack.";
-    OP_PUSHNUM_15 => 0x5f, "Push the array `0x0f` onto the stack.";
-    OP_PUSHNUM_16 => 0x60, "Push the array `0x10` onto the stack.";
+    OP_1 => 0x51, "Push the array `0x01` onto the stack.";
+    OP_2 => 0x52, "Push the array `0x02` onto the stack.";
+    OP_3 => 0x53, "Push the array `0x03` onto the stack.";
+    OP_4 => 0x54, "Push the array `0x04` onto the stack.";
+    OP_5 => 0x55, "Push the array `0x05` onto the stack.";
+    OP_6 => 0x56, "Push the array `0x06` onto the stack.";
+    OP_7 => 0x57, "Push the array `0x07` onto the stack.";
+    OP_8 => 0x58, "Push the array `0x08` onto the stack.";
+    OP_9 => 0x59, "Push the array `0x09` onto the stack.";
+    OP_10 => 0x5a, "Push the array `0x0a` onto the stack.";
+    OP_11 => 0x5b, "Push the array `0x0b` onto the stack.";
+    OP_12 => 0x5c, "Push the array `0x0c` onto the stack.";
+    OP_13 => 0x5d, "Push the array `0x0d` onto the stack.";
+    OP_14 => 0x5e, "Push the array `0x0e` onto the stack.";
+    OP_15 => 0x5f, "Push the array `0x0f` onto the stack.";
+    OP_16 => 0x60, "Push the array `0x10` onto the stack.";
     OP_NOP => 0x61, "Does nothing.";
     OP_VER => 0x62, "Synonym for `OP_RETURN`.";
     OP_IF => 0x63, "Pop and execute the next statements if a nonzero element was popped.";
@@ -397,7 +449,7 @@ impl Opcode {
             | (OP_CHECKMULTISIGVERIFY, ClassifyContext::TapScript) => Class::ReturnOp,
 
             // 1 opcode of PushNum class
-            (OP_PUSHNUM_NEG1, _) => Class::PushNum(-1),
+            (OP_NEG1, _) => Class::PushNum(-1),
 
             // 16 opcodes of PushNum class
             (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code =>
