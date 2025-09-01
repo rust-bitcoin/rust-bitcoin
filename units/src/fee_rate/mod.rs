@@ -107,7 +107,7 @@ impl FeeRate {
 
     /// Converts to sat/kwu rounding up.
     pub const fn to_sat_per_kwu_ceil(self) -> u64 {
-        self.to_sat_per_mvb().saturating_add(3_999) / 4_000
+        self.to_sat_per_mvb().div_ceil(4_000)
     }
 
     /// Converts to sat/vB rounding down.
@@ -115,7 +115,7 @@ impl FeeRate {
 
     /// Converts to sat/vB rounding up.
     pub const fn to_sat_per_vb_ceil(self) -> u64 {
-        self.to_sat_per_mvb().saturating_add(999_999) / 1_000_000
+        self.to_sat_per_mvb().div_ceil(1_000_000)
     }
 
     /// Converts to sat/kvb rounding down.
@@ -123,7 +123,7 @@ impl FeeRate {
 
     /// Converts to sat/kvb rounding up.
     pub const fn to_sat_per_kvb_ceil(self) -> u64 {
-        self.to_sat_per_mvb().saturating_add(999) / 1_000
+        self.to_sat_per_mvb().div_ceil(1_000)
     }
 
     /// Checked multiplication.
@@ -408,9 +408,9 @@ mod tests {
         assert_eq!(fee_rate.to_sat_per_kvb_ceil(), 2_001);
 
         let max = FeeRate::MAX;
-        assert_eq!(max.to_sat_per_kwu_ceil(), u64::MAX / 4_000);
-        assert_eq!(max.to_sat_per_vb_ceil(), u64::MAX / 1_000_000);
-        assert_eq!(max.to_sat_per_kvb_ceil(), u64::MAX / 1_000);
+        assert_eq!(max.to_sat_per_kwu_ceil(), u64::MAX / 4_000 + 1);
+        assert_eq!(max.to_sat_per_vb_ceil(), u64::MAX / 1_000_000 + 1);
+        assert_eq!(max.to_sat_per_kvb_ceil(), u64::MAX / 1_000 + 1);
     }
 
     #[test]
