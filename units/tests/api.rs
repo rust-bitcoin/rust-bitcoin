@@ -14,7 +14,7 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse, result, time, weight, Amount, BlockHeight,
+    amount, block, fee_rate, locktime, parse_int, result, time, weight, Amount, BlockHeight,
     BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult, SignedAmount,
     Weight,
 };
@@ -145,14 +145,14 @@ struct Errors {
     q: locktime::relative::InvalidHeightError,
     r: locktime::relative::InvalidTimeError,
     s: locktime::relative::TimeOverflowError,
-    t: parse::ParseIntError,
-    u: parse::PrefixedHexError,
-    v: parse::UnprefixedHexError,
+    t: parse_int::ParseIntError,
+    u: parse_int::PrefixedHexError,
+    v: parse_int::UnprefixedHexError,
 }
 
 #[test]
 fn api_can_use_modules_from_crate_root() {
-    use bitcoin_units::{amount, block, fee_rate, locktime, parse, time, weight};
+    use bitcoin_units::{amount, block, fee_rate, locktime, parse_int, time, weight};
 }
 
 #[test]
@@ -217,7 +217,7 @@ fn api_can_use_all_types_from_module_locktime_relative() {
 
 #[test]
 fn api_can_use_all_types_from_module_parse() {
-    use bitcoin_units::parse::{ParseIntError, PrefixedHexError, UnprefixedHexError};
+    use bitcoin_units::parse_int::{ParseIntError, PrefixedHexError, UnprefixedHexError};
 }
 
 #[test]

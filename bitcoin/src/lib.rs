@@ -165,6 +165,7 @@ pub use units::{
     amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
+    parse_int,
     time::{self, BlockTime},
     weight::Weight,
 };
@@ -268,17 +269,6 @@ pub mod amount {
             self.to_sat().consensus_encode(w)
         }
     }
-}
-
-/// Unit parsing utilities.
-pub mod parse {
-    /// Re-export everything from the [`units::parse`] module.
-    #[doc(inline)]
-    pub use units::parse::{
-        hex_check_unprefixed, hex_remove_prefix, hex_u128, hex_u128_unchecked, hex_u128_unprefixed,
-        hex_u32, hex_u32_unchecked, hex_u32_unprefixed, int_from_box, int_from_str,
-        int_from_string, ParseIntError, PrefixedHexError, UnprefixedHexError,
-    };
 }
 
 mod encode_impls {

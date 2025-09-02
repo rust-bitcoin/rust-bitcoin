@@ -9,7 +9,7 @@
 #[non_exhaustive] pub struct bitcoin_units::amount::error::UnknownDenominationError(_)
 #[non_exhaustive] pub struct bitcoin_units::locktime::absolute::ConversionError
 #[non_exhaustive] pub struct bitcoin_units::locktime::absolute::error::ConversionError
-#[non_exhaustive] pub struct bitcoin_units::parse::ParseIntError
+#[non_exhaustive] pub struct bitcoin_units::parse_int::ParseIntError
 #[non_exhaustive] pub struct bitcoin_units::result::NumOpError(_)
 impl bitcoin_units::Amount
 impl bitcoin_units::BlockTime
@@ -32,16 +32,16 @@ impl bitcoin_units::locktime::relative::LockTime
 impl bitcoin_units::locktime::relative::NumberOf512Seconds
 impl bitcoin_units::locktime::relative::NumberOfBlocks
 impl bitcoin_units::locktime::relative::error::DisabledLockTimeError
-impl bitcoin_units::parse::Integer for i128
-impl bitcoin_units::parse::Integer for i16
-impl bitcoin_units::parse::Integer for i32
-impl bitcoin_units::parse::Integer for i64
-impl bitcoin_units::parse::Integer for i8
-impl bitcoin_units::parse::Integer for u128
-impl bitcoin_units::parse::Integer for u16
-impl bitcoin_units::parse::Integer for u32
-impl bitcoin_units::parse::Integer for u64
-impl bitcoin_units::parse::Integer for u8
+impl bitcoin_units::parse_int::Integer for i128
+impl bitcoin_units::parse_int::Integer for i16
+impl bitcoin_units::parse_int::Integer for i32
+impl bitcoin_units::parse_int::Integer for i64
+impl bitcoin_units::parse_int::Integer for i8
+impl bitcoin_units::parse_int::Integer for u128
+impl bitcoin_units::parse_int::Integer for u16
+impl bitcoin_units::parse_int::Integer for u32
+impl bitcoin_units::parse_int::Integer for u64
+impl bitcoin_units::parse_int::Integer for u8
 impl bitcoin_units::result::MathOp
 impl bitcoin_units::result::NumOpError
 impl bitcoin_units::sequence::Sequence
@@ -86,9 +86,9 @@ impl core::clone::Clone for bitcoin_units::locktime::relative::error::IsSatisfie
 impl core::clone::Clone for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::clone::Clone for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::clone::Clone for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::clone::Clone for bitcoin_units::parse::ParseIntError
-impl core::clone::Clone for bitcoin_units::parse::PrefixedHexError
-impl core::clone::Clone for bitcoin_units::parse::UnprefixedHexError
+impl core::clone::Clone for bitcoin_units::parse_int::ParseIntError
+impl core::clone::Clone for bitcoin_units::parse_int::PrefixedHexError
+impl core::clone::Clone for bitcoin_units::parse_int::UnprefixedHexError
 impl core::clone::Clone for bitcoin_units::result::MathOp
 impl core::clone::Clone for bitcoin_units::result::NumOpError
 impl core::clone::Clone for bitcoin_units::sequence::Sequence
@@ -132,9 +132,9 @@ impl core::cmp::Eq for bitcoin_units::locktime::relative::error::IsSatisfiedByEr
 impl core::cmp::Eq for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::cmp::Eq for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::cmp::Eq for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::cmp::Eq for bitcoin_units::parse::ParseIntError
-impl core::cmp::Eq for bitcoin_units::parse::PrefixedHexError
-impl core::cmp::Eq for bitcoin_units::parse::UnprefixedHexError
+impl core::cmp::Eq for bitcoin_units::parse_int::ParseIntError
+impl core::cmp::Eq for bitcoin_units::parse_int::PrefixedHexError
+impl core::cmp::Eq for bitcoin_units::parse_int::UnprefixedHexError
 impl core::cmp::Eq for bitcoin_units::result::MathOp
 impl core::cmp::Eq for bitcoin_units::result::NumOpError
 impl core::cmp::Eq for bitcoin_units::sequence::Sequence
@@ -192,9 +192,9 @@ impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::IsSatisf
 impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::cmp::PartialEq for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::cmp::PartialEq for bitcoin_units::parse::ParseIntError
-impl core::cmp::PartialEq for bitcoin_units::parse::PrefixedHexError
-impl core::cmp::PartialEq for bitcoin_units::parse::UnprefixedHexError
+impl core::cmp::PartialEq for bitcoin_units::parse_int::ParseIntError
+impl core::cmp::PartialEq for bitcoin_units::parse_int::PrefixedHexError
+impl core::cmp::PartialEq for bitcoin_units::parse_int::UnprefixedHexError
 impl core::cmp::PartialEq for bitcoin_units::result::MathOp
 impl core::cmp::PartialEq for bitcoin_units::result::NumOpError
 impl core::cmp::PartialEq for bitcoin_units::sequence::Sequence
@@ -212,7 +212,7 @@ impl core::cmp::PartialOrd for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::cmp::PartialOrd for bitcoin_units::sequence::Sequence
-impl core::convert::AsRef<core::num::error::ParseIntError> for bitcoin_units::parse::ParseIntError
+impl core::convert::AsRef<core::num::error::ParseIntError> for bitcoin_units::parse_int::ParseIntError
 impl core::convert::From<&bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 impl core::convert::From<&bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
@@ -245,15 +245,15 @@ impl core::convert::From<bitcoin_units::locktime::relative::NumberOf512Seconds> 
 impl core::convert::From<bitcoin_units::locktime::relative::NumberOf512Seconds> for bitcoin_units::locktime::relative::LockTime
 impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::block::BlockHeightInterval
 impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for bitcoin_units::locktime::relative::LockTime
-impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units::parse::PrefixedHexError
-impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units::parse::UnprefixedHexError
-impl core::convert::From<bitcoin_units::parse::ParseIntError> for core::num::error::ParseIntError
+impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_units::parse_int::PrefixedHexError
+impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_units::parse_int::UnprefixedHexError
+impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for core::num::error::ParseIntError
 impl core::convert::From<bitcoin_units::sequence::Sequence> for u32
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseAmountError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseDenominationError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseError
-impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse::PrefixedHexError
-impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse::UnprefixedHexError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse_int::PrefixedHexError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse_int::UnprefixedHexError
 impl core::convert::From<u16> for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::convert::From<u32> for bitcoin_units::BlockTime
 impl core::convert::From<u32> for bitcoin_units::block::BlockHeight
@@ -323,9 +323,9 @@ impl core::fmt::Debug for bitcoin_units::locktime::relative::error::IsSatisfiedB
 impl core::fmt::Debug for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::fmt::Debug for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::fmt::Debug for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::fmt::Debug for bitcoin_units::parse::ParseIntError
-impl core::fmt::Debug for bitcoin_units::parse::PrefixedHexError
-impl core::fmt::Debug for bitcoin_units::parse::UnprefixedHexError
+impl core::fmt::Debug for bitcoin_units::parse_int::ParseIntError
+impl core::fmt::Debug for bitcoin_units::parse_int::PrefixedHexError
+impl core::fmt::Debug for bitcoin_units::parse_int::UnprefixedHexError
 impl core::fmt::Debug for bitcoin_units::result::MathOp
 impl core::fmt::Debug for bitcoin_units::result::NumOpError
 impl core::fmt::Debug for bitcoin_units::sequence::Sequence
@@ -367,9 +367,9 @@ impl core::fmt::Display for bitcoin_units::locktime::relative::error::IsSatisfie
 impl core::fmt::Display for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::fmt::Display for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::fmt::Display for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::fmt::Display for bitcoin_units::parse::ParseIntError
-impl core::fmt::Display for bitcoin_units::parse::PrefixedHexError
-impl core::fmt::Display for bitcoin_units::parse::UnprefixedHexError
+impl core::fmt::Display for bitcoin_units::parse_int::ParseIntError
+impl core::fmt::Display for bitcoin_units::parse_int::PrefixedHexError
+impl core::fmt::Display for bitcoin_units::parse_int::UnprefixedHexError
 impl core::fmt::Display for bitcoin_units::result::MathOp
 impl core::fmt::Display for bitcoin_units::result::NumOpError
 impl core::fmt::Display for bitcoin_units::sequence::Sequence
@@ -459,9 +459,9 @@ impl core::marker::Freeze for bitcoin_units::locktime::relative::error::IsSatisf
 impl core::marker::Freeze for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::marker::Freeze for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::marker::Freeze for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::marker::Freeze for bitcoin_units::parse::ParseIntError
-impl core::marker::Freeze for bitcoin_units::parse::PrefixedHexError
-impl core::marker::Freeze for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Freeze for bitcoin_units::parse_int::ParseIntError
+impl core::marker::Freeze for bitcoin_units::parse_int::PrefixedHexError
+impl core::marker::Freeze for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Freeze for bitcoin_units::result::MathOp
 impl core::marker::Freeze for bitcoin_units::result::NumOpError
 impl core::marker::Freeze for bitcoin_units::sequence::Sequence
@@ -506,9 +506,9 @@ impl core::marker::Send for bitcoin_units::locktime::relative::error::IsSatisfie
 impl core::marker::Send for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::marker::Send for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::marker::Send for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::marker::Send for bitcoin_units::parse::ParseIntError
-impl core::marker::Send for bitcoin_units::parse::PrefixedHexError
-impl core::marker::Send for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Send for bitcoin_units::parse_int::ParseIntError
+impl core::marker::Send for bitcoin_units::parse_int::PrefixedHexError
+impl core::marker::Send for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Send for bitcoin_units::result::MathOp
 impl core::marker::Send for bitcoin_units::result::NumOpError
 impl core::marker::Send for bitcoin_units::sequence::Sequence
@@ -552,9 +552,9 @@ impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::er
 impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::marker::StructuralPartialEq for bitcoin_units::parse::ParseIntError
-impl core::marker::StructuralPartialEq for bitcoin_units::parse::PrefixedHexError
-impl core::marker::StructuralPartialEq for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::StructuralPartialEq for bitcoin_units::parse_int::ParseIntError
+impl core::marker::StructuralPartialEq for bitcoin_units::parse_int::PrefixedHexError
+impl core::marker::StructuralPartialEq for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::StructuralPartialEq for bitcoin_units::result::MathOp
 impl core::marker::StructuralPartialEq for bitcoin_units::result::NumOpError
 impl core::marker::StructuralPartialEq for bitcoin_units::sequence::Sequence
@@ -599,9 +599,9 @@ impl core::marker::Sync for bitcoin_units::locktime::relative::error::IsSatisfie
 impl core::marker::Sync for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::marker::Sync for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::marker::Sync for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::marker::Sync for bitcoin_units::parse::ParseIntError
-impl core::marker::Sync for bitcoin_units::parse::PrefixedHexError
-impl core::marker::Sync for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Sync for bitcoin_units::parse_int::ParseIntError
+impl core::marker::Sync for bitcoin_units::parse_int::PrefixedHexError
+impl core::marker::Sync for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Sync for bitcoin_units::result::MathOp
 impl core::marker::Sync for bitcoin_units::result::NumOpError
 impl core::marker::Sync for bitcoin_units::sequence::Sequence
@@ -646,9 +646,9 @@ impl core::marker::Unpin for bitcoin_units::locktime::relative::error::IsSatisfi
 impl core::marker::Unpin for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::marker::Unpin for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::marker::Unpin for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::marker::Unpin for bitcoin_units::parse::ParseIntError
-impl core::marker::Unpin for bitcoin_units::parse::PrefixedHexError
-impl core::marker::Unpin for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Unpin for bitcoin_units::parse_int::ParseIntError
+impl core::marker::Unpin for bitcoin_units::parse_int::PrefixedHexError
+impl core::marker::Unpin for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Unpin for bitcoin_units::result::MathOp
 impl core::marker::Unpin for bitcoin_units::result::NumOpError
 impl core::marker::Unpin for bitcoin_units::sequence::Sequence
@@ -919,9 +919,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relati
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::ParseIntError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::PrefixedHexError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::UnprefixedHexError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse_int::ParseIntError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse_int::PrefixedHexError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse_int::UnprefixedHexError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::result::MathOp
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::result::NumOpError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::sequence::Sequence
@@ -966,9 +966,9 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative:
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::error::TimeOverflowError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::ParseIntError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::PrefixedHexError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::UnprefixedHexError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse_int::ParseIntError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse_int::PrefixedHexError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse_int::UnprefixedHexError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::result::MathOp
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::result::NumOpError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::sequence::Sequence
@@ -1772,10 +1772,10 @@ pub fn bitcoin_units::locktime::absolute::LockTime::from(h: bitcoin_units::lockt
 pub fn bitcoin_units::locktime::absolute::LockTime::from(t: bitcoin_units::locktime::absolute::MedianTimePast) -> Self
 pub fn bitcoin_units::locktime::absolute::LockTime::from_consensus(n: u32) -> Self
 pub fn bitcoin_units::locktime::absolute::LockTime::from_height(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
-pub fn bitcoin_units::locktime::absolute::LockTime::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_units::locktime::absolute::LockTime::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::locktime::absolute::LockTime::from_mtp(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
 pub fn bitcoin_units::locktime::absolute::LockTime::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-pub fn bitcoin_units::locktime::absolute::LockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_units::locktime::absolute::LockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::locktime::absolute::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::absolute::LockTime::is_implied_by(self, other: bitcoin_units::locktime::absolute::LockTime) -> bool
 pub fn bitcoin_units::locktime::absolute::LockTime::is_satisfied_by(self, height: bitcoin_units::locktime::absolute::Height, mtp: bitcoin_units::locktime::absolute::MedianTimePast) -> bool
@@ -1874,31 +1874,31 @@ pub fn bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError::fmt(&se
 pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::clone(&self) -> bitcoin_units::locktime::relative::error::TimeOverflowError
 pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::eq(&self, other: &bitcoin_units::locktime::relative::error::TimeOverflowError) -> bool
 pub fn bitcoin_units::locktime::relative::error::TimeOverflowError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::parse::ParseIntError::as_ref(&self) -> &core::num::error::ParseIntError
-pub fn bitcoin_units::parse::ParseIntError::clone(&self) -> bitcoin_units::parse::ParseIntError
-pub fn bitcoin_units::parse::ParseIntError::eq(&self, other: &bitcoin_units::parse::ParseIntError) -> bool
-pub fn bitcoin_units::parse::ParseIntError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::parse::PrefixedHexError::clone(&self) -> bitcoin_units::parse::PrefixedHexError
-pub fn bitcoin_units::parse::PrefixedHexError::eq(&self, other: &bitcoin_units::parse::PrefixedHexError) -> bool
-pub fn bitcoin_units::parse::PrefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::parse::PrefixedHexError::from(e: bitcoin_units::parse::ParseIntError) -> Self
-pub fn bitcoin_units::parse::PrefixedHexError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_units::parse::UnprefixedHexError::clone(&self) -> bitcoin_units::parse::UnprefixedHexError
-pub fn bitcoin_units::parse::UnprefixedHexError::eq(&self, other: &bitcoin_units::parse::UnprefixedHexError) -> bool
-pub fn bitcoin_units::parse::UnprefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::parse::UnprefixedHexError::from(e: bitcoin_units::parse::ParseIntError) -> Self
-pub fn bitcoin_units::parse::UnprefixedHexError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_units::parse::hex_check_unprefixed(s: &str) -> core::result::Result<&str, bitcoin_units::parse::UnprefixedHexError>
-pub fn bitcoin_units::parse::hex_remove_prefix(s: &str) -> core::result::Result<&str, bitcoin_units::parse::PrefixedHexError>
-pub fn bitcoin_units::parse::hex_u128(s: &str) -> core::result::Result<u128, bitcoin_units::parse::ParseIntError>
-pub fn bitcoin_units::parse::hex_u128_prefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse::PrefixedHexError>
-pub fn bitcoin_units::parse::hex_u128_unchecked(s: &str) -> core::result::Result<u128, bitcoin_units::parse::ParseIntError>
-pub fn bitcoin_units::parse::hex_u128_unprefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse::UnprefixedHexError>
-pub fn bitcoin_units::parse::hex_u32(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
-pub fn bitcoin_units::parse::hex_u32_prefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::PrefixedHexError>
-pub fn bitcoin_units::parse::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
-pub fn bitcoin_units::parse::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::UnprefixedHexError>
-pub fn bitcoin_units::parse::int_from_str<T: bitcoin_units::parse::Integer>(s: &str) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse_int::ParseIntError::as_ref(&self) -> &core::num::error::ParseIntError
+pub fn bitcoin_units::parse_int::ParseIntError::clone(&self) -> bitcoin_units::parse_int::ParseIntError
+pub fn bitcoin_units::parse_int::ParseIntError::eq(&self, other: &bitcoin_units::parse_int::ParseIntError) -> bool
+pub fn bitcoin_units::parse_int::ParseIntError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::parse_int::PrefixedHexError::clone(&self) -> bitcoin_units::parse_int::PrefixedHexError
+pub fn bitcoin_units::parse_int::PrefixedHexError::eq(&self, other: &bitcoin_units::parse_int::PrefixedHexError) -> bool
+pub fn bitcoin_units::parse_int::PrefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::parse_int::PrefixedHexError::from(e: bitcoin_units::parse_int::ParseIntError) -> Self
+pub fn bitcoin_units::parse_int::PrefixedHexError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::parse_int::UnprefixedHexError::clone(&self) -> bitcoin_units::parse_int::UnprefixedHexError
+pub fn bitcoin_units::parse_int::UnprefixedHexError::eq(&self, other: &bitcoin_units::parse_int::UnprefixedHexError) -> bool
+pub fn bitcoin_units::parse_int::UnprefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::parse_int::UnprefixedHexError::from(e: bitcoin_units::parse_int::ParseIntError) -> Self
+pub fn bitcoin_units::parse_int::UnprefixedHexError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::parse_int::hex_check_unprefixed(s: &str) -> core::result::Result<&str, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::parse_int::hex_remove_prefix(s: &str) -> core::result::Result<&str, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u128(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u128_prefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u128_unchecked(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u128_unprefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u32(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u32_prefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::parse_int::int_from_str<T: bitcoin_units::parse_int::Integer>(s: &str) -> core::result::Result<T, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::result::MathOp::clone(&self) -> bitcoin_units::result::MathOp
 pub fn bitcoin_units::result::MathOp::eq(&self, other: &bitcoin_units::result::MathOp) -> bool
 pub fn bitcoin_units::result::MathOp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1990,10 +1990,10 @@ pub fn bitcoin_units::sequence::Sequence::from(lt: bitcoin_units::locktime::rela
 pub fn bitcoin_units::sequence::Sequence::from_512_second_intervals(intervals: u16) -> Self
 pub fn bitcoin_units::sequence::Sequence::from_consensus(n: u32) -> Self
 pub fn bitcoin_units::sequence::Sequence::from_height(height: u16) -> Self
-pub fn bitcoin_units::sequence::Sequence::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_units::sequence::Sequence::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::sequence::Sequence::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub fn bitcoin_units::sequence::Sequence::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
-pub fn bitcoin_units::sequence::Sequence::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_units::sequence::Sequence::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::sequence::Sequence::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::sequence::Sequence::is_final(self) -> bool
 pub fn bitcoin_units::sequence::Sequence::is_height_locked(self) -> bool
@@ -2003,7 +2003,7 @@ pub fn bitcoin_units::sequence::Sequence::is_time_locked(self) -> bool
 pub fn bitcoin_units::sequence::Sequence::partial_cmp(&self, other: &bitcoin_units::sequence::Sequence) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::sequence::Sequence::to_consensus_u32(self) -> u32
 pub fn bitcoin_units::sequence::Sequence::to_relative_lock_time(self) -> core::option::Option<bitcoin_units::locktime::relative::LockTime>
-pub fn core::num::error::ParseIntError::from(value: bitcoin_units::parse::ParseIntError) -> Self
+pub fn core::num::error::ParseIntError::from(value: bitcoin_units::parse_int::ParseIntError) -> Self
 pub fn i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
 pub fn i64::mul(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
 pub fn i64::mul(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
@@ -2033,7 +2033,7 @@ pub mod bitcoin_units::locktime::absolute
 pub mod bitcoin_units::locktime::absolute::error
 pub mod bitcoin_units::locktime::relative
 pub mod bitcoin_units::locktime::relative::error
-pub mod bitcoin_units::parse
+pub mod bitcoin_units::parse_int
 pub mod bitcoin_units::relative
 pub mod bitcoin_units::relative::error
 pub mod bitcoin_units::result
@@ -2099,8 +2099,8 @@ pub struct bitcoin_units::locktime::relative::error::DisabledLockTimeError(_)
 pub struct bitcoin_units::locktime::relative::error::InvalidHeightError
 pub struct bitcoin_units::locktime::relative::error::InvalidTimeError
 pub struct bitcoin_units::locktime::relative::error::TimeOverflowError
-pub struct bitcoin_units::parse::PrefixedHexError(_)
-pub struct bitcoin_units::parse::UnprefixedHexError(_)
+pub struct bitcoin_units::parse_int::PrefixedHexError(_)
+pub struct bitcoin_units::parse_int::UnprefixedHexError(_)
 pub struct bitcoin_units::relative::DisabledLockTimeError(_)
 pub struct bitcoin_units::relative::InvalidHeightError
 pub struct bitcoin_units::relative::InvalidTimeError
@@ -2114,7 +2114,7 @@ pub struct bitcoin_units::relative::error::TimeOverflowError
 pub struct bitcoin_units::sequence::Sequence(pub u32)
 pub struct bitcoin_units::time::BlockTime(_)
 pub struct bitcoin_units::weight::Weight(_)
-pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + bitcoin_units::parse::sealed::Sealed
+pub trait bitcoin_units::parse_int::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + bitcoin_units::parse_int::sealed::Sealed
 pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add<bitcoin_units::result::NumOpResult<bitcoin_units::Amount>>>::Output
 pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add>::Output
 pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<bitcoin_units::FeeRate>>::Output
@@ -2225,8 +2225,8 @@ pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as c
 pub type bitcoin_units::SignedAmount::Output = bitcoin_units::SignedAmount
 pub type bitcoin_units::SignedAmount::Output = bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 pub type bitcoin_units::SignedAmount::Output = bitcoin_units::result::NumOpResult<i64>
-pub type bitcoin_units::Weight::Err = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::Weight::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::Weight::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::Weight::Output = <bitcoin_units::Weight as core::ops::arith::Add>::Output
 pub type bitcoin_units::Weight::Output = <bitcoin_units::Weight as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output
 pub type bitcoin_units::Weight::Output = <bitcoin_units::Weight as core::ops::arith::Div<u64>>::Output
@@ -2241,44 +2241,44 @@ pub type bitcoin_units::Weight::Output = bitcoin_units::Weight
 pub type bitcoin_units::Weight::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub type bitcoin_units::Weight::Output = u64
 pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::error::ParseDenominationError
-pub type bitcoin_units::block::BlockHeight::Err = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockHeight::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Add<bitcoin_units::block::BlockHeightInterval>>::Output
 pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Sub<bitcoin_units::block::BlockHeightInterval>>::Output
 pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Sub>::Output
 pub type bitcoin_units::block::BlockHeight::Output = bitcoin_units::block::BlockHeight
 pub type bitcoin_units::block::BlockHeight::Output = bitcoin_units::block::BlockHeightInterval
-pub type bitcoin_units::block::BlockHeightInterval::Err = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockHeightInterval::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::block::BlockHeightInterval::Output = <bitcoin_units::block::BlockHeightInterval as core::ops::arith::Add>::Output
 pub type bitcoin_units::block::BlockHeightInterval::Output = <bitcoin_units::block::BlockHeightInterval as core::ops::arith::Sub>::Output
 pub type bitcoin_units::block::BlockHeightInterval::Output = bitcoin_units::block::BlockHeightInterval
-pub type bitcoin_units::block::BlockMtp::Err = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockMtp::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::block::BlockMtp::Output = <bitcoin_units::block::BlockMtp as core::ops::arith::Add<bitcoin_units::block::BlockMtpInterval>>::Output
 pub type bitcoin_units::block::BlockMtp::Output = <bitcoin_units::block::BlockMtp as core::ops::arith::Sub<bitcoin_units::block::BlockMtpInterval>>::Output
 pub type bitcoin_units::block::BlockMtp::Output = <bitcoin_units::block::BlockMtp as core::ops::arith::Sub>::Output
 pub type bitcoin_units::block::BlockMtp::Output = bitcoin_units::block::BlockMtp
 pub type bitcoin_units::block::BlockMtp::Output = bitcoin_units::block::BlockMtpInterval
-pub type bitcoin_units::block::BlockMtpInterval::Err = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockMtpInterval::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::block::BlockMtpInterval::Output = <bitcoin_units::block::BlockMtpInterval as core::ops::arith::Add>::Output
 pub type bitcoin_units::block::BlockMtpInterval::Output = <bitcoin_units::block::BlockMtpInterval as core::ops::arith::Sub>::Output
 pub type bitcoin_units::block::BlockMtpInterval::Output = bitcoin_units::block::BlockMtpInterval
 pub type bitcoin_units::locktime::absolute::Height::Err = bitcoin_units::locktime::absolute::error::ParseHeightError
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
-pub type bitcoin_units::locktime::absolute::LockTime::Err = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::absolute::LockTime::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Err = bitcoin_units::locktime::absolute::error::ParseTimeError
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
 pub type bitcoin_units::locktime::relative::LockTime::Error = bitcoin_units::locktime::relative::error::DisabledLockTimeError
-pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Err = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse::ParseIntError
-pub type bitcoin_units::locktime::relative::NumberOfBlocks::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::locktime::relative::NumberOfBlocks::Err = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::block::TooBigForRelativeHeightError
-pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::result::NumOpResult<T>::Output = <bitcoin_units::result::NumOpResult<T> as core::ops::arith::Add<T>>::Output
 pub type bitcoin_units::result::NumOpResult<T>::Output = <bitcoin_units::result::NumOpResult<T> as core::ops::arith::Add>::Output
 pub type bitcoin_units::result::NumOpResult<T>::Output = <bitcoin_units::result::NumOpResult<T> as core::ops::arith::Sub<T>>::Output

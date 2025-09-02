@@ -10,7 +10,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{Amount, FeeRate, NumOpResult};
+use crate::{parse_int, Amount, FeeRate, NumOpResult};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -271,7 +271,7 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+parse_int::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
 
 #[cfg(feature = "serde")]
 impl Serialize for Weight {

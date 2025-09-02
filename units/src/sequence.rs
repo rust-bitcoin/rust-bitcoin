@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::locktime::relative::error::TimeOverflowError;
 use crate::locktime::relative::{self, NumberOf512Seconds};
-use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -129,7 +129,7 @@ impl Sequence {
     /// the `0x` prefix.
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let lock_time = parse::hex_u32_prefixed(s)?;
+        let lock_time = parse_int::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
@@ -141,7 +141,7 @@ impl Sequence {
     /// `0x` prefix.
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        let lock_time = parse::hex_u32_unprefixed(s)?;
+        let lock_time = parse_int::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
@@ -262,7 +262,7 @@ impl fmt::Debug for Sequence {
 }
 
 #[cfg(feature = "alloc")]
-crate::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
