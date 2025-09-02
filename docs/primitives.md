@@ -4,6 +4,14 @@ Design considerations and TODOs for the `bitcoin-primitives 1.0.0` release.
 
 ## TODOs
 
+### consensus encoding
+
+GitHub discussion: https://github.com/rust-bitcoin/rust-bitcoin/discussions/4856
+
+Pull encoding done in: https://github.com/rust-bitcoin/rust-bitcoin/pull/4912
+
+<!-- TODO: Add a consenus-encoding.md file? -->
+
 ### Remove `hashes` from the public API.
 
 Required due to [C-STABLE](https://rust-lang.github.io/api-guidelines/necessities.html#c-stable).
