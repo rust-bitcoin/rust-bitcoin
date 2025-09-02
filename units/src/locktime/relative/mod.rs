@@ -538,7 +538,7 @@ impl NumberOf512Seconds {
     #[rustfmt::skip] // moves comments to unrelated code
     pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
         if seconds <= u16::MAX as u32 * 512 {
-            let interval = (seconds + 511) / 512;
+            let interval = seconds.div_ceil(512);
             Ok(NumberOf512Seconds::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
         } else {
             Err(TimeOverflowError { seconds })

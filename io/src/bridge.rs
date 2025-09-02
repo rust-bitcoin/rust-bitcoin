@@ -253,40 +253,20 @@ macro_rules! impl_our {
     };
 }
 
-rust_version! {
-    if >= 1.72 {
-        impl_our! {
-            impl<R: std::io::Read> Read for std::io::BufReader<R> where R: ?Sized
-        }
+impl_our! {
+    impl<R: std::io::Read> Read for std::io::BufReader<R> where R: ?Sized
+}
 
-        impl_our! {
-            impl<R: std::io::Read> BufRead for std::io::BufReader<R> where R: ?Sized
-        }
+impl_our! {
+    impl<R: std::io::Read> BufRead for std::io::BufReader<R> where R: ?Sized
+}
 
-        impl_our! {
-            impl<W: std::io::Write> Write for std::io::BufWriter<W> where W: ?Sized
-        }
+impl_our! {
+    impl<W: std::io::Write> Write for std::io::BufWriter<W> where W: ?Sized
+}
 
-        impl_our! {
-            impl<W: std::io::Write> Write for std::io::LineWriter<W> where W: ?Sized
-        }
-    } else {
-        impl_our! {
-            impl<R: std::io::Read> Read for std::io::BufReader<R>
-        }
-
-        impl_our! {
-            impl<R: std::io::Read> BufRead for std::io::BufReader<R>
-        }
-
-        impl_our! {
-            impl<W: std::io::Write> Write for std::io::BufWriter<W>
-        }
-
-        impl_our! {
-            impl<W: std::io::Write> Write for std::io::LineWriter<W>
-        }
-    }
+impl_our! {
+    impl<W: std::io::Write> Write for std::io::LineWriter<W> where W: ?Sized
 }
 
 impl std::io::Write for super::Sink {
@@ -344,25 +324,21 @@ impl_our! {
     impl BufRead for std::io::Empty
 }
 
-rust_version! {
-    if >= 1.73 {
-        impl_our! {
-            impl Write for std::io::Empty
-        }
+impl_our! {
+    impl Write for std::io::Empty
+}
 
-        // No idea why &Empty impls Write but not Read + BufRead
-        impl_our! {
-            impl Write for &'_ std::io::Empty
-        }
+// No idea why &Empty impls Write but not Read + BufRead
+impl_our! {
+    impl Write for &'_ std::io::Empty
+}
 
-        impl_our! {
-            impl Read for std::sync::Arc<std::fs::File>
-        }
+impl_our! {
+    impl Read for std::sync::Arc<std::fs::File>
+}
 
-        impl_our! {
-            impl Write for std::sync::Arc<std::fs::File>
-        }
-    }
+impl_our! {
+    impl Write for std::sync::Arc<std::fs::File>
 }
 
 impl_our! {

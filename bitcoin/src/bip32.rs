@@ -271,7 +271,7 @@ impl FromStr for ChildNumber {
     type Err = ParseChildNumberError;
 
     fn from_str(inp: &str) -> Result<Self, Self::Err> {
-        let is_hardened = inp.chars().last().map_or(false, |l| l == '\'' || l == 'h');
+        let is_hardened = inp.chars().last().is_some_and(|l| l == '\'' || l == 'h');
         Ok(if is_hardened {
             ChildNumber::from_hardened_idx(
                 inp[0..inp.len() - 1].parse().map_err(ParseChildNumberError::ParseInt)?,

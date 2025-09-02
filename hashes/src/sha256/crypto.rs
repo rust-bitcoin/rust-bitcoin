@@ -110,7 +110,7 @@ impl Midstate {
             0x5be0cd19,
         ];
 
-        let num_chunks = (bytes.len() + 9 + 63) / 64;
+        let num_chunks = (bytes.len() + 9).div_ceil(64);
         let mut chunk = 0;
         #[allow(clippy::precedence)]
         while chunk < num_chunks {
@@ -292,8 +292,8 @@ impl HashEngine {
         // Load initial values
         // CAST SAFETY: loadu_si128 documentation states that mem_addr does not
         // need to be aligned on any particular boundary.
-        tmp = _mm_loadu_si128(self.h.as_ptr().add(0) as *const __m128i);
-        state1 = _mm_loadu_si128(self.h.as_ptr().add(4) as *const __m128i);
+        tmp = _mm_loadu_si128(self.h.as_ptr().add(0).cast::<__m128i>());
+        state1 = _mm_loadu_si128(self.h.as_ptr().add(4).cast::<__m128i>());
 
         tmp = _mm_shuffle_epi32(tmp, 0xB1); // CDAB
         state1 = _mm_shuffle_epi32(state1, 0x1B); // EFGH
@@ -307,7 +307,7 @@ impl HashEngine {
             cdgh_save = state1;
 
             // Rounds 0-3
-            msg = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset) as *const __m128i);
+            msg = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset).cast::<__m128i>());
             msg0 = _mm_shuffle_epi8(msg, MASK);
             msg = _mm_add_epi32(
                 msg0,
@@ -318,7 +318,7 @@ impl HashEngine {
             state0 = _mm_sha256rnds2_epu32(state0, state1, msg);
 
             // Rounds 4-7
-            msg1 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 16) as *const __m128i);
+            msg1 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 16).cast::<__m128i>());
             msg1 = _mm_shuffle_epi8(msg1, MASK);
             msg = _mm_add_epi32(
                 msg1,
@@ -330,7 +330,7 @@ impl HashEngine {
             msg0 = _mm_sha256msg1_epu32(msg0, msg1);
 
             // Rounds 8-11
-            msg2 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 32) as *const __m128i);
+            msg2 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 32).cast::<__m128i>());
             msg2 = _mm_shuffle_epi8(msg2, MASK);
             msg = _mm_add_epi32(
                 msg2,
@@ -342,7 +342,7 @@ impl HashEngine {
             msg1 = _mm_sha256msg1_epu32(msg1, msg2);
 
             // Rounds 12-15
-            msg3 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 48) as *const __m128i);
+            msg3 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 48).cast::<__m128i>());
             msg3 = _mm_shuffle_epi8(msg3, MASK);
             msg = _mm_add_epi32(
                 msg3,
@@ -519,8 +519,8 @@ impl HashEngine {
         // Save state
         // CAST SAFETY: storeu_si128 documentation states that mem_addr does not
         // need to be aligned on any particular boundary.
-        _mm_storeu_si128(self.h.as_mut_ptr().add(0) as *mut __m128i, state0);
-        _mm_storeu_si128(self.h.as_mut_ptr().add(4) as *mut __m128i, state1);
+        _mm_storeu_si128(self.h.as_mut_ptr().add(0).cast::<__m128i>(), state0);
+        _mm_storeu_si128(self.h.as_mut_ptr().add(4).cast::<__m128i>(), state1);
     }
 
     // Algorithm copied from libsecp256k1

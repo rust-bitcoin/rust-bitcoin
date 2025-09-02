@@ -9,7 +9,7 @@ since these are needed to display hashes anyway.
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should always compile with any combination of features on **Rust 1.63.0**.
+This library should always compile with any combination of features on **Rust 1.74.0**.
 
 ## Contributions
 

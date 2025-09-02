@@ -62,7 +62,7 @@ where
         // Counter starts at "1" based on RFC5869 spec and is committed to in the hash.
         let mut counter = 1u8;
         // Ceiling calculation for the total number of blocks (iterations) required for the expand.
-        let total_blocks = (okm.len() + T::Bytes::LEN - 1) / T::Bytes::LEN;
+        let total_blocks = okm.len().div_ceil(T::Bytes::LEN);
 
         while counter <= total_blocks as u8 {
             let mut engine: HmacEngine<T> = HmacEngine::new(self.prk.as_ref());

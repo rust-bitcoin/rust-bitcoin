@@ -196,7 +196,7 @@ impl Target {
     /// The compact form is by definition lossy, this means that
     /// `t == Target::from_compact(t.to_compact_lossy())` does not always hold.
     pub fn to_compact_lossy(self) -> CompactTarget {
-        let mut size = (self.0.bits() + 7) / 8;
+        let mut size = self.0.bits().div_ceil(8);
         let mut compact = if size <= 3 {
             (self.0.low_u64() << (8 * (3 - size))) as u32
         } else {

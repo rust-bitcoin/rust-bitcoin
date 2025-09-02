@@ -11,7 +11,7 @@ categories = ["cryptography::cryptocurrencies", "no-std"]
 keywords = ["bitcoin", "types"]
 readme = "README.md"
 edition = "2021"
-rust-version = "1.63.0"
+rust-version = "1.74.0"
 exclude = ["tests", "contrib"]
 
 [features]

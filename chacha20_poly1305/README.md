@@ -6,4 +6,4 @@ This implementation is maintained by the rust-bitcoin community and has a focus 
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should always compile with any combination of features on **Rust 1.63.0**.
+This library should always compile with any combination of features on **Rust 1.74.0**.

@@ -10,7 +10,7 @@ categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
 readme = "../README.md"
 edition = "2021"
-rust-version = "1.63.0"
+rust-version = "1.74.0"
 exclude = ["tests", "contrib"]
 
 # If you change features or optional dependencies in any way please update the "# Cargo features" section in lib.rs as well.

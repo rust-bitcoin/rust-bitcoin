@@ -107,14 +107,14 @@ impl Weight {
     pub const fn to_kwu_floor(self) -> u64 { self.to_wu() / 1000 }
 
     /// Converts to kilo weight units rounding up.
-    pub const fn to_kwu_ceil(self) -> u64 { self.to_wu().saturating_add(999) / 1000 }
+    pub const fn to_kwu_ceil(self) -> u64 { self.to_wu().div_ceil(1_000) }
 
     /// Converts to vB rounding down.
     pub const fn to_vbytes_floor(self) -> u64 { self.to_wu() / Self::WITNESS_SCALE_FACTOR }
 
     /// Converts to vB rounding up.
     pub const fn to_vbytes_ceil(self) -> u64 {
-        self.to_wu().saturating_add(Self::WITNESS_SCALE_FACTOR - 1) / Self::WITNESS_SCALE_FACTOR
+        self.to_wu().div_ceil(Self::WITNESS_SCALE_FACTOR)
     }
 
     /// Checked addition.
@@ -389,7 +389,7 @@ mod tests {
     fn to_kwu_ceil() {
         assert_eq!(Weight::from_wu(1_000).to_kwu_ceil(), 1);
         assert_eq!(Weight::from_wu(1_001).to_kwu_ceil(), 2);
-        assert_eq!(Weight::MAX.to_kwu_ceil(), u64::MAX / 1_000);
+        assert_eq!(Weight::MAX.to_kwu_ceil(), u64::MAX / 1_000 + 1);
     }
 
     #[test]
@@ -402,7 +402,7 @@ mod tests {
     fn to_vb_ceil() {
         assert_eq!(Weight::from_wu(4).to_vbytes_ceil(), 1);
         assert_eq!(Weight::from_wu(5).to_vbytes_ceil(), 2);
-        assert_eq!(Weight::MAX.to_vbytes_ceil(), u64::MAX / Weight::WITNESS_SCALE_FACTOR);
+        assert_eq!(Weight::MAX.to_vbytes_ceil(), u64::MAX / Weight::WITNESS_SCALE_FACTOR + 1);
     }
 
     #[test]
