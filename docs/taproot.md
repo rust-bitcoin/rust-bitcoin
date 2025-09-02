@@ -8,7 +8,7 @@ throughout the codebase which in turn entangles the `secp256k1`
 dependency.
 
 We likely need to tease apart the Taproot stuff and disentangle the
-bits we aren't yet willing to stabalize. Because of the entanglement
+bits we aren't yet willing to stabilize. Because of the entanglement
 this effects various other crates (`psbt`, `crypto`) as well as the
-stabalization efforts of script extension methods.
+stabilization efforts of script extension methods.
 
