@@ -770,4 +770,67 @@ mod tests {
         let version = Version(123);
         assert_eq!(format!("{}", version), "123");
     }
+
+    // Creates an arbitrary dummy outpoint.
+    #[cfg(feature = "serde")]
+    fn tc_out_point() -> OutPoint {
+        let s = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1";
+        s.parse::<OutPoint>().unwrap()
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_deserialize_human_readable() {
+        // `sered` serialization is the same as `Display` but includes quotes.
+        let ser = "\"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1\"";
+        let got = serde_json::from_str::<OutPoint>(ser).unwrap();
+        let want = tc_out_point();
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_deserialize_non_human_readable() {
+        #[rustfmt::skip]
+        let bytes = [
+            // Length, pre-pended by the `serde` infrastructure because we use
+            // slice serialization instead of array even though we know the length.
+            32, 0, 0, 0, 0, 0, 0, 0,
+            // The txid bytes
+            32, 31, 30, 29, 28, 27, 26, 25,
+            24, 23, 22, 21, 20, 19, 18, 17,
+            16, 15, 14, 13, 12, 11, 10, 9,
+            8, 7, 6, 5, 4, 3, 2, 1,
+            // The vout
+            1, 0, 0, 0
+        ];
+
+        let got = bincode::deserialize::<OutPoint>(&bytes).unwrap();
+        let want = tc_out_point();
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_human_readable_rountrips() {
+        let out_point = tc_out_point();
+
+        let ser = serde_json::to_string(&out_point).unwrap();
+        let got = serde_json::from_str::<OutPoint>(&ser).unwrap();
+
+        assert_eq!(got, out_point);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_non_human_readable_rountrips() {
+        let out_point = tc_out_point();
+
+        let ser = bincode::serialize(&out_point).unwrap();
+        let got = bincode::deserialize::<OutPoint>(&ser).unwrap();
+
+        assert_eq!(got, out_point);
+    }
 }
