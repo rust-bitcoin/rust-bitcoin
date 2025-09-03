@@ -13,7 +13,7 @@
 * Split out a crypto/keys crate. Includes discussion of `secp256k1`. See [crypto.md]
 * Make it possible for `bitcoin` to depend on `miniscript` (see [#2882])
     - Requires [bip-32.md] and [psbt.md]
-* Disentangle and stabalize Taproot stuff (see [taproot.md])
+* Disentangle and stabilize Taproot stuff (see [taproot.md])
 
 ## RC cycle
 
