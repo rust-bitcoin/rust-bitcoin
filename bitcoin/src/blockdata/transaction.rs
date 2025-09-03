@@ -186,10 +186,10 @@ internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
         fn minimal_non_dust(script_pubkey: ScriptPubKeyBuf) -> TxOut {
-            TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
+            TxOut { amount: script_pubkey.minimal_non_dust(), script_pubkey }
         }
 
-        /// Constructs a new `TxOut` with given script and the smallest possible `value` that is **not** dust
+        /// Constructs a new `TxOut` with given script and the smallest possible `amount` that is **not** dust
         /// per current Core policy.
         ///
         /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
@@ -201,7 +201,7 @@ internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust`]: TxOut::minimal_non_dust
         fn minimal_non_dust_custom(script_pubkey: ScriptPubKeyBuf, dust_relay_fee: FeeRate) -> Option<TxOut> {
-            Some(TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey })
+            Some(TxOut { amount: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey })
         }
     }
 }
@@ -642,7 +642,7 @@ impl Decodable for Version {
     }
 }
 
-crate::internal_macros::impl_consensus_encoding!(TxOut, value, script_pubkey);
+internal_macros::impl_consensus_encoding!(TxOut, amount, script_pubkey);
 
 impl Encodable for OutPoint {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {

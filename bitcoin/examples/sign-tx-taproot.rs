@@ -39,11 +39,11 @@ fn main() {
     };
 
     // The spend output is locked to a key controlled by the receiver.
-    let spend = TxOut { value: SPEND_AMOUNT, script_pubkey: address.script_pubkey() };
+    let spend = TxOut { amount: SPEND_AMOUNT, script_pubkey: address.script_pubkey() };
 
     // The change output is locked to a key controlled by us.
     let change = TxOut {
-        value: CHANGE_AMOUNT,
+        amount: CHANGE_AMOUNT,
         script_pubkey: ScriptPubKeyBuf::new_p2tr(&secp, internal_key, None), // Change comes back to us.
     };
 
@@ -107,7 +107,7 @@ fn receivers_address() -> Address {
 ///
 /// An utxo is described by the `OutPoint` (txid and index within the transaction that it was
 /// created). Using the out point one can get the transaction by `txid` and using the `vout` get the
-/// transaction value and script pubkey (`TxOut`) of the utxo.
+/// transaction amount and script pubkey (`TxOut`) of the utxo.
 ///
 /// This output is locked to keys that we control, in a real application this would be a valid
 /// output taken from a transaction that appears in the chain.
@@ -123,7 +123,7 @@ fn dummy_unspent_transaction_output<C: Verification, K: Into<UntweakedPublicKey>
         vout: 0,
     };
 
-    let utxo = TxOut { value: DUMMY_UTXO_AMOUNT, script_pubkey };
+    let utxo = TxOut { amount: DUMMY_UTXO_AMOUNT, script_pubkey };
 
     (out_point, utxo)
 }

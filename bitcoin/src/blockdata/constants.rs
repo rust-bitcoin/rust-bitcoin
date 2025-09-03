@@ -112,7 +112,7 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
         witness: Witness::default(),
     });
 
-    ret.outputs.push(TxOut { value: Amount::FIFTY_BTC, script_pubkey: out_script });
+    ret.outputs.push(TxOut { amount: Amount::FIFTY_BTC, script_pubkey: out_script });
 
     // end
     ret
@@ -287,7 +287,7 @@ mod test {
         assert_eq!(gen.outputs.len(), 1);
         assert_eq!(serialize(&gen.outputs[0].script_pubkey),
                    hex!("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"));
-        assert_eq!(gen.outputs[0].value, "50 BTC".parse::<Amount>().unwrap());
+        assert_eq!(gen.outputs[0].amount, "50 BTC".parse::<Amount>().unwrap());
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(
