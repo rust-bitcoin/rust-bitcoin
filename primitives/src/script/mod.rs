@@ -7,12 +7,10 @@ mod owned;
 mod tag;
 
 use core::cmp::Ordering;
-use core::convert::Infallible;
 use core::fmt;
 #[cfg(feature = "serde")]
 use core::marker::PhantomData;
 
-use hashes::{hash160, sha256};
 #[cfg(feature = "hex")]
 use hex::DisplayHex;
 use internals::script::{self, PushDataLenLen};
@@ -31,6 +29,10 @@ pub use self::{
     borrowed::Script,
     owned::ScriptBuf,
     tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag},
+};
+#[doc(inline)]
+pub use crate::hash_types::{
+    RedeemScriptSizeError, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
 
 /// A P2SH redeem script.
@@ -68,29 +70,6 @@ pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
 /// The maximum allowed redeem script size of the witness script.
 pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
 
-hashes::hash_newtype! {
-    /// A 160-bit hash of Bitcoin Script bytecode.
-    ///
-    /// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
-    /// uses 256-bit hash and hashes a semantically different script. Thus, this type cannot
-    /// represent it.
-    pub struct ScriptHash(hash160::Hash);
-
-    /// SegWit (256-bit) version of a Bitcoin Script bytecode hash.
-    ///
-    /// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
-    /// looks similar to this one also being SHA256, however, they hash semantically different
-    /// scripts and have reversed representations, so this type cannot be used for both.
-    pub struct WScriptHash(sha256::Hash);
-}
-
-#[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(ScriptHash, WScriptHash);
-#[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(ScriptHash, WScriptHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(ScriptHash, WScriptHash);
-
 /// Either a redeem script or a Segwit version 0 scriptpubkey.
 ///
 /// In the case of P2SH-wrapped Segwit version outputs, we take a Segwit scriptPubKey
@@ -110,73 +89,6 @@ mod sealed {
     pub trait Sealed {}
     impl Sealed for super::RedeemScriptTag {}
     impl Sealed for super::ScriptPubKeyTag {}
-}
-
-impl ScriptHash {
-    /// Constructs a new `ScriptHash` after first checking the script size.
-    ///
-    /// # 520-byte limitation on serialized script size
-    ///
-    /// > As a consequence of the requirement for backwards compatibility the serialized script is
-    /// > itself subject to the same rules as any other PUSHDATA operation, including the rule that
-    /// > no data greater than 520 bytes may be pushed to the stack. Thus it is not possible to
-    /// > spend a P2SH output if the redemption script it refers to is >520 bytes in length.
-    ///
-    /// ref: [BIP-0016](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
-    #[inline]
-    pub fn from_script<T>(redeem_script: &Script<T>) -> Result<Self, RedeemScriptSizeError>
-    where
-        T: ScriptHashableTag,
-    {
-        if redeem_script.len() > MAX_REDEEM_SCRIPT_SIZE {
-            return Err(RedeemScriptSizeError { size: redeem_script.len() });
-        }
-
-        // We've just checked the length
-        Ok(ScriptHash::from_script_unchecked(redeem_script))
-    }
-
-    /// Constructs a new `ScriptHash` from any script irrespective of script size.
-    ///
-    /// If you hash a script that exceeds 520 bytes in size and use it to create a P2SH output
-    /// then the output will be unspendable (see [BIP-0016]).
-    ///
-    /// [BIP-0016]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
-    #[inline]
-    pub fn from_script_unchecked<T>(script: &Script<T>) -> Self {
-        ScriptHash(hash160::Hash::hash(script.as_bytes()))
-    }
-}
-
-impl WScriptHash {
-    /// Constructs a new `WScriptHash` after first checking the script size.
-    ///
-    /// # 10,000-byte limit on the witness script
-    ///
-    /// > The witnessScript (≤ 10,000 bytes) is popped off the initial witness stack. SHA256 of the
-    /// > witnessScript must match the 32-byte witness program.
-    ///
-    /// ref: [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-    #[inline]
-    pub fn from_script(witness_script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
-        if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {
-            return Err(WitnessScriptSizeError { size: witness_script.len() });
-        }
-
-        // We've just checked the length
-        Ok(WScriptHash::from_script_unchecked(witness_script))
-    }
-
-    /// Constructs a new `WScriptHash` from any script irrespective of script size.
-    ///
-    /// If you hash a script that exceeds 10,000 bytes in size and use it to create a Segwit
-    /// output then the output will be unspendable (see [BIP-0141]).
-    ///
-    /// ref: [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-    #[inline]
-    pub fn from_script_unchecked(script: &WitnessScript) -> Self {
-        WScriptHash(sha256::Hash::hash(script.as_bytes()))
-    }
 }
 
 impl<T: ScriptHashableTag> TryFrom<ScriptBuf<T>> for ScriptHash {
@@ -232,60 +144,6 @@ impl TryFrom<&WitnessScript> for WScriptHash {
         Self::from_script(witness_script)
     }
 }
-
-/// Error while hashing a redeem script.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RedeemScriptSizeError {
-    /// Invalid redeem script size (cannot exceed 520 bytes).
-    size: usize,
-}
-
-impl RedeemScriptSizeError {
-    /// Returns the invalid redeem script size.
-    pub fn invalid_size(&self) -> usize { self.size }
-}
-
-impl From<Infallible> for RedeemScriptSizeError {
-    #[inline]
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for RedeemScriptSizeError {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "redeem script size exceeds {} bytes: {}", MAX_REDEEM_SCRIPT_SIZE, self.size)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for RedeemScriptSizeError {}
-
-/// Error while hashing a witness script.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WitnessScriptSizeError {
-    /// Invalid witness script size (cannot exceed 10,000 bytes).
-    size: usize,
-}
-
-impl WitnessScriptSizeError {
-    /// Returns the invalid witness script size.
-    pub fn invalid_size(&self) -> usize { self.size }
-}
-
-impl From<Infallible> for WitnessScriptSizeError {
-    #[inline]
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for WitnessScriptSizeError {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "witness script size exceeds {} bytes: {}", MAX_WITNESS_SCRIPT_SIZE, self.size)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for WitnessScriptSizeError {}
 
 // We keep all the `Script` and `ScriptBuf` impls together since it's easier to see side-by-side.
 
@@ -671,6 +529,8 @@ impl<'de, T> serde::Deserialize<'de> for ScriptBuf<T> {
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::{format, vec};
+
+    use hashes::{hash160, sha256};
 
     use super::*;
 

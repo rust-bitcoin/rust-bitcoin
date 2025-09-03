@@ -19,6 +19,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
@@ -33,6 +34,10 @@ use units::parse_int;
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
 use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, Witness};
+
+#[rustfmt::skip]            // Keep public re-exports separate.
+#[doc(inline)]
+pub use crate::hash_types::{Ntxid, Txid, Wtxid};
 
 /// Bitcoin transaction.
 ///
@@ -584,58 +589,6 @@ impl std::error::Error for ParseOutPointError {
     }
 }
 
-hashes::hash_newtype! {
-    /// A bitcoin transaction hash/transaction ID.
-    ///
-    /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
-    /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations.
-    ///
-    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
-
-    /// A bitcoin witness transaction ID.
-    pub struct Wtxid(sha256d::Hash);
-
-    /// A "normalized TXID".
-    ///
-    /// Computed on a transaction that has had the signatures removed.
-    ///
-    /// This type is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
-    /// applications. This method clears the `script_sig` field of each input, which in Segwit
-    /// transactions is already empty, so for Segwit transactions the ntxid will be equal to the
-    /// txid, and you should simply use the latter.
-    ///
-    /// This gives a way to identify a transaction that is "the same" as another in the sense of
-    /// having the same inputs and outputs.
-    pub struct Ntxid(sha256d::Hash);
-}
-
-#[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(Txid, Wtxid, Ntxid);
-#[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(Txid, Wtxid, Ntxid);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(Txid, Wtxid, Ntxid);
-
-impl Txid {
-    /// The `Txid` used in a coinbase prevout.
-    ///
-    /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
-    /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
-    pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
-}
-
-impl Wtxid {
-    /// The `Wtxid` of a coinbase transaction.
-    ///
-    /// This is used as the wTXID for the coinbase transaction when constructing blocks (in the
-    /// witness commitment tree) since the coinbase transaction contains a commitment to all
-    /// transactions' wTXIDs but naturally cannot commit to its own.
-    pub const COINBASE: Self = Self::from_byte_array([0; 32]);
-}
-
 /// The transaction version.
 ///
 /// Currently, as specified by [BIP-0068] and [BIP-0431], version 1, 2, and 3 are considered standard.
@@ -744,22 +697,6 @@ impl<'a> Arbitrary<'a> for Version {
             2 => Ok(Version::THREE),
             _ => Ok(Version(u.arbitrary()?)),
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Txid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let arbitrary_bytes = u.arbitrary()?;
-        let t = sha256d::Hash::from_byte_array(arbitrary_bytes);
-        Ok(Txid(t))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Wtxid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Wtxid::from_byte_array(u.arbitrary()?))
     }
 }
 
