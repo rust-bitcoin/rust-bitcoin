@@ -134,6 +134,10 @@ internal_macros::define_extension_trait! {
         /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
         /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
         /// the input length `CompactSize` to increase its encoding length.
+        ///
+        /// # Panics
+        ///
+        /// If the coversion overflows.
         fn legacy_weight(&self) -> Weight {
             Weight::from_non_witness_data_size(self.base_size().to_u64())
         }
@@ -149,6 +153,10 @@ internal_macros::define_extension_trait! {
         /// - the new input added causes the input length `CompactSize` to increase its encoding length
         /// - the new input is the first segwit input added - this will add an additional 2WU to the
         ///   transaction weight to take into account the SegWit marker
+        ///
+        /// # Panics
+        ///
+        /// If the coversion overflows.
         fn segwit_weight(&self) -> Weight {
             Weight::from_non_witness_data_size(self.base_size().to_u64())
                 + Weight::from_witness_data_size(self.witness.size().to_u64())
@@ -157,6 +165,10 @@ internal_macros::define_extension_trait! {
         /// Returns the base size of this input.
         ///
         /// Base size excludes the witness data (see [`Self::total_size`]).
+        ///
+        /// # Panics
+        ///
+        /// If the size calculation overflows.
         fn base_size(&self) -> usize {
             let mut size = OutPoint::SIZE;
 
@@ -169,6 +181,10 @@ internal_macros::define_extension_trait! {
         /// Returns the total number of bytes that this input contributes to a transaction.
         ///
         /// Total size includes the witness data (for base size see [`Self::base_size`]).
+        /// 
+        /// # Panics
+        ///
+        /// If the size calculation overflows.
         fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
     }
 }
