@@ -2315,7 +2315,7 @@ mod tests {
     fn disallow_confusing_forms() {
         // Non-exhaustive list of confusing forms.
         let confusing =
-            vec!["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
+            ["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
         for denom in confusing.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
@@ -2328,7 +2328,7 @@ mod tests {
     #[test]
     fn disallow_unknown_denomination() {
         // Non-exhaustive list of unknown forms.
-        let unknown = vec!["NBTC", "UBTC", "ABC", "abc"];
+        let unknown = ["NBTC", "UBTC", "ABC", "abc"];
         for denom in unknown.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),

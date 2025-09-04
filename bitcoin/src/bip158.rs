@@ -618,7 +618,7 @@ mod test {
                 .unwrap());
 
             for script in txmap.values() {
-                let query = vec![script];
+                let query = [script];
                 if !script.is_empty() {
                     assert!(filter
                         .match_any(block_hash, &mut query.iter().map(|s| s.as_bytes()))
