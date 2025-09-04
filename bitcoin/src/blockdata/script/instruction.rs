@@ -48,10 +48,7 @@ impl Instruction<'_> {
                 }
             }
             Instruction::PushBytes(bytes) => {
-                match super::read_scriptint_non_minimal(bytes.as_bytes()) {
-                    Ok(v) => Some(v),
-                    _ => None,
-                }
+                super::read_scriptint_non_minimal(bytes.as_bytes()).ok()
             }
         }
     }
