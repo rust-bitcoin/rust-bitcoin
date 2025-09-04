@@ -64,6 +64,7 @@ pub(crate) use maybe_const_fn;
 pub(crate) use test_macros::*;
 
 #[cfg(test)]
+#[allow(clippy::items_after_test_module)]
 mod test_macros {
 
     macro_rules! hex (($hex:expr) => (<Vec<u8> as hashes::hex::FromHex>::from_hex($hex).unwrap()));
