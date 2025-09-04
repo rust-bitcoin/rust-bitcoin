@@ -412,17 +412,17 @@ impl DerivationPath {
 
     /// Get an [Iterator] over the children of this [DerivationPath]
     /// starting with the given [ChildNumber].
-    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator {
+    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, cn)
     }
 
     /// Get an [Iterator] over the unhardened children of this [DerivationPath].
-    pub fn normal_children(&self) -> DerivationPathIterator {
+    pub fn normal_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, ChildNumber::Normal { index: 0 })
     }
 
     /// Get an [Iterator] over the hardened children of this [DerivationPath].
-    pub fn hardened_children(&self) -> DerivationPathIterator {
+    pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, ChildNumber::Hardened { index: 0 })
     }
 
