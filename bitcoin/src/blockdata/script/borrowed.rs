@@ -520,7 +520,7 @@ impl Script {
     ///
     /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
     #[inline]
-    pub fn instructions(&self) -> Instructions {
+    pub fn instructions(&self) -> Instructions<'_> {
         Instructions { data: self.0.iter(), enforce_minimal: false }
     }
 
@@ -529,7 +529,7 @@ impl Script {
     /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
     /// is not minimal.
     #[inline]
-    pub fn instructions_minimal(&self) -> Instructions {
+    pub fn instructions_minimal(&self) -> Instructions<'_> {
         Instructions { data: self.0.iter(), enforce_minimal: true }
     }
 
@@ -541,7 +541,7 @@ impl Script {
     ///
     /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
     #[inline]
-    pub fn instruction_indices(&self) -> InstructionIndices {
+    pub fn instruction_indices(&self) -> InstructionIndices<'_> {
         InstructionIndices::from_instructions(self.instructions())
     }
 
@@ -550,7 +550,7 @@ impl Script {
     /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
     /// returned if a push is not minimal.
     #[inline]
-    pub fn instruction_indices_minimal(&self) -> InstructionIndices {
+    pub fn instruction_indices_minimal(&self) -> InstructionIndices<'_> {
         InstructionIndices::from_instructions(self.instructions_minimal())
     }
 
@@ -591,7 +591,7 @@ impl Script {
     /// Iterates the script to find the last pushdata.
     ///
     /// Returns `None` if the instruction is an opcode or if the script is empty.
-    pub(crate) fn last_pushdata(&self) -> Option<Push> {
+    pub(crate) fn last_pushdata(&self) -> Option<Push<'_>> {
         match self.instructions().last() {
             // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
             Some(Ok(Instruction::PushBytes(bytes))) => Some(Push::Data(bytes)),
@@ -628,6 +628,8 @@ impl Script {
 ///
 /// "push" opcodes are defined by Bitcoin Core as OP_PUSHBYTES_, OP_PUSHDATA, OP_PUSHNUM_, and
 /// OP_RESERVED i.e., everything less than OP_PUSHNUM_16 (0x60) . (TODO: Add link to core code).
+// Num is unused but this crate is in maintenance mode and we don't want lint warnings blocking CI.
+#[allow(dead_code)] 
 pub(crate) enum Push<'a> {
     /// All the OP_PUSHBYTES_ and OP_PUSHDATA_ opcodes.
     Data(&'a PushBytes),

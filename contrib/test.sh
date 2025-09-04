@@ -8,6 +8,9 @@ MSRV="1\.48\.0"
 
 # Test pinned versions.
 if cargo --version | grep ${MSRV}; then
+    # Without this pinning fails, no clue why and I don't really care.
+    cp Cargo-minimal.lock Cargo.lock
+
     cargo update -p serde_json --precise 1.0.99
     cargo update -p serde --precise 1.0.156
     cargo update -p quote --precise 1.0.30

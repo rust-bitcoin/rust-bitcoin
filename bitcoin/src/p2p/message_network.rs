@@ -15,8 +15,6 @@ use crate::p2p::ServiceFlags;
 use crate::prelude::*;
 use crate::{io, p2p};
 
-/// Some simple messages
-
 /// The `version` message
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct VersionMessage {

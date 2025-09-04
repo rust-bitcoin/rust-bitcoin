@@ -7,7 +7,7 @@
 
 pub(crate) struct SerializeBytesAsHex<'a>(pub(crate) &'a [u8]);
 
-impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
+impl serde::Serialize for SerializeBytesAsHex<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -271,7 +271,7 @@ pub mod hex_bytes {
     {
         struct Visitor<B>(core::marker::PhantomData<B>);
 
-        impl<'de, B: FromHex> serde::de::Visitor<'de> for Visitor<B> {
+        impl<B: FromHex> serde::de::Visitor<'_> for Visitor<B> {
             type Value = B;
 
             fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -285,7 +285,7 @@ pub mod hex_bytes {
                 if let Ok(hex) = core::str::from_utf8(v) {
                     FromHex::from_hex(hex).map_err(E::custom)
                 } else {
-                    return Err(E::invalid_value(serde::de::Unexpected::Bytes(v), &self));
+                    Err(E::invalid_value(serde::de::Unexpected::Bytes(v), &self))
                 }
             }
 
