@@ -747,7 +747,7 @@ fn iterator() {
 
     assert_eq!(
         v_min,
-        vec![(0, Instruction::PushBytes([105].as_ref())), (2, Instruction::Op(opcodes::OP_NOP3))]
+        vec![(0, Instruction::PushBytes([105].as_ref())), (2, Instruction::Op(opcodes::all::OP_NOP3))]
     );
 
     assert_eq!(v_nonmin.unwrap_err(), Error::NonMinimalPush);
@@ -756,7 +756,7 @@ fn iterator() {
         v_nonmin_alt,
         vec![
             (0, Instruction::PushBytes([105, 0].as_ref())),
-            (3, Instruction::Op(opcodes::OP_NOP3))
+            (3, Instruction::Op(opcodes::all::OP_NOP3))
         ]
     );
 

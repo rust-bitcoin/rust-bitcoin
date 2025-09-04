@@ -47,18 +47,18 @@ macro_rules! all_opcodes {
                 #[doc = $doc]
                 pub const $op: Opcode = Opcode { code: $val};
             )*
-        }
 
-        /// Push an empty array onto the stack.
-        pub static OP_0: Opcode = OP_PUSHBYTES_0;
-        /// Empty stack is also FALSE.
-        pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
-        /// Number 1 is also TRUE.
-        pub static OP_TRUE: Opcode = OP_PUSHNUM_1;
-        /// Previously called OP_NOP2.
-        pub static OP_NOP2: Opcode = OP_CLTV;
-        /// Previously called OP_NOP3.
-        pub static OP_NOP3: Opcode = OP_CSV;
+            /// Push an empty array onto the stack.
+            pub static OP_0: Opcode = OP_PUSHBYTES_0;
+            /// Empty stack is also FALSE.
+            pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
+            /// Number 1 is also TRUE.
+            pub static OP_TRUE: Opcode = OP_PUSHNUM_1;
+            /// Previously called OP_NOP2.
+            pub static OP_NOP2: Opcode = OP_CLTV;
+            /// Previously called OP_NOP3.
+            pub static OP_NOP3: Opcode = OP_CSV;
+        }
 
         impl fmt::Display for Opcode {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
