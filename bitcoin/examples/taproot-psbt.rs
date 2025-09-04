@@ -447,10 +447,7 @@ impl BenefactorWallet {
 
         let input = Input {
             witness_utxo: {
-                let script_pubkey = script_pubkey;
-                let amount = Amount::from_sat(value);
-
-                Some(TxOut { value: amount.to_sat(), script_pubkey })
+                Some(TxOut { value, script_pubkey })
             },
             tap_key_origins: origins,
             tap_merkle_root: taproot_spend_info.merkle_root(),
