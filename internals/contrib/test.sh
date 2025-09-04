@@ -17,28 +17,28 @@ fi
 export CARGO_TERM_VERBOSE=true
 
 # Defaults / sanity checks
-cargo build
-cargo test
+cargo --locked build
+cargo --locked test
 
 if [ "$DO_LINT" = true ]
 then
-    cargo clippy --all-features --all-targets -- -D warnings
+    cargo --locked clippy --all-features --all-targets -- -D warnings
 fi
 
 if [ "$DO_FEATURE_MATRIX" = true ]; then
     # No features
-    cargo build --no-default-features
-    cargo test --no-default-features
+    cargo --locked build --no-default-features
+    cargo --locked test --no-default-features
 
     # All features
-    cargo build --no-default-features --features="$FEATURES"
-    cargo test --no-default-features --features="$FEATURES"
+    cargo --locked build --no-default-features --features="$FEATURES"
+    cargo --locked test --no-default-features --features="$FEATURES"
 
     # Single features
     for feature in ${FEATURES}
     do
-        cargo build --no-default-features --features="$feature"
-        cargo test --no-default-features --features="$feature"
+        cargo --locked build --no-default-features --features="$feature"
+        cargo --locked test --no-default-features --features="$feature"
     done
 fi
 
