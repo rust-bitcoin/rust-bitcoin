@@ -190,7 +190,7 @@ impl<'a> Iterator for Instructions<'a> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        if self.data.len() == 0 {
+        if self.data.as_slice().is_empty() {
             (0, Some(0))
         } else {
             // There will not be more instructions than bytes
