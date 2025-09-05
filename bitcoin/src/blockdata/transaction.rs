@@ -34,8 +34,29 @@ use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
 #[doc(inline)]
 pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut};
 
-internal_macros::impl_hashencode!(Txid);
-internal_macros::impl_hashencode!(Wtxid);
+impl Encodable for Txid {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for Txid {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Txid::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+    }
+}
+
+impl Encodable for Wtxid {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for Wtxid {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Wtxid::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+    }
+}
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Txid`] type.

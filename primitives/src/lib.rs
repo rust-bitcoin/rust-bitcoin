@@ -40,10 +40,10 @@ pub mod _export {
     }
 }
 
+mod hash_types;
 mod opcodes;
 
 pub mod block;
-pub mod merkle_tree;
 pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
@@ -83,10 +83,10 @@ pub use self::{
 };
 #[doc(inline)]
 pub use self::{
-    block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
-    merkle_tree::{TxMerkleNode, WitnessMerkleNode},
+    block::{Header as BlockHeader, Version as BlockVersion},
+    hash_types::{BlockHash, Ntxid, Txid, WitnessCommitment, Wtxid, TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
-    transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
+    transaction::{OutPoint, Version as TransactionVersion},
 };
 
 #[rustfmt::skip]

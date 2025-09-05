@@ -19,11 +19,14 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
 #[cfg(feature = "hex")]
 use internals::write_err;
+#[cfg(feature = "serde")]
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(feature = "alloc")]
 use units::locktime::absolute;
 #[cfg(feature = "hex")]
@@ -39,6 +42,11 @@ use crate::prelude::Vec;
 use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
 #[cfg(feature = "alloc")]
 use crate::witness::Witness;
+
+// TODO: Remove this.
+#[rustfmt::skip]            // Keep public re-exports separate.
+#[doc(inline)]
+pub use crate::hash_types::{Ntxid, Txid, Wtxid};
 
 /// Bitcoin transaction.
 ///
@@ -365,8 +373,6 @@ pub struct OutPoint {
     /// The index of the referenced output in its transaction's vout.
     pub vout: u32,
 }
-#[cfg(feature = "serde")]
-internals::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
     /// The number of bytes that an outpoint contributes to the size of a transaction.
@@ -427,6 +433,120 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     parse_int::int_from_str(s).map_err(ParseOutPointError::Vout)
 }
 
+#[cfg(feature = "serde")]
+impl Serialize for OutPoint {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if serializer.is_human_readable() {
+            serializer.collect_str(&self)
+        } else {
+            use crate::serde::ser::SerializeStruct as _;
+
+            let mut state = serializer.serialize_struct("OutPoint", 2)?;
+            // serializing as an array was found in the past to break for some serializers so we use
+            // a slice instead. This causes 8 bytes to be prepended for the length (even though this
+            // is a bit silly because know the length).
+            state.serialize_field("txid", self.txid.as_byte_array().as_slice())?;
+            state.serialize_field("vout", &self.vout.to_le_bytes())?;
+            state.end()
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for OutPoint {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            struct StringVisitor;
+
+            impl<'de> de::Visitor<'de> for StringVisitor {
+                type Value = OutPoint;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str("a string in format 'txid:vout'")
+                }
+
+                fn visit_str<E>(self, value: &str) -> Result<OutPoint, E>
+                where
+                    E: de::Error,
+                {
+                    value.parse::<OutPoint>().map_err(de::Error::custom)
+                }
+            }
+
+            deserializer.deserialize_str(StringVisitor)
+        } else {
+            #[derive(Deserialize)]
+            #[serde(field_identifier, rename_all = "lowercase")]
+            enum Field {
+                Txid,
+                Vout,
+            }
+
+            struct OutPointVisitor;
+
+            impl<'de> de::Visitor<'de> for OutPointVisitor {
+                type Value = OutPoint;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str("OutPoint struct with fields")
+                }
+
+                fn visit_seq<V>(self, mut seq: V) -> Result<OutPoint, V::Error>
+                where
+                    V: de::SeqAccess<'de>,
+                {
+                    let txid =
+                        seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                    let vout =
+                        seq.next_element()?.ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                    Ok(OutPoint { txid, vout })
+                }
+
+                fn visit_map<V>(self, mut map: V) -> Result<OutPoint, V::Error>
+                where
+                    V: de::MapAccess<'de>,
+                {
+                    let mut txid = None;
+                    let mut vout = None;
+
+                    while let Some(key) = map.next_key()? {
+                        match key {
+                            Field::Txid => {
+                                if txid.is_some() {
+                                    return Err(de::Error::duplicate_field("txid"));
+                                }
+                                let bytes: [u8; 32] = map.next_value()?;
+                                txid = Some(Txid::from_byte_array(bytes));
+                            }
+                            Field::Vout => {
+                                if vout.is_some() {
+                                    return Err(de::Error::duplicate_field("vout"));
+                                }
+                                let bytes: [u8; 4] = map.next_value()?;
+                                vout = Some(u32::from_le_bytes(bytes));
+                            }
+                        }
+                    }
+
+                    let txid = txid.ok_or_else(|| de::Error::missing_field("txid"))?;
+                    let vout = vout.ok_or_else(|| de::Error::missing_field("vout"))?;
+
+                    Ok(OutPoint { txid, vout })
+                }
+            }
+
+            const FIELDS: &[&str] = &["txid", "vout"];
+            deserializer.deserialize_struct("OutPoint", FIELDS, OutPointVisitor)
+        }
+    }
+}
+
 /// An error in parsing an [`OutPoint`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -476,58 +596,6 @@ impl std::error::Error for ParseOutPointError {
             Self::Format | Self::TooLong | Self::VoutNotCanonical => None,
         }
     }
-}
-
-hashes::hash_newtype! {
-    /// A bitcoin transaction hash/transaction ID.
-    ///
-    /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
-    /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations.
-    ///
-    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
-
-    /// A bitcoin witness transaction ID.
-    pub struct Wtxid(sha256d::Hash);
-
-    /// A "normalized TXID".
-    ///
-    /// Computed on a transaction that has had the signatures removed.
-    ///
-    /// This type is needed only for legacy (pre-Segwit or P2SH-wrapped segwit version 0)
-    /// applications. This method clears the `script_sig` field of each input, which in Segwit
-    /// transactions is already empty, so for Segwit transactions the ntxid will be equal to the
-    /// txid, and you should simply use the latter.
-    ///
-    /// This gives a way to identify a transaction that is "the same" as another in the sense of
-    /// having the same inputs and outputs.
-    pub struct Ntxid(sha256d::Hash);
-}
-
-#[cfg(feature = "hex")]
-hashes::impl_hex_for_newtype!(Txid, Wtxid, Ntxid);
-#[cfg(not(feature = "hex"))]
-hashes::impl_debug_only_for_newtype!(Txid, Wtxid, Ntxid);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(Txid, Wtxid, Ntxid);
-
-impl Txid {
-    /// The `Txid` used in a coinbase prevout.
-    ///
-    /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
-    /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
-    pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
-}
-
-impl Wtxid {
-    /// The `Wtxid` of a coinbase transaction.
-    ///
-    /// This is used as the wTXID for the coinbase transaction when constructing blocks (in the
-    /// witness commitment tree) since the coinbase transaction contains a commitment to all
-    /// transactions' wTXIDs but naturally cannot commit to its own.
-    pub const COINBASE: Self = Self::from_byte_array([0; 32]);
 }
 
 /// The transaction version.
@@ -638,22 +706,6 @@ impl<'a> Arbitrary<'a> for Version {
             2 => Ok(Version::THREE),
             _ => Ok(Version(u.arbitrary()?)),
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Txid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let arbitrary_bytes = u.arbitrary()?;
-        let t = sha256d::Hash::from_byte_array(arbitrary_bytes);
-        Ok(Txid(t))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Wtxid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Wtxid::from_byte_array(u.arbitrary()?))
     }
 }
 
@@ -777,5 +829,31 @@ mod tests {
     fn version_display() {
         let version = Version(123);
         assert_eq!(format!("{}", version), "123");
+    }
+
+    // Creates an arbitrary dummy outpoint.
+    #[cfg(feature = "serde")]
+    fn out_point() -> OutPoint {
+        "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1"
+            .parse::<OutPoint>()
+            .unwrap()
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_human_readable_rountrips() {
+        let output = out_point();
+        let ser = serde_json::to_string(&output).unwrap();
+        let got = serde_json::from_str::<OutPoint>(&ser).unwrap();
+        assert_eq!(got, output);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_non_human_readable_rountrips() {
+        let output = out_point();
+        let ser = bincode::serialize(&output).unwrap();
+        let got = bincode::deserialize::<OutPoint>(&ser).unwrap();
+        assert_eq!(got, output);
     }
 }

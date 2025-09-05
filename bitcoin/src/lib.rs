@@ -146,19 +146,19 @@ pub mod taproot;
 #[doc(inline)]
 pub use primitives::{
     block::{
-        Block, BlockHash, Checked as BlockChecked, Header as BlockHeader,
+        Block, Checked as BlockChecked, Header as BlockHeader,
         Unchecked as BlockUnchecked, Validation as BlockValidation, Version as BlockVersion,
-        WitnessCommitment,
     },
-    merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{
         RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
         TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf,
     },
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
-    transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
+    transaction::{OutPoint, Transaction, TxIn, TxOut, Version as TransactionVersion},
     witness::Witness,
+    // All the hash types.
+    BlockHash, Ntxid, Txid, WitnessCommitment, Wtxid, TxMerkleNode, WitnessMerkleNode,
 };
 #[doc(inline)]
 pub use units::{

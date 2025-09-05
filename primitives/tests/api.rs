@@ -17,9 +17,10 @@ use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
+    absolute, block, pow, relative, transaction, witness, OutPoint, RedeemScript,
     RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, TapScript,
     TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
+    BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment,
 };
 use hashes::sha256t;
 
@@ -39,10 +40,10 @@ struct Structs<'a> {
     b: block::Block<Unchecked>,
     c: block::Header,
     d: block::Version,
-    e: block::BlockHash,
+    e: BlockHash,
     f: block::WitnessCommitment,
-    g: merkle_tree::TxMerkleNode,
-    h: merkle_tree::WitnessMerkleNode,
+    g: TxMerkleNode,
+    h: WitnessMerkleNode,
     i: pow::CompactTarget,
     j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
@@ -83,10 +84,10 @@ struct CommonTraits {
     b: block::Block<Unchecked>,
     c: block::Header,
     d: block::Version,
-    e: block::BlockHash,
-    f: block::WitnessCommitment,
-    g: merkle_tree::TxMerkleNode,
-    h: merkle_tree::WitnessMerkleNode,
+    e: BlockHash,
+    f: WitnessCommitment,
+    g: TxMerkleNode,
+    h: WitnessMerkleNode,
     i: pow::CompactTarget,
     // j: &'a Script,
     k: ScriptHash,
@@ -115,10 +116,10 @@ struct Clone<'a> {
     b: block::Block<Unchecked>,
     c: block::Header,
     d: block::Version,
-    e: block::BlockHash,
-    f: block::WitnessCommitment,
-    g: merkle_tree::TxMerkleNode,
-    h: merkle_tree::WitnessMerkleNode,
+    e: BlockHash,
+    f: WitnessCommitment,
+    g: TxMerkleNode,
+    h: WitnessMerkleNode,
     i: pow::CompactTarget,
     // j: &'a Script,
     k: ScriptHash,
@@ -148,10 +149,10 @@ struct Ord {
     // b: block::Block<Unchecked>,
     c: block::Header,
     d: block::Version,
-    e: block::BlockHash,
-    f: block::WitnessCommitment,
-    g: merkle_tree::TxMerkleNode,
-    h: merkle_tree::WitnessMerkleNode,
+    e: BlockHash,
+    f: WitnessCommitment,
+    g: TxMerkleNode,
+    h: WitnessMerkleNode,
     i: pow::CompactTarget,
     // j: &'a Script,  // Doesn't implement `Clone`.
     k: ScriptHash,
@@ -234,7 +235,7 @@ fn api_can_use_all_units_types_from_module_amount_error() {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_primitives::{
-        block, locktime, merkle_tree, pow, script, sequence, transaction, witness,
+        block, locktime, pow, script, sequence, transaction, witness,
     };
 }
 
@@ -293,10 +294,10 @@ fn api_all_non_error_types_have_non_empty_debug() {
         block::Block::<Unchecked>::arbitrary(&mut u).unwrap();
         block::Header::arbitrary(&mut u).unwrap();
         block::Version::arbitrary(&mut u).unwrap();
-        block::BlockHash::from_byte_array(BYTES);
+        BlockHash::from_byte_array(BYTES);
         block::WitnessCommitment::from_byte_array(BYTES);
-        merkle_tree::TxMerkleNode::from_byte_array(BYTES);
-        merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
+        TxMerkleNode::from_byte_array(BYTES);
+        WitnessMerkleNode::from_byte_array(BYTES);
         pow::CompactTarget::from_consensus(0x1d00_ffff);
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
