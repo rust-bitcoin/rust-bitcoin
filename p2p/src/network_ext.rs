@@ -8,6 +8,30 @@ use bitcoin::{Network, TestnetVersion};
 
 use crate::Magic;
 
+const BITCOIN_SEEDS: &[&str] = &[
+    "seed.bitcoin.sipa.be",
+    "dnsseed.bluematt.me",
+    "dnsseed.bitcoin.dashjr-list-of-p2p-nodes.us",
+    "seed.bitcoin.jonasschnelli.ch",
+    "seed.btc.petertodd.net",
+    "seed.bitcoin.sprovoost.nl",
+    "dnsseed.emzy.de",
+    "seed.bitcoin.wiz.biz",
+    "seed.mainnet.achownodes.xyz",
+];
+
+const SIGNET_SEEDS: &[&str] = &["seed.signet.bitcoin.sprovoost.nl", "seed.signet.achownodes.xyz"];
+
+const TESTNET_SEEDS: &[&str] = &[
+    "testnet-seed.bitcoin.jonasschnelli.ch",
+    "seed.tbtc.petertodd.net",
+    "seed.testnet.bitcoin.sprovoost.nl",
+    "testnet-seed.bluematt.me",
+    "seed.testnet.achownodes.xyz",
+];
+
+const TESTNET4_SEEDS: &[&str] = &["seed.testnet4.bitcoin.sprovoost.nl", "seed.testnet4.wiz.biz"];
+
 /// Trait that extends [`Network`] by adding getter methods for the default P2P ports and [`Magic`] bytes.
 pub trait NetworkExt {
     /// The default P2P port for a given [`Network`].
@@ -15,6 +39,11 @@ pub trait NetworkExt {
 
     /// The default network [`Magic`] for a given [`Network`].
     fn default_network_magic(self) -> Magic;
+
+    /// Return a list of DNS seeds to find peers.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/37c21ebe4078d5a7b9d8a91aca2ab8b118b9d69f/src/kernel/chainparams.cpp>
+    fn dns_seeds(&self) -> &[&str];
 }
 
 impl NetworkExt for Network {
@@ -45,6 +74,16 @@ impl NetworkExt for Network {
             Network::Testnet(TestnetVersion::V4) => Magic::TESTNET4,
             Network::Testnet(_) => Magic::TESTNET4,
             Network::Regtest => Magic::REGTEST,
+        }
+    }
+
+    fn dns_seeds(&self) -> &[&str] {
+        match self {
+            Network::Bitcoin => BITCOIN_SEEDS,
+            Network::Signet => SIGNET_SEEDS,
+            Network::Testnet(TestnetVersion::V3) => TESTNET_SEEDS,
+            Network::Testnet(TestnetVersion::V4) => TESTNET4_SEEDS,
+            _ => &[],
         }
     }
 }
