@@ -1591,7 +1591,7 @@ mod tests {
             "SIGHASH_SINGLE| SIGHASH_ANYONECANPAY",
             "SIGHASH_ALL SIGHASH_ANYONECANPAY",
             "SIGHASH_NONE |",
-            "SIGHASH_SIGNLE",
+            "SIGHASH_SINGLE",
             "sighash_none",
             "Sighash_none",
             "SigHash_None",
