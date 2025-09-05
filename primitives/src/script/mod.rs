@@ -774,8 +774,12 @@ mod tests {
     #[test]
     fn script_hash_from_script_unchecked() {
         let script = WitnessScript::from_bytes(&[0x51; 521]);
-        let hash = ScriptHash::from_script_unchecked(script);
-        assert_eq!(hash, ScriptHash(hash160::Hash::hash(script.as_bytes())));
+
+        let got = ScriptHash::from_script_unchecked(script);
+        let want =
+            ScriptHash::from_byte_array(hash160::Hash::hash(script.as_bytes()).to_byte_array());
+
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -790,8 +794,12 @@ mod tests {
     #[test]
     fn wscript_hash_from_script_unchecked() {
         let script = WitnessScript::from_bytes(&[0x51; 10_001]);
-        let hash = WScriptHash::from_script_unchecked(script);
-        assert_eq!(hash, WScriptHash(sha256::Hash::hash(script.as_bytes())));
+
+        let got = WScriptHash::from_script_unchecked(script);
+        let want =
+            WScriptHash::from_byte_array(sha256::Hash::hash(script.as_bytes()).to_byte_array());
+
+        assert_eq!(got, want);
     }
 
     #[test]
