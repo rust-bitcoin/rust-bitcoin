@@ -24,21 +24,13 @@ use hashes::sha256d;
 use internals::compact_size;
 #[cfg(feature = "hex")]
 use internals::write_err;
-#[cfg(feature = "alloc")]
-use units::locktime::absolute;
 #[cfg(feature = "hex")]
 use units::parse_int;
-#[cfg(feature = "alloc")]
-use units::sequence::Sequence;
-#[cfg(feature = "alloc")]
-use units::{Amount, Weight};
 
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
-use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
-#[cfg(feature = "alloc")]
-use crate::witness::Witness;
+use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, Witness};
 
 /// Bitcoin transaction.
 ///
