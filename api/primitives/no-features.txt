@@ -1,0 +1,486 @@
+impl bitcoin_hashes::Hash for bitcoin_primitives::block::BlockHash
+impl bitcoin_hashes::Hash for bitcoin_primitives::block::WitnessCommitment
+impl bitcoin_hashes::Hash for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl bitcoin_hashes::Hash for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl bitcoin_hashes::Hash for bitcoin_primitives::transaction::Ntxid
+impl bitcoin_hashes::Hash for bitcoin_primitives::transaction::Txid
+impl bitcoin_hashes::Hash for bitcoin_primitives::transaction::Wtxid
+impl bitcoin_primitives::block::BlockHash
+impl bitcoin_primitives::block::Header
+impl bitcoin_primitives::block::Version
+impl bitcoin_primitives::block::WitnessCommitment
+impl bitcoin_primitives::merkle_tree::TxMerkleNode
+impl bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl bitcoin_primitives::pow::CompactTarget
+impl bitcoin_primitives::transaction::Ntxid
+impl bitcoin_primitives::transaction::OutPoint
+impl bitcoin_primitives::transaction::Txid
+impl bitcoin_primitives::transaction::Version
+impl bitcoin_primitives::transaction::Wtxid
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::block::BlockHash
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::block::WitnessCommitment
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::transaction::Ntxid
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::transaction::Txid
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::transaction::Wtxid
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::block::BlockHash
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::block::WitnessCommitment
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::transaction::Ntxid
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::transaction::Txid
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::transaction::Wtxid
+impl core::clone::Clone for bitcoin_primitives::block::BlockHash
+impl core::clone::Clone for bitcoin_primitives::block::Header
+impl core::clone::Clone for bitcoin_primitives::block::Version
+impl core::clone::Clone for bitcoin_primitives::block::WitnessCommitment
+impl core::clone::Clone for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::clone::Clone for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::clone::Clone for bitcoin_primitives::pow::CompactTarget
+impl core::clone::Clone for bitcoin_primitives::transaction::Ntxid
+impl core::clone::Clone for bitcoin_primitives::transaction::OutPoint
+impl core::clone::Clone for bitcoin_primitives::transaction::Txid
+impl core::clone::Clone for bitcoin_primitives::transaction::Version
+impl core::clone::Clone for bitcoin_primitives::transaction::Wtxid
+impl core::cmp::Eq for bitcoin_primitives::block::BlockHash
+impl core::cmp::Eq for bitcoin_primitives::block::Header
+impl core::cmp::Eq for bitcoin_primitives::block::Version
+impl core::cmp::Eq for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::Eq for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::cmp::Eq for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::cmp::Eq for bitcoin_primitives::pow::CompactTarget
+impl core::cmp::Eq for bitcoin_primitives::transaction::Ntxid
+impl core::cmp::Eq for bitcoin_primitives::transaction::OutPoint
+impl core::cmp::Eq for bitcoin_primitives::transaction::Txid
+impl core::cmp::Eq for bitcoin_primitives::transaction::Version
+impl core::cmp::Eq for bitcoin_primitives::transaction::Wtxid
+impl core::cmp::Ord for bitcoin_primitives::block::BlockHash
+impl core::cmp::Ord for bitcoin_primitives::block::Header
+impl core::cmp::Ord for bitcoin_primitives::block::Version
+impl core::cmp::Ord for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::Ord for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::cmp::Ord for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::cmp::Ord for bitcoin_primitives::pow::CompactTarget
+impl core::cmp::Ord for bitcoin_primitives::transaction::Ntxid
+impl core::cmp::Ord for bitcoin_primitives::transaction::OutPoint
+impl core::cmp::Ord for bitcoin_primitives::transaction::Txid
+impl core::cmp::Ord for bitcoin_primitives::transaction::Version
+impl core::cmp::Ord for bitcoin_primitives::transaction::Wtxid
+impl core::cmp::PartialEq for bitcoin_primitives::block::BlockHash
+impl core::cmp::PartialEq for bitcoin_primitives::block::Header
+impl core::cmp::PartialEq for bitcoin_primitives::block::Version
+impl core::cmp::PartialEq for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::PartialEq for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::cmp::PartialEq for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::cmp::PartialEq for bitcoin_primitives::pow::CompactTarget
+impl core::cmp::PartialEq for bitcoin_primitives::transaction::Ntxid
+impl core::cmp::PartialEq for bitcoin_primitives::transaction::OutPoint
+impl core::cmp::PartialEq for bitcoin_primitives::transaction::Txid
+impl core::cmp::PartialEq for bitcoin_primitives::transaction::Version
+impl core::cmp::PartialEq for bitcoin_primitives::transaction::Wtxid
+impl core::cmp::PartialOrd for bitcoin_primitives::block::BlockHash
+impl core::cmp::PartialOrd for bitcoin_primitives::block::Header
+impl core::cmp::PartialOrd for bitcoin_primitives::block::Version
+impl core::cmp::PartialOrd for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::PartialOrd for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::cmp::PartialOrd for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::cmp::PartialOrd for bitcoin_primitives::pow::CompactTarget
+impl core::cmp::PartialOrd for bitcoin_primitives::transaction::Ntxid
+impl core::cmp::PartialOrd for bitcoin_primitives::transaction::OutPoint
+impl core::cmp::PartialOrd for bitcoin_primitives::transaction::Txid
+impl core::cmp::PartialOrd for bitcoin_primitives::transaction::Version
+impl core::cmp::PartialOrd for bitcoin_primitives::transaction::Wtxid
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::block::BlockHash
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::block::WitnessCommitment
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::transaction::Ntxid
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::transaction::Txid
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::transaction::Wtxid
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::block::BlockHash
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::block::WitnessCommitment
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::transaction::Ntxid
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::transaction::Txid
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::transaction::Wtxid
+impl core::convert::From<&bitcoin_primitives::block::Header> for bitcoin_primitives::block::BlockHash
+impl core::convert::From<bitcoin_primitives::block::Header> for bitcoin_primitives::block::BlockHash
+impl core::convert::From<bitcoin_primitives::transaction::Version> for u32
+impl core::default::Default for bitcoin_primitives::block::Version
+impl core::fmt::Debug for bitcoin_primitives::block::BlockHash
+impl core::fmt::Debug for bitcoin_primitives::block::Header
+impl core::fmt::Debug for bitcoin_primitives::block::Version
+impl core::fmt::Debug for bitcoin_primitives::block::WitnessCommitment
+impl core::fmt::Debug for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::fmt::Debug for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::fmt::Debug for bitcoin_primitives::pow::CompactTarget
+impl core::fmt::Debug for bitcoin_primitives::transaction::Ntxid
+impl core::fmt::Debug for bitcoin_primitives::transaction::OutPoint
+impl core::fmt::Debug for bitcoin_primitives::transaction::Txid
+impl core::fmt::Debug for bitcoin_primitives::transaction::Version
+impl core::fmt::Debug for bitcoin_primitives::transaction::Wtxid
+impl core::fmt::Display for bitcoin_primitives::transaction::Version
+impl core::fmt::LowerHex for bitcoin_primitives::pow::CompactTarget
+impl core::fmt::UpperHex for bitcoin_primitives::pow::CompactTarget
+impl core::hash::Hash for bitcoin_primitives::block::BlockHash
+impl core::hash::Hash for bitcoin_primitives::block::Header
+impl core::hash::Hash for bitcoin_primitives::block::Version
+impl core::hash::Hash for bitcoin_primitives::block::WitnessCommitment
+impl core::hash::Hash for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::hash::Hash for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::hash::Hash for bitcoin_primitives::pow::CompactTarget
+impl core::hash::Hash for bitcoin_primitives::transaction::Ntxid
+impl core::hash::Hash for bitcoin_primitives::transaction::OutPoint
+impl core::hash::Hash for bitcoin_primitives::transaction::Txid
+impl core::hash::Hash for bitcoin_primitives::transaction::Version
+impl core::hash::Hash for bitcoin_primitives::transaction::Wtxid
+impl core::marker::Copy for bitcoin_primitives::block::BlockHash
+impl core::marker::Copy for bitcoin_primitives::block::Header
+impl core::marker::Copy for bitcoin_primitives::block::Version
+impl core::marker::Copy for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Copy for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::marker::Copy for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::marker::Copy for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Copy for bitcoin_primitives::transaction::Ntxid
+impl core::marker::Copy for bitcoin_primitives::transaction::OutPoint
+impl core::marker::Copy for bitcoin_primitives::transaction::Txid
+impl core::marker::Copy for bitcoin_primitives::transaction::Version
+impl core::marker::Copy for bitcoin_primitives::transaction::Wtxid
+impl core::marker::Freeze for bitcoin_primitives::block::BlockHash
+impl core::marker::Freeze for bitcoin_primitives::block::Header
+impl core::marker::Freeze for bitcoin_primitives::block::Version
+impl core::marker::Freeze for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Freeze for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::marker::Freeze for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::marker::Freeze for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Freeze for bitcoin_primitives::transaction::Ntxid
+impl core::marker::Freeze for bitcoin_primitives::transaction::OutPoint
+impl core::marker::Freeze for bitcoin_primitives::transaction::Txid
+impl core::marker::Freeze for bitcoin_primitives::transaction::Version
+impl core::marker::Freeze for bitcoin_primitives::transaction::Wtxid
+impl core::marker::Send for bitcoin_primitives::block::BlockHash
+impl core::marker::Send for bitcoin_primitives::block::Header
+impl core::marker::Send for bitcoin_primitives::block::Version
+impl core::marker::Send for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Send for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::marker::Send for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::marker::Send for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Send for bitcoin_primitives::transaction::Ntxid
+impl core::marker::Send for bitcoin_primitives::transaction::OutPoint
+impl core::marker::Send for bitcoin_primitives::transaction::Txid
+impl core::marker::Send for bitcoin_primitives::transaction::Version
+impl core::marker::Send for bitcoin_primitives::transaction::Wtxid
+impl core::marker::StructuralPartialEq for bitcoin_primitives::block::BlockHash
+impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Header
+impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Version
+impl core::marker::StructuralPartialEq for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::StructuralPartialEq for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::marker::StructuralPartialEq for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::marker::StructuralPartialEq for bitcoin_primitives::pow::CompactTarget
+impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::Ntxid
+impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::OutPoint
+impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::Txid
+impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::Version
+impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::Wtxid
+impl core::marker::Sync for bitcoin_primitives::block::BlockHash
+impl core::marker::Sync for bitcoin_primitives::block::Header
+impl core::marker::Sync for bitcoin_primitives::block::Version
+impl core::marker::Sync for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Sync for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::marker::Sync for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::marker::Sync for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Sync for bitcoin_primitives::transaction::Ntxid
+impl core::marker::Sync for bitcoin_primitives::transaction::OutPoint
+impl core::marker::Sync for bitcoin_primitives::transaction::Txid
+impl core::marker::Sync for bitcoin_primitives::transaction::Version
+impl core::marker::Sync for bitcoin_primitives::transaction::Wtxid
+impl core::marker::Unpin for bitcoin_primitives::block::BlockHash
+impl core::marker::Unpin for bitcoin_primitives::block::Header
+impl core::marker::Unpin for bitcoin_primitives::block::Version
+impl core::marker::Unpin for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Unpin for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::marker::Unpin for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::marker::Unpin for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Unpin for bitcoin_primitives::transaction::Ntxid
+impl core::marker::Unpin for bitcoin_primitives::transaction::OutPoint
+impl core::marker::Unpin for bitcoin_primitives::transaction::Txid
+impl core::marker::Unpin for bitcoin_primitives::transaction::Version
+impl core::marker::Unpin for bitcoin_primitives::transaction::Wtxid
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::BlockHash
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Header
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Version
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::WitnessCommitment
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::pow::CompactTarget
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::Ntxid
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::OutPoint
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::Txid
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::Version
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::Wtxid
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::BlockHash
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Header
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Version
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::WitnessCommitment
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNode
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::pow::CompactTarget
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::Ntxid
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::OutPoint
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::Txid
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::Version
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::Wtxid
+pub bitcoin_primitives::BlockHeader::bits: bitcoin_primitives::pow::CompactTarget
+pub bitcoin_primitives::BlockHeader::merkle_root: bitcoin_primitives::merkle_tree::TxMerkleNode
+pub bitcoin_primitives::BlockHeader::nonce: u32
+pub bitcoin_primitives::BlockHeader::prev_blockhash: bitcoin_primitives::block::BlockHash
+pub bitcoin_primitives::BlockHeader::time: bitcoin_units::time::encapsulate::BlockTime
+pub bitcoin_primitives::BlockHeader::version: bitcoin_primitives::block::Version
+pub bitcoin_primitives::OutPoint::txid: bitcoin_primitives::transaction::Txid
+pub bitcoin_primitives::OutPoint::vout: u32
+pub bitcoin_primitives::block::Header::bits: bitcoin_primitives::pow::CompactTarget
+pub bitcoin_primitives::block::Header::merkle_root: bitcoin_primitives::merkle_tree::TxMerkleNode
+pub bitcoin_primitives::block::Header::nonce: u32
+pub bitcoin_primitives::block::Header::prev_blockhash: bitcoin_primitives::block::BlockHash
+pub bitcoin_primitives::block::Header::time: bitcoin_units::time::encapsulate::BlockTime
+pub bitcoin_primitives::block::Header::version: bitcoin_primitives::block::Version
+pub bitcoin_primitives::transaction::OutPoint::txid: bitcoin_primitives::transaction::Txid
+pub bitcoin_primitives::transaction::OutPoint::vout: u32
+pub const bitcoin_primitives::block::BlockHash::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::block::BlockHash::GENESIS_PREVIOUS_BLOCK_HASH: Self
+pub const bitcoin_primitives::block::Header::SIZE: usize
+pub const bitcoin_primitives::block::Version::NO_SOFT_FORK_SIGNALLING: Self
+pub const bitcoin_primitives::block::Version::ONE: Self
+pub const bitcoin_primitives::block::Version::TWO: Self
+pub const bitcoin_primitives::block::WitnessCommitment::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::merkle_tree::TxMerkleNode::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::merkle_tree::WitnessMerkleNode::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::transaction::Ntxid::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::transaction::OutPoint::COINBASE_PREVOUT: Self
+pub const bitcoin_primitives::transaction::OutPoint::SIZE: usize
+pub const bitcoin_primitives::transaction::Txid::COINBASE_PREVOUT: Self
+pub const bitcoin_primitives::transaction::Txid::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::transaction::Version::ONE: Self
+pub const bitcoin_primitives::transaction::Version::THREE: Self
+pub const bitcoin_primitives::transaction::Version::TWO: Self
+pub const bitcoin_primitives::transaction::Wtxid::COINBASE: Self
+pub const bitcoin_primitives::transaction::Wtxid::DISPLAY_BACKWARD: bool
+pub const fn bitcoin_primitives::block::BlockHash::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::block::BlockHash::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::block::BlockHash::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::block::Version::from_consensus(v: i32) -> Self
+pub const fn bitcoin_primitives::block::WitnessCommitment::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::block::WitnessCommitment::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::block::WitnessCommitment::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::merkle_tree::TxMerkleNode::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::merkle_tree::TxMerkleNode::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::transaction::Ntxid::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::transaction::Ntxid::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::transaction::Ntxid::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::transaction::Txid::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::transaction::Txid::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::transaction::Txid::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::transaction::Version::is_standard(self) -> bool
+pub const fn bitcoin_primitives::transaction::Version::maybe_non_standard(version: u32) -> bitcoin_primitives::transaction::Version
+pub const fn bitcoin_primitives::transaction::Version::to_u32(self) -> u32
+pub const fn bitcoin_primitives::transaction::Wtxid::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::transaction::Wtxid::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::transaction::Wtxid::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub fn bitcoin_primitives::block::BlockHash::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::block::BlockHash::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::block::BlockHash::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::block::BlockHash::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::block::BlockHash::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::block::BlockHash::clone(&self) -> bitcoin_primitives::block::BlockHash
+pub fn bitcoin_primitives::block::BlockHash::cmp(&self, other: &bitcoin_primitives::block::BlockHash) -> core::cmp::Ordering
+pub fn bitcoin_primitives::block::BlockHash::eq(&self, other: &bitcoin_primitives::block::BlockHash) -> bool
+pub fn bitcoin_primitives::block::BlockHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::BlockHash::from(header: &bitcoin_primitives::block::Header) -> bitcoin_primitives::block::BlockHash
+pub fn bitcoin_primitives::block::BlockHash::from(header: bitcoin_primitives::block::Header) -> bitcoin_primitives::block::BlockHash
+pub fn bitcoin_primitives::block::BlockHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::block::BlockHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::block::BlockHash::partial_cmp(&self, other: &bitcoin_primitives::block::BlockHash) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::block::BlockHash::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::block::Header::block_hash(&self) -> bitcoin_primitives::block::BlockHash
+pub fn bitcoin_primitives::block::Header::clone(&self) -> bitcoin_primitives::block::Header
+pub fn bitcoin_primitives::block::Header::cmp(&self, other: &bitcoin_primitives::block::Header) -> core::cmp::Ordering
+pub fn bitcoin_primitives::block::Header::eq(&self, other: &bitcoin_primitives::block::Header) -> bool
+pub fn bitcoin_primitives::block::Header::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::Header::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::block::Header::partial_cmp(&self, other: &bitcoin_primitives::block::Header) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::block::Version::clone(&self) -> bitcoin_primitives::block::Version
+pub fn bitcoin_primitives::block::Version::cmp(&self, other: &bitcoin_primitives::block::Version) -> core::cmp::Ordering
+pub fn bitcoin_primitives::block::Version::default() -> bitcoin_primitives::block::Version
+pub fn bitcoin_primitives::block::Version::eq(&self, other: &bitcoin_primitives::block::Version) -> bool
+pub fn bitcoin_primitives::block::Version::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::Version::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::block::Version::is_signalling_soft_fork(self, bit: u8) -> bool
+pub fn bitcoin_primitives::block::Version::partial_cmp(&self, other: &bitcoin_primitives::block::Version) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::block::Version::to_consensus(self) -> i32
+pub fn bitcoin_primitives::block::WitnessCommitment::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::block::WitnessCommitment::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::block::WitnessCommitment::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::block::WitnessCommitment::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::block::WitnessCommitment::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::block::WitnessCommitment::clone(&self) -> bitcoin_primitives::block::WitnessCommitment
+pub fn bitcoin_primitives::block::WitnessCommitment::cmp(&self, other: &bitcoin_primitives::block::WitnessCommitment) -> core::cmp::Ordering
+pub fn bitcoin_primitives::block::WitnessCommitment::eq(&self, other: &bitcoin_primitives::block::WitnessCommitment) -> bool
+pub fn bitcoin_primitives::block::WitnessCommitment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::WitnessCommitment::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::block::WitnessCommitment::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::block::WitnessCommitment::partial_cmp(&self, other: &bitcoin_primitives::block::WitnessCommitment) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::clone(&self) -> bitcoin_primitives::merkle_tree::TxMerkleNode
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::cmp(&self, other: &bitcoin_primitives::merkle_tree::TxMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::eq(&self, other: &bitcoin_primitives::merkle_tree::TxMerkleNode) -> bool
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::merkle_tree::TxMerkleNode) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::clone(&self) -> bitcoin_primitives::merkle_tree::WitnessMerkleNode
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::cmp(&self, other: &bitcoin_primitives::merkle_tree::WitnessMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::eq(&self, other: &bitcoin_primitives::merkle_tree::WitnessMerkleNode) -> bool
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::merkle_tree::WitnessMerkleNode) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::pow::CompactTarget::clone(&self) -> bitcoin_primitives::pow::CompactTarget
+pub fn bitcoin_primitives::pow::CompactTarget::cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::cmp::Ordering
+pub fn bitcoin_primitives::pow::CompactTarget::eq(&self, other: &bitcoin_primitives::pow::CompactTarget) -> bool
+pub fn bitcoin_primitives::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::pow::CompactTarget::from_consensus(bits: u32) -> Self
+pub fn bitcoin_primitives::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::pow::CompactTarget::to_consensus(self) -> u32
+pub fn bitcoin_primitives::transaction::Ntxid::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::transaction::Ntxid::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::transaction::Ntxid::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::Ntxid::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::transaction::Ntxid::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::Ntxid::clone(&self) -> bitcoin_primitives::transaction::Ntxid
+pub fn bitcoin_primitives::transaction::Ntxid::cmp(&self, other: &bitcoin_primitives::transaction::Ntxid) -> core::cmp::Ordering
+pub fn bitcoin_primitives::transaction::Ntxid::eq(&self, other: &bitcoin_primitives::transaction::Ntxid) -> bool
+pub fn bitcoin_primitives::transaction::Ntxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::Ntxid::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::transaction::Ntxid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::transaction::Ntxid::partial_cmp(&self, other: &bitcoin_primitives::transaction::Ntxid) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::transaction::Ntxid::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::transaction::OutPoint::clone(&self) -> bitcoin_primitives::transaction::OutPoint
+pub fn bitcoin_primitives::transaction::OutPoint::cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::cmp::Ordering
+pub fn bitcoin_primitives::transaction::OutPoint::eq(&self, other: &bitcoin_primitives::transaction::OutPoint) -> bool
+pub fn bitcoin_primitives::transaction::OutPoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::OutPoint::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::transaction::OutPoint::partial_cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::transaction::Txid::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::transaction::Txid::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::transaction::Txid::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::Txid::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::transaction::Txid::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::Txid::clone(&self) -> bitcoin_primitives::transaction::Txid
+pub fn bitcoin_primitives::transaction::Txid::cmp(&self, other: &bitcoin_primitives::transaction::Txid) -> core::cmp::Ordering
+pub fn bitcoin_primitives::transaction::Txid::eq(&self, other: &bitcoin_primitives::transaction::Txid) -> bool
+pub fn bitcoin_primitives::transaction::Txid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::Txid::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::transaction::Txid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::transaction::Txid::partial_cmp(&self, other: &bitcoin_primitives::transaction::Txid) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::transaction::Txid::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::transaction::Version::clone(&self) -> bitcoin_primitives::transaction::Version
+pub fn bitcoin_primitives::transaction::Version::cmp(&self, other: &bitcoin_primitives::transaction::Version) -> core::cmp::Ordering
+pub fn bitcoin_primitives::transaction::Version::eq(&self, other: &bitcoin_primitives::transaction::Version) -> bool
+pub fn bitcoin_primitives::transaction::Version::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::Version::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::transaction::Version::partial_cmp(&self, other: &bitcoin_primitives::transaction::Version) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::transaction::Wtxid::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::transaction::Wtxid::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::transaction::Wtxid::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::Wtxid::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::transaction::Wtxid::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::Wtxid::clone(&self) -> bitcoin_primitives::transaction::Wtxid
+pub fn bitcoin_primitives::transaction::Wtxid::cmp(&self, other: &bitcoin_primitives::transaction::Wtxid) -> core::cmp::Ordering
+pub fn bitcoin_primitives::transaction::Wtxid::eq(&self, other: &bitcoin_primitives::transaction::Wtxid) -> bool
+pub fn bitcoin_primitives::transaction::Wtxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::Wtxid::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::transaction::Wtxid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::transaction::Wtxid::partial_cmp(&self, other: &bitcoin_primitives::transaction::Wtxid) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::transaction::Wtxid::to_byte_array(self) -> Self::Bytes
+pub fn u32::from(version: bitcoin_primitives::transaction::Version) -> Self
+pub mod bitcoin_primitives
+pub mod bitcoin_primitives::block
+pub mod bitcoin_primitives::merkle_tree
+pub mod bitcoin_primitives::pow
+pub mod bitcoin_primitives::transaction
+pub struct bitcoin_primitives::BlockHash(_)
+pub struct bitcoin_primitives::BlockHeader
+pub struct bitcoin_primitives::BlockVersion(_)
+pub struct bitcoin_primitives::CompactTarget(_)
+pub struct bitcoin_primitives::Ntxid(_)
+pub struct bitcoin_primitives::OutPoint
+pub struct bitcoin_primitives::TransactionVersion(_)
+pub struct bitcoin_primitives::TxMerkleNode(_)
+pub struct bitcoin_primitives::Txid(_)
+pub struct bitcoin_primitives::WitnessCommitment(_)
+pub struct bitcoin_primitives::WitnessMerkleNode(_)
+pub struct bitcoin_primitives::Wtxid(_)
+pub struct bitcoin_primitives::block::BlockHash(_)
+pub struct bitcoin_primitives::block::Header
+pub struct bitcoin_primitives::block::Version(_)
+pub struct bitcoin_primitives::block::WitnessCommitment(_)
+pub struct bitcoin_primitives::merkle_tree::TxMerkleNode(_)
+pub struct bitcoin_primitives::merkle_tree::WitnessMerkleNode(_)
+pub struct bitcoin_primitives::pow::CompactTarget(_)
+pub struct bitcoin_primitives::transaction::Ntxid(_)
+pub struct bitcoin_primitives::transaction::OutPoint
+pub struct bitcoin_primitives::transaction::Txid(_)
+pub struct bitcoin_primitives::transaction::Version(_)
+pub struct bitcoin_primitives::transaction::Wtxid(_)
+pub type bitcoin_primitives::block::BlockHash::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::block::WitnessCommitment::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::transaction::Ntxid::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::transaction::Txid::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::transaction::Wtxid::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub use bitcoin_primitives::Amount
+pub use bitcoin_primitives::BlockHeight
+pub use bitcoin_primitives::BlockHeightInterval
+pub use bitcoin_primitives::BlockMtp
+pub use bitcoin_primitives::BlockMtpInterval
+pub use bitcoin_primitives::BlockTime
+pub use bitcoin_primitives::FeeRate
+pub use bitcoin_primitives::NumOpResult
+pub use bitcoin_primitives::Sequence
+pub use bitcoin_primitives::SignedAmount
+pub use bitcoin_primitives::Weight
+pub use bitcoin_primitives::absolute
+pub use bitcoin_primitives::amount
+pub use bitcoin_primitives::block::BlockHeight
+pub use bitcoin_primitives::block::BlockHeightInterval
+pub use bitcoin_primitives::block::BlockMtp
+pub use bitcoin_primitives::block::BlockMtpInterval
+pub use bitcoin_primitives::block::TooBigForRelativeHeightError
+pub use bitcoin_primitives::fee_rate
+pub use bitcoin_primitives::locktime
+pub use bitcoin_primitives::parse
+pub use bitcoin_primitives::relative
+pub use bitcoin_primitives::result
+pub use bitcoin_primitives::sequence
+pub use bitcoin_primitives::time
+pub use bitcoin_primitives::weight
