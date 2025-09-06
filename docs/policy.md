@@ -117,6 +117,13 @@ pub use units::{foo, FooBar};
 pub use units::foo::SomeError;
 ```
 
+### Usage of re-exports
+
+As part of the attempt to mirror the `units` and `primitives`, and `bitcoin` APIs, in this codebase,
+policy is to use types from the highest crate available i.e `use crate::Foo` not `units::Foo`.
+
+This is enforced by CI.
+
 ## Return `Self`
 
 Use `Self` as the return type instead of naming the type. When constructing the return value use
