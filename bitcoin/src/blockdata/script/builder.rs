@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
+use super::{opcode_to_verify, Error, PushBytes, Script, ScriptBuf};
 use crate::key::{PublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
@@ -38,14 +38,7 @@ impl<T> Builder<T> {
     /// # Errors
     ///
     /// Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
-    pub fn push_int(self, n: i32) -> Result<Self, Error> {
-        if n == i32::MIN {
-            // ref: https://github.com/bitcoin/bitcoin/blob/cac846c2fbf6fc69bfc288fd387aa3f68d84d584/src/script/script.h#L230
-            Err(Error::NumericOverflow)
-        } else {
-            Ok(self.push_int_unchecked(n.into()))
-        }
-    }
+    pub fn push_int(mut self, n: i32) -> Result<Self, Error> { self.0.push_int(n).map(|_| self) }
 
     /// Adds instructions to push an unchecked integer onto the stack.
     ///
@@ -62,22 +55,17 @@ impl<T> Builder<T> {
     /// > throwing an exception if arithmetic is done or the result is interpreted as an integer.
     ///
     /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
-    pub fn push_int_unchecked(self, n: i64) -> Self {
-        match n {
-            -1 => self.push_opcode(OP_PUSHNUM_NEG1),
-            0 => self.push_opcode(OP_PUSHBYTES_0),
-            1..=16 => self.push_opcode(Opcode::from(n as u8 + (OP_PUSHNUM_1.to_u8() - 1))),
-            _ => self.push_int_non_minimal(n),
-        }
+    pub fn push_int_unchecked(mut self, n: i64) -> Self {
+        self.0.push_int_unchecked(n);
+        self
     }
 
     /// Adds instructions to push an integer onto the stack without optimization.
     ///
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
-    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Self {
-        let mut buf = [0u8; 8];
-        let len = write_scriptint(&mut buf, data);
-        self.push_slice_non_minimal(&<&PushBytes>::from(&buf)[..len])
+    pub(in crate::blockdata) fn push_int_non_minimal(mut self, data: i64) -> Self {
+        self.0.push_int_non_minimal(data);
+        self
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
