@@ -37,9 +37,9 @@ internal_macros::define_extension_trait! {
             let bytes = data.as_ref().as_bytes();
             if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
                 match bytes[0] {
-                    0x81 => { self.push_opcode(OP_PUSHNUM_NEG1); },
+                    0x81 => { self.push_opcode(OP_NEG1); },
                     0 => { self.push_opcode(OP_PUSHBYTES_0); },
-                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))); },
+                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))); },
                     _ => {}, // unreachable arm
                 }
             } else {

@@ -64,9 +64,9 @@ impl<T> Builder<T> {
     /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
     pub fn push_int_unchecked(self, n: i64) -> Self {
         match n {
-            -1 => self.push_opcode(OP_PUSHNUM_NEG1),
+            -1 => self.push_opcode(OP_NEG1),
             0 => self.push_opcode(OP_PUSHBYTES_0),
-            1..=16 => self.push_opcode(Opcode::from(n as u8 + (OP_PUSHNUM_1.to_u8() - 1))),
+            1..=16 => self.push_opcode(Opcode::from(n as u8 + (OP_1.to_u8() - 1))),
             _ => self.push_int_non_minimal(n),
         }
     }
@@ -85,9 +85,9 @@ impl<T> Builder<T> {
         let bytes = data.as_ref().as_bytes();
         if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
             match bytes[0] {
-                0x81 => self.push_opcode(OP_PUSHNUM_NEG1),
+                0x81 => self.push_opcode(OP_NEG1),
                 0 => self.push_opcode(OP_PUSHBYTES_0),
-                1..=16 => self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))),
+                1..=16 => self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))),
                 _ => self, // unreachable arm
             }
         } else {
