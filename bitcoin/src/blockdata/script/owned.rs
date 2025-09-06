@@ -105,7 +105,7 @@ internal_macros::define_extension_trait! {
         }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
-        #[deprecated(since = "TBD", note = "use `from_hex_string_no_length_prefix()` instead")]
+        #[deprecated(since = "TBD", note = "use `from_hex_no_length_prefix()` instead")]
         fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError>
             where Self: Sized
         {

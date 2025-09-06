@@ -51,7 +51,7 @@ fn main() {
     let hex_inherent = script_code.to_hex_string_prefixed(); // Defined in `ScriptExt`.
     println!("hex created using inherent `to_hex_string_prefixed`: {hex_inherent}");
 
-    // The inverse of `to_hex_string_prefixed` is `from_hex_string_prefixed`.
+    // The inverse of `to_hex_string_prefixed` is `from_hex_prefixed`.
     let decoded = WitnessScriptBuf::from_hex_prefixed(&hex_inherent).unwrap(); // Defined in `ScriptBufExt`.
     assert_eq!(decoded, script_code);
     // We can also parse the output of `to_hex_string_prefixed` using `deserialize_hex`.
