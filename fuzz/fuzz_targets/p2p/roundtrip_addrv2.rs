@@ -1,35 +1,28 @@
 use std::convert::TryFrom;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-
-use bitcoin::consensus::Decodable;
+use arbitrary::{Arbitrary, Unstructured};
 use honggfuzz::fuzz;
 use p2p::address::AddrV2;
 
 fn do_test(data: &[u8]) {
-    if data.len() < 2 {
-        return;
-    }
+    let mut u = Unstructured::new(data);
+    let a = AddrV2::arbitrary(&mut u);
 
-    let mut cursor = std::io::Cursor::new(data);
-    let addr_v2 = if let Ok(addr) = AddrV2::consensus_decode(&mut cursor) {
-        addr
-    } else {
-        return;
-    };
+    if let Ok(addr_v2) = a {
+        if let Ok(ip_addr) = IpAddr::try_from(addr_v2.clone()) {
+            let round_trip: AddrV2 = AddrV2::from(ip_addr);
+            assert_eq!(addr_v2, round_trip, "AddrV2 -> IpAddr -> AddrV2 should round-trip correctly");
+        }
 
-    if let Ok(ip_addr) = IpAddr::try_from(addr_v2.clone()) {
-        let round_trip: AddrV2 = AddrV2::from(ip_addr);
-        assert_eq!(addr_v2, round_trip, "AddrV2 -> IpAddr -> AddrV2 should round-trip correctly");
-    }
+        if let Ok(ip_addr) = Ipv4Addr::try_from(addr_v2.clone()) {
+            let round_trip: AddrV2 = AddrV2::from(ip_addr);
+            assert_eq!(addr_v2, round_trip, "AddrV2 -> Ipv4Addr -> AddrV2 should round-trip correctly");
+        }
 
-    if let Ok(ip_addr) = Ipv4Addr::try_from(addr_v2.clone()) {
-        let round_trip: AddrV2 = AddrV2::from(ip_addr);
-        assert_eq!(addr_v2, round_trip, "AddrV2 -> Ipv4Addr -> AddrV2 should round-trip correctly");
-    }
-
-    if let Ok(ip_addr) = Ipv6Addr::try_from(addr_v2.clone()) {
-        let round_trip: AddrV2 = AddrV2::from(ip_addr);
-        assert_eq!(addr_v2, round_trip, "AddrV2 -> Ipv6Addr -> AddrV2 should round-trip correctly");
+        if let Ok(ip_addr) = Ipv6Addr::try_from(addr_v2.clone()) {
+            let round_trip: AddrV2 = AddrV2::from(ip_addr);
+            assert_eq!(addr_v2, round_trip, "AddrV2 -> Ipv6Addr -> AddrV2 should round-trip correctly");
+        }
     }
 }
 
