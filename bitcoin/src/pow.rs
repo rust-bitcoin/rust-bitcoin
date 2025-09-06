@@ -842,7 +842,7 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
         if d.is_human_readable() {
             struct HexVisitor;
 
-            impl<'de> de::Visitor<'de> for HexVisitor {
+            impl de::Visitor<'_> for HexVisitor {
                 type Value = U256;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -882,7 +882,7 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
         } else {
             struct BytesVisitor;
 
-            impl<'de> serde::de::Visitor<'de> for BytesVisitor {
+            impl serde::de::Visitor<'_> for BytesVisitor {
                 type Value = U256;
 
                 fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {

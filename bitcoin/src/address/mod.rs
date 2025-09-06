@@ -243,7 +243,7 @@ pub struct AddressEncoding<'a> {
 }
 
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
-impl<'a> fmt::Display for AddressEncoding<'a> {
+impl fmt::Display for AddressEncoding<'_> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self.payload {
             Payload::PubkeyHash(hash) => {
@@ -374,8 +374,8 @@ struct AddressInner {
 /// ```
 ///
 /// 2. `Debug` on `Address<NetworkUnchecked>` does not produce clean address but address wrapped by
-/// an indicator that its network has not been checked. This is to encourage programmer to properly
-/// check the network and use `Display` in user-facing context.
+///    an indicator that its network has not been checked. This is to encourage programmer to properly
+///    check the network and use `Display` in user-facing context.
 ///
 /// ```
 /// # use std::str::FromStr;

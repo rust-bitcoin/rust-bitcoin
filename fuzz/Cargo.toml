@@ -87,3 +87,6 @@ path = "fuzz_targets/hashes/sha512_256.rs"
 [[bin]]
 name = "hashes_sha512"
 path = "fuzz_targets/hashes/sha512.rs"
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }

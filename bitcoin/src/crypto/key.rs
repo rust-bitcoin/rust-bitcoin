@@ -391,7 +391,7 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<PrivateKey, D::Error> {
         struct WifVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for WifVisitor {
+        impl serde::de::Visitor<'_> for WifVisitor {
             type Value = PrivateKey;
 
             fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -439,7 +439,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
         if d.is_human_readable() {
             struct HexVisitor;
 
-            impl<'de> serde::de::Visitor<'de> for HexVisitor {
+            impl serde::de::Visitor<'_> for HexVisitor {
                 type Value = PublicKey;
 
                 fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -468,7 +468,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
         } else {
             struct BytesVisitor;
 
-            impl<'de> serde::de::Visitor<'de> for BytesVisitor {
+            impl serde::de::Visitor<'_> for BytesVisitor {
                 type Value = PublicKey;
 
                 fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -615,6 +615,7 @@ impl TapTweak for UntweakedKeypair {
     ///  * p is the internal private key
     ///  * H is the hash function
     ///  * c is the commitment data
+    ///
     /// The public key is generated from a private key by multiplying with generator point, Q = qG.
     ///
     /// # Returns
