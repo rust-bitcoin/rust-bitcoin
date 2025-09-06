@@ -18,6 +18,7 @@ std = ["alloc", "internals/std"]
 alloc = ["internals/alloc","serde?/alloc"]
 
 [dependencies]
+encoding = { package = "consensus-encoding", path = "../consensus_encoding", optional = true }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0" }
 
 serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }
@@ -143,7 +144,7 @@ stable_sort_primitive = "warn"
 str_split_at_newline = "warn"
 string_add_assign = "warn"
 struct_excessive_bools = "warn"
-struct_field_names = "warn"
+struct_field_names = "allow" # dumb
 too_many_lines = "warn"
 transmute_ptr_to_ptr = "warn"
 trivially_copy_pass_by_ref = "warn"

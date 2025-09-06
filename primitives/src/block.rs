@@ -13,6 +13,7 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::Encodable;
 use hashes::{sha256d, HashEngine as _};
 
 #[cfg(feature = "alloc")]
@@ -195,15 +196,8 @@ impl Header {
     /// Returns the block hash.
     // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
     pub fn block_hash(&self) -> BlockHash {
-        let mut engine = sha256d::Hash::engine();
-        engine.input(&self.version.to_consensus().to_le_bytes());
-        engine.input(self.prev_blockhash.as_byte_array());
-        engine.input(self.merkle_root.as_byte_array());
-        engine.input(&self.time.to_u32().to_le_bytes());
-        engine.input(&self.bits.to_consensus().to_le_bytes());
-        engine.input(&self.nonce.to_le_bytes());
-
-        BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
+        let bare_hash = encoding::encode_to_hash_engine(self, sha256d::Hash::engine()).finalize();
+        BlockHash::from_byte_array(bare_hash.to_byte_array())
     }
 }
 
@@ -240,6 +234,37 @@ impl fmt::Debug for Header {
             .field("bits", &self.bits)
             .field("nonce", &self.nonce)
             .finish()
+    }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`Header`] type.
+    pub struct HeaderEncoder(
+        encoding::Encoder6<
+            VersionEncoder,
+            BlockHashEncoder,
+            crate::merkle_tree::TxMerkleNodeEncoder,
+            crate::time::BlockTimeEncoder,
+            crate::pow::CompactTargetEncoder,
+            encoding::ArrayEncoder<4>,
+        >
+    );
+}
+
+impl Encodable for Header {
+    type Encoder<'e> = HeaderEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        HeaderEncoder(
+            encoding::Encoder6::new(
+                self.version.encoder(),
+                self.prev_blockhash.encoder(),
+                self.merkle_root.encoder(),
+                self.time.encoder(),
+                self.bits.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+            )
+        )
     }
 }
 
@@ -332,6 +357,20 @@ hashes::hash_newtype! {
     pub struct WitnessCommitment(sha256d::Hash);
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`Version`] type.
+    pub struct VersionEncoder(encoding::ArrayEncoder<4>);
+}
+
+impl Encodable for Version {
+    type Encoder<'e> = VersionEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes())
+        )
+    }
+}
+
 #[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(BlockHash, WitnessCommitment);
 #[cfg(not(feature = "hex"))]
@@ -342,6 +381,20 @@ hashes::impl_serde_for_newtype!(BlockHash, WitnessCommitment);
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.
     pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`BlockHash`] type.
+    pub struct BlockHashEncoder(encoding::ArrayEncoder<32>);
+}
+
+impl Encodable for BlockHash {
+    type Encoder<'e> = BlockHashEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockHashEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_byte_array())
+        )
+    }
 }
 
 #[cfg(feature = "arbitrary")]
