@@ -3,13 +3,14 @@
 //! Signature hash implementation (used in transaction signing).
 //!
 //! Efficient implementation of the algorithm to compute the message to be signed according to
-//! [BIP-0341](https://github.com/bitcoin/bips/blob/150ab6f5c3aca9da05fccc5b435e9667853407f4/bip-0341.mediawiki),
-//! [BIP-0143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki)
-//! and legacy (before BIP-0143).
+//! [BIP-0341], [BIP-0143] and legacy (before BIP-0143).
 //!
 //! Computing signature hashes is required to sign a transaction and this module is designed to
 //! handle its complexity efficiently. Computing these hashes is as simple as creating
 //! [`SighashCache`] and calling its methods.
+//!
+//! [BIP-0341]: <https://github.com/bitcoin/bips/blob/150ab6f5c3aca9da05fccc5b435e9667853407f4/bip-0341.mediawiki>
+//! [BIP-0143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
 
 use core::convert::Infallible;
 use core::{fmt, str};
