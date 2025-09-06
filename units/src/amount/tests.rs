@@ -86,7 +86,7 @@ fn from_str_zero() {
             Ok(_) => panic!("unsigned amount from {}", s),
         }
         match s.parse::<SignedAmount>() {
-            Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
+            Err(e) => panic!("failed to create amount from {}: {:?}", s, e),
             Ok(amount) => assert_eq!(amount, SignedAmount::ZERO),
         }
     }
