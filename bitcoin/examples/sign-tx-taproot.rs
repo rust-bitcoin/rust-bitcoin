@@ -103,7 +103,7 @@ fn receivers_address() -> Address {
         .expect("valid address for mainnet")
 }
 
-/// Constructs a new p2wpkh output locked to the key associated with `wpkh`.
+/// Constructs a new p2tr output locked to the key associated with `internal_key`.
 ///
 /// An utxo is described by the `OutPoint` (txid and index within the transaction that it was
 /// created). Using the out point one can get the transaction by `txid` and using the `vout` get the
