@@ -113,8 +113,8 @@ internal_macros::define_extension_trait! {
         /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
         /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
         /// the input length `CompactSize` to increase its encoding length.
-        fn legacy_weight(&self) -> Weight {
-            Weight::from_non_witness_data_size(self.base_size().to_u64())
+        fn legacy_weight(&self) -> Option<Weight> {
+            Weight::from_vb(self.base_size().to_u64())
         }
 
         /// The weight of the TxIn when it's included in a SegWit transaction (i.e., a transaction
@@ -128,9 +128,9 @@ internal_macros::define_extension_trait! {
         /// - the new input added causes the input length `CompactSize` to increase its encoding length
         /// - the new input is the first segwit input added - this will add an additional 2WU to the
         ///   transaction weight to take into account the SegWit marker
-        fn segwit_weight(&self) -> Weight {
-            Weight::from_non_witness_data_size(self.base_size().to_u64())
-                + Weight::from_witness_data_size(self.witness.size().to_u64())
+        fn segwit_weight(&self) -> Option<Weight> {
+            Weight::from_vb(self.base_size().to_u64())
+            .and_then(|w| w.checked_add(Weight::from_wu(self.witness.size().to_u64())))
         }
 
         /// Returns the base size of this input.
@@ -1784,7 +1784,7 @@ mod tests {
             assert_eq!(*is_segwit, tx.uses_segwit_serialization());
 
             let mut calculated_weight = empty_transaction_weight
-                + tx.inputs.iter().fold(Weight::ZERO, |sum, i| sum + txin_weight(i))
+                + tx.inputs.iter().fold(Weight::ZERO, |sum, i| sum + txin_weight(i).expect("valid weight"))
                 + tx.outputs.iter().fold(Weight::ZERO, |sum, o| sum + o.weight());
 
             // The empty tx uses SegWit serialization but a legacy tx does not.

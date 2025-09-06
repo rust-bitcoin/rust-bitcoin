@@ -649,7 +649,7 @@ mod tests {
         assert_eq!(block_base_size(real_decode.transactions()), some_block.len());
         assert_eq!(
             real_decode.weight(),
-            Weight::from_non_witness_data_size(some_block.len().to_u64())
+            Weight::from_vb_unchecked(some_block.len().to_u64())
         );
 
         assert_eq!(serialize(&real_decode), some_block);
