@@ -530,13 +530,18 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             Wpkh => {
-                let sighash = cache.p2wpkh_signature_hash(input_index, spk, utxo.amount, hash_ty)?;
+                let sighash =
+                    cache.p2wpkh_signature_hash(input_index, spk, utxo.amount, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
                 let redeem_script = input.redeem_script.as_ref().expect("checked above");
-                let sighash =
-                    cache.p2wpkh_signature_hash(input_index, redeem_script, utxo.amount, hash_ty)?;
+                let sighash = cache.p2wpkh_signature_hash(
+                    input_index,
+                    redeem_script,
+                    utxo.amount,
+                    hash_ty,
+                )?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Wsh | ShWsh => {

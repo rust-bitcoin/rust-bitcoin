@@ -56,9 +56,9 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for CompactTarget {
     type Encoder<'e> = CompactTargetEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        CompactTargetEncoder(
-            encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes())
-        )
+        CompactTargetEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus().to_le_bytes(),
+        ))
     }
 }
 

@@ -12,7 +12,9 @@ pub mod encoders;
 pub trait Encodable {
     /// The encoder associated with this type. Conceptually, the encoder is like
     /// an iterator which yields byte slices.
-    type Encoder<'s>: Encoder<'s> where Self: 's;
+    type Encoder<'s>: Encoder<'s>
+    where
+        Self: 's;
 
     /// Constructs a "default encoder" for the type.
     fn encoder(&self) -> Self::Encoder<'_>;
