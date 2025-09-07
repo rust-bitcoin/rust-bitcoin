@@ -18,9 +18,9 @@ use hashes::{sha256d, HashEngine as _};
 
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
+use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
 use crate::{Transaction, WitnessMerkleNode};
-use crate::{BlockTime, CompactTarget, TxMerkleNode};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -255,16 +255,14 @@ impl Encodable for Header {
     type Encoder<'e> = HeaderEncoder;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        HeaderEncoder(
-            encoding::Encoder6::new(
-                self.version.encoder(),
-                self.prev_blockhash.encoder(),
-                self.merkle_root.encoder(),
-                self.time.encoder(),
-                self.bits.encoder(),
-                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
-            )
-        )
+        HeaderEncoder(encoding::Encoder6::new(
+            self.version.encoder(),
+            self.prev_blockhash.encoder(),
+            self.merkle_root.encoder(),
+            self.time.encoder(),
+            self.bits.encoder(),
+            encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+        ))
     }
 }
 
@@ -365,9 +363,9 @@ encoding::encoder_newtype! {
 impl Encodable for Version {
     type Encoder<'e> = VersionEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder(
-            encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes())
-        )
+        VersionEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus().to_le_bytes(),
+        ))
     }
 }
 
@@ -391,9 +389,7 @@ encoding::encoder_newtype! {
 impl Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHashEncoder(
-            encoding::ArrayEncoder::without_length_prefix(self.to_byte_array())
-        )
+        BlockHashEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
     }
 }
 

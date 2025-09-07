@@ -26,11 +26,9 @@ impl<'sl> BytesEncoder<'sl> {
 }
 
 impl<'e, 'sl> Encoder<'e> for BytesEncoder<'sl> {
-    fn current_chunk(&self) -> Option<&[u8]> {
-        self.sl
-    }
+    fn current_chunk(&self) -> Option<&[u8]> { self.sl }
 
-    fn advance(&mut self)-> bool {
+    fn advance(&mut self) -> bool {
         self.sl = None;
         false
     }
@@ -47,12 +45,9 @@ impl<const N: usize> ArrayEncoder<N> {
 }
 
 impl<'e, const N: usize> Encoder<'e> for ArrayEncoder<N> {
-    fn current_chunk(&self) -> Option<&[u8]> {
-        self.arr.as_ref().map(|x| &x[..])
-    }
+    fn current_chunk(&self) -> Option<&[u8]> { self.arr.as_ref().map(|x| &x[..]) }
 
-
-    fn advance(&mut self)-> bool {
+    fn advance(&mut self) -> bool {
         self.arr = None;
         false
     }
@@ -125,7 +120,9 @@ impl<A, B, C, D> Encoder4<A, B, C, D> {
     }
 }
 
-impl<'e, A: Encoder<'e>, B: Encoder<'e>, C: Encoder<'e>, D: Encoder<'e>> Encoder<'e> for Encoder4<A, B, C, D> {
+impl<'e, A: Encoder<'e>, B: Encoder<'e>, C: Encoder<'e>, D: Encoder<'e>> Encoder<'e>
+    for Encoder4<A, B, C, D>
+{
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
@@ -147,8 +144,15 @@ impl<A, B, C, D, E, F> Encoder6<A, B, C, D, E, F> {
     }
 }
 
-impl<'e, A: Encoder<'e>, B: Encoder<'e>, C: Encoder<'e>, D: Encoder<'e>, E: Encoder<'e>, F: Encoder<'e>> Encoder<'e>
-    for Encoder6<A, B, C, D, E, F>
+impl<
+        'e,
+        A: Encoder<'e>,
+        B: Encoder<'e>,
+        C: Encoder<'e>,
+        D: Encoder<'e>,
+        E: Encoder<'e>,
+        F: Encoder<'e>,
+    > Encoder<'e> for Encoder6<A, B, C, D, E, F>
 {
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }

@@ -2097,7 +2097,6 @@ mod tests {
             ),
         ).unwrap();
 
-
         let spk = ScriptPubKeyBuf::from_hex_no_length_prefix(
             "00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1",
         )
