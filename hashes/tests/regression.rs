@@ -9,7 +9,7 @@
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
 use bitcoin_hashes::{
-    hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256, siphash24,
+    hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha3_256, sha512, sha512_256, siphash24,
     HashEngine as _, HmacEngine,
 };
 
@@ -36,6 +36,7 @@ impl_regression_test! {
     regression_sha256, sha256, "d291c6c5a07fa1d9315cdae090ebe14169fbe0a219cd55a48d0d2104eab6ec51";
     regression_sha256d, sha256d, "93a743b022290bde3233a619b21aaebe06c5cf5cc959464c41be35711e37731b";
     regression_sha384, sha384, "f545bd83d297978d47a7f26b858a54188499dfb4d7d570a6a2362c765031d57a29d7e002df5e34d184e70b65a4f47153";
+    regression_sha3_256, sha3_256, "9479c957c295f4e42a31dbd571062610c2c3435310b27a9548b83c0b45f4c9b3";
     regression_sha512, sha512, "057d0a37e9e0ac9a93acde0752748da059a27bcf946c7af00692ac1a95db8d21f965f40af22efc4710f100f8d3e43f79f77b1f48e1e400a95b7344b7bc0dfd10";
     regression_sha512_256, sha512_256, "e204244c429b5bca037a2a8a6e7ed8a42b808ceaff182560840bb8c5c8e9a2ec";
 }
