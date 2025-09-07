@@ -8,8 +8,8 @@ use internals::ToU64 as _;
 use secp256k1::{Secp256k1, Verification};
 
 use super::{
-    opcode_to_verify, Builder, Instruction, PushBytes, ScriptBuf, ScriptExtPriv as _,
-    ScriptPubKeyBuf,
+    opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
+    ScriptExtPriv as _, ScriptPubKeyBuf,
 };
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
@@ -28,6 +28,48 @@ internal_macros::define_extension_trait! {
     pub trait ScriptBufExt<T> impl<T> for ScriptBuf<T> {
         /// Constructs a new script builder
         fn builder() -> Builder<T> { Builder::new() }
+
+        /// Adds instructions to push an integer onto the stack.
+        ///
+        /// Integers are encoded as little-endian signed-magnitude numbers, but there are dedicated
+        /// opcodes to push some small integers.
+        ///
+        /// # Errors
+        ///
+        /// Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
+        fn push_int(&mut self, n: i32) -> Result<(), Error> {
+            if n == i32::MIN {
+                // ref: https://github.com/bitcoin/bitcoin/blob/cac846c2fbf6fc69bfc288fd387aa3f68d84d584/src/script/script.h#L230
+                Err(Error::NumericOverflow)
+            } else {
+                self.push_int_unchecked(n.into());
+                Ok(())
+            }
+        }
+
+        /// Adds instructions to push an unchecked integer onto the stack.
+        ///
+        /// Integers are encoded as little-endian signed-magnitude numbers, but there are dedicated
+        /// opcodes to push some small integers.
+        ///
+        /// This function implements `CScript::push_int64` from Core `script.h`.
+        ///
+        /// > Numeric opcodes (OP_1ADD, etc) are restricted to operating on 4-byte integers.
+        /// > The semantics are subtle, though: operands must be in the range [-2^31 +1...2^31 -1],
+        /// > but results may overflow (and are valid as long as they are not used in a subsequent
+        /// > numeric operation). CScriptNum enforces those semantics by storing results as
+        /// > an int64 and allowing out-of-range values to be returned as a vector of bytes but
+        /// > throwing an exception if arithmetic is done or the result is interpreted as an integer.
+        ///
+        /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
+        fn push_int_unchecked(&mut self, n: i64) {
+            match n {
+                -1 => self.push_opcode(OP_PUSHNUM_NEG1),
+                0 => self.push_opcode(OP_PUSHBYTES_0),
+                1..=16 => self.push_opcode(Opcode::from(n as u8 + (OP_PUSHNUM_1.to_u8() - 1))),
+                _ => self.push_int_non_minimal(n),
+            }
+        }
 
         /// Adds a single opcode to the script.
         fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
@@ -274,6 +316,16 @@ internal_macros::define_extension_trait! {
                 }
                 None => self.push_opcode(OP_VERIFY),
             }
+        }
+
+        /// Adds instructions to push an integer onto the stack without optimization.
+        ///
+        /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
+        fn push_int_non_minimal(&mut self, data: i64) {
+            let mut buf = [0u8; 8];
+            let len = write_scriptint(&mut buf, data);
+            self.reserve(Self::reserved_len_for_slice(len));
+            self.push_slice_no_opt(&<&PushBytes>::from(&buf)[..len]);
         }
     }
 }
