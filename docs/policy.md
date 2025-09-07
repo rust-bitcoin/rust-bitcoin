@@ -94,7 +94,7 @@ pub mod foo {
 
     /// Some function.
     pub some_function() -> SomeError { 
-        // Example rror logic
+        // Example error logic
         SomeError::Foo(FooError { ... })
     }
     
