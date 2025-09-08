@@ -21,7 +21,7 @@ jobs:
       - name: Generate label config
         run: cd master && SCAN_DIR=../merge ./contrib/gen_label_config.sh
       - name: Update labels
-        uses: actions/labeler@v5
+        uses: actions/labeler@v6
         with:
           configuration-path: master/.github/labeler.yml
           sync-labels: true
