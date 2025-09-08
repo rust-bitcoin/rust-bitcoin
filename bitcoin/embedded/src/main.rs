@@ -46,7 +46,7 @@ fn main() -> ! {
     let address = Address::p2wpkh(pubkey, Network::Bitcoin);
     hprintln!("Address: {}", address).unwrap();
 
-    assert_eq!(address.to_string(), "bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993".to_string());
+    assert_eq!(address.to_string(), "bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993");
     // exit QEMU
     // NOTE do not run this on hardware; it can corrupt OpenOCD state
     debug::exit(debug::EXIT_SUCCESS);
