@@ -264,6 +264,22 @@ impl fmt::Debug for Sequence {
 #[cfg(feature = "alloc")]
 parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Sequence`] type.
+    pub struct SequenceEncoder(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for Sequence {
+    type Encoder<'e> = SequenceEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        SequenceEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus_u32().to_le_bytes(),
+        ))
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Sequence {

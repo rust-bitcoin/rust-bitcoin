@@ -141,6 +141,22 @@ impl TryFrom<BlockHeight> for absolute::Height {
     }
 }
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`BlockHeight`] type.
+    pub struct BlockHeightEncoder(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for BlockHeight {
+    type Encoder<'e> = BlockHeightEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockHeightEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.to_u32().to_le_bytes(),
+        ))
+    }
+}
+
 impl_u32_wrapper! {
     /// An unsigned block interval.
     ///
