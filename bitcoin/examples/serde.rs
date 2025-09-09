@@ -19,7 +19,7 @@ pub struct Foo {
 
     /// This works but it's little-endian which may be hard to read.
     ///
-    /// Integer wrapper types are more readable if the explicitly use a unit.
+    /// Integer wrapper types are more readable if they explicitly use a unit.
     #[serde(with = "consensus::serde::With::<Hex>")]
     this: Amount,
 
