@@ -57,7 +57,7 @@ impl XOnlyPublicKey {
     pub fn from_byte_array(
         data: &[u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
     ) -> Result<XOnlyPublicKey, ParseXOnlyPublicKeyError> {
-        secp256k1::XOnlyPublicKey::from_byte_array(data)
+        secp256k1::XOnlyPublicKey::from_byte_array(*data)
             .map(XOnlyPublicKey::new)
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
@@ -326,7 +326,7 @@ impl PublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        secp.verify_ecdsa(&msg, &sig.signature, &self.inner)
+        secp.verify_ecdsa(msg, &sig.signature, &self.inner)
     }
 }
 
@@ -468,7 +468,7 @@ impl CompressedPublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0)?)
+        Ok(secp.verify_ecdsa(msg, &sig.signature, &self.0)?)
     }
 }
 
@@ -582,7 +582,7 @@ impl PrivateKey {
         data: [u8; 32],
         network: impl Into<NetworkKind>,
     ) -> Result<PrivateKey, secp256k1::Error> {
-        Ok(PrivateKey::new(secp256k1::SecretKey::from_byte_array(&data)?, network))
+        Ok(PrivateKey::new(secp256k1::SecretKey::from_byte_array(data)?, network))
     }
 
     /// Deserializes a private key from a slice.
@@ -644,7 +644,7 @@ impl PrivateKey {
             }
         };
 
-        Ok(PrivateKey { compressed, network, inner: secp256k1::SecretKey::from_byte_array(key)? })
+        Ok(PrivateKey { compressed, network, inner: secp256k1::SecretKey::from_byte_array(*key)? })
     }
 
     /// Returns a new private key with the negated secret value.

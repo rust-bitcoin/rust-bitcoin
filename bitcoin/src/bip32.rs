@@ -721,7 +721,7 @@ impl Xpriv {
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_byte_array(
-                hmac.as_byte_array().split_array::<32, 32>().0,
+                *hmac.as_byte_array().split_array::<32, 32>().0,
             )
             .expect("cryptographically unreachable"),
             chain_code: ChainCode::from_hmac(hmac),
@@ -800,7 +800,7 @@ impl Xpriv {
         engine.input(&u32::from(i).to_be_bytes());
         let hmac: Hmac<sha512::Hash> = engine.finalize();
         let sk =
-            secp256k1::SecretKey::from_byte_array(hmac.as_byte_array().split_array::<32, 32>().0)
+            secp256k1::SecretKey::from_byte_array(*hmac.as_byte_array().split_array::<32, 32>().0)
                 .expect("statistically impossible to hit");
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
@@ -837,7 +837,7 @@ impl Xpriv {
             parent_fingerprint,
             child_number,
             chain_code,
-            private_key: secp256k1::SecretKey::from_byte_array(private_key)?,
+            private_key: secp256k1::SecretKey::from_byte_array(*private_key)?,
         })
     }
 
@@ -944,7 +944,7 @@ impl Xpub {
 
                 let hmac = engine.finalize();
                 let private_key = secp256k1::SecretKey::from_byte_array(
-                    hmac.as_byte_array().split_array::<32, 32>().0,
+                    *hmac.as_byte_array().split_array::<32, 32>().0,
                 )
                 .expect("cryptographically unreachable");
                 let chain_code = ChainCode::from_hmac(hmac);
