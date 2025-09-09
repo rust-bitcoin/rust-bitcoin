@@ -290,7 +290,7 @@ impl GcsFilterReader {
         // sort
         mapped.sort_unstable();
         if mapped.is_empty() {
-            return Ok(true);
+            return Ok(false);
         }
         if n_elements.0 == 0 {
             return Ok(false);
