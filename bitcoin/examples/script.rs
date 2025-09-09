@@ -65,7 +65,7 @@ fn main() {
     let decoded: WitnessScriptBuf = encode::deserialize_hex(&encoded).unwrap();
     assert_eq!(decoded, script_code);
 
-    // And we can mix these to calls because both include the length prefix.
+    // And we can mix these two calls because both include the length prefix.
     let encoded = encode::serialize_hex(&script_code);
     let decoded = WitnessScriptBuf::from_hex_prefixed(&encoded).unwrap();
     assert_eq!(decoded, script_code);
