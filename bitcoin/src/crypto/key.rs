@@ -55,7 +55,7 @@ impl XOnlyPublicKey {
     pub fn from_byte_array(
         data: &[u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
     ) -> Result<Self, ParseXOnlyPublicKeyError> {
-        secp256k1::XOnlyPublicKey::from_byte_array(data)
+        secp256k1::XOnlyPublicKey::from_byte_array(*data)
             .map(Self::new)
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
@@ -325,7 +325,7 @@ impl PublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        secp.verify_ecdsa(&msg, &sig.signature, &self.inner)
+        secp.verify_ecdsa(msg, &sig.signature, &self.inner)
     }
 }
 
@@ -467,7 +467,7 @@ impl CompressedPublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0)?)
+        Ok(secp.verify_ecdsa(msg, &sig.signature, &self.0)?)
     }
 }
 
@@ -578,7 +578,7 @@ impl PrivateKey {
         data: [u8; 32],
         network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
-        Ok(Self::new(secp256k1::SecretKey::from_byte_array(&data)?, network))
+        Ok(Self::new(secp256k1::SecretKey::from_byte_array(data)?, network))
     }
 
     /// Deserializes a private key from a slice.
@@ -640,7 +640,7 @@ impl PrivateKey {
             }
         };
 
-        Ok(Self { compressed, network, inner: secp256k1::SecretKey::from_byte_array(key)? })
+        Ok(Self { compressed, network, inner: secp256k1::SecretKey::from_byte_array(*key)? })
     }
 
     /// Returns a new private key with the negated secret value.
@@ -1851,7 +1851,7 @@ mod tests {
         let key_bytes = &<[u8; 32]>::from_hex(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
         ).expect("Failed to convert hex string to byte array");
-        let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(key_bytes)
+        let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(*key_bytes)
             .expect("Failed to create a secp256k1 x-only public key from a byte array");
         let btc_pubkey = XOnlyPublicKey::new(inner_key);
         // Confirm that the into_inner() returns the same data that was initially wrapped
