@@ -11,7 +11,6 @@ use core::convert::Infallible;
 use core::fmt;
 
 use internals::array_vec::ArrayVec;
-use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
@@ -95,13 +94,12 @@ impl WitnessProgram {
     ///
     /// This function applies BIP-0341 key-tweaking to the untweaked
     /// key using the merkle root, if it's present.
-    pub fn p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
-        secp: &Secp256k1<C>,
+    pub fn p2tr<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let internal_key = internal_key.into();
-        let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
+        let (output_key, _parity) = internal_key.tap_tweak(merkle_root);
         let pubkey = output_key.as_x_only_public_key().serialize();
         WitnessProgram::new_p2tr(pubkey)
     }

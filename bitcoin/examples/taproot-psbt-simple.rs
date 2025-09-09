@@ -27,7 +27,6 @@ use bitcoin::ext::*;
 use bitcoin::key::UntweakedPublicKey;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::Input;
-use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::{
     consensus, transaction, Address, Amount, Network, OutPoint, Psbt, ScriptPubKeyBuf,
     ScriptSigBuf, Sequence, TapLeafHash, TapSighashType, Transaction, TxIn, TxOut, Txid, Witness,
@@ -53,35 +52,33 @@ const SPEND_AMOUNT: Amount = Amount::from_sat_u32(25_000_000);
 const CHANGE_AMOUNT: Amount = Amount::from_sat_u32(4_990_000); // 10_000 sat fee.
 
 // Derive the external address xpriv.
-fn get_external_address_xpriv<C: Signing>(
-    secp: &Secp256k1<C>,
+fn get_external_address_xpriv(
     master_xpriv: Xpriv,
     index: u32,
 ) -> Xpriv {
     let derivation_path =
         BIP86_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
     let child_xpriv =
-        master_xpriv.derive_xpriv(secp, &derivation_path).expect("only deriving three steps");
+        master_xpriv.derive_xpriv(&derivation_path).expect("only deriving three steps");
     let external_index = ChildNumber::ZERO_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_xpriv(secp, [external_index, idx]).expect("only deriving two more steps")
+    child_xpriv.derive_xpriv([external_index, idx]).expect("only deriving two more steps")
 }
 
 // Derive the internal address xpriv.
-fn get_internal_address_xpriv<C: Signing>(
-    secp: &Secp256k1<C>,
+fn get_internal_address_xpriv(
     master_xpriv: Xpriv,
     index: u32,
 ) -> Xpriv {
     let derivation_path =
         BIP86_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
     let child_xpriv =
-        master_xpriv.derive_xpriv(secp, &derivation_path).expect("only deriving three steps");
+        master_xpriv.derive_xpriv(&derivation_path).expect("only deriving three steps");
     let internal_index = ChildNumber::ONE_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_xpriv(secp, [internal_index, idx]).expect("only deriving two more steps")
+    child_xpriv.derive_xpriv([internal_index, idx]).expect("only deriving two more steps")
 }
 
 // Get the Taproot Key Origin.
@@ -138,18 +135,16 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
 }
 
 fn main() {
-    let secp = Secp256k1::new();
-
     // Get the individual xprivs we control. In a real application these would come from a stored secret.
     let master_xpriv = XPRIV.parse::<Xpriv>().expect("valid xpriv");
-    let xpriv_input_1 = get_external_address_xpriv(&secp, master_xpriv, 0);
-    let xpriv_input_2 = get_internal_address_xpriv(&secp, master_xpriv, 0);
-    let xpriv_change = get_internal_address_xpriv(&secp, master_xpriv, 1);
+    let xpriv_input_1 = get_external_address_xpriv(master_xpriv, 0);
+    let xpriv_input_2 = get_internal_address_xpriv(master_xpriv, 0);
+    let xpriv_change = get_internal_address_xpriv(master_xpriv, 1);
 
     // Get the PKs
-    let (pk_input_1, _) = Xpub::from_xpriv(&secp, &xpriv_input_1).public_key.x_only_public_key();
-    let (pk_input_2, _) = Xpub::from_xpriv(&secp, &xpriv_input_2).public_key.x_only_public_key();
-    let (pk_change, _) = Xpub::from_xpriv(&secp, &xpriv_change).public_key.x_only_public_key();
+    let (pk_input_1, _) = Xpub::from_xpriv(&xpriv_input_1).public_key.x_only_public_key();
+    let (pk_input_2, _) = Xpub::from_xpriv(&xpriv_input_2).public_key.x_only_public_key();
+    let (pk_change, _) = Xpub::from_xpriv(&xpriv_change).public_key.x_only_public_key();
 
     // Get the Tap Key Origins
     // Map of tap root X-only keys to origin info and leaf hashes contained in it.
@@ -190,7 +185,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         amount: CHANGE_AMOUNT,
-        script_pubkey: ScriptPubKeyBuf::new_p2tr(&secp, pk_change, None), // Change comes back to us.
+        script_pubkey: ScriptPubKeyBuf::new_p2tr(pk_change, None), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.
@@ -227,7 +222,7 @@ fn main() {
     ];
 
     // Step 3: Signer role; that signs the PSBT.
-    psbt.sign(&master_xpriv, &secp).expect("valid signature");
+    psbt.sign(&master_xpriv).expect("valid signature");
 
     // Step 4: Finalizer role; that finalizes the PSBT.
     psbt.inputs.iter_mut().for_each(|input| {

@@ -83,7 +83,6 @@ use bitcoin::ext::*;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
@@ -92,8 +91,6 @@ use bitcoin::{
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let secp = Secp256k1::new();
-
     println!("\n----------------");
     println!("\nSTART EXAMPLE 1 - P2TR with a BIP-0086 commitment, signed with internal key\n");
 
@@ -112,7 +109,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .ok_or("fees more than input amount!")?;
 
     let tx_hex_string = encode::serialize_hex(&generate_bip86_key_spend_tx(
-        &secp,
         // The master extended private key from the descriptor in step 4
         BENEFACTOR_XPRIV_STR.parse::<Xpriv>()?,
         // Set these fields with valid data for the UTXO from step 5 above
@@ -218,7 +214,6 @@ struct P2trUtxo<'a> {
 
 #[allow(clippy::single_element_loop)]
 fn generate_bip86_key_spend_tx(
-    secp: &secp256k1::Secp256k1<secp256k1::All>,
     master_xpriv: Xpriv,
     input_utxo: P2trUtxo,
     outputs: Vec<TxOut>,
@@ -297,7 +292,7 @@ fn generate_bip86_key_spend_tx(
                 .ok_or("missing Taproot key origin")?;
 
             let secret_key =
-                master_xpriv.derive_xpriv(secp, derivation_path)?.to_private_key().inner;
+                master_xpriv.derive_xpriv(derivation_path)?.to_private_key().inner;
             sign_psbt_taproot(
                 secret_key,
                 input.tap_internal_key.unwrap(),
@@ -305,7 +300,6 @@ fn generate_bip86_key_spend_tx(
                 input,
                 hash,
                 sighash_type,
-                secp,
             );
 
             Ok(())
@@ -347,7 +341,6 @@ struct BenefactorWallet {
     beneficiary_xpub: Xpub,
     current_spend_info: Option<TaprootSpendInfo>,
     next_psbt: Option<Psbt>,
-    secp: Secp256k1<secp256k1::All>,
     next: ChildNumber,
 }
 
@@ -361,7 +354,6 @@ impl BenefactorWallet {
             beneficiary_xpub,
             current_spend_info: None,
             next_psbt: None,
-            secp: Secp256k1::new(),
             next: ChildNumber::ZERO_NORMAL,
         })
     }
@@ -394,11 +386,11 @@ impl BenefactorWallet {
         let derivation_path = format!("101/1/0/0/{}", self.next).parse::<DerivationPath>()?;
         let internal_keypair = self
             .master_xpriv
-            .derive_xpriv(&self.secp, &derivation_path)
+            .derive_xpriv(&derivation_path)
             .expect("derivation path is short")
-            .to_keypair(&self.secp);
+            .to_keypair();
         let beneficiary_key =
-            self.beneficiary_xpub.derive_xpub(&self.secp, &derivation_path)?.to_x_only_public_key();
+            self.beneficiary_xpub.derive_xpub(&derivation_path)?.to_x_only_public_key();
 
         // Build up the leaf script and combine with internal key into a Taproot commitment
         let script = Self::time_lock_script(lock_time, beneficiary_key);
@@ -406,11 +398,10 @@ impl BenefactorWallet {
 
         let taproot_spend_info = TaprootBuilder::new()
             .add_leaf(0, script.clone())?
-            .finalize(&self.secp, internal_keypair.x_only_public_key().0)
+            .finalize(internal_keypair.x_only_public_key().0)
             .expect("should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
         let script_pubkey = ScriptPubKeyBuf::new_p2tr(
-            &self.secp,
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
         );
@@ -419,7 +410,6 @@ impl BenefactorWallet {
 
         // Spend a normal BIP-0086-like output as an input in our inheritance funding transaction
         let tx = generate_bip86_key_spend_tx(
-            &self.secp,
             self.master_xpriv,
             input_utxo,
             vec![TxOut { script_pubkey: script_pubkey.clone(), amount }],
@@ -445,7 +435,7 @@ impl BenefactorWallet {
         );
         origins.insert(
             internal_keypair.x_only_public_key().0.into(),
-            (vec![], (self.master_xpriv.fingerprint(&self.secp), derivation_path)),
+            (vec![], (self.master_xpriv.fingerprint(), derivation_path)),
         );
         let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
         let mut tap_scripts = BTreeMap::new();
@@ -487,12 +477,12 @@ impl BenefactorWallet {
                 format!("101/1/0/0/{}", self.next).parse::<DerivationPath>()?;
             let new_internal_keypair = self
                 .master_xpriv
-                .derive_xpriv(&self.secp, &new_derivation_path)
+                .derive_xpriv(&new_derivation_path)
                 .expect("derivation path is short")
-                .to_keypair(&self.secp);
+                .to_keypair();
             let beneficiary_key = self
                 .beneficiary_xpub
-                .derive_xpub(&self.secp, &new_derivation_path)?
+                .derive_xpub(&new_derivation_path)?
                 .to_x_only_public_key();
 
             // Build up the leaf script and combine with internal key into a Taproot commitment
@@ -505,12 +495,11 @@ impl BenefactorWallet {
 
             let taproot_spend_info = TaprootBuilder::new()
                 .add_leaf(0, script.clone())?
-                .finalize(&self.secp, new_internal_keypair.x_only_public_key().0)
+                .finalize(new_internal_keypair.x_only_public_key().0)
                 .expect("should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();
             let output_script_pubkey = ScriptPubKeyBuf::new_p2tr(
-                &self.secp,
                 taproot_spend_info.internal_key(),
                 taproot_spend_info.merkle_root(),
             );
@@ -540,7 +529,7 @@ impl BenefactorWallet {
                     .ok_or("missing Taproot key origin")?;
                 let secret_key = self
                     .master_xpriv
-                    .derive_xpriv(&self.secp, derivation_path)
+                    .derive_xpriv(derivation_path)
                     .expect("derivation path is short")
                     .to_private_key()
                     .inner;
@@ -551,7 +540,6 @@ impl BenefactorWallet {
                     input,
                     hash,
                     sighash_type,
-                    &self.secp,
                 );
             }
 
@@ -632,15 +620,14 @@ impl BenefactorWallet {
 /// after some expiry using CLTV.
 struct BeneficiaryWallet {
     master_xpriv: Xpriv,
-    secp: secp256k1::Secp256k1<secp256k1::All>,
 }
 
 impl BeneficiaryWallet {
     fn new(master_xpriv: Xpriv) -> Result<Self, Box<dyn std::error::Error>> {
-        Ok(Self { master_xpriv, secp: Secp256k1::new() })
+        Ok(Self { master_xpriv })
     }
 
-    fn master_xpub(&self) -> Xpub { Xpub::from_xpriv(&self.secp, &self.master_xpriv) }
+    fn master_xpub(&self) -> Xpub { Xpub::from_xpriv(&self.master_xpriv) }
 
     fn spend_inheritance(
         &self,
@@ -665,7 +652,7 @@ impl BeneficiaryWallet {
             &psbt.inputs[0].tap_key_origins.clone()
         {
             let secret_key =
-                self.master_xpriv.derive_xpriv(&self.secp, derivation_path)?.to_private_key().inner;
+                self.master_xpriv.derive_xpriv(derivation_path)?.to_private_key().inner;
             for lh in leaf_hashes {
                 let sighash_type = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(
@@ -684,7 +671,6 @@ impl BeneficiaryWallet {
                     &mut psbt.inputs[0],
                     hash,
                     sighash_type,
-                    &self.secp,
                 );
             }
         }
@@ -744,15 +730,14 @@ fn sign_psbt_taproot(
     psbt_input: &mut psbt::Input,
     hash: TapSighash,
     sighash_type: TapSighashType,
-    secp: &Secp256k1<secp256k1::All>,
 ) {
     let keypair = secp256k1::Keypair::from_seckey_byte_array(secret_key.to_secret_bytes()).unwrap();
     let keypair = match leaf_hash {
-        None => keypair.tap_tweak(secp, psbt_input.tap_merkle_root).to_keypair(),
+        None => keypair.tap_tweak(psbt_input.tap_merkle_root).to_keypair(),
         Some(_) => keypair, // no tweak for script spend
     };
 
-    let signature = secp.sign_schnorr(&hash.to_byte_array(), &keypair);
+    let signature = secp256k1::schnorr::sign(&hash.to_byte_array(), &keypair);
 
     let final_signature = taproot::Signature { signature, sighash_type };
 
