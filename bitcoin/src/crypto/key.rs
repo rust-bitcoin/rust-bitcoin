@@ -543,7 +543,7 @@ impl PrivateKey {
     /// a secure random number generator.
     #[cfg(feature = "rand-std")]
     pub fn generate(network: impl Into<NetworkKind>) -> Self {
-        let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
+        let secret_key = secp256k1::SecretKey::new(&mut rand::rng());
         Self::new(secret_key, network.into())
     }
     /// Constructs a new compressed ECDSA private key from the provided generic secp256k1 private key
@@ -873,7 +873,7 @@ pub type UntweakedKeypair = Keypair;
 /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
 /// # use bitcoin::secp256k1::{rand, Secp256k1};
 /// # let secp = Secp256k1::new();
-/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&secp, &mut rand::thread_rng()));
+/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&secp, &mut rand::rng()));
 /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
 /// let (_pk, _parity) = keypair.public_parts();
 /// let _pk = TweakedPublicKey::from_keypair(keypair);
@@ -1745,7 +1745,7 @@ mod tests {
         use secp256k1::rand;
 
         let secp = Secp256k1::new();
-        let kp = Keypair::new(&secp, &mut rand::thread_rng());
+        let kp = Keypair::new(&secp, &mut rand::rng());
 
         let _ = PublicKey::new(kp);
         let _ = PublicKey::new_uncompressed(kp);

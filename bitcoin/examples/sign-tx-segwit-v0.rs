@@ -88,7 +88,7 @@ fn main() {
 ///
 /// In a real application these would be actual secrets.
 fn senders_keys<C: Signing>(secp: &Secp256k1<C>) -> (SecretKey, WPubkeyHash) {
-    let sk = SecretKey::new(&mut rand::thread_rng());
+    let sk = SecretKey::new(&mut rand::rng());
     let pk = bitcoin::PublicKey::new(sk.public_key(secp));
     let wpkh = pk.wpubkey_hash().expect("key is compressed");
 

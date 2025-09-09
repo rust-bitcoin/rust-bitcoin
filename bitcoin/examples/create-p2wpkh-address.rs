@@ -8,7 +8,7 @@ fn main() {
     let secp = Secp256k1::new();
 
     // Generate secp256k1 public and private key pair.
-    let (secret_key, public_key) = secp.generate_keypair(&mut rand::thread_rng());
+    let (secret_key, public_key) = secp.generate_keypair(&mut rand::rng());
 
     // Create a Bitcoin private key to be used on the Bitcoin mainnet.
     let private_key = PrivateKey::new(secret_key, Network::Bitcoin);

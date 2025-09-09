@@ -2369,11 +2369,11 @@ mod tests {
 
     #[cfg(feature = "rand-std")]
     fn gen_keys() -> (PrivateKey, PublicKey, Secp256k1<All>) {
-        use secp256k1::rand::thread_rng;
+        use secp256k1::rand;
 
         let secp = Secp256k1::new();
 
-        let sk = SecretKey::new(&mut thread_rng());
+        let sk = SecretKey::new(&mut rand::rng());
         let priv_key = PrivateKey::new(sk, NetworkKind::Test);
         let pk = PublicKey::from_private_key(&secp, priv_key);
 
