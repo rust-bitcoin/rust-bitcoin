@@ -544,7 +544,7 @@ impl PrivateKey {
     /// a secure random number generator.
     #[cfg(feature = "rand-std")]
     pub fn generate(network: impl Into<NetworkKind>) -> PrivateKey {
-        let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
+        let secret_key = secp256k1::SecretKey::new(&mut secp256k1::rand::rng());
         PrivateKey::new(secret_key, network.into())
     }
     /// Constructs a new compressed ECDSA private key from the provided generic Secp256k1 private key
@@ -1759,7 +1759,7 @@ mod tests {
         use secp256k1::rand;
 
         let secp = Secp256k1::new();
-        let kp = Keypair::new(&secp, &mut rand::thread_rng());
+        let kp = Keypair::new(&secp, &mut rand::rng());
 
         let _ = PublicKey::new(kp);
         let _ = PublicKey::new_uncompressed(kp);
