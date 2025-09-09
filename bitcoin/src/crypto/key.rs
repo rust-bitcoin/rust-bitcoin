@@ -325,7 +325,7 @@ impl PublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        secp.verify_ecdsa(msg, &sig.signature, &self.inner)
+        secp256k1::ecdsa::verify(&sig.signature, msg, &self.inner)
     }
 }
 
@@ -467,7 +467,7 @@ impl CompressedPublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp.verify_ecdsa(msg, &sig.signature, &self.0)?)
+        Ok(secp256k1::ecdsa::verify(&sig.signature, msg, &self.0)?)
     }
 }
 
@@ -578,7 +578,7 @@ impl PrivateKey {
         data: [u8; 32],
         network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
-        Ok(Self::new(secp256k1::SecretKey::from_byte_array(data)?, network))
+        Ok(Self::new(secp256k1::SecretKey::from_secret_bytes(data)?, network))
     }
 
     /// Deserializes a private key from a slice.
@@ -640,7 +640,7 @@ impl PrivateKey {
             }
         };
 
-        Ok(Self { compressed, network, inner: secp256k1::SecretKey::from_byte_array(*key)? })
+        Ok(Self { compressed, network, inner: secp256k1::SecretKey::from_secret_bytes(*key)? })
     }
 
     /// Returns a new private key with the negated secret value.

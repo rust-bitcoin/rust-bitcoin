@@ -379,7 +379,7 @@ impl Psbt {
             };
 
             let sig = ecdsa::Signature {
-                signature: secp.sign_ecdsa(msg, &sk.inner),
+                signature: secp256k1::ecdsa::sign(msg, &sk.inner),
                 sighash_type: sighash_ty,
             };
 
@@ -445,10 +445,10 @@ impl Psbt {
                         .to_keypair();
 
                     #[cfg(feature = "rand-std")]
-                    let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
+                    let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
                     #[cfg(not(feature = "rand-std"))]
                     let signature =
-                        secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);
+                        secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
                     let signature = taproot::Signature { signature, sighash_type };
                     input.tap_key_sig = Some(signature);
@@ -473,10 +473,10 @@ impl Psbt {
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(feature = "rand-std")]
-                        let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
+                        let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
                         #[cfg(not(feature = "rand-std"))]
                         let signature =
-                            secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);
+                            secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
                         let signature = taproot::Signature { signature, sighash_type };
                         input.tap_script_sigs.insert((xonly, lh), signature);
