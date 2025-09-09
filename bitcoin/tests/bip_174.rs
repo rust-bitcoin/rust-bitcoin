@@ -123,7 +123,7 @@ fn build_extended_private_key() -> Xpriv {
     let xpriv = extended_private_key.parse::<Xpriv>().unwrap();
 
     let sk = PrivateKey::from_wif(seed).unwrap();
-    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.inner.secret_bytes());
+    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.inner.to_secret_bytes());
     assert_eq!(xpriv, seeded);
 
     xpriv
