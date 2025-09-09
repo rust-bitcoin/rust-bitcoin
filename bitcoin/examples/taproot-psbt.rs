@@ -386,7 +386,7 @@ impl BenefactorWallet {
     ) -> Result<(Transaction, Psbt), Box<dyn std::error::Error>> {
         if let ChildNumber::Normal { index } = self.next {
             if index > 0 && self.current_spend_info.is_some() {
-                return Err("transaction already exists, use refresh_inheritance_timelock to refresh the timelock".into());
+                return Err("transaction already exists, use refresh_tx to refresh the timelock".into());
             }
         }
         // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
