@@ -46,7 +46,7 @@ fn encode_decode_from_stdlib_type() {
 ///
 /// To use the `Encodable` (and `Decodable`) traits you can implement the `bitcoin_io` traits.
 fn encode_to_custom_type() {
-    /// A byte counter - counts how many bytes where written to it.
+    /// A byte counter - counts how many bytes were written to it.
     struct WriteCounter {
         count: usize,
     }
@@ -96,7 +96,7 @@ fn encode_using_wrapper() {
 }
 
 mod pretend_this_is_some_other_crate {
-    /// A byte counter - counts how many bytes where written to it.
+    /// A byte counter - counts how many bytes were written to it.
     pub struct WriteCounter {
         count: usize,
     }
