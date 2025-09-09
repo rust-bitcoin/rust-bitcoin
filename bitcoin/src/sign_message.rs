@@ -244,8 +244,6 @@ mod tests {
     #[test]
     #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
     fn message_signature() {
-        use secp256k1;
-
         use crate::{Address, AddressType, Network, NetworkKind};
 
         let secp = secp256k1::Secp256k1::new();
