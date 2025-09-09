@@ -582,7 +582,7 @@ impl PrivateKey {
         data: [u8; 32],
         network: impl Into<NetworkKind>,
     ) -> Result<PrivateKey, secp256k1::Error> {
-        Ok(PrivateKey::new(secp256k1::SecretKey::from_byte_array(data)?, network))
+        Ok(PrivateKey::new(secp256k1::SecretKey::from_secret_bytes(data)?, network))
     }
 
     /// Deserializes a private key from a slice.
@@ -644,7 +644,7 @@ impl PrivateKey {
             }
         };
 
-        Ok(PrivateKey { compressed, network, inner: secp256k1::SecretKey::from_byte_array(*key)? })
+        Ok(PrivateKey { compressed, network, inner: secp256k1::SecretKey::from_secret_bytes(*key)? })
     }
 
     /// Returns a new private key with the negated secret value.
