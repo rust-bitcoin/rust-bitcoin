@@ -322,7 +322,7 @@ impl Alert {
     pub fn final_alert() -> Self { Self(Self::FINAL_ALERT.into()) }
 
     /// The final alert advertised by Bitcoin Core. This alert is sent if the advertised protocol
-    /// version is vulnerable to the alert-system vulerablities.
+    /// version is vulnerable to the alert-system vulnerabilities.
     pub fn is_final_alert(&self) -> bool { self.0.eq(&Self::FINAL_ALERT) }
 }
 
