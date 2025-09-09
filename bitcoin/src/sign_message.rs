@@ -252,7 +252,7 @@ mod tests {
         let message = "rust-bitcoin MessageSignature test";
         let msg_hash = super::signed_msg_hash(message);
         let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
-        let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
+        let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::rng());
         let secp_sig = secp.sign_ecdsa_recoverable(msg, &privkey);
         let signature = super::MessageSignature { signature: secp_sig, compressed: true };
 
