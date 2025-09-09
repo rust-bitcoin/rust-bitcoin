@@ -3,7 +3,6 @@ use std::{env, process};
 use bitcoin::address::{Address, KnownHrp};
 use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
 use bitcoin::hex::FromHex;
-use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::{CompressedPublicKey, NetworkKind};
 
 fn main() {
