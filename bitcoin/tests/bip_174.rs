@@ -10,7 +10,6 @@ use bitcoin::hex::FromHex;
 use bitcoin::opcodes::all::OP_0;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::{PushBytes, ScriptBuf, ScriptBufExt as _};
-use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
     absolute, script, transaction, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptPubKeyBuf,
     ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
@@ -29,14 +28,12 @@ fn hex_script<T>(s: &str) -> ScriptBuf<T> {
 
 #[test]
 fn bip174_psbt_workflow() {
-    let secp = Secp256k1::new();
-
     //
     // Step 0: Create the extended private key from the test vector data.
     //
 
     let ext_priv = build_extended_private_key();
-    let ext_pub = Xpub::from_xpriv(&secp, &ext_priv);
+    let ext_pub = Xpub::from_xpriv(&ext_priv);
     let parent_fingerprint = ext_pub.fingerprint();
 
     //
@@ -310,8 +307,6 @@ fn parse_and_verify_keys(
     ext_priv: &Xpriv,
     sk_path: &[(&str, &str)],
 ) -> BTreeMap<PublicKey, PrivateKey> {
-    let secp = &Secp256k1::new();
-
     let mut key_map = BTreeMap::new();
     for (secret_key, derivation_path) in sk_path.iter() {
         let wif_priv = PrivateKey::from_wif(secret_key).expect("failed to parse key");
@@ -319,9 +314,9 @@ fn parse_and_verify_keys(
         let path =
             derivation_path.into_derivation_path().expect("failed to convert derivation path");
         let derived_priv =
-            ext_priv.derive_xpriv(secp, &path).expect("derivation path too long").to_private_key();
+            ext_priv.derive_xpriv(&path).expect("derivation path too long").to_private_key();
         assert_eq!(wif_priv, derived_priv);
-        let derived_pub = derived_priv.public_key(secp);
+        let derived_pub = derived_priv.public_key();
         key_map.insert(derived_pub, derived_priv);
     }
     key_map
@@ -411,8 +406,7 @@ fn combine_lexicographically() {
 
 /// Signs `psbt` with `keys` if required.
 fn sign(mut psbt: Psbt, keys: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
-    let secp = Secp256k1::new();
-    psbt.sign(&keys, &secp).unwrap();
+    psbt.sign(&keys).unwrap();
     psbt
 }
 

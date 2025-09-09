@@ -1,14 +1,11 @@
-use bitcoin::secp256k1::{rand, Secp256k1};
+use bitcoin::secp256k1::rand;
 use bitcoin::{Address, CompressedPublicKey, Network, PrivateKey};
 
 /// Generate a P2WPKH (pay-to-witness-public-key-hash) address and print it
 /// along with the associated private key needed to transact.
 fn main() {
-    // Create new secp256k1 instance.
-    let secp = Secp256k1::new();
-
     // Generate secp256k1 public and private key pair.
-    let (secret_key, public_key) = secp.generate_keypair(&mut rand::rng());
+    let (secret_key, public_key) = secp256k1::generate_keypair(&mut rand::rng());
 
     // Create a Bitcoin private key to be used on the Bitcoin mainnet.
     let private_key = PrivateKey::new(secret_key, Network::Bitcoin);

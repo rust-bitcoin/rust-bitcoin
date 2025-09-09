@@ -13,7 +13,7 @@ use bitcoin::{
     absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptSigBuf, Sequence,
     TapScriptBuf, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
-use secp256k1::{Keypair, Secp256k1, Signing};
+use secp256k1::Keypair;
 
 #[test]
 fn psbt_sign_taproot() {
@@ -24,10 +24,9 @@ fn psbt_sign_taproot() {
 
     impl GetKey for Keystore {
         type Error = SignError;
-        fn get_key<C: Signing>(
+        fn get_key(
             &self,
             key_request: &KeyRequest,
-            _secp: &Secp256k1<C>,
         ) -> Result<Option<PrivateKey>, Self::Error> {
             match key_request {
                 KeyRequest::Bip32((mfp, _)) =>
@@ -40,8 +39,6 @@ fn psbt_sign_taproot() {
             }
         }
     }
-
-    let secp = &Secp256k1::new();
 
     let sk_path = [
         ("dff1c8c2c016a572914b4c5adb8791d62b4768ae9d0a61be8ab94cf5038d7d90", "m/86'/1'/0'/0/0"),
@@ -60,7 +57,7 @@ fn psbt_sign_taproot() {
     let script3 = create_basic_single_sig_script(secp, sk_path[2].0); // m/86'/1'/0'/0/2
 
     // Just use one of the secret keys for the key path spend.
-    let kp = Keypair::from_seckey_str(secp, sk_path[2].0).expect("failed to create keypair");
+    let kp = Keypair::from_seckey_str(sk_path[2].0).expect("failed to create keypair");
 
     let internal_key = kp.x_only_public_key().0; // Ignore the parity.
 
@@ -114,7 +111,7 @@ fn psbt_sign_taproot() {
     // script path spend
     {
         // use private key of path "m/86'/1'/0'/0/1" as signing key
-        let kp = Keypair::from_seckey_str(secp, sk_path[1].0).expect("failed to create keypair");
+        let kp = Keypair::from_seckey_str(sk_path[1].0).expect("failed to create keypair");
         let x_only_pubkey = kp.x_only_public_key().0;
         let signing_key_path = sk_path[1].1;
 
@@ -166,8 +163,8 @@ fn psbt_sign_taproot() {
     }
 }
 
-fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) -> TapScriptBuf {
-    let kp = Keypair::from_seckey_str(secp, sk).expect("failed to create keypair");
+fn create_basic_single_sig_script(sk: &str) -> TapScriptBuf {
+    let kp = Keypair::from_seckey_str(sk).expect("failed to create keypair");
     let x_only_pubkey = kp.x_only_public_key().0;
     script::Builder::new()
         .push_slice(x_only_pubkey.serialize())
@@ -176,7 +173,6 @@ fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) ->
 }
 
 fn create_taproot_tree<K: Into<XOnlyPublicKey>>(
-    secp: &Secp256k1<secp256k1::All>,
     script1: TapScriptBuf,
     script2: TapScriptBuf,
     script3: TapScriptBuf,
