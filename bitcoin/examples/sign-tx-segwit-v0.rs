@@ -70,7 +70,7 @@ fn main() {
 
     // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
     let msg = Message::from(sighash);
-    let signature = secp.sign_ecdsa(msg, &sk);
+    let signature = secp256k1::ecdsa::sign(msg, &sk);
 
     // Update the witness stack.
     let signature = bitcoin::ecdsa::Signature { signature, sighash_type };

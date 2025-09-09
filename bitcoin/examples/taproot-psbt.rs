@@ -748,13 +748,13 @@ fn sign_psbt_taproot(
     sighash_type: TapSighashType,
     secp: &Secp256k1<secp256k1::All>,
 ) {
-    let keypair = secp256k1::Keypair::from_seckey_byte_array(secret_key.secret_bytes()).unwrap();
+    let keypair = secp256k1::Keypair::from_seckey_byte_array(secret_key.to_secret_bytes()).unwrap();
     let keypair = match leaf_hash {
         None => keypair.tap_tweak(secp, psbt_input.tap_merkle_root).to_keypair(),
         Some(_) => keypair, // no tweak for script spend
     };
 
-    let signature = secp.sign_schnorr(&hash.to_byte_array(), &keypair);
+    let signature = secp256k1::schnorr::sign(&hash.to_byte_array(), &keypair);
 
     let final_signature = taproot::Signature { signature, sighash_type };
 

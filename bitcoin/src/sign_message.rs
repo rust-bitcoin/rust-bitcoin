@@ -139,7 +139,7 @@ mod message_signing {
             msg_hash: sha256d::Hash,
         ) -> Result<PublicKey, MessageSignatureError> {
             let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
-            let pubkey = secp_ctx.recover_ecdsa(msg, &self.signature)?;
+            let pubkey = self.signature.recover_ecdsa(msg)?;
             Ok(PublicKey { inner: pubkey, compressed: self.compressed })
         }
 
@@ -222,9 +222,11 @@ pub fn sign<C: secp256k1::Signing>(
     msg: impl AsRef<[u8]>,
     privkey: SecretKey,
 ) -> MessageSignature {
+    use secp256k1::ecdsa::RecoverableSignature;
+
     let msg_hash = signed_msg_hash(msg);
     let msg_to_sign = secp256k1::Message::from_digest(msg_hash.to_byte_array());
-    let secp_sig = secp_ctx.sign_ecdsa_recoverable(msg_to_sign, &privkey);
+    let secp_sig = RecoverableSignature::sign_ecdsa_recoverable(msg_to_sign, &privkey);
     MessageSignature { signature: secp_sig, compressed: true }
 }
 
@@ -244,6 +246,7 @@ mod tests {
     #[test]
     #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
     fn message_signature() {
+        use secp256k1::ecdsa::RecoverableSignature;
         use crate::{Address, AddressType, Network, NetworkKind};
 
         let secp = secp256k1::Secp256k1::new();
@@ -251,7 +254,7 @@ mod tests {
         let msg_hash = super::signed_msg_hash(message);
         let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
         let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::rng());
-        let secp_sig = secp.sign_ecdsa_recoverable(msg, &privkey);
+        let secp_sig = RecoverableSignature::sign_ecdsa_recoverable(msg, &privkey);
         let signature = super::MessageSignature { signature: secp_sig, compressed: true };
 
         assert_eq!(signature.to_string(), super::sign(&secp, message, privkey).to_string());

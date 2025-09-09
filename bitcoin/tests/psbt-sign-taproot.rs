@@ -60,7 +60,7 @@ fn psbt_sign_taproot() {
     let script3 = create_basic_single_sig_script(secp, sk_path[2].0); // m/86'/1'/0'/0/2
 
     // Just use one of the secret keys for the key path spend.
-    let kp = Keypair::from_seckey_str(secp, sk_path[2].0).expect("failed to create keypair");
+    let kp = sk_path[2].0.parse::<Keypair>().expect("failed to create keypair");
 
     let internal_key = kp.x_only_public_key().0; // Ignore the parity.
 
@@ -114,7 +114,7 @@ fn psbt_sign_taproot() {
     // script path spend
     {
         // use private key of path "m/86'/1'/0'/0/1" as signing key
-        let kp = Keypair::from_seckey_str(secp, sk_path[1].0).expect("failed to create keypair");
+        let kp = sk_path[1].0.parse::<Keypair>().expect("failed to create keypair");
         let x_only_pubkey = kp.x_only_public_key().0;
         let signing_key_path = sk_path[1].1;
 
@@ -167,7 +167,7 @@ fn psbt_sign_taproot() {
 }
 
 fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) -> TapScriptBuf {
-    let kp = Keypair::from_seckey_str(secp, sk).expect("failed to create keypair");
+    let kp = sk.parse::<Keypair>().expect("failed to create keypair");
     let x_only_pubkey = kp.x_only_public_key().0;
     script::Builder::new()
         .push_slice(x_only_pubkey.serialize())
