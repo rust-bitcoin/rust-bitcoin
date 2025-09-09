@@ -745,7 +745,7 @@ impl Xpriv {
     /// Constructs a new BIP-0340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
-        Keypair::from_seckey_byte_array(secp, self.private_key.secret_bytes())
+        Keypair::from_seckey_byte_array(self.private_key.secret_bytes())
             .expect("BIP-0032 internal private key representation is broken")
     }
 
@@ -961,7 +961,7 @@ impl Xpub {
     ) -> Result<Xpub, DerivationError> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let tweaked =
-            self.public_key.add_exp_tweak(secp, &sk.into()).expect("cryptographically unreachable");
+            self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
 
         Ok(Xpub {
             network: self.network,

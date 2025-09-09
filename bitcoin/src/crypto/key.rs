@@ -326,7 +326,7 @@ impl PublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        secp.verify_ecdsa(msg, &sig.signature, &self.inner)
+        secp.verify_ecdsa(&sig.signature, msg, &self.inner)
     }
 }
 
@@ -468,7 +468,7 @@ impl CompressedPublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp.verify_ecdsa(msg, &sig.signature, &self.0)?)
+        Ok(secp.verify_ecdsa(&sig.signature, msg, &self.0)?)
     }
 }
 
