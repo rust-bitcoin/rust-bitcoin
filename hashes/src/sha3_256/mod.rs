@@ -17,6 +17,8 @@
 //
 // To read this file, follow the example code: https://keccak.team/keccak_specs_summary.html
 // For a detailed specification: https://keccak.team/files/Keccak-reference-3.0.pdf
+#[cfg(bench)]
+mod benches;
 use core::fmt;
 
 crate::internal_macros::general_hash_type! {
