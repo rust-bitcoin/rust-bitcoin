@@ -24,6 +24,8 @@ use hashes::sha256d;
 use internals::compact_size;
 #[cfg(feature = "hex")]
 use internals::write_err;
+#[cfg(feature = "serde")]
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(feature = "hex")]
 use units::parse_int;
 
@@ -357,8 +359,6 @@ pub struct OutPoint {
     /// The index of the referenced output in its transaction's vout.
     pub vout: u32,
 }
-#[cfg(feature = "serde")]
-internals::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
     /// The number of bytes that an outpoint contributes to the size of a transaction.
@@ -417,6 +417,120 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
         }
     }
     parse_int::int_from_str(s).map_err(ParseOutPointError::Vout)
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for OutPoint {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if serializer.is_human_readable() {
+            serializer.collect_str(&self)
+        } else {
+            use crate::serde::ser::SerializeStruct as _;
+
+            let mut state = serializer.serialize_struct("OutPoint", 2)?;
+            // serializing as an array was found in the past to break for some serializers so we use
+            // a slice instead. This causes 8 bytes to be prepended for the length (even though this
+            // is a bit silly because know the length).
+            state.serialize_field("txid", self.txid.as_byte_array().as_slice())?;
+            state.serialize_field("vout", &self.vout.to_le_bytes())?;
+            state.end()
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for OutPoint {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            struct StringVisitor;
+
+            impl<'de> de::Visitor<'de> for StringVisitor {
+                type Value = OutPoint;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str("a string in format 'txid:vout'")
+                }
+
+                fn visit_str<E>(self, value: &str) -> Result<OutPoint, E>
+                where
+                    E: de::Error,
+                {
+                    value.parse::<OutPoint>().map_err(de::Error::custom)
+                }
+            }
+
+            deserializer.deserialize_str(StringVisitor)
+        } else {
+            #[derive(Deserialize)]
+            #[serde(field_identifier, rename_all = "lowercase")]
+            enum Field {
+                Txid,
+                Vout,
+            }
+
+            struct OutPointVisitor;
+
+            impl<'de> de::Visitor<'de> for OutPointVisitor {
+                type Value = OutPoint;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str("OutPoint struct with fields")
+                }
+
+                fn visit_seq<V>(self, mut seq: V) -> Result<OutPoint, V::Error>
+                where
+                    V: de::SeqAccess<'de>,
+                {
+                    let txid =
+                        seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                    let vout =
+                        seq.next_element()?.ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                    Ok(OutPoint { txid, vout })
+                }
+
+                fn visit_map<V>(self, mut map: V) -> Result<OutPoint, V::Error>
+                where
+                    V: de::MapAccess<'de>,
+                {
+                    let mut txid = None;
+                    let mut vout = None;
+
+                    while let Some(key) = map.next_key()? {
+                        match key {
+                            Field::Txid => {
+                                if txid.is_some() {
+                                    return Err(de::Error::duplicate_field("txid"));
+                                }
+                                let bytes: [u8; 32] = map.next_value()?;
+                                txid = Some(Txid::from_byte_array(bytes));
+                            }
+                            Field::Vout => {
+                                if vout.is_some() {
+                                    return Err(de::Error::duplicate_field("vout"));
+                                }
+                                let bytes: [u8; 4] = map.next_value()?;
+                                vout = Some(u32::from_le_bytes(bytes));
+                            }
+                        }
+                    }
+
+                    let txid = txid.ok_or_else(|| de::Error::missing_field("txid"))?;
+                    let vout = vout.ok_or_else(|| de::Error::missing_field("vout"))?;
+
+                    Ok(OutPoint { txid, vout })
+                }
+            }
+
+            const FIELDS: &[&str] = &["txid", "vout"];
+            deserializer.deserialize_struct("OutPoint", FIELDS, OutPointVisitor)
+        }
+    }
 }
 
 /// An error in parsing an [`OutPoint`].
@@ -769,5 +883,68 @@ mod tests {
     fn version_display() {
         let version = Version(123);
         assert_eq!(format!("{}", version), "123");
+    }
+
+    // Creates an arbitrary dummy outpoint.
+    #[cfg(feature = "serde")]
+    fn tc_out_point() -> OutPoint {
+        let s = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1";
+        s.parse::<OutPoint>().unwrap()
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_deserialize_human_readable() {
+        // `sered` serialization is the same as `Display` but includes quotes.
+        let ser = "\"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1\"";
+        let got = serde_json::from_str::<OutPoint>(ser).unwrap();
+        let want = tc_out_point();
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_deserialize_non_human_readable() {
+        #[rustfmt::skip]
+        let bytes = [
+            // Length, pre-pended by the `serde` infrastructure because we use
+            // slice serialization instead of array even though we know the length.
+            32, 0, 0, 0, 0, 0, 0, 0,
+            // The txid bytes
+            32, 31, 30, 29, 28, 27, 26, 25,
+            24, 23, 22, 21, 20, 19, 18, 17,
+            16, 15, 14, 13, 12, 11, 10, 9,
+            8, 7, 6, 5, 4, 3, 2, 1,
+            // The vout
+            1, 0, 0, 0
+        ];
+
+        let got = bincode::deserialize::<OutPoint>(&bytes).unwrap();
+        let want = tc_out_point();
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_human_readable_rountrips() {
+        let out_point = tc_out_point();
+
+        let ser = serde_json::to_string(&out_point).unwrap();
+        let got = serde_json::from_str::<OutPoint>(&ser).unwrap();
+
+        assert_eq!(got, out_point);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn out_point_serde_non_human_readable_rountrips() {
+        let out_point = tc_out_point();
+
+        let ser = bincode::serialize(&out_point).unwrap();
+        let got = bincode::deserialize::<OutPoint>(&ser).unwrap();
+
+        assert_eq!(got, out_point);
     }
 }
