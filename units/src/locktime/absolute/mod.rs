@@ -401,6 +401,22 @@ impl LockTime {
 
 parse_int::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`LockTime`] type.
+    pub struct LockTimeEncoder(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for LockTime {
+    type Encoder<'e> = LockTimeEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        LockTimeEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus_u32().to_le_bytes(),
+        ))
+    }
+}
+
 impl From<Height> for LockTime {
     #[inline]
     fn from(h: Height) -> Self { LockTime::Blocks(h) }

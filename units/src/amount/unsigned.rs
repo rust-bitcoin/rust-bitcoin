@@ -562,6 +562,20 @@ impl TryFrom<SignedAmount> for Amount {
     fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
 }
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Amount`] type.
+    pub struct AmountEncoder(encoding::ArrayEncoder<8>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for Amount {
+    type Encoder<'e> = AmountEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AmountEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_sat().to_le_bytes()))
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
