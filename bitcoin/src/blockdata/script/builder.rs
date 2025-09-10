@@ -12,6 +12,11 @@ use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _
 use crate::{relative, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
+///
+/// # Panics
+///
+/// `Builder` is backed by [`ScriptBuf`] and inherits its panic behavior. This means that
+/// attempting to construct scripts larger than `isize::MAX` bytes will panic.
 #[derive(PartialEq, Eq, Clone)]
 pub struct Builder<T>(ScriptBuf<T>, Option<Opcode>);
 
