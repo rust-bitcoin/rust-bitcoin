@@ -327,7 +327,7 @@ internals::transparent_newtype! {
     /// can be called, providing network on which the address is supposed to be valid. If the verification succeeds,
     /// `Address<NetworkChecked>` is returned.
     ///
-    /// The types `Address` and `Address<NetworkChecked>` are synonymous, i. e. they can be used interchangeably.
+    /// The types `Address` and `Address<NetworkChecked>` are synonymous, i.e. they can be used interchangeably.
     ///
     /// ```rust
     /// use std::str::FromStr;
@@ -952,7 +952,7 @@ impl From<Address> for ScriptPubKeyBuf {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
 
-// Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
+// Alternate formatting `{:#}` is used to return an uppercase version of bech32 addresses which should
 // be used in QR codes, see [`Address::to_qr_uri`].
 impl fmt::Display for Address {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.inner(), fmt) }
