@@ -122,7 +122,7 @@ impl ScriptHash {
     /// > no data greater than 520 bytes may be pushed to the stack. Thus it is not possible to
     /// > spend a P2SH output if the redemption script it refers to is >520 bytes in length.
     ///
-    /// ref: [BIP-16](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
+    /// ref: [BIP-0016](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
     #[inline]
     pub fn from_script<T>(redeem_script: &Script<T>) -> Result<Self, RedeemScriptSizeError>
     where
@@ -139,9 +139,9 @@ impl ScriptHash {
     /// Constructs a new `ScriptHash` from any script irrespective of script size.
     ///
     /// If you hash a script that exceeds 520 bytes in size and use it to create a P2SH output
-    /// then the output will be unspendable (see [BIP-16]).
+    /// then the output will be unspendable (see [BIP-0016]).
     ///
-    /// [BIP-16]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
+    /// [BIP-0016]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
     #[inline]
     pub fn from_script_unchecked<T>(script: &Script<T>) -> Self {
         ScriptHash(hash160::Hash::hash(script.as_bytes()))
@@ -156,7 +156,7 @@ impl WScriptHash {
     /// > The witnessScript (≤ 10,000 bytes) is popped off the initial witness stack. SHA256 of the
     /// > witnessScript must match the 32-byte witness program.
     ///
-    /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    /// ref: [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     #[inline]
     pub fn from_script(witness_script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
         if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {
@@ -170,9 +170,9 @@ impl WScriptHash {
     /// Constructs a new `WScriptHash` from any script irrespective of script size.
     ///
     /// If you hash a script that exceeds 10,000 bytes in size and use it to create a Segwit
-    /// output then the output will be unspendable (see [BIP-141]).
+    /// output then the output will be unspendable (see [BIP-0141]).
     ///
-    /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    /// ref: [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     #[inline]
     pub fn from_script_unchecked(script: &WitnessScript) -> Self {
         WScriptHash(sha256::Hash::hash(script.as_bytes()))

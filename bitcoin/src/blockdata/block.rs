@@ -289,7 +289,7 @@ impl BlockCheckedExt for Block<Checked> {
     fn witness_root(&mut self) -> Option<WitnessMerkleNode> { self.cached_witness_root() }
 
     fn weight(&self) -> Weight {
-        // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
+        // This is the exact definition of a weight unit, as defined by BIP-0141 (quote above).
         let wu = block_base_size(self.transactions()) * 3 + self.total_size();
         Weight::from_wu(wu.to_u64())
     }
