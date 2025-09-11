@@ -22,6 +22,7 @@ extern crate std;
 mod decode;
 mod encode;
 
+pub use self::decode::decoders::{ArrayDecoder, UnexpectedEof};
 pub use self::decode::{Decodable, Decoder};
 #[cfg(feature = "alloc")]
 pub use self::encode::encode_to_vec;

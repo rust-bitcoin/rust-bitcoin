@@ -2,6 +2,8 @@
 
 //! Consensus Decoding Traits
 
+pub mod decoders;
+
 /// A Bitcoin object which can be consensus-decoded using a push decoder.
 ///
 /// To decode something, create a [`Self::Decoder`] and push byte slices
