@@ -179,7 +179,7 @@ pub struct Midstate {
 }
 
 impl Midstate {
-    /// Construct a new [`Midstate`] from the `state` and the `bytes_hashed` to get to that state.
+    /// Constructs a new [`Midstate`] from the `state` and the `bytes_hashed` to get to that state.
     ///
     /// # Panics
     ///

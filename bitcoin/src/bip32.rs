@@ -410,7 +410,7 @@ pub struct DerivationPathIterator<'a> {
 }
 
 impl<'a> DerivationPathIterator<'a> {
-    /// Start a new [DerivationPathIterator] at the given child.
+    /// Starts a new [DerivationPathIterator] at the given child.
     pub fn start_from(path: &'a DerivationPath, start: ChildNumber) -> DerivationPathIterator<'a> {
         DerivationPathIterator { base: path, next_child: Some(start) }
     }
@@ -447,25 +447,25 @@ impl DerivationPath {
         DerivationPath(path)
     }
 
-    /// Convert into a [DerivationPath] that is a child of this one.
+    /// Converts into a [DerivationPath] that is a child of this one.
     pub fn into_child(self, cn: ChildNumber) -> DerivationPath {
         let mut path = self.0;
         path.push(cn);
         DerivationPath(path)
     }
 
-    /// Get an [Iterator] over the children of this [DerivationPath]
+    /// Gets an [Iterator] over the children of this [DerivationPath]
     /// starting with the given [ChildNumber].
     pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, cn)
     }
 
-    /// Get an [Iterator] over the unhardened children of this [DerivationPath].
+    /// Gets an [Iterator] over the unhardened children of this [DerivationPath].
     pub fn normal_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, ChildNumber::Normal { index: 0 })
     }
 
-    /// Get an [Iterator] over the hardened children of this [DerivationPath].
+    /// Gets an [Iterator] over the hardened children of this [DerivationPath].
     pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, ChildNumber::Hardened { index: 0 })
     }
@@ -930,7 +930,7 @@ impl Xpub {
         Ok(pk)
     }
 
-    /// Compute the scalar tweak added to this key to get a child key
+    /// Computes the scalar tweak added to this key to get a child key
     pub fn ckd_pub_tweak(
         &self,
         i: ChildNumber,

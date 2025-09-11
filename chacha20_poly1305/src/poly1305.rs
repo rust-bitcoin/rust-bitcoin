@@ -27,7 +27,7 @@ pub struct Poly1305 {
 }
 
 impl Poly1305 {
-    /// Initialize authenticator with a 32-byte one-time secret key.
+    /// Initializes authenticator with a 32-byte one-time secret key.
     pub const fn new(key: [u8; 32]) -> Self {
         // Taken from Donna. Assigns r to a 26-bit 5-limb number while simultaneously 'clamping' r.
         let r0 = u32::from_le_bytes([key[0], key[1], key[2], key[3]]) & 0x3ffffff;
@@ -50,7 +50,7 @@ impl Poly1305 {
         }
     }
 
-    /// Add message to be authenticated, can be called multiple times before creating tag.
+    /// Adds message to be authenticated, can be called multiple times before creating tag.
     pub fn input(&mut self, message: &[u8]) {
         // Process previous leftovers if the message is long enough to fill the leftovers buffer. If
         // the message is too short then it will just be added to the leftovers at the end. Now if there
@@ -95,7 +95,7 @@ impl Poly1305 {
         }
     }
 
-    /// Generate authentication tag.
+    /// Generates authentication tag.
     pub fn tag(mut self) -> [u8; 16] {
         // Add any remaining leftovers to accumulator.
         if self.leftovers_len > 0 {

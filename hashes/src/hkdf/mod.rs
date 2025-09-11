@@ -42,7 +42,7 @@ impl<T: HashEngine> Hkdf<T>
 where
     T: Default,
 {
-    /// Initialize a HKDF by performing the extract step.
+    /// Initializes a HKDF by performing the extract step.
     pub fn new(salt: &[u8], ikm: &[u8]) -> Self {
         let mut engine: HmacEngine<T> = HmacEngine::new(salt);
         engine.input(ikm);

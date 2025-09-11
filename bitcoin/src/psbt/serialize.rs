@@ -28,28 +28,28 @@ use crate::witness::Witness;
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
-    /// Serialize a value as raw data.
+    /// Serializes a value as raw data.
     fn serialize(&self) -> Vec<u8>;
 }
 
 /// A trait for deserializing a value from raw data in PSBT key-value maps.
 pub(crate) trait Deserialize: Sized {
-    /// Deserialize a value from raw data.
+    /// Deserializes a value from raw data.
     fn deserialize(bytes: &[u8]) -> Result<Self, Error>;
 }
 
 impl Psbt {
-    /// Serialize a value as bytes in hex.
+    /// Serializes a value as bytes in hex.
     pub fn serialize_hex(&self) -> String { self.serialize().to_lower_hex_string() }
 
-    /// Serialize as raw binary data
+    /// Serializes as raw binary data
     pub fn serialize(&self) -> Vec<u8> {
         let mut buf: Vec<u8> = Vec::new();
         self.serialize_to_writer(&mut buf).expect("Writing to Vec can't fail");
         buf
     }
 
-    /// Serialize the PSBT into a writer.
+    /// Serializes the PSBT into a writer.
     pub fn serialize_to_writer(&self, w: &mut impl Write) -> io::Result<usize> {
         let mut written_len = 0;
 
@@ -75,12 +75,12 @@ impl Psbt {
         Ok(written_len)
     }
 
-    /// Deserialize a value from raw binary data.
+    /// Deserializes a value from raw binary data.
     pub fn deserialize(mut bytes: &[u8]) -> Result<Self, Error> {
         Self::deserialize_from_reader(&mut bytes)
     }
 
-    /// Deserialize a value from raw binary data read from a `BufRead` object.
+    /// Deserializes a value from raw binary data read from a `BufRead` object.
     pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, Error> {
         const MAGIC_BYTES: &[u8] = b"psbt";
 

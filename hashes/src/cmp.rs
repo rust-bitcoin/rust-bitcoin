@@ -2,7 +2,7 @@
 
 //! Useful comparison functions.
 
-/// Compare two slices for equality in fixed time. Panics if the slices are of non-equal length.
+/// Compares two slices for equality in fixed time. Panics if the slices are of non-equal length.
 ///
 /// This works by XOR'ing each byte of the two inputs together and keeping an OR counter of the
 /// results.

@@ -100,7 +100,7 @@ mod message_signing {
             MessageSignature { signature, compressed }
         }
 
-        /// Serialize to bytes.
+        /// Serializes to bytes.
         pub fn serialize(&self) -> [u8; 65] {
             let (recid, raw) = self.signature.serialize_compact();
             let mut serialized = [0u8; 65];
@@ -143,7 +143,7 @@ mod message_signing {
             Ok(PublicKey { inner: pubkey, compressed: self.compressed })
         }
 
-        /// Verify that the signature signs the message and was signed by the given address.
+        /// Verifies that the signature signs the message and was signed by the given address.
         ///
         /// To get the message hash from a message, use [super::signed_msg_hash].
         pub fn is_signed_by_address<C: secp256k1::Verification>(
@@ -172,7 +172,7 @@ mod message_signing {
         use crate::prelude::String;
 
         impl MessageSignature {
-            /// Convert a signature from base64 encoding.
+            /// Converts a signature from base64 encoding.
             pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
                 if s.len() != 88 {
                     return Err(MessageSignatureError::InvalidLength);
@@ -184,7 +184,7 @@ mod message_signing {
                 MessageSignature::from_byte_array(&byte_array).map_err(MessageSignatureError::from)
             }
 
-            /// Convert to base64 encoding.
+            /// Converts to base64 encoding.
             pub fn to_base64(self) -> String { BASE64_STANDARD.encode(self.serialize()) }
         }
 

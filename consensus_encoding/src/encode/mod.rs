@@ -62,7 +62,7 @@ macro_rules! encoder_newtype{
     }
 }
 
-/// Encode an object into a hash engine.
+/// Encodes an object into a hash engine.
 ///
 /// Consumes and returns the hash engine to make it easier to call
 /// [`hashes::HashEngine::finalize`] directly on the result.
