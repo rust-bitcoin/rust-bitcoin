@@ -19,8 +19,10 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod decode;
 mod encode;
 
+pub use self::decode::{Decodable, Decoder};
 #[cfg(feature = "alloc")]
 pub use self::encode::encode_to_vec;
 #[cfg(feature = "std")]
