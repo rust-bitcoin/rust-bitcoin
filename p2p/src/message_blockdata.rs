@@ -6,6 +6,8 @@
 //! Bitcoin data (blocks and transactions) around.
 
 use alloc::vec::Vec;
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 use bitcoin::block::BlockHash;
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
@@ -129,6 +131,39 @@ pub struct GetHeadersMessage {
 impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for GetHeadersMessage {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(GetHeadersMessage{version: u.arbitrary()?, locator_hashes: Vec::<BlockHash>::arbitrary(u)?, stop_hash: u.arbitrary()?})
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for GetBlocksMessage {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(GetBlocksMessage{version: u.arbitrary()?, locator_hashes: Vec::<BlockHash>::arbitrary(u)?, stop_hash: u.arbitrary()?})
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Inventory {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=7)? {
+            0 => Ok(Inventory::Error(u.arbitrary()?)),
+            1 => Ok(Inventory::Transaction(u.arbitrary()?)),
+            2 => Ok(Inventory::Block(u.arbitrary()?)),
+            3 => Ok(Inventory::CompactBlock(u.arbitrary()?)),
+            4 => Ok(Inventory::WTx(u.arbitrary()?)),
+            5 => Ok(Inventory::WitnessTransaction(u.arbitrary()?)),
+            6 => Ok(Inventory::WitnessBlock(u.arbitrary()?)),
+            _ => Ok(Inventory::Unknown {
+                inv_type: u.arbitrary()?,
+                hash: u.arbitrary()?
+            })
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

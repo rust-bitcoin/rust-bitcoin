@@ -7,6 +7,8 @@
 
 use alloc::borrow::Cow;
 use alloc::format;
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
@@ -327,6 +329,80 @@ impl Alert {
 }
 
 impl_vec_wrapper!(Alert, Vec<u8>);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ClientSoftwareVersion {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match bool::arbitrary(u)? {
+            true => Ok(ClientSoftwareVersion::Date {
+                yyyy: u.arbitrary()?,
+                mm: u.arbitrary()?,
+                dd: u.arbitrary()?,
+            }),
+            false => Ok(ClientSoftwareVersion::SemVer {
+                major: u.arbitrary()?,
+                minor: u.arbitrary()?,
+                revision: u.arbitrary()?,
+            })
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for UserAgentVersion {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(UserAgentVersion::new(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for UserAgent {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(UserAgent::new(u.arbitrary::<String>()?, u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for VersionMessage {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(VersionMessage::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for RejectReason {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=7)? {
+            0 => Ok(RejectReason::Malformed),
+            1 => Ok(RejectReason::Invalid),
+            2 => Ok(RejectReason::Obsolete),
+            3 => Ok(RejectReason::Duplicate),
+            4 => Ok(RejectReason::NonStandard),
+            5 => Ok(RejectReason::Dust),
+            6 => Ok(RejectReason::Fee),
+            _ => Ok(RejectReason::Checkpoint)
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Reject {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Reject{
+            message: u.arbitrary::<String>()?.into(),
+            ccode: u.arbitrary()?,
+            reason: u.arbitrary::<String>()?.into(),
+            hash: sha256d::Hash::from_byte_array(u.arbitrary()?),
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Alert {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Alert(Vec::<u8>::arbitrary(u)?))
+    }
+}
 
 #[cfg(test)]
 mod tests {
