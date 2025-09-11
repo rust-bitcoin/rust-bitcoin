@@ -14,9 +14,15 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
+
 mod decode;
 mod encode;
 
+pub use self::decode::decoders::{ArrayDecoder, UnexpectedEof};
 pub use self::decode::{Decodable, Decoder};
 pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
