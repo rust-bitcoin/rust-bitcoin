@@ -62,6 +62,29 @@ impl encoding::Encodable for CompactTarget {
     }
 }
 
+/// The decoder for the [`CompactTarget`] type.
+pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
+
+impl encoding::Decoder for CompactTargetDecoder {
+    type Output = CompactTarget;
+    type Error = <encoding::ArrayDecoder<4> as encoding::Decoder>::Error;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end()?;
+        Ok(CompactTarget::from_consensus(u32::from_le_bytes(bytes)))
+    }
+}
+
+impl encoding::Decodable for CompactTarget {
+    type Decoder = CompactTargetDecoder;
+
+    fn decoder() -> Self::Decoder { CompactTargetDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]

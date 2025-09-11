@@ -266,6 +266,75 @@ impl Encodable for Header {
     }
 }
 
+/// The decoder for the [`Header`] type.
+pub struct HeaderDecoder {
+    inner: encoding::Decoder6<
+        VersionDecoder,
+        BlockHashDecoder,
+        crate::merkle_tree::TxMerkleNodeDecoder,
+        crate::time::BlockTimeDecoder,
+        crate::pow::CompactTargetDecoder,
+        encoding::ArrayDecoder<4>,
+    >,
+}
+
+impl HeaderDecoder {
+    fn new() -> Self {
+        Self {
+            inner: encoding::Decoder6::new(
+                VersionDecoder(encoding::ArrayDecoder::<4>::new()),
+                BlockHashDecoder(encoding::ArrayDecoder::<32>::new()),
+                crate::merkle_tree::TxMerkleNodeDecoder(encoding::ArrayDecoder::<32>::new()),
+                crate::time::BlockTimeDecoder(encoding::ArrayDecoder::<4>::new()),
+                crate::pow::CompactTargetDecoder(encoding::ArrayDecoder::<4>::new()),
+                encoding::ArrayDecoder::<4>::new(),
+            ),
+        }
+    }
+}
+
+impl encoding::Decoder for HeaderDecoder {
+    type Output = Header;
+    type Error = <encoding::Decoder6<
+        VersionDecoder,
+        BlockHashDecoder,
+        crate::merkle_tree::TxMerkleNodeDecoder,
+        crate::time::BlockTimeDecoder,
+        crate::pow::CompactTargetDecoder,
+        encoding::ArrayDecoder<4>,
+    > as encoding::Decoder>::Error;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.inner.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (
+            version,
+            prev_blockhash,
+            merkle_root,
+            time,
+            bits,
+            nonce_bytes,
+        ) = self.inner.end()?;
+
+        Ok(Header {
+            version,
+            prev_blockhash,
+            merkle_root,
+            time,
+            bits,
+            nonce: u32::from_le_bytes(nonce_bytes),
+        })
+    }
+}
+
+impl encoding::Decodable for Header {
+    type Decoder = HeaderDecoder;
+
+    fn decoder() -> Self::Decoder { HeaderDecoder::new() }
+}
+
 impl From<Header> for BlockHash {
     #[inline]
     fn from(header: Header) -> BlockHash { header.block_hash() }
@@ -369,6 +438,29 @@ impl Encodable for Version {
     }
 }
 
+/// The decoder for the [`Version`] type.
+pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+
+impl encoding::Decoder for VersionDecoder {
+    type Output = Version;
+    type Error = <encoding::ArrayDecoder<4> as encoding::Decoder>::Error;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end()?;
+        Ok(Version::from_consensus(i32::from_le_bytes(bytes)))
+    }
+}
+
+impl encoding::Decodable for Version {
+    type Decoder = VersionDecoder;
+
+    fn decoder() -> Self::Decoder { VersionDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
 #[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(BlockHash, WitnessCommitment);
 #[cfg(not(feature = "hex"))]
@@ -391,6 +483,29 @@ impl Encodable for BlockHash {
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockHashEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
     }
+}
+
+/// The decoder for the [`BlockHash`] type.
+pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
+
+impl encoding::Decoder for BlockHashDecoder {
+    type Output = BlockHash;
+    type Error = <encoding::ArrayDecoder<32> as encoding::Decoder>::Error;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end()?;
+        Ok(BlockHash::from_byte_array(bytes))
+    }
+}
+
+impl encoding::Decodable for BlockHash {
+    type Decoder = BlockHashDecoder;
+
+    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
 }
 
 #[cfg(feature = "arbitrary")]
