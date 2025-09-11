@@ -1,0 +1,26 @@
+[package]
+name = "bitcoin-benches"
+version = "0.1.0"
+license = "CC0-1.0"
+description = "Criterion benchmarks for rust-bitcoin"
+edition = "2021"
+
+[dependencies]
+bitcoin = { path = "../bitcoin", default-features = false, features = ["std"] }
+criterion = "0.7"
+hex_lit = "0.1.1"
+
+[[bench]]
+name = "block"
+path = "bitcoin/block.rs"
+harness = false
+
+[[bench]]
+name = "transaction"
+path = "bitcoin/transaction.rs"
+harness = false
+
+[[bench]]
+name = "witness"
+path = "bitcoin/witness.rs"
+harness = false

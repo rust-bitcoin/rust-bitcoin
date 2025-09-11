@@ -514,30 +514,3 @@ mod test {
         assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
     }
 }
-
-#[cfg(bench)]
-mod benches {
-    use test::{black_box, Bencher};
-
-    use super::{Witness, WitnessExt};
-
-    #[bench]
-    pub fn bench_big_witness_to_vec(bh: &mut Bencher) {
-        let raw_witness = [[1u8]; 5];
-        let witness = Witness::from_slice(&raw_witness);
-
-        bh.iter(|| {
-            black_box(witness.to_vec());
-        });
-    }
-
-    #[bench]
-    pub fn bench_witness_to_vec(bh: &mut Bencher) {
-        let raw_witness = vec![vec![1u8]; 3];
-        let witness = Witness::from_slice(&raw_witness);
-
-        bh.iter(|| {
-            black_box(witness.to_vec());
-        });
-    }
-}
