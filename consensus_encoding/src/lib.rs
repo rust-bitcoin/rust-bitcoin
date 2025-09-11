@@ -14,8 +14,17 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
+
 mod encode;
 
+#[cfg(feature = "alloc")]
+pub use self::encode::encode_to_vec;
+#[cfg(feature = "std")]
+pub use self::encode::encode_to_writer;
 pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
 };
