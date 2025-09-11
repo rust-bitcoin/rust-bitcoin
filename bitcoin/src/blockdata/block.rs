@@ -34,7 +34,17 @@ pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInter
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
 
-internal_macros::impl_hashencode!(BlockHash);
+impl Encodable for BlockHash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for BlockHash {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(BlockHash::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+    }
+}
 
 #[rustfmt::skip]
 internal_macros::impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
