@@ -64,7 +64,11 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
 }
 
 /// A decoder which decodes two objects, one after the other.
-pub struct Decoder2<A: Decoder, B: Decoder> {
+pub struct Decoder2<A, B>
+where
+    A: Decoder,
+    B: Decoder,
+{
     state: Decoder2State<A, B>,
 }
 
@@ -195,5 +199,148 @@ where
                 panic!("use of decoder in transitioning state");
             }
         }
+    }
+}
+
+/// A decoder which decodes three objects, one after the other.
+pub struct Decoder3<A, B, C>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+{
+    inner: Decoder2<Decoder2<A, B>, C>,
+}
+
+impl<A, B, C> Decoder3<A, B, C>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+{
+    /// Constructs a new composite decoder.
+    pub fn new(dec_1: A, dec_2: B, dec_3: C) -> Self {
+        Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), dec_3) }
+    }
+}
+
+impl<A, B, C> Decoder for Decoder3<A, B, C>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+{
+    type Output = (A::Output, B::Output, C::Output);
+    type Error = Either<Either<A::Error, B::Error>, C::Error>;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.inner.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let ((first, second), third) = self.inner.end()?;
+        Ok((first, second, third))
+    }
+}
+
+/// A decoder which decodes four objects, one after the other.
+pub struct Decoder4<A, B, C, D>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+{
+    inner: Decoder2<Decoder2<A, B>, Decoder2<C, D>>,
+}
+
+impl<A, B, C, D> Decoder4<A, B, C, D>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+{
+    /// Constructs a new composite decoder.
+    pub fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self {
+        Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), Decoder2::new(dec_3, dec_4)) }
+    }
+}
+
+impl<A, B, C, D> Decoder for Decoder4<A, B, C, D>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+{
+    type Output = (A::Output, B::Output, C::Output, D::Output);
+    type Error = Either<Either<A::Error, B::Error>, Either<C::Error, D::Error>>;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.inner.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let ((first, second), (third, fourth)) = self.inner.end()?;
+        Ok((first, second, third, fourth))
+    }
+}
+
+/// A decoder which decodes six objects, one after the other.
+pub struct Decoder6<A, B, C, D, E, F>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+    E: Decoder,
+    F: Decoder,
+{
+    inner: Decoder2<Decoder3<A, B, C>, Decoder3<D, E, F>>,
+}
+
+impl<A, B, C, D, E, F> Decoder6<A, B, C, D, E, F>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+    E: Decoder,
+    F: Decoder,
+{
+    /// Constructs a new composite decoder.
+    pub fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D, dec_5: E, dec_6: F) -> Self {
+        Self {
+            inner: Decoder2::new(
+                Decoder3::new(dec_1, dec_2, dec_3),
+                Decoder3::new(dec_4, dec_5, dec_6),
+            ),
+        }
+    }
+}
+
+impl<A, B, C, D, E, F> Decoder for Decoder6<A, B, C, D, E, F>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+    E: Decoder,
+    F: Decoder,
+{
+    type Output = (A::Output, B::Output, C::Output, D::Output, E::Output, F::Output);
+    type Error = Either<
+        Either<Either<A::Error, B::Error>, C::Error>,
+        Either<Either<D::Error, E::Error>, F::Error>,
+    >;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.inner.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let ((first, second, third), (fourth, fifth, sixth)) = self.inner.end()?;
+        Ok((first, second, third, fourth, fifth, sixth))
     }
 }

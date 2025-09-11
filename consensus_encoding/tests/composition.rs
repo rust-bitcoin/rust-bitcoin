@@ -3,7 +3,8 @@
 //! Test composition of encoders and decoders.
 
 use consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Encodable, Encoder, Encoder2,
+    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder6, Encodable, Encoder,
+    Encoder2, Encoder6,
 };
 
 const EMPTY: &[u8] = &[];
