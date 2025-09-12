@@ -7,6 +7,7 @@ use core::ops::{
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{BytesEncoder, Encodable};
 
 use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
@@ -152,6 +153,22 @@ impl<T> Script<T> {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`Script<T>`] type.
+    pub struct ScriptEncoder<'e>(BytesEncoder<'e>);
+}
+
+impl<T> Encodable for Script<T> {
+    type Encoder<'a>
+        = ScriptEncoder<'a>
+    where
+        Self: 'a;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ScriptEncoder(BytesEncoder::with_length_prefix(self.as_bytes()))
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a, T> Arbitrary<'a> for &'a Script<T> {
     #[inline]
@@ -247,5 +264,19 @@ mod tests {
         assert_eq!(script[..].as_bytes(), &[1, 2, 3, 4, 5]);
         assert_eq!(script[1..=3].as_bytes(), &[2, 3, 4]);
         assert_eq!(script[..=2].as_bytes(), &[1, 2, 3]);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn encode() {
+        // Consensus encoding includes the length of the encoded data
+        // (compact size encoded length prefix).
+        let consensus_encoded: [u8; 6] = [0x05, 1, 2, 3, 4, 5];
+
+        // `from_bytes` does not expect the prefix.
+        let script = Script::from_bytes(&consensus_encoded[1..]);
+
+        let got = encoding::encode_to_vec(script);
+        assert_eq!(got, consensus_encoded);
     }
 }
