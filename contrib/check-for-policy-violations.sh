@@ -21,7 +21,7 @@ main() {
 # Greps patch for imports that violate the policy, returns true if an
 # violations are found.
 low_level_import_usage() {
-    local crates=("units" "primitives")
+    local crates=("units" "primitives" "hashes" "internals" "io" "base58")
     local found_violation=false
     local violations;
 
