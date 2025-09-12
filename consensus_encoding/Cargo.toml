@@ -14,8 +14,8 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "hashes/std"]
+alloc = ["hashes/alloc"]
 
 [dependencies]
 hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false }
