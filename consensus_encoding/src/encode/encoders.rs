@@ -155,3 +155,40 @@ impl<
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
+
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod tests {
+    use alloc::vec::Vec;
+
+    use super::*;
+
+    fn encode_to_vec<'e>(mut encoder: impl Encoder<'e>) -> Vec<u8> {
+        let mut vec = Vec::new();
+        while let Some(chunk) = encoder.current_chunk() {
+            vec.extend_from_slice(chunk);
+            encoder.advance();
+        }
+        vec
+    }
+
+    #[test]
+    fn encode_byte_slice_without_prefix() {
+        let obj = [1u8, 2, 3];
+
+        let encoder = BytesEncoder::without_length_prefix(&obj);
+        let got = encode_to_vec(encoder);
+
+        assert_eq!(got, obj);
+    }
+
+    #[test]
+    fn encode_empty_byte_slice_without_prefix() {
+        let obj = [];
+
+        let encoder = BytesEncoder::without_length_prefix(&obj);
+        let got = encode_to_vec(encoder);
+
+        assert_eq!(got, obj);
+    }
+}
