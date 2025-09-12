@@ -406,7 +406,7 @@ fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
     Ok(())
 }
 
-/// Format the given satoshi amount in the given denomination.
+/// Formats the given satoshi amount in the given denomination.
 fn fmt_satoshi_in(
     mut satoshi: u64,
     negative: bool,

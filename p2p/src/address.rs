@@ -29,7 +29,7 @@ pub struct Address {
 const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
-    /// Construct a new address message for a socket
+    /// Constructs a new address message for a socket
     pub fn new(socket: &SocketAddr, services: ServiceFlags) -> Address {
         let (address, port) = match *socket {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
@@ -38,13 +38,13 @@ impl Address {
         Address { address, port, services }
     }
 
-    /// Build an useless address that cannot be connected to. One may find this desirable if it is
+    /// Builds a useless address that cannot be connected to. One may find this desirable if it is
     /// known the data will be ignored by the recipient.
     pub const fn useless() -> Address {
         Address { services: ServiceFlags::NONE, address: [0; 8], port: 0 }
     }
 
-    /// Extract socket address from an [Address] message.
+    /// Extracts socket address from an [Address] message.
     /// This will return [io::Error] [io::ErrorKind::AddrNotAvailable]
     /// if the message contains a Tor address.
     pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
@@ -90,7 +90,7 @@ impl Decodable for Address {
     }
 }
 
-/// Read a big-endian address from reader.
+/// Reads a big-endian address from reader.
 fn read_be_address<R: Read + ?Sized>(r: &mut R) -> Result<[u16; 8], encode::Error> {
     let mut address = [0u16; 8];
     let mut buf = [0u8; 2];
@@ -314,7 +314,7 @@ pub struct AddrV2Message {
 }
 
 impl AddrV2Message {
-    /// Extract socket address from an [AddrV2Message] message.
+    /// Extracts socket address from an [AddrV2Message] message.
     /// This will return [io::Error] [io::ErrorKind::AddrNotAvailable]
     /// if the address type can't be converted into a [SocketAddr].
     pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {

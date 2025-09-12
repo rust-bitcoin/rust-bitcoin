@@ -93,7 +93,7 @@ impl ProtocolVersion {
 }
 
 impl ProtocolVersion {
-    /// Construct a protocol version that is not well-known.
+    /// Constructs a protocol version that is not well-known.
     pub fn from_nonstandard(version: u32) -> Self { Self(version) }
 }
 
@@ -166,7 +166,7 @@ impl ServiceFlags {
         *self
     }
 
-    /// Remove [ServiceFlags] from this.
+    /// Removes [ServiceFlags] from this.
     ///
     /// Returns itself.
     #[must_use]
@@ -175,7 +175,7 @@ impl ServiceFlags {
         *self
     }
 
-    /// Check whether [ServiceFlags] are included in this one.
+    /// Checks whether [ServiceFlags] are included in this one.
     pub fn has(self, flags: ServiceFlags) -> bool { (self.0 | flags.0) == self.0 }
 
     /// Gets the integer representation of this [`ServiceFlags`].
@@ -287,10 +287,10 @@ impl Magic {
     /// Bitcoin regtest network magic bytes.
     pub const REGTEST: Self = Self([0xFA, 0xBF, 0xB5, 0xDA]);
 
-    /// Construct a new network magic from bytes.
+    /// Constructs a new network magic from bytes.
     pub const fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
 
-    /// Get network magic bytes.
+    /// Gets network magic bytes.
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
     /// Returns the magic bytes for the network defined by `params`.

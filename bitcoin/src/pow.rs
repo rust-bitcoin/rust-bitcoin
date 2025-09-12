@@ -824,7 +824,7 @@ impl U256 {
         f.pad_integral(true, "", s)
     }
 
-    /// Convert self to f64.
+    /// Converts self to f64.
     #[inline]
     fn to_f64(self) -> f64 {
         // Reference: https://blog.m-ou.se/floats/

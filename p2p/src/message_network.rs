@@ -117,7 +117,7 @@ impl UserAgent {
             panic!("user agent cannot exceed 256 characters.");
         }
     }
-    /// Build a new user agent from the lowest level client software. For example: `Satoshi` is
+    /// Builds a new user agent from the lowest level client software. For example: `Satoshi` is
     /// used by Bitcoin Core.
     ///
     /// # Panics
@@ -131,12 +131,12 @@ impl UserAgent {
         Self { user_agent: agent }
     }
 
-    /// Build a user agent, ignoring BIP-0014 recommendations.
+    /// Builds a user agent, ignoring BIP-0014 recommendations.
     pub fn from_nonstandard<S: ToString>(agent: S) -> Self {
         Self { user_agent: agent.to_string() }
     }
 
-    /// Add a client to the user agent string. Examples may include the name of a wallet software.
+    /// Adds a client to the user agent string. Examples may include the name of a wallet software.
     ///
     /// # Panics
     ///
@@ -172,12 +172,12 @@ pub struct UserAgentVersion {
 }
 
 impl UserAgentVersion {
-    /// Create a user agent client version associated with a name.
+    /// Creates a user agent client version associated with a name.
     pub const fn new(software_version: ClientSoftwareVersion) -> Self {
         Self { version: software_version, comments: None }
     }
 
-    /// Add a comment to the version. Typical comments describe the operating system or platform
+    /// Adds a comment to the version. Typical comments describe the operating system or platform
     /// that is executing the program, however these may be any comment.
     ///
     /// An example may include `Android`.
@@ -318,7 +318,7 @@ impl Alert {
         100, 101, 32, 114, 101, 113, 117, 105, 114, 101, 100, 0,
     ];
 
-    /// Build the final alert to send to a potentially vulnerable peer.
+    /// Builds the final alert to send to a potentially vulnerable peer.
     pub fn final_alert() -> Self { Self(Self::FINAL_ALERT.into()) }
 
     /// The final alert advertised by Bitcoin Core. This alert is sent if the advertised protocol

@@ -183,7 +183,7 @@ pub struct HashEngine {
 }
 
 impl HashEngine {
-    /// Construct a new Sha3-256 hash engine.
+    /// Constructs a new Sha3-256 hash engine.
     pub const fn new() -> Self {
         Self { state: KeccakState::new(), bytes_hashed: 0 }
     }

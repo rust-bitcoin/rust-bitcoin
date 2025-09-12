@@ -34,7 +34,7 @@ macro_rules! compress {
     }};
 }
 
-/// Load an integer of the desired type from a byte stream, in LE order. Uses
+/// Loads an integer of the desired type from a byte stream, in LE order. Uses
 /// `copy_nonoverlapping` to let the compiler generate the most efficient way
 /// to load it from a possibly unaligned address.
 ///
@@ -214,7 +214,7 @@ impl Hash {
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
 }
 
-/// Load a u64 using up to 7 bytes of a byte slice.
+/// Loads a u64 using up to 7 bytes of a byte slice.
 ///
 /// Unsafe because: unchecked indexing at `start..start+len`.
 #[inline]

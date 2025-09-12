@@ -55,7 +55,7 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, DeserializeError> {
     }
 }
 
-/// Deserialize any decodable type from a hex string, will error if said deserialization
+/// Deserializes any decodable type from a hex string, will error if said deserialization
 /// doesn't consume the entire vector.
 pub fn deserialize_hex<T: Decodable>(hex: &str) -> Result<T, FromHexError> {
     let iter = hex::HexSliceToBytesIter::new(hex)?;
@@ -263,7 +263,7 @@ pub trait Encodable {
 
 /// Data which can be encoded in a consensus-consistent way.
 pub trait Decodable: Sized {
-    /// Decode `Self` from a size-limited reader.
+    /// Decodes `Self` from a size-limited reader.
     ///
     /// Like `consensus_decode` but relies on the reader being limited in the amount of data it
     /// returns, e.g. by being wrapped in [`std::io::Take`].
@@ -301,7 +301,7 @@ pub trait Decodable: Sized {
         Self::consensus_decode(reader)
     }
 
-    /// Decode an object with a well-defined format.
+    /// Decodes an object with a well-defined format.
     ///
     /// This is the method that should be implemented for a typical, fixed sized type
     /// implementing this trait. Default implementation is wrapping the reader

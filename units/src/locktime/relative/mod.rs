@@ -150,7 +150,7 @@ impl LockTime {
         LockTime::Time(NumberOf512Seconds::from_512_second_intervals(intervals))
     }
 
-    /// Construct a new [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// Constructs a new [`LockTime`] from seconds, converting the seconds into 512 second interval
     /// with truncating division.
     ///
     /// # Errors
@@ -164,7 +164,7 @@ impl LockTime {
         }
     }
 
-    /// Construct a new [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// Constructs a new [`LockTime`] from seconds, converting the seconds into 512 second interval
     /// with ceiling division.
     ///
     /// # Errors

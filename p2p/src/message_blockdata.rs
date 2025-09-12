@@ -43,7 +43,7 @@ pub enum Inventory {
 }
 
 impl Inventory {
-    /// Return the item value represented as a SHA256-d hash.
+    /// Returns the item value represented as a SHA256-d hash.
     ///
     /// Returns [None] only for [Inventory::Error] who's hash value is meaningless.
     pub fn network_hash(&self) -> Option<[u8; 32]> {

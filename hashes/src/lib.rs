@@ -191,10 +191,10 @@ pub trait HashEngine: Clone {
     /// Length of the hash's internal block size, in bytes.
     const BLOCK_SIZE: usize;
 
-    /// Add data to the hash engine.
+    /// Adds data to the hash engine.
     fn input(&mut self, data: &[u8]);
 
-    /// Return the number of bytes already input into the engine.
+    /// Returns the number of bytes already input into the engine.
     fn n_bytes_hashed(&self) -> u64;
 
     /// Finalizes this engine.

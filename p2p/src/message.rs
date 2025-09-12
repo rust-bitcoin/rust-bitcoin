@@ -288,7 +288,7 @@ pub enum NetworkMessage {
 }
 
 impl NetworkMessage {
-    /// Return the message command as a static string reference.
+    /// Returns the message command as a static string reference.
     ///
     /// This returns `"unknown"` for [NetworkMessage::Unknown],
     /// regardless of the actual command in the unknown message.
@@ -335,7 +335,7 @@ impl NetworkMessage {
         }
     }
 
-    /// Return the CommandString for the message command.
+    /// Returns the CommandString for the message command.
     pub fn command(&self) -> CommandString {
         match *self {
             NetworkMessage::Unknown { command: ref c, .. } => c.clone(),
@@ -365,14 +365,14 @@ impl RawNetworkMessage {
     /// Magic bytes to identify the network these messages are meant for
     pub fn magic(&self) -> &Magic { &self.magic }
 
-    /// Return the message command as a static string reference.
+    /// Returns the message command as a static string reference.
     ///
     /// This returns `"unknown"` for [NetworkMessage::Unknown],
     /// regardless of the actual command in the unknown message.
     /// Use the [Self::command] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str { self.payload.cmd() }
 
-    /// Return the CommandString for the message command.
+    /// Returns the CommandString for the message command.
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
@@ -386,14 +386,14 @@ impl V2NetworkMessage {
     /// The actual message data
     pub fn payload(&self) -> &NetworkMessage { &self.payload }
 
-    /// Return the message command as a static string reference.
+    /// Returns the message command as a static string reference.
     ///
     /// This returns `"unknown"` for [NetworkMessage::Unknown],
     /// regardless of the actual command in the unknown message.
     /// Use the [Self::command] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str { self.payload.cmd() }
 
-    /// Return the CommandString for the message command.
+    /// Returns the CommandString for the message command.
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
