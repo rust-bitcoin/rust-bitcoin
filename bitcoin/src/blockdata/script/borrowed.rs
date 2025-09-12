@@ -401,10 +401,7 @@ internal_macros::define_extension_trait! {
         /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
         #[inline]
         fn is_op_return(&self) -> bool {
-            match self.as_bytes().first() {
-                Some(b) => *b == OP_RETURN.to_u8(),
-                None => false,
-            }
+            self.as_bytes().first().is_some_and(|&b| b == OP_RETURN.to_u8())
         }
 
         /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
