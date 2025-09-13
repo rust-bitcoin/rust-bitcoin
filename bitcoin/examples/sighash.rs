@@ -26,7 +26,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let witness = &inp.witness;
     println!("Witness: {witness:?}");
 
-    // BIP-141: The witness must consist of exactly 2 items (≤ 520 bytes each). The first one a
+    // BIP-0141: The witness must consist of exactly 2 items (≤ 520 bytes each). The first one a
     // signature, and the second one a public key.
     assert_eq!(witness.len(), 2);
     let sig_bytes = witness.get(0).unwrap();
@@ -34,7 +34,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 
     let sig = ecdsa::Signature::from_slice(sig_bytes).expect("failed to parse sig");
 
-    //BIP-143: "The item 5 : For P2WPKH witness program, the scriptCode is 0x1976a914{20-byte-pubkey-hash}88ac"
+    //BIP-0143: "The item 5 : For P2WPKH witness program, the scriptCode is 0x1976a914{20-byte-pubkey-hash}88ac"
     //this is nothing but a standard P2PKH script OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG:
     let pk = CompressedPublicKey::from_slice(pk_bytes).expect("failed to parse pubkey");
     let wpkh = pk.wpubkey_hash();

@@ -293,7 +293,7 @@ fn serde_regression_psbt() {
         }],
     };
 
-    // Sanity, check we can roundtrip BIP-174 serialize.
+    // Sanity, check we can roundtrip BIP-0174 serialize.
     let serialized = psbt.serialize();
     Psbt::deserialize(&serialized).unwrap();
 

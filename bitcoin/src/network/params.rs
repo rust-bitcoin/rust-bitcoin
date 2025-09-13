@@ -27,7 +27,7 @@
 //!         let mut params = Params::new(Network::Signet);
 //!         params.pow_target_spacing = POW_TARGET_SPACING;
 //!
-//!         // This would be something real (see BIP-325).
+//!         // This would be something real (see BIP-00325).
 //!         let challenge_script = WitnessScriptBuf::new();
 //!
 //!         Self {

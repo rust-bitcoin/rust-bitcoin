@@ -92,14 +92,14 @@ use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, W
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
-    /// The protocol version, is currently expected to be 1, 2 (BIP 68) or 3 (BIP 431).
+    /// The protocol version, is currently expected to be 1, 2 (BIP-0068) or 3 (BIP-0431).
     pub version: Version,
     /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
     ///
     /// # Relevant BIPs
     ///
-    /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
-    /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
+    /// * [BIP-0065 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+    /// * [BIP-0113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     pub lock_time: absolute::LockTime,
     /// List of transaction inputs.
     pub inputs: Vec<TxIn>,
@@ -165,7 +165,7 @@ impl Transaction {
         Wtxid::from_byte_array(hash.to_byte_array())
     }
 
-    /// Returns whether or not to serialize transaction as specified in BIP-144.
+    /// Returns whether or not to serialize transaction as specified in BIP-0144.
     // This is duplicated in `bitcoin`, if you change it please do so in both places.
     #[inline]
     fn uses_segwit_serialization(&self) -> bool {
@@ -220,10 +220,10 @@ impl From<&Transaction> for Wtxid {
 }
 
 // Duplicated in `bitcoin`.
-/// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
+/// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
 #[cfg(feature = "alloc")]
 const SEGWIT_MARKER: u8 = 0x00;
-/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
+/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-0141)
 #[cfg(feature = "alloc")]
 const SEGWIT_FLAG: u8 = 0x01;
 
@@ -236,7 +236,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     enc.input(&tx.version.0.to_le_bytes()); // Same as `encode::emit_i32`.
 
     if uses_segwit_serialization {
-        // BIP-141 (SegWit) transaction serialization also includes marker and flag.
+        // BIP-0141 (SegWit) transaction serialization also includes marker and flag.
         enc.input(&[SEGWIT_MARKER]);
         enc.input(&[SEGWIT_FLAG]);
     }
@@ -269,7 +269,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     }
 
     if uses_segwit_serialization {
-        // BIP-141 (SegWit) transaction serialization also includes the witness data.
+        // BIP-0141 (SegWit) transaction serialization also includes the witness data.
         for input in &tx.inputs {
             // Same as `Encodable for Witness`.
             enc.input(compact_size::encode(input.witness.len()).as_slice());
@@ -638,26 +638,26 @@ impl Wtxid {
 
 /// The transaction version.
 ///
-/// Currently, as specified by [BIP-68] and [BIP-431], version 1, 2, and 3 are considered standard.
+/// Currently, as specified by [BIP-0068] and [BIP-0431], version 1, 2, and 3 are considered standard.
 ///
 /// Standardness of the inner `u32` is not an invariant because you are free to create transactions
 /// of any version, transactions with non-standard version numbers will not be relayed by the
 /// Bitcoin network.
 ///
-/// [BIP-68]: https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki
-/// [BIP-431]: https://github.com/bitcoin/bips/blob/master/bip-0431.mediawiki
+/// [BIP-0068]: https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki
+/// [BIP-0431]: https://github.com/bitcoin/bips/blob/master/bip-0431.mediawiki
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(u32);
 
 impl Version {
-    /// The original Bitcoin transaction version (pre-BIP-68).
+    /// The original Bitcoin transaction version (pre-BIP-0068).
     pub const ONE: Self = Self(1);
 
-    /// The second Bitcoin transaction version (post-BIP-68).
+    /// The second Bitcoin transaction version (post-BIP-0068).
     pub const TWO: Self = Self(2);
 
-    /// The third Bitcoin transaction version (post-BIP-431).
+    /// The third Bitcoin transaction version (post-BIP-0431).
     pub const THREE: Self = Self(3);
 
     /// Constructs a potentially non-standard transaction version.
