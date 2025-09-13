@@ -14,7 +14,7 @@
 use internals::array_vec::ArrayVec;
 use internals::compact_size;
 
-use super::Encoder;
+use super::{Encodable, Encoder};
 
 /// The maximum length of a compact size encoding.
 const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
@@ -73,6 +73,78 @@ impl<const N: usize> Encoder<'_> for ArrayEncoder<N> {
     fn advance(&mut self) -> bool {
         self.arr = None;
         false
+    }
+}
+
+/// An encoder for a list of encodable types.
+pub struct SliceEncoder<'e, T: Encodable> {
+    /// The list of references to the objects we are encoding.
+    ///
+    /// This is **never** mutated. All accesses are done by array accesses because
+    /// of lifetimes and the borrow checker.
+    sl: &'e [T],
+    /// The length prefix.
+    compact_size: Option<ArrayVec<u8, SIZE>>,
+    /// Index into `sl` of the element we are currently encoding.
+    cur_idx: usize,
+    /// Current encoder (for `sl[self.cur_idx]`).
+    cur_enc: Option<T::Encoder<'e>>,
+}
+
+impl<'e, T: Encodable> SliceEncoder<'e, T> {
+    /// Constructs an encoder which encodes the slice with a length prefix.
+    pub fn with_length_prefix(sl: &'e [T]) -> Self {
+        let len = sl.len();
+        let compact_size = Some(compact_size::encode(len));
+
+        // In this `map` call we cannot remove the closure. Seems to be a bug in the compiler.
+        // Perhaps https://github.com/rust-lang/rust/issues/102540 which is 3 years old with
+        // no replies or even an acknowledgement. We will not bother filing our own issue.
+        Self { sl, compact_size, cur_idx: 0, cur_enc: sl.first().map(|x| T::encoder(x)) }
+    }
+}
+
+impl<'e, T: Encodable> Encoder<'e> for SliceEncoder<'e, T> {
+    fn current_chunk(&self) -> Option<&[u8]> {
+        if let Some(compact_size) = self.compact_size.as_ref() {
+            return Some(compact_size);
+        }
+
+        // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
+        // `current_chunk` is required to return `None` if called after the encoder is exhausted.
+        self.cur_enc.as_ref().and_then(T::Encoder::current_chunk)
+    }
+
+    fn advance(&mut self) -> bool {
+        let Some(cur) = self.cur_enc.as_mut() else {
+            return false;
+        };
+
+        loop {
+            if self.compact_size.is_some() {
+                // On the first call to advance(), just mark the compact_size as already
+                // yielded and leave self.cur_idx at 0.
+                self.compact_size = None;
+            } else {
+                // On subsequent calls, attempt to advance the current encoder and return
+                // success if this succeeds.
+                if cur.advance() {
+                    return true;
+                }
+                self.cur_idx += 1;
+            }
+
+            // If advancing the current encoder failed, attempt to move to the next encoder.
+            if let Some(x) = self.sl.get(self.cur_idx) {
+                *cur = x.encoder();
+                if cur.current_chunk().is_some() {
+                    return true;
+                }
+            } else {
+                self.cur_enc = None; // shortcut the next call to advance()
+                return false;
+            }
+        }
     }
 }
 
@@ -239,4 +311,4 @@ mod tests {
         let want = [0u8];
         assert_eq!(got, want);
     }
-}
+ }

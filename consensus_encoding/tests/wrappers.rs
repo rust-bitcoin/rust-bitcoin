@@ -3,7 +3,7 @@
 #![cfg(feature = "std")]
 
 use consensus_encoding as encoding;
-use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2};
+use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2, SliceEncoder};
 
 encoding::encoder_newtype! {
     /// An encoder that uses an inner `ArrayEncoder`.
@@ -108,4 +108,48 @@ fn two_encoder() {
     let got = encoding::encode_to_vec(&t);
 
     assert_eq!(got, want);
+}
+
+#[test]
+fn slice_encoder() {
+    #[derive(Debug, Default, Clone)]
+    pub struct Test(Vec<Inner>);
+
+    encoding::encoder_newtype! {
+        /// An encoder that uses an inner `SliceEncoder`.
+        pub struct TestEncoder<'e>(SliceEncoder<'e, Inner>);
+    }
+
+    impl Encodable for Test {
+        type Encoder<'a>
+            = TestEncoder<'a>
+        where
+            Self: 'a;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            TestEncoder(SliceEncoder::with_length_prefix(&self.0))
+        }
+    }
+
+    #[derive(Debug, Default, Clone)]
+    pub struct Inner(u32);
+
+    encoding::encoder_newtype! {
+        /// The encoder for the [`Inner`] type.
+        pub struct InnerArrayEncoder(ArrayEncoder<4>);
+    }
+
+    impl Encodable for Inner {
+        type Encoder<'e> = InnerArrayEncoder;
+        fn encoder(&self) -> Self::Encoder<'_> {
+            // Big-endian to make reading the test assertion easier.
+            InnerArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
+        }
+    }
+
+    let t = Test(vec![Inner(0xcafe_babe), Inner(0xdead_beef)]);
+    let encoded = encoding::encode_to_vec(&t);
+
+    let want = [0x02, 0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef];
+    assert_eq!(encoded, want);
 }
