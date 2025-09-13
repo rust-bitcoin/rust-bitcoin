@@ -4,7 +4,7 @@
 
 use consensus_encoding as encoding;
 
-use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder, Encoder2};
+use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder, Encoder2, VecEncoder};
 
 encoding::encoder_newtype! {
     /// An encoder that uses an inner `ArrayEncoder`.
@@ -112,4 +112,50 @@ fn two_encoder() {
     let got = encoding::encode_to_vec(&t);
 
     assert_eq!(got, want);
+}
+
+#[test]
+fn vec_encoder() {
+    #[derive(Debug, Default, Clone)]
+    pub struct Test(Vec<Inner>);
+
+    pub struct TestEncoder<'e>(VecEncoder<'e, Inner>);
+
+    impl<'e> Encoder<'e> for TestEncoder<'e> {
+        #[inline]
+        fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
+
+        #[inline]
+        fn advance(&mut self) -> bool { self.0.advance() }
+    }
+
+    impl Encodable for Test {
+        type Encoder<'a> = TestEncoder<'a> where Self: 'a;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            TestEncoder(VecEncoder::new(self.0.iter().collect::<Vec<&Inner>>()))
+        }
+    }
+
+    #[derive(Debug, Default, Clone)]
+    pub struct Inner(u32);
+
+    encoding::encoder_newtype! {
+        /// The encoder for the [`Inner`] type.
+        pub struct InnerArrayEncoder(ArrayEncoder<4>);
+    }
+
+    impl Encodable for Inner {
+        type Encoder<'e> = InnerArrayEncoder;
+        fn encoder(&self) -> Self::Encoder<'_> {
+            // Big-endian to make reading the test assertion easier.
+            InnerArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
+        }
+    }
+
+    let t = Test(vec![Inner(0xcafebabe), Inner(0xdeadbeef)]); 
+    let encoded = encoding::encode_to_vec(&t);
+
+    let want = [0x02, 0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef];
+    assert_eq!(encoded, want);
 }

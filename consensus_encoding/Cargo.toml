@@ -25,6 +25,9 @@ internals = { package = "bitcoin-internals", path = "../internals" }
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
+[[example]]
+name = "encoder"
+
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = [] }
 
