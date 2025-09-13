@@ -673,7 +673,7 @@ mod tests {
     use alloc::{format, vec};
 
     use super::*;
-
+    
     // All tests should compile and pass no matter which script type you put here.
     type Script = ScriptSig;
     type ScriptBuf = ScriptSigBuf;
