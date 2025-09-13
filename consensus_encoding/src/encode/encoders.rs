@@ -14,7 +14,7 @@
 use internals::array_vec::ArrayVec;
 use internals::compact_size;
 
-use super::Encoder;
+use super::{Encodable, Encoder};
 
 /// The maximum length of a compact size encoding.
 const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
@@ -73,6 +73,91 @@ impl<const N: usize> Encoder<'_> for ArrayEncoder<N> {
     fn advance(&mut self) -> bool {
         self.arr = None;
         false
+    }
+}
+
+/// An encoder for a list of encodable types.
+pub struct SliceEncoder<'e, T: Encodable> {
+    /// The list of references to the objects we are encoding.
+    ///
+    /// This is **never** mutated. All accesses are done by array accesses because
+    /// of lifetimes and the borrow checker.
+    sl: &'e [T],
+    /// Length of `sl`.
+    len: usize,
+    /// `len` encoded as a compact size.
+    compact_size: Option<ArrayVec<u8, SIZE>>,
+    /// Index into `sl` of the element we are currently encoding.
+    cur_idx: usize,
+    /// Current encoder (for `sl[self.cur_idx]`).
+    cur_enc: Option<T::Encoder<'e>>,
+}
+
+impl<'e, T: Encodable> SliceEncoder<'e, T> {
+    /// Constructs an encoder which encodes the slice with a length prefix.
+    pub fn with_length_prefix(sl: &'e [T]) -> Self {
+        let len = sl.len();
+        let compact_size = Some(compact_size::encode(len));
+
+        if sl.is_empty() {
+            Self { sl, len: 0, compact_size, cur_idx: 0, cur_enc: None }
+        } else {
+            let encoder = sl[0].encoder();
+            Self { sl, len, compact_size, cur_idx: 0, cur_enc: Some(encoder) }
+        }
+    }
+}
+
+impl<'e, T: Encodable> Encoder<'e> for SliceEncoder<'e, T> {
+    fn current_chunk(&self) -> Option<&[u8]> {
+        if let Some(compact_size) = self.compact_size.as_ref() {
+            return Some(compact_size);
+        }
+
+        // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
+        // `current_chunk` is required to return `None` if called after the encoder is exhausted.
+        self.cur_enc.as_ref().map(|enc| enc.current_chunk())?
+    }
+
+    fn advance(&mut self) -> bool {
+        // First call to advance.
+        if self.compact_size.is_some() {
+            self.compact_size = None;
+
+            let more = !self.sl.is_empty();
+
+            if more {
+                // Index is already 0 but set it just to be defensive.
+                self.cur_idx = 0;
+                self.cur_enc = Some(self.sl[self.cur_idx].encoder());
+
+            }
+            return more;
+        }
+
+        match self.cur_enc {
+            Some(ref mut cur) => {
+                if cur.advance() {
+                    // More data in the current encoder.
+                    true
+                } else {
+                    // Current encoder is exhausted.
+                    self.cur_idx += 1;
+                    if self.cur_idx < self.len {
+                        self.cur_enc = Some(self.sl[self.cur_idx].encoder());
+                        true
+                    } else {
+                        // SliceEncoder is totally exhausted. This line is not totally required
+                        // since the last encoder will continue to return `None` if it is exhausted
+                        // and `current_chunk` is called.
+                        self.cur_enc = None;
+                        false
+                    }
+                }
+            },
+            // Defensive; if `advance` is called repeatedly just keep returning `false`.
+            None => false
+        }
     }
 }
 
