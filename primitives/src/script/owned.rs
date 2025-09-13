@@ -27,6 +27,11 @@ use crate::prelude::{Box, Vec};
 ///
 /// [`examples/script.rs`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/script.rs>
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
+///
+/// # Panics
+///
+/// `ScriptBuf` is backed by [`Vec`] and inherits its panic behavior. This means that attempting to
+/// construct scripts larger than `isize::MAX` bytes will panic.
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct ScriptBuf<T>(PhantomData<T>, Vec<u8>);
 
