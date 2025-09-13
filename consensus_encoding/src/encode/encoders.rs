@@ -11,7 +11,6 @@
 //! For implementing these newtypes, we provide the [`encoder_newtype`] macro.
 //!
 
-/// An encoder for a single byte slice.
 use super::Encoder;
 
 /// An encoder for a single byte slice.
@@ -20,8 +19,7 @@ pub struct BytesEncoder<'sl> {
 }
 
 impl<'sl> BytesEncoder<'sl> {
-    /// Constructs a byte encoder which encodes the given byte slice, with no length
-    /// prefix.
+    /// Constructs a byte encoder which encodes the given byte slice, with no length prefix.
     pub fn without_length_prefix(sl: &'sl [u8]) -> Self { Self { sl: Some(sl) } }
 }
 
