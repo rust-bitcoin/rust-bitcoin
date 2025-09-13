@@ -6,7 +6,7 @@
 
 ## Breaking changes
 
-- Change Psbt serde implementation to contextually use the PSBT binary or base64 encoded formats described in BIP-174.
+- Change Psbt serde implementation to contextually use the PSBT binary or base64 encoded formats described in BIP-0174.
 
 # 0.33.0-alpha.0 - 2024-11-18
 
@@ -142,7 +142,7 @@ For changes to our dependencies included in this release see:
 
 # 0.32.3 - 2024-09-27
 
-- Backport BIP-32 alias' without typo [#3252](https://github.com/rust-bitcoin/rust-bitcoin/pull/3252)
+- Backport BIP-0032 alias' without typo [#3252](https://github.com/rust-bitcoin/rust-bitcoin/pull/3252)
 
 # 0.32.2 - 2024-06-07
 
@@ -171,7 +171,7 @@ might be what you are after.
   - `sig` becomes `signature`
   - `hash_ty` becomes `sighash_type`
 - Rename `txid` to `compute_txid` [#2366](https://github.com/rust-bitcoin/rust-bitcoin/pull/2366)
-- In hardcoded BIP-32 derivation paths: Remove `m/` prefix requirement [#2451](https://github.com/rust-bitcoin/rust-bitcoin/pull/2451)
+- In hardcoded BIP-0032 derivation paths: Remove `m/` prefix requirement [#2451](https://github.com/rust-bitcoin/rust-bitcoin/pull/2451)
 
 ## Crate smashing
 
@@ -262,7 +262,7 @@ In particular consider having some type that implements `AsRef<Params>`, we have
 # 0.31.1 - 2024-01-09
 
 - Fix bug in `FeeRate::checked_mul_by_weight` [#2128](https://github.com/rust-bitcoin/rust-bitcoin/pull/2182)
-- Add BIP-32 types remove in 0.31 back in and mark as deprecated [#2258](https://github.com/rust-bitcoin/rust-bitcoin/pull/2258)
+- Add BIP-0032 types remove in 0.31 back in and mark as deprecated [#2258](https://github.com/rust-bitcoin/rust-bitcoin/pull/2258)
 
 # 0.31.0 - 2023-10-18
 
@@ -397,7 +397,7 @@ This release is big, to help users upgrade we wrote a blog post, please see http
     all types except `Vec` and arrays, replace where appropriate with `FromStr`.
 
 - Performance improvements:
-  - [Remove needless allocation from BIP-158 encoding](https://github.com/rust-bitcoin/rust-bitcoin/pull/1146)
+  - [Remove needless allocation from BIP-0158 encoding](https://github.com/rust-bitcoin/rust-bitcoin/pull/1146)
   - [Implement fast hex encoding](https://github.com/rust-bitcoin/rust-bitcoin/pull/1268) (usage added in a [later PR](https://github.com/rust-bitcoin/rust-bitcoin/pull/1476))
 
 - Testing improvements:
@@ -678,7 +678,7 @@ the case and how we broke both `rust-miniscript` and BDK.
 # 0.19.0 - 2019-08-16
 
 * Add `Amount` and `SignedAmount` types.
-* Add BIP-158 support with `BlockFilter` and related types.
+* Add BIP-0158 support with `BlockFilter` and related types.
 * Add `util::misc::signed_msg_hash()` for signing messages.
 * Add `MerkleBlock` and `PartialMerkleTree` types.
 * bip32: Support serde serialization for types and add some utility methods:

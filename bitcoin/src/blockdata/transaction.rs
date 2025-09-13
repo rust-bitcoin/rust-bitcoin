@@ -343,7 +343,7 @@ impl TransactionExt for Transaction {
 
     #[inline]
     fn weight(&self) -> Weight {
-        // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
+        // This is the exact definition of a weight unit, as defined by BIP-0141 (quote above).
         let wu = self.base_size() * 3 + self.total_size();
         Weight::from_wu(wu.to_u64())
     }
@@ -464,7 +464,7 @@ trait TransactionExtPriv {
     where
         S: FnMut(&OutPoint) -> Option<TxOut>;
 
-    /// Returns whether or not to serialize transaction as specified in BIP-144.
+    /// Returns whether or not to serialize transaction as specified in BIP-0144.
     fn uses_segwit_serialization(&self) -> bool;
 }
 
@@ -559,7 +559,7 @@ impl TransactionExtPriv for Transaction {
         count
     }
 
-    /// Returns whether or not to serialize transaction as specified in BIP-144.
+    /// Returns whether or not to serialize transaction as specified in BIP-0144.
     // This is duplicated in `primitives`, if you change it please do so in both places.
     fn uses_segwit_serialization(&self) -> bool {
         if self.inputs.iter().any(|input| !input.witness.is_empty()) {
@@ -704,7 +704,7 @@ impl Encodable for Transaction {
             len += self.inputs.consensus_encode(w)?;
             len += self.outputs.consensus_encode(w)?;
         } else {
-            // BIP-141 (SegWit) transaction serialization also includes marker, flag, and witness data.
+            // BIP-0141 (SegWit) transaction serialization also includes marker, flag, and witness data.
             len += SEGWIT_MARKER.consensus_encode(w)?;
             len += SEGWIT_FLAG.consensus_encode(w)?;
             len += self.inputs.consensus_encode(w)?;

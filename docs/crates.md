@@ -32,7 +32,7 @@ people or they have a (slightly) different set of maintainers and/or merge polic
 ## Future crates
 
 - `addresses`: Bitcoin addresses (see [address.md])
-- `bip-32`: BIP-32 (and maybe BIP-380) support (see [bip-32.md])
+- `bip-32`: BIP-0032 (and maybe BIP-0380) support (see [bip-32.md])
 - `psbt`: PSBTv2 support (see [psbt.md])
 - `keys`/`crypto`: Cryptography stuff or maybe just keys (see [keys.md])
 

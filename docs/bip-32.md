@@ -1,12 +1,12 @@
-# BIP-32 and BIP-380
+# BIP-0032 and BIP-0380
 
 The current module has not been patched much in the last 5 years and the rest of the code base has
 stylistically changed quite a bit.
 
-* Re-write the BIP-32 API
-* Add support for BIP-380
+* Re-write the BIP-0032 API
+* Add support for BIP-0380
 
-See [BIP-32 super issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/4770).
+See [BIP-0032 super issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/4770).
 
 
 ## Notes

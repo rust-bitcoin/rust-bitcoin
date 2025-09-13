@@ -83,7 +83,7 @@ pub extern crate io;
 
 /// Re-export the `rust-secp256k1` crate.
 ///
-/// Rust wrapper library for Pieter Wuille's libsecp256k1. Implements ECDSA and BIP-340 signatures
+/// Rust wrapper library for Pieter Wuille's libsecp256k1. Implements ECDSA and BIP-0340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
 pub extern crate secp256k1;
 
