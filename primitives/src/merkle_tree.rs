@@ -32,6 +32,29 @@ impl encoding::Encodable for TxMerkleNode {
     }
 }
 
+/// The decoder for the [`TxMerkleNode`] type.
+pub struct TxMerkleNodeDecoder(encoding::ArrayDecoder<32>);
+
+impl encoding::Decoder for TxMerkleNodeDecoder {
+    type Output = TxMerkleNode;
+    type Error = <encoding::ArrayDecoder<32> as encoding::Decoder>::Error;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end()?;
+        Ok(TxMerkleNode::from_byte_array(bytes))
+    }
+}
+
+impl encoding::Decodable for TxMerkleNode {
+    type Decoder = TxMerkleNodeDecoder;
+
+    fn decoder() -> Self::Decoder { TxMerkleNodeDecoder(encoding::ArrayDecoder::<32>::new()) }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxMerkleNode {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {

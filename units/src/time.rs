@@ -87,6 +87,32 @@ impl encoding::Encodable for BlockTime {
     }
 }
 
+#[cfg(feature = "encoding")]
+/// The decoder for the [`BlockTime`] type.
+pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for BlockTimeDecoder {
+    type Output = BlockTime;
+    type Error = <encoding::ArrayDecoder<4> as encoding::Decoder>::Error;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end()?;
+        Ok(BlockTime::from(u32::from_le_bytes(bytes)))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for BlockTime {
+    type Decoder = BlockTimeDecoder;
+
+    fn decoder() -> Self::Decoder { BlockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTime {
     #[inline]
