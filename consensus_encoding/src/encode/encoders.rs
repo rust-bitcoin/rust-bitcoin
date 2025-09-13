@@ -11,26 +11,57 @@
 //! For implementing these newtypes, we provide the [`encoder_newtype`] macro.
 //!
 
-/// An encoder for a single byte slice.
+use internals::array_vec::ArrayVec;
+use internals::compact_size;
+
+#[cfg(feature = "alloc")]
+use super::Encodable;
 use super::Encoder;
+
+/// The maximum length of a compact size encoding.
+const SIZE: usize = internals::compact_size::MAX_ENCODING_SIZE;
 
 /// An encoder for a single byte slice.
 pub struct BytesEncoder<'sl> {
     sl: Option<&'sl [u8]>,
+    compact_size: Option<ArrayVec<u8, SIZE>>,
 }
 
 impl<'sl> BytesEncoder<'sl> {
-    /// Constructs a byte encoder which encodes the given byte slice, with no length
-    /// prefix.
-    pub fn without_length_prefix(sl: &'sl [u8]) -> Self { Self { sl: Some(sl) } }
+    /// Constructs a byte encoder which encodes the given byte slice, with no length prefix.
+    pub fn without_length_prefix(sl: &'sl [u8]) -> Self {
+        Self { sl: Some(sl), compact_size: None }
+    }
+
+    /// Constructs a byte encoder which encodes the given byte slice, with the length prefix.
+    pub fn with_length_prefix(sl: &'sl [u8]) -> Self {
+        let len = sl.len();
+
+        if len == 0 {
+            Self { sl: None, compact_size: Some(compact_size::encode(0_u64)) }
+        } else {
+            Self { sl: Some(sl), compact_size: Some(compact_size::encode(len)) }
+        }
+    }
 }
 
 impl<'e, 'sl> Encoder<'e> for BytesEncoder<'sl> {
-    fn current_chunk(&self) -> Option<&[u8]> { self.sl }
+    fn current_chunk(&self) -> Option<&[u8]> {
+        if let Some(compact_size) = self.compact_size.as_ref() {
+            Some(compact_size)
+        } else {
+            self.sl
+        }
+    }
 
     fn advance(&mut self) -> bool {
-        self.sl = None;
-        false
+        if self.compact_size.is_some() {
+            self.compact_size = None;
+            true
+        } else {
+            self.sl = None;
+            false
+        }
     }
 }
 
@@ -50,6 +81,119 @@ impl<'e, const N: usize> Encoder<'e> for ArrayEncoder<N> {
     fn advance(&mut self) -> bool {
         self.arr = None;
         false
+    }
+}
+
+// Protect the private fields from other usage in this module.
+#[cfg(feature = "alloc")]
+mod encapsulate {
+    use alloc::vec::Vec;
+
+    use internals::array_vec::ArrayVec;
+    use internals::compact_size;
+
+    use super::SIZE;
+    use crate::Encodable;
+
+    /// An encoder for a list of encodable types.
+    pub struct VecEncoder<'e, T: Encodable> {
+        ///  The list of objects we are encoding.
+        ///
+        /// This is **never** mutated. All accesses are done by array accesses because of lifetimes and
+        /// the borrow checker.
+        v: Vec<&'e T>,
+        /// Length of `v`.
+        len: usize,
+        /// `len` encoded as a compact size.
+        // FIXME: Should we encapsulate this?
+        pub compact_size: Option<ArrayVec<u8, SIZE>>,
+        /// Index into `v` of the element we are currently encoding.
+        cur_idx: usize,
+        /// Current encoder.
+        cur_enc: Option<T::Encoder<'e>>,
+    }
+    #[cfg(feature = "alloc")]
+    impl<'e, T: Encodable> VecEncoder<'e, T> {
+        /// Constructs an encoder which encodes the vector with a length prefix.
+        // TODO: Should we call this `with_length_prefix` for symmetry with other encoders?
+        pub fn new(v: Vec<&'e T>) -> Self {
+            if v.is_empty() {
+                let compact_size = Some(compact_size::encode(0_usize));
+                return Self { v, len: 0, compact_size, cur_idx: 0, cur_enc: None };
+            }
+
+            let len = v.len();
+            let compact_size = Some(compact_size::encode(len));
+            let encoder = v[0].encoder();
+
+            Self { v, len, compact_size, cur_idx: 0, cur_enc: Some(encoder) }
+        }
+
+        /// Returns a reference to the current item's encoder.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self.done()` returns true (i.e., index out of range).
+        pub fn current_encoder(&self) -> &T::Encoder<'e> { self.cur_enc.as_ref().unwrap() }
+
+        /// Returns a mutable reference to the current item's encoder.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self.done()` returns true (i.e., index out of range).
+        pub fn current_encoder_mut(&mut self) -> &mut T::Encoder<'e> {
+            self.cur_enc.as_mut().unwrap()
+        }
+
+        /// Totally done encoding.
+        pub fn done(&self) -> bool { self.cur_idx >= self.len }
+
+        /// Increment the current index, set the next encoder if necessary.
+        ///
+        /// Its fine to keep calling this function after the encoder is done.
+        pub fn inc(&mut self) {
+            if self.done() {
+                return;
+            }
+
+            self.cur_idx = self.cur_idx + 1;
+            if !self.done() {
+                self.cur_enc = Some(self.v[self.cur_idx].encoder())
+            }
+        }
+    }
+}
+#[cfg(feature = "alloc")]
+#[doc(inline)]
+pub use encapsulate::VecEncoder;
+
+impl<'e, T: Encodable> Encoder<'e> for VecEncoder<'e, T> {
+    fn current_chunk(&self) -> Option<&[u8]> {
+        if let Some(compact_size) = self.compact_size.as_ref() {
+            return Some(compact_size);
+        }
+
+        self.current_encoder().current_chunk()
+    }
+
+    fn advance(&mut self) -> bool {
+        if self.compact_size.is_some() {
+            self.compact_size = None;
+            // Use `done()` to handle initialization with empty vector.
+            return !self.done();
+        }
+
+        if self.current_encoder_mut().advance() {
+            true
+        } else {
+            if self.done() {
+                false
+            } else {
+                self.inc();
+                // Assumes all encoders return some data.
+                true
+            }
+        }
     }
 }
 
@@ -76,7 +220,7 @@ impl<'e, A: Encoder<'e>, B: Encoder<'e>> Encoder<'e> for Encoder2<A, B> {
 
     fn advance(&mut self) -> bool {
         if self.enc_idx == 0 {
-            if !self.enc_1.advance() {
+            if! self.enc_1.advance() {
                 self.enc_idx += 1;
             }
             true
@@ -156,4 +300,63 @@ impl<
 {
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }
+}
+
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod tests {
+    use alloc::vec::Vec;
+
+    use super::*;
+
+    fn encode_to_vec<'e>(mut encoder: impl Encoder<'e>) -> Vec<u8> {
+        let mut vec = Vec::new();
+        while let Some(chunk) = encoder.current_chunk() {
+            vec.extend_from_slice(chunk);
+            encoder.advance();
+        }
+        vec
+    }
+
+    #[test]
+    fn encode_byte_slice_without_prefix() {
+        let obj = [1u8, 2, 3];
+
+        let encoder = BytesEncoder::without_length_prefix(&obj);
+        let got = encode_to_vec(encoder);
+
+        assert_eq!(got, obj);
+    }
+
+    #[test]
+    fn encode_empty_byte_slice_without_prefix() {
+        let obj = [];
+
+        let encoder = BytesEncoder::without_length_prefix(&obj);
+        let got = encode_to_vec(encoder);
+
+        assert_eq!(got, obj);
+    }
+
+    #[test]
+    fn encode_byte_slice_with_prefix() {
+        let obj = [1u8, 2, 3];
+
+        let encoder = BytesEncoder::with_length_prefix(&obj);
+        let got = encode_to_vec(encoder);
+
+        let want = [3u8, 1, 2, 3];
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn encode_empty_byte_slice_with_prefix() {
+        let obj = [];
+
+        let encoder = BytesEncoder::with_length_prefix(&obj);
+        let got = encode_to_vec(encoder);
+
+        let want = [0u8];
+        assert_eq!(got, want);
+    }
 }

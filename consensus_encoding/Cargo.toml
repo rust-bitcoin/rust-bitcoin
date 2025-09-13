@@ -14,15 +14,19 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "internals/std"]
+alloc = ["internals/alloc"]
 
 [dependencies]
 hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false }
+internals = { package = "bitcoin-internals", path = "../internals" }
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[[example]]
+name = "encoder"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = [] }

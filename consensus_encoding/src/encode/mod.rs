@@ -2,6 +2,9 @@
 
 //! Consensus Encoding Traits
 
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+
 pub mod encoders;
 
 /// A Bitcoin object which can be consensus-encoded.
@@ -73,4 +76,41 @@ pub fn encode_to_hash_engine<T: Encodable, H: hashes::HashEngine>(object: &T, mu
         encoder.advance();
     }
     engine
+}
+
+/// Encodes an object into a vector.
+#[cfg(feature = "alloc")]
+pub fn encode_to_vec<T: Encodable>(object: &T) -> Vec<u8> {
+    let mut encoder = object.encoder();
+    let mut vec = Vec::new();
+    while let Some(chunk) = encoder.current_chunk() {
+        vec.extend_from_slice(chunk);
+        encoder.advance();
+    }
+    vec
+}
+
+/// Encodes an object to a standard I/O writer.
+///
+/// # Performance
+///
+/// This method writes data in potentially small chunks based on the encoder's
+/// internal chunking strategy. For optimal performance with unbuffered writers
+/// (like [`std::fs::File`] or [`std::net::TcpStream`]), consider wrapping your
+/// writer with [`std::io::BufWriter`].
+///
+/// # Errors
+///
+/// Returns any I/O error encountered while writing to the writer.
+#[cfg(feature = "std")]
+pub fn encode_to_writer<T: Encodable, W: std::io::Write>(
+    object: &T,
+    mut writer: W,
+) -> Result<(), std::io::Error> {
+    let mut encoder = object.encoder();
+    while let Some(chunk) = encoder.current_chunk() {
+        writer.write_all(chunk)?;
+        encoder.advance();
+    }
+    Ok(())
 }
