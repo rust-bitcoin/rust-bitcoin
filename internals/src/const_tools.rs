@@ -41,7 +41,7 @@ macro_rules! concat_bytes_to_arr {
         let mut output = [0u8; $len];
         let mut i = 0;
         while i < a.len() {
-            output[i] = $a[i];
+            output[i] = a[i];
             i += 1;
         }
         while i < a.len() + b.len() {
