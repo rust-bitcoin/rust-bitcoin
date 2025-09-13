@@ -35,7 +35,7 @@ pub trait Encoder<'e> {
     /// Does not need to be called when the encoder is first created. (In fact, if it
     /// is called, this will discard the first chunk of encoded data.)
     ///
-    /// Returns `true` if the the next call to [`Self::current_chunk`] will return data.
+    /// Returns `true` if the next call to [`Self::current_chunk`] will return data.
     /// Returns `false` otherwise. It is fine to ignore the return value of this method
     /// and just call `current_chunk` to see if it works.
     fn advance(&mut self) -> bool;

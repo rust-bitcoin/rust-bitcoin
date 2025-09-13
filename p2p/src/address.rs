@@ -431,7 +431,7 @@ pub enum AddrV2ToIpv6AddrError {
 impl fmt::Display for AddrV2ToIpv6AddrError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Ipv4 => write!(f, "Ipv addresses cannot be converted to Ipv6Addr"),
+            Self::Ipv4 => write!(f, "Ipv4 addresses cannot be converted to Ipv6Addr"),
             Self::TorV3 => write!(f, "TorV3 addresses cannot be converted to Ipv6Addr"),
             Self::I2p => write!(f, "I2P addresses cannot be converted to Ipv6Addr"),
             Self::Cjdns => write!(f, "Cjdns addresses cannot be converted to Ipv6Addr"),
