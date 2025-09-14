@@ -111,6 +111,7 @@ dependencies = [
 name = "bitcoin-p2p-messages"
 version = "0.1.0"
 dependencies = [
+ "arbitrary",
  "bitcoin",
  "bitcoin-internals",
  "bitcoin-io 0.2.0",

@@ -12,7 +12,7 @@ cargo-fuzz = true
 [dependencies]
 honggfuzz = { version = "0.5.56", default-features = false }
 bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
-p2p = { path = "../p2p", package = "bitcoin-p2p-messages" }
+p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 arbitrary = { version = "1.4.1" }
 
 serde = { version = "1.0.195", features = [ "derive" ] }
@@ -20,10 +20,6 @@ serde_json = "1.0.68"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
-
-[[bin]]
-name = "bitcoin_deser_net_msg"
-path = "fuzz_targets/bitcoin/deser_net_msg.rs"
 
 [[bin]]
 name = "bitcoin_deserialize_address"
@@ -58,10 +54,6 @@ name = "bitcoin_outpoint_string"
 path = "fuzz_targets/bitcoin/outpoint_string.rs"
 
 [[bin]]
-name = "bitcoin_p2p_address_roundtrip"
-path = "fuzz_targets/bitcoin/p2p_address_roundtrip.rs"
-
-[[bin]]
 name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
 
@@ -88,6 +80,18 @@ path = "fuzz_targets/hashes/sha512.rs"
 [[bin]]
 name = "hashes_sha512_256"
 path = "fuzz_targets/hashes/sha512_256.rs"
+
+[[bin]]
+name = "p2p_arbitrary_addrv2"
+path = "fuzz_targets/p2p/arbitrary_addrv2.rs"
+
+[[bin]]
+name = "p2p_deserialize_addrv2"
+path = "fuzz_targets/p2p/deserialize_addrv2.rs"
+
+[[bin]]
+name = "p2p_deserialize_raw_net_msg"
+path = "fuzz_targets/p2p/deserialize_raw_net_msg.rs"
 
 [[bin]]
 name = "units_arbitrary_weight"
