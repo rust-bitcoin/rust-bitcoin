@@ -155,6 +155,14 @@ impl ServiceFlags {
     /// See BIP-0324 for details on how this is implemented.
     pub const P2P_V2: Self = Self(1 << 11);
 
+    /// `NODE_UTREEXO` indicates that the node supports Utreexo inclusion proof propagation
+    /// for new blocks and transactions.
+    pub const NODE_UTREEXO: Self = Self(1 << 12);
+
+    /// `NODE_UTREEXO_ARCHIVE` indicates that the node supports Utreexo inclusion proof propagation
+    /// for all blocks.
+    pub const NODE_UTREEXO_ARCHIVE: Self = Self(1 << 13);
+
     // NOTE: When adding new flags, remember to update the Display impl accordingly.
 
     /// Add [ServiceFlags] together.
@@ -219,6 +227,8 @@ impl fmt::Display for ServiceFlags {
         write_flag!(COMPACT_FILTERS);
         write_flag!(NETWORK_LIMITED);
         write_flag!(P2P_V2);
+        write_flag!(NODE_UTREEXO);
+        write_flag!(NODE_UTREEXO_ARCHIVE);
         // If there are unknown flags left, we append them in hex.
         if flags != Self::NONE {
             if !first {
@@ -540,6 +550,8 @@ mod tests {
             ServiceFlags::COMPACT_FILTERS,
             ServiceFlags::NETWORK_LIMITED,
             ServiceFlags::P2P_V2,
+            ServiceFlags::NODE_UTREEXO,
+            ServiceFlags::NODE_UTREEXO_ARCHIVE,
         ];
 
         let mut flags = ServiceFlags::NONE;
@@ -566,11 +578,17 @@ mod tests {
         assert_eq!("ServiceFlags(NONE)", ServiceFlags::NONE.to_string());
         assert_eq!("ServiceFlags(WITNESS)", ServiceFlags::WITNESS.to_string());
         assert_eq!("ServiceFlags(P2P_V2)", ServiceFlags::P2P_V2.to_string());
+        assert_eq!("ServiceFlags(NODE_UTREEXO)", ServiceFlags::NODE_UTREEXO.to_string());
+        assert_eq!(
+            "ServiceFlags(NODE_UTREEXO_ARCHIVE)",
+            ServiceFlags::NODE_UTREEXO_ARCHIVE.to_string()
+        );
         let flag = ServiceFlags::WITNESS
             | ServiceFlags::BLOOM
             | ServiceFlags::NETWORK
-            | ServiceFlags::P2P_V2;
-        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS|P2P_V2)", flag.to_string());
+            | ServiceFlags::P2P_V2
+            | ServiceFlags::NODE_UTREEXO;
+        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS|P2P_V2|NODE_UTREEXO)", flag.to_string());
         let flag = ServiceFlags::WITNESS | 0xf0.into();
         assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
     }
