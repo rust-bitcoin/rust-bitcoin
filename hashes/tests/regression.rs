@@ -9,8 +9,8 @@
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
 use bitcoin_hashes::{
-    hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha3_256, sha512, sha512_256, siphash24,
-    HashEngine as _, HmacEngine,
+    hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha3_256, sha512, sha512_256,
+    siphash24, HashEngine as _, HmacEngine,
 };
 
 const DATA: &str = "arbitrary data to hash as a regression test";
