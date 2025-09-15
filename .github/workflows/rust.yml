@@ -311,6 +311,8 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
+      matrix:
+        dep: [recent]
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v5
@@ -320,6 +322,8 @@ jobs:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install cargo-public-api"
         run: cargo install --locked cargo-public-api --version 0.49.0
+      - name: "Set dependencies"
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run API checker script"
         run: ./contrib/check-for-api-changes.sh
 

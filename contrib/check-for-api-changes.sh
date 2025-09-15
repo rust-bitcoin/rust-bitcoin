@@ -65,12 +65,12 @@ check_for_changes() {
 
 # Run cargo when --all-features is not used.
 run_cargo() {
-    RUSTDOCFLAGS="$RUSTDOCFLAGS" cargo +"$NIGHTLY" public-api --simplified "$@"
+    RUSTDOCFLAGS="$RUSTDOCFLAGS" cargo +"$NIGHTLY" --locked public-api --simplified "$@"
 }
 
 # Run cargo with all features enabled.
 run_cargo_all_features() {
-    cargo +"$NIGHTLY" public-api --simplified --all-features
+    cargo +"$NIGHTLY" --locked public-api --simplified --all-features
 }
 
 need_nightly() {
