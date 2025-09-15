@@ -9,8 +9,10 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{Encodable, Encoder};
 #[cfg(feature = "hex")]
 use hex::{error::HexToBytesError, FromHex};
+use internals::array_vec::ArrayVec;
 use internals::compact_size;
 use internals::slice::SliceExt;
 use internals::wrap_debug::WrapDebug;
@@ -258,6 +260,56 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
     let start = start_of_indices + index * 4;
     bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes) as usize)
+}
+
+/// The maximum length of a compact size encoding.
+const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
+
+/// The encoder for the [`Witness`] type.
+// This is basically an exact copy of the `encoding::BytesEncoder` except we prefix
+// with the number of witness elements not the byte slice length.
+pub struct WitnessEncoder<'a> {
+    /// A slice of all the elements without the initial length prefix
+    /// but with the length prefix on each element.
+    witness_elements: Option<&'a [u8]>,
+    /// Encoding of the number of witness elements.
+    num_elements: Option<ArrayVec<u8, SIZE>>,
+}
+
+impl Encodable for Witness {
+    type Encoder<'a>
+        = WitnessEncoder<'a>
+    where
+        Self: 'a;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let num_elements = Some(compact_size::encode(self.len()));
+        let witness_elements = Some(&self.content[..self.indices_start]);
+
+        WitnessEncoder { witness_elements, num_elements }
+    }
+}
+
+impl<'a> Encoder for WitnessEncoder<'a> {
+    #[inline]
+    fn current_chunk(&self) -> Option<&[u8]> {
+        if let Some(num_elements) = self.num_elements.as_ref() {
+            Some(num_elements)
+        } else {
+            self.witness_elements
+        }
+    }
+
+    #[inline]
+    fn advance(&mut self) -> bool {
+        if self.num_elements.is_some() {
+            self.num_elements = None;
+            true
+        } else {
+            self.witness_elements = None;
+            false
+        }
+    }
 }
 
 // Note: we use `Borrow` in the following `PartialEq` impls specifically because of its additional
@@ -912,5 +964,52 @@ mod test {
 
         let witness = Witness::from_hex(hex_strings).unwrap();
         assert_eq!(witness.len(), 2);
+    }
+
+    #[test]
+    fn encode() {
+        let bytes1 = [1u8, 2, 3];
+        let bytes2 = [4u8, 5];
+        let bytes3 = [6u8, 7, 8, 9];
+        let data = [&bytes1[..], &bytes2[..], &bytes3[..]];
+
+        // Use FromIterator directly
+        let witness = Witness::from_iter(data);
+
+        let want = [0x03, 0x03, 0x01, 0x02, 0x03, 0x02, 0x04, 0x05, 0x04, 0x06, 0x07, 0x08, 0x09];
+        let got = encoding::encode_to_vec(&witness);
+
+        assert_eq!(&got, &want);
+    }
+
+    #[test]
+    fn encodes_using_correct_chunks() {
+        let bytes1 = [1u8, 2, 3];
+        let bytes2 = [4u8, 5];
+        let data = [&bytes1[..], &bytes2[..]];
+
+        // Use FromIterator directly
+        let witness = Witness::from_iter(data);
+
+        // Should have length prefix chunk, then the content slice, then exhausted.
+        let mut encoder = witness.encoder();
+
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+
+        // We don't encode one element at a time, rather we encode the whole content slice at once.
+        assert_eq!(encoder.current_chunk(), Some(&[3u8, 1, 2, 3, 2, 4, 5][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_empty() {
+        let witness = Witness::default();
+
+        let want = [0x00];
+        let got = encoding::encode_to_vec(&witness);
+
+        assert_eq!(&got, &want);
     }
 }
