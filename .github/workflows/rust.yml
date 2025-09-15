@@ -330,9 +330,9 @@ jobs:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
       - name: "Run policy script"
