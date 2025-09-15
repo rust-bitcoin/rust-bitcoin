@@ -17,18 +17,42 @@
 mod block;
 
 use hashes::{sha256d, HashEngine as _};
+use io::{BufRead, Write};
 
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
-use crate::{internal_macros, Txid, Wtxid};
+use crate::{Txid, Wtxid};
 
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
-pub use primitives::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
+pub use primitives::{TxMerkleNode, WitnessMerkleNode};
 
-internal_macros::impl_hashencode!(TxMerkleNode);
-internal_macros::impl_hashencode!(WitnessMerkleNode);
+use crate::consensus::{encode, Decodable, Encodable};
+
+impl Encodable for TxMerkleNode {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for TxMerkleNode {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(TxMerkleNode::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+    }
+}
+
+impl Encodable for WitnessMerkleNode {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for WitnessMerkleNode {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(WitnessMerkleNode::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+    }
+}
 
 /// A node in a Merkle tree of transactions or witness data within a block.
 ///

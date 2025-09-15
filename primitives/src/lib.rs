@@ -40,6 +40,7 @@ pub mod _export {
     }
 }
 
+mod hash_types;
 mod opcodes;
 
 pub mod block;
