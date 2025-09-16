@@ -417,6 +417,33 @@ impl encoding::Encodable for LockTime {
     }
 }
 
+/// The decoder for the [`LockTime`] type.
+#[cfg(feature = "encoding")]
+pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for LockTimeDecoder {
+    type Output = LockTime;
+    type Error = encoding::UnexpectedEofError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let n = u32::from_le_bytes(self.0.end()?);
+        Ok(LockTime::from_consensus(n))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for LockTime {
+    type Decoder = LockTimeDecoder;
+    fn decoder() -> Self::Decoder { LockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
 impl From<Height> for LockTime {
     #[inline]
     fn from(h: Height) -> Self { LockTime::Blocks(h) }
