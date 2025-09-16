@@ -18,7 +18,7 @@ use crate::ToU64;
 pub const MAX_ENCODABLE_VALUE: u64 = 0x0200_0000;
 
 /// The maximum length of an encoding.
-const MAX_ENCODING_SIZE: usize = 9;
+pub const MAX_ENCODING_SIZE: usize = 9;
 
 /// Returns the number of bytes used to encode this `CompactSize` value.
 ///
