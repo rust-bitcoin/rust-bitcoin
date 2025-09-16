@@ -35,7 +35,7 @@ use self::error::{
 #[doc(inline)]
 pub use self::{
     signed::SignedAmount,
-    unsigned::Amount,
+    unsigned::{Amount, AmountEncoder},
 };
 #[doc(no_inline)]
 pub use self::error::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
