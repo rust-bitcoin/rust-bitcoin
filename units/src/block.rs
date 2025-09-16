@@ -157,6 +157,31 @@ impl encoding::Encodable for BlockHeight {
     }
 }
 
+/// The decoder for the [`BlockHeight`] type.
+pub struct BlockHeightDecoder(encoding::ArrayDecoder<4>);
+
+impl encoding::Decoder for BlockHeightDecoder {
+    type Output = BlockHeight;
+    type Error = encoding::UnexpectedEofError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let n = u32::from_le_bytes(self.0.end()?);
+        Ok(BlockHeight::from_u32(n))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for BlockHeight {
+    type Decoder = BlockHeightDecoder;
+    fn decoder() -> Self::Decoder { BlockHeightDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
 impl_u32_wrapper! {
     /// An unsigned block interval.
     ///

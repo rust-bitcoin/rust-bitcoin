@@ -280,6 +280,31 @@ impl encoding::Encodable for Sequence {
     }
 }
 
+/// The decoder for the [`Sequence`] type.
+pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
+
+impl encoding::Decoder for SequenceDecoder {
+    type Output = Sequence;
+    type Error = encoding::UnexpectedEofError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let n = u32::from_le_bytes(self.0.end()?);
+        Ok(Sequence::from_consensus(n))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for Sequence {
+    type Decoder = SequenceDecoder;
+    fn decoder() -> Self::Decoder { SequenceDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Sequence {

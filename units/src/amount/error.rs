@@ -389,3 +389,40 @@ impl fmt::Display for PossiblyConfusingDenominationError {
 impl std::error::Error for PossiblyConfusingDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
+
+/// An error consensus decoding an `Amount`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum DecodeError {
+    /// Not enough bytes given to decoder.
+    UnexpectedEof(encoding::UnexpectedEofError),
+    /// Decoded amount is too big.
+    OutOfRange(OutOfRangeError),
+}
+
+impl From<Infallible> for DecodeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<encoding::UnexpectedEofError> for DecodeError {
+    fn from(e: encoding::UnexpectedEofError) -> Self { Self::UnexpectedEof(e) }
+}
+
+impl fmt::Display for DecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::UnexpectedEof(ref e) => write_err!(f, "decode error"; e),
+            Self::OutOfRange(ref e) => write_err!(f, "decode error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            Self::UnexpectedEof(ref e) => Some(e),
+            Self::OutOfRange(ref e) => Some(e),
+        }
+    }
+}

@@ -12,7 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use internals::const_casts;
 use NumOpResult as R;
 
-use super::error::{ParseAmountErrorInner, ParseErrorInner};
+use super::error::{DecodeError, ParseAmountErrorInner, ParseErrorInner};
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
@@ -574,6 +574,31 @@ impl encoding::Encodable for Amount {
     fn encoder(&self) -> Self::Encoder<'_> {
         AmountEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_sat().to_le_bytes()))
     }
+}
+
+/// The decoder for the [`Amount`] type.
+pub struct AmountDecoder(encoding::ArrayDecoder<8>);
+
+impl encoding::Decoder for AmountDecoder {
+    type Output = Amount;
+    type Error = DecodeError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let a = u64::from_le_bytes(self.0.end()?);
+        Ok(Amount::from_sat(a).map_err(DecodeError::OutOfRange)?)
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for Amount {
+    type Decoder = AmountDecoder;
+    fn decoder() -> Self::Decoder { AmountDecoder(encoding::ArrayDecoder::<8>::new()) }
 }
 
 #[cfg(feature = "arbitrary")]
