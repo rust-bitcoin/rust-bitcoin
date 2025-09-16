@@ -3,8 +3,8 @@
 //! Test composition of encoders and decoders.
 
 use consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder6, Encodable, Encoder,
-    Encoder2, Encoder6,
+    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder6, DecoderError, Either,
+    Encodable, Encoder, Encoder2, Encoder6, UnexpectedEof,
 };
 
 const EMPTY: &[u8] = &[];
@@ -136,4 +136,19 @@ fn composition_extra_bytes() {
     let (first, second) = decoder2.end().unwrap();
     assert_eq!(first, [0x01, 0x02], "First decoder should get first 2 bytes");
     assert_eq!(second, [0x03, 0x04, 0x05], "Second decoder should get next 3 bytes");
+}
+
+#[test]
+fn composition_collapse_decodererrors() {
+    // Test that DecoderError can collapse nested decoder error structures.
+
+    let pair_either: Either<UnexpectedEof, UnexpectedEof> =
+        Either::First(UnexpectedEof { missing: 3 });
+    let flattened = pair_either.collapse();
+    assert_eq!(flattened.missing, 3);
+
+    let nested_either: Either<Either<UnexpectedEof, UnexpectedEof>, UnexpectedEof> =
+        Either::First(Either::Second(UnexpectedEof { missing: 3 }));
+    let flattened = nested_either.collapse();
+    assert_eq!(flattened.missing, 3);
 }

@@ -4,6 +4,12 @@
 
 use super::Decoder;
 
+/// A trait for flattening nested decoder error structures.
+pub trait DecoderError<E = Self>: Sized {
+    /// Collapse this error to the target error E.
+    fn collapse(self) -> E;
+}
+
 /// A sum type representing one of two possible decoder errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Either<F, S> {
@@ -40,11 +46,24 @@ where
     }
 }
 
+impl<A, B, T> DecoderError<T> for Either<A, B>
+where
+    A: DecoderError<T>,
+    B: DecoderError<T>,
+{
+    fn collapse(self) -> T {
+        match self {
+            Either::First(a) => a.collapse(),
+            Either::Second(b) => b.collapse(),
+        }
+    }
+}
+
 /// Not enough bytes given to decoder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnexpectedEof {
     /// Number of bytes missing to complete decoder.
-    missing: usize,
+    pub missing: usize,
 }
 
 impl core::fmt::Display for UnexpectedEof {
@@ -55,6 +74,10 @@ impl core::fmt::Display for UnexpectedEof {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnexpectedEof {}
+
+impl DecoderError for UnexpectedEof {
+    fn collapse(self) -> UnexpectedEof { self }
+}
 
 /// A decoder that expects exactly N bytes and returns them as an array.
 pub struct ArrayDecoder<const N: usize> {
