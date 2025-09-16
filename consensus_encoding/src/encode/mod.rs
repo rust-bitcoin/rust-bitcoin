@@ -69,7 +69,11 @@ macro_rules! encoder_newtype{
 ///
 /// Consumes and returns the hash engine to make it easier to call
 /// [`hashes::HashEngine::finalize`] directly on the result.
-pub fn encode_to_hash_engine<T: Encodable, H: hashes::HashEngine>(object: &T, mut engine: H) -> H {
+pub fn encode_to_hash_engine<T, H>(object: &T, mut engine: H) -> H
+where
+    T: Encodable + ?Sized,
+    H: hashes::HashEngine,
+{
     let mut encoder = object.encoder();
     while let Some(sl) = encoder.current_chunk() {
         engine.input(sl);
@@ -80,7 +84,10 @@ pub fn encode_to_hash_engine<T: Encodable, H: hashes::HashEngine>(object: &T, mu
 
 /// Encodes an object into a vector.
 #[cfg(feature = "alloc")]
-pub fn encode_to_vec<T: Encodable>(object: &T) -> Vec<u8> {
+pub fn encode_to_vec<T>(object: &T) -> Vec<u8>
+where
+    T: Encodable + ?Sized,
+{
     let mut encoder = object.encoder();
     let mut vec = Vec::new();
     while let Some(chunk) = encoder.current_chunk() {
@@ -103,10 +110,11 @@ pub fn encode_to_vec<T: Encodable>(object: &T) -> Vec<u8> {
 ///
 /// Returns any I/O error encountered while writing to the writer.
 #[cfg(feature = "std")]
-pub fn encode_to_writer<T: Encodable, W: std::io::Write>(
-    object: &T,
-    mut writer: W,
-) -> Result<(), std::io::Error> {
+pub fn encode_to_writer<T, W>(object: &T, mut writer: W) -> Result<(), std::io::Error>
+where
+    T: Encodable + ?Sized,
+    W: std::io::Write,
+{
     let mut encoder = object.encoder();
     while let Some(chunk) = encoder.current_chunk() {
         writer.write_all(chunk)?;
