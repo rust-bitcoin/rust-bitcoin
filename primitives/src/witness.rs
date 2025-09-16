@@ -137,7 +137,7 @@ impl Witness {
         size
     }
 
-    /// Clear the witness.
+    /// Clears the witness.
     #[inline]
     pub fn clear(&mut self) {
         self.content.clear();
@@ -145,13 +145,13 @@ impl Witness {
         self.indices_start = 0;
     }
 
-    /// Push a new element on the witness, requires an allocation.
+    /// Pushes a new element on the witness, requires an allocation.
     #[inline]
     pub fn push<T: AsRef<[u8]>>(&mut self, new_element: T) {
         self.push_slice(new_element.as_ref());
     }
 
-    /// Push a new element slice onto the witness stack.
+    /// Pushes a new element slice onto the witness stack.
     fn push_slice(&mut self, new_element: &[u8]) {
         self.witness_elements += 1;
         let previous_content_end = self.indices_start;

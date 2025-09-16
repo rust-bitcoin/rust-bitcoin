@@ -193,7 +193,7 @@ impl State {
         [a, b, c, d]
     }
 
-    /// Perform a round on "columns" and then "diagonals" of the state.
+    /// Performs a round on "columns" and then "diagonals" of the state.
     ///
     /// The column quarter rounds are made up of indexes: `[0,4,8,12]`, `[1,5,9,13]`, `[2,6,10,14]`, `[3,7,11,15]`.
     /// The diagonals quarter rounds are made up of indexes: `[0,5,10,15]`, `[1,6,11,12]`, `[2,7,8,13]`, `[3,4,9,14]`.
@@ -222,7 +222,7 @@ impl State {
         [a, b, c, d]
     }
 
-    /// Transform the state by performing the ChaCha block function.
+    /// Transforms the state by performing the ChaCha block function.
     #[inline(always)]
     fn chacha_block(&mut self) {
         let mut working_state = self.matrix;
@@ -276,7 +276,7 @@ impl ChaCha20 {
         ChaCha20 { key, nonce, block_count: block, seek_offset_bytes: 0 }
     }
 
-    /// Get the keystream for a specific block.
+    /// Gets the keystream for a specific block.
     #[inline(always)]
     fn keystream_at_block(&self, block: u32) -> [u8; 64] {
         let mut state = State::new(self.key, self.nonce, block);
@@ -331,16 +331,16 @@ impl ChaCha20 {
         }
     }
 
-    /// Get the keystream for specified block.
+    /// Gets the keystream for specified block.
     pub fn get_keystream(&self, block: u32) -> [u8; 64] { self.keystream_at_block(block) }
 
-    /// Update the index of the keystream to the given byte.
+    /// Updates the index of the keystream to the given byte.
     pub fn seek(&mut self, seek: u32) {
         self.block_count = seek / 64;
         self.seek_offset_bytes = (seek % 64) as usize;
     }
 
-    /// Update the index of the keystream to a block.
+    /// Updates the index of the keystream to a block.
     pub fn block(&mut self, block: u32) {
         self.block_count = block;
         self.seek_offset_bytes = 0;

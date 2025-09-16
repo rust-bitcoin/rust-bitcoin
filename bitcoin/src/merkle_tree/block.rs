@@ -102,7 +102,7 @@ impl MerkleBlock {
         MerkleBlock { header: *header, txn: pmt }
     }
 
-    /// Extract the matching txid's represented by this partial Merkle tree
+    /// Extracts the matching txid's represented by this partial Merkle tree
     /// and their respective indices within the partial tree.
     /// returns Ok(()) on success, or error in case of failure
     pub fn extract_matches(
@@ -235,7 +235,7 @@ impl PartialMerkleTree {
         pmt
     }
 
-    /// Extract the matching txid's represented by this partial Merkle tree
+    /// Extracts the matching txid's represented by this partial Merkle tree
     /// and their respective indices within the partial tree.
     /// returns the Merkle root, or error in case of failure
     pub fn extract_matches(
@@ -297,7 +297,7 @@ impl PartialMerkleTree {
         (self.num_transactions + (1 << height) - 1) >> height
     }
 
-    /// Calculate the hash of a node in the Merkle tree (at leaf level: the txid's themselves)
+    /// Calculates the hash of a node in the Merkle tree (at leaf level: the txid's themselves)
     fn calc_hash(&self, height: u32, pos: u32, txids: &[Txid]) -> TxMerkleNode {
         if height == 0 {
             // Hash at height 0 is the txid itself

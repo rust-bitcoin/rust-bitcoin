@@ -69,14 +69,14 @@ Note, can use this exact doc format.
 
 ### Special treatment of `bitcoin`, `primitives`, `units`
 
-`bitcoin`, `primitives`, and `units` should each be a superset of the crates below. 
+`bitcoin`, `primitives`, and `units` should each be a superset of the crates below.
 
 E.g for any `units::Foo`, there will be a `primitives::Foo`, and `bitcoin::Foo`. This goes for all
 types and modules.
 
 For these three crates:
 
-- Non-error re-exports use `doc(inline)`. 
+- Non-error re-exports use `doc(inline)`.
 - Error re-exports use `doc(no_inline)`.
 - Error types that are directly in the API are re-exported.
 - Other error types are available in an `error` module.
@@ -93,15 +93,15 @@ pub mod foo {
     pub struct FooBar { ... };
 
     /// Some function.
-    pub some_function() -> SomeError { 
+    pub some_function() -> SomeError {
         // Example error logic
         SomeError::Foo(FooError { ... })
     }
-    
+
     pub mod error {
         /// Example error used 'directly' in the public API.
         pub enum SomeError { ... };
-    
+
         /// Abstracts the details of a foo-related error.
         pub struct FooError { ... };
     }
@@ -292,6 +292,11 @@ impl FooBar {
     }
 }
 ```
+
+Note usage of third person instead of imperative.
+
+Good: `/// Calculates the distance to the moon.`
+Bad: `/// Calculate the distance to the moon.`
 
 Add Panics section if any input to the function can trigger a panic.
 

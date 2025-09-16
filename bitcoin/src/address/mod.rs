@@ -900,7 +900,7 @@ impl Address<NetworkUnchecked> {
     #[inline]
     pub fn assume_checked(self) -> Address { Address::from_inner(self.into_inner()) }
 
-    /// Parse a bech32 Address string
+    /// Parses a bech32 Address string
     pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, Bech32Error> {
         let (hrp, witness_version, data) =
             bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
@@ -913,7 +913,7 @@ impl Address<NetworkUnchecked> {
         Ok(Address::from_inner(inner))
     }
 
-    /// Parse a base58 Address string
+    /// Parses a base58 Address string
     pub fn from_base58_str(s: &str) -> Result<Address<NetworkUnchecked>, Base58Error> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
