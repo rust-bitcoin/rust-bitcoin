@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 bitcoin = { path = "../bitcoin", default-features = false, features = ["std"] }
 bitcoin_hashes = { path = "../hashes" }
+chacha20-poly1305 = { path = "../chacha20_poly1305" }
+
 criterion = "0.7"
 hex_lit = "0.1.1"
 
@@ -25,6 +27,13 @@ harness = false
 name = "witness"
 path = "bitcoin/witness.rs"
 harness = false
+
+
+[[bench]]
+name = "chacha20"
+path = "chacha20_poly1305/chacha20.rs"
+harness = false
+
 
 [[bench]]
 name = "cmp"
