@@ -39,5 +39,7 @@ exclude_re = [
     "fmt_debug_pretty", # Mutants from formatting/display changes
     "CompactTarget::to_hex", # Deprecated
     "Script::to_hex", # Deprecated
+    "Script<T>::to_hex", # Deprecated
     "ScriptBuf::to_hex", # Deprecated
+    "ScriptBuf<T>::to_hex", # Deprecated
 ]
