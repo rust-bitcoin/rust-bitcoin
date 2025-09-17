@@ -3,12 +3,7 @@
 //! RIPEMD160 implementation.
 
 use internals::slice::SliceExt;
-
-#[cfg(bench)]
-mod benches;
 mod crypto;
-#[cfg(bench)]
-mod tests;
 
 use core::cmp;
 

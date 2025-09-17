@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bitcoin = { path = "../bitcoin", default-features = false, features = ["std"] }
+bitcoin_hashes = { path = "../hashes" }
 criterion = "0.7"
 hex_lit = "0.1.1"
 
@@ -23,4 +24,59 @@ harness = false
 [[bench]]
 name = "witness"
 path = "bitcoin/witness.rs"
+harness = false
+
+[[bench]]
+name = "cmp"
+path = "hashes/cmp.rs"
+harness = false
+
+[[bench]]
+name = "hash160"
+path = "hashes/hash160.rs"
+harness = false
+
+[[bench]]
+name = "hmac"
+path = "hashes/hmac.rs"
+harness = false
+
+[[bench]]
+name = "ripemd160"
+path = "hashes/ripemd160.rs"
+harness = false
+
+[[bench]]
+name = "sha1"
+path = "hashes/sha1.rs"
+harness = false
+
+[[bench]]
+name = "sha3_256"
+path = "hashes/sha3_256.rs"
+harness = false
+
+[[bench]]
+name = "sha256"
+path = "hashes/sha256.rs"
+harness = false
+
+[[bench]]
+name = "sha384"
+path = "hashes/sha384.rs"
+harness = false
+
+[[bench]]
+name = "sha512_256"
+path = "hashes/sha512_256.rs"
+harness = false
+
+[[bench]]
+name = "sha512"
+path = "hashes/sha512.rs"
+harness = false
+
+[[bench]]
+name = "siphash24"
+path = "hashes/siphash24.rs"
 harness = false
