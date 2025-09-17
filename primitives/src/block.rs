@@ -7,20 +7,28 @@
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 
+use core::convert::Infallible;
 use core::fmt;
 #[cfg(feature = "alloc")]
 use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
+use encoding::Encodable;
+#[cfg(feature = "alloc")]
+use encoding::{CompactSizeEncoder, Decodable, Decoder, Decoder6, Encoder2, SliceEncoder};
 use hashes::{sha256d, HashEngine as _};
+use internals::write_err;
 
 #[cfg(feature = "alloc")]
+use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
+#[cfg(feature = "alloc")]
 use crate::prelude::Vec;
+#[cfg(feature = "alloc")]
+use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
-use crate::{Transaction, WitnessMerkleNode};
+use crate::{BlockTimeDecoder, BlockTimeDecoderError, Transaction, WitnessMerkleNode};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -30,7 +38,9 @@ pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInter
 pub use units::block::TooBigForRelativeHeightError;
 
 #[doc(inline)]
-pub use crate::hash_types::{BlockHash, BlockHashEncoder, WitnessCommitment};
+pub use crate::hash_types::{
+    BlockHash, BlockHashDecoder, BlockHashDecoderError, BlockHashEncoder, WitnessCommitment,
+};
 
 /// Marker for whether or not a block has been validated.
 ///
@@ -295,6 +305,139 @@ impl Encodable for Header {
     }
 }
 
+/// The decoder for the [`Header`] type.
+#[cfg(feature = "alloc")]
+pub struct HeaderDecoder(
+    Decoder6<
+        VersionDecoder,
+        BlockHashDecoder,
+        TxMerkleNodeDecoder,
+        BlockTimeDecoder,
+        CompactTargetDecoder,
+        encoding::ArrayDecoder<4>, // Nonce
+        HeaderDecoderError,
+    >,
+);
+
+#[cfg(feature = "alloc")]
+impl Decoder for HeaderDecoder {
+    type Output = Header;
+    type Error = HeaderDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (version, prev_blockhash, merkle_root, time, bits, nonce) = self.0.end()?;
+        let nonce = u32::from_le_bytes(nonce);
+        Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for Header {
+    type Decoder = HeaderDecoder;
+    fn decoder() -> Self::Decoder {
+        HeaderDecoder(Decoder6::new(
+            VersionDecoder::new(),
+            BlockHashDecoder::new(),
+            TxMerkleNodeDecoder::new(),
+            BlockTimeDecoder::new(),
+            CompactTargetDecoder::new(),
+            encoding::ArrayDecoder::new(),
+        ))
+    }
+}
+
+/// An error consensus decoding a `Header`.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum HeaderDecoderError {
+    /// Error while decoding the `version`.
+    Version(VersionDecoderError),
+    /// Error while decoding the `prev_blockhash`.
+    PrevBlockhash(BlockHashDecoderError),
+    /// Error while decoding the `merkle_root`.
+    MerkleRoot(TxMerkleNodeDecoderError),
+    /// Error while decoding the `time`.
+    Time(BlockTimeDecoderError),
+    /// Error while decoding the `bits`.
+    Bits(CompactTargetDecoderError),
+    /// Error while decoding the `nonce`.
+    Nonce(encoding::UnexpectedEofError),
+}
+
+#[cfg(feature = "alloc")]
+impl From<Infallible> for HeaderDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "alloc")]
+impl From<VersionDecoderError> for HeaderDecoderError {
+    fn from(e: VersionDecoderError) -> Self { Self::Version(e) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<BlockHashDecoderError> for HeaderDecoderError {
+    fn from(e: BlockHashDecoderError) -> Self { Self::PrevBlockhash(e) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<TxMerkleNodeDecoderError> for HeaderDecoderError {
+    fn from(e: TxMerkleNodeDecoderError) -> Self { Self::MerkleRoot(e) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<BlockTimeDecoderError> for HeaderDecoderError {
+    fn from(e: BlockTimeDecoderError) -> Self { Self::Time(e) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<CompactTargetDecoderError> for HeaderDecoderError {
+    fn from(e: CompactTargetDecoderError) -> Self { Self::Bits(e) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<encoding::UnexpectedEofError> for HeaderDecoderError {
+    fn from(e: encoding::UnexpectedEofError) -> Self { Self::Nonce(e) }
+}
+
+#[cfg(feature = "alloc")]
+impl fmt::Display for HeaderDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::Version(ref e) => write_err!(f, "header decoder error"; e),
+            Self::PrevBlockhash(ref e) => write_err!(f, "header decoder error"; e),
+            Self::MerkleRoot(ref e) => write_err!(f, "header decoder error"; e),
+            Self::Time(ref e) => write_err!(f, "header decoder error"; e),
+            Self::Bits(ref e) => write_err!(f, "header decoder error"; e),
+            Self::Nonce(ref e) => write_err!(f, "header decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
+impl std::error::Error for HeaderDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            Self::Version(ref e) => Some(e),
+            Self::PrevBlockhash(ref e) => Some(e),
+            Self::MerkleRoot(ref e) => Some(e),
+            Self::Time(ref e) => Some(e),
+            Self::Bits(ref e) => Some(e),
+            Self::Nonce(ref e) => Some(e),
+        }
+    }
+}
+
 impl From<Header> for BlockHash {
     #[inline]
     fn from(header: Header) -> BlockHash { header.block_hash() }
@@ -389,6 +532,65 @@ impl Encodable for Version {
             self.to_consensus().to_le_bytes(),
         ))
     }
+}
+
+/// The decoder for the [`Version`] type.
+pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+
+impl VersionDecoder {
+    /// Constructs a new [`Version`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for VersionDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for VersionDecoder {
+    type Output = Version;
+    type Error = VersionDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let n = i32::from_le_bytes(self.0.end()?);
+        Ok(Version::from_consensus(n))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Version {
+    type Decoder = VersionDecoder;
+    fn decoder() -> Self::Decoder { VersionDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+/// An error consensus decoding an `Version`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VersionDecoderError(encoding::UnexpectedEofError);
+
+impl From<Infallible> for VersionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<encoding::UnexpectedEofError> for VersionDecoderError {
+    fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
+}
+
+impl fmt::Display for VersionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "version decoder error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for VersionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 #[cfg(feature = "arbitrary")]

@@ -2,7 +2,7 @@
 
 //! The `BlockHash` type.
 
-#[cfg(not(feature = "hex"))]
+use core::convert::Infallible;
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -13,6 +13,7 @@ use encoding::Encodable;
 use hashes::sha256d;
 #[cfg(feature = "hex")]
 use hex::FromHex as _;
+use internals::write_err;
 
 /// A bitcoin block hash.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -40,4 +41,63 @@ impl Encodable for BlockHash {
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockHashEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
     }
+}
+
+/// The decoder for the [`BlockHash`] type.
+pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
+
+impl BlockHashDecoder {
+    /// Constructs a new [`BlockHash`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for BlockHashDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for BlockHashDecoder {
+    type Output = BlockHash;
+    type Error = BlockHashDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let a = self.0.end()?;
+        Ok(BlockHash::from_byte_array(a))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for BlockHash {
+    type Decoder = BlockHashDecoder;
+    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
+}
+
+/// An error consensus decoding an `BlockHash`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockHashDecoderError(encoding::UnexpectedEofError);
+
+impl From<Infallible> for BlockHashDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<encoding::UnexpectedEofError> for BlockHashDecoderError {
+    fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
+}
+
+impl fmt::Display for BlockHashDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "sequence decoder error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BlockHashDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
