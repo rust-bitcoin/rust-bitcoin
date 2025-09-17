@@ -24,7 +24,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 #[doc(inline)]
 pub use self::{
     borrowed::{Script, ScriptEncoder},
-    owned::ScriptBuf,
+    owned::{ScriptBuf, ScriptBufDecoder, ScriptBufDecoderError},
     tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag},
 };
 #[doc(inline)]
@@ -47,8 +47,14 @@ pub type ScriptSig = Script<ScriptSigTag>;
 /// A `scriptPubKey` (locking script).
 pub type ScriptPubKeyBuf = ScriptBuf<ScriptPubKeyTag>;
 
+/// A `scriptPubKey` decoder.
+pub type ScriptPubKeyBufDecoder = ScriptBufDecoder<ScriptPubKeyTag>;
+
 /// A script signature (scriptSig).
 pub type ScriptSigBuf = ScriptBuf<ScriptSigTag>;
+
+/// A `scriptSig` decoder.
+pub type ScriptSigBufDecoder = ScriptBufDecoder<ScriptSigTag>;
 
 /// A Segwit v1 Taproot script.
 pub type TapScriptBuf = ScriptBuf<TapScriptTag>;
