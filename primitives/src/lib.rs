@@ -22,6 +22,21 @@
 // Exclude lints we don't think are valuable.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
+// We only support machines with index size of 4 bytes or more.
+//
+// Bitcoin consensus code relies on being able to have containers with more than 65536 (2^16)
+// entries in them so we cannot support consensus logic on machines that only have 16-bit memory
+// addresses.
+//
+// We specifically do not use `target_pointer_width` because of the possibility that pointer width
+// does not equal index size.
+//
+// ref: https://github.com/rust-bitcoin/rust-bitcoin/pull/2929#discussion_r1661848565
+internals::const_assert!(
+    core::mem::size_of::<usize>() >= 4;
+    "platforms that have usize less than 32 bits are not supported"
+);
+
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
