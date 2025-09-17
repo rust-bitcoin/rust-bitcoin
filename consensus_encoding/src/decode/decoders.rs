@@ -4,58 +4,6 @@
 
 use super::Decoder;
 
-/// A sum type representing one of two possible decoder errors.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Either<F, S> {
-    /// The first variant.
-    First(F),
-    /// The second variant.
-    Second(S),
-}
-
-impl<F, S> core::fmt::Display for Either<F, S>
-where
-    F: core::fmt::Display,
-    S: core::fmt::Display,
-{
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Either::First(first) => first.fmt(f),
-            Either::Second(second) => second.fmt(f),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl<F, S> std::error::Error for Either<F, S>
-where
-    F: std::error::Error,
-    S: std::error::Error,
-{
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Either::First(first) => first.source(),
-            Either::Second(second) => second.source(),
-        }
-    }
-}
-
-/// Not enough bytes given to decoder.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnexpectedEof {
-    /// Number of bytes missing to complete decoder.
-    missing: usize,
-}
-
-impl core::fmt::Display for UnexpectedEof {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "not enough bytes for decoder, {} more bytes required", self.missing)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for UnexpectedEof {}
-
 /// A decoder that expects exactly N bytes and returns them as an array.
 pub struct ArrayDecoder<const N: usize> {
     buffer: [u8; N],
@@ -354,3 +302,55 @@ where
         Ok((first, second, third, fourth, fifth, sixth))
     }
 }
+
+/// A sum type representing one of two possible decoder errors.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Either<F, S> {
+    /// The first variant.
+    First(F),
+    /// The second variant.
+    Second(S),
+}
+
+impl<F, S> core::fmt::Display for Either<F, S>
+where
+    F: core::fmt::Display,
+    S: core::fmt::Display,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Either::First(first) => first.fmt(f),
+            Either::Second(second) => second.fmt(f),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<F, S> std::error::Error for Either<F, S>
+where
+    F: std::error::Error,
+    S: std::error::Error,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Either::First(first) => first.source(),
+            Either::Second(second) => second.source(),
+        }
+    }
+}
+
+/// Not enough bytes given to decoder.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnexpectedEof {
+    /// Number of bytes missing to complete decoder.
+    missing: usize,
+}
+
+impl core::fmt::Display for UnexpectedEof {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "not enough bytes for decoder, {} more bytes required", self.missing)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnexpectedEof {}
