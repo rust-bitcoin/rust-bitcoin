@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use std::time::Duration;
 use std::hint::black_box;
 
 use bitcoin::blockdata::block::Block;
@@ -14,6 +15,7 @@ fn bench_block(c: &mut Criterion) {
 
     let mut g = c.benchmark_group("block");
     g.throughput(Throughput::Bytes(raw_block.len() as u64));
+    g.measurement_time(Duration::from_secs(10)).warm_up_time(Duration::from_secs(3));
 
     g.bench_function(BenchmarkId::new("stream_reader", "big"), |b| {
         let big_block = black_box(raw_block.as_ref());
