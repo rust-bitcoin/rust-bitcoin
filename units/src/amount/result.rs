@@ -349,4 +349,28 @@ mod tests {
         let sum: NumOpResult<SignedAmount> = amounts.into_iter().sum();
         assert_eq!(sum, NumOpResult::Valid(SignedAmount::from_sat_i32(250)));
     }
+
+    #[test]
+    fn test_sum_signed_amount_results_with_references() {
+        let amounts = [
+            NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
+            NumOpResult::Valid(SignedAmount::from_sat_i32(-50)),
+            NumOpResult::Valid(SignedAmount::from_sat_i32(200)),
+        ];
+
+        let sum: NumOpResult<SignedAmount> = amounts.iter().sum();
+        assert_eq!(sum, NumOpResult::Valid(SignedAmount::from_sat_i32(250)));
+    }
+
+    #[test]
+    fn test_sum_signed_amount_with_error_propagation() {
+        let amounts = [
+            NumOpResult::Valid(SignedAmount::from_sat_i32(100)),
+            NumOpResult::Error(NumOpError::while_doing(MathOp::Add)),
+            NumOpResult::Valid(SignedAmount::from_sat_i32(200)),
+        ];
+
+        let sum: NumOpResult<SignedAmount> = amounts.into_iter().sum();
+        assert!(matches!(sum, NumOpResult::Error(_)));
+    }
 }
