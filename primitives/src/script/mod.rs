@@ -26,7 +26,7 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::Script,
+    borrowed::{Script, ScriptEncoder},
     owned::ScriptBuf,
     tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag},
 };

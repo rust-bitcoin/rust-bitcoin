@@ -11,24 +11,49 @@
 //! For implementing these newtypes, we provide the [`encoder_newtype`] macro.
 //!
 
+use internals::array_vec::ArrayVec;
+use internals::compact_size;
+
 use super::Encoder;
+
+/// The maximum length of a compact size encoding.
+const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
 
 /// An encoder for a single byte slice.
 pub struct BytesEncoder<'sl> {
     sl: Option<&'sl [u8]>,
+    compact_size: Option<ArrayVec<u8, SIZE>>,
 }
 
 impl<'sl> BytesEncoder<'sl> {
     /// Constructs a byte encoder which encodes the given byte slice, with no length prefix.
-    pub fn without_length_prefix(sl: &'sl [u8]) -> Self { Self { sl: Some(sl) } }
+    pub fn without_length_prefix(sl: &'sl [u8]) -> Self {
+        Self { sl: Some(sl), compact_size: None }
+    }
+
+    /// Constructs a byte encoder which encodes the given byte slice, with the length prefix.
+    pub fn with_length_prefix(sl: &'sl [u8]) -> Self {
+        Self { sl: Some(sl), compact_size: Some(compact_size::encode(sl.len())) }
+    }
 }
 
 impl<'e, 'sl> Encoder<'e> for BytesEncoder<'sl> {
-    fn current_chunk(&self) -> Option<&[u8]> { self.sl }
+    fn current_chunk(&self) -> Option<&[u8]> {
+        if let Some(compact_size) = self.compact_size.as_ref() {
+            Some(compact_size)
+        } else {
+            self.sl
+        }
+    }
 
     fn advance(&mut self) -> bool {
-        self.sl = None;
-        false
+        if self.compact_size.is_some() {
+            self.compact_size = None;
+            true
+        } else {
+            self.sl = None;
+            false
+        }
     }
 }
 
@@ -154,4 +179,64 @@ impl<
 {
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }
+}
+
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod tests {
+    use alloc::vec::Vec;
+
+    use super::*;
+
+    // Run the encoder i.e., use it to encode into a vector.
+    fn run_encoder<'e>(mut encoder: impl Encoder<'e>) -> Vec<u8> {
+        let mut vec = Vec::new();
+        while let Some(chunk) = encoder.current_chunk() {
+            vec.extend_from_slice(chunk);
+            encoder.advance();
+        }
+        vec
+    }
+
+    #[test]
+    fn encode_byte_slice_without_prefix() {
+        let obj = [1u8, 2, 3];
+
+        let encoder = BytesEncoder::without_length_prefix(&obj);
+        let got = run_encoder(encoder);
+
+        assert_eq!(got, obj);
+    }
+
+    #[test]
+    fn encode_empty_byte_slice_without_prefix() {
+        let obj = [];
+
+        let encoder = BytesEncoder::without_length_prefix(&obj);
+        let got = run_encoder(encoder);
+
+        assert_eq!(got, obj);
+    }
+
+    #[test]
+    fn encode_byte_slice_with_prefix() {
+        let obj = [1u8, 2, 3];
+
+        let encoder = BytesEncoder::with_length_prefix(&obj);
+        let got = run_encoder(encoder);
+
+        let want = [3u8, 1, 2, 3];
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn encode_empty_byte_slice_with_prefix() {
+        let obj = [];
+
+        let encoder = BytesEncoder::with_length_prefix(&obj);
+        let got = run_encoder(encoder);
+
+        let want = [0u8];
+        assert_eq!(got, want);
+    }
 }
