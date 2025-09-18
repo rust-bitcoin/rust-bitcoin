@@ -1,5 +1,7 @@
+#[non_exhaustive] pub enum bitcoin_units::amount::AmountDecoderError
 #[non_exhaustive] pub enum bitcoin_units::amount::Denomination
 #[non_exhaustive] pub enum bitcoin_units::amount::ParseDenominationError
+#[non_exhaustive] pub enum bitcoin_units::amount::error::AmountDecoderError
 #[non_exhaustive] pub enum bitcoin_units::amount::error::ParseDenominationError
 #[non_exhaustive] pub enum bitcoin_units::result::MathOp
 #[non_exhaustive] pub struct bitcoin_units::absolute::ConversionError
@@ -46,6 +48,15 @@ impl bitcoin_units::parse_int::Integer for u8
 impl bitcoin_units::result::MathOp
 impl bitcoin_units::result::NumOpError
 impl bitcoin_units::sequence::Sequence
+impl consensus_encoding::decode::Decodable for bitcoin_units::Amount
+impl consensus_encoding::decode::Decodable for bitcoin_units::BlockTime
+impl consensus_encoding::decode::Decodable for bitcoin_units::block::BlockHeight
+impl consensus_encoding::decode::Decodable for bitcoin_units::locktime::absolute::LockTime
+impl consensus_encoding::decode::Decodable for bitcoin_units::sequence::Sequence
+impl consensus_encoding::decode::Decoder for bitcoin_units::block::BlockHeightDecoder
+impl consensus_encoding::decode::Decoder for bitcoin_units::locktime::absolute::LockTimeDecoder
+impl consensus_encoding::decode::Decoder for bitcoin_units::sequence::SequenceDecoder
+impl consensus_encoding::decode::Decoder for bitcoin_units::time::BlockTimeDecoder
 impl consensus_encoding::encode::Encodable for bitcoin_units::Amount
 impl consensus_encoding::encode::Encodable for bitcoin_units::BlockTime
 impl consensus_encoding::encode::Encodable for bitcoin_units::block::BlockHeight
@@ -58,6 +69,7 @@ impl core::clone::Clone for bitcoin_units::SignedAmount
 impl core::clone::Clone for bitcoin_units::Weight
 impl core::clone::Clone for bitcoin_units::amount::Denomination
 impl core::clone::Clone for bitcoin_units::amount::Display
+impl core::clone::Clone for bitcoin_units::amount::error::AmountDecoderError
 impl core::clone::Clone for bitcoin_units::amount::error::InputTooLargeError
 impl core::clone::Clone for bitcoin_units::amount::error::InvalidCharacterError
 impl core::clone::Clone for bitcoin_units::amount::error::MissingDenominationError
@@ -105,6 +117,7 @@ impl core::cmp::Eq for bitcoin_units::FeeRate
 impl core::cmp::Eq for bitcoin_units::SignedAmount
 impl core::cmp::Eq for bitcoin_units::Weight
 impl core::cmp::Eq for bitcoin_units::amount::Denomination
+impl core::cmp::Eq for bitcoin_units::amount::error::AmountDecoderError
 impl core::cmp::Eq for bitcoin_units::amount::error::InputTooLargeError
 impl core::cmp::Eq for bitcoin_units::amount::error::InvalidCharacterError
 impl core::cmp::Eq for bitcoin_units::amount::error::MissingDenominationError
@@ -166,6 +179,7 @@ impl core::cmp::PartialEq for bitcoin_units::FeeRate
 impl core::cmp::PartialEq for bitcoin_units::SignedAmount
 impl core::cmp::PartialEq for bitcoin_units::Weight
 impl core::cmp::PartialEq for bitcoin_units::amount::Denomination
+impl core::cmp::PartialEq for bitcoin_units::amount::error::AmountDecoderError
 impl core::cmp::PartialEq for bitcoin_units::amount::error::InputTooLargeError
 impl core::cmp::PartialEq for bitcoin_units::amount::error::InvalidCharacterError
 impl core::cmp::PartialEq for bitcoin_units::amount::error::MissingDenominationError
@@ -258,6 +272,8 @@ impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_un
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_units::parse_int::UnprefixedHexError
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for core::num::error::ParseIntError
 impl core::convert::From<bitcoin_units::sequence::Sequence> for u32
+impl core::convert::From<consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_units::amount::error::AmountDecoderError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::AmountDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseAmountError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseDenominationError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseError
@@ -315,6 +331,7 @@ impl core::default::Default for bitcoin_units::block::BlockMtpInterval
 impl core::default::Default for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::default::Default for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::default::Default for bitcoin_units::sequence::Sequence
+impl core::error::Error for bitcoin_units::amount::error::AmountDecoderError
 impl core::error::Error for bitcoin_units::amount::error::InputTooLargeError
 impl core::error::Error for bitcoin_units::amount::error::InvalidCharacterError
 impl core::error::Error for bitcoin_units::amount::error::MissingDigitsError
@@ -350,6 +367,7 @@ impl core::fmt::Debug for bitcoin_units::SignedAmount
 impl core::fmt::Debug for bitcoin_units::Weight
 impl core::fmt::Debug for bitcoin_units::amount::Denomination
 impl core::fmt::Debug for bitcoin_units::amount::Display
+impl core::fmt::Debug for bitcoin_units::amount::error::AmountDecoderError
 impl core::fmt::Debug for bitcoin_units::amount::error::InputTooLargeError
 impl core::fmt::Debug for bitcoin_units::amount::error::InvalidCharacterError
 impl core::fmt::Debug for bitcoin_units::amount::error::MissingDenominationError
@@ -396,6 +414,7 @@ impl core::fmt::Display for bitcoin_units::SignedAmount
 impl core::fmt::Display for bitcoin_units::Weight
 impl core::fmt::Display for bitcoin_units::amount::Denomination
 impl core::fmt::Display for bitcoin_units::amount::Display
+impl core::fmt::Display for bitcoin_units::amount::error::AmountDecoderError
 impl core::fmt::Display for bitcoin_units::amount::error::InputTooLargeError
 impl core::fmt::Display for bitcoin_units::amount::error::InvalidCharacterError
 impl core::fmt::Display for bitcoin_units::amount::error::MissingDigitsError
@@ -488,6 +507,7 @@ impl core::marker::Freeze for bitcoin_units::SignedAmount
 impl core::marker::Freeze for bitcoin_units::Weight
 impl core::marker::Freeze for bitcoin_units::amount::Denomination
 impl core::marker::Freeze for bitcoin_units::amount::Display
+impl core::marker::Freeze for bitcoin_units::amount::error::AmountDecoderError
 impl core::marker::Freeze for bitcoin_units::amount::error::InputTooLargeError
 impl core::marker::Freeze for bitcoin_units::amount::error::InvalidCharacterError
 impl core::marker::Freeze for bitcoin_units::amount::error::MissingDenominationError
@@ -500,6 +520,7 @@ impl core::marker::Freeze for bitcoin_units::amount::error::PossiblyConfusingDen
 impl core::marker::Freeze for bitcoin_units::amount::error::TooPreciseError
 impl core::marker::Freeze for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Freeze for bitcoin_units::block::BlockHeight
+impl core::marker::Freeze for bitcoin_units::block::BlockHeightDecoder
 impl core::marker::Freeze for bitcoin_units::block::BlockHeightEncoder
 impl core::marker::Freeze for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Freeze for bitcoin_units::block::BlockMtp
@@ -508,6 +529,7 @@ impl core::marker::Freeze for bitcoin_units::block::TooBigForRelativeHeightError
 impl core::marker::Freeze for bitcoin_units::fee_rate::serde::OverflowError
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::Height
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::LockTime
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::LockTimeEncoder
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Freeze for bitcoin_units::locktime::absolute::error::ConversionError
@@ -531,7 +553,9 @@ impl core::marker::Freeze for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Freeze for bitcoin_units::result::MathOp
 impl core::marker::Freeze for bitcoin_units::result::NumOpError
 impl core::marker::Freeze for bitcoin_units::sequence::Sequence
+impl core::marker::Freeze for bitcoin_units::sequence::SequenceDecoder
 impl core::marker::Freeze for bitcoin_units::sequence::SequenceEncoder
+impl core::marker::Freeze for bitcoin_units::time::BlockTimeDecoder
 impl core::marker::Freeze for bitcoin_units::time::BlockTimeEncoder
 impl core::marker::Send for bitcoin_units::Amount
 impl core::marker::Send for bitcoin_units::BlockTime
@@ -540,6 +564,7 @@ impl core::marker::Send for bitcoin_units::SignedAmount
 impl core::marker::Send for bitcoin_units::Weight
 impl core::marker::Send for bitcoin_units::amount::Denomination
 impl core::marker::Send for bitcoin_units::amount::Display
+impl core::marker::Send for bitcoin_units::amount::error::AmountDecoderError
 impl core::marker::Send for bitcoin_units::amount::error::InputTooLargeError
 impl core::marker::Send for bitcoin_units::amount::error::InvalidCharacterError
 impl core::marker::Send for bitcoin_units::amount::error::MissingDenominationError
@@ -552,6 +577,7 @@ impl core::marker::Send for bitcoin_units::amount::error::PossiblyConfusingDenom
 impl core::marker::Send for bitcoin_units::amount::error::TooPreciseError
 impl core::marker::Send for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Send for bitcoin_units::block::BlockHeight
+impl core::marker::Send for bitcoin_units::block::BlockHeightDecoder
 impl core::marker::Send for bitcoin_units::block::BlockHeightEncoder
 impl core::marker::Send for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Send for bitcoin_units::block::BlockMtp
@@ -560,6 +586,7 @@ impl core::marker::Send for bitcoin_units::block::TooBigForRelativeHeightError
 impl core::marker::Send for bitcoin_units::fee_rate::serde::OverflowError
 impl core::marker::Send for bitcoin_units::locktime::absolute::Height
 impl core::marker::Send for bitcoin_units::locktime::absolute::LockTime
+impl core::marker::Send for bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::marker::Send for bitcoin_units::locktime::absolute::LockTimeEncoder
 impl core::marker::Send for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Send for bitcoin_units::locktime::absolute::error::ConversionError
@@ -583,7 +610,9 @@ impl core::marker::Send for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Send for bitcoin_units::result::MathOp
 impl core::marker::Send for bitcoin_units::result::NumOpError
 impl core::marker::Send for bitcoin_units::sequence::Sequence
+impl core::marker::Send for bitcoin_units::sequence::SequenceDecoder
 impl core::marker::Send for bitcoin_units::sequence::SequenceEncoder
+impl core::marker::Send for bitcoin_units::time::BlockTimeDecoder
 impl core::marker::Send for bitcoin_units::time::BlockTimeEncoder
 impl core::marker::StructuralPartialEq for bitcoin_units::Amount
 impl core::marker::StructuralPartialEq for bitcoin_units::BlockTime
@@ -591,6 +620,7 @@ impl core::marker::StructuralPartialEq for bitcoin_units::FeeRate
 impl core::marker::StructuralPartialEq for bitcoin_units::SignedAmount
 impl core::marker::StructuralPartialEq for bitcoin_units::Weight
 impl core::marker::StructuralPartialEq for bitcoin_units::amount::Denomination
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::AmountDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::InputTooLargeError
 impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::InvalidCharacterError
 impl core::marker::StructuralPartialEq for bitcoin_units::amount::error::MissingDenominationError
@@ -639,6 +669,7 @@ impl core::marker::Sync for bitcoin_units::SignedAmount
 impl core::marker::Sync for bitcoin_units::Weight
 impl core::marker::Sync for bitcoin_units::amount::Denomination
 impl core::marker::Sync for bitcoin_units::amount::Display
+impl core::marker::Sync for bitcoin_units::amount::error::AmountDecoderError
 impl core::marker::Sync for bitcoin_units::amount::error::InputTooLargeError
 impl core::marker::Sync for bitcoin_units::amount::error::InvalidCharacterError
 impl core::marker::Sync for bitcoin_units::amount::error::MissingDenominationError
@@ -651,6 +682,7 @@ impl core::marker::Sync for bitcoin_units::amount::error::PossiblyConfusingDenom
 impl core::marker::Sync for bitcoin_units::amount::error::TooPreciseError
 impl core::marker::Sync for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Sync for bitcoin_units::block::BlockHeight
+impl core::marker::Sync for bitcoin_units::block::BlockHeightDecoder
 impl core::marker::Sync for bitcoin_units::block::BlockHeightEncoder
 impl core::marker::Sync for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Sync for bitcoin_units::block::BlockMtp
@@ -659,6 +691,7 @@ impl core::marker::Sync for bitcoin_units::block::TooBigForRelativeHeightError
 impl core::marker::Sync for bitcoin_units::fee_rate::serde::OverflowError
 impl core::marker::Sync for bitcoin_units::locktime::absolute::Height
 impl core::marker::Sync for bitcoin_units::locktime::absolute::LockTime
+impl core::marker::Sync for bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::marker::Sync for bitcoin_units::locktime::absolute::LockTimeEncoder
 impl core::marker::Sync for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Sync for bitcoin_units::locktime::absolute::error::ConversionError
@@ -682,7 +715,9 @@ impl core::marker::Sync for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Sync for bitcoin_units::result::MathOp
 impl core::marker::Sync for bitcoin_units::result::NumOpError
 impl core::marker::Sync for bitcoin_units::sequence::Sequence
+impl core::marker::Sync for bitcoin_units::sequence::SequenceDecoder
 impl core::marker::Sync for bitcoin_units::sequence::SequenceEncoder
+impl core::marker::Sync for bitcoin_units::time::BlockTimeDecoder
 impl core::marker::Sync for bitcoin_units::time::BlockTimeEncoder
 impl core::marker::Unpin for bitcoin_units::Amount
 impl core::marker::Unpin for bitcoin_units::BlockTime
@@ -691,6 +726,7 @@ impl core::marker::Unpin for bitcoin_units::SignedAmount
 impl core::marker::Unpin for bitcoin_units::Weight
 impl core::marker::Unpin for bitcoin_units::amount::Denomination
 impl core::marker::Unpin for bitcoin_units::amount::Display
+impl core::marker::Unpin for bitcoin_units::amount::error::AmountDecoderError
 impl core::marker::Unpin for bitcoin_units::amount::error::InputTooLargeError
 impl core::marker::Unpin for bitcoin_units::amount::error::InvalidCharacterError
 impl core::marker::Unpin for bitcoin_units::amount::error::MissingDenominationError
@@ -703,6 +739,7 @@ impl core::marker::Unpin for bitcoin_units::amount::error::PossiblyConfusingDeno
 impl core::marker::Unpin for bitcoin_units::amount::error::TooPreciseError
 impl core::marker::Unpin for bitcoin_units::amount::error::UnknownDenominationError
 impl core::marker::Unpin for bitcoin_units::block::BlockHeight
+impl core::marker::Unpin for bitcoin_units::block::BlockHeightDecoder
 impl core::marker::Unpin for bitcoin_units::block::BlockHeightEncoder
 impl core::marker::Unpin for bitcoin_units::block::BlockHeightInterval
 impl core::marker::Unpin for bitcoin_units::block::BlockMtp
@@ -711,6 +748,7 @@ impl core::marker::Unpin for bitcoin_units::block::TooBigForRelativeHeightError
 impl core::marker::Unpin for bitcoin_units::fee_rate::serde::OverflowError
 impl core::marker::Unpin for bitcoin_units::locktime::absolute::Height
 impl core::marker::Unpin for bitcoin_units::locktime::absolute::LockTime
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::marker::Unpin for bitcoin_units::locktime::absolute::LockTimeEncoder
 impl core::marker::Unpin for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::marker::Unpin for bitcoin_units::locktime::absolute::error::ConversionError
@@ -734,7 +772,9 @@ impl core::marker::Unpin for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Unpin for bitcoin_units::result::MathOp
 impl core::marker::Unpin for bitcoin_units::result::NumOpError
 impl core::marker::Unpin for bitcoin_units::sequence::Sequence
+impl core::marker::Unpin for bitcoin_units::sequence::SequenceDecoder
 impl core::marker::Unpin for bitcoin_units::sequence::SequenceEncoder
+impl core::marker::Unpin for bitcoin_units::time::BlockTimeDecoder
 impl core::marker::Unpin for bitcoin_units::time::BlockTimeEncoder
 impl core::ops::arith::Add for bitcoin_units::Amount
 impl core::ops::arith::Add for bitcoin_units::FeeRate
@@ -969,6 +1009,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::SignedAmount
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::Weight
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Denomination
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Display
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::AmountDecoderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::InputTooLargeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::InvalidCharacterError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::MissingDenominationError
@@ -981,6 +1022,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::P
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::TooPreciseError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::UnknownDenominationError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeight
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeightDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeightEncoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeightInterval
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockMtp
@@ -989,6 +1031,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::TooBigFor
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::fee_rate::serde::OverflowError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::Height
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::LockTime
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::LockTimeEncoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::error::ConversionError
@@ -1012,7 +1055,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse_int::Unpre
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::result::MathOp
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::result::NumOpError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::sequence::Sequence
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::sequence::SequenceDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::sequence::SequenceEncoder
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::time::BlockTimeDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::time::BlockTimeEncoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::Amount
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::BlockTime
@@ -1021,6 +1066,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::SignedAmount
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::Weight
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Denomination
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Display
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::AmountDecoderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::InputTooLargeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::InvalidCharacterError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::MissingDenominationError
@@ -1033,6 +1079,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::Poss
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::TooPreciseError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::UnknownDenominationError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeight
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeightDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeightEncoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeightInterval
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockMtp
@@ -1041,6 +1088,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::TooBigForRel
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::fee_rate::serde::OverflowError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::Height
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::LockTime
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::LockTimeEncoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::error::ConversionError
@@ -1064,7 +1112,9 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse_int::Unprefix
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::result::MathOp
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::result::NumOpError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::sequence::Sequence
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::sequence::SequenceDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::sequence::SequenceEncoder
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::time::BlockTimeDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::time::BlockTimeEncoder
 impl core::str::traits::FromStr for bitcoin_units::Amount
 impl core::str::traits::FromStr for bitcoin_units::SignedAmount
@@ -1226,6 +1276,8 @@ pub bitcoin_units::NumOpResult::Error(bitcoin_units::result::NumOpError)
 pub bitcoin_units::NumOpResult::Valid(T)
 pub bitcoin_units::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
 pub bitcoin_units::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::MedianTimePast)
+pub bitcoin_units::amount::AmountDecoderError::OutOfRange(bitcoin_units::amount::error::OutOfRangeError)
+pub bitcoin_units::amount::AmountDecoderError::UnexpectedEof(consensus_encoding::decode::decoders::UnexpectedEofError)
 pub bitcoin_units::amount::Denomination::Bit
 pub bitcoin_units::amount::Denomination::Bitcoin
 pub bitcoin_units::amount::Denomination::CentiBitcoin
@@ -1234,6 +1286,8 @@ pub bitcoin_units::amount::Denomination::MilliBitcoin
 pub bitcoin_units::amount::Denomination::Satoshi
 pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::error::PossiblyConfusingDenominationError)
 pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::error::UnknownDenominationError)
+pub bitcoin_units::amount::error::AmountDecoderError::OutOfRange(bitcoin_units::amount::error::OutOfRangeError)
+pub bitcoin_units::amount::error::AmountDecoderError::UnexpectedEof(consensus_encoding::decode::decoders::UnexpectedEofError)
 pub bitcoin_units::amount::error::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::error::PossiblyConfusingDenominationError)
 pub bitcoin_units::amount::error::ParseDenominationError::Unknown(bitcoin_units::amount::error::UnknownDenominationError)
 pub bitcoin_units::locktime::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
@@ -1602,6 +1656,7 @@ pub fn bitcoin_units::Amount::add(self, rhs: bitcoin_units::result::NumOpResult<
 pub fn bitcoin_units::Amount::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::Amount::clone(&self) -> bitcoin_units::Amount
 pub fn bitcoin_units::Amount::cmp(&self, other: &bitcoin_units::Amount) -> core::cmp::Ordering
+pub fn bitcoin_units::Amount::decoder() -> Self::Decoder
 pub fn bitcoin_units::Amount::default() -> Self
 pub fn bitcoin_units::Amount::display_dynamic(self) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::Amount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
@@ -1648,6 +1703,7 @@ pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> co
 pub fn bitcoin_units::BlockTime::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::BlockTime::clone(&self) -> bitcoin_units::BlockTime
 pub fn bitcoin_units::BlockTime::cmp(&self, other: &bitcoin_units::BlockTime) -> core::cmp::Ordering
+pub fn bitcoin_units::BlockTime::decoder() -> Self::Decoder
 pub fn bitcoin_units::BlockTime::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::BlockTime::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::BlockTime::eq(&self, other: &bitcoin_units::BlockTime) -> bool
@@ -1778,6 +1834,12 @@ pub fn bitcoin_units::amount::Denomination::hash<__H: core::hash::Hasher>(&self,
 pub fn bitcoin_units::amount::Display::clone(&self) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::amount::Display::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::amount::Display::show_denomination(self) -> Self
+pub fn bitcoin_units::amount::error::AmountDecoderError::clone(&self) -> bitcoin_units::amount::error::AmountDecoderError
+pub fn bitcoin_units::amount::error::AmountDecoderError::eq(&self, other: &bitcoin_units::amount::error::AmountDecoderError) -> bool
+pub fn bitcoin_units::amount::error::AmountDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::error::AmountDecoderError::from(e: consensus_encoding::decode::decoders::UnexpectedEofError) -> Self
+pub fn bitcoin_units::amount::error::AmountDecoderError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::amount::error::AmountDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_units::amount::error::InputTooLargeError::clone(&self) -> bitcoin_units::amount::error::InputTooLargeError
 pub fn bitcoin_units::amount::error::InputTooLargeError::eq(&self, other: &bitcoin_units::amount::error::InputTooLargeError) -> bool
 pub fn bitcoin_units::amount::error::InputTooLargeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1853,6 +1915,7 @@ pub fn bitcoin_units::block::BlockHeight::checked_add(self, other: bitcoin_units
 pub fn bitcoin_units::block::BlockHeight::checked_sub(self, other: Self) -> core::option::Option<bitcoin_units::block::BlockHeightInterval>
 pub fn bitcoin_units::block::BlockHeight::clone(&self) -> bitcoin_units::block::BlockHeight
 pub fn bitcoin_units::block::BlockHeight::cmp(&self, other: &bitcoin_units::block::BlockHeight) -> core::cmp::Ordering
+pub fn bitcoin_units::block::BlockHeight::decoder() -> Self::Decoder
 pub fn bitcoin_units::block::BlockHeight::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::block::BlockHeight::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::block::BlockHeight::eq(&self, other: &bitcoin_units::block::BlockHeight) -> bool
@@ -1870,6 +1933,8 @@ pub fn bitcoin_units::block::BlockHeight::sub(self, rhs: bitcoin_units::block::B
 pub fn bitcoin_units::block::BlockHeight::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::block::BlockHeightDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_units::block::BlockHeightDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::block::BlockHeightEncoder::advance(&mut self) -> bool
 pub fn bitcoin_units::block::BlockHeightEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
 pub fn bitcoin_units::block::BlockHeightInterval::add(self, rhs: &bitcoin_units::block::BlockHeightInterval) -> Self::Output
@@ -1987,6 +2052,7 @@ pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::boxed::Box<
 pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTime::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::absolute::LockTime::clone(&self) -> bitcoin_units::locktime::absolute::LockTime
+pub fn bitcoin_units::locktime::absolute::LockTime::decoder() -> Self::Decoder
 pub fn bitcoin_units::locktime::absolute::LockTime::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::locktime::absolute::LockTime::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::locktime::absolute::LockTime::eq(&self, other: &bitcoin_units::locktime::absolute::LockTime) -> bool
@@ -2009,6 +2075,8 @@ pub fn bitcoin_units::locktime::absolute::LockTime::to_consensus_u32(self) -> u3
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder::advance(&mut self) -> bool
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
@@ -2235,6 +2303,7 @@ pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::mul(self, rhs:
 pub fn bitcoin_units::sequence::Sequence::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::sequence::Sequence::clone(&self) -> bitcoin_units::sequence::Sequence
 pub fn bitcoin_units::sequence::Sequence::cmp(&self, other: &bitcoin_units::sequence::Sequence) -> core::cmp::Ordering
+pub fn bitcoin_units::sequence::Sequence::decoder() -> Self::Decoder
 pub fn bitcoin_units::sequence::Sequence::default() -> Self
 pub fn bitcoin_units::sequence::Sequence::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::sequence::Sequence::enables_absolute_lock_time(self) -> bool
@@ -2264,8 +2333,12 @@ pub fn bitcoin_units::sequence::Sequence::to_relative_lock_time(self) -> core::o
 pub fn bitcoin_units::sequence::Sequence::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::sequence::SequenceDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_units::sequence::SequenceDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::sequence::SequenceEncoder::advance(&mut self) -> bool
 pub fn bitcoin_units::sequence::SequenceEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
+pub fn bitcoin_units::time::BlockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_units::time::BlockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::time::BlockTimeEncoder::advance(&mut self) -> bool
 pub fn bitcoin_units::time::BlockTimeEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
 pub fn core::num::error::ParseIntError::from(value: bitcoin_units::parse_int::ParseIntError) -> Self
@@ -2332,6 +2405,7 @@ pub struct bitcoin_units::Weight(_)
 pub struct bitcoin_units::absolute::Height(_)
 pub struct bitcoin_units::absolute::IncompatibleHeightError
 pub struct bitcoin_units::absolute::IncompatibleTimeError
+pub struct bitcoin_units::absolute::LockTimeDecoder(_)
 pub struct bitcoin_units::absolute::LockTimeEncoder(_)
 pub struct bitcoin_units::absolute::MedianTimePast(_)
 pub struct bitcoin_units::absolute::ParseHeightError(_)
@@ -2354,6 +2428,7 @@ pub struct bitcoin_units::amount::error::ParseAmountError(_)
 pub struct bitcoin_units::amount::error::ParseError(_)
 pub struct bitcoin_units::amount::error::TooPreciseError
 pub struct bitcoin_units::block::BlockHeight(_)
+pub struct bitcoin_units::block::BlockHeightDecoder(_)
 pub struct bitcoin_units::block::BlockHeightEncoder(_)
 pub struct bitcoin_units::block::BlockHeightInterval(_)
 pub struct bitcoin_units::block::BlockMtp(_)
@@ -2363,6 +2438,7 @@ pub struct bitcoin_units::fee_rate::FeeRate(_)
 pub struct bitcoin_units::locktime::absolute::Height(_)
 pub struct bitcoin_units::locktime::absolute::IncompatibleHeightError
 pub struct bitcoin_units::locktime::absolute::IncompatibleTimeError
+pub struct bitcoin_units::locktime::absolute::LockTimeDecoder(_)
 pub struct bitcoin_units::locktime::absolute::LockTimeEncoder(_)
 pub struct bitcoin_units::locktime::absolute::MedianTimePast(_)
 pub struct bitcoin_units::locktime::absolute::ParseHeightError(_)
@@ -2394,8 +2470,10 @@ pub struct bitcoin_units::relative::error::InvalidHeightError
 pub struct bitcoin_units::relative::error::InvalidTimeError
 pub struct bitcoin_units::relative::error::TimeOverflowError
 pub struct bitcoin_units::sequence::Sequence(pub u32)
+pub struct bitcoin_units::sequence::SequenceDecoder(_)
 pub struct bitcoin_units::sequence::SequenceEncoder(_)
 pub struct bitcoin_units::time::BlockTime(_)
+pub struct bitcoin_units::time::BlockTimeDecoder(_)
 pub struct bitcoin_units::time::BlockTimeEncoder(_)
 pub struct bitcoin_units::weight::Weight(_)
 pub trait bitcoin_units::parse_int::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + bitcoin_units::parse_int::sealed::Sealed
@@ -2469,6 +2547,7 @@ pub type &i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::result::Num
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Amount>>::Output
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Weight>>::Output
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::result::NumOpResult<bitcoin_units::Amount>>>::Output
+pub type bitcoin_units::Amount::Decoder = bitcoin_units::amount::unsigned::AmountDecoder
 pub type bitcoin_units::Amount::Encoder<'e> = bitcoin_units::amount::unsigned::AmountEncoder
 pub type bitcoin_units::Amount::Err = bitcoin_units::amount::error::ParseError
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
@@ -2490,6 +2569,7 @@ pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<bitc
 pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>
 pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Weight>
 pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<u64>
+pub type bitcoin_units::BlockTime::Decoder = bitcoin_units::time::BlockTimeDecoder
 pub type bitcoin_units::BlockTime::Encoder<'e> = bitcoin_units::time::BlockTimeEncoder
 pub type bitcoin_units::FeeRate::Output = <bitcoin_units::FeeRate as core::ops::arith::Add>::Output
 pub type bitcoin_units::FeeRate::Output = <bitcoin_units::FeeRate as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output
@@ -2527,6 +2607,7 @@ pub type bitcoin_units::Weight::Output = bitcoin_units::Weight
 pub type bitcoin_units::Weight::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub type bitcoin_units::Weight::Output = u64
 pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::error::ParseDenominationError
+pub type bitcoin_units::block::BlockHeight::Decoder = bitcoin_units::block::BlockHeightDecoder
 pub type bitcoin_units::block::BlockHeight::Encoder<'e> = bitcoin_units::block::BlockHeightEncoder
 pub type bitcoin_units::block::BlockHeight::Err = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::ParseIntError
@@ -2535,6 +2616,8 @@ pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::Bloc
 pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Sub>::Output
 pub type bitcoin_units::block::BlockHeight::Output = bitcoin_units::block::BlockHeight
 pub type bitcoin_units::block::BlockHeight::Output = bitcoin_units::block::BlockHeightInterval
+pub type bitcoin_units::block::BlockHeightDecoder::Error = consensus_encoding::decode::decoders::UnexpectedEofError
+pub type bitcoin_units::block::BlockHeightDecoder::Output = bitcoin_units::block::BlockHeight
 pub type bitcoin_units::block::BlockHeightInterval::Err = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::block::BlockHeightInterval::Output = <bitcoin_units::block::BlockHeightInterval as core::ops::arith::Add>::Output
@@ -2555,9 +2638,12 @@ pub type bitcoin_units::block::BlockMtpInterval::Output = bitcoin_units::block::
 pub type bitcoin_units::locktime::absolute::Height::Err = bitcoin_units::locktime::absolute::error::ParseHeightError
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
+pub type bitcoin_units::locktime::absolute::LockTime::Decoder = bitcoin_units::locktime::absolute::LockTimeDecoder
 pub type bitcoin_units::locktime::absolute::LockTime::Encoder<'e> = bitcoin_units::locktime::absolute::LockTimeEncoder
 pub type bitcoin_units::locktime::absolute::LockTime::Err = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Error = consensus_encoding::decode::decoders::UnexpectedEofError
+pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Output = bitcoin_units::locktime::absolute::LockTime
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Err = bitcoin_units::locktime::absolute::error::ParseTimeError
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
@@ -2592,9 +2678,14 @@ pub type bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::Output
 pub type bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Weight> as core::ops::arith::Mul<bitcoin_units::FeeRate>>::Output
 pub type bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::Output = <bitcoin_units::result::NumOpResult<bitcoin_units::Weight> as core::ops::arith::Mul<bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>>>::Output
 pub type bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+pub type bitcoin_units::sequence::Sequence::Decoder = bitcoin_units::sequence::SequenceDecoder
 pub type bitcoin_units::sequence::Sequence::Encoder<'e> = bitcoin_units::sequence::SequenceEncoder
 pub type bitcoin_units::sequence::Sequence::Err = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::sequence::SequenceDecoder::Error = consensus_encoding::decode::decoders::UnexpectedEofError
+pub type bitcoin_units::sequence::SequenceDecoder::Output = bitcoin_units::sequence::Sequence
+pub type bitcoin_units::time::BlockTimeDecoder::Error = consensus_encoding::decode::decoders::UnexpectedEofError
+pub type bitcoin_units::time::BlockTimeDecoder::Output = bitcoin_units::BlockTime
 pub type i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::SignedAmount>>::Output
 pub type i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>>>::Output
 pub type i64::Output = bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
