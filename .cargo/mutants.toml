@@ -9,6 +9,7 @@ exclude_re = [
     "impl fmt::Debug",
     ".*Error",
     "deserialize", # Skip serde mutation tests
+    "serde_details::<impl de::Visitor<'_>", # Skip serde mutation tests
     "Iterator", # Mutating operations in an iterator can result in an infinite loop
 
     # ----------------------------------Crate-specific exclusions----------------------------------
@@ -39,5 +40,7 @@ exclude_re = [
     "fmt_debug_pretty", # Mutants from formatting/display changes
     "CompactTarget::to_hex", # Deprecated
     "Script::to_hex", # Deprecated
+    "Script<T>::to_hex", # Deprecated
     "ScriptBuf::to_hex", # Deprecated
+    "ScriptBuf<T>::to_hex", # Deprecated
 ]
