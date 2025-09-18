@@ -146,7 +146,7 @@ impl FeeRate {
 
     /// Checked addition.
     ///
-    /// Computes `self + rhs` returning [`None`] is case of overflow.
+    /// Computes `self + rhs` returning [`None`] in case of overflow.
     #[must_use]
     pub const fn checked_add(self, rhs: FeeRate) -> Option<Self> {
         // No `map()` in const context.
