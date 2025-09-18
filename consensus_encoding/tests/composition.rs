@@ -40,7 +40,7 @@ impl From<UnexpectedEofError> for CompositeError {
 impl core::fmt::Display for CompositeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            CompositeError::Eof(eof) => write!(f, "Error in first array: {}", eof),
+            CompositeError::Eof(eof) => write!(f, "Composite error: {}", eof),
         }
     }
 }
