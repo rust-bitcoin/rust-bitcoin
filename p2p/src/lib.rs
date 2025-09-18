@@ -29,6 +29,7 @@ pub mod message_compact_blocks;
 pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
+pub mod message_utreexo;
 
 extern crate alloc;
 #[cfg(feature = "std")]
@@ -560,7 +561,10 @@ mod tests {
         assert_eq!("ServiceFlags(WITNESS)", ServiceFlags::WITNESS.to_string());
         assert_eq!("ServiceFlags(P2P_V2)", ServiceFlags::P2P_V2.to_string());
         assert_eq!("ServiceFlags(NODE_UTREEXO)", ServiceFlags::NODE_UTREEXO.to_string());
-        assert_eq!("ServiceFlags(NODE_UTREEXO_ARCHIVE)", ServiceFlags::NODE_UTREEXO_ARCHIVE.to_string());
+        assert_eq!(
+            "ServiceFlags(NODE_UTREEXO_ARCHIVE)",
+            ServiceFlags::NODE_UTREEXO_ARCHIVE.to_string()
+        );
         let flag = ServiceFlags::WITNESS
             | ServiceFlags::BLOOM
             | ServiceFlags::NETWORK

@@ -33,6 +33,11 @@ pub enum Inventory {
     WitnessTransaction(Txid),
     /// Witness Block
     WitnessBlock(BlockHash),
+    //UtreexoProofHash(?)
+    //UtreexoSummary(?)
+    //UtreexoFlag(?)
+    //UtreexoTx(?)
+    //WitnessUtreexoTx(?)
     /// Unknown inventory type
     Unknown {
         /// The inventory item type.
