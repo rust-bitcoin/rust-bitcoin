@@ -37,7 +37,7 @@ impl<'sl> BytesEncoder<'sl> {
     }
 }
 
-impl<'e, 'sl> Encoder<'e> for BytesEncoder<'sl> {
+impl Encoder<'_> for BytesEncoder<'_> {
     fn current_chunk(&self) -> Option<&[u8]> {
         if let Some(compact_size) = self.compact_size.as_ref() {
             Some(compact_size)
@@ -67,7 +67,7 @@ impl<const N: usize> ArrayEncoder<N> {
     pub fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
 }
 
-impl<'e, const N: usize> Encoder<'e> for ArrayEncoder<N> {
+impl<const N: usize> Encoder<'_> for ArrayEncoder<N> {
     fn current_chunk(&self) -> Option<&[u8]> { self.arr.as_ref().map(|x| &x[..]) }
 
     fn advance(&mut self) -> bool {
