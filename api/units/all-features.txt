@@ -62,6 +62,10 @@ impl consensus_encoding::encode::Encodable for bitcoin_units::BlockTime
 impl consensus_encoding::encode::Encodable for bitcoin_units::block::BlockHeight
 impl consensus_encoding::encode::Encodable for bitcoin_units::locktime::absolute::LockTime
 impl consensus_encoding::encode::Encodable for bitcoin_units::sequence::Sequence
+impl consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder
+impl consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder
+impl consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder
+impl consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder
 impl core::clone::Clone for bitcoin_units::Amount
 impl core::clone::Clone for bitcoin_units::BlockTime
 impl core::clone::Clone for bitcoin_units::FeeRate
@@ -1242,10 +1246,6 @@ impl<'de> serde::de::Deserialize<'de> for bitcoin_units::block::BlockMtpInterval
 impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::LockTime
 impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::LockTime
 impl<'de> serde::de::Deserialize<'de> for bitcoin_units::sequence::Sequence
-impl<'e> consensus_encoding::encode::Encoder<'e> for bitcoin_units::block::BlockHeightEncoder
-impl<'e> consensus_encoding::encode::Encoder<'e> for bitcoin_units::locktime::absolute::LockTimeEncoder
-impl<'e> consensus_encoding::encode::Encoder<'e> for bitcoin_units::sequence::SequenceEncoder
-impl<'e> consensus_encoding::encode::Encoder<'e> for bitcoin_units::time::BlockTimeEncoder
 impl<T: core::clone::Clone> core::clone::Clone for bitcoin_units::result::NumOpResult<T>
 impl<T: core::cmp::Eq> core::cmp::Eq for bitcoin_units::result::NumOpResult<T>
 impl<T: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin_units::result::NumOpResult<T>
