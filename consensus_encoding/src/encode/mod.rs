@@ -15,7 +15,7 @@ pub mod encoders;
 pub trait Encodable {
     /// The encoder associated with this type. Conceptually, the encoder is like
     /// an iterator which yields byte slices.
-    type Encoder<'s>: Encoder<'s>
+    type Encoder<'s>: Encoder
     where
         Self: 's;
 
@@ -24,7 +24,7 @@ pub trait Encodable {
 }
 
 /// An encoder for a consensus-encodable object.
-pub trait Encoder<'e> {
+pub trait Encoder {
     /// Yields the current encoded byteslice.
     ///
     /// Will always return the same value until [`Self::advance`] is called.
@@ -55,7 +55,7 @@ macro_rules! encoder_newtype{
         $(#[$($struct_attr)*])*
         pub struct $name$(<$lt>)?($encoder);
 
-        impl<'e> $crate::Encoder<'e> for $name$(<$lt>)? {
+        impl$(<$lt>)? $crate::Encoder for $name$(<$lt>)? {
             #[inline]
             fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
 
