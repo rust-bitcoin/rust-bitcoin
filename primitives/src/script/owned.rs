@@ -146,6 +146,27 @@ impl<T> DerefMut for ScriptBuf<T> {
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
+/// The decoder for the [`ScriptBuf`] type.
+pub struct ScriptBufDecoder<T>(encoding::VecDecoder, PhantomData<T>);
+
+impl<T> encoding::Decoder for ScriptBufDecoder<T> {
+    type Output = ScriptBuf<T>;
+    type Error = encoding::VecDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> { Ok(ScriptBuf::from_bytes(self.0.end()?)) }
+}
+
+impl<T> encoding::Decodable for ScriptBuf<T> {
+    type Decoder = ScriptBufDecoder<T>;
+    fn decoder() -> Self::Decoder { ScriptBufDecoder(encoding::VecDecoder::new(), PhantomData) }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a, T> Arbitrary<'a> for ScriptBuf<T> {
     #[inline]

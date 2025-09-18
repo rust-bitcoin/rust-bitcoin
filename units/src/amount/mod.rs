@@ -38,7 +38,9 @@ pub use self::{
     unsigned::Amount,
 };
 #[doc(no_inline)]
-pub use self::error::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
+pub use self::error::{
+    DecodeError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+};
 
 /// A set of denominations in which amounts can be expressed.
 ///
