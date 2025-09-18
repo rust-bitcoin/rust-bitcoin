@@ -55,7 +55,7 @@ macro_rules! encoder_newtype{
         $(#[$($struct_attr)*])*
         pub struct $name$(<$lt>)?($encoder);
 
-        impl<'e> $crate::Encoder<'e> for $name$(<$lt>)? {
+        impl$(<$lt>)? $crate::Encoder<'_> for $name$(<$lt>)? {
             #[inline]
             fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
 
