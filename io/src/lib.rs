@@ -299,13 +299,17 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> {
         let inner: &[u8] = self.inner.as_ref();
-        Ok(&inner[self.pos as usize..])
+        let start = cmp::min(self.pos.try_into().unwrap_or(inner.len()), inner.len());
+        Ok(&inner[start..])
     }
 
     #[inline]
     fn consume(&mut self, amount: usize) {
-        assert!(amount <= self.inner.as_ref().len());
-        self.pos += amount as u64;
+        let inner: &[u8] = self.inner.as_ref();
+        let start = cmp::min(self.pos.try_into().unwrap_or(inner.len()), inner.len());
+        let remaining = inner.len().saturating_sub(start);
+        let to_consume = core::cmp::min(amount, remaining);
+        self.pos = self.pos.saturating_add(to_consume as u64);
     }
 }
 
@@ -484,6 +488,36 @@ mod tests {
             let read = c.read(&mut buf).unwrap();
             assert_eq!(read, 0);
             assert_eq!(buf[0], 0x00); // Double check that buffer state is sane.
+        }
+
+        #[test]
+        fn cursor_bufread_fill_buf_past_end_returns_empty() {
+            const BUF_LEN: usize = 8;
+            let v = [1_u8; BUF_LEN];
+            let mut c = Cursor::new(v);
+
+            // Move position past end
+            c.set_position((BUF_LEN * 2) as u64);
+            let slice = BufRead::fill_buf(&mut c).unwrap();
+            assert!(slice.is_empty());
+        }
+
+        #[test]
+        fn cursor_bufread_consume_saturates() {
+            const BUF_LEN: usize = 8;
+            let v = [1_u8; BUF_LEN];
+            let mut c = Cursor::new(v);
+
+            // Initially full buffer available
+            let slice = BufRead::fill_buf(&mut c).unwrap();
+            assert_eq!(slice.len(), BUF_LEN);
+
+            // Try to consume more than available: should not panic, saturate to end
+            c.consume(BUF_LEN * 2);
+
+            // Now we should be at/after end; fill_buf should be empty
+            let slice = BufRead::fill_buf(&mut c).unwrap();
+            assert!(slice.is_empty());
         }
     }
 
