@@ -1150,7 +1150,7 @@ fn check_const() {
     assert_eq!(Amount::MAX.to_sat() as i64, SignedAmount::MAX.to_sat());
 }
 
-// Sanity check than stdlib supports the set of reference combinations for the ops we want.
+// Sanity check that stdlib supports the set of reference combinations for the ops we want.
 #[test]
 #[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
 fn sanity_all_ops() {

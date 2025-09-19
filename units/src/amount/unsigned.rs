@@ -463,7 +463,7 @@ impl Amount {
 
         // Mul by 1,000 because we use per/kwu.
         if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            // No need to used checked arithmetic because wu is non-zero.
+            // No need to use checked arithmetic because wu is non-zero.
             if let Some(bump) = sats.checked_add(wu - 1) {
                 let fee_rate = bump / wu;
                 if let Ok(amount) = Amount::from_sat(fee_rate) {
