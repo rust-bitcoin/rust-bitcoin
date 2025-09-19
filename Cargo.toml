@@ -1,5 +1,6 @@
 [workspace]
 members = ["addresses", "base58", "bitcoin", "chacha20_poly1305", "consensus_encoding", "fuzz", "hashes", "internals", "io", "p2p", "primitives", "units"]
+exclude = ["benches"]
 resolver = "2"
 
 # Keep this patch for hashes because secp256k1 depends on bitcoin-hashes via crates.io
