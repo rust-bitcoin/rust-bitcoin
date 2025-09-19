@@ -845,7 +845,7 @@ mod tests {
     fn out_point_serde_deserialize_non_human_readable() {
         #[rustfmt::skip]
         let bytes = [
-            // Length, pre-pended by the `serde` infrastructure because we use
+            // Length, prepended by the `serde` infrastructure because we use
             // slice serialization instead of array even though we know the length.
             32, 0, 0, 0, 0, 0, 0, 0,
             // The txid bytes
