@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use crate::bip32::KeySource;
 use crate::crypto::key::XOnlyPublicKey;
 use crate::prelude::{btree_map, BTreeMap, Vec};
@@ -170,3 +173,20 @@ impl Map for Output {
 }
 
 impl_psbtmap_ser_de_serialize!(Output);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Output {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            redeem_script: u.arbitrary()?,
+            witness_script: u.arbitrary()?,
+            bip32_derivation: u.arbitrary()?,
+            tap_internal_key: u.arbitrary()?,
+            tap_tree: u.arbitrary()?,
+            tap_key_origins: u.arbitrary()?,
+            musig2_participant_pubkeys: u.arbitrary()?,
+            proprietary: u.arbitrary()?,
+            unknown: u.arbitrary()?,
+        })
+    }
+}
