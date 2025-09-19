@@ -8,6 +8,8 @@
 
 pub mod params;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use core::fmt;
 use core::str::FromStr;
 
@@ -324,6 +326,16 @@ impl TryFrom<ChainHash> for Network {
             ChainHash::SIGNET => Ok(Self::Signet),
             ChainHash::REGTEST => Ok(Self::Regtest),
             _ => Err(UnknownChainHashError(chain_hash)),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for NetworkKind {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match bool::arbitrary(u)? {
+            true => Ok(Self::Main),
+            false => Ok(Self::Test)
         }
     }
 }
