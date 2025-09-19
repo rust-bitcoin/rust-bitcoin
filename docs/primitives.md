@@ -10,7 +10,7 @@ GitHub discussion: https://github.com/rust-bitcoin/rust-bitcoin/discussions/4856
 
 Pull encoding done in: https://github.com/rust-bitcoin/rust-bitcoin/pull/4912
 
-<!-- TODO: Add a consenus-encoding.md file? -->
+<!-- TODO: Add a consensus-encoding.md file? -->
 
 ### Remove `hashes` from the public API.
 
