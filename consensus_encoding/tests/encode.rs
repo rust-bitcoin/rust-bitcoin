@@ -5,7 +5,7 @@
 #[cfg(feature = "std")]
 use std::io::{Cursor, Write};
 
-use consensus_encoding::{ArrayEncoder, Encodable};
+use consensus_encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder};
 
 // Simple test type that implements Encodable.
 struct TestData(u32);
@@ -93,4 +93,23 @@ fn encode_std_writer_io_error() {
 
     assert!(result.is_err());
     assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::Other);
+}
+
+#[test]
+fn encode_newtype_lifetime_flexibility() {
+    // Test that the encoder_newtype macro allows different lifetime names.
+
+    consensus_encoding::encoder_newtype! {
+        pub struct CustomEncoder<'data>(BytesEncoder<'data>);
+    }
+    consensus_encoding::encoder_newtype! {
+        pub struct NoLifetimeEncoder(ArrayEncoder<4>);
+    }
+
+    let test_data = b"hello world";
+    let custom_encoder = CustomEncoder(BytesEncoder::without_length_prefix(test_data));
+    let no_lifetime_encoder = NoLifetimeEncoder(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
+
+    assert_eq!(custom_encoder.current_chunk(), Some(test_data.as_slice()));
+    assert_eq!(no_lifetime_encoder.current_chunk(), Some(&[1, 2, 3, 4][..]));
 }
