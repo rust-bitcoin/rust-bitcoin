@@ -2,7 +2,7 @@
 
 //! Integration tests for decode module.
 
-use consensus_encoding::{ArrayDecoder, Decoder, UnexpectedEof};
+use consensus_encoding::{ArrayDecoder, Decoder, UnexpectedEofError};
 
 const EMPTY: &[u8] = &[];
 
@@ -50,5 +50,5 @@ fn decode_array_insufficient_data_error() {
     assert_eq!(data, EMPTY);
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, UnexpectedEof { .. }));
+    assert!(matches!(err, UnexpectedEofError { .. }));
 }
