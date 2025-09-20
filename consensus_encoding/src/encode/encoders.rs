@@ -14,7 +14,7 @@
 use internals::array_vec::ArrayVec;
 use internals::compact_size;
 
-use super::Encoder;
+use super::{Encodable, Encoder};
 
 /// The maximum length of a compact size encoding.
 const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
@@ -73,6 +73,89 @@ impl<const N: usize> Encoder<'_> for ArrayEncoder<N> {
     fn advance(&mut self) -> bool {
         self.arr = None;
         false
+    }
+}
+
+/// An encoder for a list of encodable types.
+pub struct SliceEncoder<'e, T: Encodable> {
+    ///  The list of references to the objects we are encoding.
+    ///
+    /// This is **never** mutated. All accesses are done by array accesses because
+    /// of lifetimes and the borrow checker.
+    sl: &'e [T],
+    /// Length of `sl`.
+    len: usize,
+    /// `len` encoded as a compact size.
+    compact_size: Option<ArrayVec<u8, SIZE>>,
+    /// Index into `sl` of the element we are currently encoding.
+    cur_idx: usize,
+    /// Current encoder (for `sl[self.cur_idx]`).
+    cur_enc: Option<T::Encoder<'e>>,
+}
+
+#[cfg(feature = "alloc")]
+impl<'e, T: Encodable> SliceEncoder<'e, T> {
+    /// Constructs an encoder which encodes the slice with a length prefix.
+    pub fn with_length_prefix(sl: &'e [T]) -> Self {
+        let len = sl.len();
+        let compact_size = Some(compact_size::encode(len));
+
+        if sl.is_empty() {
+            Self { sl, len: 0, compact_size, cur_idx: 0, cur_enc: None }
+        } else {
+            let encoder = sl[0].encoder();
+            Self { sl, len, compact_size, cur_idx: 0, cur_enc: Some(encoder) }
+        }
+    }
+
+    /// Returns a reference to the current item's encoder.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.done()` returns true (i.e., index out of range).
+    fn current_encoder(&self) -> &T::Encoder<'e> { self.cur_enc.as_ref().unwrap() }
+
+    /// Returns a mutable reference to the current item's encoder.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.done()` returns true (i.e., index out of range).
+    fn current_encoder_mut(&mut self) -> &mut T::Encoder<'e> { self.cur_enc.as_mut().unwrap() }
+
+    /// Returns true if encoder is exhausted.
+    fn done(&self) -> bool { self.cur_idx >= self.len }
+
+    /// Increment the current index, set the next encoder if necessary.
+    fn inc(&mut self) {
+        self.cur_idx += 1;
+        if !self.done() {
+            self.cur_enc = Some(self.sl[self.cur_idx].encoder());
+        }
+    }
+}
+
+impl<'e, T: Encodable> Encoder<'e> for SliceEncoder<'e, T> {
+    fn current_chunk(&self) -> Option<&[u8]> {
+        if let Some(compact_size) = self.compact_size.as_ref() {
+            return Some(compact_size);
+        }
+
+        self.current_encoder().current_chunk()
+    }
+
+    fn advance(&mut self) -> bool {
+        if self.compact_size.is_some() {
+            self.compact_size = None;
+            // Use `done()` to handle initialization with empty slice.
+            return !self.done();
+        }
+
+        if self.current_encoder_mut().advance() {
+            true
+        } else {
+            self.inc();
+            !self.done()
+        }
     }
 }
 
