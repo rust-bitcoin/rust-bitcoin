@@ -69,9 +69,8 @@ pub fn encode(value: impl ToU64) -> ArrayVec<u8, MAX_ENCODING_SIZE> {
             res.extend_from_slice(&v.to_le_bytes());
         }
         _ => {
-            let v = value;
             res.push(0xFF);
-            res.extend_from_slice(&v.to_le_bytes());
+            res.extend_from_slice(&value.to_le_bytes());
         }
     }
     res
