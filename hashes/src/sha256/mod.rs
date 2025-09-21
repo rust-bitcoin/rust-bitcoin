@@ -2,11 +2,7 @@
 
 //! SHA256 implementation.
 
-#[cfg(bench)]
-mod benches;
 mod crypto;
-#[cfg(bench)]
-mod tests;
 
 use core::{cmp, convert, fmt};
 

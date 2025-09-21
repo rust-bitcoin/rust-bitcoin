@@ -53,7 +53,6 @@
 #![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
-#![cfg_attr(bench, feature(test))]
 // Coding conventions.
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
@@ -62,7 +61,6 @@
 #![warn(clippy::return_self_not_must_use)]
 // Instead of littering the codebase for non-fuzzing and bench code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
-#![cfg_attr(bench, allow(dead_code, unused_imports))]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
@@ -82,8 +80,6 @@ pub extern crate serde;
 
 #[cfg(all(test, feature = "serde"))]
 extern crate serde_test;
-#[cfg(bench)]
-extern crate test;
 
 /// Re-export the `hex-conservative` crate.
 #[cfg(feature = "hex")]
