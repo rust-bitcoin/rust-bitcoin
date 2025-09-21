@@ -1,8 +1,7 @@
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let _: Result<p2p::address::AddrV2, _> =
-        bitcoin::consensus::encode::deserialize(data);
+    let _: Result<p2p::address::AddrV2, _> = bitcoin::consensus::encode::deserialize(data);
 }
 
 fn main() {

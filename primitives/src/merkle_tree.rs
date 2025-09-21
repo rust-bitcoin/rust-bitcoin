@@ -12,4 +12,3 @@
 
 #[doc(inline)]
 pub use crate::hash_types::{TxMerkleNode, TxMerkleNodeEncoder, WitnessMerkleNode};
-
