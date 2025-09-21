@@ -9,9 +9,9 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::{fmt, iter};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use io::{BufRead, Read, Write};
 
@@ -448,8 +448,28 @@ impl std::error::Error for AddrV2ToIpv6AddrError {}
 impl<'a> Arbitrary<'a> for Address {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let socket_addr = match bool::arbitrary(u)? {
-            true => SocketAddr::new(IpAddr::V4(Ipv4Addr::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?)), u.arbitrary()?),
-            false => SocketAddr::new(IpAddr::V6(Ipv6Addr::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?)), u.arbitrary()?)
+            true => SocketAddr::new(
+                IpAddr::V4(Ipv4Addr::new(
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                )),
+                u.arbitrary()?,
+            ),
+            false => SocketAddr::new(
+                IpAddr::V6(Ipv6Addr::new(
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                    u.arbitrary()?,
+                )),
+                u.arbitrary()?,
+            ),
         };
 
         Ok(Address::new(&socket_addr, u.arbitrary()?))
@@ -459,12 +479,35 @@ impl<'a> Arbitrary<'a> for Address {
 impl<'a> Arbitrary<'a> for AddrV2 {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match u.int_in_range(0..=5)? {
-            0 => Ok(AddrV2::Ipv4(Ipv4Addr::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?))),
-            1 => Ok(AddrV2::Ipv6(Ipv6Addr::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?))),
+            0 => Ok(AddrV2::Ipv4(Ipv4Addr::new(
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+            ))),
+            1 => Ok(AddrV2::Ipv6(Ipv6Addr::new(
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+            ))),
             2 => Ok(AddrV2::TorV3(u.arbitrary()?)),
             3 => Ok(AddrV2::I2p(u.arbitrary()?)),
-            4 => Ok(AddrV2::Cjdns(Ipv6Addr::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?))),
-            _ => Ok(AddrV2::Unknown(u.arbitrary()?, Vec::<u8>::arbitrary(u)?))
+            4 => Ok(AddrV2::Cjdns(Ipv6Addr::new(
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+            ))),
+            _ => Ok(AddrV2::Unknown(u.arbitrary()?, Vec::<u8>::arbitrary(u)?)),
         }
     }
 }
@@ -472,11 +515,11 @@ impl<'a> Arbitrary<'a> for AddrV2 {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrV2Message {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(AddrV2Message{
+        Ok(AddrV2Message {
             time: u.arbitrary()?,
             services: u.arbitrary()?,
             addr: u.arbitrary()?,
-            port: u.arbitrary()?
+            port: u.arbitrary()?,
         })
     }
 }

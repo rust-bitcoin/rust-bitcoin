@@ -39,9 +39,9 @@ use alloc::string::String;
 use core::borrow::{Borrow, BorrowMut};
 use core::str::FromStr;
 use core::{fmt, ops};
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::network::{Network, Params, TestnetVersion};
 use hex::FromHex;
@@ -481,9 +481,7 @@ impl<'a> Arbitrary<'a> for ServiceFlags {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Magic {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Magic(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Magic(u.arbitrary()?)) }
 }
 
 #[cfg(test)]

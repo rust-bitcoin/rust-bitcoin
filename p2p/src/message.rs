@@ -10,11 +10,10 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
+use core::{cmp, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use core::{cmp, fmt};
-
 use bitcoin::block::HeaderExt;
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
@@ -817,7 +816,7 @@ impl Decodable for CheckedData {
                 expected: expected_checksum,
                 actual: checksum,
             }
-                .into())
+            .into())
         } else {
             Ok(CheckedData { data, checksum })
         }

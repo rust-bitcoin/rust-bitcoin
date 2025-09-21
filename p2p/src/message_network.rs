@@ -7,11 +7,11 @@
 
 use alloc::borrow::Cow;
 use alloc::format;
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
 use hashes::sha256d;
 use io::{BufRead, Write};
@@ -343,7 +343,7 @@ impl<'a> Arbitrary<'a> for ClientSoftwareVersion {
                 major: u.arbitrary()?,
                 minor: u.arbitrary()?,
                 revision: u.arbitrary()?,
-            })
+            }),
         }
     }
 }
@@ -365,7 +365,16 @@ impl<'a> Arbitrary<'a> for UserAgent {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for VersionMessage {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(VersionMessage::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?, u.arbitrary()?))
+        Ok(VersionMessage::new(
+            u.arbitrary()?,
+            u.arbitrary()?,
+            u.arbitrary()?,
+            u.arbitrary()?,
+            u.arbitrary()?,
+            u.arbitrary()?,
+            u.arbitrary()?,
+            u.arbitrary()?,
+        ))
     }
 }
 
@@ -380,7 +389,7 @@ impl<'a> Arbitrary<'a> for RejectReason {
             4 => Ok(RejectReason::NonStandard),
             5 => Ok(RejectReason::Dust),
             6 => Ok(RejectReason::Fee),
-            _ => Ok(RejectReason::Checkpoint)
+            _ => Ok(RejectReason::Checkpoint),
         }
     }
 }
@@ -388,7 +397,7 @@ impl<'a> Arbitrary<'a> for RejectReason {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Reject {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Reject{
+        Ok(Reject {
             message: u.arbitrary::<String>()?.into(),
             ccode: u.arbitrary()?,
             reason: u.arbitrary::<String>()?.into(),
