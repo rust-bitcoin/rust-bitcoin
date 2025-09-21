@@ -417,7 +417,7 @@ impl Opcode {
     #[inline]
     pub const fn to_u8(self) -> u8 { self.code }
 
-    /// Encodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
+    /// Decodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
     ///
     /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
     ///
