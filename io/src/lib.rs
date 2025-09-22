@@ -299,13 +299,17 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> {
         let inner: &[u8] = self.inner.as_ref();
-        Ok(&inner[self.pos as usize..])
+        let start = cmp::min(self.pos.try_into().unwrap_or(inner.len()), inner.len());
+        Ok(&inner[start..])
     }
 
     #[inline]
     fn consume(&mut self, amount: usize) {
-        assert!(amount <= self.inner.as_ref().len());
-        self.pos += amount as u64;
+        let inner: &[u8] = self.inner.as_ref();
+        let start = cmp::min(self.pos.try_into().unwrap_or(inner.len()), inner.len());
+        let remaining = inner.len().saturating_sub(start);
+        let to_consume = core::cmp::min(amount, remaining);
+        self.pos = self.pos.saturating_add(to_consume as u64);
     }
 }
 
