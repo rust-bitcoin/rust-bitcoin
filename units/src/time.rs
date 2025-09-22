@@ -99,6 +99,17 @@ impl encoding::Encodable for BlockTime {
 pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
+impl Default for BlockTimeDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl BlockTimeDecoder {
+    /// Constructs a new [`BlockTime`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
 impl encoding::Decoder for BlockTimeDecoder {
     type Output = BlockTime;
     type Error = BlockTimeDecoderError;

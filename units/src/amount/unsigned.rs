@@ -583,6 +583,17 @@ impl encoding::Encodable for Amount {
 pub struct AmountDecoder(encoding::ArrayDecoder<8>);
 
 #[cfg(feature = "encoding")]
+impl AmountDecoder {
+    /// Constructs a new [`Amount`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for AmountDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
 impl encoding::Decoder for AmountDecoder {
     type Output = Amount;
     type Error = AmountDecoderError;

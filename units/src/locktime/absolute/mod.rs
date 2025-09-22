@@ -424,6 +424,17 @@ impl encoding::Encodable for LockTime {
 pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
+impl LockTimeDecoder {
+    /// Constructs a new [`LockTime`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for LockTimeDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
 impl encoding::Decoder for LockTimeDecoder {
     type Output = LockTime;
     type Error = LockTimeDecoderError;

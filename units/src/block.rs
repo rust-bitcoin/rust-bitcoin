@@ -166,6 +166,17 @@ impl encoding::Encodable for BlockHeight {
 pub struct BlockHeightDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
+impl Default for BlockHeightDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl BlockHeightDecoder {
+    /// Constructs a new [`BlockHeight`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
 impl encoding::Decoder for BlockHeightDecoder {
     type Output = BlockHeight;
     type Error = BlockHeightDecoderError;

@@ -289,6 +289,17 @@ impl encoding::Encodable for Sequence {
 pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
+impl Default for SequenceDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl SequenceDecoder {
+    /// Constructs a new [`Sequence`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
 impl encoding::Decoder for SequenceDecoder {
     type Output = Sequence;
     type Error = SequenceDecoderError;
