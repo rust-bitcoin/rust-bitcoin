@@ -7,8 +7,15 @@
 //! This differs from other UNIX timestamps in that we only use non-negative values. The Epoch
 //! pre-dates Bitcoin so timestamps before this are not useful for block timestamps.
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
+#[cfg(feature = "encoding")]
+use core::fmt;
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "encoding")]
+use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -94,16 +101,16 @@ pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);
 #[cfg(feature = "encoding")]
 impl encoding::Decoder for BlockTimeDecoder {
     type Output = BlockTime;
-    type Error = encoding::UnexpectedEofError;
+    type Error = BlockTimeDecoderError;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes)
+        self.0.push_bytes(bytes).map_err(BlockTimeDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let t = u32::from_le_bytes(self.0.end()?);
+        let t = u32::from_le_bytes(self.0.end().map_err(BlockTimeDecoderError)?);
         Ok(BlockTime::from_u32(t))
     }
 }
@@ -112,6 +119,28 @@ impl encoding::Decoder for BlockTimeDecoder {
 impl encoding::Decodable for BlockTime {
     type Decoder = BlockTimeDecoder;
     fn decoder() -> Self::Decoder { BlockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+/// An error consensus decoding an `BlockTime`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockTimeDecoderError(encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for BlockTimeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for BlockTimeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "block time decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for BlockTimeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 #[cfg(feature = "arbitrary")]

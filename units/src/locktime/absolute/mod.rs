@@ -24,6 +24,8 @@ use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 pub use self::error::{
     ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError, ParseTimeError,
 };
+#[cfg(feature = "encoding")]
+pub use self::error::LockTimeDecoderError;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
@@ -424,16 +426,16 @@ pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
 #[cfg(feature = "encoding")]
 impl encoding::Decoder for LockTimeDecoder {
     type Output = LockTime;
-    type Error = encoding::UnexpectedEofError;
+    type Error = LockTimeDecoderError;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes)
+        Ok(self.0.push_bytes(bytes).map_err(LockTimeDecoderError)?)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end()?);
+        let n = u32::from_le_bytes(self.0.end().map_err(LockTimeDecoderError)?);
         Ok(LockTime::from_consensus(n))
     }
 }

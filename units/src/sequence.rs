@@ -14,10 +14,14 @@
 //! [BIP-0068]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
 //! [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "encoding")]
+use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -287,16 +291,16 @@ pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
 #[cfg(feature = "encoding")]
 impl encoding::Decoder for SequenceDecoder {
     type Output = Sequence;
-    type Error = encoding::UnexpectedEofError;
+    type Error = SequenceDecoderError;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes)
+        self.0.push_bytes(bytes).map_err(SequenceDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end()?);
+        let n = u32::from_le_bytes(self.0.end().map_err(SequenceDecoderError)?);
         Ok(Sequence::from_consensus(n))
     }
 }
@@ -305,6 +309,28 @@ impl encoding::Decoder for SequenceDecoder {
 impl encoding::Decodable for Sequence {
     type Decoder = SequenceDecoder;
     fn decoder() -> Self::Decoder { SequenceDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+/// An error consensus decoding an `Sequence`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SequenceDecoderError(encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for SequenceDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for SequenceDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "sequence decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for SequenceDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 #[cfg(feature = "arbitrary")]
