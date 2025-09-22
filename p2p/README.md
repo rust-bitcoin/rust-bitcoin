@@ -2,6 +2,11 @@
 
 This crate provides data types used in the Bitcoin peer-to-peer protocol.
 
+### Support for 16-bit pointer sizes
+
+16-bit pointer sizes are not supported, and we can't promise they will be. If you care about them
+please let us know, so we can know how large the interest is and possibly decide to support them.
+
 ## Minimum Supported Rust Version (MSRV)
 
 This library should always compile with any combination of features on **Rust 1.74.0**.

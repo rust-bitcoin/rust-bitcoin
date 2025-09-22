@@ -3,6 +3,11 @@
 This crate provides primitive data types that are used throughout the
 [`rust-bitcoin`](https://github.com/rust-bitcoin) ecosystem.
 
+### Support for 16-bit pointer sizes
+
+16-bit pointer sizes are not supported, and we can't promise they will be. If you care about them
+please let us know, so we can know how large the interest is and possibly decide to support them.
+
 ## Semver compliance
 
 Functions marked as unstable (e.g. `foo__unstable`) are not guaranteed to uphold semver compliance.
