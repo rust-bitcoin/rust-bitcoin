@@ -4,7 +4,7 @@
 
 use consensus_encoding::{
     ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder6, Encodable, Encoder,
-    Encoder2, Encoder6, UnexpectedEof,
+    Encoder2, Encoder6, UnexpectedEofError,
 };
 
 const EMPTY: &[u8] = &[];
@@ -30,17 +30,17 @@ impl Encodable for CompositeData {
 /// A unified error type for [`CompositeDataDecoder`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum CompositeError {
-    Eof(UnexpectedEof),
+    Eof(UnexpectedEofError),
 }
 
-impl From<UnexpectedEof> for CompositeError {
-    fn from(eof: UnexpectedEof) -> Self { CompositeError::Eof(eof) }
+impl From<UnexpectedEofError> for CompositeError {
+    fn from(eof: UnexpectedEofError) -> Self { CompositeError::Eof(eof) }
 }
 
 impl core::fmt::Display for CompositeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            CompositeError::Eof(eof) => write!(f, "Error in first array: {}", eof),
+            CompositeError::Eof(eof) => write!(f, "Composite error: {}", eof),
         }
     }
 }
@@ -115,7 +115,7 @@ fn composition_nested() {
     }
     assert_eq!(encoded_bytes, data);
 
-    let mut decoder6: Decoder6<_, _, _, _, _, _, UnexpectedEof> = Decoder6::new(
+    let mut decoder6: Decoder6<_, _, _, _, _, _, UnexpectedEofError> = Decoder6::new(
         ArrayDecoder::<1>::new(),
         ArrayDecoder::<1>::new(),
         ArrayDecoder::<1>::new(),
@@ -139,7 +139,7 @@ fn composition_nested() {
 #[test]
 fn composition_extra_bytes() {
     // Test that Decoder2 consumes exactly what it needs and leaves extra bytes unconsumed.
-    let mut decoder2: Decoder2<_, _, UnexpectedEof> =
+    let mut decoder2: Decoder2<_, _, UnexpectedEofError> =
         Decoder2::new(ArrayDecoder::<2>::new(), ArrayDecoder::<3>::new());
     let mut bytes = &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08][..];
     let original_len = bytes.len();
@@ -167,22 +167,22 @@ fn composition_error_unification() {
     #[derive(Debug, Clone, PartialEq, Eq)]
     enum NestedError {
         BadChecksum,
-        UnexpectedEof(UnexpectedEof),
+        UnexpectedEof(UnexpectedEofError),
     }
 
-    impl From<UnexpectedEof> for NestedError {
-        fn from(eof: UnexpectedEof) -> Self { NestedError::UnexpectedEof(eof) }
+    impl From<UnexpectedEofError> for NestedError {
+        fn from(eof: UnexpectedEofError) -> Self { NestedError::UnexpectedEof(eof) }
     }
 
     /// Error for top level encoder.
     #[derive(Debug, Clone, PartialEq, Eq)]
     enum TopLevelError {
-        UnexpectedEof(UnexpectedEof),
+        UnexpectedEof(UnexpectedEofError),
         Validation(NestedError),
     }
 
-    impl From<UnexpectedEof> for TopLevelError {
-        fn from(eof: UnexpectedEof) -> Self { TopLevelError::UnexpectedEof(eof) }
+    impl From<UnexpectedEofError> for TopLevelError {
+        fn from(eof: UnexpectedEofError) -> Self { TopLevelError::UnexpectedEof(eof) }
     }
 
     impl From<NestedError> for TopLevelError {

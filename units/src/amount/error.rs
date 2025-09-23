@@ -137,8 +137,9 @@ impl fmt::Display for ParseAmountError {
             E::TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
             E::MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
             E::InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
-            E::InvalidCharacter(ref error) =>
-                write_err!(f, "invalid character in the input"; error),
+            E::InvalidCharacter(ref error) => {
+                write_err!(f, "invalid character in the input"; error)
+            }
         }
     }
 }
@@ -388,4 +389,45 @@ impl fmt::Display for PossiblyConfusingDenominationError {
 #[cfg(feature = "std")]
 impl std::error::Error for PossiblyConfusingDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
+
+/// An error consensus decoding an `Amount`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum AmountDecoderError {
+    /// Not enough bytes given to decoder.
+    UnexpectedEof(encoding::UnexpectedEofError),
+    /// Decoded amount is too big.
+    OutOfRange(OutOfRangeError),
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for AmountDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl From<encoding::UnexpectedEofError> for AmountDecoderError {
+    fn from(e: encoding::UnexpectedEofError) -> Self { Self::UnexpectedEof(e) }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for AmountDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::UnexpectedEof(ref e) => write_err!(f, "decode error"; e),
+            Self::OutOfRange(ref e) => write_err!(f, "decode error"; e),
+        }
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for AmountDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            Self::UnexpectedEof(ref e) => Some(e),
+            Self::OutOfRange(ref e) => Some(e),
+        }
+    }
 }

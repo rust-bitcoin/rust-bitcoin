@@ -37,6 +37,9 @@ pub use self::{
     signed::SignedAmount,
     unsigned::Amount,
 };
+#[cfg(feature = "encoding")]
+#[doc(no_inline)]
+pub use self::error::AmountDecoderError;
 #[doc(no_inline)]
 pub use self::error::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
 

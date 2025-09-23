@@ -4,22 +4,6 @@
 
 use super::Decoder;
 
-/// Not enough bytes given to decoder.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnexpectedEof {
-    /// Number of bytes missing to complete decoder.
-    missing: usize,
-}
-
-impl core::fmt::Display for UnexpectedEof {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "not enough bytes for decoder, {} more bytes required", self.missing)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for UnexpectedEof {}
-
 /// A decoder that expects exactly N bytes and returns them as an array.
 pub struct ArrayDecoder<const N: usize> {
     buffer: [u8; N],
@@ -37,7 +21,7 @@ impl<const N: usize> Default for ArrayDecoder<N> {
 
 impl<const N: usize> Decoder for ArrayDecoder<N> {
     type Output = [u8; N];
-    type Error = UnexpectedEof;
+    type Error = UnexpectedEofError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         let remaining_space = N - self.bytes_written;
@@ -59,7 +43,7 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
         if self.bytes_written == N {
             Ok(self.buffer)
         } else {
-            Err(UnexpectedEof { missing: N - self.bytes_written })
+            Err(UnexpectedEofError { missing: N - self.bytes_written })
         }
     }
 }
@@ -355,3 +339,19 @@ where
         Ok((first, second, third, fourth, fifth, sixth))
     }
 }
+
+/// Not enough bytes given to decoder.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnexpectedEofError {
+    /// Number of bytes missing to complete decoder.
+    missing: usize,
+}
+
+impl core::fmt::Display for UnexpectedEofError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "not enough bytes for decoder, {} more bytes required", self.missing)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnexpectedEofError {}
