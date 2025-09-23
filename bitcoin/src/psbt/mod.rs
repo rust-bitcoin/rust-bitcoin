@@ -1057,7 +1057,7 @@ pub enum SignError {
     MissingWitnessScript,
     /// Signing algorithm and key type does not match.
     MismatchedAlgoKey,
-    /// Attempted to ECDSA sign an non-ECDSA input.
+    /// Attempted to ECDSA sign a non-ECDSA input.
     NotEcdsa,
     /// The `scriptPubkey` is not a P2WPKH script.
     NotWpkh,
@@ -1093,7 +1093,7 @@ impl fmt::Display for SignError {
             MissingSpendUtxo => write!(f, "missing spend utxo in PSBT"),
             MissingWitnessScript => write!(f, "missing witness script"),
             MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
-            NotEcdsa => write!(f, "attempted to ECDSA sign an non-ECDSA input"),
+            NotEcdsa => write!(f, "attempted to ECDSA sign a non-ECDSA input"),
             NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
             SegwitV0Sighash(ref e) => write_err!(f, "SegWit v0 sighash"; e),
             P2wpkhSighash(ref e) => write_err!(f, "p2wpkh sighash"; e),
@@ -2247,7 +2247,7 @@ mod tests {
         let rtt = hex_psbt(&unserialized.serialize_hex()).unwrap();
         assert_eq!(rtt, unserialized);
 
-        // Now add an ripemd160 with incorrect preimage
+        // Now add a ripemd160 with incorrect preimage
         let mut ripemd160_preimages = BTreeMap::new();
         ripemd160_preimages.insert(ripemd160::Hash::hash(&[17u8]), vec![18u8]);
         unserialized.inputs[0].ripemd160_preimages = ripemd160_preimages;
