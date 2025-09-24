@@ -589,13 +589,13 @@ impl encoding::Decoder for AmountDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        Ok(self.0.push_bytes(bytes)?)
+        self.0.push_bytes(bytes).map_err(AmountDecoderError::eof)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let a = u64::from_le_bytes(self.0.end()?);
-        Ok(Amount::from_sat(a).map_err(AmountDecoderError::OutOfRange)?)
+        let a = u64::from_le_bytes(self.0.end().map_err(AmountDecoderError::eof)?);
+        Amount::from_sat(a).map_err(AmountDecoderError::out_of_range)
     }
 }
 
