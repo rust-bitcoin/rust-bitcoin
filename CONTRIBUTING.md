@@ -16,7 +16,7 @@ changes to this document in a pull request.
 - [Contribution workflow](#contribution-workflow)
   * [Preparing PRs](#preparing-prs)
   * [Peer review](#peer-review)
-  * [CI and Merging](#merging)
+  * [CI and Merging](#ci-and-merging)
   * [Repository maintainers](#repository-maintainers)
 - [Coding conventions](#coding-conventions)
   * [Naming conventions](#naming-conventions)
@@ -217,6 +217,10 @@ If your change requires a dependency to be upgraded you must do the following:
 Use of `unsafe` code is prohibited unless there is a unanimous decision among
 library maintainers on the exclusion from this rule. In such cases there is a
 requirement to test unsafe code with sanitizers including Miri.
+
+### Policy
+
+For broader project policy and guidelines, see [policy.md](./docs/policy.md).
 
 ### API changes
 
