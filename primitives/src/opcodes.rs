@@ -49,18 +49,70 @@ macro_rules! all_opcodes {
                 #[doc = $doc]
                 pub const $op: Opcode = Opcode { code: $val};
             )*
-        }
 
-        /// Push an empty array onto the stack.
-        pub static OP_0: Opcode = OP_PUSHBYTES_0;
-        /// Empty stack is also `FALSE`.
-        pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
-        /// Number 1 is also TRUE.
-        pub static OP_TRUE: Opcode = OP_PUSHNUM_1;
-        /// Previously called `OP_NOP2`.
-        pub static OP_NOP2: Opcode = OP_CLTV;
-        /// Previously called `OP_NOP3`.
-        pub static OP_NOP3: Opcode = OP_CSV;
+            /// Push an empty array onto the stack.
+            pub const OP_0: Opcode = OP_PUSHBYTES_0;
+            /// Empty stack is also `FALSE`.
+            pub const OP_FALSE: Opcode = OP_PUSHBYTES_0;
+            /// Number 1 is also TRUE.
+            pub const OP_TRUE: Opcode = OP_1;
+            /// Previously called `OP_NOP2`.
+            pub const OP_NOP2: Opcode = OP_CLTV;
+            /// Previously called `OP_NOP3`.
+            pub const OP_NOP3: Opcode = OP_CSV;
+
+            /// Push the array `0x81` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_1NEGATE instead")]
+            pub const OP_PUSHNUM_NEG1: Opcode = OP_1NEGATE;
+            /// Push the array `0x01` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_1 instead")]
+            pub const OP_PUSHNUM_1: Opcode = OP_1;
+            /// Push the array `0x02` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_2 instead")]
+            pub const OP_PUSHNUM_2: Opcode = OP_2;
+            /// Push the array `0x03` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_3 instead")]
+            pub const OP_PUSHNUM_3: Opcode = OP_3;
+            /// Push the array `0x04` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_4 instead")]
+            pub const OP_PUSHNUM_4: Opcode = OP_4;
+            /// Push the array `0x05` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_5 instead")]
+            pub const OP_PUSHNUM_5: Opcode = OP_5;
+            /// Push the array `0x06` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_6 instead")]
+            pub const OP_PUSHNUM_6: Opcode = OP_6;
+            /// Push the array `0x07` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_7 instead")]
+            pub const OP_PUSHNUM_7: Opcode = OP_7;
+            /// Push the array `0x08` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_8 instead")]
+            pub const OP_PUSHNUM_8: Opcode = OP_8;
+            /// Push the array `0x09` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_9 instead")]
+            pub const OP_PUSHNUM_9: Opcode = OP_9;
+            /// Push the array `0x0a` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_10 instead")]
+            pub const OP_PUSHNUM_10: Opcode = OP_10;
+            /// Push the array `0x0b` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_11 instead")]
+            pub const OP_PUSHNUM_11: Opcode = OP_11;
+            /// Push the array `0x0c` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_12 instead")]
+            pub const OP_PUSHNUM_12: Opcode = OP_12;
+            /// Push the array `0x0d` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_13 instead")]
+            pub const OP_PUSHNUM_13: Opcode = OP_13;
+            /// Push the array `0x0e` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_14 instead")]
+            pub const OP_PUSHNUM_14: Opcode = OP_14;
+            /// Push the array `0x0f` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_15 instead")]
+            pub const OP_PUSHNUM_15: Opcode = OP_15;
+            /// Push the array `0x10` onto the stack.
+            #[deprecated(since = "TBD", note = "use OP_16 instead")]
+            pub const OP_PUSHNUM_16: Opcode = OP_16;
+        }
 
         impl fmt::Display for Opcode {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -154,24 +206,24 @@ all_opcodes! {
     OP_PUSHDATA1 => 0x4c, "Read the next byte as N; push the next N bytes as an array onto the stack.";
     OP_PUSHDATA2 => 0x4d, "Read the next 2 bytes as N; push the next N bytes as an array onto the stack.";
     OP_PUSHDATA4 => 0x4e, "Read the next 4 bytes as N; push the next N bytes as an array onto the stack.";
-    OP_PUSHNUM_NEG1 => 0x4f, "Push the array `0x81` onto the stack.";
+    OP_1NEGATE => 0x4f, "Push the array `0x81` onto the stack.";
     OP_RESERVED => 0x50, "Synonym for `OP_RETURN`.";
-    OP_PUSHNUM_1 => 0x51, "Push the array `0x01` onto the stack.";
-    OP_PUSHNUM_2 => 0x52, "Push the array `0x02` onto the stack.";
-    OP_PUSHNUM_3 => 0x53, "Push the array `0x03` onto the stack.";
-    OP_PUSHNUM_4 => 0x54, "Push the array `0x04` onto the stack.";
-    OP_PUSHNUM_5 => 0x55, "Push the array `0x05` onto the stack.";
-    OP_PUSHNUM_6 => 0x56, "Push the array `0x06` onto the stack.";
-    OP_PUSHNUM_7 => 0x57, "Push the array `0x07` onto the stack.";
-    OP_PUSHNUM_8 => 0x58, "Push the array `0x08` onto the stack.";
-    OP_PUSHNUM_9 => 0x59, "Push the array `0x09` onto the stack.";
-    OP_PUSHNUM_10 => 0x5a, "Push the array `0x0a` onto the stack.";
-    OP_PUSHNUM_11 => 0x5b, "Push the array `0x0b` onto the stack.";
-    OP_PUSHNUM_12 => 0x5c, "Push the array `0x0c` onto the stack.";
-    OP_PUSHNUM_13 => 0x5d, "Push the array `0x0d` onto the stack.";
-    OP_PUSHNUM_14 => 0x5e, "Push the array `0x0e` onto the stack.";
-    OP_PUSHNUM_15 => 0x5f, "Push the array `0x0f` onto the stack.";
-    OP_PUSHNUM_16 => 0x60, "Push the array `0x10` onto the stack.";
+    OP_1 => 0x51, "Push the array `0x01` onto the stack.";
+    OP_2 => 0x52, "Push the array `0x02` onto the stack.";
+    OP_3 => 0x53, "Push the array `0x03` onto the stack.";
+    OP_4 => 0x54, "Push the array `0x04` onto the stack.";
+    OP_5 => 0x55, "Push the array `0x05` onto the stack.";
+    OP_6 => 0x56, "Push the array `0x06` onto the stack.";
+    OP_7 => 0x57, "Push the array `0x07` onto the stack.";
+    OP_8 => 0x58, "Push the array `0x08` onto the stack.";
+    OP_9 => 0x59, "Push the array `0x09` onto the stack.";
+    OP_10 => 0x5a, "Push the array `0x0a` onto the stack.";
+    OP_11 => 0x5b, "Push the array `0x0b` onto the stack.";
+    OP_12 => 0x5c, "Push the array `0x0c` onto the stack.";
+    OP_13 => 0x5d, "Push the array `0x0d` onto the stack.";
+    OP_14 => 0x5e, "Push the array `0x0e` onto the stack.";
+    OP_15 => 0x5f, "Push the array `0x0f` onto the stack.";
+    OP_16 => 0x60, "Push the array `0x10` onto the stack.";
     OP_NOP => 0x61, "Does nothing.";
     OP_VER => 0x62, "Synonym for `OP_RETURN`.";
     OP_IF => 0x63, "Pop and execute the next statements if a nonzero element was popped.";
@@ -399,11 +451,11 @@ impl Opcode {
             | (OP_CHECKMULTISIGVERIFY, ClassifyContext::TapScript) => Class::ReturnOp,
 
             // 1 opcode of PushNum class
-            (OP_PUSHNUM_NEG1, _) => Class::PushNum(-1),
+            (OP_1NEGATE, _) => Class::PushNum(-1),
 
             // 16 opcodes of PushNum class
-            (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code =>
-                Class::PushNum(1 + i32::from(self.code) - i32::from(OP_PUSHNUM_1.code)),
+            (op, _) if op.code >= OP_1.code && op.code <= OP_16.code =>
+                Class::PushNum(1 + i32::from(self.code) - i32::from(OP_1.code)),
 
             // 76 opcodes of PushBytes class
             (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(u32::from(self.code)),
@@ -417,9 +469,9 @@ impl Opcode {
     #[inline]
     pub const fn to_u8(self) -> u8 { self.code }
 
-    /// Encodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
+    /// Decodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
     ///
-    /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
+    /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_16` are covered.
     ///
     /// # Returns
     ///
@@ -427,8 +479,8 @@ impl Opcode {
     #[inline]
     #[must_use]
     pub const fn decode_pushnum(self) -> Option<u8> {
-        const START: u8 = OP_PUSHNUM_1.code;
-        const END: u8 = OP_PUSHNUM_16.code;
+        const START: u8 = OP_1.code;
+        const END: u8 = OP_16.code;
         match self.code {
             START..=END => Some(self.code - START + 1),
             _ => None,
@@ -581,11 +633,11 @@ mod tests {
     fn decode_pushnum() {
         // Test all possible opcodes
         // - Sanity check
-        assert_eq!(OP_PUSHNUM_1.code, 0x51_u8);
-        assert_eq!(OP_PUSHNUM_16.code, 0x60_u8);
+        assert_eq!(OP_1.code, 0x51_u8);
+        assert_eq!(OP_16.code, 0x60_u8);
         for i in 0x00..=0xff_u8 {
             let expected = match i {
-                // OP_PUSHNUM_1 ..= OP_PUSHNUM_16
+                // OP_1 ..= OP_16
                 0x51..=0x60 => Some(i - 0x50),
                 _ => None,
             };
@@ -595,22 +647,22 @@ mod tests {
         // Test the named opcode constants
         // - This is the OP right before PUSHNUMs start
         assert!(OP_RESERVED.decode_pushnum().is_none());
-        assert_eq!(OP_PUSHNUM_1.decode_pushnum().expect("pushnum"), 1);
-        assert_eq!(OP_PUSHNUM_2.decode_pushnum().expect("pushnum"), 2);
-        assert_eq!(OP_PUSHNUM_3.decode_pushnum().expect("pushnum"), 3);
-        assert_eq!(OP_PUSHNUM_4.decode_pushnum().expect("pushnum"), 4);
-        assert_eq!(OP_PUSHNUM_5.decode_pushnum().expect("pushnum"), 5);
-        assert_eq!(OP_PUSHNUM_6.decode_pushnum().expect("pushnum"), 6);
-        assert_eq!(OP_PUSHNUM_7.decode_pushnum().expect("pushnum"), 7);
-        assert_eq!(OP_PUSHNUM_8.decode_pushnum().expect("pushnum"), 8);
-        assert_eq!(OP_PUSHNUM_9.decode_pushnum().expect("pushnum"), 9);
-        assert_eq!(OP_PUSHNUM_10.decode_pushnum().expect("pushnum"), 10);
-        assert_eq!(OP_PUSHNUM_11.decode_pushnum().expect("pushnum"), 11);
-        assert_eq!(OP_PUSHNUM_12.decode_pushnum().expect("pushnum"), 12);
-        assert_eq!(OP_PUSHNUM_13.decode_pushnum().expect("pushnum"), 13);
-        assert_eq!(OP_PUSHNUM_14.decode_pushnum().expect("pushnum"), 14);
-        assert_eq!(OP_PUSHNUM_15.decode_pushnum().expect("pushnum"), 15);
-        assert_eq!(OP_PUSHNUM_16.decode_pushnum().expect("pushnum"), 16);
+        assert_eq!(OP_1.decode_pushnum().expect("pushnum"), 1);
+        assert_eq!(OP_2.decode_pushnum().expect("pushnum"), 2);
+        assert_eq!(OP_3.decode_pushnum().expect("pushnum"), 3);
+        assert_eq!(OP_4.decode_pushnum().expect("pushnum"), 4);
+        assert_eq!(OP_5.decode_pushnum().expect("pushnum"), 5);
+        assert_eq!(OP_6.decode_pushnum().expect("pushnum"), 6);
+        assert_eq!(OP_7.decode_pushnum().expect("pushnum"), 7);
+        assert_eq!(OP_8.decode_pushnum().expect("pushnum"), 8);
+        assert_eq!(OP_9.decode_pushnum().expect("pushnum"), 9);
+        assert_eq!(OP_10.decode_pushnum().expect("pushnum"), 10);
+        assert_eq!(OP_11.decode_pushnum().expect("pushnum"), 11);
+        assert_eq!(OP_12.decode_pushnum().expect("pushnum"), 12);
+        assert_eq!(OP_13.decode_pushnum().expect("pushnum"), 13);
+        assert_eq!(OP_14.decode_pushnum().expect("pushnum"), 14);
+        assert_eq!(OP_15.decode_pushnum().expect("pushnum"), 15);
+        assert_eq!(OP_16.decode_pushnum().expect("pushnum"), 16);
         // - This is the OP right after PUSHNUMs end
         assert!(OP_NOP.decode_pushnum().is_none());
     }
@@ -727,24 +779,24 @@ mod tests {
         roundtrip!(unique, OP_PUSHDATA1);
         roundtrip!(unique, OP_PUSHDATA2);
         roundtrip!(unique, OP_PUSHDATA4);
-        roundtrip!(unique, OP_PUSHNUM_NEG1);
+        roundtrip!(unique, OP_1NEGATE);
         roundtrip!(unique, OP_RESERVED);
-        roundtrip!(unique, OP_PUSHNUM_1);
-        roundtrip!(unique, OP_PUSHNUM_2);
-        roundtrip!(unique, OP_PUSHNUM_3);
-        roundtrip!(unique, OP_PUSHNUM_4);
-        roundtrip!(unique, OP_PUSHNUM_5);
-        roundtrip!(unique, OP_PUSHNUM_6);
-        roundtrip!(unique, OP_PUSHNUM_7);
-        roundtrip!(unique, OP_PUSHNUM_8);
-        roundtrip!(unique, OP_PUSHNUM_9);
-        roundtrip!(unique, OP_PUSHNUM_10);
-        roundtrip!(unique, OP_PUSHNUM_11);
-        roundtrip!(unique, OP_PUSHNUM_12);
-        roundtrip!(unique, OP_PUSHNUM_13);
-        roundtrip!(unique, OP_PUSHNUM_14);
-        roundtrip!(unique, OP_PUSHNUM_15);
-        roundtrip!(unique, OP_PUSHNUM_16);
+        roundtrip!(unique, OP_1);
+        roundtrip!(unique, OP_2);
+        roundtrip!(unique, OP_3);
+        roundtrip!(unique, OP_4);
+        roundtrip!(unique, OP_5);
+        roundtrip!(unique, OP_6);
+        roundtrip!(unique, OP_7);
+        roundtrip!(unique, OP_8);
+        roundtrip!(unique, OP_9);
+        roundtrip!(unique, OP_10);
+        roundtrip!(unique, OP_11);
+        roundtrip!(unique, OP_12);
+        roundtrip!(unique, OP_13);
+        roundtrip!(unique, OP_14);
+        roundtrip!(unique, OP_15);
+        roundtrip!(unique, OP_16);
         roundtrip!(unique, OP_NOP);
         roundtrip!(unique, OP_VER);
         roundtrip!(unique, OP_IF);

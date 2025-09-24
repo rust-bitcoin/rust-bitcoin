@@ -64,9 +64,9 @@ internal_macros::define_extension_trait! {
         /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
         fn push_int_unchecked(&mut self, n: i64) {
             match n {
-                -1 => self.push_opcode(OP_PUSHNUM_NEG1),
+                -1 => self.push_opcode(OP_1NEGATE),
                 0 => self.push_opcode(OP_PUSHBYTES_0),
-                1..=16 => self.push_opcode(Opcode::from(n as u8 + (OP_PUSHNUM_1.to_u8() - 1))),
+                1..=16 => self.push_opcode(Opcode::from(n as u8 + (OP_1.to_u8() - 1))),
                 _ => self.push_int_non_minimal(n),
             }
         }
@@ -79,9 +79,9 @@ internal_macros::define_extension_trait! {
             let bytes = data.as_ref().as_bytes();
             if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
                 match bytes[0] {
-                    0x81 => { self.push_opcode(OP_PUSHNUM_NEG1); },
+                    0x81 => { self.push_opcode(OP_1NEGATE); },
                     0 => { self.push_opcode(OP_PUSHBYTES_0); },
-                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))); },
+                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))); },
                     _ => {}, // unreachable arm
                 }
             } else {

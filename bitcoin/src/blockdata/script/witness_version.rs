@@ -122,8 +122,8 @@ impl TryFrom<Opcode> for WitnessVersion {
     fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
             0 => Ok(WitnessVersion::V0),
-            version if version >= OP_PUSHNUM_1.to_u8() && version <= OP_PUSHNUM_16.to_u8() =>
-                WitnessVersion::try_from(version - OP_PUSHNUM_1.to_u8() + 1),
+            version if version >= OP_1.to_u8() && version <= OP_16.to_u8() =>
+                WitnessVersion::try_from(version - OP_1.to_u8() + 1),
             invalid => Err(TryFromError { invalid }),
         }
     }
@@ -145,7 +145,7 @@ impl From<WitnessVersion> for Opcode {
     fn from(version: WitnessVersion) -> Opcode {
         match version {
             WitnessVersion::V0 => OP_PUSHBYTES_0,
-            no => Opcode::from(OP_PUSHNUM_1.to_u8() + no.to_num() - 1),
+            no => Opcode::from(OP_1.to_u8() + no.to_num() - 1),
         }
     }
 }

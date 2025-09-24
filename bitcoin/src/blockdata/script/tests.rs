@@ -747,7 +747,7 @@ fn iterator() {
 
     assert_eq!(
         v_min,
-        vec![(0, Instruction::PushBytes([105].as_ref())), (2, Instruction::Op(opcodes::OP_NOP3))]
+        vec![(0, Instruction::PushBytes([105].as_ref())), (2, Instruction::Op(opcodes::all::OP_NOP3))]
     );
 
     assert_eq!(v_nonmin.unwrap_err(), Error::NonMinimalPush);
@@ -756,7 +756,7 @@ fn iterator() {
         v_nonmin_alt,
         vec![
             (0, Instruction::PushBytes([105, 0].as_ref())),
-            (3, Instruction::Op(opcodes::OP_NOP3))
+            (3, Instruction::Op(opcodes::all::OP_NOP3))
         ]
     );
 
@@ -858,34 +858,34 @@ fn script_get_sigop_count() {
             .push_slice([42; 20])
             .push_opcode(OP_EQUALVERIFY)
             .push_opcode(OP_CHECKSIGVERIFY)
-            .push_opcode(OP_PUSHNUM_1)
+            .push_opcode(OP_1)
             .into_script()
             .count_sigops(),
         1
     );
     let multi = Script::builder()
-        .push_opcode(OP_PUSHNUM_1)
+        .push_opcode(OP_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
         .push_slice([3; 33])
-        .push_opcode(OP_PUSHNUM_3)
+        .push_opcode(OP_3)
         .push_opcode(OP_CHECKMULTISIG)
         .into_script();
     assert_eq!(multi.count_sigops(), 3);
     assert_eq!(multi.count_sigops_legacy(), 20);
     let multi_verify = Script::builder()
-        .push_opcode(OP_PUSHNUM_1)
+        .push_opcode(OP_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
         .push_slice([3; 33])
-        .push_opcode(OP_PUSHNUM_3)
+        .push_opcode(OP_3)
         .push_opcode(OP_CHECKMULTISIGVERIFY)
-        .push_opcode(OP_PUSHNUM_1)
+        .push_opcode(OP_1)
         .into_script();
     assert_eq!(multi_verify.count_sigops(), 3);
     assert_eq!(multi_verify.count_sigops_legacy(), 20);
     let multi_nopushnum_pushdata = Script::builder()
-        .push_opcode(OP_PUSHNUM_1)
+        .push_opcode(OP_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
         .push_slice([3; 33])
@@ -894,7 +894,7 @@ fn script_get_sigop_count() {
     assert_eq!(multi_nopushnum_pushdata.count_sigops(), 20);
     assert_eq!(multi_nopushnum_pushdata.count_sigops_legacy(), 20);
     let multi_nopushnum_op = Script::builder()
-        .push_opcode(OP_PUSHNUM_1)
+        .push_opcode(OP_1)
         .push_slice([3; 33])
         .push_slice([3; 33])
         .push_opcode(OP_DROP)
@@ -1017,10 +1017,10 @@ fn instruction_script_num_parse() {
     ];
     let ops = [
         (Instruction::Op(opcodes::all::OP_PUSHDATA4), None),
-        (Instruction::Op(opcodes::all::OP_PUSHNUM_NEG1), Some(-1)),
+        (Instruction::Op(opcodes::all::OP_1NEGATE), Some(-1)),
         (Instruction::Op(opcodes::all::OP_RESERVED), None),
-        (Instruction::Op(opcodes::all::OP_PUSHNUM_1), Some(1)),
-        (Instruction::Op(opcodes::all::OP_PUSHNUM_16), Some(16)),
+        (Instruction::Op(opcodes::all::OP_1), Some(1)),
+        (Instruction::Op(opcodes::all::OP_16), Some(16)),
         (Instruction::Op(opcodes::all::OP_NOP), None),
     ];
     for (input, expected) in &push_bytes {
