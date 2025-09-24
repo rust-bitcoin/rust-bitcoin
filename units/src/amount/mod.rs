@@ -35,7 +35,7 @@ use self::error::{
 #[doc(inline)]
 pub use self::{
     signed::SignedAmount,
-    unsigned::Amount,
+    unsigned::{Amount, AmountEncoder},
 };
 #[cfg(feature = "encoding")]
 #[doc(no_inline)]
