@@ -2,8 +2,8 @@
 
 use std::hint::black_box;
 
-use bitcoin_hashes::{sha256, sha512};
 use bitcoin_hashes::cmp::fixed_time_eq;
+use bitcoin_hashes::{sha256, sha512};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn bench_cmp(c: &mut Criterion) {

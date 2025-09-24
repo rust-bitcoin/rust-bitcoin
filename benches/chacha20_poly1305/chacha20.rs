@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use std::hint::black_box;
-
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::time::Duration;
 
-use chacha20_poly1305::{chacha20::ChaCha20, Key, Nonce};
+use chacha20_poly1305::chacha20::ChaCha20;
+use chacha20_poly1305::{Key, Nonce};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 fn bench_chacha20(c: &mut Criterion) {
     let mut g = c.benchmark_group("chacha20");

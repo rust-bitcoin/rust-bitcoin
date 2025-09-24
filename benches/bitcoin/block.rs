@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use std::time::Duration;
 use std::hint::black_box;
+use std::time::Duration;
 
 use bitcoin::blockdata::block::Block;
 use bitcoin::consensus::{deserialize, Decodable, Encodable};
