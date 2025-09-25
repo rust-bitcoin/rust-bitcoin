@@ -240,8 +240,8 @@ all_opcodes! {
     OP_2DROP => 0x6d, "Drops the top two stack items.";
     OP_2DUP => 0x6e, "Duplicates the top two stack items as `AB` -> `ABAB`.";
     OP_3DUP => 0x6f, "Duplicates the three stack items as `ABC` -> `ABCABC`.";
-    OP_2OVER => 0x70, "Copies the two stack items two spaces back to the front, as `xxAB` -> `ABxxAB`.";
-    OP_2ROT => 0x71, "Moves the two stack items four spaces back to the front, as `xxxxAB` -> `ABxxxx`.";
+    OP_2OVER => 0x70, "Copies the pair of items two positions back to the top, as `[a b c d]` -> `[a b c d a b]`.";
+    OP_2ROT => 0x71, "The 5th and 6th items back are moved to the top, as `[a b c d e f]` -> `[c d e f a b]`.";
     OP_2SWAP => 0x72, "Swaps the top two pairs, as `ABCD` -> `CDAB`.";
     OP_IFDUP => 0x73, "Duplicate the top stack element unless it is zero.";
     OP_DEPTH => 0x74, "Push the current number of stack items onto the stack.";
