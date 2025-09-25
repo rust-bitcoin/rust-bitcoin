@@ -681,7 +681,7 @@ mod tests {
         assert_eq!(mb_hex, encode::serialize(&mb).to_lower_hex_string().as_str());
     }
 
-    /// Constructs a new CMerkleBlock using a list of txids which will be found in the
+    /// Constructs a new MerkleBlock using a list of txids which will be found in the
     /// given block.
     #[test]
     fn merkleblock_construct_from_txids_found() {
@@ -720,7 +720,7 @@ mod tests {
         assert_eq!(index[1], 8);
     }
 
-    /// Constructs a new CMerkleBlock using a list of txids which will not be found in the given block
+    /// Constructs a new MerkleBlock using a list of txids which will not be found in the given block
     #[test]
     fn merkleblock_construct_from_txids_not_found() {
         let block = get_block_13b8a();
