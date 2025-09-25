@@ -159,7 +159,7 @@ impl fmt::Display for Error {
             }
             ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
             ConsensusDeserialize(ref e) =>
-                write_err!(f, "bitcoin consensus deserializaton error"; e),
+                write_err!(f, "bitcoin consensus deserialization error"; e),
             ConsensusParse(ref e) =>
                 write_err!(f, "error parsing bitcoin consensus encoded object"; e),
             NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
