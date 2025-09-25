@@ -24,6 +24,9 @@ main() {
     need_nightly
     need_cargo_public_api
 
+    rm Cargo.lock               # Not sure if everyones shell has `cp --force`.
+    cp Cargo-recent.lock Cargo.lock
+
     # Just check crates that are stabilising.
     generate_api_files "units"
 
