@@ -37,7 +37,7 @@ impl<'sl> BytesEncoder<'sl> {
     }
 }
 
-impl Encoder<'_> for BytesEncoder<'_> {
+impl Encoder for BytesEncoder<'_> {
     fn current_chunk(&self) -> Option<&[u8]> {
         if let Some(compact_size) = self.compact_size.as_ref() {
             Some(compact_size)
@@ -67,7 +67,7 @@ impl<const N: usize> ArrayEncoder<N> {
     pub fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
 }
 
-impl<const N: usize> Encoder<'_> for ArrayEncoder<N> {
+impl<const N: usize> Encoder for ArrayEncoder<N> {
     fn current_chunk(&self) -> Option<&[u8]> { self.arr.as_ref().map(|x| &x[..]) }
 
     fn advance(&mut self) -> bool {
@@ -104,7 +104,7 @@ impl<'e, T: Encodable> SliceEncoder<'e, T> {
     }
 }
 
-impl<'e, T: Encodable> Encoder<'e> for SliceEncoder<'e, T> {
+impl<'e, T: Encodable> Encoder for SliceEncoder<'e, T> {
     fn current_chunk(&self) -> Option<&[u8]> {
         if let Some(compact_size) = self.compact_size.as_ref() {
             return Some(compact_size);
@@ -160,7 +160,7 @@ impl<A, B> Encoder2<A, B> {
     pub fn new(enc_1: A, enc_2: B) -> Self { Self { enc_idx: 0, enc_1, enc_2 } }
 }
 
-impl<'e, A: Encoder<'e>, B: Encoder<'e>> Encoder<'e> for Encoder2<A, B> {
+impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
     fn current_chunk(&self) -> Option<&[u8]> {
         if self.enc_idx == 0 {
             self.enc_1.current_chunk()
@@ -198,7 +198,7 @@ impl<A, B, C> Encoder3<A, B, C> {
     }
 }
 
-impl<'e, A: Encoder<'e>, B: Encoder<'e>, C: Encoder<'e>> Encoder<'e> for Encoder3<A, B, C> {
+impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<A, B, C> {
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
@@ -215,9 +215,7 @@ impl<A, B, C, D> Encoder4<A, B, C, D> {
     }
 }
 
-impl<'e, A: Encoder<'e>, B: Encoder<'e>, C: Encoder<'e>, D: Encoder<'e>> Encoder<'e>
-    for Encoder4<A, B, C, D>
-{
+impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<A, B, C, D> {
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
@@ -239,15 +237,8 @@ impl<A, B, C, D, E, F> Encoder6<A, B, C, D, E, F> {
     }
 }
 
-impl<
-        'e,
-        A: Encoder<'e>,
-        B: Encoder<'e>,
-        C: Encoder<'e>,
-        D: Encoder<'e>,
-        E: Encoder<'e>,
-        F: Encoder<'e>,
-    > Encoder<'e> for Encoder6<A, B, C, D, E, F>
+impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Encoder
+    for Encoder6<A, B, C, D, E, F>
 {
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     fn advance(&mut self) -> bool { self.inner.advance() }
@@ -261,7 +252,7 @@ mod tests {
     use super::*;
 
     // Run the encoder i.e., use it to encode into a vector.
-    fn run_encoder<'e>(mut encoder: impl Encoder<'e>) -> Vec<u8> {
+    fn run_encoder(mut encoder: impl Encoder) -> Vec<u8> {
         let mut vec = Vec::new();
         while let Some(chunk) = encoder.current_chunk() {
             vec.extend_from_slice(chunk);
@@ -311,4 +302,4 @@ mod tests {
         let want = [0u8];
         assert_eq!(got, want);
     }
- }
+}
