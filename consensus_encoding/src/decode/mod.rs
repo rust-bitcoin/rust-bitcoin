@@ -58,6 +58,14 @@ pub trait Decoder: Sized {
     /// May panic if called after a previous call to [`Self::push_bytes`] errored.
     #[must_use = "must check result to avoid panics on subsequent calls"]
     fn end(self) -> Result<Self::Output, Self::Error>;
+
+    /// Returns the minimum number of bytes needed to advance the state of the
+    /// decoder while ensuring there are no over-reads.
+    ///
+    /// Returns 0 if the decoder is complete and ready to finalize with [`Self::end`].
+    /// This is used by [`decode_from_read_unbuffered`] to optimize read sizes,
+    /// avoiding both inefficient under reads and unnecessary over-reads.
+    fn min_bytes_needed(&self) -> usize;
 }
 
 /// Decodes an object from a byte slice.
@@ -125,6 +133,89 @@ where
             return decoder.end().map_err(ReadError::Decode);
         }
     }
+}
+
+/// Decodes an object from an unbuffered reader using a fixed-size buffer.
+///
+/// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`].
+/// This function is only needed when you have an unbuffered reader which you
+/// cannot wrap. It will probably have worse performance.
+///
+/// # Buffer
+///
+/// Uses a fixed 4KB (4096 bytes) stack-allocated buffer that is reused across
+/// read operations. This size is a good balance between memory usage and
+/// system call efficiency for most use cases.
+///
+/// For different buffer sizes, use [`decode_from_read_unbuffered_with`].
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
+/// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "std")]
+pub fn decode_from_read_unbuffered<T, R>(
+    reader: R,
+) -> Result<T, ReadError<<T::Decoder as Decoder>::Error>>
+where
+    T: Decodable,
+    R: std::io::Read,
+{
+    decode_from_read_unbuffered_with::<T, R, 4096>(reader)
+}
+
+/// Decodes an object from an unbuffered reader using a custom-sized buffer.
+///
+/// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`].
+/// This function is only needed when you have an unbuffered reader which you
+/// cannot wrap. It will probably have worse performance.
+///
+/// # Buffer
+///
+/// The `BUFFER_SIZE` parameter controls the intermediate buffer size used for
+/// reading. The buffer is allocated on the stack (not heap) and reused across
+/// read operations. Larger buffers reduce the number of system calls, but use
+/// more memory.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
+/// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "std")]
+pub fn decode_from_read_unbuffered_with<T, R, const BUFFER_SIZE: usize>(
+    mut reader: R,
+) -> Result<T, ReadError<<T::Decoder as Decoder>::Error>>
+where
+    T: Decodable,
+    R: std::io::Read,
+{
+    let mut decoder = T::decoder();
+    let mut buffer = [0u8; BUFFER_SIZE];
+
+    while decoder.min_bytes_needed() > 0 {
+        // Only read what we need, up to buffer size.
+        let clamped_buffer = &mut buffer[..decoder.min_bytes_needed().min(BUFFER_SIZE)];
+        match reader.read(clamped_buffer) {
+            Ok(0) => {
+                // EOF, but still try to finalize the decoder.
+                return decoder.end().map_err(ReadError::Decode);
+            }
+            Ok(bytes_read) => {
+                if !decoder
+                    .push_bytes(&mut &clamped_buffer[..bytes_read])
+                    .map_err(ReadError::Decode)?
+                {
+                    return decoder.end().map_err(ReadError::Decode);
+                }
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::Interrupted => {
+                // Auto retry read for non-fatal error.
+            }
+            Err(e) => return Err(ReadError::Io(e)),
+        }
+    }
+
+    decoder.end().map_err(ReadError::Decode)
 }
 
 /// An error that can occur when reading and decoding from a buffered reader.
@@ -196,6 +287,8 @@ mod tests {
         }
 
         fn end(self) -> Result<Self::Output, Self::Error> { self.inner.end().map(TestArray) }
+
+        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
     }
 
     #[test]
@@ -269,5 +362,45 @@ mod tests {
 
         let mut buf = Vec::new();
         let _ = cursor.read_to_end(&mut buf);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn decode_from_read_unbuffered_success() {
+        let data = [1, 2, 3, 4];
+        let cursor = Cursor::new(&data);
+        let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+        assert!(result.is_ok());
+        let decoded = result.unwrap();
+        assert_eq!(decoded.0, [1, 2, 3, 4]);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn decode_from_read_unbuffered_unexpected_eof() {
+        let data = [1, 2, 3];
+        let cursor = Cursor::new(&data);
+        let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+        assert!(matches!(result, Err(ReadError::Decode(_))));
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn decode_from_read_unbuffered_empty() {
+        let data = [];
+        let cursor = Cursor::new(&data);
+        let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+        assert!(matches!(result, Err(ReadError::Decode(_))));
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn decode_from_read_unbuffered_extra_data() {
+        let data = [1, 2, 3, 4, 5, 6];
+        let cursor = Cursor::new(&data);
+        let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+        assert!(result.is_ok());
+        let decoded = result.unwrap();
+        assert_eq!(decoded.0, [1, 2, 3, 4]);
     }
 }
