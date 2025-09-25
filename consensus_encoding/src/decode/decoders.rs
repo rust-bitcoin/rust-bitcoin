@@ -2,9 +2,124 @@
 
 //! Primitive decoders.
 
-use core::fmt;
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+#[cfg(feature = "alloc")]
+use core::convert::Infallible;
+use core::{fmt, mem};
+
+#[cfg(feature = "alloc")]
+use internals::write_err;
 
 use super::Decoder;
+
+/// Maximum size, in bytes, of a vector we are allowed to decode.
+#[cfg(feature = "alloc")]
+const MAX_VEC_SIZE: u64 = 4_000_000;
+
+/// A decoder that decodes a byte vector.
+///
+/// The encoding is expected to start with the number of encoded bytes (length prefix).
+#[cfg(feature = "alloc")]
+pub struct ByteVecDecoder {
+    prefix_decoder: Option<CompactSizeDecoder>,
+    prefix_read: bool, // true if the length prefix has been read.
+    buffer: Vec<u8>,
+    bytes_expected: usize,
+    bytes_written: usize,
+}
+
+#[cfg(feature = "alloc")]
+impl ByteVecDecoder {
+    /// Constructs a new byte decoder.
+    pub fn new() -> Self {
+        Self {
+            prefix_decoder: None,
+            prefix_read: false,
+            buffer: Vec::new(),
+            bytes_expected: 0,
+            bytes_written: 0,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Default for ByteVecDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "alloc")]
+impl Decoder for ByteVecDecoder {
+    type Output = Vec<u8>;
+    type Error = ByteVecDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        use {ByteVecDecoderError as E, ByteVecDecoderErrorInner as Inner};
+
+        if !self.prefix_read {
+            let mut decoder = self.prefix_decoder.take().unwrap_or_default();
+
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
+                self.prefix_decoder = Some(decoder);
+                return Ok(true);
+            }
+            let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+
+            self.prefix_read = true;
+            self.bytes_expected =
+                cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
+
+            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
+            self.buffer = Vec::with_capacity(length as usize);
+        }
+
+        let remaining = self.bytes_expected - self.bytes_written;
+        let copy_len = bytes.len().min(remaining);
+
+        self.buffer.extend_from_slice(&bytes[..copy_len]);
+        self.bytes_written += copy_len;
+        *bytes = &bytes[copy_len..];
+
+        // Return true if we still need more data.
+        Ok(self.bytes_written < self.bytes_expected)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        use {ByteVecDecoderError as E, ByteVecDecoderErrorInner as Inner};
+
+        if self.bytes_written == self.bytes_expected {
+            Ok(self.buffer)
+        } else {
+            Err(E(Inner::UnexpectedEof(UnexpectedEofError {
+                missing: self.bytes_expected - self.bytes_written,
+            })))
+        }
+    }
+}
+
+/// Cast a decoded length prefix to a `usize`.
+///
+/// Consensus encoded vectors can be up to 4,000,000 bytes long. On 32-bit and 64-bit machines we
+/// can cast to a `usize` and move on with our lives. On a 16-bit machine however one cannot address
+/// that much memory so it is not possible to decode all consensus valid encoded objects.
+///
+/// # Errors
+///
+/// Errors if `n` is greater than 4,000,000.
+// FIXME: Are we ok with this being public?
+#[cfg(feature = "alloc")]
+pub fn cast_to_usize_if_valid(n: u64) -> Result<usize, LengthPrefixExceedsMaxError> {
+    if n > MAX_VEC_SIZE {
+        return Err(LengthPrefixExceedsMaxError { value: n });
+    }
+
+    // 4,000,000 needs more than 16 bits.
+    if mem::size_of::<usize>() <= 2 {
+        return Err(LengthPrefixExceedsMaxError { value: n });
+    }
+
+    Ok(n as usize)
+}
 
 /// A decoder that expects exactly N bytes and returns them as an array.
 pub struct ArrayDecoder<const N: usize> {
@@ -462,6 +577,77 @@ impl fmt::Display for CompactSizeDecoderError {
 #[cfg(feature = "std")]
 impl std::error::Error for CompactSizeDecoderError {}
 
+/// The error returned by the [`ByteVecDecoder`].
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ByteVecDecoderError(ByteVecDecoderErrorInner);
+
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ByteVecDecoderErrorInner {
+    /// Error decoding the byte vector length prefix.
+    LengthPrefixDecode(CompactSizeDecoderError),
+    /// Length prefix exceeds 4,000,000.
+    LengthPrefixInvalid(LengthPrefixExceedsMaxError),
+    /// Not enough bytes given to decoder.
+    UnexpectedEof(UnexpectedEofError),
+}
+
+#[cfg(feature = "alloc")]
+impl From<Infallible> for ByteVecDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "alloc")]
+impl fmt::Display for ByteVecDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ByteVecDecoderErrorInner as E;
+
+        match self.0 {
+            E::LengthPrefixDecode(ref e) => write_err!(f, "byte vec decoder error"; e),
+            E::LengthPrefixInvalid(ref e) => write_err!(f, "byte vec decoder error"; e),
+            E::UnexpectedEof(ref e) => write_err!(f, "byte vec decoder error"; e),
+        }
+    }
+}
+
+#[cfg(all(feature = "std", feature = "alloc"))]
+impl std::error::Error for ByteVecDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ByteVecDecoderErrorInner as E;
+
+        match self.0 {
+            E::LengthPrefixDecode(ref e) => Some(e),
+            E::LengthPrefixInvalid(ref e) => Some(e),
+            E::UnexpectedEof(ref e) => Some(e),
+        }
+    }
+}
+
+/// Length prefix exceeds max value (4,000,000).
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LengthPrefixExceedsMaxError {
+    /// Decoded value of the compact encoded length prefix.
+    value: u64,
+}
+
+#[cfg(feature = "alloc")]
+impl core::fmt::Display for LengthPrefixExceedsMaxError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let max = match mem::size_of::<usize>() {
+            1 => u8::MAX as u32,
+            2 => u16::MAX as u32,
+            _ => 4_000_000,
+        };
+
+        write!(f, "length prefix {} exceeds max value {}", self.value, max)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "alloc"))]
+impl std::error::Error for LengthPrefixExceedsMaxError {}
+
 /// Not enough bytes given to decoder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnexpectedEofError {
@@ -501,6 +687,26 @@ mod tests {
 
         let more_required = decoder.push_bytes(&mut c).unwrap();
         assert!(!more_required);
+
+        let got = decoder.end().unwrap();
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_multiple_pushes() {
+        let encoded = [0x08, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
+        let want = alloc::vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
+
+        let mut a = &encoded[..1];
+        let mut b = &encoded[1..5];
+        let mut c = &encoded[5..];
+
+        let mut decoder = ByteVecDecoder::default();
+
+        decoder.push_bytes(&mut a).unwrap();
+        decoder.push_bytes(&mut b).unwrap();
+        decoder.push_bytes(&mut c).unwrap();
 
         let got = decoder.end().unwrap();
         assert_eq!(got, want);
