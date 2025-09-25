@@ -2,6 +2,8 @@
 
 //! Primitive decoders.
 
+use core::fmt;
+
 use super::Decoder;
 
 /// A decoder that expects exactly N bytes and returns them as an array.
@@ -371,6 +373,138 @@ where
     fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
 }
 
+/// Decodes a compact size encoded integer.
+///
+/// For more information about decoder see the documentation of the [`Decoder`] trait.
+#[derive(Default, Debug, Clone)]
+pub struct CompactSizeDecoder {
+    buf: internals::array_vec::ArrayVec<u8, 9>,
+}
+
+impl Decoder for CompactSizeDecoder {
+    type Output = u64;
+    type Error = CompactSizeDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        if bytes.is_empty() {
+            return Ok(true);
+        }
+
+        if self.buf.is_empty() {
+            self.buf.push(bytes[0]);
+            *bytes = &bytes[1..];
+        }
+        let len = match self.buf[0] {
+            0xFF => 9,
+            0xFE => 5,
+            0xFD => 3,
+            _ => 1,
+        };
+        let to_copy = bytes.len().min(len - self.buf.len());
+        self.buf.extend_from_slice(&bytes[..to_copy]);
+        *bytes = &bytes[to_copy..];
+
+        Ok(self.buf.len() != len)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        use CompactSizeDecoderErrorInner as E;
+
+        fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
+            slice.try_into().map_err(|_| {
+                CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
+            })
+        }
+
+        let (first, payload) = self
+            .buf
+            .split_first()
+            .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
+
+        match *first {
+            0xFF => {
+                let x = u64::from_le_bytes(arr(payload)?);
+                if x < 0x100_000_000 {
+                    Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
+                } else {
+                    Ok(x)
+                }
+            }
+            0xFE => {
+                let x = u32::from_le_bytes(arr(payload)?);
+                if x < 0x10000 {
+                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+                } else {
+                    Ok(x.into())
+                }
+            }
+            0xFD => {
+                let x = u16::from_le_bytes(arr(payload)?);
+                if x < 0xFD {
+                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+                } else {
+                    Ok(x.into())
+                }
+            }
+            n => Ok(n.into()),
+        }
+    }
+
+    fn min_bytes_needed(&self) -> usize {
+        match self.buf.len() {
+            0 => 1,
+            already_read => match self.buf[0] {
+                0xFF => 9_usize.saturating_sub(already_read),
+                0xFE => 5_usize.saturating_sub(already_read),
+                0xFD => 3_usize.saturating_sub(already_read),
+                _ => 0,
+            },
+        }
+    }
+}
+
+/// An error consensus decoding a compact size encoded integer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompactSizeDecoderError(CompactSizeDecoderErrorInner);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum CompactSizeDecoderErrorInner {
+    /// Returned when the decoder reaches end of stream (EOF).
+    UnexpectedEof {
+        /// How many bytes were required.
+        required: usize,
+        /// How many bytes were received.
+        received: usize,
+    },
+    /// Returned when the encoding is not minimal
+    NonMinimal {
+        /// The encoded value.
+        value: u64,
+    },
+}
+
+impl fmt::Display for CompactSizeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use CompactSizeDecoderErrorInner as E;
+
+        match self.0 {
+            E::UnexpectedEof { required: 1, received: 0 } =>
+                write!(f, "required at least one byte but the input is empty"),
+            E::UnexpectedEof { required, received: 0 } =>
+                write!(f, "required at least {} bytes but the input is empty", required),
+            E::UnexpectedEof { required, received } => write!(
+                f,
+                "required at least {} bytes but only {} bytes were received",
+                required, received
+            ),
+            E::NonMinimal { value } => write!(f, "the value {} was not encoded minimally", value),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CompactSizeDecoderError {}
+
 /// Not enough bytes given to decoder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnexpectedEofError {
@@ -386,3 +520,61 @@ impl core::fmt::Display for UnexpectedEofError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnexpectedEofError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Stress test the push_bytes impl by passing in a single byte slice repeatedly.
+    macro_rules! check_decode_one_byte_at_a_time {
+        ($decoder:ident $($test_name:ident, $want:expr, $array:expr);* $(;)?) => {
+            $(
+                #[test]
+                #[allow(non_snake_case)]
+                fn $test_name() {
+                    let mut decoder = $decoder::default();
+
+                    for (i, _) in $array.iter().enumerate() {
+                        if i < $array.len() - 1 {
+                            let mut p = &$array[i..i+1];
+                            assert!(decoder.push_bytes(&mut p).unwrap());
+                        } else {
+                            // last byte: `push_bytes` should return false since no more bytes required.
+                            let mut p = &$array[i..];
+                            assert!(!decoder.push_bytes(&mut p).unwrap());
+                        }
+                    }
+
+                    let got = decoder.end().unwrap();
+                    assert_eq!(got, $want);
+                }
+            )*
+
+        }
+    }
+
+    check_decode_one_byte_at_a_time! {
+        CompactSizeDecoder
+        decode_compact_size_0x10, 0x10, [0x10];
+        decode_compact_size_0xFC, 0xFC, [0xFC];
+        decode_compact_size_0xFD, 0xFD, [0xFD, 0xFD, 0x00];
+        decode_compact_size_0x100, 0x100, [0xFD, 0x00, 0x01];
+        decode_compact_size_0xFFF, 0x0FFF, [0xFD, 0xFF, 0x0F];
+        decode_compact_size_0x0F0F_0F0F, 0x0F0F_0F0F, [0xFE, 0xF, 0xF, 0xF, 0xF];
+        decode_compact_size_0xF0F0_F0F0_F0E0, 0xF0F0_F0F0_F0E0, [0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0];
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn compact_size_zero() {
+        // Zero (eg for an empty vector) with a couple of arbitrary extra bytes.
+        let encoded = alloc::vec![0x00, 0xFF, 0xFF];
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = CompactSizeDecoder::default();
+        assert!(!decoder.push_bytes(&mut slice).unwrap());
+
+        let got = decoder.end().unwrap();
+        assert_eq!(got, 0);
+    }
+}

@@ -23,7 +23,8 @@ mod decode;
 mod encode;
 
 pub use self::decode::decoders::{
-    ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6, UnexpectedEofError,
+    ArrayDecoder, CompactSizeDecoder, CompactSizeDecoderError, Decoder2, Decoder3, Decoder4,
+    Decoder6, UnexpectedEofError,
 };
 #[cfg(feature = "std")]
 pub use self::decode::{
