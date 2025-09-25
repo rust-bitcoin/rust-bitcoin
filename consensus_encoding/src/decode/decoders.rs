@@ -6,11 +6,14 @@
 use alloc::vec::Vec;
 #[cfg(feature = "alloc")]
 use core::convert::Infallible;
+use core::marker::PhantomData;
 use core::{fmt, mem};
 
 #[cfg(feature = "alloc")]
 use internals::write_err;
 
+#[cfg(feature = "alloc")]
+use super::Decodable;
 use super::Decoder;
 
 /// Maximum size, in bytes, of a vector we are allowed to decode.
@@ -92,6 +95,97 @@ impl Decoder for ByteVecDecoder {
         } else {
             Err(E(Inner::UnexpectedEof(UnexpectedEofError {
                 missing: self.bytes_expected - self.bytes_written,
+            })))
+        }
+    }
+}
+
+/// A decoder that decodes a vector of `T`s.
+///
+/// The decoding is expected to start with expected number of items in the vector.
+#[cfg(feature = "alloc")]
+pub struct VecDecoder<T: Decodable> {
+    prefix_decoder: Option<CompactSizeDecoder>,
+    prefix_read: bool, // true if the length prefix has been read.
+    length: usize,
+    buffer: Vec<T>,
+
+    decoder: Option<<T as Decodable>::Decoder>,
+    _marker: PhantomData<T>,
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Decodable> VecDecoder<T> {
+    /// Constructs a new byte decoder.
+    pub fn new() -> Self {
+        Self {
+            prefix_decoder: None,
+            prefix_read: false,
+            length: 0,
+            buffer: Vec::new(),
+            decoder: None,
+            _marker: PhantomData,
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Decodable> Default for VecDecoder<T> {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Decodable> Decoder for VecDecoder<T> {
+    type Output = Vec<T>;
+    type Error = VecDecoderError<<<T as Decodable>::Decoder as Decoder>::Error>;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        use {VecDecoderError as E, VecDecoderErrorInner as Inner};
+
+        if !self.prefix_read {
+            let mut decoder = self.prefix_decoder.take().unwrap_or_default();
+
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
+                self.prefix_decoder = Some(decoder);
+                return Ok(true);
+            }
+            let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+
+            self.prefix_read = true;
+            self.length =
+                cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
+
+            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
+            self.buffer = Vec::with_capacity(self.length);
+        }
+
+        while !bytes.is_empty() {
+            let mut decoder = self.decoder.take().unwrap_or_else(T::decoder);
+
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::Item(e)))? {
+                self.decoder = Some(decoder);
+                return Ok(true);
+            }
+
+            let item = decoder.end().map_err(|e| E(Inner::Item(e)))?;
+            self.buffer.push(item);
+        }
+
+        if self.buffer.len() == self.length {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        use VecDecoderErrorInner as E;
+
+        if self.buffer.len() == self.length {
+            Ok(self.buffer)
+        } else {
+            Err(VecDecoderError(E::UnexpectedEof(UnexpectedEofError {
+                missing: self.length - self.buffer.len(),
             })))
         }
     }
@@ -624,6 +718,63 @@ impl std::error::Error for ByteVecDecoderError {
     }
 }
 
+/// The error returned by the [`VecDecoder`].
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VecDecoderError<Err>(VecDecoderErrorInner<Err>);
+
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum VecDecoderErrorInner<Err> {
+    /// Error decoding the vector length prefix.
+    LengthPrefixDecode(CompactSizeDecoderError),
+    /// Length prefix exceeds 4,000,000.
+    LengthPrefixInvalid(LengthPrefixExceedsMaxError),
+    /// Error while decoding an item.
+    Item(Err),
+    /// Not enough bytes given to decoder.
+    UnexpectedEof(UnexpectedEofError),
+}
+
+#[cfg(feature = "alloc")]
+impl<Err> From<Infallible> for VecDecoderError<Err> {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "alloc")]
+impl<Err> fmt::Display for VecDecoderError<Err>
+where
+    Err: fmt::Display + fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use VecDecoderErrorInner as E;
+
+        match self.0 {
+            E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
+            E::LengthPrefixInvalid(ref e) => write_err!(f, "vec decoder error"; e),
+            E::Item(ref e) => write_err!(f, "vec decoder error"; e),
+            E::UnexpectedEof(ref e) => write_err!(f, "vec decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<Err> std::error::Error for VecDecoderError<Err>
+where
+    Err: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use VecDecoderErrorInner as E;
+
+        match self.0 {
+            E::LengthPrefixDecode(ref e) => Some(e),
+            E::LengthPrefixInvalid(ref e) => Some(e),
+            E::Item(ref e) => Some(e),
+            E::UnexpectedEof(ref e) => Some(e),
+        }
+    }
+}
+
 /// Length prefix exceeds max value (4,000,000).
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -666,6 +817,11 @@ impl std::error::Error for UnexpectedEofError {}
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::vec;
+    #[cfg(feature = "alloc")]
+    use alloc::vec::Vec;
+
     use super::*;
 
     #[test]
@@ -696,7 +852,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn byte_vec_decoder_multiple_pushes() {
         let encoded = [0x08, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
-        let want = alloc::vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
+        let want = vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
 
         let mut a = &encoded[..1];
         let mut b = &encoded[1..5];
@@ -709,6 +865,117 @@ mod tests {
         decoder.push_bytes(&mut c).unwrap();
 
         let got = decoder.end().unwrap();
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct Inner(u32);
+
+    /// The decoder for the [`Inner`] type.
+    #[cfg(feature = "alloc")]
+    pub struct InnerDecoder(ArrayDecoder<4>);
+
+    #[cfg(feature = "alloc")]
+    impl Decoder for InnerDecoder {
+        type Output = Inner;
+        type Error = UnexpectedEofError;
+
+        #[inline]
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+            self.0.push_bytes(bytes)
+        }
+
+        #[inline]
+        fn end(self) -> Result<Self::Output, Self::Error> {
+            let n = u32::from_le_bytes(self.0.end()?);
+            Ok(Inner(n))
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    impl Decodable for Inner {
+        type Decoder = InnerDecoder;
+        fn decoder() -> Self::Decoder { InnerDecoder(ArrayDecoder::<4>::new()) }
+    }
+
+    #[cfg(feature = "alloc")]
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct Test(Vec<Inner>);
+
+    /// The decoder for the [`Test`] type.
+    #[cfg(feature = "alloc")]
+    pub struct TestDecoder(VecDecoder<Inner>);
+
+    #[cfg(feature = "alloc")]
+    impl Decoder for TestDecoder {
+        type Output = Test;
+        type Error = VecDecoderError<UnexpectedEofError>;
+
+        #[inline]
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+            self.0.push_bytes(bytes)
+        }
+
+        #[inline]
+        fn end(self) -> Result<Self::Output, Self::Error> {
+            let v = self.0.end()?;
+            Ok(Test(v))
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    impl Decodable for Test {
+        type Decoder = TestDecoder;
+        fn decoder() -> Self::Decoder { TestDecoder(VecDecoder::new()) }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_one_item() {
+        let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE];
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = Test::decoder();
+        decoder.push_bytes(&mut slice).unwrap();
+
+        let got = decoder.end().unwrap();
+        let want = Test(vec![Inner(0xDEAD_BEEF)]);
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_two_items() {
+        let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = Test::decoder();
+        decoder.push_bytes(&mut slice).unwrap();
+
+        let got = decoder.end().unwrap();
+        let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_multiple_calls_to_push_bytes() {
+        let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
+
+        let mut a = &encoded.as_slice()[..2]; // 0x02, 0xEF
+        let mut b = &encoded.as_slice()[2..5]; // 0xBE, 0xAD
+        let mut c = &encoded.as_slice()[5..]; // 0xDE, 0xBE, 0xBA, 0xFE, 0xCA
+        let mut decoder = Test::decoder();
+        decoder.push_bytes(&mut a).unwrap();
+        decoder.push_bytes(&mut b).unwrap();
+        decoder.push_bytes(&mut c).unwrap();
+
+        let got = decoder.end().unwrap();
+        let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
+
         assert_eq!(got, want);
     }
 }

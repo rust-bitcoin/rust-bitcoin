@@ -25,6 +25,7 @@ mod encode;
 #[cfg(feature = "alloc")]
 pub use self::decode::decoders::{
     cast_to_usize_if_valid, ByteVecDecoder, ByteVecDecoderError, LengthPrefixExceedsMaxError,
+    VecDecoder, VecDecoderError,
 };
 pub use self::decode::decoders::{
     ArrayDecoder, CompactSizeDecoder, CompactSizeDecoderError, Decoder2, Decoder3, Decoder4,
