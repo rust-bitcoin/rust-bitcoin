@@ -597,6 +597,9 @@ impl encoding::Decoder for AmountDecoder {
         let a = u64::from_le_bytes(self.0.end()?);
         Ok(Amount::from_sat(a).map_err(AmountDecoderError::OutOfRange)?)
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { self.0.min_bytes_needed() }
 }
 
 #[cfg(feature = "encoding")]

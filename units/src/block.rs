@@ -176,6 +176,9 @@ impl encoding::Decoder for BlockHeightDecoder {
         let n = u32::from_le_bytes(self.0.end()?);
         Ok(BlockHeight::from_u32(n))
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { self.0.min_bytes_needed() }
 }
 
 #[cfg(feature = "encoding")]

@@ -26,7 +26,9 @@ pub use self::decode::decoders::{
     ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6, UnexpectedEofError,
 };
 #[cfg(feature = "std")]
-pub use self::decode::{decode_from_read, ReadError};
+pub use self::decode::{
+    decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with, ReadError,
+};
 pub use self::decode::{decode_from_slice, Decodable, Decoder};
 #[cfg(feature = "alloc")]
 pub use self::encode::encode_to_vec;

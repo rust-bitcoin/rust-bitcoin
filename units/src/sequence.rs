@@ -299,6 +299,9 @@ impl encoding::Decoder for SequenceDecoder {
         let n = u32::from_le_bytes(self.0.end()?);
         Ok(Sequence::from_consensus(n))
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { self.0.min_bytes_needed() }
 }
 
 #[cfg(feature = "encoding")]
