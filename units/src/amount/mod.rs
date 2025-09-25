@@ -37,6 +37,9 @@ pub use self::{
     signed::SignedAmount,
     unsigned::Amount,
 };
+#[doc(inline)]
+#[cfg(feature = "encoding")]
+pub use self::unsigned::AmountDecoder;
 #[cfg(feature = "encoding")]
 #[doc(no_inline)]
 pub use self::error::AmountDecoderError;
