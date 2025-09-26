@@ -111,24 +111,24 @@ impl<'e, T: Encodable> Encoder for SliceEncoder<'e, T> {
     }
 
     fn advance(&mut self) -> bool {
+        // Handle compact_size first, regardless of whether we have elements.
+        if self.compact_size.is_some() {
+            self.compact_size = None;
+            return self.cur_enc.is_some();
+        }
+
         let Some(cur) = self.cur_enc.as_mut() else {
             return false;
         };
 
         loop {
-            if self.compact_size.is_some() {
-                // On the first call to advance(), just mark the compact_size as already
-                // yielded and leave self.sl alone.
-                self.compact_size = None;
-            } else {
-                // On subsequent calls, attempt to advance the current encoder and return
-                // success if this succeeds.
-                if cur.advance() {
-                    return true;
-                }
-                // self.sl guaranteed to be non-empty if cur is non-None.
-                self.sl = &self.sl[1..];
+            // On subsequent calls, attempt to advance the current encoder and return
+            // success if this succeeds.
+            if cur.advance() {
+                return true;
             }
+            // self.sl guaranteed to be non-empty if cur is non-None.
+            self.sl = &self.sl[1..];
 
             // If advancing the current encoder failed, attempt to move to the next encoder.
             if let Some(x) = self.sl.first() {
