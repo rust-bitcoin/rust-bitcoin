@@ -241,61 +241,106 @@ impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Enc
 }
 
 #[cfg(test)]
-#[cfg(feature = "alloc")]
 mod tests {
-    use alloc::vec::Vec;
-
     use super::*;
 
-    // Run the encoder i.e., use it to encode into a vector.
-    fn run_encoder(mut encoder: impl Encoder) -> Vec<u8> {
-        let mut vec = Vec::new();
-        while let Some(chunk) = encoder.current_chunk() {
-            vec.extend_from_slice(chunk);
-            encoder.advance();
+    struct TestBytes<'a>(&'a [u8], bool);
+
+    impl<'a> Encodable for TestBytes<'a> {
+        type Encoder<'s>
+            = BytesEncoder<'s>
+        where
+            Self: 's;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            if self.1 {
+                BytesEncoder::with_length_prefix(self.0)
+            } else {
+                BytesEncoder::without_length_prefix(self.0)
+            }
         }
-        vec
+    }
+
+    struct TestArray<const N: usize>([u8; N]);
+
+    impl<const N: usize> Encodable for TestArray<N> {
+        type Encoder<'s>
+            = ArrayEncoder<N>
+        where
+            Self: 's;
+
+        fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
+    }
+
+    #[test]
+    fn encode_array_with_data() {
+        // Should have one chunk with the array data, then exhausted.
+        let test_array = TestArray([1u8, 2, 3, 4]);
+        let mut encoder = test_array.encoder();
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3, 4][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_empty_array() {
+        // Empty array should have one empty chunk, then exhausted.
+        let test_array = TestArray([]);
+        let mut encoder = test_array.encoder();
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
     }
 
     #[test]
     fn encode_byte_slice_without_prefix() {
+        // Should have one chunk with the byte data, then exhausted.
         let obj = [1u8, 2, 3];
+        let test_bytes = TestBytes(&obj, false);
+        let mut encoder = test_bytes.encoder();
 
-        let encoder = BytesEncoder::without_length_prefix(&obj);
-        let got = run_encoder(encoder);
-
-        assert_eq!(got, obj);
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
     }
 
     #[test]
     fn encode_empty_byte_slice_without_prefix() {
+        // Should have one empty chunk, then exhausted.
         let obj = [];
+        let test_bytes = TestBytes(&obj, false);
+        let mut encoder = test_bytes.encoder();
 
-        let encoder = BytesEncoder::without_length_prefix(&obj);
-        let got = run_encoder(encoder);
-
-        assert_eq!(got, obj);
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
     }
 
     #[test]
     fn encode_byte_slice_with_prefix() {
+        // Should have length prefix chunk, then data chunk, then exhausted.
         let obj = [1u8, 2, 3];
+        let test_bytes = TestBytes(&obj, true);
+        let mut encoder = test_bytes.encoder();
 
-        let encoder = BytesEncoder::with_length_prefix(&obj);
-        let got = run_encoder(encoder);
-
-        let want = [3u8, 1, 2, 3];
-        assert_eq!(got, want);
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
     }
 
     #[test]
     fn encode_empty_byte_slice_with_prefix() {
+        // Should have length prefix chunk (0), then empty data chunk, then exhausted.
         let obj = [];
+        let test_bytes = TestBytes(&obj, true);
+        let mut encoder = test_bytes.encoder();
 
-        let encoder = BytesEncoder::with_length_prefix(&obj);
-        let got = run_encoder(encoder);
-
-        let want = [0u8];
-        assert_eq!(got, want);
+        assert_eq!(encoder.current_chunk(), Some(&[0u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
     }
 }
