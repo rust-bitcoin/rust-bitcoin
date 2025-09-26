@@ -6,9 +6,33 @@ use core::convert::Infallible;
 use core::fmt;
 
 use internals::error::InputString;
+#[cfg(feature = "encoding")]
+use internals::write_err;
 
 use super::{Height, MedianTimePast, LOCK_TIME_THRESHOLD};
 use crate::parse_int::ParseIntError;
+
+/// An error consensus decoding an `LockTime`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LockTimeDecoderError(pub(super) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for LockTimeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for LockTimeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "lock time decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for LockTimeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 /// Tried to satisfy a lock-by-time lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]

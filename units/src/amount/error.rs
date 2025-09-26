@@ -394,8 +394,24 @@ impl std::error::Error for PossiblyConfusingDenominationError {
 /// An error consensus decoding an `Amount`.
 #[cfg(feature = "encoding")]
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum AmountDecoderError {
+pub struct AmountDecoderError(pub(super) AmountDecoderErrorInner);
+
+#[cfg(feature = "encoding")]
+impl AmountDecoderError {
+    /// Constructs an EOF error.
+    pub(super) fn eof(e: encoding::UnexpectedEofError) -> Self {
+        Self(AmountDecoderErrorInner::UnexpectedEof(e))
+    }
+
+    /// Constructs an out of range (`Amount::from_sat`) error.
+    pub(super) fn out_of_range(e: OutOfRangeError) -> Self {
+        Self(AmountDecoderErrorInner::OutOfRange(e))
+    }
+}
+
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(super) enum AmountDecoderErrorInner {
     /// Not enough bytes given to decoder.
     UnexpectedEof(encoding::UnexpectedEofError),
     /// Decoded amount is too big.
@@ -408,16 +424,13 @@ impl From<Infallible> for AmountDecoderError {
 }
 
 #[cfg(feature = "encoding")]
-impl From<encoding::UnexpectedEofError> for AmountDecoderError {
-    fn from(e: encoding::UnexpectedEofError) -> Self { Self::UnexpectedEof(e) }
-}
-
-#[cfg(feature = "encoding")]
 impl fmt::Display for AmountDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::UnexpectedEof(ref e) => write_err!(f, "decode error"; e),
-            Self::OutOfRange(ref e) => write_err!(f, "decode error"; e),
+        use AmountDecoderErrorInner as E;
+
+        match self.0 {
+            E::UnexpectedEof(ref e) => write_err!(f, "decode error"; e),
+            E::OutOfRange(ref e) => write_err!(f, "decode error"; e),
         }
     }
 }
@@ -425,9 +438,11 @@ impl fmt::Display for AmountDecoderError {
 #[cfg(all(feature = "std", feature = "encoding"))]
 impl std::error::Error for AmountDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::UnexpectedEof(ref e) => Some(e),
-            Self::OutOfRange(ref e) => Some(e),
+        use AmountDecoderErrorInner as E;
+
+        match self.0 {
+            E::UnexpectedEof(ref e) => Some(e),
+            E::OutOfRange(ref e) => Some(e),
         }
     }
 }

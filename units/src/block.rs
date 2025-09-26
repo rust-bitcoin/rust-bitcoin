@@ -11,10 +11,14 @@
 //! The difference between these types and the locktime types is that these types are thin wrappers
 //! whereas the locktime types contain more complex locktime specific abstractions.
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "encoding")]
+use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -162,18 +166,29 @@ impl encoding::Encodable for BlockHeight {
 pub struct BlockHeightDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
+impl Default for BlockHeightDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl BlockHeightDecoder {
+    /// Constructs a new [`BlockHeight`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
 impl encoding::Decoder for BlockHeightDecoder {
     type Output = BlockHeight;
-    type Error = encoding::UnexpectedEofError;
+    type Error = BlockHeightDecoderError;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes)
+        self.0.push_bytes(bytes).map_err(BlockHeightDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end()?);
+        let n = u32::from_le_bytes(self.0.end().map_err(BlockHeightDecoderError)?);
         Ok(BlockHeight::from_u32(n))
     }
 }
@@ -182,6 +197,28 @@ impl encoding::Decoder for BlockHeightDecoder {
 impl encoding::Decodable for BlockHeight {
     type Decoder = BlockHeightDecoder;
     fn decoder() -> Self::Decoder { BlockHeightDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+/// An error consensus decoding an `BlockHeight`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockHeightDecoderError(encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for BlockHeightDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for BlockHeightDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "block height decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for BlockHeightDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl_u32_wrapper! {
