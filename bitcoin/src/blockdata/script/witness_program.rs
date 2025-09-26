@@ -133,7 +133,7 @@ impl WitnessProgram {
         self.version == WitnessVersion::V0 && self.program.len() == 20
     }
 
-    /// Returns true if this witness program is for a P2WPSH output.
+    /// Returns true if this witness program is for a P2WSH output.
     pub fn is_p2wsh(&self) -> bool {
         self.version == WitnessVersion::V0 && self.program.len() == 32
     }
