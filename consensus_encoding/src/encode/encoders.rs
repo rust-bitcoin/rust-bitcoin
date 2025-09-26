@@ -68,8 +68,10 @@ impl<const N: usize> ArrayEncoder<N> {
 }
 
 impl<const N: usize> Encoder for ArrayEncoder<N> {
+    #[inline]
     fn current_chunk(&self) -> Option<&[u8]> { self.arr.as_ref().map(|x| &x[..]) }
 
+    #[inline]
     fn advance(&mut self) -> bool {
         self.arr = None;
         false
@@ -161,6 +163,7 @@ impl<A, B> Encoder2<A, B> {
 }
 
 impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
+    #[inline]
     fn current_chunk(&self) -> Option<&[u8]> {
         if self.enc_idx == 0 {
             self.enc_1.current_chunk()
@@ -169,6 +172,7 @@ impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
         }
     }
 
+    #[inline]
     fn advance(&mut self) -> bool {
         if self.enc_idx == 0 {
             if !self.enc_1.advance() {
@@ -199,7 +203,9 @@ impl<A, B, C> Encoder3<A, B, C> {
 }
 
 impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<A, B, C> {
+    #[inline]
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
+    #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
 
@@ -216,7 +222,9 @@ impl<A, B, C, D> Encoder4<A, B, C, D> {
 }
 
 impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<A, B, C, D> {
+    #[inline]
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
+    #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
 
@@ -240,7 +248,9 @@ impl<A, B, C, D, E, F> Encoder6<A, B, C, D, E, F> {
 impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Encoder
     for Encoder6<A, B, C, D, E, F>
 {
+    #[inline]
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
+    #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
 
