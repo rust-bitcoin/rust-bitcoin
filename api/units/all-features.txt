@@ -17,6 +17,7 @@ impl bitcoin_units::BlockTime
 impl bitcoin_units::FeeRate
 impl bitcoin_units::SignedAmount
 impl bitcoin_units::Weight
+impl bitcoin_units::amount::AmountDecoder
 impl bitcoin_units::amount::Denomination
 impl bitcoin_units::amount::Display
 impl bitcoin_units::amount::error::OutOfRangeError
@@ -55,6 +56,7 @@ impl consensus_encoding::decode::Decodable for bitcoin_units::BlockTime
 impl consensus_encoding::decode::Decodable for bitcoin_units::block::BlockHeight
 impl consensus_encoding::decode::Decodable for bitcoin_units::locktime::absolute::LockTime
 impl consensus_encoding::decode::Decodable for bitcoin_units::sequence::Sequence
+impl consensus_encoding::decode::Decoder for bitcoin_units::amount::AmountDecoder
 impl consensus_encoding::decode::Decoder for bitcoin_units::block::BlockHeightDecoder
 impl consensus_encoding::decode::Decoder for bitcoin_units::locktime::absolute::LockTimeDecoder
 impl consensus_encoding::decode::Decoder for bitcoin_units::sequence::SequenceDecoder
@@ -343,6 +345,7 @@ impl core::convert::TryFrom<bitcoin_units::block::BlockMtp> for bitcoin_units::l
 impl core::convert::TryFrom<bitcoin_units::sequence::Sequence> for bitcoin_units::locktime::relative::LockTime
 impl core::default::Default for bitcoin_units::Amount
 impl core::default::Default for bitcoin_units::SignedAmount
+impl core::default::Default for bitcoin_units::amount::AmountDecoder
 impl core::default::Default for bitcoin_units::block::BlockHeightDecoder
 impl core::default::Default for bitcoin_units::block::BlockHeightInterval
 impl core::default::Default for bitcoin_units::block::BlockMtpInterval
@@ -538,6 +541,7 @@ impl core::marker::Freeze for bitcoin_units::BlockTime
 impl core::marker::Freeze for bitcoin_units::FeeRate
 impl core::marker::Freeze for bitcoin_units::SignedAmount
 impl core::marker::Freeze for bitcoin_units::Weight
+impl core::marker::Freeze for bitcoin_units::amount::AmountDecoder
 impl core::marker::Freeze for bitcoin_units::amount::Denomination
 impl core::marker::Freeze for bitcoin_units::amount::Display
 impl core::marker::Freeze for bitcoin_units::amount::error::AmountDecoderError
@@ -599,6 +603,7 @@ impl core::marker::Send for bitcoin_units::BlockTime
 impl core::marker::Send for bitcoin_units::FeeRate
 impl core::marker::Send for bitcoin_units::SignedAmount
 impl core::marker::Send for bitcoin_units::Weight
+impl core::marker::Send for bitcoin_units::amount::AmountDecoder
 impl core::marker::Send for bitcoin_units::amount::Denomination
 impl core::marker::Send for bitcoin_units::amount::Display
 impl core::marker::Send for bitcoin_units::amount::error::AmountDecoderError
@@ -712,6 +717,7 @@ impl core::marker::Sync for bitcoin_units::BlockTime
 impl core::marker::Sync for bitcoin_units::FeeRate
 impl core::marker::Sync for bitcoin_units::SignedAmount
 impl core::marker::Sync for bitcoin_units::Weight
+impl core::marker::Sync for bitcoin_units::amount::AmountDecoder
 impl core::marker::Sync for bitcoin_units::amount::Denomination
 impl core::marker::Sync for bitcoin_units::amount::Display
 impl core::marker::Sync for bitcoin_units::amount::error::AmountDecoderError
@@ -773,6 +779,7 @@ impl core::marker::Unpin for bitcoin_units::BlockTime
 impl core::marker::Unpin for bitcoin_units::FeeRate
 impl core::marker::Unpin for bitcoin_units::SignedAmount
 impl core::marker::Unpin for bitcoin_units::Weight
+impl core::marker::Unpin for bitcoin_units::amount::AmountDecoder
 impl core::marker::Unpin for bitcoin_units::amount::Denomination
 impl core::marker::Unpin for bitcoin_units::amount::Display
 impl core::marker::Unpin for bitcoin_units::amount::error::AmountDecoderError
@@ -1060,6 +1067,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::BlockTime
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::FeeRate
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::SignedAmount
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::Weight
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::AmountDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Denomination
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Display
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::error::AmountDecoderError
@@ -1121,6 +1129,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::BlockTime
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::FeeRate
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::SignedAmount
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::Weight
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::AmountDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Denomination
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Display
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::error::AmountDecoderError
@@ -1882,6 +1891,10 @@ pub fn bitcoin_units::Weight::sum<I>(iter: I) -> Self where I: core::iter::trait
 pub fn bitcoin_units::Weight::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::Weight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::Weight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::amount::AmountDecoder::default() -> Self
+pub fn bitcoin_units::amount::AmountDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_units::amount::AmountDecoder::new() -> Self
+pub fn bitcoin_units::amount::AmountDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::amount::Denomination::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
@@ -2501,6 +2514,7 @@ pub struct bitcoin_units::absolute::error::LockTimeDecoderError(_)
 pub struct bitcoin_units::absolute::error::ParseHeightError(_)
 pub struct bitcoin_units::absolute::error::ParseTimeError(_)
 pub struct bitcoin_units::amount::Amount(_)
+pub struct bitcoin_units::amount::AmountDecoder(_)
 pub struct bitcoin_units::amount::AmountDecoderError(_)
 pub struct bitcoin_units::amount::Display
 pub struct bitcoin_units::amount::OutOfRangeError
@@ -2640,7 +2654,7 @@ pub type &i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::result::Num
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Amount>>::Output
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Weight>>::Output
 pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::result::NumOpResult<bitcoin_units::Amount>>>::Output
-pub type bitcoin_units::Amount::Decoder = bitcoin_units::amount::unsigned::AmountDecoder
+pub type bitcoin_units::Amount::Decoder = bitcoin_units::amount::AmountDecoder
 pub type bitcoin_units::Amount::Encoder<'e> = bitcoin_units::amount::unsigned::AmountEncoder
 pub type bitcoin_units::Amount::Err = bitcoin_units::amount::error::ParseError
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
@@ -2699,6 +2713,8 @@ pub type bitcoin_units::Weight::Output = <bitcoin_units::Weight as core::ops::ar
 pub type bitcoin_units::Weight::Output = bitcoin_units::Weight
 pub type bitcoin_units::Weight::Output = bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub type bitcoin_units::Weight::Output = u64
+pub type bitcoin_units::amount::AmountDecoder::Error = bitcoin_units::amount::error::AmountDecoderError
+pub type bitcoin_units::amount::AmountDecoder::Output = bitcoin_units::Amount
 pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::error::ParseDenominationError
 pub type bitcoin_units::block::BlockHeight::Decoder = bitcoin_units::block::BlockHeightDecoder
 pub type bitcoin_units::block::BlockHeight::Encoder<'e> = bitcoin_units::block::BlockHeightEncoder
