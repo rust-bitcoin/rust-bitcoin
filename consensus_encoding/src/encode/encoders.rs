@@ -343,4 +343,45 @@ mod tests {
         assert!(!encoder.advance());
         assert_eq!(encoder.current_chunk(), None);
     }
+
+    #[test]
+    fn encode_slice_with_elements() {
+        // Should have length prefix chunk, then element chunks, then exhausted.
+        let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
+        let mut encoder = SliceEncoder::with_length_prefix(slice);
+
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x34, 0x12, 0x00, 0x00][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x78, 0x56, 0x00, 0x00][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_empty_slice() {
+        // Should have only length prefix chunk (0), then exhausted.
+        let slice: &[TestArray<4>] = &[];
+        let mut encoder = SliceEncoder::with_length_prefix(slice);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0u8][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_slice_with_zero_sized_arrays() {
+        // Should have length prefix chunk, then empty array chunks, then exhausted.
+        let slice = &[TestArray([]), TestArray([])];
+        let mut encoder = SliceEncoder::with_length_prefix(slice);
+
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
 }
