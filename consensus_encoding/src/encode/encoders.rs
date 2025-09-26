@@ -79,15 +79,10 @@ impl<const N: usize> Encoder for ArrayEncoder<N> {
 /// An encoder for a list of encodable types.
 pub struct SliceEncoder<'e, T: Encodable> {
     /// The list of references to the objects we are encoding.
-    ///
-    /// This is **never** mutated. All accesses are done by array accesses because
-    /// of lifetimes and the borrow checker.
     sl: &'e [T],
     /// The length prefix.
     compact_size: Option<ArrayVec<u8, SIZE>>,
-    /// Index into `sl` of the element we are currently encoding.
-    cur_idx: usize,
-    /// Current encoder (for `sl[self.cur_idx]`).
+    /// Encoder for the current object being encoded.
     cur_enc: Option<T::Encoder<'e>>,
 }
 
@@ -100,7 +95,7 @@ impl<'e, T: Encodable> SliceEncoder<'e, T> {
         // In this `map` call we cannot remove the closure. Seems to be a bug in the compiler.
         // Perhaps https://github.com/rust-lang/rust/issues/102540 which is 3 years old with
         // no replies or even an acknowledgement. We will not bother filing our own issue.
-        Self { sl, compact_size, cur_idx: 0, cur_enc: sl.first().map(|x| T::encoder(x)) }
+        Self { sl, compact_size, cur_enc: sl.first().map(|x| T::encoder(x)) }
     }
 }
 
@@ -123,7 +118,7 @@ impl<'e, T: Encodable> Encoder for SliceEncoder<'e, T> {
         loop {
             if self.compact_size.is_some() {
                 // On the first call to advance(), just mark the compact_size as already
-                // yielded and leave self.cur_idx at 0.
+                // yielded and leave self.sl alone.
                 self.compact_size = None;
             } else {
                 // On subsequent calls, attempt to advance the current encoder and return
@@ -131,11 +126,12 @@ impl<'e, T: Encodable> Encoder for SliceEncoder<'e, T> {
                 if cur.advance() {
                     return true;
                 }
-                self.cur_idx += 1;
+                // self.sl guaranteed to be non-empty if cur is non-None.
+                self.sl = &self.sl[1..];
             }
 
             // If advancing the current encoder failed, attempt to move to the next encoder.
-            if let Some(x) = self.sl.get(self.cur_idx) {
+            if let Some(x) = self.sl.first() {
                 *cur = x.encoder();
                 if cur.current_chunk().is_some() {
                     return true;
