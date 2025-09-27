@@ -21,6 +21,7 @@ jobs:
           bitcoin_arbitrary_block,
           bitcoin_arbitrary_script,
           bitcoin_arbitrary_transaction,
+          bitcoin_arbitrary_witness,
           bitcoin_deserialize_block,
           bitcoin_deserialize_prefilled_transaction,
           bitcoin_deserialize_psbt,
@@ -41,6 +42,7 @@ jobs:
           p2p_deserialize_raw_net_msg,
           units_arbitrary_weight,
           units_parse_amount,
+          units_parse_int,
         ]
     steps:
       - name: Install test dependencies
