@@ -12,18 +12,18 @@
 
 #[cfg(feature = "alloc")]
 use core::cmp;
-#[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
 use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::UnexpectedEofError;
+#[cfg(feature = "alloc")]
+use encoding::{Decodable, Decoder, Decoder2, Decoder4, VecDecoder, VecDecoderError};
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
-#[cfg(feature = "hex")]
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -31,13 +31,23 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use units::parse_int;
 
 #[cfg(feature = "alloc")]
+use crate::amount::{AmountDecoder, AmountDecoderError};
+#[cfg(feature = "alloc")]
+use crate::locktime::absolute::{LockTimeDecoder, LockTimeDecoderError};
+#[cfg(feature = "alloc")]
 use crate::prelude::Vec;
+#[cfg(feature = "alloc")]
+use crate::script::{ScriptBufDecoderError, ScriptPubKeyBufDecoder, ScriptSigBufDecoder};
+#[cfg(feature = "alloc")]
+use crate::sequence::{SequenceDecoder, SequenceDecoderError};
+#[cfg(feature = "alloc")]
+use crate::witness::{WitnessDecoder, WitnessDecoderError};
 #[cfg(feature = "alloc")]
 use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, Witness};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use crate::hash_types::{Ntxid, Txid, Wtxid};
+pub use crate::hash_types::{Ntxid, Txid, Wtxid, BlockHashDecoder, BlockHashDecoderError, TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 
 /// Bitcoin transaction.
 ///
@@ -291,6 +301,124 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     sha256d::Hash::from_engine(enc)
 }
 
+/// The decoder for the [`Transaction`] type.
+#[cfg(feature = "alloc")]
+pub struct TransactionDecoder(
+    Decoder4<
+        VersionDecoder,
+        LockTimeDecoder,
+        VecDecoder<TxIn>,
+        VecDecoder<TxOut>,
+        TransactionDecoderError,
+    >,
+);
+
+#[cfg(feature = "alloc")]
+impl Decoder for TransactionDecoder {
+    type Output = Transaction;
+    type Error = TransactionDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (version, lock_time, inputs, outputs) = self.0.end()?;
+        Ok(Transaction { version, lock_time, inputs, outputs })
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for Transaction {
+    type Decoder = TransactionDecoder;
+    fn decoder() -> Self::Decoder {
+        TransactionDecoder(Decoder4::new(
+            VersionDecoder::new(),
+            LockTimeDecoder::new(),
+            VecDecoder::new(),
+            VecDecoder::new(),
+        ))
+    }
+}
+
+/// An error consensus decoding a `Transaction`.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionDecoderError(TransactionDecoderErrorInner);
+
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum TransactionDecoderErrorInner {
+    /// Error while decoding the `version`.
+    Version(VersionDecoderError),
+    /// Error while decoding the `lock_time`.
+    LockTime(LockTimeDecoderError),
+    /// Error while decoding the `inputs`.
+    Inputs(VecDecoderError<TxInDecoderError>),
+    /// Error while decoding the `outputs`.
+    Outputs(VecDecoderError<TxOutDecoderError>),
+}
+
+#[cfg(feature = "alloc")]
+impl From<Infallible> for TransactionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "alloc")]
+impl From<VersionDecoderError> for TransactionDecoderError {
+    fn from(e: VersionDecoderError) -> Self { Self(TransactionDecoderErrorInner::Version(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<LockTimeDecoderError> for TransactionDecoderError {
+    fn from(e: LockTimeDecoderError) -> Self { Self(TransactionDecoderErrorInner::LockTime(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<VecDecoderError<TxInDecoderError>> for TransactionDecoderError {
+    fn from(e: VecDecoderError<TxInDecoderError>) -> Self {
+        Self(TransactionDecoderErrorInner::Inputs(e))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<VecDecoderError<TxOutDecoderError>> for TransactionDecoderError {
+    fn from(e: VecDecoderError<TxOutDecoderError>) -> Self {
+        Self(TransactionDecoderErrorInner::Outputs(e))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl fmt::Display for TransactionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TransactionDecoderErrorInner as E;
+
+        match self.0 {
+            E::Version(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::Inputs(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::Outputs(ref e) => write_err!(f, "transaction decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg(feature = "alloc")]
+impl std::error::Error for TransactionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TransactionDecoderErrorInner as E;
+
+        match self.0 {
+            E::Version(ref e) => Some(e),
+            E::LockTime(ref e) => Some(e),
+            E::Inputs(ref e) => Some(e),
+            E::Outputs(ref e) => Some(e),
+        }
+    }
+}
+
 /// Bitcoin transaction input.
 ///
 /// It contains the location of the previous transaction's output,
@@ -332,6 +460,120 @@ impl TxIn {
     };
 }
 
+/// The decoder for the [`TxIn`] type.
+#[cfg(feature = "alloc")]
+pub struct TxInDecoder(
+    Decoder4<
+        OutPointDecoder,
+        ScriptSigBufDecoder,
+        SequenceDecoder,
+        WitnessDecoder,
+        TxInDecoderError,
+    >,
+);
+
+#[cfg(feature = "alloc")]
+impl Decoder for TxInDecoder {
+    type Output = TxIn;
+    type Error = TxInDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (previous_output, script_sig, sequence, witness) = self.0.end()?;
+        Ok(TxIn { previous_output, script_sig, sequence, witness })
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for TxIn {
+    type Decoder = TxInDecoder;
+    fn decoder() -> Self::Decoder {
+        TxInDecoder(Decoder4::new(
+            OutPointDecoder::new(),
+            ScriptSigBufDecoder::new(),
+            SequenceDecoder::new(),
+            WitnessDecoder::new(),
+        ))
+    }
+}
+
+/// An error consensus decoding a `TxIn`.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxInDecoderError(TxInDecoderErrorInner);
+
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum TxInDecoderErrorInner {
+    /// Error while decoding the `previous_output`.
+    PreviousOutput(OutPointDecoderError),
+    /// Error while decoding the `script_sig`.
+    ScriptSig(ScriptBufDecoderError),
+    /// Error while decoding the `sequence`.
+    Sequence(SequenceDecoderError),
+    /// Error while decoding the `witness`.
+    Witness(WitnessDecoderError),
+}
+
+#[cfg(feature = "alloc")]
+impl From<Infallible> for TxInDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "alloc")]
+impl From<OutPointDecoderError> for TxInDecoderError {
+    fn from(e: OutPointDecoderError) -> Self { Self(TxInDecoderErrorInner::PreviousOutput(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScriptBufDecoderError> for TxInDecoderError {
+    fn from(e: ScriptBufDecoderError) -> Self { Self(TxInDecoderErrorInner::ScriptSig(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<SequenceDecoderError> for TxInDecoderError {
+    fn from(e: SequenceDecoderError) -> Self { Self(TxInDecoderErrorInner::Sequence(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<WitnessDecoderError> for TxInDecoderError {
+    fn from(e: WitnessDecoderError) -> Self { Self(TxInDecoderErrorInner::Witness(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl fmt::Display for TxInDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TxInDecoderErrorInner as E;
+
+        match self.0 {
+            E::PreviousOutput(ref e) => write_err!(f, "txin decoder error"; e),
+            E::ScriptSig(ref e) => write_err!(f, "txin decoder error"; e),
+            E::Sequence(ref e) => write_err!(f, "txin decoder error"; e),
+            E::Witness(ref e) => write_err!(f, "txin decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "std")]
+impl std::error::Error for TxInDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TxInDecoderErrorInner as E;
+
+        match self.0 {
+            E::PreviousOutput(ref e) => Some(e),
+            E::ScriptSig(ref e) => Some(e),
+            E::Sequence(ref e) => Some(e),
+            E::Witness(ref e) => Some(e),
+        }
+    }
+}
+
 /// Bitcoin transaction output.
 ///
 /// Defines new coins to be created as a result of the transaction,
@@ -350,6 +592,89 @@ pub struct TxOut {
     pub amount: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptPubKeyBuf,
+}
+
+/// The decoder for the [`TxOut`] type.
+#[cfg(feature = "alloc")]
+pub struct TxOutDecoder(Decoder2<AmountDecoder, ScriptPubKeyBufDecoder, TxOutDecoderError>);
+
+#[cfg(feature = "alloc")]
+impl Decoder for TxOutDecoder {
+    type Output = TxOut;
+    type Error = TxOutDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (amount, script_pubkey) = self.0.end()?;
+        Ok(TxOut { amount, script_pubkey })
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for TxOut {
+    type Decoder = TxOutDecoder;
+    fn decoder() -> Self::Decoder {
+        TxOutDecoder(Decoder2::new(AmountDecoder::new(), ScriptPubKeyBufDecoder::new()))
+    }
+}
+
+/// An error consensus decoding a `TxOut`.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxOutDecoderError(TxOutDecoderErrorInner);
+
+/// An error consensus decoding a `TxOut`.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum TxOutDecoderErrorInner {
+    /// Error while decoding the `amount`.
+    Amount(AmountDecoderError),
+    /// Error while decoding the `script_pubkey`.
+    ScriptPubKey(ScriptBufDecoderError),
+}
+
+#[cfg(feature = "alloc")]
+impl From<Infallible> for TxOutDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "alloc")]
+impl From<AmountDecoderError> for TxOutDecoderError {
+    fn from(e: AmountDecoderError) -> Self { Self(TxOutDecoderErrorInner::Amount(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl From<ScriptBufDecoderError> for TxOutDecoderError {
+    fn from(e: ScriptBufDecoderError) -> Self { Self(TxOutDecoderErrorInner::ScriptPubKey(e)) }
+}
+
+#[cfg(feature = "alloc")]
+impl fmt::Display for TxOutDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TxOutDecoderErrorInner as E;
+
+        match self.0 {
+            E::Amount(ref e) => write_err!(f, "txout decoder error"; e),
+            E::ScriptPubKey(ref e) => write_err!(f, "txout decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TxOutDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TxOutDecoderErrorInner as E;
+
+        match self.0 {
+            E::Amount(ref e) => Some(e),
+            E::ScriptPubKey(ref e) => Some(e),
+        }
+    }
 }
 
 /// A reference to a transaction output.
@@ -422,6 +747,59 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
         }
     }
     parse_int::int_from_str(s).map_err(ParseOutPointError::Vout)
+}
+
+/// The decoder for the [`OutPoint`] type.
+// 32 for the txid + 4 for the vout
+pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
+
+impl OutPointDecoder {
+    /// Constructs a new [`OutPoint`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for OutPointDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for OutPointDecoder {
+    type Output = OutPoint;
+    type Error = OutPointDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(OutPointDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let encoded = self.0.end().map_err(OutPointDecoderError)?;
+
+        let mut txid_buf = [0_u8; 32];
+        txid_buf.copy_from_slice(&encoded[..32]);
+        let txid = Txid::from_byte_array(txid_buf);
+
+        let mut vout_buf = [0_u8; 4];
+        vout_buf.copy_from_slice(&encoded[32..]);
+        let vout = u32::from_le_bytes(vout_buf);
+
+        Ok(OutPoint { txid, vout })
+    }
+}
+
+/// Error while decoding an `OutPoint`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutPointDecoderError(UnexpectedEofError);
+
+impl core::fmt::Display for OutPointDecoderError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write_err!(f, "out point decoder error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for OutPointDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 #[cfg(feature = "serde")]
@@ -645,6 +1023,59 @@ impl From<Version> for u32 {
     fn from(version: Version) -> Self { version.0 }
 }
 
+/// The decoder for the [`Version`] type.
+pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+
+impl VersionDecoder {
+    /// Constructs a new [`Version`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for VersionDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for VersionDecoder {
+    type Output = Version;
+    type Error = VersionDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(VersionDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(VersionDecoderError)?;
+        let n = u32::from_le_bytes(bytes);
+        Ok(Version::maybe_non_standard(n))
+    }
+}
+
+impl encoding::Decodable for Version {
+    type Decoder = VersionDecoder;
+    fn decoder() -> Self::Decoder { VersionDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+/// An error consensus decoding an `Version`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VersionDecoderError(encoding::UnexpectedEofError);
+
+impl From<Infallible> for VersionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for VersionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "version decoder error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for VersionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Transaction {
@@ -704,7 +1135,9 @@ impl<'a> Arbitrary<'a> for Version {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
-    use alloc::{format, vec};
+    use alloc::{format, vec, string::ToString};
+
+    use hex_lit::hex;
 
     use super::*;
 
@@ -883,5 +1316,44 @@ mod tests {
         let got = bincode::deserialize::<OutPoint>(&ser).unwrap();
 
         assert_eq!(got, out_point);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decode_segwit_transaction() {
+        let tx_bytes = hex!(
+            "02000000000101595895ea20179de87052b4046dfe6fd515860505d6511a9004cf12a1f93cac7c01000000\
+            00ffffffff01deb807000000000017a9140f3444e271620c736808aa7b33e370bd87cb5a078702483045022\
+            100fb60dad8df4af2841adc0346638c16d0b8035f5e3f3753b88db122e70c79f9370220756e6633b17fd271\
+            0e626347d28d60b0a2d6cbb41de51740644b9fb3ba7751040121028fa937ca8cba2197a37c007176ed89410\
+            55d3bcb8627d085e94553e62f057dcc00000000"
+        );
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let tx = decoder.end().unwrap();
+
+        // All these tests aren't really needed because if they fail, the hash check at the end
+        // will also fail. But these will show you where the failure is so I'll leave them in.
+        assert_eq!(tx.version, Version::TWO);
+        assert_eq!(tx.inputs.len(), 1);
+        // In particular this one is easy to get backward -- in bitcoin hashes are encoded
+        // as little-endian 256-bit numbers rather than as data strings.
+        assert_eq!(
+            format!("{:x}", tx.inputs[0].previous_output.txid),
+            "7cac3cf9a112cf04901a51d605058615d56ffe6d04b45270e89d1720ea955859".to_string()
+        );
+        assert_eq!(tx.inputs[0].previous_output.vout, 1);
+        assert_eq!(tx.outputs.len(), 1);
+        assert_eq!(tx.lock_time, absolute::LockTime::ZERO);
+
+        assert_eq!(
+            format!("{:x}", tx.compute_txid()),
+            "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206".to_string()
+        );
+        assert_eq!(
+            format!("{:x}", tx.compute_wtxid()),
+            "80b7d8a82d5d5bf92905b06f2014dd699e03837ca172e3a59d51426ebbe3e7f5".to_string()
+        );
     }
 }
