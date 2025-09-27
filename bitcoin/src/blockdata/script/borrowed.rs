@@ -297,7 +297,7 @@ internal_macros::define_extension_trait! {
     pub trait ScriptPubKeyExt impl for ScriptPubKey {
         /// Checks whether a script pubkey is a P2PK output.
         ///
-        /// You can obtain the public key, if its valid,
+        /// You can obtain the public key, if it's valid,
         /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
         fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
 
@@ -516,7 +516,7 @@ internal_macros::define_extension_trait! {
 
         /// Iterates the script to find the last opcode.
         ///
-        /// Returns `None` is the instruction is data push or if the script is empty.
+        /// Returns `None` if the instruction is data push or if the script is empty.
         fn last_opcode(&self) -> Option<Opcode> {
             match self.instructions().last() {
                 Some(Ok(Instruction::Op(op))) => Some(op),

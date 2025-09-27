@@ -199,7 +199,7 @@ impl From<TryFromError> for FromStrError {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum TryFromInstructionError {
-    /// Cannot not convert OP to a witness version.
+    /// Cannot convert OP to a witness version.
     TryFrom(TryFromError),
     /// Cannot create a witness version from non-zero data push.
     DataPush,
