@@ -19,6 +19,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2, Encoder4, SliceEncoder};
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
@@ -30,8 +31,13 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(feature = "hex")]
 use units::parse_int;
 
+use crate::amount::AmountEncoder;
+use crate::locktime::absolute::LockTimeEncoder;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
+use crate::script::ScriptEncoder;
+use crate::sequence::SequenceEncoder;
+use crate::witness::WitnessEncoder;
 #[cfg(feature = "alloc")]
 use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, Witness};
 
@@ -291,6 +297,30 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     sha256d::Hash::from_engine(enc)
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`Transaction`] type.
+    pub struct TransactionEncoder<'e>(
+        Encoder4<ArrayEncoder<4>, LockTimeEncoder, SliceEncoder<'e, TxIn>, SliceEncoder<'e, TxOut>>
+    );
+}
+
+impl Encodable for Transaction {
+    type Encoder<'e>
+        =
+        Encoder4<ArrayEncoder<4>, LockTimeEncoder, SliceEncoder<'e, TxIn>, SliceEncoder<'e, TxOut>>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder4::new(
+            ArrayEncoder::without_length_prefix(self.version.to_u32().to_le_bytes()),
+            self.lock_time.encoder(),
+            SliceEncoder::with_length_prefix(&self.inputs),
+            SliceEncoder::with_length_prefix(&self.outputs),
+        )
+    }
+}
+
 /// Bitcoin transaction input.
 ///
 /// It contains the location of the previous transaction's output,
@@ -332,6 +362,29 @@ impl TxIn {
     };
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`TxIn`] type.
+    pub struct TxInEncoder<'e>(
+        Encoder4<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder, WitnessEncoder<'e>>
+    );
+}
+
+impl Encodable for TxIn {
+    type Encoder<'e>
+        = Encoder4<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder, WitnessEncoder<'e>>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder4::new(
+            self.previous_output.encoder(),
+            self.script_sig.encoder(),
+            self.sequence.encoder(),
+            self.witness.encoder(),
+        )
+    }
+}
+
 /// Bitcoin transaction output.
 ///
 /// Defines new coins to be created as a result of the transaction,
@@ -350,6 +403,22 @@ pub struct TxOut {
     pub amount: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptPubKeyBuf,
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`TxOut`] type.
+    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder, ScriptEncoder<'e>>);
+}
+
+impl Encodable for TxOut {
+    type Encoder<'e>
+        = Encoder2<AmountEncoder, ScriptEncoder<'e>>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder())
+    }
 }
 
 /// A reference to a transaction output.
@@ -374,6 +443,25 @@ impl OutPoint {
     /// This is used as the dummy input for coinbase transactions because they don't have any
     /// previous outputs. In other words, does not point to a real transaction.
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`TxOut`] type.
+    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
+}
+
+impl Encodable for OutPoint {
+    type Encoder<'e>
+        = OutPointEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        OutPointEncoder(Encoder2::new(
+            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
+        ))
+    }
 }
 
 #[cfg(feature = "hex")]
