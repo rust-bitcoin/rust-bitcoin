@@ -39,6 +39,7 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
         Ok(self.bytes_written < N)
     }
 
+    #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         if self.bytes_written == N {
             Ok(self.buffer)
@@ -141,6 +142,7 @@ where
         }
     }
 
+    #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         match self.state {
             Decoder2State::First(first_decoder, second_decoder) => {
@@ -203,10 +205,12 @@ where
     type Output = (A::Output, B::Output, C::Output);
     type Error = Err;
 
+    #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         self.inner.push_bytes(bytes)
     }
 
+    #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let ((first, second), third) = self.inner.end()?;
         Ok((first, second, third))
@@ -254,10 +258,12 @@ where
     type Output = (A::Output, B::Output, C::Output, D::Output);
     type Error = Err;
 
+    #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         self.inner.push_bytes(bytes)
     }
 
+    #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let ((first, second), (third, fourth)) = self.inner.end()?;
         Ok((first, second, third, fourth))
@@ -330,10 +336,12 @@ where
     type Output = (A::Output, B::Output, C::Output, D::Output, E::Output, F::Output);
     type Error = Err;
 
+    #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         self.inner.push_bytes(bytes)
     }
 
+    #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let ((first, second, third), (fourth, fifth, sixth)) = self.inner.end()?;
         Ok((first, second, third, fourth, fifth, sixth))
