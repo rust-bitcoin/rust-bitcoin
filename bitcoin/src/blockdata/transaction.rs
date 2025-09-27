@@ -2094,7 +2094,7 @@ mod tests {
     #[test]
     fn sequence_debug_output() {
         let seq = Sequence::from_seconds_floor(1000);
-        println!("{:?}", seq)
+        let _ = format!("{:?}", seq);
     }
 
     #[test]

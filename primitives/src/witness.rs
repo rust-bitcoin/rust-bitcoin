@@ -577,8 +577,6 @@ impl<'a> Arbitrary<'a> for Witness {
 mod test {
     #[cfg(feature = "alloc")]
     use alloc::vec;
-    #[cfg(feature = "std")]
-    use std::println;
 
     use super::*;
 
@@ -598,7 +596,7 @@ mod test {
     #[cfg(feature = "std")]
     fn witness_debug_can_display_empty_element() {
         let witness = single_empty_element();
-        println!("{:?}", witness);
+        let _ = alloc::format!("{:?}", witness);
     }
 
     #[test]
