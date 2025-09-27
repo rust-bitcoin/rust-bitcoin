@@ -2,7 +2,6 @@
 
 //! The `BlockHash` type.
 
-#[cfg(not(feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -17,6 +16,8 @@ use hex::FromHex as _;
 /// A bitcoin block hash.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BlockHash(sha256d::Hash);
+
+super::impl_debug!(BlockHash);
 
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.

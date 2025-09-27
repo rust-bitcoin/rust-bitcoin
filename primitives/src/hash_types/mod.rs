@@ -110,6 +110,36 @@ macro_rules! impl_serde(
 #[cfg(feature = "serde")]
 pub(in crate::hash_types) use impl_serde;
 
+macro_rules! impl_debug {
+    ($ty:ident) => {
+        impl fmt::Debug for $ty {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "{}(", stringify!($ty))?;
+
+                #[cfg(not(feature = "hex"))]
+                {
+                    if REVERSE {
+                        for byte in self.as_byte_array().iter().rev() {
+                            write!(f, "{:02x}", byte)?;
+                        }
+                    } else {
+                        for byte in self.as_byte_array() {
+                            write!(f, "{:02x}", byte)?;
+                        }
+                    }
+                }
+                #[cfg(feature = "hex")]
+                {
+                    core::fmt::LowerHex::fmt(self, f)?;
+                }
+
+                write!(f, ")")
+            }
+        }
+    }
+}
+pub(in crate::hash_types) use impl_debug;
+
 /// Functions used by serde impls of all hashes.
 #[cfg(feature = "serde")]
 pub mod serde_details {
@@ -213,14 +243,23 @@ mod tests {
         assert_eq!(got, tc);
     }
 
+    #[cfg(feature = "alloc")]
+    fn ab_test_case() -> (Txid, &'static str) {
+        let mut a = [0xab; 32];
+        a[0] = 0xff;           // Just so we can see which way the array is printing.
+        let tc = Txid::from_byte_array(a);
+        let want = "Txid(abababababababababababababababababababababababababababababababff)";
+
+        (tc, want)
+    }
+
     #[test]
     // This is solely to test that we can debug print WITH "hex" so its ok to require "alloc".
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn debug() {
-        let tc = Txid::from_byte_array([0xab; 32]);
+        let (tc, want) = ab_test_case();
         let got = alloc::format!("{:?}", tc);
-        let want = "abababababababababababababababababababababababababababababababab";
         assert_eq!(got, want);
     }
 
@@ -229,9 +268,8 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(not(feature = "hex"))]
     fn debug() {
-        let tc = Txid::from_byte_array([0xab; 32]);
+        let (tc, want) = ab_test_case();
         let got = alloc::format!("{:?}", tc);
-        let want = "abababababababababababababababababababababababababababababababab";
         assert_eq!(got, want);
     }
 }

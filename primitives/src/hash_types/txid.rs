@@ -4,7 +4,6 @@
 //!
 //! In order to print and parse txids enable the "hex" feature.
 
-#[cfg(not(feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -26,6 +25,8 @@ use crate::OutPoint;
 /// trait operations.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Txid(sha256d::Hash);
+
+super::impl_debug!(Txid);
 
 impl Txid {
     /// The `Txid` used in a coinbase prevout.

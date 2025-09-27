@@ -2,7 +2,6 @@
 
 //! The `WitnessMerkleNode` type.
 
-#[cfg(not(feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -16,6 +15,8 @@ use hex::FromHex as _;
 /// A hash corresponding to the Merkle tree root for witness data.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WitnessMerkleNode(sha256d::Hash);
+
+super::impl_debug!(WitnessMerkleNode);
 
 // The new hash wrapper type.
 type HashType = WitnessMerkleNode;

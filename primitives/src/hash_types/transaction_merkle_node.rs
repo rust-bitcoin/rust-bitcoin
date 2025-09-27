@@ -2,7 +2,6 @@
 
 //! The `TxMerkleNode` type.
 
-#[cfg(not(feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -16,6 +15,8 @@ use hex::FromHex as _;
 /// A hash of the Merkle tree branch or root for transactions.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TxMerkleNode(sha256d::Hash);
+
+super::impl_debug!(TxMerkleNode);
 
 // The new hash wrapper type.
 type HashType = TxMerkleNode;
