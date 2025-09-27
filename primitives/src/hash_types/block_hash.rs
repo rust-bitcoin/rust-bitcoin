@@ -30,6 +30,11 @@ type Inner = sha256d::Hash;
 
 include!("./generic.rs");
 
+#[cfg(not(feature = "hex"))]
+super::impl_hashtype_debug!(BlockHash);
+#[cfg(feature = "hex")]
+super::impl_hashtype_fmt_traits!(BlockHash);
+
 encoding::encoder_newtype! {
     /// The encoder for the [`BlockHash`] type.
     pub struct BlockHashEncoder(encoding::ArrayEncoder<32>);

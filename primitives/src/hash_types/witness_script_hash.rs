@@ -87,3 +87,8 @@ include!("./generic.rs");
 type HashType = WScriptHash;
 // The inner hash type from `hashes`.
 type Inner = sha256::Hash;
+
+#[cfg(not(feature = "hex"))]
+super::impl_hashtype_debug!(WScriptHash);
+#[cfg(feature = "hex")]
+super::impl_hashtype_fmt_traits!(WScriptHash);

@@ -92,3 +92,8 @@ type HashType = ScriptHash;
 type Inner = hash160::Hash;
 
 include!("./generic.rs");
+
+#[cfg(not(feature = "hex"))]
+super::impl_hashtype_debug!(ScriptHash);
+#[cfg(feature = "hex")]
+super::impl_hashtype_fmt_traits!(ScriptHash);

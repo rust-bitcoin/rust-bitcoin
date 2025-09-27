@@ -28,14 +28,6 @@ super::impl_serde!(HashType, LEN);
 super::impl_bytelike_traits!(HashType, LEN);
 
 #[cfg(feature = "hex")]
-hex::impl_fmt_traits! {
-    #[display_backward(REVERSE)]
-    impl fmt_traits for HashType {
-        const LENGTH: usize = LEN;
-    }
-}
-
-#[cfg(feature = "hex")]
 impl str::FromStr for HashType {
     type Err = hex::HexToArrayError;
 
@@ -46,16 +38,6 @@ impl str::FromStr for HashType {
             bytes.reverse();
         }
         Ok(Self::from_byte_array(bytes))
-    }
-}
-
-#[cfg(not(feature = "hex"))]
-impl fmt::Debug for HashType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for byte in self.as_byte_array() {
-            write!(f, "{:02x}", byte)?
-        }
-        Ok(())
     }
 }
 
