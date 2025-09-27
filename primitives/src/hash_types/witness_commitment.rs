@@ -28,3 +28,8 @@ type HashType = WitnessCommitment;
 type Inner = sha256d::Hash;
 
 include!("./generic.rs");
+
+#[cfg(not(feature = "hex"))]
+super::impl_hashtype_debug!(WitnessCommitment);
+#[cfg(feature = "hex")]
+super::impl_hashtype_fmt_traits!(WitnessCommitment);

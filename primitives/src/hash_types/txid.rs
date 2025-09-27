@@ -41,3 +41,8 @@ type HashType = Txid;
 type Inner = sha256d::Hash;
 
 include!("./generic.rs");
+
+#[cfg(not(feature = "hex"))]
+super::impl_hashtype_debug!(Txid);
+#[cfg(feature = "hex")]
+super::impl_hashtype_fmt_traits!(Txid);

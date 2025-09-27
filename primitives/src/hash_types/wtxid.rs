@@ -34,3 +34,8 @@ type HashType = Wtxid;
 type Inner = sha256d::Hash;
 
 include!("./generic.rs");
+
+#[cfg(not(feature = "hex"))]
+super::impl_hashtype_debug!(Wtxid);
+#[cfg(feature = "hex")]
+super::impl_hashtype_fmt_traits!(Wtxid);

@@ -23,3 +23,8 @@ type HashType = WitnessMerkleNode;
 type Inner = sha256d::Hash;
 
 include!("./generic.rs");
+
+#[cfg(not(feature = "hex"))]
+super::impl_hashtype_debug!(WitnessMerkleNode);
+#[cfg(feature = "hex")]
+super::impl_hashtype_fmt_traits!(WitnessMerkleNode);
