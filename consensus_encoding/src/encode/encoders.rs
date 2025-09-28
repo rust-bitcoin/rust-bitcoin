@@ -394,4 +394,261 @@ mod tests {
         assert!(!encoder.advance());
         assert_eq!(encoder.current_chunk(), None);
     }
+
+    #[test]
+    fn encode_two_arrays() {
+        // Should encode first array, then second array, then exhausted.
+        let enc1 = TestArray([1u8, 2]).encoder();
+        let enc2 = TestArray([3u8, 4]).encoder();
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8, 4][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_two_empty_arrays() {
+        // Should encode first empty array, then second empty array, then exhausted.
+        let enc1 = TestArray([]).encoder();
+        let enc2 = TestArray([]).encoder();
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_two_byte_slices_mixed() {
+        // Should encode byte slice without prefix, then with prefix, then exhausted.
+        let enc1 = TestBytes(&[0xAA, 0xBB], false).encoder();
+        let enc2 = TestBytes(&[0xCC], true).encoder();
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0xAA, 0xBB][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xCC][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_three_arrays() {
+        // Should encode three arrays in sequence, then exhausted.
+        let enc1 = TestArray([1u8]).encoder();
+        let enc2 = TestArray([2u8, 3u8]).encoder();
+        let enc3 = TestArray([4u8, 5u8, 6u8]).encoder();
+        let mut encoder = Encoder3::new(enc1, enc2, enc3);
+
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[2u8, 3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[4u8, 5u8, 6u8][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_four_arrays() {
+        // Should encode four arrays in sequence, then exhausted.
+        let enc1 = TestArray([0x10]).encoder();
+        let enc2 = TestArray([0x20]).encoder();
+        let enc3 = TestArray([0x30]).encoder();
+        let enc4 = TestArray([0x40]).encoder();
+        let mut encoder = Encoder4::new(enc1, enc2, enc3, enc4);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0x10][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x20][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x30][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x40][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_six_arrays() {
+        // Should encode six arrays in sequence, then exhausted.
+        let enc1 = TestArray([0x01]).encoder();
+        let enc2 = TestArray([0x02]).encoder();
+        let enc3 = TestArray([0x03]).encoder();
+        let enc4 = TestArray([0x04]).encoder();
+        let enc5 = TestArray([0x05]).encoder();
+        let enc6 = TestArray([0x06]).encoder();
+        let mut encoder = Encoder6::new(enc1, enc2, enc3, enc4, enc5, enc6);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0x01][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x02][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x03][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x04][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x05][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x06][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_mixed_composition_with_byte_slices() {
+        // Should encode byte slice with prefix, then array, then exhausted.
+        let enc1 = TestBytes(&[0xFF, 0xEE], true).encoder();
+        let enc2 = TestArray([0xDD, 0xCC]).encoder();
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xFF, 0xEE][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xDD, 0xCC][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_nested_composition() {
+        // Should encode empty array, single byte array, then three byte array, then exhausted.
+        let enc1 = TestArray([]).encoder();
+        let enc2 = TestArray([0x42]).encoder();
+        let enc3 = TestArray([0x43, 0x44, 0x45]).encoder();
+        let mut encoder = Encoder3::new(enc1, enc2, enc3);
+
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x42][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x43, 0x44, 0x45][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_slice_with_array_composition() {
+        // Should encode slice with prefix and elements, then array, then exhausted.
+        let slice = &[TestArray([0x10, 0x11]), TestArray([0x12, 0x13])];
+        let slice_enc = SliceEncoder::with_length_prefix(slice);
+        let array_enc = TestArray([0x20, 0x21]).encoder();
+        let mut encoder = Encoder2::new(slice_enc, array_enc);
+
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x10, 0x11][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x12, 0x13][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x20, 0x21][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_array_with_slice_composition() {
+        // Should encode header array, then slice with prefix and elements, then exhausted.
+        let header = TestArray([0xFF, 0xFE]).encoder();
+        let slice = &[TestArray([0x01]), TestArray([0x02]), TestArray([0x03])];
+        let slice_enc = SliceEncoder::with_length_prefix(slice);
+        let mut encoder = Encoder2::new(header, slice_enc);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0xFF, 0xFE][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x01][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x02][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x03][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_multiple_slices_composition() {
+        // Should encode three slices in sequence with prefixes and elements, then exhausted.
+        let slice1 = &[TestArray([0xA1]), TestArray([0xA2])];
+        let slice2: &[TestArray<1>] = &[];
+        let slice3 = &[TestArray([0xC1]), TestArray([0xC2]), TestArray([0xC3])];
+
+        let enc1 = SliceEncoder::with_length_prefix(slice1);
+        let enc2 = SliceEncoder::with_length_prefix(slice2);
+        let enc3 = SliceEncoder::with_length_prefix(slice3);
+        let mut encoder = Encoder3::new(enc1, enc2, enc3);
+
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xA1][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xA2][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xC1][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xC2][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xC3][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_slice_with_mixed_byte_encoders() {
+        // Should encode slice of mixed byte encoders with different prefix settings, then exhausted.
+        let bytes1 = TestBytes(&[0x11, 0x12], false);
+        let bytes2 = TestBytes(&[0x21, 0x22, 0x23], true);
+        let bytes3 = TestBytes(&[], false);
+        let slice = &[bytes1, bytes2, bytes3];
+        let mut encoder = SliceEncoder::with_length_prefix(slice);
+
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x11, 0x12][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x21, 0x22, 0x23][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_complex_nested_structure() {
+        // Should encode header, slice with elements, and footer with prefix, then exhausted.
+        let header = TestBytes(&[0xDE, 0xAD], false).encoder();
+        let data_slice = &[TestArray([0x01, 0x02]), TestArray([0x03, 0x04])];
+        let slice_enc = SliceEncoder::with_length_prefix(data_slice);
+        let footer = TestBytes(&[0xBE, 0xEF], true).encoder();
+        let mut encoder = Encoder3::new(header, slice_enc, footer);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0xDE, 0xAD][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x01, 0x02][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x03, 0x04][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xBE, 0xEF][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
 }
