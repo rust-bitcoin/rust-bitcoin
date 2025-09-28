@@ -1,7 +1,7 @@
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::block::{self, Block, BlockCheckedExt as _};
-use honggfuzz::fuzz;
 use bitcoin::consensus::{deserialize, serialize};
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let mut u = Unstructured::new(data);

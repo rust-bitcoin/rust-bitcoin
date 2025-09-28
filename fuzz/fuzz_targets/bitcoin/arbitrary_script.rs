@@ -1,10 +1,9 @@
 use arbitrary::{Arbitrary, Unstructured};
-use honggfuzz::fuzz;
-
-use bitcoin::{Network};
 use bitcoin::address::Address;
 use bitcoin::consensus::serialize;
 use bitcoin::script::{self, ScriptBuf, ScriptExt as _, ScriptPubKeyExt as _};
+use bitcoin::Network;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let mut u = Unstructured::new(data);
@@ -12,7 +11,8 @@ fn do_test(data: &[u8]) {
 
     if let Ok(script_buf) = s {
         let serialized = serialize(&script_buf);
-        let _ : Result<Vec<script::Instruction>, script::Error> = script_buf.instructions().collect();
+        let _: Result<Vec<script::Instruction>, script::Error> =
+            script_buf.instructions().collect();
 
         let _ = script_buf.to_string();
         let _ = script_buf.count_sigops();

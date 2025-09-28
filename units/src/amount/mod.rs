@@ -37,14 +37,14 @@ pub use self::{
     signed::SignedAmount,
     unsigned::Amount,
 };
-#[doc(inline)]
-#[cfg(feature = "encoding")]
-pub use self::unsigned::AmountDecoder;
 #[cfg(feature = "encoding")]
 #[doc(no_inline)]
 pub use self::error::AmountDecoderError;
 #[doc(no_inline)]
 pub use self::error::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
+#[doc(inline)]
+#[cfg(feature = "encoding")]
+pub use self::unsigned::AmountDecoder;
 
 /// A set of denominations in which amounts can be expressed.
 ///

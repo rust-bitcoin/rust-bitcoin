@@ -1,8 +1,7 @@
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let tx_result: Result<bitcoin::Transaction, _> =
-        bitcoin::consensus::encode::deserialize(data);
+    let tx_result: Result<bitcoin::Transaction, _> = bitcoin::consensus::encode::deserialize(data);
 
     match tx_result {
         Err(_) => {}
