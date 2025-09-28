@@ -671,7 +671,7 @@ impl Psbt {
         Ok(output_type.signing_algorithm())
     }
 
-    /// Returns the [`OutputType`] of the spend utxo for this PBST's input at `input_index`.
+    /// Returns the [`OutputType`] of the spend utxo for this PSBT's input at `input_index`.
     fn output_type(&self, input_index: usize) -> Result<OutputType, SignError> {
         let input = self.checked_input(input_index)?;
         let utxo = self.spend_utxo(input_index)?;
@@ -1088,7 +1088,7 @@ impl fmt::Display for SignError {
         match *self {
             IndexOutOfBounds(ref e) => write_err!(f, "index out of bounds"; e),
             InvalidSighashType => write!(f, "invalid sighash type"),
-            MissingInputUtxo => write!(f, "missing input utxo in PBST"),
+            MissingInputUtxo => write!(f, "missing input utxo in PSBT"),
             MissingRedeemScript => write!(f, "missing redeem script"),
             MissingSpendUtxo => write!(f, "missing spend utxo in PSBT"),
             MissingWitnessScript => write!(f, "missing witness script"),
@@ -1213,14 +1213,14 @@ pub enum IndexOutOfBoundsError {
     Inputs {
         /// Attempted index access.
         index: usize,
-        /// Length of the PBST inputs vector.
+        /// Length of the PSBT inputs vector.
         length: usize,
     },
     /// The index is out of bounds for the `psbt.unsigned_tx.input` vector.
     TxInput {
         /// Attempted index access.
         index: usize,
-        /// Length of the PBST's unsigned transaction input vector.
+        /// Length of the PSBT's unsigned transaction input vector.
         length: usize,
     },
 }
