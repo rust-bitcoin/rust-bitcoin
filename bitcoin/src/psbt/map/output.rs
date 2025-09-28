@@ -22,7 +22,7 @@ const PSBT_OUT_TAP_TREE: u64 = 0x06;
 const PSBT_OUT_TAP_BIP32_DERIVATION: u64 = 0x07;
 /// Type: MuSig2 Public Keys Participating in Aggregate Output PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS = 0x08
 const PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS: u64 = 0x08;
-/// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
+/// Type: Proprietary Use Type PSBT_OUT_PROPRIETARY = 0xFC
 const PSBT_OUT_PROPRIETARY: u64 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
