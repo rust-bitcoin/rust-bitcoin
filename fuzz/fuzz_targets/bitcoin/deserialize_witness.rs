@@ -2,8 +2,7 @@ use bitcoin::witness::Witness;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let witness_result: Result<Witness, _> =
-        bitcoin::consensus::encode::deserialize(data);
+    let witness_result: Result<Witness, _> = bitcoin::consensus::encode::deserialize(data);
 
     match witness_result {
         Err(_) => {}
