@@ -68,6 +68,8 @@ impl Decoder for CompositeDataDecoder {
         let (first, second) = self.inner.end()?;
         Ok(CompositeData { first, second })
     }
+
+    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
 }
 
 impl Decodable for CompositeData {
@@ -217,6 +219,8 @@ fn composition_error_unification() {
             let (first, second) = self.inner.end()?;
             Ok((first, second))
         }
+
+        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
     }
 
     /// Another test composite decoder.
@@ -240,6 +244,8 @@ fn composition_error_unification() {
             let result = self.inner.end()?;
             Ok(result)
         }
+
+        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
     }
 
     /// A decoder which can fail.
@@ -267,6 +273,8 @@ fn composition_error_unification() {
                 self.inner.end().map_err(NestedError::from)
             }
         }
+
+        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
     }
 
     // A multi-layer, nested, decoder structure with a unified top level error type.

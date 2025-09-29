@@ -47,6 +47,9 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
             Err(UnexpectedEofError { missing: N - self.bytes_written })
         }
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { N - self.bytes_written }
 }
 
 /// A decoder which wraps two inner decoders and returns the output of both.
@@ -165,6 +168,17 @@ where
             }
         }
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize {
+        match &self.state {
+            Decoder2State::First(first_decoder, second_decoder) =>
+                first_decoder.min_bytes_needed() + second_decoder.min_bytes_needed(),
+            Decoder2State::Second(_, second_decoder) => second_decoder.min_bytes_needed(),
+            Decoder2State::Errored => 0,
+            Decoder2State::Transitioning => 0,
+        }
+    }
 }
 
 /// A decoder which decodes three objects, one after the other.
@@ -215,6 +229,9 @@ where
         let ((first, second), third) = self.inner.end()?;
         Ok((first, second, third))
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
 }
 
 /// A decoder which decodes four objects, one after the other.
@@ -268,6 +285,9 @@ where
         let ((first, second), (third, fourth)) = self.inner.end()?;
         Ok((first, second, third, fourth))
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
 }
 
 /// A decoder which decodes six objects, one after the other.
@@ -346,6 +366,9 @@ where
         let ((first, second, third), (fourth, fifth, sixth)) = self.inner.end()?;
         Ok((first, second, third, fourth, fifth, sixth))
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
 }
 
 /// Not enough bytes given to decoder.

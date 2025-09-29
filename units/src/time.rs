@@ -124,6 +124,9 @@ impl encoding::Decoder for BlockTimeDecoder {
         let t = u32::from_le_bytes(self.0.end().map_err(BlockTimeDecoderError)?);
         Ok(BlockTime::from_u32(t))
     }
+
+    #[inline]
+    fn min_bytes_needed(&self) -> usize { self.0.min_bytes_needed() }
 }
 
 #[cfg(feature = "encoding")]
