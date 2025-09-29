@@ -10,6 +10,10 @@ fn do_test(data: &[u8]) {
 
     if let Ok(mut tx) = t {
         let serialized = serialize(&tx);
+        let deserialized: Result<Transaction, _> = deserialize(serialized.as_slice());
+        assert!(deserialized.is_ok(), "Deserialization error: {:?}", deserialized.err().unwrap());
+        assert_eq!(deserialized.unwrap(), tx);
+
         let len = serialized.len();
         let calculated_weight = tx.weight().to_wu() as usize;
         for input in &mut tx.inputs {
@@ -25,10 +29,6 @@ fn do_test(data: &[u8]) {
         } else {
             assert_eq!(no_witness_len * 3 + len, calculated_weight);
         }
-
-        let deserialized: Result<Transaction, _> = deserialize(serialized.as_slice());
-        assert!(deserialized.is_ok(), "Deserialization error: {:?}", deserialized.err().unwrap());
-        assert_eq!(deserialized.unwrap(), tx);
     }
 }
 
