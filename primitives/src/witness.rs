@@ -4,7 +4,7 @@
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
 
-use core::fmt;
+use core::{fmt, mem};
 use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
@@ -257,7 +257,14 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 #[inline]
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
     let start = start_of_indices + index * 4;
-    bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes) as usize)
+    let pos = bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes))?;
+    // On a 16-bit machine the u32 _should_ be smaller than `u16::MAX` since one cannot
+    // create a vector bigger than the amount of available memory, check just to be defensive.
+    if mem::size_of::<usize>() <= 2 && pos > u16::MAX as u32 {
+        None
+    } else {
+        Some(pos as usize)      // Cast ok, just checked we have at least 32 bits.
+    }
 }
 
 // Note: we use `Borrow` in the following `PartialEq` impls specifically because of its additional
