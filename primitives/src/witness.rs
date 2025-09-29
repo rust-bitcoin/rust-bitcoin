@@ -230,9 +230,7 @@ impl Witness {
 
         let mut slice = &self.content[pos..]; // Start of element.
         let element_len = compact_size::decode_unchecked(&mut slice);
-        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
-        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
-        let end = element_len as usize;
+        let end = cast_to_usize_if_valid(element_len)?;
         Some(&slice[..end])
     }
 
@@ -562,9 +560,7 @@ impl<'a> Iterator for Iter<'a> {
         let index = decode_cursor(self.inner, self.indices_start, self.current_index)?;
         let mut slice = &self.inner[index..]; // Start of element.
         let element_len = compact_size::decode_unchecked(&mut slice);
-        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
-        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
-        let end = element_len as usize;
+        let end = cast_to_usize_if_valid(element_len)?;
         self.current_index += 1;
         Some(&slice[..end])
     }
@@ -807,6 +803,27 @@ impl<'a> Arbitrary<'a> for Witness {
         let arbitrary_bytes = Vec::<Vec<u8>>::arbitrary(u)?;
         Ok(Witness::from_slice(&arbitrary_bytes))
     }
+}
+
+/// Cast a decoded length prefix to a `usize`.
+///
+/// This function is basically just defensive. For all sane use cases the length prefix should be
+/// less than `MAX_VEC_SIZE` (on a 32-bit machine). If the value is bigger that `u16::MAX` and we
+/// are on a 16-bit machine you'll likely hit an error later anyway, better to just check it now.
+///
+/// # 16-bits
+///
+/// The compact size may be bigger than what can be represented in a `usize` on a 16-bit machine but
+/// this shouldn't happen if we created the witness because one would get an OOM error before that.
+fn cast_to_usize_if_valid(n: u64) -> Option<usize> {
+    /// Maximum size, in bytes, of a vector we are allowed to decode.
+    const MAX_VEC_SIZE: u64 = 4_000_000;
+
+    if n > MAX_VEC_SIZE {
+        return None;
+    }
+
+    usize::try_from(n).ok()
 }
 
 #[cfg(test)]
