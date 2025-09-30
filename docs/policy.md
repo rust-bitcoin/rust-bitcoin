@@ -93,7 +93,7 @@ pub mod foo {
     pub struct FooBar { ... };
 
     /// Some function.
-    pub some_function() -> SomeError {
+    pub fn some_function() -> SomeError {
         // Example error logic
         SomeError::Foo(FooError { ... })
     }
@@ -331,7 +331,7 @@ enum Foo {
 }
 ```
 
-For types that do should not form a total or partial order, or that technically do but it does not
+For types that should not form a total or partial order, or that technically do but it does not
 make sense to compare them, we use the `Ordered` trait from the
 [`ordered`](https://crates.io/crates/ordered) crate. See `absolute::LockTime` for an example.
 
