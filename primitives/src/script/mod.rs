@@ -15,9 +15,6 @@ use core::marker::PhantomData;
 use hex::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
-#[allow(clippy::wildcard_imports)]
-use crate::opcodes::all::*;
-use crate::opcodes::{self, Opcode};
 use crate::prelude::rc::Rc;
 #[cfg(target_has_atomic = "ptr")]
 use crate::prelude::sync::Arc;
@@ -287,15 +284,13 @@ impl<T> fmt::Display for Script<T> {
         let mut at_least_one = false;
         // `iter` needs to be borrowed in `read_push_data_len`, so we have to use `while let` instead
         // of `for`.
-        while let Some(byte) = iter.next() {
-            let opcode = Opcode::from(*byte);
+        while let Some(byte) = iter.next().copied() {
+            use crate::opcodes::{OP_PUSHDATA1, OP_PUSHDATA2, OP_PUSHDATA4};
 
-            let data_len = if let opcodes::Class::PushBytes(n) =
-                opcode.classify(opcodes::ClassifyContext::Legacy)
-            {
-                n as usize
+            let data_len = if byte <= 75 {
+                usize::from(byte)
             } else {
-                match opcode {
+                match byte {
                     OP_PUSHDATA1 => {
                         // side effects: may write and break from the loop
                         read_push_data_len!(&mut iter, PushDataLenLen::One, f)
@@ -318,11 +313,7 @@ impl<T> fmt::Display for Script<T> {
                 at_least_one = true;
             }
             // Write the opcode
-            if opcode == OP_PUSHBYTES_0 {
-                f.write_str("OP_0")?;
-            } else {
-                write!(f, "{:?}", opcode)?;
-            }
+            crate::opcodes::fmt_opcode(byte, f)?;
             // Write any pushdata
             if data_len > 0 {
                 f.write_str(" ")?;
