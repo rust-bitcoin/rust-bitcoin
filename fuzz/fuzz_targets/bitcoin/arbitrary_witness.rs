@@ -1,8 +1,8 @@
 use arbitrary::{Arbitrary, Unstructured};
-use honggfuzz::fuzz;
+use bitcoin::blockdata::witness::WitnessExt;
 use bitcoin::consensus::{deserialize, serialize};
 use bitcoin::Witness;
-use bitcoin::blockdata::witness::WitnessExt;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let mut u = Unstructured::new(data);

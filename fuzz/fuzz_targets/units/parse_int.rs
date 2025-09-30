@@ -1,6 +1,6 @@
 use arbitrary::Unstructured;
-use honggfuzz::fuzz;
 use bitcoin::parse_int;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let mut u = Unstructured::new(data);
