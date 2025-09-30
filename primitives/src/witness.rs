@@ -577,9 +577,6 @@ impl<'a> Arbitrary<'a> for Witness {
 mod test {
     #[cfg(feature = "alloc")]
     use alloc::vec;
-    #[cfg(feature = "std")]
-    use std::println;
-
     use super::*;
 
     // Appends all the indices onto the end of a list of elements.
@@ -595,13 +592,7 @@ mod test {
     fn single_empty_element() -> Witness { Witness::from([[0u8; 0]]) }
 
     #[test]
-    #[cfg(feature = "std")]
-    fn witness_debug_can_display_empty_element() {
-        let witness = single_empty_element();
-        println!("{:?}", witness);
-    }
 
-    #[test]
     fn witness_single_empty_element() {
         let mut got = Witness::new();
         got.push([]);
