@@ -14,7 +14,6 @@ fn do_test(data: &[u8]) {
         let _ = witness.taproot_leaf_script();
 
         let deserialized: Result<Witness, _> = deserialize(serialized.as_slice());
-        assert!(deserialized.is_ok(), "Deserialization error: {:?}", deserialized.err().unwrap());
         assert_eq!(deserialized.unwrap(), witness);
 
         if let Ok(element_bytes) = Vec::<u8>::arbitrary(&mut u) {

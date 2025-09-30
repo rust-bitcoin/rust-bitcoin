@@ -23,7 +23,6 @@ fn do_test(data: &[u8]) {
         }
 
         let deserialized: Result<Block, _> = deserialize(serialized.as_slice());
-        assert!(deserialized.is_ok(), "Deserialization error: {:?}", deserialized.err().unwrap());
         assert_eq!(deserialized.unwrap(), block);
     }
 }
