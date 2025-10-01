@@ -11,7 +11,7 @@ entry in [roadmap.md] and likely also a file of their own.
 - `addresses`: **Empty** placeholder (see future crates below).
 - `base58`: Bitcoin base58 encoding and decoding (for pre-segwit addresses).
 - `bitcoin`: The `rust-bitcoin` crate.
-- `chacha20_poly135`: ChaCha20 stream cipher with the Poly1305 MAC.
+- `chacha20_poly1305`: ChaCha20 stream cipher with the Poly1305 MAC.
 - `hashes`: Rust Bitcoin hashes library.
 - `internals`: Used internally by crates in this repo.
 - `io`: Rust Bitcoin I/O library (to support `no_std`).
@@ -31,7 +31,7 @@ people or they have a (slightly) different set of maintainers and/or merge polic
 
 ## Future crates
 
-- `addresses`: Bitcoin addresses (see [address.md])
+- `addresses`: Bitcoin addresses (see [addresses.md])
 - `bip-32`: BIP-0032 (and maybe BIP-0380) support (see [bip-32.md])
 - `psbt`: PSBTv2 support (see [psbt.md])
 - `keys`/`crypto`: Cryptography stuff or maybe just keys (see [keys.md])
