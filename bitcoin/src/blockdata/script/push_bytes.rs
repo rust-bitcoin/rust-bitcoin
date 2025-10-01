@@ -167,13 +167,13 @@ mod primitive {
 
                 impl From<[u8; $len]> for PushBytesBuf {
                     fn from(bytes: [u8; $len]) -> Self {
-                        PushBytesBuf(Vec::from(&bytes as &[_]))
+                        PushBytesBuf(Vec::from(&bytes))
                     }
                 }
 
                 impl<'a> From<&'a [u8; $len]> for PushBytesBuf {
                     fn from(bytes: &'a [u8; $len]) -> Self {
-                        PushBytesBuf(Vec::from(bytes as &[_]))
+                        PushBytesBuf(Vec::from(bytes))
                     }
                 }
             )*
