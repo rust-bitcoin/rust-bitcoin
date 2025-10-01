@@ -438,7 +438,7 @@ mod tests {
     use crate::script::ScriptBufExt as _;
     use crate::TapScriptBuf;
 
-    // Composes tree matching a given depth map, filled with dumb script leafs,
+    // Composes tree matching a given depth map, filled with dumb script leaves,
     // each of which consists of a single push-int op code, with int value
     // increased for each consecutive leaf.
     pub fn compose_taproot_builder<'map>(

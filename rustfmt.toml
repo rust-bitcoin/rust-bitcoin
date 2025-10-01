@@ -4,7 +4,7 @@ tab_spaces = 4
 newline_style = "Auto"
 indent_style = "Block"
 
-max_width = 100 # This is number of characters.
+max_width = 100 # This is the number of characters.
 # `use_small_heuristics` is ignored if the granular width config values are explicitly set.
 use_small_heuristics = "Max"    # "Max" == All granular width settings same as `max_width`.
 # # Granular width configuration settings. These are percentages of `max_width`.
