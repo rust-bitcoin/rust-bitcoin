@@ -517,4 +517,24 @@ mod tests {
         assert_eq!(read, 32);
         assert_eq!(data[0..32], v[0..32]);
     }
+
+    #[test]
+    fn cursor_fill_buf_past_end() {
+        let data = [1, 2, 3];
+        let mut cursor = Cursor::new(&data);
+        cursor.set_position(10);
+
+        let buf = cursor.fill_buf().unwrap();
+        assert!(buf.is_empty());
+    }
+
+    #[test]
+    fn cursor_consume_past_end() {
+        let data = [1, 2, 3];
+        let mut cursor = Cursor::new(&data);
+        cursor.set_position(10);
+
+        cursor.consume(5);
+        assert_eq!(cursor.position(), 15);
+    }
 }
