@@ -8,6 +8,7 @@
 // follow the DRY principle without using macros.
 
 const LEN: usize = <Inner as hashes::Hash>::LEN;
+#[cfg(feature = "hex")]
 const REVERSE: bool =  <Inner as hashes::Hash>::DISPLAY_BACKWARD;
 
 impl HashType {
