@@ -2,7 +2,8 @@
 
 //! Primitive decoders.
 
-use core::fmt;
+use core::marker::PhantomData;
+use core::{fmt, mem};
 
 use super::Decoder;
 
@@ -62,7 +63,7 @@ where
     B: Decoder,
 {
     state: Decoder2State<A, B>,
-    _error: core::marker::PhantomData<Err>,
+    _error: PhantomData<Err>,
 }
 
 enum Decoder2State<A: Decoder, B: Decoder> {
@@ -87,7 +88,7 @@ impl<A: Decoder, B: Decoder> Decoder2State<A, B> {
     /// with `#[track_caller]` to show where the bug occurred.
     #[track_caller]
     fn transition(&mut self) -> (A, B) {
-        match core::mem::replace(self, Decoder2State::Transitioning) {
+        match mem::replace(self, Decoder2State::Transitioning) {
             Decoder2State::First(first, second) => (first, second),
             _ => panic!("transition called on invalid state"),
         }
@@ -101,7 +102,7 @@ where
 {
     /// Constructs a new composite decoder.
     pub fn new(first: A, second: B) -> Self {
-        Self { state: Decoder2State::First(first, second), _error: core::marker::PhantomData }
+        Self { state: Decoder2State::First(first, second), _error: PhantomData }
     }
 }
 
@@ -192,7 +193,7 @@ where
     Err: From<A::Error> + From<B::Error> + From<C::Error>,
 {
     inner: Decoder2<Decoder2<A, B, Err>, C, Err>,
-    _error: core::marker::PhantomData<Err>,
+    _error: PhantomData<Err>,
 }
 
 impl<A, B, C, Err> Decoder3<A, B, C, Err>
@@ -204,10 +205,7 @@ where
 {
     /// Constructs a new composite decoder.
     pub fn new(dec_1: A, dec_2: B, dec_3: C) -> Self {
-        Self {
-            inner: Decoder2::new(Decoder2::new(dec_1, dec_2), dec_3),
-            _error: core::marker::PhantomData,
-        }
+        Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), dec_3), _error: PhantomData }
     }
 }
 
@@ -246,7 +244,7 @@ where
     Err: From<A::Error> + From<B::Error> + From<C::Error> + From<D::Error>,
 {
     inner: Decoder2<Decoder2<A, B, Err>, Decoder2<C, D, Err>, Err>,
-    _error: core::marker::PhantomData<Err>,
+    _error: PhantomData<Err>,
 }
 
 impl<A, B, C, D, Err> Decoder4<A, B, C, D, Err>
@@ -261,7 +259,7 @@ where
     pub fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self {
         Self {
             inner: Decoder2::new(Decoder2::new(dec_1, dec_2), Decoder2::new(dec_3, dec_4)),
-            _error: core::marker::PhantomData,
+            _error: PhantomData,
         }
     }
 }
@@ -310,7 +308,7 @@ where
         + From<F::Error>,
 {
     inner: Decoder2<Decoder3<A, B, C, Err>, Decoder3<D, E, F, Err>, Err>,
-    _error: core::marker::PhantomData<Err>,
+    _error: PhantomData<Err>,
 }
 
 impl<A, B, C, D, E, F, Err> Decoder6<A, B, C, D, E, F, Err>
@@ -335,7 +333,7 @@ where
                 Decoder3::new(dec_1, dec_2, dec_3),
                 Decoder3::new(dec_4, dec_5, dec_6),
             ),
-            _error: core::marker::PhantomData,
+            _error: PhantomData,
         }
     }
 }
@@ -512,8 +510,8 @@ pub struct UnexpectedEofError {
     missing: usize,
 }
 
-impl core::fmt::Display for UnexpectedEofError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl fmt::Display for UnexpectedEofError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "not enough bytes for decoder, {} more bytes required", self.missing)
     }
 }
