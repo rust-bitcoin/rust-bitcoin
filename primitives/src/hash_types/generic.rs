@@ -54,7 +54,7 @@ impl str::FromStr for HashType {
 impl fmt::Debug for HashType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for byte in self.as_byte_array() {
-            write!(f, "{:02x}", byte)?
+            write!(f, "{:02x}", byte)?;
         }
         Ok(())
     }
