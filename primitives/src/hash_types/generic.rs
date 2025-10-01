@@ -28,13 +28,39 @@ super::impl_serde!(HashType, LEN);
 super::impl_bytelike_traits!(HashType, LEN);
 
 #[cfg(feature = "hex")]
-hex::impl_fmt_traits! {
-    #[display_backward(REVERSE)]
-    impl fmt_traits for HashType {
-        const LENGTH: usize = LEN;
+impl core::fmt::LowerHex for HashType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let case = hex::Case::Lower;
+
+        if REVERSE {
+            let bytes = core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
+            hex::fmt_hex_exact!(f, LEN, bytes, case)
+        } else {
+            let bytes = core::borrow::Borrow::<[u8]>::borrow(self).iter();
+            hex::fmt_hex_exact!(f, LEN, bytes, case)
+        }
     }
 }
+#[cfg(feature = "hex")]
+impl core::fmt::UpperHex for HashType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let case = hex::Case::Upper;
 
+        if REVERSE {
+            let bytes = core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
+            hex::fmt_hex_exact!(f, LEN, bytes, case)
+        } else {
+            let bytes = core::borrow::Borrow::<[u8]>::borrow(self).iter();
+            hex::fmt_hex_exact!(f, LEN, bytes, case)
+        }
+    }
+}
+#[cfg(feature = "hex")]
+impl core::fmt::Display for HashType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        core::fmt::LowerHex::fmt(self, f)
+    }
+}
 #[cfg(feature = "hex")]
 impl str::FromStr for HashType {
     type Err = hex::HexToArrayError;
@@ -46,16 +72,6 @@ impl str::FromStr for HashType {
             bytes.reverse();
         }
         Ok(Self::from_byte_array(bytes))
-    }
-}
-
-#[cfg(not(feature = "hex"))]
-impl fmt::Debug for HashType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for byte in self.as_byte_array() {
-            write!(f, "{:02x}", byte)?
-        }
-        Ok(())
     }
 }
 

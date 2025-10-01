@@ -274,10 +274,51 @@ macro_rules! impl_hex_string_traits {
             }
         }
 
-        $crate::hex::impl_fmt_traits! {
-            #[display_backward($reverse)]
-            impl<$($gen: $gent),*> fmt_traits for $ty<$($gen),*> {
-                const LENGTH: usize = ($len); // parens required due to rustc parser weirdness
+        // parens around $len required due to rustc parser weirdness for LowerHex and UpperHex
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                let case = $crate::hex::Case::Lower;
+
+                if $reverse {
+                    let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
+                    $crate::hex::fmt_hex_exact!(f, ($len), bytes, case)
+                } else {
+                    let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter();
+                    $crate::hex::fmt_hex_exact!(f, ($len), bytes, case)
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                let case = $crate::hex::Case::Upper;
+
+                if $reverse {
+                    let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
+                    $crate::hex::fmt_hex_exact!(f, ($len), bytes, case)
+                } else {
+                    let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter();
+                    $crate::hex::fmt_hex_exact!(f, ($len), bytes, case)
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                $crate::_export::_core::fmt::LowerHex::fmt(self, f)
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                write!(f, "{}(", stringify!($ty))?;
+                $crate::_export::_core::fmt::LowerHex::fmt(&self, f)?;
+                write!(f, ")")
             }
         }
     }
@@ -291,7 +332,9 @@ macro_rules! impl_debug_only {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                $crate::debug_hex(self.as_byte_array(), f)
+                write!(f, "{}(", stringify!($ty))?;
+                $crate::debug_hex(self.as_byte_array(), f)?;
+                write!(f, ")")
             }
         }
     }
@@ -575,7 +618,7 @@ mod test {
     fn debug() {
         use alloc::format;
 
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
+        let want = "TestHash(0000000000000000000000000000000000000000000000000000000000000000)";
         let got = format!("{:?}", TestHash::all_zeros());
         assert_eq!(got, want)
     }
