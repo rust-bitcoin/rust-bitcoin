@@ -40,7 +40,7 @@ impl<T> FromStd<T> {
 
     /// Returns a mutable reference to the wrapped value.
     #[inline]
-    #[deprecated(since = "TBD", note = "use `get_ref()` instead")]
+    #[deprecated(since = "TBD", note = "use `get_mut()` instead")]
     pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
 }
 
