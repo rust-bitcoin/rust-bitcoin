@@ -24,8 +24,17 @@ main() {
     need_nightly
     need_cargo_public_api
 
+    # If script is running in CI the recent lock file is copied into place
+    # already by the github action job. Locally be kind to the environment.
+    if [ "${GITHUB_ACTIONS:-}" != "true" ]; then
+        [ -f "Cargo.lock" ] && mv Cargo.lock Cargo.lock.tmp
+        cp Cargo-recent.lock Cargo.lock
+    fi
+
     # Just check crates that are stabilising.
     generate_api_files "units"
+
+    [ -f "Cargo.lock.tmp" ] && mv Cargo.lock.tmp Cargo.lock
 
     check_for_changes
 }
