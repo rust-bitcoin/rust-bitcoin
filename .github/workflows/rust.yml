@@ -119,6 +119,11 @@ jobs:
         run: rustup component add clippy
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
+      - name: "Clippy no-default-features (primitives, units)"
+        run: |
+          for crate in primitives units; do
+            cargo clippy --manifest-path $crate/Cargo.toml --all-targets --no-default-features --keep-going -- -D warnings
+          done
       - name: "Run test script"
         run: ./maintainer-tools/ci/run_task.sh lint
 
