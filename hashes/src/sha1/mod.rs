@@ -4,6 +4,8 @@
 
 use internals::slice::SliceExt;
 mod crypto;
+#[cfg(test)]
+mod tests;
 
 use core::cmp;
 

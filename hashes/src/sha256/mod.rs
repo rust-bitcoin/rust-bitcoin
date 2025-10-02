@@ -3,6 +3,8 @@
 //! SHA256 implementation.
 
 mod crypto;
+#[cfg(test)]
+mod tests;
 
 use core::{cmp, convert, fmt};
 
