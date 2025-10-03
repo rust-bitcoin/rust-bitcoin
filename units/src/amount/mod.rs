@@ -44,7 +44,7 @@ pub use self::error::AmountDecoderError;
 pub use self::error::{OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError};
 #[doc(inline)]
 #[cfg(feature = "encoding")]
-pub use self::unsigned::AmountDecoder;
+pub use self::unsigned::{AmountDecoder, AmountEncoder};
 
 /// A set of denominations in which amounts can be expressed.
 ///
