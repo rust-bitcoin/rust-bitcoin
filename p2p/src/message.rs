@@ -203,7 +203,7 @@ impl_vec_wrapper!(InventoryPayload, message_blockdata::Inventory);
 impl_vec_wrapper!(AddrPayload, (u32, Address));
 impl_vec_wrapper!(AddrV2Payload, AddrV2Message);
 
-/// A Network message payload. Proper documentation is available on at
+/// A Network message payload. Proper documentation is available at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum NetworkMessage {

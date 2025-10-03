@@ -64,7 +64,7 @@ impl Sequence {
     /// The lowest sequence number that does not opt-in for replace-by-fee.
     ///
     /// A transaction is considered to have opted in to replacement of itself
-    /// if any of it's inputs have a `Sequence` number less than this value
+    /// if any of its inputs have a `Sequence` number less than this value
     /// (Explicit Signalling [BIP-0125]).
     ///
     /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
