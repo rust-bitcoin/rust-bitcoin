@@ -299,13 +299,13 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> {
         let inner: &[u8] = self.inner.as_ref();
-        Ok(&inner[self.pos as usize..])
+        let pos = self.pos.min(inner.len() as u64) as usize;
+        Ok(&inner[pos..])
     }
 
     #[inline]
     fn consume(&mut self, amount: usize) {
-        assert!(amount <= self.inner.as_ref().len());
-        self.pos += amount as u64;
+        self.pos = self.pos.saturating_add(amount as u64);
     }
 }
 
@@ -516,5 +516,25 @@ mod tests {
         let read = take.read_to_end(&mut v).unwrap();
         assert_eq!(read, 32);
         assert_eq!(data[0..32], v[0..32]);
+    }
+
+    #[test]
+    fn cursor_fill_buf_past_end() {
+        let data = [1, 2, 3];
+        let mut cursor = Cursor::new(&data);
+        cursor.set_position(10);
+
+        let buf = cursor.fill_buf().unwrap();
+        assert!(buf.is_empty());
+    }
+
+    #[test]
+    fn cursor_consume_past_end() {
+        let data = [1, 2, 3];
+        let mut cursor = Cursor::new(&data);
+        cursor.set_position(10);
+
+        cursor.consume(5);
+        assert_eq!(cursor.position(), 15);
     }
 }
