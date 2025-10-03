@@ -255,6 +255,7 @@ impl TxIn {
     /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
     /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
     /// the input length `VarInt` to increase its encoding length.
+    #[deprecated(since = "0.32.8", note = "deprecated so we can change the function signature or delete in future")]
     pub fn legacy_weight(&self) -> Weight {
         Weight::from_non_witness_data_size(self.base_size() as u64)
     }
@@ -270,6 +271,7 @@ impl TxIn {
     /// - the new input added causes the input length `VarInt` to increase its encoding length
     /// - the new input is the first segwit input added - this will add an additional 2WU to the
     ///   transaction weight to take into account the segwit marker
+    #[deprecated(since = "0.32.8", note = "deprecated so we can change the function signature or delete in future")]
     pub fn segwit_weight(&self) -> Weight {
         Weight::from_non_witness_data_size(self.base_size() as u64)
             + Weight::from_witness_data_size(self.witness.size() as u64)
