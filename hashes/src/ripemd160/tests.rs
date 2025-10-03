@@ -100,7 +100,7 @@ fn ripemd_serde() {
         0xf1, 0x4a, 0xca, 0xd7,
     ];
 
-    let hash = ripemd160::Hash::from_slice(&HASH_BYTES).expect("right number of bytes");
+    let hash = ripemd160::Hash::from_byte_array(HASH_BYTES);
     assert_tokens(&hash.compact(), &[Token::BorrowedBytes(&HASH_BYTES[..])]);
     assert_tokens(&hash.readable(), &[Token::Str("132072df690933835eb8b6ad0b77e7b6f14acad7")]);
 }

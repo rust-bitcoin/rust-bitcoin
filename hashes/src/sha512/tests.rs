@@ -97,7 +97,7 @@ fn sha512_serde() {
         0x0b, 0x2d, 0x8a, 0x60, 0x0b, 0xdf, 0x4c, 0x0c,
     ];
 
-    let hash = sha512::Hash::from_slice(&HASH_BYTES).expect("right number of bytes");
+    let hash = sha512::Hash::from_byte_array(HASH_BYTES);
     assert_tokens(&hash.compact(), &[Token::BorrowedBytes(&HASH_BYTES[..])]);
     assert_tokens(
         &hash.readable(),

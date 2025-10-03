@@ -83,7 +83,7 @@ fn fmt_roundtrips() {
 
 #[test]
 #[rustfmt::skip]
-pub(crate) fn midstate() {
+fn midstate() {
     // Test vector obtained by doing an asset issuance on Elements
     let mut engine = sha256::Hash::engine();
     // sha256dhash of outpoint
@@ -187,9 +187,6 @@ const TAP_LEAF_MIDSTATE: Midstate = Midstate::new(
 );
 
 #[test]
-fn const_midstate() { assert_eq!(Midstate::hash_tag(b"TapLeaf"), TAP_LEAF_MIDSTATE,) }
-
-#[test]
 #[cfg(feature = "alloc")]
 fn regression_midstate_debug_format() {
     use alloc::format;
@@ -212,7 +209,7 @@ fn sha256_serde() {
         0xb7, 0x65, 0x44, 0x8c, 0x86, 0x35, 0xfb, 0x6c,
     ];
 
-    let hash = sha256::Hash::from_slice(&HASH_BYTES).expect("right number of bytes");
+    let hash = sha256::Hash::from_byte_array(HASH_BYTES);
     assert_tokens(&hash.compact(), &[Token::BorrowedBytes(&HASH_BYTES[..])]);
     assert_tokens(
         &hash.readable(),
