@@ -201,7 +201,7 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
+    /// use bitcoin::Txid;
     /// use bitcoin::merkle_tree::PartialMerkleTree;
     ///
     /// // Block 80000
@@ -540,7 +540,7 @@ mod tests {
     use super::*;
     use crate::block::{BlockUncheckedExt as _, Unchecked};
     use crate::consensus::encode;
-    use crate::hash_types::Txid;
+    use crate::Txid;
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
