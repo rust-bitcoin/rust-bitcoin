@@ -258,7 +258,7 @@ impl<D> From<std::io::Error> for ReadError<D> {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
+    #[cfg(feature = "std")]
     use alloc::vec::Vec;
     #[cfg(feature = "std")]
     use std::io::{Cursor, Read};
