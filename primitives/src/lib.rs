@@ -41,6 +41,7 @@ pub mod _export {
 }
 
 mod hash_types;
+#[cfg(feature = "alloc")]
 mod opcodes;
 
 pub mod block;

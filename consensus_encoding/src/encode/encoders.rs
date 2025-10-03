@@ -101,7 +101,7 @@ impl<'e, T: Encodable> SliceEncoder<'e, T> {
     }
 }
 
-impl<'e, T: Encodable> Encoder for SliceEncoder<'e, T> {
+impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
     fn current_chunk(&self) -> Option<&[u8]> {
         if let Some(compact_size) = self.compact_size.as_ref() {
             return Some(compact_size);
