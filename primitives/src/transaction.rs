@@ -19,6 +19,9 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2};
+#[cfg(feature = "alloc")]
+use encoding::{Encoder, Encoder3, Encoder6, SliceEncoder};
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
@@ -31,7 +34,17 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use units::parse_int;
 
 #[cfg(feature = "alloc")]
+use crate::amount::AmountEncoder;
+#[cfg(feature = "alloc")]
+use crate::locktime::absolute::LockTimeEncoder;
+#[cfg(feature = "alloc")]
 use crate::prelude::Vec;
+#[cfg(feature = "alloc")]
+use crate::script::ScriptEncoder;
+#[cfg(feature = "alloc")]
+use crate::sequence::SequenceEncoder;
+#[cfg(feature = "alloc")]
+use crate::witness::WitnessEncoder;
 #[cfg(feature = "alloc")]
 use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, Witness};
 
@@ -291,6 +304,51 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     sha256d::Hash::from_engine(enc)
 }
 
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Transaction`] type.
+    pub struct TransactionEncoder<'e>(
+        Encoder6<
+            VersionEncoder,
+        Option<ArrayEncoder<2>>,
+        SliceEncoder<'e, TxIn>,
+        SliceEncoder<'e, TxOut>,
+        Option<WitnessesEncoder<'e>>,
+        LockTimeEncoder,
+        >
+    );
+}
+
+#[cfg(feature = "alloc")]
+impl Encodable for Transaction {
+    type Encoder<'e>
+        = TransactionEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let version = self.version.encoder();
+        let inputs = SliceEncoder::with_length_prefix(self.inputs.as_ref());
+        let outputs = SliceEncoder::with_length_prefix(self.outputs.as_ref());
+        let lock_time = self.lock_time.encoder();
+
+        if self.uses_segwit_serialization() {
+            let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
+            let witnesses = WitnessesEncoder::new(self.inputs.as_slice());
+            TransactionEncoder(Encoder6::new(
+                version,
+                Some(segwit),
+                inputs,
+                outputs,
+                Some(witnesses),
+                lock_time,
+            ))
+        } else {
+            TransactionEncoder(Encoder6::new(version, None, inputs, outputs, None, lock_time))
+        }
+    }
+}
+
 /// Bitcoin transaction input.
 ///
 /// It contains the location of the previous transaction's output,
@@ -332,6 +390,84 @@ impl TxIn {
     };
 }
 
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`TxIn`] type.
+    pub struct TxInEncoder<'e>(
+        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder>
+    );
+}
+
+#[cfg(feature = "alloc")]
+impl Encodable for TxIn {
+    type Encoder<'e>
+        = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder3::new(
+            self.previous_output.encoder(),
+            self.script_sig.encoder(),
+            self.sequence.encoder(),
+        )
+    }
+}
+
+/// Encodes the witnesses from a list of inputs.
+#[cfg(feature = "alloc")]
+pub struct WitnessesEncoder<'e> {
+    inputs: &'e [TxIn],
+    /// Encoder for the current witness being encoded.
+    cur_enc: Option<WitnessEncoder<'e>>,
+}
+
+#[cfg(feature = "alloc")]
+impl<'e> WitnessesEncoder<'e> {
+    /// Constructs a new encoder for all witnesses in a list of transaction inputs.
+    pub fn new(inputs: &'e [TxIn]) -> Self {
+        Self { inputs, cur_enc: inputs.first().map(|input| input.witness.encoder()) }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<'e> Encoder for WitnessesEncoder<'e> {
+    #[inline]
+    fn current_chunk(&self) -> Option<&[u8]> {
+        // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
+        // `current_chunk` is required to return `None` if called after the encoder is exhausted.
+        self.cur_enc.as_ref().and_then(WitnessEncoder::current_chunk)
+    }
+
+    #[inline]
+    fn advance(&mut self) -> bool {
+        let Some(cur) = self.cur_enc.as_mut() else {
+            return false;
+        };
+
+        loop {
+            // On subsequent calls, attempt to advance the current encoder and return
+            // success if this succeeds.
+            if cur.advance() {
+                return true;
+            }
+            // self.inputs guaranteed to be non-empty if cur_enc is non-None.
+            self.inputs = &self.inputs[1..];
+
+            // If advancing the current encoder failed, attempt to move to the next encoder.
+            if let Some(input) = self.inputs.first() {
+                *cur = input.witness.encoder();
+                if cur.current_chunk().is_some() {
+                    return true;
+                }
+            } else {
+                self.cur_enc = None; // shortcut the next call to advance()
+                return false;
+            }
+        }
+    }
+}
+
 /// Bitcoin transaction output.
 ///
 /// Defines new coins to be created as a result of the transaction,
@@ -350,6 +486,24 @@ pub struct TxOut {
     pub amount: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptPubKeyBuf,
+}
+
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`TxOut`] type.
+    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder, ScriptEncoder<'e>>);
+}
+
+#[cfg(feature = "alloc")]
+impl Encodable for TxOut {
+    type Encoder<'e>
+        = Encoder2<AmountEncoder, ScriptEncoder<'e>>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(self.amount.encoder(), self.script_pubkey.encoder())
+    }
 }
 
 /// A reference to a transaction output.
@@ -374,6 +528,25 @@ impl OutPoint {
     /// This is used as the dummy input for coinbase transactions because they don't have any
     /// previous outputs. In other words, does not point to a real transaction.
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`TxOut`] type.
+    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
+}
+
+impl Encodable for OutPoint {
+    type Encoder<'e>
+        = OutPointEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        OutPointEncoder(Encoder2::new(
+            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
+        ))
+    }
 }
 
 #[cfg(feature = "hex")]
@@ -645,6 +818,18 @@ impl From<Version> for u32 {
     fn from(version: Version) -> Self { version.0 }
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`Version`] type.
+    pub struct VersionEncoder(encoding::ArrayEncoder<4>);
+}
+
+impl encoding::Encodable for Version {
+    type Encoder<'e> = VersionEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Transaction {
@@ -706,7 +891,11 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::{format, vec};
 
+    use encoding::Encoder as _;
+
     use super::*;
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    use crate::absolute::LockTime;
 
     #[test]
     fn sanity_check() {
@@ -823,7 +1012,7 @@ mod tests {
     }
 
     // Creates an arbitrary dummy outpoint.
-    #[cfg(feature = "serde")]
+    #[cfg(any(feature = "hex", feature = "serde"))]
     fn tc_out_point() -> OutPoint {
         let s = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1";
         s.parse::<OutPoint>().unwrap()
@@ -883,5 +1072,250 @@ mod tests {
         let got = bincode::deserialize::<OutPoint>(&ser).unwrap();
 
         assert_eq!(got, out_point);
+    }
+
+    #[cfg(feature = "alloc")]
+    fn tx_out() -> TxOut { TxOut { amount: Amount::ONE_SAT, script_pubkey: tc_script_pubkey() } }
+
+    #[cfg(any(feature = "hex", feature = "serde"))]
+    fn segwit_tx_in() -> TxIn {
+        let bytes = [1u8, 2, 3];
+        let data = [&bytes[..]];
+        let witness = Witness::from_iter(data);
+
+        TxIn {
+            previous_output: tc_out_point(),
+            script_sig: tc_script_sig(),
+            sequence: Sequence::MAX,
+            witness,
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    fn tc_script_pubkey() -> ScriptPubKeyBuf {
+        let script_bytes = vec![1, 2, 3];
+        ScriptPubKeyBuf::from_bytes(script_bytes)
+    }
+
+    #[cfg(any(feature = "hex", feature = "serde"))]
+    fn tc_script_sig() -> ScriptSigBuf {
+        let script_bytes = vec![1, 2, 3];
+        ScriptSigBuf::from_bytes(script_bytes)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn encode_out_point() {
+        let out_point = tc_out_point();
+        let mut encoder = out_point.encoder();
+
+        // The txid
+        assert_eq!(
+            encoder.current_chunk(),
+            Some(
+                &[
+                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                ][..]
+            )
+        );
+        assert!(encoder.advance());
+
+        // The vout
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert!(!encoder.advance());
+
+        // Exhausted
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn encode_tx_out() {
+        let out = tx_out();
+        let mut encoder = out.encoder();
+
+        // The amount.
+        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert!(encoder.advance());
+
+        // The script pubkey length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+
+        // The script pubkey data.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(!encoder.advance());
+
+        // Exhausted
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn encode_tx_in() {
+        let txin = segwit_tx_in();
+        let mut encoder = txin.encoder();
+
+        // The outpoint (same as tested above).
+        assert_eq!(
+            encoder.current_chunk(),
+            Some(
+                &[
+                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                ][..]
+            )
+        );
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+
+        // The script sig
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(encoder.advance());
+
+        // The sequence
+        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert!(!encoder.advance());
+
+        // Exhausted
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn encode_segwit_transaction() {
+        let tx = Transaction {
+            version: Version::TWO,
+            lock_time: LockTime::ZERO,
+            inputs: vec![segwit_tx_in()],
+            outputs: vec![tx_out()],
+        };
+
+        let mut encoder = tx.encoder();
+
+        // The version
+        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+
+        // The segwit marker and flag
+        assert_eq!(encoder.current_chunk(), Some(&[0u8, 1][..]));
+        assert!(encoder.advance());
+
+        // The input (same as tested above) but with vec length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(
+            encoder.current_chunk(),
+            Some(
+                &[
+                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                ][..]
+            )
+        );
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert!(encoder.advance());
+
+        // The output (same as tested above) but with vec length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(encoder.advance());
+
+        // The witness
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8, 1, 2, 3][..]));
+        assert!(encoder.advance());
+
+        // The lock time.
+        assert_eq!(encoder.current_chunk(), Some(&[0, 0, 0, 0][..]));
+        assert!(!encoder.advance());
+
+        // Exhausted
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn encode_non_segwit_transaction() {
+        let mut tx_in = segwit_tx_in();
+        tx_in.witness = Witness::default();
+
+        let tx = Transaction {
+            version: Version::TWO,
+            lock_time: LockTime::ZERO,
+            inputs: vec![tx_in],
+            outputs: vec![tx_out()],
+        };
+
+        let mut encoder = tx.encoder();
+
+        // The version
+        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+
+        // Advance past the optional segwit bytes encoder.
+        assert!(encoder.advance());
+
+        // The input (same as tested above) but with vec length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(
+            encoder.current_chunk(),
+            Some(
+                &[
+                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                ][..]
+            )
+        );
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert!(encoder.advance());
+
+        // The output (same as tested above) but with vec length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(encoder.advance());
+
+        // Advance past the optional witnesses encoder.
+        assert!(encoder.advance());
+
+        // The lock time.
+        assert_eq!(encoder.current_chunk(), Some(&[0, 0, 0, 0][..]));
+        assert!(!encoder.advance());
+
+        // Exhausted
+        assert_eq!(encoder.current_chunk(), None);
     }
 }

@@ -122,3 +122,19 @@ where
     }
     Ok(())
 }
+
+impl<T: Encoder> Encoder for Option<T> {
+    fn current_chunk(&self) -> Option<&[u8]> {
+        match self {
+            Some(encoder) => encoder.current_chunk(),
+            None => None,
+        }
+    }
+
+    fn advance(&mut self) -> bool {
+        match self {
+            Some(encoder) => encoder.advance(),
+            None => false,
+        }
+    }
+}
