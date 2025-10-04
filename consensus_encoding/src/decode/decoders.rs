@@ -26,7 +26,6 @@ const MAX_VEC_SIZE: u64 = 4_000_000;
 #[cfg(feature = "alloc")]
 pub struct ByteVecDecoder {
     prefix_decoder: Option<CompactSizeDecoder>,
-    prefix_read: bool, // true if the length prefix has been read.
     buffer: Vec<u8>,
     bytes_expected: usize,
     bytes_written: usize,
@@ -37,8 +36,7 @@ impl ByteVecDecoder {
     /// Constructs a new byte decoder.
     pub fn new() -> Self {
         Self {
-            prefix_decoder: None,
-            prefix_read: false,
+            prefix_decoder: Some(CompactSizeDecoder::default()),
             buffer: Vec::new(),
             bytes_expected: 0,
             bytes_written: 0,
@@ -59,16 +57,14 @@ impl Decoder for ByteVecDecoder {
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         use {ByteVecDecoderError as E, ByteVecDecoderErrorInner as Inner};
 
-        if !self.prefix_read {
-            let mut decoder = self.prefix_decoder.take().unwrap_or_default();
-
+        if let Some(mut decoder) = self.prefix_decoder.take() {
             if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
                 self.prefix_decoder = Some(decoder);
                 return Ok(true);
             }
             let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
 
-            self.prefix_read = true;
+            self.prefix_decoder = None;
             self.bytes_expected =
                 cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
@@ -100,13 +96,11 @@ impl Decoder for ByteVecDecoder {
     }
 
     fn min_bytes_needed(&self) -> usize {
-        if !self.prefix_read {
-            return match &self.prefix_decoder {
-                Some(compact_size_decoder) => compact_size_decoder.min_bytes_needed(),
-                None => 1,
-            };
+        if let Some(prefix_decoder) = &self.prefix_decoder {
+            prefix_decoder.min_bytes_needed()
+        } else {
+            self.bytes_expected - self.bytes_written
         }
-        self.bytes_expected - self.bytes_written
     }
 }
 
