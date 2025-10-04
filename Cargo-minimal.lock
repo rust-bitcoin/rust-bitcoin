@@ -134,6 +134,7 @@ dependencies = [
  "bitcoin_hashes 0.16.0",
  "consensus-encoding",
  "hex-conservative 0.3.0",
+ "hex_lit",
  "serde",
  "serde_json",
 ]

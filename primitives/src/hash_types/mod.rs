@@ -19,10 +19,10 @@ mod wtxid;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    block_hash::{BlockHash, BlockHashEncoder},
+    block_hash::{BlockHash, BlockHashDecoder, BlockHashDecoderError, BlockHashEncoder},
     ntxid::Ntxid,
-    transaction_merkle_node::{TxMerkleNode, TxMerkleNodeEncoder},
-    txid::Txid,
+    transaction_merkle_node::{TxMerkleNode, TxMerkleNodeEncoder, TxMerkleNodeDecoder, TxMerkleNodeDecoderError},
+    txid::{Txid},
     wtxid::Wtxid,
     witness_commitment::WitnessCommitment,
     witness_merkle_node::WitnessMerkleNode,
