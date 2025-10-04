@@ -12,7 +12,7 @@
 //!
 
 use internals::array_vec::ArrayVec;
-use internals::compact_size;
+use internals::{compact_size, ToU64};
 
 use super::{Encodable, Encoder};
 
@@ -248,6 +248,27 @@ impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Enc
     fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
+}
+
+/// Encoder for a compact size encoded integer.
+pub struct CompactSizeEncoder {
+    buf: Option<ArrayVec<u8, SIZE>>,
+}
+
+impl CompactSizeEncoder {
+    /// Constructs a new `CompactSizeEncoder`.
+    pub fn new(value: impl ToU64) -> Self { Self { buf: Some(compact_size::encode(value)) } }
+}
+
+impl Encoder for CompactSizeEncoder {
+    #[inline]
+    fn current_chunk(&self) -> Option<&[u8]> { self.buf.as_ref().map(|b| &b[..]) }
+
+    #[inline]
+    fn advance(&mut self) -> bool {
+        self.buf = None;
+        false
+    }
 }
 
 #[cfg(test)]
@@ -650,5 +671,43 @@ mod tests {
         assert_eq!(encoder.current_chunk(), Some(&[0xBE, 0xEF][..]));
         assert!(!encoder.advance());
         assert_eq!(encoder.current_chunk(), None);
+    }
+    #[test]
+    fn encode_compact_size() {
+        // 1-byte
+        let mut e = CompactSizeEncoder::new(0x10u64);
+        assert_eq!(e.current_chunk(), Some(&[0x10][..]));
+        assert!(!e.advance());
+        assert_eq!(e.current_chunk(), None);
+
+        let mut e = CompactSizeEncoder::new(0xFCu64);
+        assert_eq!(e.current_chunk(), Some(&[0xFC][..]));
+        assert!(!e.advance());
+
+        // 0xFD + u16
+        let mut e = CompactSizeEncoder::new(0x00FDu64);
+        assert_eq!(e.current_chunk(), Some(&[0xFD, 0xFD, 0x00][..]));
+        assert!(!e.advance());
+
+        let mut e = CompactSizeEncoder::new(0x0FFFu64);
+        assert_eq!(e.current_chunk(), Some(&[0xFD, 0xFF, 0x0F][..]));
+        assert!(!e.advance());
+
+        // 0xFE + u32
+        let mut e = CompactSizeEncoder::new(0x0001_0000u64);
+        assert_eq!(e.current_chunk(), Some(&[0xFE, 0x00, 0x00, 0x01, 0x00][..]));
+        assert!(!e.advance());
+
+        let mut e = CompactSizeEncoder::new(0x0F0F_0F0Fu64);
+        assert_eq!(e.current_chunk(), Some(&[0xFE, 0x0F, 0x0F, 0x0F, 0x0F][..]));
+        assert!(!e.advance());
+
+        // 0xFF + u64
+        let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64);
+        assert_eq!(
+            e.current_chunk(),
+            Some(&[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..])
+        );
+        assert!(!e.advance());
     }
 }
