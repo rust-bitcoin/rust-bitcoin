@@ -7,6 +7,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::write_err;
 use io::Write;
 
@@ -130,4 +132,16 @@ impl From<secp256k1::Error> for SigFromSliceError {
 
 impl From<InvalidSighashTypeError> for SigFromSliceError {
     fn from(err: InvalidSighashTypeError) -> Self { Self::SighashType(err) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Signature {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let arbitrary_bytes: [u8; secp256k1::constants::SCHNORR_SIGNATURE_SIZE] = u.arbitrary()?;
+
+        Ok(Signature {
+            signature: secp256k1::schnorr::Signature::from_slice(&arbitrary_bytes).unwrap(),
+            sighash_type: TapSighashType::arbitrary(u)?,
+        })
+    }
 }

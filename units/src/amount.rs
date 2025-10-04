@@ -18,6 +18,9 @@ use ::serde::{Deserialize, Serialize};
 use internals::error::InputString;
 use internals::write_err;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// A set of denominations in which amounts can be expressed.
 ///
 /// # Examples
@@ -1880,6 +1883,37 @@ pub mod serde {
                 d.deserialize_option(VisitOptAmt::<A>(PhantomData))
             }
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Amount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = u64::arbitrary(u)?;
+        Ok(Amount(a))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Denomination {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=5)?;
+        match choice {
+            0 => Ok(Denomination::Bitcoin),
+            1 => Ok(Denomination::CentiBitcoin),
+            2 => Ok(Denomination::MilliBitcoin),
+            3 => Ok(Denomination::MicroBitcoin),
+            4 => Ok(Denomination::Bit),
+            _ => Ok(Denomination::Satoshi),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for SignedAmount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let s = i64::arbitrary(u)?;
+        Ok(SignedAmount(s))
     }
 }
 
