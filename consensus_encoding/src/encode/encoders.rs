@@ -257,16 +257,12 @@ pub struct CompactSizeEncoder {
 
 impl CompactSizeEncoder {
     /// Constructs a new `CompactSizeEncoder`.
-    pub fn new(value: u64) -> Self {
-        Self { buf: Some(compact_size::encode(value)) }
-    }
+    pub fn new(value: u64) -> Self { Self { buf: Some(compact_size::encode(value)) } }
 }
 
 impl Encoder for CompactSizeEncoder {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> {
-        self.buf.as_ref().map(|b| &b[..])
-    }
+    fn current_chunk(&self) -> Option<&[u8]> { self.buf.as_ref().map(|b| &b[..]) }
 
     #[inline]
     fn advance(&mut self) -> bool {
@@ -707,7 +703,7 @@ mod tests {
         assert!(!e.advance());
 
         // 0xFF + u64
-        let mut e = CompactSizeEncoder::new(0x00F0F0_F0F0_F0E0);
+        let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0);
         assert_eq!(
             e.current_chunk(),
             Some(&[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..])

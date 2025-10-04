@@ -9,7 +9,7 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{Encodable, Encoder, Encoder2, CompactSizeEncoder, BytesEncoder};
+use encoding::{BytesEncoder, CompactSizeEncoder, Encodable, Encoder, Encoder2};
 #[cfg(feature = "hex")]
 use hex::{error::HexToBytesError, FromHex};
 use internals::compact_size;
@@ -261,7 +261,6 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
     bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes) as usize)
 }
 
-
 /// The encoder for the [`Witness`] type.
 pub struct WitnessEncoder<'a>(Encoder2<CompactSizeEncoder, BytesEncoder<'a>>);
 
@@ -273,7 +272,8 @@ impl Encodable for Witness {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let num_elements = CompactSizeEncoder::new(self.len() as u64);
-        let witness_elements = BytesEncoder::without_length_prefix(&self.content[..self.indices_start]);
+        let witness_elements =
+            BytesEncoder::without_length_prefix(&self.content[..self.indices_start]);
 
         WitnessEncoder(Encoder2::new(num_elements, witness_elements))
     }
@@ -281,14 +281,10 @@ impl Encodable for Witness {
 
 impl<'a> Encoder for WitnessEncoder<'a> {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> {
-        self.0.current_chunk()
-    }
+    fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
 
     #[inline]
-    fn advance(&mut self) -> bool {
-        self.0.advance()
-    }
+    fn advance(&mut self) -> bool { self.0.advance() }
 }
 
 // Note: we use `Borrow` in the following `PartialEq` impls specifically because of its additional
@@ -608,6 +604,7 @@ impl<'a> Arbitrary<'a> for Witness {
 mod test {
     #[cfg(feature = "alloc")]
     use alloc::vec;
+
     use super::*;
 
     // Appends all the indices onto the end of a list of elements.
