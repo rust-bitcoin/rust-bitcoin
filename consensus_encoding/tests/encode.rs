@@ -5,7 +5,7 @@
 #[cfg(feature = "std")]
 use std::io::{Cursor, Write};
 
-use consensus_encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder};
+use bitcoin_consensus_encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder};
 
 // Simple test type that implements Encodable.
 #[cfg(feature = "alloc")]
@@ -43,7 +43,7 @@ fn encode_std_writer() {
     let data = TestData(0x1234_5678);
 
     let mut cursor = Cursor::new(Vec::new());
-    consensus_encoding::encode_to_writer(&data, &mut cursor).unwrap();
+    bitcoin_consensus_encoding::encode_to_writer(&data, &mut cursor).unwrap();
 
     let result = cursor.into_inner();
     assert_eq!(result, vec![0x78, 0x56, 0x34, 0x12]);
@@ -53,7 +53,7 @@ fn encode_std_writer() {
 #[cfg(feature = "alloc")]
 fn encode_vec() {
     let data = TestData(0xDEAD_BEEF);
-    let vec = consensus_encoding::encode_to_vec(&data);
+    let vec = bitcoin_consensus_encoding::encode_to_vec(&data);
     assert_eq!(vec, vec![0xEF, 0xBE, 0xAD, 0xDE]);
 }
 
@@ -61,7 +61,7 @@ fn encode_vec() {
 #[cfg(feature = "alloc")]
 fn encode_vec_empty_data() {
     let data = EmptyData;
-    let result = consensus_encoding::encode_to_vec(&data);
+    let result = bitcoin_consensus_encoding::encode_to_vec(&data);
     assert!(result.is_empty());
 }
 
@@ -70,7 +70,7 @@ fn encode_vec_empty_data() {
 fn encode_std_writer_empty_data() {
     let data = EmptyData;
     let mut cursor = Cursor::new(Vec::new());
-    consensus_encoding::encode_to_writer(&data, &mut cursor).unwrap();
+    bitcoin_consensus_encoding::encode_to_writer(&data, &mut cursor).unwrap();
 
     let result = cursor.into_inner();
     assert!(result.is_empty());
@@ -93,7 +93,7 @@ fn encode_std_writer_io_error() {
     let data = TestData(0x1234_5678);
     let mut writer = FailingWriter;
 
-    let result = consensus_encoding::encode_to_writer(&data, &mut writer);
+    let result = bitcoin_consensus_encoding::encode_to_writer(&data, &mut writer);
 
     assert!(result.is_err());
     assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::Other);
@@ -103,10 +103,10 @@ fn encode_std_writer_io_error() {
 fn encode_newtype_lifetime_flexibility() {
     // Test that the encoder_newtype macro allows different lifetime names.
 
-    consensus_encoding::encoder_newtype! {
+    bitcoin_consensus_encoding::encoder_newtype! {
         pub struct CustomEncoder<'data>(BytesEncoder<'data>);
     }
-    consensus_encoding::encoder_newtype! {
+    bitcoin_consensus_encoding::encoder_newtype! {
         pub struct NoLifetimeEncoder(ArrayEncoder<4>);
     }
 
