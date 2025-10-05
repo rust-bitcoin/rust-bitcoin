@@ -629,6 +629,7 @@ impl<'a> Arbitrary<'a> for Witness {
 mod test {
     #[cfg(feature = "alloc")]
     use alloc::vec;
+
     use super::*;
 
     // Appends all the indices onto the end of a list of elements.

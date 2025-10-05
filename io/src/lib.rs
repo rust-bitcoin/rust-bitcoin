@@ -304,9 +304,7 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     }
 
     #[inline]
-    fn consume(&mut self, amount: usize) {
-        self.pos = self.pos.saturating_add(amount as u64);
-    }
+    fn consume(&mut self, amount: usize) { self.pos = self.pos.saturating_add(amount as u64); }
 }
 
 /// A generic trait describing an output stream.
