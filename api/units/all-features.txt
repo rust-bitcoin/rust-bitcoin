@@ -12,6 +12,26 @@
 #[non_exhaustive] pub struct bitcoin_units::locktime::absolute::error::ConversionError
 #[non_exhaustive] pub struct bitcoin_units::parse_int::ParseIntError
 #[non_exhaustive] pub struct bitcoin_units::result::NumOpError(_)
+impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_units::Amount
+impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_units::BlockTime
+impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_units::block::BlockHeight
+impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_units::locktime::absolute::LockTime
+impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_units::sequence::Sequence
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::amount::AmountDecoder
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::block::BlockHeightDecoder
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::locktime::absolute::LockTimeDecoder
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::sequence::SequenceDecoder
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::time::BlockTimeDecoder
+impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_units::Amount
+impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_units::BlockTime
+impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_units::block::BlockHeight
+impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_units::locktime::absolute::LockTime
+impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_units::sequence::Sequence
+impl bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder
+impl bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder
+impl bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder
+impl bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder
+impl bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder
 impl bitcoin_units::Amount
 impl bitcoin_units::BlockTime
 impl bitcoin_units::FeeRate
@@ -51,26 +71,6 @@ impl bitcoin_units::result::NumOpError
 impl bitcoin_units::sequence::Sequence
 impl bitcoin_units::sequence::SequenceDecoder
 impl bitcoin_units::time::BlockTimeDecoder
-impl consensus_encoding::decode::Decodable for bitcoin_units::Amount
-impl consensus_encoding::decode::Decodable for bitcoin_units::BlockTime
-impl consensus_encoding::decode::Decodable for bitcoin_units::block::BlockHeight
-impl consensus_encoding::decode::Decodable for bitcoin_units::locktime::absolute::LockTime
-impl consensus_encoding::decode::Decodable for bitcoin_units::sequence::Sequence
-impl consensus_encoding::decode::Decoder for bitcoin_units::amount::AmountDecoder
-impl consensus_encoding::decode::Decoder for bitcoin_units::block::BlockHeightDecoder
-impl consensus_encoding::decode::Decoder for bitcoin_units::locktime::absolute::LockTimeDecoder
-impl consensus_encoding::decode::Decoder for bitcoin_units::sequence::SequenceDecoder
-impl consensus_encoding::decode::Decoder for bitcoin_units::time::BlockTimeDecoder
-impl consensus_encoding::encode::Encodable for bitcoin_units::Amount
-impl consensus_encoding::encode::Encodable for bitcoin_units::BlockTime
-impl consensus_encoding::encode::Encodable for bitcoin_units::block::BlockHeight
-impl consensus_encoding::encode::Encodable for bitcoin_units::locktime::absolute::LockTime
-impl consensus_encoding::encode::Encodable for bitcoin_units::sequence::Sequence
-impl consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder
-impl consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder
-impl consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder
-impl consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder
-impl consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder
 impl core::clone::Clone for bitcoin_units::Amount
 impl core::clone::Clone for bitcoin_units::BlockTime
 impl core::clone::Clone for bitcoin_units::FeeRate
