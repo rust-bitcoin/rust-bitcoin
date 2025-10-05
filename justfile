@@ -65,5 +65,6 @@ gen-dep-tree:
         cargo tree --all-features --edges=no-dev,no-build --format={lib} --no-dedupe \
         --prune=serde_json --prune=rand --prune=bincode --prune=serde \
         -p bitcoin -p bitcoin-internals -p bitcoin_hashes@0.16.0 -p bitcoin-units \
-        -p bitcoin-primitives -p chacha20-poly1305 -p base58ck -p bitcoin-addresses -p bitcoin-io@0.2.0
+        -p bitcoin-primitives -p chacha20-poly1305 -p base58ck -p bitcoin-addresses -p bitcoin-io@0.2.0 \
+        -p bitcoin-consensus-encoding
        
