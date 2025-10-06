@@ -19,7 +19,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2};
+use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{Encoder, Encoder3, Encoder6, SliceEncoder};
 #[cfg(feature = "alloc")]
@@ -311,8 +311,8 @@ encoding::encoder_newtype! {
         Encoder6<
             VersionEncoder,
         Option<ArrayEncoder<2>>,
-        SliceEncoder<'e, TxIn>,
-        SliceEncoder<'e, TxOut>,
+        Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
+        Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
         Option<WitnessesEncoder<'e>>,
         LockTimeEncoder,
         >
@@ -328,8 +328,14 @@ impl Encodable for Transaction {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let version = self.version.encoder();
-        let inputs = SliceEncoder::with_length_prefix(self.inputs.as_ref());
-        let outputs = SliceEncoder::with_length_prefix(self.outputs.as_ref());
+        let inputs = Encoder2::new(
+            CompactSizeEncoder::new(self.inputs.len() as u64),
+            SliceEncoder::new(self.inputs.as_ref()),
+        );
+        let outputs = Encoder2::new(
+            CompactSizeEncoder::new(self.outputs.len() as u64),
+            SliceEncoder::new(self.outputs.as_ref()),
+        );
         let lock_time = self.lock_time.encoder();
 
         if self.uses_segwit_serialization() {
