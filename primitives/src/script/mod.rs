@@ -38,13 +38,13 @@ pub type RedeemScriptBuf = ScriptBuf<RedeemScriptTag>;
 /// A reference to a P2SH redeem script.
 pub type RedeemScript = Script<RedeemScriptTag>;
 
-/// A reference to a script public key (scriptPubKey).
+/// A reference to a `scriptPubKey` (locking script).
 pub type ScriptPubKey = Script<ScriptPubKeyTag>;
 
 /// A reference to a script signature (scriptSig).
 pub type ScriptSig = Script<ScriptSigTag>;
 
-/// A script public key (scriptPubKey).
+/// A `scriptPubKey` (locking script).
 pub type ScriptPubKeyBuf = ScriptBuf<ScriptPubKeyTag>;
 
 /// A script signature (scriptSig).
