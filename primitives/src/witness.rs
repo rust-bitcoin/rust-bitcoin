@@ -272,8 +272,7 @@ impl Encodable for Witness {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let num_elements = CompactSizeEncoder::new(self.len());
-        let witness_elements =
-            BytesEncoder::without_length_prefix(&self.content[..self.indices_start]);
+        let witness_elements = BytesEncoder::new(&self.content[..self.indices_start]);
 
         WitnessEncoder(Encoder2::new(num_elements, witness_elements))
     }
@@ -604,6 +603,7 @@ impl<'a> Arbitrary<'a> for Witness {
 mod test {
     #[cfg(feature = "alloc")]
     use alloc::vec;
+
     use super::*;
 
     // Appends all the indices onto the end of a list of elements.

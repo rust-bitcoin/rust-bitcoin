@@ -543,7 +543,7 @@ impl Encodable for OutPoint {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         OutPointEncoder(Encoder2::new(
-            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+            BytesEncoder::new(self.txid.as_byte_array()),
             ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
         ))
     }

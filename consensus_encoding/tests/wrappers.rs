@@ -3,7 +3,7 @@
 #![cfg(feature = "std")]
 
 use consensus_encoding as encoding;
-use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2, SliceEncoder};
+use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
 
 encoding::encoder_newtype! {
     /// An encoder that uses an inner `ArrayEncoder`.
@@ -47,7 +47,7 @@ fn bytes_encoder_without_length_prefix() {
             Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestBytesEncoder(BytesEncoder::without_length_prefix(self.0.as_ref()))
+            TestBytesEncoder(BytesEncoder::new(self.0.as_ref()))
         }
     }
 
@@ -66,12 +66,15 @@ fn bytes_encoder_with_length_prefix() {
 
     impl Encodable for Test {
         type Encoder<'e>
-            = TestBytesEncoder<'e>
+            = Encoder2<CompactSizeEncoder, BytesEncoder<'e>>
         where
             Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestBytesEncoder(BytesEncoder::with_length_prefix(self.0.as_ref()))
+            Encoder2::new(
+                CompactSizeEncoder::new(self.0.len() as u64),
+                BytesEncoder::new(self.0.as_ref()),
+            )
         }
     }
 
@@ -92,11 +95,15 @@ fn two_encoder() {
     }
 
     impl Encodable for Test {
-        type Encoder<'e> = Encoder2<TestBytesEncoder<'e>, TestBytesEncoder<'e>>;
+        type Encoder<'e> =
+            Encoder2<TestBytesEncoder<'e>, Encoder2<CompactSizeEncoder, BytesEncoder<'e>>>;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            let a = TestBytesEncoder(BytesEncoder::without_length_prefix(self.a.as_ref()));
-            let b = TestBytesEncoder(BytesEncoder::with_length_prefix(self.b.as_ref()));
+            let a = TestBytesEncoder(BytesEncoder::new(self.a.as_ref()));
+            let b = Encoder2::new(
+                CompactSizeEncoder::new(self.b.len() as u64),
+                BytesEncoder::new(self.b.as_ref()),
+            );
 
             Encoder2::new(a, b)
         }

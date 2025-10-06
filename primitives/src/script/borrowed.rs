@@ -7,7 +7,7 @@ use core::ops::{
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{BytesEncoder, Encodable};
+use encoding::{BytesEncoder, CompactSizeEncoder, Encodable, Encoder2};
 
 use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
@@ -155,7 +155,7 @@ impl<T> Script<T> {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Script<T>`] type.
-    pub struct ScriptEncoder<'e>(BytesEncoder<'e>);
+    pub struct ScriptEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }
 
 impl<T> Encodable for Script<T> {
@@ -165,7 +165,10 @@ impl<T> Encodable for Script<T> {
         Self: 'a;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        ScriptEncoder(BytesEncoder::with_length_prefix(self.as_bytes()))
+        ScriptEncoder(Encoder2::new(
+            CompactSizeEncoder::new(self.as_bytes().len() as u64),
+            BytesEncoder::new(self.as_bytes()),
+        ))
     }
 }
 

@@ -40,7 +40,7 @@ impl Encodable for Adt {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let a = SliceEncoder::with_length_prefix(&self.v);
-        let b = BytesEncoder::without_length_prefix(self.b.as_ref());
+        let b = BytesEncoder::new(self.b.as_ref());
 
         AdtEncoder(Encoder2::new(a, b))
     }
