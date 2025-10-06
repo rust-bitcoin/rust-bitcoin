@@ -23,7 +23,7 @@ fn array_encoder() {
     impl Encodable for Test {
         type Encoder<'e> = TestArrayEncoder;
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
+            TestArrayEncoder(ArrayEncoder::new(self.0.to_le_bytes()))
         }
     }
 
@@ -150,7 +150,7 @@ fn slice_encoder() {
         type Encoder<'e> = InnerArrayEncoder;
         fn encoder(&self) -> Self::Encoder<'_> {
             // Big-endian to make reading the test assertion easier.
-            InnerArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
+            InnerArrayEncoder(ArrayEncoder::new(self.0.to_be_bytes()))
         }
     }
 

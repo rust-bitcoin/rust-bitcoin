@@ -574,7 +574,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for Amount {
     type Encoder<'e> = AmountEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        AmountEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_sat().to_le_bytes()))
+        AmountEncoder(encoding::ArrayEncoder::new(self.to_sat().to_le_bytes()))
     }
 }
 

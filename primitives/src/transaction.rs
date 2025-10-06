@@ -333,7 +333,7 @@ impl Encodable for Transaction {
         let lock_time = self.lock_time.encoder();
 
         if self.uses_segwit_serialization() {
-            let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
+            let segwit = ArrayEncoder::new([0x00, 0x01]);
             let witnesses = WitnessesEncoder::new(self.inputs.as_slice());
             TransactionEncoder(Encoder6::new(
                 version,
@@ -544,7 +544,7 @@ impl Encodable for OutPoint {
     fn encoder(&self) -> Self::Encoder<'_> {
         OutPointEncoder(Encoder2::new(
             BytesEncoder::new(self.txid.as_byte_array()),
-            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
+            ArrayEncoder::new(self.vout.to_le_bytes()),
         ))
     }
 }
@@ -826,7 +826,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for Version {
     type Encoder<'e> = VersionEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
+        VersionEncoder(encoding::ArrayEncoder::new(self.to_u32().to_le_bytes()))
     }
 }
 

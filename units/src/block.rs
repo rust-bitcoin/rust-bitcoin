@@ -155,9 +155,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for BlockHeight {
     type Encoder<'e> = BlockHeightEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHeightEncoder(encoding::ArrayEncoder::without_length_prefix(
-            self.to_u32().to_le_bytes(),
-        ))
+        BlockHeightEncoder(encoding::ArrayEncoder::new(self.to_u32().to_le_bytes()))
     }
 }
 

@@ -413,9 +413,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for LockTime {
     type Encoder<'e> = LockTimeEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        LockTimeEncoder(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus_u32().to_le_bytes(),
-        ))
+        LockTimeEncoder(encoding::ArrayEncoder::new(self.to_consensus_u32().to_le_bytes()))
     }
 }
 

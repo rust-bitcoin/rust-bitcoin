@@ -90,7 +90,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for BlockTime {
     type Encoder<'e> = BlockTimeEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTimeEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
+        BlockTimeEncoder(encoding::ArrayEncoder::new(self.to_u32().to_le_bytes()))
     }
 }
 

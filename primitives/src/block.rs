@@ -264,7 +264,7 @@ impl Encodable for Header {
             self.merkle_root.encoder(),
             self.time.encoder(),
             self.bits.encoder(),
-            encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+            encoding::ArrayEncoder::new(self.nonce.to_le_bytes()),
         ))
     }
 }
@@ -359,9 +359,7 @@ encoding::encoder_newtype! {
 impl Encodable for Version {
     type Encoder<'e> = VersionEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus().to_le_bytes(),
-        ))
+        VersionEncoder(encoding::ArrayEncoder::new(self.to_consensus().to_le_bytes()))
     }
 }
 

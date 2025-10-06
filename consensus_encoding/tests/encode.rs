@@ -16,9 +16,7 @@ impl Encodable for TestData {
     where
         Self: 's;
 
-    fn encoder(&self) -> Self::Encoder<'_> {
-        ArrayEncoder::without_length_prefix(self.0.to_le_bytes())
-    }
+    fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::new(self.0.to_le_bytes()) }
 }
 
 // Test with a type that creates an empty encoder.
@@ -30,7 +28,7 @@ impl Encodable for EmptyData {
     where
         Self: 's;
 
-    fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix([]) }
+    fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::new([]) }
 }
 
 #[test]
@@ -108,7 +106,7 @@ fn encode_newtype_lifetime_flexibility() {
 
     let test_data = b"hello world";
     let custom_encoder = CustomEncoder(BytesEncoder::new(test_data));
-    let no_lifetime_encoder = NoLifetimeEncoder(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
+    let no_lifetime_encoder = NoLifetimeEncoder(ArrayEncoder::new([1, 2, 3, 4]));
 
     assert_eq!(custom_encoder.current_chunk(), Some(test_data.as_slice()));
     assert_eq!(no_lifetime_encoder.current_chunk(), Some(&[1, 2, 3, 4][..]));

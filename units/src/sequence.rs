@@ -278,9 +278,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for Sequence {
     type Encoder<'e> = SequenceEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        SequenceEncoder(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus_u32().to_le_bytes(),
-        ))
+        SequenceEncoder(encoding::ArrayEncoder::new(self.to_consensus_u32().to_le_bytes()))
     }
 }
 

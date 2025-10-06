@@ -44,8 +44,8 @@ pub struct ArrayEncoder<const N: usize> {
 }
 
 impl<const N: usize> ArrayEncoder<N> {
-    /// Constructs an encoder which encodes the array with no length prefix.
-    pub fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
+    /// Constructs an encoder which encodes the array.
+    pub fn new(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
 }
 
 impl<const N: usize> Encoder for ArrayEncoder<N> {
@@ -275,7 +275,7 @@ mod tests {
         where
             Self: 's;
 
-        fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
+        fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::new(self.0) }
     }
 
     #[test]

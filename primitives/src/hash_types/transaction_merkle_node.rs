@@ -32,6 +32,6 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for TxMerkleNode {
     type Encoder<'e> = TxMerkleNodeEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        TxMerkleNodeEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        TxMerkleNodeEncoder(encoding::ArrayEncoder::new(self.to_byte_array()))
     }
 }

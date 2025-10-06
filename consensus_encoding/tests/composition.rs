@@ -20,10 +20,7 @@ impl Encodable for CompositeData {
     type Encoder<'e> = Encoder2<ArrayEncoder<4>, ArrayEncoder<2>>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(
-            ArrayEncoder::without_length_prefix(self.first),
-            ArrayEncoder::without_length_prefix(self.second),
-        )
+        Encoder2::new(ArrayEncoder::new(self.first), ArrayEncoder::new(self.second))
     }
 }
 
@@ -102,12 +99,12 @@ fn composition_chain() {
 fn composition_nested() {
     let data = b"abcdef";
     let mut encoder6 = Encoder6::new(
-        ArrayEncoder::without_length_prefix([data[0]]),
-        ArrayEncoder::without_length_prefix([data[1]]),
-        ArrayEncoder::without_length_prefix([data[2]]),
-        ArrayEncoder::without_length_prefix([data[3]]),
-        ArrayEncoder::without_length_prefix([data[4]]),
-        ArrayEncoder::without_length_prefix([data[5]]),
+        ArrayEncoder::new([data[0]]),
+        ArrayEncoder::new([data[1]]),
+        ArrayEncoder::new([data[2]]),
+        ArrayEncoder::new([data[3]]),
+        ArrayEncoder::new([data[4]]),
+        ArrayEncoder::new([data[5]]),
     );
 
     let mut encoded_bytes = Vec::new();

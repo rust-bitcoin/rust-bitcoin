@@ -65,7 +65,5 @@ encoding::encoder_newtype! {
 
 impl Encodable for Inner {
     type Encoder<'e> = InnerEncoder;
-    fn encoder(&self) -> Self::Encoder<'_> {
-        InnerEncoder(ArrayEncoder::without_length_prefix(self.to_array()))
-    }
+    fn encoder(&self) -> Self::Encoder<'_> { InnerEncoder(ArrayEncoder::new(self.to_array())) }
 }
