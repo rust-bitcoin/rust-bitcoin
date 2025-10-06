@@ -49,7 +49,7 @@ impl fmt::UpperHex for CompactTarget {
 }
 
 encoding::encoder_newtype! {
-    /// The encoder for the [`TxMerkleNode`] type.
+    /// The encoder for the [`CompactTarget`] type.
     pub struct CompactTargetEncoder(encoding::ArrayEncoder<4>);
 }
 
