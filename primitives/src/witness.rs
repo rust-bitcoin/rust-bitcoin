@@ -9,10 +9,9 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{Encodable, Encoder};
+use encoding::{BytesEncoder, CompactSizeEncoder, Encodable, Encoder, Encoder2};
 #[cfg(feature = "hex")]
 use hex::{error::HexToBytesError, FromHex};
-use internals::array_vec::ArrayVec;
 use internals::compact_size;
 use internals::slice::SliceExt;
 use internals::wrap_debug::WrapDebug;
@@ -262,19 +261,8 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
     bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes) as usize)
 }
 
-/// The maximum length of a compact size encoding.
-const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
-
 /// The encoder for the [`Witness`] type.
-// This is basically an exact copy of the `encoding::BytesEncoder` except we prefix
-// with the number of witness elements not the byte slice length.
-pub struct WitnessEncoder<'a> {
-    /// A slice of all the elements without the initial length prefix
-    /// but with the length prefix on each element.
-    witness_elements: Option<&'a [u8]>,
-    /// Encoding of the number of witness elements.
-    num_elements: Option<ArrayVec<u8, SIZE>>,
-}
+pub struct WitnessEncoder<'a>(Encoder2<CompactSizeEncoder, BytesEncoder<'a>>);
 
 impl Encodable for Witness {
     type Encoder<'a>
@@ -283,33 +271,20 @@ impl Encodable for Witness {
         Self: 'a;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        let num_elements = Some(compact_size::encode(self.len()));
-        let witness_elements = Some(&self.content[..self.indices_start]);
+        let num_elements = CompactSizeEncoder::new(self.len());
+        let witness_elements =
+            BytesEncoder::without_length_prefix(&self.content[..self.indices_start]);
 
-        WitnessEncoder { witness_elements, num_elements }
+        WitnessEncoder(Encoder2::new(num_elements, witness_elements))
     }
 }
 
 impl<'a> Encoder for WitnessEncoder<'a> {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> {
-        if let Some(num_elements) = self.num_elements.as_ref() {
-            Some(num_elements)
-        } else {
-            self.witness_elements
-        }
-    }
+    fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
 
     #[inline]
-    fn advance(&mut self) -> bool {
-        if self.num_elements.is_some() {
-            self.num_elements = None;
-            true
-        } else {
-            self.witness_elements = None;
-            false
-        }
-    }
+    fn advance(&mut self) -> bool { self.0.advance() }
 }
 
 // Note: we use `Borrow` in the following `PartialEq` impls specifically because of its additional
