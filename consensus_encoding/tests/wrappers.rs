@@ -60,35 +60,11 @@ fn bytes_encoder_without_length_prefix() {
 }
 
 #[test]
-fn bytes_encoder_with_length_prefix() {
-    #[derive(Debug, Default, Clone)]
-    pub struct Test(Vec<u8>);
-
-    impl Encodable for Test {
-        type Encoder<'e>
-            = TestBytesEncoder<'e>
-        where
-            Self: 'e;
-
-        fn encoder(&self) -> Self::Encoder<'_> {
-            TestBytesEncoder(BytesEncoder::with_length_prefix(self.0.as_ref()))
-        }
-    }
-
-    let t = Test(vec![0xca, 0xfe]);
-
-    let want = [0x02, 0xca, 0xfe];
-    let got = encoding::encode_to_vec(&t);
-
-    assert_eq!(got, want);
-}
-
-#[test]
 fn two_encoder() {
     #[derive(Debug, Default, Clone)]
     pub struct Test {
-        a: Vec<u8>, // Encode without prefix.
-        b: Vec<u8>, // Encode with prefix.
+        a: Vec<u8>,
+        b: Vec<u8>,
     }
 
     impl Encodable for Test {
@@ -96,7 +72,7 @@ fn two_encoder() {
 
         fn encoder(&self) -> Self::Encoder<'_> {
             let a = TestBytesEncoder(BytesEncoder::without_length_prefix(self.a.as_ref()));
-            let b = TestBytesEncoder(BytesEncoder::with_length_prefix(self.b.as_ref()));
+            let b = TestBytesEncoder(BytesEncoder::without_length_prefix(self.b.as_ref()));
 
             Encoder2::new(a, b)
         }
@@ -104,7 +80,7 @@ fn two_encoder() {
 
     let t = Test { a: vec![0xca, 0xfe], b: (vec![0xba, 0xbe]) };
 
-    let want = [0xca, 0xfe, 0x02, 0xba, 0xbe];
+    let want = [0xca, 0xfe, 0xba, 0xbe];
     let got = encoding::encode_to_vec(&t);
 
     assert_eq!(got, want);

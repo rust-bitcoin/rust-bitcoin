@@ -22,38 +22,21 @@ const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
 /// An encoder for a single byte slice.
 pub struct BytesEncoder<'sl> {
     sl: Option<&'sl [u8]>,
-    compact_size: Option<ArrayVec<u8, SIZE>>,
 }
 
 impl<'sl> BytesEncoder<'sl> {
     /// Constructs a byte encoder which encodes the given byte slice, with no length prefix.
     pub fn without_length_prefix(sl: &'sl [u8]) -> Self {
-        Self { sl: Some(sl), compact_size: None }
-    }
-
-    /// Constructs a byte encoder which encodes the given byte slice, with the length prefix.
-    pub fn with_length_prefix(sl: &'sl [u8]) -> Self {
-        Self { sl: Some(sl), compact_size: Some(compact_size::encode(sl.len())) }
+        Self { sl: Some(sl) }
     }
 }
 
 impl Encoder for BytesEncoder<'_> {
-    fn current_chunk(&self) -> Option<&[u8]> {
-        if let Some(compact_size) = self.compact_size.as_ref() {
-            Some(compact_size)
-        } else {
-            self.sl
-        }
-    }
+    fn current_chunk(&self) -> Option<&[u8]> { self.sl }
 
     fn advance(&mut self) -> bool {
-        if self.compact_size.is_some() {
-            self.compact_size = None;
-            true
-        } else {
-            self.sl = None;
-            false
-        }
+        self.sl = None;
+        false
     }
 }
 
@@ -275,7 +258,7 @@ impl Encoder for CompactSizeEncoder {
 mod tests {
     use super::*;
 
-    struct TestBytes<'a>(&'a [u8], bool);
+    struct TestBytes<'a>(&'a [u8]);
 
     impl<'a> Encodable for TestBytes<'a> {
         type Encoder<'s>
@@ -284,11 +267,7 @@ mod tests {
             Self: 's;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            if self.1 {
-                BytesEncoder::with_length_prefix(self.0)
-            } else {
-                BytesEncoder::without_length_prefix(self.0)
-            }
+            BytesEncoder::without_length_prefix(self.0)
         }
     }
 
@@ -327,7 +306,7 @@ mod tests {
     fn encode_byte_slice_without_prefix() {
         // Should have one chunk with the byte data, then exhausted.
         let obj = [1u8, 2, 3];
-        let test_bytes = TestBytes(&obj, false);
+        let test_bytes = TestBytes(&obj);
         let mut encoder = test_bytes.encoder();
 
         assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
@@ -339,7 +318,7 @@ mod tests {
     fn encode_empty_byte_slice_without_prefix() {
         // Should have one empty chunk, then exhausted.
         let obj = [];
-        let test_bytes = TestBytes(&obj, false);
+        let test_bytes = TestBytes(&obj);
         let mut encoder = test_bytes.encoder();
 
         assert_eq!(encoder.current_chunk(), Some(&[][..]));
@@ -347,33 +326,6 @@ mod tests {
         assert_eq!(encoder.current_chunk(), None);
     }
 
-    #[test]
-    fn encode_byte_slice_with_prefix() {
-        // Should have length prefix chunk, then data chunk, then exhausted.
-        let obj = [1u8, 2, 3];
-        let test_bytes = TestBytes(&obj, true);
-        let mut encoder = test_bytes.encoder();
-
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
-        assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
-    }
-
-    #[test]
-    fn encode_empty_byte_slice_with_prefix() {
-        // Should have length prefix chunk (0), then empty data chunk, then exhausted.
-        let obj = [];
-        let test_bytes = TestBytes(&obj, true);
-        let mut encoder = test_bytes.encoder();
-
-        assert_eq!(encoder.current_chunk(), Some(&[0u8][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
-        assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
-    }
 
     #[test]
     fn encode_slice_with_elements() {
@@ -445,22 +397,6 @@ mod tests {
     }
 
     #[test]
-    fn encode_two_byte_slices_mixed() {
-        // Should encode byte slice without prefix, then with prefix, then exhausted.
-        let enc1 = TestBytes(&[0xAA, 0xBB], false).encoder();
-        let enc2 = TestBytes(&[0xCC], true).encoder();
-        let mut encoder = Encoder2::new(enc1, enc2);
-
-        assert_eq!(encoder.current_chunk(), Some(&[0xAA, 0xBB][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xCC][..]));
-        assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
-    }
-
-    #[test]
     fn encode_three_arrays() {
         // Should encode three arrays in sequence, then exhausted.
         let enc1 = TestArray([1u8]).encoder();
@@ -525,13 +461,11 @@ mod tests {
 
     #[test]
     fn encode_mixed_composition_with_byte_slices() {
-        // Should encode byte slice with prefix, then array, then exhausted.
-        let enc1 = TestBytes(&[0xFF, 0xEE], true).encoder();
+        // Should encode byte slice, then array, then exhausted.
+        let enc1 = TestBytes(&[0xFF, 0xEE]).encoder();
         let enc2 = TestArray([0xDD, 0xCC]).encoder();
         let mut encoder = Encoder2::new(enc1, enc2);
 
-        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
-        assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0xFF, 0xEE][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0xDD, 0xCC][..]));
@@ -628,34 +562,12 @@ mod tests {
     }
 
     #[test]
-    fn encode_slice_with_mixed_byte_encoders() {
-        // Should encode slice of mixed byte encoders with different prefix settings, then exhausted.
-        let bytes1 = TestBytes(&[0x11, 0x12], false);
-        let bytes2 = TestBytes(&[0x21, 0x22, 0x23], true);
-        let bytes3 = TestBytes(&[], false);
-        let slice = &[bytes1, bytes2, bytes3];
-        let mut encoder = SliceEncoder::with_length_prefix(slice);
-
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x11, 0x12][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x21, 0x22, 0x23][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
-        assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
-    }
-
-    #[test]
     fn encode_complex_nested_structure() {
         // Should encode header, slice with elements, and footer with prefix, then exhausted.
-        let header = TestBytes(&[0xDE, 0xAD], false).encoder();
+        let header = TestBytes(&[0xDE, 0xAD]).encoder();
         let data_slice = &[TestArray([0x01, 0x02]), TestArray([0x03, 0x04])];
         let slice_enc = SliceEncoder::with_length_prefix(data_slice);
-        let footer = TestBytes(&[0xBE, 0xEF], true).encoder();
+        let footer = TestBytes(&[0xBE, 0xEF]).encoder();
         let mut encoder = Encoder3::new(header, slice_enc, footer);
 
         assert_eq!(encoder.current_chunk(), Some(&[0xDE, 0xAD][..]));
@@ -665,8 +577,6 @@ mod tests {
         assert_eq!(encoder.current_chunk(), Some(&[0x01, 0x02][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0x03, 0x04][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0xBE, 0xEF][..]));
         assert!(!encoder.advance());
