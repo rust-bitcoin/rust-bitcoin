@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::Encodable;
+use encoding::{Encodable, Encoder2, SliceEncoder};
 use hashes::{sha256d, HashEngine as _};
 
 #[cfg(feature = "alloc")]
@@ -163,6 +163,26 @@ mod sealed {
     pub trait Validation {}
     impl Validation for super::Checked {}
     impl Validation for super::Unchecked {}
+}
+
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Block`] type.
+    pub struct BlockEncoder<'e>(
+        Encoder2<HeaderEncoder, SliceEncoder<'e, Transaction>>
+    );
+}
+
+#[cfg(feature = "alloc")]
+impl Encodable for Block {
+    type Encoder<'e>
+        = Encoder2<HeaderEncoder, SliceEncoder<'e, Transaction>>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(self.header.encoder(), SliceEncoder::with_length_prefix(&self.transactions))
+    }
 }
 
 /// Bitcoin block header.

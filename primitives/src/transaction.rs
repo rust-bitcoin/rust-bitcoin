@@ -1318,4 +1318,126 @@ mod tests {
         // Exhausted
         assert_eq!(encoder.current_chunk(), None);
     }
+
+    // FIXME: Move all these encoding tests to a single file in `primitives/tests/`.
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn encode_block() {
+        use crate::{
+            Block, BlockHash, BlockHeader, BlockTime, BlockVersion, CompactTarget, TxMerkleNode,
+        };
+
+        let seconds: u32 = 1_653_195_600; // Arbitrary timestamp: May 22nd, 5am UTC.
+
+        let header = BlockHeader {
+            version: BlockVersion::TWO,
+            prev_blockhash: BlockHash::from_byte_array([0xab; 32]),
+            merkle_root: TxMerkleNode::from_byte_array([0xcd; 32]),
+            time: BlockTime::from(seconds),
+            bits: CompactTarget::from_consensus(0xbeef),
+            nonce: 0xcafe,
+        };
+
+        let tx = Transaction {
+            version: Version::TWO,
+            lock_time: LockTime::ZERO,
+            inputs: vec![segwit_tx_in()],
+            outputs: vec![tx_out()],
+        };
+
+        let block = Block::new_unchecked(header, vec![tx]);
+        let mut encoder = block.encoder();
+
+        // The block header, 6 encoders, 1 chunk per encoder.
+
+        // The block version.
+        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        // The previous block's blockhash.
+        assert_eq!(
+            encoder.current_chunk(),
+            Some(
+                &[
+                    171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
+                    171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
+                ][..]
+            )
+        );
+        assert!(encoder.advance());
+        // The merkle root hash.
+        assert_eq!(
+            encoder.current_chunk(),
+            Some(
+                &[
+                    205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
+                    205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
+                ][..]
+            )
+        );
+        assert!(encoder.advance());
+        // The block time.
+        assert_eq!(encoder.current_chunk(), Some(&[80, 195, 137, 98][..]));
+        assert!(encoder.advance());
+        // The target (bits).
+        assert_eq!(encoder.current_chunk(), Some(&[239, 190, 0, 0][..]));
+        assert!(encoder.advance());
+        // The nonce.
+        assert_eq!(encoder.current_chunk(), Some(&[254, 202, 0, 0][..]));
+        assert!(encoder.advance());
+
+        // The transaction list length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+
+        // The transaction (same as tested above).
+
+        // The version
+        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        // The segwit marker and flag
+        assert_eq!(encoder.current_chunk(), Some(&[0u8, 1][..]));
+        assert!(encoder.advance());
+        // The input (same as tested above) but with vec length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(
+            encoder.current_chunk(),
+            Some(
+                &[
+                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                ][..]
+            )
+        );
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert!(encoder.advance());
+        // The output (same as tested above) but with vec length prefix.
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert!(encoder.advance());
+        // The witness
+        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[3u8, 1, 2, 3][..]));
+        assert!(encoder.advance());
+        // The lock time.
+        assert_eq!(encoder.current_chunk(), Some(&[0, 0, 0, 0][..]));
+        assert!(!encoder.advance());
+
+        // Exhausted
+        assert_eq!(encoder.current_chunk(), None);
+    }
 }
