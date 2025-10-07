@@ -19,7 +19,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2};
+use encoding::{ArrayEncoder, Encodable, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{Encoder, Encoder3, Encoder6, SliceEncoder};
 #[cfg(feature = "alloc")]
@@ -394,14 +394,14 @@ impl TxIn {
 encoding::encoder_newtype! {
     /// The encoder for the [`TxIn`] type.
     pub struct TxInEncoder<'e>(
-        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder>
+        Encoder3<OutPointEncoder, ScriptEncoder<'e>, SequenceEncoder>
     );
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for TxIn {
     type Encoder<'e>
-        = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder>
+        = Encoder3<OutPointEncoder, ScriptEncoder<'e>, SequenceEncoder>
     where
         Self: 'e;
 
@@ -532,18 +532,20 @@ impl OutPoint {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`TxOut`] type.
-    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
+    pub struct OutPointEncoder(Encoder2<ArrayEncoder<32>, ArrayEncoder<4>>);
 }
 
 impl Encodable for OutPoint {
-    type Encoder<'e>
-        = OutPointEncoder<'e>
+    type Encoder<'e> = OutPointEncoder
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
+        let mut txid = [0_u8; 32];
+        txid.copy_from_slice(self.txid.as_byte_array());
+
         OutPointEncoder(Encoder2::new(
-            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+            ArrayEncoder::without_length_prefix(txid),
             ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
         ))
     }
