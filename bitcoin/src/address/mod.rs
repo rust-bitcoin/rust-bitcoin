@@ -1603,4 +1603,22 @@ mod tests {
         assert!(address.is_spend_standard());
         assert_eq!(address.address_type(), Some(AddressType::P2a));
     }
+
+    #[test]
+    fn base58_invalid_payload_length_reports_decoded_size() {
+        use crate::constants::PUBKEY_ADDRESS_PREFIX_MAIN;
+
+        let mut payload = [0u8; 22]; // Invalid: should be 21
+        payload[0] = PUBKEY_ADDRESS_PREFIX_MAIN;
+        let encoded = base58::encode_check(&payload);
+
+        let err = Address::<NetworkUnchecked>::from_base58_str(&encoded).unwrap_err();
+        match err {
+            Base58Error::InvalidBase58PayloadLength(inner) => {
+                assert_eq!(inner.invalid_base58_payload_length(), 22); // Payload size
+                assert_ne!(inner.invalid_base58_payload_length(), encoded.len()); // Not string size
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
 }
