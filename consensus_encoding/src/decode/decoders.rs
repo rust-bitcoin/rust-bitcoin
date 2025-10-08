@@ -126,7 +126,7 @@ impl<T: Decodable> VecDecoder<T> {
     /// Constructs a new byte decoder.
     pub fn new() -> Self {
         Self {
-            prefix_decoder: Some(CompactSizeDecoder::default()),
+            prefix_decoder: Some(CompactSizeDecoder::new()),
             length: 0,
             buffer: Vec::new(),
             decoder: None,
@@ -602,9 +602,18 @@ where
 /// Decodes a compact size encoded integer.
 ///
 /// For more information about decoder see the documentation of the [`Decoder`] trait.
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct CompactSizeDecoder {
     buf: internals::array_vec::ArrayVec<u8, 9>,
+}
+
+impl CompactSizeDecoder {
+    /// Constructs a new compact size decoder.
+    pub fn new() -> Self { Self { buf: internals::array_vec::ArrayVec::new() } }
+}
+
+impl Default for CompactSizeDecoder {
+    fn default() -> Self { Self::new() }
 }
 
 impl Decoder for CompactSizeDecoder {
@@ -934,7 +943,7 @@ mod tests {
         let encoded = alloc::vec![0x00, 0xFF, 0xFF];
 
         let mut slice = encoded.as_slice();
-        let mut decoder = CompactSizeDecoder::default();
+        let mut decoder = CompactSizeDecoder::new();
         assert!(!decoder.push_bytes(&mut slice).unwrap());
 
         let got = decoder.end().unwrap();
