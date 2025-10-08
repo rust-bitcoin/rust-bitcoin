@@ -529,7 +529,10 @@ internal_macros::define_extension_trait! {
         /// Returns `None` if the instruction is an opcode or if the script is empty.
         fn last_pushdata(&self) -> Option<&PushBytes> {
             match self.instructions().last() {
-                // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
+                // Returns only true data pushes.
+                // Note: OP_0 (empty push) is included as PushBytes; numeric push opcodes
+                // OP_1NEGATE and OP_1..OP_16 are opcodes (not pushdata) and thus excluded.
+                // OP_RESERVED is also excluded.
                 Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
                 // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
                 // However we are only interested in the pushdata so we can ignore them.
