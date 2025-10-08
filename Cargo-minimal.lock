@@ -74,7 +74,7 @@ version = "0.0.0"
 
 [[package]]
 name = "bitcoin-consensus-encoding"
-version = "0.1.0"
+version = "1.0.0-rc.0"
 dependencies = [
  "bitcoin-internals",
  "bitcoin_hashes 0.16.0",
