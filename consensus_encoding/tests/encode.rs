@@ -8,8 +8,10 @@ use std::io::{Cursor, Write};
 use consensus_encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder};
 
 // Simple test type that implements Encodable.
+#[cfg(feature = "alloc")]
 struct TestData(u32);
 
+#[cfg(feature = "alloc")]
 impl Encodable for TestData {
     type Encoder<'s>
         = ArrayEncoder<4>
@@ -22,8 +24,10 @@ impl Encodable for TestData {
 }
 
 // Test with a type that creates an empty encoder.
+#[cfg(feature = "alloc")]
 struct EmptyData;
 
+#[cfg(feature = "alloc")]
 impl Encodable for EmptyData {
     type Encoder<'s>
         = ArrayEncoder<0>
