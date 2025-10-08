@@ -431,7 +431,7 @@ impl<'e> WitnessesEncoder<'e> {
 }
 
 #[cfg(feature = "alloc")]
-impl<'e> Encoder for WitnessesEncoder<'e> {
+impl Encoder for WitnessesEncoder<'_> {
     #[inline]
     fn current_chunk(&self) -> Option<&[u8]> {
         // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
@@ -628,7 +628,7 @@ impl<'de> Deserialize<'de> for OutPoint {
         if deserializer.is_human_readable() {
             struct StringVisitor;
 
-            impl<'de> de::Visitor<'de> for StringVisitor {
+            impl de::Visitor<'_> for StringVisitor {
                 type Value = OutPoint;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

@@ -753,7 +753,7 @@ impl<'de> serde::Deserialize<'de> for Psbt {
     {
         struct Visitor;
 
-        impl<'de> serde::de::Visitor<'de> for Visitor {
+        impl serde::de::Visitor<'_> for Visitor {
             type Value = Psbt;
 
             fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {

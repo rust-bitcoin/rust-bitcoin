@@ -279,7 +279,7 @@ impl Encodable for Witness {
     }
 }
 
-impl<'a> Encoder for WitnessEncoder<'a> {
+impl Encoder for WitnessEncoder<'_> {
     #[inline]
     fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
 

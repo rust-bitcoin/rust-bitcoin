@@ -277,7 +277,7 @@ mod tests {
 
     struct TestBytes<'a>(&'a [u8], bool);
 
-    impl<'a> Encodable for TestBytes<'a> {
+    impl Encodable for TestBytes<'_> {
         type Encoder<'s>
             = BytesEncoder<'s>
         where
