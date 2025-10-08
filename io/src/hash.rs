@@ -30,7 +30,6 @@ macro_rules! impl_write {
         }
     }
 }
-pub(crate) use impl_write;
 
 impl_write!(
     hash160::HashEngine,
