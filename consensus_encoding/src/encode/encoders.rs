@@ -65,43 +65,32 @@ impl<const N: usize> Encoder for ArrayEncoder<N> {
 pub struct SliceEncoder<'e, T: Encodable> {
     /// The list of references to the objects we are encoding.
     sl: &'e [T],
-    /// The length prefix.
-    compact_size: Option<ArrayVec<u8, SIZE>>,
     /// Encoder for the current object being encoded.
     cur_enc: Option<T::Encoder<'e>>,
 }
 
 impl<'e, T: Encodable> SliceEncoder<'e, T> {
-    /// Constructs an encoder which encodes the slice with a length prefix.
-    pub fn with_length_prefix(sl: &'e [T]) -> Self {
-        let len = sl.len();
-        let compact_size = Some(compact_size::encode(len));
-
+    /// Constructs an encoder which encodes the slice _without_ adding the length prefix.
+    ///
+    /// To encode with a length prefix consider using the `Encoder2`.
+    ///
+    /// E.g, `Encoder2<CompactSizeEncoder, SliceEncoder<'e, Foo>>`.
+    pub fn without_length_prefix(sl: &'e [T]) -> Self {
         // In this `map` call we cannot remove the closure. Seems to be a bug in the compiler.
         // Perhaps https://github.com/rust-lang/rust/issues/102540 which is 3 years old with
         // no replies or even an acknowledgement. We will not bother filing our own issue.
-        Self { sl, compact_size, cur_enc: sl.first().map(|x| T::encoder(x)) }
+        Self { sl, cur_enc: sl.first().map(|x| T::encoder(x)) }
     }
 }
 
 impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
     fn current_chunk(&self) -> Option<&[u8]> {
-        if let Some(compact_size) = self.compact_size.as_ref() {
-            return Some(compact_size);
-        }
-
         // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
         // `current_chunk` is required to return `None` if called after the encoder is exhausted.
         self.cur_enc.as_ref().and_then(T::Encoder::current_chunk)
     }
 
     fn advance(&mut self) -> bool {
-        // Handle compact_size first, regardless of whether we have elements.
-        if self.compact_size.is_some() {
-            self.compact_size = None;
-            return self.cur_enc.is_some();
-        }
-
         let Some(cur) = self.cur_enc.as_mut() else {
             return false;
         };
@@ -329,12 +318,10 @@ mod tests {
 
     #[test]
     fn encode_slice_with_elements() {
-        // Should have length prefix chunk, then element chunks, then exhausted.
+        // Should have the element chunks, then exhausted.
         let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
-        let mut encoder = SliceEncoder::with_length_prefix(slice);
+        let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
-        assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0x34, 0x12, 0x00, 0x00][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0x78, 0x56, 0x00, 0x00][..]));
@@ -344,23 +331,20 @@ mod tests {
 
     #[test]
     fn encode_empty_slice() {
-        // Should have only length prefix chunk (0), then exhausted.
+        // Should immediately be exhausted.
         let slice: &[TestArray<4>] = &[];
-        let mut encoder = SliceEncoder::with_length_prefix(slice);
+        let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0u8][..]));
         assert!(!encoder.advance());
         assert_eq!(encoder.current_chunk(), None);
     }
 
     #[test]
     fn encode_slice_with_zero_sized_arrays() {
-        // Should have length prefix chunk, then empty array chunks, then exhausted.
+        // Should have empty array chunks, then exhausted.
         let slice = &[TestArray([]), TestArray([])];
-        let mut encoder = SliceEncoder::with_length_prefix(slice);
+        let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
-        assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[][..]));
@@ -492,14 +476,12 @@ mod tests {
 
     #[test]
     fn encode_slice_with_array_composition() {
-        // Should encode slice with prefix and elements, then array, then exhausted.
+        // Should encode slice elements, then array, then exhausted.
         let slice = &[TestArray([0x10, 0x11]), TestArray([0x12, 0x13])];
-        let slice_enc = SliceEncoder::with_length_prefix(slice);
+        let slice_enc = SliceEncoder::without_length_prefix(slice);
         let array_enc = TestArray([0x20, 0x21]).encoder();
         let mut encoder = Encoder2::new(slice_enc, array_enc);
 
-        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
-        assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0x10, 0x11][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0x12, 0x13][..]));
@@ -511,15 +493,13 @@ mod tests {
 
     #[test]
     fn encode_array_with_slice_composition() {
-        // Should encode header array, then slice with prefix and elements, then exhausted.
+        // Should encode header array, then slice elements, then exhausted.
         let header = TestArray([0xFF, 0xFE]).encoder();
         let slice = &[TestArray([0x01]), TestArray([0x02]), TestArray([0x03])];
-        let slice_enc = SliceEncoder::with_length_prefix(slice);
+        let slice_enc = SliceEncoder::without_length_prefix(slice);
         let mut encoder = Encoder2::new(header, slice_enc);
 
         assert_eq!(encoder.current_chunk(), Some(&[0xFF, 0xFE][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0x01][..]));
         assert!(encoder.advance());
@@ -532,25 +512,23 @@ mod tests {
 
     #[test]
     fn encode_multiple_slices_composition() {
-        // Should encode three slices in sequence with prefixes and elements, then exhausted.
+        // Should encode three slices in sequence, then exhausted.
         let slice1 = &[TestArray([0xA1]), TestArray([0xA2])];
         let slice2: &[TestArray<1>] = &[];
         let slice3 = &[TestArray([0xC1]), TestArray([0xC2]), TestArray([0xC3])];
 
-        let enc1 = SliceEncoder::with_length_prefix(slice1);
-        let enc2 = SliceEncoder::with_length_prefix(slice2);
-        let enc3 = SliceEncoder::with_length_prefix(slice3);
+        let enc1 = SliceEncoder::without_length_prefix(slice1);
+        let enc2 = SliceEncoder::without_length_prefix(slice2);
+        let enc3 = SliceEncoder::without_length_prefix(slice3);
         let mut encoder = Encoder3::new(enc1, enc2, enc3);
 
-        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
-        assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0xA1][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0xA2][..]));
+
+        // Skip the empty slice
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0u8][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0xC1][..]));
         assert!(encoder.advance());
@@ -566,13 +544,11 @@ mod tests {
         // Should encode header, slice with elements, and footer with prefix, then exhausted.
         let header = TestBytes(&[0xDE, 0xAD]).encoder();
         let data_slice = &[TestArray([0x01, 0x02]), TestArray([0x03, 0x04])];
-        let slice_enc = SliceEncoder::with_length_prefix(data_slice);
+        let slice_enc = SliceEncoder::without_length_prefix(data_slice);
         let footer = TestBytes(&[0xBE, 0xEF]).encoder();
         let mut encoder = Encoder3::new(header, slice_enc, footer);
 
         assert_eq!(encoder.current_chunk(), Some(&[0xDE, 0xAD][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[2u8][..]));
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), Some(&[0x01, 0x02][..]));
         assert!(encoder.advance());
