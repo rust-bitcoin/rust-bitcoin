@@ -59,13 +59,12 @@ pub trait Decoder: Sized {
     #[must_use = "must check result to avoid panics on subsequent calls"]
     fn end(self) -> Result<Self::Output, Self::Error>;
 
-    /// Returns the minimum number of bytes needed to advance the state of the
-    /// decoder while ensuring there are no over-reads.
+    /// Returns the maximum number of bytes this decoder can consume without over-reading.
     ///
     /// Returns 0 if the decoder is complete and ready to finalize with [`Self::end`].
     /// This is used by [`decode_from_read_unbuffered`] to optimize read sizes,
-    /// avoiding both inefficient under reads and unnecessary over-reads.
-    fn min_bytes_needed(&self) -> usize;
+    /// avoiding both inefficient under-reads and unnecessary over-reads.
+    fn read_limit(&self) -> usize;
 }
 
 /// Decodes an object from a byte slice.
@@ -192,9 +191,9 @@ where
     let mut decoder = T::decoder();
     let mut buffer = [0u8; BUFFER_SIZE];
 
-    while decoder.min_bytes_needed() > 0 {
+    while decoder.read_limit() > 0 {
         // Only read what we need, up to buffer size.
-        let clamped_buffer = &mut buffer[..decoder.min_bytes_needed().min(BUFFER_SIZE)];
+        let clamped_buffer = &mut buffer[..decoder.read_limit().min(BUFFER_SIZE)];
         match reader.read(clamped_buffer) {
             Ok(0) => {
                 // EOF, but still try to finalize the decoder.
@@ -288,7 +287,7 @@ mod tests {
 
         fn end(self) -> Result<Self::Output, Self::Error> { self.inner.end().map(TestArray) }
 
-        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+        fn read_limit(&self) -> usize { self.inner.read_limit() }
     }
 
     #[test]

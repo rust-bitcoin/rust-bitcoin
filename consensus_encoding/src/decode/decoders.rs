@@ -95,9 +95,9 @@ impl Decoder for ByteVecDecoder {
         }
     }
 
-    fn min_bytes_needed(&self) -> usize {
+    fn read_limit(&self) -> usize {
         if let Some(prefix_decoder) = &self.prefix_decoder {
-            prefix_decoder.min_bytes_needed()
+            prefix_decoder.read_limit()
         } else {
             self.bytes_expected - self.bytes_written
         }
@@ -193,11 +193,11 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
         }
     }
 
-    fn min_bytes_needed(&self) -> usize {
+    fn read_limit(&self) -> usize {
         if let Some(prefix_decoder) = &self.prefix_decoder {
-            prefix_decoder.min_bytes_needed()
+            prefix_decoder.read_limit()
         } else if let Some(decoder) = &self.decoder {
-            decoder.min_bytes_needed()
+            decoder.read_limit()
         } else if self.buffer.len() == self.length {
             // Totally done.
             0
@@ -205,8 +205,8 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
             let items_left_to_decode = self.length - self.buffer.len();
             let decoder = T::decoder();
             // This could be inaccurate (eg 1 for a `ByteVecDecoder`) but its the best we can do.
-            let min_per_decoder = decoder.min_bytes_needed();
-            items_left_to_decode * min_per_decoder
+            let limit_per_decoder = decoder.read_limit();
+            items_left_to_decode * limit_per_decoder
         }
     }
 }
@@ -274,7 +274,7 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
     }
 
     #[inline]
-    fn min_bytes_needed(&self) -> usize { N - self.bytes_written }
+    fn read_limit(&self) -> usize { N - self.bytes_written }
 }
 
 /// A decoder which wraps two inner decoders and returns the output of both.
@@ -395,11 +395,11 @@ where
     }
 
     #[inline]
-    fn min_bytes_needed(&self) -> usize {
+    fn read_limit(&self) -> usize {
         match &self.state {
             Decoder2State::First(first_decoder, second_decoder) =>
-                first_decoder.min_bytes_needed() + second_decoder.min_bytes_needed(),
-            Decoder2State::Second(_, second_decoder) => second_decoder.min_bytes_needed(),
+                first_decoder.read_limit() + second_decoder.read_limit(),
+            Decoder2State::Second(_, second_decoder) => second_decoder.read_limit(),
             Decoder2State::Errored => 0,
             Decoder2State::Transitioning => 0,
         }
@@ -453,7 +453,7 @@ where
     }
 
     #[inline]
-    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
 /// A decoder which decodes four objects, one after the other.
@@ -509,7 +509,7 @@ where
     }
 
     #[inline]
-    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
 /// A decoder which decodes six objects, one after the other.
@@ -590,7 +590,7 @@ where
     }
 
     #[inline]
-    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
 /// Decodes a compact size encoded integer.
@@ -679,7 +679,7 @@ impl Decoder for CompactSizeDecoder {
         }
     }
 
-    fn min_bytes_needed(&self) -> usize {
+    fn read_limit(&self) -> usize {
         match self.buf.len() {
             0 => 1,
             already_read => match self.buf[0] {
@@ -984,7 +984,7 @@ mod tests {
             Ok(Inner(n))
         }
 
-        fn min_bytes_needed(&self) -> usize { self.0.min_bytes_needed() }
+        fn read_limit(&self) -> usize { self.0.read_limit() }
     }
 
     #[cfg(feature = "alloc")]
@@ -1016,7 +1016,7 @@ mod tests {
             Ok(Test(v))
         }
 
-        fn min_bytes_needed(&self) -> usize { self.0.min_bytes_needed() }
+        fn read_limit(&self) -> usize { self.0.read_limit() }
     }
 
     #[cfg(feature = "alloc")]

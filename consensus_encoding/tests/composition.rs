@@ -69,7 +69,7 @@ impl Decoder for CompositeDataDecoder {
         Ok(CompositeData { first, second })
     }
 
-    fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
 impl Decodable for CompositeData {
@@ -220,7 +220,7 @@ fn composition_error_unification() {
             Ok((first, second))
         }
 
-        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+        fn read_limit(&self) -> usize { self.inner.read_limit() }
     }
 
     /// Another test composite decoder.
@@ -245,7 +245,7 @@ fn composition_error_unification() {
             Ok(result)
         }
 
-        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+        fn read_limit(&self) -> usize { self.inner.read_limit() }
     }
 
     /// A decoder which can fail.
@@ -274,7 +274,7 @@ fn composition_error_unification() {
             }
         }
 
-        fn min_bytes_needed(&self) -> usize { self.inner.min_bytes_needed() }
+        fn read_limit(&self) -> usize { self.inner.read_limit() }
     }
 
     // A multi-layer, nested, decoder structure with a unified top level error type.
