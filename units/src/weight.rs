@@ -96,6 +96,7 @@ impl Weight {
     }
 
     /// Constructs a new [`Weight`] from witness size.
+    #[deprecated(since = "TBD", note = "use `from_wu` instead")]
     pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight::from_wu(witness_size) }
 
     /// Constructs a new [`Weight`] from non-witness size.
@@ -103,6 +104,7 @@ impl Weight {
     /// # Panics
     ///
     /// If the conversion from virtual bytes overflows.
+    #[deprecated(since = "TBD", note = "use `from_vb` or `from_vb_unchecked` instead")]
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
         Weight::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }
@@ -366,6 +368,8 @@ mod tests {
     fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
 
     #[test]
+    #[allow(deprecated)] // tests the deprecated function
+    #[allow(deprecated_in_future)]
     fn from_witness_data_size() {
         let witness_data_size = 1;
         let got = Weight::from_witness_data_size(witness_data_size);
@@ -374,6 +378,8 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)] // tests the deprecated function
+    #[allow(deprecated_in_future)]
     fn from_non_witness_data_size() {
         let non_witness_data_size = 1;
         let got = Weight::from_non_witness_data_size(non_witness_data_size);

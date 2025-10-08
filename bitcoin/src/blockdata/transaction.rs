@@ -139,7 +139,7 @@ internal_macros::define_extension_trait! {
         ///
         /// If the coversion overflows.
         fn legacy_weight(&self) -> Weight {
-            Weight::from_non_witness_data_size(self.base_size().to_u64())
+            Weight::from_vb(self.base_size().to_u64()).unwrap()
         }
 
         /// The weight of the TxIn when it's included in a SegWit transaction (i.e., a transaction
@@ -158,8 +158,8 @@ internal_macros::define_extension_trait! {
         ///
         /// If the coversion overflows.
         fn segwit_weight(&self) -> Weight {
-            Weight::from_non_witness_data_size(self.base_size().to_u64())
-                + Weight::from_witness_data_size(self.witness.size().to_u64())
+            Weight::from_vb(self.base_size().to_u64())
+            .and_then(|w| w.checked_add(Weight::from_wu(self.witness.size().to_u64()))).unwrap()
         }
 
         /// Returns the base size of this input.
