@@ -1,7 +1,3 @@
-# Unreleased
-
-- Do not re-export doc hidden macros
-
 # 1.0.0 - 2025-02-24
 
 BOOM! A long time in the making but here goes, our first 1.0 crate release.
@@ -36,6 +32,10 @@ This changelog is a rolling description of everything that will eventually end u
 * Change parameter type used for whole bitcoin [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
 * Add `Weight::to_kwu_ceil` [#3740](https://github.com/rust-bitcoin/rust-bitcoin/pull/3740)
 * Replace `String` with `InputString` [#3559](https://github.com/rust-bitcoin/rust-bitcoin/pull/3559)
+* Do not re-export doc hidden macros
+* Use the new `consensus_encoding` crate to re-write encoding logic.
+  * Decoders with phantoms [#5008](https://github.com/rust-bitcoin/rust-bitcoin/pull/5008)
+  * Improve the decoders [#5027](https://github.com/rust-bitcoin/rust-bitcoin/pull/5027)
 
 ## Changes relate to error types
 
