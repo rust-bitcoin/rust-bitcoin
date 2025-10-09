@@ -44,7 +44,6 @@ pub use std::{string::String, vec::Vec};
 use hashes::sha256d;
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
-#[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
 
 use crate::error::{IncorrectChecksumError, TooShortError};
