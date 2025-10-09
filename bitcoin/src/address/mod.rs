@@ -919,8 +919,9 @@ impl Address<NetworkUnchecked> {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
         let data = base58::decode_check(s)?;
-        let data: &[u8; 21] =
-            (&*data).try_into().map_err(|_| InvalidBase58PayloadLengthError { length: s.len() })?;
+        let data: &[u8; 21] = (&*data)
+            .try_into()
+            .map_err(|_| InvalidBase58PayloadLengthError { length: data.len() })?;
 
         let (prefix, &data) = data.split_first();
 
@@ -1601,5 +1602,23 @@ mod tests {
         // and that the output type is P2A.
         assert!(address.is_spend_standard());
         assert_eq!(address.address_type(), Some(AddressType::P2a));
+    }
+
+    #[test]
+    fn base58_invalid_payload_length_reports_decoded_size() {
+        use crate::constants::PUBKEY_ADDRESS_PREFIX_MAIN;
+
+        let mut payload = [0u8; 22]; // Invalid: should be 21
+        payload[0] = PUBKEY_ADDRESS_PREFIX_MAIN;
+        let encoded = base58::encode_check(&payload);
+
+        let err = Address::<NetworkUnchecked>::from_base58_str(&encoded).unwrap_err();
+        match err {
+            Base58Error::InvalidBase58PayloadLength(inner) => {
+                assert_eq!(inner.invalid_base58_payload_length(), 22); // Payload size
+                assert_ne!(inner.invalid_base58_payload_length(), encoded.len()); // Not string size
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
     }
 }
