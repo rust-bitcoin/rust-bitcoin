@@ -46,7 +46,8 @@ fn bench_chacha20poly1305(c: &mut Criterion) {
                 let mut buf = ct.clone();
                 let cipher = ChaCha20Poly1305::new(key, nonce);
                 let res = cipher.decrypt(black_box(&mut buf), tag, Some(aad));
-                black_box(res.unwrap());
+                res.unwrap();
+                black_box(());
             });
         });
     }

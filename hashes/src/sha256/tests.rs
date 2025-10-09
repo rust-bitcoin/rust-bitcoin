@@ -178,6 +178,7 @@ fn hash_unoptimized() {
 }
 
 // The midstate of an empty hash engine tagged with "TapLeaf".
+#[cfg(feature = "alloc")]
 const TAP_LEAF_MIDSTATE: Midstate = Midstate::new(
     [
         156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147,
