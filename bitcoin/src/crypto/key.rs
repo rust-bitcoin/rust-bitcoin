@@ -1459,6 +1459,11 @@ mod tests {
             }))
         ));
 
+        // test byte array
+        let sk = PrivateKey::from_byte_array([1; 32], NetworkKind::Test).unwrap();
+        assert!(sk.compressed);
+        assert_eq!(sk.inner.secret_bytes(), [1; 32]);
+
         // testnet compressed
         let sk =
             PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
@@ -1475,6 +1480,13 @@ mod tests {
         let sk_str =
             "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
+
+        // mainnet uncompressed
+        let sk = PrivateKey::new_uncompressed(
+            PrivateKey::from_wif("5KHxtARu5yRpYLc3WZRApb8DbPGpcDQ2L3uufJ99izMamS2dXLQ").unwrap().inner,
+            NetworkKind::Main);
+        assert!(!sk.compressed);
+        assert_eq!(&sk.to_wif(), "5KHxtARu5yRpYLc3WZRApb8DbPGpcDQ2L3uufJ99izMamS2dXLQ");
 
         // mainnet uncompressed
         let sk =
@@ -1527,6 +1539,7 @@ mod tests {
         );
         assert!(upk.wpubkey_hash().is_err());
     }
+
 
     #[test]
     #[cfg(feature = "serde")]
