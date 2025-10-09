@@ -54,7 +54,7 @@ impl From<ParseError> for DeserializeError {
 
 /// Error when consensus decoding from an `[IterReader]`.
 ///
-/// This is the same as a `DeserializeError` with an additional variant to return any error yealded
+/// This is the same as a `DeserializeError` with an additional variant to return any error yielded
 /// by the inner bytes iterator.
 #[derive(Debug)]
 pub enum DecodeError<E> {

@@ -67,7 +67,7 @@ macro_rules! sha256t_tag {
 /// This will display the hash backwards regardless of what the inner type does. Use `forward`
 /// instead of `backward` to force displaying forward.
 ///
-/// You can add arbitrary doc comments or other attributes to the struct or it's field. Note that
+/// You can add arbitrary doc comments or other attributes to the struct or its field. Note that
 /// the macro already derives [`Copy`], [`Clone`], [`Eq`], [`PartialEq`],
 /// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`].
 ///
@@ -96,7 +96,7 @@ macro_rules! sha256t_tag {
 // one. The following code is written the way it is for some specific reasons. If you think you can
 // simplify it, I suggest spending your time elsewhere.
 //
-// If you looks at the code carefully you might ask these questions:
+// If you look at the code carefully you might ask these questions:
 //
 // * Why are attributes using `tt` and not `meta`?!
 // * Why are the macros split like that?!
