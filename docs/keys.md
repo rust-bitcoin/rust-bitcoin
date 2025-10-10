@@ -56,7 +56,7 @@ Currently we are using `bitcoin::network::NetworkKind` in `PrivateKey`.
 
 #### `ScriptBuf`
 
-Possibly ok if we have a dependency on `primitives`. Only used for sciptcode.
+Possibly ok if we have a dependency on `primitives`. Only used for scriptcode.
 
 #### Taproot stuff
 
