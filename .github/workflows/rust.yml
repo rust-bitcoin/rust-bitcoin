@@ -341,3 +341,24 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: "Run policy script"
         run: ./contrib/check-for-policy-violations.sh
+
+  DiffMutants: 
+    name: Check cargo mutants in diff - stable toolchain
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # required for full diff context
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@stable
+      - name: "Fetch base branch for diff"
+        run: git fetch origin ${{ github.base_ref }}
+      - name: "Retrieve relative diff"
+        run: |
+          git branch -av
+          git diff origin/${{ github.base_ref }}.. | tee git.diff
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - run: cargo mutants --no-shuffle --in-diff git.diff
