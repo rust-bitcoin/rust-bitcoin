@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{Encodable, Encoder2, SliceEncoder};
+use encoding::{CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
 use hashes::{sha256d, HashEngine as _};
 
 #[cfg(feature = "alloc")]
@@ -169,19 +169,25 @@ mod sealed {
 encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
     pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder, SliceEncoder<'e, Transaction>>
+        Encoder2<HeaderEncoder, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
     );
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for Block {
     type Encoder<'e>
-        = Encoder2<HeaderEncoder, SliceEncoder<'e, Transaction>>
+        = Encoder2<HeaderEncoder, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        Encoder2::new(self.header.encoder(), SliceEncoder::with_length_prefix(&self.transactions))
+        Encoder2::new(
+            self.header.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.transactions.len()),
+                SliceEncoder::without_length_prefix(&self.transactions),
+            ),
+        )
     }
 }
 
