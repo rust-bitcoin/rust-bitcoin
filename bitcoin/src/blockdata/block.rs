@@ -149,6 +149,14 @@ impl BlockUncheckedExt for Block<Unchecked> {
 }
 
 /// Computes the Merkle root for a list of transactions.
+///
+/// Returns `None` if the iterator was empty, or if the transaction list contains
+/// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
+/// transactions will always be invalid, so there is no harm in us refusing to
+/// compute their merkle roots.
+///
+/// Unless you are certain your transaction list is nonempty and has no duplicates,
+/// you should not unwrap the `Option` returned by this method!
 pub fn compute_merkle_root(transactions: &[Transaction]) -> Option<TxMerkleNode> {
     let hashes = transactions.iter().map(|obj| obj.compute_txid());
     TxMerkleNode::calculate_root(hashes)
@@ -170,6 +178,14 @@ pub fn compute_witness_commitment(
 }
 
 /// Computes the Merkle root of transactions hashed for witness.
+///
+/// Returns `None` if the iterator was empty, or if the transaction list contains
+/// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
+/// transactions will always be invalid, so there is no harm in us refusing to
+/// compute their merkle roots.
+///
+/// Unless you are certain your transaction list is nonempty and has no duplicates,
+/// you should not unwrap the `Option` returned by this method!
 pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkleNode> {
     let hashes = transactions.iter().enumerate().map(|(i, t)| {
         if i == 0 {
@@ -938,6 +954,6 @@ mod tests {
         let forged_block = Block::new_unchecked(header, transactions);
 
         assert!(valid_block.validate().is_ok());
-        assert!(forged_block.validate().is_ok()); // FIXME fixed in next commit
+        assert!(forged_block.validate().is_err());
     }
 }
