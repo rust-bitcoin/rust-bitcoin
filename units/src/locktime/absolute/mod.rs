@@ -451,7 +451,7 @@ impl encoding::Decoder for LockTimeDecoder {
     }
 
     #[inline]
-    fn min_bytes_needed(&self) -> usize { self.0.min_bytes_needed() }
+    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "encoding")]
