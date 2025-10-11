@@ -620,4 +620,54 @@ mod tests {
         );
         assert!(!e.advance());
     }
+
+    #[test]
+    fn encode_encoder2_with_option_none_some() {
+        let enc1: Option<ArrayEncoder<2>> = None;
+        let enc2 = Some(ArrayEncoder::without_length_prefix([0x42, 0x43]));
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x42, 0x43][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
+
+    #[test]
+    fn encode_encoder2_with_option_some_none() {
+        let enc1 = Some(ArrayEncoder::without_length_prefix([0x40, 0x41]));
+        let enc2: Option<ArrayEncoder<2>> = None;
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0x40, 0x41][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+        assert!(!encoder.advance());
+    }
+
+    #[test]
+    fn encode_encoder2_with_option_none_none() {
+        let enc1: Option<ArrayEncoder<2>> = None;
+        let enc2: Option<ArrayEncoder<2>> = None;
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+        assert!(!encoder.advance());
+    }
+
+    #[test]
+    fn encode_encoder2_with_option_some_some() {
+        let enc1 = Some(ArrayEncoder::without_length_prefix([0x40, 0x41]));
+        let enc2 = Some(ArrayEncoder::without_length_prefix([0x42, 0x43]));
+        let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.current_chunk(), Some(&[0x40, 0x41][..]));
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), Some(&[0x42, 0x43][..]));
+        assert!(!encoder.advance());
+        assert_eq!(encoder.current_chunk(), None);
+    }
 }
