@@ -72,6 +72,14 @@ name = "bitcoin-addresses"
 version = "0.0.0"
 
 [[package]]
+name = "bitcoin-consensus-encoding"
+version = "0.1.0"
+dependencies = [
+ "bitcoin-internals",
+ "bitcoin_hashes 0.16.0",
+]
+
+[[package]]
 name = "bitcoin-fuzz"
 version = "0.0.1"
 dependencies = [
@@ -128,10 +136,10 @@ dependencies = [
  "arbitrary",
  "arrayvec",
  "bincode",
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-units",
  "bitcoin_hashes 0.16.0",
- "consensus-encoding",
  "hex-conservative 0.3.0",
  "serde",
  "serde_json",
@@ -143,8 +151,8 @@ version = "1.0.0-rc.0"
 dependencies = [
  "arbitrary",
  "bincode",
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
- "consensus-encoding",
  "serde",
  "serde_json",
  "serde_test",
@@ -205,14 +213,6 @@ name = "chacha20-poly1305"
 version = "0.1.2"
 dependencies = [
  "hex-conservative 0.3.0",
-]
-
-[[package]]
-name = "consensus-encoding"
-version = "0.0.0"
-dependencies = [
- "bitcoin-internals",
- "bitcoin_hashes 0.16.0",
 ]
 
 [[package]]

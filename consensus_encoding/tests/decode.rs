@@ -2,7 +2,7 @@
 
 //! Integration tests for decode module.
 
-use consensus_encoding::{ArrayDecoder, Decoder, UnexpectedEofError};
+use bitcoin_consensus_encoding::{ArrayDecoder, Decoder, UnexpectedEofError};
 
 const EMPTY: &[u8] = &[];
 

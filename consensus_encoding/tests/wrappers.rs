@@ -2,7 +2,7 @@
 
 #![cfg(feature = "std")]
 
-use consensus_encoding as encoding;
+use bitcoin_consensus_encoding as encoding;
 use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
 
 encoding::encoder_newtype! {
