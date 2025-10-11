@@ -417,7 +417,7 @@ pub struct TaprootBuilder {
     // 128 entries (as that would mean more than 128 levels in the tree). The depth of newly added
     // entries will always be at least equal to the current size of branch (otherwise it does not
     // correspond to a depth-first traversal of a tree). A branch is only empty if no entries have
-    // ever be processed. A branch having length 1 corresponds to being done.
+    // ever been processed. A branch having length 1 corresponds to being done.
     branch: Vec<Option<NodeInfo>>,
 }
 
