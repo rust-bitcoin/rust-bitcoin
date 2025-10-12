@@ -375,51 +375,6 @@ impl Default for TransactionDecoder {
 }
 
 #[cfg(feature = "alloc")]
-impl TransactionDecoderState {
-    #[track_caller]
-    fn version_transition(&mut self) -> VersionDecoder {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Version(decoder) => decoder,
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn inputs_transition(&mut self) -> VecDecoder<TxIn> {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Inputs(_, _, decoder) => decoder,
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn outputs_transition(&mut self) -> (Vec<TxIn>, VecDecoder<TxOut>) {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Outputs(_, inputs, _, decoder) => (inputs, decoder),
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn witness_transition(&mut self) -> (Vec<TxIn>, Vec<TxOut>, WitnessDecoder) {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Witnesses(_, inputs, outputs, _, decoder) =>
-                (inputs, outputs, decoder),
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn lock_time_transition(&mut self) -> (Vec<TxIn>, Vec<TxOut>, LockTimeDecoder) {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::LockTime(_, inputs, outputs, decoder) =>
-                (inputs, outputs, decoder),
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
 #[allow(clippy::too_many_lines)] // TODO: Can we clean this up?
 impl Decoder for TransactionDecoder {
     type Output = Transaction;
@@ -433,25 +388,52 @@ impl Decoder for TransactionDecoder {
         };
 
         loop {
+            // Attempt to push to the currently-active decoder and return early on success.
             match &mut self.state {
                 State::Version(decoder) => {
                     if decoder.push_bytes(bytes)? {
                         // Still more bytes required.
                         return Ok(true);
                     }
-                    let decoder = self.state.version_transition();
+                },
+                State::Inputs(_, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::SegwitFlag(_) => {
+                    if bytes.is_empty() {
+                        return Ok(true);
+                    }
+                },
+                State::Outputs(_, _, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::Witnesses(_, _, _, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::LockTime(_, _, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::Done(..) => return Ok(false),
+                State::Transitioning => {
+                    panic!("use of decoder in transitioning state");
+                }
+            }
+
+            // If the above failed, end the current decoder and go to the next state.
+            match mem::replace(&mut self.state, State::Transitioning) {
+                State::Version(decoder) => {
                     let version = decoder.end()?;
                     self.state = State::Inputs(version, Attempt::First, VecDecoder::<TxIn>::new());
                 }
                 State::Inputs(version, attempt, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    // Copy the state because we need mutable access to self to transition.
-                    let version = *version;
-                    let attempt = *attempt;
-
-                    let decoder = self.state.inputs_transition();
                     let inputs = decoder.end()?;
 
                     if Attempt::First == attempt {
@@ -475,11 +457,6 @@ impl Decoder for TransactionDecoder {
                     }
                 }
                 State::SegwitFlag(version) => {
-                    if bytes.is_empty() {
-                        return Ok(true);
-                    }
-                    let version = *version;
-
                     let segwit_flag = bytes[0];
                     *bytes = &bytes[1..];
 
@@ -488,17 +465,9 @@ impl Decoder for TransactionDecoder {
                     }
                     self.state = State::Inputs(version, Attempt::Second, VecDecoder::<TxIn>::new());
                 }
-                State::Outputs(version, _, is_segwit, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    // These types are Copy, so we can deref them but does not work for vectors.
-                    let version = *version;
-                    let is_segwit = *is_segwit;
-
+                State::Outputs(version, inputs, is_segwit, decoder) => {
                     // We get the inputs vector here instead of in the pattern match because I
                     // couldn't find another way to get it out of behind the mutable reference.
-                    let (inputs, decoder) = self.state.outputs_transition();
                     let outputs = decoder.end()?;
                     if is_segwit == IsSegwit::Yes {
                         self.state = State::Witnesses(
@@ -513,14 +482,9 @@ impl Decoder for TransactionDecoder {
                             State::LockTime(version, inputs, outputs, LockTimeDecoder::new());
                     }
                 }
-                State::Witnesses(version, _, _, iteration, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    let version = *version;
+                State::Witnesses(version, mut inputs, outputs, iteration, decoder) => {
                     let iteration = iteration.0;
 
-                    let (mut inputs, outputs, decoder) = self.state.witness_transition();
                     inputs[iteration].witness = decoder.end()?;
                     if iteration < inputs.len() - 1 {
                         self.state = State::Witnesses(
@@ -539,13 +503,7 @@ impl Decoder for TransactionDecoder {
                             State::LockTime(version, inputs, outputs, LockTimeDecoder::new());
                     }
                 }
-                State::LockTime(version, _, _, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    let version = *version;
-
-                    let (inputs, outputs, decoder) = self.state.lock_time_transition();
+                State::LockTime(version, inputs, outputs, decoder) => {
                     let lock_time = decoder.end()?;
                     self.state = State::Done(Transaction { version, lock_time, inputs, outputs });
                     return Ok(false);
