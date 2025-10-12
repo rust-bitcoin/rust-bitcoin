@@ -100,7 +100,7 @@ impl Weight {
     pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight::from_wu(witness_size) }
 
     /// Constructs a new [`Weight`] from non-witness size.
-    /// 
+    ///
     /// # Panics
     ///
     /// If the conversion from virtual bytes overflows.
