@@ -9,7 +9,7 @@ use crate::script;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-// This is not the usual re-export, `primitive` here is an code audit thing.
+// This is not the usual re-export, `primitive` here is a code audit thing.
 pub use self::primitive::{PushBytes, PushBytesBuf};
 
 /// This module only contains required operations so that outside functions wouldn't accidentally

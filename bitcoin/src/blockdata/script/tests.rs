@@ -623,7 +623,7 @@ fn script_buf_collect() {
 }
 
 #[test]
-fn script_p2sh_p2p2k_template() {
+fn script_p2sh_p2pkh_template() {
     // random outputs I picked out of the mempool
     assert!(ScriptPubKeyBuf::from_hex_no_length_prefix(
         "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac"
