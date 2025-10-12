@@ -181,7 +181,7 @@ internal_macros::define_extension_trait! {
         /// Returns the total number of bytes that this input contributes to a transaction.
         ///
         /// Total size includes the witness data (for base size see [`Self::base_size`]).
-        /// 
+        ///
         /// # Panics
         ///
         /// If the size calculation overflows.

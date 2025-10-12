@@ -11,9 +11,9 @@ use core::num::{NonZeroI64, NonZeroU64};
 use std::panic;
 
 use super::*;
-use crate::result::NumOpResult;
 #[cfg(feature = "alloc")]
 use crate::result::MathOp;
+use crate::result::NumOpResult;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
 

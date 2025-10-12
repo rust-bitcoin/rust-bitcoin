@@ -26,9 +26,7 @@ pub struct BytesEncoder<'sl> {
 
 impl<'sl> BytesEncoder<'sl> {
     /// Constructs a byte encoder which encodes the given byte slice, with no length prefix.
-    pub fn without_length_prefix(sl: &'sl [u8]) -> Self {
-        Self { sl: Some(sl) }
-    }
+    pub fn without_length_prefix(sl: &'sl [u8]) -> Self { Self { sl: Some(sl) } }
 }
 
 impl Encoder for BytesEncoder<'_> {
@@ -255,9 +253,7 @@ mod tests {
         where
             Self: 's;
 
-        fn encoder(&self) -> Self::Encoder<'_> {
-            BytesEncoder::without_length_prefix(self.0)
-        }
+        fn encoder(&self) -> Self::Encoder<'_> { BytesEncoder::without_length_prefix(self.0) }
     }
 
     struct TestArray<const N: usize>([u8; N]);
@@ -314,7 +310,6 @@ mod tests {
         assert!(!encoder.advance());
         assert_eq!(encoder.current_chunk(), None);
     }
-
 
     #[test]
     fn encode_slice_with_elements() {

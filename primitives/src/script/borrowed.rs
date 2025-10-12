@@ -165,12 +165,10 @@ impl<T> Encodable for Script<T> {
         Self: 'a;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        ScriptEncoder(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.as_bytes().len()),
-                BytesEncoder::without_length_prefix(self.as_bytes())
-            )
-        )
+        ScriptEncoder(Encoder2::new(
+            CompactSizeEncoder::new(self.as_bytes().len()),
+            BytesEncoder::without_length_prefix(self.as_bytes()),
+        ))
     }
 }
 

@@ -192,9 +192,9 @@ macro_rules! sha256t_tag_constructor {
 
 #[cfg(test)]
 mod tests {
-    use crate::sha256t;
     #[cfg(feature = "alloc")]
     use crate::sha256;
+    use crate::sha256t;
 
     const TEST_MIDSTATE: [u8; 32] = [
         156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147,
