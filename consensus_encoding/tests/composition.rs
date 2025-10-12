@@ -2,7 +2,7 @@
 
 //! Test composition of encoders and decoders.
 
-use consensus_encoding::{
+use bitcoin_consensus_encoding::{
     ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder6, Encodable, Encoder,
     Encoder2, Encoder6, UnexpectedEofError,
 };

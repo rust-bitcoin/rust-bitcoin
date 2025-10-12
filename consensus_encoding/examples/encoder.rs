@@ -2,7 +2,7 @@
 
 //! Example of creating an encoder that encodes a slice of encodable objects.
 
-use consensus_encoding as encoding;
+use bitcoin_consensus_encoding as encoding;
 use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
 
 fn main() {
