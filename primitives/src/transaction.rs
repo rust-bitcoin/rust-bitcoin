@@ -1108,7 +1108,7 @@ impl OutPoint {
 }
 
 encoding::encoder_newtype! {
-    /// The encoder for the [`TxOut`] type.
+    /// The encoder for the [`OutPoint`] type.
     pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
 }
 
