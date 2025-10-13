@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::convert::Infallible;
+use core::fmt;
 use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{ByteVecDecoder, ByteVecDecoderError, Decodable, Decoder};
+use internals::write_err;
 
 use super::Script;
 use crate::prelude::{Box, Vec};
@@ -146,6 +150,60 @@ impl<T> DerefMut for ScriptBuf<T> {
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
+/// The decoder for the [`ScriptBuf`] type.
+pub struct ScriptBufDecoder<T>(ByteVecDecoder, PhantomData<T>);
+
+impl<T> ScriptBufDecoder<T> {
+    /// Constructs a new [`ScriptBuf`] decoder.
+    pub fn new() -> Self { Self(ByteVecDecoder::new(), PhantomData) }
+}
+
+impl<T> Default for ScriptBufDecoder<T> {
+    fn default() -> Self { Self::new() }
+}
+
+impl<T> Decoder for ScriptBufDecoder<T> {
+    type Output = ScriptBuf<T>;
+    type Error = ScriptBufDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> { Ok(ScriptBuf::from_bytes(self.0.end()?)) }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl<T> Decodable for ScriptBuf<T> {
+    type Decoder = ScriptBufDecoder<T>;
+    fn decoder() -> Self::Decoder { ScriptBufDecoder(ByteVecDecoder::new(), PhantomData) }
+}
+
+/// An error consensus decoding a `ScriptBuf<T>`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScriptBufDecoderError(ByteVecDecoderError);
+
+impl From<Infallible> for ScriptBufDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<ByteVecDecoderError> for ScriptBufDecoderError {
+    fn from(e: ByteVecDecoderError) -> Self { Self(e) }
+}
+
+impl fmt::Display for ScriptBufDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write_err!(f, "decoder error"; self.0) }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ScriptBufDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a, T> Arbitrary<'a> for ScriptBuf<T> {
     #[inline]
@@ -162,6 +220,8 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn script_buf_from_bytes() {
@@ -221,5 +281,32 @@ mod tests {
         let mut script = ScriptBuf::new();
         script.reserve_exact(10);
         assert!(script.capacity() >= 10);
+    }
+
+    #[test]
+    fn script_consensus_decode_empty() {
+        let bytes = vec![0_u8];
+        let mut push = bytes.as_slice();
+        let mut decoder = ScriptBuf::decoder();
+        decoder.push_bytes(&mut push).unwrap();
+
+        let got = decoder.end().unwrap();
+        let want = ScriptBuf::new();
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn script_consensus_decode_empty_with_more_data() {
+        // An empty script sig with a bunch of unrelated data at the end.
+        let bytes = vec![0x00_u8, 0xff, 0xff, 0xff, 0xff];
+        let mut push = bytes.as_slice();
+        let mut decoder = ScriptBuf::decoder();
+        decoder.push_bytes(&mut push).unwrap();
+
+        let got = decoder.end().unwrap();
+        let want = ScriptBuf::new();
+
+        assert_eq!(got, want);
     }
 }
