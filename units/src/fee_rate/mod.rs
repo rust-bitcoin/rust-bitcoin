@@ -188,16 +188,16 @@ impl FeeRate {
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
     ///
-    /// This is equivalent to `Self::checked_mul_by_weight()`.
+    /// This is equivalent to `Self::mul_by_weight(weight).ok()`.
     #[must_use]
     #[deprecated(since = "TBD", note = "use `to_fee()` instead")]
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.mul_by_weight(weight).ok() }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
-    /// if an overflow occurred.
+    /// if `vb` cannot be represented as [`Weight`].
     ///
     /// This is equivalent to converting `vb` to [`Weight`] using [`Weight::from_vb`] and then calling
-    /// `Self::fee_wu(weight)`.
+    /// [`Self::to_fee`].
     #[must_use]
     #[deprecated(since = "TBD", note = "use Weight::from_vb and then `to_fee()` instead")]
     pub fn fee_vb(self, vb: u64) -> Option<Amount> { Weight::from_vb(vb).map(|w| self.to_fee(w)) }
