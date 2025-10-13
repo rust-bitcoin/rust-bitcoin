@@ -12,7 +12,7 @@ exclude_re = [
     "serde_details::<impl de::Visitor<'_>", # Skip serde mutation tests
     "Iterator", # Mutating operations in an iterator can result in an infinite loop
     "<impl encoding::Decodable for .*>::decoder", # Mutant replacing Default::default() is equivalent to returning new()
-    "<impl encoding::Decoder for .*>::read_limit", # Function is just a cast for optimization.
+    "<impl encoding::Decoder for .*>::read_limit", # Function is for optimization and does not need to be tested.
 
 
     # ----------------------------------Crate-specific exclusions----------------------------------
