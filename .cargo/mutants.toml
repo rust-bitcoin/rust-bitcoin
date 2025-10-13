@@ -46,6 +46,6 @@ exclude_re = [
     "Script<T>::to_hex", # Deprecated
     "ScriptBuf::to_hex", # Deprecated
     "ScriptBuf<T>::to_hex", # Deprecated
-    "<impl Encoder for WitnessEncoder<'a>>::current_chunk", # Replacing the return with Some(vec![]) causes an infinite loop.
-    "<impl Encoder for WitnessEncoder<'a>>::advance", # Replacing the return with true causes an infinite loop.
+    "<impl Encoder for WitnessEncoder<'_>>::current_chunk", # Replacing the return with Some(vec![]) causes an infinite loop.
+    "<impl Encoder for WitnessEncoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
 ]
