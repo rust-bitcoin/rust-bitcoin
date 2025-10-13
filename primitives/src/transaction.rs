@@ -422,13 +422,11 @@ impl Decoder for TransactionDecoder {
                     }
                 },
                 State::Done(..) => return Ok(false),
-                State::Transitioning => {
-                    panic!("use of decoder in transitioning state");
-                }
+                State::Errored => panic!("call to push_bytes() after decoder errored"),
             }
 
             // If the above failed, end the current decoder and go to the next state.
-            match mem::replace(&mut self.state, State::Transitioning) {
+            match mem::replace(&mut self.state, State::Errored) {
                 State::Version(decoder) => {
                     let version = decoder.end()?;
                     self.state = State::Inputs(version, Attempt::First, VecDecoder::<TxIn>::new());
@@ -509,9 +507,7 @@ impl Decoder for TransactionDecoder {
                     return Ok(false);
                 }
                 State::Done(..) => return Ok(false),
-                State::Transitioning => {
-                    panic!("use of decoder in transitioning state");
-                }
+                State::Errored => unreachable!("checked above"),
             }
         }
     }
@@ -528,9 +524,7 @@ impl Decoder for TransactionDecoder {
             State::Witnesses(..) => panic!("tried to end decoder in state: Witnesses"),
             State::LockTime(..) => panic!("tried to end decoder in state: LockTime"),
             State::Done(tx) => Ok(tx),
-            State::Transitioning => {
-                panic!("use of decoder in transitioning state");
-            }
+            State::Errored => panic!("call to end() after decoder errored"),
         }
     }
 
@@ -546,7 +540,9 @@ impl Decoder for TransactionDecoder {
             State::Witnesses(_, _, _, _, decoder) => decoder.read_limit(),
             State::LockTime(_, _, _, decoder) => decoder.read_limit(),
             State::Done(_) => 0,
-            State::Transitioning => panic!("use of decoder in transitioning state"),
+            // `read_limit` is not documented to panic or return an error, so we
+            // return a dummy value if the decoder is in an error state.
+            State::Errored => 0,
         }
     }
 }
@@ -574,8 +570,9 @@ enum TransactionDecoderState {
     LockTime(Version, Vec<TxIn>, Vec<TxOut>, LockTimeDecoder),
     /// Done decoding the [`Transaction`].
     Done(Transaction),
-    /// Temporary state during transitions, should never be observed.
-    Transitioning,
+    /// When `end()`ing a sub-decoder, encountered an error which prevented us
+    /// from constructing the next sub-decoder.
+    Errored,
 }
 
 /// Boolean used to track number of times we have attempted to decode the inputs vector.
