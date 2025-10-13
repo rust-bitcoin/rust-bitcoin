@@ -2116,6 +2116,16 @@ mod tests {
         decoder.push_bytes(&mut slice).unwrap();
         let tx = decoder.end().unwrap();
 
+        // Attempt various truncations
+        for i in [1, 10, 20, 50, 100, tx_bytes.len() / 2, tx_bytes.len()] {
+            let mut decoder = Transaction::decoder();
+            let mut slice = &tx_bytes[..tx_bytes.len() - i];
+            // push_bytes will not fail because the data is not invalid, just truncated
+            decoder.push_bytes(&mut slice).unwrap();
+            // ...but end() will fail because we will be in some incomplete state
+            decoder.end().unwrap_err();
+        }
+
         // All these tests aren't really needed because if they fail, the hash check at the end
         // will also fail. But these will show you where the failure is so I'll leave them in.
         assert_eq!(tx.version, Version::TWO);
