@@ -3,8 +3,8 @@
 //! Test composition of encoders and decoders.
 
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder6, Encodable, Encoder,
-    Encoder2, Encoder6, UnexpectedEofError,
+    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder2Error, Decoder6, Encodable,
+    Encoder, Encoder2, Encoder6, UnexpectedEofError,
 };
 
 const EMPTY: &[u8] = &[];
@@ -47,7 +47,7 @@ impl core::fmt::Display for CompositeError {
 
 /// A wrapper decoder that converts the tuple output to [`CompositeData`].
 struct CompositeDataDecoder {
-    inner: Decoder2<ArrayDecoder<4>, ArrayDecoder<2>, CompositeError>,
+    inner: Decoder2<ArrayDecoder<4>, ArrayDecoder<2>>,
 }
 
 impl CompositeDataDecoder {
@@ -61,11 +61,15 @@ impl Decoder for CompositeDataDecoder {
     type Error = CompositeError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes)
+        self.inner.push_bytes(bytes).map_err(|error| match error {
+            Decoder2Error::First(e) | Decoder2Error::Second(e) => CompositeError::Eof(e),
+        })
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (first, second) = self.inner.end()?;
+        let (first, second) = self.inner.end().map_err(|error| match error {
+            Decoder2Error::First(e) | Decoder2Error::Second(e) => CompositeError::Eof(e),
+        })?;
         Ok(CompositeData { first, second })
     }
 
@@ -117,7 +121,7 @@ fn composition_nested() {
     }
     assert_eq!(encoded_bytes, data);
 
-    let mut decoder6: Decoder6<_, _, _, _, _, _, UnexpectedEofError> = Decoder6::new(
+    let mut decoder6: Decoder6<_, _, _, _, _, _> = Decoder6::new(
         ArrayDecoder::<1>::new(),
         ArrayDecoder::<1>::new(),
         ArrayDecoder::<1>::new(),
@@ -141,7 +145,7 @@ fn composition_nested() {
 #[test]
 fn composition_extra_bytes() {
     // Test that Decoder2 consumes exactly what it needs and leaves extra bytes unconsumed.
-    let mut decoder2: Decoder2<_, _, UnexpectedEofError> =
+    let mut decoder2: Decoder2<_, _> =
         Decoder2::new(ArrayDecoder::<2>::new(), ArrayDecoder::<3>::new());
     let mut bytes = &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08][..];
     let original_len = bytes.len();
@@ -198,7 +202,7 @@ fn composition_error_unification() {
 
     /// A test composite decoder.
     struct HeaderDecoder {
-        inner: Decoder2<ArrayDecoder<1>, ArrayDecoder<1>, NestedError>,
+        inner: Decoder2<ArrayDecoder<1>, ArrayDecoder<1>>,
     }
 
     impl HeaderDecoder {
@@ -212,11 +216,15 @@ fn composition_error_unification() {
         type Error = NestedError;
 
         fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-            self.inner.push_bytes(bytes)
+            self.inner.push_bytes(bytes).map_err(|error| match error {
+                Decoder2Error::First(e) | Decoder2Error::Second(e) => NestedError::from(e),
+            })
         }
 
         fn end(self) -> Result<Self::Output, Self::Error> {
-            let (first, second) = self.inner.end()?;
+            let (first, second) = self.inner.end().map_err(|error| match error {
+                Decoder2Error::First(e) | Decoder2Error::Second(e) => NestedError::from(e),
+            })?;
             Ok((first, second))
         }
 
@@ -278,15 +286,7 @@ fn composition_error_unification() {
     }
 
     // A multi-layer, nested, decoder structure with a unified top level error type.
-    let mut nested_decoder: Decoder6<
-        HeaderDecoder,
-        PayloadDecoder,
-        ArrayDecoder<1>,
-        HeaderDecoder,
-        PayloadDecoder,
-        ArrayDecoder<2>,
-        TopLevelError,
-    > = Decoder6::new(
+    let mut nested_decoder = Decoder6::new(
         HeaderDecoder::new(),
         PayloadDecoder::new(),
         ArrayDecoder::<1>::new(),
@@ -303,18 +303,15 @@ fn composition_error_unification() {
     assert!(end_result.is_ok(), "end should succeed, got error: {:?}", end_result.err());
 
     // Test error during decoding.
-    let mut failing_decoder: Decoder2<FailingDecoder, ArrayDecoder<1>, TopLevelError> =
+    let mut failing_decoder: Decoder2<FailingDecoder, ArrayDecoder<1>> =
         Decoder2::new(FailingDecoder::new(true), ArrayDecoder::<1>::new());
     let test_data = b"ab";
     let mut bytes = &test_data[..];
     let push_result = failing_decoder.push_bytes(&mut bytes);
     assert!(push_result.is_err(), "push_bytes should fail when first decoder fails in end()");
     assert!(
-        matches!(
-            push_result.as_ref().unwrap_err(),
-            TopLevelError::Validation(NestedError::BadChecksum)
-        ),
-        "Expected TopLevelError::Validation(NestedError::BadChecksum), got {:?}",
+        matches!(push_result.as_ref().unwrap_err(), Decoder2Error::First(NestedError::BadChecksum)),
+        "Expected Decoder2Error::First(NestedError::BadChecksum), got {:?}",
         push_result.unwrap_err()
     );
 }
