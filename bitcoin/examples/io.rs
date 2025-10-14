@@ -17,7 +17,7 @@ fn main() {
     // Encode to a custom type by implementing `bitcoin_io` traits.
     encode_to_custom_type();
 
-    // Encode to a foreign custom type by using the `bitcoin_io::bridge::FromStd` wrapper.
+    // Encode to a foreign custom type by using the `bitcoin_io::FromStd` wrapper.
     encode_using_wrapper();
 }
 
@@ -75,7 +75,7 @@ fn encode_to_custom_type() {
 /// Encodes to a custom type by using the `bitcoin_io::bridge` module.
 ///
 /// If you have a type that you don't control that implements `std::io::Write` you can still encode
-/// to it by way of the `io::bridge::FromStd` wrapper.
+/// to it by way of the `io::FromStd` wrapper.
 fn encode_using_wrapper() {
     use pretend_this_is_some_other_crate::WriteCounter;
 
