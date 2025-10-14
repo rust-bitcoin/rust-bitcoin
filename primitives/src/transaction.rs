@@ -464,8 +464,6 @@ impl Decoder for TransactionDecoder {
                     self.state = State::Inputs(version, Attempt::Second, VecDecoder::<TxIn>::new());
                 }
                 State::Outputs(version, inputs, is_segwit, decoder) => {
-                    // We get the inputs vector here instead of in the pattern match because I
-                    // couldn't find another way to get it out of behind the mutable reference.
                     let outputs = decoder.end()?;
                     if is_segwit == IsSegwit::Yes {
                         self.state = State::Witnesses(
