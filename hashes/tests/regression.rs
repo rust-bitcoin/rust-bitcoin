@@ -6,7 +6,7 @@
 
 #![cfg(feature = "hex")]
 // Exclude lints we don't think are valuable.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
+#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 use bitcoin_hashes::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha3_256, sha512, sha512_256,
