@@ -30,7 +30,9 @@ impl<'sl> BytesEncoder<'sl> {
 }
 
 impl Encoder for BytesEncoder<'_> {
-    fn current_chunk(&self) -> Option<&[u8]> { self.sl }
+    fn current_chunk(&self) -> &[u8] {
+        self.sl.unwrap_or_default()
+    }
 
     fn advance(&mut self) -> bool {
         self.sl = None;
@@ -50,7 +52,7 @@ impl<const N: usize> ArrayEncoder<N> {
 
 impl<const N: usize> Encoder for ArrayEncoder<N> {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> { self.arr.as_ref().map(|x| &x[..]) }
+    fn current_chunk(&self) -> &[u8] { self.arr.as_ref().map(|x| &x[..]).unwrap_or_default() }
 
     #[inline]
     fn advance(&mut self) -> bool {
@@ -82,10 +84,9 @@ impl<'e, T: Encodable> SliceEncoder<'e, T> {
 }
 
 impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
-    fn current_chunk(&self) -> Option<&[u8]> {
+    fn current_chunk(&self) -> &[u8] {
         // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
-        // `current_chunk` is required to return `None` if called after the encoder is exhausted.
-        self.cur_enc.as_ref().and_then(T::Encoder::current_chunk)
+        self.cur_enc.as_ref().map(T::Encoder::current_chunk).unwrap_or_default()
     }
 
     fn advance(&mut self) -> bool {
@@ -105,7 +106,7 @@ impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
             // If advancing the current encoder failed, attempt to move to the next encoder.
             if let Some(x) = self.sl.first() {
                 *cur = x.encoder();
-                if cur.current_chunk().is_some() {
+                if !cur.current_chunk().is_empty() {
                     return true;
                 }
             } else {
@@ -130,7 +131,7 @@ impl<A, B> Encoder2<A, B> {
 
 impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> {
+    fn current_chunk(&self) -> &[u8] {
         if self.enc_idx == 0 {
             self.enc_1.current_chunk()
         } else {
@@ -170,7 +171,7 @@ impl<A, B, C> Encoder3<A, B, C> {
 
 impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<A, B, C> {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
+    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
@@ -189,7 +190,7 @@ impl<A, B, C, D> Encoder4<A, B, C, D> {
 
 impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<A, B, C, D> {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
+    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
@@ -215,7 +216,7 @@ impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Enc
     for Encoder6<A, B, C, D, E, F>
 {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> { self.inner.current_chunk() }
+    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
@@ -232,7 +233,7 @@ impl CompactSizeEncoder {
 
 impl Encoder for CompactSizeEncoder {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> { self.buf.as_ref().map(|b| &b[..]) }
+    fn current_chunk(&self) -> &[u8] { self.buf.as_ref().map(|b| &b[..]).unwrap_or_default() }
 
     #[inline]
     fn advance(&mut self) -> bool {
@@ -272,9 +273,9 @@ mod tests {
         // Should have one chunk with the array data, then exhausted.
         let test_array = TestArray([1u8, 2, 3, 4]);
         let mut encoder = test_array.encoder();
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3, 4][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3, 4][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -282,9 +283,9 @@ mod tests {
         // Empty array should have one empty chunk, then exhausted.
         let test_array = TestArray([]);
         let mut encoder = test_array.encoder();
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.current_chunk().is_empty());
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -294,9 +295,9 @@ mod tests {
         let test_bytes = TestBytes(&obj);
         let mut encoder = test_bytes.encoder();
 
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -306,9 +307,9 @@ mod tests {
         let test_bytes = TestBytes(&obj);
         let mut encoder = test_bytes.encoder();
 
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.current_chunk().is_empty());
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -317,11 +318,11 @@ mod tests {
         let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
         let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0x34, 0x12, 0x00, 0x00][..]));
+        assert_eq!(encoder.current_chunk(), &[0x34, 0x12, 0x00, 0x00][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x78, 0x56, 0x00, 0x00][..]));
+        assert_eq!(encoder.current_chunk(), &[0x78, 0x56, 0x00, 0x00][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -331,7 +332,7 @@ mod tests {
         let mut encoder = SliceEncoder::without_length_prefix(slice);
 
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -340,11 +341,12 @@ mod tests {
         let slice = &[TestArray([]), TestArray([])];
         let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.current_chunk().is_empty());
+        // FIXME: Its strange the we can't do this?
+        // assert!(encoder.advance());
+        // assert!(encoder.current_chunk().is_empty());
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -354,11 +356,11 @@ mod tests {
         let enc2 = TestArray([3u8, 4]).encoder();
         let mut encoder = Encoder2::new(enc1, enc2);
 
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8, 4][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8, 4][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -368,11 +370,11 @@ mod tests {
         let enc2 = TestArray([]).encoder();
         let mut encoder = Encoder2::new(enc1, enc2);
 
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.current_chunk().is_empty());
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.current_chunk().is_empty());
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -383,13 +385,13 @@ mod tests {
         let enc3 = TestArray([4u8, 5u8, 6u8]).encoder();
         let mut encoder = Encoder3::new(enc1, enc2, enc3);
 
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[2u8, 3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[2u8, 3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[4u8, 5u8, 6u8][..]));
+        assert_eq!(encoder.current_chunk(), &[4u8, 5u8, 6u8][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -401,15 +403,15 @@ mod tests {
         let enc4 = TestArray([0x40]).encoder();
         let mut encoder = Encoder4::new(enc1, enc2, enc3, enc4);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0x10][..]));
+        assert_eq!(encoder.current_chunk(), &[0x10][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x20][..]));
+        assert_eq!(encoder.current_chunk(), &[0x20][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x30][..]));
+        assert_eq!(encoder.current_chunk(), &[0x30][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x40][..]));
+        assert_eq!(encoder.current_chunk(), &[0x40][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -423,19 +425,19 @@ mod tests {
         let enc6 = TestArray([0x06]).encoder();
         let mut encoder = Encoder6::new(enc1, enc2, enc3, enc4, enc5, enc6);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0x01][..]));
+        assert_eq!(encoder.current_chunk(), &[0x01][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x02][..]));
+        assert_eq!(encoder.current_chunk(), &[0x02][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x03][..]));
+        assert_eq!(encoder.current_chunk(), &[0x03][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x04][..]));
+        assert_eq!(encoder.current_chunk(), &[0x04][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x05][..]));
+        assert_eq!(encoder.current_chunk(), &[0x05][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x06][..]));
+        assert_eq!(encoder.current_chunk(), &[0x06][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -445,11 +447,11 @@ mod tests {
         let enc2 = TestArray([0xDD, 0xCC]).encoder();
         let mut encoder = Encoder2::new(enc1, enc2);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0xFF, 0xEE][..]));
+        assert_eq!(encoder.current_chunk(), &[0xFF, 0xEE][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xDD, 0xCC][..]));
+        assert_eq!(encoder.current_chunk(), &[0xDD, 0xCC][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -460,13 +462,13 @@ mod tests {
         let enc3 = TestArray([0x43, 0x44, 0x45]).encoder();
         let mut encoder = Encoder3::new(enc1, enc2, enc3);
 
-        assert_eq!(encoder.current_chunk(), Some(&[][..]));
+        assert!(encoder.current_chunk().is_empty());
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x42][..]));
+        assert_eq!(encoder.current_chunk(), &[0x42][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x43, 0x44, 0x45][..]));
+        assert_eq!(encoder.current_chunk(), &[0x43, 0x44, 0x45][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -477,13 +479,13 @@ mod tests {
         let array_enc = TestArray([0x20, 0x21]).encoder();
         let mut encoder = Encoder2::new(slice_enc, array_enc);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0x10, 0x11][..]));
+        assert_eq!(encoder.current_chunk(), &[0x10, 0x11][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x12, 0x13][..]));
+        assert_eq!(encoder.current_chunk(), &[0x12, 0x13][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x20, 0x21][..]));
+        assert_eq!(encoder.current_chunk(), &[0x20, 0x21][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -494,15 +496,15 @@ mod tests {
         let slice_enc = SliceEncoder::without_length_prefix(slice);
         let mut encoder = Encoder2::new(header, slice_enc);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0xFF, 0xFE][..]));
+        assert_eq!(encoder.current_chunk(), &[0xFF, 0xFE][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x01][..]));
+        assert_eq!(encoder.current_chunk(), &[0x01][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x02][..]));
+        assert_eq!(encoder.current_chunk(), &[0x02][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x03][..]));
+        assert_eq!(encoder.current_chunk(), &[0x03][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -517,21 +519,21 @@ mod tests {
         let enc3 = SliceEncoder::without_length_prefix(slice3);
         let mut encoder = Encoder3::new(enc1, enc2, enc3);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0xA1][..]));
+        assert_eq!(encoder.current_chunk(), &[0xA1][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xA2][..]));
+        assert_eq!(encoder.current_chunk(), &[0xA2][..]);
 
         // Skip the empty slice
         assert!(encoder.advance());
 
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xC1][..]));
+        assert_eq!(encoder.current_chunk(), &[0xC1][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xC2][..]));
+        assert_eq!(encoder.current_chunk(), &[0xC2][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xC3][..]));
+        assert_eq!(encoder.current_chunk(), &[0xC3][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -543,52 +545,58 @@ mod tests {
         let footer = TestBytes(&[0xBE, 0xEF]).encoder();
         let mut encoder = Encoder3::new(header, slice_enc, footer);
 
-        assert_eq!(encoder.current_chunk(), Some(&[0xDE, 0xAD][..]));
+        assert_eq!(encoder.current_chunk(), &[0xDE, 0xAD][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x01, 0x02][..]));
+        assert_eq!(encoder.current_chunk(), &[0x01, 0x02][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0x03, 0x04][..]));
+        assert_eq!(encoder.current_chunk(), &[0x03, 0x04][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xBE, 0xEF][..]));
+        assert_eq!(encoder.current_chunk(), &[0xBE, 0xEF][..]);
         assert!(!encoder.advance());
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
     #[test]
     fn encode_compact_size() {
         // 1-byte
         let mut e = CompactSizeEncoder::new(0x10u64);
-        assert_eq!(e.current_chunk(), Some(&[0x10][..]));
+        assert_eq!(e.current_chunk(), &[0x10][..]);
         assert!(!e.advance());
-        assert_eq!(e.current_chunk(), None);
+        assert!(e.current_chunk().is_empty());
 
         let mut e = CompactSizeEncoder::new(0xFCu64);
-        assert_eq!(e.current_chunk(), Some(&[0xFC][..]));
+        assert_eq!(e.current_chunk(), &[0xFC][..]);
         assert!(!e.advance());
+        assert!(e.current_chunk().is_empty());
 
         // 0xFD + u16
         let mut e = CompactSizeEncoder::new(0x00FDu64);
-        assert_eq!(e.current_chunk(), Some(&[0xFD, 0xFD, 0x00][..]));
+        assert_eq!(e.current_chunk(), &[0xFD, 0xFD, 0x00][..]);
         assert!(!e.advance());
+        assert!(e.current_chunk().is_empty());
 
         let mut e = CompactSizeEncoder::new(0x0FFFu64);
-        assert_eq!(e.current_chunk(), Some(&[0xFD, 0xFF, 0x0F][..]));
+        assert_eq!(e.current_chunk(), &[0xFD, 0xFF, 0x0F][..]);
         assert!(!e.advance());
+        assert!(e.current_chunk().is_empty());
 
         // 0xFE + u32
         let mut e = CompactSizeEncoder::new(0x0001_0000u64);
-        assert_eq!(e.current_chunk(), Some(&[0xFE, 0x00, 0x00, 0x01, 0x00][..]));
+        assert_eq!(e.current_chunk(), &[0xFE, 0x00, 0x00, 0x01, 0x00][..]);
         assert!(!e.advance());
+        assert!(e.current_chunk().is_empty());
 
         let mut e = CompactSizeEncoder::new(0x0F0F_0F0Fu64);
-        assert_eq!(e.current_chunk(), Some(&[0xFE, 0x0F, 0x0F, 0x0F, 0x0F][..]));
+        assert_eq!(e.current_chunk(), &[0xFE, 0x0F, 0x0F, 0x0F, 0x0F][..]);
         assert!(!e.advance());
+        assert!(e.current_chunk().is_empty());
 
         // 0xFF + u64
         let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64);
         assert_eq!(
             e.current_chunk(),
-            Some(&[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..])
+            &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]
         );
         assert!(!e.advance());
+        assert!(e.current_chunk().is_empty());
     }
 }

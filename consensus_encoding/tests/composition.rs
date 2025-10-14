@@ -88,9 +88,11 @@ fn composition_chain() {
     // Encode using the pull encoder.
     let mut encoder = original.encoder();
     let mut encoded_bytes = Vec::new();
-    while let Some(chunk) = encoder.current_chunk() {
-        encoded_bytes.extend_from_slice(chunk);
-        encoder.advance();
+    loop {
+        encoded_bytes.extend_from_slice(encoder.current_chunk());
+        if !encoder.advance() {
+            break;
+        }
     }
     // Decode using the push decoder.
     let mut decoder = CompositeData::decoder();
@@ -115,9 +117,11 @@ fn composition_nested() {
     );
 
     let mut encoded_bytes = Vec::new();
-    while let Some(chunk) = encoder6.current_chunk() {
-        encoded_bytes.extend_from_slice(chunk);
-        encoder6.advance();
+    loop {
+        encoded_bytes.extend_from_slice(encoder6.current_chunk());
+        if !encoder6.advance() {
+            break;
+        }
     }
     assert_eq!(encoded_bytes, data);
 
@@ -325,16 +329,16 @@ fn empty_encoders() {
         BytesEncoder::without_length_prefix(&bytes[2..]),
     );
 
-    assert_eq!(encoder.current_chunk(), Some(&[1, 2][..]));
+    assert_eq!(encoder.current_chunk(), &[1, 2][..]);
     assert!(encoder.advance());
 
     // Still have to advance over empty slice.
-    assert_eq!(encoder.current_chunk(), Some(&[][..]));
+    assert!(encoder.current_chunk().is_empty());
     assert!(encoder.advance());
 
-    assert_eq!(encoder.current_chunk(), Some(&[3, 4][..]));
+    assert_eq!(encoder.current_chunk(), &[3, 4][..]);
     assert!(!encoder.advance());
 
     // Exhausted.
-    assert!(encoder.current_chunk().is_none());
+    assert!(encoder.current_chunk().is_empty());
 }

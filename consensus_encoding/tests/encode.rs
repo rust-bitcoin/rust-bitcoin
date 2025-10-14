@@ -116,6 +116,6 @@ fn encode_newtype_lifetime_flexibility() {
     let custom_encoder = CustomEncoder(BytesEncoder::without_length_prefix(test_data));
     let no_lifetime_encoder = NoLifetimeEncoder(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
 
-    assert_eq!(custom_encoder.current_chunk(), Some(test_data.as_slice()));
-    assert_eq!(no_lifetime_encoder.current_chunk(), Some(&[1, 2, 3, 4][..]));
+    assert_eq!(custom_encoder.current_chunk(), test_data.as_slice());
+    assert_eq!(no_lifetime_encoder.current_chunk(), &[1, 2, 3, 4][..]);
 }
