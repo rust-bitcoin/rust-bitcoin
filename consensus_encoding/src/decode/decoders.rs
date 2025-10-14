@@ -295,26 +295,6 @@ enum Decoder2State<A: Decoder, B: Decoder> {
     Second(A::Output, B),
     /// Decoder has failed and cannot be used again.
     Errored,
-    /// Temporary state during transitions from First to Second, should never be observed.
-    Transitioning,
-}
-
-impl<A: Decoder, B: Decoder> Decoder2State<A, B> {
-    /// Transitions from the first state to second by extracting both decoders.
-    ///
-    /// We use `mem::replace` to atomically swap the entire state, giving us
-    /// ownership of the decoders so we can consume the first decoder while
-    /// holding a mutable reference to the state.
-    ///
-    /// If this method is called when not in the `First` state, we panic
-    /// with `#[track_caller]` to show where the bug occurred.
-    #[track_caller]
-    fn transition(&mut self) -> (A, B) {
-        match mem::replace(self, Decoder2State::Transitioning) {
-            Decoder2State::First(first, second) => (first, second),
-            _ => panic!("transition called on invalid state"),
-        }
-    }
 }
 
 impl<A, B, Err> Decoder2<A, B, Err>
@@ -347,12 +327,15 @@ where
                     }
 
                     // First decoder is complete, transition to second.
-                    let (first, second) = self.state.transition();
-                    let first_result = first.end().map_err(|error| {
-                        self.state = Decoder2State::Errored;
-                        Err::from(error)
-                    })?;
-                    self.state = Decoder2State::Second(first_result, second);
+                    // If the first decoder fails, the composite decoder
+                    // remains in an Errored state.
+                    match mem::replace(&mut self.state, Decoder2State::Errored) {
+                        Decoder2State::First(first, second) => {
+                            let first_result = first.end()?;
+                            self.state = Decoder2State::Second(first_result, second);
+                        }
+                        _ => unreachable!("we know we're in First state"),
+                    }
                 }
                 Decoder2State::Second(_, second_decoder) => {
                     return second_decoder.push_bytes(bytes).map_err(|error| {
@@ -362,9 +345,6 @@ where
                 }
                 Decoder2State::Errored => {
                     panic!("use of failed decoder");
-                }
-                Decoder2State::Transitioning => {
-                    panic!("use of decoder in transitioning state");
                 }
             }
         }
@@ -388,9 +368,6 @@ where
             Decoder2State::Errored => {
                 panic!("use of failed decoder");
             }
-            Decoder2State::Transitioning => {
-                panic!("use of decoder in transitioning state");
-            }
         }
     }
 
@@ -401,7 +378,6 @@ where
                 first_decoder.read_limit() + second_decoder.read_limit(),
             Decoder2State::Second(_, second_decoder) => second_decoder.read_limit(),
             Decoder2State::Errored => 0,
-            Decoder2State::Transitioning => 0,
         }
     }
 }
