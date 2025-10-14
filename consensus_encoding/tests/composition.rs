@@ -3,8 +3,8 @@
 //! Test composition of encoders and decoders.
 
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder2Error, Decoder6, Encodable,
-    Encoder, Encoder2, Encoder6, UnexpectedEofError,
+    ArrayDecoder, ArrayEncoder, BytesEncoder, Decodable, Decoder, Decoder2, Decoder2Error,
+    Decoder6, Encodable, Encoder, Encoder2, Encoder3, Encoder6, UnexpectedEofError,
 };
 
 const EMPTY: &[u8] = &[];
@@ -314,4 +314,27 @@ fn composition_error_unification() {
         "Expected Decoder2Error::First(NestedError::BadChecksum), got {:?}",
         push_result.unwrap_err()
     );
+}
+
+#[test]
+fn empty_encoders() {
+    let bytes = [0x01, 2, 3, 4];
+    let mut encoder = Encoder3::new(
+        BytesEncoder::without_length_prefix(&bytes[..2]),
+        BytesEncoder::without_length_prefix(&[]),
+        BytesEncoder::without_length_prefix(&bytes[2..]),
+    );
+
+    assert_eq!(encoder.current_chunk(), Some(&[1, 2][..]));
+    assert!(encoder.advance());
+
+    // Still have to advance over empty slice.
+    assert_eq!(encoder.current_chunk(), Some(&[][..]));
+    assert!(encoder.advance());
+
+    assert_eq!(encoder.current_chunk(), Some(&[3, 4][..]));
+    assert!(!encoder.advance());
+
+    // Exhausted.
+    assert!(encoder.current_chunk().is_none());
 }
