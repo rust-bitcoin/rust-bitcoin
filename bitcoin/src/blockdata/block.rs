@@ -273,6 +273,10 @@ pub trait BlockCheckedExt: sealed::Sealed {
     ///
     /// > Total size is the block size in bytes with transactions serialized as described in BIP-0144,
     /// > including base data and witness data.
+    ///
+    /// # Panics
+    ///
+    /// If the size calculation overflows.
     fn total_size(&self) -> usize;
 
     /// Returns the coinbase transaction.
@@ -304,6 +308,9 @@ impl BlockCheckedExt for Block<Checked> {
         Weight::from_wu(wu.to_u64())
     }
 
+    /// # Panics
+    ///
+    /// If the size calculation overflows.
     fn total_size(&self) -> usize {
         let mut size = Header::SIZE;
 

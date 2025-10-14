@@ -131,6 +131,10 @@ impl Witness {
     pub fn len(&self) -> usize { self.witness_elements }
 
     /// Returns the number of bytes this witness contributes to a transactions total size.
+    ///
+    /// # Panics
+    ///
+    /// If the size calculation overflows.
     pub fn size(&self) -> usize {
         let mut size: usize = 0;
 

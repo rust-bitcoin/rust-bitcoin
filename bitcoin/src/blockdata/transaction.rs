@@ -286,12 +286,20 @@ pub trait TransactionExt: sealed::Sealed {
     /// Returns the base transaction size.
     ///
     /// > Base transaction size is the size of the transaction serialised with the witness data stripped.
+    ///
+    /// # Panics
+    ///
+    /// If the size calculation overflows.
     fn base_size(&self) -> usize;
 
     /// Returns the total transaction size.
     ///
     /// > Total transaction size is the transaction size in bytes serialized as described in BIP-0144,
     /// > including base data and witness data.
+    ///
+    /// # Panics
+    ///
+    /// If the size calculation overflows.
     fn total_size(&self) -> usize;
 
     /// Returns the "virtual size" (vsize) of this transaction.
@@ -385,6 +393,9 @@ impl TransactionExt for Transaction {
         Weight::from_wu(wu.to_u64())
     }
 
+    /// # Panics
+    ///
+    /// If the size calculation overflows.
     fn base_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
 
@@ -397,6 +408,9 @@ impl TransactionExt for Transaction {
         size + absolute::LockTime::SIZE
     }
 
+    /// # Panics
+    ///
+    /// If the size calculation overflows.
     #[inline]
     fn total_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
