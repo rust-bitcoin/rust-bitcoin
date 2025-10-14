@@ -11,8 +11,8 @@ exclude_re = [
     "deserialize", # Skip serde mutation tests
     "serde_details::<impl de::Visitor<'_>", # Skip serde mutation tests
     "Iterator", # Mutating operations in an iterator can result in an infinite loop
-    "<impl encoding::Decodable for .*>::decoder", # Mutant replacing Default::default() is equivalent to returning new()
-    "<impl encoding::Decoder for .*>::read_limit", # Function is for optimization and does not need to be tested.
+    "<impl .*Decodable for .*>::decoder", # Mutant replacing Default::default() is equivalent to returning new()
+    "<impl .*Decoder for .*>::read_limit", # Function is for optimization and does not need to be tested.
 
 
     # ----------------------------------Crate-specific exclusions----------------------------------
@@ -46,6 +46,7 @@ exclude_re = [
     "Script<T>::to_hex", # Deprecated
     "ScriptBuf::to_hex", # Deprecated
     "ScriptBuf<T>::to_hex", # Deprecated
-    "<impl Encoder for WitnessEncoder<'_>>::current_chunk", # Replacing the return with Some(vec![]) causes an infinite loop.
-    "<impl Encoder for WitnessEncoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
+    "<impl Encoder for .*Encoder<'_>>::current_chunk", # Replacing the return with Some(vec![]) causes an infinite loop.
+    "<impl Encoder for .*Encoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
+    "<impl Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
 ]
