@@ -1904,7 +1904,7 @@ pub fn bitcoin_units::amount::AmountDecoder::new() -> Self
 pub fn bitcoin_units::amount::AmountDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::amount::AmountDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::amount::AmountEncoder::advance(&mut self) -> bool
-pub fn bitcoin_units::amount::AmountEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
+pub fn bitcoin_units::amount::AmountEncoder::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::amount::Denomination::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
@@ -2023,7 +2023,7 @@ pub fn bitcoin_units::block::BlockHeightDecoderError::fmt(&self, f: &mut core::f
 pub fn bitcoin_units::block::BlockHeightDecoderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_units::block::BlockHeightDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_units::block::BlockHeightEncoder::advance(&mut self) -> bool
-pub fn bitcoin_units::block::BlockHeightEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
+pub fn bitcoin_units::block::BlockHeightEncoder::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::block::BlockHeightInterval::add(self, rhs: &bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeightInterval::add(self, rhs: bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeightInterval::add_assign(&mut self, rhs: &bitcoin_units::block::BlockHeightInterval)
@@ -2168,7 +2168,7 @@ pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::new() -> Self
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder::advance(&mut self) -> bool
-pub fn bitcoin_units::locktime::absolute::LockTimeEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
+pub fn bitcoin_units::locktime::absolute::LockTimeEncoder::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::clone(&self) -> bitcoin_units::locktime::absolute::MedianTimePast
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::cmp(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> core::cmp::Ordering
@@ -2439,7 +2439,7 @@ pub fn bitcoin_units::sequence::SequenceDecoderError::fmt(&self, f: &mut core::f
 pub fn bitcoin_units::sequence::SequenceDecoderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_units::sequence::SequenceDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_units::sequence::SequenceEncoder::advance(&mut self) -> bool
-pub fn bitcoin_units::sequence::SequenceEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
+pub fn bitcoin_units::sequence::SequenceEncoder::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::time::BlockTimeDecoder::default() -> Self
 pub fn bitcoin_units::time::BlockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::time::BlockTimeDecoder::new() -> Self
@@ -2451,7 +2451,7 @@ pub fn bitcoin_units::time::BlockTimeDecoderError::fmt(&self, f: &mut core::fmt:
 pub fn bitcoin_units::time::BlockTimeDecoderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_units::time::BlockTimeDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_units::time::BlockTimeEncoder::advance(&mut self) -> bool
-pub fn bitcoin_units::time::BlockTimeEncoder::current_chunk(&self) -> core::option::Option<&[u8]>
+pub fn bitcoin_units::time::BlockTimeEncoder::current_chunk(&self) -> &[u8]
 pub fn core::num::error::ParseIntError::from(value: bitcoin_units::parse_int::ParseIntError) -> Self
 pub fn i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
 pub fn i64::mul(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
