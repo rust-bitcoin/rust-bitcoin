@@ -20,7 +20,7 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 // Exclude lints we don't think are valuable.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
+#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
