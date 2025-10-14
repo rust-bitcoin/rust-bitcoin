@@ -610,7 +610,7 @@ impl TaprootBuilder {
     /// Inserts a leaf at `depth`.
     fn insert(mut self, mut node: NodeInfo, mut depth: u8) -> Result<Self, TaprootBuilderError> {
         // early error on invalid depth. Though this will be checked later
-        // while constructing TaprootMerkelBranch
+        // while constructing TaprootMerkleBranch
         if depth as usize > TAPROOT_CONTROL_MAX_NODE_COUNT {
             return Err(InvalidMerkleTreeDepthError(depth as usize).into());
         }
@@ -1473,7 +1473,7 @@ pub enum TaprootBuilderError {
     NodeNotInDfsOrder,
     /// Two nodes at depth 0 are not allowed.
     OverCompleteTree,
-    /// Called finalize on a empty tree.
+    /// Called finalize on an empty tree.
     EmptyTree,
 }
 
