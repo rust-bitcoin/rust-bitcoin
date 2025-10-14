@@ -2136,4 +2136,31 @@ mod tests {
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
     }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn decode_segwit_without_witnesses_errors() {
+        // A SegWit-serialized transaction with 1 input but no witnesses for any input.
+        let tx_bytes = hex!(
+            "02000000\
+             0001\
+             01\
+             0000000000000000000000000000000000000000000000000000000000000000\
+             00000000\
+             00\
+             ffffffff\
+             01\
+             0100000000000000\
+             00\
+             00\
+             00000000"
+        );
+
+        let mut slice = tx_bytes.as_slice();
+        let err = Transaction::decoder()
+            .push_bytes(&mut slice)
+            .expect_err("segwit tx with no witnesses should error");
+
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NoWitnesses));
+    }
 }
