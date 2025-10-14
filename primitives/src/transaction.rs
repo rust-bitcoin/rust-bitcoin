@@ -375,51 +375,6 @@ impl Default for TransactionDecoder {
 }
 
 #[cfg(feature = "alloc")]
-impl TransactionDecoderState {
-    #[track_caller]
-    fn version_transition(&mut self) -> VersionDecoder {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Version(decoder) => decoder,
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn inputs_transition(&mut self) -> VecDecoder<TxIn> {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Inputs(_, _, decoder) => decoder,
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn outputs_transition(&mut self) -> (Vec<TxIn>, VecDecoder<TxOut>) {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Outputs(_, inputs, _, decoder) => (inputs, decoder),
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn witness_transition(&mut self) -> (Vec<TxIn>, Vec<TxOut>, WitnessDecoder) {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::Witnesses(_, inputs, outputs, _, decoder) =>
-                (inputs, outputs, decoder),
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-
-    #[track_caller]
-    fn lock_time_transition(&mut self) -> (Vec<TxIn>, Vec<TxOut>, LockTimeDecoder) {
-        match mem::replace(self, TransactionDecoderState::Transitioning) {
-            TransactionDecoderState::LockTime(_, inputs, outputs, decoder) =>
-                (inputs, outputs, decoder),
-            _ => panic!("transition called on invalid state"),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
 #[allow(clippy::too_many_lines)] // TODO: Can we clean this up?
 impl Decoder for TransactionDecoder {
     type Output = Transaction;
@@ -433,25 +388,50 @@ impl Decoder for TransactionDecoder {
         };
 
         loop {
+            // Attempt to push to the currently-active decoder and return early on success.
             match &mut self.state {
                 State::Version(decoder) => {
                     if decoder.push_bytes(bytes)? {
                         // Still more bytes required.
                         return Ok(true);
                     }
-                    let decoder = self.state.version_transition();
+                },
+                State::Inputs(_, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::SegwitFlag(_) => {
+                    if bytes.is_empty() {
+                        return Ok(true);
+                    }
+                },
+                State::Outputs(_, _, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::Witnesses(_, _, _, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::LockTime(_, _, _, decoder) => {
+                    if decoder.push_bytes(bytes)? {
+                        return Ok(true);
+                    }
+                },
+                State::Done(..) => return Ok(false),
+                State::Errored => panic!("call to push_bytes() after decoder errored"),
+            }
+
+            // If the above failed, end the current decoder and go to the next state.
+            match mem::replace(&mut self.state, State::Errored) {
+                State::Version(decoder) => {
                     let version = decoder.end()?;
                     self.state = State::Inputs(version, Attempt::First, VecDecoder::<TxIn>::new());
                 }
                 State::Inputs(version, attempt, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    // Copy the state because we need mutable access to self to transition.
-                    let version = *version;
-                    let attempt = *attempt;
-
-                    let decoder = self.state.inputs_transition();
                     let inputs = decoder.end()?;
 
                     if Attempt::First == attempt {
@@ -475,11 +455,6 @@ impl Decoder for TransactionDecoder {
                     }
                 }
                 State::SegwitFlag(version) => {
-                    if bytes.is_empty() {
-                        return Ok(true);
-                    }
-                    let version = *version;
-
                     let segwit_flag = bytes[0];
                     *bytes = &bytes[1..];
 
@@ -488,17 +463,9 @@ impl Decoder for TransactionDecoder {
                     }
                     self.state = State::Inputs(version, Attempt::Second, VecDecoder::<TxIn>::new());
                 }
-                State::Outputs(version, _, is_segwit, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    // These types are Copy, so we can deref them but does not work for vectors.
-                    let version = *version;
-                    let is_segwit = *is_segwit;
-
+                State::Outputs(version, inputs, is_segwit, decoder) => {
                     // We get the inputs vector here instead of in the pattern match because I
                     // couldn't find another way to get it out of behind the mutable reference.
-                    let (inputs, decoder) = self.state.outputs_transition();
                     let outputs = decoder.end()?;
                     if is_segwit == IsSegwit::Yes {
                         self.state = State::Witnesses(
@@ -513,14 +480,9 @@ impl Decoder for TransactionDecoder {
                             State::LockTime(version, inputs, outputs, LockTimeDecoder::new());
                     }
                 }
-                State::Witnesses(version, _, _, iteration, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    let version = *version;
+                State::Witnesses(version, mut inputs, outputs, iteration, decoder) => {
                     let iteration = iteration.0;
 
-                    let (mut inputs, outputs, decoder) = self.state.witness_transition();
                     inputs[iteration].witness = decoder.end()?;
                     if iteration < inputs.len() - 1 {
                         self.state = State::Witnesses(
@@ -539,40 +501,33 @@ impl Decoder for TransactionDecoder {
                             State::LockTime(version, inputs, outputs, LockTimeDecoder::new());
                     }
                 }
-                State::LockTime(version, _, _, decoder) => {
-                    if decoder.push_bytes(bytes)? {
-                        return Ok(true);
-                    }
-                    let version = *version;
-
-                    let (inputs, outputs, decoder) = self.state.lock_time_transition();
+                State::LockTime(version, inputs, outputs, decoder) => {
                     let lock_time = decoder.end()?;
                     self.state = State::Done(Transaction { version, lock_time, inputs, outputs });
                     return Ok(false);
                 }
                 State::Done(..) => return Ok(false),
-                State::Transitioning => {
-                    panic!("use of decoder in transitioning state");
-                }
+                State::Errored => unreachable!("checked above"),
             }
         }
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        use TransactionDecoderState as State;
+        use {
+            TransactionDecoderError as E, TransactionDecoderErrorInner as Inner,
+            TransactionDecoderState as State,
+        };
 
         match self.state {
-            State::Version(_) => panic!("tried to end decoder in state: Version"),
-            State::Inputs(..) => panic!("tried to end decoder in state: Inputs"),
-            State::SegwitFlag(..) => panic!("tried to end decoder in state: SegwitFlag"),
-            State::Outputs(..) => panic!("tried to end decoder in state: Outputs"),
-            State::Witnesses(..) => panic!("tried to end decoder in state: Witnesses"),
-            State::LockTime(..) => panic!("tried to end decoder in state: LockTime"),
+            State::Version(_) => Err(E(Inner::EarlyEnd("version"))),
+            State::Inputs(..) => Err(E(Inner::EarlyEnd("inputs"))),
+            State::SegwitFlag(..) => Err(E(Inner::EarlyEnd("segwit flag"))),
+            State::Outputs(..) => Err(E(Inner::EarlyEnd("outputs"))),
+            State::Witnesses(..) => Err(E(Inner::EarlyEnd("witnesses"))),
+            State::LockTime(..) => Err(E(Inner::EarlyEnd("locktime"))),
             State::Done(tx) => Ok(tx),
-            State::Transitioning => {
-                panic!("use of decoder in transitioning state");
-            }
+            State::Errored => panic!("call to end() after decoder errored"),
         }
     }
 
@@ -588,7 +543,9 @@ impl Decoder for TransactionDecoder {
             State::Witnesses(_, _, _, _, decoder) => decoder.read_limit(),
             State::LockTime(_, _, _, decoder) => decoder.read_limit(),
             State::Done(_) => 0,
-            State::Transitioning => panic!("use of decoder in transitioning state"),
+            // `read_limit` is not documented to panic or return an error, so we
+            // return a dummy value if the decoder is in an error state.
+            State::Errored => 0,
         }
     }
 }
@@ -616,8 +573,9 @@ enum TransactionDecoderState {
     LockTime(Version, Vec<TxIn>, Vec<TxOut>, LockTimeDecoder),
     /// Done decoding the [`Transaction`].
     Done(Transaction),
-    /// Temporary state during transitions, should never be observed.
-    Transitioning,
+    /// When `end()`ing a sub-decoder, encountered an error which prevented us
+    /// from constructing the next sub-decoder.
+    Errored,
 }
 
 /// Boolean used to track number of times we have attempted to decode the inputs vector.
@@ -667,6 +625,9 @@ enum TransactionDecoderErrorInner {
     NoWitnesses,
     /// Error while decoding the `lock_time`.
     LockTime(LockTimeDecoderError),
+    /// Attempt to call `end()` before the transaction was complete. Holds
+    /// a description of the current state.
+    EarlyEnd(&'static str),
 }
 
 #[cfg(feature = "alloc")]
@@ -717,6 +678,7 @@ impl fmt::Display for TransactionDecoderError {
             E::Witness(ref e) => write_err!(f, "transaction decoder error"; e),
             E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
             E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
+            E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
         }
     }
 }
@@ -735,6 +697,7 @@ impl std::error::Error for TransactionDecoderError {
             E::Witness(ref e) => Some(e),
             E::NoWitnesses => None,
             E::LockTime(ref e) => Some(e),
+            E::EarlyEnd(_) => None,
         }
     }
 }
@@ -2152,6 +2115,16 @@ mod tests {
         let mut slice = tx_bytes.as_slice();
         decoder.push_bytes(&mut slice).unwrap();
         let tx = decoder.end().unwrap();
+
+        // Attempt various truncations
+        for i in [1, 10, 20, 50, 100, tx_bytes.len() / 2, tx_bytes.len()] {
+            let mut decoder = Transaction::decoder();
+            let mut slice = &tx_bytes[..tx_bytes.len() - i];
+            // push_bytes will not fail because the data is not invalid, just truncated
+            decoder.push_bytes(&mut slice).unwrap();
+            // ...but end() will fail because we will be in some incomplete state
+            decoder.end().unwrap_err();
+        }
 
         // All these tests aren't really needed because if they fail, the hash check at the end
         // will also fail. But these will show you where the failure is so I'll leave them in.
