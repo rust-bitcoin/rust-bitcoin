@@ -1503,6 +1503,27 @@ mod tests {
     use crate::absolute::LockTime;
 
     #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn transaction_encode_decode_roundtrip() {
+        let tx = Transaction {
+            version: Version::TWO,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![segwit_tx_in(), segwit_tx_in()],
+            outputs: vec![tx_out(), tx_out()],
+        };
+
+        let encoded = encoding::encode_to_vec(&tx);
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = encoded.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let decoded = decoder.end().unwrap();
+
+        assert_eq!(tx, decoded);
+    }
+
+    #[test]
     fn sanity_check() {
         let version = Version(123);
         assert_eq!(version.to_u32(), 123);
