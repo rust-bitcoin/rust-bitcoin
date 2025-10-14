@@ -2632,7 +2632,7 @@ mod tests {
         let (priv_key, pk, secp) = gen_keys();
 
         // key_map implements `GetKey` using KeyRequest::Pubkey. A pubkey key request does not use
-        // keysource so we use default `KeySource` (fingreprint and derivation path) below.
+        // keysource so we use default `KeySource` (fingerprint and derivation path) below.
         let mut key_map = BTreeMap::new();
         key_map.insert(pk, priv_key);
 

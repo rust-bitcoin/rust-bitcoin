@@ -250,7 +250,7 @@ impl Input {
     ///
     /// # Errors
     ///
-    /// If the `sighash_type` field is set to a invalid Taproot sighash value.
+    /// If the `sighash_type` field is set to an invalid Taproot sighash value.
     pub fn taproot_hash_ty(&self) -> Result<TapSighashType, InvalidSighashTypeError> {
         self.sighash_type
             .map(|sighash_type| sighash_type.taproot_hash_ty())
