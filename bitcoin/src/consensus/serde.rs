@@ -378,6 +378,7 @@ fn consensus_error_into_serde<E: serde::de::Error>(error: ParseError) -> E {
         ParseError::ParseFailed(msg) => E::custom(msg),
         ParseError::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
+        ParseError::Witness(e) => E::custom(e),
     }
 }
 
