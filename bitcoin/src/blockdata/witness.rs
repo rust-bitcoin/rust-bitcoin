@@ -6,8 +6,8 @@
 
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, Error, ParseError, WriteExt};
-use crate::consensus::{Decodable, Encodable};
+use crate::consensus::encode::{self, Error, WriteExt};
+use crate::consensus::{Decodable, Encodable, ParseError};
 use crate::crypto::ecdsa;
 use crate::crypto::key::SerializedXOnlyPublicKey;
 use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
