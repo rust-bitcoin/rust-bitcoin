@@ -118,7 +118,7 @@ impl fmt::Display for IncorrectChecksumError {
 #[cfg(feature = "std")]
 impl std::error::Error for IncorrectChecksumError {}
 
-/// The decode base58 data was too short (require at least 4 bytes for checksum).
+/// The decoded base58 data was too short (require at least 4 bytes for checksum).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct TooShortError {
     /// The length of the decoded data.
