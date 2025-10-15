@@ -103,6 +103,8 @@ pub enum Error {
     Io(io::Error),
     /// Error parsing encoded object.
     Parse(ParseError),
+    /// Witness decoding error.
+    Witness(primitives::witness::WitnessDecoderError),
 }
 
 impl From<Infallible> for Error {
@@ -116,6 +118,7 @@ impl fmt::Display for Error {
         match *self {
             Io(ref e) => write_err!(f, "I/O error"; e),
             Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+            Witness(ref e) => write_err!(f, "witness"; e),
         }
     }
 }
@@ -128,6 +131,7 @@ impl std::error::Error for Error {
         match *self {
             Io(ref e) => Some(e),
             Parse(ref e) => Some(e),
+            Witness(ref e) => Some(e),
         }
     }
 }
