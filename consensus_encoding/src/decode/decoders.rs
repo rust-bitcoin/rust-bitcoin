@@ -6,10 +6,8 @@
 use alloc::vec::Vec;
 #[cfg(feature = "alloc")]
 use core::convert::Infallible;
-use core::marker::PhantomData;
 use core::{fmt, mem};
 
-#[cfg(feature = "alloc")]
 use internals::write_err;
 
 #[cfg(feature = "alloc")]
@@ -278,14 +276,12 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
 }
 
 /// A decoder which wraps two inner decoders and returns the output of both.
-/// The error types of the inner decoders are mapped to a common type.
-pub struct Decoder2<A, B, Err>
+pub struct Decoder2<A, B>
 where
     A: Decoder,
     B: Decoder,
 {
     state: Decoder2State<A, B>,
-    _error: PhantomData<Err>,
 }
 
 enum Decoder2State<A: Decoder, B: Decoder> {
@@ -297,31 +293,28 @@ enum Decoder2State<A: Decoder, B: Decoder> {
     Errored,
 }
 
-impl<A, B, Err> Decoder2<A, B, Err>
+impl<A, B> Decoder2<A, B>
 where
     A: Decoder,
     B: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub fn new(first: A, second: B) -> Self {
-        Self { state: Decoder2State::First(first, second), _error: PhantomData }
-    }
+    pub fn new(first: A, second: B) -> Self { Self { state: Decoder2State::First(first, second) } }
 }
 
-impl<A, B, Err> Decoder for Decoder2<A, B, Err>
+impl<A, B> Decoder for Decoder2<A, B>
 where
     A: Decoder,
     B: Decoder,
-    Err: From<A::Error> + From<B::Error>,
 {
     type Output = (A::Output, B::Output);
-    type Error = Err;
+    type Error = Decoder2Error<A::Error, B::Error>;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         loop {
             match &mut self.state {
                 Decoder2State::First(first_decoder, _) => {
-                    if first_decoder.push_bytes(bytes).map_err(Err::from)? {
+                    if first_decoder.push_bytes(bytes).map_err(Decoder2Error::First)? {
                         // First decoder wants more data.
                         return Ok(true);
                     }
@@ -331,7 +324,7 @@ where
                     // remains in an Errored state.
                     match mem::replace(&mut self.state, Decoder2State::Errored) {
                         Decoder2State::First(first, second) => {
-                            let first_result = first.end()?;
+                            let first_result = first.end().map_err(Decoder2Error::First)?;
                             self.state = Decoder2State::Second(first_result, second);
                         }
                         _ => unreachable!("we know we're in First state"),
@@ -340,7 +333,7 @@ where
                 Decoder2State::Second(_, second_decoder) => {
                     return second_decoder.push_bytes(bytes).map_err(|error| {
                         self.state = Decoder2State::Errored;
-                        Err::from(error)
+                        Decoder2Error::Second(error)
                     });
                 }
                 Decoder2State::Errored => {
@@ -357,12 +350,12 @@ where
                 // This branch is most likely an error since the decoder
                 // never got to the second one. But letting the error bubble
                 // up naturally from the child decoders.
-                let first_result = first_decoder.end().map_err(Err::from)?;
-                let second_result = second_decoder.end().map_err(Err::from)?;
+                let first_result = first_decoder.end().map_err(Decoder2Error::First)?;
+                let second_result = second_decoder.end().map_err(Decoder2Error::Second)?;
                 Ok((first_result, second_result))
             }
             Decoder2State::Second(first_result, second_decoder) => {
-                let second_result = second_decoder.end().map_err(Err::from)?;
+                let second_result = second_decoder.end().map_err(Decoder2Error::Second)?;
                 Ok((first_result, second_result))
             }
             Decoder2State::Errored => {
@@ -383,48 +376,54 @@ where
 }
 
 /// A decoder which decodes three objects, one after the other.
-pub struct Decoder3<A, B, C, Err>
+pub struct Decoder3<A, B, C>
 where
     A: Decoder,
     B: Decoder,
     C: Decoder,
-    Err: From<A::Error> + From<B::Error> + From<C::Error>,
 {
-    inner: Decoder2<Decoder2<A, B, Err>, C, Err>,
-    _error: PhantomData<Err>,
+    inner: Decoder2<Decoder2<A, B>, C>,
 }
 
-impl<A, B, C, Err> Decoder3<A, B, C, Err>
+impl<A, B, C> Decoder3<A, B, C>
 where
     A: Decoder,
     B: Decoder,
     C: Decoder,
-    Err: From<A::Error> + From<B::Error> + From<C::Error>,
 {
     /// Constructs a new composite decoder.
     pub fn new(dec_1: A, dec_2: B, dec_3: C) -> Self {
-        Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), dec_3), _error: PhantomData }
+        Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), dec_3) }
     }
 }
 
-impl<A, B, C, Err> Decoder for Decoder3<A, B, C, Err>
+impl<A, B, C> Decoder for Decoder3<A, B, C>
 where
     A: Decoder,
     B: Decoder,
     C: Decoder,
-    Err: From<A::Error> + From<B::Error> + From<C::Error>,
 {
     type Output = (A::Output, B::Output, C::Output);
-    type Error = Err;
+    type Error = Decoder3Error<A::Error, B::Error, C::Error>;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes)
+        self.inner.push_bytes(bytes).map_err(|error| match error {
+            Decoder2Error::First(Decoder2Error::First(a)) => Decoder3Error::First(a),
+            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder3Error::Second(b),
+            Decoder2Error::Second(c) => Decoder3Error::Third(c),
+        })
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let ((first, second), third) = self.inner.end()?;
+        let result = self.inner.end().map_err(|error| match error {
+            Decoder2Error::First(Decoder2Error::First(a)) => Decoder3Error::First(a),
+            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder3Error::Second(b),
+            Decoder2Error::Second(c) => Decoder3Error::Third(c),
+        })?;
+
+        let ((first, second), third) = result;
         Ok((first, second, third))
     }
 
@@ -433,54 +432,59 @@ where
 }
 
 /// A decoder which decodes four objects, one after the other.
-pub struct Decoder4<A, B, C, D, Err>
+pub struct Decoder4<A, B, C, D>
 where
     A: Decoder,
     B: Decoder,
     C: Decoder,
     D: Decoder,
-    Err: From<A::Error> + From<B::Error> + From<C::Error> + From<D::Error>,
 {
-    inner: Decoder2<Decoder2<A, B, Err>, Decoder2<C, D, Err>, Err>,
-    _error: PhantomData<Err>,
+    inner: Decoder2<Decoder2<A, B>, Decoder2<C, D>>,
 }
 
-impl<A, B, C, D, Err> Decoder4<A, B, C, D, Err>
+impl<A, B, C, D> Decoder4<A, B, C, D>
 where
     A: Decoder,
     B: Decoder,
     C: Decoder,
     D: Decoder,
-    Err: From<A::Error> + From<B::Error> + From<C::Error> + From<D::Error>,
 {
     /// Constructs a new composite decoder.
     pub fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self {
-        Self {
-            inner: Decoder2::new(Decoder2::new(dec_1, dec_2), Decoder2::new(dec_3, dec_4)),
-            _error: PhantomData,
-        }
+        Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), Decoder2::new(dec_3, dec_4)) }
     }
 }
 
-impl<A, B, C, D, Err> Decoder for Decoder4<A, B, C, D, Err>
+impl<A, B, C, D> Decoder for Decoder4<A, B, C, D>
 where
     A: Decoder,
     B: Decoder,
     C: Decoder,
     D: Decoder,
-    Err: From<A::Error> + From<B::Error> + From<C::Error> + From<D::Error>,
 {
     type Output = (A::Output, B::Output, C::Output, D::Output);
-    type Error = Err;
+    type Error = Decoder4Error<A::Error, B::Error, C::Error, D::Error>;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes)
+        self.inner.push_bytes(bytes).map_err(|error| match error {
+            Decoder2Error::First(Decoder2Error::First(a)) => Decoder4Error::First(a),
+            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder4Error::Second(b),
+            Decoder2Error::Second(Decoder2Error::First(c)) => Decoder4Error::Third(c),
+            Decoder2Error::Second(Decoder2Error::Second(d)) => Decoder4Error::Fourth(d),
+        })
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let ((first, second), (third, fourth)) = self.inner.end()?;
+        let result = self.inner.end().map_err(|error| match error {
+            Decoder2Error::First(Decoder2Error::First(a)) => Decoder4Error::First(a),
+            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder4Error::Second(b),
+            Decoder2Error::Second(Decoder2Error::First(c)) => Decoder4Error::Third(c),
+            Decoder2Error::Second(Decoder2Error::Second(d)) => Decoder4Error::Fourth(d),
+        })?;
+
+        let ((first, second), (third, fourth)) = result;
         Ok((first, second, third, fourth))
     }
 
@@ -490,7 +494,7 @@ where
 
 /// A decoder which decodes six objects, one after the other.
 #[allow(clippy::type_complexity)] // Nested composition is easier than flattened alternatives.
-pub struct Decoder6<A, B, C, D, E, F, Err>
+pub struct Decoder6<A, B, C, D, E, F>
 where
     A: Decoder,
     B: Decoder,
@@ -498,18 +502,11 @@ where
     D: Decoder,
     E: Decoder,
     F: Decoder,
-    Err: From<A::Error>
-        + From<B::Error>
-        + From<C::Error>
-        + From<D::Error>
-        + From<E::Error>
-        + From<F::Error>,
 {
-    inner: Decoder2<Decoder3<A, B, C, Err>, Decoder3<D, E, F, Err>, Err>,
-    _error: PhantomData<Err>,
+    inner: Decoder2<Decoder3<A, B, C>, Decoder3<D, E, F>>,
 }
 
-impl<A, B, C, D, E, F, Err> Decoder6<A, B, C, D, E, F, Err>
+impl<A, B, C, D, E, F> Decoder6<A, B, C, D, E, F>
 where
     A: Decoder,
     B: Decoder,
@@ -517,12 +514,6 @@ where
     D: Decoder,
     E: Decoder,
     F: Decoder,
-    Err: From<A::Error>
-        + From<B::Error>
-        + From<C::Error>
-        + From<D::Error>
-        + From<E::Error>
-        + From<F::Error>,
 {
     /// Constructs a new composite decoder.
     pub fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D, dec_5: E, dec_6: F) -> Self {
@@ -531,12 +522,11 @@ where
                 Decoder3::new(dec_1, dec_2, dec_3),
                 Decoder3::new(dec_4, dec_5, dec_6),
             ),
-            _error: PhantomData,
         }
     }
 }
 
-impl<A, B, C, D, E, F, Err> Decoder for Decoder6<A, B, C, D, E, F, Err>
+impl<A, B, C, D, E, F> Decoder for Decoder6<A, B, C, D, E, F>
 where
     A: Decoder,
     B: Decoder,
@@ -544,24 +534,34 @@ where
     D: Decoder,
     E: Decoder,
     F: Decoder,
-    Err: From<A::Error>
-        + From<B::Error>
-        + From<C::Error>
-        + From<D::Error>
-        + From<E::Error>
-        + From<F::Error>,
 {
     type Output = (A::Output, B::Output, C::Output, D::Output, E::Output, F::Output);
-    type Error = Err;
+    type Error = Decoder6Error<A::Error, B::Error, C::Error, D::Error, E::Error, F::Error>;
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes)
+        self.inner.push_bytes(bytes).map_err(|error| match error {
+            Decoder2Error::First(Decoder3Error::First(a)) => Decoder6Error::First(a),
+            Decoder2Error::First(Decoder3Error::Second(b)) => Decoder6Error::Second(b),
+            Decoder2Error::First(Decoder3Error::Third(c)) => Decoder6Error::Third(c),
+            Decoder2Error::Second(Decoder3Error::First(d)) => Decoder6Error::Fourth(d),
+            Decoder2Error::Second(Decoder3Error::Second(e)) => Decoder6Error::Fifth(e),
+            Decoder2Error::Second(Decoder3Error::Third(f)) => Decoder6Error::Sixth(f),
+        })
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let ((first, second, third), (fourth, fifth, sixth)) = self.inner.end()?;
+        let result = self.inner.end().map_err(|error| match error {
+            Decoder2Error::First(Decoder3Error::First(a)) => Decoder6Error::First(a),
+            Decoder2Error::First(Decoder3Error::Second(b)) => Decoder6Error::Second(b),
+            Decoder2Error::First(Decoder3Error::Third(c)) => Decoder6Error::Third(c),
+            Decoder2Error::Second(Decoder3Error::First(d)) => Decoder6Error::Fourth(d),
+            Decoder2Error::Second(Decoder3Error::Second(e)) => Decoder6Error::Fifth(e),
+            Decoder2Error::Second(Decoder3Error::Third(f)) => Decoder6Error::Sixth(f),
+        })?;
+
+        let ((first, second, third), (fourth, fifth, sixth)) = result;
         Ok((first, second, third, fourth, fifth, sixth))
     }
 
@@ -693,10 +693,12 @@ impl fmt::Display for CompactSizeDecoderError {
         use CompactSizeDecoderErrorInner as E;
 
         match self.0 {
-            E::UnexpectedEof { required: 1, received: 0 } =>
-                write!(f, "required at least one byte but the input is empty"),
-            E::UnexpectedEof { required, received: 0 } =>
-                write!(f, "required at least {} bytes but the input is empty", required),
+            E::UnexpectedEof { required: 1, received: 0 } => {
+                write!(f, "required at least one byte but the input is empty")
+            }
+            E::UnexpectedEof { required, received: 0 } => {
+                write!(f, "required at least {} bytes but the input is empty", required)
+            }
             E::UnexpectedEof { required, received } => write!(
                 f,
                 "required at least {} bytes but only {} bytes were received",
@@ -853,6 +855,192 @@ impl fmt::Display for UnexpectedEofError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnexpectedEofError {}
+
+/// Error type for [`Decoder2`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Decoder2Error<A, B> {
+    /// Error from the first decoder.
+    First(A),
+    /// Error from the second decoder.
+    Second(B),
+}
+
+impl<A, B> fmt::Display for Decoder2Error<A, B>
+where
+    A: fmt::Display,
+    B: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Decoder2Error::First(ref e) => write_err!(f, "first decoder error"; e),
+            Decoder2Error::Second(ref e) => write_err!(f, "second decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<A, B> std::error::Error for Decoder2Error<A, B>
+where
+    A: std::error::Error + 'static,
+    B: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Decoder2Error::First(ref e) => Some(e),
+            Decoder2Error::Second(ref e) => Some(e),
+        }
+    }
+}
+
+/// Error type for [`Decoder3`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Decoder3Error<A, B, C> {
+    /// Error from the first decoder.
+    First(A),
+    /// Error from the second decoder.
+    Second(B),
+    /// Error from the third decoder.
+    Third(C),
+}
+
+impl<A, B, C> fmt::Display for Decoder3Error<A, B, C>
+where
+    A: fmt::Display,
+    B: fmt::Display,
+    C: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Decoder3Error::First(ref e) => write_err!(f, "first decoder error"; e),
+            Decoder3Error::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Decoder3Error::Third(ref e) => write_err!(f, "third decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<A, B, C> std::error::Error for Decoder3Error<A, B, C>
+where
+    A: std::error::Error + 'static,
+    B: std::error::Error + 'static,
+    C: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Decoder3Error::First(ref e) => Some(e),
+            Decoder3Error::Second(ref e) => Some(e),
+            Decoder3Error::Third(ref e) => Some(e),
+        }
+    }
+}
+
+/// Error type for [`Decoder4`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Decoder4Error<A, B, C, D> {
+    /// Error from the first decoder.
+    First(A),
+    /// Error from the second decoder.
+    Second(B),
+    /// Error from the third decoder.
+    Third(C),
+    /// Error from the fourth decoder.
+    Fourth(D),
+}
+
+impl<A, B, C, D> fmt::Display for Decoder4Error<A, B, C, D>
+where
+    A: fmt::Display,
+    B: fmt::Display,
+    C: fmt::Display,
+    D: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Decoder4Error::First(ref e) => write_err!(f, "first decoder error"; e),
+            Decoder4Error::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Decoder4Error::Third(ref e) => write_err!(f, "third decoder error"; e),
+            Decoder4Error::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<A, B, C, D> std::error::Error for Decoder4Error<A, B, C, D>
+where
+    A: std::error::Error + 'static,
+    B: std::error::Error + 'static,
+    C: std::error::Error + 'static,
+    D: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Decoder4Error::First(ref e) => Some(e),
+            Decoder4Error::Second(ref e) => Some(e),
+            Decoder4Error::Third(ref e) => Some(e),
+            Decoder4Error::Fourth(ref e) => Some(e),
+        }
+    }
+}
+
+/// Error type for [`Decoder6`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Decoder6Error<A, B, C, D, E, F> {
+    /// Error from the first decoder.
+    First(A),
+    /// Error from the second decoder.
+    Second(B),
+    /// Error from the third decoder.
+    Third(C),
+    /// Error from the fourth decoder.
+    Fourth(D),
+    /// Error from the fifth decoder.
+    Fifth(E),
+    /// Error from the sixth decoder.
+    Sixth(F),
+}
+
+impl<A, B, C, D, E, F> fmt::Display for Decoder6Error<A, B, C, D, E, F>
+where
+    A: fmt::Display,
+    B: fmt::Display,
+    C: fmt::Display,
+    D: fmt::Display,
+    E: fmt::Display,
+    F: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Decoder6Error::First(ref e) => write_err!(f, "first decoder error"; e),
+            Decoder6Error::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Decoder6Error::Third(ref e) => write_err!(f, "third decoder error"; e),
+            Decoder6Error::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
+            Decoder6Error::Fifth(ref e) => write_err!(f, "fifth decoder error"; e),
+            Decoder6Error::Sixth(ref e) => write_err!(f, "sixth decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<A, B, C, D, E, F> std::error::Error for Decoder6Error<A, B, C, D, E, F>
+where
+    A: std::error::Error + 'static,
+    B: std::error::Error + 'static,
+    C: std::error::Error + 'static,
+    D: std::error::Error + 'static,
+    E: std::error::Error + 'static,
+    F: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Decoder6Error::First(ref e) => Some(e),
+            Decoder6Error::Second(ref e) => Some(e),
+            Decoder6Error::Third(ref e) => Some(e),
+            Decoder6Error::Fourth(ref e) => Some(e),
+            Decoder6Error::Fifth(ref e) => Some(e),
+            Decoder6Error::Sixth(ref e) => Some(e),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

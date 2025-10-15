@@ -28,8 +28,8 @@ pub use self::decode::decoders::{
     VecDecoder, VecDecoderError,
 };
 pub use self::decode::decoders::{
-    ArrayDecoder, CompactSizeDecoder, CompactSizeDecoderError, Decoder2, Decoder3, Decoder4,
-    Decoder6, UnexpectedEofError,
+    ArrayDecoder, CompactSizeDecoder, CompactSizeDecoderError, Decoder2, Decoder2Error, Decoder3,
+    Decoder3Error, Decoder4, Decoder4Error, Decoder6, Decoder6Error, UnexpectedEofError,
 };
 #[cfg(feature = "std")]
 pub use self::decode::{

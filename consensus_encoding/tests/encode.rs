@@ -5,9 +5,9 @@
 #[cfg(feature = "std")]
 use std::io::{Cursor, Write};
 
-use bitcoin_consensus_encoding::{ArrayEncoder, BytesEncoder, Encoder};
 #[cfg(feature = "alloc")]
-use bitcoin_consensus_encoding::{Encodable};
+use bitcoin_consensus_encoding::Encodable;
+use bitcoin_consensus_encoding::{ArrayEncoder, BytesEncoder, Encoder};
 
 // Simple test type that implements Encodable.
 #[cfg(feature = "alloc")]

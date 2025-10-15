@@ -34,17 +34,15 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use units::parse_int;
 
 #[cfg(feature = "alloc")]
-use crate::amount::{AmountDecoder, AmountDecoderError, AmountEncoder};
+use crate::amount::{AmountDecoder, AmountEncoder};
 #[cfg(feature = "alloc")]
 use crate::locktime::absolute::{LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
-use crate::script::{
-    ScriptBufDecoderError, ScriptEncoder, ScriptPubKeyBufDecoder, ScriptSigBufDecoder,
-};
+use crate::script::{ScriptEncoder, ScriptPubKeyBufDecoder, ScriptSigBufDecoder};
 #[cfg(feature = "alloc")]
-use crate::sequence::{SequenceDecoder, SequenceDecoderError, SequenceEncoder};
+use crate::sequence::{SequenceDecoder, SequenceEncoder};
 #[cfg(feature = "alloc")]
 use crate::witness::{WitnessDecoder, WitnessDecoderError, WitnessEncoder};
 #[cfg(feature = "alloc")]
@@ -669,8 +667,9 @@ impl fmt::Display for TransactionDecoderError {
 
         match self.0 {
             E::Version(ref e) => write_err!(f, "transaction decoder error"; e),
-            E::UnsupportedSegwitFlag(v) =>
-                write!(f, "we only support segwit flag value 0x01: {}", v),
+            E::UnsupportedSegwitFlag(v) => {
+                write!(f, "we only support segwit flag value 0x01: {}", v)
+            }
             E::Inputs(ref e) => write_err!(f, "transaction decoder error"; e),
             E::Outputs(ref e) => write_err!(f, "transaction decoder error"; e),
             E::Witness(ref e) => write_err!(f, "transaction decoder error"; e),
@@ -819,11 +818,12 @@ impl Encoder for WitnessesEncoder<'_> {
     }
 }
 
+#[cfg(feature = "alloc")]
+type TxInInnerDecoder = Decoder3<OutPointDecoder, ScriptSigBufDecoder, SequenceDecoder>;
+
 /// The decoder for the [`TxIn`] type.
 #[cfg(feature = "alloc")]
-pub struct TxInDecoder(
-    Decoder3<OutPointDecoder, ScriptSigBufDecoder, SequenceDecoder, TxInDecoderError>,
-);
+pub struct TxInDecoder(TxInInnerDecoder);
 
 #[cfg(feature = "alloc")]
 impl Decoder for TxInDecoder {
@@ -832,12 +832,12 @@ impl Decoder for TxInDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes)
+        self.0.push_bytes(bytes).map_err(TxInDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (previous_output, script_sig, sequence) = self.0.end()?;
+        let (previous_output, script_sig, sequence) = self.0.end().map_err(TxInDecoderError)?;
         Ok(TxIn { previous_output, script_sig, sequence, witness: Witness::default() })
     }
 
@@ -860,18 +860,7 @@ impl Decodable for TxIn {
 /// An error consensus decoding a `TxIn`.
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TxInDecoderError(TxInDecoderErrorInner);
-
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum TxInDecoderErrorInner {
-    /// Error while decoding the `previous_output`.
-    PreviousOutput(OutPointDecoderError),
-    /// Error while decoding the `script_sig`.
-    ScriptSig(ScriptBufDecoderError),
-    /// Error while decoding the `sequence`.
-    Sequence(SequenceDecoderError),
-}
+pub struct TxInDecoderError(<TxInInnerDecoder as Decoder>::Error);
 
 #[cfg(feature = "alloc")]
 impl From<Infallible> for TxInDecoderError {
@@ -879,29 +868,12 @@ impl From<Infallible> for TxInDecoderError {
 }
 
 #[cfg(feature = "alloc")]
-impl From<OutPointDecoderError> for TxInDecoderError {
-    fn from(e: OutPointDecoderError) -> Self { Self(TxInDecoderErrorInner::PreviousOutput(e)) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScriptBufDecoderError> for TxInDecoderError {
-    fn from(e: ScriptBufDecoderError) -> Self { Self(TxInDecoderErrorInner::ScriptSig(e)) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<SequenceDecoderError> for TxInDecoderError {
-    fn from(e: SequenceDecoderError) -> Self { Self(TxInDecoderErrorInner::Sequence(e)) }
-}
-
-#[cfg(feature = "alloc")]
 impl fmt::Display for TxInDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use TxInDecoderErrorInner as E;
-
-        match self.0 {
-            E::PreviousOutput(ref e) => write_err!(f, "txin decoder error"; e),
-            E::ScriptSig(ref e) => write_err!(f, "txin decoder error"; e),
-            E::Sequence(ref e) => write_err!(f, "txin decoder error"; e),
+        match &self.0 {
+            encoding::Decoder3Error::First(ref e) => write_err!(f, "txin decoder error"; e),
+            encoding::Decoder3Error::Second(ref e) => write_err!(f, "txin decoder error"; e),
+            encoding::Decoder3Error::Third(ref e) => write_err!(f, "txin decoder error"; e),
         }
     }
 }
@@ -910,12 +882,10 @@ impl fmt::Display for TxInDecoderError {
 #[cfg(feature = "std")]
 impl std::error::Error for TxInDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TxInDecoderErrorInner as E;
-
-        match self.0 {
-            E::PreviousOutput(ref e) => Some(e),
-            E::ScriptSig(ref e) => Some(e),
-            E::Sequence(ref e) => Some(e),
+        match &self.0 {
+            encoding::Decoder3Error::First(ref e) => Some(e),
+            encoding::Decoder3Error::Second(ref e) => Some(e),
+            encoding::Decoder3Error::Third(ref e) => Some(e),
         }
     }
 }
@@ -958,9 +928,12 @@ impl Encodable for TxOut {
     }
 }
 
+#[cfg(feature = "alloc")]
+type TxOutInnerDecoder = Decoder2<AmountDecoder, ScriptPubKeyBufDecoder>;
+
 /// The decoder for the [`TxOut`] type.
 #[cfg(feature = "alloc")]
-pub struct TxOutDecoder(Decoder2<AmountDecoder, ScriptPubKeyBufDecoder, TxOutDecoderError>);
+pub struct TxOutDecoder(TxOutInnerDecoder);
 
 #[cfg(feature = "alloc")]
 impl Decoder for TxOutDecoder {
@@ -969,12 +942,12 @@ impl Decoder for TxOutDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        Ok(self.0.push_bytes(bytes)?)
+        self.0.push_bytes(bytes).map_err(TxOutDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (amount, script_pubkey) = self.0.end()?;
+        let (amount, script_pubkey) = self.0.end().map_err(TxOutDecoderError)?;
         Ok(TxOut { amount, script_pubkey })
     }
 
@@ -993,17 +966,7 @@ impl Decodable for TxOut {
 /// An error consensus decoding a `TxOut`.
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TxOutDecoderError(TxOutDecoderErrorInner);
-
-/// An error consensus decoding a `TxOut`.
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum TxOutDecoderErrorInner {
-    /// Error while decoding the `amount`.
-    Amount(AmountDecoderError),
-    /// Error while decoding the `script_pubkey`.
-    ScriptPubKey(ScriptBufDecoderError),
-}
+pub struct TxOutDecoderError(<TxOutInnerDecoder as Decoder>::Error);
 
 #[cfg(feature = "alloc")]
 impl From<Infallible> for TxOutDecoderError {
@@ -1011,23 +974,11 @@ impl From<Infallible> for TxOutDecoderError {
 }
 
 #[cfg(feature = "alloc")]
-impl From<AmountDecoderError> for TxOutDecoderError {
-    fn from(e: AmountDecoderError) -> Self { Self(TxOutDecoderErrorInner::Amount(e)) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<ScriptBufDecoderError> for TxOutDecoderError {
-    fn from(e: ScriptBufDecoderError) -> Self { Self(TxOutDecoderErrorInner::ScriptPubKey(e)) }
-}
-
-#[cfg(feature = "alloc")]
 impl fmt::Display for TxOutDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use TxOutDecoderErrorInner as E;
-
-        match self.0 {
-            E::Amount(ref e) => write_err!(f, "txout decoder error"; e),
-            E::ScriptPubKey(ref e) => write_err!(f, "txout decoder error"; e),
+        match &self.0 {
+            encoding::Decoder2Error::First(ref e) => write_err!(f, "txout decoder error"; e),
+            encoding::Decoder2Error::Second(ref e) => write_err!(f, "txout decoder error"; e),
         }
     }
 }
@@ -1035,11 +986,9 @@ impl fmt::Display for TxOutDecoderError {
 #[cfg(feature = "std")]
 impl std::error::Error for TxOutDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TxOutDecoderErrorInner as E;
-
-        match self.0 {
-            E::Amount(ref e) => Some(e),
-            E::ScriptPubKey(ref e) => Some(e),
+        match &self.0 {
+            encoding::Decoder2Error::First(ref e) => Some(e),
+            encoding::Decoder2Error::Second(ref e) => Some(e),
         }
     }
 }

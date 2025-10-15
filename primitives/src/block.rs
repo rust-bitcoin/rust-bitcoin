@@ -305,19 +305,33 @@ impl Encodable for Header {
     }
 }
 
+#[cfg(feature = "alloc")]
+type HeaderInnerDecoder = Decoder6<
+    VersionDecoder,
+    BlockHashDecoder,
+    TxMerkleNodeDecoder,
+    BlockTimeDecoder,
+    CompactTargetDecoder,
+    encoding::ArrayDecoder<4>, // Nonce
+>;
+
 /// The decoder for the [`Header`] type.
 #[cfg(feature = "alloc")]
-pub struct HeaderDecoder(
-    Decoder6<
-        VersionDecoder,
-        BlockHashDecoder,
-        TxMerkleNodeDecoder,
-        BlockTimeDecoder,
-        CompactTargetDecoder,
-        encoding::ArrayDecoder<4>, // Nonce
-        HeaderDecoderError,
-    >,
-);
+pub struct HeaderDecoder(HeaderInnerDecoder);
+
+#[cfg(feature = "alloc")]
+impl HeaderDecoder {
+    fn from_inner(e: <HeaderInnerDecoder as Decoder>::Error) -> HeaderDecoderError {
+        match e {
+            encoding::Decoder6Error::First(e) => HeaderDecoderError::Version(e),
+            encoding::Decoder6Error::Second(e) => HeaderDecoderError::PrevBlockhash(e),
+            encoding::Decoder6Error::Third(e) => HeaderDecoderError::MerkleRoot(e),
+            encoding::Decoder6Error::Fourth(e) => HeaderDecoderError::Time(e),
+            encoding::Decoder6Error::Fifth(e) => HeaderDecoderError::Bits(e),
+            encoding::Decoder6Error::Sixth(e) => HeaderDecoderError::Nonce(e),
+        }
+    }
+}
 
 #[cfg(feature = "alloc")]
 impl Decoder for HeaderDecoder {
@@ -326,12 +340,13 @@ impl Decoder for HeaderDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes)
+        self.0.push_bytes(bytes).map_err(Self::from_inner)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (version, prev_blockhash, merkle_root, time, bits, nonce) = self.0.end()?;
+        let (version, prev_blockhash, merkle_root, time, bits, nonce) =
+            self.0.end().map_err(Self::from_inner)?;
         let nonce = u32::from_le_bytes(nonce);
         Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
     }
@@ -377,36 +392,6 @@ pub enum HeaderDecoderError {
 #[cfg(feature = "alloc")]
 impl From<Infallible> for HeaderDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "alloc")]
-impl From<VersionDecoderError> for HeaderDecoderError {
-    fn from(e: VersionDecoderError) -> Self { Self::Version(e) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<BlockHashDecoderError> for HeaderDecoderError {
-    fn from(e: BlockHashDecoderError) -> Self { Self::PrevBlockhash(e) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<TxMerkleNodeDecoderError> for HeaderDecoderError {
-    fn from(e: TxMerkleNodeDecoderError) -> Self { Self::MerkleRoot(e) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<BlockTimeDecoderError> for HeaderDecoderError {
-    fn from(e: BlockTimeDecoderError) -> Self { Self::Time(e) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<CompactTargetDecoderError> for HeaderDecoderError {
-    fn from(e: CompactTargetDecoderError) -> Self { Self::Bits(e) }
-}
-
-#[cfg(feature = "alloc")]
-impl From<encoding::UnexpectedEofError> for HeaderDecoderError {
-    fn from(e: encoding::UnexpectedEofError) -> Self { Self::Nonce(e) }
 }
 
 #[cfg(feature = "alloc")]
