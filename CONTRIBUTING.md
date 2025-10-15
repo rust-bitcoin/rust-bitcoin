@@ -254,7 +254,7 @@ the [readme](./README.md) for more information.
 
 ## Going further
 
-You may be interested in the guide by Jon Atack on
+You may be interested in the guide by Jon Attack on
 [How to review Bitcoin Core PRs](https://github.com/jonatack/bitcoin-development/blob/master/how-to-review-bitcoin-core-prs.md)
 and [How to make Bitcoin Core PRs](https://github.com/jonatack/bitcoin-development/blob/master/how-to-make-bitcoin-core-prs.md).
 While there are differences between the projects in terms of context and

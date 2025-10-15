@@ -137,7 +137,7 @@ internal_macros::define_extension_trait! {
         ///
         /// # Panics
         ///
-        /// If the coversion overflows.
+        /// If the conversion overflows.
         fn legacy_weight(&self) -> Weight {
             Weight::from_vb(self.base_size().to_u64()).unwrap()
         }
@@ -156,7 +156,7 @@ internal_macros::define_extension_trait! {
         ///
         /// # Panics
         ///
-        /// If the coversion overflows.
+        /// If the conversion overflows.
         fn segwit_weight(&self) -> Weight {
             Weight::from_vb(self.base_size().to_u64())
             .and_then(|w| w.checked_add(Weight::from_wu(self.witness.size().to_u64()))).unwrap()
