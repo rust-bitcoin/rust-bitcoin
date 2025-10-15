@@ -25,7 +25,7 @@ for targetFile in $targetFiles; do
   targetName=$(targetFileToName "$targetFile")
   echo "Fuzzing target $targetName ($targetFile)"
   if [ -d "hfuzz_input/$targetName" ]; then
-    HFUZZ_INPUT_ARGS="-f hfuzz_input/$targetName/input\""
+    HFUZZ_INPUT_ARGS="-f hfuzz_input/$targetName/input"
   else
     HFUZZ_INPUT_ARGS=""
   fi

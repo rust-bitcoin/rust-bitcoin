@@ -20,14 +20,6 @@ targetFileToName() {
     | sed 's/^_//g'
 }
 
-targetFileToHFuzzInputArg() {
-  baseName=$(basename "$1")
-  dirName="${baseName%.*}"
-  if [ -d "hfuzz_input/$dirName" ]; then
-    echo "HFUZZ_INPUT_ARGS=\"-f hfuzz_input/$FILE/input\""
-  fi
-}
-
 listTargetNames() {
   for target in $(listTargetFiles); do
     targetFileToName "$target"
