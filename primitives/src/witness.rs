@@ -266,7 +266,6 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
         .copy_from_slice(&u32::to_ne_bytes(value.try_into().expect("larger than u32")));
 }
 
-// This is duplicated in `bitcoin::blockdata::witness`, if you change them do so over there also.
 #[inline]
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
     let start = start_of_indices + index * 4;
