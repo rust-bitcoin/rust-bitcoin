@@ -261,7 +261,7 @@ pub trait Encodable {
     fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error>;
 }
 
-/// Data which can be encoded in a consensus-consistent way.
+/// Data which can be decoded in a consensus-consistent way.
 pub trait Decodable: Sized {
     /// Decodes `Self` from a size-limited reader.
     ///
