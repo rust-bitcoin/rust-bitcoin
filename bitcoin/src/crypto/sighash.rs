@@ -447,7 +447,7 @@ impl EcdsaSighashType {
     ///
     /// This might cause unexpected behavior because it does not roundtrip. That is,
     /// `EcdsaSighashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
-    /// verifying signatures, the user should retain the `n` and use it compute the signature hash
+    /// verifying signatures, the user should retain the `n` and use it to compute the signature hash
     /// message.
     pub fn from_consensus(n: u32) -> EcdsaSighashType {
         use EcdsaSighashType::*;
@@ -1206,7 +1206,7 @@ impl Encodable for Annex<'_> {
 pub enum TaprootError {
     /// Index out of bounds when accessing transaction input vector.
     InputsIndex(transaction::InputsIndexError),
-    /// Using `SIGHASH_SINGLE` requires an output at the same index is the input.
+    /// Using `SIGHASH_SINGLE` requires an output at the same index as the input.
     SingleMissingOutput(SingleMissingOutputError),
     /// Prevouts size error.
     PrevoutsSize(PrevoutsSizeError),
