@@ -418,10 +418,10 @@ pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std
 ///
 /// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
 /// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
-pub fn decode_from_read<T, R>(mut reader: R) -> core::result::Result<T, ReadError<<T::Decoder as Decoder>::Error>>
+pub fn decode_from_read<T, R>(reader: &mut R) -> core::result::Result<T, ReadError<<T::Decoder as Decoder>::Error>>
 where
     T: Decodable,
-    R: BufRead,
+    R: BufRead + ?Sized,
 {
     let mut decoder = T::decoder();
 
@@ -468,11 +468,11 @@ where
 /// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
 /// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
 pub fn decode_from_read_unbuffered<T, R>(
-    reader: R,
+    reader: &mut R,
 ) -> core::result::Result<T, ReadError<<T::Decoder as Decoder>::Error>>
 where
     T: Decodable,
-    R: Read,
+    R: Read + ?Sized,
 {
     decode_from_read_unbuffered_with::<T, R, 4096>(reader)
 }
@@ -496,11 +496,11 @@ where
 /// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
 #[cfg(feature = "std")]
 pub fn decode_from_read_unbuffered_with<T, R, const BUFFER_SIZE: usize>(
-    mut reader: R,
+    reader: &mut R,
 ) -> core::result::Result<T, ReadError<<T::Decoder as Decoder>::Error>>
 where
     T: Decodable,
-    R: Read,
+    R: Read + ?Sized,
 {
     let mut decoder = T::decoder();
     let mut buffer = [0u8; BUFFER_SIZE];
