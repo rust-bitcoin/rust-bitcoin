@@ -34,7 +34,7 @@ fn can_use_network_kind() {
 }
 
 #[test]
-fn can_not_match_exaustively_on_testnet_version() {
+fn can_not_match_exhaustively_on_testnet_version() {
     // Returns true if `n` is testnet version 3.
     fn is_testnet_v3(n: Network) -> bool {
         match n {
