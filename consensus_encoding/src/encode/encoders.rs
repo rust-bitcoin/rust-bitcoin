@@ -17,7 +17,7 @@ use internals::{compact_size, ToU64};
 use super::{Encodable, Encoder};
 
 /// The maximum length of a compact size encoding.
-const SIZE: usize = compact_size::MAX_ENCODING_SIZE;
+const SIZE: usize = 9;
 
 /// An encoder for a single byte slice.
 pub struct BytesEncoder<'sl> {
