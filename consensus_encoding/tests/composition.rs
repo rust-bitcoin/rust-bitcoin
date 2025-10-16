@@ -3,8 +3,8 @@
 //! Test composition of encoders and decoders.
 
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, Decodable, Decoder, Decoder2, Decoder2Error, Decoder6, Encodable,
-    Encoder, Encoder2, Encoder6, UnexpectedEofError,
+    ArrayDecoder, ArrayEncoder, BytesEncoder, Decodable, Decoder, Decoder2, Decoder2Error,
+    Decoder6, Encodable, Encoder, Encoder2, Encoder3, Encoder6, UnexpectedEofError,
 };
 
 const EMPTY: &[u8] = &[];
@@ -88,9 +88,11 @@ fn composition_chain() {
     // Encode using the pull encoder.
     let mut encoder = original.encoder();
     let mut encoded_bytes = Vec::new();
-    while let Some(chunk) = encoder.current_chunk() {
-        encoded_bytes.extend_from_slice(chunk);
-        encoder.advance();
+    loop {
+        encoded_bytes.extend_from_slice(encoder.current_chunk());
+        if !encoder.advance() {
+            break;
+        }
     }
     // Decode using the push decoder.
     let mut decoder = CompositeData::decoder();
@@ -115,9 +117,11 @@ fn composition_nested() {
     );
 
     let mut encoded_bytes = Vec::new();
-    while let Some(chunk) = encoder6.current_chunk() {
-        encoded_bytes.extend_from_slice(chunk);
-        encoder6.advance();
+    loop {
+        encoded_bytes.extend_from_slice(encoder6.current_chunk());
+        if !encoder6.advance() {
+            break;
+        }
     }
     assert_eq!(encoded_bytes, data);
 
@@ -314,4 +318,27 @@ fn composition_error_unification() {
         "Expected Decoder2Error::First(NestedError::BadChecksum), got {:?}",
         push_result.unwrap_err()
     );
+}
+
+#[test]
+fn empty_encoders() {
+    let bytes = [0x01, 2, 3, 4];
+    let mut encoder = Encoder3::new(
+        BytesEncoder::without_length_prefix(&bytes[..2]),
+        BytesEncoder::without_length_prefix(&[]),
+        BytesEncoder::without_length_prefix(&bytes[2..]),
+    );
+
+    assert_eq!(encoder.current_chunk(), &[1, 2][..]);
+    assert!(encoder.advance());
+
+    // Still have to advance over empty slice.
+    assert!(encoder.current_chunk().is_empty());
+    assert!(encoder.advance());
+
+    assert_eq!(encoder.current_chunk(), &[3, 4][..]);
+    assert!(!encoder.advance());
+
+    // Exhausted.
+    assert!(encoder.current_chunk().is_empty());
 }

@@ -783,10 +783,8 @@ impl<'e> WitnessesEncoder<'e> {
 #[cfg(feature = "alloc")]
 impl Encoder for WitnessesEncoder<'_> {
     #[inline]
-    fn current_chunk(&self) -> Option<&[u8]> {
-        // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
-        // `current_chunk` is required to return `None` if called after the encoder is exhausted.
-        self.cur_enc.as_ref().and_then(WitnessEncoder::current_chunk)
+    fn current_chunk(&self) -> &[u8] {
+        self.cur_enc.as_ref().map(WitnessEncoder::current_chunk).unwrap_or_default()
     }
 
     #[inline]
@@ -807,7 +805,7 @@ impl Encoder for WitnessesEncoder<'_> {
             // If advancing the current encoder failed, attempt to move to the next encoder.
             if let Some(input) = self.inputs.first() {
                 *cur = input.witness.encoder();
-                if cur.current_chunk().is_some() {
+                if !cur.current_chunk().is_empty() {
                     return true;
                 }
             } else {
@@ -1720,21 +1718,19 @@ mod tests {
         // The txid
         assert_eq!(
             encoder.current_chunk(),
-            Some(
-                &[
-                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-                ][..]
-            )
+            &[
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+            ][..]
         );
         assert!(encoder.advance());
 
         // The vout
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
         assert!(!encoder.advance());
 
         // Exhausted
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -1744,19 +1740,19 @@ mod tests {
         let mut encoder = out.encoder();
 
         // The amount.
-        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
         assert!(encoder.advance());
 
         // The script pubkey length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
 
         // The script pubkey data.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(!encoder.advance());
 
         // Exhausted
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -1769,29 +1765,27 @@ mod tests {
         // The outpoint (same as tested above).
         assert_eq!(
             encoder.current_chunk(),
-            Some(
-                &[
-                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-                ][..]
-            )
+            &[
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+            ][..]
         );
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
         assert!(encoder.advance());
 
         // The script sig
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(encoder.advance());
 
         // The sequence
-        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
         assert!(!encoder.advance());
 
         // Exhausted
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -1807,57 +1801,55 @@ mod tests {
         let mut encoder = tx.encoder();
 
         // The version
-        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
         assert!(encoder.advance());
 
         // The segwit marker and flag
-        assert_eq!(encoder.current_chunk(), Some(&[0u8, 1][..]));
+        assert_eq!(encoder.current_chunk(), &[0u8, 1][..]);
         assert!(encoder.advance());
 
         // The input (same as tested above) but with vec length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
         assert_eq!(
             encoder.current_chunk(),
-            Some(
-                &[
-                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-                ][..]
-            )
+            &[
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+            ][..]
         );
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
         assert!(encoder.advance());
 
         // The output (same as tested above) but with vec length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(encoder.advance());
 
         // The witness
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8, 1, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8, 1, 2, 3][..]);
         assert!(encoder.advance());
 
         // The lock time.
-        assert_eq!(encoder.current_chunk(), Some(&[0, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[0, 0, 0, 0][..]);
         assert!(!encoder.advance());
 
         // Exhausted
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]
@@ -1877,53 +1869,52 @@ mod tests {
         let mut encoder = tx.encoder();
 
         // The version
-        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
         assert!(encoder.advance());
 
         // Advance past the optional segwit bytes encoder.
         assert!(encoder.advance());
 
         // The input (same as tested above) but with vec length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
         assert_eq!(
             encoder.current_chunk(),
-            Some(
-                &[
-                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-                ][..]
-            )
+            &[
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+            ][..]
+
         );
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
         assert!(encoder.advance());
 
         // The output (same as tested above) but with vec length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(encoder.advance());
 
         // Advance past the optional witnesses encoder.
         assert!(encoder.advance());
 
         // The lock time.
-        assert_eq!(encoder.current_chunk(), Some(&[0, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[0, 0, 0, 0][..]);
         assert!(!encoder.advance());
 
         // Exhausted
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     // FIXME: Move all these encoding tests to a single file in `primitives/tests/`.
@@ -1959,93 +1950,87 @@ mod tests {
         // The block header, 6 encoders, 1 chunk per encoder.
 
         // The block version.
-        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
         assert!(encoder.advance());
         // The previous block's blockhash.
         assert_eq!(
             encoder.current_chunk(),
-            Some(
-                &[
-                    171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
-                    171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
-                ][..]
-            )
+            &[
+                171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
+                171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
+            ][..]
         );
         assert!(encoder.advance());
         // The merkle root hash.
         assert_eq!(
             encoder.current_chunk(),
-            Some(
-                &[
-                    205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
-                    205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
-                ][..]
-            )
+            &[
+                205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
+                205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
+            ][..]
         );
         assert!(encoder.advance());
         // The block time.
-        assert_eq!(encoder.current_chunk(), Some(&[80, 195, 137, 98][..]));
+        assert_eq!(encoder.current_chunk(), &[80, 195, 137, 98][..]);
         assert!(encoder.advance());
         // The target (bits).
-        assert_eq!(encoder.current_chunk(), Some(&[239, 190, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[239, 190, 0, 0][..]);
         assert!(encoder.advance());
         // The nonce.
-        assert_eq!(encoder.current_chunk(), Some(&[254, 202, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[254, 202, 0, 0][..]);
         assert!(encoder.advance());
 
         // The transaction list length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
 
         // The transaction (same as tested above).
 
         // The version
-        assert_eq!(encoder.current_chunk(), Some(&[2u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
         assert!(encoder.advance());
         // The segwit marker and flag
-        assert_eq!(encoder.current_chunk(), Some(&[0u8, 1][..]));
+        assert_eq!(encoder.current_chunk(), &[0u8, 1][..]);
         assert!(encoder.advance());
         // The input (same as tested above) but with vec length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
         assert_eq!(
             encoder.current_chunk(),
-            Some(
-                &[
-                    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                    12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-                ][..]
-            )
+            &[
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
+                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+            ][..]
         );
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[0xffu8, 0xff, 0xff, 0xff][..]));
+        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
         assert!(encoder.advance());
         // The output (same as tested above) but with vec length prefix.
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1, 0, 0, 0, 0, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[1u8, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(encoder.advance());
         // The witness
-        assert_eq!(encoder.current_chunk(), Some(&[1u8][..]));
+        assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), Some(&[3u8, 1, 2, 3][..]));
+        assert_eq!(encoder.current_chunk(), &[3u8, 1, 2, 3][..]);
         assert!(encoder.advance());
         // The lock time.
-        assert_eq!(encoder.current_chunk(), Some(&[0, 0, 0, 0][..]));
+        assert_eq!(encoder.current_chunk(), &[0, 0, 0, 0][..]);
         assert!(!encoder.advance());
 
         // Exhausted
-        assert_eq!(encoder.current_chunk(), None);
+        assert!(encoder.current_chunk().is_empty());
     }
 
     #[test]

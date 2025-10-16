@@ -27,20 +27,19 @@ pub trait Encodable {
 pub trait Encoder {
     /// Yields the current encoded byteslice.
     ///
-    /// Will always return the same value until [`Self::advance`] is called.
-    ///
-    /// Returns `None` if the encoder is exhausted. Once this method returns `None`,
-    /// all subsequent calls will return `None`.
-    fn current_chunk(&self) -> Option<&[u8]>;
+    /// Will always return the same value until [`Self::advance`] is called. May return an empty
+    /// list.
+    fn current_chunk(&self) -> &[u8];
 
     /// Moves the encoder to its next state.
     ///
     /// Does not need to be called when the encoder is first created. (In fact, if it
     /// is called, this will discard the first chunk of encoded data.)
     ///
-    /// Returns `true` if the next call to [`Self::current_chunk`] will return data.
-    /// Returns `false` otherwise. It is fine to ignore the return value of this method
-    /// and just call `current_chunk` to see if it works.
+    /// # Returns
+    ///
+    /// - `true` if the encoder has advanced to a new state and [`Self::current_chunk`] will return new data.
+    /// - `false` if the encoder is exhausted and has no more states.
     fn advance(&mut self) -> bool;
 }
 
@@ -57,7 +56,7 @@ macro_rules! encoder_newtype{
 
         impl$(<$lt>)? $crate::Encoder for $name$(<$lt>)? {
             #[inline]
-            fn current_chunk(&self) -> Option<&[u8]> { self.0.current_chunk() }
+            fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
             #[inline]
             fn advance(&mut self) -> bool { self.0.advance() }
@@ -75,9 +74,11 @@ where
     H: hashes::HashEngine,
 {
     let mut encoder = object.encoder();
-    while let Some(sl) = encoder.current_chunk() {
-        engine.input(sl);
-        encoder.advance();
+    loop {
+        engine.input(encoder.current_chunk());
+        if !encoder.advance() {
+            break;
+        }
     }
     engine
 }
@@ -90,9 +91,11 @@ where
 {
     let mut encoder = object.encoder();
     let mut vec = Vec::new();
-    while let Some(chunk) = encoder.current_chunk() {
-        vec.extend_from_slice(chunk);
-        encoder.advance();
+    loop {
+        vec.extend_from_slice(encoder.current_chunk());
+        if !encoder.advance() {
+            break;
+        }
     }
     vec
 }
@@ -116,18 +119,20 @@ where
     W: std::io::Write,
 {
     let mut encoder = object.encoder();
-    while let Some(chunk) = encoder.current_chunk() {
-        writer.write_all(chunk)?;
-        encoder.advance();
+    loop {
+        writer.write_all(encoder.current_chunk())?;
+        if !encoder.advance() {
+            break;
+        }
     }
     Ok(())
 }
 
 impl<T: Encoder> Encoder for Option<T> {
-    fn current_chunk(&self) -> Option<&[u8]> {
+    fn current_chunk(&self) -> &[u8] {
         match self {
             Some(encoder) => encoder.current_chunk(),
-            None => None,
+            None => &[],
         }
     }
 
