@@ -13,7 +13,8 @@ fn do_test(data: &[u8]) {
         // Manually call all compute functions with unchecked block data.
         let (header, transactions) = block.clone().into_parts();
         block::compute_merkle_root(&transactions);
-        block::compute_witness_commitment(&transactions, &[]); // TODO: Is empty slice ok?
+        // Use 32-byte zero array as witness_reserved_value per BIP-0141 requirement.
+        block::compute_witness_commitment(&transactions, &[0u8; 32]);
         block::compute_witness_root(&transactions);
 
         if let Ok(block) = Block::new_checked(header, transactions) {
