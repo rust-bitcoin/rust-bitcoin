@@ -1,9 +1,38 @@
 set positional-arguments
 
+NIGHTLY_VERSION := `cat nightly-version`
+
 alias ulf := update-lock-files
 
 default:
   @just --list
+
+# Run the given CI task using maintainer tools.
+@ci task toolchain="stable" lock="recent":
+  {{justfile_directory()}}/contrib/ensure-maintainer-tools.sh
+  cp -f {{justfile_directory()}}/Cargo-{{lock}}.lock {{justfile_directory()}}/Cargo.lock
+  rustup run {{toolchain}} {{justfile_directory()}}/.maintainer-tools/ci/run_task.sh {{task}}
+
+# Test with stable toolchain.
+test-stable: (ci "stable")
+
+# Test with nightly toolchain.
+test-nightly: (ci "nightly")
+
+# Test with MSRV toolchain.
+test-msrv: (ci "msrv")
+
+# Lint workspace.
+lint: (ci "lint" NIGHTLY_VERSION)
+
+# Generate documentation.
+docs: (ci "docs")
+
+# Generate documentation with nightly.
+docsrs: (ci "docsrs" NIGHTLY_VERSION)
+
+# Run benchmarks.
+bench: (ci "bench")
 
 # Cargo build everything.
 build:
@@ -13,12 +42,6 @@ build:
 check:
   cargo check --workspace --all-targets --all-features
 
-# Lint everything.
-lint:
-  cargo +$(cat ./nightly-version) clippy --workspace --all-targets --all-features -- --deny warnings
-  # lint warnings get inhibited unless we use `--nocapture`
-  cargo test --quiet --workspace --doc -- --nocapture
-
 # Run cargo fmt
 fmt:
   cargo +$(cat ./nightly-version) fmt --all
@@ -26,10 +49,6 @@ fmt:
 # Check the formatting
 format:
   cargo +$(cat ./nightly-version) fmt --all --check
-
-# Generate documentation.
-docsrs *flags:
-  RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" cargo +$(cat ./nightly-version) doc --all-features {{flags}}
 
 # Quick and dirty CI useful for pre-push checks.
 sane: lint
@@ -67,4 +86,3 @@ gen-dep-tree:
         -p bitcoin -p bitcoin-internals -p bitcoin_hashes@0.16.0 -p bitcoin-units \
         -p bitcoin-primitives -p chacha20-poly1305 -p base58ck -p bitcoin-addresses -p bitcoin-io@0.2.0 \
         -p bitcoin-consensus-encoding
-       
