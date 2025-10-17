@@ -19,7 +19,7 @@ name = "base58ck"
 version = "0.2.0"
 dependencies = [
  "bitcoin-internals",
- "bitcoin_hashes 0.16.0",
+ "bitcoin_hashes 0.17.0",
  "hex_lit",
 ]
 
@@ -58,7 +58,7 @@ dependencies = [
  "bitcoin-io 0.2.0",
  "bitcoin-primitives",
  "bitcoin-units",
- "bitcoin_hashes 0.16.0",
+ "bitcoin_hashes 0.17.0",
  "bitcoinconsensus",
  "hex-conservative 0.3.0",
  "hex_lit",
@@ -77,7 +77,7 @@ name = "bitcoin-consensus-encoding"
 version = "1.0.0-rc.0"
 dependencies = [
  "bitcoin-internals",
- "bitcoin_hashes 0.16.0",
+ "bitcoin_hashes 0.17.0",
 ]
 
 [[package]]
@@ -113,7 +113,7 @@ name = "bitcoin-io"
 version = "0.2.0"
 dependencies = [
  "bitcoin-internals",
- "bitcoin_hashes 0.16.0",
+ "bitcoin_hashes 0.17.0",
 ]
 
 [[package]]
@@ -125,7 +125,7 @@ dependencies = [
  "bitcoin-internals",
  "bitcoin-io 0.2.0",
  "bitcoin-units",
- "bitcoin_hashes 0.16.0",
+ "bitcoin_hashes 0.17.0",
  "hex-conservative 0.3.0",
  "hex_lit",
 ]
@@ -140,7 +140,7 @@ dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-units",
- "bitcoin_hashes 0.16.0",
+ "bitcoin_hashes 0.17.0",
  "hex-conservative 0.3.0",
  "hex_lit",
  "serde",
@@ -172,7 +172,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.16.0"
+version = "0.17.0"
 dependencies = [
  "bitcoin-internals",
  "hex-conservative 0.3.0",
