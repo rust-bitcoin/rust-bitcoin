@@ -17,6 +17,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+/// Rust implementation of cryptographic hash function algorithms.
+pub extern crate hashes;
+
 mod decode;
 mod encode;
 
