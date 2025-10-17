@@ -63,7 +63,7 @@ impl Decodable for WitnessMerkleNode {
 ///
 /// Other Merkle trees in Bitcoin, such as those used in Taproot commitments,
 /// do not use this algorithm and cannot use this trait.
-pub trait MerkleNode: Copy {
+pub trait MerkleNode: Copy + PartialEq {
     /// The hash (TXID or WTXID) of a transaction in the tree.
     type Leaf: TxIdentifier;
 
@@ -74,7 +74,13 @@ pub trait MerkleNode: Copy {
 
     /// Given an iterator of leaves, compute the Merkle root.
     ///
-    /// Returns `None` if and only if the iterator was empty.
+    /// Returns `None` if the iterator was empty, or if the transaction list contains
+    /// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
+    /// transactions will always be invalid, so there is no harm in us refusing to
+    /// compute their merkle roots.
+    ///
+    /// Unless you are certain your transaction list is nonempty and has no duplicates,
+    /// you should not unwrap the `Option` returned by this method!
     fn calculate_root<I: Iterator<Item = Self::Leaf>>(iter: I) -> Option<Self> {
         let mut stack = Vec::<(usize, Self)>::with_capacity(32);
         // Start with a standard Merkle tree root computation...
@@ -84,6 +90,13 @@ pub trait MerkleNode: Copy {
             while n & 1 == 1 {
                 let right = stack.pop().unwrap();
                 let left = stack.pop().unwrap();
+                if left.1 == right.1 {
+                    // Reject duplicate trees since they are guaranteed-invalid (Bitcoin does
+                    // not allow duplicate transactions in block) but can be used to confuse
+                    // nodes about legitimate blocks. See CVE 2012-2459 and the block comment
+                    // below.
+                    return None;
+                }
                 debug_assert_eq!(left.0, right.0);
                 stack.push((left.0 + 1, left.1.combine(&right.1)));
                 n >>= 1;
@@ -91,11 +104,17 @@ pub trait MerkleNode: Copy {
         }
         // ...then, deal with incomplete trees. Bitcoin does a weird thing in
         // which it doubles-up nodes of the tree to fill out the tree, rather
-        // than treating incomplete branches specially. This, along with its
-        // conflation of leaves with leaf hashes, makes its Merkle tree
-        // construction theoretically (though probably not practically)
-        // vulnerable to collisions. This is consensus logic so we just have
-        // to accept it.
+        // than treating incomplete branches specially. This makes this tree
+        // construction vulnerable to collisions (see CVE 2012-2459).
+        //
+        // (It is also vulnerable to collisions because it does not distinguish
+        // between internal nodes and transactions, but this collisions of this
+        // form are probably impractical. It is likely that 64-byte transactions
+        // will be forbidden in the future which will close this for good.)
+        //
+        // This is consensus logic so we cannot fix the Merkle tree construction.
+        // Instead we just have to reject the clearly-invalid half of the collision
+        // (see previous comment).
         while stack.len() > 1 {
             let mut right = stack.pop().unwrap();
             let left = stack.pop().unwrap();
