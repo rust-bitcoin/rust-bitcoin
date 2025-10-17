@@ -86,7 +86,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
         "first in ScriptSig must be PUSHBYTES_0 got {pushbytes_0:?}"
     );
 
-    //All other scriptSig instructions  must be signatures
+    //All other scriptSig instructions must be signatures
     for instr in instructions {
         let sig = ecdsa::Signature::from_slice(instr.unwrap().push_bytes().unwrap().as_bytes())
             .expect("failed to parse sig");
