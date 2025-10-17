@@ -19,8 +19,6 @@
 //! ```
 
 #![no_std]
-// Experimental features we need.
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 // Coding conventions.
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]

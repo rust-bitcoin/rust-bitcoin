@@ -13,7 +13,6 @@
 #![cfg(feature = "alloc")]
 #![no_std]
 // Experimental features we need.
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc(test(attr(warn(unused))))]
 // Coding conventions.
 #![warn(deprecated_in_future)]
