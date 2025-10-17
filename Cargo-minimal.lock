@@ -94,7 +94,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-internals"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "bincode",
  "hex-conservative 0.3.0",
