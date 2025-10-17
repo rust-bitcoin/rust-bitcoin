@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin-units"
-version = "1.0.0-rc.0"
+version = "1.0.0-rc.1"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Tobin C. Harding <me@tobin.cc>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -19,7 +19,7 @@ alloc = ["internals/alloc", "serde?/alloc", "encoding?/alloc"]
 
 [dependencies]
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0-rc.0", default-features = false, optional = true }
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0" }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1" }
 
 serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }
 arbitrary = { version = "1.4.1", optional = true }

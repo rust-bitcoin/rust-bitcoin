@@ -23,7 +23,7 @@ hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = fa
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
 internals = { package = "bitcoin-internals", path = "../internals", default-features = false }
 io = { package = "bitcoin-io", path = "../io", default-features = false }
-units = { package = "bitcoin-units", path = "../units", default-features = false }
+units = { package = "bitcoin-units", path = "../units", version = "1.0.0-rc.1", default-features = false }
 
 arbitrary = { version = "1.4.1", optional = true }
 
