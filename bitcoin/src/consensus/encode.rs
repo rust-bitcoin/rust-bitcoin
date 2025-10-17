@@ -73,6 +73,7 @@ pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Pars
         Err(Error::Parse(e)) => return Err(e),
         Err(Error::Io(_)) =>
             unreachable!("consensus_decode code never returns an I/O error for in-memory reads"),
+        Err(Error::Witness(_)) => panic!("sorry your on your own"),
     };
     let consumed = decoder.position() as usize;
 
