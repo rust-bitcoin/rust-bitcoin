@@ -1,3 +1,18 @@
+# 0.17.0 - 2025-10-17
+
+* Bump MSRV from 1.63.0 to 1.74.0 for all crates in the repo [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
+* Add a `sha3_256` module with `SHA3-256` [#4919](https://github.com/rust-bitcoin/rust-bitcoin/pull/4919)
+* Remove code deprecated in `v0.15.0` [#4840](https://github.com/rust-bitcoin/rust-bitcoin/pull/4840)
+* Update `serde` dependency to match workspace [#4321](https://github.com/rust-bitcoin/rust-bitcoin/pull/4321)
+* Remove `From<hash>` for not-general-hash types [#4128 ](https://github.com/rust-bitcoin/rust-bitcoin/pull/4128)
+* Remove the `GeneralHash` trait [#4085](https://github.com/rust-bitcoin/rust-bitcoin/pull/4085)
+* Only enable `hex`/`std`, and `hex`/`alloc` when `hex` is [#4055](https://github.com/rust-bitcoin/rust-bitcoin/pull/4055)
+* Derive `Debug` for all hash engines [#4015](https://github.com/rust-bitcoin/rust-bitcoin/pull/4015)
+* Add a tagged hash engine [#4010](https://github.com/rust-bitcoin/rust-bitcoin/pull/4010)
+* Add engine function to `siphash24::Hash` [#4003](https://github.com/rust-bitcoin/rust-bitcoin/pull/4003)
+* Do not implement `Default` for `HmacEngine` [#3981](https://github.com/rust-bitcoin/rust-bitcoin/pull/3981)
+* Invert dependency between `io` and `hashes` [#3961](https://github.com/rust-bitcoin/rust-bitcoin/pull/3961)
+
 # 0.16.0 - 2024-12-12
 
 * Make `hex-conservative` an optional dependency [#3611](https://github.com/rust-bitcoin/rust-bitcoin/pull/3611)

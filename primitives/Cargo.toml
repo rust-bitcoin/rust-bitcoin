@@ -24,7 +24,7 @@ hex = ["dep:hex", "hashes/hex", "internals/hex"]
 
 [dependencies]
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0-rc.0", default-features = false }
-hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.17.0", default-features = false }
 internals = { package = "bitcoin-internals", path = "../internals" }
 units = { package = "bitcoin-units", path = "../units", version = "1.0.0-rc.1", default-features = false, features = [ "encoding" ] }
 arrayvec = { version = "0.7.2", default-features = false }
