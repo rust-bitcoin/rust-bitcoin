@@ -884,7 +884,7 @@ pub type UntweakedKeypair = Keypair;
 /// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&secp, &mut rand::thread_rng()));
 /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
 /// let (_pk, _parity) = keypair.public_parts();
-/// let _pk  = TweakedPublicKey::from_keypair(keypair);
+/// let _pk = TweakedPublicKey::from_keypair(keypair);
 /// let _pk = TweakedPublicKey::from(keypair);
 /// # }
 /// ```

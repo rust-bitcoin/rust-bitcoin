@@ -1678,7 +1678,7 @@ impl fmt::Display for InvalidControlBlockSizeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
+            "Control Block size({}) must be of the form 33 + 32*m where 0 <= m <= {} ",
             self.0, TAPROOT_CONTROL_MAX_NODE_COUNT
         )
     }
