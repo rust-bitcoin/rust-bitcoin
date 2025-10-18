@@ -131,7 +131,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-primitives"
-version = "0.101.0"
+version = "1.0.0-rc.0"
 dependencies = [
  "arbitrary",
  "arrayvec",
