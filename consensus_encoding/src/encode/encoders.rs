@@ -337,14 +337,12 @@ mod tests {
 
     #[test]
     fn encode_slice_with_zero_sized_arrays() {
-        // Should have empty array chunks, then exhausted.
+        // Should skip empty array chunks and be immediately exhausted.
+        // This is an optimization - empty chunks don't provide meaningful data.
         let slice = &[TestArray([]), TestArray([])];
         let mut encoder = SliceEncoder::without_length_prefix(slice);
 
         assert!(encoder.current_chunk().is_empty());
-        // FIXME: Its strange the we can't do this?
-        // assert!(encoder.advance());
-        // assert!(encoder.current_chunk().is_empty());
         assert!(!encoder.advance());
         assert!(encoder.current_chunk().is_empty());
     }
