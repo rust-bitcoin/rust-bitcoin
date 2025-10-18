@@ -135,6 +135,13 @@ pub mod psbt;
 pub mod sign_message;
 pub mod taproot;
 
+
+// FIXME: Dirty hack so we don't have to do script tagging yet.
+#[deprecated(since = "0.33.0", note = "You need to tag this type")]
+pub type ScriptBuf = crate::script::ScriptPubKeyBuf;
+#[deprecated(since = "0.33.0", note = "You need to tag this type")]
+pub type Script = crate::script::ScriptPubKey;
+
 // Re-export the type from where it is defined but the module from the highest place up the stack
 // that it is available in the event that we add some functionality there.
 #[doc(inline)]
