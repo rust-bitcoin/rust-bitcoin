@@ -34,7 +34,7 @@ internals = { package = "bitcoin-internals", path = "../internals", features = [
 io = { package = "bitcoin-io", path = "../io", default-features = false, features = ["alloc", "hashes"] }
 primitives = { package = "bitcoin-primitives", path = "../primitives", default-features = false, features = ["alloc", "hex"] }
 secp256k1 = { version = "0.30.0", default-features = false, features = ["hashes", "alloc"] }
-units = { package = "bitcoin-units", path = "../units", version = "1.0.0-rc.1", default-features = false, features = ["alloc"] }
+units = { package = "bitcoin-units", path = "../units", version = "1.0.0-rc.2", default-features = false, features = ["alloc"] }
 
 arbitrary = { version = "1.4.1", optional = true }
 base64 = { version = "0.22.0", optional = true, default-features = false, features = ["alloc"] }
