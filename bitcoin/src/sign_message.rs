@@ -104,7 +104,7 @@ mod message_signing {
         pub fn serialize(&self) -> [u8; 65] {
             let (recid, raw) = self.signature.serialize_compact();
             let mut serialized = [0u8; 65];
-            serialized[0] = i32::from(recid) as u8 + if self.compressed { 31 } else { 27 };
+            serialized[0] = recid.to_u8() + if self.compressed { 31 } else { 27 };
             serialized[1..].copy_from_slice(&raw[..]);
             serialized
         }
@@ -278,7 +278,7 @@ mod tests {
         let p2pkh = Address::p2pkh(pubkey, Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
 
-        assert_eq!(pubkey.0, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
+        assert_eq!(pubkey.0, secp256k1::PublicKey::from_secret_key(&privkey));
         let signature_base64 = signature.to_base64();
         let signature_round_trip =
             super::MessageSignature::from_base64(&signature_base64).expect("message signature");

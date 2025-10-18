@@ -74,7 +74,7 @@ fn main() {
 
     // Update the witness stack.
     let signature = bitcoin::ecdsa::Signature { signature, sighash_type };
-    let pk = sk.public_key(&secp);
+    let pk = sk.public_key();
     *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(signature, pk);
 
     // Get the signed transaction.
@@ -89,7 +89,7 @@ fn main() {
 /// In a real application these would be actual secrets.
 fn senders_keys<C: Signing>(secp: &Secp256k1<C>) -> (SecretKey, WPubkeyHash) {
     let sk = SecretKey::new(&mut rand::rng());
-    let pk = bitcoin::PublicKey::new(sk.public_key(secp));
+    let pk = bitcoin::PublicKey::new(sk.public_key());
     let wpkh = pk.wpubkey_hash().expect("key is compressed");
 
     (sk, wpkh)

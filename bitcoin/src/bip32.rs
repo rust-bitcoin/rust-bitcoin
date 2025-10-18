@@ -745,7 +745,7 @@ impl Xpriv {
     /// Constructs a new BIP-0340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
-        Keypair::from_seckey_byte_array(secp, self.private_key.secret_bytes())
+        Keypair::from_seckey_byte_array(self.private_key.secret_bytes())
             .expect("BIP-0032 internal private key representation is broken")
     }
 
@@ -787,7 +787,7 @@ impl Xpriv {
             ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
                 engine.input(
-                    &secp256k1::PublicKey::from_secret_key(secp, &self.private_key).serialize()[..],
+                    &secp256k1::PublicKey::from_secret_key(&self.private_key).serialize()[..],
                 );
             }
             ChildNumber::Hardened { .. } => {
@@ -882,7 +882,7 @@ impl Xpub {
             depth: xpriv.depth,
             parent_fingerprint: xpriv.parent_fingerprint,
             child_number: xpriv.child_number,
-            public_key: secp256k1::PublicKey::from_secret_key(secp, &xpriv.private_key),
+            public_key: secp256k1::PublicKey::from_secret_key(&xpriv.private_key),
             chain_code: xpriv.chain_code,
         }
     }
@@ -961,7 +961,7 @@ impl Xpub {
     ) -> Result<Self, DerivationError> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let tweaked =
-            self.public_key.add_exp_tweak(secp, &sk.into()).expect("cryptographically unreachable");
+            self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
 
         Ok(Self {
             network: self.network,

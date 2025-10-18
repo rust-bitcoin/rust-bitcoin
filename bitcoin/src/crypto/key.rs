@@ -84,7 +84,7 @@ impl XOnlyPublicKey {
         tweaked_parity: Parity,
         tweak: secp256k1::Scalar,
     ) -> bool {
-        self.0.tweak_add_check(secp, &tweaked_key.0, tweaked_parity, tweak)
+        self.0.tweak_add_check(&tweaked_key.0, tweaked_parity, tweak)
     }
 
     /// Tweaks an [`XOnlyPublicKey`] by adding the generator multiplied with the given tweak to it.
@@ -104,7 +104,7 @@ impl XOnlyPublicKey {
         secp: &Secp256k1<V>,
         tweak: &secp256k1::Scalar,
     ) -> Result<(Self, Parity), TweakXOnlyPublicKeyError> {
-        match self.0.add_tweak(secp, tweak) {
+        match self.0.add_tweak(tweak) {
             Ok((xonly, parity)) => Ok((Self(xonly), parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
@@ -562,7 +562,7 @@ impl PrivateKey {
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
             compressed: self.compressed,
-            inner: secp256k1::PublicKey::from_secret_key(secp, &self.inner),
+            inner: secp256k1::PublicKey::from_secret_key(&self.inner),
         }
     }
 
@@ -873,7 +873,7 @@ pub type UntweakedKeypair = Keypair;
 /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
 /// # use bitcoin::secp256k1::{rand, Secp256k1};
 /// # let secp = Secp256k1::new();
-/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&secp, &mut rand::rng()));
+/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&mut rand::rng()));
 /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
 /// let (_pk, _parity) = keypair.public_parts();
 /// let _pk = TweakedPublicKey::from_keypair(keypair);
@@ -971,7 +971,7 @@ impl TapTweak for UntweakedKeypair {
     ) -> TweakedKeypair {
         let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
-        let tweaked = self.add_xonly_tweak(secp, &tweak).expect("Tap tweak failed");
+        let tweaked = self.add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair(tweaked)
     }
 
@@ -1745,7 +1745,7 @@ mod tests {
         use secp256k1::rand;
 
         let secp = Secp256k1::new();
-        let kp = Keypair::new(&secp, &mut rand::rng());
+        let kp = Keypair::new(&mut rand::rng());
 
         let _ = PublicKey::new(kp);
         let _ = PublicKey::new_uncompressed(kp);
