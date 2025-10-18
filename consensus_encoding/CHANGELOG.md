@@ -1,4 +1,4 @@
-# 1.0.0-rc.0 - 2025-09-20
+# 1.0.0 - 2025-10-10
 
 This changelog is a rolling description of everything that will eventually end up in `v1.0`.
 
