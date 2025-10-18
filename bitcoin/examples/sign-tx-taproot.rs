@@ -87,7 +87,7 @@ fn main() {
 /// In a real application these would be actual secrets.
 fn senders_keys<C: Signing>(secp: &Secp256k1<C>) -> Keypair {
     let sk = SecretKey::new(&mut rand::rng());
-    Keypair::from_secret_key(secp, &sk)
+    Keypair::from_secret_key(&sk)
 }
 
 /// A dummy address for the receiver.
