@@ -86,6 +86,7 @@ version = "0.0.1"
 dependencies = [
  "arbitrary",
  "bitcoin",
+ "bitcoin-consensus-encoding",
  "bitcoin-p2p-messages",
  "honggfuzz",
  "serde",

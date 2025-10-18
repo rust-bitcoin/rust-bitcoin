@@ -13,6 +13,7 @@ cargo-fuzz = true
 honggfuzz = { version = "0.5.58", default-features = false }
 bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
+bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
 arbitrary = { version = "1.4.1" }
 
 serde = { version = "1.0.195", features = [ "derive" ] }
@@ -120,3 +121,19 @@ path = "fuzz_targets/units/parse_amount.rs"
 [[bin]]
 name = "units_parse_int"
 path = "fuzz_targets/units/parse_int.rs"
+
+[[bin]]
+name = "consensus_encoding_decode_array"
+path = "fuzz_targets/consensus_encoding/decode_array.rs"
+
+[[bin]]
+name = "consensus_encoding_decode_compact_size"
+path = "fuzz_targets/consensus_encoding/decode_compact_size.rs"
+
+[[bin]]
+name = "consensus_encoding_decode_decoder2"
+path = "fuzz_targets/consensus_encoding/decode_decoder2.rs"
+
+[[bin]]
+name = "consensus_encoding_decode_byte_vec"
+path = "fuzz_targets/consensus_encoding/decode_byte_vec.rs"
