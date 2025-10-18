@@ -26,7 +26,9 @@ pub struct BytesEncoder<'sl> {
 
 impl<'sl> BytesEncoder<'sl> {
     /// Constructs a byte encoder which encodes the given byte slice, with no length prefix.
-    pub fn without_length_prefix(sl: &'sl [u8]) -> Self { Self { sl: Some(sl) } }
+    pub fn without_length_prefix(sl: &'sl [u8]) -> Self {
+        Self { sl: Some(sl) }
+    }
 }
 
 impl Encoder for BytesEncoder<'_> {
@@ -47,12 +49,16 @@ pub struct ArrayEncoder<const N: usize> {
 
 impl<const N: usize> ArrayEncoder<N> {
     /// Constructs an encoder which encodes the array with no length prefix.
-    pub fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
+    pub fn without_length_prefix(arr: [u8; N]) -> Self {
+        Self { arr: Some(arr) }
+    }
 }
 
 impl<const N: usize> Encoder for ArrayEncoder<N> {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.arr.as_ref().map(|x| &x[..]).unwrap_or_default() }
+    fn current_chunk(&self) -> &[u8] {
+        self.arr.as_ref().map(|x| &x[..]).unwrap_or_default()
+    }
 
     #[inline]
     fn advance(&mut self) -> bool {
@@ -126,7 +132,9 @@ pub struct Encoder2<A, B> {
 
 impl<A, B> Encoder2<A, B> {
     /// Constructs a new composite encoder.
-    pub fn new(enc_1: A, enc_2: B) -> Self { Self { enc_idx: 0, enc_1, enc_2 } }
+    pub fn new(enc_1: A, enc_2: B) -> Self {
+        Self { enc_idx: 0, enc_1, enc_2 }
+    }
 }
 
 impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
@@ -171,9 +179,13 @@ impl<A, B, C> Encoder3<A, B, C> {
 
 impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<A, B, C> {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
+    fn current_chunk(&self) -> &[u8] {
+        self.inner.current_chunk()
+    }
     #[inline]
-    fn advance(&mut self) -> bool { self.inner.advance() }
+    fn advance(&mut self) -> bool {
+        self.inner.advance()
+    }
 }
 
 /// An encoder which encodes four objects, one after the other.
@@ -190,9 +202,13 @@ impl<A, B, C, D> Encoder4<A, B, C, D> {
 
 impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<A, B, C, D> {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
+    fn current_chunk(&self) -> &[u8] {
+        self.inner.current_chunk()
+    }
     #[inline]
-    fn advance(&mut self) -> bool { self.inner.advance() }
+    fn advance(&mut self) -> bool {
+        self.inner.advance()
+    }
 }
 
 /// An encoder which encodes six objects, one after the other.
@@ -216,9 +232,13 @@ impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Enc
     for Encoder6<A, B, C, D, E, F>
 {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
+    fn current_chunk(&self) -> &[u8] {
+        self.inner.current_chunk()
+    }
     #[inline]
-    fn advance(&mut self) -> bool { self.inner.advance() }
+    fn advance(&mut self) -> bool {
+        self.inner.advance()
+    }
 }
 
 /// Encoder for a compact size encoded integer.
@@ -228,12 +248,16 @@ pub struct CompactSizeEncoder {
 
 impl CompactSizeEncoder {
     /// Constructs a new `CompactSizeEncoder`.
-    pub fn new(value: impl ToU64) -> Self { Self { buf: Some(compact_size::encode(value)) } }
+    pub fn new(value: impl ToU64) -> Self {
+        Self { buf: Some(compact_size::encode(value)) }
+    }
 }
 
 impl Encoder for CompactSizeEncoder {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.buf.as_ref().map(|b| &b[..]).unwrap_or_default() }
+    fn current_chunk(&self) -> &[u8] {
+        self.buf.as_ref().map(|b| &b[..]).unwrap_or_default()
+    }
 
     #[inline]
     fn advance(&mut self) -> bool {
@@ -254,7 +278,9 @@ mod tests {
         where
             Self: 's;
 
-        fn encoder(&self) -> Self::Encoder<'_> { BytesEncoder::without_length_prefix(self.0) }
+        fn encoder(&self) -> Self::Encoder<'_> {
+            BytesEncoder::without_length_prefix(self.0)
+        }
     }
 
     struct TestArray<const N: usize>([u8; N]);
@@ -265,7 +291,9 @@ mod tests {
         where
             Self: 's;
 
-        fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
+        fn encoder(&self) -> Self::Encoder<'_> {
+            ArrayEncoder::without_length_prefix(self.0)
+        }
     }
 
     #[test]
@@ -342,9 +370,7 @@ mod tests {
         let mut encoder = SliceEncoder::without_length_prefix(slice);
 
         assert!(encoder.current_chunk().is_empty());
-        // FIXME: Its strange the we can't do this?
-        // assert!(encoder.advance());
-        // assert!(encoder.current_chunk().is_empty());
+        // The slice advanced is optimized to skip over empty chunks.
         assert!(!encoder.advance());
         assert!(encoder.current_chunk().is_empty());
     }
@@ -592,10 +618,7 @@ mod tests {
 
         // 0xFF + u64
         let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64);
-        assert_eq!(
-            e.current_chunk(),
-            &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]
-        );
+        assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
     }
