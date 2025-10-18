@@ -1825,7 +1825,7 @@ mod tests {
             assert_eq!(err.invalid_char(), b'g');
             assert_eq!(err.pos(), 129);
         } else {
-            panic!("Expected Invalid char error");
+            panic!("expected ParsePublicKeyError::InvalidChar");
         }
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1ag";
@@ -1836,7 +1836,7 @@ mod tests {
             assert_eq!(err.invalid_char(), b'g');
             assert_eq!(err.pos(), 65);
         } else {
-            panic!("Expected Invalid char error");
+            panic!("expected ParsePublicKeyError::InvalidChar");
         }
     }
 
