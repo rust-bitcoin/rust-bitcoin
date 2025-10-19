@@ -87,7 +87,7 @@ impl ProtocolVersion {
     /// Support `sendheaders` message and announce new blocks via headers rather than inv
     pub const SENDHEADERS_VERSION: ProtocolVersion = ProtocolVersion(70012);
     /// Support `pong` message and nonce in `ping` message
-    pub const BIP0031_VERSION: ProtocolVersion = ProtocolVersion(60000);
+    pub const BIP0031_VERSION: ProtocolVersion = ProtocolVersion(60001);
     /// All connections will be terminated below this version.
     pub const MIN_PEER_PROTO_VERSION: ProtocolVersion = ProtocolVersion(31800);
 }
