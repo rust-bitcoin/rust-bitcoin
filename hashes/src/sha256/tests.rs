@@ -172,7 +172,7 @@ fn hash_unoptimized() {
             Hash::hash(bytes),
             Hash::hash_unoptimized(bytes),
             "hashes don't match for n_bytes_hashed {}",
-            i + 1
+            i
         );
     }
 }
