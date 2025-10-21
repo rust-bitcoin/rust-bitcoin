@@ -13,14 +13,8 @@ default:
   cp -f {{justfile_directory()}}/Cargo-{{lock}}.lock {{justfile_directory()}}/Cargo.lock
   rustup run {{toolchain}} {{justfile_directory()}}/.maintainer-tools/ci/run_task.sh {{task}}
 
-# Test with stable toolchain.
+# Test workspace with stable toolchain.
 test-stable: (ci "stable")
-
-# Test with nightly toolchain.
-test-nightly: (ci "nightly")
-
-# Test with MSRV toolchain.
-test-msrv: (ci "msrv")
 
 # Lint workspace.
 lint: (ci "lint" NIGHTLY_VERSION)
