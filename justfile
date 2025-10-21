@@ -29,30 +29,14 @@ docsrs: (ci "docsrs" NIGHTLY_VERSION)
 # Run benchmarks.
 bench: (ci "bench")
 
-# Cargo build everything.
-build:
-  cargo build --workspace --all-targets --all-features
+# Sanity check given crates.
+@check +crates:
+  cargo test --quiet -p {{replace(crates, " ", " -p ")}} --no-default-features
+  cargo test --quiet -p {{replace(crates, " ", " -p ")}} --all-features
 
-# Cargo check everything.
-check:
-  cargo check --workspace --all-targets --all-features
-
-# Run cargo fmt
-fmt:
-  cargo +$(cat ./nightly-version) fmt --all
-
-# Check the formatting
-format:
-  cargo +$(cat ./nightly-version) fmt --all --check
-
-# Quick and dirty CI useful for pre-push checks.
-sane: lint
-  cargo test --quiet --workspace --all-targets --no-default-features > /dev/null || exit 1
-  cargo test --quiet --workspace --all-targets > /dev/null || exit 1
-  cargo test --quiet --workspace --all-targets --all-features > /dev/null || exit 1
-
-  # Make an attempt to catch feature gate problems in doctests
-  cargo test --manifest-path bitcoin/Cargo.toml --doc --no-default-features > /dev/null || exit 1
+# Format given crates.
+@fmt +crates:
+  cargo +{{NIGHTLY_VERSION}} fmt -p {{replace(crates, " ", " -p ")}}
 
 # Check for API changes.
 check-api:
