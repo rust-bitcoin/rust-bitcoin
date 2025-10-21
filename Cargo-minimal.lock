@@ -77,7 +77,6 @@ name = "bitcoin-consensus-encoding"
 version = "1.0.0-rc.1"
 dependencies = [
  "bitcoin-internals",
- "bitcoin_hashes 0.17.0",
 ]
 
 [[package]]
@@ -174,6 +173,7 @@ dependencies = [
 name = "bitcoin_hashes"
 version = "0.17.0"
 dependencies = [
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "hex-conservative 0.3.0",
  "serde",

@@ -235,7 +235,7 @@ impl Header {
     /// Returns the block hash.
     // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
     pub fn block_hash(&self) -> BlockHash {
-        let bare_hash = encoding::encode_to_hash_engine(self, sha256d::Hash::engine()).finalize();
+        let bare_hash = hashes::encode_to_hash_engine(self, sha256d::Hash::engine()).finalize();
         BlockHash::from_byte_array(bare_hash.to_byte_array())
     }
 }
