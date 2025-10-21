@@ -108,7 +108,7 @@ Prerequisites that a PR must satisfy for merging into the `master` branch:
 * the tip of any PR branch must also compile and pass tests with no errors on
   MSRV (check [README.md] on current MSRV requirements) and pass fuzz tests on
   nightly rust;
-* contain all necessary tests for the introduced functional (either as a part of
+* contain all necessary tests for the introduced functionality (either as a part of
   commits, or, more preferably, as separate commits, so that it's easy to
   reorder them during review and check that the new tests fail without the new
   code);
