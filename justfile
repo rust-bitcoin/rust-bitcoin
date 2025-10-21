@@ -1,10 +1,11 @@
 set positional-arguments
 
-NIGHTLY_VERSION := `cat nightly-version`
+# Once just v1.39.0 is widely deployed, simplify with the `read` function.
+NIGHTLY_VERSION := trim(shell('cat "$1"', justfile_directory() / "nightly-version"))
 
 alias ulf := update-lock-files
 
-default:
+_default:
   @just --list
 
 # Run the given CI task using maintainer tools.
@@ -55,23 +56,23 @@ sane: lint
 
 # Check for API changes.
 check-api:
- contrib/check-for-api-changes.sh
+ {{justfile_directory()}}/contrib/check-for-api-changes.sh
 
 # Query the current API.
 @query-api crate command:
- contrib/api.sh $1 $2
+ {{justfile_directory()}}/contrib/api.sh $1 $2
 
 # Update the recent and minimal lock files.
 update-lock-files:
-  contrib/update-lock-files.sh
+ {{justfile_directory()}}/contrib/update-lock-files.sh
 
-# Install githooks
+# Install githooks.
 githooks-install:
-  ./contrib/copy-githooks.sh
+ {{justfile_directory()}}/contrib/copy-githooks.sh
 
-# Remove githooks
+# Remove githooks.
 githooks-remove:
-  ./contrib/copy-githooks.sh -r
+ {{justfile_directory()}}/contrib/copy-githooks.sh -r
 
 # Generate a dependency tree
 gen-dep-tree:
