@@ -1,3 +1,7 @@
+# 0.1.4 - 2025-10-30
+
+* Remove `doc_auto_cfg`
+
 # 0.1.3 - 2024-11-02
 
 * Backport IO improvements [#3181](https://github.com/rust-bitcoin/rust-bitcoin/pull/3181)
