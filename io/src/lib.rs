@@ -41,6 +41,8 @@ mod hash;
 use alloc::vec::Vec;
 use core::cmp;
 
+use encoding::Encoder;
+
 #[cfg(feature = "std")]
 pub use bridge::{FromStd, ToStd};
 
@@ -404,10 +406,27 @@ pub const fn from_std<T>(std_io: T) -> FromStd<T> { FromStd::new(std_io) }
 #[inline]
 pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std_io) }
 
+/// Encodes a consensus_encoding object to an I/O writer.
+pub fn encode_to_writer<T, W>(object: &T, mut writer: W) -> Result<()>
+where
+    T: encoding::Encodable + ?Sized,
+    W: Write,
+{
+    let mut encoder = object.encoder();
+    loop {
+        writer.write_all(encoder.current_chunk())?;
+        if !encoder.advance() {
+            break;
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(all(not(feature = "std"), feature = "alloc"))]
     use alloc::{string::ToString, vec};
+    use encoding::ArrayEncoder;
 
     use super::*;
 
@@ -532,5 +551,29 @@ mod tests {
 
         cursor.consume(5);
         assert_eq!(cursor.position(), 15);
+    }
+
+    // Simple test type that implements Encodable.
+    struct TestData(u32);
+
+    impl encoding::Encodable for TestData {
+        type Encoder<'s>
+            = ArrayEncoder<4>
+        where
+            Self: 's;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            ArrayEncoder::without_length_prefix(self.0.to_le_bytes())
+        }
+    }
+
+    #[test]
+    fn encode_io_writer() {
+        let data = TestData(0x1234_5678);
+
+        let mut buf = [0_u8; 4];
+        encode_to_writer(&data, buf.as_mut_slice()).unwrap();
+
+        assert_eq!(buf, [0x78, 0x56, 0x34, 0x12]);
     }
 }

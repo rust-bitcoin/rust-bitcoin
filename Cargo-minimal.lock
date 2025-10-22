@@ -112,6 +112,7 @@ checksum = "17e5b76b88667412087beea1882980ad843b660490bbf6cce0a6cfc999c5b989"
 name = "bitcoin-io"
 version = "0.2.0"
 dependencies = [
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin_hashes 0.17.0",
 ]
