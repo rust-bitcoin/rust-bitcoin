@@ -12,7 +12,7 @@ use core::fmt;
 
 use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};
-use io::{BufRead, Write};
+use io::{BufRead, ErrorKind, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
@@ -379,13 +379,16 @@ impl Encodable for Block<Unchecked> {
 impl Encodable for Block<Checked> {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.header().consensus_encode(w)?;
+        let mut len: usize = 0;
+        len = len.checked_add(self.header().consensus_encode(w)?)
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, "length exceeded maximum value"))?;
 
         let transactions = self.transactions();
-        len += w.emit_compact_size(transactions.len())?;
+        len = len.checked_add(w.emit_compact_size(transactions.len())?)
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, "length exceeded maximum value"))?;
         for c in transactions.iter() {
-            len += c.consensus_encode(w)?;
+            len = len.checked_add(c.consensus_encode(w)?)
+                .ok_or_else(|| io::Error::new(ErrorKind::Other, "length exceeded maximum value"))?;
         }
 
         Ok(len)
