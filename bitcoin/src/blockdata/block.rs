@@ -357,6 +357,9 @@ impl BlockCheckedExt for Block<Checked> {
     }
 }
 
+/// # Panics
+///
+/// If the size calculation overflows.
 fn block_base_size(transactions: &[Transaction]) -> usize {
     let mut size = Header::SIZE;
 
