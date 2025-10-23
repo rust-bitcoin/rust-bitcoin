@@ -846,7 +846,6 @@ mod test {
     fn single_empty_element() -> Witness { Witness::from([[0u8; 0]]) }
 
     #[test]
-
     fn witness_single_empty_element() {
         let mut got = Witness::new();
         got.push([]);
