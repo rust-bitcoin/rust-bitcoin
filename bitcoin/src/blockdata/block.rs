@@ -878,7 +878,7 @@ mod tests {
         let header = *genesis.header();
         let transactions = genesis.transactions().to_vec();
 
-        let checked_block = Block::new_checked(header, transactions.clone());
+        let checked_block = Block::new_checked(header, transactions);
         assert!(checked_block.is_ok(), "Genesis block should validate via new_checked");
 
         // Test validation failure with empty transactions
