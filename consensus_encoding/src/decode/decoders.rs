@@ -14,6 +14,39 @@ use internals::write_err;
 use super::Decodable;
 use super::Decoder;
 
+/// Macro to reduce code duplication in composite decoder error mapping.
+/// Maps `Decoder2Error` patterns to higher-level decoder error variants.
+macro_rules! map_decoder2_error {
+    // For Decoder3: maps Decoder2Error<Decoder2Error<A, B>, C> to Decoder3Error<A, B, C>
+    (Decoder3, $error:ident, $target_error:ident) => {
+        match $error {
+            Decoder2Error::First(Decoder2Error::First(a)) => $target_error::First(a),
+            Decoder2Error::First(Decoder2Error::Second(b)) => $target_error::Second(b),
+            Decoder2Error::Second(c) => $target_error::Third(c),
+        }
+    };
+    // For Decoder4: maps Decoder2Error<Decoder2Error<A, B>, Decoder2Error<C, D>> to Decoder4Error<A, B, C, D>
+    (Decoder4, $error:ident, $target_error:ident) => {
+        match $error {
+            Decoder2Error::First(Decoder2Error::First(a)) => $target_error::First(a),
+            Decoder2Error::First(Decoder2Error::Second(b)) => $target_error::Second(b),
+            Decoder2Error::Second(Decoder2Error::First(c)) => $target_error::Third(c),
+            Decoder2Error::Second(Decoder2Error::Second(d)) => $target_error::Fourth(d),
+        }
+    };
+    // For Decoder6: maps Decoder2Error<Decoder3Error<A, B, C>, Decoder3Error<D, E, F>> to Decoder6Error<A, B, C, D, E, F>
+    (Decoder6, $error:ident, $target_error:ident) => {
+        match $error {
+            Decoder2Error::First(Decoder3Error::First(a)) => $target_error::First(a),
+            Decoder2Error::First(Decoder3Error::Second(b)) => $target_error::Second(b),
+            Decoder2Error::First(Decoder3Error::Third(c)) => $target_error::Third(c),
+            Decoder2Error::Second(Decoder3Error::First(d)) => $target_error::Fourth(d),
+            Decoder2Error::Second(Decoder3Error::Second(e)) => $target_error::Fifth(e),
+            Decoder2Error::Second(Decoder3Error::Third(f)) => $target_error::Sixth(f),
+        }
+    };
+}
+
 /// Maximum size, in bytes, of a vector we are allowed to decode.
 #[cfg(feature = "alloc")]
 const MAX_VEC_SIZE: u64 = 4_000_000;
@@ -408,20 +441,17 @@ where
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes).map_err(|error| match error {
-            Decoder2Error::First(Decoder2Error::First(a)) => Decoder3Error::First(a),
-            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder3Error::Second(b),
-            Decoder2Error::Second(c) => Decoder3Error::Third(c),
-        })
+        self.inner
+            .push_bytes(bytes)
+            .map_err(|error| map_decoder2_error!(Decoder3, error, Decoder3Error))
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let result = self.inner.end().map_err(|error| match error {
-            Decoder2Error::First(Decoder2Error::First(a)) => Decoder3Error::First(a),
-            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder3Error::Second(b),
-            Decoder2Error::Second(c) => Decoder3Error::Third(c),
-        })?;
+        let result = self
+            .inner
+            .end()
+            .map_err(|error| map_decoder2_error!(Decoder3, error, Decoder3Error))?;
 
         let ((first, second), third) = result;
         Ok((first, second, third))
@@ -467,22 +497,17 @@ where
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes).map_err(|error| match error {
-            Decoder2Error::First(Decoder2Error::First(a)) => Decoder4Error::First(a),
-            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder4Error::Second(b),
-            Decoder2Error::Second(Decoder2Error::First(c)) => Decoder4Error::Third(c),
-            Decoder2Error::Second(Decoder2Error::Second(d)) => Decoder4Error::Fourth(d),
-        })
+        self.inner
+            .push_bytes(bytes)
+            .map_err(|error| map_decoder2_error!(Decoder4, error, Decoder4Error))
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let result = self.inner.end().map_err(|error| match error {
-            Decoder2Error::First(Decoder2Error::First(a)) => Decoder4Error::First(a),
-            Decoder2Error::First(Decoder2Error::Second(b)) => Decoder4Error::Second(b),
-            Decoder2Error::Second(Decoder2Error::First(c)) => Decoder4Error::Third(c),
-            Decoder2Error::Second(Decoder2Error::Second(d)) => Decoder4Error::Fourth(d),
-        })?;
+        let result = self
+            .inner
+            .end()
+            .map_err(|error| map_decoder2_error!(Decoder4, error, Decoder4Error))?;
 
         let ((first, second), (third, fourth)) = result;
         Ok((first, second, third, fourth))
@@ -540,26 +565,17 @@ where
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes).map_err(|error| match error {
-            Decoder2Error::First(Decoder3Error::First(a)) => Decoder6Error::First(a),
-            Decoder2Error::First(Decoder3Error::Second(b)) => Decoder6Error::Second(b),
-            Decoder2Error::First(Decoder3Error::Third(c)) => Decoder6Error::Third(c),
-            Decoder2Error::Second(Decoder3Error::First(d)) => Decoder6Error::Fourth(d),
-            Decoder2Error::Second(Decoder3Error::Second(e)) => Decoder6Error::Fifth(e),
-            Decoder2Error::Second(Decoder3Error::Third(f)) => Decoder6Error::Sixth(f),
-        })
+        self.inner
+            .push_bytes(bytes)
+            .map_err(|error| map_decoder2_error!(Decoder6, error, Decoder6Error))
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let result = self.inner.end().map_err(|error| match error {
-            Decoder2Error::First(Decoder3Error::First(a)) => Decoder6Error::First(a),
-            Decoder2Error::First(Decoder3Error::Second(b)) => Decoder6Error::Second(b),
-            Decoder2Error::First(Decoder3Error::Third(c)) => Decoder6Error::Third(c),
-            Decoder2Error::Second(Decoder3Error::First(d)) => Decoder6Error::Fourth(d),
-            Decoder2Error::Second(Decoder3Error::Second(e)) => Decoder6Error::Fifth(e),
-            Decoder2Error::Second(Decoder3Error::Third(f)) => Decoder6Error::Sixth(f),
-        })?;
+        let result = self
+            .inner
+            .end()
+            .map_err(|error| map_decoder2_error!(Decoder6, error, Decoder6Error))?;
 
         let ((first, second, third), (fourth, fifth, sixth)) = result;
         Ok((first, second, third, fourth, fifth, sixth))
