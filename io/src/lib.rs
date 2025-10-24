@@ -420,10 +420,10 @@ pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std
 ///
 /// Returns any I/O error encountered while writing to the writer.
 #[cfg(feature = "encoding")]
-pub fn consensus_encode_to_writer<T, W>(object: &T, mut writer: W) -> Result<()>
+pub fn consensus_encode_to_writer<T, W>(object: &T, writer: &mut W) -> Result<()>
 where
     T: Encodable + ?Sized,
-    W: Write,
+    W: Write + ?Sized,
 {
     let mut encoder = object.encoder();
     loop {

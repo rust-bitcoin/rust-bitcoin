@@ -58,6 +58,7 @@ hash_newtype! {
 hashes::impl_hex_for_newtype!(TapLeafHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapLeafHash);
+hashes::impl_encodable!(TapLeafHash, 32); // FIXME: Get length from inner hash.
 
 sha256t_tag! {
     pub struct TapBranchTag = hash_str("TapBranch");

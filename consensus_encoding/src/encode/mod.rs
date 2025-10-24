@@ -7,6 +7,9 @@ use alloc::vec::Vec;
 
 pub mod encoders;
 
+#[cfg(feature = "alloc")]
+use self::encoders::{CompactSizeEncoder, Encoder2, SliceEncoder};
+
 /// A Bitcoin object which can be consensus-encoded.
 ///
 /// To encode something, use the [`Self::encoder`] method to obtain a
@@ -41,6 +44,21 @@ pub trait Encoder {
     /// - `true` if the encoder has advanced to a new state and [`Self::current_chunk`] will return new data.
     /// - `false` if the encoder is exhausted and has no more states.
     fn advance(&mut self) -> bool;
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Encodable> Encodable for Vec<T> {
+    type Encoder<'s>
+        = Encoder2<CompactSizeEncoder, SliceEncoder<'s, T>>
+    where
+        Self: 's;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(
+            CompactSizeEncoder::new(self.len()),
+            SliceEncoder::without_length_prefix(&self),
+        )
+    }
 }
 
 /// Implements a newtype around an encoder which implements the

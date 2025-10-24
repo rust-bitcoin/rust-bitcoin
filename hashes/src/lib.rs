@@ -120,7 +120,7 @@ use core::fmt::{self, Write as _};
 use core::{convert, hash};
 
 #[cfg(feature = "encoding")]
-use encoding::{Encodable, Encoder as _};
+use encoding::{ArrayEncoder, Encodable, Encoder};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -284,6 +284,26 @@ where
         }
     }
     engine
+}
+
+/// The encoder for the [`Hash`] type.
+#[cfg(feature = "encoding")]
+pub struct HashEncoder<const N: usize>(ArrayEncoder<N>);
+
+#[cfg(feature = "encoding")]
+impl<const N: usize> HashEncoder<N> {
+    /// Creates a new `HashEncoder`.
+    pub fn new(a: [u8; N]) -> Self { Self(crate::encoding::ArrayEncoder::without_length_prefix(a)) }
+}
+
+// FIXME: `encoder_newtype` doesn't play nicely with const generic.
+#[cfg(feature = "encoding")]
+impl<const N: usize> Encoder for HashEncoder<N> {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    #[inline]
+    fn advance(&mut self) -> bool { self.0.advance() }
 }
 
 #[cfg(test)]
