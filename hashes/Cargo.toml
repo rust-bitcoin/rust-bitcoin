@@ -24,6 +24,7 @@ small-hash = []
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1" }
 
+encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0-rc.1", default-features = false, optional = true }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, optional = true }
 
