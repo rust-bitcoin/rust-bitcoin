@@ -87,7 +87,12 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
-    taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
+    taproot::{
+        TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
+        TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE, TAPROOT_CONTROL_MAX_NODE_COUNT,
+        TAPROOT_CONTROL_MAX_SIZE, TAPROOT_CONTROL_NODE_SIZE, TAPROOT_LEAF_MASK,
+        TAPROOT_LEAF_TAPSCRIPT,
+    },
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
 

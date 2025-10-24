@@ -40,6 +40,8 @@ pub use merkle_branch::TaprootMerkleBranchBuf;
 #[doc(inline)]
 pub use primitives::{
     TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
+    TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE, TAPROOT_CONTROL_MAX_NODE_COUNT,
+    TAPROOT_CONTROL_MAX_SIZE, TAPROOT_CONTROL_NODE_SIZE, TAPROOT_LEAF_MASK, TAPROOT_LEAF_TAPSCRIPT,
 };
 
 #[doc(inline)]
@@ -141,28 +143,6 @@ mod sealed {
     impl Sealed for super::TapLeafHash {}
     impl Sealed for super::TapNodeHash {}
 }
-
-/// Maximum depth of a Taproot tree script spend path.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
-pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
-/// Size of a Taproot control node.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L228
-pub const TAPROOT_CONTROL_NODE_SIZE: usize = 32;
-/// Tapleaf mask for getting the leaf version from first byte of control block.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L225
-pub const TAPROOT_LEAF_MASK: u8 = 0xfe;
-/// Tapscript leaf version.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L226
-pub const TAPROOT_LEAF_TAPSCRIPT: u8 = 0xc0;
-/// Taproot annex prefix.
-pub const TAPROOT_ANNEX_PREFIX: u8 = 0x50;
-/// Tapscript control base size.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L227
-pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
-/// Tapscript control max size.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L230
-pub const TAPROOT_CONTROL_MAX_SIZE: usize =
-    TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
 /// The leaf script with its version.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
