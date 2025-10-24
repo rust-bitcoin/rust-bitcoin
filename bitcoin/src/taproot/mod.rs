@@ -12,7 +12,7 @@ use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
+use hashes::{sha256t, HashEngine};
 use hex::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
@@ -27,7 +27,7 @@ use crate::crypto::key::{
 };
 use crate::key::ParseXOnlyPublicKeyError;
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
-use crate::{TapScript, TapScriptBuf};
+use crate::{internal_macros, TapScript, TapScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
@@ -37,99 +37,56 @@ pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 pub use merkle_branch::TaprootMerkleBranch;
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranchBuf;
+#[doc(inline)]
+pub use primitives::{
+    TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
+};
 
 #[doc(inline)]
 pub use crate::XOnlyPublicKey;
 
 type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
-
-// Taproot test vectors from BIP-0341 state the hashes without any reversing
-sha256t_tag! {
-    pub struct TapLeafTag = hash_str("TapLeaf");
-}
-
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapLeaf\".
-    ///
-    /// This is used for computing tapscript script spend hash.
-    pub struct TapLeafHash(sha256t::Hash<TapLeafTag>);
-}
-
-hashes::impl_hex_for_newtype!(TapLeafHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapLeafHash);
-hashes::impl_encodable!(TapLeafHash, 32); // FIXME: Get length from inner hash.
-
-sha256t_tag! {
-    pub struct TapBranchTag = hash_str("TapBranch");
-}
-
-hash_newtype! {
-    /// Tagged hash used in Taproot trees.
-    ///
-    /// See BIP-0340 for tagging rules.
-    #[repr(transparent)]
-    pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
-}
-
-hashes::impl_hex_for_newtype!(TapNodeHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapNodeHash);
-
-sha256t_tag! {
-    pub struct TapTweakTag = hash_str("TapTweak");
-}
-
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapTweak\".
-    ///
-    /// This hash type is used while computing the tweaked public key.
-    pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
-}
-
-hashes::impl_hex_for_newtype!(TapTweakHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapTweakHash);
-
-impl From<TapLeafHash> for TapNodeHash {
-    fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_byte_array(leaf.to_byte_array()) }
-}
-
-impl TapTweakHash {
-    /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
-    /// `P` is the internal key and `R` is the Merkle root.
-    pub fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        merkle_root: Option<TapNodeHash>,
-    ) -> TapTweakHash {
-        let internal_key = internal_key.into();
-        let mut eng = sha256t::Hash::<TapTweakTag>::engine();
-        // always hash the key
-        eng.input(&internal_key.serialize());
-        if let Some(h) = merkle_root {
-            eng.input(h.as_ref());
-        } else {
-            // nothing to hash
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapTweakHash`] type.
+    pub trait TapTweakHashExt impl for TapTweakHash {
+        /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces
+        /// `H_taptweak(P||R)` where `P` is the internal key and `R` is the Merkle root.
+        fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
+            internal_key: K,
+            merkle_root: Option<TapNodeHash>,
+        ) -> TapTweakHash {
+            let internal_key = internal_key.into();
+            let mut eng = sha256t::Hash::<TapTweakTag>::engine();
+            // always hash the key
+            eng.input(&internal_key.serialize());
+            if let Some(h) = merkle_root {
+                eng.input(h.as_ref());
+            } else {
+                // nothing to hash
+            }
+            let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
+            TapTweakHash::from_byte_array(inner.to_byte_array())
         }
-        let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
-        TapTweakHash::from_byte_array(inner.to_byte_array())
-    }
 
-    /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
-    pub fn to_scalar(self) -> Scalar {
-        // This is statistically extremely unlikely to panic.
-        Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
+        /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
+        fn to_scalar(self) -> Scalar {
+            // This is statistically extremely unlikely to panic.
+            Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
+        }
     }
 }
 
-impl TapLeafHash {
-    /// Computes the leaf hash from components.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> TapLeafHash {
-        let mut eng = sha256t::Hash::<TapLeafTag>::engine();
-        ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
-        script.consensus_encode(&mut eng).expect("engines don't error");
-        let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
-        TapLeafHash::from_byte_array(inner.to_byte_array())
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapLeafHash`] type.
+    pub trait TapLeafHashExt impl for TapLeafHash {
+        /// Computes the leaf hash from components.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> TapLeafHash {
+            let mut eng = sha256t::Hash::<TapLeafTag>::engine();
+            ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
+            script.consensus_encode(&mut eng).expect("engines don't error");
+            let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
+            TapLeafHash::from_byte_array(inner.to_byte_array())
+        }
     }
 }
 
@@ -141,22 +98,25 @@ impl From<&LeafNode> for TapNodeHash {
     fn from(leaf: &LeafNode) -> TapNodeHash { leaf.node_hash() }
 }
 
-impl TapNodeHash {
-    /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: TapNodeHash, b: TapNodeHash) -> TapNodeHash {
-        combine_node_hashes(a, b).0
-    }
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapNodeHash`] type.
+    pub trait TapNodeHashExt impl for TapNodeHash {
+        /// Computes branch hash given two hashes of the nodes underneath it.
+        fn from_node_hashes(a: TapNodeHash, b: TapNodeHash) -> TapNodeHash {
+            combine_node_hashes(a, b).0
+        }
 
-    /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
-    ///
-    /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
-    /// hash is constructed from a hidden node. This also has better ergonomics
-    /// because it does not require the caller to import the Hash trait.
-    pub fn assume_hidden(hash: [u8; 32]) -> TapNodeHash { TapNodeHash::from_byte_array(hash) }
+        /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
+        ///
+        /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
+        /// hash is constructed from a hidden node. This also has better ergonomics
+        /// because it does not require the caller to import the Hash trait.
+        fn assume_hidden(hash: [u8; 32]) -> TapNodeHash { TapNodeHash::from_byte_array(hash) }
 
-    /// Computes the [`TapNodeHash`] from a script and a leaf version.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> TapNodeHash {
-        TapNodeHash::from(TapLeafHash::from_script(script, ver))
+        /// Computes the [`TapNodeHash`] from a script and a leaf version.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> TapNodeHash {
+            TapNodeHash::from(TapLeafHash::from_script(script, ver))
+        }
     }
 }
 
@@ -173,6 +133,13 @@ fn combine_node_hashes(a: TapNodeHash, b: TapNodeHash) -> (TapNodeHash, bool) {
     };
     let inner = sha256t::Hash::<TapBranchTag>::from_engine(eng);
     (TapNodeHash::from_byte_array(inner.to_byte_array()), a < b)
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::TapTweakHash {}
+    impl Sealed for super::TapLeafHash {}
+    impl Sealed for super::TapNodeHash {}
 }
 
 /// Maximum depth of a Taproot tree script spend path.

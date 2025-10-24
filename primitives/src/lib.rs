@@ -47,6 +47,7 @@ pub mod merkle_tree;
 pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
+pub mod taproot;
 pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
@@ -86,6 +87,7 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
+    taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
 
