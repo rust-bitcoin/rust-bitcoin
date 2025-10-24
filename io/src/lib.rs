@@ -41,6 +41,9 @@ mod hash;
 use alloc::vec::Vec;
 use core::cmp;
 
+#[cfg(feature = "encoding")]
+use encoding::{Encodable, Encoder as _};
+
 #[cfg(feature = "std")]
 pub use bridge::{FromStd, ToStd};
 
@@ -403,6 +406,34 @@ pub const fn from_std<T>(std_io: T) -> FromStd<T> { FromStd::new(std_io) }
 #[cfg(feature = "std")]
 #[inline]
 pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std_io) }
+
+/// Consensus encodes an object to an I/O writer.
+///
+/// # Performance
+///
+/// This method writes data in potentially small chunks based on the encoder's
+/// internal chunking strategy. For optimal performance with unbuffered writers
+/// (like [`std::fs::File`] or [`std::net::TcpStream`]), consider wrapping your
+/// writer with [`std::io::BufWriter`].
+///
+/// # Errors
+///
+/// Returns any I/O error encountered while writing to the writer.
+#[cfg(feature = "encoding")]
+pub fn consensus_encode_to_writer<T, W>(object: &T, mut writer: W) -> Result<()>
+where
+    T: Encodable + ?Sized,
+    W: Write,
+{
+    let mut encoder = object.encoder();
+    loop {
+        writer.write_all(encoder.current_chunk())?;
+        if !encoder.advance() {
+            break;
+        }
+    }
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {

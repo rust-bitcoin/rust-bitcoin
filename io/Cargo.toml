@@ -15,12 +15,13 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hashes?/std", "internals/std"]
-alloc = ["hashes?/alloc", "internals/alloc"]
+std = ["alloc", "hashes?/std", "encoding?/std", "internals/std"]
+alloc = ["hashes?/alloc", "encoding?/alloc", "internals/alloc"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals" }
 
+encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0-rc.1", default-features = false, optional = true }
 hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false, optional = true }
 
 [dev-dependencies]
