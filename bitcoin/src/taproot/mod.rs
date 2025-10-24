@@ -17,7 +17,7 @@ use hex::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
-use internals::{impl_to_hex_from_lower_hex, write_err};
+use internals::write_err;
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
@@ -42,7 +42,10 @@ pub use primitives::{
     TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
     TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE, TAPROOT_CONTROL_MAX_NODE_COUNT,
     TAPROOT_CONTROL_MAX_SIZE, TAPROOT_CONTROL_NODE_SIZE, TAPROOT_LEAF_MASK, TAPROOT_LEAF_TAPSCRIPT,
+    LeafVersion, FutureLeafVersion,
 };
+#[doc(no_inline)]
+pub use primitives::taproot::InvalidTaprootLeafVersionError;
 
 #[doc(inline)]
 pub use crate::XOnlyPublicKey;
@@ -1262,155 +1265,6 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
     }
 }
 
-/// Inner type representing future (non-tapscript) leaf versions. See [`LeafVersion::Future`].
-///
-/// NB: NO PUBLIC CONSTRUCTOR!
-/// The only way to construct this is by converting `u8` to [`LeafVersion`] and then extracting it.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct FutureLeafVersion(u8);
-
-impl FutureLeafVersion {
-    pub(self) fn from_consensus(
-        version: u8,
-    ) -> Result<FutureLeafVersion, InvalidTaprootLeafVersionError> {
-        match version {
-            TAPROOT_LEAF_TAPSCRIPT => unreachable!(
-                "FutureLeafVersion::from_consensus should never be called for 0xC0 value"
-            ),
-            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
-            odd if odd & 0xFE != odd => Err(InvalidTaprootLeafVersionError(odd)),
-            even => Ok(FutureLeafVersion(even)),
-        }
-    }
-
-    /// Returns the consensus representation of this [`FutureLeafVersion`].
-    #[inline]
-    pub fn to_consensus(self) -> u8 { self.0 }
-}
-
-impl fmt::Display for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl fmt::LowerHex for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-impl_to_hex_from_lower_hex!(FutureLeafVersion, |_| 2);
-
-impl fmt::UpperHex for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
-}
-
-/// The leaf version for tapleafs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum LeafVersion {
-    /// BIP-0342 tapscript.
-    TapScript,
-
-    /// Future leaf version.
-    Future(FutureLeafVersion),
-}
-
-impl LeafVersion {
-    /// Constructs a new [`LeafVersion`] from consensus byte representation.
-    ///
-    /// # Errors
-    ///
-    /// - If the last bit of the `version` is odd.
-    /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
-    pub fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
-        match version {
-            TAPROOT_LEAF_TAPSCRIPT => Ok(LeafVersion::TapScript),
-            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
-            future => FutureLeafVersion::from_consensus(future).map(LeafVersion::Future),
-        }
-    }
-
-    /// Returns the consensus representation of this [`LeafVersion`].
-    pub fn to_consensus(self) -> u8 {
-        match self {
-            LeafVersion::TapScript => TAPROOT_LEAF_TAPSCRIPT,
-            LeafVersion::Future(version) => version.to_consensus(),
-        }
-    }
-}
-
-impl fmt::Display for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match (self, f.alternate()) {
-            (LeafVersion::TapScript, true) => f.write_str("tapscript"),
-            (LeafVersion::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (LeafVersion::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
-            (LeafVersion::Future(version), false) => fmt::Display::fmt(version, f),
-        }
-    }
-}
-
-impl fmt::LowerHex for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.to_consensus(), f)
-    }
-}
-impl_to_hex_from_lower_hex!(LeafVersion, |_| 2);
-
-impl fmt::UpperHex for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.to_consensus(), f)
-    }
-}
-
-/// Serializes [`LeafVersion`] as a `u8` using consensus encoding.
-#[cfg(feature = "serde")]
-impl serde::Serialize for LeafVersion {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_u8(self.to_consensus())
-    }
-}
-
-/// Deserializes [`LeafVersion`] as a `u8` using consensus encoding.
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for LeafVersion {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct U8Visitor;
-        impl serde::de::Visitor<'_> for U8Visitor {
-            type Value = LeafVersion;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a valid consensus-encoded Taproot leaf version")
-            }
-
-            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                let value = u8::try_from(value).map_err(|_| {
-                    E::invalid_value(
-                        serde::de::Unexpected::Unsigned(value),
-                        &"consensus-encoded leaf version as u8",
-                    )
-                })?;
-                LeafVersion::from_consensus(value).map_err(|_| {
-                    E::invalid_value(
-                        ::serde::de::Unexpected::Unsigned(value as u64),
-                        &"consensus-encoded leaf version as u8",
-                    )
-                })
-            }
-        }
-
-        deserializer.deserialize_u8(U8Visitor)
-    }
-}
-
 /// Detailed error type for Taproot builder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -1586,28 +1440,6 @@ impl fmt::Display for InvalidMerkleTreeDepthError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidMerkleTreeDepthError {}
-
-/// The last bit of tapleaf version must be zero.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidTaprootLeafVersionError(u8);
-
-impl InvalidTaprootLeafVersionError {
-    /// Accessor for the invalid leaf version.
-    pub fn invalid_leaf_version(&self) -> u8 { self.0 }
-}
-
-impl From<Infallible> for InvalidTaprootLeafVersionError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for InvalidTaprootLeafVersionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "leaf version({}) must have the least significant bit 0", self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidTaprootLeafVersionError {}
 
 /// Invalid control block size.
 #[derive(Debug, Clone, PartialEq, Eq)]
