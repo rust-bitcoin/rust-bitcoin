@@ -240,6 +240,66 @@ impl Encoder for CompactSizeEncoder {
     }
 }
 
+/// Encoder for an unsigned 8-bit integer.
+pub struct U8Encoder {
+    buf: Option<[u8; 1]>,
+}
+
+impl U8Encoder {
+    /// Constructs a new `U8Encoder`.
+    pub fn new(value: u8) -> Self { Self { buf: Some([value]) } }
+}
+
+impl Encoder for U8Encoder {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.buf.as_ref().map(|b| &b[..]).unwrap_or_default() }
+
+    #[inline]
+    fn advance(&mut self) -> bool {
+        self.buf = None;
+        false
+    }
+}
+
+impl Encodable for u8 {
+    type Encoder<'s>
+        = U8Encoder
+    where
+        Self: 's;
+
+    fn encoder(&self) -> Self::Encoder<'_> { U8Encoder::new(*self) }
+}
+
+/// Encoder for an unsigned 32-bit integer.
+pub struct U32Encoder {
+    buf: Option<[u8; 4]>,
+}
+
+impl U32Encoder {
+    /// Constructs a new `U32Encoder`.
+    pub fn new(value: u32) -> Self { Self { buf: Some(value.to_le_bytes()) } }
+}
+
+impl Encoder for U32Encoder {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.buf.as_ref().map(|b| &b[..]).unwrap_or_default() }
+
+    #[inline]
+    fn advance(&mut self) -> bool {
+        self.buf = None;
+        false
+    }
+}
+
+impl Encodable for u32 {
+    type Encoder<'s>
+        = U32Encoder
+    where
+        Self: 's;
+
+    fn encoder(&self) -> Self::Encoder<'_> { U32Encoder::new(*self) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -593,5 +653,25 @@ mod tests {
         assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
+    }
+
+    #[test]
+    fn u8_encoder() {
+        let x: u8 = 42;
+        let mut encoder = x.encoder();
+
+        assert_eq!(encoder.current_chunk(), &[42]);
+        assert!(!encoder.advance());
+        assert!(encoder.current_chunk().is_empty());
+    }
+
+    #[test]
+    fn u32_encoder() {
+        let x: u32 = 0xcafebabe;
+        let mut encoder = x.encoder();
+
+        assert_eq!(encoder.current_chunk(), &[0xbe, 0xba, 0xfe, 0xca]);
+        assert!(!encoder.advance());
+        assert!(encoder.current_chunk().is_empty());
     }
 }
