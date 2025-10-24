@@ -30,9 +30,7 @@ impl<'sl> BytesEncoder<'sl> {
 }
 
 impl Encoder for BytesEncoder<'_> {
-    fn current_chunk(&self) -> &[u8] {
-        self.sl.unwrap_or_default()
-    }
+    fn current_chunk(&self) -> &[u8] { self.sl.unwrap_or_default() }
 
     fn advance(&mut self) -> bool {
         self.sl = None;
@@ -592,10 +590,7 @@ mod tests {
 
         // 0xFF + u64
         let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64);
-        assert_eq!(
-            e.current_chunk(),
-            &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]
-        );
+        assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
     }

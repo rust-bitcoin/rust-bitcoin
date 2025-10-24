@@ -393,32 +393,27 @@ impl Decoder for TransactionDecoder {
                         // Still more bytes required.
                         return Ok(true);
                     }
-                },
-                State::Inputs(_, _, decoder) => {
+                }
+                State::Inputs(_, _, decoder) =>
                     if decoder.push_bytes(bytes)? {
                         return Ok(true);
-                    }
-                },
-                State::SegwitFlag(_) => {
+                    },
+                State::SegwitFlag(_) =>
                     if bytes.is_empty() {
                         return Ok(true);
-                    }
-                },
-                State::Outputs(_, _, _, decoder) => {
+                    },
+                State::Outputs(_, _, _, decoder) =>
                     if decoder.push_bytes(bytes)? {
                         return Ok(true);
-                    }
-                },
-                State::Witnesses(_, _, _, _, decoder) => {
+                    },
+                State::Witnesses(_, _, _, _, decoder) =>
                     if decoder.push_bytes(bytes)? {
                         return Ok(true);
-                    }
-                },
-                State::LockTime(_, _, _, decoder) => {
+                    },
+                State::LockTime(_, _, _, decoder) =>
                     if decoder.push_bytes(bytes)? {
                         return Ok(true);
-                    }
-                },
+                    },
                 State::Done(..) => return Ok(false),
                 State::Errored => panic!("call to push_bytes() after decoder errored"),
             }
@@ -1719,8 +1714,8 @@ mod tests {
         assert_eq!(
             encoder.current_chunk(),
             &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
             ][..]
         );
         assert!(encoder.advance());
@@ -1766,8 +1761,8 @@ mod tests {
         assert_eq!(
             encoder.current_chunk(),
             &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
             ][..]
         );
         assert!(encoder.advance());
@@ -1814,8 +1809,8 @@ mod tests {
         assert_eq!(
             encoder.current_chunk(),
             &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
             ][..]
         );
         assert!(encoder.advance());
@@ -1881,10 +1876,9 @@ mod tests {
         assert_eq!(
             encoder.current_chunk(),
             &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
             ][..]
-
         );
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
@@ -1998,8 +1992,8 @@ mod tests {
         assert_eq!(
             encoder.current_chunk(),
             &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13,
-                12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
+                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
             ][..]
         );
         assert!(encoder.advance());
