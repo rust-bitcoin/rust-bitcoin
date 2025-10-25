@@ -340,9 +340,7 @@ mod tests {
         let mut encoder = SliceEncoder::without_length_prefix(slice);
 
         assert!(encoder.current_chunk().is_empty());
-        // FIXME: Its strange the we can't do this?
-        // assert!(encoder.advance());
-        // assert!(encoder.current_chunk().is_empty());
+        // The slice advanced is optimized to skip over empty chunks.
         assert!(!encoder.advance());
         assert!(encoder.current_chunk().is_empty());
     }
