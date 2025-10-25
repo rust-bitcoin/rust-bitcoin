@@ -1464,7 +1464,7 @@ mod tests {
             Err(error_fee_rate)
         );
         assert_eq!(
-            psbt.clone().extract_tx_fee_rate_limit().map_err(|e| match e {
+            psbt.extract_tx_fee_rate_limit().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 other => panic!("expected AbsurdFeeRate error, got {other:?}"),
             }),
@@ -2443,7 +2443,7 @@ mod tests {
         let derived_xpriv = parent_xpriv.derive_xpriv(&secp, &path_prefix).unwrap();
 
         let derived_key = derived_xpriv
-            .get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(&secp), path.clone())), &secp)
+            .get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(&secp), path)), &secp)
             .unwrap();
 
         assert_eq!(derived_key, Some(expected_private_key));

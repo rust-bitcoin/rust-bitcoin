@@ -701,7 +701,7 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
 
-        assert_eq!(merkle_block.header.block_hash(), block.clone().block_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
@@ -731,7 +731,7 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
 
-        assert_eq!(merkle_block.header.block_hash(), block.clone().block_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
