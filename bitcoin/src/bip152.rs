@@ -289,10 +289,6 @@ pub struct BlockTransactionsRequest {
 }
 
 impl Encodable for BlockTransactionsRequest {
-    /// # Panics
-    ///
-    /// Panics if the index overflows [`u64::MAX`]. This happens when [`BlockTransactionsRequest::indexes`]
-    /// contains an entry with the value [`u64::MAX`] as `u64` overflows during differential encoding.
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.block_hash.consensus_encode(w)?;
         // Manually encode indexes because they are differentially encoded as CompactSize.

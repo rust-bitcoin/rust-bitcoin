@@ -393,9 +393,6 @@ impl TransactionExt for Transaction {
         Weight::from_wu(wu.to_u64())
     }
 
-    /// # Panics
-    ///
-    /// If the size calculation overflows.
     fn base_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
 
@@ -408,9 +405,6 @@ impl TransactionExt for Transaction {
         size + absolute::LockTime::SIZE
     }
 
-    /// # Panics
-    ///
-    /// If the size calculation overflows.
     #[inline]
     fn total_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.

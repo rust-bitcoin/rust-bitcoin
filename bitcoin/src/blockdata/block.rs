@@ -308,9 +308,6 @@ impl BlockCheckedExt for Block<Checked> {
         Weight::from_wu(wu.to_u64())
     }
 
-    /// # Panics
-    ///
-    /// If the size calculation overflows.
     fn total_size(&self) -> usize {
         let mut size = Header::SIZE;
 
