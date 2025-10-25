@@ -99,7 +99,7 @@ impl<E: fmt::Debug + std::error::Error + 'static> std::error::Error for DecodeEr
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// And I/O error.
+    /// An I/O error.
     Io(io::Error),
     /// Error parsing encoded object.
     Parse(ParseError),
