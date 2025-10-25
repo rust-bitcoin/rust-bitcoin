@@ -293,7 +293,7 @@ impl BlockCheckedExt for Block<Checked> {
     fn new_checked(
         header: Header,
         transactions: Vec<Transaction>,
-    ) -> Result<Block<Checked>, InvalidBlockError> {
+    ) -> Result<Self, InvalidBlockError> {
         let block = Block::new_unchecked(header, transactions);
         block.validate()
     }

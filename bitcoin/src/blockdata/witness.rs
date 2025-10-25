@@ -119,7 +119,7 @@ internal_macros::define_extension_trait! {
         /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
         ///
         /// It is expected that `pubkey` is related to the secret key used to create `signature`.
-        fn p2wpkh(signature: ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Witness {
+        fn p2wpkh(signature: ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Self {
             let mut witness = Witness::new();
             witness.push(signature.serialize());
             witness.push(pubkey.serialize());
@@ -127,7 +127,7 @@ internal_macros::define_extension_trait! {
         }
 
         /// Constructs a new witness required to do a key path spend of a P2TR output.
-        fn p2tr_key_spend(signature: &taproot::Signature) -> Witness {
+        fn p2tr_key_spend(signature: &taproot::Signature) -> Self {
             let mut witness = Witness::new();
             witness.push(signature.serialize());
             witness
