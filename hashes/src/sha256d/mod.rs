@@ -18,7 +18,7 @@ impl Hash {
 
         let mut ret = [0; 32];
         ret.copy_from_slice(sha2d.as_byte_array());
-        Hash(ret)
+        Self(ret)
     }
 }
 

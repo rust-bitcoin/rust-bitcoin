@@ -15,7 +15,7 @@ impl Hash {
     pub fn from_engine(e: HashEngine) -> Self {
         let mut ret = [0; 48];
         ret.copy_from_slice(&sha512::Hash::from_engine(e.0).as_byte_array()[..48]);
-        Hash(ret)
+        Self(ret)
     }
 }
 
