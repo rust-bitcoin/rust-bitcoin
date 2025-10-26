@@ -101,3 +101,6 @@ required-features = ["std", "serde"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)', 'cfg(kani)'] }
+
+[lints.clippy]
+use_self = "warn"

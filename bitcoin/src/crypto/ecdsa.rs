@@ -34,8 +34,8 @@ pub struct Signature {
 
 impl Signature {
     /// Constructs a new ECDSA Bitcoin signature for [`EcdsaSighashType::All`].
-    pub fn sighash_all(signature: secp256k1::ecdsa::Signature) -> Signature {
-        Signature { signature, sighash_type: EcdsaSighashType::All }
+    pub fn sighash_all(signature: secp256k1::ecdsa::Signature) -> Self {
+        Self { signature, sighash_type: EcdsaSighashType::All }
     }
 
     /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
@@ -44,7 +44,7 @@ impl Signature {
         let sighash_type = EcdsaSighashType::from_standard(*sighash_type as u32)?;
         let signature =
             secp256k1::ecdsa::Signature::from_der(sig).map_err(DecodeError::Secp256k1)?;
-        Ok(Signature { signature, sighash_type })
+        Ok(Self { signature, sighash_type })
     }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format).
@@ -186,7 +186,7 @@ impl fmt::UpperHex for SerializedSignature {
 
 impl PartialEq for SerializedSignature {
     #[inline]
-    fn eq(&self, other: &SerializedSignature) -> bool { **self == **other }
+    fn eq(&self, other: &Self) -> bool { **self == **other }
 }
 
 impl Eq for SerializedSignature {}
@@ -325,7 +325,7 @@ impl<'a> Arbitrary<'a> for Signature {
         signature_bytes[..32].copy_from_slice(&bytes);
         signature_bytes[32..].copy_from_slice(&bytes);
 
-        Ok(Signature {
+        Ok(Self {
             signature: secp256k1::ecdsa::Signature::from_compact(&signature_bytes).unwrap(),
             sighash_type: EcdsaSighashType::arbitrary(u)?,
         })

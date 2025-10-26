@@ -34,7 +34,7 @@ impl fmt::Display for SerializedSignature {
 
 impl PartialEq for SerializedSignature {
     #[inline]
-    fn eq(&self, other: &SerializedSignature) -> bool { **self == **other }
+    fn eq(&self, other: &Self) -> bool { **self == **other }
 }
 
 impl PartialEq<[u8]> for SerializedSignature {
@@ -48,13 +48,13 @@ impl PartialEq<SerializedSignature> for [u8] {
 }
 
 impl PartialOrd for SerializedSignature {
-    fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for SerializedSignature {
-    fn cmp(&self, other: &SerializedSignature) -> core::cmp::Ordering { (**self).cmp(&**other) }
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
 }
 
 impl PartialOrd<[u8]> for SerializedSignature {
@@ -139,7 +139,7 @@ impl SerializedSignature {
     #[inline]
     pub(crate) fn from_raw_parts(data: [u8; MAX_LEN], len: usize) -> Self {
         assert!(len <= MAX_LEN, "attempt to set length to {} but the maximum is {}", len, MAX_LEN);
-        SerializedSignature { data, len }
+        Self { data, len }
     }
 
     /// Get the len of the used data.
@@ -162,7 +162,7 @@ impl SerializedSignature {
     /// Constructs a new SerializedSignature from a Signature.
     /// (this serializes it)
     #[inline]
-    pub fn from_signature(sig: Signature) -> SerializedSignature { sig.serialize() }
+    pub fn from_signature(sig: Signature) -> Self { sig.serialize() }
 
     /// Writes this serialized signature to a `writer`.
     #[inline]
@@ -190,7 +190,7 @@ mod into_iter {
     impl IntoIter {
         #[inline]
         pub(crate) fn new(signature: SerializedSignature) -> Self {
-            IntoIter {
+            Self {
                 signature,
                 // for all unsigned n: 0 <= n
                 pos: 0,

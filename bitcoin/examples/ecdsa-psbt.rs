@@ -124,7 +124,7 @@ impl ColdStorage {
         let input_xpriv = master_xpriv.derive_xpriv(secp, &path).expect("derivation path is short");
         let input_xpub = Xpub::from_xpriv(secp, &input_xpriv);
 
-        let wallet = ColdStorage { master_xpriv, master_xpub };
+        let wallet = Self { master_xpriv, master_xpub };
         let fingerprint = wallet.master_fingerprint();
 
         Ok((wallet, fingerprint, account_0_xpub, input_xpub))
@@ -169,7 +169,7 @@ impl WatchOnly {
     /// The reason for importing the `input_xpub` is so one can use bitcoind to grab a valid input
     /// to verify the workflow presented in this file.
     fn new(account_0_xpub: Xpub, input_xpub: Xpub, master_fingerprint: Fingerprint) -> Self {
-        WatchOnly { account_0_xpub, input_xpub, master_fingerprint }
+        Self { account_0_xpub, input_xpub, master_fingerprint }
     }
 
     /// Creates the PSBT, in BIP-0174 parlance this is the 'Creator'.
@@ -284,7 +284,7 @@ fn previous_output() -> TxOut {
 struct Error(Box<dyn std::error::Error>);
 
 impl<T: std::error::Error + 'static> From<T> for Error {
-    fn from(e: T) -> Self { Error(Box::new(e)) }
+    fn from(e: T) -> Self { Self(Box::new(e)) }
 }
 
 impl fmt::Debug for Error {

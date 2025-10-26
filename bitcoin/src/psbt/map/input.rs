@@ -169,7 +169,7 @@ impl FromStr for PsbtSighashType {
 
         // We accept non-standard sighash values.
         if let Ok(inner) = u32::from_str_radix(s.trim_start_matches("0x"), 16) {
-            return Ok(PsbtSighashType { inner });
+            return Ok(Self { inner });
         }
 
         Err(SighashTypeParseError { unrecognized: s.to_owned() })
@@ -177,13 +177,13 @@ impl FromStr for PsbtSighashType {
 }
 impl From<EcdsaSighashType> for PsbtSighashType {
     fn from(ecdsa_hash_ty: EcdsaSighashType) -> Self {
-        PsbtSighashType { inner: ecdsa_hash_ty as u32 }
+        Self { inner: ecdsa_hash_ty as u32 }
     }
 }
 
 impl From<TapSighashType> for PsbtSighashType {
     fn from(taproot_hash_ty: TapSighashType) -> Self {
-        PsbtSighashType { inner: taproot_hash_ty as u32 }
+        Self { inner: taproot_hash_ty as u32 }
     }
 }
 
@@ -202,7 +202,7 @@ impl PsbtSighashType {
     /// let _ecdsa_sighash_anyone_can_pay: PsbtSighashType = EcdsaSighashType::AllPlusAnyoneCanPay.into();
     /// let _tap_sighash_anyone_can_pay: PsbtSighashType = TapSighashType::AllPlusAnyoneCanPay.into();
     /// ```
-    pub const ALL: PsbtSighashType = PsbtSighashType { inner: 0x01 };
+    pub const ALL: Self = Self { inner: 0x01 };
 
     /// Returns the [`EcdsaSighashType`] if the [`PsbtSighashType`] can be
     /// converted to one.
@@ -224,7 +224,7 @@ impl PsbtSighashType {
     ///
     /// Allows construction of a non-standard or non-valid sighash flag
     /// ([`EcdsaSighashType`], [`TapSighashType`] respectively).
-    pub fn from_u32(n: u32) -> PsbtSighashType { PsbtSighashType { inner: n } }
+    pub fn from_u32(n: u32) -> Self { Self { inner: n } }
 
     /// Converts [`PsbtSighashType`] to a raw `u32` sighash flag.
     ///
