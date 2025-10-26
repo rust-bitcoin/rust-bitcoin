@@ -1498,6 +1498,27 @@ mod tests {
     use crate::absolute::LockTime;
 
     #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn transaction_encode_decode_roundtrip() {
+        let tx = Transaction {
+            version: Version::TWO,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![segwit_tx_in(), segwit_tx_in()],
+            outputs: vec![tx_out(), tx_out()],
+        };
+
+        let encoded = encoding::encode_to_vec(&tx);
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = encoded.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let decoded = decoder.end().unwrap();
+
+        assert_eq!(tx, decoded);
+    }
+
+    #[test]
     fn sanity_check() {
         let version = Version(123);
         assert_eq!(version.to_u32(), 123);
@@ -2108,5 +2129,32 @@ mod tests {
             format!("{:x}", tx.compute_wtxid()),
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn decode_segwit_without_witnesses_errors() {
+        // A SegWit-serialized transaction with 1 input but no witnesses for any input.
+        let tx_bytes = hex!(
+            "02000000\
+             0001\
+             01\
+             0000000000000000000000000000000000000000000000000000000000000000\
+             00000000\
+             00\
+             ffffffff\
+             01\
+             0100000000000000\
+             00\
+             00\
+             00000000"
+        );
+
+        let mut slice = tx_bytes.as_slice();
+        let err = Transaction::decoder()
+            .push_bytes(&mut slice)
+            .expect_err("segwit tx with no witnesses should error");
+
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NoWitnesses));
     }
 }

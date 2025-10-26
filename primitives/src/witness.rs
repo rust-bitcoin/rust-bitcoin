@@ -846,7 +846,6 @@ mod test {
     fn single_empty_element() -> Witness { Witness::from([[0u8; 0]]) }
 
     #[test]
-
     fn witness_single_empty_element() {
         let mut got = Witness::new();
         got.push([]);
@@ -1276,5 +1275,29 @@ mod test {
         let got = decoder.end().unwrap();
 
         assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_max_length() {
+        let mut encoded = Vec::new();
+        encoded.extend_from_slice(compact_size::encode(1usize).as_slice());
+        encoded.extend_from_slice(compact_size::encode(4_000_000usize).as_slice());
+        encoded.resize(encoded.len() + 4_000_000, 0u8);
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+        decoder.push_bytes(&mut slice).unwrap();
+        let witness = decoder.end().unwrap();
+        assert_eq!(witness[0].len(), 4_000_000);
+
+        let mut encoded = Vec::new();
+        encoded.extend_from_slice(compact_size::encode(1usize).as_slice());
+        encoded.extend_from_slice(compact_size::encode(4_000_001usize).as_slice());
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+        let err = decoder.push_bytes(&mut slice).unwrap_err();
+        assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixInvalid(_))));
     }
 }
