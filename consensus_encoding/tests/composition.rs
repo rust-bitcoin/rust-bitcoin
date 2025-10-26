@@ -34,13 +34,13 @@ enum CompositeError {
 }
 
 impl From<UnexpectedEofError> for CompositeError {
-    fn from(eof: UnexpectedEofError) -> Self { CompositeError::Eof(eof) }
+    fn from(eof: UnexpectedEofError) -> Self { Self::Eof(eof) }
 }
 
 impl core::fmt::Display for CompositeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            CompositeError::Eof(eof) => write!(f, "Composite error: {}", eof),
+            Self::Eof(eof) => write!(f, "Composite error: {}", eof),
         }
     }
 }
@@ -181,7 +181,7 @@ fn composition_error_unification() {
     }
 
     impl From<UnexpectedEofError> for NestedError {
-        fn from(eof: UnexpectedEofError) -> Self { NestedError::UnexpectedEof(eof) }
+        fn from(eof: UnexpectedEofError) -> Self { Self::UnexpectedEof(eof) }
     }
 
     /// Error for top level encoder.
@@ -192,14 +192,14 @@ fn composition_error_unification() {
     }
 
     impl From<UnexpectedEofError> for TopLevelError {
-        fn from(eof: UnexpectedEofError) -> Self { TopLevelError::UnexpectedEof(eof) }
+        fn from(eof: UnexpectedEofError) -> Self { Self::UnexpectedEof(eof) }
     }
 
     impl From<NestedError> for TopLevelError {
         fn from(err: NestedError) -> Self {
             match err {
-                NestedError::UnexpectedEof(eof) => TopLevelError::UnexpectedEof(eof),
-                NestedError::BadChecksum => TopLevelError::Validation(err),
+                NestedError::UnexpectedEof(eof) => Self::UnexpectedEof(eof),
+                NestedError::BadChecksum => Self::Validation(err),
             }
         }
     }
