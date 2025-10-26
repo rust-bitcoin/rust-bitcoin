@@ -37,3 +37,6 @@ required-features = ["std"]
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.clippy]
+use_self = "warn"
