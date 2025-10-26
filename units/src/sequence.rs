@@ -38,25 +38,25 @@ impl Sequence {
     /// The maximum allowable sequence number.
     ///
     /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
-    pub const MAX: Self = Sequence(0xFFFF_FFFF);
+    pub const MAX: Self = Self(0xFFFF_FFFF);
     /// Zero value sequence.
     ///
     /// This sequence number enables replace-by-fee and absolute lock time.
-    pub const ZERO: Self = Sequence(0);
+    pub const ZERO: Self = Self(0);
     /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
-    pub const FINAL: Self = Sequence::MAX;
+    pub const FINAL: Self = Self::MAX;
     /// The sequence number that enables absolute lock time but disables replace-by-fee
     /// and relative lock time.
-    pub const ENABLE_LOCKTIME_NO_RBF: Self = Sequence::MIN_NO_RBF;
+    pub const ENABLE_LOCKTIME_NO_RBF: Self = Self::MIN_NO_RBF;
     /// The sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
     #[deprecated(since = "TBD", note = "use `ENABLE_LOCKTIME_AND_RBF` instead")]
-    pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFF_FFFD);
+    pub const ENABLE_RBF_NO_LOCKTIME: Self = Self(0xFFFF_FFFD);
     /// The maximum sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
     ///
     /// This sequence number has no meaning other than to enable RBF and the absolute locktime.
-    pub const ENABLE_LOCKTIME_AND_RBF: Self = Sequence(0xFFFF_FFFD);
+    pub const ENABLE_LOCKTIME_AND_RBF: Self = Self(0xFFFF_FFFD);
 
     /// The number of bytes that a sequence number contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
@@ -68,7 +68,7 @@ impl Sequence {
     /// (Explicit Signalling [BIP-0125]).
     ///
     /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
-    const MIN_NO_RBF: Self = Sequence(0xFFFF_FFFE);
+    const MIN_NO_RBF: Self = Self(0xFFFF_FFFE);
     /// BIP-0068 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x8000_0000;
     /// BIP-0068 relative lock time type flag mask.
@@ -76,7 +76,7 @@ impl Sequence {
 
     /// Returns `true` if the sequence number enables absolute lock-time (`Transaction::lock_time`).
     #[inline]
-    pub fn enables_absolute_lock_time(self) -> bool { self != Sequence::MAX }
+    pub fn enables_absolute_lock_time(self) -> bool { self != Self::MAX }
 
     /// Returns `true` if the sequence number indicates that the transaction is finalized.
     ///
@@ -105,24 +105,24 @@ impl Sequence {
     /// Replace by fee is signaled by the sequence being less than 0xfffffffe which is checked by
     /// this method. Note, this is the highest "non-final" value (see [`Sequence::is_final`]).
     #[inline]
-    pub fn is_rbf(self) -> bool { self < Sequence::MIN_NO_RBF }
+    pub fn is_rbf(self) -> bool { self < Self::MIN_NO_RBF }
 
     /// Returns `true` if the sequence has a relative lock-time.
     #[inline]
     pub fn is_relative_lock_time(self) -> bool {
-        self.0 & Sequence::LOCK_TIME_DISABLE_FLAG_MASK == 0
+        self.0 & Self::LOCK_TIME_DISABLE_FLAG_MASK == 0
     }
 
     /// Returns `true` if the sequence number encodes a block based relative lock-time.
     #[inline]
     pub fn is_height_locked(self) -> bool {
-        self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK == 0)
+        self.is_relative_lock_time() & (self.0 & Self::LOCK_TYPE_MASK == 0)
     }
 
     /// Returns `true` if the sequence number encodes a time interval based relative lock-time.
     #[inline]
     pub fn is_time_locked(self) -> bool {
-        self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)
+        self.is_relative_lock_time() & (self.0 & Self::LOCK_TYPE_MASK > 0)
     }
 
     /// Constructs a new `Sequence` from a prefixed hex string.
@@ -151,7 +151,7 @@ impl Sequence {
 
     /// Constructs a new relative lock-time using block height.
     #[inline]
-    pub fn from_height(height: u16) -> Self { Sequence(u32::from(height)) }
+    pub fn from_height(height: u16) -> Self { Self(u32::from(height)) }
 
     /// Constructs a new relative lock-time using time intervals where each interval is equivalent
     /// to 512 seconds.
@@ -159,7 +159,7 @@ impl Sequence {
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin
     #[inline]
     pub fn from_512_second_intervals(intervals: u16) -> Self {
-        Sequence(u32::from(intervals) | Sequence::LOCK_TYPE_MASK)
+        Self(u32::from(intervals) | Self::LOCK_TYPE_MASK)
     }
 
     /// Constructs a new relative lock-time from seconds, converting the seconds into 512 second
@@ -174,7 +174,7 @@ impl Sequence {
     #[inline]
     pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
         let intervals = NumberOf512Seconds::from_seconds_floor(seconds)?;
-        Ok(Sequence::from_512_second_intervals(intervals.to_512_second_intervals()))
+        Ok(Self::from_512_second_intervals(intervals.to_512_second_intervals()))
     }
 
     /// Constructs a new relative lock-time from seconds, converting the seconds into 512 second
@@ -189,12 +189,12 @@ impl Sequence {
     #[inline]
     pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
         let intervals = NumberOf512Seconds::from_seconds_ceil(seconds)?;
-        Ok(Sequence::from_512_second_intervals(intervals.to_512_second_intervals()))
+        Ok(Self::from_512_second_intervals(intervals.to_512_second_intervals()))
     }
 
     /// Constructs a new sequence from a u32 value.
     #[inline]
-    pub fn from_consensus(n: u32) -> Self { Sequence(n) }
+    pub fn from_consensus(n: u32) -> Self { Self(n) }
 
     /// Returns the inner 32bit integer value of Sequence.
     #[inline]
@@ -234,12 +234,12 @@ impl Sequence {
 impl Default for Sequence {
     /// The default value of sequence is 0xffffffff.
     #[inline]
-    fn default() -> Self { Sequence::MAX }
+    fn default() -> Self { Self::MAX }
 }
 
 impl From<Sequence> for u32 {
     #[inline]
-    fn from(sequence: Sequence) -> u32 { sequence.0 }
+    fn from(sequence: Sequence) -> Self { sequence.0 }
 }
 
 impl fmt::Display for Sequence {
@@ -354,21 +354,21 @@ impl<'a> Arbitrary<'a> for Sequence {
         // Equally weight the cases of meaningful sequence numbers
         let choice = u.int_in_range(0..=8)?;
         match choice {
-            0 => Ok(Sequence::MAX),
-            1 => Ok(Sequence::ZERO),
-            2 => Ok(Sequence::MIN_NO_RBF),
-            3 => Ok(Sequence::ENABLE_LOCKTIME_AND_RBF),
-            4 => Ok(Sequence::from_consensus(u32::from(relative::NumberOfBlocks::MIN.to_height()))),
-            5 => Ok(Sequence::from_consensus(u32::from(relative::NumberOfBlocks::MAX.to_height()))),
-            6 => Ok(Sequence::from_consensus(
-                Sequence::LOCK_TYPE_MASK
+            0 => Ok(Self::MAX),
+            1 => Ok(Self::ZERO),
+            2 => Ok(Self::MIN_NO_RBF),
+            3 => Ok(Self::ENABLE_LOCKTIME_AND_RBF),
+            4 => Ok(Self::from_consensus(u32::from(relative::NumberOfBlocks::MIN.to_height()))),
+            5 => Ok(Self::from_consensus(u32::from(relative::NumberOfBlocks::MAX.to_height()))),
+            6 => Ok(Self::from_consensus(
+                Self::LOCK_TYPE_MASK
                     | u32::from(relative::NumberOf512Seconds::MIN.to_512_second_intervals()),
             )),
-            7 => Ok(Sequence::from_consensus(
-                Sequence::LOCK_TYPE_MASK
+            7 => Ok(Self::from_consensus(
+                Self::LOCK_TYPE_MASK
                     | u32::from(relative::NumberOf512Seconds::MAX.to_512_second_intervals()),
             )),
-            _ => Ok(Sequence(u.arbitrary()?)),
+            _ => Ok(Self(u.arbitrary()?)),
         }
     }
 }
