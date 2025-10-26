@@ -41,7 +41,7 @@ impl Poly1305 {
         let s2 = u32::from_le_bytes([key[24], key[25], key[26], key[27]]);
         let s3 = u32::from_le_bytes([key[28], key[29], key[30], key[31]]);
 
-        Poly1305 {
+        Self {
             r: [r0, r1, r2, r3, r4],
             s: [s0, s1, s2, s3],
             acc: [0; 5],
