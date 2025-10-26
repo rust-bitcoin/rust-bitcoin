@@ -87,8 +87,8 @@ where
 impl Block<Unchecked> {
     /// Constructs a new `Block` without doing any validation.
     #[inline]
-    pub fn new_unchecked(header: Header, transactions: Vec<Transaction>) -> Block<Unchecked> {
-        Block { header, transactions, witness_root: None, marker: PhantomData::<Unchecked> }
+    pub fn new_unchecked(header: Header, transactions: Vec<Transaction>) -> Self {
+        Self { header, transactions, witness_root: None, marker: PhantomData::<Unchecked> }
     }
 
     /// Ignores block validation logic and just assumes you know what you are doing.
@@ -138,13 +138,13 @@ impl<V: Validation> Block<V> {
 #[cfg(feature = "alloc")]
 impl From<Block> for BlockHash {
     #[inline]
-    fn from(block: Block) -> BlockHash { block.block_hash() }
+    fn from(block: Block) -> Self { block.block_hash() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Block> for BlockHash {
     #[inline]
-    fn from(block: &Block) -> BlockHash { block.block_hash() }
+    fn from(block: &Block) -> Self { block.block_hash() }
 }
 
 /// Marker that the block's merkle root has been successfully validated.
@@ -425,12 +425,12 @@ impl std::error::Error for HeaderDecoderError {
 
 impl From<Header> for BlockHash {
     #[inline]
-    fn from(header: Header) -> BlockHash { header.block_hash() }
+    fn from(header: Header) -> Self { header.block_hash() }
 }
 
 impl From<&Header> for BlockHash {
     #[inline]
-    fn from(header: &Header) -> BlockHash { header.block_hash() }
+    fn from(header: &Header) -> Self { header.block_hash() }
 }
 
 /// Bitcoin block version number.
@@ -472,7 +472,7 @@ impl Version {
     ///
     /// This is the data type used in consensus code in Bitcoin Core.
     #[inline]
-    pub const fn from_consensus(v: i32) -> Self { Version(v) }
+    pub const fn from_consensus(v: i32) -> Self { Self(v) }
 
     /// Returns the inner `i32` value.
     ///
@@ -502,7 +502,7 @@ impl Version {
 
 impl Default for Version {
     #[inline]
-    fn default() -> Version { Self::NO_SOFT_FORK_SIGNALLING }
+    fn default() -> Self { Self::NO_SOFT_FORK_SIGNALLING }
 }
 
 encoding::encoder_newtype! {
@@ -584,14 +584,14 @@ impl<'a> Arbitrary<'a> for Block {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let header = Header::arbitrary(u)?;
         let transactions = Vec::<Transaction>::arbitrary(u)?;
-        Ok(Block::new_unchecked(header, transactions))
+        Ok(Self::new_unchecked(header, transactions))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Header {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Header {
+        Ok(Self {
             version: Version::arbitrary(u)?,
             prev_blockhash: BlockHash::from_byte_array(u.arbitrary()?),
             merkle_root: TxMerkleNode::from_byte_array(u.arbitrary()?),
@@ -608,10 +608,10 @@ impl<'a> Arbitrary<'a> for Version {
         // Equally weight known versions and arbitrary versions
         let choice = u.int_in_range(0..=3)?;
         match choice {
-            0 => Ok(Version::ONE),
-            1 => Ok(Version::TWO),
-            2 => Ok(Version::NO_SOFT_FORK_SIGNALLING),
-            _ => Ok(Version::from_consensus(u.arbitrary()?)),
+            0 => Ok(Self::ONE),
+            1 => Ok(Self::TWO),
+            2 => Ok(Self::NO_SOFT_FORK_SIGNALLING),
+            _ => Ok(Self::from_consensus(u.arbitrary()?)),
         }
     }
 }
