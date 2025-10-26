@@ -193,7 +193,7 @@ trait Buffer: Sized {
 }
 
 impl Buffer for Vec<u8> {
-    fn push(&mut self, val: u8) { Vec::push(self, val) }
+    fn push(&mut self, val: u8) { Self::push(self, val) }
 
     fn slice(&self) -> &[u8] { self }
 
@@ -201,7 +201,7 @@ impl Buffer for Vec<u8> {
 }
 
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
-    fn push(&mut self, val: u8) { ArrayVec::push(self, val) }
+    fn push(&mut self, val: u8) { Self::push(self, val) }
 
     fn slice(&self) -> &[u8] { self.as_slice() }
 
