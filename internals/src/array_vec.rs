@@ -140,7 +140,7 @@ impl<T: Copy + PartialEq, const CAP: usize, const LEN: usize> PartialEq<ArrayVec
 }
 
 impl<T: Copy + Ord, const CAP: usize> Ord for ArrayVec<T, CAP> {
-    fn cmp(&self, other: &ArrayVec<T, CAP>) -> core::cmp::Ordering { (**self).cmp(&**other) }
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
 }
 
 impl<T: Copy + PartialOrd, const CAP1: usize, const CAP2: usize> PartialOrd<ArrayVec<T, CAP2>>
