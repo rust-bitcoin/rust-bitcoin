@@ -33,3 +33,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny" }
+
+[lints.clippy]
+use_self = "warn"

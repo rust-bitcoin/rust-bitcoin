@@ -238,7 +238,7 @@ pub struct Cursor<T> {
 impl<T: AsRef<[u8]>> Cursor<T> {
     /// Constructs a new `Cursor` by wrapping `inner`.
     #[inline]
-    pub const fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
+    pub const fn new(inner: T) -> Self { Self { inner, pos: 0 } }
 
     /// Returns the position read or written up to thus far.
     #[inline]
