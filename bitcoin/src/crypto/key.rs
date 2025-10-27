@@ -1852,4 +1852,27 @@ mod tests {
         assert!(PrivateKey::from_slice(&[1u8; 31], Network::Regtest).is_err());
         assert!(PrivateKey::from_slice(&[1u8; 33], Network::Regtest).is_err());
     }
+
+    #[test]
+    fn xonly_pubkey_from_bytes() {
+        let key_bytes = &<[u8; 32]>::from_hex(
+            "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
+        ).expect("Failed to convert hex string to byte array");
+        let xonly_pub_key = XOnlyPublicKey::from_byte_array(key_bytes)
+            .expect("Failed to create an XOnlyPublicKey from a byte array");
+        // Confirm that the public key from bytes serializes back to the same bytes
+        assert_eq!(&xonly_pub_key.serialize(), key_bytes);
+    }
+
+    #[test]
+    fn xonly_pubkey_into_inner() {
+        let key_bytes = &<[u8; 32]>::from_hex(
+            "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
+        ).expect("Failed to convert hex string to byte array");
+        let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(key_bytes)
+            .expect("Failed to create a secp256k1 x-only public key from a byte array");
+        let btc_pubkey = XOnlyPublicKey::new(inner_key);
+        // Confirm that the into_inner() returns the same data that was initially wrapped
+        assert_eq!(inner_key, btc_pubkey.into_inner());
+    }
 }
