@@ -1,7 +1,7 @@
 [package]
 name = "bitcoin-consensus-encoding"
 version = "1.0.0-rc.1"
-authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Tobin C. Harding <me@tobin.cc>"]
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Nick Johnson <nick@yonson.dev>", "Tobin C. Harding <me@tobin.cc>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
 description = "Consensus encoding and decoding"
