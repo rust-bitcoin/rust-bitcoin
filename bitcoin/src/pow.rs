@@ -336,13 +336,19 @@ internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
     pub trait CompactTargetExt impl for CompactTarget {
         /// Constructs a new `CompactTarget` from a prefixed hex string.
-        fn from_hex(s: &str) -> Result<CompactTarget, PrefixedHexError> {
+        fn from_hex(s: &str) -> Result<Self, PrefixedHexError>
+        where
+            Self: Sized
+        {
             let target = parse_int::hex_u32_prefixed(s)?;
             Ok(Self::from_consensus(target))
         }
 
         /// Constructs a new `CompactTarget` from an unprefixed hex string.
-        fn from_unprefixed_hex(s: &str) -> Result<CompactTarget, UnprefixedHexError> {
+        fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError>
+        where
+            Self: Sized
+        {
             let target = parse_int::hex_u32_unprefixed(s)?;
             Ok(Self::from_consensus(target))
         }
@@ -375,7 +381,7 @@ internal_macros::define_extension_trait! {
             last: CompactTarget,
             timespan: i64,
             params: impl AsRef<Params>,
-        ) -> CompactTarget {
+        ) -> Self {
             let params = params.as_ref();
             if params.no_pow_retargeting {
                 return last;
@@ -419,7 +425,7 @@ internal_macros::define_extension_trait! {
             last_epoch_boundary: Header,
             current: Header,
             params: impl AsRef<Params>,
-        ) -> CompactTarget {
+        ) -> Self {
             let timespan = i64::from(current.time.to_u32()) - i64::from(last_epoch_boundary.time.to_u32());
             let bits = current.bits;
             CompactTarget::from_next_work_required(bits, timespan, params)
