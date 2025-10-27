@@ -21,6 +21,7 @@ use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
+use crate::witness_program::P2A_PROGRAM;
 use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
 
 internal_macros::define_extension_trait! {
@@ -393,6 +394,15 @@ internal_macros::define_extension_trait! {
             self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V1)
                 && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a P2A output.
+        #[inline]
+        fn is_p2a(&self) -> bool {
+            self.len() == 4
+                && self.witness_version() == Some(WitnessVersion::V1)
+                && self.as_bytes()[1] == OP_PUSHBYTES_2.to_u8()
+                && self.as_bytes()[2..] == P2A_PROGRAM
         }
 
         /// Check if this is a consensus-valid OP_RETURN output.
