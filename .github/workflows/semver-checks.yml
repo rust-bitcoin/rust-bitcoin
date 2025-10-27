@@ -38,7 +38,7 @@ jobs:
           echo "$PR_NUMBER" > ./semver-break
       - name: "Save breaking state"
         if: ${{ hashFiles('semver-break') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: semver-break
           path: semver-break
