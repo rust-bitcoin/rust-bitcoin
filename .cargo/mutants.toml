@@ -16,37 +16,37 @@ exclude_re = [
 
 
     # ----------------------------------Crate-specific exclusions----------------------------------
-    # Units
+    # units
     # src/amount/mod.rs
-    "parse_signed_to_satoshi", # Can't kill all mutants since there is no denomination smaller than Satoshi
-    "fmt_satoshi_in", # Related to formatting/display
-    "dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
+    "units/.* parse_signed_to_satoshi", # Can't kill all mutants since there is no denomination smaller than Satoshi
+    "units/.* fmt_satoshi_in", # Related to formatting/display
+    "units/.* dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
     # src/locktime/relative.rs
-    "Time::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
-    "FeeRate::fee_vb", # Deprecated
-    "FeeRate::fee_wu", # Deprecated
-    "SignedAmount::checked_abs", # Deprecated
-    "NumberOfBlocks::value", # Deprecated
-    "NumberOf512Seconds::to_consensus_u32", # Deprecated
-    "MedianTimePast::to_consensus_u32", # Deprecated
-    "Height::to_consensus_u32", # Deprecated
-    "Sequence::to_hex", # Deprecated
-    "Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* LockTime::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* FeeRate::fee_vb", # Deprecated
+    "units/.* FeeRate::fee_wu", # Deprecated
+    "units/.* SignedAmount::checked_abs", # Deprecated
+    "units/.* NumberOfBlocks::value", # Deprecated
+    "units/.* NumberOf512Seconds::to_consensus_u32", # Deprecated
+    "units/.* MedianTimePast::to_consensus_u32", # Deprecated
+    "units/.* Height::to_consensus_u32", # Deprecated
+    "units/.* Sequence::to_hex", # Deprecated
+    "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
 
     # primitives
-    "Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
-    "Block<Checked>::cached_witness_root", # Skip getters
-    "Block<Checked>::transactions", # Skip getters
-    "Script::to_bytes", # Deprecated
-    "decode_cursor", # Mutating operations in decode_cursor can result in an infinite loop
-    "fmt_debug", # Mutants from formatting/display changes
-    "fmt_debug_pretty", # Mutants from formatting/display changes
-    "CompactTarget::to_hex", # Deprecated
-    "Script::to_hex", # Deprecated
-    "Script<T>::to_hex", # Deprecated
-    "ScriptBuf::to_hex", # Deprecated
-    "ScriptBuf<T>::to_hex", # Deprecated
-    "<impl Encoder for .*Encoder<'_>>::current_chunk", # Replacing the return with Some(vec![]) causes an infinite loop.
-    "<impl Encoder for .*Encoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
-    "<impl Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
+    "primitives/.* Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
+    "primitives/.* Block<Checked>::cached_witness_root", # Skip getters
+    "primitives/.* Block<Checked>::transactions", # Skip getters
+    "primitives/.* Script::to_bytes", # Deprecated
+    "primitives/.* decode_cursor", # Mutating operations in decode_cursor can result in an infinite loop
+    "primitives/.* fmt_debug", # Mutants from formatting/display changes
+    "primitives/.* fmt_debug_pretty", # Mutants from formatting/display changes
+    "primitives/.* CompactTarget::to_hex", # Deprecated
+    "primitives/.* Script::to_hex", # Deprecated
+    "primitives/.* Script<T>::to_hex", # Deprecated
+    "primitives/.* ScriptBuf::to_hex", # Deprecated
+    "primitives/.* ScriptBuf<T>::to_hex", # Deprecated
+    "primitives/.* <impl Encoder for .*Encoder<'_>>::current_chunk", # Replacing the return with Some(vec![]) causes an infinite loop.
+    "primitives/.* <impl Encoder for .*Encoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
+    "primitives/.* <impl Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
 ]
