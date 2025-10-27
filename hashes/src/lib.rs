@@ -115,6 +115,8 @@ pub mod siphash24;
 use core::fmt::{self, Write as _};
 use core::{convert, hash};
 
+use encoding::Encoder;
+
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
@@ -193,6 +195,25 @@ pub trait HashEngine: Clone {
 
     /// Finalizes this engine.
     fn finalize(self) -> Self::Hash;
+}
+
+/// Encodes an object into a hash engine.
+///
+/// Consumes and returns the hash engine to make it easier to call
+/// [`HashEngine::finalize`] directly on the result.
+pub fn encode_to_hash_engine<T, H>(object: &T, mut engine: H) -> H
+where
+    T: encoding::Encodable + ?Sized,
+    H: HashEngine,
+{
+    let mut encoder = object.encoder();
+    loop {
+        engine.input(encoder.current_chunk());
+        if !encoder.advance() {
+            break;
+        }
+    }
+    engine
 }
 
 /// Trait which applies to hashes of all types.

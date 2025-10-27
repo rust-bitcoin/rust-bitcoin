@@ -64,25 +64,6 @@ macro_rules! encoder_newtype{
     }
 }
 
-/// Encodes an object into a hash engine.
-///
-/// Consumes and returns the hash engine to make it easier to call
-/// [`hashes::HashEngine::finalize`] directly on the result.
-pub fn encode_to_hash_engine<T, H>(object: &T, mut engine: H) -> H
-where
-    T: Encodable + ?Sized,
-    H: hashes::HashEngine,
-{
-    let mut encoder = object.encoder();
-    loop {
-        engine.input(encoder.current_chunk());
-        if !encoder.advance() {
-            break;
-        }
-    }
-    engine
-}
-
 /// Encodes an object into a vector.
 #[cfg(feature = "alloc")]
 pub fn encode_to_vec<T>(object: &T) -> Vec<u8>
