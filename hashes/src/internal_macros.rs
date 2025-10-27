@@ -144,6 +144,9 @@ macro_rules! hash_type_no_default {
             },
             |_us| { Ok(()) }
         );
+
+        #[cfg(feature = "encoding")]
+        $crate::impl_encodable!(Hash, { $bits / 8 });
     };
 }
 pub(crate) use hash_type_no_default;

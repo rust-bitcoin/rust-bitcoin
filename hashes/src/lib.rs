@@ -79,6 +79,10 @@ pub extern crate serde;
 #[cfg(all(test, feature = "serde"))]
 extern crate serde_test;
 
+/// Re-export the `consensus-encoding` crate.
+#[cfg(feature = "encoding")]
+pub extern crate encoding;
+
 /// Re-export the `hex-conservative` crate.
 #[cfg(feature = "hex")]
 pub extern crate hex;
@@ -114,6 +118,9 @@ pub mod siphash24;
 
 use core::fmt::{self, Write as _};
 use core::{convert, hash};
+
+#[cfg(feature = "encoding")]
+use encoding::{ArrayEncoder, Encodable, Encoder};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -257,6 +264,46 @@ pub fn debug_hex(bytes: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
         f.write_char(char::from(upper))?;
     }
     Ok(())
+}
+
+/// Consensus encodes an object into a hash engine.
+///
+/// Consumes and returns the hash engine to make it easier to call
+/// [`hashes::HashEngine::finalize`] directly on the result.
+#[cfg(feature = "encoding")]
+pub fn consensus_encode_to_hash_engine<T, H>(object: &T, mut engine: H) -> H
+where
+    T: Encodable + ?Sized,
+    H: HashEngine,
+{
+    let mut encoder = object.encoder();
+    loop {
+        engine.input(encoder.current_chunk());
+        if !encoder.advance() {
+            break;
+        }
+    }
+    engine
+}
+
+/// The encoder for the [`Hash`] type.
+#[cfg(feature = "encoding")]
+pub struct HashEncoder<const N: usize>(ArrayEncoder<N>);
+
+#[cfg(feature = "encoding")]
+impl<const N: usize> HashEncoder<N> {
+    /// Creates a new `HashEncoder`.
+    pub fn new(a: [u8; N]) -> Self { Self(crate::encoding::ArrayEncoder::without_length_prefix(a)) }
+}
+
+// FIXME: `encoder_newtype` doesn't play nicely with const generic.
+#[cfg(feature = "encoding")]
+impl<const N: usize> Encoder for HashEncoder<N> {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    #[inline]
+    fn advance(&mut self) -> bool { self.0.advance() }
 }
 
 #[cfg(test)]

@@ -7,6 +7,9 @@ use alloc::vec::Vec;
 
 pub mod encoders;
 
+#[cfg(feature = "alloc")]
+use self::encoders::{CompactSizeEncoder, Encoder2, SliceEncoder};
+
 /// A Bitcoin object which can be consensus-encoded.
 ///
 /// To encode something, use the [`Self::encoder`] method to obtain a
@@ -43,6 +46,21 @@ pub trait Encoder {
     fn advance(&mut self) -> bool;
 }
 
+#[cfg(feature = "alloc")]
+impl<T: Encodable> Encodable for Vec<T> {
+    type Encoder<'s>
+        = Encoder2<CompactSizeEncoder, SliceEncoder<'s, T>>
+    where
+        Self: 's;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(
+            CompactSizeEncoder::new(self.len()),
+            SliceEncoder::without_length_prefix(&self),
+        )
+    }
+}
+
 /// Implements a newtype around an encoder which implements the
 /// [`Encoder`] trait by forwarding to the wrapped encoder.
 #[macro_export]
@@ -62,25 +80,6 @@ macro_rules! encoder_newtype{
             fn advance(&mut self) -> bool { self.0.advance() }
         }
     }
-}
-
-/// Encodes an object into a hash engine.
-///
-/// Consumes and returns the hash engine to make it easier to call
-/// [`hashes::HashEngine::finalize`] directly on the result.
-pub fn encode_to_hash_engine<T, H>(object: &T, mut engine: H) -> H
-where
-    T: Encodable + ?Sized,
-    H: hashes::HashEngine,
-{
-    let mut encoder = object.encoder();
-    loop {
-        engine.input(encoder.current_chunk());
-        if !encoder.advance() {
-            break;
-        }
-    }
-    engine
 }
 
 /// Encodes an object into a vector.

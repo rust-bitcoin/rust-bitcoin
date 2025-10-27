@@ -37,6 +37,9 @@ mod error;
 #[cfg(feature = "hashes")]
 mod hash;
 
+#[cfg(feature = "encoding")]
+pub mod encoding;
+
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
 use core::cmp;
@@ -48,6 +51,8 @@ pub use bridge::{FromStd, ToStd};
 pub use self::error::{Error, ErrorKind};
 #[cfg(feature = "hashes")]
 pub use self::hash::hash_reader;
+#[cfg(feature = "encoding")]
+pub use self::encoding::consensus_encode_to_writer;
 
 /// Result type returned by functions in this crate.
 pub type Result<T> = core::result::Result<T, Error>;

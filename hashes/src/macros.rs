@@ -510,6 +510,24 @@ macro_rules! serde_impl(
         ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => ()
 );
 
+/// Implements [`encoding::Encodable`] for a hash type.
+#[macro_export]
+macro_rules! impl_encodable {
+    ($type:ident, $len:expr) => {
+        impl encoding::Encodable for $type {
+            type Encoder<'a>
+                = $crate::HashEncoder<{ $len }>
+            // FIXME: Not sure if we need these braces.
+            where
+                Self: 'a;
+
+            fn encoder(&self) -> Self::Encoder<'_> {
+                $crate::HashEncoder::new(self.to_byte_array())
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod test {
     use crate::sha256;

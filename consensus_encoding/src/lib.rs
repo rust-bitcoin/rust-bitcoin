@@ -17,9 +17,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-/// Rust implementation of cryptographic hash function algorithms.
-pub extern crate hashes;
-
 mod decode;
 mod encode;
 
@@ -43,6 +40,6 @@ pub use self::encode::encode_to_vec;
 pub use self::encode::encode_to_writer;
 pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
-    SliceEncoder,
+    SliceEncoder, U32Encoder,
 };
-pub use self::encode::{encode_to_hash_engine, Encodable, Encoder};
+pub use self::encode::{Encodable, Encoder};

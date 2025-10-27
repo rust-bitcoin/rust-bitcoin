@@ -47,6 +47,7 @@ pub mod merkle_tree;
 pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
+pub mod taproot;
 pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
@@ -86,8 +87,16 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
+    taproot::{
+        TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
+        TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE, TAPROOT_CONTROL_MAX_NODE_COUNT,
+        TAPROOT_CONTROL_MAX_SIZE, TAPROOT_CONTROL_NODE_SIZE, TAPROOT_LEAF_MASK,
+        TAPROOT_LEAF_TAPSCRIPT, LeafVersion, FutureLeafVersion,
+    },
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
+#[doc(no_inline)]
+pub use self::taproot::InvalidTaprootLeafVersionError;
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
