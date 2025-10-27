@@ -384,18 +384,21 @@ impl BlockTransactions {
         request: &BlockTransactionsRequest,
         block: &Block<BlockChecked>,
     ) -> Result<BlockTransactions, TxIndexOutOfRangeError> {
+        let transactions = block.transactions();
+        let tx_count = transactions.len();
+
+        let mut txs = Vec::with_capacity(request.indexes.len());
+        for &idx in &request.indexes {
+            let idx_usize = idx as usize;
+            if idx_usize >= tx_count {
+                return Err(TxIndexOutOfRangeError(idx));
+            }
+            txs.push(transactions[idx_usize].clone());
+        }
+
         Ok(BlockTransactions {
             block_hash: request.block_hash,
-            transactions: {
-                let mut txs = Vec::with_capacity(request.indexes.len());
-                for idx in &request.indexes {
-                    if *idx >= block.transactions().len().to_u64() {
-                        return Err(TxIndexOutOfRangeError(*idx));
-                    }
-                    txs.push(block.transactions()[*idx as usize].clone());
-                }
-                txs
-            },
+            transactions: txs,
         })
     }
 }
@@ -574,5 +577,42 @@ mod test {
             block_hash: BlockHash::from_byte_array([0; 32]),
             indexes: vec![u64::MAX],
         });
+    }
+
+    #[test]
+    fn construct_block_transactions_from_request() {
+        let block = dummy_block();
+        let block_hash = BlockHash::from_byte_array([0; 32]);
+        let request = BlockTransactionsRequest {
+            block_hash,
+            indexes: vec![0, 1, 2],
+        };
+
+        let result = BlockTransactions::from_request(&request, &block);
+
+        assert!(result.is_ok());
+        let block_txs = result.unwrap();
+        assert_eq!(block_txs.block_hash, block_hash);
+        assert_eq!(block_txs.transactions.len(), 3);
+        for (i, tx) in block_txs.transactions.iter().enumerate() {
+            assert_eq!(*tx, block.transactions()[i]);
+        }
+    }
+
+    #[test]
+    fn from_request_error_index_out_of_range() {
+        let block = dummy_block(); // contains 3 transactions
+        let block_hash = BlockHash::from_byte_array([0; 32]);
+        let request = BlockTransactionsRequest {
+            block_hash,
+            indexes: vec![0, 1, 2, 4],
+        };
+
+        let result = BlockTransactions::from_request(&request, &block);
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            TxIndexOutOfRangeError(idx) => assert_eq!(idx, 4),
+        }
     }
 }
