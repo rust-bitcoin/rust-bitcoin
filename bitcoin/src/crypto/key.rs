@@ -62,6 +62,10 @@ impl XOnlyPublicKey {
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
 
+    /// Returns the inner secp256k1 x-only public key.
+    #[inline]
+    pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
+
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
     pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.0.serialize() }
