@@ -86,7 +86,7 @@ fn decode_array_empty_slice_push() {
 
 #[test]
 fn decode_decoder2_state_transitions() {
-    // Test the state transition point boundry in Decoder2.
+    // Test the state transition point boundary in Decoder2.
     let mut decoder: Decoder2<ArrayDecoder<2>, ArrayDecoder<3>> =
         Decoder2::new(ArrayDecoder::<2>::new(), ArrayDecoder::<3>::new());
 
