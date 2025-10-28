@@ -442,7 +442,7 @@ impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> 
             {
                 // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
                 let address = v.parse::<Address<NetworkUnchecked>>().map_err(E::custom)?;
-                Ok(Address::from_inner(address.into_inner()))
+                Ok(Address::from_inner(address.to_inner()))
             }
         }
 
@@ -465,7 +465,7 @@ impl<V: NetworkValidation> serde::Serialize for Address<V> {
 impl<V: NetworkValidation> Address<V> {
     fn from_inner(inner: AddressInner) -> Self { Address(PhantomData, inner) }
 
-    fn into_inner(self) -> AddressInner { self.1 }
+    fn to_inner(self) -> AddressInner { self.1 }
 
     fn inner(&self) -> &AddressInner { &self.1 }
 
@@ -475,8 +475,14 @@ impl<V: NetworkValidation> Address<V> {
     }
 
     /// Marks the network of this address as unchecked.
+    pub fn to_unchecked(self) -> Address<NetworkUnchecked> {
+        Address::from_inner(self.to_inner())
+    }
+
+    /// Marks the network of this address as unchecked.
+    #[deprecated(since = "0.33.0", note = "use to_unchecked instead")]
     pub fn into_unchecked(self) -> Address<NetworkUnchecked> {
-        Address::from_inner(self.into_inner())
+        Address::from_inner(self.to_inner())
     }
 
     /// Returns the [`NetworkKind`] of this address.
@@ -898,7 +904,7 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     #[inline]
-    pub fn assume_checked(self) -> Address { Address::from_inner(self.into_inner()) }
+    pub fn assume_checked(self) -> Address { Address::from_inner(self.to_inner()) }
 
     /// Parses a bech32 Address string
     pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, Bech32Error> {
@@ -993,10 +999,10 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
         if ["bc1", "bcrt1", "tb1"].iter().any(|&prefix| s.to_lowercase().starts_with(prefix)) {
             let address = Address::from_bech32_str(s)?;
             // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
-            Ok(Address::from_inner(address.into_inner()))
+            Ok(Address::from_inner(address.to_inner()))
         } else if ["1", "2", "3", "m", "n"].iter().any(|&prefix| s.starts_with(prefix)) {
             let address = Address::from_base58_str(s)?;
-            Ok(Address::from_inner(address.into_inner()))
+            Ok(Address::from_inner(address.to_inner()))
         } else {
             let hrp = match s.rfind('1') {
                 Some(pos) => &s[..pos],
