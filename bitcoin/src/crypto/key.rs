@@ -36,7 +36,7 @@ pub use serialized_x_only::SerializedXOnlyPublicKey;
 pub struct XOnlyPublicKey(secp256k1::XOnlyPublicKey);
 
 impl XOnlyPublicKey {
-    /// Constructs a new x-only public key from the provided generic Secp256k1 x-only public key.
+    /// Constructs a new x-only public key from the provided generic secp256k1 x-only public key.
     pub fn new(key: impl Into<secp256k1::XOnlyPublicKey>) -> XOnlyPublicKey {
         XOnlyPublicKey(key.into())
     }
@@ -149,12 +149,12 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
-    /// Constructs a new compressed ECDSA public key from the provided generic Secp256k1 public key.
+    /// Constructs a new compressed ECDSA public key from the provided generic secp256k1 public key.
     pub fn new(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey { compressed: true, inner: key.into() }
     }
 
-    /// Constructs a new uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
+    /// Constructs a new uncompressed (legacy) ECDSA public key from the provided generic secp256k1
     /// public key.
     pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey { compressed: false, inner: key.into() }
@@ -547,13 +547,13 @@ impl PrivateKey {
         let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
         PrivateKey::new(secret_key, network.into())
     }
-    /// Constructs a new compressed ECDSA private key from the provided generic Secp256k1 private key
+    /// Constructs a new compressed ECDSA private key from the provided generic secp256k1 private key
     /// and the specified network.
     pub fn new(key: secp256k1::SecretKey, network: impl Into<NetworkKind>) -> PrivateKey {
         PrivateKey { compressed: true, network: network.into(), inner: key }
     }
 
-    /// Constructs a new uncompressed (legacy) ECDSA private key from the provided generic Secp256k1
+    /// Constructs a new uncompressed (legacy) ECDSA private key from the provided generic secp256k1
     /// private key and the specified network.
     pub fn new_uncompressed(
         key: secp256k1::SecretKey,
@@ -1075,7 +1075,7 @@ impl From<TweakedKeypair> for TweakedPublicKey {
 pub enum FromSliceError {
     /// Invalid key prefix error.
     InvalidKeyPrefix(u8),
-    /// A Secp256k1 error.
+    /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
     /// Invalid Length of the slice.
     InvalidLength(usize),
@@ -1235,7 +1235,7 @@ impl From<FromSliceError> for ParsePublicKeyError {
 /// Error returned when parsing a [`CompressedPublicKey`] from a string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseCompressedPublicKeyError {
-    /// Secp256k1 Error.
+    /// secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
     Hex(hex::HexToArrayError),

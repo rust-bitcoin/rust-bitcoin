@@ -90,7 +90,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-// We cache the pubkeys for convenience because it requires a secp context to convert the private key.
+// We cache the pubkeys for convenience because it requires a secp256k1 context to convert the private key.
 /// An example of an offline signer i.e., a cold-storage device.
 struct ColdStorage {
     /// The master extended private key.
