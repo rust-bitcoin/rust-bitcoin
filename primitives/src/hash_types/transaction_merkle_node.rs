@@ -10,8 +10,6 @@ use core::str;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
-#[cfg(feature = "hex")]
-use hex::FromHex as _;
 use internals::write_err;
 
 /// A hash of the Merkle tree branch or root for transactions.

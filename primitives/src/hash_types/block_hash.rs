@@ -11,8 +11,6 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::Encodable;
 use hashes::sha256d;
-#[cfg(feature = "hex")]
-use hex::FromHex as _;
 use internals::write_err;
 
 /// A bitcoin block hash.

@@ -10,8 +10,6 @@ use core::str;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
-#[cfg(feature = "hex")]
-use hex::FromHex as _;
 
 use crate::script::{Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
 
