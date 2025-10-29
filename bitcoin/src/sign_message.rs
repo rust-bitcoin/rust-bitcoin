@@ -133,9 +133,8 @@ mod message_signing {
         /// Attempt to recover a public key from the signature and the signed message.
         ///
         /// To get the message hash from a message, use [super::signed_msg_hash].
-        pub fn recover_pubkey<C: secp256k1::Verification>(
+        pub fn recover_pubkey(
             &self,
-            secp_ctx: &secp256k1::Secp256k1<C>,
             msg_hash: sha256d::Hash,
         ) -> Result<PublicKey, MessageSignatureError> {
             let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
@@ -146,15 +145,14 @@ mod message_signing {
         /// Verifies that the signature signs the message and was signed by the given address.
         ///
         /// To get the message hash from a message, use [super::signed_msg_hash].
-        pub fn is_signed_by_address<C: secp256k1::Verification>(
+        pub fn is_signed_by_address(
             &self,
-            secp_ctx: &secp256k1::Secp256k1<C>,
             address: &Address,
             msg_hash: sha256d::Hash,
         ) -> Result<bool, MessageSignatureError> {
             match address.address_type() {
                 Some(AddressType::P2pkh) => {
-                    let pubkey = self.recover_pubkey(secp_ctx, msg_hash)?;
+                    let pubkey = self.recover_pubkey(msg_hash)?;
                     Ok(address.pubkey_hash() == Some(pubkey.pubkey_hash()))
                 }
                 Some(address_type) =>
@@ -217,8 +215,7 @@ pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
 
 /// Sign message using Bitcoin's message signing format.
 #[cfg(feature = "secp-recovery")]
-pub fn sign<C: secp256k1::Signing>(
-    secp_ctx: &secp256k1::Secp256k1<C>,
+pub fn sign(
     msg: impl AsRef<[u8]>,
     privkey: SecretKey,
 ) -> MessageSignature {
@@ -249,7 +246,6 @@ mod tests {
         use secp256k1::ecdsa::RecoverableSignature;
         use crate::{Address, AddressType, Network, NetworkKind};
 
-        let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
         let msg_hash = super::signed_msg_hash(message);
         let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
@@ -257,29 +253,29 @@ mod tests {
         let secp_sig = RecoverableSignature::sign_ecdsa_recoverable(msg, &privkey);
         let signature = super::MessageSignature { signature: secp_sig, compressed: true };
 
-        assert_eq!(signature.to_string(), super::sign(&secp, message, privkey).to_string());
+        assert_eq!(signature.to_string(), super::sign(message, privkey).to_string());
         assert_eq!(signature.to_base64(), signature.to_string());
         let signature2 = &signature.to_string().parse::<super::MessageSignature>().unwrap();
         let pubkey = signature2
-            .recover_pubkey(&secp, msg_hash)
+            .recover_pubkey(msg_hash)
             .unwrap()
             .try_into()
             .expect("compressed was set to true");
 
         let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
+        assert_eq!(signature2.is_signed_by_address(&p2pkh, msg_hash), Ok(true));
         let p2wpkh = Address::p2wpkh(pubkey, Network::Bitcoin);
         assert_eq!(
-            signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
+            signature2.is_signed_by_address(&p2wpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
         );
         let p2shwpkh = Address::p2shwpkh(pubkey, NetworkKind::Main);
         assert_eq!(
-            signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
+            signature2.is_signed_by_address(&p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
         );
         let p2pkh = Address::p2pkh(pubkey, Network::Bitcoin);
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
+        assert_eq!(signature2.is_signed_by_address(&p2pkh, msg_hash), Ok(true));
 
         assert_eq!(pubkey.0, secp256k1::PublicKey::from_secret_key(&privkey));
         let signature_base64 = signature.to_base64();
@@ -292,12 +288,10 @@ mod tests {
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn incorrect_message_signature() {
         use base64::prelude::{Engine as _, BASE64_STANDARD};
-        use secp256k1;
 
         use crate::crypto::key::PublicKey;
         use crate::{Address, NetworkKind};
 
-        let secp = secp256k1::Secp256k1::new();
         let message = "a different message from what was signed";
         let msg_hash = super::signed_msg_hash(message);
 
@@ -313,6 +307,6 @@ mod tests {
                 .expect("pubkey slice");
 
         let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
-        assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));
+        assert_eq!(signature.is_signed_by_address(&p2pkh, msg_hash), Ok(false));
     }
 }
