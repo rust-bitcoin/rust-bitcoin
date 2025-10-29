@@ -13,7 +13,6 @@ use core::{fmt, slice};
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
 use internals::write_err;
-use secp256k1::Secp256k1;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
 use crate::internal_macros;
@@ -738,13 +737,13 @@ impl Xpriv {
     }
 
     /// Constructs a new extended public key from this extended private key.
-    pub fn to_xpub<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Xpub {
-        Xpub::from_xpriv(secp, &self)
+    pub fn to_xpub(self) -> Xpub {
+        Xpub::from_xpriv(&self)
     }
 
     /// Constructs a new BIP-0340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
-    pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
+    pub fn to_keypair(self) -> Keypair {
         Keypair::from_seckey_byte_array(self.private_key.to_secret_bytes())
             .expect("BIP-0032 internal private key representation is broken")
     }
@@ -753,33 +752,30 @@ impl Xpriv {
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
     #[deprecated(since = "TBD", note = "use `derive_xpriv()` instead")]
-    pub fn derive_priv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
+    pub fn derive_priv<P: AsRef<[ChildNumber]>>(
         &self,
-        secp: &Secp256k1<C>,
         path: P,
     ) -> Result<Self, DerivationError> {
-        self.derive_xpriv(secp, path)
+        self.derive_xpriv(path)
     }
 
     /// Derives an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
-    pub fn derive_xpriv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
+    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(
         &self,
-        secp: &Secp256k1<C>,
         path: P,
     ) -> Result<Self, DerivationError> {
         let mut sk: Self = *self;
         for cnum in path.as_ref() {
-            sk = sk.ckd_priv(secp, *cnum)?;
+            sk = sk.ckd_priv(*cnum)?;
         }
         Ok(sk)
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv<C: secp256k1::Signing>(
+    fn ckd_priv(
         &self,
-        secp: &Secp256k1<C>,
         i: ChildNumber,
     ) -> Result<Self, DerivationError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
@@ -808,7 +804,7 @@ impl Xpriv {
         Ok(Self {
             network: self.network,
             depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
-            parent_fingerprint: self.fingerprint(secp),
+            parent_fingerprint: self.fingerprint(),
             child_number: i,
             private_key: tweaked,
             chain_code: ChainCode::from_hmac(hmac),
@@ -858,25 +854,25 @@ impl Xpriv {
     }
 
     /// Returns the HASH160 of the public key belonging to the xpriv
-    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XKeyIdentifier {
-        Xpub::from_xpriv(secp, self).identifier()
+    pub fn identifier(&self) -> XKeyIdentifier {
+        Xpub::from_xpriv(self).identifier()
     }
 
     /// Returns the first four bytes of the identifier
-    pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
-        self.identifier(secp).as_byte_array().sub_array::<0, 4>().into()
+    pub fn fingerprint(&self) -> Fingerprint {
+        self.identifier().as_byte_array().sub_array::<0, 4>().into()
     }
 }
 
 impl Xpub {
     /// Constructs a new extended public key from an extended private key.
     #[deprecated(since = "TBD", note = "use `from_xpriv()` instead")]
-    pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &Xpriv) -> Self {
-        Self::from_xpriv(secp, sk)
+    pub fn from_priv(sk: &Xpriv) -> Self {
+        Self::from_xpriv(sk)
     }
 
     /// Constructs a new extended public key from an extended private key.
-    pub fn from_xpriv<C: secp256k1::Signing>(secp: &Secp256k1<C>, xpriv: &Xpriv) -> Self {
+    pub fn from_xpriv(xpriv: &Xpriv) -> Self {
         Self {
             network: xpriv.network,
             depth: xpriv.depth,
@@ -907,25 +903,23 @@ impl Xpub {
     ///
     /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
     #[deprecated(since = "TBD", note = "use `derive_xpub()` instead")]
-    pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
+    pub fn derive_pub<P: AsRef<[ChildNumber]>>(
         &self,
-        secp: &Secp256k1<C>,
         path: P,
     ) -> Result<Self, DerivationError> {
-        self.derive_xpub(secp, path)
+        self.derive_xpub(path)
     }
 
     /// Attempts to derive an extended public key from a path.
     ///
     /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
-    pub fn derive_xpub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
+    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(
         &self,
-        secp: &Secp256k1<C>,
         path: P,
     ) -> Result<Self, DerivationError> {
         let mut pk: Self = *self;
         for cnum in path.as_ref() {
-            pk = pk.ckd_pub(secp, *cnum)?
+            pk = pk.ckd_pub(*cnum)?
         }
         Ok(pk)
     }
@@ -954,9 +948,8 @@ impl Xpub {
     }
 
     /// Public->Public child key derivation
-    pub fn ckd_pub<C: secp256k1::Verification>(
+    pub fn ckd_pub(
         &self,
-        secp: &Secp256k1<C>,
         i: ChildNumber,
     ) -> Result<Self, DerivationError> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
@@ -1298,8 +1291,7 @@ mod tests {
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
     }
 
-    fn test_path<C: secp256k1::Signing + secp256k1::Verification>(
-        secp: &Secp256k1<C>,
+    fn test_path(
         network: NetworkKind,
         seed: &[u8],
         path: DerivationPath,
@@ -1307,37 +1299,37 @@ mod tests {
         expected_pk: &str,
     ) {
         let mut sk = Xpriv::new_master(network, seed);
-        let mut pk = Xpub::from_xpriv(secp, &sk);
+        let mut pk = Xpub::from_xpriv(&sk);
 
         // Check derivation convenience method for Xpriv
-        assert_eq!(&sk.derive_xpriv(secp, &path).unwrap().to_string()[..], expected_sk);
+        assert_eq!(&sk.derive_xpriv(&path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.0.iter().any(|cnum| cnum.is_hardened()) {
             assert_eq!(
-                pk.derive_xpub(secp, &path),
+                pk.derive_xpub(&path),
                 Err(DerivationError::CannotDeriveHardenedChild)
             );
         } else {
-            assert_eq!(&pk.derive_xpub(secp, &path).unwrap().to_string()[..], expected_pk);
+            assert_eq!(&pk.derive_xpub(&path).unwrap().to_string()[..], expected_pk);
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in path.0.iter() {
-            sk = sk.ckd_priv(secp, num).unwrap();
+            sk = sk.ckd_priv(num).unwrap();
             match num {
                 Normal { .. } => {
-                    let pk2 = pk.ckd_pub(secp, num).unwrap();
-                    pk = Xpub::from_xpriv(secp, &sk);
+                    let pk2 = pk.ckd_pub(num).unwrap();
+                    pk = Xpub::from_xpriv(&sk);
                     assert_eq!(pk, pk2);
                 }
                 Hardened { .. } => {
                     assert_eq!(
-                        pk.ckd_pub(secp, num),
+                        pk.ckd_pub(num),
                         Err(DerivationError::CannotDeriveHardenedChild)
                     );
-                    pk = Xpub::from_xpriv(secp, &sk);
+                    pk = Xpub::from_xpriv(&sk);
                 }
             }
         }
@@ -1397,88 +1389,86 @@ mod tests {
 
     #[test]
     fn vector_1() {
-        let secp = Secp256k1::new();
+
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
         // m
-        test_path(&secp, NetworkKind::Main, &seed, "m".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m".parse().unwrap(),
                   "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
                   "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8");
 
         // m/0h
-        test_path(&secp, NetworkKind::Main, &seed, "m/0h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0h".parse().unwrap(),
                   "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
                   "xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw");
 
         // m/0h/1
-        test_path(&secp, NetworkKind::Main, &seed, "m/0h/1".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0h/1".parse().unwrap(),
                    "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
                    "xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ");
 
         // m/0h/1/2h
-        test_path(&secp, NetworkKind::Main, &seed, "m/0h/1/2h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0h/1/2h".parse().unwrap(),
                   "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
                   "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5");
 
         // m/0h/1/2h/2
-        test_path(&secp, NetworkKind::Main, &seed, "m/0h/1/2h/2".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0h/1/2h/2".parse().unwrap(),
                   "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
                   "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV");
 
         // m/0h/1/2h/2/1000000000
-        test_path(&secp, NetworkKind::Main, &seed, "m/0h/1/2h/2/1000000000".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0h/1/2h/2/1000000000".parse().unwrap(),
                   "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
                   "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy");
     }
 
     #[test]
     fn vector_2() {
-        let secp = Secp256k1::new();
         let seed = hex!("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542");
 
         // m
-        test_path(&secp, NetworkKind::Main, &seed, "m".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m".parse().unwrap(),
                   "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
                   "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB");
 
         // m/0
-        test_path(&secp, NetworkKind::Main, &seed, "m/0".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0".parse().unwrap(),
                   "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
                   "xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH");
 
         // m/0/2147483647h
-        test_path(&secp, NetworkKind::Main, &seed, "m/0/2147483647h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0/2147483647h".parse().unwrap(),
                   "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
                   "xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a");
 
         // m/0/2147483647h/1
-        test_path(&secp, NetworkKind::Main, &seed, "m/0/2147483647h/1".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0/2147483647h/1".parse().unwrap(),
                   "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
                   "xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon");
 
         // m/0/2147483647h/1/2147483646h
-        test_path(&secp, NetworkKind::Main, &seed, "m/0/2147483647h/1/2147483646h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0/2147483647h/1/2147483646h".parse().unwrap(),
                   "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
                   "xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL");
 
         // m/0/2147483647h/1/2147483646h/2
-        test_path(&secp, NetworkKind::Main, &seed, "m/0/2147483647h/1/2147483646h/2".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0/2147483647h/1/2147483646h/2".parse().unwrap(),
                   "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
                   "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
     }
 
     #[test]
     fn vector_3() {
-        let secp = Secp256k1::new();
         let seed = hex!("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be");
 
         // m
-        test_path(&secp, NetworkKind::Main, &seed, "m".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m".parse().unwrap(),
                   "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
                   "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13");
 
         // m/0h
-        test_path(&secp, NetworkKind::Main, &seed, "m/0h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, "m/0h".parse().unwrap(),
                   "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
                   "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y");
     }

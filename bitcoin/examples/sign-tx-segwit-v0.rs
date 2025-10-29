@@ -5,7 +5,7 @@
 use bitcoin::ext::*;
 use bitcoin::key::WPubkeyHash;
 use bitcoin::locktime::absolute;
-use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing};
+use bitcoin::secp256k1::{rand, Message, SecretKey};
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
 use bitcoin::{
     transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf, ScriptSigBuf, Sequence,
@@ -17,11 +17,9 @@ const SPEND_AMOUNT: Amount = Amount::from_sat_u32(5_000_000);
 const CHANGE_AMOUNT: Amount = Amount::from_sat_u32(14_999_000); // 1000 sat fee.
 
 fn main() {
-    let secp = Secp256k1::new();
-
     // Get a secret key we control and the pubkeyhash of the associated pubkey.
     // In a real application these would come from a stored secret.
-    let (sk, wpkh) = senders_keys(&secp);
+    let (sk, wpkh) = senders_keys();
 
     // Get an address to send to.
     let address = receivers_address();
@@ -87,7 +85,7 @@ fn main() {
 /// An example of keys controlled by the transaction sender.
 ///
 /// In a real application these would be actual secrets.
-fn senders_keys<C: Signing>(secp: &Secp256k1<C>) -> (SecretKey, WPubkeyHash) {
+fn senders_keys() -> (SecretKey, WPubkeyHash) {
     let sk = SecretKey::new(&mut rand::rng());
     let pk = bitcoin::PublicKey::new(sk.public_key());
     let wpkh = pk.wpubkey_hash().expect("key is compressed");

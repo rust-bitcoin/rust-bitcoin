@@ -10,11 +10,10 @@
 //!
 //! ```rust
 //! #[cfg(feature = "rand-std")] {
-//! use bitcoin::secp256k1::{rand, Secp256k1};
+//! use bitcoin::secp256k1::rand;
 //! use bitcoin::{Address, Network, PublicKey};
 //!
 //! // Generate random key pair.
-//! let secp = Secp256k1::new();
 //! let (_sk, pk) = secp256k1::generate_keypair(&mut rand::rng());
 //! let public_key = PublicKey::new(pk); // Or `PublicKey::from(pk)`.
 //!
@@ -49,7 +48,6 @@ use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt;
-use secp256k1::{Secp256k1, Verification};
 
 use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
@@ -576,14 +574,13 @@ impl Address {
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
-    pub fn p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
-        secp: &Secp256k1<C>,
+    pub fn p2tr<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
         hrp: impl Into<KnownHrp>,
     ) -> Self {
         let internal_key = internal_key.into();
-        let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
+        let program = WitnessProgram::p2tr(internal_key, merkle_root);
         Self::from_witness_program(program, hrp)
     }
 
@@ -1352,8 +1349,7 @@ mod tests {
         let internal_key = "cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115"
             .parse::<XOnlyPublicKey>()
             .unwrap();
-        let secp = Secp256k1::verification_only();
-        let address = Address::p2tr(&secp, internal_key, None, KnownHrp::Mainnet);
+        let address = Address::p2tr(internal_key, None, KnownHrp::Mainnet);
         assert_eq!(
             address.to_string(),
             "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"

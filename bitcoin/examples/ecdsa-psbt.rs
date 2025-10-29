@@ -36,7 +36,6 @@ use bitcoin::consensus::encode;
 use bitcoin::ext::*;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
-use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
     transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, RedeemScriptBuf,
     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
@@ -66,17 +65,15 @@ const CHANGE_AMOUNT_BTC: &str = "48.99999 BTC"; // 1000 sat transaction fee.
 const NETWORK: Network = Network::Regtest;
 
 fn main() -> Result<()> {
-    let secp = Secp256k1::new();
-
     let (offline, fingerprint, account_0_xpub, input_xpub) =
-        ColdStorage::new(&secp, EXTENDED_MASTER_PRIVATE_KEY)?;
+        ColdStorage::new(EXTENDED_MASTER_PRIVATE_KEY)?;
 
     let online = WatchOnly::new(account_0_xpub, input_xpub, fingerprint);
 
-    let created = online.create_psbt(&secp)?;
+    let created = online.create_psbt()?;
     let updated = online.update_psbt(created)?;
 
-    let signed = offline.sign_psbt(&secp, updated)?;
+    let signed = offline.sign_psbt(updated)?;
 
     let finalized = online.finalize_psbt(signed)?;
 
@@ -109,20 +106,20 @@ impl ColdStorage {
     /// # Returns
     ///
     /// The newly created signer along with the data needed to configure a watch-only wallet.
-    fn new<C: Signing>(secp: &Secp256k1<C>, xpriv: &str) -> Result<ExportData> {
+    fn new(xpriv: &str) -> Result<ExportData> {
         let master_xpriv = xpriv.parse::<Xpriv>()?;
-        let master_xpub = Xpub::from_xpriv(secp, &master_xpriv);
+        let master_xpub = Xpub::from_xpriv(&master_xpriv);
 
         // Hardened children require secret data to derive.
 
         let path = "84h/0h/0h".into_derivation_path()?;
         let account_0_xpriv =
-            master_xpriv.derive_xpriv(secp, &path).expect("derivation path is short");
-        let account_0_xpub = Xpub::from_xpriv(secp, &account_0_xpriv);
+            master_xpriv.derive_xpriv(&path).expect("derivation path is short");
+        let account_0_xpub = Xpub::from_xpriv(&account_0_xpriv);
 
         let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
-        let input_xpriv = master_xpriv.derive_xpriv(secp, &path).expect("derivation path is short");
-        let input_xpub = Xpub::from_xpriv(secp, &input_xpriv);
+        let input_xpriv = master_xpriv.derive_xpriv(&path).expect("derivation path is short");
+        let input_xpub = Xpub::from_xpriv(&input_xpriv);
 
         let wallet = Self { master_xpriv, master_xpub };
         let fingerprint = wallet.master_fingerprint();
@@ -134,12 +131,11 @@ impl ColdStorage {
     fn master_fingerprint(&self) -> Fingerprint { self.master_xpub.fingerprint() }
 
     /// Signs `psbt` with this signer.
-    fn sign_psbt<C: Signing + Verification>(
+    fn sign_psbt(
         &self,
-        secp: &Secp256k1<C>,
         mut psbt: Psbt,
     ) -> Result<Psbt> {
-        match psbt.sign(&self.master_xpriv, secp) {
+        match psbt.sign(&self.master_xpriv) {
             Ok(keys) => assert_eq!(keys.len(), 1),
             Err((_, e)) => {
                 let e = e.get(&0).expect("at least one error");
@@ -173,12 +169,12 @@ impl WatchOnly {
     }
 
     /// Creates the PSBT, in BIP-0174 parlance this is the 'Creator'.
-    fn create_psbt<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<Psbt> {
+    fn create_psbt(&self) -> Result<Psbt> {
         let to_address =
             RECEIVE_ADDRESS.parse::<Address<_>>()?.require_network(Network::Regtest)?;
         let to_amount = OUTPUT_AMOUNT_BTC.parse::<Amount>()?;
 
-        let (_, change_address, _) = self.change_address(secp)?;
+        let (_, change_address, _) = self.change_address()?;
         let change_amount = CHANGE_AMOUNT_BTC.parse::<Amount>()?;
 
         let tx = Transaction {
@@ -253,12 +249,11 @@ impl WatchOnly {
     /// "m/84h/0h/0h/1/0"). A real wallet would have access to the chain so could determine if an
     /// address has been used or not. We ignore this detail and just re-use the first change address
     /// without loss of generality.
-    fn change_address<C: Verification>(
+    fn change_address(
         &self,
-        secp: &Secp256k1<C>,
     ) -> Result<(CompressedPublicKey, Address, DerivationPath)> {
         let path = [ChildNumber::ONE_NORMAL, ChildNumber::ZERO_NORMAL];
-        let derived = self.account_0_xpub.derive_xpub(secp, path)?;
+        let derived = self.account_0_xpub.derive_xpub(path)?;
 
         let pk = derived.to_public_key();
         let addr = Address::p2wpkh(pk, NETWORK);

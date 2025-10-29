@@ -13,7 +13,7 @@ use bitcoin::{
     absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptSigBuf, Sequence,
     TapScriptBuf, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
-use secp256k1::{Keypair, Secp256k1, Signing};
+use secp256k1::Keypair;
 
 #[test]
 fn psbt_sign_taproot() {
@@ -24,10 +24,9 @@ fn psbt_sign_taproot() {
 
     impl GetKey for Keystore {
         type Error = SignError;
-        fn get_key<C: Signing>(
+        fn get_key(
             &self,
             key_request: &KeyRequest,
-            _secp: &Secp256k1<C>,
         ) -> Result<Option<PrivateKey>, Self::Error> {
             match key_request {
                 KeyRequest::Bip32((mfp, _)) =>
@@ -41,8 +40,6 @@ fn psbt_sign_taproot() {
         }
     }
 
-    let secp = &Secp256k1::new();
-
     let sk_path = [
         ("dff1c8c2c016a572914b4c5adb8791d62b4768ae9d0a61be8ab94cf5038d7d90", "m/86'/1'/0'/0/0"),
         ("1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9", "m/86'/1'/0'/0/1"),
@@ -55,9 +52,9 @@ fn psbt_sign_taproot() {
     //
 
     // Create three basic scripts to test script path spend.
-    let script1 = create_basic_single_sig_script(secp, sk_path[0].0); // m/86'/1'/0'/0/0
-    let script2 = create_basic_single_sig_script(secp, sk_path[1].0); // m/86'/1'/0'/0/1
-    let script3 = create_basic_single_sig_script(secp, sk_path[2].0); // m/86'/1'/0'/0/2
+    let script1 = create_basic_single_sig_script(sk_path[0].0); // m/86'/1'/0'/0/0
+    let script2 = create_basic_single_sig_script(sk_path[1].0); // m/86'/1'/0'/0/1
+    let script3 = create_basic_single_sig_script(sk_path[2].0); // m/86'/1'/0'/0/2
 
     // Just use one of the secret keys for the key path spend.
     let kp = sk_path[2].0.parse::<Keypair>().expect("failed to create keypair");
@@ -65,7 +62,7 @@ fn psbt_sign_taproot() {
     let internal_key = kp.x_only_public_key().0; // Ignore the parity.
 
     let tree =
-        create_taproot_tree(secp, script1, script2.clone(), script3, internal_key);
+        create_taproot_tree(script1, script2.clone(), script3, internal_key);
 
     let address = create_p2tr_address(tree.clone());
     assert_eq!(
@@ -92,7 +89,7 @@ fn psbt_sign_taproot() {
             mfp: mfp.parse::<Fingerprint>().unwrap(),
             sk: PrivateKey::new(kp.secret_key(), Network::Testnet(bitcoin::TestnetVersion::V3)),
         };
-        let _ = psbt_key_path_spend.sign(&keystore, secp);
+        let _ = psbt_key_path_spend.sign(&keystore);
 
         let sig = "92864dc9e56b6260ecbd54ec16b94bb597a2e6be7cca0de89d75e17921e0e1528cba32dd04217175c237e1835b5db1c8b384401718514f9443dce933c6ba9c87";
         assert_eq!(sig, psbt_key_path_spend.inputs[0].tap_key_sig.unwrap().signature.to_string());
@@ -138,7 +135,7 @@ fn psbt_sign_taproot() {
         //
         // Step 2: sign psbt.
         //
-        let _ = psbt_script_path_spend.sign(&keystore, secp);
+        let _ = psbt_script_path_spend.sign(&keystore);
 
         let sig = "9c1466e1631a58c55fcb8642ce5f7896314f4b565d92c5c80b17aa9abf56d22e0b5e5dcbcfe836bbd7d409491f58aa9e1f68a491ef8f05eef62fb50ffac85727";
         assert_eq!(
@@ -166,7 +163,7 @@ fn psbt_sign_taproot() {
     }
 }
 
-fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) -> TapScriptBuf {
+fn create_basic_single_sig_script(sk: &str) -> TapScriptBuf {
     let kp = sk.parse::<Keypair>().expect("failed to create keypair");
     let x_only_pubkey = kp.x_only_public_key().0;
     script::Builder::new()
@@ -176,7 +173,6 @@ fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) ->
 }
 
 fn create_taproot_tree<K: Into<XOnlyPublicKey>>(
-    secp: &Secp256k1<secp256k1::All>,
     script1: TapScriptBuf,
     script2: TapScriptBuf,
     script3: TapScriptBuf,
@@ -187,7 +183,7 @@ fn create_taproot_tree<K: Into<XOnlyPublicKey>>(
     let builder = builder.add_leaf(2, script1).unwrap();
     let builder = builder.add_leaf(2, script2).unwrap();
     let builder = builder.add_leaf(1, script3).unwrap();
-    builder.finalize(secp, internal_key).unwrap()
+    builder.finalize(internal_key).unwrap()
 }
 
 fn create_p2tr_address(tree: TaprootSpendInfo) -> Address {
