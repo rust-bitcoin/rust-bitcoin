@@ -445,7 +445,7 @@ impl Psbt {
                         .to_keypair();
 
                     #[cfg(feature = "rand-std")]
-                    let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
+                    let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
                     #[cfg(not(feature = "rand-std"))]
                     let signature =
                         secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);
@@ -473,7 +473,7 @@ impl Psbt {
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(feature = "rand-std")]
-                        let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
+                        let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
                         #[cfg(not(feature = "rand-std"))]
                         let signature =
                             secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);

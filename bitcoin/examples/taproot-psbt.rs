@@ -754,7 +754,7 @@ fn sign_psbt_taproot(
         Some(_) => keypair, // no tweak for script spend
     };
 
-    let signature = secp.sign_schnorr(&hash.to_byte_array(), &keypair);
+    let signature = secp256k1::schnorr::sign(&hash.to_byte_array(), &keypair);
 
     let final_signature = taproot::Signature { signature, sighash_type };
 
