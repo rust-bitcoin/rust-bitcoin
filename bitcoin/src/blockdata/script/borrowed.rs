@@ -5,7 +5,6 @@ use core::fmt;
 use hex::DisplayHex as _;
 use internals::array::ArrayExt; // For `split_first`.
 use internals::ToU64 as _;
-use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{
@@ -280,15 +279,14 @@ crate::internal_macros::define_extension_trait! {
 
         /// Computes P2TR output with a given internal key and a single script spending path equal to
         /// the current script, assuming that the script is a Tapscript.
-        fn to_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
+        fn to_p2tr<K: Into<UntweakedPublicKey>>(
             &self,
-            secp: &Secp256k1<C>,
             internal_key: K,
         ) -> ScriptPubKeyBuf {
             let internal_key = internal_key.into();
             let leaf_hash = self.tapscript_leaf_hash();
             let merkle_root = TapNodeHash::from(leaf_hash);
-            ScriptPubKeyBuf::new_p2tr(secp, internal_key, Some(merkle_root))
+            ScriptPubKeyBuf::new_p2tr(internal_key, Some(merkle_root))
         }
     }
 }

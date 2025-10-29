@@ -1974,7 +1974,6 @@ mod tests {
             serde_json::from_str::<TestData>(json_str).expect("JSON was not well-formatted");
 
         assert_eq!(data.version, 1u64);
-        let secp = &secp256k1::Secp256k1::new();
         let key_path = data.key_path_spending.remove(0);
 
         let raw_unsigned_tx = key_path.given.raw_unsigned_tx;

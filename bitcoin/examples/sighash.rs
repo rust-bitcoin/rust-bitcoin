@@ -48,8 +48,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     println!("SegWit p2wpkh sighash: {sighash:x}");
     let msg = secp256k1::Message::from(sighash);
     println!("Message is {msg:x}");
-    let secp = secp256k1::Secp256k1::verification_only();
-    pk.verify(&secp, msg, sig).unwrap()
+    pk.verify(msg, sig).unwrap()
 }
 
 /// Computes sighash for a legacy multisig transaction input that spends either a p2sh or a p2ms output.

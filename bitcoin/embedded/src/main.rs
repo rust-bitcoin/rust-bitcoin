@@ -7,12 +7,9 @@ extern crate alloc;
 extern crate bitcoin;
 
 use alloc::string::ToString;
-use alloc::vec;
 use core::panic::PanicInfo;
 
 use alloc_cortex_m::CortexMHeap;
-use bitcoin::secp256k1::ffi::types::AlignedType;
-use bitcoin::secp256k1::Secp256k1;
 // use panic_halt as _;
 use bitcoin::{Address, Network, PrivateKey};
 use cortex_m_rt::entry;
@@ -30,19 +27,13 @@ fn main() -> ! {
 
     unsafe { ALLOCATOR.init(cortex_m_rt::heap_start() as usize, HEAP_SIZE) }
 
-    let size = Secp256k1::preallocate_size();
-    hprintln!("secp buf size {}", size * 16).unwrap();
-
     // Load a private key
     let raw = "L1HKVVLHXiUhecWnwFYF6L3shkf1E12HUmuZTESvBXUdx3yqVP1D";
     let pk = PrivateKey::from_wif(raw).unwrap();
     hprintln!("Seed WIF: {}", pk).unwrap();
 
-    let mut buf_ful = vec![AlignedType::zeroed(); size];
-    let secp = Secp256k1::preallocated_new(&mut buf_ful).unwrap();
-
     // Derive address
-    let pubkey = pk.public_key(&secp).try_into().unwrap();
+    let pubkey = pk.public_key().try_into().unwrap();
     let address = Address::p2wpkh(pubkey, Network::Bitcoin);
     hprintln!("Address: {}", address).unwrap();
 
