@@ -2020,6 +2020,9 @@ pub use bitcoin_primitives::Weight
 pub use bitcoin_primitives::absolute
 pub use bitcoin_primitives::amount
 pub use bitcoin_primitives::block::BlockHeight
+pub use bitcoin_primitives::block::BlockHeightDecoder
+pub use bitcoin_primitives::block::BlockHeightDecoderError
+pub use bitcoin_primitives::block::BlockHeightEncoder
 pub use bitcoin_primitives::block::BlockHeightInterval
 pub use bitcoin_primitives::block::BlockMtp
 pub use bitcoin_primitives::block::BlockMtpInterval
