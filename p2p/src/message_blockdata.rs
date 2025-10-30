@@ -16,6 +16,7 @@ use io::{BufRead, Write};
 
 use crate::consensus::impl_consensus_encoding;
 use crate::ProtocolVersion;
+use crate::message_utreexo::PackedPositions;
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -35,6 +36,14 @@ pub enum Inventory {
     WitnessTransaction(Txid),
     /// Witness Block
     WitnessBlock(BlockHash),
+    /// Utreexo Proof hashes.
+    UtreexoProofHash(PackedPositions),
+    /// Utreexo Summary
+    UtreexoSummary(BlockHash),
+    /// Utreexo Transaction
+    UtreexoTransaction(Txid),
+    /// Witness Utreexo Transaction
+    WitnessUtreexoTransaction(Txid),
     /// Unknown inventory type
     Unknown {
         /// The inventory item type.
@@ -57,6 +66,10 @@ impl Inventory {
             Inventory::WTx(t) => Some(t.to_byte_array()),
             Inventory::WitnessTransaction(t) => Some(t.to_byte_array()),
             Inventory::WitnessBlock(b) => Some(b.to_byte_array()),
+            Inventory::UtreexoProofHash(p) => Some(p.to_byte_array()),
+            Inventory::UtreexoSummary(s) => Some(s.to_byte_array()),
+            Inventory::UtreexoTransaction(t) => Some(t.to_byte_array()),
+            Inventory::WitnessUtreexoTransaction(t) => Some(t.to_byte_array()),
             Inventory::Unknown { hash, .. } => Some(*hash),
         }
     }
@@ -78,6 +91,10 @@ impl Encodable for Inventory {
             Inventory::WTx(ref w) => encode_inv!(5, w),
             Inventory::WitnessTransaction(ref t) => encode_inv!(0x40000001, t),
             Inventory::WitnessBlock(ref b) => encode_inv!(0x40000002, b),
+            Inventory::UtreexoProofHash(ref p) => encode_inv!(6, p),
+            Inventory::UtreexoSummary(ref s) => encode_inv!(7, s),
+            Inventory::UtreexoTransaction(ref t) => encode_inv!(0x01000001, t),
+            Inventory::WitnessUtreexoTransaction(ref t) => encode_inv!(0x41000001, t),
             Inventory::Unknown { inv_type: t, hash: ref d } => encode_inv!(t, d),
         })
     }
