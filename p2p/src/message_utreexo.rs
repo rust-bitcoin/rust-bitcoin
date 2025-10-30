@@ -435,3 +435,41 @@ impl Decodable for GetUtreexoTTLs {
         })
     }
 }
+
+/// The `usummary` message (BIP-0324 type 33).
+///
+/// The [`UtreexoSummary`] (`usummary`) message has all the data needed to
+/// calculate the missing Merkle forest positions required to validate any given block.
+#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Hash, Debug)]
+pub struct UtreexoSummary {
+    /// The hash of the block this [`UtreexoSummary`] relates to.
+    pub blockhash: BlockHash,
+    /// The number of leaves added to the accumulator on the block this [`UtreexoSummary`] relates to.
+    pub num_additions: usize,
+    /// The Utreexo Merkle tree locations of the leaf datas.
+    /// These locations must be in blockchain order and must include all locations.
+    pub target_locations: Vec<u64>,
+}
+
+impl Encodable for UtreexoSummary {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.blockhash.consensus_encode(w)?;
+        len += w.emit_compact_size(self.num_additions)?;
+        len += self.blockhash.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for UtreexoSummary {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let blockhash = BlockHash::consensus_decode(r)?;
+        let num_additions = r.read_compact_size()? as usize;
+        let target_locations = Vec::<u64>::consensus_decode(r)?;
+
+        Ok(Self { blockhash, num_additions, target_locations })
+    }
+}
