@@ -27,6 +27,7 @@ pub mod message_compact_blocks;
 pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
+pub mod message_utreexo;
 
 extern crate alloc;
 #[cfg(feature = "std")]
