@@ -569,6 +569,30 @@ impl Decodable for Box<[u8]> {
     }
 }
 
+impl Encodable for [u8] {
+    fn consensus_encode<W: Write + ?Sized>(
+        &self,
+        w: &mut W,
+    ) -> Result<usize, io::Error> {
+        // let mut len = (self.len() as u64).consensus_encode(w)?;
+        // w.write_all(self)?;
+        // len += self.len();
+        // Ok(len)
+        consensus_encode_with_size(self, w)
+    }
+}
+
+impl<T: Encodable> Encodable for &[T] {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += (self.len() as u64).consensus_encode(w)?;
+        for item in *self {
+            len += item.consensus_encode(w)?;
+        }
+        Ok(len)
+    }
+}
+
 impl<T: Encodable> Encodable for &'_ T {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)
@@ -731,6 +755,43 @@ mod tests {
         input[0] = n;
         input[1..x.len() + 1].copy_from_slice(x);
         (&input[..]).read_compact_size()
+    }
+
+    fn test_slice_encode<T: Encodable>(vec: Vec<T>) -> Result<(Vec<u8>, Vec<u8>), Error> {
+        let vec = vec![1u8, 2, 3, 4];
+        let slice: &[u8] = &vec;
+
+        let mut v_buf = Vec::new();
+        let mut s_buf = Vec::new();
+
+        vec.consensus_encode(&mut v_buf).unwrap();
+        slice.consensus_encode(&mut s_buf).unwrap();
+
+        Ok((v_buf, s_buf))
+    }
+
+    #[test]
+    fn encode_slice_matches_vec() {
+        // Multi-element case
+        let (v_buf, s_buf) = test_slice_encode(vec![1u8, 2, 3, 4]).unwrap();
+        assert_eq!(v_buf, s_buf);
+
+        // Empty case
+        let (v_buf, s_buf) = test_slice_encode(Vec::<u8>::new()).unwrap();
+        assert_eq!(v_buf, s_buf);
+
+        // Single-element case
+        let (v_buf, s_buf) = test_slice_encode(vec![42u8]).unwrap();
+        assert_eq!(v_buf, s_buf);
+
+        // Negative case: truncated encoding should fail with UnexpectedEof
+        let bad_buf = vec![0x04];
+        let err = deserialize::<Vec<u8>>(&bad_buf).unwrap_err();
+
+        assert_eq!(
+            discriminant(&err),
+            discriminant(&DeserializeError::Parse(ParseError::MissingData))
+        );
     }
 
     #[test]
