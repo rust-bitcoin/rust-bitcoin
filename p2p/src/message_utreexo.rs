@@ -205,3 +205,66 @@ impl Decodable for CompactLeafData {
         })
     }
 }
+
+/// The [`TTLInfo`] type informs a node about how long to hold a proof in it's cache.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct TTLInfo {
+    /// The TTL value of a leaf in the Utreexo Merkle forest,
+    /// determined by the amount of leaves that were added to the
+    /// accumulator since it's inception.
+    pub ttl: usize,
+    /// The position of the leaf in the Utreexo Merkle forest at
+    /// the moment it was removed.
+    pub death_position: usize,
+}
+
+impl Encodable for TTLInfo {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += w.emit_compact_size(self.ttl)?;
+        len += w.emit_compact_size(self.death_position)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for TTLInfo {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self {
+            ttl: r.read_compact_size()? as usize,
+            death_position: r.read_compact_size()? as usize,
+        })
+    }
+}
+
+/// The [`UtreexoTTL`] type... TODO
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct UtreexoTTL {
+    /// The [`BlockHeight`] denotes the block that these [`TTLInfo`]s refer to.
+    pub block_height: BlockHeight,
+    /// The set of [`TTLInfo`]'s at height `block_height`.
+    pub ttls: Vec<TTLInfo>,
+}
+
+impl Encodable for UtreexoTTL {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.block_height.consensus_encode(w)?;
+        len += self.ttls.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for UtreexoTTL {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self {
+            block_height: BlockHeight::consensus_decode(r)?,
+            ttls: Vec::<TTLInfo>::consensus_decode(r)?,
+        })
+    }
+}
