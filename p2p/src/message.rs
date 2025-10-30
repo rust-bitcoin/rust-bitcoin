@@ -27,7 +27,7 @@ use crate::address::{AddrV2Message, Address};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
-    Magic,
+    message_utreexo, Magic,
 };
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
@@ -279,6 +279,22 @@ pub enum NetworkMessage {
     AddrV2(AddrV2Payload),
     /// `sendaddrv2`
     SendAddrV2,
+    /// BIP-0183 `uproof`
+    UtreexoProof(message_utreexo::UtreexoProof),
+    /// BIP-0183 `getuproof`
+    GetUtreexoProof(message_utreexo::GetUtreexoProof),
+    /// BIP-0183 `uttls`
+    UtreexoTTLs(message_utreexo::UtreexoTTLs),
+    /// BIP-0183 `getuttls`
+    GetUtreexoTTLs(message_utreexo::GetUtreexoTTLs),
+    /// BIP-0183 `usummary`
+    UtreexoSummary(message_utreexo::UtreexoSummary),
+    /// BIP-0183 `utreexotx`
+    UtreexoTx(message_utreexo::UtreexoTransaction),
+    /// BIP-0183 `uroot`
+    UtreexoRoot(message_utreexo::UtreexoRoot),
+    /// BIP-0183 `geturoot`
+    GetUtreexoRoot(message_utreexo::GetUtreexoRoot),
 
     /// Any other message.
     Unknown {
@@ -333,6 +349,14 @@ impl NetworkMessage {
             Self::WtxidRelay => "wtxidrelay",
             Self::AddrV2(_) => "addrv2",
             Self::SendAddrV2 => "sendaddrv2",
+            Self::UtreexoProof(_) => "uproof",
+            Self::GetUtreexoProof(_) => "getuproof",
+            Self::UtreexoTTLs(_) => "uttls",
+            Self::GetUtreexoTTLs(_) => "getuttls",
+            Self::UtreexoSummary(_) => "usummary",
+            Self::UtreexoTx(_) => "utreexotx",
+            Self::UtreexoRoot(_) => "uroot",
+            Self::GetUtreexoRoot(_) => "geturoot",
             Self::Unknown { .. } => "unknown",
         }
     }
@@ -452,6 +476,14 @@ impl Encodable for NetworkMessage {
             | Self::WtxidRelay
             | Self::FilterClear
             | Self::SendAddrV2 => Ok(0),
+            Self::UtreexoProof(ref dat) => dat.consensus_encode(writer),
+            Self::GetUtreexoProof(ref dat) => dat.consensus_encode(writer),
+            Self::UtreexoTTLs(ref dat) => dat.consensus_encode(writer),
+            Self::GetUtreexoTTLs(ref dat) => dat.consensus_encode(writer),
+            Self::UtreexoSummary(ref dat) => dat.consensus_encode(writer),
+            Self::UtreexoTx(ref dat) => dat.consensus_encode(writer),
+            Self::UtreexoRoot(ref dat) => dat.consensus_encode(writer),
+            Self::GetUtreexoRoot(ref dat) => dat.consensus_encode(writer),
             Self::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
         }
     }
@@ -502,6 +534,14 @@ impl Encodable for V2NetworkMessage {
             NetworkMessage::BlockTxn(_) => (3u8, None),
             NetworkMessage::FeeFilter(_) => (5u8, None),
             NetworkMessage::AddrV2(_) => (28u8, None),
+            NetworkMessage::UtreexoProof(_) => (29u8, None),
+            NetworkMessage::GetUtreexoProof(_) => (30u8, None),
+            NetworkMessage::UtreexoTTLs(_) => (31u8, None),
+            NetworkMessage::GetUtreexoTTLs(_) => (32u8, None),
+            NetworkMessage::UtreexoSummary(_) => (33u8, None),
+            NetworkMessage::UtreexoTx(_) => (34u8, None),
+            NetworkMessage::UtreexoRoot(_) => (35u8, None),
+            NetworkMessage::GetUtreexoRoot(_) => (36u8, None),
             NetworkMessage::Version(_)
             | NetworkMessage::Verack
             | NetworkMessage::SendHeaders
@@ -675,6 +715,30 @@ impl Decodable for RawNetworkMessage {
             "addrv2" =>
                 NetworkMessage::AddrV2(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "sendaddrv2" => NetworkMessage::SendAddrV2,
+            "uproof" => NetworkMessage::UtreexoProof(
+                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
+            "getuproof" => NetworkMessage::GetUtreexoProof(
+                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
+            "uttls" => NetworkMessage::UtreexoTTLs(Decodable::consensus_decode_from_finite_reader(
+                &mut mem_d,
+            )?),
+            "getuttls" => NetworkMessage::GetUtreexoTTLs(
+                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
+            "usummary" => NetworkMessage::UtreexoSummary(
+                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
+            "utreexotx" => NetworkMessage::UtreexoTx(
+                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
+            "uroot" => NetworkMessage::UtreexoRoot(Decodable::consensus_decode_from_finite_reader(
+                &mut mem_d,
+            )?),
+            "geturoot" => NetworkMessage::GetUtreexoRoot(
+                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
             _ => NetworkMessage::Unknown { command: cmd, payload: raw_payload },
         };
         Ok(Self { magic, payload, payload_len, checksum })
@@ -751,6 +815,14 @@ impl Decodable for V2NetworkMessage {
                 NetworkMessage::GetCFCheckpt(Decodable::consensus_decode_from_finite_reader(r)?),
             27u8 => NetworkMessage::CFCheckpt(Decodable::consensus_decode_from_finite_reader(r)?),
             28u8 => NetworkMessage::AddrV2(Decodable::consensus_decode_from_finite_reader(r)?),
+            29u8 => NetworkMessage::UtreexoProof(Decodable::consensus_decode_from_finite_reader(r)?),
+            30u8 => NetworkMessage::GetUtreexoProof(Decodable::consensus_decode_from_finite_reader(r)?),
+            31u8 => NetworkMessage::UtreexoTTLs(Decodable::consensus_decode_from_finite_reader(r)?),
+            32u8 => NetworkMessage::GetUtreexoTTLs(Decodable::consensus_decode_from_finite_reader(r)?),
+            33u8 => NetworkMessage::UtreexoSummary(Decodable::consensus_decode_from_finite_reader(r)?),
+            34u8 => NetworkMessage::UtreexoTx(Decodable::consensus_decode_from_finite_reader(r)?),
+            35u8 => NetworkMessage::UtreexoRoot(Decodable::consensus_decode_from_finite_reader(r)?),
+            36u8 => NetworkMessage::GetUtreexoRoot(Decodable::consensus_decode_from_finite_reader(r)?),
             _ =>
                 return Err(encode::Error::Parse(encode::ParseError::ParseFailed(
                     "Unknown short ID",
@@ -1101,6 +1173,7 @@ mod test {
             }),
             NetworkMessage::BlockTxn(blocktxn),
             NetworkMessage::SendCmpct(SendCmpct { send_compact: true, version: 8333 }),
+            // TODO(@luisschwab): add Utreexo messages to the test (pending BIP-0183 test vectors)
         ];
 
         for msg in &msgs {
