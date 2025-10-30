@@ -305,6 +305,20 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     fn consume(&mut self, amount: usize) { self.pos = self.pos.saturating_add(amount as u64); }
 }
 
+impl<T: AsMut<[u8]>> Write for Cursor<T> {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        let write_slice = self.inner.as_mut();
+        let pos = cmp::min(self.pos, write_slice.len() as u64);
+        let amt = (&mut write_slice[(pos as usize)..]).write(buf)?;
+        self.pos += amt as u64;
+        Ok(amt)
+    }
+
+    #[inline]
+    fn flush(&mut self) -> Result<()> { Ok(()) }
+}
+
 /// A generic trait describing an output stream.
 ///
 /// See [`std::io::Write`] for more information.
@@ -522,6 +536,31 @@ mod tests {
 
         let buf = cursor.fill_buf().unwrap();
         assert!(buf.is_empty());
+    }
+
+    #[test]
+    fn cursor_write() {
+        let data = [0x78, 0x56, 0x34, 0x12];
+
+        let mut buf = [0_u8; 4];
+        let mut cursor = Cursor::new(&mut buf);
+        let amt = cursor.write(&data).unwrap();
+
+        assert_eq!(buf, data);
+        assert_eq!(amt, 4);
+    }
+
+    #[test]
+    fn cursor_offset_write() {
+        let data = [0x78, 0x56, 0x34, 0x12];
+
+        let mut buf = [0_u8; 4];
+        let mut cursor = Cursor::new(&mut buf);
+        cursor.set_position(2);
+        let amt = cursor.write(&data).unwrap();
+
+        assert_eq!(buf, [0, 0, 0x78, 0x56]);
+        assert_eq!(amt, 2);
     }
 
     #[test]
