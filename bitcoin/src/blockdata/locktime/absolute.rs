@@ -284,7 +284,19 @@ impl LockTime {
     }
 }
 
-units::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
+// REVERT THIS CHANGE SOON AS `bitcoin-io v0.1.4` IS RELEASED.
+//
+// This macro call is borked because `btcoin` does not have the `alloc` feature and the macro
+// contains feature gating `<insert usual rand about calling macros across crate boundries>`.
+//
+// units::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
+impl core::str::FromStr for LockTime {
+    type Err = crate::error::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        units::parse::int::<u32, &str>(s).map(LockTime::from_consensus)
+    }
+}
 
 impl From<Height> for LockTime {
     #[inline]
