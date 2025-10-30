@@ -18,6 +18,10 @@ use super::Decoder;
 #[cfg(feature = "alloc")]
 const MAX_VEC_SIZE: u64 = 4_000_000;
 
+/// Maximum amount of memory (in bytes) to allocate at once when deserializing vectors.
+#[cfg(feature = "alloc")]
+const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
+
 /// A decoder that decodes a byte vector.
 ///
 /// The encoding is expected to start with the number of encoded bytes (length prefix).
@@ -38,6 +42,25 @@ impl ByteVecDecoder {
             buffer: Vec::new(),
             bytes_expected: 0,
             bytes_written: 0,
+        }
+    }
+
+    /// Reserves capacity for byte vectors in batches.
+    ///
+    /// Reserves up to `MAX_VECTOR_ALLOCATE` bytes when the buffer has no remaining capacity.
+    ///
+    /// Documentation adapted from Bitcoin Core:
+    ///
+    /// > For `DoS` prevention, do not blindly allocate as much as the stream claims to contain.
+    /// > Instead, allocate in ~1 MB batches, so that an attacker actually needs to provide X MB of
+    /// > data to make us allocate X+1 MB of memory.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/72511fd02e72b74be11273e97bd7911786a82e54/src/serialize.h#L669C2-L672C1>
+    fn reserve(&mut self) {
+        if self.buffer.len() == self.buffer.capacity() {
+            let bytes_remaining = self.bytes_expected - self.bytes_written;
+            let batch_size = bytes_remaining.min(MAX_VECTOR_ALLOCATE);
+            self.buffer.reserve_exact(batch_size);
         }
     }
 }
@@ -66,12 +89,14 @@ impl Decoder for ByteVecDecoder {
             self.bytes_expected =
                 cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.bytes_expected);
+            // For DoS prevention, let's not allocate all memory upfront.
         }
 
+        self.reserve();
+
         let remaining = self.bytes_expected - self.bytes_written;
-        let copy_len = bytes.len().min(remaining);
+        let available_capacity = self.buffer.capacity() - self.buffer.len();
+        let copy_len = bytes.len().min(remaining).min(available_capacity);
 
         self.buffer.extend_from_slice(&bytes[..copy_len]);
         self.bytes_written += copy_len;
@@ -124,6 +149,28 @@ impl<T: Decodable> VecDecoder<T> {
             decoder: None,
         }
     }
+
+    /// Reserves capacity for typed vectors in batches.
+    ///
+    /// Calculates how many elements of type `T` fit within `MAX_VECTOR_ALLOCATE` bytes and reserves
+    /// up to that amount when the buffer reaches capacity.
+    ///
+    /// Documentation adapted from Bitcoin Core:
+    ///
+    /// > For `DoS` prevention, do not blindly allocate as much as the stream claims to contain.
+    /// > Instead, allocate in ~1 MB batches, so that an attacker actually needs to provide X MB of
+    /// > data to make us allocate X+1 MB of memory.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/72511fd02e72b74be11273e97bd7911786a82e54/src/serialize.h#L669C2-L672C1>
+    fn reserve(&mut self) {
+        if self.buffer.len() == self.buffer.capacity() {
+            let elements_remaining = self.length - self.buffer.len();
+            let element_size = mem::size_of::<T>().max(1);
+            let batch_elements = MAX_VECTOR_ALLOCATE / element_size;
+            let elements_to_reserve = elements_remaining.min(batch_elements);
+            self.buffer.reserve_exact(elements_to_reserve);
+        }
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -153,11 +200,12 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
             self.length =
                 cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.length);
+            // For DoS prevention, let's not allocate all memory upfront.
         }
 
         while !bytes.is_empty() {
+            self.reserve();
+
             let mut decoder = self.decoder.take().unwrap_or_else(T::decoder);
 
             if decoder.push_bytes(bytes).map_err(|e| E(Inner::Item(e)))? {
