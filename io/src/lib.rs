@@ -226,7 +226,7 @@ impl BufRead for &[u8] {
     fn consume(&mut self, amount: usize) { *self = &self[amount..] }
 }
 
-/// Wraps an in memory reader providing the `position` function.
+/// Wraps an in memory buffer providing `position` functionality for read and write.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Cursor<T> {
     inner: T,
@@ -238,7 +238,7 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     #[inline]
     pub const fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
 
-    /// Returns the position read up to thus far.
+    /// Returns the position read or written up to thus far.
     #[inline]
     pub const fn position(&self) -> u64 { self.pos }
 
@@ -247,7 +247,7 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     /// This method allows seeking within the wrapped memory by setting the position.
     ///
     /// Note that setting a position that is larger than the buffer length will cause reads to
-    /// succeed by reading zero bytes.
+    /// succeed by reading zero bytes. Further, writes will be no-op zero length writes.
     #[inline]
     pub fn set_position(&mut self, position: u64) { self.pos = position; }
 
