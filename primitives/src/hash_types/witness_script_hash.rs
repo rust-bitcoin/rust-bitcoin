@@ -10,8 +10,6 @@ use core::str;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256;
-#[cfg(feature = "hex")]
-use hex::FromHex as _;
 
 use crate::script::{WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
 

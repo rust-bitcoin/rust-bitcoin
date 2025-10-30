@@ -1154,7 +1154,7 @@ pub bitcoin_primitives::transaction::OutPoint::txid: bitcoin_primitives::Txid
 pub bitcoin_primitives::transaction::OutPoint::vout: u32
 pub bitcoin_primitives::transaction::ParseOutPointError::Format
 pub bitcoin_primitives::transaction::ParseOutPointError::TooLong
-pub bitcoin_primitives::transaction::ParseOutPointError::Txid(hex_conservative::error::HexToArrayError)
+pub bitcoin_primitives::transaction::ParseOutPointError::Txid(hex_conservative::error::DecodeFixedLengthBytesError)
 pub bitcoin_primitives::transaction::ParseOutPointError::Vout(bitcoin_units::parse_int::ParseIntError)
 pub bitcoin_primitives::transaction::ParseOutPointError::VoutNotCanonical
 pub bitcoin_primitives::transaction::Transaction::inputs: alloc::vec::Vec<bitcoin_primitives::transaction::TxIn>
@@ -1236,6 +1236,7 @@ pub enum bitcoin_primitives::script::ScriptPubKeyTag
 pub enum bitcoin_primitives::script::ScriptSigTag
 pub enum bitcoin_primitives::script::TapScriptTag
 pub enum bitcoin_primitives::script::WitnessScriptTag
+pub extern crate bitcoin_primitives::hex
 pub fn &'a bitcoin_primitives::script::Script<T>::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn &'a bitcoin_primitives::witness::Witness::into_iter(self) -> Self::IntoIter
 pub fn &'de bitcoin_primitives::script::Script<T>::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
@@ -1794,7 +1795,7 @@ pub fn bitcoin_primitives::witness::Witness::from(slice: [&[u8; M]; N]) -> Self
 pub fn bitcoin_primitives::witness::Witness::from(slice: [[u8; M]; N]) -> Self
 pub fn bitcoin_primitives::witness::Witness::from(vec: alloc::vec::Vec<&[u8]>) -> Self
 pub fn bitcoin_primitives::witness::Witness::from(vec: alloc::vec::Vec<alloc::vec::Vec<u8>>) -> Self
-pub fn bitcoin_primitives::witness::Witness::from_hex<I, T>(iter: I) -> core::result::Result<Self, hex_conservative::error::HexToBytesError> where I: core::iter::traits::collect::IntoIterator<Item = T>, T: core::convert::AsRef<str>
+pub fn bitcoin_primitives::witness::Witness::from_hex<I, T>(iter: I) -> core::result::Result<Self, hex_conservative::error::DecodeVariableLengthBytesError> where I: core::iter::traits::collect::IntoIterator<Item = T>, T: core::convert::AsRef<str>
 pub fn bitcoin_primitives::witness::Witness::from_iter<I: core::iter::traits::collect::IntoIterator<Item = T>>(iter: I) -> Self
 pub fn bitcoin_primitives::witness::Witness::from_slice<T: core::convert::AsRef<[u8]>>(slice: &[T]) -> Self
 pub fn bitcoin_primitives::witness::Witness::get(&self, index: usize) -> core::option::Option<&[u8]>
@@ -1918,8 +1919,8 @@ pub type &'a bitcoin_primitives::witness::Witness::IntoIter = bitcoin_primitives
 pub type &'a bitcoin_primitives::witness::Witness::Item = &'a [u8]
 pub type bitcoin_primitives::BlockHash::Decoder = bitcoin_primitives::block::BlockHashDecoder
 pub type bitcoin_primitives::BlockHash::Encoder<'e> = bitcoin_primitives::block::BlockHashEncoder
-pub type bitcoin_primitives::BlockHash::Err = hex_conservative::error::HexToArrayError
-pub type bitcoin_primitives::Ntxid::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::BlockHash::Err = hex_conservative::error::DecodeFixedLengthBytesError
+pub type bitcoin_primitives::Ntxid::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::RedeemScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::RedeemScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::ScriptPubKey = bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>
@@ -1930,13 +1931,13 @@ pub type bitcoin_primitives::TapScript = bitcoin_primitives::script::Script<bitc
 pub type bitcoin_primitives::TapScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::TapScriptTag>
 pub type bitcoin_primitives::TxMerkleNode::Decoder = bitcoin_primitives::transaction::TxMerkleNodeDecoder
 pub type bitcoin_primitives::TxMerkleNode::Encoder<'e> = bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder
-pub type bitcoin_primitives::TxMerkleNode::Err = hex_conservative::error::HexToArrayError
-pub type bitcoin_primitives::Txid::Err = hex_conservative::error::HexToArrayError
-pub type bitcoin_primitives::WitnessCommitment::Err = hex_conservative::error::HexToArrayError
-pub type bitcoin_primitives::WitnessMerkleNode::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::TxMerkleNode::Err = hex_conservative::error::DecodeFixedLengthBytesError
+pub type bitcoin_primitives::Txid::Err = hex_conservative::error::DecodeFixedLengthBytesError
+pub type bitcoin_primitives::WitnessCommitment::Err = hex_conservative::error::DecodeFixedLengthBytesError
+pub type bitcoin_primitives::WitnessMerkleNode::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::WitnessScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::WitnessScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>
-pub type bitcoin_primitives::Wtxid::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::Wtxid::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::block::Block::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_primitives::block::HeaderEncoder, bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_consensus_encoding::encode::encoders::CompactSizeEncoder, bitcoin_consensus_encoding::encode::encoders::SliceEncoder<'e, bitcoin_primitives::transaction::Transaction>>>
 pub type bitcoin_primitives::block::BlockHashDecoder::Error = bitcoin_primitives::block::BlockHashDecoderError
 pub type bitcoin_primitives::block::BlockHashDecoder::Output = bitcoin_primitives::BlockHash
@@ -1961,7 +1962,7 @@ pub type bitcoin_primitives::script::ScriptBuf<T>::Decoder = bitcoin_primitives:
 pub type bitcoin_primitives::script::ScriptBuf<T>::Target = bitcoin_primitives::script::Script<T>
 pub type bitcoin_primitives::script::ScriptBufDecoder<T>::Error = bitcoin_primitives::script::ScriptBufDecoderError
 pub type bitcoin_primitives::script::ScriptBufDecoder<T>::Output = bitcoin_primitives::script::ScriptBuf<T>
-pub type bitcoin_primitives::script::ScriptHash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::script::ScriptHash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::script::ScriptHash::Error = bitcoin_primitives::script::RedeemScriptSizeError
 pub type bitcoin_primitives::script::ScriptPubKey = bitcoin_primitives::script::Script<bitcoin_primitives::script::ScriptPubKeyTag>
 pub type bitcoin_primitives::script::ScriptPubKeyBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptPubKeyTag>
@@ -1971,7 +1972,7 @@ pub type bitcoin_primitives::script::ScriptSigBuf = bitcoin_primitives::script::
 pub type bitcoin_primitives::script::ScriptSigBufDecoder = bitcoin_primitives::script::ScriptBufDecoder<bitcoin_primitives::script::ScriptSigTag>
 pub type bitcoin_primitives::script::TapScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::TapScriptTag>
 pub type bitcoin_primitives::script::TapScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::TapScriptTag>
-pub type bitcoin_primitives::script::WScriptHash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::script::WScriptHash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::script::WScriptHash::Error = bitcoin_primitives::script::WitnessScriptSizeError
 pub type bitcoin_primitives::script::WitnessScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::script::WitnessScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>

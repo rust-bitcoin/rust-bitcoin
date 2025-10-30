@@ -12,7 +12,7 @@ use core::fmt;
 use core::marker::PhantomData;
 
 #[cfg(feature = "hex")]
-use hex::DisplayHex;
+use hex_unstable::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
 use crate::prelude::rc::Rc;
@@ -473,8 +473,6 @@ impl<'de, T> serde::Deserialize<'de> for ScriptBuf<T> {
     {
         use core::fmt::Formatter;
 
-        use hex::FromHex;
-
         if deserializer.is_human_readable() {
             struct Visitor<T>(PhantomData<T>);
             impl<T> serde::de::Visitor<'_> for Visitor<T> {
@@ -488,7 +486,7 @@ impl<'de, T> serde::Deserialize<'de> for ScriptBuf<T> {
                 where
                     E: serde::de::Error,
                 {
-                    let v = Vec::from_hex(v).map_err(E::custom)?;
+                    let v = hex::decode_to_vec(v).map_err(E::custom)?;
                     Ok(ScriptBuf::from(v))
                 }
             }

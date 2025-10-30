@@ -30,6 +30,9 @@ extern crate std;
 #[macro_use]
 extern crate serde;
 
+#[cfg(feature = "hex")]
+pub extern crate hex_stable as hex;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.

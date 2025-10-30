@@ -244,7 +244,7 @@ impl Header {
 impl fmt::Display for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use fmt::Write as _;
-        use hex::DisplayHex as _;
+        use hex_unstable::DisplayHex as _;
 
         let mut buf = arrayvec::ArrayString::<160>::new();
         write!(

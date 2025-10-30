@@ -17,7 +17,7 @@ use encoding::{
     Encodable, Encoder, Encoder2, LengthPrefixExceedsMaxError,
 };
 #[cfg(feature = "hex")]
-use hex::{error::HexToBytesError, FromHex};
+use hex::DecodeVariableLengthBytesError;
 use internals::slice::SliceExt;
 use internals::wrap_debug::WrapDebug;
 use internals::{compact_size, write_err};
@@ -240,14 +240,14 @@ impl Witness {
     ///
     /// This function will return an error if any of the hex strings are invalid.
     #[cfg(feature = "hex")]
-    pub fn from_hex<I, T>(iter: I) -> Result<Self, HexToBytesError>
+    pub fn from_hex<I, T>(iter: I) -> Result<Self, DecodeVariableLengthBytesError>
     where
         I: IntoIterator<Item = T>,
         T: AsRef<str>,
     {
         let result = iter
             .into_iter()
-            .map(|hex_str| Vec::from_hex(hex_str.as_ref()))
+            .map(|hex_str| crate::hex::decode_to_vec(hex_str.as_ref()))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Self::from_slice(&result))
@@ -525,7 +525,7 @@ impl fmt::Debug for Witness {
                 &WrapDebug(|f| {
                     #[cfg(feature = "hex")]
                     {
-                        f.debug_list().entries(self.iter().map(hex::DisplayHex::as_hex)).finish()
+                        f.debug_list().entries(self.iter().map(hex_unstable::DisplayHex::as_hex)).finish()
                     }
                     #[cfg(not(feature = "hex"))]
                     {
@@ -634,7 +634,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                use hex::{FromHex, HexToBytesError as E};
+                use hex_unstable::{FromHex, HexToBytesError as E};
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {

@@ -12,8 +12,6 @@ use core::str;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
-#[cfg(feature = "hex")]
-use hex::FromHex as _;
 
 /// A bitcoin witness transaction ID.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

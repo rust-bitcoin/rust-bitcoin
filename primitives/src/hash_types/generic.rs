@@ -29,7 +29,7 @@ super::impl_serde!(HashType, LEN);
 super::impl_bytelike_traits!(HashType, LEN);
 
 #[cfg(feature = "hex")]
-hex::impl_fmt_traits! {
+hex_unstable::impl_fmt_traits! {
     #[display_backward(REVERSE)]
     impl fmt_traits for HashType {
         const LENGTH: usize = LEN;
@@ -38,10 +38,10 @@ hex::impl_fmt_traits! {
 
 #[cfg(feature = "hex")]
 impl str::FromStr for HashType {
-    type Err = hex::HexToArrayError;
+    type Err = hex::DecodeFixedLengthBytesError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut bytes = <[u8; LEN]>::from_hex(s)?;
+        let mut bytes = crate::hex::decode_to_array(s)?;
 
         if REVERSE {
             bytes.reverse();

@@ -1259,7 +1259,7 @@ impl<'de> Deserialize<'de> for OutPoint {
 #[cfg(feature = "hex")]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(hex::HexToArrayError),
+    Txid(hex::DecodeFixedLengthBytesError),
     /// Error in vout part.
     Vout(parse_int::ParseIntError),
     /// Error in general format.

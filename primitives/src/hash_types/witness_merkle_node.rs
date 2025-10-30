@@ -10,8 +10,6 @@ use core::str;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
-#[cfg(feature = "hex")]
-use hex::FromHex as _;
 
 /// A hash corresponding to the Merkle tree root for witness data.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
