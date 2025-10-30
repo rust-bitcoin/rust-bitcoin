@@ -168,3 +168,40 @@ impl Decodable for ReconstructableScript {
         }
     }
 }
+
+#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Hash, Debug)]
+/// The [`CompactLeafData`] type contains all the information needed
+/// for a node to rebuild the full leaf data for a given [`TxOut`].
+pub struct CompactLeafData {
+    /// The header code is obtained by doing a left shift of
+    /// the block height the [`TxOut`] was confirmed in. If the [`TxOut`]
+    /// is an output of a coinbase transaction, it gets OR-ed with 1.
+    pub header_code: u32,
+    /// The amount of satoshis locked on the [`TxOut`].
+    pub amount: Amount,
+    /// The [`TxOut`]'s scriptPubKey in the [`ReconstructableScript`] format.
+    pub script_pubkey: ReconstructableScript,
+}
+
+impl Encodable for CompactLeafData {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.header_code.consensus_encode(w)?;
+        len += self.amount.consensus_encode(w)?;
+        len += self.script_pubkey.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for CompactLeafData {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self {
+            header_code: u32::consensus_decode(r)?,
+            amount: Amount::consensus_decode(r)?,
+            script_pubkey: ReconstructableScript::consensus_decode(r)?,
+        })
+    }
+}
