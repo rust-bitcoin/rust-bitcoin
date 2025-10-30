@@ -220,7 +220,7 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
     }
 }
 
-/// Cast a decoded length prefix to a `usize`.
+/// Cast a decoded length prefix to a `usize` with built in denial of service protection.
 ///
 /// Consensus encoded vectors can be up to 4,000,000 bytes long.
 ///
@@ -230,7 +230,7 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
 ///
 /// Errors if `n` is greater than 4,000,000 or won't fit in a `usize`.
 #[cfg(feature = "alloc")]
-pub fn cast_to_usize_if_valid(n: u64) -> Result<usize, LengthPrefixExceedsMaxError> {
+fn cast_to_usize_if_valid(n: u64) -> Result<usize, LengthPrefixExceedsMaxError> {
     if n > MAX_VEC_SIZE {
         return Err(LengthPrefixExceedsMaxError { value: n });
     }
@@ -1295,5 +1295,15 @@ mod tests {
 
         let want = Test(vec![Inner(0xDEAD_BEEF)]);
         assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn cast_to_usize_boundary_conditions() {
+        // Test the 4MB boundary and some edge cases.
+        assert!(cast_to_usize_if_valid(4_000_000).is_ok());
+        assert!(cast_to_usize_if_valid(4_000_001).is_err());
+        assert!(cast_to_usize_if_valid(u64::MAX).is_err());
+        assert_eq!(cast_to_usize_if_valid(0).unwrap(), 0);
     }
 }
