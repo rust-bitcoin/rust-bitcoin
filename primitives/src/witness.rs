@@ -12,10 +12,7 @@ use core::ops::Index;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(doc)]
 use encoding::Decoder4;
-use encoding::{
-    self, BytesEncoder, CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, Decoder,
-    Encodable, Encoder, Encoder2, LengthPrefixExceedsMaxError,
-};
+use encoding::{self, BytesEncoder, CompactSizeEncoder, Decoder, Encodable, Encoder, Encoder2};
 #[cfg(feature = "hex")]
 use hex::{error::HexToBytesError, FromHex};
 use internals::slice::SliceExt;
@@ -300,38 +297,12 @@ impl Encoder for WitnessEncoder<'_> {
 /// The decoder for the [`Witness`] type.
 #[cfg(feature = "alloc")]
 pub struct WitnessDecoder {
-    /// A decoder for the initial length prefix and subsequent per-element prefixes.
-    prefix_decoder: Option<CompactSizeDecoder>,
-    /// Holds the elements.
-    buffer: Vec<Vec<u8>>,
-    /// True if the initial compact size has been read.
-    initial_length_prefix_read: bool, // I.e not the one for each element.
-    /// Set after the initial length prefix is read.
-    ///
-    /// This is read as a u64, checked to be below 4,000,000 then
-    /// cast to a `usize` to make usage easier.
-    witness_elements: usize,
-    /// Index of the element we are going to decode next.
-    idx: usize,
-    /// True if the element length prefix has been read.
-    element_length_prefix_read: bool,
-    /// Bytes left to read for this element.
-    bytes_to_read: usize,
+    inner: encoding::VecDecoder<Vec<u8>>,
 }
 
 impl WitnessDecoder {
     /// Constructs a new witness decoder.
-    pub fn new() -> Self {
-        Self {
-            prefix_decoder: None,
-            buffer: Vec::new(),
-            initial_length_prefix_read: false,
-            witness_elements: 0,
-            idx: 0,
-            element_length_prefix_read: false,
-            bytes_to_read: 0,
-        }
-    }
+    pub fn new() -> Self { Self { inner: encoding::VecDecoder::new() } }
 }
 
 impl Default for WitnessDecoder {
@@ -343,91 +314,15 @@ impl Decoder for WitnessDecoder {
     type Error = WitnessDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        use {WitnessDecoderError as E, WitnessDecoderErrorInner as Inner};
-
-        // First call to `push_bytes`.
-        if !self.initial_length_prefix_read {
-            let mut decoder = self.prefix_decoder.take().unwrap_or_default();
-
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
-                self.prefix_decoder = Some(decoder);
-                return Ok(true);
-            }
-            let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-
-            self.witness_elements = encoding::cast_to_usize_if_valid(length)
-                .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
-            self.initial_length_prefix_read = true;
-
-            if self.witness_elements == 0 {
-                return Ok(false);
-            }
-
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.witness_elements);
-        }
-
-        loop {
-            if bytes.is_empty() {
-                return Ok(true);
-            }
-
-            if self.element_length_prefix_read {
-                let v = self.buffer.get_mut(self.idx).expect("we created this last call");
-                let copy_len = bytes.len().min(self.bytes_to_read);
-
-                v.extend_from_slice(&bytes[..copy_len]);
-                *bytes = &bytes[copy_len..];
-                self.bytes_to_read -= copy_len;
-
-                if self.bytes_to_read == 0 {
-                    self.element_length_prefix_read = false;
-                    self.idx += 1;
-                    if self.idx == self.witness_elements {
-                        return Ok(false);
-                    }
-                }
-            } else {
-                let mut decoder = self.prefix_decoder.take().unwrap_or_default();
-
-                if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
-                    self.prefix_decoder = Some(decoder);
-                    return Ok(true);
-                }
-                let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-                self.bytes_to_read = encoding::cast_to_usize_if_valid(length)
-                    .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
-                self.element_length_prefix_read = true;
-
-                // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-                let v = Vec::with_capacity(self.bytes_to_read);
-                self.buffer.push(v);
-            }
-        }
+        self.inner.push_bytes(bytes).map_err(WitnessDecoderError::from)
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
-        use {WitnessDecoderError as E, WitnessDecoderErrorInner as Inner};
-
-        let remaining = self.witness_elements - self.idx;
-
-        if remaining == 0 {
-            Ok(Witness::from_slice(&self.buffer))
-        } else {
-            Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing_elements: remaining })))
-        }
+        let vec = self.inner.end().map_err(WitnessDecoderError::from)?;
+        Ok(Witness::from_slice(&vec))
     }
 
-    fn read_limit(&self) -> usize {
-        if !self.initial_length_prefix_read {
-            return match &self.prefix_decoder {
-                Some(compact_size_decoder) => compact_size_decoder.read_limit(),
-                None => 1,
-            };
-        }
-        // The only assumption we can make is that each witness element is at least one byte.
-        self.witness_elements.saturating_sub(self.buffer.len())
-    }
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
 impl encoding::Decodable for Witness {
@@ -644,7 +539,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
                 while let Some(elem) = a.next_element::<String>()? {
                     let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
-                        E::InvalidChar(ref e) =>
+                        E::InvalidChar(ref e) => {
                             match core::char::from_u32(e.invalid_char().into()) {
                                 Some(c) => de::Error::invalid_value(
                                     Unexpected::Char(c),
@@ -654,7 +549,8 @@ impl<'de> serde::Deserialize<'de> for Witness {
                                     Unexpected::Unsigned(e.invalid_char().into()),
                                     &"a valid hex character",
                                 ),
-                            },
+                            }
+                        }
                         E::OddLengthString(ref e) =>
                             de::Error::invalid_length(e.length(), &"an even length string"),
                     })?;
@@ -740,62 +636,26 @@ impl Default for Witness {
 
 /// An error when consensus decoding a [`Witness`].
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WitnessDecoderError(WitnessDecoderErrorInner);
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum WitnessDecoderErrorInner {
-    /// Error decoding the vector length prefix.
-    LengthPrefixDecode(CompactSizeDecoderError),
-    /// Length prefix exceeds 4,000,000.
-    LengthPrefixInvalid(LengthPrefixExceedsMaxError),
-    /// Not enough bytes given to decoder.
-    UnexpectedEof(UnexpectedEofError),
-}
+pub struct WitnessDecoderError(encoding::VecDecoderError<encoding::ByteVecDecoderError>);
 
 impl From<Infallible> for WitnessDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+impl From<encoding::VecDecoderError<encoding::ByteVecDecoderError>> for WitnessDecoderError {
+    fn from(e: encoding::VecDecoderError<encoding::ByteVecDecoderError>) -> Self { Self(e) }
+}
+
 impl fmt::Display for WitnessDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use WitnessDecoderErrorInner as E;
-
-        match self.0 {
-            E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
-            E::LengthPrefixInvalid(ref e) => write_err!(f, "vec decoder error"; e),
-            E::UnexpectedEof(ref e) => write_err!(f, "decoder error"; e),
-        }
+        write_err!(f, "witness decoder error"; self.0)
     }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use WitnessDecoderErrorInner as E;
-
-        match self.0 {
-            E::LengthPrefixDecode(ref e) => Some(e),
-            E::LengthPrefixInvalid(ref e) => Some(e),
-            E::UnexpectedEof(ref e) => Some(e),
-        }
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
-
-/// Not enough witness elements (bytes) given to decoder.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnexpectedEofError {
-    /// Number of elements missing to complete decoder.
-    missing_elements: usize,
-}
-
-impl core::fmt::Display for UnexpectedEofError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "not enough witness elements for decoder, missing {}", self.missing_elements)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for UnexpectedEofError {}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Witness {
@@ -1297,7 +1157,6 @@ mod test {
 
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
-        let err = decoder.push_bytes(&mut slice).unwrap_err();
-        assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixInvalid(_))));
+        decoder.push_bytes(&mut slice).unwrap_err();
     }
 }
