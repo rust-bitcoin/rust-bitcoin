@@ -239,7 +239,7 @@ impl Decodable for TTLInfo {
     }
 }
 
-/// The [`UtreexoTTL`] type... TODO
+/// The [`UtreexoTTL`] type holds TTL information about leaves at a given `block_height`.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UtreexoTTL {
     /// The [`BlockHeight`] denotes the block that these [`TTLInfo`]s refer to.
@@ -362,6 +362,76 @@ impl Decodable for GetUtreexoProof {
             include_all: bool::consensus_decode(r)?,
             proof_request_bitmap: Vec::<u8>::consensus_decode(r)?,
             leaf_data_request_bitmap: Vec::<u8>::consensus_decode(r)?,
+        })
+    }
+}
+
+/// The `uttls` message (BIP-0324 type 31).
+///
+/// The [`UtreexoTTLs`] (`uttls`) message has the requested [`UtreexoTTL`]s and proof hashes
+/// needed to validate that the given TTLs were commited in the provided application binary.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct UtreexoTTLs {
+    /// The requested [`UtreexoTTL`]s.
+    pub utreexo_ttls: Vec<UtreexoTTL>,
+    /// The requested proof hashes.
+    pub proof_hashes: Vec<[u8; 32]>,
+}
+
+impl Encodable for UtreexoTTLs {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.utreexo_ttls.consensus_encode(w)?;
+        len += self.proof_hashes.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for UtreexoTTLs {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self {
+            utreexo_ttls: Vec::<UtreexoTTL>::consensus_decode(r)?,
+            proof_hashes: Vec::<[u8; 32]>::consensus_decode(r)?,
+        })
+    }
+}
+
+/// The `getuttls` message (BIP-0324 type 32).
+///
+/// The [`GetUtreexoTTLs`] (`getuttls`) message is a request for [`UtreexoTTL`]s and proof hashes.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct GetUtreexoTTLs {
+    /// The block height of the commited TTL accumulator,
+    /// used to specify which accumulator the TTL should be proved against.
+    pub version: BlockHeight,
+    /// The block height which the first TTL message will be provided for.
+    pub start_height: BlockHeight,
+    /// Indicates the maximum number of TTLs that should be provided, as an exponent of 2 (2^max_receive_exponent).
+    pub max_receive_exponent: u8,
+}
+
+impl Encodable for GetUtreexoTTLs {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.version.consensus_encode(w)?;
+        len += self.start_height.consensus_encode(w)?;
+        len += self.max_receive_exponent.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for GetUtreexoTTLs {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self {
+            version: BlockHeight::consensus_decode(r)?,
+            start_height: BlockHeight::consensus_decode(r)?,
+            max_receive_exponent: u8::consensus_decode(r)?,
         })
     }
 }
