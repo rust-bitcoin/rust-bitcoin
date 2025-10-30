@@ -473,3 +473,43 @@ impl Decodable for UtreexoSummary {
         Ok(Self { blockhash, num_additions, target_locations })
     }
 }
+
+/// The `utreexotx` message (BIP-0324 type 34).
+///
+/// The [`UtreexoTransaction`] (`utreexotx`) message is the
+/// non-Utreexo transaction appended with it's inclusion proof.
+#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Hash, Debug)]
+pub struct UtreexoTransaction {
+    /// The non-Utreexo transaction. Unconfirmed inputs are marked by left-shifting the index by 1 and setting the LSB to 1.
+    /// TODO(@luisschwab): update the BIP to make the left-shift **explicit**.
+    pub transaction: Transaction,
+    /// The requested Utreexo summaries.
+    pub proof_hashes: Vec<UtreexoSummary>,
+    /// The preimage of the leaf datas referenced in the transaction. These preimages must be in
+    /// the order of the referenced inputs. A unconfirmed input does not have a corresponding
+    /// leaf data.
+    pub leaf_datas: Vec<CompactLeafData>,
+}
+
+impl Encodable for UtreexoTransaction {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.transaction.consensus_encode(w)?;
+        len += self.proof_hashes.consensus_encode(w)?;
+        len += self.leaf_datas.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for UtreexoTransaction {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self {
+            transaction: Transaction::consensus_decode(r)?,
+            proof_hashes: Vec::<UtreexoSummary>::consensus_decode(r)?,
+            leaf_datas: Vec::<CompactLeafData>::consensus_decode(r)?,
+        })
+    }
+}
