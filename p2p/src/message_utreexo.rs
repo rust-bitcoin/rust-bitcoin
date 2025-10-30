@@ -268,3 +268,100 @@ impl Decodable for UtreexoTTL {
         })
     }
 }
+
+/// The `uproof` message (BIP-0324 type 29).
+///
+/// The [`UtreexoProof`] (`uproof`) message has all the data needed for a Utreexo
+/// Compact State Node (CSN) or archive node to validate a block.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct UtreexoProof {
+    /// The hash of the block this Utreexo proof proves.
+    pub blockhash: BlockHash,
+    /// The hashes requested via the `getuproof` message. These hashes must be in tree order.
+    pub proof_hashes: Vec<[u8; 32]>,
+    /// The locations of the leaf datas on the Utreexo Merkle tree. These locations must
+    /// be in blockchain order and include either all locations or no locations at all.
+    pub target_locations: Vec<usize>,
+    /// The preimage of the commited [`TxOut`] ([`CompactLeafData`]) requested via the `getuproof` message.
+    /// These [`CompactLeafData`]s must be in blockchain order.
+    pub leaf_datas: Vec<CompactLeafData>,
+}
+
+impl Encodable for UtreexoProof {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.blockhash.consensus_encode(w)?;
+        len += self.proof_hashes.consensus_encode(w)?;
+        len += w.emit_compact_size(self.target_locations.len())?;
+        for location in &self.target_locations {
+            len += w.emit_compact_size(*location)?;
+        }
+        len += self.leaf_datas.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for UtreexoProof {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let blockhash = BlockHash::consensus_decode(r)?;
+        let proof_hashes = Vec::<[u8; 32]>::consensus_decode(r)?;
+
+        let target_locations_len = r.read_compact_size()? as usize;
+        let mut target_locations = Vec::with_capacity(target_locations_len);
+        for _ in 0..target_locations_len {
+            target_locations.push(r.read_compact_size()? as usize);
+        }
+
+        let leaf_datas = Vec::<CompactLeafData>::consensus_decode(r)?;
+
+        Ok(Self { blockhash, proof_hashes, target_locations, leaf_datas })
+    }
+}
+
+/// The `getuproof` message (BIP-0324 type 30).
+///
+/// The [`GetUtreexoProof`] (`getuproof`) message is a request for a block's inclusion proof.
+///
+/// The bitmaps must be in Big-Endian and padded to the nearest byte, with 1 indicating a
+/// request and 0 indicating an omission of the proof hash or leaf data. Use the
+/// `proof_positions` function to generate the bitmaps from a given set of targets
+/// (see the 'Utility Functions' sections from BIP-0181).
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct GetUtreexoProof {
+    /// The hash of the block which inclusion proofs are requested.
+    pub blockhash: BlockHash,
+    /// Indicates if the complete proof or only a subset of it is requested.
+    pub include_all: bool,
+    /// A bitmap of the requested proof hashes.
+    pub proof_request_bitmap: Vec<u8>,
+    /// A bitmap of the requested leaf datas.
+    pub leaf_data_request_bitmap: Vec<u8>,
+}
+
+impl Encodable for GetUtreexoProof {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.blockhash.consensus_encode(w)?;
+        len += self.include_all.consensus_encode(w)?;
+        len += self.proof_request_bitmap.consensus_encode(w)?;
+        len += self.leaf_data_request_bitmap.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for GetUtreexoProof {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self {
+            blockhash: BlockHash::consensus_decode(r)?,
+            include_all: bool::consensus_decode(r)?,
+            proof_request_bitmap: Vec::<u8>::consensus_decode(r)?,
+            leaf_data_request_bitmap: Vec::<u8>::consensus_decode(r)?,
+        })
+    }
+}
