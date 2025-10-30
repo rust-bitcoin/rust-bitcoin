@@ -137,7 +137,6 @@ impl core::clone::Clone for bitcoin_primitives::transaction::TxOut
 impl core::clone::Clone for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::clone::Clone for bitcoin_primitives::transaction::Version
 impl core::clone::Clone for bitcoin_primitives::transaction::VersionDecoderError
-impl core::clone::Clone for bitcoin_primitives::witness::UnexpectedEofError
 impl core::clone::Clone for bitcoin_primitives::witness::Witness
 impl core::clone::Clone for bitcoin_primitives::witness::WitnessDecoderError
 impl core::cmp::Eq for bitcoin_primitives::BlockHash
@@ -178,7 +177,6 @@ impl core::cmp::Eq for bitcoin_primitives::transaction::TxOut
 impl core::cmp::Eq for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::cmp::Eq for bitcoin_primitives::transaction::Version
 impl core::cmp::Eq for bitcoin_primitives::transaction::VersionDecoderError
-impl core::cmp::Eq for bitcoin_primitives::witness::UnexpectedEofError
 impl core::cmp::Eq for bitcoin_primitives::witness::Witness
 impl core::cmp::Eq for bitcoin_primitives::witness::WitnessDecoderError
 impl core::cmp::Ord for bitcoin_primitives::BlockHash
@@ -244,7 +242,6 @@ impl core::cmp::PartialEq for bitcoin_primitives::transaction::TxOut
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::Version
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::VersionDecoderError
-impl core::cmp::PartialEq for bitcoin_primitives::witness::UnexpectedEofError
 impl core::cmp::PartialEq for bitcoin_primitives::witness::Witness
 impl core::cmp::PartialEq for bitcoin_primitives::witness::WitnessDecoderError
 impl core::cmp::PartialOrd for bitcoin_primitives::BlockHash
@@ -303,6 +300,7 @@ impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::Unexpecte
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_primitives::block::VersionDecoderError
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
+impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::VecDecoderError<bitcoin_consensus_encoding::decode::decoders::ByteVecDecoderError>> for bitcoin_primitives::witness::WitnessDecoderError
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::VecDecoderError<bitcoin_primitives::transaction::TxInDecoderError>> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::VecDecoderError<bitcoin_primitives::transaction::TxOutDecoderError>> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<bitcoin_primitives::block::Block> for bitcoin_primitives::BlockHash
@@ -354,7 +352,6 @@ impl core::error::Error for bitcoin_primitives::transaction::TxInDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::VersionDecoderError
-impl core::error::Error for bitcoin_primitives::witness::UnexpectedEofError
 impl core::error::Error for bitcoin_primitives::witness::WitnessDecoderError
 impl core::fmt::Debug for bitcoin_primitives::BlockHash
 impl core::fmt::Debug for bitcoin_primitives::Ntxid
@@ -389,7 +386,6 @@ impl core::fmt::Debug for bitcoin_primitives::transaction::TxOut
 impl core::fmt::Debug for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::fmt::Debug for bitcoin_primitives::transaction::Version
 impl core::fmt::Debug for bitcoin_primitives::transaction::VersionDecoderError
-impl core::fmt::Debug for bitcoin_primitives::witness::UnexpectedEofError
 impl core::fmt::Debug for bitcoin_primitives::witness::Witness
 impl core::fmt::Debug for bitcoin_primitives::witness::WitnessDecoderError
 impl core::fmt::Display for bitcoin_primitives::BlockHash
@@ -418,7 +414,6 @@ impl core::fmt::Display for bitcoin_primitives::transaction::TxMerkleNodeDecoder
 impl core::fmt::Display for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::Version
 impl core::fmt::Display for bitcoin_primitives::transaction::VersionDecoderError
-impl core::fmt::Display for bitcoin_primitives::witness::UnexpectedEofError
 impl core::fmt::Display for bitcoin_primitives::witness::WitnessDecoderError
 impl core::fmt::LowerHex for bitcoin_primitives::BlockHash
 impl core::fmt::LowerHex for bitcoin_primitives::Ntxid
@@ -534,7 +529,6 @@ impl core::marker::Freeze for bitcoin_primitives::transaction::Version
 impl core::marker::Freeze for bitcoin_primitives::transaction::VersionDecoder
 impl core::marker::Freeze for bitcoin_primitives::transaction::VersionDecoderError
 impl core::marker::Freeze for bitcoin_primitives::transaction::VersionEncoder
-impl core::marker::Freeze for bitcoin_primitives::witness::UnexpectedEofError
 impl core::marker::Freeze for bitcoin_primitives::witness::Witness
 impl core::marker::Freeze for bitcoin_primitives::witness::WitnessDecoder
 impl core::marker::Freeze for bitcoin_primitives::witness::WitnessDecoderError
@@ -592,7 +586,6 @@ impl core::marker::Send for bitcoin_primitives::transaction::Version
 impl core::marker::Send for bitcoin_primitives::transaction::VersionDecoder
 impl core::marker::Send for bitcoin_primitives::transaction::VersionDecoderError
 impl core::marker::Send for bitcoin_primitives::transaction::VersionEncoder
-impl core::marker::Send for bitcoin_primitives::witness::UnexpectedEofError
 impl core::marker::Send for bitcoin_primitives::witness::Witness
 impl core::marker::Send for bitcoin_primitives::witness::WitnessDecoder
 impl core::marker::Send for bitcoin_primitives::witness::WitnessDecoderError
@@ -634,7 +627,6 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TxOu
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::Version
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::VersionDecoderError
-impl core::marker::StructuralPartialEq for bitcoin_primitives::witness::UnexpectedEofError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::witness::Witness
 impl core::marker::StructuralPartialEq for bitcoin_primitives::witness::WitnessDecoderError
 impl core::marker::Sync for bitcoin_primitives::BlockHash
@@ -691,7 +683,6 @@ impl core::marker::Sync for bitcoin_primitives::transaction::Version
 impl core::marker::Sync for bitcoin_primitives::transaction::VersionDecoder
 impl core::marker::Sync for bitcoin_primitives::transaction::VersionDecoderError
 impl core::marker::Sync for bitcoin_primitives::transaction::VersionEncoder
-impl core::marker::Sync for bitcoin_primitives::witness::UnexpectedEofError
 impl core::marker::Sync for bitcoin_primitives::witness::Witness
 impl core::marker::Sync for bitcoin_primitives::witness::WitnessDecoder
 impl core::marker::Sync for bitcoin_primitives::witness::WitnessDecoderError
@@ -749,7 +740,6 @@ impl core::marker::Unpin for bitcoin_primitives::transaction::Version
 impl core::marker::Unpin for bitcoin_primitives::transaction::VersionDecoder
 impl core::marker::Unpin for bitcoin_primitives::transaction::VersionDecoderError
 impl core::marker::Unpin for bitcoin_primitives::transaction::VersionEncoder
-impl core::marker::Unpin for bitcoin_primitives::witness::UnexpectedEofError
 impl core::marker::Unpin for bitcoin_primitives::witness::Witness
 impl core::marker::Unpin for bitcoin_primitives::witness::WitnessDecoder
 impl core::marker::Unpin for bitcoin_primitives::witness::WitnessDecoderError
@@ -808,7 +798,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::VersionDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::VersionDecoderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::VersionEncoder
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness::UnexpectedEofError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness::Witness
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness::WitnessDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness::WitnessDecoderError
@@ -866,7 +855,6 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::V
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::VersionDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::VersionDecoderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::VersionEncoder
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness::UnexpectedEofError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness::Witness
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness::WitnessDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness::WitnessDecoderError
@@ -1761,9 +1749,6 @@ pub fn bitcoin_primitives::transaction::WitnessesEncoder<'e>::new(inputs: &'e [b
 pub fn bitcoin_primitives::witness::Iter<'a>::clone(&self) -> bitcoin_primitives::witness::Iter<'a>
 pub fn bitcoin_primitives::witness::Iter<'a>::next(&mut self) -> core::option::Option<Self::Item>
 pub fn bitcoin_primitives::witness::Iter<'a>::size_hint(&self) -> (usize, core::option::Option<usize>)
-pub fn bitcoin_primitives::witness::UnexpectedEofError::clone(&self) -> bitcoin_primitives::witness::UnexpectedEofError
-pub fn bitcoin_primitives::witness::UnexpectedEofError::eq(&self, other: &bitcoin_primitives::witness::UnexpectedEofError) -> bool
-pub fn bitcoin_primitives::witness::UnexpectedEofError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::witness::Witness::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::witness::Witness::clear(&mut self)
 pub fn bitcoin_primitives::witness::Witness::clone(&self) -> bitcoin_primitives::witness::Witness
@@ -1818,6 +1803,7 @@ pub fn bitcoin_primitives::witness::WitnessDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::witness::WitnessDecoderError::clone(&self) -> bitcoin_primitives::witness::WitnessDecoderError
 pub fn bitcoin_primitives::witness::WitnessDecoderError::eq(&self, other: &bitcoin_primitives::witness::WitnessDecoderError) -> bool
 pub fn bitcoin_primitives::witness::WitnessDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::witness::WitnessDecoderError::from(e: bitcoin_consensus_encoding::decode::decoders::VecDecoderError<bitcoin_consensus_encoding::decode::decoders::ByteVecDecoderError>) -> Self
 pub fn bitcoin_primitives::witness::WitnessDecoderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::witness::WitnessDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::witness::WitnessEncoder<'_>::advance(&mut self) -> bool
@@ -1905,7 +1891,6 @@ pub struct bitcoin_primitives::transaction::VersionEncoder(_)
 pub struct bitcoin_primitives::transaction::WitnessesEncoder<'e>
 pub struct bitcoin_primitives::transaction::Wtxid(_)
 pub struct bitcoin_primitives::witness::Iter<'a>
-pub struct bitcoin_primitives::witness::UnexpectedEofError
 pub struct bitcoin_primitives::witness::Witness
 pub struct bitcoin_primitives::witness::WitnessDecoder
 pub struct bitcoin_primitives::witness::WitnessDecoderError(_)
