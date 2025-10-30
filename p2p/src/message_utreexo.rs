@@ -513,3 +513,78 @@ impl Decodable for UtreexoTransaction {
         })
     }
 }
+
+/// The `uroot` message (BIP-0324 type 35).
+///
+/// The [`UtreexoRoot`] (`uroot`) message is the Utreexo accumulator state at a given height
+/// with a proof to a Utreexo accumulator of the Utreexo roots.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct UtreexoRoot {
+    /// The number of leaves that were added to the accumulator at this block hash.
+    pub num_leaves: usize,
+    /// The position of the Utreexo root in the optional accumulator of Utreexo roots.
+    pub target: usize,
+    /// The blockhash for this Utreexo accumulator.
+    pub blockhash: BlockHash,
+    /// The roots of the Utreexo Merkle forest at this block hash.
+    pub root_hashes: Vec<[u8; 32]>,
+    /// The proof hashes necessary to validate with the pre-commited Utreexo accumulator of the Utreexo roots.
+    pub proof_hashes: Vec<[u8; 32]>,
+}
+
+impl Encodable for UtreexoRoot {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += w.emit_compact_size(self.num_leaves)?;
+        len += w.emit_compact_size(self.target)?;
+        len += self.blockhash.consensus_encode(w)?;
+        len += self.proof_hashes.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for UtreexoRoot {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let num_leaves = r.read_compact_size()? as usize;
+        let target = r.read_compact_size()? as usize;
+        let blockhash = BlockHash::consensus_decode(r)?;
+        let root_hashes = Vec::<[u8; 32]>::consensus_decode(r)?;
+        let proof_hashes = Vec::<[u8; 32]>::consensus_decode(r)?;
+
+        Ok(Self { num_leaves, target, blockhash, root_hashes, proof_hashes })
+    }
+}
+
+/// The `geturoot` message (BIP-0324 type 36).
+///
+/// The [`GetUtreexoRoot`] (`geturoot`) message is a request for the accumulator state at the given block hash.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct GetUtreexoRoot {
+    /// The block hash that the accumulator state is being requested for.
+    pub blockhash: BlockHash,
+}
+
+impl Encodable for GetUtreexoRoot {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.blockhash.consensus_encode(w)?;
+
+        Ok(len)
+    }
+}
+
+impl Decodable for GetUtreexoRoot {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self { blockhash: BlockHash::consensus_decode(r)? })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // TODO(@luisschwab): add tests (pending BIP-0183 test vectors)
+}
