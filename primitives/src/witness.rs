@@ -363,8 +363,7 @@ impl Decoder for WitnessDecoder {
                 return Ok(false);
             }
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.witness_elements);
+            // For DoS prevention, let's not allocate all memory upfront.
         }
 
         loop {
@@ -372,9 +371,15 @@ impl Decoder for WitnessDecoder {
                 return Ok(true);
             }
 
+            encoding::reserve_vec_batch(&mut self.buffer, self.witness_elements);
+
             if self.element_length_prefix_read {
                 let v = self.buffer.get_mut(self.idx).expect("we created this last call");
-                let copy_len = bytes.len().min(self.bytes_to_read);
+
+                encoding::reserve_byte_batch(v, self.bytes_to_read);
+
+                let available_capacity = v.capacity() - v.len();
+                let copy_len = bytes.len().min(self.bytes_to_read).min(available_capacity);
 
                 v.extend_from_slice(&bytes[..copy_len]);
                 *bytes = &bytes[copy_len..];
@@ -399,8 +404,8 @@ impl Decoder for WitnessDecoder {
                     .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
                 self.element_length_prefix_read = true;
 
-                // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-                let v = Vec::with_capacity(self.bytes_to_read);
+                // For DoS prevention, let's not allocate all memory upfront.
+                let v = Vec::new();
                 self.buffer.push(v);
             }
         }
