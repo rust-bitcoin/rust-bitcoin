@@ -102,6 +102,17 @@ impl Decoder for ByteVecDecoder {
     }
 }
 
+/// Implements `Decodable` for byte vectors.
+///
+/// This delegates to [`ByteVecDecoder`] which provides an optimized implementation
+/// that uses bulk copying rather than decoding bytes one at a time.
+#[cfg(feature = "alloc")]
+impl Decodable for Vec<u8> {
+    type Decoder = ByteVecDecoder;
+
+    fn decoder() -> Self::Decoder { ByteVecDecoder::new() }
+}
+
 /// A decoder that decodes a vector of `T`s.
 ///
 /// The decoding is expected to start with expected number of items in the vector.

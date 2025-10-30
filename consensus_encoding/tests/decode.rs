@@ -194,3 +194,20 @@ fn decode_byte_vec_decoder_empty() {
     let result = decoder.end().unwrap();
     assert!(result.is_empty());
 }
+
+#[cfg(feature = "alloc")]
+#[test]
+fn decode_vec_u8() {
+    use bitcoin_consensus_encoding::{Decoder, VecDecoder};
+
+    let encoded = vec![0x02, 0x02, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05];
+    let mut slice = encoded.as_slice();
+    let mut decoder = VecDecoder::<Vec<u8>>::new();
+
+    while decoder.push_bytes(&mut slice).unwrap() {}
+
+    let result = decoder.end().unwrap();
+    let expected: Vec<Vec<u8>> = vec![vec![1, 2], vec![3, 4, 5]];
+
+    assert_eq!(result, expected);
+}
