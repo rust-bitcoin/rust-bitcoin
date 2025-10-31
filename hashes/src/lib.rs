@@ -201,7 +201,7 @@ pub trait HashEngine: Clone {
 ///
 /// Consumes and returns the hash engine to make it easier to call
 /// [`HashEngine::finalize`] directly on the result.
-pub fn encode_to_hash_engine<T, H>(object: &T, mut engine: H) -> H
+pub fn encode_to_engine<T, H>(object: &T, mut engine: H) -> H
 where
     T: encoding::Encodable + ?Sized,
     H: HashEngine,
