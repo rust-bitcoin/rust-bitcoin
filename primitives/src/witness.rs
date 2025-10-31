@@ -70,23 +70,6 @@ impl Witness {
         Witness { content: Vec::new(), witness_elements: 0, indices_start: 0 }
     }
 
-    /// Constructs a new [`Witness`] from inner parts.
-    ///
-    /// This function leaks implementation details of the `Witness`, as such it is unstable and
-    /// should not be relied upon (it is primarily provided for use in `rust-bitcoin`).
-    ///
-    /// UNSTABLE: This function may change, break, or disappear in any release.
-    #[inline]
-    #[doc(hidden)]
-    #[allow(non_snake_case)] // Because of `__unstable`.
-    pub fn from_parts__unstable(
-        content: Vec<u8>,
-        witness_elements: usize,
-        indices_start: usize,
-    ) -> Self {
-        Witness { content, witness_elements, indices_start }
-    }
-
     /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
         let witness_elements = slice.len();
@@ -833,15 +816,6 @@ mod test {
 
     use super::*;
 
-    // Appends all the indices onto the end of a list of elements.
-    fn append_u32_vec(elements: &[u8], indices: &[u32]) -> Vec<u8> {
-        let mut v = elements.to_vec();
-        for &num in indices {
-            v.extend_from_slice(&num.to_ne_bytes());
-        }
-        v
-    }
-
     // A witness with a single element that is empty (zero length).
     fn single_empty_element() -> Witness { Witness::from([[0u8; 0]]) }
 
@@ -937,19 +911,6 @@ mod test {
             assert_eq!(iter.len(), i);
             iter.next();
         }
-    }
-
-    #[test]
-    fn witness_from_parts() {
-        let elements = [1u8, 11, 2, 21, 22];
-        let witness_elements = 2;
-        let content = append_u32_vec(&elements, &[0, 2]);
-        let indices_start = elements.len();
-        let witness =
-            Witness::from_parts__unstable(content.clone(), witness_elements, indices_start);
-        assert_eq!(witness.get(0).unwrap(), [11_u8]);
-        assert_eq!(witness.get(1).unwrap(), [21_u8, 22]);
-        assert_eq!(witness.size(), 6);
     }
 
     #[test]
