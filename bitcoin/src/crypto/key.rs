@@ -310,11 +310,7 @@ impl PublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key(
-        sk: PrivateKey,
-    ) -> PublicKey {
-        sk.public_key()
-    }
+    pub fn from_private_key(sk: PrivateKey) -> PublicKey { sk.public_key() }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
     pub fn verify(
@@ -450,9 +446,7 @@ impl CompressedPublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key(
-        sk: PrivateKey,
-    ) -> Result<Self, UncompressedPublicKeyError> {
+    pub fn from_private_key(sk: PrivateKey) -> Result<Self, UncompressedPublicKeyError> {
         sk.public_key().try_into()
     }
 
@@ -638,7 +632,11 @@ impl PrivateKey {
             }
         };
 
-        Ok(PrivateKey { compressed, network, inner: secp256k1::SecretKey::from_secret_bytes(*key)? })
+        Ok(PrivateKey {
+            compressed,
+            network,
+            inner: secp256k1::SecretKey::from_secret_bytes(*key)?,
+        })
     }
 
     /// Returns a new private key with the negated secret value.
@@ -906,10 +904,7 @@ pub trait TapTweak {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak(
-        self,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self::TweakedAux;
+    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
 
     /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`].
     ///
@@ -935,10 +930,7 @@ impl TapTweak for UntweakedPublicKey {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak(
-        self,
-        merkle_root: Option<TapNodeHash>,
-    ) -> (TweakedPublicKey, Parity) {
+    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> (TweakedPublicKey, Parity) {
         let tweak = TapTweakHash::from_key_and_merkle_root(self, merkle_root).to_scalar();
         let (output_key, parity) = self.add_tweak(&tweak).expect("Tap tweak failed");
 
@@ -963,10 +955,7 @@ impl TapTweak for UntweakedKeypair {
     /// # Returns
     ///
     /// The tweaked keypair.
-    fn tap_tweak(
-        self,
-        merkle_root: Option<TapNodeHash>,
-    ) -> TweakedKeypair {
+    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
         let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
         let tweaked = self.add_xonly_tweak(&tweak).expect("Tap tweak failed");

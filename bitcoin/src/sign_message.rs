@@ -215,10 +215,7 @@ pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
 
 /// Sign message using Bitcoin's message signing format.
 #[cfg(feature = "secp-recovery")]
-pub fn sign(
-    msg: impl AsRef<[u8]>,
-    privkey: SecretKey,
-) -> MessageSignature {
+pub fn sign(msg: impl AsRef<[u8]>, privkey: SecretKey) -> MessageSignature {
     use secp256k1::ecdsa::RecoverableSignature;
 
     let msg_hash = signed_msg_hash(msg);
@@ -244,6 +241,7 @@ mod tests {
     #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
     fn message_signature() {
         use secp256k1::ecdsa::RecoverableSignature;
+
         use crate::{Address, AddressType, Network, NetworkKind};
 
         let message = "rust-bitcoin MessageSignature test";

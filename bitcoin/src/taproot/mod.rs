@@ -1775,20 +1775,13 @@ mod test {
         );
     }
 
-    fn _verify_tap_commitments(
-        out_spk_hex: &str,
-        script_hex: &str,
-        control_block_hex: &str,
-    ) {
+    fn _verify_tap_commitments(out_spk_hex: &str, script_hex: &str, control_block_hex: &str) {
         let out_pk = out_spk_hex[4..].parse::<XOnlyPublicKey>().unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = TapScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
         let control_block = ControlBlock::from_hex(control_block_hex).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
-        assert!(control_block.verify_taproot_commitment(
-            out_pk.to_x_only_public_key(),
-            &script
-        ));
+        assert!(control_block.verify_taproot_commitment(out_pk.to_x_only_public_key(), &script));
     }
 
     #[test]
@@ -1852,8 +1845,7 @@ mod test {
             (19, TapScriptBuf::from_hex_no_length_prefix("55").unwrap()),
         ];
         let tree_info =
-            TaprootSpendInfo::with_huffman_tree(internal_key, script_weights.clone())
-                .unwrap();
+            TaprootSpendInfo::with_huffman_tree(internal_key, script_weights.clone()).unwrap();
 
         /* The resulting tree should put the scripts into a tree similar
          * to the following:
@@ -1889,10 +1881,8 @@ mod test {
         for (_weights, script) in script_weights {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(
-                output_key.to_x_only_public_key(),
-                &ver_script.0
-            ))
+            assert!(ctrl_block
+                .verify_taproot_commitment(output_key.to_x_only_public_key(), &ver_script.0))
         }
     }
 
@@ -1961,10 +1951,8 @@ mod test {
         for script in [a, b, c, d, e] {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(
-                output_key.to_x_only_public_key(),
-                &ver_script.0
-            ))
+            assert!(ctrl_block
+                .verify_taproot_commitment(output_key.to_x_only_public_key(), &ver_script.0))
         }
     }
 
