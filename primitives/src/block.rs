@@ -32,10 +32,10 @@ use crate::{BlockTimeDecoder, BlockTimeDecoderError, Transaction, WitnessMerkleN
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval};
+pub use units::block::{BlockHeight, BlockHeightDecoder, BlockHeightEncoder, BlockHeightInterval, BlockMtp, BlockMtpInterval};
 // Re-export errors that appear directly in the API - but no doc inline.
 #[doc(no_inline)]
-pub use units::block::TooBigForRelativeHeightError;
+pub use units::block::{BlockHeightDecoderError, TooBigForRelativeHeightError};
 
 #[doc(inline)]
 pub use crate::hash_types::{
