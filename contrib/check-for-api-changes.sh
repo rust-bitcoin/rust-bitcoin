@@ -32,6 +32,7 @@ main() {
     fi
 
     # Just check crates that are stabilising.
+    generate_api_files "consensus_encoding"
     generate_api_files "units"
     generate_api_files "primitives"
 
