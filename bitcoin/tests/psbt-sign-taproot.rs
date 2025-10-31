@@ -24,10 +24,7 @@ fn psbt_sign_taproot() {
 
     impl GetKey for Keystore {
         type Error = SignError;
-        fn get_key(
-            &self,
-            key_request: &KeyRequest,
-        ) -> Result<Option<PrivateKey>, Self::Error> {
+        fn get_key(&self, key_request: &KeyRequest) -> Result<Option<PrivateKey>, Self::Error> {
             match key_request {
                 KeyRequest::Bip32((mfp, _)) =>
                     if *mfp == self.mfp {
@@ -61,8 +58,7 @@ fn psbt_sign_taproot() {
 
     let internal_key = kp.x_only_public_key().0; // Ignore the parity.
 
-    let tree =
-        create_taproot_tree(script1, script2.clone(), script3, internal_key);
+    let tree = create_taproot_tree(script1, script2.clone(), script3, internal_key);
 
     let address = create_p2tr_address(tree.clone());
     assert_eq!(

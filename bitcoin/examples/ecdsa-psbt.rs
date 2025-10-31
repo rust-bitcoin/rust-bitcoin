@@ -113,8 +113,7 @@ impl ColdStorage {
         // Hardened children require secret data to derive.
 
         let path = "84h/0h/0h".into_derivation_path()?;
-        let account_0_xpriv =
-            master_xpriv.derive_xpriv(&path).expect("derivation path is short");
+        let account_0_xpriv = master_xpriv.derive_xpriv(&path).expect("derivation path is short");
         let account_0_xpub = Xpub::from_xpriv(&account_0_xpriv);
 
         let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
@@ -131,10 +130,7 @@ impl ColdStorage {
     fn master_fingerprint(&self) -> Fingerprint { self.master_xpub.fingerprint() }
 
     /// Signs `psbt` with this signer.
-    fn sign_psbt(
-        &self,
-        mut psbt: Psbt,
-    ) -> Result<Psbt> {
+    fn sign_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
         match psbt.sign(&self.master_xpriv) {
             Ok(keys) => assert_eq!(keys.len(), 1),
             Err((_, e)) => {
@@ -249,9 +245,7 @@ impl WatchOnly {
     /// "m/84h/0h/0h/1/0"). A real wallet would have access to the chain so could determine if an
     /// address has been used or not. We ignore this detail and just re-use the first change address
     /// without loss of generality.
-    fn change_address(
-        &self,
-    ) -> Result<(CompressedPublicKey, Address, DerivationPath)> {
+    fn change_address(&self) -> Result<(CompressedPublicKey, Address, DerivationPath)> {
         let path = [ChildNumber::ONE_NORMAL, ChildNumber::ZERO_NORMAL];
         let derived = self.account_0_xpub.derive_xpub(path)?;
 
