@@ -1,45 +1,48 @@
-# Unreleased
+# 0.33.0-beta.0 - 2025-11-03
 
-- TODO: Make a comment about `Amount::MAX_MONEY` (perhaps here in `bitcoin` release notes as well as in `amount`)
+This series of beta releases is meant for two things:
 
-- Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+1. To allow testing of the upcoming `bitcoin v0.33.0`. Its been a long
+   time since we released and there is a lot in this.
 
-## Breaking changes
+2. To allow testing of the `1.0.0` RC releases of:
 
-- Change Psbt serde implementation to contextually use the PSBT binary or base64 encoded formats described in BIP-0174.
+   - `bitcoin-primitives`
+   - `bitcoin-units`
+   - `bitcoin-consensus-encoding`
 
-# 0.33.0-alpha.0 - 2024-11-18
-
-This series of alpha releases is meant for two things:
-
-1. To facilitate testing of `primitives 0.101`.
-2. To allow testing of upcoming `1.0` releases of:
-
-   - `bitcoin_hashes`
-   - `hex`
-   - `bitcoin-io`
-   - `primitives`
-   - `units`
-   - `ordered`
-
-You likely want to explicitly set the version if doing testing. `cargo` can be surprising when there
-is a `-` in the version number.
+`cargo` can be surprising when there is a `-` in the version number
+(see discussion on [#5229](https://github.com/rust-bitcoin/rust-bitcoin/discussions/5229)).
 
 We do not currently intend on releasing `bitcoin 0.33.0` until the `1.0` releases above are done.
 
 For changes to our dependencies included in this release see:
 
 - `bitcoin_hashes 0.17`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
+- `hex-conservative 1.0.0`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/1.x/CHANGELOG.md)
 - `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
 - `bitcoin-io 0.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
-- `bitcoin-primitives: 1.0.0-rc.0`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
-- `bitcoin-units 1.0.0-rc.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
-- `bitcoinconsensus: 0.106.0+26`: [changelog](https://github.com/rust-bitcoin/rust-bitcoinconsensus/blob/master/CHANGELOG.md)
+- `bitcoin-primitives: 1.0.0-rc`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
+- `bitcoin-units 1.0.0-rc`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
+- `bitcoin-consensus-encoding 1.0.0-rc` [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/consensus_encoding/CHANGELOG.md)
+
+## Worthy on note
+
+This release introduces an upper limit on the `Amount` type.
+
+- Remove `Amount::MAX` and replace it with the value in `MAX_MONEY` [#3691](https://github.com/rust-bitcoin/rust-bitcoin/issues/3691)
+- Prepare to enforce `MAX_MONEY` invariant [#4164](https://github.com/rust-bitcoin/rust-bitcoin/pull/4164)
+- Enforce `MAX_MONEY` invariant in amount types [#4157](https://github.com/rust-bitcoin/rust-bitcoin/pull/4157)
+- Use `MAX_MONEY` in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+
+The `serde` serialization for `Psbt` has changed.
+
+- BREAKING: Change `Psbt` serde implementations [#4496](https://github.com/rust-bitcoin/rust-bitcoin/pull/4496)
 
 ## Changes
 
 - Deprecate unchecked `amount` ops [#3759](https://github.com/rust-bitcoin/rust-bitcoin/pull/3759)
-- Change paramater type used for whole bitcoin amounts [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
+- Change parameter type used for whole bitcoin amounts [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
 - Add `Weight::to_kwu_ceil` [#3740](https://github.com/rust-bitcoin/rust-bitcoin/pull/3740)
 - Remove `Weight::from_wu_usize` function [#3738](https://github.com/rust-bitcoin/rust-bitcoin/pull/3738)
 - Move script hash types to `primitives` [#3734](https://github.com/rust-bitcoin/rust-bitcoin/pull/3734)
@@ -135,6 +138,7 @@ For changes to our dependencies included in this release see:
 - Change `TxIn::default()` to `TxIn::EMPTY_COINBASE` if appropriate.
 - Change `to_raw_hash()` to `to_byte_array()`.
 - `bitcoin::error::UnprefixedHexError` moved to `bitcoin::parse::UnprefixedHexError`.
+
 # 0.32.5 - 2024-11-27
 
 - Backport - Re-export `bech32` crate [#3662](https://github.com/rust-bitcoin/rust-bitcoin/pull/3662)
