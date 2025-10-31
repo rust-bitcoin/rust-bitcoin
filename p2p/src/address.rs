@@ -32,18 +32,18 @@ const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
     /// Constructs a new address message for a socket
-    pub fn new(socket: &SocketAddr, services: ServiceFlags) -> Address {
+    pub fn new(socket: &SocketAddr, services: ServiceFlags) -> Self {
         let (address, port) = match *socket {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
             SocketAddr::V6(addr) => (addr.ip().segments(), addr.port()),
         };
-        Address { address, port, services }
+        Self { address, port, services }
     }
 
     /// Builds a useless address that cannot be connected to. One may find this desirable if it is
     /// known the data will be ignored by the recipient.
-    pub const fn useless() -> Address {
-        Address { services: ServiceFlags::NONE, address: [0; 8], port: 0 }
+    pub const fn useless() -> Self {
+        Self { services: ServiceFlags::NONE, address: [0; 8], port: 0 }
     }
 
     /// Extracts socket address from an [Address] message.
@@ -84,7 +84,7 @@ impl Encodable for Address {
 impl Decodable for Address {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Address {
+        Ok(Self {
             services: Decodable::consensus_decode(r)?,
             address: read_be_address(r)?,
             port: u16::swap_bytes(Decodable::consensus_decode(r)?),
@@ -150,10 +150,10 @@ pub enum AddrV2 {
 impl TryFrom<AddrV2> for IpAddr {
     type Error = AddrV2ToIpAddrError;
 
-    fn try_from(addr: AddrV2) -> Result<IpAddr, Self::Error> {
+    fn try_from(addr: AddrV2) -> Result<Self, Self::Error> {
         match addr {
-            AddrV2::Ipv4(ip) => Ok(IpAddr::V4(ip)),
-            AddrV2::Ipv6(ip) => Ok(IpAddr::V6(ip)),
+            AddrV2::Ipv4(ip) => Ok(Self::V4(ip)),
+            AddrV2::Ipv6(ip) => Ok(Self::V6(ip)),
             AddrV2::Cjdns(_) => Err(AddrV2ToIpAddrError::Cjdns),
             AddrV2::TorV3(_) => Err(AddrV2ToIpAddrError::TorV3),
             AddrV2::I2p(_) => Err(AddrV2ToIpAddrError::I2p),
@@ -165,7 +165,7 @@ impl TryFrom<AddrV2> for IpAddr {
 impl TryFrom<AddrV2> for Ipv4Addr {
     type Error = AddrV2ToIpv4AddrError;
 
-    fn try_from(addr: AddrV2) -> Result<Ipv4Addr, Self::Error> {
+    fn try_from(addr: AddrV2) -> Result<Self, Self::Error> {
         match addr {
             AddrV2::Ipv4(ip) => Ok(ip),
             AddrV2::Ipv6(_) => Err(AddrV2ToIpv4AddrError::Ipv6),
@@ -180,7 +180,7 @@ impl TryFrom<AddrV2> for Ipv4Addr {
 impl TryFrom<AddrV2> for Ipv6Addr {
     type Error = AddrV2ToIpv6AddrError;
 
-    fn try_from(addr: AddrV2) -> Result<Ipv6Addr, Self::Error> {
+    fn try_from(addr: AddrV2) -> Result<Self, Self::Error> {
         match addr {
             AddrV2::Ipv6(ip) => Ok(ip),
             AddrV2::Cjdns(_) => Err(AddrV2ToIpv6AddrError::Cjdns),
@@ -195,18 +195,18 @@ impl TryFrom<AddrV2> for Ipv6Addr {
 impl From<IpAddr> for AddrV2 {
     fn from(addr: IpAddr) -> Self {
         match addr {
-            IpAddr::V4(ip) => AddrV2::Ipv4(ip),
-            IpAddr::V6(ip) => AddrV2::Ipv6(ip),
+            IpAddr::V4(ip) => Self::Ipv4(ip),
+            IpAddr::V6(ip) => Self::Ipv6(ip),
         }
     }
 }
 
 impl From<Ipv4Addr> for AddrV2 {
-    fn from(addr: Ipv4Addr) -> Self { AddrV2::Ipv4(addr) }
+    fn from(addr: Ipv4Addr) -> Self { Self::Ipv4(addr) }
 }
 
 impl From<Ipv6Addr> for AddrV2 {
-    fn from(addr: Ipv6Addr) -> Self { AddrV2::Ipv6(addr) }
+    fn from(addr: Ipv6Addr) -> Self { Self::Ipv6(addr) }
 }
 
 impl Encodable for AddrV2 {
@@ -220,12 +220,12 @@ impl Encodable for AddrV2 {
                 + crate::consensus::consensus_encode_with_size(bytes, w)?)
         }
         Ok(match *self {
-            AddrV2::Ipv4(ref addr) => encode_addr(w, 1, &addr.octets())?,
-            AddrV2::Ipv6(ref addr) => encode_addr(w, 2, &addr.octets())?,
-            AddrV2::TorV3(ref bytes) => encode_addr(w, 4, bytes)?,
-            AddrV2::I2p(ref bytes) => encode_addr(w, 5, bytes)?,
-            AddrV2::Cjdns(ref addr) => encode_addr(w, 6, &addr.octets())?,
-            AddrV2::Unknown(network, ref bytes) => encode_addr(w, network, bytes)?,
+            Self::Ipv4(ref addr) => encode_addr(w, 1, &addr.octets())?,
+            Self::Ipv6(ref addr) => encode_addr(w, 2, &addr.octets())?,
+            Self::TorV3(ref bytes) => encode_addr(w, 4, bytes)?,
+            Self::I2p(ref bytes) => encode_addr(w, 5, bytes)?,
+            Self::Cjdns(ref addr) => encode_addr(w, 6, &addr.octets())?,
+            Self::Unknown(network, ref bytes) => encode_addr(w, network, bytes)?,
         })
     }
 }
@@ -243,7 +243,7 @@ impl Decodable for AddrV2 {
                     return Err(crate::consensus::parse_failed_error("invalid IPv4 address"));
                 }
                 let addr: [u8; 4] = Decodable::consensus_decode(r)?;
-                AddrV2::Ipv4(Ipv4Addr::new(addr[0], addr[1], addr[2], addr[3]))
+                Self::Ipv4(Ipv4Addr::new(addr[0], addr[1], addr[2], addr[3]))
             }
             2 => {
                 if len != 16 {
@@ -260,7 +260,7 @@ impl Decodable for AddrV2 {
                         "IPV4 wrapped address sent with IPv6 network id",
                     ));
                 }
-                AddrV2::Ipv6(Ipv6Addr::new(
+                Self::Ipv6(Ipv6Addr::new(
                     addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7],
                 ))
             }
@@ -270,14 +270,14 @@ impl Decodable for AddrV2 {
                     return Err(crate::consensus::parse_failed_error("invalid TorV3 address"));
                 }
                 let pubkey = Decodable::consensus_decode(r)?;
-                AddrV2::TorV3(pubkey)
+                Self::TorV3(pubkey)
             }
             5 => {
                 if len != 32 {
                     return Err(crate::consensus::parse_failed_error("invalid I2P address"));
                 }
                 let hash = Decodable::consensus_decode(r)?;
-                AddrV2::I2p(hash)
+                Self::I2p(hash)
             }
             6 => {
                 if len != 16 {
@@ -288,7 +288,7 @@ impl Decodable for AddrV2 {
                 if addr[0] >> 8 != 0xFC {
                     return Err(crate::consensus::parse_failed_error("invalid CJDNS address"));
                 }
-                AddrV2::Cjdns(Ipv6Addr::new(
+                Self::Cjdns(Ipv6Addr::new(
                     addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7],
                 ))
             }
@@ -296,7 +296,7 @@ impl Decodable for AddrV2 {
                 // len already checked above to be <= 512
                 let mut addr = vec![0u8; len as usize];
                 r.read_slice(&mut addr)?;
-                AddrV2::Unknown(network_id, addr)
+                Self::Unknown(network_id, addr)
             }
         })
     }
@@ -344,7 +344,7 @@ impl Encodable for AddrV2Message {
 
 impl Decodable for AddrV2Message {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(AddrV2Message {
+        Ok(Self {
             time: Decodable::consensus_decode(r)?,
             services: ServiceFlags::from(r.read_compact_size()?),
             addr: Decodable::consensus_decode(r)?,
@@ -472,32 +472,20 @@ impl<'a> Arbitrary<'a> for Address {
             ),
         };
 
-        Ok(Address::new(&socket_addr, u.arbitrary()?))
+        Ok(Self::new(&socket_addr, u.arbitrary()?))
     }
 }
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrV2 {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match u.int_in_range(0..=5)? {
-            0 => Ok(AddrV2::Ipv4(Ipv4Addr::new(
+            0 => Ok(Self::Ipv4(Ipv4Addr::new(
                 u.arbitrary()?,
                 u.arbitrary()?,
                 u.arbitrary()?,
                 u.arbitrary()?,
             ))),
-            1 => Ok(AddrV2::Ipv6(Ipv6Addr::new(
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-                u.arbitrary()?,
-            ))),
-            2 => Ok(AddrV2::TorV3(u.arbitrary()?)),
-            3 => Ok(AddrV2::I2p(u.arbitrary()?)),
-            4 => Ok(AddrV2::Cjdns(Ipv6Addr::new(
+            1 => Ok(Self::Ipv6(Ipv6Addr::new(
                 u.arbitrary()?,
                 u.arbitrary()?,
                 u.arbitrary()?,
@@ -507,7 +495,19 @@ impl<'a> Arbitrary<'a> for AddrV2 {
                 u.arbitrary()?,
                 u.arbitrary()?,
             ))),
-            _ => Ok(AddrV2::Unknown(u.arbitrary()?, Vec::<u8>::arbitrary(u)?)),
+            2 => Ok(Self::TorV3(u.arbitrary()?)),
+            3 => Ok(Self::I2p(u.arbitrary()?)),
+            4 => Ok(Self::Cjdns(Ipv6Addr::new(
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+                u.arbitrary()?,
+            ))),
+            _ => Ok(Self::Unknown(u.arbitrary()?, Vec::<u8>::arbitrary(u)?)),
         }
     }
 }
@@ -515,7 +515,7 @@ impl<'a> Arbitrary<'a> for AddrV2 {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrV2Message {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(AddrV2Message {
+        Ok(Self {
             time: u.arbitrary()?,
             services: u.arbitrary()?,
             addr: u.arbitrary()?,

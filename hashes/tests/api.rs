@@ -66,7 +66,7 @@ impl Hashes<Sha256> {
         let tagged = TaggedHash::from_byte_array(Sha256t::<Tag>::hash(&[]).to_byte_array());
         let siphash = Siphash24::from_engine(siphash24::HashEngine::with_keys(0, 0));
 
-        Hashes {
+        Self {
             a: Hash160::hash(&[]),
             // b: hkdf,
             c: hmac,
@@ -105,7 +105,7 @@ struct Engines {
 
 impl Engines {
     fn new_sha256() -> Self {
-        Engines {
+        Self {
             a: hash160::HashEngine::new(),
             b: hmac::HmacEngine::<sha256::HashEngine>::new(&[]),
             c: ripemd160::HashEngine::new(),

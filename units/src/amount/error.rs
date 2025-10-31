@@ -219,7 +219,7 @@ impl std::error::Error for OutOfRangeError {}
 
 impl From<OutOfRangeError> for ParseAmountError {
     fn from(value: OutOfRangeError) -> Self {
-        ParseAmountError(ParseAmountErrorInner::OutOfRange(value))
+        Self(ParseAmountErrorInner::OutOfRange(value))
     }
 }
 

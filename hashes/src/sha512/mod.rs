@@ -38,7 +38,7 @@ impl Hash {
         e.input(&(8 * n_bytes_hashed).to_be_bytes());
         debug_assert_eq!(incomplete_block_len(&e), 0);
 
-        Hash(e.midstate())
+        Self(e.midstate())
     }
 
     /// Finalize a hash engine to produce a hash.
@@ -99,7 +99,7 @@ impl HashEngine {
     /// Constructs a new hash engine suitable for use constructing a `sha512_256::HashEngine`.
     #[rustfmt::skip]
     pub(crate) const fn sha512_256() -> Self {
-        HashEngine {
+        Self {
             h: [
                 0x22312194fc2bf72c, 0x9f555fa3c84c64c2, 0x2393b86b6f53b151, 0x963877195940eabd,
                 0x96283ee2a88effe3, 0xbe5e1e2553863992, 0x2b0199fc2c85b8aa, 0x0eb72ddc81c52ca2,
@@ -112,7 +112,7 @@ impl HashEngine {
     /// Constructs a new hash engine suitable for constructing a `sha384::HashEngine`.
     #[rustfmt::skip]
     pub(crate) const fn sha384() -> Self {
-        HashEngine {
+        Self {
             h: [
                 0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,
                 0x67332667ffc00b31, 0x8eb44a8768581511, 0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,

@@ -64,6 +64,6 @@ impl fmt::Debug for HashType {
 impl<'a> Arbitrary<'a> for HashType {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let arbitrary_bytes = u.arbitrary()?;
-        Ok(HashType::from_byte_array(arbitrary_bytes))
+        Ok(Self::from_byte_array(arbitrary_bytes))
     }
 }

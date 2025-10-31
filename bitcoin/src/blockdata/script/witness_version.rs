@@ -83,7 +83,7 @@ impl FromStr for WitnessVersion {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let version: u8 = parse_int::int_from_str(s)?;
-        Ok(WitnessVersion::try_from(version)?)
+        Ok(Self::try_from(version)?)
     }
 }
 
@@ -121,9 +121,9 @@ impl TryFrom<Opcode> for WitnessVersion {
 
     fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
-            0 => Ok(WitnessVersion::V0),
+            0 => Ok(Self::V0),
             version if version >= OP_1.to_u8() && version <= OP_16.to_u8() =>
-                WitnessVersion::try_from(version - OP_1.to_u8() + 1),
+                Self::try_from(version - OP_1.to_u8() + 1),
             invalid => Err(TryFromError { invalid }),
         }
     }
@@ -134,18 +134,18 @@ impl TryFrom<Instruction<'_>> for WitnessVersion {
 
     fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {
         match instruction {
-            Instruction::Op(op) => Ok(WitnessVersion::try_from(op)?),
-            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(WitnessVersion::V0),
+            Instruction::Op(op) => Ok(Self::try_from(op)?),
+            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(Self::V0),
             Instruction::PushBytes(_) => Err(TryFromInstructionError::DataPush),
         }
     }
 }
 
 impl From<WitnessVersion> for Opcode {
-    fn from(version: WitnessVersion) -> Opcode {
+    fn from(version: WitnessVersion) -> Self {
         match version {
             WitnessVersion::V0 => OP_PUSHBYTES_0,
-            no => Opcode::from(OP_1.to_u8() + no.to_num() - 1),
+            no => Self::from(OP_1.to_u8() + no.to_num() - 1),
         }
     }
 }

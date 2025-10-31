@@ -42,11 +42,11 @@ pub enum IsSatisfiedByError {
 impl fmt::Display for IsSatisfiedByError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use IsSatisfiedByError as E;
+        
 
         match *self {
-            E::Blocks(ref e) => write_err!(f, "blocks"; e),
-            E::Time(ref e) => write_err!(f, "time"; e),
+            Self::Blocks(ref e) => write_err!(f, "blocks"; e),
+            Self::Time(ref e) => write_err!(f, "time"; e),
         }
     }
 }
@@ -54,11 +54,11 @@ impl fmt::Display for IsSatisfiedByError {
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use IsSatisfiedByError as E;
+        
 
         match *self {
-            E::Blocks(ref e) => Some(e),
-            E::Time(ref e) => Some(e),
+            Self::Blocks(ref e) => Some(e),
+            Self::Time(ref e) => Some(e),
         }
     }
 }
@@ -76,11 +76,11 @@ pub enum IsSatisfiedByHeightError {
 impl fmt::Display for IsSatisfiedByHeightError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use IsSatisfiedByHeightError as E;
+        
 
         match *self {
-            E::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
-            E::Incompatible(time) =>
+            Self::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
+            Self::Incompatible(time) =>
                 write!(f, "tried to satisfy a lock-by-height locktime using seconds {}", time),
         }
     }
@@ -89,11 +89,11 @@ impl fmt::Display for IsSatisfiedByHeightError {
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByHeightError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use IsSatisfiedByHeightError as E;
+        
 
         match *self {
-            E::Satisfaction(ref e) => Some(e),
-            E::Incompatible(_) => None,
+            Self::Satisfaction(ref e) => Some(e),
+            Self::Incompatible(_) => None,
         }
     }
 }
@@ -111,11 +111,11 @@ pub enum IsSatisfiedByTimeError {
 impl fmt::Display for IsSatisfiedByTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use IsSatisfiedByTimeError as E;
+        
 
         match *self {
-            E::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
-            E::Incompatible(blocks) =>
+            Self::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
+            Self::Incompatible(blocks) =>
                 write!(f, "tried to satisfy a lock-by-time locktime using blocks {}", blocks),
         }
     }
@@ -124,11 +124,11 @@ impl fmt::Display for IsSatisfiedByTimeError {
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByTimeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use IsSatisfiedByTimeError as E;
+        
 
         match *self {
-            E::Satisfaction(ref e) => Some(e),
-            E::Incompatible(_) => None,
+            Self::Satisfaction(ref e) => Some(e),
+            Self::Incompatible(_) => None,
         }
     }
 }

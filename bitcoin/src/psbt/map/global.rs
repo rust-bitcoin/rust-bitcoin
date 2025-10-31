@@ -199,7 +199,7 @@ impl Psbt {
         }
 
         if let Some(tx) = tx {
-            Ok(Psbt {
+            Ok(Self {
                 unsigned_tx: tx,
                 version: version.unwrap_or(0),
                 xpub: xpub_map,

@@ -253,48 +253,48 @@ impl ops::Neg for SignedAmount {
     }
 }
 
-impl core::iter::Sum<NumOpResult<Amount>> for NumOpResult<Amount> {
+impl core::iter::Sum<Self> for NumOpResult<Amount> {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = NumOpResult<Amount>>,
+        I: Iterator<Item = Self>,
     {
-        iter.fold(R::Valid(Amount::ZERO), |acc, amount| match (acc, amount) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-            (_, _) => R::Error(NumOpError::while_doing(MathOp::Add)),
+        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, amount) {
+            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
+            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
         })
     }
 }
-impl<'a> core::iter::Sum<&'a NumOpResult<Amount>> for NumOpResult<Amount> {
+impl<'a> core::iter::Sum<&'a Self> for NumOpResult<Amount> {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = &'a NumOpResult<Amount>>,
+        I: Iterator<Item = &'a Self>,
     {
-        iter.fold(R::Valid(Amount::ZERO), |acc, amount| match (acc, amount) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-            (_, _) => R::Error(NumOpError::while_doing(MathOp::Add)),
+        iter.fold(Self::Valid(Amount::ZERO), |acc, amount| match (acc, amount) {
+            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
+            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
         })
     }
 }
 
-impl core::iter::Sum<NumOpResult<SignedAmount>> for NumOpResult<SignedAmount> {
+impl core::iter::Sum<Self> for NumOpResult<SignedAmount> {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = NumOpResult<SignedAmount>>,
+        I: Iterator<Item = Self>,
     {
-        iter.fold(R::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-            (_, _) => R::Error(NumOpError::while_doing(MathOp::Add)),
+        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount) {
+            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
+            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
         })
     }
 }
-impl<'a> core::iter::Sum<&'a NumOpResult<SignedAmount>> for NumOpResult<SignedAmount> {
+impl<'a> core::iter::Sum<&'a Self> for NumOpResult<SignedAmount> {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = &'a NumOpResult<SignedAmount>>,
+        I: Iterator<Item = &'a Self>,
     {
-        iter.fold(R::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-            (_, _) => R::Error(NumOpError::while_doing(MathOp::Add)),
+        iter.fold(Self::Valid(SignedAmount::ZERO), |acc, amount| match (acc, amount) {
+            (Self::Valid(lhs), Self::Valid(rhs)) => lhs + rhs,
+            (_, _) => Self::Error(NumOpError::while_doing(MathOp::Add)),
         })
     }
 }

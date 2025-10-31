@@ -13,6 +13,9 @@ chacha20-poly1305 = { path = "../chacha20_poly1305" }
 criterion = "0.7"
 hex_lit = "0.1.1"
 
+[lints.clippy]
+use_self = "warn"
+
 [[bench]]
 name = "block"
 path = "bitcoin/block.rs"

@@ -42,7 +42,7 @@ impl Encodable for BlockHash {
 
 impl Decodable for BlockHash {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(BlockHash::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
     }
 }
 
@@ -95,7 +95,7 @@ impl Encodable for Version {
 
 impl Decodable for Version {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version::from_consensus)
+        Decodable::consensus_decode(r).map(Self::from_consensus)
     }
 }
 
@@ -107,7 +107,7 @@ impl Encodable for BlockTime {
 
 impl Decodable for BlockTime {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(BlockTime::from_u32)
+        Decodable::consensus_decode(r).map(Self::from_u32)
     }
 }
 
@@ -141,7 +141,7 @@ impl BlockUncheckedExt for Block<Unchecked> {
         match check_witness_commitment(&transactions) {
             (false, _) => Err(InvalidBlockError::InvalidWitnessCommitment),
             (true, witness_root) => {
-                let block = Block::new_unchecked(header, transactions);
+                let block = Self::new_unchecked(header, transactions);
                 Ok(block.assume_checked(witness_root))
             }
         }
@@ -409,20 +409,20 @@ impl Decodable for Block<Unchecked> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
         r: &mut R,
-    ) -> Result<Block, encode::Error> {
+    ) -> Result<Self, encode::Error> {
         let header = Decodable::consensus_decode_from_finite_reader(r)?;
         let transactions = Decodable::consensus_decode_from_finite_reader(r)?;
 
-        Ok(Block::new_unchecked(header, transactions))
+        Ok(Self::new_unchecked(header, transactions))
     }
 
     #[inline]
-    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Block, encode::Error> {
+    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let mut r = r.take(internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
         let header = Decodable::consensus_decode(&mut r)?;
         let transactions = Decodable::consensus_decode(&mut r)?;
 
-        Ok(Block::new_unchecked(header, transactions))
+        Ok(Self::new_unchecked(header, transactions))
     }
 }
 

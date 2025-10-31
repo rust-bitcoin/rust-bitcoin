@@ -26,7 +26,7 @@ where
     Case: hex::Case;
 
 impl<C: hex::Case> Default for Hex<C> {
-    fn default() -> Self { Hex(Default::default()) }
+    fn default() -> Self { Self(Default::default()) }
 }
 
 impl<C: hex::Case> ByteEncoder for Hex<C> {
@@ -75,7 +75,7 @@ pub mod hex {
 
     impl<C: Case> From<super::Hex<C>> for Encoder<C> {
         fn from(_: super::Hex<C>) -> Self {
-            Encoder(BufEncoder::new(C::INTERNAL_CASE), Default::default())
+            Self(BufEncoder::new(C::INTERNAL_CASE), Default::default())
         }
     }
 
@@ -194,7 +194,7 @@ struct ErrorTrackingWriter<W: fmt::Write> {
 
 impl<W: fmt::Write> ErrorTrackingWriter<W> {
     fn new(writer: W) -> Self {
-        ErrorTrackingWriter {
+        Self {
             writer,
             #[cfg(debug_assertions)]
             was_error: false,
@@ -387,9 +387,9 @@ where
 {
     fn unify(self) -> E {
         match self {
-            DecodeError::Other(error) => error,
-            DecodeError::Unconsumed => E::custom(format_args!("got more bytes than expected")),
-            DecodeError::Parse(e) => consensus_error_into_serde(e),
+            Self::Other(error) => error,
+            Self::Unconsumed => E::custom(format_args!("got more bytes than expected")),
+            Self::Parse(e) => consensus_error_into_serde(e),
         }
     }
 }
@@ -400,9 +400,9 @@ where
 {
     fn into_de_error<DE: serde::de::Error>(self) -> DE {
         match self {
-            DecodeError::Other(error) => error.into_de_error(),
-            DecodeError::Unconsumed => DE::custom(format_args!("got more bytes than expected")),
-            DecodeError::Parse(e) => consensus_error_into_serde(e),
+            Self::Other(error) => error.into_de_error(),
+            Self::Unconsumed => DE::custom(format_args!("got more bytes than expected")),
+            Self::Parse(e) => consensus_error_into_serde(e),
         }
     }
 }

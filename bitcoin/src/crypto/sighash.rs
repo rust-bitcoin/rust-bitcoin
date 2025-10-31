@@ -355,7 +355,7 @@ impl<'s> ScriptPath<'s> {
 }
 
 impl<'s> From<ScriptPath<'s>> for TapLeafHash {
-    fn from(script_path: ScriptPath<'s>) -> TapLeafHash { script_path.leaf_hash() }
+    fn from(script_path: ScriptPath<'s>) -> Self { script_path.leaf_hash() }
 }
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
@@ -419,7 +419,7 @@ impl str::FromStr for EcdsaSighashType {
 
 impl EcdsaSighashType {
     /// Splits the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean.
-    pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSighashType, bool) {
+    pub(crate) fn split_anyonecanpay_flag(self) -> (Self, bool) {
         use EcdsaSighashType::*;
 
         match self {
@@ -449,7 +449,7 @@ impl EcdsaSighashType {
     /// `EcdsaSighashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
     /// verifying signatures, the user should retain the `n` and use it to compute the signature hash
     /// message.
-    pub fn from_consensus(n: u32) -> EcdsaSighashType {
+    pub fn from_consensus(n: u32) -> Self {
         use EcdsaSighashType::*;
 
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
@@ -476,7 +476,7 @@ impl EcdsaSighashType {
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
-    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
+    pub fn from_standard(n: u32) -> Result<Self, NonStandardSighashTypeError> {
         use EcdsaSighashType::*;
 
         match n {
@@ -514,7 +514,7 @@ impl From<EcdsaSighashType> for TapSighashType {
 
 impl TapSighashType {
     /// Breaks the sighash flag into the "real" sighash flag and the `SIGHASH_ANYONECANPAY` boolean.
-    pub(crate) fn split_anyonecanpay_flag(self) -> (TapSighashType, bool) {
+    pub(crate) fn split_anyonecanpay_flag(self) -> (Self, bool) {
         use TapSighashType::*;
 
         match self {
@@ -604,7 +604,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// sighashes to be valid, no fields in the transaction may change except for script_sig and
     /// witness.
     pub fn new(tx: R) -> Self {
-        SighashCache { tx, common_cache: None, taproot_cache: None, segwit_cache: None }
+        Self { tx, common_cache: None, taproot_cache: None, segwit_cache: None }
     }
 
     /// Returns the reference to the cached transaction.
@@ -1284,7 +1284,7 @@ impl From<Infallible> for P2wpkhError {
 }
 
 impl From<transaction::InputsIndexError> for P2wpkhError {
-    fn from(value: transaction::InputsIndexError) -> Self { P2wpkhError::Sighash(value) }
+    fn from(value: transaction::InputsIndexError) -> Self { Self::Sighash(value) }
 }
 
 impl fmt::Display for P2wpkhError {
@@ -1425,9 +1425,9 @@ impl<E> EncodeSigningDataResult<E> {
     #[allow(clippy::wrong_self_convention)] // Consume self so we can take the error.
     pub fn is_sighash_single_bug(self) -> Result<bool, E> {
         match self {
-            EncodeSigningDataResult::SighashSingleBug => Ok(true),
-            EncodeSigningDataResult::WriteResult(Ok(())) => Ok(false),
-            EncodeSigningDataResult::WriteResult(Err(e)) => Err(e),
+            Self::SighashSingleBug => Ok(true),
+            Self::WriteResult(Ok(())) => Ok(false),
+            Self::WriteResult(Err(e)) => Err(e),
         }
     }
 
@@ -1440,10 +1440,10 @@ impl<E> EncodeSigningDataResult<E> {
         F: FnOnce(E) -> E2,
     {
         match self {
-            EncodeSigningDataResult::SighashSingleBug => EncodeSigningDataResult::SighashSingleBug,
-            EncodeSigningDataResult::WriteResult(Err(e)) =>
+            Self::SighashSingleBug => EncodeSigningDataResult::SighashSingleBug,
+            Self::WriteResult(Err(e)) =>
                 EncodeSigningDataResult::WriteResult(Err(f(e))),
-            EncodeSigningDataResult::WriteResult(Ok(o)) =>
+            Self::WriteResult(Ok(o)) =>
                 EncodeSigningDataResult::WriteResult(Ok(o)),
         }
     }
@@ -1496,8 +1496,8 @@ impl<E: fmt::Display> fmt::Display for SigningDataError<E> {
 impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            SigningDataError::Io(error) => Some(error),
-            SigningDataError::Sighash(error) => Some(error),
+            Self::Io(error) => Some(error),
+            Self::Sighash(error) => Some(error),
         }
     }
 }
@@ -1507,12 +1507,12 @@ impl<'a> Arbitrary<'a> for EcdsaSighashType {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=5)?;
         match choice {
-            0 => Ok(EcdsaSighashType::All),
-            1 => Ok(EcdsaSighashType::None),
-            2 => Ok(EcdsaSighashType::Single),
-            3 => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
-            4 => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
-            _ => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
+            0 => Ok(Self::All),
+            1 => Ok(Self::None),
+            2 => Ok(Self::Single),
+            3 => Ok(Self::AllPlusAnyoneCanPay),
+            4 => Ok(Self::NonePlusAnyoneCanPay),
+            _ => Ok(Self::SinglePlusAnyoneCanPay),
         }
     }
 }
@@ -1522,13 +1522,13 @@ impl<'a> Arbitrary<'a> for TapSighashType {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=6)?;
         match choice {
-            0 => Ok(TapSighashType::Default),
-            1 => Ok(TapSighashType::All),
-            2 => Ok(TapSighashType::None),
-            3 => Ok(TapSighashType::Single),
-            4 => Ok(TapSighashType::AllPlusAnyoneCanPay),
-            5 => Ok(TapSighashType::NonePlusAnyoneCanPay),
-            _ => Ok(TapSighashType::SinglePlusAnyoneCanPay),
+            0 => Ok(Self::Default),
+            1 => Ok(Self::All),
+            2 => Ok(Self::None),
+            3 => Ok(Self::Single),
+            4 => Ok(Self::AllPlusAnyoneCanPay),
+            5 => Ok(Self::NonePlusAnyoneCanPay),
+            _ => Ok(Self::SinglePlusAnyoneCanPay),
         }
     }
 }

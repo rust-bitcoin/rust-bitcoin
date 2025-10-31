@@ -415,7 +415,7 @@ impl Amount {
     /// Since `SignedAmount::MIN` is equivalent to `-Amount::MAX` subtraction of two signed amounts
     /// can never overflow a `SignedAmount`.
     #[must_use]
-    pub fn signed_sub(self, rhs: Amount) -> SignedAmount {
+    pub fn signed_sub(self, rhs: Self) -> SignedAmount {
         (self.to_signed() - rhs.to_signed())
             .expect("difference of two amounts is always within SignedAmount range")
     }
@@ -431,7 +431,7 @@ impl Amount {
         if let Some(sats) = self.to_sat().checked_mul(1_000) {
             match sats.checked_div(wu) {
                 Some(fee_rate) =>
-                    if let Ok(amount) = Amount::from_sat(fee_rate) {
+                    if let Ok(amount) = Self::from_sat(fee_rate) {
                         return FeeRate::from_per_kwu(amount);
                     },
                 None => return R::Error(E::while_doing(MathOp::Div)),
@@ -468,7 +468,7 @@ impl Amount {
             // No need to use checked arithmetic because wu is non-zero.
             if let Some(bump) = sats.checked_add(wu - 1) {
                 let fee_rate = bump / wu;
-                if let Ok(amount) = Amount::from_sat(fee_rate) {
+                if let Ok(amount) = Self::from_sat(fee_rate) {
                     return FeeRate::from_per_kwu(amount);
                 }
             }
@@ -483,7 +483,7 @@ impl Amount {
     /// at the given `fee_rate`. Uses floor division to ensure the resulting weight doesn't cause
     /// the fee to exceed the amount.
     pub const fn div_by_fee_rate_floor(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
-        debug_assert!(Amount::MAX.to_sat().checked_mul(1_000).is_some());
+        debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
         let msats = self.to_sat() * 1_000;
         match msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
             Some(wu) => R::Valid(Weight::from_wu(wu)),
@@ -503,7 +503,7 @@ impl Amount {
             return R::Error(E::while_doing(MathOp::Div));
         }
 
-        debug_assert!(Amount::MAX.to_sat().checked_mul(1_000).is_some());
+        debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
         let msats = self.to_sat() * 1_000;
         match msats.checked_add(rate - 1) {
             Some(bump) => {

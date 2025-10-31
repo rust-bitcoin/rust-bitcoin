@@ -217,7 +217,7 @@ impl<T> From<ScriptBuf<T>> for Vec<u8> {
     fn from(v: ScriptBuf<T>) -> Self { v.into_bytes() }
 }
 
-impl<T> AsRef<Script<T>> for Script<T> {
+impl<T> AsRef<Self> for Script<T> {
     #[inline]
     fn as_ref(&self) -> &Self { self }
 }
@@ -237,7 +237,7 @@ impl<T> AsRef<[u8]> for ScriptBuf<T> {
     fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
-impl<T> AsMut<Script<T>> for Script<T> {
+impl<T> AsMut<Self> for Script<T> {
     #[inline]
     fn as_mut(&mut self) -> &mut Self { self }
 }

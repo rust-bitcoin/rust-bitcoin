@@ -34,7 +34,7 @@ impl Decodable for Witness {
             .into());
         }
         if witness_elements == 0 {
-            Ok(Witness::default())
+            Ok(Self::default())
         } else {
             // Leave space at the head for element positions.
             // We will rotate them to the end of the Vec later.
@@ -82,7 +82,7 @@ impl Decodable for Witness {
             // Index space is now at the end of the Vec
             content.rotate_left(witness_index_space);
             let indices_start = cursor - witness_index_space;
-            Ok(Witness::from_parts__unstable(content, witness_elements, indices_start))
+            Ok(Self::from_parts__unstable(content, witness_elements, indices_start))
         }
     }
 }

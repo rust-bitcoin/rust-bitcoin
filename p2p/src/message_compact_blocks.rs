@@ -51,27 +51,27 @@ impl_consensus_encoding!(BlockTxn, transactions);
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for SendCmpct {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(SendCmpct { send_compact: u.arbitrary()?, version: u.arbitrary()? })
+        Ok(Self { send_compact: u.arbitrary()?, version: u.arbitrary()? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CmpctBlock {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(CmpctBlock { compact_block: u.arbitrary()? })
+        Ok(Self { compact_block: u.arbitrary()? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for GetBlockTxn {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(GetBlockTxn { txs_request: u.arbitrary()? })
+        Ok(Self { txs_request: u.arbitrary()? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTxn {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(BlockTxn { transactions: u.arbitrary()? })
+        Ok(Self { transactions: u.arbitrary()? })
     }
 }

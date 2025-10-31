@@ -36,7 +36,7 @@ impl Hash {
         e.input(&(8 * n_bytes_hashed).to_le_bytes());
         debug_assert_eq!(incomplete_block_len(&e), 0);
 
-        Hash(e.midstate())
+        Self(e.midstate())
     }
 
     /// Finalize a hash engine to produce a hash.

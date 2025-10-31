@@ -137,14 +137,14 @@ impl From<io::Error> for Error {
         use io::ErrorKind;
 
         match e.kind() {
-            ErrorKind::UnexpectedEof => Error::Parse(ParseError::MissingData),
-            _ => Error::Io(e),
+            ErrorKind::UnexpectedEof => Self::Parse(ParseError::MissingData),
+            _ => Self::Io(e),
         }
     }
 }
 
 impl From<ParseError> for Error {
-    fn from(e: ParseError) -> Self { Error::Parse(e) }
+    fn from(e: ParseError) -> Self { Self::Parse(e) }
 }
 
 /// Encoding is invalid.

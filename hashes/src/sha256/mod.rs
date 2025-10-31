@@ -46,14 +46,14 @@ impl HashEngine {
     /// Constructs a new [`HashEngine`] from a [`Midstate`].
     ///
     /// Please see docs on [`Midstate`] before using this function.
-    pub fn from_midstate(midstate: Midstate) -> HashEngine {
+    pub fn from_midstate(midstate: Midstate) -> Self {
         let mut ret = [0; 8];
         for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate.as_ref().bitcoin_as_chunks().0)
         {
             *ret_val = u32::from_be_bytes(*midstate_bytes);
         }
 
-        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, bytes_hashed: midstate.bytes_hashed }
+        Self { buffer: [0; BLOCK_SIZE], h: ret, bytes_hashed: midstate.bytes_hashed }
     }
 
     /// Returns `true` if the midstate can be extracted from this engine.
@@ -126,7 +126,7 @@ impl Hash {
         e.input(&(8 * n_bytes_hashed).to_be_bytes());
         debug_assert_eq!(incomplete_block_len(&e), 0);
 
-        Hash(e.midstate_unchecked().bytes)
+        Self(e.midstate_unchecked().bytes)
     }
 
     /// Finalize a hash engine to obtain a hash.
@@ -149,7 +149,7 @@ impl Hash {
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
-        Hash(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
+        Self(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
     }
 }
 
@@ -187,7 +187,7 @@ impl Midstate {
             panic!("bytes hashed is not a multiple of 64");
         }
 
-        Midstate { bytes: state, bytes_hashed }
+        Self { bytes: state, bytes_hashed }
     }
 
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.

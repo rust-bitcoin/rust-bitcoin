@@ -32,7 +32,7 @@ struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
 
 impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
     pub(crate) fn new(iterator: I) -> Self {
-        IterReader { iterator: iterator.fuse(), buf: None, error: None }
+        Self { iterator: iterator.fuse(), buf: None, error: None }
     }
 
     fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {

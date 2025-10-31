@@ -57,28 +57,28 @@ impl WitnessProgram {
         }
 
         let program = ArrayVec::from_slice(bytes);
-        Ok(WitnessProgram { version, program })
+        Ok(Self { version, program })
     }
 
     /// Constructs a new [`WitnessProgram`] from a 20 byte pubkey hash.
     fn new_p2wpkh(program: [u8; 20]) -> Self {
-        WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
+        Self { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Constructs a new [`WitnessProgram`] from a 32 byte script hash.
     fn new_p2wsh(program: [u8; 32]) -> Self {
-        WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
+        Self { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Constructs a new [`WitnessProgram`] from a 32 byte serialized Taproot x-only pubkey.
     fn new_p2tr(program: [u8; 32]) -> Self {
-        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
+        Self { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
     }
 
     /// Constructs a new [`WitnessProgram`] from `pk` for a P2WPKH output.
     pub fn p2wpkh(pk: CompressedPublicKey) -> Self {
         let hash = pk.wpubkey_hash();
-        WitnessProgram::new_p2wpkh(hash.to_byte_array())
+        Self::new_p2wpkh(hash.to_byte_array())
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
@@ -88,7 +88,7 @@ impl WitnessProgram {
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
     pub fn p2wsh_from_hash(hash: WScriptHash) -> Self {
-        WitnessProgram::new_p2wsh(hash.to_byte_array())
+        Self::new_p2wsh(hash.to_byte_array())
     }
 
     /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.
@@ -103,18 +103,18 @@ impl WitnessProgram {
         let internal_key = internal_key.into();
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         let pubkey = output_key.as_x_only_public_key().serialize();
-        WitnessProgram::new_p2tr(pubkey)
+        Self::new_p2tr(pubkey)
     }
 
     /// Constructs a new [`WitnessProgram`] from a tweaked key for a P2TR output.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         let pubkey = output_key.as_x_only_public_key().serialize();
-        WitnessProgram::new_p2tr(pubkey)
+        Self::new_p2tr(pubkey)
     }
 
     /// Constructs a new [`WitnessProgram`] for a P2A output.
     pub const fn p2a() -> Self {
-        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM) }
+        Self { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM) }
     }
 
     /// Returns the witness program version.

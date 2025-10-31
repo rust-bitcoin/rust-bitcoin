@@ -33,12 +33,12 @@ impl Signature {
         if let Ok(signature) = <[u8; 64]>::try_from(sl) {
             // default type
             let signature = secp256k1::schnorr::Signature::from_byte_array(signature);
-            Ok(Signature { signature, sighash_type: TapSighashType::Default })
+            Ok(Self { signature, sighash_type: TapSighashType::Default })
         } else if let Ok(signature) = <[u8; 65]>::try_from(sl) {
             let (sighash_type, signature) = signature.split_last();
             let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
             let signature = secp256k1::schnorr::Signature::from_byte_array(*signature);
-            Ok(Signature { signature, sighash_type })
+            Ok(Self { signature, sighash_type })
         } else {
             Err(SigFromSliceError::InvalidSignatureSize(sl.len()))
         }
@@ -138,7 +138,7 @@ impl<'a> Arbitrary<'a> for Signature {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let arbitrary_bytes: [u8; secp256k1::constants::SCHNORR_SIGNATURE_SIZE] = u.arbitrary()?;
 
-        Ok(Signature {
+        Ok(Self {
             signature: secp256k1::schnorr::Signature::from_byte_array(arbitrary_bytes),
             sighash_type: TapSighashType::arbitrary(u)?,
         })

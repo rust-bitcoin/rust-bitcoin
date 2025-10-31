@@ -111,7 +111,7 @@ impl std::error::Error for Error {
 }
 
 impl From<io::Error> for Error {
-    fn from(io: io::Error) -> Self { Error::Io(io) }
+    fn from(io: io::Error) -> Self { Self::Io(io) }
 }
 
 /// A block filter, as described by BIP 158.
@@ -133,13 +133,13 @@ impl FilterHash {
 
 impl BlockFilter {
     /// Constructs a new filter from pre-computed data.
-    pub fn new(content: &[u8]) -> BlockFilter { BlockFilter { content: content.to_vec() } }
+    pub fn new(content: &[u8]) -> Self { Self { content: content.to_vec() } }
 
     /// Computes a SCRIPT_FILTER that contains spent and output scripts.
     pub fn new_script_filter<M, S>(
         block: &Block<Checked>,
         script_for_coin: M,
-    ) -> Result<BlockFilter, Error>
+    ) -> Result<Self, Error>
     where
         M: Fn(&OutPoint) -> Result<S, Error>,
         S: Borrow<ScriptPubKey>,
@@ -151,7 +151,7 @@ impl BlockFilter {
         writer.add_input_scripts(script_for_coin)?;
         writer.finish()?;
 
-        Ok(BlockFilter { content: out })
+        Ok(Self { content: out })
     }
 
     /// Computes this filter's ID in a chain of filters (see [BIP 157]).
@@ -196,7 +196,7 @@ pub struct BlockFilterWriter<'a, W> {
 
 impl<'a, W: Write> BlockFilterWriter<'a, W> {
     /// Constructs a new [`BlockFilterWriter`] from `block`.
-    pub fn new(writer: &'a mut W, block: &'a Block<Checked>) -> BlockFilterWriter<'a, W> {
+    pub fn new(writer: &'a mut W, block: &'a Block<Checked>) -> Self {
         let block_hash_as_int = block.block_hash().to_byte_array();
         let k0 = u64::from_le_bytes(*block_hash_as_int.sub_array::<0, 8>());
         let k1 = u64::from_le_bytes(*block_hash_as_int.sub_array::<8, 8>());
@@ -251,11 +251,11 @@ pub struct BlockFilterReader {
 
 impl BlockFilterReader {
     /// Constructs a new [`BlockFilterReader`] from `block_hash`.
-    pub fn new(block_hash: BlockHash) -> BlockFilterReader {
+    pub fn new(block_hash: BlockHash) -> Self {
         let block_hash_as_int = block_hash.to_byte_array();
         let k0 = u64::from_le_bytes(*block_hash_as_int.sub_array::<0, 8>());
         let k1 = u64::from_le_bytes(*block_hash_as_int.sub_array::<8, 8>());
-        BlockFilterReader { reader: GcsFilterReader::new(k0, k1, M, P) }
+        Self { reader: GcsFilterReader::new(k0, k1, M, P) }
     }
 
     /// Returns true if any query matches against this [`BlockFilterReader`].
@@ -287,8 +287,8 @@ pub struct GcsFilterReader {
 
 impl GcsFilterReader {
     /// Constructs a new [`GcsFilterReader`] with specific seed to siphash.
-    pub fn new(k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterReader {
-        GcsFilterReader { filter: GcsFilter::new(k0, k1, p), m }
+    pub fn new(k0: u64, k1: u64, m: u64, p: u8) -> Self {
+        Self { filter: GcsFilter::new(k0, k1, p), m }
     }
 
     /// Returns true if any query matches against this [`GcsFilterReader`].
@@ -392,7 +392,7 @@ pub struct GcsFilterWriter<'a, W> {
 
 impl<'a, W: Write> GcsFilterWriter<'a, W> {
     /// Constructs a new [`GcsFilterWriter`] wrapping a generic writer, with specific seed to siphash.
-    pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterWriter<'a, W> {
+    pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> Self {
         GcsFilterWriter { filter: GcsFilter::new(k0, k1, p), writer, elements: BTreeSet::new(), m }
     }
 
@@ -439,7 +439,7 @@ struct GcsFilter {
 
 impl GcsFilter {
     /// Constructs a new [`GcsFilter`].
-    fn new(k0: u64, k1: u64, p: u8) -> GcsFilter { GcsFilter { k0, k1, p } }
+    fn new(k0: u64, k1: u64, p: u8) -> Self { Self { k0, k1, p } }
 
     /// Golomb-Rice encodes a number `n` to a bit stream (parameter 2^k).
     fn golomb_rice_encode<W>(
@@ -490,7 +490,7 @@ pub struct BitStreamReader<'a, R: ?Sized> {
 
 impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
     /// Constructs a new [`BitStreamReader`] that reads bitwise from a given `reader`.
-    pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
+    pub fn new(reader: &'a mut R) -> Self {
         BitStreamReader { buffer: [0u8], reader, offset: 8 }
     }
 
@@ -538,7 +538,7 @@ pub struct BitStreamWriter<'a, W> {
 
 impl<'a, W: Write> BitStreamWriter<'a, W> {
     /// Constructs a new [`BitStreamWriter`] that writes bitwise to a given `writer`.
-    pub fn new(writer: &'a mut W) -> BitStreamWriter<'a, W> {
+    pub fn new(writer: &'a mut W) -> Self {
         BitStreamWriter { buffer: [0u8], writer, offset: 0 }
     }
 
@@ -579,14 +579,14 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FilterHash {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(FilterHash::from_byte_array(u.arbitrary()?))
+        Ok(Self::from_byte_array(u.arbitrary()?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FilterHeader {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(FilterHeader::from_byte_array(u.arbitrary()?))
+        Ok(Self::from_byte_array(u.arbitrary()?))
     }
 }
 

@@ -99,7 +99,7 @@ impl MerkleBlock {
         let matches: Vec<bool> = block_txids.iter().map(match_txids).collect();
 
         let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
-        MerkleBlock { header: *header, txn: pmt }
+        Self { header: *header, txn: pmt }
     }
 
     /// Extracts the matching txid's represented by this partial Merkle tree
@@ -129,7 +129,7 @@ impl Encodable for MerkleBlock {
 
 impl Decodable for MerkleBlock {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(MerkleBlock {
+        Ok(Self {
             header: Decodable::consensus_decode(r)?,
             txn: Decodable::consensus_decode(r)?,
         })
@@ -223,7 +223,7 @@ impl PartialMerkleTree {
         assert_ne!(txids.len(), 0);
         assert_eq!(txids.len(), matches.len());
 
-        let mut pmt = PartialMerkleTree {
+        let mut pmt = Self {
             num_transactions: txids.len() as u32,
             bits: Vec::with_capacity(txids.len()),
             hashes: vec![],
@@ -445,7 +445,7 @@ impl Decodable for PartialMerkleTree {
             }
         }
 
-        Ok(PartialMerkleTree { num_transactions, hashes, bits })
+        Ok(Self { num_transactions, hashes, bits })
     }
 }
 
@@ -515,7 +515,7 @@ impl std::error::Error for MerkleBlockError {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for PartialMerkleTree {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(PartialMerkleTree {
+        Ok(Self {
             num_transactions: u.arbitrary()?,
             bits: Vec::<bool>::arbitrary(u)?,
             hashes: Vec::<TxMerkleNode>::arbitrary(u)?,
@@ -526,7 +526,7 @@ impl<'a> Arbitrary<'a> for PartialMerkleTree {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for MerkleBlock {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(MerkleBlock { header: u.arbitrary()?, txn: u.arbitrary()? })
+        Ok(Self { header: u.arbitrary()?, txn: u.arbitrary()? })
     }
 }
 

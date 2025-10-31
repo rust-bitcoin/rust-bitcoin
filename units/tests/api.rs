@@ -306,7 +306,7 @@ fn dyn_compatible() {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Types {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Types { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
+        let a = Self { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
         Ok(a)
     }
 }
@@ -314,7 +314,7 @@ impl<'a> Arbitrary<'a> for Types {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Structs {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Structs {
+        let a = Self {
             a: Amount::arbitrary(u)?,
             // Skip the `Display` type.
             b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
@@ -338,7 +338,7 @@ impl<'a> Arbitrary<'a> for Structs {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Enums {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Enums {
+        let a = Self {
             a: amount::Denomination::arbitrary(u)?,
             b: NumOpResult::<Amount>::arbitrary(u)?,
             c: result::MathOp::arbitrary(u)?,

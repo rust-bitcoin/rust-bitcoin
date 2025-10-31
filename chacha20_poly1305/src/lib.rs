@@ -43,7 +43,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::UnauthenticatedAdditionalData => write!(f, "Unauthenticated aad."),
+            Self::UnauthenticatedAdditionalData => write!(f, "Unauthenticated aad."),
         }
     }
 }
@@ -52,7 +52,7 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Error::UnauthenticatedAdditionalData => None,
+            Self::UnauthenticatedAdditionalData => None,
         }
     }
 }
@@ -65,7 +65,7 @@ pub struct ChaCha20Poly1305 {
 
 impl ChaCha20Poly1305 {
     /// Make a new instance of a ChaCha20Poly1305 AEAD.
-    pub const fn new(key: Key, nonce: Nonce) -> Self { ChaCha20Poly1305 { key, nonce } }
+    pub const fn new(key: Key, nonce: Nonce) -> Self { Self { key, nonce } }
 
     /// Encrypt content in place and return the Poly1305 16-byte authentication tag.
     ///

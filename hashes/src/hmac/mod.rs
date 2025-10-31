@@ -22,7 +22,7 @@ pub struct Hmac<T: Hash>(T);
 
 impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
     type Err = <T as str::FromStr>::Err;
-    fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Hmac(str::FromStr::from_str(s)?)) }
+    fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Self(str::FromStr::from_str(s)?)) }
 }
 
 impl<T: Hash> PartialEq for Hmac<T> {
@@ -46,7 +46,7 @@ impl<T: HashEngine> HmacEngine<T> {
     /// # Panics
     ///
     /// Larger hashes will result in a panic.
-    pub fn new(key: &[u8]) -> HmacEngine<T>
+    pub fn new(key: &[u8]) -> Self
     where
         T: Default,
     {
@@ -54,7 +54,7 @@ impl<T: HashEngine> HmacEngine<T> {
 
         let mut ipad = [0x36u8; 128];
         let mut opad = [0x5cu8; 128];
-        let mut ret = HmacEngine { iengine: T::default(), oengine: T::default() };
+        let mut ret = Self { iengine: T::default(), oengine: T::default() };
 
         if key.len() > T::BLOCK_SIZE {
             let mut engine = T::default();
@@ -82,8 +82,8 @@ impl<T: HashEngine> HmacEngine<T> {
     }
 
     /// A special constructor giving direct access to the underlying "inner" and "outer" engines.
-    pub fn from_inner_engines(iengine: T, oengine: T) -> HmacEngine<T> {
-        HmacEngine { iengine, oengine }
+    pub fn from_inner_engines(iengine: T, oengine: T) -> Self {
+        Self { iengine, oengine }
     }
 }
 
@@ -121,7 +121,7 @@ impl<T: Hash> convert::AsRef<[u8]> for Hmac<T> {
 impl<T: Hash> Hash for Hmac<T> {
     type Bytes = T::Bytes;
 
-    fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
+    fn from_byte_array(bytes: T::Bytes) -> Self { Self(T::from_byte_array(bytes)) }
 
     fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
 
@@ -137,9 +137,9 @@ impl<T: Hash + Serialize> Serialize for Hmac<T> {
 
 #[cfg(feature = "serde")]
 impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
-    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Hmac<T>, D::Error> {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let bytes = Deserialize::deserialize(d)?;
-        Ok(Hmac(bytes))
+        Ok(Self(bytes))
     }
 }
 

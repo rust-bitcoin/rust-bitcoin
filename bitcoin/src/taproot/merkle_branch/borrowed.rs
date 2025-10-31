@@ -116,12 +116,12 @@ impl Default for &'_ TaprootMerkleBranch {
     fn default() -> Self { TaprootMerkleBranch::new() }
 }
 
-impl AsRef<TaprootMerkleBranch> for TaprootMerkleBranch {
-    fn as_ref(&self) -> &TaprootMerkleBranch { self }
+impl AsRef<Self> for TaprootMerkleBranch {
+    fn as_ref(&self) -> &Self { self }
 }
 
-impl AsMut<TaprootMerkleBranch> for TaprootMerkleBranch {
-    fn as_mut(&mut self) -> &mut TaprootMerkleBranch { self }
+impl AsMut<Self> for TaprootMerkleBranch {
+    fn as_mut(&mut self) -> &mut Self { self }
 }
 
 impl AsRef<TaprootMerkleBranch> for TaprootMerkleBranchBuf {

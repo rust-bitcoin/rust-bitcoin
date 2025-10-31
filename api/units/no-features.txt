@@ -1147,11 +1147,11 @@ pub const bitcoin_units::Amount::ONE_BTC: Self
 pub const bitcoin_units::Amount::ONE_SAT: Self
 pub const bitcoin_units::Amount::SIZE: usize
 pub const bitcoin_units::Amount::ZERO: Self
-pub const bitcoin_units::FeeRate::BROADCAST_MIN: bitcoin_units::FeeRate
-pub const bitcoin_units::FeeRate::DUST: bitcoin_units::FeeRate
-pub const bitcoin_units::FeeRate::MAX: bitcoin_units::FeeRate
-pub const bitcoin_units::FeeRate::MIN: bitcoin_units::FeeRate
-pub const bitcoin_units::FeeRate::ZERO: bitcoin_units::FeeRate
+pub const bitcoin_units::FeeRate::BROADCAST_MIN: Self
+pub const bitcoin_units::FeeRate::DUST: Self
+pub const bitcoin_units::FeeRate::MAX: Self
+pub const bitcoin_units::FeeRate::MIN: Self
+pub const bitcoin_units::FeeRate::ZERO: Self
 pub const bitcoin_units::SignedAmount::FIFTY_BTC: Self
 pub const bitcoin_units::SignedAmount::MAX: Self
 pub const bitcoin_units::SignedAmount::MAX_MONEY: Self
@@ -1159,12 +1159,12 @@ pub const bitcoin_units::SignedAmount::MIN: Self
 pub const bitcoin_units::SignedAmount::ONE_BTC: Self
 pub const bitcoin_units::SignedAmount::ONE_SAT: Self
 pub const bitcoin_units::SignedAmount::ZERO: Self
-pub const bitcoin_units::Weight::MAX: bitcoin_units::Weight
-pub const bitcoin_units::Weight::MAX_BLOCK: bitcoin_units::Weight
-pub const bitcoin_units::Weight::MIN: bitcoin_units::Weight
-pub const bitcoin_units::Weight::MIN_TRANSACTION: bitcoin_units::Weight
+pub const bitcoin_units::Weight::MAX: Self
+pub const bitcoin_units::Weight::MAX_BLOCK: Self
+pub const bitcoin_units::Weight::MIN: Self
+pub const bitcoin_units::Weight::MIN_TRANSACTION: Self
 pub const bitcoin_units::Weight::WITNESS_SCALE_FACTOR: u64
-pub const bitcoin_units::Weight::ZERO: bitcoin_units::Weight
+pub const bitcoin_units::Weight::ZERO: Self
 pub const bitcoin_units::absolute::LOCK_TIME_THRESHOLD: u32
 pub const bitcoin_units::amount::Denomination::BTC: Self
 pub const bitcoin_units::amount::Denomination::SAT: Self
@@ -1185,11 +1185,11 @@ pub const bitcoin_units::locktime::absolute::Height::MIN: Self
 pub const bitcoin_units::locktime::absolute::Height::ZERO: Self
 pub const bitcoin_units::locktime::absolute::LOCK_TIME_THRESHOLD: u32
 pub const bitcoin_units::locktime::absolute::LockTime::SIZE: usize
-pub const bitcoin_units::locktime::absolute::LockTime::ZERO: bitcoin_units::locktime::absolute::LockTime
+pub const bitcoin_units::locktime::absolute::LockTime::ZERO: Self
 pub const bitcoin_units::locktime::absolute::MedianTimePast::MAX: Self
 pub const bitcoin_units::locktime::absolute::MedianTimePast::MIN: Self
 pub const bitcoin_units::locktime::relative::LockTime::SIZE: usize
-pub const bitcoin_units::locktime::relative::LockTime::ZERO: bitcoin_units::locktime::relative::LockTime
+pub const bitcoin_units::locktime::relative::LockTime::ZERO: Self
 pub const bitcoin_units::locktime::relative::NumberOf512Seconds::MAX: Self
 pub const bitcoin_units::locktime::relative::NumberOf512Seconds::MIN: Self
 pub const bitcoin_units::locktime::relative::NumberOf512Seconds::ZERO: Self
@@ -1219,10 +1219,10 @@ pub const fn bitcoin_units::Amount::from_sat_u32(satoshi: u32) -> Self
 pub const fn bitcoin_units::Amount::to_sat(self) -> u64
 pub const fn bitcoin_units::BlockTime::from_u32(t: u32) -> Self
 pub const fn bitcoin_units::BlockTime::to_u32(self) -> u32
-pub const fn bitcoin_units::FeeRate::checked_add(self, rhs: bitcoin_units::FeeRate) -> core::option::Option<Self>
+pub const fn bitcoin_units::FeeRate::checked_add(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::FeeRate::checked_div(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::FeeRate::checked_mul(self, rhs: u64) -> core::option::Option<Self>
-pub const fn bitcoin_units::FeeRate::checked_sub(self, rhs: bitcoin_units::FeeRate) -> core::option::Option<Self>
+pub const fn bitcoin_units::FeeRate::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
@@ -1256,7 +1256,7 @@ pub const fn bitcoin_units::Weight::from_kwu(wu: u64) -> core::option::Option<Se
 pub const fn bitcoin_units::Weight::from_non_witness_data_size(non_witness_size: u64) -> Self
 pub const fn bitcoin_units::Weight::from_vb(vb: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::Weight::from_vb_unchecked(vb: u64) -> Self
-pub const fn bitcoin_units::Weight::from_vb_unwrap(vb: u64) -> bitcoin_units::Weight
+pub const fn bitcoin_units::Weight::from_vb_unwrap(vb: u64) -> Self
 pub const fn bitcoin_units::Weight::from_witness_data_size(witness_size: u64) -> Self
 pub const fn bitcoin_units::Weight::from_wu(wu: u64) -> Self
 pub const fn bitcoin_units::Weight::mul_by_fee_rate(self, fee_rate: bitcoin_units::FeeRate) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
@@ -1277,11 +1277,11 @@ pub const fn bitcoin_units::block::BlockMtpInterval::from_u32(inner: u32) -> Sel
 pub const fn bitcoin_units::block::BlockMtpInterval::to_relative_mtp_interval_ceil(self) -> core::result::Result<bitcoin_units::locktime::relative::NumberOf512Seconds, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::block::BlockMtpInterval::to_relative_mtp_interval_floor(self) -> core::result::Result<bitcoin_units::locktime::relative::NumberOf512Seconds, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::block::BlockMtpInterval::to_u32(self) -> u32
-pub const fn bitcoin_units::locktime::absolute::Height::from_u32(n: u32) -> core::result::Result<bitcoin_units::locktime::absolute::Height, bitcoin_units::locktime::absolute::error::ConversionError>
+pub const fn bitcoin_units::locktime::absolute::Height::from_u32(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
 pub const fn bitcoin_units::locktime::absolute::Height::to_u32(self) -> u32
 pub const fn bitcoin_units::locktime::absolute::LockTime::is_block_height(self) -> bool
 pub const fn bitcoin_units::locktime::absolute::LockTime::is_block_time(self) -> bool
-pub const fn bitcoin_units::locktime::absolute::LockTime::is_same_unit(self, other: bitcoin_units::locktime::absolute::LockTime) -> bool
+pub const fn bitcoin_units::locktime::absolute::LockTime::is_same_unit(self, other: Self) -> bool
 pub const fn bitcoin_units::locktime::absolute::MedianTimePast::from_u32(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
 pub const fn bitcoin_units::locktime::absolute::MedianTimePast::to_u32(self) -> u32
 pub const fn bitcoin_units::locktime::absolute::is_block_height(n: u32) -> bool
@@ -1292,7 +1292,7 @@ pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_ceil(seco
 pub const fn bitcoin_units::locktime::relative::LockTime::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::LockTime::is_block_height(self) -> bool
 pub const fn bitcoin_units::locktime::relative::LockTime::is_block_time(self) -> bool
-pub const fn bitcoin_units::locktime::relative::LockTime::is_same_unit(self, other: bitcoin_units::locktime::relative::LockTime) -> bool
+pub const fn bitcoin_units::locktime::relative::LockTime::is_same_unit(self, other: Self) -> bool
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_512_second_intervals(intervals: u16) -> Self
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::TimeOverflowError>
@@ -1495,7 +1495,7 @@ pub fn bitcoin_units::Amount::mul(self, rhs: u64) -> Self::Output
 pub fn bitcoin_units::Amount::partial_cmp(&self, other: &bitcoin_units::Amount) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::Amount::rem(self, modulus: u64) -> Self::Output
 pub fn bitcoin_units::Amount::rem(self, rhs: &u64) -> Self::Output
-pub fn bitcoin_units::Amount::signed_sub(self, rhs: bitcoin_units::Amount) -> bitcoin_units::SignedAmount
+pub fn bitcoin_units::Amount::signed_sub(self, rhs: Self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>) -> Self::Output
 pub fn bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Output
@@ -1531,7 +1531,7 @@ pub fn bitcoin_units::FeeRate::sub(self, rhs: &bitcoin_units::FeeRate) -> Self::
 pub fn bitcoin_units::FeeRate::sub(self, rhs: bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::FeeRate::sub_assign(&mut self, rhs: &bitcoin_units::FeeRate)
 pub fn bitcoin_units::FeeRate::sub_assign(&mut self, rhs: bitcoin_units::FeeRate)
-pub fn bitcoin_units::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::FeeRate>
+pub fn bitcoin_units::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
 pub fn bitcoin_units::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::SignedAmount::add(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
 pub fn bitcoin_units::SignedAmount::add(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
@@ -1606,7 +1606,7 @@ pub fn bitcoin_units::Weight::sub(self, rhs: &bitcoin_units::Weight) -> Self::Ou
 pub fn bitcoin_units::Weight::sub(self, rhs: bitcoin_units::Weight) -> Self::Output
 pub fn bitcoin_units::Weight::sub_assign(&mut self, rhs: &bitcoin_units::Weight)
 pub fn bitcoin_units::Weight::sub_assign(&mut self, rhs: bitcoin_units::Weight)
-pub fn bitcoin_units::Weight::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::Weight>
+pub fn bitcoin_units::Weight::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
 pub fn bitcoin_units::Weight::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::Weight::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
@@ -1707,7 +1707,7 @@ pub fn bitcoin_units::block::BlockHeightInterval::sub(self, rhs: bitcoin_units::
 pub fn bitcoin_units::block::BlockHeightInterval::sub_assign(&mut self, rhs: &bitcoin_units::block::BlockHeightInterval)
 pub fn bitcoin_units::block::BlockHeightInterval::sub_assign(&mut self, rhs: bitcoin_units::block::BlockHeightInterval)
 pub fn bitcoin_units::block::BlockHeightInterval::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
-pub fn bitcoin_units::block::BlockHeightInterval::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::block::BlockHeightInterval>
+pub fn bitcoin_units::block::BlockHeightInterval::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
 pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::block::BlockMtp::add(self, rhs: &bitcoin_units::block::BlockMtpInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockMtp::add(self, rhs: bitcoin_units::block::BlockMtpInterval) -> Self::Output
@@ -1749,7 +1749,7 @@ pub fn bitcoin_units::block::BlockMtpInterval::sub(self, rhs: bitcoin_units::blo
 pub fn bitcoin_units::block::BlockMtpInterval::sub_assign(&mut self, rhs: &bitcoin_units::block::BlockMtpInterval)
 pub fn bitcoin_units::block::BlockMtpInterval::sub_assign(&mut self, rhs: bitcoin_units::block::BlockMtpInterval)
 pub fn bitcoin_units::block::BlockMtpInterval::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
-pub fn bitcoin_units::block::BlockMtpInterval::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::block::BlockMtpInterval>
+pub fn bitcoin_units::block::BlockMtpInterval::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
 pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::block::TooBigForRelativeHeightError::clone(&self) -> bitcoin_units::block::TooBigForRelativeHeightError
 pub fn bitcoin_units::block::TooBigForRelativeHeightError::eq(&self, other: &bitcoin_units::block::TooBigForRelativeHeightError) -> bool
@@ -1761,7 +1761,7 @@ pub fn bitcoin_units::locktime::absolute::Height::fmt(&self, f: &mut core::fmt::
 pub fn bitcoin_units::locktime::absolute::Height::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseHeightError>
 pub fn bitcoin_units::locktime::absolute::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::absolute::Height::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin_units::locktime::absolute::Height::is_satisfied_by(self, height: bitcoin_units::locktime::absolute::Height) -> bool
+pub fn bitcoin_units::locktime::absolute::Height::is_satisfied_by(self, height: Self) -> bool
 pub fn bitcoin_units::locktime::absolute::Height::partial_cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::locktime::absolute::Height::try_from(h: bitcoin_units::block::BlockHeight) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::Height::try_from(s: &str) -> core::result::Result<Self, Self::Error>
@@ -1777,7 +1777,7 @@ pub fn bitcoin_units::locktime::absolute::LockTime::from_mtp(n: u32) -> core::re
 pub fn bitcoin_units::locktime::absolute::LockTime::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::absolute::LockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::locktime::absolute::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin_units::locktime::absolute::LockTime::is_implied_by(self, other: bitcoin_units::locktime::absolute::LockTime) -> bool
+pub fn bitcoin_units::locktime::absolute::LockTime::is_implied_by(self, other: Self) -> bool
 pub fn bitcoin_units::locktime::absolute::LockTime::is_satisfied_by(self, height: bitcoin_units::locktime::absolute::Height, mtp: bitcoin_units::locktime::absolute::MedianTimePast) -> bool
 pub fn bitcoin_units::locktime::absolute::LockTime::is_satisfied_by_height(self, height: bitcoin_units::locktime::absolute::Height) -> core::result::Result<bool, bitcoin_units::locktime::absolute::error::IncompatibleHeightError>
 pub fn bitcoin_units::locktime::absolute::LockTime::is_satisfied_by_time(self, mtp: bitcoin_units::locktime::absolute::MedianTimePast) -> core::result::Result<bool, bitcoin_units::locktime::absolute::error::IncompatibleTimeError>
@@ -1790,7 +1790,7 @@ pub fn bitcoin_units::locktime::absolute::MedianTimePast::fmt(&self, f: &mut cor
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseTimeError>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin_units::locktime::absolute::MedianTimePast::is_satisfied_by(self, time: bitcoin_units::locktime::absolute::MedianTimePast) -> bool
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::is_satisfied_by(self, time: Self) -> bool
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::new(timestamps: [bitcoin_units::BlockTime; 11]) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::partial_cmp(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(h: bitcoin_units::block::BlockMtp) -> core::result::Result<Self, Self::Error>
@@ -1822,14 +1822,14 @@ pub fn bitcoin_units::locktime::relative::LockTime::from(t: bitcoin_units::lockt
 pub fn bitcoin_units::locktime::relative::LockTime::from_consensus(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
 pub fn bitcoin_units::locktime::relative::LockTime::from_sequence(n: bitcoin_units::sequence::Sequence) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
 pub fn bitcoin_units::locktime::relative::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by(self, other: bitcoin_units::locktime::relative::LockTime) -> bool
+pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by(self, other: Self) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_implied_by_sequence(self, other: bitcoin_units::sequence::Sequence) -> bool
 pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by(self, chain_tip_height: bitcoin_units::block::BlockHeight, chain_tip_mtp: bitcoin_units::block::BlockMtp, utxo_mined_at_height: bitcoin_units::block::BlockHeight, utxo_mined_at_mtp: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByError>
 pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_height(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError>
 pub fn bitcoin_units::locktime::relative::LockTime::is_satisfied_by_time(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError>
 pub fn bitcoin_units::locktime::relative::LockTime::to_consensus_u32(self) -> u32
 pub fn bitcoin_units::locktime::relative::LockTime::to_sequence(self) -> bitcoin_units::sequence::Sequence
-pub fn bitcoin_units::locktime::relative::LockTime::try_from(seq: bitcoin_units::sequence::Sequence) -> core::result::Result<bitcoin_units::locktime::relative::LockTime, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
+pub fn bitcoin_units::locktime::relative::LockTime::try_from(seq: bitcoin_units::sequence::Sequence) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::clone(&self) -> bitcoin_units::locktime::relative::NumberOf512Seconds
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::cmp(&self, other: &bitcoin_units::locktime::relative::NumberOf512Seconds) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::default() -> bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -1918,7 +1918,7 @@ pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: &T) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: &bitcoin_units::result::NumOpResult<T>) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: Self) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: T) -> Self::Output
-pub fn bitcoin_units::result::NumOpResult<T>::and_then<F>(self, op: F) -> bitcoin_units::result::NumOpResult<T> where F: core::ops::function::FnOnce(T) -> bitcoin_units::result::NumOpResult<T>
+pub fn bitcoin_units::result::NumOpResult<T>::and_then<F>(self, op: F) -> Self where F: core::ops::function::FnOnce(T) -> Self
 pub fn bitcoin_units::result::NumOpResult<T>::clone(&self) -> bitcoin_units::result::NumOpResult<T>
 pub fn bitcoin_units::result::NumOpResult<T>::eq(&self, other: &bitcoin_units::result::NumOpResult<T>) -> bool
 pub fn bitcoin_units::result::NumOpResult<T>::expect(self, msg: &str) -> T
@@ -1956,8 +1956,8 @@ pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::mul_assign(&mu
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::mul_assign(&mut self, rhs: u64)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::rem(self, modulus: u64) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::rem(self, rhs: &u64) -> Self::Output
-pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::result::NumOpResult<bitcoin_units::Amount>>
-pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = bitcoin_units::result::NumOpResult<bitcoin_units::Amount>>
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>::mul(self, rhs: &bitcoin_units::Weight) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>::mul(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>::mul(self, rhs: bitcoin_units::Weight) -> Self::Output
@@ -1974,8 +1974,8 @@ pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::mul_assi
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::mul_assign(&mut self, rhs: i64)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::rem(self, modulus: i64) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::rem(self, rhs: &i64) -> Self::Output
-pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>>
-pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>>
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::mul(self, rhs: &bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::mul(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::mul(self, rhs: bitcoin_units::FeeRate) -> Self::Output
@@ -1986,7 +1986,7 @@ pub fn bitcoin_units::sequence::Sequence::default() -> Self
 pub fn bitcoin_units::sequence::Sequence::enables_absolute_lock_time(self) -> bool
 pub fn bitcoin_units::sequence::Sequence::eq(&self, other: &bitcoin_units::sequence::Sequence) -> bool
 pub fn bitcoin_units::sequence::Sequence::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::sequence::Sequence::from(lt: bitcoin_units::locktime::relative::LockTime) -> bitcoin_units::sequence::Sequence
+pub fn bitcoin_units::sequence::Sequence::from(lt: bitcoin_units::locktime::relative::LockTime) -> Self
 pub fn bitcoin_units::sequence::Sequence::from_512_second_intervals(intervals: u16) -> Self
 pub fn bitcoin_units::sequence::Sequence::from_consensus(n: u32) -> Self
 pub fn bitcoin_units::sequence::Sequence::from_height(height: u16) -> Self
@@ -2012,7 +2012,7 @@ pub fn u32::from(height: bitcoin_units::block::BlockHeight) -> Self
 pub fn u32::from(height: bitcoin_units::block::BlockHeightInterval) -> Self
 pub fn u32::from(height: bitcoin_units::block::BlockMtp) -> Self
 pub fn u32::from(height: bitcoin_units::block::BlockMtpInterval) -> Self
-pub fn u32::from(sequence: bitcoin_units::sequence::Sequence) -> u32
+pub fn u32::from(sequence: bitcoin_units::sequence::Sequence) -> Self
 pub fn u32::from(t: bitcoin_units::BlockTime) -> Self
 pub fn u64::from(value: bitcoin_units::Weight) -> Self
 pub fn u64::mul(self, rhs: &bitcoin_units::Amount) -> Self::Output

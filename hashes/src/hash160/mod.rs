@@ -23,7 +23,7 @@ impl Hash {
 
         let mut ret = [0; 20];
         ret.copy_from_slice(rmd.as_byte_array());
-        Hash(ret)
+        Self(ret)
     }
 }
 

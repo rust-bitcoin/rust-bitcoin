@@ -231,8 +231,8 @@ pub enum ReadError<D> {
 impl<D: core::fmt::Display> core::fmt::Display for ReadError<D> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            ReadError::Io(e) => write!(f, "I/O error: {}", e),
-            ReadError::Decode(e) => write!(f, "decode error: {}", e),
+            Self::Io(e) => write!(f, "I/O error: {}", e),
+            Self::Decode(e) => write!(f, "decode error: {}", e),
         }
     }
 }
@@ -244,15 +244,15 @@ where
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            ReadError::Io(e) => Some(e),
-            ReadError::Decode(e) => Some(e),
+            Self::Io(e) => Some(e),
+            Self::Decode(e) => Some(e),
         }
     }
 }
 
 #[cfg(feature = "std")]
 impl<D> From<std::io::Error> for ReadError<D> {
-    fn from(e: std::io::Error) -> Self { ReadError::Io(e) }
+    fn from(e: std::io::Error) -> Self { Self::Io(e) }
 }
 
 #[cfg(test)]

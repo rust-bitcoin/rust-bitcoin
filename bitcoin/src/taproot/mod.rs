@@ -91,7 +91,7 @@ hashes::impl_hex_for_newtype!(TapTweakHash);
 hashes::impl_serde_for_newtype!(TapTweakHash);
 
 impl From<TapLeafHash> for TapNodeHash {
-    fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_byte_array(leaf.to_byte_array()) }
+    fn from(leaf: TapLeafHash) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 }
 
 impl TapTweakHash {
@@ -100,7 +100,7 @@ impl TapTweakHash {
     pub fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
-    ) -> TapTweakHash {
+    ) -> Self {
         let internal_key = internal_key.into();
         let mut eng = sha256t::Hash::<TapTweakTag>::engine();
         // always hash the key
@@ -111,7 +111,7 @@ impl TapTweakHash {
             // nothing to hash
         }
         let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
-        TapTweakHash::from_byte_array(inner.to_byte_array())
+        Self::from_byte_array(inner.to_byte_array())
     }
 
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
@@ -123,26 +123,26 @@ impl TapTweakHash {
 
 impl TapLeafHash {
     /// Computes the leaf hash from components.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> TapLeafHash {
+    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
         let mut eng = sha256t::Hash::<TapLeafTag>::engine();
         ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
         script.consensus_encode(&mut eng).expect("engines don't error");
         let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
-        TapLeafHash::from_byte_array(inner.to_byte_array())
+        Self::from_byte_array(inner.to_byte_array())
     }
 }
 
 impl From<LeafNode> for TapNodeHash {
-    fn from(leaf: LeafNode) -> TapNodeHash { leaf.node_hash() }
+    fn from(leaf: LeafNode) -> Self { leaf.node_hash() }
 }
 
 impl From<&LeafNode> for TapNodeHash {
-    fn from(leaf: &LeafNode) -> TapNodeHash { leaf.node_hash() }
+    fn from(leaf: &LeafNode) -> Self { leaf.node_hash() }
 }
 
 impl TapNodeHash {
     /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: TapNodeHash, b: TapNodeHash) -> TapNodeHash {
+    pub fn from_node_hashes(a: Self, b: Self) -> Self {
         combine_node_hashes(a, b).0
     }
 
@@ -151,11 +151,11 @@ impl TapNodeHash {
     /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
     /// hash is constructed from a hidden node. This also has better ergonomics
     /// because it does not require the caller to import the Hash trait.
-    pub fn assume_hidden(hash: [u8; 32]) -> TapNodeHash { TapNodeHash::from_byte_array(hash) }
+    pub fn assume_hidden(hash: [u8; 32]) -> Self { Self::from_byte_array(hash) }
 
     /// Computes the [`TapNodeHash`] from a script and a leaf version.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> TapNodeHash {
-        TapNodeHash::from(TapLeafHash::from_script(script, ver))
+    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
+        Self::from(TapLeafHash::from_script(script, ver))
     }
 }
 
@@ -320,10 +320,10 @@ impl TaprootSpendInfo {
         secp: &Secp256k1<C>,
         internal_key: K,
         node: NodeInfo,
-    ) -> TaprootSpendInfo {
+    ) -> Self {
         // Create as if it is a key spend path with the given Merkle root
         let root_hash = Some(node.hash);
-        let mut info = TaprootSpendInfo::new_key_spend(secp, internal_key, root_hash);
+        let mut info = Self::new_key_spend(secp, internal_key, root_hash);
 
         for leaves in node.leaves {
             match leaves.leaf {
@@ -372,11 +372,11 @@ impl TaprootSpendInfo {
 }
 
 impl From<TaprootSpendInfo> for TapTweakHash {
-    fn from(spend_info: TaprootSpendInfo) -> TapTweakHash { spend_info.tap_tweak() }
+    fn from(spend_info: TaprootSpendInfo) -> Self { spend_info.tap_tweak() }
 }
 
 impl From<&TaprootSpendInfo> for TapTweakHash {
-    fn from(spend_info: &TaprootSpendInfo) -> TapTweakHash { spend_info.tap_tweak() }
+    fn from(spend_info: &TaprootSpendInfo) -> Self { spend_info.tap_tweak() }
 }
 
 /// Builder for building Taproot iteratively. Users can specify tap leaf or omitted/hidden branches
@@ -423,13 +423,13 @@ pub struct TaprootBuilder {
 
 impl TaprootBuilder {
     /// Constructs a new instance of [`TaprootBuilder`].
-    pub fn new() -> Self { TaprootBuilder { branch: vec![] } }
+    pub fn new() -> Self { Self { branch: vec![] } }
 
     /// Constructs a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
     ///
     /// The size here should be maximum depth of the tree.
     pub fn with_capacity(size: usize) -> Self {
-        TaprootBuilder { branch: Vec::with_capacity(size) }
+        Self { branch: Vec::with_capacity(size) }
     }
 
     /// Constructs a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
@@ -480,7 +480,7 @@ impl TaprootBuilder {
         // Therefore, the loop will eventually terminate with exactly 1 element
         debug_assert_eq!(node_weights.len(), 1);
         let node = node_weights.pop().expect("Huffman tree algorithm is broken").1;
-        Ok(TaprootBuilder { branch: vec![Some(node)] })
+        Ok(Self { branch: vec![Some(node)] })
     }
 
     /// Adds a leaf script at `depth` to the builder with script version `ver`.
@@ -571,7 +571,7 @@ impl TaprootBuilder {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilderError::HiddenParts(TaprootBuilder {
+            return Err(IncompleteBuilderError::HiddenParts(Self {
                 branch: vec![Some(node)],
             }));
         }
@@ -591,7 +591,7 @@ impl TaprootBuilder {
         mut self,
         secp: &Secp256k1<C>,
         internal_key: K,
-    ) -> Result<TaprootSpendInfo, TaprootBuilder> {
+    ) -> Result<TaprootSpendInfo, Self> {
         let internal_key = internal_key.into();
         match self.branch.len() {
             0 => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
@@ -815,7 +815,7 @@ impl TryFrom<NodeInfo> for TapTree {
         if node_info.has_hidden_nodes {
             Err(HiddenNodesError::HiddenParts(node_info))
         } else {
-            Ok(TapTree(node_info))
+            Ok(Self(node_info))
         }
     }
 }
@@ -905,7 +905,7 @@ impl Ord for NodeInfo {
 }
 
 impl PartialOrd for NodeInfo {
-    fn partial_cmp(&self, other: &NodeInfo) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 
 impl PartialEq for NodeInfo {
@@ -1198,7 +1198,7 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if Merkle tree is too deep (more than 128 levels).
-    pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
+    pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
         use alloc::borrow::ToOwned;
 
         let ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch } =
@@ -1207,13 +1207,13 @@ impl ControlBlock {
         let internal_key = internal_key.to_validated().map_err(TaprootError::InvalidInternalKey)?;
         let merkle_branch = merkle_branch.to_owned();
 
-        Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
+        Ok(Self { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
 
     /// Constructs a new [`ControlBlock`] from a hex string.
     pub fn from_hex(hex: &str) -> Result<Self, TaprootError> {
         let vec = Vec::from_hex(hex).map_err(TaprootError::InvalidControlBlockHex)?;
-        ControlBlock::decode(vec.as_slice())
+        Self::decode(vec.as_slice())
     }
 }
 
@@ -1237,7 +1237,7 @@ impl<B, K> ControlBlock<B, K> {
         let leaf_version = LeafVersion::from_consensus(first & TAPROOT_LEAF_MASK)?;
         let internal_key = SerializedXOnlyPublicKey::from_bytes_ref(internal_key).into();
         let merkle_branch = TaprootMerkleBranch::decode(merkle_branch)?.into();
-        Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
+        Ok(Self { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
 }
 
@@ -1324,14 +1324,14 @@ pub struct FutureLeafVersion(u8);
 impl FutureLeafVersion {
     pub(self) fn from_consensus(
         version: u8,
-    ) -> Result<FutureLeafVersion, InvalidTaprootLeafVersionError> {
+    ) -> Result<Self, InvalidTaprootLeafVersionError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => unreachable!(
                 "FutureLeafVersion::from_consensus should never be called for 0xC0 value"
             ),
             TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
             odd if odd & 0xFE != odd => Err(InvalidTaprootLeafVersionError(odd)),
-            even => Ok(FutureLeafVersion(even)),
+            even => Ok(Self(even)),
         }
     }
 
@@ -1375,7 +1375,7 @@ impl LeafVersion {
     /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
     pub fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
         match version {
-            TAPROOT_LEAF_TAPSCRIPT => Ok(LeafVersion::TapScript),
+            TAPROOT_LEAF_TAPSCRIPT => Ok(Self::TapScript),
             TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
             future => FutureLeafVersion::from_consensus(future).map(LeafVersion::Future),
         }
@@ -1384,8 +1384,8 @@ impl LeafVersion {
     /// Returns the consensus representation of this [`LeafVersion`].
     pub fn to_consensus(self) -> u8 {
         match self {
-            LeafVersion::TapScript => TAPROOT_LEAF_TAPSCRIPT,
-            LeafVersion::Future(version) => version.to_consensus(),
+            Self::TapScript => TAPROOT_LEAF_TAPSCRIPT,
+            Self::Future(version) => version.to_consensus(),
         }
     }
 }
@@ -1393,10 +1393,10 @@ impl LeafVersion {
 impl fmt::Display for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match (self, f.alternate()) {
-            (LeafVersion::TapScript, true) => f.write_str("tapscript"),
-            (LeafVersion::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (LeafVersion::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
-            (LeafVersion::Future(version), false) => fmt::Display::fmt(version, f),
+            (Self::TapScript, true) => f.write_str("tapscript"),
+            (Self::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
+            (Self::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
+            (Self::Future(version), false) => fmt::Display::fmt(version, f),
         }
     }
 }

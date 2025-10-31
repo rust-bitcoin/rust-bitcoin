@@ -488,7 +488,7 @@ impl Opcode {
 
 impl From<u8> for Opcode {
     #[inline]
-    fn from(b: u8) -> Opcode { Opcode { code: b } }
+    fn from(b: u8) -> Self { Self { code: b } }
 }
 
 impl fmt::Debug for Opcode {

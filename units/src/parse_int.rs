@@ -549,11 +549,11 @@ mod tests {
             type Err = core::num::ParseIntError;
 
             fn from_str(_: &str) -> Result<Self, Self::Err> {
-                "Always invalid for testing".parse::<u32>().map(|_| TestTypeLargerThanU128(0, 0))
+                "Always invalid for testing".parse::<u32>().map(|_| Self(0, 0))
             }
         }
         impl From<i8> for TestTypeLargerThanU128 {
-            fn from(_: i8) -> Self { TestTypeLargerThanU128(0, 0) }
+            fn from(_: i8) -> Self { Self(0, 0) }
         }
 
         let result = panic::catch_unwind(|| int_from_str::<TestTypeLargerThanU128>("not a number"));

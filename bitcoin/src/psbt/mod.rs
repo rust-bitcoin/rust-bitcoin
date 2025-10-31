@@ -107,7 +107,7 @@ impl Psbt {
     ///
     /// If transactions is not unsigned.
     pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
-        let psbt = Psbt {
+        let psbt = Self {
             inputs: vec![Default::default(); tx.inputs.len()],
             outputs: vec![Default::default(); tx.outputs.len()],
 
@@ -1138,11 +1138,11 @@ impl From<sighash::P2wpkhError> for SignError {
 }
 
 impl From<IndexOutOfBoundsError> for SignError {
-    fn from(e: IndexOutOfBoundsError) -> Self { SignError::IndexOutOfBounds(e) }
+    fn from(e: IndexOutOfBoundsError) -> Self { Self::IndexOutOfBounds(e) }
 }
 
 impl From<sighash::TaprootError> for SignError {
-    fn from(e: sighash::TaprootError) -> Self { SignError::TaprootError(e) }
+    fn from(e: sighash::TaprootError) -> Self { Self::TaprootError(e) }
 }
 
 /// This error is returned when extracting a [`Transaction`] from a [`Psbt`].
@@ -1319,7 +1319,7 @@ mod display_from_str {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let data = BASE64_STANDARD.decode(s).map_err(PsbtParseError::Base64Encoding)?;
-            Psbt::deserialize(&data).map_err(PsbtParseError::PsbtEncoding)
+            Self::deserialize(&data).map_err(PsbtParseError::PsbtEncoding)
         }
     }
 }

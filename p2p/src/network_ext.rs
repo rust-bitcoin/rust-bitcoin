@@ -24,12 +24,12 @@ impl NetworkExt for Network {
     /// This function will be updated as new test networks are defined.
     fn default_p2p_port(self) -> u16 {
         match &self {
-            Network::Bitcoin => 8333,
-            Network::Signet => 38333,
-            Network::Testnet(TestnetVersion::V3) => 18333,
-            Network::Testnet(TestnetVersion::V4) => 48333,
-            Network::Testnet(_) => 48333,
-            Network::Regtest => 18444,
+            Self::Bitcoin => 8333,
+            Self::Signet => 38333,
+            Self::Testnet(TestnetVersion::V3) => 18333,
+            Self::Testnet(TestnetVersion::V4) => 48333,
+            Self::Testnet(_) => 48333,
+            Self::Regtest => 18444,
         }
     }
 
@@ -39,12 +39,12 @@ impl NetworkExt for Network {
     /// This function will be updated as new test networks are defined.
     fn default_network_magic(self) -> Magic {
         match &self {
-            Network::Bitcoin => Magic::BITCOIN,
-            Network::Signet => Magic::SIGNET,
-            Network::Testnet(TestnetVersion::V3) => Magic::TESTNET3,
-            Network::Testnet(TestnetVersion::V4) => Magic::TESTNET4,
-            Network::Testnet(_) => Magic::TESTNET4,
-            Network::Regtest => Magic::REGTEST,
+            Self::Bitcoin => Magic::BITCOIN,
+            Self::Signet => Magic::SIGNET,
+            Self::Testnet(TestnetVersion::V3) => Magic::TESTNET3,
+            Self::Testnet(TestnetVersion::V4) => Magic::TESTNET4,
+            Self::Testnet(_) => Magic::TESTNET4,
+            Self::Regtest => Magic::REGTEST,
         }
     }
 }

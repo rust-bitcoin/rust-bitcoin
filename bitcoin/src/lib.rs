@@ -251,7 +251,7 @@ pub mod amount {
     impl Decodable for Amount {
         #[inline]
         fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Amount::from_sat(Decodable::consensus_decode(r)?).map_err(|_| {
+            Self::from_sat(Decodable::consensus_decode(r)?).map_err(|_| {
                 consensus::parse_failed_error("amount is greater than Amount::MAX_MONEY")
             })
         }

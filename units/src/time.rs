@@ -38,7 +38,7 @@ mod encapsulate {
     impl BlockTime {
         /// Constructs a new [`BlockTime`] from an unsigned 32 bit integer value.
         #[inline]
-        pub const fn from_u32(t: u32) -> Self { BlockTime(t) }
+        pub const fn from_u32(t: u32) -> Self { Self(t) }
 
         /// Returns the inner `u32` value.
         #[inline]
@@ -162,7 +162,7 @@ impl<'a> Arbitrary<'a> for BlockTime {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let t: u32 = u.arbitrary()?;
-        Ok(BlockTime::from(t))
+        Ok(Self::from(t))
     }
 }
 

@@ -67,7 +67,7 @@ where
 
     /// Produces a hash from the current state of a given engine.
     pub fn from_engine(e: HashEngine<T>) -> Self {
-        Hash::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())
+        Self::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())
     }
 
     /// Constructs a new engine.
@@ -108,16 +108,16 @@ impl<T: Tag> Clone for Hash<T> {
     fn clone(&self) -> Self { *self }
 }
 impl<T: Tag> PartialEq for Hash<T> {
-    fn eq(&self, other: &Hash<T>) -> bool { self.as_byte_array() == other.as_byte_array() }
+    fn eq(&self, other: &Self) -> bool { self.as_byte_array() == other.as_byte_array() }
 }
 impl<T: Tag> Eq for Hash<T> {}
 impl<T: Tag> PartialOrd for Hash<T> {
-    fn partial_cmp(&self, other: &Hash<T>) -> Option<cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         Some(cmp::Ord::cmp(self, other))
     }
 }
 impl<T: Tag> Ord for Hash<T> {
-    fn cmp(&self, other: &Hash<T>) -> cmp::Ordering {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
         cmp::Ord::cmp(&self.as_byte_array(), &other.as_byte_array())
     }
 }
@@ -134,7 +134,7 @@ pub struct HashEngine<T>(sha256::HashEngine, PhantomData<T>);
 impl<T: Tag> Default for HashEngine<T> {
     fn default() -> Self {
         let tagged = sha256::HashEngine::from_midstate(T::MIDSTATE);
-        HashEngine(tagged, PhantomData)
+        Self(tagged, PhantomData)
     }
 }
 

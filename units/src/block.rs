@@ -141,7 +141,7 @@ impl TryFrom<BlockHeight> for absolute::Height {
     /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
     /// minus one, while [`BlockHeight`] may take the full range of `u32`.
     fn try_from(h: BlockHeight) -> Result<Self, Self::Error> {
-        absolute::Height::from_u32(h.to_u32())
+        Self::from_u32(h.to_u32())
     }
 }
 
@@ -281,7 +281,7 @@ impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
     fn try_from(h: BlockHeightInterval) -> Result<Self, Self::Error> {
         u16::try_from(h.to_u32())
-            .map(relative::NumberOfBlocks::from)
+            .map(Self::from)
             .map_err(|_| TooBigForRelativeHeightError(h.into()))
     }
 }
@@ -355,7 +355,7 @@ impl TryFrom<BlockMtp> for absolute::MedianTimePast {
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
     fn try_from(h: BlockMtp) -> Result<Self, Self::Error> {
-        absolute::MedianTimePast::from_u32(h.to_u32())
+        Self::from_u32(h.to_u32())
     }
 }
 
@@ -567,35 +567,35 @@ crate::internal_macros::impl_sub_assign!(BlockMtpInterval);
 
 impl core::iter::Sum for BlockHeightInterval {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sum = iter.map(BlockHeightInterval::to_u32).sum();
-        BlockHeightInterval::from_u32(sum)
+        let sum = iter.map(Self::to_u32).sum();
+        Self::from_u32(sum)
     }
 }
 
-impl<'a> core::iter::Sum<&'a BlockHeightInterval> for BlockHeightInterval {
+impl<'a> core::iter::Sum<&'a Self> for BlockHeightInterval {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = &'a BlockHeightInterval>,
+        I: Iterator<Item = &'a Self>,
     {
         let sum = iter.map(|interval| interval.to_u32()).sum();
-        BlockHeightInterval::from_u32(sum)
+        Self::from_u32(sum)
     }
 }
 
 impl core::iter::Sum for BlockMtpInterval {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sum = iter.map(BlockMtpInterval::to_u32).sum();
-        BlockMtpInterval::from_u32(sum)
+        let sum = iter.map(Self::to_u32).sum();
+        Self::from_u32(sum)
     }
 }
 
-impl<'a> core::iter::Sum<&'a BlockMtpInterval> for BlockMtpInterval {
+impl<'a> core::iter::Sum<&'a Self> for BlockMtpInterval {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = &'a BlockMtpInterval>,
+        I: Iterator<Item = &'a Self>,
     {
         let sum = iter.map(|interval| interval.to_u32()).sum();
-        BlockMtpInterval::from_u32(sum)
+        Self::from_u32(sum)
     }
 }
 

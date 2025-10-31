@@ -134,10 +134,10 @@ pub static REGTEST: Params = Params::REGTEST;
 #[allow(deprecated)] // For `pow_limit`.
 impl Params {
     /// The mainnet parameters (alias for `Params::MAINNET`).
-    pub const BITCOIN: Params = Params::MAINNET;
+    pub const BITCOIN: Self = Self::MAINNET;
 
     /// The mainnet parameters.
-    pub const MAINNET: Params = Params {
+    pub const MAINNET: Self = Self {
         network: Network::Bitcoin,
         bip16_time: 1333238400,                      // Apr 1 2012
         bip34_height: BlockHeight::from_u32(227931), // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
@@ -155,7 +155,7 @@ impl Params {
 
     /// The testnet3 parameters.
     #[deprecated(since = "TBD", note = "use `TESTNET3` instead")]
-    pub const TESTNET: Params = Params {
+    pub const TESTNET: Self = Self {
         network: Network::Testnet(TestnetVersion::V3),
         bip16_time: 1333238400,                      // Apr 1 2012
         bip34_height: BlockHeight::from_u32(21111), // 0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8
@@ -172,7 +172,7 @@ impl Params {
     };
 
     /// The testnet3 parameters.
-    pub const TESTNET3: Params = Params {
+    pub const TESTNET3: Self = Self {
         network: Network::Testnet(TestnetVersion::V3),
         bip16_time: 1333238400,                      // Apr 1 2012
         bip34_height: BlockHeight::from_u32(21111), // 0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8
@@ -189,7 +189,7 @@ impl Params {
     };
 
     /// The testnet4 parameters.
-    pub const TESTNET4: Params = Params {
+    pub const TESTNET4: Self = Self {
         network: Network::Testnet(TestnetVersion::V4),
         bip16_time: 1333238400, // Apr 1 2012
         bip34_height: BlockHeight::from_u32(1),
@@ -206,7 +206,7 @@ impl Params {
     };
 
     /// The signet parameters.
-    pub const SIGNET: Params = Params {
+    pub const SIGNET: Self = Self {
         network: Network::Signet,
         bip16_time: 1333238400, // Apr 1 2012
         bip34_height: BlockHeight::from_u32(1),
@@ -223,7 +223,7 @@ impl Params {
     };
 
     /// The regtest parameters.
-    pub const REGTEST: Params = Params {
+    pub const REGTEST: Self = Self {
         network: Network::Regtest,
         bip16_time: 1333238400,                         // Apr 1 2012
         bip34_height: BlockHeight::from_u32(100000000), // not activated on regtest
@@ -242,11 +242,11 @@ impl Params {
     /// Constructs parameters set for the given network.
     pub const fn new(network: Network) -> Self {
         match network {
-            Network::Bitcoin => Params::MAINNET,
-            Network::Testnet(TestnetVersion::V3) => Params::TESTNET3,
-            Network::Testnet(TestnetVersion::V4) => Params::TESTNET4,
-            Network::Signet => Params::SIGNET,
-            Network::Regtest => Params::REGTEST,
+            Network::Bitcoin => Self::MAINNET,
+            Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
+            Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Signet => Self::SIGNET,
+            Network::Regtest => Self::REGTEST,
         }
     }
 
@@ -272,8 +272,8 @@ impl From<&Network> for &'static Params {
     fn from(value: &Network) -> Self { value.params() }
 }
 
-impl AsRef<Params> for Params {
-    fn as_ref(&self) -> &Params { self }
+impl AsRef<Self> for Params {
+    fn as_ref(&self) -> &Self { self }
 }
 
 impl AsRef<Params> for Network {

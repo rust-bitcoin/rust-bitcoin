@@ -42,7 +42,7 @@ impl ScriptHash {
         }
 
         // We've just checked the length
-        Ok(ScriptHash::from_script_unchecked(redeem_script))
+        Ok(Self::from_script_unchecked(redeem_script))
     }
 
     /// Constructs a new `ScriptHash` from any script irrespective of script size.
@@ -53,7 +53,7 @@ impl ScriptHash {
     /// [BIP-0016]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
     #[inline]
     pub fn from_script_unchecked<T>(script: &Script<T>) -> Self {
-        ScriptHash(hash160::Hash::hash(script.as_bytes()))
+        Self(hash160::Hash::hash(script.as_bytes()))
     }
 }
 

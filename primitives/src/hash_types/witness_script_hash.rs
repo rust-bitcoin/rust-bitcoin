@@ -37,7 +37,7 @@ impl WScriptHash {
         }
 
         // We've just checked the length
-        Ok(WScriptHash::from_script_unchecked(witness_script))
+        Ok(Self::from_script_unchecked(witness_script))
     }
 
     /// Constructs a new `WScriptHash` from any script irrespective of script size.
@@ -48,7 +48,7 @@ impl WScriptHash {
     /// ref: [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
     #[inline]
     pub fn from_script_unchecked(script: &WitnessScript) -> Self {
-        WScriptHash(sha256::Hash::hash(script.as_bytes()))
+        Self(sha256::Hash::hash(script.as_bytes()))
     }
 }
 

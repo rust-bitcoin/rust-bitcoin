@@ -39,35 +39,35 @@ impl FeeRate {
     /// The zero fee rate.
     ///
     /// Equivalent to [`MIN`](Self::MIN), may better express intent in some contexts.
-    pub const ZERO: FeeRate = FeeRate::from_sat_per_mvb(0);
+    pub const ZERO: Self = Self::from_sat_per_mvb(0);
 
     /// The minimum possible value.
     ///
     /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
-    pub const MIN: FeeRate = FeeRate::ZERO;
+    pub const MIN: Self = Self::ZERO;
 
     /// The maximum possible value.
-    pub const MAX: FeeRate = FeeRate::from_sat_per_mvb(u64::MAX);
+    pub const MAX: Self = Self::from_sat_per_mvb(u64::MAX);
 
     /// The minimum fee rate required to broadcast a transaction.
     ///
     /// The value matches the default Bitcoin Core policy at the time of library release.
-    pub const BROADCAST_MIN: FeeRate = FeeRate::from_sat_per_vb(1);
+    pub const BROADCAST_MIN: Self = Self::from_sat_per_vb(1);
 
     /// The fee rate used to compute dust amount.
-    pub const DUST: FeeRate = FeeRate::from_sat_per_vb(3);
+    pub const DUST: Self = Self::from_sat_per_vb(3);
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
     pub const fn from_sat_per_kwu(sat_kwu: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_kwu)) * 4_000;
-        FeeRate::from_sat_per_mvb(fee_rate)
+        Self::from_sat_per_mvb(fee_rate)
     }
 
     /// Constructs a new [`FeeRate`] from amount per 1000 weight units.
     pub const fn from_per_kwu(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
         match rate.checked_mul(4_000) {
-            Some(per_mvb) => R::Valid(FeeRate::from_sat_per_mvb(per_mvb.to_sat())),
+            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
             None => R::Error(E::while_doing(MathOp::Mul)),
         }
     }
@@ -75,14 +75,14 @@ impl FeeRate {
     /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
     pub const fn from_sat_per_vb(sat_vb: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_vb)) * 1_000_000;
-        FeeRate::from_sat_per_mvb(fee_rate)
+        Self::from_sat_per_mvb(fee_rate)
     }
 
     /// Constructs a new [`FeeRate`] from amount per virtual byte.
     pub const fn from_per_vb(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
         match rate.checked_mul(1_000_000) {
-            Some(per_mvb) => R::Valid(FeeRate::from_sat_per_mvb(per_mvb.to_sat())),
+            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
             None => R::Error(E::while_doing(MathOp::Mul)),
         }
     }
@@ -90,14 +90,14 @@ impl FeeRate {
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     pub const fn from_sat_per_kvb(sat_kvb: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_kvb)) * 1_000;
-        FeeRate::from_sat_per_mvb(fee_rate)
+        Self::from_sat_per_mvb(fee_rate)
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     pub const fn from_per_kvb(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
         match rate.checked_mul(1_000) {
-            Some(per_mvb) => R::Valid(FeeRate::from_sat_per_mvb(per_mvb.to_sat())),
+            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
             None => R::Error(E::while_doing(MathOp::Mul)),
         }
     }
@@ -148,7 +148,7 @@ impl FeeRate {
     ///
     /// Computes `self + rhs` returning [`None`] in case of overflow.
     #[must_use]
-    pub const fn checked_add(self, rhs: FeeRate) -> Option<Self> {
+    pub const fn checked_add(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         match self.to_sat_per_mvb().checked_add(rhs.to_sat_per_mvb()) {
             Some(res) => Some(Self::from_sat_per_mvb(res)),
@@ -160,7 +160,7 @@ impl FeeRate {
     ///
     /// Computes `self - rhs`, returning [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_sub(self, rhs: FeeRate) -> Option<Self> {
+    pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         match self.to_sat_per_mvb().checked_sub(rhs.to_sat_per_mvb()) {
             Some(res) => Some(Self::from_sat_per_mvb(res)),
@@ -249,16 +249,16 @@ impl core::iter::Sum for FeeRate {
     where
         I: Iterator<Item = Self>,
     {
-        FeeRate::from_sat_per_mvb(iter.map(FeeRate::to_sat_per_mvb).sum())
+        Self::from_sat_per_mvb(iter.map(Self::to_sat_per_mvb).sum())
     }
 }
 
-impl<'a> core::iter::Sum<&'a FeeRate> for FeeRate {
+impl<'a> core::iter::Sum<&'a Self> for FeeRate {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = &'a FeeRate>,
+        I: Iterator<Item = &'a Self>,
     {
-        FeeRate::from_sat_per_mvb(iter.map(|f| FeeRate::to_sat_per_mvb(*f)).sum())
+        Self::from_sat_per_mvb(iter.map(|f| Self::to_sat_per_mvb(*f)).sum())
     }
 }
 
@@ -267,11 +267,11 @@ impl<'a> Arbitrary<'a> for FeeRate {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=4)?;
         match choice {
-            0 => Ok(FeeRate::MIN),
-            1 => Ok(FeeRate::BROADCAST_MIN),
-            2 => Ok(FeeRate::DUST),
-            3 => Ok(FeeRate::MAX),
-            _ => Ok(FeeRate::from_sat_per_mvb(u64::arbitrary(u)?)),
+            0 => Ok(Self::MIN),
+            1 => Ok(Self::BROADCAST_MIN),
+            2 => Ok(Self::DUST),
+            3 => Ok(Self::MAX),
+            _ => Ok(Self::from_sat_per_mvb(u64::arbitrary(u)?)),
         }
     }
 }

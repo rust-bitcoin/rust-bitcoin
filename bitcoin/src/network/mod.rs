@@ -35,7 +35,7 @@ pub enum NetworkKind {
 // ambiguous due to confusion caused by signet/testnet/regtest.
 impl NetworkKind {
     /// Returns true if this is real mainnet bitcoin.
-    pub fn is_mainnet(&self) -> bool { *self == NetworkKind::Main }
+    pub fn is_mainnet(&self) -> bool { *self == Self::Main }
 }
 
 impl From<Network> for NetworkKind {
@@ -43,8 +43,8 @@ impl From<Network> for NetworkKind {
         use Network::*;
 
         match n {
-            Bitcoin => NetworkKind::Main,
-            Testnet(_) | Signet | Regtest => NetworkKind::Test,
+            Bitcoin => Self::Main,
+            Testnet(_) | Signet | Regtest => Self::Test,
         }
     }
 }
@@ -130,12 +130,12 @@ impl Network {
     /// ```
     pub fn to_core_arg(self) -> &'static str {
         match self {
-            Network::Bitcoin => "main",
+            Self::Bitcoin => "main",
             // For user-side compatibility, testnet3 is retained as test
-            Network::Testnet(TestnetVersion::V3) => "test",
-            Network::Testnet(TestnetVersion::V4) => "testnet4",
-            Network::Signet => "signet",
-            Network::Regtest => "regtest",
+            Self::Testnet(TestnetVersion::V3) => "test",
+            Self::Testnet(TestnetVersion::V4) => "testnet4",
+            Self::Signet => "signet",
+            Self::Regtest => "regtest",
         }
     }
 
@@ -185,18 +185,18 @@ impl Network {
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
     /// ```
-    pub fn from_chain_hash(chain_hash: ChainHash) -> Option<Network> {
-        Network::try_from(chain_hash).ok()
+    pub fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> {
+        Self::try_from(chain_hash).ok()
     }
 
     /// Returns the associated network parameters.
     pub const fn params(self) -> &'static Params {
         match self {
-            Network::Bitcoin => &Params::BITCOIN,
-            Network::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
-            Network::Testnet(TestnetVersion::V4) => &Params::TESTNET4,
-            Network::Signet => &Params::SIGNET,
-            Network::Regtest => &Params::REGTEST,
+            Self::Bitcoin => &Params::BITCOIN,
+            Self::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
+            Self::Testnet(TestnetVersion::V4) => &Params::TESTNET4,
+            Self::Signet => &Params::SIGNET,
+            Self::Regtest => &Params::REGTEST,
         }
     }
 
@@ -204,11 +204,11 @@ impl Network {
     /// This is useful for displaying the network type as a string.
     const fn as_display_str(self) -> &'static str {
         match self {
-            Network::Bitcoin => "bitcoin",
-            Network::Testnet(TestnetVersion::V3) => "testnet",
-            Network::Testnet(TestnetVersion::V4) => "testnet4",
-            Network::Signet => "signet",
-            Network::Regtest => "regtest",
+            Self::Bitcoin => "bitcoin",
+            Self::Testnet(TestnetVersion::V3) => "testnet",
+            Self::Testnet(TestnetVersion::V4) => "testnet4",
+            Self::Signet => "signet",
+            Self::Regtest => "regtest",
         }
     }
 }
@@ -279,12 +279,12 @@ impl FromStr for Network {
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "bitcoin" => Ok(Network::Bitcoin),
+            "bitcoin" => Ok(Self::Bitcoin),
             // For user-side compatibility, testnet3 is retained as testnet
-            "testnet" => Ok(Network::Testnet(TestnetVersion::V3)),
-            "testnet4" => Ok(Network::Testnet(TestnetVersion::V4)),
-            "signet" => Ok(Network::Signet),
-            "regtest" => Ok(Network::Regtest),
+            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
+            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
+            "signet" => Ok(Self::Signet),
+            "regtest" => Ok(Self::Regtest),
             _ => Err(ParseNetworkError(s.to_owned())),
         }
     }
@@ -318,11 +318,11 @@ impl TryFrom<ChainHash> for Network {
     fn try_from(chain_hash: ChainHash) -> Result<Self, Self::Error> {
         match chain_hash {
             // Note: any new network entries must be matched against here.
-            ChainHash::BITCOIN => Ok(Network::Bitcoin),
-            ChainHash::TESTNET3 => Ok(Network::Testnet(TestnetVersion::V3)),
-            ChainHash::TESTNET4 => Ok(Network::Testnet(TestnetVersion::V4)),
-            ChainHash::SIGNET => Ok(Network::Signet),
-            ChainHash::REGTEST => Ok(Network::Regtest),
+            ChainHash::BITCOIN => Ok(Self::Bitcoin),
+            ChainHash::TESTNET3 => Ok(Self::Testnet(TestnetVersion::V3)),
+            ChainHash::TESTNET4 => Ok(Self::Testnet(TestnetVersion::V4)),
+            ChainHash::SIGNET => Ok(Self::Signet),
+            ChainHash::REGTEST => Ok(Self::Regtest),
             _ => Err(UnknownChainHashError(chain_hash)),
         }
     }

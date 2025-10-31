@@ -373,7 +373,7 @@ impl Encodable for bool {
 
 impl Decodable for bool {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<bool, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         ReadExt::read_bool(r)
     }
 }
@@ -387,8 +387,8 @@ impl Encodable for String {
 
 impl Decodable for String {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<String, Error> {
-        String::from_utf8(Decodable::consensus_decode(r)?)
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+        Self::from_utf8(Decodable::consensus_decode(r)?)
             .map_err(|_| super::parse_failed_error("String was not valid UTF8"))
     }
 }
@@ -402,7 +402,7 @@ impl Encodable for Cow<'static, str> {
 
 impl Decodable for Cow<'static, str> {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Cow<'static, str>, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         String::from_utf8(Decodable::consensus_decode(r)?)
             .map_err(|_| super::parse_failed_error("String was not valid UTF8"))
             .map(Cow::Owned)
@@ -491,7 +491,7 @@ impl<T: Decodable + 'static> Decodable for Vec<T> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
-    ) -> Result<Vec<T>, Error> {
+    ) -> Result<Self, Error> {
         if TypeId::of::<T>() == TypeId::of::<u8>() {
             let len = r.read_compact_size()? as usize;
             // most real-world vec of bytes data, wouldn't be larger than 128KiB
@@ -499,7 +499,7 @@ impl<T: Decodable + 'static> Decodable for Vec<T> {
             let bytes = read_bytes_from_finite_reader(r, opts)?;
 
             // unsafe: We've just checked that T is `u8` so the transmute here is a no-op.
-            unsafe { Ok(mem::transmute::<Vec<u8>, Vec<T>>(bytes)) }
+            unsafe { Ok(mem::transmute::<Vec<u8>, Self>(bytes)) }
         } else {
             let len = r.read_compact_size()?;
             // Do not allocate upfront more items than if the sequence of type
@@ -509,7 +509,7 @@ impl<T: Decodable + 'static> Decodable for Vec<T> {
             // Note: OOM protection relies on reader eventually running out of
             // data to feed us.
             let max_capacity = MAX_VEC_SIZE / 4 / mem::size_of::<T>();
-            let mut ret = Vec::with_capacity(cmp::min(len as usize, max_capacity));
+            let mut ret = Self::with_capacity(cmp::min(len as usize, max_capacity));
             for _ in 0..len {
                 ret.push(Decodable::consensus_decode_from_finite_reader(r)?);
             }

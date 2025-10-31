@@ -53,15 +53,15 @@ impl CommandString {
     ///
     /// Returns an error if, and only if, the string is
     /// larger than 12 characters in length.
-    pub fn try_from_static(s: &'static str) -> Result<CommandString, CommandStringError> {
+    pub fn try_from_static(s: &'static str) -> Result<Self, CommandStringError> {
         Self::try_from_static_cow(s.into())
     }
 
-    fn try_from_static_cow(cow: Cow<'static, str>) -> Result<CommandString, CommandStringError> {
+    fn try_from_static_cow(cow: Cow<'static, str>) -> Result<Self, CommandStringError> {
         if cow.len() > 12 {
             Err(CommandStringError { cow })
         } else {
-            Ok(CommandString(cow))
+            Ok(Self(cow))
         }
     }
 }
@@ -129,7 +129,7 @@ impl Decodable for CommandString {
             return Err(crate::consensus::parse_failed_error("Command string must be ASCII"));
         }
 
-        Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
+        Ok(Self(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
     }
 }
 
@@ -297,50 +297,50 @@ impl NetworkMessage {
     /// Use the [Self::command] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str {
         match *self {
-            NetworkMessage::Version(_) => "version",
-            NetworkMessage::Verack => "verack",
-            NetworkMessage::Addr(_) => "addr",
-            NetworkMessage::Inv(_) => "inv",
-            NetworkMessage::GetData(_) => "getdata",
-            NetworkMessage::NotFound(_) => "notfound",
-            NetworkMessage::GetBlocks(_) => "getblocks",
-            NetworkMessage::GetHeaders(_) => "getheaders",
-            NetworkMessage::MemPool => "mempool",
-            NetworkMessage::Tx(_) => "tx",
-            NetworkMessage::Block(_) => "block",
-            NetworkMessage::Headers(_) => "headers",
-            NetworkMessage::SendHeaders => "sendheaders",
-            NetworkMessage::GetAddr => "getaddr",
-            NetworkMessage::Ping(_) => "ping",
-            NetworkMessage::Pong(_) => "pong",
-            NetworkMessage::MerkleBlock(_) => "merkleblock",
-            NetworkMessage::FilterLoad(_) => "filterload",
-            NetworkMessage::FilterAdd(_) => "filteradd",
-            NetworkMessage::FilterClear => "filterclear",
-            NetworkMessage::GetCFilters(_) => "getcfilters",
-            NetworkMessage::CFilter(_) => "cfilter",
-            NetworkMessage::GetCFHeaders(_) => "getcfheaders",
-            NetworkMessage::CFHeaders(_) => "cfheaders",
-            NetworkMessage::GetCFCheckpt(_) => "getcfcheckpt",
-            NetworkMessage::CFCheckpt(_) => "cfcheckpt",
-            NetworkMessage::SendCmpct(_) => "sendcmpct",
-            NetworkMessage::CmpctBlock(_) => "cmpctblock",
-            NetworkMessage::GetBlockTxn(_) => "getblocktxn",
-            NetworkMessage::BlockTxn(_) => "blocktxn",
-            NetworkMessage::Alert(_) => "alert",
-            NetworkMessage::Reject(_) => "reject",
-            NetworkMessage::FeeFilter(_) => "feefilter",
-            NetworkMessage::WtxidRelay => "wtxidrelay",
-            NetworkMessage::AddrV2(_) => "addrv2",
-            NetworkMessage::SendAddrV2 => "sendaddrv2",
-            NetworkMessage::Unknown { .. } => "unknown",
+            Self::Version(_) => "version",
+            Self::Verack => "verack",
+            Self::Addr(_) => "addr",
+            Self::Inv(_) => "inv",
+            Self::GetData(_) => "getdata",
+            Self::NotFound(_) => "notfound",
+            Self::GetBlocks(_) => "getblocks",
+            Self::GetHeaders(_) => "getheaders",
+            Self::MemPool => "mempool",
+            Self::Tx(_) => "tx",
+            Self::Block(_) => "block",
+            Self::Headers(_) => "headers",
+            Self::SendHeaders => "sendheaders",
+            Self::GetAddr => "getaddr",
+            Self::Ping(_) => "ping",
+            Self::Pong(_) => "pong",
+            Self::MerkleBlock(_) => "merkleblock",
+            Self::FilterLoad(_) => "filterload",
+            Self::FilterAdd(_) => "filteradd",
+            Self::FilterClear => "filterclear",
+            Self::GetCFilters(_) => "getcfilters",
+            Self::CFilter(_) => "cfilter",
+            Self::GetCFHeaders(_) => "getcfheaders",
+            Self::CFHeaders(_) => "cfheaders",
+            Self::GetCFCheckpt(_) => "getcfcheckpt",
+            Self::CFCheckpt(_) => "cfcheckpt",
+            Self::SendCmpct(_) => "sendcmpct",
+            Self::CmpctBlock(_) => "cmpctblock",
+            Self::GetBlockTxn(_) => "getblocktxn",
+            Self::BlockTxn(_) => "blocktxn",
+            Self::Alert(_) => "alert",
+            Self::Reject(_) => "reject",
+            Self::FeeFilter(_) => "feefilter",
+            Self::WtxidRelay => "wtxidrelay",
+            Self::AddrV2(_) => "addrv2",
+            Self::SendAddrV2 => "sendaddrv2",
+            Self::Unknown { .. } => "unknown",
         }
     }
 
     /// Returns the CommandString for the message command.
     pub fn command(&self) -> CommandString {
         match *self {
-            NetworkMessage::Unknown { command: ref c, .. } => c.clone(),
+            Self::Unknown { command: ref c, .. } => c.clone(),
             _ => CommandString::try_from_static(self.cmd()).expect("cmd returns valid commands"),
         }
     }
@@ -415,44 +415,44 @@ impl Encodable for HeadersMessage {
 impl Encodable for NetworkMessage {
     fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
         match self {
-            NetworkMessage::Version(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Addr(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Inv(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetData(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::NotFound(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetBlocks(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Headers(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Ping(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Pong(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FilterLoad(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FilterAdd(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFilters(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFilter(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFCheckpt(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFCheckpt(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::SendCmpct(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CmpctBlock(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetBlockTxn(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::BlockTxn(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Alert(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Reject(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FeeFilter(ref dat) =>
+            Self::Version(ref dat) => dat.consensus_encode(writer),
+            Self::Addr(ref dat) => dat.consensus_encode(writer),
+            Self::Inv(ref dat) => dat.consensus_encode(writer),
+            Self::GetData(ref dat) => dat.consensus_encode(writer),
+            Self::NotFound(ref dat) => dat.consensus_encode(writer),
+            Self::GetBlocks(ref dat) => dat.consensus_encode(writer),
+            Self::GetHeaders(ref dat) => dat.consensus_encode(writer),
+            Self::Tx(ref dat) => dat.consensus_encode(writer),
+            Self::Block(ref dat) => dat.consensus_encode(writer),
+            Self::Headers(ref dat) => dat.consensus_encode(writer),
+            Self::Ping(ref dat) => dat.consensus_encode(writer),
+            Self::Pong(ref dat) => dat.consensus_encode(writer),
+            Self::MerkleBlock(ref dat) => dat.consensus_encode(writer),
+            Self::FilterLoad(ref dat) => dat.consensus_encode(writer),
+            Self::FilterAdd(ref dat) => dat.consensus_encode(writer),
+            Self::GetCFilters(ref dat) => dat.consensus_encode(writer),
+            Self::CFilter(ref dat) => dat.consensus_encode(writer),
+            Self::GetCFHeaders(ref dat) => dat.consensus_encode(writer),
+            Self::CFHeaders(ref dat) => dat.consensus_encode(writer),
+            Self::GetCFCheckpt(ref dat) => dat.consensus_encode(writer),
+            Self::CFCheckpt(ref dat) => dat.consensus_encode(writer),
+            Self::SendCmpct(ref dat) => dat.consensus_encode(writer),
+            Self::CmpctBlock(ref dat) => dat.consensus_encode(writer),
+            Self::GetBlockTxn(ref dat) => dat.consensus_encode(writer),
+            Self::BlockTxn(ref dat) => dat.consensus_encode(writer),
+            Self::Alert(ref dat) => dat.consensus_encode(writer),
+            Self::Reject(ref dat) => dat.consensus_encode(writer),
+            Self::FeeFilter(ref dat) =>
                 dat.to_sat_per_kvb_ceil().consensus_encode(writer),
-            NetworkMessage::AddrV2(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Verack
-            | NetworkMessage::SendHeaders
-            | NetworkMessage::MemPool
-            | NetworkMessage::GetAddr
-            | NetworkMessage::WtxidRelay
-            | NetworkMessage::FilterClear
-            | NetworkMessage::SendAddrV2 => Ok(0),
-            NetworkMessage::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
+            Self::AddrV2(ref dat) => dat.consensus_encode(writer),
+            Self::Verack
+            | Self::SendHeaders
+            | Self::MemPool
+            | Self::GetAddr
+            | Self::WtxidRelay
+            | Self::FilterClear
+            | Self::SendAddrV2 => Ok(0),
+            Self::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
         }
     }
 }
@@ -565,7 +565,7 @@ impl Decodable for HeadersMessage {
                 ));
             }
         }
-        Ok(HeadersMessage(ret))
+        Ok(Self(ret))
     }
 
     #[inline]
@@ -677,7 +677,7 @@ impl Decodable for RawNetworkMessage {
             "sendaddrv2" => NetworkMessage::SendAddrV2,
             _ => NetworkMessage::Unknown { command: cmd, payload: raw_payload },
         };
-        Ok(RawNetworkMessage { magic, payload, payload_len, checksum })
+        Ok(Self { magic, payload, payload_len, checksum })
     }
 
     #[inline]
@@ -756,7 +756,7 @@ impl Decodable for V2NetworkMessage {
                     "Unknown short ID",
                 ))),
         };
-        Ok(V2NetworkMessage { payload })
+        Ok(Self { payload })
     }
 
     #[inline]
@@ -818,7 +818,7 @@ impl Decodable for CheckedData {
             }
             .into())
         } else {
-            Ok(CheckedData { data, checksum })
+            Ok(Self { data, checksum })
         }
     }
 }
@@ -863,35 +863,35 @@ fn sha2_checksum(data: &[u8]) -> [u8; 4] {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrPayload {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(AddrPayload(Vec::<(u32, Address)>::arbitrary(u)?))
+        Ok(Self(Vec::<(u32, Address)>::arbitrary(u)?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrV2Payload {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(AddrV2Payload(Vec::<AddrV2Message>::arbitrary(u)?))
+        Ok(Self(Vec::<AddrV2Message>::arbitrary(u)?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for InventoryPayload {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(InventoryPayload(Vec::<message_blockdata::Inventory>::arbitrary(u)?))
+        Ok(Self(Vec::<message_blockdata::Inventory>::arbitrary(u)?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CommandString {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(CommandString(u.arbitrary::<String>()?.into()))
+        Ok(Self(u.arbitrary::<String>()?.into()))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HeadersMessage {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(HeadersMessage(u.arbitrary()?))
+        Ok(Self(u.arbitrary()?))
     }
 }
 
@@ -899,43 +899,43 @@ impl<'a> Arbitrary<'a> for HeadersMessage {
 impl<'a> Arbitrary<'a> for NetworkMessage {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match u.int_in_range(0..=36)? {
-            0 => Ok(NetworkMessage::Version(u.arbitrary()?)),
-            1 => Ok(NetworkMessage::Verack),
-            2 => Ok(NetworkMessage::Addr(u.arbitrary()?)),
-            3 => Ok(NetworkMessage::Inv(u.arbitrary()?)),
-            4 => Ok(NetworkMessage::GetData(u.arbitrary()?)),
-            5 => Ok(NetworkMessage::NotFound(u.arbitrary()?)),
-            6 => Ok(NetworkMessage::GetBlocks(u.arbitrary()?)),
-            7 => Ok(NetworkMessage::GetHeaders(u.arbitrary()?)),
-            8 => Ok(NetworkMessage::MemPool),
-            9 => Ok(NetworkMessage::Tx(u.arbitrary()?)),
-            10 => Ok(NetworkMessage::Block(u.arbitrary()?)),
-            11 => Ok(NetworkMessage::Headers(u.arbitrary()?)),
-            12 => Ok(NetworkMessage::SendHeaders),
-            13 => Ok(NetworkMessage::GetAddr),
-            14 => Ok(NetworkMessage::Ping(u.arbitrary()?)),
-            15 => Ok(NetworkMessage::Pong(u.arbitrary()?)),
-            16 => Ok(NetworkMessage::MerkleBlock(u.arbitrary()?)),
-            17 => Ok(NetworkMessage::FilterLoad(u.arbitrary()?)),
-            18 => Ok(NetworkMessage::FilterAdd(u.arbitrary()?)),
-            19 => Ok(NetworkMessage::FilterClear),
-            20 => Ok(NetworkMessage::GetCFilters(u.arbitrary()?)),
-            21 => Ok(NetworkMessage::CFilter(u.arbitrary()?)),
-            22 => Ok(NetworkMessage::GetCFHeaders(u.arbitrary()?)),
-            23 => Ok(NetworkMessage::CFHeaders(u.arbitrary()?)),
-            24 => Ok(NetworkMessage::GetCFCheckpt(u.arbitrary()?)),
-            25 => Ok(NetworkMessage::CFCheckpt(u.arbitrary()?)),
-            26 => Ok(NetworkMessage::SendCmpct(u.arbitrary()?)),
-            27 => Ok(NetworkMessage::CmpctBlock(u.arbitrary()?)),
-            28 => Ok(NetworkMessage::GetBlockTxn(u.arbitrary()?)),
-            29 => Ok(NetworkMessage::BlockTxn(u.arbitrary()?)),
-            30 => Ok(NetworkMessage::Alert(u.arbitrary()?)),
-            31 => Ok(NetworkMessage::Reject(u.arbitrary()?)),
-            32 => Ok(NetworkMessage::FeeFilter(u.arbitrary()?)),
-            33 => Ok(NetworkMessage::WtxidRelay),
-            34 => Ok(NetworkMessage::AddrV2(u.arbitrary()?)),
-            35 => Ok(NetworkMessage::SendAddrV2),
-            _ => Ok(NetworkMessage::Unknown {
+            0 => Ok(Self::Version(u.arbitrary()?)),
+            1 => Ok(Self::Verack),
+            2 => Ok(Self::Addr(u.arbitrary()?)),
+            3 => Ok(Self::Inv(u.arbitrary()?)),
+            4 => Ok(Self::GetData(u.arbitrary()?)),
+            5 => Ok(Self::NotFound(u.arbitrary()?)),
+            6 => Ok(Self::GetBlocks(u.arbitrary()?)),
+            7 => Ok(Self::GetHeaders(u.arbitrary()?)),
+            8 => Ok(Self::MemPool),
+            9 => Ok(Self::Tx(u.arbitrary()?)),
+            10 => Ok(Self::Block(u.arbitrary()?)),
+            11 => Ok(Self::Headers(u.arbitrary()?)),
+            12 => Ok(Self::SendHeaders),
+            13 => Ok(Self::GetAddr),
+            14 => Ok(Self::Ping(u.arbitrary()?)),
+            15 => Ok(Self::Pong(u.arbitrary()?)),
+            16 => Ok(Self::MerkleBlock(u.arbitrary()?)),
+            17 => Ok(Self::FilterLoad(u.arbitrary()?)),
+            18 => Ok(Self::FilterAdd(u.arbitrary()?)),
+            19 => Ok(Self::FilterClear),
+            20 => Ok(Self::GetCFilters(u.arbitrary()?)),
+            21 => Ok(Self::CFilter(u.arbitrary()?)),
+            22 => Ok(Self::GetCFHeaders(u.arbitrary()?)),
+            23 => Ok(Self::CFHeaders(u.arbitrary()?)),
+            24 => Ok(Self::GetCFCheckpt(u.arbitrary()?)),
+            25 => Ok(Self::CFCheckpt(u.arbitrary()?)),
+            26 => Ok(Self::SendCmpct(u.arbitrary()?)),
+            27 => Ok(Self::CmpctBlock(u.arbitrary()?)),
+            28 => Ok(Self::GetBlockTxn(u.arbitrary()?)),
+            29 => Ok(Self::BlockTxn(u.arbitrary()?)),
+            30 => Ok(Self::Alert(u.arbitrary()?)),
+            31 => Ok(Self::Reject(u.arbitrary()?)),
+            32 => Ok(Self::FeeFilter(u.arbitrary()?)),
+            33 => Ok(Self::WtxidRelay),
+            34 => Ok(Self::AddrV2(u.arbitrary()?)),
+            35 => Ok(Self::SendAddrV2),
+            _ => Ok(Self::Unknown {
                 command: u.arbitrary()?,
                 payload: Vec::<u8>::arbitrary(u)?,
             }),
@@ -946,7 +946,7 @@ impl<'a> Arbitrary<'a> for NetworkMessage {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for RawNetworkMessage {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(RawNetworkMessage::new(u.arbitrary()?, u.arbitrary()?))
+        Ok(Self::new(u.arbitrary()?, u.arbitrary()?))
     }
 }
 

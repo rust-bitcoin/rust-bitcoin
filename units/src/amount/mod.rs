@@ -106,47 +106,47 @@ pub enum Denomination {
 
 impl Denomination {
     /// Convenience alias for `Denomination::Bitcoin`.
-    pub const BTC: Self = Denomination::Bitcoin;
+    pub const BTC: Self = Self::Bitcoin;
 
     /// Convenience alias for `Denomination::Satoshi`.
-    pub const SAT: Self = Denomination::Satoshi;
+    pub const SAT: Self = Self::Satoshi;
 
     /// The number of decimal places more than a satoshi.
     fn precision(self) -> i8 {
         match self {
-            Denomination::Bitcoin => -8,
-            Denomination::CentiBitcoin => -6,
-            Denomination::MilliBitcoin => -5,
-            Denomination::MicroBitcoin => -2,
-            Denomination::Bit => -2,
-            Denomination::Satoshi => 0,
-            Denomination::_DoNotUse(infallible) => match infallible {},
+            Self::Bitcoin => -8,
+            Self::CentiBitcoin => -6,
+            Self::MilliBitcoin => -5,
+            Self::MicroBitcoin => -2,
+            Self::Bit => -2,
+            Self::Satoshi => 0,
+            Self::_DoNotUse(infallible) => match infallible {},
         }
     }
 
     /// Returns a string representation of this denomination.
     fn as_str(self) -> &'static str {
         match self {
-            Denomination::Bitcoin => "BTC",
-            Denomination::CentiBitcoin => "cBTC",
-            Denomination::MilliBitcoin => "mBTC",
-            Denomination::MicroBitcoin => "uBTC",
-            Denomination::Bit => "bits",
-            Denomination::Satoshi => "satoshi",
-            Denomination::_DoNotUse(infallible) => match infallible {},
+            Self::Bitcoin => "BTC",
+            Self::CentiBitcoin => "cBTC",
+            Self::MilliBitcoin => "mBTC",
+            Self::MicroBitcoin => "uBTC",
+            Self::Bit => "bits",
+            Self::Satoshi => "satoshi",
+            Self::_DoNotUse(infallible) => match infallible {},
         }
     }
 
     /// The different `str` forms of denominations that are recognized.
     fn forms(s: &str) -> Option<Self> {
         match s {
-            "BTC" | "btc" => Some(Denomination::Bitcoin),
-            "cBTC" | "cbtc" => Some(Denomination::CentiBitcoin),
-            "mBTC" | "mbtc" => Some(Denomination::MilliBitcoin),
-            "uBTC" | "ubtc" | "µBTC" | "µbtc" => Some(Denomination::MicroBitcoin),
-            "bit" | "bits" | "BIT" | "BITS" => Some(Denomination::Bit),
+            "BTC" | "btc" => Some(Self::Bitcoin),
+            "cBTC" | "cbtc" => Some(Self::CentiBitcoin),
+            "mBTC" | "mbtc" => Some(Self::MilliBitcoin),
+            "uBTC" | "ubtc" | "µBTC" | "µbtc" => Some(Self::MicroBitcoin),
+            "bit" | "bits" | "BIT" | "BITS" => Some(Self::Bit),
             "SATOSHI" | "satoshi" | "SATOSHIS" | "satoshis" | "SAT" | "sat" | "SATS" | "sats" =>
-                Some(Denomination::Satoshi),
+                Some(Self::Satoshi),
             _ => None,
         }
     }
@@ -177,7 +177,7 @@ impl FromStr for Denomination {
             return Err(E::PossiblyConfusing(PossiblyConfusingDenominationError(s.into())));
         };
 
-        let form = self::Denomination::forms(s);
+        let form = Self::forms(s);
 
         form.ok_or_else(|| E::Unknown(UnknownDenominationError(s.into())))
     }
@@ -369,7 +369,7 @@ struct FormatOptions {
 
 impl FormatOptions {
     fn from_formatter(f: &fmt::Formatter) -> Self {
-        FormatOptions {
+        Self {
             fill: f.fill(),
             align: f.align(),
             width: f.width(),
@@ -382,7 +382,7 @@ impl FormatOptions {
 
 impl Default for FormatOptions {
     fn default() -> Self {
-        FormatOptions {
+        Self {
             fill: ' ',
             align: None,
             width: None,
@@ -605,12 +605,12 @@ impl<'a> Arbitrary<'a> for Denomination {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=5)?;
         match choice {
-            0 => Ok(Denomination::Bitcoin),
-            1 => Ok(Denomination::CentiBitcoin),
-            2 => Ok(Denomination::MilliBitcoin),
-            3 => Ok(Denomination::MicroBitcoin),
-            4 => Ok(Denomination::Bit),
-            _ => Ok(Denomination::Satoshi),
+            0 => Ok(Self::Bitcoin),
+            1 => Ok(Self::CentiBitcoin),
+            2 => Ok(Self::MilliBitcoin),
+            3 => Ok(Self::MicroBitcoin),
+            4 => Ok(Self::Bit),
+            _ => Ok(Self::Satoshi),
         }
     }
 }

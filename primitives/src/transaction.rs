@@ -142,7 +142,7 @@ impl Transaction {
     /// having the same inputs and outputs.
     #[doc(alias = "ntxid")]
     pub fn compute_ntxid(&self) -> Ntxid {
-        let normalized = Transaction {
+        let normalized = Self {
             version: self.version,
             lock_time: self.lock_time,
             inputs: self
@@ -216,25 +216,25 @@ impl cmp::Ord for Transaction {
 #[cfg(feature = "alloc")]
 impl From<Transaction> for Txid {
     #[inline]
-    fn from(tx: Transaction) -> Txid { tx.compute_txid() }
+    fn from(tx: Transaction) -> Self { tx.compute_txid() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Transaction> for Txid {
     #[inline]
-    fn from(tx: &Transaction) -> Txid { tx.compute_txid() }
+    fn from(tx: &Transaction) -> Self { tx.compute_txid() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<Transaction> for Wtxid {
     #[inline]
-    fn from(tx: Transaction) -> Wtxid { tx.compute_wtxid() }
+    fn from(tx: Transaction) -> Self { tx.compute_wtxid() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Transaction> for Wtxid {
     #[inline]
-    fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
+    fn from(tx: &Transaction) -> Self { tx.compute_wtxid() }
 }
 
 // Duplicated in `bitcoin`.
@@ -727,7 +727,7 @@ pub struct TxIn {
 #[cfg(feature = "alloc")]
 impl TxIn {
     /// An empty transaction input with the previous output as for a coinbase transaction.
-    pub const EMPTY_COINBASE: TxIn = TxIn {
+    pub const EMPTY_COINBASE: Self = Self {
         previous_output: OutPoint::COINBASE_PREVOUT,
         script_sig: ScriptSigBuf::new(),
         sequence: Sequence::MAX,
@@ -1055,7 +1055,7 @@ impl core::str::FromStr for OutPoint {
         if colon == 0 || colon == s.len() - 1 {
             return Err(ParseOutPointError::Format);
         }
-        Ok(OutPoint {
+        Ok(Self {
             txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
             vout: parse_vout(&s[colon + 1..])?,
         })
@@ -1331,7 +1331,7 @@ impl Version {
     ///
     /// This can accept both standard and non-standard versions.
     #[inline]
-    pub const fn maybe_non_standard(version: u32) -> Version { Self(version) }
+    pub const fn maybe_non_standard(version: u32) -> Self { Self(version) }
 
     /// Returns the inner `u32` value of this `Version`.
     #[inline]
@@ -1345,7 +1345,7 @@ impl Version {
     /// versions 1, 2, and 3 are considered standard.
     #[inline]
     pub const fn is_standard(self) -> bool {
-        self.0 == Version::ONE.0 || self.0 == Version::TWO.0 || self.0 == Version::THREE.0
+        self.0 == Self::ONE.0 || self.0 == Self::TWO.0 || self.0 == Self::THREE.0
     }
 }
 
@@ -1431,7 +1431,7 @@ impl std::error::Error for VersionDecoderError {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Transaction {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Transaction {
+        Ok(Self {
             version: Version::arbitrary(u)?,
             lock_time: absolute::LockTime::arbitrary(u)?,
             inputs: Vec::<TxIn>::arbitrary(u)?,
@@ -1444,7 +1444,7 @@ impl<'a> Arbitrary<'a> for Transaction {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxIn {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxIn {
+        Ok(Self {
             previous_output: OutPoint::arbitrary(u)?,
             script_sig: ScriptSigBuf::arbitrary(u)?,
             sequence: Sequence::arbitrary(u)?,
@@ -1457,14 +1457,14 @@ impl<'a> Arbitrary<'a> for TxIn {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { amount: Amount::arbitrary(u)?, script_pubkey: ScriptPubKeyBuf::arbitrary(u)? })
+        Ok(Self { amount: Amount::arbitrary(u)?, script_pubkey: ScriptPubKeyBuf::arbitrary(u)? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for OutPoint {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(OutPoint { txid: Txid::arbitrary(u)?, vout: u32::arbitrary(u)? })
+        Ok(Self { txid: Txid::arbitrary(u)?, vout: u32::arbitrary(u)? })
     }
 }
 
@@ -1474,10 +1474,10 @@ impl<'a> Arbitrary<'a> for Version {
         // Equally weight the case of normal version numbers
         let choice = u.int_in_range(0..=3)?;
         match choice {
-            0 => Ok(Version::ONE),
-            1 => Ok(Version::TWO),
-            2 => Ok(Version::THREE),
-            _ => Ok(Version(u.arbitrary()?)),
+            0 => Ok(Self::ONE),
+            1 => Ok(Self::TWO),
+            2 => Ok(Self::THREE),
+            _ => Ok(Self(u.arbitrary()?)),
         }
     }
 }

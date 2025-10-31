@@ -99,12 +99,12 @@ pub enum AddressType {
 impl fmt::Display for AddressType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match *self {
-            AddressType::P2pkh => "p2pkh",
-            AddressType::P2sh => "p2sh",
-            AddressType::P2wpkh => "p2wpkh",
-            AddressType::P2wsh => "p2wsh",
-            AddressType::P2tr => "p2tr",
-            AddressType::P2a => "p2a",
+            Self::P2pkh => "p2pkh",
+            Self::P2sh => "p2sh",
+            Self::P2wpkh => "p2wpkh",
+            Self::P2wsh => "p2wsh",
+            Self::P2tr => "p2tr",
+            Self::P2a => "p2a",
         })
     }
 }
@@ -113,12 +113,12 @@ impl FromStr for AddressType {
     type Err = UnknownAddressTypeError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "p2pkh" => Ok(AddressType::P2pkh),
-            "p2sh" => Ok(AddressType::P2sh),
-            "p2wpkh" => Ok(AddressType::P2wpkh),
-            "p2wsh" => Ok(AddressType::P2wsh),
-            "p2tr" => Ok(AddressType::P2tr),
-            "p2a" => Ok(AddressType::P2a),
+            "p2pkh" => Ok(Self::P2pkh),
+            "p2sh" => Ok(Self::P2sh),
+            "p2wpkh" => Ok(Self::P2wpkh),
+            "p2wsh" => Ok(Self::P2wsh),
+            "p2tr" => Ok(Self::P2tr),
+            "p2a" => Ok(Self::P2a),
             _ => Err(UnknownAddressTypeError(s.to_owned())),
         }
     }
@@ -279,9 +279,9 @@ impl From<Network> for KnownHrp {
 impl From<KnownHrp> for NetworkKind {
     fn from(hrp: KnownHrp) -> Self {
         match hrp {
-            KnownHrp::Mainnet => NetworkKind::Main,
-            KnownHrp::Testnets => NetworkKind::Test,
-            KnownHrp::Regtest => NetworkKind::Test,
+            KnownHrp::Mainnet => Self::Main,
+            KnownHrp::Testnets => Self::Test,
+            KnownHrp::Regtest => Self::Test,
         }
     }
 }
@@ -418,7 +418,7 @@ impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
 
 #[cfg(feature = "serde")]
 impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> {
-    fn deserialize<D>(deserializer: D) -> Result<Address<U>, D::Error>
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::de::Deserializer<'de>,
     {
@@ -463,7 +463,7 @@ impl<V: NetworkValidation> serde::Serialize for Address<V> {
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
-    fn from_inner(inner: AddressInner) -> Self { Address(PhantomData, inner) }
+    fn from_inner(inner: AddressInner) -> Self { Self(PhantomData, inner) }
 
     fn to_inner(self) -> AddressInner { self.1 }
 
@@ -475,9 +475,7 @@ impl<V: NetworkValidation> Address<V> {
     }
 
     /// Marks the network of this address as unchecked.
-    pub fn to_unchecked(self) -> Address<NetworkUnchecked> {
-        Address::from_inner(self.to_inner())
-    }
+    pub fn to_unchecked(self) -> Address<NetworkUnchecked> { Address::from_inner(self.to_inner()) }
 
     /// Marks the network of this address as unchecked.
     #[deprecated(since = "0.33.0", note = "use to_unchecked instead")]
@@ -502,7 +500,7 @@ impl Address {
     ///
     /// This is the preferred non-witness type address.
     #[inline]
-    pub fn p2pkh(pk: impl Into<PubkeyHash>, network: impl Into<NetworkKind>) -> Address {
+    pub fn p2pkh(pk: impl Into<PubkeyHash>, network: impl Into<NetworkKind>) -> Self {
         let hash = pk.into();
         Self::from_inner(AddressInner::P2pkh { hash, network: network.into() })
     }
@@ -515,9 +513,9 @@ impl Address {
     pub fn p2sh<T: ScriptHashableTag>(
         redeem_script: &Script<T>,
         network: impl Into<NetworkKind>,
-    ) -> Result<Address, RedeemScriptSizeError> {
+    ) -> Result<Self, RedeemScriptSizeError> {
         let hash = redeem_script.script_hash()?;
-        Ok(Address::p2sh_from_hash(hash, network))
+        Ok(Self::p2sh_from_hash(hash, network))
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script hash.
@@ -526,7 +524,7 @@ impl Address {
     ///
     /// The `hash` pre-image (redeem script) must not exceed 520 bytes in length
     /// otherwise outputs created from the returned address will be un-spendable.
-    pub fn p2sh_from_hash(hash: ScriptHash, network: impl Into<NetworkKind>) -> Address {
+    pub fn p2sh_from_hash(hash: ScriptHash, network: impl Into<NetworkKind>) -> Self {
         Self::from_inner(AddressInner::P2sh { hash, network: network.into() })
     }
 
@@ -535,32 +533,32 @@ impl Address {
     /// This is the native SegWit address type for an output redeemable with a single signature.
     pub fn p2wpkh(pk: CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2wpkh(pk);
-        Address::from_witness_program(program, hrp)
+        Self::from_witness_program(program, hrp)
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
     /// pay-to-witness-public-key-hash (P2WPKH).
     ///
     /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
+    pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Self {
         let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
-        Address::p2sh_from_hash(script_hash, network)
+        Self::p2sh_from_hash(script_hash, network)
     }
 
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script.
     pub fn p2wsh(
         witness_script: &WitnessScript,
         hrp: impl Into<KnownHrp>,
-    ) -> Result<Address, WitnessScriptSizeError> {
+    ) -> Result<Self, WitnessScriptSizeError> {
         let program = WitnessProgram::p2wsh(witness_script)?;
-        Ok(Address::from_witness_program(program, hrp))
+        Ok(Self::from_witness_program(program, hrp))
     }
 
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script hash.
-    pub fn p2wsh_from_hash(hash: WScriptHash, hrp: impl Into<KnownHrp>) -> Address {
+    pub fn p2wsh_from_hash(hash: WScriptHash, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2wsh_from_hash(hash);
-        Address::from_witness_program(program, hrp)
+        Self::from_witness_program(program, hrp)
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
@@ -570,11 +568,11 @@ impl Address {
     pub fn p2shwsh(
         witness_script: &WitnessScript,
         network: impl Into<NetworkKind>,
-    ) -> Result<Address, WitnessScriptSizeError> {
+    ) -> Result<Self, WitnessScriptSizeError> {
         let hash = witness_script.wscript_hash()?;
         let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(hash);
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
-        Ok(Address::p2sh_from_hash(script_hash, network))
+        Ok(Self::p2sh_from_hash(script_hash, network))
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
@@ -583,25 +581,25 @@ impl Address {
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
         hrp: impl Into<KnownHrp>,
-    ) -> Address {
+    ) -> Self {
         let internal_key = internal_key.into();
         let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
-        Address::from_witness_program(program, hrp)
+        Self::from_witness_program(program, hrp)
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from a pre-tweaked output key.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Address {
+    pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2tr_tweaked(output_key);
-        Address::from_witness_program(program, hrp)
+        Self::from_witness_program(program, hrp)
     }
 
     /// Constructs a new [`Address`] from an arbitrary [`WitnessProgram`].
     ///
     /// This only exists to support future witness versions. If you are doing normal mainnet things
     /// then you likely do not need this constructor.
-    pub fn from_witness_program(program: WitnessProgram, hrp: impl Into<KnownHrp>) -> Address {
+    pub fn from_witness_program(program: WitnessProgram, hrp: impl Into<KnownHrp>) -> Self {
         let inner = AddressInner::Segwit { program, hrp: hrp.into() };
-        Address::from_inner(inner)
+        Self::from_inner(inner)
     }
 
     /// Gets the address type of the [`Address`].
@@ -689,22 +687,22 @@ impl Address {
     pub fn from_script(
         script: &ScriptPubKey,
         params: impl AsRef<Params>,
-    ) -> Result<Address, FromScriptError> {
+    ) -> Result<Self, FromScriptError> {
         let network = params.as_ref().network;
         if script.is_p2pkh() {
             let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
             let hash = PubkeyHash::from_byte_array(bytes);
-            Ok(Address::p2pkh(hash, network))
+            Ok(Self::p2pkh(hash, network))
         } else if script.is_p2sh() {
             let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
             let hash = ScriptHash::from_byte_array(bytes);
-            Ok(Address::p2sh_from_hash(hash, network))
+            Ok(Self::p2sh_from_hash(hash, network))
         } else if script.is_witness_program() {
             let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
 
             let version = WitnessVersion::try_from(opcode)?;
             let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
-            Ok(Address::from_witness_program(program, network))
+            Ok(Self::from_witness_program(program, network))
         } else {
             Err(FromScriptError::UnrecognizedScript)
         }
@@ -907,7 +905,7 @@ impl Address<NetworkUnchecked> {
     pub fn assume_checked(self) -> Address { Address::from_inner(self.to_inner()) }
 
     /// Parses a bech32 Address string
-    pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, Bech32Error> {
+    pub fn from_bech32_str(s: &str) -> Result<Self, Bech32Error> {
         let (hrp, witness_version, data) =
             bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
         let version = WitnessVersion::try_from(witness_version.to_u8())?;
@@ -916,11 +914,11 @@ impl Address<NetworkUnchecked> {
 
         let hrp = KnownHrp::from_hrp(hrp)?;
         let inner = AddressInner::Segwit { program, hrp };
-        Ok(Address::from_inner(inner))
+        Ok(Self::from_inner(inner))
     }
 
     /// Parses a base58 Address string
-    pub fn from_base58_str(s: &str) -> Result<Address<NetworkUnchecked>, Base58Error> {
+    pub fn from_base58_str(s: &str) -> Result<Self, Base58Error> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
@@ -951,7 +949,7 @@ impl Address<NetworkUnchecked> {
             invalid => return Err(InvalidLegacyPrefixError { invalid }.into()),
         };
 
-        Ok(Address::from_inner(inner))
+        Ok(Self::from_inner(inner))
     }
 }
 
@@ -999,10 +997,10 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
         if ["bc1", "bcrt1", "tb1"].iter().any(|&prefix| s.to_lowercase().starts_with(prefix)) {
             let address = Address::from_bech32_str(s)?;
             // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
-            Ok(Address::from_inner(address.to_inner()))
+            Ok(Self::from_inner(address.to_inner()))
         } else if ["1", "2", "3", "m", "n"].iter().any(|&prefix| s.starts_with(prefix)) {
             let address = Address::from_base58_str(s)?;
-            Ok(Address::from_inner(address.to_inner()))
+            Ok(Self::from_inner(address.to_inner()))
         } else {
             let hrp = match s.rfind('1') {
                 Some(pos) => &s[..pos],
