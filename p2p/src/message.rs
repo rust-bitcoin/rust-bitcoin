@@ -225,7 +225,7 @@ pub enum NetworkMessage {
     GetHeaders(message_blockdata::GetHeadersMessage),
     /// `mempool`
     MemPool,
-    /// tx
+    /// `tx`
     Tx(transaction::Transaction),
     /// `block`
     Block(block::Block),
@@ -247,25 +247,25 @@ pub enum NetworkMessage {
     FilterAdd(message_bloom::FilterAdd),
     /// BIP-0037 `filterclear`
     FilterClear,
-    /// BIP-0157 getcfilters
+    /// BIP-0157 `getcfilters`
     GetCFilters(message_filter::GetCFilters),
-    /// BIP-0157 cfilter
+    /// BIP-0157 `cfilter`
     CFilter(message_filter::CFilter),
-    /// BIP-0157 getcfheaders
+    /// BIP-0157 `getcfheaders`
     GetCFHeaders(message_filter::GetCFHeaders),
-    /// BIP-0157 cfheaders
+    /// BIP-0157 `cfheaders`
     CFHeaders(message_filter::CFHeaders),
-    /// BIP-0157 getcfcheckpt
+    /// BIP-0157 `getcfcheckpt`
     GetCFCheckpt(message_filter::GetCFCheckpt),
-    /// BIP-0157 cfcheckpt
+    /// BIP-0157 `cfcheckpt`
     CFCheckpt(message_filter::CFCheckpt),
-    /// BIP-0152 sendcmpct
+    /// BIP-0152 `sendcmpct`
     SendCmpct(message_compact_blocks::SendCmpct),
-    /// BIP-0152 cmpctblock
+    /// BIP-0152 `cmpctblock`
     CmpctBlock(message_compact_blocks::CmpctBlock),
-    /// BIP-0152 getblocktxn
+    /// BIP-0152 `getblocktxn`
     GetBlockTxn(message_compact_blocks::GetBlockTxn),
-    /// BIP-0152 blocktxn
+    /// BIP-0152 `blocktxn`
     BlockTxn(message_compact_blocks::BlockTxn),
     /// `alert`
     Alert(message_network::Alert),
