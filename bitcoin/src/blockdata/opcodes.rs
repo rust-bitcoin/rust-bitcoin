@@ -9,9 +9,6 @@
 
 use core::fmt;
 
-#[cfg(feature = "serde")]
-use crate::prelude::ToString;
-
 /// A script Opcode.
 ///
 /// We do not implement Ord on this type because there is no natural ordering on opcodes, but there
@@ -47,6 +44,13 @@ macro_rules! all_opcodes {
                 #[doc = $doc]
                 pub const $op: Opcode = Opcode { code: $val};
             )*
+
+            /// An opcode name array. Used as a lookup from opcode code to name
+            pub(crate) const OPCODE_TABLE: [&str; 256] = [
+                $(
+                    stringify!($op),
+                )*
+            ];
 
             /// Push an empty array onto the stack.
             pub const OP_0: Opcode = OP_PUSHBYTES_0;
@@ -484,6 +488,24 @@ impl Opcode {
             _ => None,
         }
     }
+
+    /// Returns the string representation of the opcode.
+    ///
+    /// This function maps the `Opcode`'s `code` value (a `u8`) to its corresponding
+    /// Bitcoin Script opcode name.
+    ///
+    /// # Example
+    /// ```
+    /// use bitcoin::opcodes::all::*;
+    ///
+    /// assert_eq!(OP_1.as_str(), "OP_1");
+    /// assert_eq!(OP_1NEGATE.as_str(), "OP_1NEGATE");
+    /// assert_eq!(OP_CHECKMULTISIG.as_str(), "OP_CHECKMULTISIG");
+    /// ```
+    #[inline]
+    pub fn as_str(&self) -> &'static str {
+        OPCODE_TABLE[self.code as usize]
+    }
 }
 
 impl From<u8> for Opcode {
@@ -501,7 +523,7 @@ impl serde::Serialize for Opcode {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&self.to_string())
+        serializer.serialize_str(self.as_str())
     }
 }
 
