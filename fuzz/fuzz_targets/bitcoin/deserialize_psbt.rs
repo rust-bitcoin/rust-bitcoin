@@ -19,7 +19,11 @@ fn do_test(data: &[u8]) {
             match psbt_b {
                 Err(_) => {}
                 Ok(mut psbt_b) => {
-                    assert_eq!(psbt_b.combine(psbt.clone()).is_ok(), psbt.combine(psbt_b).is_ok());
+                    let psbt_b_clone = psbt_b.clone();
+                    assert_eq!(
+                        psbt_b.combine(psbt.clone()).is_ok(),
+                        psbt.combine(psbt_b_clone).is_ok()
+                    );
                 }
             }
         }
