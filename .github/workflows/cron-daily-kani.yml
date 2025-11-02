@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: 'Checkout your code.'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       - name: 'Run Kani on your code.'
         uses: model-checking/kani-github-action@f838096619a707b0f6b2118cf435eaccfa33e51f # v1.1
