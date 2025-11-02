@@ -95,8 +95,8 @@ impl<T> NumOpResult<T> {
     #[inline]
     pub fn map<U, F: FnOnce(T) -> U>(self, op: F) -> NumOpResult<U> {
         match self {
-            NumOpResult::Valid(t) => NumOpResult::Valid(op(t)),
-            NumOpResult::Error(e) => NumOpResult::Error(e),
+            Self::Valid(t) => NumOpResult::Valid(op(t)),
+            Self::Error(e) => NumOpResult::Error(e),
         }
     }
 }
@@ -111,8 +111,8 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[track_caller]
     pub fn expect(self, msg: &str) -> T {
         match self {
-            R::Valid(x) => x,
-            R::Error(_) => panic!("{}", msg),
+            Self::Valid(x) => x,
+            Self::Error(_) => panic!("{}", msg),
         }
     }
 
@@ -125,8 +125,8 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[track_caller]
     pub fn unwrap(self) -> T {
         match self {
-            R::Valid(x) => x,
-            R::Error(e) => panic!("tried to unwrap an invalid numeric result: {:?}", e),
+            Self::Valid(x) => x,
+            Self::Error(e) => panic!("tried to unwrap an invalid numeric result: {:?}", e),
         }
     }
 
@@ -139,8 +139,8 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[track_caller]
     pub fn unwrap_err(self) -> NumOpError {
         match self {
-            R::Error(e) => e,
-            R::Valid(a) => panic!("tried to unwrap a valid numeric result: {:?}", a),
+            Self::Error(e) => e,
+            Self::Valid(a) => panic!("tried to unwrap a valid numeric result: {:?}", a),
         }
     }
 
@@ -152,8 +152,8 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[track_caller]
     pub fn unwrap_or(self, default: T) -> T {
         match self {
-            R::Valid(x) => x,
-            R::Error(_) => default,
+            Self::Valid(x) => x,
+            Self::Error(_) => default,
         }
     }
 
@@ -165,8 +165,8 @@ impl<T: fmt::Debug> NumOpResult<T> {
         F: FnOnce() -> T,
     {
         match self {
-            R::Valid(x) => x,
-            R::Error(_) => f(),
+            Self::Valid(x) => x,
+            Self::Error(_) => f(),
         }
     }
 
@@ -174,8 +174,8 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[inline]
     pub fn ok(self) -> Option<T> {
         match self {
-            R::Valid(x) => Some(x),
-            R::Error(_) => None,
+            Self::Valid(x) => Some(x),
+            Self::Error(_) => None,
         }
     }
 
@@ -184,20 +184,20 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[allow(clippy::missing_errors_doc)]
     pub fn into_result(self) -> Result<T, NumOpError> {
         match self {
-            R::Valid(x) => Ok(x),
-            R::Error(e) => Err(e),
+            Self::Valid(x) => Ok(x),
+            Self::Error(e) => Err(e),
         }
     }
 
     /// Calls `op` if the numeric result is `Valid`, otherwise returns the `Error` value of `self`.
     #[inline]
-    pub fn and_then<F>(self, op: F) -> NumOpResult<T>
+    pub fn and_then<F>(self, op: F) -> Self
     where
-        F: FnOnce(T) -> NumOpResult<T>,
+        F: FnOnce(T) -> Self,
     {
         match self {
-            R::Valid(x) => op(x),
-            R::Error(e) => R::Error(e),
+            Self::Valid(x) => op(x),
+            Self::Error(e) => Self::Error(e),
         }
     }
 
@@ -205,8 +205,8 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[inline]
     pub fn is_valid(&self) -> bool {
         match self {
-            R::Valid(_) => true,
-            R::Error(_) => false,
+            Self::Valid(_) => true,
+            Self::Error(_) => false,
         }
     }
 
@@ -243,7 +243,7 @@ pub struct NumOpError(MathOp);
 
 impl NumOpError {
     /// Constructs a [`NumOpError`] caused by `op`.
-    pub(crate) const fn while_doing(op: MathOp) -> Self { NumOpError(op) }
+    pub(crate) const fn while_doing(op: MathOp) -> Self { Self(op) }
 
     /// Returns `true` if this operation error'ed due to overflow.
     pub fn is_overflow(self) -> bool { self.0.is_overflow() }
@@ -289,35 +289,35 @@ pub enum MathOp {
 impl MathOp {
     /// Returns `true` if this operation error'ed due to overflow.
     pub fn is_overflow(self) -> bool {
-        matches!(self, MathOp::Add | MathOp::Sub | MathOp::Mul | MathOp::Neg)
+        matches!(self, Self::Add | Self::Sub | Self::Mul | Self::Neg)
     }
 
     /// Returns `true` if this operation error'ed due to division by zero.
     pub fn is_div_by_zero(self) -> bool { !self.is_overflow() }
 
     /// Returns `true` if this operation error'ed due to addition.
-    pub fn is_addition(self) -> bool { self == MathOp::Add }
+    pub fn is_addition(self) -> bool { self == Self::Add }
 
     /// Returns `true` if this operation error'ed due to subtraction.
-    pub fn is_subtraction(self) -> bool { self == MathOp::Sub }
+    pub fn is_subtraction(self) -> bool { self == Self::Sub }
 
     /// Returns `true` if this operation error'ed due to multiplication.
-    pub fn is_multiplication(self) -> bool { self == MathOp::Mul }
+    pub fn is_multiplication(self) -> bool { self == Self::Mul }
 
     /// Returns `true` if this operation error'ed due to negation.
-    pub fn is_negation(self) -> bool { self == MathOp::Neg }
+    pub fn is_negation(self) -> bool { self == Self::Neg }
 }
 
 impl fmt::Display for MathOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            MathOp::Add => write!(f, "add"),
-            MathOp::Sub => write!(f, "sub"),
-            MathOp::Mul => write!(f, "mul"),
-            MathOp::Div => write!(f, "div"),
-            MathOp::Rem => write!(f, "rem"),
-            MathOp::Neg => write!(f, "neg"),
-            MathOp::_DoNotUse(infallible) => match infallible {},
+            Self::Add => write!(f, "add"),
+            Self::Sub => write!(f, "sub"),
+            Self::Mul => write!(f, "mul"),
+            Self::Div => write!(f, "div"),
+            Self::Rem => write!(f, "rem"),
+            Self::Neg => write!(f, "neg"),
+            Self::_DoNotUse(infallible) => match infallible {},
         }
     }
 }
@@ -326,8 +326,8 @@ impl fmt::Display for MathOp {
 impl<'a, T: Arbitrary<'a>> Arbitrary<'a> for NumOpResult<T> {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
-            true => Ok(NumOpResult::Valid(T::arbitrary(u)?)),
-            false => Ok(NumOpResult::Error(NumOpError(MathOp::arbitrary(u)?))),
+            true => Ok(Self::Valid(T::arbitrary(u)?)),
+            false => Ok(Self::Error(NumOpError(MathOp::arbitrary(u)?))),
         }
     }
 }
@@ -337,12 +337,12 @@ impl<'a> Arbitrary<'a> for MathOp {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=5)?;
         match choice {
-            0 => Ok(MathOp::Add),
-            1 => Ok(MathOp::Sub),
-            2 => Ok(MathOp::Mul),
-            3 => Ok(MathOp::Div),
-            4 => Ok(MathOp::Rem),
-            _ => Ok(MathOp::Neg),
+            0 => Ok(Self::Add),
+            1 => Ok(Self::Sub),
+            2 => Ok(Self::Mul),
+            3 => Ok(Self::Div),
+            4 => Ok(Self::Rem),
+            _ => Ok(Self::Neg),
         }
     }
 }

@@ -38,7 +38,7 @@ impl Encodable for TxMerkleNode {
 
 impl Decodable for TxMerkleNode {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(TxMerkleNode::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
     }
 }
 
@@ -50,7 +50,7 @@ impl Encodable for WitnessMerkleNode {
 
 impl Decodable for WitnessMerkleNode {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(WitnessMerkleNode::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
     }
 }
 

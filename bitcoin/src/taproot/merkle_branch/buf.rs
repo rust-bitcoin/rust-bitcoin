@@ -64,7 +64,7 @@ impl TaprootMerkleBranchBuf {
         if collection.as_ref().len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(InvalidMerkleTreeDepthError(collection.as_ref().len()))
         } else {
-            Ok(TaprootMerkleBranchBuf(collection.into()))
+            Ok(Self(collection.into()))
         }
     }
 

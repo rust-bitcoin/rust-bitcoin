@@ -42,9 +42,9 @@ pub enum BloomFlags {
 impl Encodable for BloomFlags {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         w.write_all(&[match self {
-            BloomFlags::None => 0,
-            BloomFlags::All => 1,
-            BloomFlags::PubkeyOnly => 2,
+            Self::None => 0,
+            Self::All => 1,
+            Self::PubkeyOnly => 2,
         }])?;
         Ok(1)
     }
@@ -53,9 +53,9 @@ impl Encodable for BloomFlags {
 impl Decodable for BloomFlags {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
-            0 => BloomFlags::None,
-            1 => BloomFlags::All,
-            2 => BloomFlags::PubkeyOnly,
+            0 => Self::None,
+            1 => Self::All,
+            2 => Self::PubkeyOnly,
             _ => return Err(crate::consensus::parse_failed_error("unknown bloom flag")),
         })
     }
@@ -74,9 +74,9 @@ impl_consensus_encoding!(FilterAdd, data);
 impl<'a> Arbitrary<'a> for BloomFlags {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match u.int_in_range(0..=2)? {
-            0 => Ok(BloomFlags::None),
-            1 => Ok(BloomFlags::All),
-            _ => Ok(BloomFlags::PubkeyOnly),
+            0 => Ok(Self::None),
+            1 => Ok(Self::All),
+            _ => Ok(Self::PubkeyOnly),
         }
     }
 }
@@ -84,14 +84,14 @@ impl<'a> Arbitrary<'a> for BloomFlags {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FilterAdd {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(FilterAdd { data: Vec::<u8>::arbitrary(u)? })
+        Ok(Self { data: Vec::<u8>::arbitrary(u)? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FilterLoad {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(FilterLoad {
+        Ok(Self {
             filter: Vec::<u8>::arbitrary(u)?,
             hash_funcs: u.arbitrary()?,
             tweak: u.arbitrary()?,

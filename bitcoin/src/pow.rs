@@ -110,13 +110,13 @@ do_impl!(Work);
 impl_to_hex_from_lower_hex!(Work, |_| 64);
 
 impl Add for Work {
-    type Output = Work;
-    fn add(self, rhs: Self) -> Self { Work(self.0 + rhs.0) }
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self { Self(self.0 + rhs.0) }
 }
 
 impl Sub for Work {
-    type Output = Work;
-    fn sub(self, rhs: Self) -> Self { Work(self.0 - rhs.0) }
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self { Self(self.0 - rhs.0) }
 }
 
 /// A 256 bit integer representing target.
@@ -132,7 +132,7 @@ pub struct Target(U256);
 
 impl Target {
     /// When parsing nBits, Bitcoin Core converts a negative target threshold into a target of zero.
-    pub const ZERO: Target = Target(U256::ZERO);
+    pub const ZERO: Self = Self(U256::ZERO);
     /// The maximum possible target.
     ///
     /// This value is used to calculate difficulty, which is defined as how difficult the current
@@ -142,33 +142,33 @@ impl Target {
     /// ref: <https://en.bitcoin.it/wiki/Target>
     // In Bitcoind this is ~(u256)0 >> 32 stored as a floating-point type so it gets truncated, hence
     // the low 208 bits are all zero.
-    pub const MAX: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
+    pub const MAX: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
 
     /// The maximum **attainable** target value on mainnet.
     ///
     /// Not all target values are attainable because consensus code uses the compact format to
     /// represent targets (see [`CompactTarget`]).
-    pub const MAX_ATTAINABLE_MAINNET: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
+    pub const MAX_ATTAINABLE_MAINNET: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
 
     /// The proof of work limit on testnet.
     // Taken from Bitcoin Core but had lossy conversion to/from compact form.
     // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
-    pub const MAX_ATTAINABLE_TESTNET: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
+    pub const MAX_ATTAINABLE_TESTNET: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
 
     /// The proof of work limit on regtest.
     // Taken from Bitcoin Core but had lossy conversion to/from compact form.
     // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
-    pub const MAX_ATTAINABLE_REGTEST: Self = Target(U256(0x7FFF_FF00u128 << 96, 0));
+    pub const MAX_ATTAINABLE_REGTEST: Self = Self(U256(0x7FFF_FF00u128 << 96, 0));
 
     /// The proof of work limit on signet.
     // Taken from Bitcoin Core but had lossy conversion to/from compact form.
     // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
-    pub const MAX_ATTAINABLE_SIGNET: Self = Target(U256(0x0377_ae00 << 80, 0));
+    pub const MAX_ATTAINABLE_SIGNET: Self = Self(U256(0x0377_ae00 << 80, 0));
 
     /// Computes the [`Target`] value from a compact representation.
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
-    pub fn from_compact(c: CompactTarget) -> Target {
+    pub fn from_compact(c: CompactTarget) -> Self {
         let bits = c.to_consensus();
         // This is a floating-point "compact" encoding originally used by
         // OpenSSL, which satoshi put into consensus code, so we're stuck
@@ -185,9 +185,9 @@ impl Target {
 
         // The mantissa is signed but may not be negative.
         if mant > 0x7F_FFFF {
-            Target::ZERO
+            Self::ZERO
         } else {
-            Target(U256::from(mant) << expt)
+            Self(U256::from(mant) << expt)
         }
     }
 
@@ -439,7 +439,7 @@ mod sealed {
 }
 
 impl From<CompactTarget> for Target {
-    fn from(c: CompactTarget) -> Self { Target::from_compact(c) }
+    fn from(c: CompactTarget) -> Self { Self::from_compact(c) }
 }
 
 impl Encodable for CompactTarget {
@@ -452,7 +452,7 @@ impl Encodable for CompactTarget {
 impl Decodable for CompactTarget {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(CompactTarget::from_consensus)
+        u32::consensus_decode(r).map(Self::from_consensus)
     }
 }
 
@@ -462,23 +462,23 @@ impl Decodable for CompactTarget {
 struct U256(u128, u128);
 
 impl U256 {
-    const MAX: U256 =
-        U256(0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff, 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff);
+    const MAX: Self =
+        Self(0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff, 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff);
 
-    const ZERO: U256 = U256(0, 0);
+    const ZERO: Self = Self(0, 0);
 
-    const ONE: U256 = U256(0, 1);
+    const ONE: Self = Self(0, 1);
 
     /// Constructs a new `U256` from a prefixed hex string.
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let checked = parse_int::hex_remove_prefix(s)?;
-        Ok(U256::from_hex_internal(checked)?)
+        Ok(Self::from_hex_internal(checked)?)
     }
 
     /// Constructs a new `U256` from an unprefixed hex string.
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let checked = parse_int::hex_check_unprefixed(s)?;
-        Ok(U256::from_hex_internal(checked)?)
+        Ok(Self::from_hex_internal(checked)?)
     }
 
     // Caller to ensure `s` does not contain a prefix.
@@ -496,23 +496,23 @@ impl U256 {
             (high, low)
         };
 
-        Ok(U256(high, low))
+        Ok(Self(high, low))
     }
 
     /// Constructs a new `U256` from a big-endian array of `u8`s.
-    fn from_be_bytes(a: [u8; 32]) -> U256 {
+    fn from_be_bytes(a: [u8; 32]) -> Self {
         let (high, low) = split_in_half(a);
         let big = u128::from_be_bytes(high);
         let little = u128::from_be_bytes(low);
-        U256(big, little)
+        Self(big, little)
     }
 
     /// Constructs a new `U256` from a little-endian array of `u8`s.
-    fn from_le_bytes(a: [u8; 32]) -> U256 {
+    fn from_le_bytes(a: [u8; 32]) -> Self {
         let (high, low) = split_in_half(a);
         let little = u128::from_le_bytes(high);
         let big = u128::from_le_bytes(low);
-        U256(big, little)
+        Self(big, little)
     }
 
     /// Converts `U256` to a big-endian array of `u8`s.
@@ -536,19 +536,19 @@ impl U256 {
     /// 2**256 / (x + 1) == ~x / (x + 1) + 1
     ///
     /// (Equation shamelessly stolen from bitcoind)
-    fn inverse(&self) -> U256 {
+    fn inverse(&self) -> Self {
         // We should never have a target/work of zero so this doesn't matter
         // that much but we define the inverse of 0 as max.
         if self.is_zero() {
-            return U256::MAX;
+            return Self::MAX;
         }
         // We define the inverse of 1 as max.
         if self.is_one() {
-            return U256::MAX;
+            return Self::MAX;
         }
         // We define the inverse of max as 1.
         if self.is_max() {
-            return U256::ONE;
+            return Self::ONE;
         }
 
         let ret = !*self / self.wrapping_inc();
@@ -573,7 +573,7 @@ impl U256 {
     /// Returns this `U256` as a `u128` saturating to `u128::MAX` if `self` is too big.
     // Mutagen gives false positive because >= and > both return u128::MAX
     fn saturating_to_u128(&self) -> u128 {
-        if *self > U256::from(u128::MAX) {
+        if *self > Self::from(u128::MAX) {
             u128::MAX
         } else {
             self.low_u128()
@@ -595,7 +595,7 @@ impl U256 {
     ///
     /// The multiplication result along with a boolean indicating whether an arithmetic overflow
     /// occurred. If an overflow occurred then the wrapped value is returned.
-    fn mul_u64(self, rhs: u64) -> (U256, bool) {
+    fn mul_u64(self, rhs: u64) -> (Self, bool) {
         let mut carry: u128 = 0;
         let mut split_le =
             [self.1 as u64, (self.1 >> 64) as u64, self.0 as u64, (self.0 >> 64) as u64];
@@ -635,7 +635,7 @@ impl U256 {
 
         // Early return in case we are dividing by a larger number than us
         if my_bits < your_bits {
-            return (U256::ZERO, sub_copy);
+            return (Self::ZERO, sub_copy);
         }
 
         // Bitwise long division
@@ -653,7 +653,7 @@ impl U256 {
             shift -= 1;
         }
 
-        (U256(ret[0], ret[1]), sub_copy)
+        (Self(ret[0], ret[1]), sub_copy)
     }
 
     /// Calculates `self` + `rhs`
@@ -662,7 +662,7 @@ impl U256 {
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     fn overflowing_add(self, rhs: Self) -> (Self, bool) {
-        let mut ret = U256::ZERO;
+        let mut ret = Self::ZERO;
         let mut ret_overflow = false;
 
         let (high, overflow) = self.0.overflowing_add(rhs.0);
@@ -698,7 +698,7 @@ impl U256 {
     /// overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
-        let mut ret = U256::ZERO;
+        let mut ret = Self::ZERO;
         let mut ret_overflow = false;
 
         for i in 0..3 {
@@ -744,8 +744,8 @@ impl U256 {
 
     /// Returns `self` incremented by 1 wrapping around at the boundary of the type.
     #[must_use = "this returns the result of the increment, without modifying the original"]
-    fn wrapping_inc(&self) -> U256 {
-        let mut ret = U256::ZERO;
+    fn wrapping_inc(&self) -> Self {
+        let mut ret = Self::ZERO;
 
         ret.1 = self.1.wrapping_add(1);
         if ret.1 == 0 {
@@ -766,7 +766,7 @@ impl U256 {
     fn wrapping_shl(self, rhs: u32) -> Self {
         let shift = rhs & 0x000000ff;
 
-        let mut ret = U256::ZERO;
+        let mut ret = Self::ZERO;
         let word_shift = shift >= 128;
         let bit_shift = shift % 128;
 
@@ -792,7 +792,7 @@ impl U256 {
     fn wrapping_shr(self, rhs: u32) -> Self {
         let shift = rhs & 0x000000ff;
 
-        let mut ret = U256::ZERO;
+        let mut ret = Self::ZERO;
         let word_shift = shift >= 128;
         let bit_shift = shift % 128;
 
@@ -868,7 +868,7 @@ impl U256 {
 }
 
 impl<T: Into<u128>> From<T> for U256 {
-    fn from(x: T) -> Self { U256(0, x.into()) }
+    fn from(x: T) -> Self { Self(0, x.into()) }
 }
 
 impl Add for U256 {
@@ -911,17 +911,17 @@ impl Rem for U256 {
 impl Not for U256 {
     type Output = Self;
 
-    fn not(self) -> Self { U256(!self.0, !self.1) }
+    fn not(self) -> Self { Self(!self.0, !self.1) }
 }
 
 impl Shl<u32> for U256 {
     type Output = Self;
-    fn shl(self, shift: u32) -> U256 { self.wrapping_shl(shift) }
+    fn shl(self, shift: u32) -> Self { self.wrapping_shl(shift) }
 }
 
 impl Shr<u32> for U256 {
     type Output = Self;
-    fn shr(self, shift: u32) -> U256 { self.wrapping_shr(shift) }
+    fn shr(self, shift: u32) -> Self { self.wrapping_shr(shift) }
 }
 
 impl fmt::Display for U256 {
@@ -1100,7 +1100,7 @@ mod tests {
 
         /// Constructs a new U256 from a big-endian array of u64's
         fn from_array(a: [u64; 4]) -> Self {
-            let mut ret = U256::ZERO;
+            let mut ret = Self::ZERO;
             ret.0 = ((a[0] as u128) << 64) ^ (a[1] as u128);
             ret.1 = ((a[2] as u128) << 64) ^ (a[3] as u128);
             ret

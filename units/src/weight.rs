@@ -25,7 +25,7 @@ mod encapsulate {
 
     impl Weight {
         /// Constructs a new [`Weight`] from weight units.
-        pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
+        pub const fn from_wu(wu: u64) -> Self { Self(wu) }
 
         /// Returns raw weight units.
         ///
@@ -40,30 +40,30 @@ impl Weight {
     /// Zero weight units (wu).
     ///
     /// Equivalent to [`MIN`](Self::MIN), may better express intent in some contexts.
-    pub const ZERO: Weight = Weight::from_wu(0);
+    pub const ZERO: Self = Self::from_wu(0);
 
     /// Minimum possible value (0 wu).
     ///
     /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
-    pub const MIN: Weight = Weight::from_wu(u64::MIN);
+    pub const MIN: Self = Self::from_wu(u64::MIN);
 
     /// Maximum possible value.
-    pub const MAX: Weight = Weight::from_wu(u64::MAX);
+    pub const MAX: Self = Self::from_wu(u64::MAX);
 
     /// The factor that non-witness serialization data is multiplied by during weight calculation.
     pub const WITNESS_SCALE_FACTOR: u64 = WITNESS_SCALE_FACTOR as u64; // this value is 4
 
     /// The maximum allowed weight for a block, see BIP-0141 (network rule).
-    pub const MAX_BLOCK: Weight = Weight::from_wu(4_000_000);
+    pub const MAX_BLOCK: Self = Self::from_wu(4_000_000);
 
     /// The minimum transaction weight for a valid serialized transaction.
-    pub const MIN_TRANSACTION: Weight = Weight::from_wu(Self::WITNESS_SCALE_FACTOR * 60);
+    pub const MIN_TRANSACTION: Self = Self::from_wu(Self::WITNESS_SCALE_FACTOR * 60);
 
     /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
     pub const fn from_kwu(wu: u64) -> Option<Self> {
         // No `map()` in const context.
         match wu.checked_mul(1000) {
-            Some(wu) => Some(Weight::from_wu(wu)),
+            Some(wu) => Some(Self::from_wu(wu)),
             None => None,
         }
     }
@@ -72,7 +72,7 @@ impl Weight {
     pub const fn from_vb(vb: u64) -> Option<Self> {
         // No `map()` in const context.
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
-            Some(wu) => Some(Weight::from_wu(wu)),
+            Some(wu) => Some(Self::from_wu(wu)),
             None => None,
         }
     }
@@ -83,21 +83,21 @@ impl Weight {
     ///
     /// If the conversion from virtual bytes overflows.
     #[deprecated(since = "TBD", note = "use `from_vb_unchecked` instead")]
-    pub const fn from_vb_unwrap(vb: u64) -> Weight {
+    pub const fn from_vb_unwrap(vb: u64) -> Self {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
-            Some(weight) => Weight::from_wu(weight),
+            Some(weight) => Self::from_wu(weight),
             None => panic!("checked_mul overflowed"),
         }
     }
 
     /// Constructs a new [`Weight`] from virtual bytes without an overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self {
-        Weight::from_wu(vb * Self::WITNESS_SCALE_FACTOR)
+        Self::from_wu(vb * Self::WITNESS_SCALE_FACTOR)
     }
 
     /// Constructs a new [`Weight`] from witness size.
     #[deprecated(since = "TBD", note = "use `from_wu` instead")]
-    pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight::from_wu(witness_size) }
+    pub const fn from_witness_data_size(witness_size: u64) -> Self { Self::from_wu(witness_size) }
 
     /// Constructs a new [`Weight`] from non-witness size.
     ///
@@ -106,7 +106,7 @@ impl Weight {
     /// If the conversion from virtual bytes overflows.
     #[deprecated(since = "TBD", note = "use `from_vb` or `from_vb_unchecked` instead")]
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
-        Weight::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
+        Self::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }
 
     /// Converts to kilo weight units rounding down.
@@ -128,7 +128,7 @@ impl Weight {
     pub const fn checked_add(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         match self.to_wu().checked_add(rhs.to_wu()) {
-            Some(wu) => Some(Weight::from_wu(wu)),
+            Some(wu) => Some(Self::from_wu(wu)),
             None => None,
         }
     }
@@ -140,7 +140,7 @@ impl Weight {
     pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         match self.to_wu().checked_sub(rhs.to_wu()) {
-            Some(wu) => Some(Weight::from_wu(wu)),
+            Some(wu) => Some(Self::from_wu(wu)),
             None => None,
         }
     }
@@ -152,7 +152,7 @@ impl Weight {
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.to_wu().checked_mul(rhs) {
-            Some(wu) => Some(Weight::from_wu(wu)),
+            Some(wu) => Some(Self::from_wu(wu)),
             None => None,
         }
     }
@@ -164,7 +164,7 @@ impl Weight {
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.to_wu().checked_div(rhs) {
-            Some(wu) => Some(Weight::from_wu(wu)),
+            Some(wu) => Some(Self::from_wu(wu)),
             None => None,
         }
     }
@@ -246,15 +246,15 @@ crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::MulAssign<u64> for Weight {
-    fn mul_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() * rhs); }
+    fn mul_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() * rhs); }
 }
 
 impl ops::DivAssign<u64> for Weight {
-    fn div_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() / rhs); }
+    fn div_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() / rhs); }
 }
 
 impl ops::RemAssign<u64> for Weight {
-    fn rem_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() % rhs); }
+    fn rem_assign(&mut self, rhs: u64) { *self = Self::from_wu(self.to_wu() % rhs); }
 }
 
 impl core::iter::Sum for Weight {
@@ -262,14 +262,14 @@ impl core::iter::Sum for Weight {
     where
         I: Iterator<Item = Self>,
     {
-        Weight::from_wu(iter.map(Weight::to_wu).sum())
+        Self::from_wu(iter.map(Self::to_wu).sum())
     }
 }
 
-impl<'a> core::iter::Sum<&'a Weight> for Weight {
+impl<'a> core::iter::Sum<&'a Self> for Weight {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = &'a Weight>,
+        I: Iterator<Item = &'a Self>,
     {
         iter.copied().sum()
     }
@@ -303,7 +303,7 @@ impl<'de> Deserialize<'de> for Weight {
 impl<'a> Arbitrary<'a> for Weight {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let w = u64::arbitrary(u)?;
-        Ok(Weight::from_wu(w))
+        Ok(Self::from_wu(w))
     }
 }
 

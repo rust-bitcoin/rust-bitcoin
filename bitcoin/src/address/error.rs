@@ -125,7 +125,7 @@ impl From<Bech32Error> for ParseError {
 }
 
 impl From<UnknownHrpError> for ParseError {
-    fn from(e: UnknownHrpError) -> ParseError { Self::Bech32(e.into()) }
+    fn from(e: UnknownHrpError) -> Self { Self::Bech32(e.into()) }
 }
 
 impl From<NetworkValidationError> for ParseError {

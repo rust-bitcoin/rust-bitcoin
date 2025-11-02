@@ -89,7 +89,7 @@ impl_consensus_encoding!(CFCheckpt, filter_type, stop_hash, filter_headers);
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for GetCFilters {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(GetCFilters {
+        Ok(Self {
             filter_type: u.arbitrary()?,
             start_height: u.arbitrary()?,
             stop_hash: u.arbitrary()?,
@@ -100,7 +100,7 @@ impl<'a> Arbitrary<'a> for GetCFilters {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CFilter {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(CFilter {
+        Ok(Self {
             filter_type: u.arbitrary()?,
             block_hash: u.arbitrary()?,
             filter: Vec::<u8>::arbitrary(u)?,
@@ -111,7 +111,7 @@ impl<'a> Arbitrary<'a> for CFilter {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for GetCFHeaders {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(GetCFHeaders {
+        Ok(Self {
             filter_type: u.arbitrary()?,
             start_height: u.arbitrary()?,
             stop_hash: u.arbitrary()?,
@@ -122,7 +122,7 @@ impl<'a> Arbitrary<'a> for GetCFHeaders {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CFHeaders {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(CFHeaders {
+        Ok(Self {
             filter_type: u.arbitrary()?,
             stop_hash: u.arbitrary()?,
             previous_filter_header: u.arbitrary()?,
@@ -134,14 +134,14 @@ impl<'a> Arbitrary<'a> for CFHeaders {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for GetCFCheckpt {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(GetCFCheckpt { filter_type: u.arbitrary()?, stop_hash: u.arbitrary()? })
+        Ok(Self { filter_type: u.arbitrary()?, stop_hash: u.arbitrary()? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CFCheckpt {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(CFCheckpt {
+        Ok(Self {
             filter_type: u.arbitrary()?,
             stop_hash: u.arbitrary()?,
             filter_headers: Vec::<FilterHeader>::arbitrary(u)?,

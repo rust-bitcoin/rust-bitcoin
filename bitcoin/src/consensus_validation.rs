@@ -266,5 +266,5 @@ impl std::error::Error for TxVerifyError {
 }
 
 impl From<BitcoinconsensusError> for TxVerifyError {
-    fn from(e: BitcoinconsensusError) -> Self { TxVerifyError::ScriptVerification(e) }
+    fn from(e: BitcoinconsensusError) -> Self { Self::ScriptVerification(e) }
 }

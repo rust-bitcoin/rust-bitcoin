@@ -77,8 +77,8 @@ pub struct HashEngine {
 impl HashEngine {
     /// Constructs a new SipHash24 engine with keys.
     #[inline]
-    pub const fn with_keys(k0: u64, k1: u64) -> HashEngine {
-        HashEngine {
+    pub const fn with_keys(k0: u64, k1: u64) -> Self {
+        Self {
             k0,
             k1,
             bytes_hashed: 0,
@@ -132,7 +132,7 @@ impl crate::HashEngine for HashEngine {
                 return;
             } else {
                 self.state.v3 ^= self.tail;
-                HashEngine::c_rounds(&mut self.state);
+                Self::c_rounds(&mut self.state);
                 self.state.v0 ^= self.tail;
                 self.ntail = 0;
             }
@@ -147,7 +147,7 @@ impl crate::HashEngine for HashEngine {
             let mi = unsafe { load_int_le!(msg, i, u64) };
 
             self.state.v3 ^= mi;
-            HashEngine::c_rounds(&mut self.state);
+            Self::c_rounds(&mut self.state);
             self.state.v0 ^= mi;
 
             i += 8;
@@ -168,7 +168,7 @@ impl Hash {
 
     /// Produces a hash from the current state of a given engine.
     #[cfg(not(hashes_fuzz))]
-    pub fn from_engine(e: HashEngine) -> Self { Hash::from_u64(Hash::from_engine_to_u64(e)) }
+    pub fn from_engine(e: HashEngine) -> Self { Self::from_u64(Self::from_engine_to_u64(e)) }
 
     #[cfg(hashes_fuzz)]
     pub fn from_engine(e: HashEngine) -> Self {
@@ -177,17 +177,17 @@ impl Hash {
     }
 
     /// Hashes the given data with an engine with the provided keys.
-    pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Hash {
+    pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Self {
         let mut engine = HashEngine::with_keys(k0, k1);
         engine.input(data);
-        Hash::from_engine(engine)
+        Self::from_engine(engine)
     }
 
     /// Hashes the given data directly to u64 with an engine with the provided keys.
     pub fn hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64 {
         let mut engine = HashEngine::with_keys(k0, k1);
         engine.input(data);
-        Hash::from_engine_to_u64(engine)
+        Self::from_engine_to_u64(engine)
     }
 
     /// Produces a hash as `u64` from the current state of a given engine.
@@ -211,7 +211,7 @@ impl Hash {
     pub fn to_u64(self) -> u64 { u64::from_le_bytes(self.0) }
 
     /// Constructs a new hash from its (little endian) 64-bit integer representation.
-    pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
+    pub fn from_u64(hash: u64) -> Self { Self(hash.to_le_bytes()) }
 }
 
 /// Loads a u64 using up to 7 bytes of a byte slice.

@@ -872,8 +872,8 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Decoder2Error::First(ref e) => write_err!(f, "first decoder error"; e),
-            Decoder2Error::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Self::First(ref e) => write_err!(f, "first decoder error"; e),
+            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
         }
     }
 }
@@ -886,8 +886,8 @@ where
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Decoder2Error::First(ref e) => Some(e),
-            Decoder2Error::Second(ref e) => Some(e),
+            Self::First(ref e) => Some(e),
+            Self::Second(ref e) => Some(e),
         }
     }
 }
@@ -911,9 +911,9 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Decoder3Error::First(ref e) => write_err!(f, "first decoder error"; e),
-            Decoder3Error::Second(ref e) => write_err!(f, "second decoder error"; e),
-            Decoder3Error::Third(ref e) => write_err!(f, "third decoder error"; e),
+            Self::First(ref e) => write_err!(f, "first decoder error"; e),
+            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Self::Third(ref e) => write_err!(f, "third decoder error"; e),
         }
     }
 }
@@ -927,9 +927,9 @@ where
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Decoder3Error::First(ref e) => Some(e),
-            Decoder3Error::Second(ref e) => Some(e),
-            Decoder3Error::Third(ref e) => Some(e),
+            Self::First(ref e) => Some(e),
+            Self::Second(ref e) => Some(e),
+            Self::Third(ref e) => Some(e),
         }
     }
 }
@@ -956,10 +956,10 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Decoder4Error::First(ref e) => write_err!(f, "first decoder error"; e),
-            Decoder4Error::Second(ref e) => write_err!(f, "second decoder error"; e),
-            Decoder4Error::Third(ref e) => write_err!(f, "third decoder error"; e),
-            Decoder4Error::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
+            Self::First(ref e) => write_err!(f, "first decoder error"; e),
+            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Self::Third(ref e) => write_err!(f, "third decoder error"; e),
+            Self::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
         }
     }
 }
@@ -974,10 +974,10 @@ where
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Decoder4Error::First(ref e) => Some(e),
-            Decoder4Error::Second(ref e) => Some(e),
-            Decoder4Error::Third(ref e) => Some(e),
-            Decoder4Error::Fourth(ref e) => Some(e),
+            Self::First(ref e) => Some(e),
+            Self::Second(ref e) => Some(e),
+            Self::Third(ref e) => Some(e),
+            Self::Fourth(ref e) => Some(e),
         }
     }
 }
@@ -1010,12 +1010,12 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Decoder6Error::First(ref e) => write_err!(f, "first decoder error"; e),
-            Decoder6Error::Second(ref e) => write_err!(f, "second decoder error"; e),
-            Decoder6Error::Third(ref e) => write_err!(f, "third decoder error"; e),
-            Decoder6Error::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
-            Decoder6Error::Fifth(ref e) => write_err!(f, "fifth decoder error"; e),
-            Decoder6Error::Sixth(ref e) => write_err!(f, "sixth decoder error"; e),
+            Self::First(ref e) => write_err!(f, "first decoder error"; e),
+            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Self::Third(ref e) => write_err!(f, "third decoder error"; e),
+            Self::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
+            Self::Fifth(ref e) => write_err!(f, "fifth decoder error"; e),
+            Self::Sixth(ref e) => write_err!(f, "sixth decoder error"; e),
         }
     }
 }
@@ -1032,12 +1032,12 @@ where
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Decoder6Error::First(ref e) => Some(e),
-            Decoder6Error::Second(ref e) => Some(e),
-            Decoder6Error::Third(ref e) => Some(e),
-            Decoder6Error::Fourth(ref e) => Some(e),
-            Decoder6Error::Fifth(ref e) => Some(e),
-            Decoder6Error::Sixth(ref e) => Some(e),
+            Self::First(ref e) => Some(e),
+            Self::Second(ref e) => Some(e),
+            Self::Third(ref e) => Some(e),
+            Self::Fourth(ref e) => Some(e),
+            Self::Fifth(ref e) => Some(e),
+            Self::Sixth(ref e) => Some(e),
         }
     }
 }

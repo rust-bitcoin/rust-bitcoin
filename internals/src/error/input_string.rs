@@ -122,7 +122,7 @@ mod storage {
     }
 
     impl From<&str> for Storage {
-        fn from(_value: &str) -> Self { Storage }
+        fn from(_value: &str) -> Self { Self }
     }
 
     pub(super) fn cannot_parse<W>(_: &Storage, what: &W, f: &mut fmt::Formatter) -> fmt::Result

@@ -24,7 +24,7 @@ pub struct Error {
 impl Error {
     /// Constructs a new I/O error.
     #[cfg(feature = "std")]
-    pub fn new<E>(kind: ErrorKind, error: E) -> Error
+    pub fn new<E>(kind: ErrorKind, error: E) -> Self
     where
         E: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
     {
@@ -33,7 +33,7 @@ impl Error {
 
     /// Constructs a new I/O error.
     #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Error {
+    pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Self {
         Self { kind, _not_unwind_safe: core::marker::PhantomData, error: Some(error.into()) }
     }
 
@@ -54,7 +54,7 @@ impl Error {
 }
 
 impl From<ErrorKind> for Error {
-    fn from(kind: ErrorKind) -> Error {
+    fn from(kind: ErrorKind) -> Self {
         Self {
             kind,
             _not_unwind_safe: core::marker::PhantomData,
@@ -84,7 +84,7 @@ impl std::error::Error for Error {
 
 #[cfg(feature = "std")]
 impl From<std::io::Error> for Error {
-    fn from(o: std::io::Error) -> Error {
+    fn from(o: std::io::Error) -> Self {
         Self {
             kind: ErrorKind::from_std(o.kind()),
             _not_unwind_safe: core::marker::PhantomData,
@@ -95,9 +95,9 @@ impl From<std::io::Error> for Error {
 
 #[cfg(feature = "std")]
 impl From<Error> for std::io::Error {
-    fn from(o: Error) -> std::io::Error {
+    fn from(o: Error) -> Self {
         if let Some(err) = o.error {
-            std::io::Error::new(o.kind.to_std(), err)
+            Self::new(o.kind.to_std(), err)
         } else {
             o.kind.to_std().into()
         }

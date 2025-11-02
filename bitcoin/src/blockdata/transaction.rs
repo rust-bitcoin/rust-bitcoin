@@ -42,7 +42,7 @@ impl Encodable for Txid {
 
 impl Decodable for Txid {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Txid::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
     }
 }
 
@@ -54,7 +54,7 @@ impl Encodable for Wtxid {
 
 impl Decodable for Wtxid {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Wtxid::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<[u8; 32]>::consensus_decode(r)?))
     }
 }
 
@@ -686,7 +686,7 @@ impl Encodable for Version {
 
 impl Decodable for Version {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version::maybe_non_standard)
+        Decodable::consensus_decode(r).map(Self::maybe_non_standard)
     }
 }
 
@@ -700,7 +700,7 @@ impl Encodable for OutPoint {
 }
 impl Decodable for OutPoint {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(OutPoint {
+        Ok(Self {
             txid: Decodable::consensus_decode(r)?,
             vout: Decodable::consensus_decode(r)?,
         })
@@ -721,7 +721,7 @@ impl Decodable for TxIn {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
-        Ok(TxIn {
+        Ok(Self {
             previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
             script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
             sequence: Decodable::consensus_decode_from_finite_reader(r)?,
@@ -788,7 +788,7 @@ impl Decodable for Transaction {
                             "witness flag set but no witnesses present",
                         ))
                     } else {
-                        Ok(Transaction {
+                        Ok(Self {
                             version,
                             inputs,
                             outputs,
@@ -801,7 +801,7 @@ impl Decodable for Transaction {
             }
         // non-SegWit
         } else {
-            Ok(Transaction {
+            Ok(Self {
                 version,
                 inputs,
                 outputs: Decodable::consensus_decode_from_finite_reader(r)?,
@@ -991,7 +991,7 @@ impl InputWeightPrediction {
     /// under-paying. See [`ground_p2wpkh`](Self::ground_p2wpkh) if you do use signature grinding.
     ///
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const P2WPKH_MAX: Self = InputWeightPrediction::from_slice(0, &[72, 33]);
+    pub const P2WPKH_MAX: Self = Self::from_slice(0, &[72, 33]);
 
     /// Input weight prediction corresponding to spending of [nested P2WPKH] output with the largest possible
     /// DER-encoded signature.
@@ -1004,7 +1004,7 @@ impl InputWeightPrediction {
     ///
     /// [nested P2WPKH]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh-nested-in-bip16-p2sh
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const NESTED_P2WPKH_MAX: Self = InputWeightPrediction::from_slice(23, &[72, 33]);
+    pub const NESTED_P2WPKH_MAX: Self = Self::from_slice(23, &[72, 33]);
 
     /// Input weight prediction corresponding to spending of a P2PKH output with the largest possible
     /// DER-encoded signature, and a compressed public key.
@@ -1017,28 +1017,28 @@ impl InputWeightPrediction {
     /// signature grinding.
     ///
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const P2PKH_COMPRESSED_MAX: Self = InputWeightPrediction::from_slice(107, &[]);
+    pub const P2PKH_COMPRESSED_MAX: Self = Self::from_slice(107, &[]);
 
     /// Input weight prediction corresponding to spending of a P2PKH output with the largest possible
     /// DER-encoded signature, and an uncompressed public key.
     ///
     /// If the input in your transaction uses P2PKH with an uncompressed key, you can use this instead of
     /// [`InputWeightPrediction::new`].
-    pub const P2PKH_UNCOMPRESSED_MAX: Self = InputWeightPrediction::from_slice(139, &[]);
+    pub const P2PKH_UNCOMPRESSED_MAX: Self = Self::from_slice(139, &[]);
 
     /// Input weight prediction corresponding to spending of Taproot output using the key and
     /// default sighash.
     ///
     /// If the input in your transaction uses Taproot key spend you can use this instead of
     /// [`InputWeightPrediction::new`].
-    pub const P2TR_KEY_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[64]);
+    pub const P2TR_KEY_DEFAULT_SIGHASH: Self = Self::from_slice(0, &[64]);
 
     /// Input weight prediction corresponding to spending of Taproot output using the key and
     /// **non**-default sighash.
     ///
     /// If the input in your transaction uses Taproot key spend you can use this instead of
     /// [`InputWeightPrediction::new`].
-    pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[65]);
+    pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self = Self::from_slice(0, &[65]);
 
     const fn saturate_to_u32(x: usize) -> u32 {
         if x > u32::MAX as usize {
@@ -1074,7 +1074,7 @@ impl InputWeightPrediction {
     pub const fn ground_p2wpkh(bytes_to_grind: usize) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
-        InputWeightPrediction::from_slice(0, &[der_signature_size, 33])
+        Self::from_slice(0, &[der_signature_size, 33])
     }
 
     /// Input weight prediction corresponding to spending of [nested P2WPKH] output using [signature
@@ -1095,7 +1095,7 @@ impl InputWeightPrediction {
     pub const fn ground_nested_p2wpkh(bytes_to_grind: usize) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
-        InputWeightPrediction::from_slice(23, &[der_signature_size, 33])
+        Self::from_slice(23, &[der_signature_size, 33])
     }
 
     /// Input weight prediction corresponding to spending of a P2PKH output using [signature
@@ -1116,7 +1116,7 @@ impl InputWeightPrediction {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
 
-        InputWeightPrediction::from_slice(2 + 33 + der_signature_size, &[])
+        Self::from_slice(2 + 33 + der_signature_size, &[])
     }
 
     /// Computes the prediction for a single input.
@@ -1138,7 +1138,7 @@ impl InputWeightPrediction {
         let script_size =
             Self::saturate_to_u32(input_script_len) + Self::encoded_size(input_script_len);
 
-        InputWeightPrediction { script_size, witness_size }
+        Self { script_size, witness_size }
     }
 
     /// Computes the prediction for a single input in `const` context.
@@ -1165,7 +1165,7 @@ impl InputWeightPrediction {
         let script_size = Self::saturate_to_u32(input_script_len)
             .saturating_add(Self::encoded_size(input_script_len));
 
-        InputWeightPrediction { script_size, witness_size }
+        Self { script_size, witness_size }
     }
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
@@ -1270,21 +1270,21 @@ mod sealed {
 impl<'a> Arbitrary<'a> for InputWeightPrediction {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match u.int_in_range(0..=7)? {
-            0 => Ok(InputWeightPrediction::P2WPKH_MAX),
-            1 => Ok(InputWeightPrediction::NESTED_P2WPKH_MAX),
-            2 => Ok(InputWeightPrediction::P2PKH_COMPRESSED_MAX),
-            3 => Ok(InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX),
-            4 => Ok(InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH),
-            5 => Ok(InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH),
+            0 => Ok(Self::P2WPKH_MAX),
+            1 => Ok(Self::NESTED_P2WPKH_MAX),
+            2 => Ok(Self::P2PKH_COMPRESSED_MAX),
+            3 => Ok(Self::P2PKH_UNCOMPRESSED_MAX),
+            4 => Ok(Self::P2TR_KEY_DEFAULT_SIGHASH),
+            5 => Ok(Self::P2TR_KEY_NON_DEFAULT_SIGHASH),
             6 => {
                 let input_script_len = usize::arbitrary(u)?;
                 let witness_element_lengths: Vec<usize> = Vec::arbitrary(u)?;
-                Ok(InputWeightPrediction::new(input_script_len, witness_element_lengths))
+                Ok(Self::new(input_script_len, witness_element_lengths))
             }
             _ => {
                 let input_script_len = usize::arbitrary(u)?;
                 let witness_element_lengths: Vec<usize> = Vec::arbitrary(u)?;
-                Ok(InputWeightPrediction::from_slice(input_script_len, &witness_element_lengths))
+                Ok(Self::from_slice(input_script_len, &witness_element_lengths))
             }
         }
     }

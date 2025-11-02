@@ -91,7 +91,7 @@ impl Key {
             key_data.push(Decodable::consensus_decode(r)?);
         }
 
-        Ok(Key { type_value, key_data })
+        Ok(Self { type_value, key_data })
     }
 }
 
@@ -123,13 +123,13 @@ impl Serialize for Pair {
 impl Deserialize for Pair {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         let mut decoder = bytes;
-        Pair::decode(&mut decoder)
+        Self::decode(&mut decoder)
     }
 }
 
 impl Pair {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
+        Ok(Self { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
     }
 }
 
@@ -159,7 +159,7 @@ where
         let mut key = vec![];
         let _ = r.read_to_limit(&mut key, 1024)?;
 
-        Ok(ProprietaryKey { prefix, subtype, key })
+        Ok(Self { prefix, subtype, key })
     }
 }
 
@@ -194,7 +194,7 @@ where
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ProprietaryKey {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(ProprietaryKey {
+        Ok(Self {
             prefix: Vec::<u8>::arbitrary(u)?,
             subtype: u64::arbitrary(u)?,
             key: Vec::<u8>::arbitrary(u)?,
@@ -205,6 +205,6 @@ impl<'a> Arbitrary<'a> for ProprietaryKey {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Key {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Key { type_value: u.arbitrary()?, key_data: Vec::<u8>::arbitrary(u)? })
+        Ok(Self { type_value: u.arbitrary()?, key_data: Vec::<u8>::arbitrary(u)? })
     }
 }

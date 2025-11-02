@@ -67,7 +67,7 @@ impl Witness {
     /// Constructs a new empty [`Witness`].
     #[inline]
     pub const fn new() -> Self {
-        Witness { content: Vec::new(), witness_elements: 0, indices_start: 0 }
+        Self { content: Vec::new(), witness_elements: 0, indices_start: 0 }
     }
 
     /// Constructs a new [`Witness`] from inner parts.
@@ -84,7 +84,7 @@ impl Witness {
         witness_elements: usize,
         indices_start: usize,
     ) -> Self {
-        Witness { content, witness_elements, indices_start }
+        Self { content, witness_elements, indices_start }
     }
 
     /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
@@ -108,7 +108,7 @@ impl Witness {
             cursor += elem.as_ref().len();
         }
 
-        Witness { witness_elements, content, indices_start: content_size }
+        Self { witness_elements, content, indices_start: content_size }
     }
 
     /// Convenience method to create an array of byte-arrays from this witness.
@@ -668,69 +668,69 @@ impl<'de> serde::Deserialize<'de> for Witness {
             deserializer.deserialize_seq(Visitor)
         } else {
             let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
-            Ok(Witness::from_slice(&vec))
+            Ok(Self::from_slice(&vec))
         }
     }
 }
 
 impl From<Vec<Vec<u8>>> for Witness {
     #[inline]
-    fn from(vec: Vec<Vec<u8>>) -> Self { Witness::from_slice(&vec) }
+    fn from(vec: Vec<Vec<u8>>) -> Self { Self::from_slice(&vec) }
 }
 
 impl From<&[&[u8]]> for Witness {
     #[inline]
-    fn from(slice: &[&[u8]]) -> Self { Witness::from_slice(slice) }
+    fn from(slice: &[&[u8]]) -> Self { Self::from_slice(slice) }
 }
 
 impl From<&[Vec<u8>]> for Witness {
     #[inline]
-    fn from(slice: &[Vec<u8>]) -> Self { Witness::from_slice(slice) }
+    fn from(slice: &[Vec<u8>]) -> Self { Self::from_slice(slice) }
 }
 
 impl From<Vec<&[u8]>> for Witness {
     #[inline]
-    fn from(vec: Vec<&[u8]>) -> Self { Witness::from_slice(&vec) }
+    fn from(vec: Vec<&[u8]>) -> Self { Self::from_slice(&vec) }
 }
 
 impl<const N: usize> From<[&[u8]; N]> for Witness {
     #[inline]
-    fn from(arr: [&[u8]; N]) -> Self { Witness::from_slice(&arr) }
+    fn from(arr: [&[u8]; N]) -> Self { Self::from_slice(&arr) }
 }
 
 impl<const N: usize> From<&[&[u8]; N]> for Witness {
     #[inline]
-    fn from(arr: &[&[u8]; N]) -> Self { Witness::from_slice(arr) }
+    fn from(arr: &[&[u8]; N]) -> Self { Self::from_slice(arr) }
 }
 
 impl<const N: usize> From<&[[u8; N]]> for Witness {
     #[inline]
-    fn from(slice: &[[u8; N]]) -> Self { Witness::from_slice(slice) }
+    fn from(slice: &[[u8; N]]) -> Self { Self::from_slice(slice) }
 }
 
 impl<const N: usize> From<&[&[u8; N]]> for Witness {
     #[inline]
-    fn from(slice: &[&[u8; N]]) -> Self { Witness::from_slice(slice) }
+    fn from(slice: &[&[u8; N]]) -> Self { Self::from_slice(slice) }
 }
 
 impl<const N: usize, const M: usize> From<[[u8; M]; N]> for Witness {
     #[inline]
-    fn from(slice: [[u8; M]; N]) -> Self { Witness::from_slice(&slice) }
+    fn from(slice: [[u8; M]; N]) -> Self { Self::from_slice(&slice) }
 }
 
 impl<const N: usize, const M: usize> From<&[[u8; M]; N]> for Witness {
     #[inline]
-    fn from(slice: &[[u8; M]; N]) -> Self { Witness::from_slice(slice) }
+    fn from(slice: &[[u8; M]; N]) -> Self { Self::from_slice(slice) }
 }
 
 impl<const N: usize, const M: usize> From<[&[u8; M]; N]> for Witness {
     #[inline]
-    fn from(slice: [&[u8; M]; N]) -> Self { Witness::from_slice(&slice) }
+    fn from(slice: [&[u8; M]; N]) -> Self { Self::from_slice(&slice) }
 }
 
 impl<const N: usize, const M: usize> From<&[&[u8; M]; N]> for Witness {
     #[inline]
-    fn from(slice: &[&[u8; M]; N]) -> Self { Witness::from_slice(slice) }
+    fn from(slice: &[&[u8; M]; N]) -> Self { Self::from_slice(slice) }
 }
 
 impl Default for Witness {
@@ -801,7 +801,7 @@ impl std::error::Error for UnexpectedEofError {}
 impl<'a> Arbitrary<'a> for Witness {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let arbitrary_bytes = Vec::<Vec<u8>>::arbitrary(u)?;
-        Ok(Witness::from_slice(&arbitrary_bytes))
+        Ok(Self::from_slice(&arbitrary_bytes))
     }
 }
 

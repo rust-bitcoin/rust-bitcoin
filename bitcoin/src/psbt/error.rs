@@ -235,21 +235,21 @@ impl std::error::Error for Error {
 }
 
 impl From<core::array::TryFromSliceError> for Error {
-    fn from(e: core::array::TryFromSliceError) -> Error { Error::InvalidHash(e) }
+    fn from(e: core::array::TryFromSliceError) -> Self { Self::InvalidHash(e) }
 }
 
 impl From<encode::Error> for Error {
-    fn from(e: encode::Error) -> Self { Error::ConsensusEncoding(e) }
+    fn from(e: encode::Error) -> Self { Self::ConsensusEncoding(e) }
 }
 
 impl From<encode::DeserializeError> for Error {
-    fn from(e: encode::DeserializeError) -> Self { Error::ConsensusDeserialize(e) }
+    fn from(e: encode::DeserializeError) -> Self { Self::ConsensusDeserialize(e) }
 }
 
 impl From<encode::ParseError> for Error {
-    fn from(e: encode::ParseError) -> Self { Error::ConsensusParse(e) }
+    fn from(e: encode::ParseError) -> Self { Self::ConsensusParse(e) }
 }
 
 impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self { Error::Io(e) }
+    fn from(e: io::Error) -> Self { Self::Io(e) }
 }

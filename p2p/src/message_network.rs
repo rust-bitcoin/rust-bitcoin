@@ -65,8 +65,8 @@ impl VersionMessage {
         nonce: u64,
         user_agent: UserAgent,
         start_height: i32,
-    ) -> VersionMessage {
-        VersionMessage {
+    ) -> Self {
+        Self {
             version,
             services,
             timestamp,
@@ -277,14 +277,14 @@ impl Encodable for RejectReason {
 impl Decodable for RejectReason {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
-            0x01 => RejectReason::Malformed,
-            0x10 => RejectReason::Invalid,
-            0x11 => RejectReason::Obsolete,
-            0x12 => RejectReason::Duplicate,
-            0x40 => RejectReason::NonStandard,
-            0x41 => RejectReason::Dust,
-            0x42 => RejectReason::Fee,
-            0x43 => RejectReason::Checkpoint,
+            0x01 => Self::Malformed,
+            0x10 => Self::Invalid,
+            0x11 => Self::Obsolete,
+            0x12 => Self::Duplicate,
+            0x40 => Self::NonStandard,
+            0x41 => Self::Dust,
+            0x42 => Self::Fee,
+            0x43 => Self::Checkpoint,
             _ => return Err(crate::consensus::parse_failed_error("unknown reject code")),
         })
     }
@@ -334,12 +334,12 @@ impl_vec_wrapper!(Alert, Vec<u8>);
 impl<'a> Arbitrary<'a> for ClientSoftwareVersion {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
-            true => Ok(ClientSoftwareVersion::Date {
+            true => Ok(Self::Date {
                 yyyy: u.arbitrary()?,
                 mm: u.arbitrary()?,
                 dd: u.arbitrary()?,
             }),
-            false => Ok(ClientSoftwareVersion::SemVer {
+            false => Ok(Self::SemVer {
                 major: u.arbitrary()?,
                 minor: u.arbitrary()?,
                 revision: u.arbitrary()?,
@@ -351,21 +351,21 @@ impl<'a> Arbitrary<'a> for ClientSoftwareVersion {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for UserAgentVersion {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(UserAgentVersion::new(u.arbitrary()?))
+        Ok(Self::new(u.arbitrary()?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for UserAgent {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(UserAgent::new(u.arbitrary::<String>()?, u.arbitrary()?))
+        Ok(Self::new(u.arbitrary::<String>()?, u.arbitrary()?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for VersionMessage {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(VersionMessage::new(
+        Ok(Self::new(
             u.arbitrary()?,
             u.arbitrary()?,
             u.arbitrary()?,
@@ -382,14 +382,14 @@ impl<'a> Arbitrary<'a> for VersionMessage {
 impl<'a> Arbitrary<'a> for RejectReason {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match u.int_in_range(0..=7)? {
-            0 => Ok(RejectReason::Malformed),
-            1 => Ok(RejectReason::Invalid),
-            2 => Ok(RejectReason::Obsolete),
-            3 => Ok(RejectReason::Duplicate),
-            4 => Ok(RejectReason::NonStandard),
-            5 => Ok(RejectReason::Dust),
-            6 => Ok(RejectReason::Fee),
-            _ => Ok(RejectReason::Checkpoint),
+            0 => Ok(Self::Malformed),
+            1 => Ok(Self::Invalid),
+            2 => Ok(Self::Obsolete),
+            3 => Ok(Self::Duplicate),
+            4 => Ok(Self::NonStandard),
+            5 => Ok(Self::Dust),
+            6 => Ok(Self::Fee),
+            _ => Ok(Self::Checkpoint),
         }
     }
 }
@@ -397,7 +397,7 @@ impl<'a> Arbitrary<'a> for RejectReason {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Reject {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Reject {
+        Ok(Self {
             message: u.arbitrary::<String>()?.into(),
             ccode: u.arbitrary()?,
             reason: u.arbitrary::<String>()?.into(),
@@ -409,7 +409,7 @@ impl<'a> Arbitrary<'a> for Reject {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Alert {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Alert(Vec::<u8>::arbitrary(u)?))
+        Ok(Self(Vec::<u8>::arbitrary(u)?))
     }
 }
 

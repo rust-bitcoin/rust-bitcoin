@@ -243,7 +243,7 @@ impl Midstate {
             output[i * 4 + 3] = (state[i + 0] >> 0) as u8;
             i += 1;
         }
-        Midstate { bytes: output, bytes_hashed: bytes.len() as u64 }
+        Self { bytes: output, bytes_hashed: bytes.len() as u64 }
     }
 }
 
