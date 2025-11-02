@@ -3,9 +3,12 @@ name: Kani CI
 on:
   schedule:
     - cron: '59 23 * * *'       # midnight every day.
+permissions: {}
 jobs:
   run-kani:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: 'Checkout your code.'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

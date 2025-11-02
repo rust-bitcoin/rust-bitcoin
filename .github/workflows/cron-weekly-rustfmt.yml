@@ -3,10 +3,14 @@ on:
   schedule:
     - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
   workflow_dispatch: # allows manual triggering
+permissions: {}
 jobs:
   format:
     name: Nightly rustfmt
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -28,3 +32,4 @@ jobs:
            Automated nightly `rustfmt` changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
           commit-message: ${{ env.date }} automated rustfmt nightly 
           labels: rustfmt
+        

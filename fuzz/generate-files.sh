@@ -55,11 +55,14 @@ on:
     # - 6am CET
     # - 4pm AEDT
     - cron: '00 05 * * *'
+permissions: {}
 
 jobs:
   fuzz:
     if: \${{ !github.event.act }}
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:

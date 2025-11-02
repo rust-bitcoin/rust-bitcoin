@@ -8,10 +8,14 @@ on:   # yamllint disable-line rule:truthy
 
 name: Miri
 
+permissions: {}
+
 jobs:
   Miri:
     name: Miri
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
     steps:
