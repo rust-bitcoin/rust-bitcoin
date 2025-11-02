@@ -475,9 +475,7 @@ impl<V: NetworkValidation> Address<V> {
     }
 
     /// Marks the network of this address as unchecked.
-    pub fn to_unchecked(self) -> Address<NetworkUnchecked> {
-        Address::from_inner(self.to_inner())
-    }
+    pub fn to_unchecked(self) -> Address<NetworkUnchecked> { Address::from_inner(self.to_inner()) }
 
     /// Marks the network of this address as unchecked.
     #[deprecated(since = "0.33.0", note = "use to_unchecked instead")]

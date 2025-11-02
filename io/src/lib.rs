@@ -41,10 +41,9 @@ mod hash;
 use alloc::vec::Vec;
 use core::cmp;
 
-use encoding::Encoder;
-
 #[cfg(feature = "std")]
 pub use bridge::{FromStd, ToStd};
+use encoding::Encoder;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
@@ -440,6 +439,7 @@ where
 mod tests {
     #[cfg(all(not(feature = "std"), feature = "alloc"))]
     use alloc::{string::ToString, vec};
+
     use encoding::ArrayEncoder;
 
     use super::*;
