@@ -23,6 +23,3 @@
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 extern crate alloc;
-
-#[cfg(feature = "std")]
-extern crate std;
