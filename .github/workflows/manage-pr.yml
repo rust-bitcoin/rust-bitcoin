@@ -10,18 +10,18 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout master
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: master
       - name: Checkout merge commit
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: merge
           ref: "refs/pull/${{ github.event.number }}/merge"
       - name: Generate label config
         run: cd master && SCAN_DIR=../merge ./contrib/gen_label_config.sh
       - name: Update labels
-        uses: actions/labeler@v6
+        uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
         with:
           configuration-path: master/.github/labeler.yml
           sync-labels: true

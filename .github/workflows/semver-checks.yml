@@ -11,16 +11,16 @@ jobs:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0 # we need full history for cargo semver-checks
       - name: "Install Rustup"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Select stable-version"
         run: |
           rustup default $(cat ./.github/workflows/stable-version)
       - name: "Install cargo-binstall"
-        uses: cargo-bins/cargo-binstall@main
+        uses: cargo-bins/cargo-binstall@b3f755e95653da9a2d25b99154edfdbd5b356d0a # v1.15.10
       - name: "Binstall pinned cargo-semver-checks"
         run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
       - name: "Run semver checker script"
@@ -38,7 +38,7 @@ jobs:
           echo "$PR_NUMBER" > ./semver-break
       - name: "Save breaking state"
         if: ${{ hashFiles('semver-break') != '' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: semver-break
           path: semver-break
@@ -50,14 +50,14 @@ jobs:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: "Install Rustup"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Select stable-version"
         run: |
           rustup default $(cat ./.github/workflows/stable-version)
       - name: "Install cargo-binstall"
-        uses: cargo-bins/cargo-binstall@main
+        uses: cargo-bins/cargo-binstall@b3f755e95653da9a2d25b99154edfdbd5b356d0a # v1.15.10
       - name: "Binstall pinned cargo-semver-checks"
         run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
       - name: "Run semver checker script"

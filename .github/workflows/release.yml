@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Crate
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: run cargo
         run: contrib/release.sh
