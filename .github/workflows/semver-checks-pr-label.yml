@@ -1,5 +1,5 @@
 on:   # yamllint disable-line rule:truthy
-  workflow_run:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
     workflows: [Check semver breaks]
     types: [completed]
 
