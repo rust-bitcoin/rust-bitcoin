@@ -525,7 +525,9 @@ impl fmt::Debug for Witness {
                 &WrapDebug(|f| {
                     #[cfg(feature = "hex")]
                     {
-                        f.debug_list().entries(self.iter().map(hex_unstable::DisplayHex::as_hex)).finish()
+                        f.debug_list()
+                            .entries(self.iter().map(hex_unstable::DisplayHex::as_hex))
+                            .finish()
                     }
                     #[cfg(not(feature = "hex"))]
                     {
@@ -1298,6 +1300,9 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
         let err = decoder.push_bytes(&mut slice).unwrap_err();
-        assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixInvalid(_))));
+        assert!(matches!(
+            err,
+            WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixInvalid(_))
+        ));
     }
 }
