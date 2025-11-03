@@ -1,5 +1,5 @@
 additional_cargo_args = ["--all-features"]
-examine_globs = ["units/src/**/*.rs", "primitives/src/**/*.rs"]
+examine_globs = ["consensus_encoding/src/**/*.rs", "units/src/**/*.rs", "primitives/src/**/*.rs"]
 exclude_globs = [
     "units/src/amount/verification.rs" # kani tests
 ]
