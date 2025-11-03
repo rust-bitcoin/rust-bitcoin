@@ -300,36 +300,47 @@ impl Encoder for WitnessEncoder<'_> {
 /// The decoder for the [`Witness`] type.
 #[cfg(feature = "alloc")]
 pub struct WitnessDecoder {
-    /// A decoder for the initial length prefix and subsequent per-element prefixes.
-    prefix_decoder: Option<CompactSizeDecoder>,
-    /// Holds the elements.
-    buffer: Vec<Vec<u8>>,
-    /// True if the initial compact size has been read.
-    initial_length_prefix_read: bool, // I.e not the one for each element.
-    /// Set after the initial length prefix is read.
-    ///
-    /// This is read as a u64, checked to be below 4,000,000 then
-    /// cast to a `usize` to make usage easier.
-    witness_elements: usize,
-    /// Index of the element we are going to decode next.
-    idx: usize,
-    /// True if the element length prefix has been read.
-    element_length_prefix_read: bool,
-    /// Bytes left to read for this element.
-    bytes_to_read: usize,
+    /// The single buffer that will become the Witness content.
+    /// The index entries are written at the beginning, then rotated in [`Self::end`].
+    content: Vec<u8>,
+    /// Current write position in the content buffer.
+    cursor: usize,
+    /// Decoder for the initial witness element count.
+    witness_count_decoder: CompactSizeDecoder,
+    /// Total number of witness elements to decode (None until initial count is read).
+    witness_elements: Option<usize>,
+    /// Index of the current element being decoded.
+    element_idx: usize,
+    /// Decoder for the current element's length.
+    element_length_decoder: CompactSizeDecoder,
+    /// Bytes remaining to read for the current element's data.
+    /// - `None` means we're currently reading the length.
+    /// - `Some(n)` means we're reading element data with `n` bytes remaining.
+    element_bytes_remaining: Option<usize>,
 }
 
 impl WitnessDecoder {
     /// Constructs a new witness decoder.
     pub fn new() -> Self {
         Self {
-            prefix_decoder: None,
-            buffer: Vec::new(),
-            initial_length_prefix_read: false,
-            witness_elements: 0,
-            idx: 0,
-            element_length_prefix_read: false,
-            bytes_to_read: 0,
+            content: Vec::new(),
+            cursor: 0,
+            witness_elements: None,
+            witness_count_decoder: CompactSizeDecoder::new(),
+            element_idx: 0,
+            element_length_decoder: CompactSizeDecoder::new(),
+            element_bytes_remaining: None,
+        }
+    }
+
+    /// Resizes the content buffer if needed, doubling the size each time.
+    fn resize_if_needed(&mut self, required_len: usize) {
+        if required_len >= self.content.len() {
+            let mut new_len = self.content.len().max(1);
+            while new_len <= required_len {
+                new_len *= 2;
+            }
+            self.content.resize(new_len, 0);
         }
     }
 }
@@ -345,88 +356,154 @@ impl Decoder for WitnessDecoder {
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         use {WitnessDecoderError as E, WitnessDecoderErrorInner as Inner};
 
-        // First call to `push_bytes`.
-        if !self.initial_length_prefix_read {
-            let mut decoder = self.prefix_decoder.take().unwrap_or_default();
-
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
-                self.prefix_decoder = Some(decoder);
+        // Read initial witness element count.
+        if self.witness_elements.is_none() {
+            if self
+                .witness_count_decoder
+                .push_bytes(bytes)
+                .map_err(|e| E(Inner::LengthPrefixDecode(e)))?
+            {
                 return Ok(true);
             }
+            // Take ownership of the decoder in order to consume it.
+            let decoder = core::mem::take(&mut self.witness_count_decoder);
             let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-
-            self.witness_elements = encoding::cast_to_usize_if_valid(length)
+            let witness_elements = encoding::cast_to_usize_if_valid(length)
                 .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
-            self.initial_length_prefix_read = true;
+            self.witness_elements = Some(witness_elements);
 
-            if self.witness_elements == 0 {
+            // Short circuit for zero witness elements.
+            if witness_elements == 0 {
                 return Ok(false);
             }
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.witness_elements);
+            // Allocate space for the index and buffer. The buffer
+            // is initialized to 128 bytes which should be large enough
+            // to cover most witnesses, the typical pubkey + signature
+            // and some overhead (e.g. P2WPKH witness is ~100 bytes),
+            // without reallocating.
+            let witness_index_space = witness_elements * 4;
+            self.cursor = witness_index_space;
+            self.content = alloc::vec![0u8; self.cursor + 128];
         }
 
+        let Some(witness_elements) = self.witness_elements else {
+            unreachable!("witness_elements must be Some after initial read")
+        };
+        let witness_index_space = witness_elements * 4;
+
+        // Read witness elements.
         loop {
+            // Check if we're done processing all elements.
+            if self.element_idx >= witness_elements {
+                return Ok(false);
+            }
+
             if bytes.is_empty() {
                 return Ok(true);
             }
 
-            if self.element_length_prefix_read {
-                let v = self.buffer.get_mut(self.idx).expect("we created this last call");
-                let copy_len = bytes.len().min(self.bytes_to_read);
+            // If we have some bytes to read, then reading element data.
+            // Else we are reading the element's length.
+            if let Some(bytes_to_read) = self.element_bytes_remaining {
+                let copy_len = bytes.len().min(bytes_to_read);
 
-                v.extend_from_slice(&bytes[..copy_len]);
+                // Ensure we have enough space.
+                let required_len = self.cursor + copy_len;
+                self.resize_if_needed(required_len);
+
+                self.content[self.cursor..self.cursor + copy_len]
+                    .copy_from_slice(&bytes[..copy_len]);
+                self.cursor += copy_len;
                 *bytes = &bytes[copy_len..];
-                self.bytes_to_read -= copy_len;
+                let remaining = bytes_to_read - copy_len;
 
-                if self.bytes_to_read == 0 {
-                    self.element_length_prefix_read = false;
-                    self.idx += 1;
-                    if self.idx == self.witness_elements {
-                        return Ok(false);
-                    }
+                if remaining == 0 {
+                    // Element complete, move to next element.
+                    self.element_idx += 1;
+                    self.element_bytes_remaining = None;
+                } else {
+                    self.element_bytes_remaining = Some(remaining);
                 }
             } else {
-                let mut decoder = self.prefix_decoder.take().unwrap_or_default();
-
-                if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
-                    self.prefix_decoder = Some(decoder);
+                if self
+                    .element_length_decoder
+                    .push_bytes(bytes)
+                    .map_err(|e| E(Inner::LengthPrefixDecode(e)))?
+                {
                     return Ok(true);
                 }
-                let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-                self.bytes_to_read = encoding::cast_to_usize_if_valid(length)
-                    .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
-                self.element_length_prefix_read = true;
 
-                // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-                let v = Vec::with_capacity(self.bytes_to_read);
-                self.buffer.push(v);
+                // Take ownership of the decoder so we can consume it.
+                let decoder = core::mem::take(&mut self.element_length_decoder);
+                let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+                let element_length = encoding::cast_to_usize_if_valid(length)
+                    .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
+
+                // Store the element position in the index.
+                let position_after_rotation = self.cursor - witness_index_space;
+                encode_cursor(&mut self.content, 0, self.element_idx, position_after_rotation);
+
+                // Re-encode the length back into the buffer.
+                let encoded_size = compact_size::encoded_size(element_length);
+                let required_len = self.cursor + encoded_size + element_length;
+                self.resize_if_needed(required_len);
+                let encoded_compact_size = compact_size::encode(element_length);
+                self.content[self.cursor..self.cursor + encoded_size]
+                    .copy_from_slice(&encoded_compact_size);
+                self.cursor += encoded_size;
+
+                if element_length == 0 {
+                    // Complete immediately for zero-length element to
+                    // avoid incorrectly signaling "need more data".
+                    self.element_idx += 1;
+                    self.element_bytes_remaining = None;
+                } else {
+                    self.element_bytes_remaining = Some(element_length);
+                }
             }
         }
     }
 
-    fn end(self) -> Result<Self::Output, Self::Error> {
+    fn end(mut self) -> Result<Self::Output, Self::Error> {
         use {WitnessDecoderError as E, WitnessDecoderErrorInner as Inner};
 
-        let remaining = self.witness_elements - self.idx;
+        let Some(witness_elements) = self.witness_elements else {
+            // Never read the witness element count.
+            return Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing_elements: 0 })));
+        };
+
+        let remaining = witness_elements - self.element_idx;
 
         if remaining == 0 {
-            Ok(Witness::from_slice(&self.buffer))
+            // Truncate to actual content length (remove unused allocated space).
+            self.content.truncate(self.cursor);
+
+            // Rotate the index area from beginning to end.
+            let witness_index_space = witness_elements * 4;
+            self.content.rotate_left(witness_index_space);
+
+            Ok(Witness::from_parts__unstable(
+                self.content,
+                witness_elements,
+                self.cursor - witness_index_space,
+            ))
         } else {
             Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing_elements: remaining })))
         }
     }
 
     fn read_limit(&self) -> usize {
-        if !self.initial_length_prefix_read {
-            return match &self.prefix_decoder {
-                Some(compact_size_decoder) => compact_size_decoder.read_limit(),
-                None => 1,
-            };
+        if self.witness_elements.is_none() {
+            // Reading witness count (haven't started processing elements yet).
+            self.witness_count_decoder.read_limit()
+        } else {
+            // Reading an element.
+            match self.element_bytes_remaining {
+                None => self.element_length_decoder.read_limit(),
+                Some(remaining) => remaining,
+            }
         }
-        // The only assumption we can make is that each witness element is at least one byte.
-        self.witness_elements.saturating_sub(self.buffer.len())
     }
 }
 
@@ -1304,5 +1381,130 @@ mod test {
             err,
             WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixInvalid(_))
         ));
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_empty_witness() {
+        // Witness with 0 elements.
+        let encoded = vec![0x00];
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+
+        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        let witness = decoder.end().unwrap();
+
+        assert_eq!(witness.len(), 0);
+        assert!(witness.is_empty());
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_single_element() {
+        // Witness with 1 element containing [0xAB, 0xCD].
+        let encoded = vec![0x01, 0x02, 0xAB, 0xCD];
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+
+        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        let witness = decoder.end().unwrap();
+
+        assert_eq!(witness.len(), 1);
+        assert_eq!(&witness[0], &[0xABu8, 0xCD][..]);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_empty_element() {
+        // Witness with 1 element that is empty (0 bytes).
+        let encoded = vec![0x01, 0x00];
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+
+        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        let witness = decoder.end().unwrap();
+
+        assert_eq!(witness.len(), 1);
+        assert_eq!(&witness[0], &[] as &[u8]);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_multiple_empty_elements() {
+        // Witness with 3 empty elements.
+        let encoded = vec![0x03, 0x00, 0x00, 0x00];
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+
+        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        let witness = decoder.end().unwrap();
+
+        assert_eq!(witness.len(), 3);
+        assert_eq!(&witness[0], &[] as &[u8]);
+        assert_eq!(&witness[1], &[] as &[u8]);
+        assert_eq!(&witness[2], &[] as &[u8]);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_incomplete_witness_count() {
+        // 3-byte compact size but only provide 2 bytes.
+        let encoded = vec![0xFD, 0x03];
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_incomplete_element_length() {
+        // Witness count = 1, but element length is incomplete.
+        let encoded = vec![0x01, 0xFD, 0x05]; // Element length should be 3 bytes.
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_incomplete_element_data() {
+        // Witness count = 1, element length = 5, but only 3 bytes of data provided.
+        let encoded = vec![0x01, 0x05, 0xAA, 0xBB, 0xCC];
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn decode_buffer_resizing() {
+        // Create a witness with elements larger than initial 128-byte allocation.
+        let large_element = vec![0xFF; 500];
+        let mut encoded = vec![0x02];
+        encoded.extend_from_slice(&[0xFD, 0xF4, 0x01]);
+        encoded.extend_from_slice(&large_element);
+        encoded.extend_from_slice(&[0xFD, 0xF4, 0x01]);
+        encoded.extend_from_slice(&large_element);
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = WitnessDecoder::new();
+        assert!(!decoder.push_bytes(&mut slice).unwrap());
+
+        let witness = decoder.end().unwrap();
+        assert_eq!(witness.len(), 2);
+        assert_eq!(&witness[0], large_element.as_slice());
+        assert_eq!(&witness[1], large_element.as_slice());
     }
 }
