@@ -576,7 +576,7 @@ pub struct AmountDecoder(encoding::ArrayDecoder<8>);
 #[cfg(feature = "encoding")]
 impl AmountDecoder {
     /// Constructs a new [`Amount`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]

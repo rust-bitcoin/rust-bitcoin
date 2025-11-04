@@ -1544,8 +1544,10 @@ pub const fn bitcoin_units::Weight::to_vbytes_floor(self) -> u64
 pub const fn bitcoin_units::Weight::to_wu(self) -> u64
 pub const fn bitcoin_units::absolute::is_block_height(n: u32) -> bool
 pub const fn bitcoin_units::absolute::is_block_time(n: u32) -> bool
+pub const fn bitcoin_units::amount::AmountDecoder::new() -> Self
 pub const fn bitcoin_units::block::BlockHeight::from_u32(inner: u32) -> Self
 pub const fn bitcoin_units::block::BlockHeight::to_u32(self) -> u32
+pub const fn bitcoin_units::block::BlockHeightDecoder::new() -> Self
 pub const fn bitcoin_units::block::BlockHeightInterval::from_u32(inner: u32) -> Self
 pub const fn bitcoin_units::block::BlockHeightInterval::to_u32(self) -> u32
 pub const fn bitcoin_units::block::BlockMtp::from_u32(inner: u32) -> Self
@@ -1559,6 +1561,7 @@ pub const fn bitcoin_units::locktime::absolute::Height::to_u32(self) -> u32
 pub const fn bitcoin_units::locktime::absolute::LockTime::is_block_height(self) -> bool
 pub const fn bitcoin_units::locktime::absolute::LockTime::is_block_time(self) -> bool
 pub const fn bitcoin_units::locktime::absolute::LockTime::is_same_unit(self, other: Self) -> bool
+pub const fn bitcoin_units::locktime::absolute::LockTimeDecoder::new() -> Self
 pub const fn bitcoin_units::locktime::absolute::MedianTimePast::from_u32(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
 pub const fn bitcoin_units::locktime::absolute::MedianTimePast::to_u32(self) -> u32
 pub const fn bitcoin_units::locktime::absolute::is_block_height(n: u32) -> bool
@@ -1579,6 +1582,9 @@ pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_seconds(s
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_height(blocks: u16) -> Self
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_height(self) -> u16
+pub const fn bitcoin_units::sequence::Sequence::to_consensus_u32(self) -> u32
+pub const fn bitcoin_units::sequence::SequenceDecoder::new() -> Self
+pub const fn bitcoin_units::time::BlockTimeDecoder::new() -> Self
 pub enum bitcoin_units::NumOpResult<T>
 pub enum bitcoin_units::absolute::LockTime
 pub enum bitcoin_units::locktime::absolute::LockTime
@@ -1915,7 +1921,6 @@ pub fn bitcoin_units::Weight::try_from(s: alloc::boxed::Box<str>) -> core::resul
 pub fn bitcoin_units::Weight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::amount::AmountDecoder::default() -> Self
 pub fn bitcoin_units::amount::AmountDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::amount::AmountDecoder::new() -> Self
 pub fn bitcoin_units::amount::AmountDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::amount::AmountDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::amount::AmountEncoder::advance(&mut self) -> bool
@@ -2034,7 +2039,6 @@ pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::boxed::Box<str>) ->
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::block::BlockHeightDecoder::default() -> Self
 pub fn bitcoin_units::block::BlockHeightDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::block::BlockHeightDecoder::new() -> Self
 pub fn bitcoin_units::block::BlockHeightDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::block::BlockHeightDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::block::BlockHeightDecoderError::clone(&self) -> bitcoin_units::block::BlockHeightDecoderError
@@ -2184,7 +2188,6 @@ pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::boxed::Bo
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::default() -> Self
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::new() -> Self
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder::advance(&mut self) -> bool
@@ -2442,7 +2445,6 @@ pub fn bitcoin_units::sequence::Sequence::is_relative_lock_time(self) -> bool
 pub fn bitcoin_units::sequence::Sequence::is_time_locked(self) -> bool
 pub fn bitcoin_units::sequence::Sequence::partial_cmp(&self, other: &bitcoin_units::sequence::Sequence) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::sequence::Sequence::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-pub fn bitcoin_units::sequence::Sequence::to_consensus_u32(self) -> u32
 pub fn bitcoin_units::sequence::Sequence::to_hex(self) -> alloc::string::String
 pub fn bitcoin_units::sequence::Sequence::to_relative_lock_time(self) -> core::option::Option<bitcoin_units::locktime::relative::LockTime>
 pub fn bitcoin_units::sequence::Sequence::try_from(s: &str) -> core::result::Result<Self, Self::Error>
@@ -2450,7 +2452,6 @@ pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::boxed::Box<str>) ->
 pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::sequence::SequenceDecoder::default() -> Self
 pub fn bitcoin_units::sequence::SequenceDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::sequence::SequenceDecoder::new() -> Self
 pub fn bitcoin_units::sequence::SequenceDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::sequence::SequenceDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::sequence::SequenceDecoderError::clone(&self) -> bitcoin_units::sequence::SequenceDecoderError
@@ -2462,7 +2463,6 @@ pub fn bitcoin_units::sequence::SequenceEncoder::advance(&mut self) -> bool
 pub fn bitcoin_units::sequence::SequenceEncoder::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::time::BlockTimeDecoder::default() -> Self
 pub fn bitcoin_units::time::BlockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::time::BlockTimeDecoder::new() -> Self
 pub fn bitcoin_units::time::BlockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_units::time::BlockTimeDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::time::BlockTimeDecoderError::clone(&self) -> bitcoin_units::time::BlockTimeDecoderError
