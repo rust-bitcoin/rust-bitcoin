@@ -33,7 +33,7 @@ macro_rules! impl_consensus_encoding {
             fn consensus_decode<R: $crate::io::BufRead + ?Sized>(
                 r: &mut R,
             ) -> core::result::Result<$thing, $crate::consensus::encode::Error> {
-                let mut r = r.take(internals::ToU64::to_u64($crate::consensus::encode::MAX_VEC_SIZE));
+                let mut r = $crate::io::Read::take(r, internals::ToU64::to_u64($crate::consensus::encode::MAX_VEC_SIZE));
                 Ok($thing {
                     $($field: $crate::consensus::Decodable::consensus_decode(&mut r)?),+
                 })
