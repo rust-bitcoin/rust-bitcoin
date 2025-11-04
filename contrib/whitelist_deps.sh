@@ -4,4 +4,7 @@
 # disable verify unused vars, despite the fact that they are used when sourced
 # shellcheck disable=SC2034
 
-DUPLICATE_DEPS=("hashes")
+# - hashes because of secp v0.30
+# - io because of hashes
+# - hex because 1.0 only has decoding
+DUPLICATE_DEPS=("bitcoin_hashes" "hex-conservative" "bitcoin-io")

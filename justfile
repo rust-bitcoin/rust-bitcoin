@@ -13,7 +13,7 @@ _default:
 @ci task toolchain="stable" lock="recent":
   {{justfile_directory()}}/contrib/ensure-maintainer-tools.sh
   cp -f {{justfile_directory()}}/Cargo-{{lock}}.lock {{justfile_directory()}}/Cargo.lock
-  rustup run {{toolchain}} {{justfile_directory()}}/.maintainer-tools/ci/run_task.sh {{task}}
+  MAINTAINER_TOOLS_LOG_LEVEL=quiet rustup run {{toolchain}} {{justfile_directory()}}/.maintainer-tools/ci/run_task.sh {{task}}
 
 # Test workspace with stable toolchain.
 [group('ci')]
