@@ -252,7 +252,7 @@ impl NumOpError {
     pub fn is_div_by_zero(self) -> bool { self.0.is_div_by_zero() }
 
     /// Returns the [`MathOp`] that caused this error.
-    pub fn operation(self) -> MathOp { self.0 }
+    pub const fn operation(self) -> MathOp { self.0 }
 }
 
 impl fmt::Display for NumOpError {

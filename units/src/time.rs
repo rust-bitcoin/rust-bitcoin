@@ -106,7 +106,7 @@ impl Default for BlockTimeDecoder {
 #[cfg(feature = "encoding")]
 impl BlockTimeDecoder {
     /// Constructs a new [`BlockTime`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]

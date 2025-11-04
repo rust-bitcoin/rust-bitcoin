@@ -178,10 +178,10 @@ impl OutOfRangeError {
     }
 
     /// Returns true if the input value was larger than the maximum allowed value.
-    pub fn is_above_max(self) -> bool { self.is_greater_than_max }
+    pub const fn is_above_max(self) -> bool { self.is_greater_than_max }
 
     /// Returns true if the input value was smaller than the minimum allowed value.
-    pub fn is_below_min(self) -> bool { !self.is_greater_than_max }
+    pub const fn is_below_min(self) -> bool { !self.is_greater_than_max }
 
     #[cfg(test)]
     pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_greater_than_max: true } }

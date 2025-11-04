@@ -426,7 +426,7 @@ pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
 #[cfg(feature = "encoding")]
 impl LockTimeDecoder {
     /// Constructs a new [`LockTime`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]

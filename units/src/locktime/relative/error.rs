@@ -17,7 +17,7 @@ impl DisabledLockTimeError {
     /// Accessor for the `u32` whose "disable" flag was set, preventing
     /// it from being parsed as a relative locktime.
     #[inline]
-    pub fn disabled_locktime_value(&self) -> u32 { self.0 }
+    pub const fn disabled_locktime_value(&self) -> u32 { self.0 }
 }
 
 impl fmt::Display for DisabledLockTimeError {
