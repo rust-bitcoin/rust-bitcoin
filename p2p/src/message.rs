@@ -256,6 +256,8 @@ pub enum NetworkMessage {
     AddrV2(AddrV2Payload),
     /// `sendaddrv2`
     SendAddrV2,
+    /// `sendtxrcncl`
+    SendTxRcncl,
 
     /// Any other message.
     Unknown {
@@ -310,6 +312,7 @@ impl NetworkMessage {
             NetworkMessage::WtxidRelay => "wtxidrelay",
             NetworkMessage::AddrV2(_) => "addrv2",
             NetworkMessage::SendAddrV2 => "sendaddrv2",
+            NetworkMessage::SendTxRcncl => "sendtxrcncl",
             NetworkMessage::Unknown { .. } => "unknown",
         }
     }
@@ -430,7 +433,8 @@ impl Encodable for NetworkMessage {
             | NetworkMessage::GetAddr
             | NetworkMessage::WtxidRelay
             | NetworkMessage::FilterClear
-            | NetworkMessage::SendAddrV2 => Ok(0),
+            | NetworkMessage::SendAddrV2
+            | NetworkMessage::SendTxRcncl => Ok(0),
             NetworkMessage::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
         }
     }
@@ -487,6 +491,7 @@ impl Encodable for V2NetworkMessage {
             | NetworkMessage::GetAddr
             | NetworkMessage::WtxidRelay
             | NetworkMessage::SendAddrV2
+            | NetworkMessage::SendTxRcncl
             | NetworkMessage::Alert(_)
             | NetworkMessage::Reject(_)
             | NetworkMessage::Unknown { .. } => (0u8, Some(self.payload.command())),
@@ -626,6 +631,7 @@ impl Decodable for RawNetworkMessage {
             "addrv2" =>
                 NetworkMessage::AddrV2(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "sendaddrv2" => NetworkMessage::SendAddrV2,
+            "sendtxrcncl" => NetworkMessage::SendTxRcncl,
             _ => NetworkMessage::Unknown { command: cmd, payload: raw_payload },
         };
         Ok(RawNetworkMessage { magic, payload, payload_len, checksum })
@@ -850,6 +856,7 @@ mod test {
                 time: 0,
             }])),
             NetworkMessage::SendAddrV2,
+            NetworkMessage::SendTxRcncl,
             NetworkMessage::CmpctBlock(cmptblock),
             NetworkMessage::GetBlockTxn(GetBlockTxn {
                 txs_request: BlockTransactionsRequest {
