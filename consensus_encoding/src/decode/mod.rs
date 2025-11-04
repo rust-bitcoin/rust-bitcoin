@@ -317,6 +317,17 @@ mod tests {
 
     #[cfg(feature = "std")]
     #[test]
+    fn decode_from_read_extra_data() {
+        let data = [1, 2, 3, 4, 5, 6];
+        let mut cursor = Cursor::new(&data);
+        let result: Result<TestArray, _> = decode_from_read(&mut cursor);
+        assert!(result.is_ok());
+        let decoded = result.unwrap();
+        assert_eq!(decoded.0, [1, 2, 3, 4]);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
     fn decode_from_read_success() {
         let data = [1, 2, 3, 4];
         let cursor = Cursor::new(&data);
