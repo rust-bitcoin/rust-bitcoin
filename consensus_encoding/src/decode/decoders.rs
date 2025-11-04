@@ -32,9 +32,9 @@ pub struct ByteVecDecoder {
 #[cfg(feature = "alloc")]
 impl ByteVecDecoder {
     /// Constructs a new byte decoder.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
-            prefix_decoder: Some(CompactSizeDecoder::default()),
+            prefix_decoder: Some(CompactSizeDecoder::new()),
             buffer: Vec::new(),
             bytes_expected: 0,
             bytes_written: 0,
@@ -116,7 +116,7 @@ pub struct VecDecoder<T: Decodable> {
 #[cfg(feature = "alloc")]
 impl<T: Decodable> VecDecoder<T> {
     /// Constructs a new byte decoder.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             prefix_decoder: Some(CompactSizeDecoder::new()),
             length: 0,
@@ -235,7 +235,7 @@ pub struct ArrayDecoder<const N: usize> {
 
 impl<const N: usize> ArrayDecoder<N> {
     /// Constructs a new array decoder that expects exactly N bytes.
-    pub fn new() -> Self { Self { buffer: [0; N], bytes_written: 0 } }
+    pub const fn new() -> Self { Self { buffer: [0; N], bytes_written: 0 } }
 }
 
 impl<const N: usize> Default for ArrayDecoder<N> {
@@ -299,7 +299,7 @@ where
     B: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub fn new(first: A, second: B) -> Self { Self { state: Decoder2State::First(first, second) } }
+    pub const fn new(first: A, second: B) -> Self { Self { state: Decoder2State::First(first, second) } }
 }
 
 impl<A, B> Decoder for Decoder2<A, B>
@@ -392,7 +392,7 @@ where
     C: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub fn new(dec_1: A, dec_2: B, dec_3: C) -> Self {
+    pub const fn new(dec_1: A, dec_2: B, dec_3: C) -> Self {
         Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), dec_3) }
     }
 }
@@ -450,7 +450,7 @@ where
     D: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self {
+    pub const fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self {
         Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), Decoder2::new(dec_3, dec_4)) }
     }
 }
@@ -516,7 +516,7 @@ where
     F: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D, dec_5: E, dec_6: F) -> Self {
+    pub const fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D, dec_5: E, dec_6: F) -> Self {
         Self {
             inner: Decoder2::new(
                 Decoder3::new(dec_1, dec_2, dec_3),
@@ -579,7 +579,7 @@ pub struct CompactSizeDecoder {
 
 impl CompactSizeDecoder {
     /// Constructs a new compact size decoder.
-    pub fn new() -> Self { Self { buf: internals::array_vec::ArrayVec::new() } }
+    pub const fn new() -> Self { Self { buf: internals::array_vec::ArrayVec::new() } }
 }
 
 impl Default for CompactSizeDecoder {

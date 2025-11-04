@@ -26,7 +26,7 @@ pub struct BytesEncoder<'sl> {
 
 impl<'sl> BytesEncoder<'sl> {
     /// Constructs a byte encoder which encodes the given byte slice, with no length prefix.
-    pub fn without_length_prefix(sl: &'sl [u8]) -> Self { Self { sl: Some(sl) } }
+    pub const fn without_length_prefix(sl: &'sl [u8]) -> Self { Self { sl: Some(sl) } }
 }
 
 impl Encoder for BytesEncoder<'_> {
@@ -45,7 +45,7 @@ pub struct ArrayEncoder<const N: usize> {
 
 impl<const N: usize> ArrayEncoder<N> {
     /// Constructs an encoder which encodes the array with no length prefix.
-    pub fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
+    pub const fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
 }
 
 impl<const N: usize> Encoder for ArrayEncoder<N> {
@@ -124,7 +124,7 @@ pub struct Encoder2<A, B> {
 
 impl<A, B> Encoder2<A, B> {
     /// Constructs a new composite encoder.
-    pub fn new(enc_1: A, enc_2: B) -> Self { Self { enc_idx: 0, enc_1, enc_2 } }
+    pub const fn new(enc_1: A, enc_2: B) -> Self { Self { enc_idx: 0, enc_1, enc_2 } }
 }
 
 impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
@@ -162,7 +162,7 @@ pub struct Encoder3<A, B, C> {
 
 impl<A, B, C> Encoder3<A, B, C> {
     /// Constructs a new composite encoder.
-    pub fn new(enc_1: A, enc_2: B, enc_3: C) -> Self {
+    pub const fn new(enc_1: A, enc_2: B, enc_3: C) -> Self {
         Self { inner: Encoder2::new(Encoder2::new(enc_1, enc_2), enc_3) }
     }
 }
@@ -181,7 +181,7 @@ pub struct Encoder4<A, B, C, D> {
 
 impl<A, B, C, D> Encoder4<A, B, C, D> {
     /// Constructs a new composite encoder.
-    pub fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D) -> Self {
+    pub const fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D) -> Self {
         Self { inner: Encoder2::new(Encoder2::new(enc_1, enc_2), Encoder2::new(enc_3, enc_4)) }
     }
 }
@@ -200,7 +200,7 @@ pub struct Encoder6<A, B, C, D, E, F> {
 
 impl<A, B, C, D, E, F> Encoder6<A, B, C, D, E, F> {
     /// Constructs a new composite encoder.
-    pub fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D, enc_5: E, enc_6: F) -> Self {
+    pub const fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D, enc_5: E, enc_6: F) -> Self {
         Self {
             inner: Encoder2::new(
                 Encoder3::new(enc_1, enc_2, enc_3),
