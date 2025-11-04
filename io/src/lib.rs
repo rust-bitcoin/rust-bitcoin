@@ -86,7 +86,9 @@ pub trait Read {
 
     /// Constructs a new adapter which will read at most `limit` bytes.
     #[inline]
-    fn take(&mut self, limit: u64) -> Take<'_, Self> { Take { reader: self, remaining: limit } }
+    fn take(&mut self, limit: u64) -> Take<'_, Self>
+        where Self: Sized,
+    { Take { reader: self, remaining: limit } }
 
     /// Attempts to read up to limit bytes from the reader, allocating space in `buf` as needed.
     ///
@@ -101,7 +103,9 @@ pub trait Read {
     #[doc(alias = "read_to_end")]
     #[cfg(feature = "alloc")]
     #[inline]
-    fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize> {
+    fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize>
+        where Self: Sized,
+    {
         self.take(limit).read_to_end(buf)
     }
 }
@@ -825,18 +829,6 @@ mod tests {
     }
 
     #[test]
-    fn decode_from_read_trait_object() {
-        let data = [1, 2, 3, 4];
-        let mut cursor = Cursor::new(&data);
-        // Test that we can pass a trait object (&mut dyn BufRead implements BufRead).
-        let reader: &mut dyn BufRead = &mut cursor;
-        let result: core::result::Result<TestArray, _> = decode_from_read(reader);
-        assert!(result.is_ok());
-        let decoded = result.unwrap();
-        assert_eq!(decoded.0, [1, 2, 3, 4]);
-    }
-
-    #[test]
     fn decode_from_read_by_reference() {
         let data = [1, 2, 3, 4];
         let mut cursor = Cursor::new(&data);
@@ -847,7 +839,7 @@ mod tests {
         assert_eq!(decoded.0, [1, 2, 3, 4]);
 
         let mut buf = Vec::new();
-        let _ = cursor.read_to_end(&mut buf);
+        let _ = cursor.read_to_limit(&mut buf, 100);
     }
 
     #[test]
