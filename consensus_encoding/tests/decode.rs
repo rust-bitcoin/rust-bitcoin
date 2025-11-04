@@ -194,3 +194,38 @@ fn decode_byte_vec_decoder_empty() {
     let result = decoder.end().unwrap();
     assert!(result.is_empty());
 }
+
+#[cfg(feature = "alloc")]
+#[test]
+fn decode_byte_vec_decoder_does_not_overconsume() {
+    use bitcoin_consensus_encoding::ByteVecDecoder;
+
+    let mut decoder = ByteVecDecoder::new();
+    let mut data = &[0x02, 0xAA, 0xBB, 0xCC, 0xDD][..];
+    assert!(!decoder.push_bytes(&mut data).unwrap());
+    assert_eq!(data, &[0xCC, 0xDD][..]);
+    assert_eq!(decoder.end().unwrap(), vec![0xAA, 0xBB]);
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn decode_byte_vec_decoder_does_not_overconsume_on_second_chunk() {
+    use bitcoin_consensus_encoding::ByteVecDecoder;
+
+    // First chunk prefix declares 4 payload bytes and provides the first one.
+    let mut first_chunk: &[u8] = &[0x04, 0xAA];
+    // Second chunk provides the remaining 3 payload bytes plus two trailing bytes.
+    let mut second_chunk: &[u8] = &[0xBB, 0xCC, 0xDD, 0x11, 0x22];
+
+    let mut decoder = ByteVecDecoder::new();
+
+    assert!(decoder.push_bytes(&mut first_chunk).unwrap());
+    assert!(first_chunk.is_empty());
+
+    let needs_more = decoder.push_bytes(&mut second_chunk).unwrap();
+    assert!(!needs_more);
+    assert_eq!(second_chunk, &[0x11, 0x22][..]);
+
+    let decoded_vec = decoder.end().unwrap();
+    assert_eq!(decoded_vec, vec![0xAA, 0xBB, 0xCC, 0xDD]);
+}
