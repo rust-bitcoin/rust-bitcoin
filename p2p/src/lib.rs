@@ -120,38 +120,38 @@ impl Decodable for ProtocolVersion {
 pub struct ServiceFlags(u64);
 
 impl ServiceFlags {
-    /// NONE means no services supported.
+    /// `NONE` means no services supported.
     pub const NONE: Self = Self(0);
 
-    /// NETWORK means that the node is capable of serving the complete block chain. It is currently
+    /// `NETWORK` means that the node is capable of serving the complete block chain. It is currently
     /// set by all Bitcoin Core non pruned nodes, and is unset by SPV clients or other light
     /// clients.
     pub const NETWORK: Self = Self(1 << 0);
 
-    /// GETUTXO means the node is capable of responding to the getutxo protocol request. Bitcoin
+    /// `GETUTXO` means the node is capable of responding to the getutxo protocol request. Bitcoin
     /// Core does not support this but a patch set called Bitcoin XT does.
     /// See BIP-0064 for details on how this is implemented.
     pub const GETUTXO: Self = Self(1 << 1);
 
-    /// BLOOM means the node is capable and willing to handle bloom-filtered connections. Bitcoin
+    /// `BLOOM` means the node is capable and willing to handle bloom-filtered connections. Bitcoin
     /// Core nodes used to support this by default, without advertising this bit, but no longer do
     /// as of protocol version 70011 (= NO_BLOOM_VERSION)
     pub const BLOOM: Self = Self(1 << 2);
 
-    /// WITNESS indicates that a node can be asked for blocks and transactions including witness
+    /// `WITNESS` indicates that a node can be asked for blocks and transactions including witness
     /// data.
     pub const WITNESS: Self = Self(1 << 3);
 
-    /// COMPACT_FILTERS means the node will service basic block filter requests.
+    /// `COMPACT_FILTERS` means the node will service basic block filter requests.
     /// See BIP-0157 and BIP-0158 for details on how this is implemented.
     pub const COMPACT_FILTERS: Self = Self(1 << 6);
 
-    /// NETWORK_LIMITED means the same as NODE_NETWORK with the limitation of only serving the last
+    /// `NETWORK_LIMITED` means the same as NODE_NETWORK with the limitation of only serving the last
     /// 288 (2 day) blocks.
     /// See BIP-0159 for details on how this is implemented.
     pub const NETWORK_LIMITED: Self = Self(1 << 10);
 
-    /// P2P_V2 indicates that the node supports the P2P v2 encrypted transport protocol.
+    /// `P2P_V2` indicates that the node supports the P2P v2 encrypted transport protocol.
     /// See BIP-0324 for details on how this is implemented.
     pub const P2P_V2: Self = Self(1 << 11);
 
