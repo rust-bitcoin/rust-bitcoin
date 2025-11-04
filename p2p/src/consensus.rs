@@ -46,7 +46,7 @@ macro_rules! impl_consensus_encoding {
             fn consensus_decode<R: io::BufRead + ?Sized>(
                 r: &mut R,
             ) -> core::result::Result<$thing, bitcoin::consensus::encode::Error> {
-                let mut r = r.take(internals::ToU64::to_u64(bitcoin::consensus::encode::MAX_VEC_SIZE));
+                let mut r = io::Read::take(r, internals::ToU64::to_u64(bitcoin::consensus::encode::MAX_VEC_SIZE));
                 Ok($thing {
                     $($field: bitcoin::consensus::Decodable::consensus_decode(&mut r)?),+
                 })

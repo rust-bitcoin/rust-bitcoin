@@ -418,7 +418,7 @@ impl Decodable for Block<Unchecked> {
 
     #[inline]
     fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        let mut r = r.take(internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
+        let mut r = io::Read::take(r, internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
         let header = Decodable::consensus_decode(&mut r)?;
         let transactions = Decodable::consensus_decode(&mut r)?;
 
