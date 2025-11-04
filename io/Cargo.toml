@@ -35,4 +35,5 @@ rustdoc-args = ["--cfg", "docsrs"]
 unexpected_cfgs = { level = "deny" }
 
 [lints.clippy]
+redundant_clone = "warn"
 use_self = "warn"

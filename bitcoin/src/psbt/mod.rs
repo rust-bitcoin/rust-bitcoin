@@ -2543,7 +2543,7 @@ mod tests {
             e => panic!("unexpected error: {:?}", e),
         }
         //  negative fee
-        let mut t3 = t.clone();
+        let mut t3 = t;
         t3.unsigned_tx.outputs[0].amount = prev_output_val;
         match t3.fee().unwrap_err() {
             Error::NegativeFee => {}

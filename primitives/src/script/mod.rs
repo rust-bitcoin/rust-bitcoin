@@ -762,8 +762,7 @@ mod tests {
 
     #[test]
     fn cow_scriptbuf_to_script() {
-        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
-        let cow_owned: Cow<Script> = Cow::Owned(script_buf.clone());
+        let cow_owned: Cow<Script> = Cow::Owned(ScriptBuf::from(vec![0x51, 0x52, 0x53]));
         let script: &Script = cow_owned.borrow();
         assert_eq!(script.as_bytes(), &[0x51, 0x52, 0x53]);
     }

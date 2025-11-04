@@ -103,4 +103,5 @@ required-features = ["std", "serde"]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)', 'cfg(kani)'] }
 
 [lints.clippy]
+redundant_clone = "warn"
 use_self = "warn"

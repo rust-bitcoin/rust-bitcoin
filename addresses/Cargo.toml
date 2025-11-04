@@ -26,4 +26,5 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.clippy]
+redundant_clone = "warn"
 use_self = "warn"
