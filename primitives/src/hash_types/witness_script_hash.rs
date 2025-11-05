@@ -61,7 +61,7 @@ pub struct WitnessScriptSizeError {
 
 impl WitnessScriptSizeError {
     /// Returns the invalid witness script size.
-    pub fn invalid_size(&self) -> usize { self.size }
+    pub const fn invalid_size(&self) -> usize { self.size }
 }
 
 impl From<Infallible> for WitnessScriptSizeError {
