@@ -155,7 +155,7 @@ pub struct ScriptBufDecoder<T>(ByteVecDecoder, PhantomData<T>);
 
 impl<T> ScriptBufDecoder<T> {
     /// Constructs a new [`ScriptBuf`] decoder.
-    pub fn new() -> Self { Self(ByteVecDecoder::new(), PhantomData) }
+    pub const fn new() -> Self { Self(ByteVecDecoder::new(), PhantomData) }
 }
 
 impl<T> Default for ScriptBufDecoder<T> {

@@ -40,7 +40,7 @@ pub struct TxMerkleNodeDecoder(encoding::ArrayDecoder<32>);
 
 impl TxMerkleNodeDecoder {
     /// Constructs a new [`TxMerkleNode`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for TxMerkleNodeDecoder {

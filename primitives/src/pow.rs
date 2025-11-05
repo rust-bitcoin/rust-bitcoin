@@ -32,7 +32,7 @@ impl CompactTarget {
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     #[inline]
-    pub fn to_consensus(self) -> u32 { self.0 }
+    pub const fn to_consensus(self) -> u32 { self.0 }
 
     /// Gets the hex representation of this [`CompactTarget`].
     #[cfg(feature = "alloc")]
@@ -70,7 +70,7 @@ pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
 
 impl CompactTargetDecoder {
     /// Constructs a new [`CompactTarget`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for CompactTargetDecoder {

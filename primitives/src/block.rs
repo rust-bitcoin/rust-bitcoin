@@ -549,7 +549,7 @@ impl Version {
     ///
     /// This is the data type used in consensus code in Bitcoin Core.
     #[inline]
-    pub fn to_consensus(self) -> i32 { self.0 }
+    pub const fn to_consensus(self) -> i32 { self.0 }
 
     /// Checks whether the version number is signalling a soft fork at the given bit.
     ///
@@ -595,7 +595,7 @@ pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
 impl VersionDecoder {
     /// Constructs a new [`Version`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for VersionDecoder {
