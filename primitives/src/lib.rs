@@ -2,23 +2,22 @@
 
 //! Rust Bitcoin - primitive types
 //!
-//! Primitive data types that are used throughout the [`rust-bitcoin`] ecosystem.
+//! Primitive data types used throughout the [`rust-bitcoin`] ecosystem.
 //!
-//! If you are using `rust-bitcoin` then you do not need to access this crate directly. Everything
-//! here is re-exported in `rust-bitcoin` at the same path.
+//! If you are using `rust-bitcoin` you do not need to access this crate directly. All items
+//! are re-exported in `rust-bitcoin` at the same path.
 //!
-//! This crate can be used in a no-std environment but a lot of the functionality requires an
-//! allocator i.e., requires the `alloc` feature to be enabled.
+//! This crate supports `no_std` environments, but many features require the `alloc` feature.
 //!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin>
 
 #![no_std]
-// Coding conventions.
+// Coding conventions
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
-// Exclude lints we don't think are valuable.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
+// Exclude lints we don't think are valuable
+#![allow(clippy::uninlined_format_args)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -33,18 +32,12 @@ extern crate serde;
 #[cfg(feature = "hex")]
 pub extern crate hex_stable as hex;
 
-#[doc(hidden)]
-pub mod _export {
-    /// A re-export of `core::*`.
-    pub mod _core {
-        pub use core::*;
-    }
-}
-
+// Internal modules
 mod hash_types;
 #[cfg(feature = "alloc")]
 mod opcodes;
 
+// Public modules
 pub mod block;
 pub mod merkle_tree;
 pub mod pow;
@@ -54,6 +47,7 @@ pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
 
+// Re-exports from units module
 #[doc(inline)]
 pub use units::{
     amount::{self, Amount, SignedAmount},
@@ -71,6 +65,7 @@ pub use units::{
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
 
+// Conditional re-exports
 #[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::{
@@ -84,6 +79,8 @@ pub use self::{
     transaction::{Transaction, TxIn, TxOut},
     witness::Witness,
 };
+
+// Always available re-exports
 #[doc(inline)]
 pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
@@ -92,15 +89,40 @@ pub use self::{
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
 
+// Internal prelude module
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {
     #[cfg(feature = "alloc")]
-    pub use alloc::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
-
-    #[cfg(feature = "alloc")]
-    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, slice, rc};
+    pub use alloc::{
+        borrow::{Borrow, BorrowMut, Cow, ToOwned},
+        boxed::Box,
+        collections::{BTreeMap, BTreeSet, BinaryHeap, btree_map},
+        rc,
+        slice,
+        string::{String, ToString},
+        vec::Vec,
+    };
 
     #[cfg(all(feature = "alloc", target_has_atomic = "ptr"))]
     pub use alloc::sync;
+
+    // Core prelude for no_std compatibility
+    pub use core::prelude::rust_2021::*;
+}
+
+// Internal exports for macros and derive
+#[doc(hidden)]
+pub mod _export {
+    /// Re-export of core primitives for macro use
+    pub mod _core {
+        pub use core::*;
+    }
+    
+    /// Common traits for internal use
+    pub mod _traits {
+        pub use core::fmt;
+        #[cfg(feature = "alloc")]
+        pub use alloc::string::ToString;
+    }
 }
