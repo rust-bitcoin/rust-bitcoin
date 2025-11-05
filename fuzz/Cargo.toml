@@ -88,6 +88,3 @@ path = "fuzz_targets/hashes/sha512.rs"
 [[bin]]
 name = "units_deserialize_amount"
 path = "fuzz_targets/units/deserialize_amount.rs"
-
-[lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
