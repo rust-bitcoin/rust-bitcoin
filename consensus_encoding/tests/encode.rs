@@ -198,3 +198,23 @@ fn encode_encoder_advance_multiple_times_when_exhausted() {
     assert!(!encoder.advance());
     assert!(encoder.current_chunk().is_empty());
 }
+
+#[test]
+fn encode_option_encoder_some() {
+    use bitcoin_consensus_encoding::Encoder;
+
+    let mut encoder = Some(ArrayEncoder::<3>::without_length_prefix([1, 2, 3]));
+    assert_eq!(encoder.current_chunk(), &[1, 2, 3]);
+    assert!(!encoder.advance());
+    assert!(encoder.current_chunk().is_empty());
+}
+
+#[test]
+fn encode_option_encoder_none() {
+    use bitcoin_consensus_encoding::Encoder;
+
+    let mut encoder: Option<ArrayEncoder<3>> = None;
+    assert!(encoder.current_chunk().is_empty());
+    assert!(!encoder.advance());
+    assert!(encoder.current_chunk().is_empty());
+}
