@@ -18,6 +18,7 @@ arbitrary = { version = "1.4.1" }
 
 serde = { version = "1.0.195", features = [ "derive" ] }
 serde_json = "1.0.68"
+standard_test = "0.1.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
@@ -141,3 +142,7 @@ path = "fuzz_targets/consensus_encoding/decode_decoder2.rs"
 [[bin]]
 name = "consensus_encoding_decode_byte_vec"
 path = "fuzz_targets/consensus_encoding/decode_byte_vec.rs"
+
+[[bin]]
+name = "units_standard_checks"
+path = "fuzz_targets/units/standard_checks.rs"

@@ -29,6 +29,7 @@ arbitrary = { version = "1.4.1" }
 
 serde = { version = "1.0.195", features = [ "derive" ] }
 serde_json = "1.0.68"
+standard_test = "0.1.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }

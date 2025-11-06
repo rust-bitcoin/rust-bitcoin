@@ -90,6 +90,7 @@ dependencies = [
  "honggfuzz",
  "serde",
  "serde_json",
+ "standard_test",
 ]
 
 [[package]]
@@ -441,6 +442,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "482765e11e55174e2d74a611674d09ed96712c00e0777e305a0c416dfef5fa40"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "standard_test"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af4bac6cd647192c3cb6e687af2703eb3a30e9187e555c664520cd848443ae70"
+dependencies = [
+ "arbitrary",
 ]
 
 [[package]]
