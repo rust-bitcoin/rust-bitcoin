@@ -100,7 +100,23 @@ pub trait Read {
     #[cfg(feature = "alloc")]
     #[inline]
     fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize> {
-        self.take(limit).read_to_end(buf)
+        let mut read: usize = 0;
+        let mut chunk = [0u8; 64];
+
+        let limit = usize::try_from(limit).unwrap_or(usize::MAX);
+        while read < limit {
+            let idx = cmp::min(limit - read, 64);
+            match self.read(&mut chunk[..idx]) {
+                Ok(0) => break,
+                Ok(n) => {
+                    buf.extend_from_slice(&chunk[0..n]);
+                    read += n;
+                }
+                Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
+                Err(e) => return Err(e),
+            };
+        }
+        Ok(read)
     }
 }
 
