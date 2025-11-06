@@ -6,3 +6,7 @@ updates:
     schedule:
       # Check for updates to GitHub Actions every week
       interval: "weekly"
+    # Defines a cooldown period for dependency updates,
+    # allowing updates to be delayed for a configurable number of days.
+    cooldown:
+      default-days: 60

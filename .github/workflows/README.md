@@ -34,3 +34,6 @@ Run from rust.yml unless stated otherwise. Unfortunately we are now exceeding th
 20. `release` - run by `release.yml`
 21. `labeler` - run by `manage-pr.yml`
 22. `Shellcheck` - run by `shellcheck.yml`
+
+If any change touches the `.github/` directory then the `zizmor`, run by `zizmor.yml`, will be
+triggered for that PR.

@@ -8,15 +8,21 @@ on:   # yamllint disable-line rule:truthy
 
 name: Continuous integration
 
+permissions: {}
+
 jobs:
   Prepare:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
       maintainer_tools_version: ${{ steps.read_toolchain.outputs.maintainer_tools_version }}
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Read workspace versions"
         id: read_toolchain
         run: |
@@ -27,21 +33,26 @@ jobs:
     name: Test - stable toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [minimal, recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
@@ -51,21 +62,26 @@ jobs:
     name: Test - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [minimal, recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Set dependencies"
@@ -77,21 +93,26 @@ jobs:
     name: Test - MSRV toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [minimal, recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
         with:
           toolchain: "1.74.0"
       - name: "Set dependencies"
@@ -103,21 +124,26 @@ jobs:
     name: Lint - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install clippy"
@@ -131,21 +157,26 @@ jobs:
     name: Docs - stable toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
@@ -155,21 +186,26 @@ jobs:
     name: Docs - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Set dependencies"
@@ -181,21 +217,26 @@ jobs:
     name: Bench - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Checkout maintainer tools"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Set dependencies"
@@ -206,11 +247,15 @@ jobs:
   Arch32bit:
     name: Test 32-bit version
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Add architecture i386"
         run: sudo dpkg --add-architecture i386
       - name: "Install i686 gcc"
@@ -224,11 +269,15 @@ jobs:
     name: Cross test - stable toolchain
     if: ${{ !github.event.act }}
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Install target"
         run: rustup target add s390x-unknown-linux-gnu
       - name: "Install cross"
@@ -240,16 +289,20 @@ jobs:
     name: Embedded - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     env:
       RUSTFLAGS: "-C link-arg=-Tlink.x"
       CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Set up QEMU"
         run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
           targets: thumbv7m-none-eabi
@@ -268,15 +321,19 @@ jobs:
     name: ASAN - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install rust-src"
@@ -289,25 +346,33 @@ jobs:
   WASM:                         # hashes crate only.
     name: WASM - stable toolchain
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       # Note we do not use the recent lock file for wasm testing.
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Run wasm script"
         run: cd hashes && ./contrib/wasm.sh
 
   Kani:
     name: Kani codegen - stable toolchain
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Build Kani proofs"
-        uses: model-checking/kani-github-action@v1.1
+        uses: model-checking/kani-github-action@f838096619a707b0f6b2118cf435eaccfa33e51f # v1.1
         with:
           args: "--only-codegen"
 
@@ -315,15 +380,19 @@ jobs:
     needs: Prepare
     name: API - nightly toolchain
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         dep: [recent]
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install cargo-public-api"
@@ -336,25 +405,33 @@ jobs:
   Policy:
     name: Enforce repo policy - stable toolchain
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Run policy script"
         run: ./contrib/check-for-policy-violations.sh
 
   Re-exports:
     name: Check re-exports - stable toolchain
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Run API checker script"
         run: contrib/generate-re-export-test.sh && cd ./primitives && cargo test --all-features

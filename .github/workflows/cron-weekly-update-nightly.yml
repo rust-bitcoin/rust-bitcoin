@@ -3,13 +3,20 @@ on:
   schedule:
     - cron: "5 0 * * 6" # Saturday at 00:05
   workflow_dispatch: # allows manual triggering
+permissions: {}
 jobs:
   format:
     name: Update nightly rustc
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@55d80eb3c5a4228eec5390a083c092095115c6f1 # nightly
       - name: Update rust.yml to use latest nightly
         run: |
           set -x
@@ -29,7 +36,7 @@ jobs:
           fi
       - name: Create Pull Request
         if: env.changes_made == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
           author: Update Nightly Rustc Bot <bot@example.com>
