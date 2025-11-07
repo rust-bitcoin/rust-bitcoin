@@ -1094,7 +1094,7 @@ mod tests {
         // 4. Test with a large script sig. With scriptsigs there is no limit on how large
         //    an object we can parse, which is inconsistent with witnesses. Also not an
         //    API guarantee.
-        let mut tx_copy = tx.clone();
+        let mut tx_copy = tx;
         tx_copy.inputs[0].script_sig = ScriptSigBuf::from(vec![0; 8_000_001]);
         let roundtrip = deserialize(&serialize(&tx_copy)).unwrap();
         assert_eq!(tx_copy, roundtrip);

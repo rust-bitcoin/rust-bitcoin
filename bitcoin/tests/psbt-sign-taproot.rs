@@ -65,7 +65,7 @@ fn psbt_sign_taproot() {
     let internal_key = kp.x_only_public_key().0; // Ignore the parity.
 
     let tree =
-        create_taproot_tree(secp, script1.clone(), script2.clone(), script3.clone(), internal_key);
+        create_taproot_tree(secp, script1, script2.clone(), script3, internal_key);
 
     let address = create_p2tr_address(tree.clone());
     assert_eq!(
@@ -129,7 +129,7 @@ fn psbt_sign_taproot() {
         let mut psbt_script_path_spend = create_psbt_for_taproot_script_path_spend(
             address,
             to_address,
-            tree.clone(),
+            tree,
             x_only_pubkey,
             signing_key_path,
             script2.clone(),
@@ -145,7 +145,7 @@ fn psbt_sign_taproot() {
             sig,
             psbt_script_path_spend.inputs[0]
                 .tap_script_sigs
-                .get(&(x_only_pubkey.into(), script2.clone().tapscript_leaf_hash()))
+                .get(&(x_only_pubkey.into(), script2.tapscript_leaf_hash()))
                 .unwrap()
                 .signature
                 .to_string()
@@ -314,7 +314,7 @@ fn create_psbt_for_taproot_script_path_spend<K: Into<XOnlyPublicKey>>(
     let mut tap_scripts = BTreeMap::new();
     tap_scripts.insert(
         tree.control_block(&(use_script.clone(), LeafVersion::TapScript)).unwrap(),
-        (use_script.clone(), LeafVersion::TapScript),
+        (use_script, LeafVersion::TapScript),
     );
 
     let mut input = Input {

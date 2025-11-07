@@ -1025,7 +1025,7 @@ mod test {
         let content = append_u32_vec(&elements, &[0, 2]);
         let indices_start = elements.len();
         let witness =
-            Witness::from_parts__unstable(content.clone(), witness_elements, indices_start);
+            Witness::from_parts__unstable(content, witness_elements, indices_start);
         assert_eq!(witness.get(0).unwrap(), [11_u8]);
         assert_eq!(witness.get(1).unwrap(), [21_u8, 22]);
         assert_eq!(witness.size(), 6);
@@ -1099,8 +1099,6 @@ mod test {
             }};
         }
 
-        let witness = Witness::from_slice(&[DATA_1, DATA_2]);
-
         // &[T]
         let container: &[&[u8]] = &[EMPTY_BYTES];
         let different: &[&[u8]] = &[DATA_1];
@@ -1123,22 +1121,22 @@ mod test {
         // Vec<T>
         let container: Vec<&[u8]> = vec![DATA_1, DATA_2];
         let different: Vec<&[u8]> = vec![DATA_2, DATA_1];
-        ck!(witness.clone(), container, different);
+        ck!(Witness::from(container.as_slice()), container, different);
 
         // Box<[T]>
         let container: Box<[&[u8]]> = vec![DATA_1, DATA_2].into_boxed_slice();
         let different: Box<[&[u8]]> = vec![DATA_2, DATA_1].into_boxed_slice();
-        ck!(witness.clone(), container, different);
+        ck!(Witness::from(&*container), container, different);
 
         // Rc<[T]>
         let container: alloc::rc::Rc<[&[u8]]> = vec![DATA_1, DATA_2].into();
         let different: alloc::rc::Rc<[&[u8]]> = vec![DATA_2, DATA_1].into();
-        ck!(witness.clone(), container, different);
+        ck!(Witness::from(&*container), container, different);
 
         // Arc<[T]>
         let container: alloc::sync::Arc<[&[u8]]> = vec![DATA_1, DATA_2].into();
         let different: alloc::sync::Arc<[&[u8]]> = vec![DATA_2, DATA_1].into();
-        ck!(witness, container, different);
+        ck!(Witness::from(&*container), container, different);
     }
 
     #[test]

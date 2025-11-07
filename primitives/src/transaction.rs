@@ -1550,8 +1550,8 @@ mod tests {
         let tx_orig = Transaction {
             version: Version::ONE,
             lock_time: absolute::LockTime::from_consensus(1_738_968_231), // The time this was written
-            inputs: vec![txin.clone()],
-            outputs: vec![txout.clone()],
+            inputs: vec![txin],
+            outputs: vec![txout],
         };
 
         // Test changing the transaction

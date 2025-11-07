@@ -240,11 +240,10 @@ mod tests {
 
     #[test]
     fn script_buf_as_mut_script() {
-        let bytes = vec![1, 2, 3];
-        let mut script = ScriptBuf::from_bytes(bytes.clone());
+        let mut script = ScriptBuf::from_bytes(vec![1, 2, 3]);
         let script_mut_ref = script.as_mut_script();
         script_mut_ref.as_mut_bytes()[0] = 4;
-        assert_eq!(script.as_mut_bytes(), vec![4, 2, 3]);
+        assert_eq!(script.as_mut_bytes(), &[4, 2, 3]);
     }
 
     #[test]
