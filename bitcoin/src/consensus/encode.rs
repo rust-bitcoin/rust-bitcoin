@@ -940,7 +940,7 @@ mod tests {
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
         // by making sure it fails with `MissingData` and not an `OversizedVectorAllocation` Error.
         let err = deserialize::<BlockHash>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
-        assert_eq!(err, DeserializeError::Parse(ParseError::MissingData));
+        assert!(matches!(err, DeserializeError::Parse(ParseError::MissingData { .. })));
 
         test_len_is_max_vec::<u8>();
         test_len_is_max_vec::<BlockHash>();
@@ -961,7 +961,7 @@ mod tests {
         let mut buf = Vec::new();
         buf.emit_compact_size(super::MAX_VEC_SIZE / mem::size_of::<T>()).unwrap();
         let err = deserialize::<Vec<T>>(&buf).unwrap_err();
-        assert_eq!(err, DeserializeError::Parse(ParseError::MissingData));
+        assert!(matches!(err, DeserializeError::Parse(ParseError::MissingData { .. })));
     }
 
     #[test]
