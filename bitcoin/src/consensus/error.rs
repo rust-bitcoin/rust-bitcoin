@@ -137,7 +137,10 @@ impl From<io::Error> for Error {
         use io::ErrorKind;
 
         match e.kind() {
-            ErrorKind::UnexpectedEof => Self::Parse(ParseError::MissingData),
+            ErrorKind::UnexpectedEof => Self::Parse(ParseError::MissingData {
+                expected: None,
+                available: None,
+            }),
             _ => Self::Io(e),
         }
     }
@@ -152,7 +155,12 @@ impl From<ParseError> for Error {
 #[non_exhaustive]
 pub enum ParseError {
     /// Missing data (early end of file or slice too short).
-    MissingData, // TODO: Can we add more context?
+    MissingData {
+        /// The number of bytes expected, if known.
+        expected: Option<usize>,
+        /// The number of bytes available, if known.
+        available: Option<usize>,
+    },
     /// Tried to allocate an oversized vector.
     OversizedVectorAllocation {
         /// The capacity requested.
@@ -184,7 +192,18 @@ impl fmt::Display for ParseError {
         use ParseError::*;
 
         match *self {
-            MissingData => write!(f, "missing data (early end of file or slice too short)"),
+            MissingData { expected: ref e, available: ref a } => {
+                match (e, a) {
+                    (Some(exp), Some(avail)) =>
+                        write!(f, "missing data: expected {} bytes, got {}", exp, avail),
+                    (Some(exp), None) =>
+                        write!(f, "missing data: expected {} bytes", exp),
+                    (None, Some(avail)) =>
+                        write!(f, "missing data: got {} bytes", avail),
+                    (None, None) =>
+                        write!(f, "missing data (early end of file or slice too short)"),
+                }
+            }
             OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
             InvalidChecksum { expected: ref e, actual: ref a } => write!(
@@ -206,7 +225,7 @@ impl std::error::Error for ParseError {
         use ParseError::*;
 
         match self {
-            MissingData
+            MissingData { .. }
             | OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalCompactSize
