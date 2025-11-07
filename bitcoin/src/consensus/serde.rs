@@ -361,7 +361,19 @@ impl<D: fmt::Display> serde::de::Expected for DisplayExpected<D> {
 // not a trait impl because we panic on some variants
 fn consensus_error_into_serde<E: serde::de::Error>(error: ParseError) -> E {
     match error {
-        ParseError::MissingData => E::custom("missing data (early end of file or slice too short)"),
+        ParseError::MissingData { expected, available } => {
+            let msg = match (expected, available) {
+                (Some(exp), Some(avail)) =>
+                    format_args!("missing data: expected {} bytes, got {}", exp, avail),
+                (Some(exp), None) =>
+                    format_args!("missing data: expected {} bytes", exp),
+                (None, Some(avail)) =>
+                    format_args!("missing data: got {} bytes", avail),
+                (None, None) =>
+                    format_args!("missing data (early end of file or slice too short)"),
+            };
+            E::custom(msg)
+        }
         ParseError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
             "the requested allocation of {} items exceeds maximum of {}",
             requested, max
