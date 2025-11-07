@@ -252,6 +252,18 @@ Various methods of testing are in use (e.g. fuzzing, mutation), please see
 the [readme](./README.md) for more information.
 
 
+## LLMs, GitHub bot accounts, and AI agents
+
+This project does not accept contributions from bot GitHub accounts. All
+PRs that appear to come from such an account will be closed.
+
+Patches created by LLMs and AI agents are also viewed with suspicion unless a
+human has reviewed them. All LLM generated patches MUST have text in the git log
+and in the PR description that indicates the patch was created using an LLM.
+First time contributions by way of LLM generated patches are not welcome. Thanks
+for your time, please be respectful of ours.
+
+
 ## Going further
 
 You may be interested in the guide by Jon Atack on
