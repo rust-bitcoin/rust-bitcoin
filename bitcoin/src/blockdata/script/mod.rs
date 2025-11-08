@@ -76,7 +76,7 @@ pub use self::{
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt},
-    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
+    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, ScriptIntError},
 };
 #[doc(inline)]
 pub use primitives::script::{
@@ -155,12 +155,12 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 ///
 /// See [`push_bytes::PushBytes::read_scriptint`] for a description of some subtleties of
 /// this function.
-pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i32, Error> {
+pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i32, ScriptIntError> {
     if v.is_empty() {
         return Ok(0);
     }
     if v.len() > 4 {
-        return Err(Error::NumericOverflow);
+        return Err(ScriptIntError::NumericOverflow);
     }
 
     let ret = scriptint_parse(v);
