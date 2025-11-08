@@ -3,6 +3,7 @@
 //! Contains `PushBytes` & co
 
 use core::ops::{Deref, DerefMut};
+use core::fmt;
 
 use crate::prelude::{Borrow, BorrowMut};
 use crate::script;
@@ -304,13 +305,19 @@ impl PushBytes {
     /// is no longer a number. This is basically a ranged type implementation.
     ///
     /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
-    pub fn read_scriptint(&self) -> Result<i64, script::Error> {
+    ///
+    /// # Errors
+    ///
+    /// * [`ScriptIntError::NumericOverflow`] if result is not in range [-2^31 +1...2^31 -1].
+    /// * [`ScriptIntError::NonMinimal`] if encoding is non-minimal.
+    // Return value issue: https://github.com/rust-bitcoin/rust-bitcoin/issues/5268
+    pub fn read_scriptint(&self) -> Result<i64, ScriptIntError> {
         let last = match self.as_bytes().last() {
             Some(last) => last,
             None => return Ok(0),
         };
         if self.len() > 4 {
-            return Err(script::Error::NumericOverflow);
+            return Err(ScriptIntError::NumericOverflow);
         }
         // Comment and code copied from Bitcoin Core:
         // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
@@ -324,7 +331,7 @@ impl PushBytes {
             // is +-255, which encode to 0xff00 and 0xff80 respectively.
             // (big-endian).
             if self.len() <= 1 || (self[self.len() - 2] & 0x80) == 0 {
-                return Err(script::Error::NonMinimalPush);
+                return Err(ScriptIntError::NonMinimal);
             }
         }
 
@@ -383,6 +390,28 @@ impl Borrow<PushBytes> for PushBytesBuf {
 
 impl BorrowMut<PushBytes> for PushBytesBuf {
     fn borrow_mut(&mut self) -> &mut PushBytes { self.as_mut_push_bytes() }
+}
+
+/// Possible errors that can arise from [`PushBytes::read_scriptint`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ScriptIntError {
+    /// The result is not in range [-2^31 +1...2^31 -1].
+    NumericOverflow,
+    /// The resulting encoding is non-minimal.
+    NonMinimal,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ScriptIntError {}
+
+impl fmt::Display for ScriptIntError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::NumericOverflow => f.write_str("TODO"),
+            Self::NonMinimal => f.write_str("TODO"),
+        }
+    }
 }
 
 /// Reports information about failed conversion into `PushBytes`.
