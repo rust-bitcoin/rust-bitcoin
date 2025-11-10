@@ -202,26 +202,34 @@ pub bitcoin_consensus_encoding::Decoder6Error::Fourth(D)
 pub bitcoin_consensus_encoding::Decoder6Error::Second(B)
 pub bitcoin_consensus_encoding::Decoder6Error::Sixth(F)
 pub bitcoin_consensus_encoding::Decoder6Error::Third(C)
+pub const fn bitcoin_consensus_encoding::ArrayDecoder<N>::new() -> Self
+pub const fn bitcoin_consensus_encoding::ArrayEncoder<N>::without_length_prefix(arr: [u8; N]) -> Self
+pub const fn bitcoin_consensus_encoding::BytesEncoder<'sl>::without_length_prefix(sl: &'sl [u8]) -> Self
+pub const fn bitcoin_consensus_encoding::CompactSizeDecoder::new() -> Self
+pub const fn bitcoin_consensus_encoding::Decoder2<A, B>::new(first: A, second: B) -> Self
+pub const fn bitcoin_consensus_encoding::Decoder3<A, B, C>::new(dec_1: A, dec_2: B, dec_3: C) -> Self
+pub const fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self
+pub const fn bitcoin_consensus_encoding::Decoder6<A, B, C, D, E, F>::new(dec_1: A, dec_2: B, dec_3: C, dec_4: D, dec_5: E, dec_6: F) -> Self
+pub const fn bitcoin_consensus_encoding::Encoder2<A, B>::new(enc_1: A, enc_2: B) -> Self
+pub const fn bitcoin_consensus_encoding::Encoder3<A, B, C>::new(enc_1: A, enc_2: B, enc_3: C) -> Self
+pub const fn bitcoin_consensus_encoding::Encoder4<A, B, C, D>::new(enc_1: A, enc_2: B, enc_3: C, enc_4: D) -> Self
+pub const fn bitcoin_consensus_encoding::Encoder6<A, B, C, D, E, F>::new(enc_1: A, enc_2: B, enc_3: C, enc_4: D, enc_5: E, enc_6: F) -> Self
 pub enum bitcoin_consensus_encoding::Decoder2Error<A, B>
 pub enum bitcoin_consensus_encoding::Decoder3Error<A, B, C>
 pub enum bitcoin_consensus_encoding::Decoder4Error<A, B, C, D>
 pub enum bitcoin_consensus_encoding::Decoder6Error<A, B, C, D, E, F>
 pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::default() -> Self
 pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::new() -> Self
 pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_consensus_encoding::ArrayDecoder<N>::read_limit(&self) -> usize
 pub fn bitcoin_consensus_encoding::ArrayEncoder<N>::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::ArrayEncoder<N>::current_chunk(&self) -> &[u8]
-pub fn bitcoin_consensus_encoding::ArrayEncoder<N>::without_length_prefix(arr: [u8; N]) -> Self
 pub fn bitcoin_consensus_encoding::BytesEncoder<'_>::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::BytesEncoder<'_>::current_chunk(&self) -> &[u8]
-pub fn bitcoin_consensus_encoding::BytesEncoder<'sl>::without_length_prefix(sl: &'sl [u8]) -> Self
 pub fn bitcoin_consensus_encoding::CompactSizeDecoder::clone(&self) -> bitcoin_consensus_encoding::CompactSizeDecoder
 pub fn bitcoin_consensus_encoding::CompactSizeDecoder::default() -> Self
 pub fn bitcoin_consensus_encoding::CompactSizeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_consensus_encoding::CompactSizeDecoder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_consensus_encoding::CompactSizeDecoder::new() -> Self
 pub fn bitcoin_consensus_encoding::CompactSizeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_consensus_encoding::CompactSizeDecoder::read_limit(&self) -> usize
 pub fn bitcoin_consensus_encoding::CompactSizeDecoderError::clone(&self) -> bitcoin_consensus_encoding::CompactSizeDecoderError
@@ -232,28 +240,24 @@ pub fn bitcoin_consensus_encoding::CompactSizeEncoder::current_chunk(&self) -> &
 pub fn bitcoin_consensus_encoding::CompactSizeEncoder::new(value: impl bitcoin_internals::ToU64) -> Self
 pub fn bitcoin_consensus_encoding::Decodable::decoder() -> Self::Decoder
 pub fn bitcoin_consensus_encoding::Decoder2<A, B>::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_consensus_encoding::Decoder2<A, B>::new(first: A, second: B) -> Self
 pub fn bitcoin_consensus_encoding::Decoder2<A, B>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_consensus_encoding::Decoder2<A, B>::read_limit(&self) -> usize
 pub fn bitcoin_consensus_encoding::Decoder2Error<A, B>::clone(&self) -> bitcoin_consensus_encoding::Decoder2Error<A, B>
 pub fn bitcoin_consensus_encoding::Decoder2Error<A, B>::eq(&self, other: &bitcoin_consensus_encoding::Decoder2Error<A, B>) -> bool
 pub fn bitcoin_consensus_encoding::Decoder2Error<A, B>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_consensus_encoding::Decoder3<A, B, C>::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_consensus_encoding::Decoder3<A, B, C>::new(dec_1: A, dec_2: B, dec_3: C) -> Self
 pub fn bitcoin_consensus_encoding::Decoder3<A, B, C>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_consensus_encoding::Decoder3<A, B, C>::read_limit(&self) -> usize
 pub fn bitcoin_consensus_encoding::Decoder3Error<A, B, C>::clone(&self) -> bitcoin_consensus_encoding::Decoder3Error<A, B, C>
 pub fn bitcoin_consensus_encoding::Decoder3Error<A, B, C>::eq(&self, other: &bitcoin_consensus_encoding::Decoder3Error<A, B, C>) -> bool
 pub fn bitcoin_consensus_encoding::Decoder3Error<A, B, C>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self
 pub fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::read_limit(&self) -> usize
 pub fn bitcoin_consensus_encoding::Decoder4Error<A, B, C, D>::clone(&self) -> bitcoin_consensus_encoding::Decoder4Error<A, B, C, D>
 pub fn bitcoin_consensus_encoding::Decoder4Error<A, B, C, D>::eq(&self, other: &bitcoin_consensus_encoding::Decoder4Error<A, B, C, D>) -> bool
 pub fn bitcoin_consensus_encoding::Decoder4Error<A, B, C, D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_consensus_encoding::Decoder6<A, B, C, D, E, F>::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_consensus_encoding::Decoder6<A, B, C, D, E, F>::new(dec_1: A, dec_2: B, dec_3: C, dec_4: D, dec_5: E, dec_6: F) -> Self
 pub fn bitcoin_consensus_encoding::Decoder6<A, B, C, D, E, F>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_consensus_encoding::Decoder6<A, B, C, D, E, F>::read_limit(&self) -> usize
 pub fn bitcoin_consensus_encoding::Decoder6Error<A, B, C, D, E, F>::clone(&self) -> bitcoin_consensus_encoding::Decoder6Error<A, B, C, D, E, F>
@@ -265,16 +269,12 @@ pub fn bitcoin_consensus_encoding::Decoder::read_limit(&self) -> usize
 pub fn bitcoin_consensus_encoding::Encodable::encoder(&self) -> Self::Encoder
 pub fn bitcoin_consensus_encoding::Encoder2<A, B>::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::Encoder2<A, B>::current_chunk(&self) -> &[u8]
-pub fn bitcoin_consensus_encoding::Encoder2<A, B>::new(enc_1: A, enc_2: B) -> Self
 pub fn bitcoin_consensus_encoding::Encoder3<A, B, C>::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::Encoder3<A, B, C>::current_chunk(&self) -> &[u8]
-pub fn bitcoin_consensus_encoding::Encoder3<A, B, C>::new(enc_1: A, enc_2: B, enc_3: C) -> Self
 pub fn bitcoin_consensus_encoding::Encoder4<A, B, C, D>::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::Encoder4<A, B, C, D>::current_chunk(&self) -> &[u8]
-pub fn bitcoin_consensus_encoding::Encoder4<A, B, C, D>::new(enc_1: A, enc_2: B, enc_3: C, enc_4: D) -> Self
 pub fn bitcoin_consensus_encoding::Encoder6<A, B, C, D, E, F>::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::Encoder6<A, B, C, D, E, F>::current_chunk(&self) -> &[u8]
-pub fn bitcoin_consensus_encoding::Encoder6<A, B, C, D, E, F>::new(enc_1: A, enc_2: B, enc_3: C, enc_4: D, enc_5: E, enc_6: F) -> Self
 pub fn bitcoin_consensus_encoding::Encoder::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::Encoder::current_chunk(&self) -> &[u8]
 pub fn bitcoin_consensus_encoding::SliceEncoder<'_, T>::advance(&mut self) -> bool
