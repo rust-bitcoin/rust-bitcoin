@@ -18,7 +18,7 @@ use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
-use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
+use crate::crypto::key::{self, TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::prelude::*;
 use crate::{Script, ScriptBuf};
 
@@ -1112,7 +1112,10 @@ impl ControlBlock {
         };
 
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
-        let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
+
+        let a = <[u8; 32]>::try_from(&sl[1..TAPROOT_CONTROL_BASE_SIZE]).expect("this is 32 bytes");
+            
+        let internal_key = UntweakedPublicKey::from_byte_array(&a)
             .map_err(TaprootError::InvalidInternalKey)?;
         let merkle_branch = TaprootMerkleBranch::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
@@ -1394,7 +1397,7 @@ pub enum TaprootError {
     /// Invalid control block size.
     InvalidControlBlockSize(usize),
     /// Invalid taproot internal key.
-    InvalidInternalKey(secp256k1::Error),
+    InvalidInternalKey(key::ParseXOnlyPublicKeyError),
     /// Empty tap tree.
     EmptyTree,
 }
