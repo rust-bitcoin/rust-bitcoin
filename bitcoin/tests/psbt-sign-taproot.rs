@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use bitcoin::bip32::{DerivationPath, Fingerprint};
 use bitcoin::consensus::encode::serialize_hex;
+use bitcoin::key::XOnlyPublicKey;
 use bitcoin::opcodes::all::OP_CHECKSIG;
 use bitcoin::psbt::{GetKey, Input, KeyRequest, PsbtSighashType, SignError};
 use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
@@ -13,7 +14,7 @@ use bitcoin::{
     absolute, script, Address, Network, OutPoint, PrivateKey, Psbt, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, Witness,
 };
-use secp256k1::{Keypair, Secp256k1, Signing, XOnlyPublicKey};
+use secp256k1::{Keypair, Secp256k1, Signing};
 use units::Amount;
 
 #[test]

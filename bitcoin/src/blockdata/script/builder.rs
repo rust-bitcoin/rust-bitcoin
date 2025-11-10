@@ -2,14 +2,12 @@
 
 use core::fmt;
 
-use secp256k1::XOnlyPublicKey;
-
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
 use crate::blockdata::transaction::Sequence;
-use crate::key::PublicKey;
+use crate::key::{PublicKey, XOnlyPublicKey};
 use crate::prelude::*;
 
 /// An Object which can be used to construct a script piece by piece.
