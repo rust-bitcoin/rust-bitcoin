@@ -15,12 +15,9 @@ macro_rules! const_assert {
     }
 }
 
-/// Adds an implementation of `pub fn to_hex(&self) -> String` if `alloc` feature is enabled.
+/// Adds an implementation of `pub fn to_hex(&self) -> String`.
 ///
 /// The added function allocates a `String` then calls through to [`core::fmt::LowerHex`].
-///
-/// Note: Calling this macro assumes that the calling crate has an `alloc` feature that also activates the
-/// `alloc` crate. Calling this macro without the `alloc` feature enabled is a no-op.
 #[macro_export]
 macro_rules! impl_to_hex_from_lower_hex {
     ($t:ident, $hex_len_fn:expr) => {
