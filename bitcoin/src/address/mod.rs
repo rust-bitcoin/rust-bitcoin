@@ -34,7 +34,7 @@ use core::str::FromStr;
 
 use bech32::primitives::hrp::Hrp;
 use hashes::{sha256, Hash, HashEngine};
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
@@ -45,7 +45,7 @@ use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
 use crate::consensus::Params;
 use crate::crypto::key::{
-    CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
+    CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey
 };
 use crate::network::{Network, NetworkKind};
 use crate::prelude::*;

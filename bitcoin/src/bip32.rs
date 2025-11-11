@@ -13,9 +13,9 @@ use core::{fmt, slice};
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
 use io::Write;
-use secp256k1::{Secp256k1, XOnlyPublicKey};
+use secp256k1::Secp256k1;
 
-use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
+use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::NetworkKind;
 use crate::prelude::*;

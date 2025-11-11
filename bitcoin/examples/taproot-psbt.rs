@@ -401,7 +401,7 @@ impl BenefactorWallet {
 
         let taproot_spend_info = TaprootBuilder::new()
             .add_leaf(0, script.clone())?
-            .finalize(&self.secp, internal_keypair.x_only_public_key().0)
+            .finalize(&self.secp, internal_keypair.x_only_public_key().0.into())
             .expect("Should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
         let script_pubkey = ScriptBuf::new_p2tr(
@@ -438,7 +438,7 @@ impl BenefactorWallet {
             (vec![leaf_hash], (self.beneficiary_xpub.fingerprint(), derivation_path.clone())),
         );
         origins.insert(
-            internal_keypair.x_only_public_key().0,
+            internal_keypair.x_only_public_key().0.into(),
             (vec![], (self.master_xpriv.fingerprint(&self.secp), derivation_path)),
         );
         let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
@@ -453,7 +453,7 @@ impl BenefactorWallet {
             tap_key_origins: origins,
             tap_merkle_root: taproot_spend_info.merkle_root(),
             sighash_type: Some(ty),
-            tap_internal_key: Some(internal_keypair.x_only_public_key().0),
+            tap_internal_key: Some(internal_keypair.x_only_public_key().0.into()),
             tap_scripts,
             ..Default::default()
         };
@@ -496,7 +496,7 @@ impl BenefactorWallet {
 
             let taproot_spend_info = TaprootBuilder::new()
                 .add_leaf(0, script.clone())?
-                .finalize(&self.secp, new_internal_keypair.x_only_public_key().0)
+                .finalize(&self.secp, new_internal_keypair.x_only_public_key().0.into())
                 .expect("Should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();
@@ -599,7 +599,7 @@ impl BenefactorWallet {
                 tap_key_origins: origins,
                 tap_merkle_root: taproot_spend_info.merkle_root(),
                 sighash_type: Some(ty),
-                tap_internal_key: Some(new_internal_keypair.x_only_public_key().0),
+                tap_internal_key: Some(new_internal_keypair.x_only_public_key().0.into()),
                 tap_scripts,
                 ..Default::default()
             };
