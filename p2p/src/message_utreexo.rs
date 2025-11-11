@@ -5,6 +5,8 @@
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
 #[allow(unused_imports)]
 use bitcoin::key::{PubkeyHash, WPubkeyHash};
@@ -583,6 +585,160 @@ impl Decodable for GetUtreexoRoot {
         Ok(Self { blockhash: BlockHash::consensus_decode(r)? })
     }
 }
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PackedPositions {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            leaf_0: u.arbitrary()?,
+            leaf_1: u.arbitrary()?,
+            leaf_2: u.arbitrary()?,
+            leaf_3: u.arbitrary()?,
+
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ReconstructableScript {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(
+            match u.int_in_range(0..=4)? {
+                0 => {
+                    let len = u.arbitrary_len::<u8>()?;
+                    let bytes: Vec<u8> = (0..len).map(|_| u.arbitrary()).collect::<arbitrary::Result<_>>()?;
+                    Self::Other(bytes.into_boxed_slice())
+                },
+                1 => Self::PubkeyHash,
+                2 => Self::WitnessV0PubkeyHash,
+                3 => Self::ScriptHash,
+                4 => Self::WitnessV0ScriptHash,
+                _ => unreachable!(),
+            }
+        )
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for CompactLeafData {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            header_code: u.arbitrary()?,
+            amount: u.arbitrary()?,
+            script_pubkey: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for TTLInfo {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            ttl: u.arbitrary()?,
+            death_position: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for UtreexoTTL {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            block_height: u.arbitrary()?,
+            ttls: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for UtreexoProof {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            blockhash: u.arbitrary()?,
+            proof_hashes: u.arbitrary()?,
+            target_locations: u.arbitrary()?,
+            leaf_datas: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for  GetUtreexoProof {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            blockhash: u.arbitrary()?,
+            include_all: u.arbitrary()?,
+            proof_request_bitmap: u.arbitrary()?,
+            leaf_data_request_bitmap: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for  UtreexoTTLs {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            utreexo_ttls: u.arbitrary()?,
+            proof_hashes: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for  GetUtreexoTTLs {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            version: u.arbitrary()?,
+            start_height: u.arbitrary()?,
+            max_receive_exponent:  u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for  UtreexoSummary {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            blockhash: u.arbitrary()?,
+            num_additions: u.arbitrary()?,
+            target_locations: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for  UtreexoTransaction {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            transaction: u.arbitrary()?,
+            proof_hashes: u.arbitrary()?,
+            leaf_datas: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for  UtreexoRoot {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            num_leaves: u.arbitrary()?,
+            target: u.arbitrary()?,
+            blockhash: u.arbitrary()?,
+            root_hashes: u.arbitrary()?,
+            proof_hashes: u.arbitrary()?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for  GetUtreexoRoot {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            blockhash: u.arbitrary()?,
+        })
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

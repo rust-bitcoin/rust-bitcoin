@@ -970,7 +970,7 @@ impl<'a> Arbitrary<'a> for HeadersMessage {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for NetworkMessage {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        match u.int_in_range(0..=36)? {
+        match u.int_in_range(0..=43)? {
             0 => Ok(Self::Version(u.arbitrary()?)),
             1 => Ok(Self::Verack),
             2 => Ok(Self::Addr(u.arbitrary()?)),
@@ -1007,6 +1007,14 @@ impl<'a> Arbitrary<'a> for NetworkMessage {
             33 => Ok(Self::WtxidRelay),
             34 => Ok(Self::AddrV2(u.arbitrary()?)),
             35 => Ok(Self::SendAddrV2),
+            36 => Ok(Self::UtreexoProof(u.arbitrary()?)),
+            37 => Ok(Self::GetUtreexoProof(u.arbitrary()?)),
+            38 => Ok(Self::UtreexoTTLs(u.arbitrary()?)),
+            39 => Ok(Self::GetUtreexoTTLs(u.arbitrary()?)),
+            40 => Ok(Self::UtreexoSummary(u.arbitrary()?)),
+            41 => Ok(Self::UtreexoTx(u.arbitrary()?)),
+            42 => Ok(Self::UtreexoRoot(u.arbitrary()?)),
+            43 => Ok(Self::GetUtreexoRoot(u.arbitrary()?)),
             _ => Ok(Self::Unknown {
                 command: u.arbitrary()?,
                 payload: Vec::<u8>::arbitrary(u)?,
