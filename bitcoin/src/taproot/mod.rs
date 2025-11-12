@@ -705,7 +705,9 @@ impl TapTree {
 
     /// Returns [`TapTreeIter<'_>`] iterator for a taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
-    pub fn script_leaves(&self) -> ScriptLeaves<'_> { ScriptLeaves { leaf_iter: self.0.leaf_nodes() } }
+    pub fn script_leaves(&self) -> ScriptLeaves<'_> {
+        ScriptLeaves { leaf_iter: self.0.leaf_nodes() }
+    }
 
     /// Returns the root [`TapNodeHash`] of this tree.
     pub fn root_hash(&self) -> TapNodeHash { self.0.hash }
@@ -1556,7 +1558,11 @@ mod test {
         let control_block =
             ControlBlock::decode(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
-        assert!(control_block.verify_taproot_commitment(secp, out_pk.to_x_only_public_key(), &script));
+        assert!(control_block.verify_taproot_commitment(
+            secp,
+            out_pk.to_x_only_public_key(),
+            &script
+        ));
     }
 
     #[test]

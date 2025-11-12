@@ -211,8 +211,7 @@ impl<T: AsRef<[u8]>> Read for Cursor<T> {
         let start_pos = self.pos.try_into().unwrap_or(inner.len());
         let read = core::cmp::min(inner.len().saturating_sub(start_pos), buf.len());
         buf[..read].copy_from_slice(&inner[start_pos..start_pos + read]);
-        self.pos =
-            self.pos.saturating_add(read.try_into().unwrap_or(u64::MAX /* unreachable */));
+        self.pos = self.pos.saturating_add(read.try_into().unwrap_or(u64::MAX /* unreachable */));
         Ok(read)
     }
 }

@@ -406,9 +406,7 @@ macro_rules! impl_int_encodable {
     ($ty:ident, $meth_dec:ident, $meth_enc:ident) => {
         impl Decodable for $ty {
             #[inline]
-            fn consensus_decode<R: Read + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<Self, Error> {
+            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
                 ReadExt::$meth_dec(r)
             }
         }
@@ -593,9 +591,7 @@ macro_rules! impl_array {
 
         impl Decodable for [u8; $size] {
             #[inline]
-            fn consensus_decode<R: Read + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<Self, Error> {
+            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
                 let mut ret = [0; $size];
                 r.read_slice(&mut ret)?;
                 Ok(ret)
