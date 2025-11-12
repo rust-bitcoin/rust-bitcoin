@@ -148,10 +148,10 @@ pub use primitives::{
     pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{
         RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
-        TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf,
+        TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf, ScriptHashableTag,
+        Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag,
     },
-    sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
-    transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
+    transaction::{Ntxid, OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,
 };
 #[doc(inline)]
@@ -160,7 +160,9 @@ pub use units::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     parse_int,
-    time::{self, BlockTime},
+    result::{self, NumOpResult},
+    sequence::{self, Sequence},
+    time::{self, BlockTime, BlockTimeDecoder, BlockTimeDecoderError},
     weight::Weight,
 };
 

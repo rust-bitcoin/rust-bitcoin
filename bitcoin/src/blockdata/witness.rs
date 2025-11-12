@@ -20,6 +20,8 @@ type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a Serial
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use primitives::witness::{Iter, Witness};
+#[doc(no_inline)]
+pub use primitives::witness::UnexpectedEofError;
 
 impl Decodable for Witness {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
