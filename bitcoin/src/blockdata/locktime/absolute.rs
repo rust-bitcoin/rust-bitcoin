@@ -6,6 +6,8 @@
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 //!
 
+#![allow(rustdoc::broken_intra_doc_links)]
+
 use core::cmp::Ordering;
 use core::fmt;
 use core::str::FromStr;
