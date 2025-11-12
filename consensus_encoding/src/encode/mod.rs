@@ -64,6 +64,35 @@ macro_rules! encoder_newtype{
     }
 }
 
+/// Yields bytes from any [`Encodable`] instance.
+pub struct EncodableByteIter<'s, T: Encodable + 's> {
+    enc: T::Encoder<'s>,
+    position: usize,
+}
+
+impl<'s, T: Encodable + 's> EncodableByteIter<'s, T> {
+    /// Constructs a new byte iterator around a provided encodable.
+    pub fn new(encodable: &'s T) -> Self {
+        Self { enc: encodable.encoder(), position: 0 }
+    }
+}
+
+impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if let Some(b) = self.enc.current_chunk().get(self.position) {
+                self.position += 1;
+                return Some(*b);
+            } else if !self.enc.advance() {
+                return None;
+            }
+            self.position = 0;
+        }
+    }
+}
+
 /// Encodes an object into a vector.
 #[cfg(feature = "alloc")]
 pub fn encode_to_vec<T>(object: &T) -> Vec<u8>
