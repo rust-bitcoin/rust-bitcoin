@@ -290,7 +290,7 @@ impl Witness {
     pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
 
     /// Returns a struct implementing [`Iterator`].
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter { inner: self.content.as_slice(), indices_start: self.indices_start, current_index: 0 }
     }
 
