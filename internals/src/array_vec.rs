@@ -57,6 +57,7 @@ mod safety_boundary {
         // from_raw_parts is const-unstable until 1.64
         cond_const! {
             /// Returns a reference to the underlying data.
+            #[allow(clippy::incompatible_msrv)]
             pub const(in rust_v_1_64 = "1.64") fn as_slice(&self) -> &[T] {
                 let ptr = &self.data as *const _ as *const T;
                 unsafe { core::slice::from_raw_parts(ptr, self.len) }
