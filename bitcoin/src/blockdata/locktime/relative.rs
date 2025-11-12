@@ -6,6 +6,8 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
+#![allow(rustdoc::broken_intra_doc_links)]
+
 #[cfg(feature = "ordered")]
 use core::cmp::Ordering;
 use core::{cmp, convert, fmt};

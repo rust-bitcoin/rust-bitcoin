@@ -31,13 +31,12 @@ fn psbt_sign_taproot() {
             _secp: &Secp256k1<C>,
         ) -> Result<Option<PrivateKey>, Self::Error> {
             match key_request {
-                KeyRequest::Bip32((mfp, _)) => {
+                KeyRequest::Bip32((mfp, _)) =>
                     if mfp == self.mfp {
                         Ok(Some(self.sk))
                     } else {
                         Err(SignError::KeyNotFound)
-                    }
-                }
+                    },
                 _ => Err(SignError::KeyNotFound),
             }
         }

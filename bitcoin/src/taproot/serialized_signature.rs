@@ -49,7 +49,7 @@ impl PartialEq<SerializedSignature> for [u8] {
 
 impl PartialOrd for SerializedSignature {
     fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
-        Some((**self).cmp(&**other))
+        Some(self.cmp(other))
     }
 }
 

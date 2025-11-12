@@ -29,8 +29,8 @@ use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
-use crate::prelude::*;
 use crate::network::Network;
+use crate::prelude::*;
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -234,9 +234,7 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
     /// Returns the magic bytes for the network defined by `params`.
-    pub fn from_params(params: impl AsRef<Params>) -> Self {
-        params.as_ref().network.into()
-    }
+    pub fn from_params(params: impl AsRef<Params>) -> Self { params.as_ref().network.into() }
 }
 
 impl FromStr for Magic {

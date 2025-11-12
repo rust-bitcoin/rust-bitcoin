@@ -6,6 +6,8 @@
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 //!
 
+#![allow(rustdoc::broken_intra_doc_links)]
+
 use core::cmp::Ordering;
 use core::fmt;
 use core::str::FromStr;
@@ -297,25 +299,19 @@ impl FromStr for LockTime {
 impl TryFrom<&str> for LockTime {
     type Error = ParseIntError;
 
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        LockTime::from_str(s)
-    }
+    fn try_from(s: &str) -> Result<Self, Self::Error> { LockTime::from_str(s) }
 }
 
 impl TryFrom<String> for LockTime {
     type Error = ParseIntError;
 
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        LockTime::from_str(&s)
-    }
+    fn try_from(s: String) -> Result<Self, Self::Error> { LockTime::from_str(&s) }
 }
 
 impl TryFrom<Box<str>> for LockTime {
     type Error = ParseIntError;
 
-    fn try_from(s: Box<str>) -> Result<Self, Self::Error> {
-        LockTime::from_str(&s)
-    }
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> { LockTime::from_str(&s) }
 }
 
 impl From<Height> for LockTime {

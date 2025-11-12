@@ -175,7 +175,7 @@ mod tests {
     fn fee_rate_from_sat_per_vb_overflow_test() {
         let fee_rate = FeeRate::from_sat_per_vb(u64::MAX);
         assert!(fee_rate.is_none());
-    } 
+    }
 
     #[test]
     fn from_sat_per_vb_u32() {
@@ -185,7 +185,7 @@ mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[allow(deprecated)]        // Keep test until we remove the function.
+    #[allow(deprecated)] // Keep test until we remove the function.
     #[should_panic]
     fn from_sat_per_vb_unchecked_panic_test() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
 

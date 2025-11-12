@@ -406,9 +406,7 @@ macro_rules! impl_int_encodable {
     ($ty:ident, $meth_dec:ident, $meth_enc:ident) => {
         impl Decodable for $ty {
             #[inline]
-            fn consensus_decode<R: Read + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<Self, Error> {
+            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
                 ReadExt::$meth_dec(r)
             }
         }
@@ -593,9 +591,7 @@ macro_rules! impl_array {
 
         impl Decodable for [u8; $size] {
             #[inline]
-            fn consensus_decode<R: Read + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<Self, Error> {
+            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
                 let mut ret = [0; $size];
                 r.read_slice(&mut ret)?;
                 Ok(ret)
@@ -801,13 +797,13 @@ impl Decodable for CheckedData {
     }
 }
 
-impl<'a, T: Encodable> Encodable for &'a T {
+impl<T: Encodable> Encodable for &T {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)
     }
 }
 
-impl<'a, T: Encodable> Encodable for &'a mut T {
+impl<T: Encodable> Encodable for &mut T {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)
     }
