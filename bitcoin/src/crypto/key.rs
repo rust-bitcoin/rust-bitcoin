@@ -25,7 +25,7 @@ use crate::script::{self, WitnessScriptBuf};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification};
+pub use secp256k1::{constants, Keypair, Parity, Verification};
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
 pub use serialized_x_only::SerializedXOnlyPublicKey;
@@ -55,7 +55,7 @@ impl XOnlyPublicKey {
     pub fn from_byte_array(
         data: &[u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
     ) -> Result<Self, ParseXOnlyPublicKeyError> {
-        secp256k1::XOnlyPublicKey::from_byte_array(data)
+        secp256k1::XOnlyPublicKey::from_byte_array(*data)
             .map(Self::new)
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
@@ -77,14 +77,13 @@ impl XOnlyPublicKey {
     /// Should be called on the original untweaked key. Takes the tweaked key and output parity from
     /// [`XOnlyPublicKey::add_tweak`] as input.
     #[inline]
-    pub fn tweak_add_check<V: Verification>(
+    pub fn tweak_add_check(
         &self,
-        secp: &Secp256k1<V>,
         tweaked_key: &Self,
         tweaked_parity: Parity,
         tweak: secp256k1::Scalar,
     ) -> bool {
-        self.0.tweak_add_check(secp, &tweaked_key.0, tweaked_parity, tweak)
+        self.0.tweak_add_check(&tweaked_key.0, tweaked_parity, tweak)
     }
 
     /// Tweaks an [`XOnlyPublicKey`] by adding the generator multiplied with the given tweak to it.
@@ -99,12 +98,11 @@ impl XOnlyPublicKey {
     ///
     /// If the resulting key would be invalid.
     #[inline]
-    pub fn add_tweak<V: Verification>(
+    pub fn add_tweak(
         &self,
-        secp: &Secp256k1<V>,
         tweak: &secp256k1::Scalar,
     ) -> Result<(Self, Parity), TweakXOnlyPublicKeyError> {
-        match self.0.add_tweak(secp, tweak) {
+        match self.0.add_tweak(tweak) {
             Ok((xonly, parity)) => Ok((Self(xonly), parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
@@ -314,18 +312,19 @@ impl PublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: PrivateKey) -> Self {
-        sk.public_key(secp)
+    pub fn from_private_key(
+        sk: PrivateKey,
+    ) -> Self {
+        sk.public_key()
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
-    pub fn verify<C: secp256k1::Verification>(
+    pub fn verify(
         &self,
-        secp: &Secp256k1<C>,
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        secp.verify_ecdsa(&msg, &sig.signature, &self.inner)
+        secp256k1::ecdsa::verify(&sig.signature, msg, &self.inner)
     }
 }
 
@@ -453,21 +452,19 @@ impl CompressedPublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key<C: secp256k1::Signing>(
-        secp: &Secp256k1<C>,
+    pub fn from_private_key(
         sk: PrivateKey,
     ) -> Result<Self, UncompressedPublicKeyError> {
-        sk.public_key(secp).try_into()
+        sk.public_key().try_into()
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
-    pub fn verify<C: secp256k1::Verification>(
+    pub fn verify(
         &self,
-        secp: &Secp256k1<C>,
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0)?)
+        Ok(secp256k1::ecdsa::verify(&sig.signature, msg, &self.0)?)
     }
 }
 
@@ -543,7 +540,7 @@ impl PrivateKey {
     /// a secure random number generator.
     #[cfg(feature = "rand-std")]
     pub fn generate(network: impl Into<NetworkKind>) -> Self {
-        let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
+        let secret_key = secp256k1::SecretKey::new(&mut rand::rng());
         Self::new(secret_key, network.into())
     }
     /// Constructs a new compressed ECDSA private key from the provided generic secp256k1 private key
@@ -559,10 +556,10 @@ impl PrivateKey {
     }
 
     /// Constructs a new public key from this private key.
-    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
+    pub fn public_key(&self) -> PublicKey {
         PublicKey {
             compressed: self.compressed,
-            inner: secp256k1::PublicKey::from_secret_key(secp, &self.inner),
+            inner: secp256k1::PublicKey::from_secret_key(&self.inner),
         }
     }
 
@@ -578,7 +575,7 @@ impl PrivateKey {
         data: [u8; 32],
         network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
-        Ok(Self::new(secp256k1::SecretKey::from_byte_array(&data)?, network))
+        Ok(Self::new(secp256k1::SecretKey::from_secret_bytes(data)?, network))
     }
 
     /// Deserializes a private key from a slice.
@@ -640,7 +637,7 @@ impl PrivateKey {
             }
         };
 
-        Ok(Self { compressed, network, inner: secp256k1::SecretKey::from_byte_array(key)? })
+        Ok(Self { compressed, network, inner: secp256k1::SecretKey::from_secret_bytes(*key)? })
     }
 
     /// Returns a new private key with the negated secret value.
@@ -871,9 +868,8 @@ pub type UntweakedKeypair = Keypair;
 /// ```
 /// # #[cfg(feature = "rand-std")] {
 /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
-/// # use bitcoin::secp256k1::{rand, Secp256k1};
-/// # let secp = Secp256k1::new();
-/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&secp, &mut rand::thread_rng()));
+/// # use bitcoin::secp256k1::rand;
+/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&mut rand::rng()));
 /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
 /// let (_pk, _parity) = keypair.public_parts();
 /// let _pk = TweakedPublicKey::from_keypair(keypair);
@@ -905,9 +901,8 @@ pub trait TapTweak {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(
+    fn tap_tweak(
         self,
-        secp: &Secp256k1<C>,
         merkle_root: Option<TapNodeHash>,
     ) -> Self::TweakedAux;
 
@@ -935,15 +930,14 @@ impl TapTweak for UntweakedPublicKey {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(
+    fn tap_tweak(
         self,
-        secp: &Secp256k1<C>,
         merkle_root: Option<TapNodeHash>,
     ) -> (TweakedPublicKey, Parity) {
         let tweak = TapTweakHash::from_key_and_merkle_root(self, merkle_root).to_scalar();
-        let (output_key, parity) = self.add_tweak(secp, &tweak).expect("Tap tweak failed");
+        let (output_key, parity) = self.add_tweak(&tweak).expect("Tap tweak failed");
 
-        debug_assert!(self.tweak_add_check(secp, &output_key, parity, tweak));
+        debug_assert!(self.tweak_add_check(&output_key, parity, tweak));
         (TweakedPublicKey(output_key), parity)
     }
 
@@ -964,14 +958,13 @@ impl TapTweak for UntweakedKeypair {
     /// # Returns
     ///
     /// The tweaked keypair.
-    fn tap_tweak<C: Verification>(
+    fn tap_tweak(
         self,
-        secp: &Secp256k1<C>,
         merkle_root: Option<TapNodeHash>,
     ) -> TweakedKeypair {
         let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
-        let tweaked = self.add_xonly_tweak(secp, &tweak).expect("Tap tweak failed");
+        let tweaked = self.add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair(tweaked)
     }
 
@@ -1452,8 +1445,7 @@ mod tests {
         assert!(sk.compressed);
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
-        let secp = Secp256k1::new();
-        let pk = Address::p2pkh(sk.public_key(&secp), sk.network);
+        let pk = Address::p2pkh(sk.public_key(), sk.network);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
@@ -1469,8 +1461,7 @@ mod tests {
         assert!(!sk.compressed);
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
-        let secp = Secp256k1::new();
-        let mut pk = sk.public_key(&secp);
+        let mut pk = sk.public_key();
         assert!(!pk.compressed);
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
         assert_eq!(pk, "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
@@ -1547,9 +1538,8 @@ mod tests {
             0xe9, 0x71, 0xd8, 0x6b, 0x5e, 0x61, 0x87, 0x5d,
         ];
 
-        let s = Secp256k1::new();
         let sk = KEY_WIF.parse::<PrivateKey>().unwrap();
-        let pk = PublicKey::from_private_key(&s, sk);
+        let pk = PublicKey::from_private_key(sk);
         let pk_u = PublicKey { inner: pk.inner, compressed: false };
 
         assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);
@@ -1744,8 +1734,7 @@ mod tests {
     fn public_key_constructors() {
         use secp256k1::rand;
 
-        let secp = Secp256k1::new();
-        let kp = Keypair::new(&secp, &mut rand::thread_rng());
+        let kp = Keypair::new(&mut rand::rng());
 
         let _ = PublicKey::new(kp);
         let _ = PublicKey::new_uncompressed(kp);
@@ -1851,7 +1840,7 @@ mod tests {
         let key_bytes = &<[u8; 32]>::from_hex(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
         ).expect("Failed to convert hex string to byte array");
-        let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(key_bytes)
+        let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(*key_bytes)
             .expect("Failed to create a secp256k1 x-only public key from a byte array");
         let btc_pubkey = XOnlyPublicKey::new(inner_key);
         // Confirm that the into_inner() returns the same data that was initially wrapped
