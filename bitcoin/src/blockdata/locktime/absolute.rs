@@ -42,6 +42,8 @@ pub use units::locktime::absolute::{
 /// consensus encoding to order it. We also implement [`ordered::ArbitraryOrd`] if the "ordered"
 /// feature is enabled.
 ///
+/// [`ordered::ArbitraryOrd`]: <https://docs.rs/ordered/latest/ordered/trait.ArbitraryOrd.html>
+///
 /// ### Relevant BIPs
 ///
 /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
