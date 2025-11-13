@@ -66,7 +66,7 @@ pub struct RedeemScriptSizeError {
 
 impl RedeemScriptSizeError {
     /// Returns the invalid redeem script size.
-    pub fn invalid_size(&self) -> usize { self.size }
+    pub const fn invalid_size(&self) -> usize { self.size }
 }
 
 impl From<Infallible> for RedeemScriptSizeError {
