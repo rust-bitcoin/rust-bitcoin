@@ -185,6 +185,8 @@ impl PartialOrd<SerializedSignature> for [u8] {
     }
 }
 
+impl Eq for SerializedSignature {}
+
 impl core::hash::Hash for SerializedSignature {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { (**self).hash(state) }
 }
@@ -205,8 +207,6 @@ impl ops::Deref for SerializedSignature {
     #[inline]
     fn deref(&self) -> &[u8] { &self.data[..self.len] }
 }
-
-impl Eq for SerializedSignature {}
 
 impl IntoIterator for SerializedSignature {
     type IntoIter = IntoIter;
