@@ -44,6 +44,24 @@ impl Signature {
         }
     }
 
+    /// Serializes the signature (without heap allocation).
+    ///
+    /// This returns a type with an API very similar to that of `Box<[u8]>`.
+    /// You can get a slice from it using deref coercions or turn it into an iterator.
+    pub fn serialize(self) -> SerializedSignature {
+        let mut buf = [0; serialized_signature::MAX_LEN];
+        let ser_sig = self.signature.to_byte_array();
+        buf[..64].copy_from_slice(&ser_sig);
+        let len = if self.sighash_type == TapSighashType::Default {
+            // default sighash type, don't add extra sighash byte
+            64
+        } else {
+            buf[64] = self.sighash_type as u8;
+            65
+        };
+        SerializedSignature::from_raw_parts(buf, len)
+    }
+
     /// Serializes the signature.
     ///
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
@@ -61,24 +79,6 @@ impl Signature {
     pub fn serialize_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         let sig = self.serialize();
         sig.write_to(writer)
-    }
-
-    /// Serializes the signature (without heap allocation).
-    ///
-    /// This returns a type with an API very similar to that of `Box<[u8]>`.
-    /// You can get a slice from it using deref coercions or turn it into an iterator.
-    pub fn serialize(self) -> SerializedSignature {
-        let mut buf = [0; serialized_signature::MAX_LEN];
-        let ser_sig = self.signature.to_byte_array();
-        buf[..64].copy_from_slice(&ser_sig);
-        let len = if self.sighash_type == TapSighashType::Default {
-            // default sighash type, don't add extra sighash byte
-            64
-        } else {
-            buf[64] = self.sighash_type as u8;
-            65
-        };
-        SerializedSignature::from_raw_parts(buf, len)
     }
 }
 
