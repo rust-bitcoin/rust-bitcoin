@@ -276,6 +276,72 @@ impl<'a> Arbitrary<'a> for FeeRate {
     }
 }
 
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`FeeRate`] type.
+    ///
+    /// Encodes a fee rate as sat/kvB in little-endian format.
+    /// This matches the Bitcoin protocol wire format for the `feefilter` P2P message.
+    pub struct FeeRateEncoder(encoding::ArrayEncoder<8>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for FeeRate {
+    type Encoder<'e> = FeeRateEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        FeeRateEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.to_sat_per_kvb_ceil().to_le_bytes(),
+        ))
+    }
+}
+
+/// The decoder for the [`FeeRate`] type.
+#[cfg(feature = "encoding")]
+pub struct FeeRateDecoder(encoding::ArrayDecoder<8>);
+
+#[cfg(feature = "encoding")]
+impl FeeRateDecoder {
+    /// Constructs a new [`FeeRate`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for FeeRateDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for FeeRateDecoder {
+    type Output = FeeRate;
+    type Error = encoding::UnexpectedEofError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end()?;
+        let kvb = u64::from_le_bytes(bytes);
+
+        // BIP-0133 specifies feefilter as int64_t (signed), but negative values and values
+        // exceeding u32::MAX are invalid for fee rates. We saturate both cases to FeeRate::MAX.
+        let feerate = kvb.try_into().ok().map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb);
+
+        Ok(feerate)
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for FeeRate {
+    type Decoder = FeeRateDecoder;
+    fn decoder() -> Self::Decoder { FeeRateDecoder(encoding::ArrayDecoder::<8>::new()) }
+}
+
 #[cfg(test)]
 mod tests {
     use core::num::NonZeroU64;
@@ -432,5 +498,50 @@ mod tests {
         let fee_rate = FeeRate::from_sat_per_mvb(1_234_567);
         let got = fee_rate.to_sat_per_mvb();
         assert_eq!(got, 1_234_567);
+    }
+
+    #[test]
+    #[cfg(feature = "encoding")]
+    fn encode_decode_roundtrip() {
+        use encoding::{decode_from_slice, encode_to_vec};
+
+        let test_cases = [
+            FeeRate::ZERO,
+            FeeRate::BROADCAST_MIN,
+            FeeRate::DUST,
+            FeeRate::from_sat_per_kvb(1000),
+            FeeRate::from_sat_per_kvb(u32::MAX),
+        ];
+
+        for original in test_cases {
+            let encoded = encode_to_vec(&original);
+            let decoded: FeeRate = decode_from_slice(&encoded).expect("decoding should succeed");
+            assert_eq!(decoded.to_sat_per_kvb_ceil(), original.to_sat_per_kvb_ceil());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "encoding")]
+    fn decode_edge_cases() {
+        use encoding::decode_from_slice;
+
+        // Test negative value saturation.
+        let negative_bytes = (-1i64).to_le_bytes();
+        let decoded: FeeRate = decode_from_slice(&negative_bytes).expect("decoding should succeed");
+        assert_eq!(decoded, FeeRate::MAX, "Negative fee rate should saturate to MAX");
+
+        // Test value exceeding u32::MAX (grief attack scenario).
+        let overflow_bytes = (u64::from(u32::MAX) + 1).to_le_bytes();
+        let decoded: FeeRate = decode_from_slice(&overflow_bytes).expect("decoding should succeed");
+        assert_eq!(decoded, FeeRate::MAX, "Overflow should saturate to MAX");
+
+        // Test maximum valid u32 value.
+        let max_u32_bytes = u64::from(u32::MAX).to_le_bytes();
+        let decoded: FeeRate = decode_from_slice(&max_u32_bytes).expect("decoding should succeed");
+        assert_eq!(
+            decoded,
+            FeeRate::from_sat_per_kvb(u32::MAX),
+            "u32::MAX should decode correctly"
+        );
     }
 }
