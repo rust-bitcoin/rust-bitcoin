@@ -41,7 +41,7 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use bitcoin::network::{Network, Params, TestnetVersion};
+use bitcoin::network::{Network, TestnetVersion};
 use hex::FromHex;
 use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
@@ -294,8 +294,9 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
     /// Returns the magic bytes for the network defined by `params`.
-    pub fn from_params(params: impl AsRef<Params>) -> Option<Self> {
-        params.as_ref().network.try_into().ok()
+    pub fn from_params(network: impl AsRef<Network>) -> Option<Self> {
+        let network = AsRef::<Network>::as_ref(&network);
+        (*network).try_into().ok()
     }
 }
 
@@ -465,16 +466,12 @@ impl std::error::Error for UnknownNetworkError {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ProtocolVersion {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ServiceFlags {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
 #[cfg(feature = "arbitrary")]

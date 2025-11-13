@@ -238,9 +238,11 @@ crate::internal_macros::define_extension_trait! {
 
         /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
         fn new_witness_program(witness_program: &WitnessProgram) -> Self {
+            use crate::script::witness_program::WitnessProgramExt;
+
             Builder::new()
                 .push_opcode(witness_program.version().into())
-                .push_slice(witness_program.program())
+                .push_slice(WitnessProgramExt::program(witness_program))
                 .into_script()
         }
     }

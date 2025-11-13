@@ -18,6 +18,10 @@ use super::Decoder;
 #[cfg(feature = "alloc")]
 const MAX_VEC_SIZE: u64 = 4_000_000;
 
+/// Maximum amount of memory (in bytes) to allocate at once when deserializing vectors.
+#[cfg(feature = "alloc")]
+const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
+
 /// A decoder that decodes a byte vector.
 ///
 /// The encoding is expected to start with the number of encoded bytes (length prefix).
@@ -38,6 +42,25 @@ impl ByteVecDecoder {
             buffer: Vec::new(),
             bytes_expected: 0,
             bytes_written: 0,
+        }
+    }
+
+    /// Reserves capacity for byte vectors in batches.
+    ///
+    /// Reserves up to `MAX_VECTOR_ALLOCATE` bytes when the buffer has no remaining capacity.
+    ///
+    /// Documentation adapted from Bitcoin Core:
+    ///
+    /// > For `DoS` prevention, do not blindly allocate as much as the stream claims to contain.
+    /// > Instead, allocate in ~1 MB batches, so that an attacker actually needs to provide X MB of
+    /// > data to make us allocate X+1 MB of memory.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/72511fd02e72b74be11273e97bd7911786a82e54/src/serialize.h#L669C2-L672C1>
+    fn reserve(&mut self) {
+        if self.buffer.len() == self.buffer.capacity() {
+            let bytes_remaining = self.bytes_expected - self.bytes_written;
+            let batch_size = bytes_remaining.min(MAX_VECTOR_ALLOCATE);
+            self.buffer.reserve_exact(batch_size);
         }
     }
 }
@@ -66,12 +89,14 @@ impl Decoder for ByteVecDecoder {
             self.bytes_expected =
                 cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.bytes_expected);
+            // For DoS prevention, let's not allocate all memory upfront.
         }
 
+        self.reserve();
+
         let remaining = self.bytes_expected - self.bytes_written;
-        let copy_len = bytes.len().min(remaining);
+        let available_capacity = self.buffer.capacity() - self.buffer.len();
+        let copy_len = bytes.len().min(remaining).min(available_capacity);
 
         self.buffer.extend_from_slice(&bytes[..copy_len]);
         self.bytes_written += copy_len;
@@ -124,6 +149,28 @@ impl<T: Decodable> VecDecoder<T> {
             decoder: None,
         }
     }
+
+    /// Reserves capacity for typed vectors in batches.
+    ///
+    /// Calculates how many elements of type `T` fit within `MAX_VECTOR_ALLOCATE` bytes and reserves
+    /// up to that amount when the buffer reaches capacity.
+    ///
+    /// Documentation adapted from Bitcoin Core:
+    ///
+    /// > For `DoS` prevention, do not blindly allocate as much as the stream claims to contain.
+    /// > Instead, allocate in ~1 MB batches, so that an attacker actually needs to provide X MB of
+    /// > data to make us allocate X+1 MB of memory.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/72511fd02e72b74be11273e97bd7911786a82e54/src/serialize.h#L669C2-L672C1>
+    fn reserve(&mut self) {
+        if self.buffer.len() == self.buffer.capacity() {
+            let elements_remaining = self.length - self.buffer.len();
+            let element_size = mem::size_of::<T>().max(1);
+            let batch_elements = MAX_VECTOR_ALLOCATE / element_size;
+            let elements_to_reserve = elements_remaining.min(batch_elements);
+            self.buffer.reserve_exact(elements_to_reserve);
+        }
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -153,11 +200,12 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
             self.length =
                 cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.length);
+            // For DoS prevention, let's not allocate all memory upfront.
         }
 
         while !bytes.is_empty() {
+            self.reserve();
+
             let mut decoder = self.decoder.take().unwrap_or_else(T::decoder);
 
             if decoder.push_bytes(bytes).map_err(|e| E(Inner::Item(e)))? {
@@ -299,7 +347,9 @@ where
     B: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub const fn new(first: A, second: B) -> Self { Self { state: Decoder2State::First(first, second) } }
+    pub const fn new(first: A, second: B) -> Self {
+        Self { state: Decoder2State::First(first, second) }
+    }
 }
 
 impl<A, B> Decoder for Decoder2<A, B>
@@ -1126,6 +1176,52 @@ mod tests {
             decode_byte_vec_multi_byte_length_prefix, [0xff; 256], two_fifty_six_bytes_encoded();
     }
 
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_reserves_in_batches() {
+        // A small number of extra bytes so we extend exactly by the remainder
+        // instead of another full batch.
+        let tail_length: usize = 11;
+
+        let total_len = MAX_VECTOR_ALLOCATE + tail_length;
+        let total_len_le = u32::try_from(total_len).expect("total_len fits u32").to_le_bytes();
+        let mut decoder = ByteVecDecoder::new();
+
+        let mut prefix = vec![0xFE]; // total_len_le is a compact size of four bytes.
+        prefix.extend_from_slice(&total_len_le);
+        prefix.push(0xAA);
+        let mut prefix_slice = prefix.as_slice();
+        decoder.push_bytes(&mut prefix_slice).expect("length plus first element");
+        assert!(prefix_slice.is_empty());
+
+        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.buffer.len(), 1);
+        assert_eq!(decoder.buffer[0], 0xAA);
+
+        let fill = vec![0xBB; MAX_VECTOR_ALLOCATE - 1];
+        let mut fill_slice = fill.as_slice();
+        decoder.push_bytes(&mut fill_slice).expect("fills to batch boundary, full capacity");
+        assert!(fill_slice.is_empty());
+
+        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.buffer.len(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.buffer[MAX_VECTOR_ALLOCATE - 1], 0xBB);
+
+        let mut tail = vec![0xCC];
+        tail.extend([0xDD].repeat(tail_length - 1));
+        let mut tail_slice = tail.as_slice();
+        decoder.push_bytes(&mut tail_slice).expect("fills the remaining bytes");
+        assert!(tail_slice.is_empty());
+
+        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE + tail_length);
+        assert_eq!(decoder.buffer.len(), total_len);
+        assert_eq!(decoder.buffer[MAX_VECTOR_ALLOCATE], 0xCC);
+
+        let result = decoder.end().unwrap();
+        assert_eq!(result.len(), total_len);
+        assert_eq!(result[total_len - 1], 0xDD);
+    }
+
     #[cfg(feature = "alloc")]
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Inner(u32);
@@ -1233,6 +1329,55 @@ mod tests {
         let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
 
         assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_reserves_in_batches() {
+        // A small number of extra elements so we extend exactly by the remainder
+        // instead of another full batch.
+        let tail_length: usize = 11;
+
+        let element_size = core::mem::size_of::<Inner>();
+        let batch_length = MAX_VECTOR_ALLOCATE / element_size;
+        assert!(batch_length > 1);
+        let total_len = batch_length + tail_length;
+        let total_len_le = u32::try_from(total_len).expect("total_len fits u32").to_le_bytes();
+        let mut decoder = Test::decoder();
+
+        let mut prefix = vec![0xFE]; // total_len_le is a compact size of four bytes.
+        prefix.extend_from_slice(&total_len_le);
+        prefix.extend_from_slice(&0xAA_u32.to_le_bytes());
+        let mut prefix_slice = prefix.as_slice();
+        decoder.push_bytes(&mut prefix_slice).expect("length plus first element");
+        assert!(prefix_slice.is_empty());
+
+        assert_eq!(decoder.0.buffer.capacity(), batch_length);
+        assert_eq!(decoder.0.buffer.len(), 1);
+        assert_eq!(decoder.0.buffer[0], Inner(0xAA));
+
+        let fill = 0xBB_u32.to_le_bytes().repeat(batch_length - 1);
+        let mut fill_slice = fill.as_slice();
+        decoder.push_bytes(&mut fill_slice).expect("fills to batch boundary, full capacity");
+        assert!(fill_slice.is_empty());
+
+        assert_eq!(decoder.0.buffer.capacity(), batch_length);
+        assert_eq!(decoder.0.buffer.len(), batch_length);
+        assert_eq!(decoder.0.buffer[batch_length - 1], Inner(0xBB));
+
+        let mut tail = 0xCC_u32.to_le_bytes().to_vec();
+        tail.extend(0xDD_u32.to_le_bytes().repeat(tail_length - 1));
+        let mut tail_slice = tail.as_slice();
+        decoder.push_bytes(&mut tail_slice).expect("fills the remaining bytes");
+        assert!(tail_slice.is_empty());
+
+        assert_eq!(decoder.0.buffer.capacity(), batch_length + tail_length);
+        assert_eq!(decoder.0.buffer.len(), total_len);
+        assert_eq!(decoder.0.buffer[batch_length], Inner(0xCC));
+
+        let Test(result) = decoder.end().unwrap();
+        assert_eq!(result.len(), total_len);
+        assert_eq!(result[total_len - 1], Inner(0xDD));
     }
 
     #[cfg(feature = "alloc")]

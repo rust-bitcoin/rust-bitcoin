@@ -9,6 +9,8 @@
 
 use core::fmt;
 
+use crate::witness_version::{self, WitnessVersion};
+
 /// A script Opcode.
 ///
 /// We do not implement Ord on this type because there is no natural ordering on opcodes, but there
@@ -25,6 +27,28 @@ use core::fmt;
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Opcode {
     code: u8,
+}
+
+impl TryFrom<Opcode> for WitnessVersion {
+    type Error = witness_version::TryFromError;
+
+    fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
+        match opcode.to_u8() {
+            0 => Ok(Self::V0),
+            version if version >= OP_1.to_u8() && version <= OP_16.to_u8() =>
+                Self::try_from(version - OP_1.to_u8() + 1),
+            invalid => Err(witness_version::TryFromError { invalid }),
+        }
+    }
+}
+
+impl From<WitnessVersion> for Opcode {
+    fn from(version: WitnessVersion) -> Self {
+        match version {
+            WitnessVersion::V0 => OP_PUSHBYTES_0,
+            no => Self::from(OP_1.to_u8() + no.to_num() - 1),
+        }
+    }
 }
 
 use self::all::*;

@@ -951,11 +951,9 @@ impl From<Infallible> for GetKeyError {
 
 impl fmt::Display for GetKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use GetKeyError::*;
-
-        match *self {
-            Bip32(ref e) => write_err!(f, "bip32 derivation"; e),
-            NotSupported =>
+        match self {
+            Self::Bip32(ref e) => write_err!(f, "bip32 derivation"; e),
+            Self::NotSupported =>
                 f.write_str("the GetKey operation is not supported for this key request"),
         }
     }
@@ -964,11 +962,9 @@ impl fmt::Display for GetKeyError {
 #[cfg(feature = "std")]
 impl std::error::Error for GetKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use GetKeyError::*;
-
-        match *self {
-            NotSupported => None,
-            Bip32(ref e) => Some(e),
+        match self {
+            Self::NotSupported => None,
+            Self::Bip32(ref e) => Some(e),
         }
     }
 }
@@ -1062,26 +1058,24 @@ impl From<Infallible> for SignError {
 
 impl fmt::Display for SignError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use SignError::*;
-
-        match *self {
-            IndexOutOfBounds(ref e) => write_err!(f, "index out of bounds"; e),
-            InvalidSighashType => write!(f, "invalid sighash type"),
-            MissingInputUtxo => write!(f, "missing input utxo in PSBT"),
-            MissingRedeemScript => write!(f, "missing redeem script"),
-            MissingSpendUtxo => write!(f, "missing spend utxo in PSBT"),
-            MissingWitnessScript => write!(f, "missing witness script"),
-            MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
-            NotEcdsa => write!(f, "attempted to ECDSA sign a non-ECDSA input"),
-            NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
-            SegwitV0Sighash(ref e) => write_err!(f, "SegWit v0 sighash"; e),
-            P2wpkhSighash(ref e) => write_err!(f, "p2wpkh sighash"; e),
-            TaprootError(ref e) => write_err!(f, "Taproot sighash"; e),
-            UnknownOutputType => write!(f, "unable to determine the output type"),
-            KeyNotFound => write!(f, "unable to find key"),
-            WrongSigningAlgorithm =>
+        match self {
+            Self::IndexOutOfBounds(ref e) => write_err!(f, "index out of bounds"; e),
+            Self::InvalidSighashType => write!(f, "invalid sighash type"),
+            Self::MissingInputUtxo => write!(f, "missing input utxo in PSBT"),
+            Self::MissingRedeemScript => write!(f, "missing redeem script"),
+            Self::MissingSpendUtxo => write!(f, "missing spend utxo in PSBT"),
+            Self::MissingWitnessScript => write!(f, "missing witness script"),
+            Self::MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
+            Self::NotEcdsa => write!(f, "attempted to ECDSA sign a non-ECDSA input"),
+            Self::NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
+            Self::SegwitV0Sighash(ref e) => write_err!(f, "SegWit v0 sighash"; e),
+            Self::P2wpkhSighash(ref e) => write_err!(f, "p2wpkh sighash"; e),
+            Self::TaprootError(ref e) => write_err!(f, "Taproot sighash"; e),
+            Self::UnknownOutputType => write!(f, "unable to determine the output type"),
+            Self::KeyNotFound => write!(f, "unable to find key"),
+            Self::WrongSigningAlgorithm =>
                 write!(f, "attempt to sign an input with the wrong signing algorithm"),
-            Unsupported => write!(f, "signing request currently unsupported"),
+            Self::Unsupported => write!(f, "signing request currently unsupported"),
         }
     }
 }
@@ -1089,25 +1083,23 @@ impl fmt::Display for SignError {
 #[cfg(feature = "std")]
 impl std::error::Error for SignError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use SignError::*;
-
-        match *self {
-            SegwitV0Sighash(ref e) => Some(e),
-            P2wpkhSighash(ref e) => Some(e),
-            TaprootError(ref e) => Some(e),
-            IndexOutOfBounds(ref e) => Some(e),
-            InvalidSighashType
-            | MissingInputUtxo
-            | MissingRedeemScript
-            | MissingSpendUtxo
-            | MissingWitnessScript
-            | MismatchedAlgoKey
-            | NotEcdsa
-            | NotWpkh
-            | UnknownOutputType
-            | KeyNotFound
-            | WrongSigningAlgorithm
-            | Unsupported => None,
+        match self {
+            Self::SegwitV0Sighash(ref e) => Some(e),
+            Self::P2wpkhSighash(ref e) => Some(e),
+            Self::TaprootError(ref e) => Some(e),
+            Self::IndexOutOfBounds(ref e) => Some(e),
+            Self::InvalidSighashType
+            | Self::MissingInputUtxo
+            | Self::MissingRedeemScript
+            | Self::MissingSpendUtxo
+            | Self::MissingWitnessScript
+            | Self::MismatchedAlgoKey
+            | Self::NotEcdsa
+            | Self::NotWpkh
+            | Self::UnknownOutputType
+            | Self::KeyNotFound
+            | Self::WrongSigningAlgorithm
+            | Self::Unsupported => None,
         }
     }
 }
@@ -1153,19 +1145,17 @@ impl From<Infallible> for ExtractTxError {
 
 impl fmt::Display for ExtractTxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use ExtractTxError::*;
-
-        match *self {
-            AbsurdFeeRate { fee_rate, .. } => write!(
+        match self {
+            Self::AbsurdFeeRate { fee_rate, .. } => write!(
                 f,
                 "an absurdly high fee rate of {} sat/kwu",
                 fee_rate.to_sat_per_kwu_floor()
             ),
-            MissingInputAmount { .. } => write!(
+            Self::MissingInputAmount { .. } => write!(
                 f,
                 "one of the inputs lacked amount information (witness_utxo or non_witness_utxo)"
             ),
-            SendingTooMuch { .. } => write!(
+            Self::SendingTooMuch { .. } => write!(
                 f,
                 "transaction would be invalid due to output amount being greater than input amount."
             ),
@@ -1176,10 +1166,10 @@ impl fmt::Display for ExtractTxError {
 #[cfg(feature = "std")]
 impl std::error::Error for ExtractTxError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ExtractTxError::*;
-
-        match *self {
-            AbsurdFeeRate { .. } | MissingInputAmount { .. } | SendingTooMuch { .. } => None,
+        match self {
+            Self::AbsurdFeeRate { .. }
+            | Self::MissingInputAmount { .. }
+            | Self::SendingTooMuch { .. } => None,
         }
     }
 }
@@ -1210,15 +1200,13 @@ impl From<Infallible> for IndexOutOfBoundsError {
 
 impl fmt::Display for IndexOutOfBoundsError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use IndexOutOfBoundsError::*;
-
-        match *self {
-            Inputs { ref index, ref length } => write!(
+        match self {
+            Self::Inputs { ref index, ref length } => write!(
                 f,
                 "index {} is out-of-bounds for PSBT inputs vector length {}",
                 index, length
             ),
-            TxInput { ref index, ref length } => write!(
+            Self::TxInput { ref index, ref length } => write!(
                 f,
                 "index {} is out-of-bounds for PSBT unsigned tx input vector length {}",
                 index, length
@@ -1230,10 +1218,8 @@ impl fmt::Display for IndexOutOfBoundsError {
 #[cfg(feature = "std")]
 impl std::error::Error for IndexOutOfBoundsError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use IndexOutOfBoundsError::*;
-
-        match *self {
-            Inputs { .. } | TxInput { .. } => None,
+        match self {
+            Self::Inputs { .. } | Self::TxInput { .. } => None,
         }
     }
 }
@@ -1266,11 +1252,10 @@ mod display_from_str {
 
     impl fmt::Display for PsbtParseError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            use self::PsbtParseError::*;
-
-            match *self {
-                PsbtEncoding(ref e) => write_err!(f, "error in internal PSBT data structure"; e),
-                Base64Encoding(ref e) => write_err!(f, "error in PSBT base64 encoding"; e),
+            match self {
+                Self::PsbtEncoding(ref e) =>
+                    write_err!(f, "error in internal PSBT data structure"; e),
+                Self::Base64Encoding(ref e) => write_err!(f, "error in PSBT base64 encoding"; e),
             }
         }
     }
@@ -1278,11 +1263,9 @@ mod display_from_str {
     #[cfg(feature = "std")]
     impl std::error::Error for PsbtParseError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            use self::PsbtParseError::*;
-
             match self {
-                PsbtEncoding(e) => Some(e),
-                Base64Encoding(e) => Some(e),
+                Self::PsbtEncoding(e) => Some(e),
+                Self::Base64Encoding(e) => Some(e),
             }
         }
     }
@@ -1312,7 +1295,7 @@ mod tests {
     use hashes::{hash160, ripemd160, sha256};
     use hex::FromHex;
     use hex_lit::hex;
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     use {
         crate::bip32::Fingerprint, crate::locktime, crate::script::ScriptPubKeyBufExt as _,
         crate::witness_version::WitnessVersion, crate::WitnessProgram, secp256k1::SecretKey,
@@ -2353,7 +2336,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn get_key_btree_map() {
         let (priv_key, pk) = gen_keys();
 
@@ -2365,7 +2348,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn pubkey_map_get_key_negates_odd_parity_keys() {
         use crate::psbt::{GetKey, KeyRequest};
 
@@ -2520,7 +2503,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn hashmap_can_sign_taproot() {
         let (priv_key, pk) = gen_keys();
         let internal_key: XOnlyPublicKey = pk.inner.into();
@@ -2553,7 +2536,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn xonly_hashmap_can_sign_taproot() {
         let (priv_key, pk) = gen_keys();
         let internal_key: XOnlyPublicKey = pk.inner.into();
@@ -2586,7 +2569,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn sign_psbt() {
         let unsigned_tx = Transaction {
             version: transaction::Version::TWO,

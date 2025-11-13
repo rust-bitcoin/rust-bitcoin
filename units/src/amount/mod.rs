@@ -26,9 +26,9 @@ use core::str::FromStr;
 use arbitrary::{Arbitrary, Unstructured};
 
 use self::error::{
-    InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-    MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner, PossiblyConfusingDenominationError,
-    TooPreciseError, UnknownDenominationError,
+    BadPositionError, InputTooLargeError, InvalidCharacterError, MissingDenominationError,
+    MissingDigitsError, MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner,
+    PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
 };
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -209,6 +209,7 @@ const INPUT_STRING_LEN_LIMIT: usize = 50;
 /// [`bool`] indicator for a negative amount.
 ///
 /// The `bool` is only needed to distinguish -0 from 0.
+#[allow(clippy::too_many_lines)]
 fn parse_signed_to_satoshi(
     mut s: &str,
     denom: Denomination,
@@ -259,6 +260,8 @@ fn parse_signed_to_satoshi(
     };
 
     let mut decimals = None;
+    // The number of consecutive underscores
+    let mut underscores = None;
     let mut value: i64 = 0; // as satoshis
     for (i, c) in s.char_indices() {
         match c {
@@ -280,10 +283,29 @@ fn parse_signed_to_satoshi(
                             position: i + usize::from(is_negative),
                         })),
                 };
+                underscores = None;
             }
+            '_' if i == 0 =>
+            // Leading underscore
+                return Err(InnerParseError::BadPosition(BadPositionError {
+                    char: '_',
+                    position: i + usize::from(is_negative),
+                })),
+            '_' => match underscores {
+                None => underscores = Some(1),
+                // Consecutive underscores
+                _ =>
+                    return Err(InnerParseError::BadPosition(BadPositionError {
+                        char: '_',
+                        position: i + usize::from(is_negative),
+                    })),
+            },
             '.' => match decimals {
                 None if max_decimals <= 0 => break,
-                None => decimals = Some(0),
+                None => {
+                    decimals = Some(0);
+                    underscores = None;
+                }
                 // Double decimal dot.
                 _ =>
                     return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {
@@ -323,6 +345,7 @@ enum InnerParseError {
     MissingDigits(MissingDigitsError),
     InputTooLarge(usize),
     InvalidCharacter(InvalidCharacterError),
+    BadPosition(BadPositionError),
 }
 
 impl From<Infallible> for InnerParseError {
@@ -340,6 +363,7 @@ impl InnerParseError {
                 ParseAmountError(ParseAmountErrorInner::InputTooLarge(InputTooLargeError { len })),
             Self::InvalidCharacter(e) =>
                 ParseAmountError(ParseAmountErrorInner::InvalidCharacter(e)),
+            Self::BadPosition(e) => ParseAmountError(ParseAmountErrorInner::BadPosition(e)),
         }
     }
 }

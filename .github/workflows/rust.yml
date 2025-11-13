@@ -111,6 +111,12 @@ jobs:
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
           persist-credentials: false
+      - name: "Free disk space"
+        uses: endersonmenezes/free-disk-space@6c4664f43348c8c7011b53488d5ca65e9fc5cd1a # v3.0.0
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
         with:
@@ -433,5 +439,27 @@ jobs:
           persist-credentials: false
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: "Run API checker script"
-        run: contrib/generate-re-export-test.sh && cd ./primitives && cargo test --all-features
+      - name: "Run primitives API checker script"
+        run: |
+          contrib/generate-primitives-re-export-test.sh && (cd ./primitives && cargo test --all-features)
+          contrib/generate-bitcoin-re-export-test.sh && (cd ./bitcoin && cargo test --all-features)
+
+  DiffMutants: 
+    name: Check cargo mutants in diff - stable toolchain
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # required for full diff context
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+      - name: "Fetch base branch for diff"
+        run: git fetch origin master
+      - name: "Retrieve relative diff"
+        run: git diff origin/master.. | tee git.diff
+      - uses: taiki-e/install-action@81ee1d48d9194cdcab880cbdc7d36e87d39874cb # v2.62.45
+        with:
+          tool: cargo-mutants
+      - run: cargo mutants --no-shuffle --in-diff git.diff

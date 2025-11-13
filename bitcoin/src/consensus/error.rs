@@ -27,11 +27,9 @@ impl From<Infallible> for DeserializeError {
 
 impl fmt::Display for DeserializeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DeserializeError::*;
-
-        match *self {
-            Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
-            Unconsumed => write!(f, "data not consumed entirely when deserializing"),
+        match self {
+            Self::Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+            Self::Unconsumed => write!(f, "data not consumed entirely when deserializing"),
         }
     }
 }
@@ -39,11 +37,9 @@ impl fmt::Display for DeserializeError {
 #[cfg(feature = "std")]
 impl std::error::Error for DeserializeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use DeserializeError::*;
-
-        match *self {
-            Parse(ref e) => Some(e),
-            Unconsumed => None,
+        match self {
+            Self::Parse(ref e) => Some(e),
+            Self::Unconsumed => None,
         }
     }
 }
@@ -72,12 +68,10 @@ impl<E> From<Infallible> for DecodeError<E> {
 
 impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DecodeError::*;
-
-        match *self {
-            Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
-            Unconsumed => write!(f, "data not consumed entirely when deserializing"),
-            Other(ref other) => write!(f, "other decoding error: {:?}", other),
+        match self {
+            Self::Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+            Self::Unconsumed => write!(f, "data not consumed entirely when deserializing"),
+            Self::Other(ref other) => write!(f, "other decoding error: {:?}", other),
         }
     }
 }
@@ -85,12 +79,10 @@ impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
 #[cfg(feature = "std")]
 impl<E: fmt::Debug + std::error::Error + 'static> std::error::Error for DecodeError<E> {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use DecodeError::*;
-
-        match *self {
-            Parse(ref e) => Some(e),
-            Unconsumed => None,
-            Other(ref e) => Some(e),
+        match self {
+            Self::Parse(ref e) => Some(e),
+            Self::Unconsumed => None,
+            Self::Other(ref e) => Some(e),
         }
     }
 }
@@ -111,11 +103,9 @@ impl From<Infallible> for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            Io(ref e) => write_err!(f, "I/O error"; e),
-            Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+        match self {
+            Self::Io(ref e) => write_err!(f, "I/O error"; e),
+            Self::Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
         }
     }
 }
@@ -123,11 +113,9 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            Io(ref e) => Some(e),
-            Parse(ref e) => Some(e),
+        match self {
+            Self::Io(ref e) => Some(e),
+            Self::Parse(ref e) => Some(e),
         }
     }
 }
@@ -181,20 +169,18 @@ impl From<Infallible> for ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseError::*;
-
-        match *self {
-            MissingData => write!(f, "missing data (early end of file or slice too short)"),
-            OversizedVectorAllocation { requested: ref r, max: ref m } =>
+        match self {
+            Self::MissingData => write!(f, "missing data (early end of file or slice too short)"),
+            Self::OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
-            InvalidChecksum { expected: ref e, actual: ref a } => write!(
+            Self::InvalidChecksum { expected: ref e, actual: ref a } => write!(
                 f,
                 "invalid checksum: expected {:02x}{:02x}{:02x}{:02x}, actual {:02x}{:02x}{:02x}{:02x}",
                 e[0], e[1], e[2], e[3], a[0], a[1], a[2], a[3],
             ),
-            NonMinimalCompactSize => write!(f, "non-minimal compact size"),
-            ParseFailed(ref s) => write!(f, "parse failed: {}", s),
-            UnsupportedSegwitFlag(ref swflag) =>
+            Self::NonMinimalCompactSize => write!(f, "non-minimal compact size"),
+            Self::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
+            Self::UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported SegWit version: {}", swflag),
         }
     }
@@ -203,15 +189,13 @@ impl fmt::Display for ParseError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseError::*;
-
         match self {
-            MissingData
-            | OversizedVectorAllocation { .. }
-            | InvalidChecksum { .. }
-            | NonMinimalCompactSize
-            | ParseFailed(_)
-            | UnsupportedSegwitFlag(_) => None,
+            Self::MissingData
+            | Self::OversizedVectorAllocation { .. }
+            | Self::InvalidChecksum { .. }
+            | Self::NonMinimalCompactSize
+            | Self::ParseFailed(_)
+            | Self::UnsupportedSegwitFlag(_) => None,
         }
     }
 }
@@ -227,12 +211,10 @@ pub enum FromHexError {
 
 impl fmt::Display for FromHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromHexError::*;
-
-        match *self {
-            OddLengthString(ref e) =>
+        match self {
+            Self::OddLengthString(ref e) =>
                 write_err!(f, "odd length, failed to create bytes from hex"; e),
-            Decode(ref e) => write_err!(f, "decoding error"; e),
+            Self::Decode(ref e) => write_err!(f, "decoding error"; e),
         }
     }
 }
@@ -240,11 +222,9 @@ impl fmt::Display for FromHexError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromHexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromHexError::*;
-
-        match *self {
-            OddLengthString(ref e) => Some(e),
-            Decode(ref e) => Some(e),
+        match self {
+            Self::OddLengthString(ref e) => Some(e),
+            Self::Decode(ref e) => Some(e),
         }
     }
 }

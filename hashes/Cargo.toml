@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin_hashes"
-version = "0.17.0"
+version = "0.18.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
@@ -23,7 +23,7 @@ small-hash = []
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1" }
-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0-rc.1", default-features = false }
+encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0-rc.2", default-features = false }
 
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, optional = true }

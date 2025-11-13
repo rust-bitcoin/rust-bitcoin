@@ -6,6 +6,11 @@ mod borrowed;
 mod owned;
 mod tag;
 
+// FIXME: These should probably be private but `witness_program::MAX_SIZE`
+// doesn't work without the module name and also the error types.
+pub mod witness_program;
+pub mod witness_version;
+
 use core::cmp::Ordering;
 use core::fmt;
 #[cfg(feature = "serde")]
@@ -26,6 +31,8 @@ pub use self::{
     borrowed::{Script, ScriptEncoder},
     owned::{ScriptBuf, ScriptBufDecoder, ScriptBufDecoderError},
     tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag},
+    witness_program::WitnessProgram,
+    witness_version::WitnessVersion,
 };
 #[doc(inline)]
 pub use crate::hash_types::{

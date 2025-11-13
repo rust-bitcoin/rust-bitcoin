@@ -5,157 +5,90 @@
 //! This module provides support for Taproot tagged hashes.
 
 pub mod merkle_branch;
-pub mod serialized_signature;
 
 use core::cmp::{Ordering, Reverse};
 use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
+use crypto::TapTweakHashExt as _;
+use hashes::{sha256t, HashEngine as _};
 use hex::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
-use internals::{impl_to_hex_from_lower_hex, write_err};
+use internals::write_err;
 use io::Write;
-use secp256k1::Scalar;
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{
-    SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
+    ParseXOnlyPublicKeyError, SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey,
+    UntweakedPublicKey,
 };
-use crate::key::ParseXOnlyPublicKeyError;
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
 use crate::{TapScript, TapScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
 #[doc(inline)]
-pub use crate::crypto::taproot::{SigFromSliceError, Signature};
+pub use crate::crypto::taproot::{SerializedSignature, SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranchBuf;
+#[doc(inline)]
+pub use taproot_primitives::*;
 
 #[doc(inline)]
 pub use crate::XOnlyPublicKey;
 
 type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
 
-// Taproot test vectors from BIP-0341 state the hashes without any reversing
-sha256t_tag! {
-    pub struct TapLeafTag = hash_str("TapLeaf");
+/// The leaf script with its version.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct LeafScript<S> {
+    /// The version of the script.
+    pub version: LeafVersion,
+    /// The script, usually `TapScriptBuf` or `&TapScript`.
+    pub script: S,
 }
 
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapLeaf\".
-    ///
-    /// This is used for computing tapscript script spend hash.
-    pub struct TapLeafHash(sha256t::Hash<TapLeafTag>);
-}
+// type alias for versioned tap script corresponding Merkle proof
+type ScriptMerkleProofMap = BTreeMap<(TapScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
 
-hashes::impl_hex_for_newtype!(TapLeafHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapLeafHash);
-
-sha256t_tag! {
-    pub struct TapBranchTag = hash_str("TapBranch");
-}
-
-hash_newtype! {
-    /// Tagged hash used in Taproot trees.
-    ///
-    /// See BIP-0340 for tagging rules.
-    #[repr(transparent)]
-    pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
-}
-
-hashes::impl_hex_for_newtype!(TapNodeHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapNodeHash);
-
-sha256t_tag! {
-    pub struct TapTweakTag = hash_str("TapTweak");
-}
-
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapTweak\".
-    ///
-    /// This hash type is used while computing the tweaked public key.
-    pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
-}
-
-hashes::impl_hex_for_newtype!(TapTweakHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapTweakHash);
-
-impl From<TapLeafHash> for TapNodeHash {
-    fn from(leaf: TapLeafHash) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
-}
-
-impl TapTweakHash {
-    /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
-    /// `P` is the internal key and `R` is the Merkle root.
-    pub fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self {
-        let internal_key = internal_key.into();
-        let mut eng = sha256t::Hash::<TapTweakTag>::engine();
-        // always hash the key
-        eng.input(&internal_key.serialize());
-        if let Some(h) = merkle_root {
-            eng.input(h.as_ref());
-        } else {
-            // nothing to hash
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapLeafHash`] type.
+    pub trait TapLeafHashExt impl for TapLeafHash {
+        /// Computes the leaf hash from components.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
+            let mut eng = sha256t::Hash::<TapLeafTag>::engine();
+            ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
+            script.consensus_encode(&mut eng).expect("engines don't error");
+            let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
+            Self::from_byte_array(inner.to_byte_array())
         }
-        let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
-        Self::from_byte_array(inner.to_byte_array())
-    }
-
-    /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
-    pub fn to_scalar(self) -> Scalar {
-        // This is statistically extremely unlikely to panic.
-        Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
     }
 }
 
-impl TapLeafHash {
-    /// Computes the leaf hash from components.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
-        let mut eng = sha256t::Hash::<TapLeafTag>::engine();
-        ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
-        script.consensus_encode(&mut eng).expect("engines don't error");
-        let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
-        Self::from_byte_array(inner.to_byte_array())
-    }
-}
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapNodeHash`] type.
+    pub trait TapNodeHashExt impl for TapNodeHash {
+        /// Computes branch hash given two hashes of the nodes underneath it.
+        fn from_node_hashes(a: Self, b: Self) -> Self {
+            combine_node_hashes(a, b).0
+        }
 
-impl From<LeafNode> for TapNodeHash {
-    fn from(leaf: LeafNode) -> Self { leaf.node_hash() }
-}
+        /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
+        ///
+        /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
+        /// hash is constructed from a hidden node. This also has better ergonomics
+        /// because it does not require the caller to import the Hash trait.
+        fn assume_hidden(hash: [u8; 32]) -> Self { Self::from_byte_array(hash) }
 
-impl From<&LeafNode> for TapNodeHash {
-    fn from(leaf: &LeafNode) -> Self { leaf.node_hash() }
-}
-
-impl TapNodeHash {
-    /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: Self, b: Self) -> Self {
-        combine_node_hashes(a, b).0
-    }
-
-    /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
-    ///
-    /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
-    /// hash is constructed from a hidden node. This also has better ergonomics
-    /// because it does not require the caller to import the Hash trait.
-    pub fn assume_hidden(hash: [u8; 32]) -> Self { Self::from_byte_array(hash) }
-
-    /// Computes the [`TapNodeHash`] from a script and a leaf version.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
-        Self::from(TapLeafHash::from_script(script, ver))
+        /// Computes the [`TapNodeHash`] from a script and a leaf version.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
+            Self::from(TapLeafHash::from_script(script, ver))
+        }
     }
 }
 
@@ -174,39 +107,12 @@ fn combine_node_hashes(a: TapNodeHash, b: TapNodeHash) -> (TapNodeHash, bool) {
     (TapNodeHash::from_byte_array(inner.to_byte_array()), a < b)
 }
 
-/// Maximum depth of a Taproot tree script spend path.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
-pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
-/// Size of a Taproot control node.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L228
-pub const TAPROOT_CONTROL_NODE_SIZE: usize = 32;
-/// Tapleaf mask for getting the leaf version from first byte of control block.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L225
-pub const TAPROOT_LEAF_MASK: u8 = 0xfe;
-/// Tapscript leaf version.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L226
-pub const TAPROOT_LEAF_TAPSCRIPT: u8 = 0xc0;
-/// Taproot annex prefix.
-pub const TAPROOT_ANNEX_PREFIX: u8 = 0x50;
-/// Tapscript control base size.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L227
-pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
-/// Tapscript control max size.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L230
-pub const TAPROOT_CONTROL_MAX_SIZE: usize =
-    TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
-
-/// The leaf script with its version.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct LeafScript<S> {
-    /// The version of the script.
-    pub version: LeafVersion,
-    /// The script, usually `TapScriptBuf` or `&TapScript`.
-    pub script: S,
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::TapTweakHash {}
+    impl Sealed for super::TapLeafHash {}
+    impl Sealed for super::TapNodeHash {}
 }
-
-// type alias for versioned tap script corresponding Merkle proof
-type ScriptMerkleProofMap = BTreeMap<(TapScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
 
 /// Represents Taproot spending information.
 ///
@@ -421,9 +327,7 @@ impl TaprootBuilder {
     /// Constructs a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
     ///
     /// The size here should be maximum depth of the tree.
-    pub fn with_capacity(size: usize) -> Self {
-        Self { branch: Vec::with_capacity(size) }
-    }
+    pub fn with_capacity(size: usize) -> Self { Self { branch: Vec::with_capacity(size) } }
 
     /// Constructs a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
@@ -564,9 +468,7 @@ impl TaprootBuilder {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilderError::HiddenParts(Self {
-                branch: vec![Some(node)],
-            }));
+            return Err(IncompleteBuilderError::HiddenParts(Self { branch: vec![Some(node)] }));
         }
         Ok(TapTree(node))
     }
@@ -667,22 +569,18 @@ impl From<Infallible> for IncompleteBuilderError {
 impl IncompleteBuilderError {
     /// Converts error into the original incomplete [`TaprootBuilder`] instance.
     pub fn into_builder(self) -> TaprootBuilder {
-        use IncompleteBuilderError::*;
-
         match self {
-            NotFinalized(builder) | HiddenParts(builder) => builder,
+            Self::NotFinalized(builder) | Self::HiddenParts(builder) => builder,
         }
     }
 }
 
 impl core::fmt::Display for IncompleteBuilderError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        use IncompleteBuilderError::*;
-
         f.write_str(match self {
-            NotFinalized(_) =>
+            Self::NotFinalized(_) =>
                 "an attempt to construct a Taproot tree from a builder containing incomplete branches",
-            HiddenParts(_) =>
+            Self::HiddenParts(_) =>
                 "an attempt to construct a Taproot tree from a builder containing hidden parts",
         })
     }
@@ -691,10 +589,8 @@ impl core::fmt::Display for IncompleteBuilderError {
 #[cfg(feature = "std")]
 impl std::error::Error for IncompleteBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use IncompleteBuilderError::*;
-
-        match *self {
-            NotFinalized(_) | HiddenParts(_) => None,
+        match self {
+            Self::NotFinalized(_) | Self::HiddenParts(_) => None,
         }
     }
 }
@@ -715,20 +611,16 @@ impl From<Infallible> for HiddenNodesError {
 impl HiddenNodesError {
     /// Converts error into the original incomplete [`NodeInfo`] instance.
     pub fn into_node_info(self) -> NodeInfo {
-        use HiddenNodesError::*;
-
         match self {
-            HiddenParts(node_info) => node_info,
+            Self::HiddenParts(node_info) => node_info,
         }
     }
 }
 
 impl core::fmt::Display for HiddenNodesError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        use HiddenNodesError::*;
-
         f.write_str(match self {
-            HiddenParts(_) =>
+            Self::HiddenParts(_) =>
                 "an attempt to construct a Taproot tree from a node_info containing hidden parts",
         })
     }
@@ -737,10 +629,8 @@ impl core::fmt::Display for HiddenNodesError {
 #[cfg(feature = "std")]
 impl std::error::Error for HiddenNodesError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use HiddenNodesError::*;
-
         match self {
-            HiddenParts(_) => None,
+            Self::HiddenParts(_) => None,
         }
     }
 }
@@ -1131,6 +1021,14 @@ impl LeafNode {
     pub fn leaf(&self) -> &TapLeaf { &self.leaf }
 }
 
+impl From<LeafNode> for TapNodeHash {
+    fn from(leaf: LeafNode) -> Self { leaf.node_hash() }
+}
+
+impl From<&LeafNode> for TapNodeHash {
+    fn from(leaf: &LeafNode) -> Self { leaf.node_hash() }
+}
+
 /// Script leaf node in a Taproot tree along with the Merkle proof to get this node.
 /// Returned by [`TapTree::script_leaves`]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1219,7 +1117,7 @@ impl<B, K> ControlBlock<B, K> {
             .split_first_chunk::<TAPROOT_CONTROL_BASE_SIZE>()
             .ok_or(InvalidControlBlockSizeError(sl.len()))?;
 
-        let (&first, internal_key) = base.split_first();
+        let (&first, internal_key_bytes) = base.split_first();
 
         let output_key_parity = match first & 1 {
             0 => secp256k1::Parity::Even,
@@ -1227,9 +1125,15 @@ impl<B, K> ControlBlock<B, K> {
         };
 
         let leaf_version = LeafVersion::from_consensus(first & TAPROOT_LEAF_MASK)?;
-        let internal_key = SerializedXOnlyPublicKey::from_bytes_ref(internal_key).into();
+        let internal_key_ref: &'a SerializedXOnlyPublicKey =
+            SerializedXOnlyPublicKey::from_bytes_ref(internal_key_bytes);
         let merkle_branch = TaprootMerkleBranch::decode(merkle_branch)?.into();
-        Ok(Self { leaf_version, output_key_parity, internal_key, merkle_branch })
+        Ok(Self {
+            leaf_version,
+            output_key_parity,
+            internal_key: internal_key_ref.into(),
+            merkle_branch,
+        })
     }
 }
 
@@ -1305,155 +1209,6 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
     }
 }
 
-/// Inner type representing future (non-tapscript) leaf versions. See [`LeafVersion::Future`].
-///
-/// NB: NO PUBLIC CONSTRUCTOR!
-/// The only way to construct this is by converting `u8` to [`LeafVersion`] and then extracting it.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct FutureLeafVersion(u8);
-
-impl FutureLeafVersion {
-    pub(self) fn from_consensus(
-        version: u8,
-    ) -> Result<Self, InvalidTaprootLeafVersionError> {
-        match version {
-            TAPROOT_LEAF_TAPSCRIPT => unreachable!(
-                "FutureLeafVersion::from_consensus should never be called for 0xC0 value"
-            ),
-            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
-            odd if odd & 0xFE != odd => Err(InvalidTaprootLeafVersionError(odd)),
-            even => Ok(Self(even)),
-        }
-    }
-
-    /// Returns the consensus representation of this [`FutureLeafVersion`].
-    #[inline]
-    pub fn to_consensus(self) -> u8 { self.0 }
-}
-
-impl fmt::Display for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl fmt::LowerHex for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-impl_to_hex_from_lower_hex!(FutureLeafVersion, |_| 2);
-
-impl fmt::UpperHex for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
-}
-
-/// The leaf version for tapleafs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum LeafVersion {
-    /// BIP-0342 tapscript.
-    TapScript,
-
-    /// Future leaf version.
-    Future(FutureLeafVersion),
-}
-
-impl LeafVersion {
-    /// Constructs a new [`LeafVersion`] from consensus byte representation.
-    ///
-    /// # Errors
-    ///
-    /// - If the last bit of the `version` is odd.
-    /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
-    pub fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
-        match version {
-            TAPROOT_LEAF_TAPSCRIPT => Ok(Self::TapScript),
-            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
-            future => FutureLeafVersion::from_consensus(future).map(LeafVersion::Future),
-        }
-    }
-
-    /// Returns the consensus representation of this [`LeafVersion`].
-    pub fn to_consensus(self) -> u8 {
-        match self {
-            Self::TapScript => TAPROOT_LEAF_TAPSCRIPT,
-            Self::Future(version) => version.to_consensus(),
-        }
-    }
-}
-
-impl fmt::Display for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match (self, f.alternate()) {
-            (Self::TapScript, true) => f.write_str("tapscript"),
-            (Self::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (Self::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
-            (Self::Future(version), false) => fmt::Display::fmt(version, f),
-        }
-    }
-}
-
-impl fmt::LowerHex for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.to_consensus(), f)
-    }
-}
-impl_to_hex_from_lower_hex!(LeafVersion, |_| 2);
-
-impl fmt::UpperHex for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.to_consensus(), f)
-    }
-}
-
-/// Serializes [`LeafVersion`] as a `u8` using consensus encoding.
-#[cfg(feature = "serde")]
-impl serde::Serialize for LeafVersion {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_u8(self.to_consensus())
-    }
-}
-
-/// Deserializes [`LeafVersion`] as a `u8` using consensus encoding.
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for LeafVersion {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct U8Visitor;
-        impl serde::de::Visitor<'_> for U8Visitor {
-            type Value = LeafVersion;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a valid consensus-encoded Taproot leaf version")
-            }
-
-            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                let value = u8::try_from(value).map_err(|_| {
-                    E::invalid_value(
-                        serde::de::Unexpected::Unsigned(value),
-                        &"consensus-encoded leaf version as u8",
-                    )
-                })?;
-                LeafVersion::from_consensus(value).map_err(|_| {
-                    E::invalid_value(
-                        ::serde::de::Unexpected::Unsigned(value as u64),
-                        &"consensus-encoded leaf version as u8",
-                    )
-                })
-            }
-        }
-
-        deserializer.deserialize_u8(U8Visitor)
-    }
-}
-
 /// Detailed error type for Taproot builder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -1474,19 +1229,17 @@ impl From<Infallible> for TaprootBuilderError {
 
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use TaprootBuilderError::*;
-
-        match *self {
-            InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
-            NodeNotInDfsOrder => {
+        match self {
+            Self::InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
+            Self::NodeNotInDfsOrder => {
                 write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
             }
-            OverCompleteTree => write!(
+            Self::OverCompleteTree => write!(
                 f,
                 "attempted to create a tree with two nodes at depth 0. There must\
                 only be exactly one node at depth 0",
             ),
-            EmptyTree => {
+            Self::EmptyTree => {
                 write!(f, "called finalize on an empty tree")
             }
         }
@@ -1496,11 +1249,9 @@ impl fmt::Display for TaprootBuilderError {
 #[cfg(feature = "std")]
 impl std::error::Error for TaprootBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TaprootBuilderError::*;
-
-        match *self {
-            InvalidMerkleTreeDepth(ref e) => Some(e),
-            NodeNotInDfsOrder | OverCompleteTree | EmptyTree => None,
+        match self {
+            Self::InvalidMerkleTreeDepth(ref e) => Some(e),
+            Self::NodeNotInDfsOrder | Self::OverCompleteTree | Self::EmptyTree => None,
         }
     }
 }
@@ -1534,15 +1285,14 @@ impl From<Infallible> for TaprootError {
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use TaprootError::*;
-
-        match *self {
-            InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
-            InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
-            InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
-            InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
-            InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
-            InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
+        match self {
+            Self::InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
+            Self::InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
+            Self::InvalidTaprootLeafVersion(ref e) =>
+                write_err!(f, "invalid Taproot leaf version"; e),
+            Self::InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
+            Self::InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
+            Self::InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
         }
     }
 }
@@ -1550,14 +1300,12 @@ impl fmt::Display for TaprootError {
 #[cfg(feature = "std")]
 impl std::error::Error for TaprootError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TaprootError::*;
-
         match self {
-            InvalidInternalKey(e) => Some(e),
-            InvalidTaprootLeafVersion(ref e) => Some(e),
-            InvalidMerkleTreeDepth(ref e) => Some(e),
-            InvalidControlBlockHex(ref e) => Some(e),
-            InvalidMerkleBranchSize(_) | InvalidControlBlockSize(_) => None,
+            Self::InvalidInternalKey(e) => Some(e),
+            Self::InvalidTaprootLeafVersion(ref e) => Some(e),
+            Self::InvalidMerkleTreeDepth(ref e) => Some(e),
+            Self::InvalidControlBlockHex(ref e) => Some(e),
+            Self::InvalidMerkleBranchSize(_) | Self::InvalidControlBlockSize(_) => None,
         }
     }
 }
@@ -1630,28 +1378,6 @@ impl fmt::Display for InvalidMerkleTreeDepthError {
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidMerkleTreeDepthError {}
 
-/// The last bit of tapleaf version must be zero.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidTaprootLeafVersionError(u8);
-
-impl InvalidTaprootLeafVersionError {
-    /// Accessor for the invalid leaf version.
-    pub fn invalid_leaf_version(&self) -> u8 { self.0 }
-}
-
-impl From<Infallible> for InvalidTaprootLeafVersionError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for InvalidTaprootLeafVersionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "leaf version({}) must have the least significant bit 0", self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidTaprootLeafVersionError {}
-
 /// Invalid control block size.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidControlBlockSizeError(usize);
@@ -1684,6 +1410,7 @@ mod test {
     use hex::DisplayHex;
 
     use super::*;
+    use crate::address::AddressScriptExt as _;
     use crate::script::ScriptBufExt as _;
     use crate::sighash::TapSighashTag;
     use crate::{Address, KnownHrp, ScriptPubKeyBuf};

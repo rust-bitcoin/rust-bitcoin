@@ -14,10 +14,38 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
+std = [
+    "alloc",
+    "base58/std",
+    "bech32/std",
+    "crypto/std",
+    "hashes/std",
+    "internals/std",
+    "network/std",
+    "primitives/std",
+    "taproot-primitives/std",
+]
 alloc = []
+serde = [
+    "dep:serde",
+    "crypto/serde",
+    "hashes/serde",
+    "network/serde",
+    "primitives/serde",
+    "taproot-primitives/serde",
+]
 
 [dependencies]
+
+base58 = { package = "base58ck", path = "../base58", version = "0.2.0", default-features = false, features = ["alloc"] }
+bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.1.0", default-features = false, features = ["alloc"] }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.18.0", default-features = false, features = ["alloc", "hex"] }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1", features = ["alloc", "hex"] }
+network = { package = "bitcoin-network", path = "../network", version = "0.1.0", default-features = false, features = ["alloc"] }
+primitives = { package = "bitcoin-primitives", path = "../primitives", version = "1.0.0-rc.0", default-features = false, features = ["alloc", "hex"] }
+taproot-primitives = { package = "bitcoin-taproot-primitives", path = "../taproot-primitives", version = "0.1.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.195", default-features = false, features = ["derive", "alloc"], optional = true }
 
 [dev-dependencies]
 

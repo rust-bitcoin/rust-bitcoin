@@ -18,6 +18,7 @@ arbitrary = { version = "1.4.1" }
 
 serde = { version = "1.0.195", features = [ "derive" ] }
 serde_json = "1.0.68"
+standard_test = "0.1.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
@@ -79,6 +80,22 @@ name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
 
 [[bin]]
+name = "consensus_encoding_decode_array"
+path = "fuzz_targets/consensus_encoding/decode_array.rs"
+
+[[bin]]
+name = "consensus_encoding_decode_byte_vec"
+path = "fuzz_targets/consensus_encoding/decode_byte_vec.rs"
+
+[[bin]]
+name = "consensus_encoding_decode_compact_size"
+path = "fuzz_targets/consensus_encoding/decode_compact_size.rs"
+
+[[bin]]
+name = "consensus_encoding_decode_decoder2"
+path = "fuzz_targets/consensus_encoding/decode_decoder2.rs"
+
+[[bin]]
 name = "hashes_json"
 path = "fuzz_targets/hashes/json.rs"
 
@@ -127,17 +144,5 @@ name = "units_parse_int"
 path = "fuzz_targets/units/parse_int.rs"
 
 [[bin]]
-name = "consensus_encoding_decode_array"
-path = "fuzz_targets/consensus_encoding/decode_array.rs"
-
-[[bin]]
-name = "consensus_encoding_decode_compact_size"
-path = "fuzz_targets/consensus_encoding/decode_compact_size.rs"
-
-[[bin]]
-name = "consensus_encoding_decode_decoder2"
-path = "fuzz_targets/consensus_encoding/decode_decoder2.rs"
-
-[[bin]]
-name = "consensus_encoding_decode_byte_vec"
-path = "fuzz_targets/consensus_encoding/decode_byte_vec.rs"
+name = "units_standard_checks"
+path = "fuzz_targets/units/standard_checks.rs"

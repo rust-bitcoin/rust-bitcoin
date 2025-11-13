@@ -16,17 +16,15 @@ use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
+use network::NetworkKind;
+use taproot_primitives::{TapNodeHash, TapTweakHash};
 
-use crate::crypto::ecdsa;
-use crate::internal_macros::impl_asref_push_bytes;
-use crate::network::NetworkKind;
+use super::{ecdsa, TapTweakHashExt as _};
 use crate::prelude::{DisplayHex, String, Vec};
-use crate::script::{self, WitnessScriptBuf};
-use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Verification};
-#[cfg(feature = "rand-std")]
+#[cfg(all(feature = "rand", feature = "std"))]
 pub use secp256k1::rand;
 pub use serialized_x_only::SerializedXOnlyPublicKey;
 
@@ -184,16 +182,6 @@ impl PublicKey {
         }
     }
 
-    /// Returns the script code used to spend a P2WPKH input.
-    ///
-    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-    /// should not be used as one. It is a special template defined in BIP 143 which is used
-    /// in place of a witness script for purposes of sighash computation.
-    pub fn p2wpkh_script_code(&self) -> Result<WitnessScriptBuf, UncompressedPublicKeyError> {
-        let key = CompressedPublicKey::try_from(*self)?;
-        Ok(key.p2wpkh_script_code())
-    }
-
     /// Writes the public key into a writer.
     pub fn write_into<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         self.with_serialized(|bytes| writer.write_all(bytes))
@@ -253,7 +241,7 @@ impl PublicKey {
     /// # Example: Using with `sort_unstable_by_key`
     ///
     /// ```rust
-    /// use bitcoin::PublicKey;
+    /// use bitcoin_crypto::PublicKey;
     ///
     /// let pk = |s: &str| s.parse::<PublicKey>().unwrap();
     ///
@@ -345,20 +333,18 @@ impl fmt::Display for PublicKey {
 impl FromStr for PublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<Self, ParsePublicKeyError> {
-        use HexToArrayError::*;
-
         match s.len() {
             66 => {
                 let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    InvalidLength(_) => unreachable!("length checked already"),
+                    HexToArrayError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    HexToArrayError::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
             130 => {
                 let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    InvalidLength(_) => unreachable!("length checked already"),
+                    HexToArrayError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    HexToArrayError::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
@@ -377,8 +363,6 @@ hashes::hash_newtype! {
 hashes::impl_hex_for_newtype!(PubkeyHash, WPubkeyHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(PubkeyHash, WPubkeyHash);
-
-impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 impl From<PublicKey> for PubkeyHash {
     fn from(key: PublicKey) -> Self { key.pubkey_hash() }
@@ -399,15 +383,6 @@ impl CompressedPublicKey {
     /// Returns bitcoin 160-bit hash of the public key for witness program.
     pub fn wpubkey_hash(&self) -> WPubkeyHash {
         WPubkeyHash::from_byte_array(hash160::Hash::hash(&self.to_bytes()).to_byte_array())
-    }
-
-    /// Returns the script code used to spend a P2WPKH input.
-    ///
-    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-    /// should not be used as one. It is a special template defined in BIP 143 which is used
-    /// in place of a witness script for purposes of sighash computation.
-    pub fn p2wpkh_script_code(&self) -> WitnessScriptBuf {
-        script::p2wpkh_script_code(self.wpubkey_hash())
     }
 
     /// Writes the public key into a writer.
@@ -532,7 +507,7 @@ pub struct PrivateKey {
 impl PrivateKey {
     /// Constructs a new compressed ECDSA private key using the secp256k1 algorithm and
     /// a secure random number generator.
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     pub fn generate(network: impl Into<NetworkKind>) -> Self {
         let secret_key = secp256k1::SecretKey::new(&mut rand::rng());
         Self::new(secret_key, network.into())
@@ -860,7 +835,7 @@ pub type UntweakedKeypair = Keypair;
 /// # Examples
 ///
 /// ```
-/// # #[cfg(feature = "rand-std")] {
+/// # #[cfg(all(feature = "rand", feature = "std"))] {
 /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
 /// # use bitcoin::secp256k1::rand;
 /// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&mut rand::rng()));
@@ -1055,12 +1030,11 @@ impl From<Infallible> for FromSliceError {
 
 impl fmt::Display for FromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromSliceError::*;
-
         match self {
-            Secp256k1(e) => write_err!(f, "secp256k1"; e),
-            InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
-            InvalidLength(got) => write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
+            Self::Secp256k1(e) => write_err!(f, "secp256k1"; e),
+            Self::InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
+            Self::InvalidLength(got) =>
+                write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
         }
     }
 }
@@ -1068,11 +1042,9 @@ impl fmt::Display for FromSliceError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromSliceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromSliceError::*;
-
-        match *self {
-            Secp256k1(ref e) => Some(e),
-            InvalidKeyPrefix(_) | InvalidLength(_) => None,
+        match self {
+            Self::Secp256k1(ref e) => Some(e),
+            Self::InvalidKeyPrefix(_) | Self::InvalidLength(_) => None,
         }
     }
 }
@@ -1103,16 +1075,15 @@ impl From<Infallible> for FromWifError {
 
 impl fmt::Display for FromWifError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromWifError::*;
-
-        match *self {
-            Base58(ref e) => write_err!(f, "invalid base58"; e),
-            InvalidBase58PayloadLength(ref e) =>
+        match self {
+            Self::Base58(ref e) => write_err!(f, "invalid base58"; e),
+            Self::InvalidBase58PayloadLength(ref e) =>
                 write_err!(f, "decoded base58 data was an invalid length"; e),
-            InvalidAddressVersion(ref e) =>
+            Self::InvalidAddressVersion(ref e) =>
                 write_err!(f, "decoded base58 data contained an invalid address version byte"; e),
-            Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
-            InvalidWifCompressionFlag(ref e) => write_err!(f, "invalid WIF compression flag"; e),
+            Self::Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
+            Self::InvalidWifCompressionFlag(ref e) =>
+                write_err!(f, "invalid WIF compression flag"; e),
         }
     }
 }
@@ -1120,14 +1091,12 @@ impl fmt::Display for FromWifError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromWifError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromWifError::*;
-
-        match *self {
-            Base58(ref e) => Some(e),
-            InvalidBase58PayloadLength(ref e) => Some(e),
-            InvalidAddressVersion(ref e) => Some(e),
-            Secp256k1(ref e) => Some(e),
-            InvalidWifCompressionFlag(ref e) => Some(e),
+        match self {
+            Self::Base58(ref e) => Some(e),
+            Self::InvalidBase58PayloadLength(ref e) => Some(e),
+            Self::InvalidAddressVersion(ref e) => Some(e),
+            Self::Secp256k1(ref e) => Some(e),
+            Self::InvalidWifCompressionFlag(ref e) => Some(e),
         }
     }
 }
@@ -1169,11 +1138,10 @@ impl From<Infallible> for ParsePublicKeyError {
 
 impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParsePublicKeyError::*;
-        match *self {
-            Encoding(ref e) => write_err!(f, "string error"; e),
-            InvalidChar(ref e) => write_err!(f, "hex decoding"; e),
-            InvalidHexLength(got) =>
+        match self {
+            Self::Encoding(ref e) => write_err!(f, "string error"; e),
+            Self::InvalidChar(ref e) => write_err!(f, "hex decoding"; e),
+            Self::InvalidHexLength(got) =>
                 write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
         }
     }
@@ -1182,12 +1150,10 @@ impl fmt::Display for ParsePublicKeyError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParsePublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParsePublicKeyError::*;
-
-        match *self {
-            Encoding(ref e) => Some(e),
-            InvalidChar(ref e) => Some(e),
-            InvalidHexLength(_) => None,
+        match self {
+            Self::Encoding(ref e) => Some(e),
+            Self::InvalidChar(ref e) => Some(e),
+            Self::InvalidHexLength(_) => None,
         }
     }
 }
@@ -1211,10 +1177,9 @@ impl From<Infallible> for ParseCompressedPublicKeyError {
 
 impl fmt::Display for ParseCompressedPublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseCompressedPublicKeyError::*;
         match self {
-            Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            Hex(e) => write_err!(f, "invalid hex"; e),
+            Self::Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
+            Self::Hex(e) => write_err!(f, "invalid hex"; e),
         }
     }
 }
@@ -1222,11 +1187,9 @@ impl fmt::Display for ParseCompressedPublicKeyError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseCompressedPublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseCompressedPublicKeyError::*;
-
         match self {
-            Secp256k1(e) => Some(e),
-            Hex(e) => Some(e),
+            Self::Secp256k1(e) => Some(e),
+            Self::Hex(e) => Some(e),
         }
     }
 }
@@ -1328,7 +1291,9 @@ mod serialized_x_only {
         pub struct SerializedXOnlyPublicKey([u8; 32]);
 
         impl SerializedXOnlyPublicKey {
-            pub(crate) fn from_bytes_ref(bytes: &_) -> Self;
+            /// FIXME: This didn't used to be public but I can't get
+            /// `bitcoin::taproot` to build without making this public.
+            pub fn from_bytes_ref(bytes: &_) -> Self;
         }
     }
 
@@ -1410,64 +1375,12 @@ impl std::error::Error for TweakXOnlyPublicKeyError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::address::Address;
 
     #[test]
-    fn key_derivation() {
-        // mainnet compressed WIF with invalid compression flag.
-        let sk = PrivateKey::from_wif("L2x4uC2YgfFWZm9tF4pjDnVR6nJkheizFhEr2KvDNnTEmEqVzPJY");
-        assert!(matches!(
-            sk,
-            Err(FromWifError::InvalidWifCompressionFlag(InvalidWifCompressionFlagError {
-                invalid: 49
-            }))
-        ));
-
-        // testnet compressed
-        let sk =
-            PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, NetworkKind::Test);
-        assert!(sk.compressed);
-        assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
-
-        let pk = Address::p2pkh(sk.public_key(), sk.network);
-        assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
-
-        // test string conversion
-        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
-        let sk_str =
-            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
-        assert_eq!(&sk.to_wif(), &sk_str.to_wif());
-
-        // mainnet uncompressed
-        let sk =
-            PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, NetworkKind::Main);
-        assert!(!sk.compressed);
-        assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
-
-        let mut pk = sk.public_key();
-        assert!(!pk.compressed);
-        assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
-        assert_eq!(pk, "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
-        .parse::<PublicKey>().unwrap());
-        let addr = Address::p2pkh(pk, sk.network);
-        assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
-        pk.compressed = true;
-        assert_eq!(
-            &pk.to_string(),
-            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
-        );
-        assert_eq!(
-            pk,
-            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
-                .parse::<PublicKey>()
-                .unwrap()
-        );
-    }
-
-    #[test]
+    #[cfg(feature = "alloc")]
     fn pubkey_hash() {
+        use crate::prelude::ToString;
+
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
             .parse::<PublicKey>()
             .unwrap();
@@ -1478,7 +1391,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn wpubkey_hash() {
+        use crate::prelude::ToString;
+
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
             .parse::<PublicKey>()
             .unwrap();
@@ -1557,7 +1473,11 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn pubkey_read_write() {
+        use alloc::vec;
+        use alloc::vec::Vec;
+
         const N_KEYS: usize = 20;
         let keys: Vec<_> = (0..N_KEYS).map(|i| random_key(i as u8)).collect();
 
@@ -1605,7 +1525,11 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn pubkey_sort() {
+        use alloc::vec;
+        use alloc::vec::Vec;
+
         struct Vector {
             input: Vec<PublicKey>,
             expect: Vec<PublicKey>,
@@ -1715,7 +1639,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn public_key_constructors() {
         use secp256k1::rand;
 
@@ -1804,7 +1728,7 @@ mod tests {
     #[allow(deprecated)] // tests the deprecated function
     #[allow(deprecated_in_future)]
     fn invalid_private_key_len() {
-        use crate::Network;
+        use network::Network;
         assert!(PrivateKey::from_slice(&[1u8; 31], Network::Regtest).is_err());
         assert!(PrivateKey::from_slice(&[1u8; 33], Network::Regtest).is_err());
     }

@@ -25,6 +25,7 @@ use encoding::{
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
+use internals::array::ArrayExt as _;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
 use internals::write_err;
@@ -329,11 +330,11 @@ impl Encodable for Transaction {
     fn encoder(&self) -> Self::Encoder<'_> {
         let version = self.version.encoder();
         let inputs = Encoder2::new(
-            CompactSizeEncoder::new(self.inputs.len() as u64),
+            CompactSizeEncoder::new(self.inputs.len()),
             SliceEncoder::without_length_prefix(self.inputs.as_ref()),
         );
         let outputs = Encoder2::new(
-            CompactSizeEncoder::new(self.outputs.len() as u64),
+            CompactSizeEncoder::new(self.outputs.len()),
             SliceEncoder::without_length_prefix(self.outputs.as_ref()),
         );
         let lock_time = self.lock_time.encoder();
@@ -364,7 +365,9 @@ pub struct TransactionDecoder {
 #[cfg(feature = "alloc")]
 impl TransactionDecoder {
     /// Constructs a new [`TransactionDecoder`].
-    pub fn new() -> Self { Self { state: TransactionDecoderState::Version(VersionDecoder::new()) } }
+    pub const fn new() -> Self {
+        Self { state: TransactionDecoderState::Version(VersionDecoder::new()) }
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -458,7 +461,8 @@ impl Decoder for TransactionDecoder {
                 }
                 State::Outputs(version, inputs, is_segwit, decoder) => {
                     let outputs = decoder.end()?;
-                    if is_segwit == IsSegwit::Yes {
+                    // Handle the zero-input case described in the `Transaction` docs.
+                    if is_segwit == IsSegwit::Yes && !inputs.is_empty() {
                         self.state = State::Witnesses(
                             version,
                             inputs,
@@ -1083,7 +1087,7 @@ pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
 
 impl OutPointDecoder {
     /// Constructs a new [`OutPoint`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for OutPointDecoder {
@@ -1102,14 +1106,10 @@ impl encoding::Decoder for OutPointDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let encoded = self.0.end().map_err(OutPointDecoderError)?;
+        let (txid_buf, vout_buf) = encoded.split_array::<32, 4>();
 
-        let mut txid_buf = [0_u8; 32];
-        txid_buf.copy_from_slice(&encoded[..32]);
-        let txid = Txid::from_byte_array(txid_buf);
-
-        let mut vout_buf = [0_u8; 4];
-        vout_buf.copy_from_slice(&encoded[32..]);
-        let vout = u32::from_le_bytes(vout_buf);
+        let txid = Txid::from_byte_array(*txid_buf);
+        let vout = u32::from_le_bytes(*vout_buf);
 
         Ok(OutPoint { txid, vout })
     }
@@ -1376,7 +1376,7 @@ pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
 impl VersionDecoder {
     /// Constructs a new [`Version`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for VersionDecoder {
@@ -2156,5 +2156,23 @@ mod tests {
             .expect_err("segwit tx with no witnesses should error");
 
         assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NoWitnesses));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decode_zero_inputs() {
+        // Test empty transaction with no inputs or outputs.
+        let block: u32 = 741_521;
+        let original_tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::from_height(block).expect("valid height"),
+            inputs: vec![],
+            outputs: vec![],
+        };
+
+        let encoded = encoding::encode_to_vec(&original_tx);
+        let decoded_tx = encoding::decode_from_slice(&encoded).unwrap();
+
+        assert_eq!(original_tx, decoded_tx);
     }
 }

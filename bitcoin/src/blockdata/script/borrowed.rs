@@ -19,7 +19,7 @@ use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
-use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
+use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _, TapNodeHash};
 use crate::witness_program::P2A_PROGRAM;
 use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
 
@@ -256,6 +256,7 @@ internal_macros::define_extension_trait! {
     pub trait WitnessScriptExt impl for WitnessScript {
         /// Returns 256-bit hash of the script for P2WSH outputs.
         #[inline]
+        // FIXME: Do we want to keep this, we provide `WiScriptHash::try_from` also.
         fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
             WScriptHash::from_script(self)
         }

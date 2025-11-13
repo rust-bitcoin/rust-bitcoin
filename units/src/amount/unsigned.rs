@@ -466,11 +466,9 @@ impl Amount {
         // Mul by 1,000 because we use per/kwu.
         if let Some(sats) = self.to_sat().checked_mul(1_000) {
             // No need to use checked arithmetic because wu is non-zero.
-            if let Some(bump) = sats.checked_add(wu - 1) {
-                let fee_rate = bump / wu;
-                if let Ok(amount) = Self::from_sat(fee_rate) {
-                    return FeeRate::from_per_kwu(amount);
-                }
+            let fee_rate = sats.div_ceil(wu);
+            if let Ok(amount) = Self::from_sat(fee_rate) {
+                return FeeRate::from_per_kwu(amount);
             }
         }
         // Use `MathOp::Mul` because `Div` implies div by zero.
@@ -505,14 +503,7 @@ impl Amount {
 
         debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
         let msats = self.to_sat() * 1_000;
-        match msats.checked_add(rate - 1) {
-            Some(bump) => {
-                let wu = bump / rate;
-                NumOpResult::Valid(Weight::from_wu(wu))
-            }
-            // Use `MathOp::Add` because `Div` implies div by zero.
-            None => R::Error(E::while_doing(MathOp::Add)),
-        }
+        NumOpResult::Valid(Weight::from_wu(msats.div_ceil(rate)))
     }
 }
 
@@ -585,7 +576,7 @@ pub struct AmountDecoder(encoding::ArrayDecoder<8>);
 #[cfg(feature = "encoding")]
 impl AmountDecoder {
     /// Constructs a new [`Amount`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]

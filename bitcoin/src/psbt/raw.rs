@@ -157,7 +157,7 @@ where
         // The limit is a DOS protection mechanism the exact value is not
         // important, 1024 bytes is bigger than any key should be.
         let mut key = vec![];
-        let _ = r.read_to_limit(&mut key, 1024)?;
+        let _ = io::Read::read_to_limit(r, &mut key, 1024)?;
 
         Ok(Self { prefix, subtype, key })
     }

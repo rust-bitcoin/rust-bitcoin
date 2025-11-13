@@ -18,7 +18,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::prelude::Vec;
-use crate::script::{self, ScriptExt as _};
+use crate::script::{self, ScriptExt as _, ScriptIntError};
 use crate::transaction::{Coinbase, Transaction, TransactionExt as _, Wtxid};
 use crate::{internal_macros, BlockTime, Target, Weight, Work};
 
@@ -364,7 +364,7 @@ impl BlockCheckedExt for Block<Checked> {
         match (push.script_num(), push.push_bytes().map(|b| b.read_scriptint())) {
             (Some(num), Some(Ok(_)) | None) =>
                 Ok(num.try_into().map_err(|_| Bip34Error::NegativeHeight)?),
-            (_, Some(Err(err))) => Err(to_bip34_error(err)),
+            (_, Some(Err(err))) => Err(err.into()),
             (None, _) => Err(Bip34Error::NotPresent),
         }
     }
@@ -418,7 +418,7 @@ impl Decodable for Block<Unchecked> {
 
     #[inline]
     fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        let mut r = r.take(internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
+        let mut r = io::Read::take(r, internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
         let header = Decodable::consensus_decode(&mut r)?;
         let transactions = Decodable::consensus_decode(&mut r)?;
 
@@ -453,13 +453,13 @@ impl From<Infallible> for InvalidBlockError {
 
 impl fmt::Display for InvalidBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use InvalidBlockError::*;
-
-        match *self {
-            InvalidMerkleRoot => write!(f, "header Merkle root does not match the calculated Merkle root"),
-            InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
-            NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
-            InvalidCoinbase => write!(f, "the first transaction is not a valid coinbase transaction"),
+        match self {
+            Self::InvalidMerkleRoot =>
+                write!(f, "header Merkle root does not match the calculated Merkle root"),
+            Self::InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
+            Self::NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
+            Self::InvalidCoinbase =>
+                write!(f, "the first transaction is not a valid coinbase transaction"),
         }
     }
 }
@@ -487,13 +487,11 @@ impl From<Infallible> for Bip34Error {
 
 impl fmt::Display for Bip34Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Bip34Error::*;
-
-        match *self {
-            Unsupported => write!(f, "block doesn't support BIP-0034"),
-            NotPresent => write!(f, "BIP-0034 push not present in block's coinbase"),
-            NonMinimalPush => write!(f, "byte push not minimally encoded"),
-            NegativeHeight => write!(f, "negative BIP-0034 height"),
+        match self {
+            Self::Unsupported => write!(f, "block doesn't support BIP-0034"),
+            Self::NotPresent => write!(f, "BIP-0034 push not present in block's coinbase"),
+            Self::NonMinimalPush => write!(f, "byte push not minimally encoded"),
+            Self::NegativeHeight => write!(f, "negative BIP-0034 height"),
         }
     }
 }
@@ -501,10 +499,19 @@ impl fmt::Display for Bip34Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Bip34Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Bip34Error::*;
+        match self {
+            Self::Unsupported | Self::NotPresent | Self::NonMinimalPush | Self::NegativeHeight =>
+                None,
+        }
+    }
+}
 
-        match *self {
-            Unsupported | NotPresent | NonMinimalPush | NegativeHeight => None,
+impl From<ScriptIntError> for Bip34Error {
+    #[inline]
+    fn from(err: ScriptIntError) -> Self {
+        match err {
+            ScriptIntError::NonMinimal => Self::NonMinimalPush,
+            _ => Self::NotPresent,
         }
     }
 }
@@ -533,11 +540,9 @@ impl From<Infallible> for ValidationError {
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ValidationError::*;
-
-        match *self {
-            BadProofOfWork => f.write_str("block target correct but not attained"),
-            BadTarget => f.write_str("block target incorrect"),
+        match self {
+            Self::BadProofOfWork => f.write_str("block target correct but not attained"),
+            Self::BadTarget => f.write_str("block target incorrect"),
         }
     }
 }
@@ -545,10 +550,8 @@ impl fmt::Display for ValidationError {
 #[cfg(feature = "std")]
 impl std::error::Error for ValidationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::ValidationError::*;
-
-        match *self {
-            BadProofOfWork | BadTarget => None,
+        match self {
+            Self::BadProofOfWork | Self::BadTarget => None,
         }
     }
 }

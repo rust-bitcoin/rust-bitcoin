@@ -661,9 +661,7 @@ fn unsigned_signed_conversion() {
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 #[allow(clippy::items_after_statements)] // Define functions where we use them.
 fn from_str() {
-    use ParseDenominationError::*;
-
-    use super::ParseAmountError as E;
+    use super::{ParseAmountError as E, ParseDenominationError};
 
     assert_eq!(
         "x BTC".parse::<Amount>(),
@@ -671,11 +669,11 @@ fn from_str() {
     );
     assert_eq!(
         "xBTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("xBTC".into())).into()),
     );
     assert_eq!(
         "5 BTC BTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("BTC BTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("BTC BTC".into())).into()),
     );
     assert_eq!(
         "5BTC BTC".parse::<Amount>(),
@@ -683,7 +681,7 @@ fn from_str() {
     );
     assert_eq!(
         "5 5 BTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("5 BTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("5 BTC".into())).into()),
     );
 
     #[track_caller]
@@ -712,7 +710,7 @@ fn from_str() {
         assert_eq!(s.replace(' ', "").parse::<SignedAmount>(), expected);
     }
 
-    case("5 BCH", Err(Unknown(UnknownDenominationError("BCH".into()))));
+    case("5 BCH", Err(ParseDenominationError::Unknown(UnknownDenominationError("BCH".into()))));
 
     case("-1 BTC", Err(OutOfRangeError::negative()));
     case("-0.0 BTC", Err(OutOfRangeError::negative()));
@@ -726,6 +724,9 @@ fn from_str() {
     scase("2100000000000001 SAT", Err(OutOfRangeError::too_big(true)));
     case("21000001 BTC", Err(OutOfRangeError::too_big(false)));
     case("18446744073709551616 sat", Err(OutOfRangeError::too_big(false)));
+    case("_1000 sat", Err(BadPositionError { char: '_', position: 0 }));
+    case("10__00 sat", Err(BadPositionError { char: '_', position: 3 }));
+    scase("-_10_00 sat", Err(BadPositionError { char: '_', position: 1 }));
 
     ok_case(".5 bits", sat(50));
     ok_scase("-.5 bits", ssat(-50));
@@ -736,6 +737,9 @@ fn from_str() {
     ok_case("21000000 BTC", Amount::MAX);
     ok_scase("21000000 BTC", SignedAmount::MAX);
     ok_scase("-21000000 BTC", SignedAmount::MIN);
+    ok_case("1_000 sat", sat(1000));
+    ok_case("1_0_0_0_0_0_0 satoshi", sat(1_000_000));
+    ok_scase("-0_._0_10_00 BTC", ssat(-1_000_000));
 }
 
 #[cfg(feature = "alloc")]
@@ -818,9 +822,7 @@ fn to_from_string_in() {
 #[cfg(feature = "alloc")]
 #[test]
 fn to_string_with_denomination_from_str_roundtrip() {
-    use ParseDenominationError::*;
-
-    use super::Denomination as D;
+    use super::{Denomination as D, ParseDenominationError};
 
     let amt = sat(42);
     let denom = Amount::to_string_with_denomination;
@@ -833,11 +835,11 @@ fn to_string_with_denomination_from_str_roundtrip() {
 
     assert_eq!(
         "42 satoshi BTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("satoshi BTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("satoshi BTC".into())).into(),),
     );
     assert_eq!(
         "-42 satoshi BTC".parse::<SignedAmount>(),
-        Err(Unknown(UnknownDenominationError("satoshi BTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("satoshi BTC".into())).into(),),
     );
 }
 

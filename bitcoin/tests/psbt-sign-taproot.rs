@@ -1,7 +1,10 @@
-#![cfg(not(feature = "rand-std"))]
+//! This test is excluded when the `rand` feature is enabled because Schnorr signatures use
+//! auxiliary randomness, making them non-deterministic and incompatible with hardcoded test vectors.
+#![cfg(all(feature = "std", not(feature = "rand")))]
 
 use std::collections::BTreeMap;
 
+use bitcoin::address::AddressScriptExt as _;
 use bitcoin::bip32::{DerivationPath, Fingerprint};
 use bitcoin::consensus::encode::serialize_hex;
 use bitcoin::opcodes::all::OP_CHECKSIG;

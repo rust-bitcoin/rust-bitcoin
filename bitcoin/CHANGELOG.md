@@ -2,8 +2,8 @@
 
 This series of beta releases is meant for two things:
 
-1. To allow testing of the upcoming `bitcoin v0.33.0`. Its been a long
-   time since we released and there is a lot in this.
+- Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+- Remove rand-std feature. Just use rand (but you probably need std enabled as well). [#5293](https://github.com/rust-bitcoin/rust-bitcoin/pull/5293)
 
 2. To allow testing of the `1.0.0` RC releases of:
 

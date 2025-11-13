@@ -172,19 +172,16 @@ impl FromStr for PsbtSighashType {
             return Ok(Self { inner });
         }
 
+        // FIXME: This no longer works with error in `crypto` crate.
         Err(SighashTypeParseError { unrecognized: s.to_owned() })
     }
 }
 impl From<EcdsaSighashType> for PsbtSighashType {
-    fn from(ecdsa_hash_ty: EcdsaSighashType) -> Self {
-        Self { inner: ecdsa_hash_ty as u32 }
-    }
+    fn from(ecdsa_hash_ty: EcdsaSighashType) -> Self { Self { inner: ecdsa_hash_ty as u32 } }
 }
 
 impl From<TapSighashType> for PsbtSighashType {
-    fn from(taproot_hash_ty: TapSighashType) -> Self {
-        Self { inner: taproot_hash_ty as u32 }
-    }
+    fn from(taproot_hash_ty: TapSighashType) -> Self { Self { inner: taproot_hash_ty as u32 } }
 }
 
 impl PsbtSighashType {

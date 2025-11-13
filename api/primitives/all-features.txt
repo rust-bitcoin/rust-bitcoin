@@ -1,6 +1,16 @@
 #[non_exhaustive] pub enum bitcoin_primitives::block::HeaderDecoderError
+#[non_exhaustive] pub enum bitcoin_primitives::script::witness_program::Error
+#[non_exhaustive] pub enum bitcoin_primitives::script::witness_version::FromStrError
+#[non_exhaustive] pub enum bitcoin_primitives::script::witness_version::TryFromInstructionError
 #[non_exhaustive] pub enum bitcoin_primitives::transaction::ParseOutPointError
+#[non_exhaustive] pub enum bitcoin_primitives::witness_program::Error
+#[non_exhaustive] pub enum bitcoin_primitives::witness_version::FromStrError
+#[non_exhaustive] pub enum bitcoin_primitives::witness_version::TryFromInstructionError
 #[repr(transparent)] pub struct bitcoin_primitives::script::Script<T>(_, _)
+#[repr(u8)] pub enum bitcoin_primitives::WitnessVersion
+#[repr(u8)] pub enum bitcoin_primitives::script::WitnessVersion
+#[repr(u8)] pub enum bitcoin_primitives::script::witness_version::WitnessVersion
+#[repr(u8)] pub enum bitcoin_primitives::witness_version::WitnessVersion
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::BlockHash
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::TxMerkleNode
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Header
@@ -71,6 +81,9 @@ impl bitcoin_primitives::script::Tag for bitcoin_primitives::script::TapScriptTa
 impl bitcoin_primitives::script::Tag for bitcoin_primitives::script::WitnessScriptTag
 impl bitcoin_primitives::script::WScriptHash
 impl bitcoin_primitives::script::WitnessScriptSizeError
+impl bitcoin_primitives::script::witness_program::WitnessProgram
+impl bitcoin_primitives::script::witness_version::TryFromError
+impl bitcoin_primitives::script::witness_version::WitnessVersion
 impl bitcoin_primitives::transaction::OutPoint
 impl bitcoin_primitives::transaction::OutPointDecoder
 impl bitcoin_primitives::transaction::Transaction
@@ -125,6 +138,12 @@ impl core::clone::Clone for bitcoin_primitives::script::TapScriptTag
 impl core::clone::Clone for bitcoin_primitives::script::WScriptHash
 impl core::clone::Clone for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::clone::Clone for bitcoin_primitives::script::WitnessScriptTag
+impl core::clone::Clone for bitcoin_primitives::script::witness_program::Error
+impl core::clone::Clone for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::clone::Clone for bitcoin_primitives::script::witness_version::FromStrError
+impl core::clone::Clone for bitcoin_primitives::script::witness_version::TryFromError
+impl core::clone::Clone for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::clone::Clone for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::clone::Clone for bitcoin_primitives::transaction::OutPoint
 impl core::clone::Clone for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::clone::Clone for bitcoin_primitives::transaction::ParseOutPointError
@@ -166,6 +185,12 @@ impl core::cmp::Eq for bitcoin_primitives::script::TapScriptTag
 impl core::cmp::Eq for bitcoin_primitives::script::WScriptHash
 impl core::cmp::Eq for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::cmp::Eq for bitcoin_primitives::script::WitnessScriptTag
+impl core::cmp::Eq for bitcoin_primitives::script::witness_program::Error
+impl core::cmp::Eq for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::cmp::Eq for bitcoin_primitives::script::witness_version::FromStrError
+impl core::cmp::Eq for bitcoin_primitives::script::witness_version::TryFromError
+impl core::cmp::Eq for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::cmp::Eq for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::cmp::Eq for bitcoin_primitives::transaction::OutPoint
 impl core::cmp::Eq for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::cmp::Eq for bitcoin_primitives::transaction::ParseOutPointError
@@ -200,6 +225,8 @@ impl core::cmp::Ord for bitcoin_primitives::script::ScriptSigTag
 impl core::cmp::Ord for bitcoin_primitives::script::TapScriptTag
 impl core::cmp::Ord for bitcoin_primitives::script::WScriptHash
 impl core::cmp::Ord for bitcoin_primitives::script::WitnessScriptTag
+impl core::cmp::Ord for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::cmp::Ord for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::cmp::Ord for bitcoin_primitives::transaction::OutPoint
 impl core::cmp::Ord for bitcoin_primitives::transaction::Transaction
 impl core::cmp::Ord for bitcoin_primitives::transaction::TxIn
@@ -232,6 +259,12 @@ impl core::cmp::PartialEq for bitcoin_primitives::script::TapScriptTag
 impl core::cmp::PartialEq for bitcoin_primitives::script::WScriptHash
 impl core::cmp::PartialEq for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::cmp::PartialEq for bitcoin_primitives::script::WitnessScriptTag
+impl core::cmp::PartialEq for bitcoin_primitives::script::witness_program::Error
+impl core::cmp::PartialEq for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::cmp::PartialEq for bitcoin_primitives::script::witness_version::FromStrError
+impl core::cmp::PartialEq for bitcoin_primitives::script::witness_version::TryFromError
+impl core::cmp::PartialEq for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::cmp::PartialEq for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::OutPoint
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::ParseOutPointError
@@ -266,6 +299,8 @@ impl core::cmp::PartialOrd for bitcoin_primitives::script::ScriptSigTag
 impl core::cmp::PartialOrd for bitcoin_primitives::script::TapScriptTag
 impl core::cmp::PartialOrd for bitcoin_primitives::script::WScriptHash
 impl core::cmp::PartialOrd for bitcoin_primitives::script::WitnessScriptTag
+impl core::cmp::PartialOrd for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::cmp::PartialOrd for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::cmp::PartialOrd for bitcoin_primitives::transaction::OutPoint
 impl core::cmp::PartialOrd for bitcoin_primitives::transaction::Transaction
 impl core::cmp::PartialOrd for bitcoin_primitives::transaction::TxIn
@@ -307,12 +342,15 @@ impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::VecDecode
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::VecDecoderError<bitcoin_primitives::transaction::TxOutDecoderError>> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<bitcoin_primitives::block::Block> for bitcoin_primitives::BlockHash
 impl core::convert::From<bitcoin_primitives::block::Header> for bitcoin_primitives::BlockHash
+impl core::convert::From<bitcoin_primitives::script::witness_version::TryFromError> for bitcoin_primitives::script::witness_version::FromStrError
+impl core::convert::From<bitcoin_primitives::script::witness_version::TryFromError> for bitcoin_primitives::script::witness_version::TryFromInstructionError
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Txid
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Wtxid
 impl core::convert::From<bitcoin_primitives::transaction::Version> for u32
 impl core::convert::From<bitcoin_primitives::transaction::VersionDecoderError> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<bitcoin_primitives::witness::WitnessDecoderError> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<bitcoin_units::locktime::absolute::error::LockTimeDecoderError> for bitcoin_primitives::transaction::TransactionDecoderError
+impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_primitives::script::witness_version::FromStrError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::BlockHashDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::HeaderDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::VersionDecoderError
@@ -320,6 +358,9 @@ impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::pow:
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::WitnessScriptSizeError
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::witness_program::Error
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::witness_version::FromStrError
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::witness_version::TryFromInstructionError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::ParseOutPointError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxInDecoderError
@@ -330,6 +371,7 @@ impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witn
 impl core::convert::TryFrom<&bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
 impl core::convert::TryFrom<&bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
 impl core::convert::TryFrom<bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
+impl core::convert::TryFrom<u8> for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::default::Default for bitcoin_primitives::block::BlockHashDecoder
 impl core::default::Default for bitcoin_primitives::block::Version
 impl core::default::Default for bitcoin_primitives::block::VersionDecoder
@@ -347,6 +389,10 @@ impl core::error::Error for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::error::Error for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::error::Error for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::error::Error for bitcoin_primitives::script::WitnessScriptSizeError
+impl core::error::Error for bitcoin_primitives::script::witness_program::Error
+impl core::error::Error for bitcoin_primitives::script::witness_version::FromStrError
+impl core::error::Error for bitcoin_primitives::script::witness_version::TryFromError
+impl core::error::Error for bitcoin_primitives::script::witness_version::TryFromInstructionError
 impl core::error::Error for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::ParseOutPointError
 impl core::error::Error for bitcoin_primitives::transaction::TransactionDecoderError
@@ -377,6 +423,12 @@ impl core::fmt::Debug for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptHash
 impl core::fmt::Debug for bitcoin_primitives::script::WScriptHash
 impl core::fmt::Debug for bitcoin_primitives::script::WitnessScriptSizeError
+impl core::fmt::Debug for bitcoin_primitives::script::witness_program::Error
+impl core::fmt::Debug for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::fmt::Debug for bitcoin_primitives::script::witness_version::FromStrError
+impl core::fmt::Debug for bitcoin_primitives::script::witness_version::TryFromError
+impl core::fmt::Debug for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::fmt::Debug for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::fmt::Debug for bitcoin_primitives::transaction::OutPoint
 impl core::fmt::Debug for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::fmt::Debug for bitcoin_primitives::transaction::ParseOutPointError
@@ -409,6 +461,11 @@ impl core::fmt::Display for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::fmt::Display for bitcoin_primitives::script::ScriptHash
 impl core::fmt::Display for bitcoin_primitives::script::WScriptHash
 impl core::fmt::Display for bitcoin_primitives::script::WitnessScriptSizeError
+impl core::fmt::Display for bitcoin_primitives::script::witness_program::Error
+impl core::fmt::Display for bitcoin_primitives::script::witness_version::FromStrError
+impl core::fmt::Display for bitcoin_primitives::script::witness_version::TryFromError
+impl core::fmt::Display for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::fmt::Display for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::fmt::Display for bitcoin_primitives::transaction::OutPoint
 impl core::fmt::Display for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::ParseOutPointError
@@ -459,6 +516,8 @@ impl core::hash::Hash for bitcoin_primitives::script::ScriptSigTag
 impl core::hash::Hash for bitcoin_primitives::script::TapScriptTag
 impl core::hash::Hash for bitcoin_primitives::script::WScriptHash
 impl core::hash::Hash for bitcoin_primitives::script::WitnessScriptTag
+impl core::hash::Hash for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::hash::Hash for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::hash::Hash for bitcoin_primitives::transaction::OutPoint
 impl core::hash::Hash for bitcoin_primitives::transaction::Transaction
 impl core::hash::Hash for bitcoin_primitives::transaction::TxIn
@@ -478,6 +537,8 @@ impl core::marker::Copy for bitcoin_primitives::block::Version
 impl core::marker::Copy for bitcoin_primitives::pow::CompactTarget
 impl core::marker::Copy for bitcoin_primitives::script::ScriptHash
 impl core::marker::Copy for bitcoin_primitives::script::WScriptHash
+impl core::marker::Copy for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::marker::Copy for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::marker::Copy for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Copy for bitcoin_primitives::transaction::Version
 impl core::marker::Freeze for bitcoin_primitives::BlockHash
@@ -515,6 +576,12 @@ impl core::marker::Freeze for bitcoin_primitives::script::TapScriptTag
 impl core::marker::Freeze for bitcoin_primitives::script::WScriptHash
 impl core::marker::Freeze for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Freeze for bitcoin_primitives::script::WitnessScriptTag
+impl core::marker::Freeze for bitcoin_primitives::script::witness_program::Error
+impl core::marker::Freeze for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::marker::Freeze for bitcoin_primitives::script::witness_version::FromStrError
+impl core::marker::Freeze for bitcoin_primitives::script::witness_version::TryFromError
+impl core::marker::Freeze for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::marker::Freeze for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::marker::Freeze for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Freeze for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Freeze for bitcoin_primitives::transaction::OutPointDecoderError
@@ -573,6 +640,12 @@ impl core::marker::Send for bitcoin_primitives::script::TapScriptTag
 impl core::marker::Send for bitcoin_primitives::script::WScriptHash
 impl core::marker::Send for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Send for bitcoin_primitives::script::WitnessScriptTag
+impl core::marker::Send for bitcoin_primitives::script::witness_program::Error
+impl core::marker::Send for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::marker::Send for bitcoin_primitives::script::witness_version::FromStrError
+impl core::marker::Send for bitcoin_primitives::script::witness_version::TryFromError
+impl core::marker::Send for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::marker::Send for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::marker::Send for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Send for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Send for bitcoin_primitives::transaction::OutPointDecoderError
@@ -622,6 +695,12 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::script::TapScript
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::WScriptHash
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::WitnessScriptTag
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::witness_program::Error
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::witness_version::FromStrError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::witness_version::TryFromError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::OutPoint
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::ParseOutPointError
@@ -672,6 +751,12 @@ impl core::marker::Sync for bitcoin_primitives::script::TapScriptTag
 impl core::marker::Sync for bitcoin_primitives::script::WScriptHash
 impl core::marker::Sync for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Sync for bitcoin_primitives::script::WitnessScriptTag
+impl core::marker::Sync for bitcoin_primitives::script::witness_program::Error
+impl core::marker::Sync for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::marker::Sync for bitcoin_primitives::script::witness_version::FromStrError
+impl core::marker::Sync for bitcoin_primitives::script::witness_version::TryFromError
+impl core::marker::Sync for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::marker::Sync for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::marker::Sync for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Sync for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Sync for bitcoin_primitives::transaction::OutPointDecoderError
@@ -730,6 +815,12 @@ impl core::marker::Unpin for bitcoin_primitives::script::TapScriptTag
 impl core::marker::Unpin for bitcoin_primitives::script::WScriptHash
 impl core::marker::Unpin for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Unpin for bitcoin_primitives::script::WitnessScriptTag
+impl core::marker::Unpin for bitcoin_primitives::script::witness_program::Error
+impl core::marker::Unpin for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::marker::Unpin for bitcoin_primitives::script::witness_version::FromStrError
+impl core::marker::Unpin for bitcoin_primitives::script::witness_version::TryFromError
+impl core::marker::Unpin for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::marker::Unpin for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::marker::Unpin for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Unpin for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Unpin for bitcoin_primitives::transaction::OutPointDecoderError
@@ -789,6 +880,12 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::Tap
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::WScriptHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::WitnessScriptTag
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::witness_program::Error
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::witness_version::FromStrError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::witness_version::TryFromError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::OutPoint
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::OutPointDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::OutPointDecoderError
@@ -847,6 +944,12 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::TapScr
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::WScriptHash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::WitnessScriptTag
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::witness_program::Error
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::witness_program::WitnessProgram
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::witness_version::FromStrError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::witness_version::TryFromError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::witness_version::TryFromInstructionError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::OutPoint
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::OutPointDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::OutPointDecoderError
@@ -879,6 +982,7 @@ impl core::str::traits::FromStr for bitcoin_primitives::WitnessMerkleNode
 impl core::str::traits::FromStr for bitcoin_primitives::Wtxid
 impl core::str::traits::FromStr for bitcoin_primitives::script::ScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::script::WScriptHash
+impl core::str::traits::FromStr for bitcoin_primitives::script::witness_version::WitnessVersion
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::OutPoint
 impl serde::ser::Serialize for bitcoin_primitives::BlockHash
 impl serde::ser::Serialize for bitcoin_primitives::Ntxid
@@ -1138,6 +1242,23 @@ pub bitcoin_primitives::TxIn::sequence: bitcoin_units::sequence::Sequence
 pub bitcoin_primitives::TxIn::witness: bitcoin_primitives::witness::Witness
 pub bitcoin_primitives::TxOut::amount: bitcoin_units::amount::unsigned::encapsulate::Amount
 pub bitcoin_primitives::TxOut::script_pubkey: bitcoin_primitives::script::ScriptPubKeyBuf
+pub bitcoin_primitives::WitnessVersion::V0 = 0
+pub bitcoin_primitives::WitnessVersion::V1 = 1
+pub bitcoin_primitives::WitnessVersion::V10 = 10
+pub bitcoin_primitives::WitnessVersion::V11 = 11
+pub bitcoin_primitives::WitnessVersion::V12 = 12
+pub bitcoin_primitives::WitnessVersion::V13 = 13
+pub bitcoin_primitives::WitnessVersion::V14 = 14
+pub bitcoin_primitives::WitnessVersion::V15 = 15
+pub bitcoin_primitives::WitnessVersion::V16 = 16
+pub bitcoin_primitives::WitnessVersion::V2 = 2
+pub bitcoin_primitives::WitnessVersion::V3 = 3
+pub bitcoin_primitives::WitnessVersion::V4 = 4
+pub bitcoin_primitives::WitnessVersion::V5 = 5
+pub bitcoin_primitives::WitnessVersion::V6 = 6
+pub bitcoin_primitives::WitnessVersion::V7 = 7
+pub bitcoin_primitives::WitnessVersion::V8 = 8
+pub bitcoin_primitives::WitnessVersion::V9 = 9
 pub bitcoin_primitives::block::Header::bits: bitcoin_primitives::pow::CompactTarget
 pub bitcoin_primitives::block::Header::merkle_root: bitcoin_primitives::TxMerkleNode
 pub bitcoin_primitives::block::Header::nonce: u32
@@ -1150,6 +1271,47 @@ pub bitcoin_primitives::block::HeaderDecoderError::Nonce(bitcoin_consensus_encod
 pub bitcoin_primitives::block::HeaderDecoderError::PrevBlockhash(bitcoin_primitives::block::BlockHashDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::Time(bitcoin_units::time::BlockTimeDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::Version(bitcoin_primitives::block::VersionDecoderError)
+pub bitcoin_primitives::script::WitnessVersion::V0 = 0
+pub bitcoin_primitives::script::WitnessVersion::V1 = 1
+pub bitcoin_primitives::script::WitnessVersion::V10 = 10
+pub bitcoin_primitives::script::WitnessVersion::V11 = 11
+pub bitcoin_primitives::script::WitnessVersion::V12 = 12
+pub bitcoin_primitives::script::WitnessVersion::V13 = 13
+pub bitcoin_primitives::script::WitnessVersion::V14 = 14
+pub bitcoin_primitives::script::WitnessVersion::V15 = 15
+pub bitcoin_primitives::script::WitnessVersion::V16 = 16
+pub bitcoin_primitives::script::WitnessVersion::V2 = 2
+pub bitcoin_primitives::script::WitnessVersion::V3 = 3
+pub bitcoin_primitives::script::WitnessVersion::V4 = 4
+pub bitcoin_primitives::script::WitnessVersion::V5 = 5
+pub bitcoin_primitives::script::WitnessVersion::V6 = 6
+pub bitcoin_primitives::script::WitnessVersion::V7 = 7
+pub bitcoin_primitives::script::WitnessVersion::V8 = 8
+pub bitcoin_primitives::script::WitnessVersion::V9 = 9
+pub bitcoin_primitives::script::witness_program::Error::InvalidLength(usize)
+pub bitcoin_primitives::script::witness_program::Error::InvalidSegwitV0Length(usize)
+pub bitcoin_primitives::script::witness_version::FromStrError::Invalid(bitcoin_primitives::script::witness_version::TryFromError)
+pub bitcoin_primitives::script::witness_version::FromStrError::Unparsable(bitcoin_units::parse_int::ParseIntError)
+pub bitcoin_primitives::script::witness_version::TryFromError::invalid: u8
+pub bitcoin_primitives::script::witness_version::TryFromInstructionError::DataPush
+pub bitcoin_primitives::script::witness_version::TryFromInstructionError::TryFrom(bitcoin_primitives::script::witness_version::TryFromError)
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V0 = 0
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V1 = 1
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V10 = 10
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V11 = 11
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V12 = 12
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V13 = 13
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V14 = 14
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V15 = 15
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V16 = 16
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V2 = 2
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V3 = 3
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V4 = 4
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V5 = 5
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V6 = 6
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V7 = 7
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V8 = 8
+pub bitcoin_primitives::script::witness_version::WitnessVersion::V9 = 9
 pub bitcoin_primitives::transaction::OutPoint::txid: bitcoin_primitives::Txid
 pub bitcoin_primitives::transaction::OutPoint::vout: u32
 pub bitcoin_primitives::transaction::ParseOutPointError::Format
@@ -1167,6 +1329,30 @@ pub bitcoin_primitives::transaction::TxIn::sequence: bitcoin_units::sequence::Se
 pub bitcoin_primitives::transaction::TxIn::witness: bitcoin_primitives::witness::Witness
 pub bitcoin_primitives::transaction::TxOut::amount: bitcoin_units::amount::unsigned::encapsulate::Amount
 pub bitcoin_primitives::transaction::TxOut::script_pubkey: bitcoin_primitives::script::ScriptPubKeyBuf
+pub bitcoin_primitives::witness_program::Error::InvalidLength(usize)
+pub bitcoin_primitives::witness_program::Error::InvalidSegwitV0Length(usize)
+pub bitcoin_primitives::witness_version::FromStrError::Invalid(bitcoin_primitives::script::witness_version::TryFromError)
+pub bitcoin_primitives::witness_version::FromStrError::Unparsable(bitcoin_units::parse_int::ParseIntError)
+pub bitcoin_primitives::witness_version::TryFromError::invalid: u8
+pub bitcoin_primitives::witness_version::TryFromInstructionError::DataPush
+pub bitcoin_primitives::witness_version::TryFromInstructionError::TryFrom(bitcoin_primitives::script::witness_version::TryFromError)
+pub bitcoin_primitives::witness_version::WitnessVersion::V0 = 0
+pub bitcoin_primitives::witness_version::WitnessVersion::V1 = 1
+pub bitcoin_primitives::witness_version::WitnessVersion::V10 = 10
+pub bitcoin_primitives::witness_version::WitnessVersion::V11 = 11
+pub bitcoin_primitives::witness_version::WitnessVersion::V12 = 12
+pub bitcoin_primitives::witness_version::WitnessVersion::V13 = 13
+pub bitcoin_primitives::witness_version::WitnessVersion::V14 = 14
+pub bitcoin_primitives::witness_version::WitnessVersion::V15 = 15
+pub bitcoin_primitives::witness_version::WitnessVersion::V16 = 16
+pub bitcoin_primitives::witness_version::WitnessVersion::V2 = 2
+pub bitcoin_primitives::witness_version::WitnessVersion::V3 = 3
+pub bitcoin_primitives::witness_version::WitnessVersion::V4 = 4
+pub bitcoin_primitives::witness_version::WitnessVersion::V5 = 5
+pub bitcoin_primitives::witness_version::WitnessVersion::V6 = 6
+pub bitcoin_primitives::witness_version::WitnessVersion::V7 = 7
+pub bitcoin_primitives::witness_version::WitnessVersion::V8 = 8
+pub bitcoin_primitives::witness_version::WitnessVersion::V9 = 9
 pub const bitcoin_primitives::BlockHash::GENESIS_PREVIOUS_BLOCK_HASH: Self
 pub const bitcoin_primitives::BlockValidation::IS_CHECKED: bool
 pub const bitcoin_primitives::Txid::COINBASE_PREVOUT: Self
@@ -1181,6 +1367,9 @@ pub const bitcoin_primitives::block::Version::ONE: Self
 pub const bitcoin_primitives::block::Version::TWO: Self
 pub const bitcoin_primitives::script::MAX_REDEEM_SCRIPT_SIZE: usize
 pub const bitcoin_primitives::script::MAX_WITNESS_SCRIPT_SIZE: usize
+pub const bitcoin_primitives::script::witness_program::MAX_SIZE: usize
+pub const bitcoin_primitives::script::witness_program::MIN_SIZE: usize
+pub const bitcoin_primitives::script::witness_program::P2A_PROGRAM: [u8; 2]
 pub const bitcoin_primitives::transaction::OutPoint::COINBASE_PREVOUT: Self
 pub const bitcoin_primitives::transaction::OutPoint::SIZE: usize
 pub const bitcoin_primitives::transaction::Transaction::MAX_STANDARD_WEIGHT: bitcoin_units::weight::encapsulate::Weight
@@ -1188,6 +1377,9 @@ pub const bitcoin_primitives::transaction::TxIn::EMPTY_COINBASE: Self
 pub const bitcoin_primitives::transaction::Version::ONE: Self
 pub const bitcoin_primitives::transaction::Version::THREE: Self
 pub const bitcoin_primitives::transaction::Version::TWO: Self
+pub const bitcoin_primitives::witness_program::MAX_SIZE: usize
+pub const bitcoin_primitives::witness_program::MIN_SIZE: usize
+pub const bitcoin_primitives::witness_program::P2A_PROGRAM: [u8; 2]
 pub const fn bitcoin_primitives::BlockHash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_primitives::BlockHash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_primitives::BlockHash::to_byte_array(self) -> [u8; 32]
@@ -1223,6 +1415,7 @@ pub const fn bitcoin_primitives::script::ScriptHash::to_byte_array(self) -> [u8;
 pub const fn bitcoin_primitives::script::WScriptHash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_primitives::script::WScriptHash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_primitives::script::WScriptHash::to_byte_array(self) -> [u8; 32]
+pub const fn bitcoin_primitives::script::witness_program::WitnessProgram::p2a() -> Self
 pub const fn bitcoin_primitives::transaction::Version::is_standard(self) -> bool
 pub const fn bitcoin_primitives::transaction::Version::maybe_non_standard(version: u32) -> Self
 pub const fn bitcoin_primitives::transaction::Version::to_u32(self) -> u32
@@ -1627,6 +1820,53 @@ pub fn bitcoin_primitives::script::WitnessScriptTag::cmp(&self, other: &bitcoin_
 pub fn bitcoin_primitives::script::WitnessScriptTag::eq(&self, other: &bitcoin_primitives::script::WitnessScriptTag) -> bool
 pub fn bitcoin_primitives::script::WitnessScriptTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::script::WitnessScriptTag::partial_cmp(&self, other: &bitcoin_primitives::script::WitnessScriptTag) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::script::witness_program::Error::clone(&self) -> bitcoin_primitives::script::witness_program::Error
+pub fn bitcoin_primitives::script::witness_program::Error::eq(&self, other: &bitcoin_primitives::script::witness_program::Error) -> bool
+pub fn bitcoin_primitives::script::witness_program::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::witness_program::Error::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_primitives::script::witness_program::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::clone(&self) -> bitcoin_primitives::script::witness_program::WitnessProgram
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::cmp(&self, other: &bitcoin_primitives::script::witness_program::WitnessProgram) -> core::cmp::Ordering
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::eq(&self, other: &bitcoin_primitives::script::witness_program::WitnessProgram) -> bool
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::is_p2a(&self) -> bool
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::is_p2tr(&self) -> bool
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::is_p2wpkh(&self) -> bool
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::is_p2wsh(&self) -> bool
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::new(version: bitcoin_primitives::script::witness_version::WitnessVersion, bytes: &[u8]) -> core::result::Result<Self, bitcoin_primitives::script::witness_program::Error>
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::new_p2tr(program: [u8; 32]) -> Self
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::new_p2wpkh(program: [u8; 20]) -> Self
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::new_p2wsh(program: [u8; 32]) -> Self
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::partial_cmp(&self, other: &bitcoin_primitives::script::witness_program::WitnessProgram) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::program(&self) -> &[u8]
+pub fn bitcoin_primitives::script::witness_program::WitnessProgram::version(&self) -> bitcoin_primitives::script::witness_version::WitnessVersion
+pub fn bitcoin_primitives::script::witness_version::FromStrError::clone(&self) -> bitcoin_primitives::script::witness_version::FromStrError
+pub fn bitcoin_primitives::script::witness_version::FromStrError::eq(&self, other: &bitcoin_primitives::script::witness_version::FromStrError) -> bool
+pub fn bitcoin_primitives::script::witness_version::FromStrError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::witness_version::FromStrError::from(e: bitcoin_primitives::script::witness_version::TryFromError) -> Self
+pub fn bitcoin_primitives::script::witness_version::FromStrError::from(e: bitcoin_units::parse_int::ParseIntError) -> Self
+pub fn bitcoin_primitives::script::witness_version::FromStrError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_primitives::script::witness_version::FromStrError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_primitives::script::witness_version::TryFromError::clone(&self) -> bitcoin_primitives::script::witness_version::TryFromError
+pub fn bitcoin_primitives::script::witness_version::TryFromError::eq(&self, other: &bitcoin_primitives::script::witness_version::TryFromError) -> bool
+pub fn bitcoin_primitives::script::witness_version::TryFromError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::witness_version::TryFromError::invalid_version(&self) -> u8
+pub fn bitcoin_primitives::script::witness_version::TryFromInstructionError::clone(&self) -> bitcoin_primitives::script::witness_version::TryFromInstructionError
+pub fn bitcoin_primitives::script::witness_version::TryFromInstructionError::eq(&self, other: &bitcoin_primitives::script::witness_version::TryFromInstructionError) -> bool
+pub fn bitcoin_primitives::script::witness_version::TryFromInstructionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::witness_version::TryFromInstructionError::from(e: bitcoin_primitives::script::witness_version::TryFromError) -> Self
+pub fn bitcoin_primitives::script::witness_version::TryFromInstructionError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_primitives::script::witness_version::TryFromInstructionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::clone(&self) -> bitcoin_primitives::script::witness_version::WitnessVersion
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::cmp(&self, other: &bitcoin_primitives::script::witness_version::WitnessVersion) -> core::cmp::Ordering
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::eq(&self, other: &bitcoin_primitives::script::witness_version::WitnessVersion) -> bool
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::partial_cmp(&self, other: &bitcoin_primitives::script::witness_version::WitnessVersion) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::to_num(self) -> u8
+pub fn bitcoin_primitives::script::witness_version::WitnessVersion::try_from(no: u8) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_primitives::transaction::OutPoint::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::transaction::OutPoint::clone(&self) -> bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::cmp::Ordering
@@ -1829,8 +2069,12 @@ pub mod bitcoin_primitives::block
 pub mod bitcoin_primitives::merkle_tree
 pub mod bitcoin_primitives::pow
 pub mod bitcoin_primitives::script
+pub mod bitcoin_primitives::script::witness_program
+pub mod bitcoin_primitives::script::witness_version
 pub mod bitcoin_primitives::transaction
 pub mod bitcoin_primitives::witness
+pub mod bitcoin_primitives::witness_program
+pub mod bitcoin_primitives::witness_version
 pub struct bitcoin_primitives::Block<V> where V: bitcoin_primitives::block::Validation
 pub struct bitcoin_primitives::BlockHash(_)
 pub struct bitcoin_primitives::BlockHeader
@@ -1847,6 +2091,7 @@ pub struct bitcoin_primitives::Txid(_)
 pub struct bitcoin_primitives::Witness
 pub struct bitcoin_primitives::WitnessCommitment(_)
 pub struct bitcoin_primitives::WitnessMerkleNode(_)
+pub struct bitcoin_primitives::WitnessProgram
 pub struct bitcoin_primitives::Wtxid(_)
 pub struct bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation
 pub struct bitcoin_primitives::block::BlockEncoder<'e>(_)
@@ -1876,7 +2121,10 @@ pub struct bitcoin_primitives::script::ScriptBufDecoderError(_)
 pub struct bitcoin_primitives::script::ScriptEncoder<'e>(_)
 pub struct bitcoin_primitives::script::ScriptHash(_)
 pub struct bitcoin_primitives::script::WScriptHash(_)
+pub struct bitcoin_primitives::script::WitnessProgram
 pub struct bitcoin_primitives::script::WitnessScriptSizeError
+pub struct bitcoin_primitives::script::witness_program::WitnessProgram
+pub struct bitcoin_primitives::script::witness_version::TryFromError
 pub struct bitcoin_primitives::transaction::BlockHashDecoder(_)
 pub struct bitcoin_primitives::transaction::BlockHashDecoderError(_)
 pub struct bitcoin_primitives::transaction::Ntxid(_)
@@ -1911,6 +2159,8 @@ pub struct bitcoin_primitives::witness::Witness
 pub struct bitcoin_primitives::witness::WitnessDecoder
 pub struct bitcoin_primitives::witness::WitnessDecoderError(_)
 pub struct bitcoin_primitives::witness::WitnessEncoder<'a>(_)
+pub struct bitcoin_primitives::witness_program::WitnessProgram
+pub struct bitcoin_primitives::witness_version::TryFromError
 pub trait bitcoin_primitives::BlockValidation: bitcoin_primitives::block::sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
 pub trait bitcoin_primitives::block::Validation: bitcoin_primitives::block::sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
 pub trait bitcoin_primitives::script::ScriptHashableTag: bitcoin_primitives::script::sealed::Sealed
@@ -1976,6 +2226,8 @@ pub type bitcoin_primitives::script::WScriptHash::Err = hex_conservative::error:
 pub type bitcoin_primitives::script::WScriptHash::Error = bitcoin_primitives::script::WitnessScriptSizeError
 pub type bitcoin_primitives::script::WitnessScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::script::WitnessScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>
+pub type bitcoin_primitives::script::witness_version::WitnessVersion::Err = bitcoin_primitives::script::witness_version::FromStrError
+pub type bitcoin_primitives::script::witness_version::WitnessVersion::Error = bitcoin_primitives::script::witness_version::TryFromError
 pub type bitcoin_primitives::transaction::OutPoint::Decoder = bitcoin_primitives::transaction::OutPointDecoder
 pub type bitcoin_primitives::transaction::OutPoint::Encoder<'e> where Self: 'e = bitcoin_primitives::transaction::OutPointEncoder<'e>
 pub type bitcoin_primitives::transaction::OutPoint::Err = bitcoin_primitives::transaction::ParseOutPointError

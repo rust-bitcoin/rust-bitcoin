@@ -128,7 +128,7 @@ impl Witness {
 
     /// Returns the number of elements this witness holds.
     #[inline]
-    pub fn len(&self) -> usize { self.witness_elements }
+    pub const fn len(&self) -> usize { self.witness_elements }
 
     /// Returns the number of bytes this witness contributes to a transactions total size.
     ///
@@ -321,7 +321,7 @@ pub struct WitnessDecoder {
 
 impl WitnessDecoder {
     /// Constructs a new witness decoder.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             content: Vec::new(),
             cursor: 0,
@@ -1024,8 +1024,7 @@ mod test {
         let witness_elements = 2;
         let content = append_u32_vec(&elements, &[0, 2]);
         let indices_start = elements.len();
-        let witness =
-            Witness::from_parts__unstable(content, witness_elements, indices_start);
+        let witness = Witness::from_parts__unstable(content, witness_elements, indices_start);
         assert_eq!(witness.get(0).unwrap(), [11_u8]);
         assert_eq!(witness.get(1).unwrap(), [21_u8, 22]);
         assert_eq!(witness.size(), 6);

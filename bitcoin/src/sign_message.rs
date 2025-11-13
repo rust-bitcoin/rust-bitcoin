@@ -51,13 +51,11 @@ mod message_signing {
 
     impl fmt::Display for MessageSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            use MessageSignatureError::*;
-
-            match *self {
-                InvalidLength => write!(f, "length not 65 bytes"),
-                InvalidEncoding(ref e) => write_err!(f, "invalid encoding"; e),
-                InvalidBase64 => write!(f, "invalid base64"),
-                UnsupportedAddressType(ref address_type) =>
+            match self {
+                Self::InvalidLength => write!(f, "length not 65 bytes"),
+                Self::InvalidEncoding(ref e) => write_err!(f, "invalid encoding"; e),
+                Self::InvalidBase64 => write!(f, "invalid base64"),
+                Self::UnsupportedAddressType(ref address_type) =>
                     write!(f, "unsupported address type: {}", address_type),
             }
         }
@@ -66,19 +64,15 @@ mod message_signing {
     #[cfg(feature = "std")]
     impl std::error::Error for MessageSignatureError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            use MessageSignatureError::*;
-
-            match *self {
-                InvalidEncoding(ref e) => Some(e),
-                InvalidLength | InvalidBase64 | UnsupportedAddressType(_) => None,
+            match self {
+                Self::InvalidEncoding(ref e) => Some(e),
+                Self::InvalidLength | Self::InvalidBase64 | Self::UnsupportedAddressType(_) => None,
             }
         }
     }
 
     impl From<secp256k1::Error> for MessageSignatureError {
-        fn from(e: secp256k1::Error) -> Self {
-            Self::InvalidEncoding(e)
-        }
+        fn from(e: secp256k1::Error) -> Self { Self::InvalidEncoding(e) }
     }
 
     /// A signature on a Bitcoin Signed Message.
@@ -196,9 +190,7 @@ mod message_signing {
 
         impl core::str::FromStr for MessageSignature {
             type Err = MessageSignatureError;
-            fn from_str(s: &str) -> Result<Self, MessageSignatureError> {
-                Self::from_base64(s)
-            }
+            fn from_str(s: &str) -> Result<Self, MessageSignatureError> { Self::from_base64(s) }
         }
     }
 }
@@ -238,10 +230,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
+    #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand", feature = "std"))]
     fn message_signature() {
         use secp256k1::ecdsa::RecoverableSignature;
 
+        use crate::address::AddressScriptExt as _;
         use crate::{Address, AddressType, Network, NetworkKind};
 
         let message = "rust-bitcoin MessageSignature test";

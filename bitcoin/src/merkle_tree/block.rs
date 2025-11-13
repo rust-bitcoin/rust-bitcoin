@@ -17,7 +17,6 @@ use arbitrary::{Arbitrary, Unstructured};
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
-use self::MerkleBlockError::*;
 use crate::block::{self, Block, Checked};
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
@@ -115,7 +114,7 @@ impl MerkleBlock {
         if merkle_root.eq(&self.header.merkle_root) {
             Ok(())
         } else {
-            Err(MerkleRootMismatch)
+            Err(MerkleBlockError::MerkleRootMismatch)
         }
     }
 }
@@ -129,10 +128,7 @@ impl Encodable for MerkleBlock {
 
 impl Decodable for MerkleBlock {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self {
-            header: Decodable::consensus_decode(r)?,
-            txn: Decodable::consensus_decode(r)?,
-        })
+        Ok(Self { header: Decodable::consensus_decode(r)?, txn: Decodable::consensus_decode(r)? })
     }
 }
 
@@ -247,19 +243,19 @@ impl PartialMerkleTree {
         indexes.clear();
         // An empty set will not work
         if self.num_transactions == 0 {
-            return Err(NoTransactions);
+            return Err(MerkleBlockError::NoTransactions);
         };
         // check for excessively high numbers of transactions
         if self.num_transactions.to_u64() > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
-            return Err(TooManyTransactions);
+            return Err(MerkleBlockError::TooManyTransactions);
         }
         // there can never be more hashes provided than one for every txid
         if self.hashes.len() as u32 > self.num_transactions {
-            return Err(TooManyHashes);
+            return Err(MerkleBlockError::TooManyHashes);
         };
         // there must be at least one bit per node in the partial tree, and at least one node per hash
         if self.bits.len() < self.hashes.len() {
-            return Err(NotEnoughBits);
+            return Err(MerkleBlockError::NotEnoughBits);
         };
 
         let height = self.calc_tree_height();
@@ -272,11 +268,11 @@ impl PartialMerkleTree {
         // Verify that all bits were consumed (except for the padding caused by
         // serializing it as a byte sequence)
         if bits_used.div_ceil(8) != self.bits.len().div_ceil(8) as u32 {
-            return Err(NotAllBitsConsumed);
+            return Err(MerkleBlockError::NotAllBitsConsumed);
         }
         // Verify that all hashes were consumed
         if hash_used != self.hashes.len() as u32 {
-            return Err(NotAllHashesConsumed);
+            return Err(MerkleBlockError::NotAllHashesConsumed);
         }
         Ok(hash_merkle_root)
     }
@@ -353,14 +349,14 @@ impl PartialMerkleTree {
         indexes: &mut Vec<u32>,
     ) -> Result<TxMerkleNode, MerkleBlockError> {
         if *bits_used as usize >= self.bits.len() {
-            return Err(BitsArrayOverflow);
+            return Err(MerkleBlockError::BitsArrayOverflow);
         }
         let parent_of_match = self.bits[*bits_used as usize];
         *bits_used += 1;
         if height == 0 || !parent_of_match {
             // If at height 0, or nothing interesting below, use stored hash and do not descend
             if *hash_used as usize >= self.hashes.len() {
-                return Err(HashesArrayOverflow);
+                return Err(MerkleBlockError::HashesArrayOverflow);
             }
             let hash = self.hashes[*hash_used as usize];
             *hash_used += 1;
@@ -393,7 +389,7 @@ impl PartialMerkleTree {
                 if right == left {
                     // The left and right branches should never be identical, as the transaction
                     // hashes covered by them must each be unique.
-                    return Err(IdenticalHashesFound);
+                    return Err(MerkleBlockError::IdenticalHashesFound);
                 }
             } else {
                 right = left;
@@ -482,19 +478,17 @@ impl From<Infallible> for MerkleBlockError {
 
 impl fmt::Display for MerkleBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use MerkleBlockError::*;
-
-        match *self {
-            MerkleRootMismatch => write!(f, "Merkle header root doesn't match to the root calculated from the partial Merkle tree"),
-            NoTransactions => write!(f, "partial Merkle tree contains no transactions"),
-            TooManyTransactions => write!(f, "too many transactions"),
-            TooManyHashes => write!(f, "proof contains more hashes than transactions"),
-            NotEnoughBits => write!(f, "proof contains fewer bits than hashes"),
-            NotAllBitsConsumed => write!(f, "not all bits were consumed"),
-            NotAllHashesConsumed => write!(f, "not all hashes were consumed"),
-            BitsArrayOverflow => write!(f, "overflowed the bits array"),
-            HashesArrayOverflow => write!(f, "overflowed the hashes array"),
-            IdenticalHashesFound => write!(f, "found identical transaction hashes"),
+        match self {
+            Self::MerkleRootMismatch => write!(f, "Merkle header root doesn't match to the root calculated from the partial Merkle tree"),
+            Self::NoTransactions => write!(f, "partial Merkle tree contains no transactions"),
+            Self::TooManyTransactions => write!(f, "too many transactions"),
+            Self::TooManyHashes => write!(f, "proof contains more hashes than transactions"),
+            Self::NotEnoughBits => write!(f, "proof contains fewer bits than hashes"),
+            Self::NotAllBitsConsumed => write!(f, "not all bits were consumed"),
+            Self::NotAllHashesConsumed => write!(f, "not all hashes were consumed"),
+            Self::BitsArrayOverflow => write!(f, "overflowed the bits array"),
+            Self::HashesArrayOverflow => write!(f, "overflowed the hashes array"),
+            Self::IdenticalHashesFound => write!(f, "found identical transaction hashes"),
         }
     }
 }
@@ -502,12 +496,17 @@ impl fmt::Display for MerkleBlockError {
 #[cfg(feature = "std")]
 impl std::error::Error for MerkleBlockError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use MerkleBlockError::*;
-
-        match *self {
-            MerkleRootMismatch | NoTransactions | TooManyTransactions | TooManyHashes
-            | NotEnoughBits | NotAllBitsConsumed | NotAllHashesConsumed | BitsArrayOverflow
-            | HashesArrayOverflow | IdenticalHashesFound => None,
+        match self {
+            Self::MerkleRootMismatch
+            | Self::NoTransactions
+            | Self::TooManyTransactions
+            | Self::TooManyHashes
+            | Self::NotEnoughBits
+            | Self::NotAllBitsConsumed
+            | Self::NotAllHashesConsumed
+            | Self::BitsArrayOverflow
+            | Self::HashesArrayOverflow
+            | Self::IdenticalHashesFound => None,
         }
     }
 }
@@ -534,7 +533,7 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 mod tests {
     use hex::{DisplayHex, FromHex};
     use hex_lit::hex;
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     use {core::cmp, secp256k1::rand::prelude::*};
 
     use super::*;
@@ -542,7 +541,7 @@ mod tests {
     use crate::consensus::encode;
     use crate::Txid;
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     macro_rules! pmt_tests {
         ($($name:ident),* $(,)?) => {
             $(
@@ -554,7 +553,7 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     pmt_tests!(
         pmt_test_1,
         pmt_test_4,
@@ -571,10 +570,10 @@ mod tests {
     );
 
     /// Parses the transaction count out of `name` with form: `pmt_test_$num`.
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn pmt_test_from_name(name: &str) { pmt_test(name[9..].parse().unwrap()) }
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn pmt_test(tx_count: usize) {
         let mut rng = secp256k1::rand::rng();
         // Create some fake tx ids
@@ -744,7 +743,7 @@ mod tests {
         assert_eq!(index.len(), 0);
     }
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
         fn damage(&mut self, rng: &mut ThreadRng) {

@@ -46,7 +46,7 @@ pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
 
 impl BlockHashDecoder {
     /// Constructs a new [`BlockHash`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for BlockHashDecoder {

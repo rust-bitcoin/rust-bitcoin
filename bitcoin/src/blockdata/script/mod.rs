@@ -52,8 +52,61 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
-pub mod witness_program;
-pub mod witness_version;
+
+pub mod witness_program {
+    //! The segregated witness program as defined by [BIP-0141].
+    //!
+    //! > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte push
+    //! > opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new special
+    //! > meaning. The value of the first push is called the "version byte". The following byte
+    //! > vector pushed is called the "witness program".
+    //!
+    //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
+
+    use crate::internal_macros;
+    use crate::script::PushBytes;
+
+    #[rustfmt::skip]            // Keep public re-exports separate.
+    #[doc(inline)]
+    pub use primitives::script::witness_program::{MIN_SIZE, MAX_SIZE, P2A_PROGRAM, WitnessProgram};
+    #[doc(no_inline)]
+    pub use primitives::script::witness_program::Error;
+
+    internal_macros::define_extension_trait! {
+        /// Extension functionality for the [`WitnessProgram`] type.
+        pub trait WitnessProgramExt impl for WitnessProgram {
+            /// Returns the witness program.
+            fn program(&self) -> &PushBytes {
+                self.program()
+                    .try_into()
+                    .expect("witness programs are always smaller than max size of PushBytes")
+            }
+        }
+    }
+
+    mod sealed {
+        pub trait Sealed {}
+        impl Sealed for super::WitnessProgram {}
+    }
+}
+
+pub mod witness_version {
+    //! The segregated witness version byte as defined by [BIP-0141].
+    //!
+    //! > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte push
+    //! > opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new special
+    //! > meaning. The value of the first push is called the "version byte". The following byte
+    //! > vector pushed is called the "witness program".
+    //!
+    //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
+
+    #[doc(inline)]
+    pub use primitives::script::witness_version::WitnessVersion;
+    #[doc(no_inline)]
+    pub use primitives::script::witness_version::{
+        FromStrError, TryFromError, TryFromInstructionError,
+    };
+}
 
 use core::convert::Infallible;
 use core::fmt;
@@ -76,14 +129,14 @@ pub use self::{
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt},
-    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
+    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, ScriptIntError},
 };
 #[doc(inline)]
 pub use primitives::script::{
     RedeemScript, RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
     ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig,
-    ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf, WScriptHash, WitnessScript,
-    WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
+    ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf, TapScriptTag, WScriptHash,
+    WitnessScript, WitnessScriptBuf, WitnessScriptSizeError, WitnessScriptTag,
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
@@ -155,15 +208,16 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 ///
 /// See [`push_bytes::PushBytes::read_scriptint`] for a description of some subtleties of
 /// this function.
-pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, Error> {
+pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i32, ScriptIntError> {
     if v.is_empty() {
         return Ok(0);
     }
     if v.len() > 4 {
-        return Err(Error::NumericOverflow);
+        return Err(ScriptIntError::NumericOverflow);
     }
 
-    Ok(scriptint_parse(v))
+    let ret = scriptint_parse(v);
+    Ok(i32::try_from(ret).expect("4 bytes or less fits in an i32"))
 }
 
 // Caller to guarantee that `v` is not empty.
@@ -262,15 +316,13 @@ impl From<Infallible> for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            NonMinimalPush => f.write_str("non-minimal datapush"),
-            EarlyEndOfScript => f.write_str("unexpected end of script"),
-            NumericOverflow =>
+        match self {
+            Self::NonMinimalPush => f.write_str("non-minimal datapush"),
+            Self::EarlyEndOfScript => f.write_str("unexpected end of script"),
+            Self::NumericOverflow =>
                 f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
-            UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
-            Serialization =>
+            Self::UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
+            Self::Serialization =>
                 f.write_str("can not serialize the spending transaction in Transaction::verify()"),
         }
     }
@@ -279,14 +331,12 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            NonMinimalPush
-            | EarlyEndOfScript
-            | NumericOverflow
-            | UnknownSpentOutput(_)
-            | Serialization => None,
+        match self {
+            Self::NonMinimalPush
+            | Self::EarlyEndOfScript
+            | Self::NumericOverflow
+            | Self::UnknownSpentOutput(_)
+            | Self::Serialization => None,
         }
     }
 }

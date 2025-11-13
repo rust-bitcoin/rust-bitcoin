@@ -49,6 +49,7 @@ exclude_re = [
     "primitives/.* <impl Encoder for .*Encoder<'_>>::current_chunk", # Replacing the return with Some(vec![]) causes an infinite loop.
     "primitives/.* <impl Encoder for .*Encoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
     "primitives/.* <impl Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
+    "primitives/.* WitnessDecoder::resize_if_needed", # Replacing *= with += still resizes the buffer making the mutant untestable.
 
     # consensus_encoding - most of these are for mutations in the logic used to determine when to stop encoding or decoding.
     "consensus_encoding/.* <impl Decoder for ArrayDecoder<N>>::push_bytes", # Mutations cause an infinite loop

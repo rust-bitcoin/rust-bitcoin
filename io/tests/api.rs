@@ -54,8 +54,8 @@ impl Structs {
 }
 
 #[derive(Debug)] // `Take` implements Debug (C-DEBUG).
-struct Taker<'a> {
-    a: Take<'a, Dummy>,
+struct Taker<Dummy> {
+    a: Take<Dummy>,
 }
 
 /// An arbitrary `Dummy` instance.
@@ -141,4 +141,20 @@ fn all_non_error_types_implement_send_sync() {
     // Error types are meaningful and well-behaved (C-GOOD-ERR)
     assert_send::<Errors>();
     assert_sync::<Errors>();
+}
+
+#[test]
+fn dyn_compatible() {
+    // Sanity check, these are all dyn compatible.
+    struct StdlibTraits {
+        p: Box<dyn std::io::Read>,
+        q: Box<dyn std::io::Write>,
+        r: Box<dyn std::io::BufRead>,
+    }
+    // If this builds then our three traits are dyn compatible also.
+    struct OurTraits {
+        p: Box<dyn Read>,
+        q: Box<dyn Write>,
+        r: Box<dyn BufRead>,
+    }
 }

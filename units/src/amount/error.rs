@@ -60,6 +60,10 @@ impl From<InvalidCharacterError> for ParseError {
     fn from(e: InvalidCharacterError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
 }
 
+impl From<BadPositionError> for ParseError {
+    fn from(e: BadPositionError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
+}
+
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
@@ -100,6 +104,8 @@ pub(crate) enum ParseAmountErrorInner {
     InputTooLarge(InputTooLargeError),
     /// Invalid character in input.
     InvalidCharacter(InvalidCharacterError),
+    /// A valid character is in an invalid position.
+    BadPosition(BadPositionError),
 }
 
 impl From<TooPreciseError> for ParseAmountError {
@@ -118,6 +124,10 @@ impl From<InvalidCharacterError> for ParseAmountError {
     fn from(value: InvalidCharacterError) -> Self {
         Self(ParseAmountErrorInner::InvalidCharacter(value))
     }
+}
+
+impl From<BadPositionError> for ParseAmountError {
+    fn from(value: BadPositionError) -> Self { Self(ParseAmountErrorInner::BadPosition(value)) }
 }
 
 impl From<Infallible> for ParseAmountError {
@@ -140,6 +150,7 @@ impl fmt::Display for ParseAmountError {
             E::InvalidCharacter(ref error) => {
                 write_err!(f, "invalid character in the input"; error)
             }
+            E::BadPosition(ref error) => write_err!(f, "valid character in bad position"; error),
         }
     }
 }
@@ -155,6 +166,7 @@ impl std::error::Error for ParseAmountError {
             E::OutOfRange(ref error) => Some(error),
             E::MissingDigits(ref error) => Some(error),
             E::InvalidCharacter(ref error) => Some(error),
+            E::BadPosition(ref error) => Some(error),
         }
     }
 }
@@ -218,9 +230,7 @@ impl fmt::Display for OutOfRangeError {
 impl std::error::Error for OutOfRangeError {}
 
 impl From<OutOfRangeError> for ParseAmountError {
-    fn from(value: OutOfRangeError) -> Self {
-        Self(ParseAmountErrorInner::OutOfRange(value))
-    }
+    fn from(value: OutOfRangeError) -> Self { Self(ParseAmountErrorInner::OutOfRange(value)) }
 }
 
 /// Error returned when the input string has higher precision than satoshis.
@@ -321,6 +331,32 @@ impl fmt::Display for InvalidCharacterError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidCharacterError {}
+
+/// Error returned when a valid character (e.g. '_') is in an invalid/bad position.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BadPositionError {
+    pub(super) char: char,
+    pub(super) position: usize,
+}
+
+impl fmt::Display for BadPositionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.char {
+            '_' => match self.position {
+                0 => f.write_str("the input amount is prefixed with an underscore (_)"),
+                // Position 1 can only occur when the amount begins with a minus (-), since an underscore
+                // at position 0 will cause an error with position 0, and this error marks the position of
+                // the second underscore.
+                1 => f.write_str("the input amount is prefixed with an underscore (_)"),
+                _ => f.write_str("there are consecutive underscores (_) in the input"),
+            },
+            c => write!(f, "The character '{}' is at a bad position: {}", c, self.position),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BadPositionError {}
 
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]

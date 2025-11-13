@@ -4,7 +4,9 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+use core::borrow::Borrow;
 use core::convert::Infallible;
+use core::ops::Deref;
 use core::str::FromStr;
 use core::{fmt, iter};
 
@@ -14,11 +16,8 @@ use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
+use super::{EcdsaSighashType, NonStandardSighashTypeError};
 use crate::prelude::{DisplayHex, Vec};
-use crate::script::PushBytes;
-#[cfg(doc)]
-use crate::script::ScriptPubKeyBufExt as _;
-use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;
 
@@ -110,6 +109,24 @@ pub struct SerializedSignature {
 }
 
 impl SerializedSignature {
+    /// Constructs a new SerializedSignature from a Signature.
+    ///
+    /// In other words this serializes a `Signature` into a `SerializedSignature`.
+    #[inline]
+    pub fn from_signature(sig: Signature) -> Self { sig.serialize() }
+
+    /// Converts the serialized signature into the [`Signature`] struct.
+    ///
+    /// In other words this deserializes the `SerializedSignature`.
+    #[inline]
+    pub fn to_signature(self) -> Result<Signature, DecodeError> { Signature::from_slice(&self) }
+
+    /// Returns the length of the serialized signature data.
+    #[inline]
+    // `len` is never 0, so `is_empty` would always return `false`.
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize { self.len }
+
     /// Returns an iterator over bytes of the signature.
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
@@ -119,43 +136,6 @@ impl SerializedSignature {
     pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         writer.write_all(self)
     }
-}
-
-impl core::ops::Deref for SerializedSignature {
-    type Target = [u8];
-
-    #[inline]
-    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
-}
-
-impl core::ops::DerefMut for SerializedSignature {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data[..self.len] }
-}
-
-impl AsRef<[u8]> for SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &[u8] { self }
-}
-
-impl AsMut<[u8]> for SerializedSignature {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [u8] { self }
-}
-
-impl AsRef<PushBytes> for SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &PushBytes { &<&PushBytes>::from(&self.data)[..self.len()] }
-}
-
-impl core::borrow::Borrow<[u8]> for SerializedSignature {
-    #[inline]
-    fn borrow(&self) -> &[u8] { self }
-}
-
-impl core::borrow::BorrowMut<[u8]> for SerializedSignature {
-    #[inline]
-    fn borrow_mut(&mut self) -> &mut [u8] { self }
 }
 
 impl fmt::Debug for SerializedSignature {
@@ -189,10 +169,57 @@ impl PartialEq for SerializedSignature {
     fn eq(&self, other: &Self) -> bool { **self == **other }
 }
 
+impl PartialEq<[u8]> for SerializedSignature {
+    #[inline]
+    fn eq(&self, other: &[u8]) -> bool { **self == *other }
+}
+
+impl PartialEq<SerializedSignature> for [u8] {
+    #[inline]
+    fn eq(&self, other: &SerializedSignature) -> bool { *self == **other }
+}
+
+impl PartialOrd for SerializedSignature {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
+}
+
+impl Ord for SerializedSignature {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
+}
+
+impl PartialOrd<[u8]> for SerializedSignature {
+    fn partial_cmp(&self, other: &[u8]) -> Option<core::cmp::Ordering> {
+        (**self).partial_cmp(other)
+    }
+}
+
+impl PartialOrd<SerializedSignature> for [u8] {
+    fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
+        self.partial_cmp(&**other)
+    }
+}
+
 impl Eq for SerializedSignature {}
 
 impl core::hash::Hash for SerializedSignature {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state) }
+}
+
+impl AsRef<[u8]> for SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &[u8] { &self.data[..self.len] }
+}
+
+impl Borrow<[u8]> for SerializedSignature {
+    #[inline]
+    fn borrow(&self) -> &[u8] { &self.data[..self.len] }
+}
+
+impl Deref for SerializedSignature {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
 }
 
 impl<'a> IntoIterator for &'a SerializedSignature {
@@ -221,12 +248,10 @@ impl From<Infallible> for DecodeError {
 
 impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DecodeError::*;
-
-        match *self {
-            SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
-            EmptySignature => write!(f, "empty ECDSA signature"),
-            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
+        match self {
+            Self::SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
+            Self::EmptySignature => write!(f, "empty ECDSA signature"),
+            Self::Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
         }
     }
 }
@@ -234,12 +259,10 @@ impl fmt::Display for DecodeError {
 #[cfg(feature = "std")]
 impl std::error::Error for DecodeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use DecodeError::*;
-
-        match *self {
-            Secp256k1(ref e) => Some(e),
-            SighashType(ref e) => Some(e),
-            EmptySignature => None,
+        match self {
+            Self::Secp256k1(ref e) => Some(e),
+            Self::SighashType(ref e) => Some(e),
+            Self::EmptySignature => None,
         }
     }
 }
@@ -268,11 +291,9 @@ impl From<Infallible> for ParseSignatureError {
 
 impl fmt::Display for ParseSignatureError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseSignatureError::*;
-
-        match *self {
-            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
-            Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
+        match self {
+            Self::Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            Self::Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
         }
     }
 }
@@ -280,11 +301,9 @@ impl fmt::Display for ParseSignatureError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseSignatureError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseSignatureError::*;
-
-        match *self {
-            Hex(ref e) => Some(e),
-            Decode(ref e) => Some(e),
+        match self {
+            Self::Hex(ref e) => Some(e),
+            Self::Decode(ref e) => Some(e),
         }
     }
 }
@@ -339,7 +358,10 @@ mod tests {
     const TEST_SIGNATURE_HEX: &str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn write_serialized_signature() {
+        use alloc::vec;
+
         let sig = Signature {
             signature: secp256k1::ecdsa::Signature::from_str(TEST_SIGNATURE_HEX).unwrap(),
             sighash_type: EcdsaSighashType::All,

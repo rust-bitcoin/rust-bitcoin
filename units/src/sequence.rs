@@ -109,9 +109,7 @@ impl Sequence {
 
     /// Returns `true` if the sequence has a relative lock-time.
     #[inline]
-    pub fn is_relative_lock_time(self) -> bool {
-        self.0 & Self::LOCK_TIME_DISABLE_FLAG_MASK == 0
-    }
+    pub fn is_relative_lock_time(self) -> bool { self.0 & Self::LOCK_TIME_DISABLE_FLAG_MASK == 0 }
 
     /// Returns `true` if the sequence number encodes a block based relative lock-time.
     #[inline]
@@ -198,7 +196,7 @@ impl Sequence {
 
     /// Returns the inner 32bit integer value of Sequence.
     #[inline]
-    pub fn to_consensus_u32(self) -> u32 { self.0 }
+    pub const fn to_consensus_u32(self) -> u32 { self.0 }
 
     /// Gets the hex representation of this [`Sequence`].
     #[cfg(feature = "alloc")]
@@ -228,7 +226,7 @@ impl Sequence {
     ///
     /// BIP-0068 only uses the low 16 bits for relative lock value.
     #[inline]
-    fn low_u16(self) -> u16 { self.0 as u16 }
+    const fn low_u16(self) -> u16 { self.0 as u16 }
 }
 
 impl Default for Sequence {
@@ -296,7 +294,7 @@ impl Default for SequenceDecoder {
 #[cfg(feature = "encoding")]
 impl SequenceDecoder {
     /// Constructs a new [`Sequence`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]

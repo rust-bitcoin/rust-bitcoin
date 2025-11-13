@@ -34,6 +34,10 @@ jobs:
           bitcoin_parse_address,
           bitcoin_parse_outpoint,
           bitcoin_script_bytes_to_asm_fmt,
+          consensus_encoding_decode_array,
+          consensus_encoding_decode_byte_vec,
+          consensus_encoding_decode_compact_size,
+          consensus_encoding_decode_decoder2,
           hashes_json,
           hashes_ripemd160,
           hashes_sha1,
@@ -46,6 +50,7 @@ jobs:
           units_arbitrary_weight,
           units_parse_amount,
           units_parse_int,
+          units_standard_checks,
         ]
     steps:
       - name: Install test dependencies
@@ -54,6 +59,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+
         id: cache-fuzz
         with:
           path: |
