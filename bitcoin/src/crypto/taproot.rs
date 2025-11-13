@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin Taproot keys.
+//! Bitcoin Taproot signatures.
 //!
-//! This module provides Taproot keys used in Bitcoin (including reexporting secp256k1 keys).
+//! This module provides Taproot signatures used by Bitcoin that can be roundtrip (de)serialized.
 
 use core::convert::Infallible;
 use core::fmt;
