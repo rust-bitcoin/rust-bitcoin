@@ -121,43 +121,6 @@ impl SerializedSignature {
     }
 }
 
-impl core::ops::Deref for SerializedSignature {
-    type Target = [u8];
-
-    #[inline]
-    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
-}
-
-impl core::ops::DerefMut for SerializedSignature {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data[..self.len] }
-}
-
-impl AsRef<[u8]> for SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &[u8] { self }
-}
-
-impl AsMut<[u8]> for SerializedSignature {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [u8] { self }
-}
-
-impl AsRef<PushBytes> for SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &PushBytes { &<&PushBytes>::from(&self.data)[..self.len()] }
-}
-
-impl core::borrow::Borrow<[u8]> for SerializedSignature {
-    #[inline]
-    fn borrow(&self) -> &[u8] { self }
-}
-
-impl core::borrow::BorrowMut<[u8]> for SerializedSignature {
-    #[inline]
-    fn borrow_mut(&mut self) -> &mut [u8] { self }
-}
-
 impl fmt::Debug for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
@@ -189,10 +152,79 @@ impl PartialEq for SerializedSignature {
     fn eq(&self, other: &Self) -> bool { **self == **other }
 }
 
+impl PartialEq<[u8]> for SerializedSignature {
+    #[inline]
+    fn eq(&self, other: &[u8]) -> bool { **self == *other }
+}
+
+impl PartialEq<SerializedSignature> for [u8] {
+    #[inline]
+    fn eq(&self, other: &SerializedSignature) -> bool { *self == **other }
+}
+
+impl PartialOrd for SerializedSignature {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for SerializedSignature {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
+}
+
+impl PartialOrd<[u8]> for SerializedSignature {
+    fn partial_cmp(&self, other: &[u8]) -> Option<core::cmp::Ordering> {
+        (**self).partial_cmp(other)
+    }
+}
+
+impl PartialOrd<SerializedSignature> for [u8] {
+    fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
+        self.partial_cmp(&**other)
+    }
+}
+
 impl Eq for SerializedSignature {}
 
 impl core::hash::Hash for SerializedSignature {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state) }
+}
+
+impl AsRef<[u8]> for SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &[u8] { self }
+}
+
+impl AsMut<[u8]> for SerializedSignature {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [u8] { self }
+}
+
+impl AsRef<PushBytes> for SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &PushBytes { &<&PushBytes>::from(&self.data)[..self.len()] }
+}
+
+impl core::borrow::Borrow<[u8]> for SerializedSignature {
+    #[inline]
+    fn borrow(&self) -> &[u8] { self }
+}
+
+impl core::borrow::BorrowMut<[u8]> for SerializedSignature {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [u8] { self }
+}
+
+impl core::ops::Deref for SerializedSignature {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
+}
+
+impl core::ops::DerefMut for SerializedSignature {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data[..self.len] }
 }
 
 impl<'a> IntoIterator for &'a SerializedSignature {
