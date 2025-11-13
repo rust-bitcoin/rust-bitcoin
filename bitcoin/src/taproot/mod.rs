@@ -5,7 +5,6 @@
 //! This module provides support for Taproot tagged hashes.
 
 pub mod merkle_branch;
-pub mod serialized_signature;
 
 use core::cmp::{Ordering, Reverse};
 use core::convert::Infallible;
@@ -32,7 +31,7 @@ use crate::{TapScript, TapScriptBuf};
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
 #[doc(inline)]
-pub use crate::crypto::taproot::{SigFromSliceError, Signature};
+pub use crate::crypto::taproot::{SerializedSignature, SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
 #[doc(inline)]
