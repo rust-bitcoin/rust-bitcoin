@@ -11,10 +11,10 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::array::ArrayExt;
-use internals::write_err;
+use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
-use crate::prelude::Vec;
+use crate::prelude::{DisplayHex, Vec};
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 
 pub use self::into_iter::IntoIter;
@@ -145,6 +145,22 @@ impl fmt::Debug for SerializedSignature {
 impl fmt::Display for SerializedSignature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         hex::fmt_hex_exact!(f, MAX_LEN, self, hex::Case::Lower)
+    }
+}
+
+impl fmt::LowerHex for SerializedSignature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&(**self).as_hex(), f)
+    }
+}
+impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
+    * 2);
+
+impl fmt::UpperHex for SerializedSignature {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&(**self).as_hex(), f)
     }
 }
 
