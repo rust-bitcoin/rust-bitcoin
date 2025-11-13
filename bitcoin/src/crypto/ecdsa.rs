@@ -200,18 +200,6 @@ impl AsMut<[u8]> for SerializedSignature {
     fn as_mut(&mut self) -> &mut [u8] { self }
 }
 
-impl core::ops::Deref for SerializedSignature {
-    type Target = [u8];
-
-    #[inline]
-    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
-}
-
-impl core::ops::DerefMut for SerializedSignature {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data[..self.len] }
-}
-
 impl AsRef<PushBytes> for SerializedSignature {
     #[inline]
     fn as_ref(&self) -> &PushBytes { &<&PushBytes>::from(&self.data)[..self.len()] }
@@ -225,6 +213,18 @@ impl core::borrow::Borrow<[u8]> for SerializedSignature {
 impl core::borrow::BorrowMut<[u8]> for SerializedSignature {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [u8] { self }
+}
+
+impl core::ops::Deref for SerializedSignature {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
+}
+
+impl core::ops::DerefMut for SerializedSignature {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data[..self.len] }
 }
 
 impl<'a> IntoIterator for &'a SerializedSignature {
