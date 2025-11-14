@@ -1,4 +1,4 @@
-#![cfg(not(feature = "rand-std"))]
+#![cfg(all(feature = "std", not(feature = "rand")))]
 
 use std::collections::BTreeMap;
 

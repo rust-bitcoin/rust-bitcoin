@@ -26,7 +26,7 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification};
-#[cfg(feature = "rand-std")]
+#[cfg(all(feature = "rand", feature = "std"))]
 pub use secp256k1::rand;
 pub use serialized_x_only::SerializedXOnlyPublicKey;
 
@@ -541,7 +541,7 @@ pub struct PrivateKey {
 impl PrivateKey {
     /// Constructs a new compressed ECDSA private key using the secp256k1 algorithm and
     /// a secure random number generator.
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     pub fn generate(network: impl Into<NetworkKind>) -> Self {
         let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
         Self::new(secret_key, network.into())
@@ -869,7 +869,7 @@ pub type UntweakedKeypair = Keypair;
 /// # Examples
 ///
 /// ```
-/// # #[cfg(feature = "rand-std")] {
+/// # #[cfg(all(feature = "rand", feature = "std"))] {
 /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
 /// # use bitcoin::secp256k1::{rand, Secp256k1};
 /// # let secp = Secp256k1::new();
@@ -1740,7 +1740,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn public_key_constructors() {
         use secp256k1::rand;
 
