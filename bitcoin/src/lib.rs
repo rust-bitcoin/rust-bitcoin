@@ -17,7 +17,6 @@
 //! * `bitcoinconsensus` (dependency) - enables validating scripts and transactions.
 //! * `default` - enables `std` and `secp-recovery`.
 //! * `rand` (transitive dependency) - makes it more convenient to generate random values.
-//! * `rand-std` - same as `rand` but also enables `std` here and in `secp256k1`.
 //! * `serde` (dependency) - implements `serde`-based serialization and deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `secp-recovery` - enables calculating public key from a signature and message.

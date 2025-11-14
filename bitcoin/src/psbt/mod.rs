@@ -438,9 +438,9 @@ impl Psbt {
                         .tap_tweak(input.tap_merkle_root)
                         .to_keypair();
 
-                    #[cfg(feature = "rand-std")]
+                    #[cfg(all(feature = "rand", feature = "std"))]
                     let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
-                    #[cfg(not(feature = "rand-std"))]
+                    #[cfg(not(all(feature = "rand", feature = "std")))]
                     let signature =
                         secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
@@ -466,9 +466,9 @@ impl Psbt {
                         let (sighash, sighash_type) =
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
-                        #[cfg(feature = "rand-std")]
+                        #[cfg(all(feature = "rand", feature = "std"))]
                         let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
-                        #[cfg(not(feature = "rand-std"))]
+                        #[cfg(not(all(feature = "rand", feature = "std")))]
                         let signature =
                             secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
@@ -1322,7 +1322,7 @@ mod tests {
     use hashes::{hash160, ripemd160, sha256};
     use hex::FromHex;
     use hex_lit::hex;
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     use {
         crate::bip32::Fingerprint,
         crate::locktime,
@@ -2355,7 +2355,7 @@ mod tests {
         ));
     }
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn gen_keys() -> (PrivateKey, PublicKey) {
         use secp256k1::rand;
 
@@ -2367,7 +2367,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn get_key_btree_map() {
         let (priv_key, pk) = gen_keys();
 
@@ -2379,7 +2379,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn pubkey_map_get_key_negates_odd_parity_keys() {
         use crate::psbt::{GetKey, KeyRequest};
 
@@ -2536,7 +2536,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn hashmap_can_sign_taproot() {
         let (priv_key, pk) = gen_keys();
         let internal_key: XOnlyPublicKey = pk.inner.into();
@@ -2569,7 +2569,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn xonly_hashmap_can_sign_taproot() {
         let (priv_key, pk) = gen_keys();
         let internal_key: XOnlyPublicKey = pk.inner.into();
@@ -2602,7 +2602,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn sign_psbt() {
         let unsigned_tx = Transaction {
             version: transaction::Version::TWO,
