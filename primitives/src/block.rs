@@ -16,7 +16,7 @@ use core::marker::PhantomData;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::Encodable;
 #[cfg(feature = "alloc")]
-use encoding::{CompactSizeEncoder, Decodable, Decoder, Decoder6, Encoder2, SliceEncoder};
+use encoding::{CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder};
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
 
@@ -198,6 +198,77 @@ impl Encodable for Block {
                 SliceEncoder::without_length_prefix(&self.transactions),
             ),
         )
+    }
+}
+
+#[cfg(feature = "alloc")]
+type BlockInnerDecoder = Decoder2<HeaderDecoder, VecDecoder<Transaction>>;
+
+/// The decoder for the [`Block`] type.
+///
+/// This decoder can only produce a `Block<Unchecked>`.
+#[cfg(feature = "alloc")]
+pub struct BlockDecoder(BlockInnerDecoder);
+
+#[cfg(feature = "alloc")]
+impl Decoder for BlockDecoder {
+    type Output = Block;
+    type Error = BlockDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(BlockDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (header, transactions) = self.0.end().map_err(BlockDecoderError)?;
+        Ok(Self::Output::new_unchecked(header, transactions))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for Block {
+    type Decoder = BlockDecoder;
+    fn decoder() -> Self::Decoder {
+        BlockDecoder(Decoder2::new(
+            Header::decoder(),
+            VecDecoder::<Transaction>::new(),
+        ))
+    }
+}
+
+/// An error consensus decoding a [`Block`].
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockDecoderError(<BlockInnerDecoder as Decoder>::Error);
+
+#[cfg(feature = "alloc")]
+impl From<Infallible> for BlockDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "alloc")]
+impl fmt::Display for BlockDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.0 {
+            encoding::Decoder2Error::First(ref e) => write_err!(f, "block decoder error"; e),
+            encoding::Decoder2Error::Second(ref e) => write_err!(f, "block decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "std")]
+impl std::error::Error for BlockDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match &self.0 {
+            encoding::Decoder2Error::First(ref e) => Some(e),
+            encoding::Decoder2Error::Second(ref e) => Some(e),
+        }
     }
 }
 
@@ -826,5 +897,46 @@ mod tests {
         let want = format!("{:.20}", want);
         let got = format!("{:.20}", header);
         assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decode() {
+        // Make a simple block, encode then decode. Verify equivalence.
+        let header = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::from_byte_array([
+                0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA,
+                0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA,
+                0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA,
+                0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA, 0xDC, 0xBA,
+            ]),
+            merkle_root: TxMerkleNode::from_byte_array([
+                0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD,
+                0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD,
+                0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD,
+                0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD, 0xAB, 0xCD,
+            ]),
+            time: BlockTime::from(1_742_979_600), // 26 Mar 2025 9:00 UTC
+            bits: CompactTarget::from_consensus(12_345_678),
+            nonce: 1024,
+        };
+
+        let block: u32 = 741_521;
+        let transactions = vec![
+            Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: units::absolute::LockTime::from_height(block).unwrap(),
+                inputs: vec![crate::transaction::TxIn::EMPTY_COINBASE],
+                outputs: Vec::new(),
+            },
+        ];
+        let original_block = Block::new_unchecked(header, transactions);
+
+        // Encode + decode the block
+        let encoded = encoding::encode_to_vec(&original_block);
+        let decoded_block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+
+        assert_eq!(original_block, decoded_block);
     }
 }
