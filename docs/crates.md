@@ -12,6 +12,7 @@ entry in [roadmap.md] and likely also a file of their own.
 - `base58`: Bitcoin base58 encoding and decoding (for pre-segwit addresses).
 - `bitcoin`: The `rust-bitcoin` crate.
 - `chacha20_poly1305`: ChaCha20 stream cipher with the Poly1305 MAC.
+- `consensus_encoding`: Rust Bitcoin traits to encode/decode objects in a consensus-consistent way.
 - `hashes`: Rust Bitcoin hashes library.
 - `internals`: Used internally by crates in this repo.
 - `io`: Rust Bitcoin I/O library (to support `no_std`).
