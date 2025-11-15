@@ -18,6 +18,49 @@ use super::Decoder;
 #[cfg(feature = "alloc")]
 const MAX_VEC_SIZE: u64 = 4_000_000;
 
+/// Maximum amount of memory (in bytes) to allocate at once when deserializing vectors.
+#[cfg(feature = "alloc")]
+const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
+
+/// Reserves capacity for typed vectors in batches
+///
+/// Documentation adapted from Bitcoin Core:
+/// <https://github.com/bitcoin/bitcoin/blob/72511fd02e72b74be11273e97bd7911786a82e54/src/serialize.h#L669C2-L672C1>
+/// For `DoS` prevention, do not blindly allocate as much as the stream claims to contain.
+/// Instead, allocate in ~1 MB batches, so that an attacker actually needs to provide
+/// X MB of data to make us allocate X+1 MB of memory.
+///
+/// Calculates how many elements of type `T` fit within `MAX_VECTOR_ALLOCATE` bytes
+/// and reserves up to that amount when the buffer reaches capacity.
+#[cfg(feature = "alloc")]
+pub fn reserve_vec_batch<T>(buffer: &mut Vec<T>, total_needed: usize) {
+    if buffer.len() == buffer.capacity() {
+        let elements_remaining = total_needed - buffer.len();
+        let element_size = mem::size_of::<T>().max(1);
+        let batch_elements = MAX_VECTOR_ALLOCATE / element_size;
+        let elements_to_reserve = elements_remaining.min(batch_elements);
+        buffer.reserve_exact(elements_to_reserve);
+    }
+}
+
+/// Reserves capacity for byte vectors in batches.
+///
+/// Documentation adapted from Bitcoin Core:
+/// <https://github.com/bitcoin/bitcoin/blob/72511fd02e72b74be11273e97bd7911786a82e54/src/serialize.h#L669C2-L672C1>
+/// For `DoS` prevention, do not blindly allocate as much as the stream claims to contain.
+/// Instead, allocate in ~1 MB batches, so that an attacker actually needs to provide
+/// X MB of data to make us allocate X+1 MB of memory.
+///
+/// Reserves up to `MAX_VECTOR_ALLOCATE` bytes when the buffer has no remaining capacity.
+#[cfg(feature = "alloc")]
+pub fn reserve_byte_batch(buffer: &mut Vec<u8>, bytes_remaining: usize) {
+    let available_capacity = buffer.capacity() - buffer.len();
+    if available_capacity == 0 {
+        let batch_size = bytes_remaining.min(MAX_VECTOR_ALLOCATE);
+        buffer.reserve_exact(batch_size);
+    }
+}
+
 /// A decoder that decodes a byte vector.
 ///
 /// The encoding is expected to start with the number of encoded bytes (length prefix).
@@ -66,12 +109,15 @@ impl Decoder for ByteVecDecoder {
             self.bytes_expected =
                 cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.bytes_expected);
+            // For DoS prevention, let's not allocate all memory upfront.
         }
 
         let remaining = self.bytes_expected - self.bytes_written;
-        let copy_len = bytes.len().min(remaining);
+
+        reserve_byte_batch(&mut self.buffer, remaining);
+
+        let available_capacity = self.buffer.capacity() - self.buffer.len();
+        let copy_len = bytes.len().min(remaining).min(available_capacity);
 
         self.buffer.extend_from_slice(&bytes[..copy_len]);
         self.bytes_written += copy_len;
@@ -153,11 +199,12 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
             self.length =
                 cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
-            // `cast_to_usize_if_valid` asserts length < 4,000,000, so no DoS vector here.
-            self.buffer = Vec::with_capacity(self.length);
+            // For DoS prevention, let's not allocate all memory upfront.
         }
 
         while !bytes.is_empty() {
+            reserve_vec_batch(&mut self.buffer, self.length);
+
             let mut decoder = self.decoder.take().unwrap_or_else(T::decoder);
 
             if decoder.push_bytes(bytes).map_err(|e| E(Inner::Item(e)))? {
