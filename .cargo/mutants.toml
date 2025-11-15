@@ -52,6 +52,7 @@ exclude_re = [
     "primitives/.* <impl Encoder for .*Encoder<'_>>::advance", # Replacing the return with true causes an infinite loop.
     "primitives/.* <impl Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
     "primitives/.* WitnessDecoder::resize_if_needed", # Replacing *= with += still resizes the buffer making the mutant untestable.
+    "primitives/.* WitnessDecoder::reserve_batch", # Mutations cause an infinite loop
     "primitives/.* replace \\+ with \\* in MerkleNode::calculate_root", # Replacing + with * causes an infinite loop
     "primitives/.* replace == with != in MerkleNode::calculate_root", # Replacing == with != isn't caught unless alloc is disabled.
 
