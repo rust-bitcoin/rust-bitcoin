@@ -364,7 +364,7 @@ impl BlockCheckedExt for Block<Checked> {
         match (push.script_num(), push.push_bytes().map(|b| b.read_scriptint())) {
             (Some(num), Some(Ok(_)) | None) =>
                 Ok(num.try_into().map_err(|_| Bip34Error::NegativeHeight)?),
-            (_, Some(Err(err))) => Err(to_bip34_error(err)),
+            (_, Some(Err(err))) => Err(err.into()),
             (None, _) => Err(Bip34Error::NotPresent),
         }
     }
@@ -505,6 +505,16 @@ impl std::error::Error for Bip34Error {
 
         match *self {
             Unsupported | NotPresent | NonMinimalPush | NegativeHeight => None,
+        }
+    }
+}
+
+impl From<crate::script::ScriptIntError> for Bip34Error {
+    #[inline]
+    fn from(err: crate::script::ScriptIntError) -> Self {
+        match err {
+            crate::script::ScriptIntError::NonMinimal => Self::NonMinimalPush,
+            _ => Self::NotPresent,
         }
     }
 }

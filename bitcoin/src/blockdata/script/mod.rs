@@ -76,7 +76,7 @@ pub use self::{
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt},
-    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
+    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, ScriptIntError},
 };
 #[doc(inline)]
 pub use primitives::script::{

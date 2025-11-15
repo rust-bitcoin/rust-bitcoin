@@ -430,11 +430,11 @@ fn non_minimal_scriptints() {
     );
     assert_eq!(
         PushBytes::read_scriptint(<[_; 3] as AsRef<PushBytes>>::as_ref(&[0x8f, 0x00, 0x00])),
-        Err(Error::NonMinimalPush)
+        Err(ScriptIntError::NonMinimal)
     );
     assert_eq!(
         PushBytes::read_scriptint(<[_; 2] as AsRef<PushBytes>>::as_ref(&[0x7f, 0x00])),
-        Err(Error::NonMinimalPush)
+        Err(ScriptIntError::NonMinimal)
     );
 
     assert_eq!(read_scriptint_non_minimal(&[0x80, 0x00]), Ok(0x80));
