@@ -620,9 +620,7 @@ impl From<base58::Error> for ParseError {
 }
 
 impl From<InvalidBase58PayloadLengthError> for ParseError {
-    fn from(e: InvalidBase58PayloadLengthError) -> Self {
-        Self::InvalidBase58PayloadLength(e)
-    }
+    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
 }
 
 /// A BIP-0032 error

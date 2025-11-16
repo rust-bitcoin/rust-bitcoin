@@ -64,8 +64,7 @@ fn psbt_sign_taproot() {
 
     let internal_key = kp.x_only_public_key().0; // Ignore the parity.
 
-    let tree =
-        create_taproot_tree(secp, script1, script2.clone(), script3, internal_key);
+    let tree = create_taproot_tree(secp, script1, script2.clone(), script3, internal_key);
 
     let address = create_p2tr_address(tree.clone());
     assert_eq!(

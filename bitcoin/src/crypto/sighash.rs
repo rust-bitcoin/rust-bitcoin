@@ -1441,10 +1441,8 @@ impl<E> EncodeSigningDataResult<E> {
     {
         match self {
             Self::SighashSingleBug => EncodeSigningDataResult::SighashSingleBug,
-            Self::WriteResult(Err(e)) =>
-                EncodeSigningDataResult::WriteResult(Err(f(e))),
-            Self::WriteResult(Ok(o)) =>
-                EncodeSigningDataResult::WriteResult(Ok(o)),
+            Self::WriteResult(Err(e)) => EncodeSigningDataResult::WriteResult(Err(f(e))),
+            Self::WriteResult(Ok(o)) => EncodeSigningDataResult::WriteResult(Ok(o)),
         }
     }
 }

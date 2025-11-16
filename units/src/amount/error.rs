@@ -218,9 +218,7 @@ impl fmt::Display for OutOfRangeError {
 impl std::error::Error for OutOfRangeError {}
 
 impl From<OutOfRangeError> for ParseAmountError {
-    fn from(value: OutOfRangeError) -> Self {
-        Self(ParseAmountErrorInner::OutOfRange(value))
-    }
+    fn from(value: OutOfRangeError) -> Self { Self(ParseAmountErrorInner::OutOfRange(value)) }
 }
 
 /// Error returned when the input string has higher precision than satoshis.

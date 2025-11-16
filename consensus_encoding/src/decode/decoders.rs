@@ -299,7 +299,9 @@ where
     B: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub const fn new(first: A, second: B) -> Self { Self { state: Decoder2State::First(first, second) } }
+    pub const fn new(first: A, second: B) -> Self {
+        Self { state: Decoder2State::First(first, second) }
+    }
 }
 
 impl<A, B> Decoder for Decoder2<A, B>

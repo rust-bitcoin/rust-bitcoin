@@ -76,9 +76,7 @@ mod message_signing {
     }
 
     impl From<secp256k1::Error> for MessageSignatureError {
-        fn from(e: secp256k1::Error) -> Self {
-            Self::InvalidEncoding(e)
-        }
+        fn from(e: secp256k1::Error) -> Self { Self::InvalidEncoding(e) }
     }
 
     /// A signature on a Bitcoin Signed Message.
@@ -198,9 +196,7 @@ mod message_signing {
 
         impl core::str::FromStr for MessageSignature {
             type Err = MessageSignatureError;
-            fn from_str(s: &str) -> Result<Self, MessageSignatureError> {
-                Self::from_base64(s)
-            }
+            fn from_str(s: &str) -> Result<Self, MessageSignatureError> { Self::from_base64(s) }
         }
     }
 }
