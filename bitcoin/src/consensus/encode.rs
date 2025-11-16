@@ -502,14 +502,14 @@ impl<T: Decodable + 'static> Decodable for Vec<T> {
             unsafe { Ok(mem::transmute::<Vec<u8>, Self>(bytes)) }
         } else {
             let len = r.read_compact_size()?;
-            // Do not allocate upfront more items than if the sequence of type
-            // occupied roughly quarter a block. This should never be the case
-            // for normal data, but even if that's not true - `push` will just
-            // reallocate.
+            // Limit the initial vec allocation to at most 8,000 bytes, which is
+            // sufficient for most use cases. We don't allocate more space upfront
+            // than this, since `len` is an untrusted allocation capacity. If the
+            // vector does overflow the initial capacity `push` will just reallocate.
             // Note: OOM protection relies on reader eventually running out of
             // data to feed us.
-            let max_capacity = MAX_VEC_SIZE / 4 / mem::size_of::<T>();
-            let mut ret = Self::with_capacity(cmp::min(len as usize, max_capacity));
+            let max_init_capacity = 8000 / mem::size_of::<T>();
+            let mut ret = Self::with_capacity(cmp::min(len as usize, max_init_capacity));
             for _ in 0..len {
                 ret.push(Decodable::consensus_decode_from_finite_reader(r)?);
             }
