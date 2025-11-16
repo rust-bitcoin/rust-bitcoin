@@ -87,9 +87,7 @@ impl WitnessProgram {
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
-    pub fn p2wsh_from_hash(hash: WScriptHash) -> Self {
-        Self::new_p2wsh(hash.to_byte_array())
-    }
+    pub fn p2wsh_from_hash(hash: WScriptHash) -> Self { Self::new_p2wsh(hash.to_byte_array()) }
 
     /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.
     ///
