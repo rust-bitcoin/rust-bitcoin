@@ -80,7 +80,7 @@ where
     /// Cached witness root if it's been computed.
     witness_root: Option<WitnessMerkleNode>,
     /// Validation marker.
-    marker: PhantomData<V>,
+    _marker: PhantomData<V>,
 }
 
 #[cfg(feature = "alloc")]
@@ -88,7 +88,7 @@ impl Block<Unchecked> {
     /// Constructs a new `Block` without doing any validation.
     #[inline]
     pub fn new_unchecked(header: Header, transactions: Vec<Transaction>) -> Self {
-        Self { header, transactions, witness_root: None, marker: PhantomData::<Unchecked> }
+        Self { header, transactions, witness_root: None, _marker: PhantomData::<Unchecked> }
     }
 
     /// Ignores block validation logic and just assumes you know what you are doing.
@@ -101,7 +101,7 @@ impl Block<Unchecked> {
             header: self.header,
             transactions: self.transactions,
             witness_root,
-            marker: PhantomData::<Checked>,
+            _marker: PhantomData::<Checked>,
         }
     }
 
