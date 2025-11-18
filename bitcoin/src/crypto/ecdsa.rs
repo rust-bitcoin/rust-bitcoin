@@ -111,6 +111,26 @@ pub struct SerializedSignature {
 }
 
 impl SerializedSignature {
+    /// Constructs a new SerializedSignature from a Signature.
+    ///
+    /// In other words this serializes a `Signature` into a `SerializedSignature`.
+    #[inline]
+    pub fn from_signature(sig: Signature) -> Self { sig.serialize() }
+
+    /// Converts the serialized signature into the [`Signature`] struct.
+    ///
+    /// In other words this deserializes the `SerializedSignature`.
+    #[inline]
+    pub fn to_signature(self) -> Result<Signature, DecodeError> {
+        Signature::from_slice(&self)
+    }
+
+    /// Returns the length of the serialized signature data.
+    #[inline]
+    // `len` is never 0, so `is_empty` would always return `false`.
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize { self.len }
+
     /// Returns an iterator over bytes of the signature.
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }

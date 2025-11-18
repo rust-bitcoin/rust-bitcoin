@@ -7,7 +7,7 @@
 use core::borrow::Borrow;
 use core::convert::Infallible;
 use core::ops::Deref;
-use core::{fmt, ops};
+use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -99,6 +99,36 @@ pub struct SerializedSignature {
 }
 
 impl SerializedSignature {
+    /// Constructs a new SerializedSignature from a Signature.
+    ///
+    /// In other words this serializes a `Signature` into a `SerializedSignature`.
+    #[inline]
+    pub fn from_signature(sig: Signature) -> Self { sig.serialize() }
+
+    /// Converts the serialized signature into the [`Signature`] struct.
+    ///
+    /// In other words this deserializes the `SerializedSignature`.
+    #[inline]
+    pub fn to_signature(self) -> Result<Signature, SigFromSliceError> {
+        Signature::from_slice(&self)
+    }
+
+    /// Returns the length of the serialized signature data.
+    #[inline]
+    // `len` is never 0, so `is_empty` would always return `false`.
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize { self.len }
+
+    /// Returns an iterator over bytes of the signature.
+    #[inline]
+    pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
+
+    /// Writes this serialized signature to a `writer`.
+    #[inline]
+    pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+        writer.write_all(self)
+    }
+
     /// Constructs new `SerializedSignature` from data and length.
     ///
     /// # Panics
@@ -110,33 +140,9 @@ impl SerializedSignature {
         Self { data, len }
     }
 
-    /// Get the len of the used data.
-    // `len` is never 0, so `is_empty` would always return `false`.
-    #[allow(clippy::len_without_is_empty)]
-    #[inline]
-    pub fn len(&self) -> usize { self.len }
-
     /// Set the length of the object.
     #[inline]
     pub(crate) fn set_len_unchecked(&mut self, len: usize) { self.len = len; }
-
-    /// Convert the serialized signature into the Signature struct.
-    /// (This deserializes it)
-    #[inline]
-    pub fn to_signature(self) -> Result<Signature, SigFromSliceError> {
-        Signature::from_slice(&self)
-    }
-
-    /// Constructs a new SerializedSignature from a Signature.
-    /// (this serializes it)
-    #[inline]
-    pub fn from_signature(sig: Signature) -> Self { sig.serialize() }
-
-    /// Writes this serialized signature to a `writer`.
-    #[inline]
-    pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
-        writer.write_all(self)
-    }
 }
 
 impl fmt::Debug for SerializedSignature {
@@ -238,7 +244,7 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     type Item = &'a u8;
 
     #[inline]
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter { (**self).iter() }
 }
 
 impl From<Signature> for SerializedSignature {
