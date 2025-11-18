@@ -6,6 +6,7 @@
 
 use core::borrow::Borrow;
 use core::convert::Infallible;
+use core::ops::Deref;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -217,7 +218,7 @@ impl Borrow<[u8]> for SerializedSignature {
     fn borrow(&self) -> &[u8] { &self.data[..self.len] }
 }
 
-impl ops::Deref for SerializedSignature {
+impl Deref for SerializedSignature {
     type Target = [u8];
 
     #[inline]
