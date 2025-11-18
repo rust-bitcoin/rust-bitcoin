@@ -1,0 +1,34 @@
+[package]
+# We will need another name (or to get this one from kleb6).
+name = "bitcoin-network"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+description = "Which network we are operating on"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "types"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.74.0"
+exclude = ["tests", "contrib"]
+
+[features]
+default = ["std", "internals/std"]
+std = ["alloc"]
+alloc = ["internals/alloc", "serde?/alloc"]
+
+[dependencies]
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1", features = [] }
+
+serde = { version = "1.0.195", default-features = false, features = [ "derive" ], optional = true }
+
+[dev-dependencies]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.clippy]
+redundant_clone = "warn"
+use_self = "warn"

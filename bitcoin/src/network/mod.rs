@@ -9,18 +9,14 @@
 pub mod params;
 
 use core::fmt;
-use core::str::FromStr;
-
-use internals::write_err;
-#[cfg(feature = "serde")]
-use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::constants::ChainHash;
-use crate::prelude::{String, ToOwned};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::params::Params;
+#[doc(inline)]
+pub use network::{Network, TestnetVersion, ParseNetworkError};
 
 /// What kind of network we are on.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -49,119 +45,8 @@ impl From<Network> for NetworkKind {
     }
 }
 
-/// The testnet version to act on.
-#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
-#[non_exhaustive]
-pub enum TestnetVersion {
-    /// Testnet version 3.
-    V3,
-    /// Testnet version 4.
-    V4,
-}
-
-/// The cryptocurrency network to act on.
-///
-/// This is an exhaustive enum, meaning that we cannot add any future networks without defining a
-/// new, incompatible version of this type. If you are using this type directly and wish to support the
-/// new network, this will be a breaking change to your APIs and likely require changes in your code.
-///
-/// If you are concerned about forward compatibility, consider using `T: Into<Params>` instead of
-/// this type as a parameter to functions in your public API, or directly using the `Params` type.
-// For extensive discussion on the usage of `non_exhaustive` please see:
-// https://github.com/rust-bitcoin/rust-bitcoin/issues/2225
-#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
-pub enum Network {
-    /// Mainnet Bitcoin.
-    Bitcoin,
-    /// Bitcoin's testnet network.
-    Testnet(TestnetVersion),
-    /// Bitcoin's signet network.
-    Signet,
-    /// Bitcoin's regtest network.
-    Regtest,
-}
-
-#[cfg(feature = "serde")]
-impl Serialize for Network {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.as_display_str())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for Network {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct NetworkVisitor;
-
-        impl Visitor<'_> for NetworkVisitor {
-            type Value = Network;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a valid network identifier")
-            }
-
-            fn visit_str<E>(self, value: &str) -> Result<Network, E>
-            where
-                E: serde::de::Error,
-            {
-                Network::from_str(value).map_err(E::custom)
-            }
-        }
-
-        deserializer.deserialize_str(NetworkVisitor)
-    }
-}
-
-impl Network {
-    /// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
-    ///
-    /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
-    /// Chain selection options:
-    ///
-    /// -chain=<chain>
-    /// Use the chain <chain> (default: main). Allowed values: main, test, signet, regtest
-    /// ```
-    pub fn to_core_arg(self) -> &'static str {
-        match self {
-            Self::Bitcoin => "main",
-            // For user-side compatibility, testnet3 is retained as test
-            Self::Testnet(TestnetVersion::V3) => "test",
-            Self::Testnet(TestnetVersion::V4) => "testnet4",
-            Self::Signet => "signet",
-            Self::Regtest => "regtest",
-        }
-    }
-
-    /// Converts a `bitcoind -chain` argument name to its equivalent `Network`.
-    ///
-    /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
-    /// Chain selection options:
-    ///
-    /// -chain=<chain>
-    /// Use the chain <chain> (default: main). Allowed values: main, test, signet, regtest
-    /// ```
-    pub fn from_core_arg(core_arg: &str) -> Result<Self, ParseNetworkError> {
-        use Network::*;
-
-        let network = match core_arg {
-            "main" => Bitcoin,
-            "test" => Testnet(TestnetVersion::V3),
-            "testnet4" => Testnet(TestnetVersion::V4),
-            "signet" => Signet,
-            "regtest" => Regtest,
-            _ => return Err(ParseNetworkError(core_arg.to_owned())),
-        };
-        Ok(network)
-    }
-
+/// Trait to extend the [`Network`] type.
+pub trait NetworkExt {
     /// Return the network's chain hash (genesis block hash).
     ///
     /// # Examples
@@ -173,7 +58,7 @@ impl Network {
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
     /// ```
-    pub fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
+    fn chain_hash(self) -> ChainHash;
 
     /// Constructs a new `Network` from the chain hash (genesis block hash).
     ///
@@ -185,31 +70,26 @@ impl Network {
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
     /// ```
-    pub fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> {
+    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> where Self: Sized;
+}
+
+/// Returns the associated network parameters.
+pub const fn params(network: Network) -> &'static Params {
+    match network {
+        Network::Bitcoin => &Params::BITCOIN,
+        Network::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
+        Network::Testnet(TestnetVersion::V4) => &Params::TESTNET4,
+        Network::Testnet(_) => &Params::TESTNET4, // unreachable in network 0.1.0
+        Network::Signet => &Params::SIGNET,
+        Network::Regtest => &Params::REGTEST,
+    }
+}
+
+impl NetworkExt for Network {
+    fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
+
+    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> {
         Self::try_from(chain_hash).ok()
-    }
-
-    /// Returns the associated network parameters.
-    pub const fn params(self) -> &'static Params {
-        match self {
-            Self::Bitcoin => &Params::BITCOIN,
-            Self::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
-            Self::Testnet(TestnetVersion::V4) => &Params::TESTNET4,
-            Self::Signet => &Params::SIGNET,
-            Self::Regtest => &Params::REGTEST,
-        }
-    }
-
-    /// Returns a string representation of the `Network` enum variant.
-    /// This is useful for displaying the network type as a string.
-    const fn as_display_str(self) -> &'static str {
-        match self {
-            Self::Bitcoin => "bitcoin",
-            Self::Testnet(TestnetVersion::V3) => "testnet",
-            Self::Testnet(TestnetVersion::V4) => "testnet4",
-            Self::Signet => "signet",
-            Self::Regtest => "regtest",
-        }
     }
 }
 
@@ -254,45 +134,6 @@ pub mod as_core_arg {
         }
 
         deserializer.deserialize_str(NetworkVisitor)
-    }
-}
-
-/// An error in parsing network string.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct ParseNetworkError(String);
-
-impl fmt::Display for ParseNetworkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write_err!(f, "failed to parse {} as network", self.0; self)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for ParseNetworkError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
-
-impl FromStr for Network {
-    type Err = ParseNetworkError;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "bitcoin" => Ok(Self::Bitcoin),
-            // For user-side compatibility, testnet3 is retained as testnet
-            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
-            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
-            "signet" => Ok(Self::Signet),
-            "regtest" => Ok(Self::Regtest),
-            _ => Err(ParseNetworkError(s.to_owned())),
-        }
-    }
-}
-
-impl fmt::Display for Network {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", self.as_display_str())
     }
 }
 
