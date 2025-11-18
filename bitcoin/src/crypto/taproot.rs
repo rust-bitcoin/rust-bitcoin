@@ -209,12 +209,12 @@ impl core::hash::Hash for SerializedSignature {
 
 impl AsRef<[u8]> for SerializedSignature {
     #[inline]
-    fn as_ref(&self) -> &[u8] { self }
+    fn as_ref(&self) -> &[u8] { &self.data[..self.len] }
 }
 
 impl Borrow<[u8]> for SerializedSignature {
     #[inline]
-    fn borrow(&self) -> &[u8] { self }
+    fn borrow(&self) -> &[u8] { &self.data[..self.len] }
 }
 
 impl ops::Deref for SerializedSignature {
