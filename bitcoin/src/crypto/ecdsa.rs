@@ -4,7 +4,9 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+use core::borrow::Borrow;
 use core::convert::Infallible;
+use core::ops::Deref;
 use core::str::FromStr;
 use core::{fmt, iter};
 
@@ -194,12 +196,12 @@ impl AsRef<[u8]> for SerializedSignature {
     fn as_ref(&self) -> &[u8] { &self.data[..self.len] }
 }
 
-impl core::borrow::Borrow<[u8]> for SerializedSignature {
+impl Borrow<[u8]> for SerializedSignature {
     #[inline]
     fn borrow(&self) -> &[u8] { &self.data[..self.len] }
 }
 
-impl core::ops::Deref for SerializedSignature {
+impl Deref for SerializedSignature {
     type Target = [u8];
 
     #[inline]
