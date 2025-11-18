@@ -15,7 +15,6 @@ use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
 use crate::prelude::{DisplayHex, Vec};
-use crate::script::PushBytes;
 #[cfg(doc)]
 use crate::script::ScriptPubKeyBufExt as _;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
@@ -193,11 +192,6 @@ impl core::hash::Hash for SerializedSignature {
 impl AsRef<[u8]> for SerializedSignature {
     #[inline]
     fn as_ref(&self) -> &[u8] { &self.data[..self.len] }
-}
-
-impl AsRef<PushBytes> for SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &PushBytes { &<&PushBytes>::from(&self.data)[..self.len()] }
 }
 
 impl core::borrow::Borrow<[u8]> for SerializedSignature {
