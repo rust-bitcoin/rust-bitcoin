@@ -69,7 +69,7 @@ use primitives::script::{
 use crate::script::{
     self, ScriptExt as _, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WitnessScriptExt as _,
 };
-use crate::taproot::TapNodeHash;
+use taproot_primitives::TapNodeHash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
