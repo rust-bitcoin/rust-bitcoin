@@ -26,7 +26,7 @@ use crate::prelude::{DisplayHex, String, Vec};
 #[rustfmt::skip]
 use super::TapTweakHashExt as _;
 use crate::internal_macros::impl_asref_push_bytes;
-use crate::network::NetworkKind;
+use network::NetworkKind;
 use crate::taproot::TapTweakHashExt as _;
 
 #[rustfmt::skip]                // Keep public re-exports separate.

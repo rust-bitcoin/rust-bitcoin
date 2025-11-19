@@ -33,6 +33,29 @@ use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::prelude::{String, ToOwned};
 
+/// What kind of network we are on.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum NetworkKind {
+    /// The Bitcoin mainnet network.
+    Main,
+    /// Some kind of testnet network (testnet, signet, regtest).
+    Test,
+}
+
+impl NetworkKind {
+    /// Returns true if this is real mainnet bitcoin.
+    pub const fn is_mainnet(self) -> bool { matches!(self, Self::Main) }
+}
+
+impl From<Network> for NetworkKind {
+    fn from(network: Network) -> Self {
+        match network {
+            Network::Bitcoin => Self::Main,
+            Network::Testnet(_) | Network::Signet | Network::Regtest => Self::Test,
+        }
+    }
+}
+
 /// The cryptocurrency network to act on.
 ///
 /// This is an exhaustive enum, meaning that we cannot add any future networks without defining a

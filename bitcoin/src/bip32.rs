@@ -16,7 +16,7 @@ use internals::write_err;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
 use crate::internal_macros;
-use crate::network::NetworkKind;
+use network::NetworkKind;
 use crate::prelude::{String, Vec};
 
 /// Version bytes for extended public keys on the Bitcoin network.

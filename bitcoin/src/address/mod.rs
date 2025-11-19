@@ -61,8 +61,8 @@ use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
     XOnlyPublicKey,
 };
-use network::Network;
-use crate::network::{NetworkKind, Params};
+use network::{Network, NetworkKind};
+use crate::network::Params;
 use primitives::script::witness_program::WitnessProgram;
 use primitives::script::witness_version::WitnessVersion;
 use primitives::script::{

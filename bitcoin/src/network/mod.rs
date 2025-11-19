@@ -16,34 +16,7 @@ use crate::constants::ChainHash;
 #[doc(inline)]
 pub use self::params::Params;
 #[doc(inline)]
-pub use network::{Network, TestnetVersion, ParseNetworkError};
-
-/// What kind of network we are on.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum NetworkKind {
-    /// The Bitcoin mainnet network.
-    Main,
-    /// Some kind of testnet network.
-    Test,
-}
-
-// We explicitly do not provide `is_testnet`, using `!network.is_mainnet()` is less
-// ambiguous due to confusion caused by signet/testnet/regtest.
-impl NetworkKind {
-    /// Returns true if this is real mainnet bitcoin.
-    pub fn is_mainnet(&self) -> bool { *self == Self::Main }
-}
-
-impl From<Network> for NetworkKind {
-    fn from(n: Network) -> Self {
-        use Network::*;
-
-        match n {
-            Bitcoin => Self::Main,
-            Testnet(_) | Signet | Regtest => Self::Test,
-        }
-    }
-}
+pub use network::{Network, NetworkKind, TestnetVersion, ParseNetworkError};
 
 /// Trait to extend the [`Network`] type.
 pub trait NetworkExt {
@@ -74,7 +47,8 @@ pub trait NetworkExt {
 }
 
 /// Returns the associated network parameters.
-pub const fn params(network: Network) -> &'static Params {
+#[allow(unreachable_patterns)]
+pub fn params(network: Network) -> &'static Params {
     match network {
         Network::Bitcoin => &Params::BITCOIN,
         Network::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
