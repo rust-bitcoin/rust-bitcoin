@@ -2,6 +2,7 @@
 
 use std::collections::BTreeMap;
 
+use bitcoin::address::AddressScriptExt as _;
 use bitcoin::bip32::{DerivationPath, Fingerprint};
 use bitcoin::consensus::encode::serialize_hex;
 use bitcoin::opcodes::all::OP_CHECKSIG;

@@ -1,5 +1,5 @@
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::address::Address;
+use bitcoin::address::{Address, AddressScriptExt as _};
 use bitcoin::consensus::serialize;
 use bitcoin::script::{self, ScriptBuf, ScriptExt as _, ScriptPubKeyExt as _};
 use bitcoin::Network;

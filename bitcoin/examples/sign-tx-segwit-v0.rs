@@ -2,6 +2,7 @@
 
 //! Demonstrate creating a transaction that spends to and from p2wpkh outputs.
 
+use bitcoin::address::AddressScriptExt as _;
 use bitcoin::ext::*;
 use bitcoin::key::WPubkeyHash;
 use bitcoin::locktime::absolute;

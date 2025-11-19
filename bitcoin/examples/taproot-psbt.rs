@@ -77,6 +77,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 
 use std::collections::BTreeMap;
 
+use bitcoin::address::AddressScriptExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::ext::*;

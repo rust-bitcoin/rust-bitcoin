@@ -22,6 +22,7 @@
 //! The miner's fee will be 10,000 satoshis.
 use std::collections::BTreeMap;
 
+use bitcoin::address::AddressScriptExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
 use bitcoin::ext::*;
 use bitcoin::key::UntweakedPublicKey;
