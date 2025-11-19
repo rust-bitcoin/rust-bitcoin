@@ -107,6 +107,7 @@ pub mod ext {
     #[rustfmt::skip] // Use terse custom grouping.
     pub use crate::{
         block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
+        network::NetworkExt as _,
         pow::CompactTargetExt as _,
         script::{ScriptExt as _, ScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},

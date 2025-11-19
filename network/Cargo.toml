@@ -1,5 +1,5 @@
 [package]
-# We will need another name (or to get this one from kleb6).
+# FIXME: We will need another name (or to get this one from kleb6).
 name = "bitcoin-network"
 version = "0.1.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]

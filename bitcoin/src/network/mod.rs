@@ -52,7 +52,7 @@ pub trait NetworkExt {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::Network;
+    /// use bitcoin::network::{Network, NetworkExt as _};
     /// use bitcoin::constants::ChainHash;
     ///
     /// let network = Network::Bitcoin;
@@ -65,7 +65,7 @@ pub trait NetworkExt {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::Network;
+    /// use bitcoin::network::{Network, NetworkExt as _};
     /// use bitcoin::constants::ChainHash;
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
