@@ -40,6 +40,9 @@
 
 pub mod error;
 
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::string::String;
 use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
@@ -59,7 +62,6 @@ use crate::crypto::key::{
     XOnlyPublicKey,
 };
 use crate::network::{Network, NetworkKind, Params};
-use crate::prelude::{String, ToOwned};
 use primitives::script::witness_program::WitnessProgram;
 use primitives::script::witness_version::WitnessVersion;
 use primitives::script::{

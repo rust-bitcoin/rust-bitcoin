@@ -1,12 +1,12 @@
 //! Error code for the address module.
-
+//!
+use alloc::string::String;
 use core::convert::Infallible;
 use core::fmt;
 
 use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
-use crate::prelude::String;
 use primitives::script::{witness_program, witness_version};
 use crate::Network;
 
