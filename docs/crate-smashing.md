@@ -13,8 +13,6 @@ too many conflicts.
 
 ### @jamillambert
 
-`address` move from `bitcoin` to `addressees`
+`address` move from `bitcoin` to `addresses`
 - Needs the following to move first:
-  - `network` -> new crate
-  - `witness_program` and `witness_version` -> `primitives`?
   - `keys` -> `crypto`?
