@@ -52,8 +52,59 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
-pub mod witness_program;
-pub mod witness_version;
+
+pub mod witness_program {
+    //! The segregated witness program as defined by [BIP-0141].
+    //!
+    //! > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte push
+    //! > opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new special
+    //! > meaning. The value of the first push is called the "version byte". The following byte
+    //! > vector pushed is called the "witness program".
+    //!
+    //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
+
+    use crate::script::PushBytes;
+    use crate::internal_macros;
+
+    #[rustfmt::skip]            // Keep public re-exports separate.
+    #[doc(inline)]
+    pub use primitives::script::witness_program::{MIN_SIZE, MAX_SIZE, P2A_PROGRAM, WitnessProgram};
+    #[doc(no_inline)]
+    pub use primitives::script::witness_program::Error;
+
+    internal_macros::define_extension_trait! {
+        /// Extension functionality for the [`WitnessProgram`] type.
+        pub trait WitnessProgramExt impl for WitnessProgram {
+            /// Returns the witness program.
+            fn program(&self) -> &PushBytes {
+                self.program()
+                    .try_into()
+                    .expect("witness programs are always smaller than max size of PushBytes")
+            }
+        }
+    }
+
+    mod sealed {
+        pub trait Sealed {}
+        impl Sealed for super::WitnessProgram {}
+    }
+}
+
+pub mod witness_version {
+    //! The segregated witness version byte as defined by [BIP-0141].
+    //!
+    //! > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte push
+    //! > opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new special
+    //! > meaning. The value of the first push is called the "version byte". The following byte
+    //! > vector pushed is called the "witness program".
+    //!
+    //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
+
+    #[doc(inline)]
+    pub use primitives::script::witness_version::WitnessVersion;
+    #[doc(no_inline)]
+    pub use primitives::script::witness_version::{FromStrError, TryFromInstructionError, TryFromError};
+}
 
 use core::convert::Infallible;
 use core::fmt;

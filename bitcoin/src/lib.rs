@@ -149,7 +149,7 @@ pub use primitives::{
     pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{
         RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
-        TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf,
+        TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf, WitnessVersion, WitnessProgram,
     },
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
@@ -181,6 +181,7 @@ pub use crate::{
     network::{Network, NetworkKind, TestnetVersion},
     pow::{Target, Work},
     psbt::Psbt,
+    script::{witness_program, witness_version},
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
@@ -190,8 +191,6 @@ pub use crate::{
     // Also, re-export types and modules from `blockdata` that don't come from `primitives`.
     blockdata::locktime::{absolute, relative},
     blockdata::opcodes::{self, Opcode},
-    blockdata::script::witness_program::{self, WitnessProgram},
-    blockdata::script::witness_version::{self, WitnessVersion},
     // These modules also re-export all the respective `primitives` types.
     blockdata::{block, constants, fee_rate, locktime, script, transaction, weight, witness},
 };

@@ -13,10 +13,6 @@ use core::fmt;
 use internals::array_vec::ArrayVec;
 
 use super::witness_version::WitnessVersion;
-use super::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
-use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::script::WitnessScriptExt as _;
-use crate::taproot::TapNodeHash;
 
 /// The minimum byte size of a segregated witness program.
 pub const MIN_SIZE: usize = 2;
@@ -25,7 +21,8 @@ pub const MIN_SIZE: usize = 2;
 pub const MAX_SIZE: usize = 40;
 
 /// The P2A program which is given by 0x4e73.
-pub(crate) const P2A_PROGRAM: [u8; 2] = [78, 115];
+// FIXME: This used to be private.
+pub const P2A_PROGRAM: [u8; 2] = [78, 115];
 
 /// The segregated witness program.
 ///
@@ -43,16 +40,14 @@ pub struct WitnessProgram {
 impl WitnessProgram {
     /// Constructs a new witness program, copying the content from the given byte slice.
     pub fn new(version: WitnessVersion, bytes: &[u8]) -> Result<Self, Error> {
-        use Error::*;
-
         let program_len = bytes.len();
         if program_len < MIN_SIZE || program_len > MAX_SIZE {
-            return Err(InvalidLength(program_len));
+            return Err(Error::InvalidLength(program_len));
         }
 
         // Specific SegWit v0 check. These addresses can never spend funds sent to them.
         if version == WitnessVersion::V0 && (program_len != 20 && program_len != 32) {
-            return Err(InvalidSegwitV0Length(program_len));
+            return Err(Error::InvalidSegwitV0Length(program_len));
         }
 
         let program = ArrayVec::from_slice(bytes);
@@ -60,54 +55,21 @@ impl WitnessProgram {
     }
 
     /// Constructs a new [`WitnessProgram`] from a 20 byte pubkey hash.
-    fn new_p2wpkh(program: [u8; 20]) -> Self {
+    // FIXME: This constructor used to be private.
+    pub fn new_p2wpkh(program: [u8; 20]) -> Self {
         Self { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Constructs a new [`WitnessProgram`] from a 32 byte script hash.
-    fn new_p2wsh(program: [u8; 32]) -> Self {
+    // FIXME: This constructor used to be private.
+    pub fn new_p2wsh(program: [u8; 32]) -> Self {
         Self { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Constructs a new [`WitnessProgram`] from a 32 byte serialized Taproot x-only pubkey.
-    fn new_p2tr(program: [u8; 32]) -> Self {
+    // FIXME: This constructor used to be private.
+    pub fn new_p2tr(program: [u8; 32]) -> Self {
         Self { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
-    }
-
-    /// Constructs a new [`WitnessProgram`] from `pk` for a P2WPKH output.
-    pub fn p2wpkh(pk: CompressedPublicKey) -> Self {
-        let hash = pk.wpubkey_hash();
-        Self::new_p2wpkh(hash.to_byte_array())
-    }
-
-    /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
-    pub fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
-        script.wscript_hash().map(Self::p2wsh_from_hash)
-    }
-
-    /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
-    pub fn p2wsh_from_hash(hash: WScriptHash) -> Self {
-        Self::new_p2wsh(hash.to_byte_array())
-    }
-
-    /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.
-    ///
-    /// This function applies BIP-0341 key-tweaking to the untweaked
-    /// key using the merkle root, if it's present.
-    pub fn p2tr<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self {
-        let internal_key = internal_key.into();
-        let (output_key, _parity) = internal_key.tap_tweak(merkle_root);
-        let pubkey = output_key.as_x_only_public_key().serialize();
-        Self::new_p2tr(pubkey)
-    }
-
-    /// Constructs a new [`WitnessProgram`] from a tweaked key for a P2TR output.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
-        let pubkey = output_key.as_x_only_public_key().serialize();
-        Self::new_p2tr(pubkey)
     }
 
     /// Constructs a new [`WitnessProgram`] for a P2A output.
@@ -119,12 +81,9 @@ impl WitnessProgram {
     pub fn version(&self) -> WitnessVersion { self.version }
 
     /// Returns the witness program.
-    pub fn program(&self) -> &PushBytes {
-        self.program
-            .as_slice()
-            .try_into()
-            .expect("witness programs are always smaller than max size of PushBytes")
-    }
+    ///
+    /// The returned slice is guaranteed to be between 2 and 40 bytes inclusive.
+    pub fn program(&self) -> &[u8] { self.program.as_slice() }
 
     /// Returns true if this witness program is for a P2WPKH output.
     pub fn is_p2wpkh(&self) -> bool {
@@ -161,12 +120,10 @@ impl From<Infallible> for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
         match *self {
-            InvalidLength(len) =>
+            Self::InvalidLength(len) =>
                 write!(f, "witness program must be between 2 and 40 bytes: length={}", len),
-            InvalidSegwitV0Length(len) =>
+            Self::InvalidSegwitV0Length(len) =>
                 write!(f, "a v0 witness program must be either 20 or 32 bytes: length={}", len),
         }
     }
@@ -175,10 +132,8 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
         match *self {
-            InvalidLength(_) | InvalidSegwitV0Length(_) => None,
+            Self::InvalidLength(_) | Self::InvalidSegwitV0Length(_) => None,
         }
     }
 }

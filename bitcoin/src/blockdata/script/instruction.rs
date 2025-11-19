@@ -4,6 +4,7 @@ use internals::script::{self, PushDataLenLen};
 
 use super::{Error, PushBytes, Script, ScriptBufExtPriv as _};
 use crate::opcodes::{self, Opcode};
+use crate::witness_version;
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -78,6 +79,18 @@ impl Instruction<'_> {
                 }
             }
             Instruction::PushBytes(bytes) => bytes.read_scriptint().ok(),
+        }
+    }
+}
+
+impl TryFrom<Instruction<'_>> for primitives::WitnessVersion {
+    type Error = witness_version::TryFromInstructionError;
+
+    fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {
+        match instruction {
+            Instruction::Op(op) => Ok(Self::try_from(op)?),
+            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(Self::V0),
+            Instruction::PushBytes(_) => Err(witness_version::TryFromInstructionError::DataPush),
         }
     }
 }

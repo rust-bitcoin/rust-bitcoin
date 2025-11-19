@@ -13,10 +13,7 @@ use core::str::FromStr;
 
 use internals::write_err;
 
-use crate::opcodes::all::*;
-use crate::opcodes::Opcode;
 use crate::parse_int::{self, ParseIntError};
-use crate::script::Instruction;
 
 /// Version of the segregated witness program.
 ///
@@ -91,62 +88,26 @@ impl TryFrom<u8> for WitnessVersion {
     type Error = TryFromError;
 
     fn try_from(no: u8) -> Result<Self, Self::Error> {
-        use WitnessVersion::*;
-
         Ok(match no {
-            0 => V0,
-            1 => V1,
-            2 => V2,
-            3 => V3,
-            4 => V4,
-            5 => V5,
-            6 => V6,
-            7 => V7,
-            8 => V8,
-            9 => V9,
-            10 => V10,
-            11 => V11,
-            12 => V12,
-            13 => V13,
-            14 => V14,
-            15 => V15,
-            16 => V16,
+            0 => Self::V0,
+            1 => Self::V1,
+            2 => Self::V2,
+            3 => Self::V3,
+            4 => Self::V4,
+            5 => Self::V5,
+            6 => Self::V6,
+            7 => Self::V7,
+            8 => Self::V8,
+            9 => Self::V9,
+            10 => Self::V10,
+            11 => Self::V11,
+            12 => Self::V12,
+            13 => Self::V13,
+            14 => Self::V14,
+            15 => Self::V15,
+            16 => Self::V16,
             invalid => return Err(TryFromError { invalid }),
         })
-    }
-}
-
-impl TryFrom<Opcode> for WitnessVersion {
-    type Error = TryFromError;
-
-    fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
-        match opcode.to_u8() {
-            0 => Ok(Self::V0),
-            version if version >= OP_1.to_u8() && version <= OP_16.to_u8() =>
-                Self::try_from(version - OP_1.to_u8() + 1),
-            invalid => Err(TryFromError { invalid }),
-        }
-    }
-}
-
-impl TryFrom<Instruction<'_>> for WitnessVersion {
-    type Error = TryFromInstructionError;
-
-    fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {
-        match instruction {
-            Instruction::Op(op) => Ok(Self::try_from(op)?),
-            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(Self::V0),
-            Instruction::PushBytes(_) => Err(TryFromInstructionError::DataPush),
-        }
-    }
-}
-
-impl From<WitnessVersion> for Opcode {
-    fn from(version: WitnessVersion) -> Self {
-        match version {
-            WitnessVersion::V0 => OP_PUSHBYTES_0,
-            no => Self::from(OP_1.to_u8() + no.to_num() - 1),
-        }
     }
 }
 
@@ -166,11 +127,9 @@ impl From<Infallible> for FromStrError {
 
 impl fmt::Display for FromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromStrError::*;
-
         match *self {
-            Unparsable(ref e) => write_err!(f, "integer parse error"; e),
-            Invalid(ref e) => write_err!(f, "invalid version number"; e),
+            Self::Unparsable(ref e) => write_err!(f, "integer parse error"; e),
+            Self::Invalid(ref e) => write_err!(f, "invalid version number"; e),
         }
     }
 }
@@ -178,11 +137,9 @@ impl fmt::Display for FromStrError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromStrError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromStrError::*;
-
         match *self {
-            Unparsable(ref e) => Some(e),
-            Invalid(ref e) => Some(e),
+            Self::Unparsable(ref e) => Some(e),
+            Self::Invalid(ref e) => Some(e),
         }
     }
 }
@@ -211,11 +168,9 @@ impl From<Infallible> for TryFromInstructionError {
 
 impl fmt::Display for TryFromInstructionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use TryFromInstructionError::*;
-
         match *self {
-            TryFrom(ref e) => write_err!(f, "opcode is not a valid witness version"; e),
-            DataPush => write!(f, "non-zero data push opcode is not a valid witness version"),
+            Self::TryFrom(ref e) => write_err!(f, "opcode is not a valid witness version"; e),
+            Self::DataPush => write!(f, "non-zero data push opcode is not a valid witness version"),
         }
     }
 }
@@ -223,11 +178,9 @@ impl fmt::Display for TryFromInstructionError {
 #[cfg(feature = "std")]
 impl std::error::Error for TryFromInstructionError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TryFromInstructionError::*;
-
         match *self {
-            TryFrom(ref e) => Some(e),
-            DataPush => None,
+            Self::TryFrom(ref e) => Some(e),
+            Self::DataPush => None,
         }
     }
 }
@@ -240,7 +193,8 @@ impl From<TryFromError> for TryFromInstructionError {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TryFromError {
     /// The invalid non-witness version integer.
-    invalid: u8,
+    // FIXME: This used to be private.
+    pub invalid: u8,
 }
 
 impl TryFromError {

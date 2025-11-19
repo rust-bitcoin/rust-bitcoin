@@ -89,6 +89,7 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
+    script::{witness_program, witness_version, WitnessProgram, WitnessVersion},
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
 

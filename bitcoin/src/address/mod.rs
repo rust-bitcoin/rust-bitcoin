@@ -53,6 +53,7 @@ use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
     SCRIPT_ADDRESS_PREFIX_TEST,
 };
+use crate::crypto::WitnessProgramExt as _;
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
     XOnlyPublicKey,
@@ -208,7 +209,7 @@ impl fmt::Display for AddressInner {
                 let hrp = hrp.to_hrp();
                 let version = Fe32::try_from(program.version().to_num())
                     .expect("version nums 0-16 are valid fe32 values");
-                let program = program.program().as_ref();
+                let program = program.program();
 
                 if fmt.alternate() {
                     bech32::segwit::encode_upper_to_fmt_unchecked(fmt, hrp, version, program)
@@ -712,7 +713,7 @@ impl Address {
             P2pkh { hash, network: _ } => ScriptPubKeyBuf::new_p2pkh(hash),
             P2sh { hash, network: _ } => ScriptPubKeyBuf::new_p2sh(hash),
             Segwit { ref program, hrp: _ } => {
-                let prog = program.program();
+                let prog = script::witness_program::WitnessProgramExt::program(program);
                 let version = program.version();
                 script::new_witness_program_unchecked(version, prog)
             }
@@ -781,7 +782,7 @@ impl Address {
             P2sh { ref hash, network: _ } if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
             Segwit { ref program, hrp: _ } if script.is_witness_program() =>
-                &script.as_bytes()[2..] == program.program().as_bytes(),
+                &script.as_bytes()[2..] == program.program(),
             P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
         }
     }
@@ -799,7 +800,7 @@ impl Address {
         match *self.inner() {
             P2sh { ref hash, network: _ } => hash.as_ref(),
             P2pkh { ref hash, network: _ } => hash.as_ref(),
-            Segwit { ref program, hrp: _ } => program.program().as_bytes(),
+            Segwit { ref program, hrp: _ } => program.program(),
         }
     }
 }
