@@ -89,9 +89,12 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
-    script::{witness_program, witness_version, WitnessProgram, WitnessVersion},
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
+
+#[cfg(feature = "alloc")]
+#[doc(inline)]
+pub use self::script::{witness_program, witness_version, WitnessProgram, WitnessVersion};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
