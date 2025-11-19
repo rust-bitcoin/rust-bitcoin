@@ -152,7 +152,7 @@ impl From<TryFromError> for FromStrError {
     fn from(e: TryFromError) -> Self { Self::Invalid(e) }
 }
 
-/// Error attempting to create a [`WitnessVersion`] from an [`Instruction`]
+/// Error attempting to create a [`WitnessVersion`] from an `Instruction`
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum TryFromInstructionError {
