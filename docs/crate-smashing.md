@@ -14,5 +14,13 @@ too many conflicts.
 ### @jamillambert
 
 `address` move from `bitcoin` to `addresses`
-- Needs the following to move first:
-  - `keys` -> `crypto`?
+- Needs the following first:
+  - Move `keys` -> `crypto` (tcharding doing)
+  - Move `params` to `network`
+  - Create extension trait for `AddressScript` including dealing with the script extension traits
+- Recently done in `address`
+  - Import from new crates instead of bitcoin where possible
+  - Moved `NetworkKind` to `network`
+- Unfinished and un pushed work:
+  - `AddressScriptExt`
+  - Moving `params` to `network`

@@ -56,7 +56,9 @@ dependencies = [
  "bincode",
  "bitcoin-internals",
  "bitcoin-io",
+ "bitcoin-network",
  "bitcoin-primitives",
+ "bitcoin-taproot-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
  "bitcoinconsensus",
@@ -112,6 +114,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-network"
+version = "0.1.0"
+dependencies = [
+ "bitcoin-internals",
+ "serde",
+]
+
+[[package]]
 name = "bitcoin-p2p-messages"
 version = "0.1.0"
 dependencies = [
@@ -141,6 +151,15 @@ dependencies = [
  "hex_lit",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "bitcoin-taproot-primitives"
+version = "0.1.0"
+dependencies = [
+ "bitcoin-internals",
+ "bitcoin_hashes",
+ "serde",
 ]
 
 [[package]]
