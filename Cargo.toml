@@ -1,4 +1,4 @@
 [workspace]
-members = ["addresses", "base58", "bitcoin", "chacha20_poly1305", "consensus_encoding", "fuzz", "hashes", "internals", "io", "network", "p2p", "primitives", "units"]
+members = ["addresses", "base58", "bitcoin", "chacha20_poly1305", "consensus_encoding", "fuzz", "hashes", "internals", "io", "network", "p2p", "primitives", "taproot-primitives", "units"]
 exclude = ["benches"]
 resolver = "2"

@@ -1541,6 +1541,8 @@ mod tests {
 
     use super::*;
     use crate::consensus::deserialize;
+    use crate::crypto::TapTweakHashExt as _;
+    use crate::taproot::TapTweakHashExt as _;
     use crate::locktime::absolute;
     use crate::script::{
         ScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,

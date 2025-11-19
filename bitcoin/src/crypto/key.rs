@@ -17,12 +17,13 @@ use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
 
+use super::TapTweakHashExt as _;
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
 use crate::script::{self, WitnessScriptBuf};
-use crate::taproot::{TapNodeHash, TapTweakHash};
+use crate::taproot::{TapNodeHash, TapTweakHash, TapTweakHashExt as _};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Verification};
