@@ -20,16 +20,18 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use internals::write_err;
 use io::Write;
+use taproot_primitives::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 
-use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
-use crate::script::{ScriptExt as _, ScriptHashableTag};
-use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
-use crate::transaction::TransactionExt as _;
-use crate::witness::Witness;
 use crate::{
-    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript,
+    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript, Witness
 };
+
+// FIXME: We need to remove these.
+#[rustfmt::skip]
+use crate::consensus::{encode, Encodable};
+use crate::script::{ScriptExt as _, ScriptHashableTag};
+use crate::transaction::TransactionExt as _;
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]

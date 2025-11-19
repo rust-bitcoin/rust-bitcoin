@@ -16,14 +16,18 @@ use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
+use primitives::script::WitnessScriptBuf;
+use taproot_primitives::{TapNodeHash, TapTweakHash};
 
+use super::ecdsa;
+use crate::prelude::{DisplayHex, String, Vec};
+
+// TODO: We need to remove these.
+#[rustfmt::skip]
 use super::TapTweakHashExt as _;
-use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
-use crate::prelude::{DisplayHex, String, Vec};
-use crate::script::{self, WitnessScriptBuf};
-use crate::taproot::{TapNodeHash, TapTweakHash, TapTweakHashExt as _};
+use crate::taproot::TapTweakHashExt as _;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Verification};
@@ -408,7 +412,8 @@ impl CompressedPublicKey {
     /// should not be used as one. It is a special template defined in BIP 143 which is used
     /// in place of a witness script for purposes of sighash computation.
     pub fn p2wpkh_script_code(&self) -> WitnessScriptBuf {
-        script::p2wpkh_script_code(self.wpubkey_hash())
+        // FIXME: Work out what to do about this.
+        crate::blockdata::script::p2wpkh_script_code(self.wpubkey_hash())
     }
 
     /// Writes the public key into a writer.

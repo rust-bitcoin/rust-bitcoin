@@ -16,10 +16,14 @@ use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
+use super::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 use crate::prelude::{DisplayHex, Vec};
+
+// TODO: We need to remove this.
 #[cfg(doc)]
+#[rustfmt::skip]
 use crate::script::ScriptPubKeyBufExt as _;
-use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
+
 
 const MAX_SIG_LEN: usize = 73;
 

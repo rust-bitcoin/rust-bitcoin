@@ -12,11 +12,13 @@ pub(crate) mod taproot;
 
 use hashes::{sha256t, HashEngine as _};
 use taproot_primitives::{TapNodeHash, TapTweakHash, TapTweakTag};
-use primitives::script::WitnessScriptSizeError;
-use primitives::WitnessProgram;
+use primitives::script::{WitnessScriptSizeError, WScriptHash, WitnessProgram, WitnessScript};
 
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::script::{WitnessScript, WScriptHash, WitnessScriptExt as _};
+
+// FIXME: We need to remove this.
+#[rustfmt::skip]
+use crate::script::WitnessScriptExt as _;
 
 /// Extension functionality for the [`TapTweakHash`] type.
 pub trait TapTweakHashExt: sealed::Sealed {
