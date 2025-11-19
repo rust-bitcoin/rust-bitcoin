@@ -1543,7 +1543,9 @@ mod tests {
 
     use super::*;
     use crate::consensus::deserialize;
+    #[cfg(feature = "serde")]
     use crate::crypto::TapTweakHashExt as _;
+    #[cfg(feature = "serde")]
     use crate::taproot::TapTweakHashExt as _;
     use crate::locktime::absolute;
     use crate::script::{
