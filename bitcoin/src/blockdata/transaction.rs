@@ -11,8 +11,8 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use core::{cmp, fmt};
 use core::str::FromStr;
+use core::{cmp, fmt};
 
 use hashes::{sha256d, Hash};
 use internals::write_err;
@@ -539,25 +539,19 @@ impl FromStr for Sequence {
 impl TryFrom<&str> for Sequence {
     type Error = ParseIntError;
 
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        Sequence::from_str(s)
-    }
+    fn try_from(s: &str) -> Result<Self, Self::Error> { Sequence::from_str(s) }
 }
 
 impl TryFrom<String> for Sequence {
     type Error = ParseIntError;
 
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        Sequence::from_str(&s)
-    }
+    fn try_from(s: String) -> Result<Self, Self::Error> { Sequence::from_str(&s) }
 }
 
 impl TryFrom<Box<str>> for Sequence {
     type Error = ParseIntError;
 
-    fn try_from(s: Box<str>) -> Result<Self, Self::Error> {
-        Sequence::from_str(&s)
-    }
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> { Sequence::from_str(&s) }
 }
 
 /// Bitcoin transaction output.
@@ -1020,11 +1014,7 @@ impl Transaction {
                 1
             } else if witness_program.is_p2wsh() {
                 // Treat the last item of the witness as the witnessScript
-                return witness
-                    .last()
-                    .map(Script::from_bytes)
-                    .map(|s| s.count_sigops())
-                    .unwrap_or(0);
+                witness.last().map(Script::from_bytes).map(|s| s.count_sigops()).unwrap_or(0)
             } else {
                 0
             }

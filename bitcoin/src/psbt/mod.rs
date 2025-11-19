@@ -7,6 +7,8 @@
 //! except we define PSBTs containing non-standard sighash types as invalid.
 //!
 
+#![allow(clippy::result_large_err)]
+
 #[macro_use]
 mod macros;
 mod error;
