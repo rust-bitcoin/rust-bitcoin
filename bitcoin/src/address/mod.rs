@@ -60,12 +60,14 @@ use crate::crypto::key::{
 };
 use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
-use crate::script::witness_program::WitnessProgram;
-use crate::script::witness_version::WitnessVersion;
+use primitives::script::witness_program::WitnessProgram;
+use primitives::script::witness_version::WitnessVersion;
+use primitives::script::{
+    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf,
+    WScriptHash, WitnessScript, WitnessScriptSizeError,
+};
 use crate::script::{
-    self, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash, ScriptHashableTag,
-    ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WScriptHash,
-    WitnessScript, WitnessScriptExt as _, WitnessScriptSizeError,
+    self, ScriptExt as _, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WitnessScriptExt as _,
 };
 use crate::taproot::TapNodeHash;
 

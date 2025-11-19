@@ -7,7 +7,7 @@ use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
 use crate::prelude::String;
-use crate::script::{witness_program, witness_version};
+use primitives::script::{witness_program, witness_version};
 use crate::Network;
 
 /// Error while generating address from script.
