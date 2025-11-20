@@ -111,6 +111,12 @@ jobs:
           ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
           path: maintainer-tools
           persist-credentials: false
+      - name: "Free disk space"
+        uses: endersonmenezes/free-disk-space@6c4664f43348c8c7011b53488d5ca65e9fc5cd1a # v3.0.0
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
         with:
