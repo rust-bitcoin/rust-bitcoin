@@ -293,6 +293,23 @@ impl PushBytes {
 
     /// Decodes an integer in script(minimal CScriptNum) format.
     ///
+    /// This code is based on the
+    /// [`CScriptNum` constructor in Bitcoin Core](https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.h#L245)
+    ///
+    /// # Errors
+    ///
+    /// * [`script::Error::NumericOverflow`] if result is not in range [-2^31 +1...2^31 -1].
+    /// * [`script::Error::NonMinimalPush`] if encoding is non-minimal.
+    pub fn read_scriptint(&self) -> Result<i32, script::Error> {
+        // Cast is safe, since the function already checks for byte length > 4
+        let ret = self.read_scriptint_internal(4)?;
+        Ok(i32::try_from(ret).expect("4 bytes or less fits in an i32"))
+    }
+
+    /// Decodes an integer in script(minimal CScriptNum) format.
+    ///
+    /// This is suitable to read input values for CHECKLOCKTIMEVERIFY instructions.
+    ///
     /// Notice that this fails on overflow: the result is the same as in bitcoind, that only 4-byte
     /// signed-magnitude values may be read as numbers. They can be added or subtracted (and a long
     /// time ago, multiplied and divided), and this may result in numbers which can't be written out
@@ -300,16 +317,31 @@ impl PushBytes {
     /// bit crazy and subtle, but it makes sense: you can load 32-bit numbers and do anything with
     /// them, which back when mult/div was allowed, could result in up to a 64-bit number. We don't
     /// want overflow since that's surprising --- and we don't want numbers that don't fit in 64
-    /// bits (for efficiency on modern processors) so we simply say, anything in excess of 32 bits
-    /// is no longer a number. This is basically a ranged type implementation.
+    /// bits (for efficiency on modern processors). This function will return any value up to 40
+    /// bits in length. This is basically a ranged type implementation.
     ///
-    /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
-    pub fn read_scriptint(&self) -> Result<i64, script::Error> {
+    /// This code is based on the
+    /// [`CScriptNum` constructor in Bitcoin Core](https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.h#L245)
+    ///
+    /// # Errors
+    ///
+    /// * [`script::Error::NumericOverflow`] if result is not in range [-2^39 +1...2^39 -1].
+    /// * [`script::Error::NonMinimalPush`] if encoding is non-minimal.
+    pub fn read_cltv_scriptint(&self) -> Result<i64, script::Error> {
+        self.read_scriptint_internal(5)
+    }
+
+    /// The internal implementation for reading a script integer.
+    ///
+    /// As with `read_cltv_scriptint`, this returns an i64, since that is the maximum size we might
+    /// need to return data. In practice, if the max_size parameter is 4 or less, this function
+    /// will always return a value that can fit into an i32, and can thus be safely cast.
+    fn read_scriptint_internal(&self, max_size: usize) -> Result<i64, script::Error> {
         let last = match self.as_bytes().last() {
             Some(last) => last,
             None => return Ok(0),
         };
-        if self.len() > 4 {
+        if self.len() > max_size {
             return Err(script::Error::NumericOverflow);
         }
         // Comment and code copied from Bitcoin Core:
