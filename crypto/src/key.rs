@@ -241,7 +241,7 @@ impl PublicKey {
     /// # Example: Using with `sort_unstable_by_key`
     ///
     /// ```rust
-    /// use bitcoin::PublicKey;
+    /// use bitcoin_crypto::PublicKey;
     ///
     /// let pk = |s: &str| s.parse::<PublicKey>().unwrap();
     ///
