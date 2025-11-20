@@ -4,8 +4,10 @@
 
 use core::ops::{Deref, DerefMut};
 
+use crate::crypto::{ecdsa, taproot};
+use crate::key::{PubkeyHash, WPubkeyHash};
 use crate::prelude::{Borrow, BorrowMut};
-use crate::script;
+use crate::{internal_macros, script};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -416,6 +418,24 @@ impl Borrow<PushBytes> for PushBytesBuf {
 impl BorrowMut<PushBytes> for PushBytesBuf {
     fn borrow_mut(&mut self) -> &mut PushBytes { self.as_mut_push_bytes() }
 }
+
+impl AsRef<PushBytes> for ecdsa::SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &PushBytes {
+        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self))
+            .expect("max length 73 bytes is valid")
+    }
+}
+
+impl AsRef<PushBytes> for taproot::SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &PushBytes {
+        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self))
+            .expect("max length 65 bytes is valid")
+    }
+}
+
+internal_macros::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 /// Reports information about failed conversion into `PushBytes`.
 ///

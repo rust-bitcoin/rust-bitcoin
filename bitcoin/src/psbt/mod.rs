@@ -19,7 +19,7 @@ use core::{cmp, fmt};
 use std::collections::{HashMap, HashSet};
 
 use internals::write_err;
-use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
+use secp256k1::{Keypair, Message};
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
@@ -290,13 +290,8 @@ impl Psbt {
     ///
     /// If an error is returned some signatures may already have been added to the PSBT. Since
     /// `partial_sigs` is a [`BTreeMap`] it is safe to retry, previous sigs will be overwritten.
-    pub fn sign<C, K>(
-        &mut self,
-        k: &K,
-        secp: &Secp256k1<C>,
-    ) -> Result<SigningKeysMap, (SigningKeysMap, SigningErrors)>
+    pub fn sign<K>(&mut self, k: &K) -> Result<SigningKeysMap, (SigningKeysMap, SigningErrors)>
     where
-        C: Signing + Verification,
         K: GetKey,
     {
         let tx = self.unsigned_tx.clone(); // clone because we need to mutably borrow when signing.
@@ -307,25 +302,22 @@ impl Psbt {
 
         for i in 0..self.inputs.len() {
             match self.signing_algorithm(i) {
-                Ok(SigningAlgorithm::Ecdsa) =>
-                    match self.bip32_sign_ecdsa(k, i, &mut cache, secp) {
-                        Ok(v) => {
-                            used.insert(i, SigningKeys::Ecdsa(v));
-                        }
-                        Err(e) => {
-                            errors.insert(i, e);
-                        }
-                    },
-                Ok(SigningAlgorithm::Schnorr) => {
-                    match self.bip32_sign_schnorr(k, i, &mut cache, secp) {
-                        Ok(v) => {
-                            used.insert(i, SigningKeys::Schnorr(v));
-                        }
-                        Err(e) => {
-                            errors.insert(i, e);
-                        }
+                Ok(SigningAlgorithm::Ecdsa) => match self.bip32_sign_ecdsa(k, i, &mut cache) {
+                    Ok(v) => {
+                        used.insert(i, SigningKeys::Ecdsa(v));
                     }
-                }
+                    Err(e) => {
+                        errors.insert(i, e);
+                    }
+                },
+                Ok(SigningAlgorithm::Schnorr) => match self.bip32_sign_schnorr(k, i, &mut cache) {
+                    Ok(v) => {
+                        used.insert(i, SigningKeys::Schnorr(v));
+                    }
+                    Err(e) => {
+                        errors.insert(i, e);
+                    }
+                },
                 Err(e) => {
                     errors.insert(i, e);
                 }
@@ -345,15 +337,13 @@ impl Psbt {
     ///
     /// - Ok: A list of the public keys used in signing.
     /// - Err: Error encountered trying to calculate the sighash AND we had the signing key.
-    fn bip32_sign_ecdsa<C, K, T>(
+    fn bip32_sign_ecdsa<K, T>(
         &mut self,
         k: &K,
         input_index: usize,
         cache: &mut SighashCache<T>,
-        secp: &Secp256k1<C>,
     ) -> Result<Vec<PublicKey>, SignError>
     where
-        C: Signing,
         T: Borrow<Transaction>,
         K: GetKey,
     {
@@ -364,9 +354,9 @@ impl Psbt {
         let mut used = vec![]; // List of pubkeys used to sign the input.
 
         for (pk, key_source) in input.bip32_derivation.iter() {
-            let sk = if let Ok(Some(sk)) = k.get_key(&KeyRequest::Bip32(key_source.clone()), secp) {
+            let sk = if let Ok(Some(sk)) = k.get_key(&KeyRequest::Bip32(key_source.clone())) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
+            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::new(*pk))) {
                 sk
             } else {
                 continue;
@@ -379,11 +369,11 @@ impl Psbt {
             };
 
             let sig = ecdsa::Signature {
-                signature: secp.sign_ecdsa(&msg, &sk.inner),
+                signature: secp256k1::ecdsa::sign(msg, &sk.inner),
                 sighash_type: sighash_ty,
             };
 
-            let pk = sk.public_key(secp);
+            let pk = sk.public_key();
 
             input.partial_sigs.insert(pk, sig);
             used.push(pk);
@@ -400,15 +390,13 @@ impl Psbt {
     /// - Ok: A list of the xonly public keys used in signing. When signing a key path spend we
     ///   return the internal key.
     /// - Err: Error encountered trying to calculate the sighash AND we had the signing key.
-    fn bip32_sign_schnorr<C, K, T>(
+    fn bip32_sign_schnorr<K, T>(
         &mut self,
         k: &K,
         input_index: usize,
         cache: &mut SighashCache<T>,
-        secp: &Secp256k1<C>,
     ) -> Result<Vec<XOnlyPublicKey>, SignError>
     where
-        C: Signing + Verification,
         T: Borrow<Transaction>,
         K: GetKey,
     {
@@ -417,11 +405,10 @@ impl Psbt {
         let mut used = vec![]; // List of pubkeys used to sign the input.
 
         for (&xonly, (leaf_hashes, key_source)) in input.tap_key_origins.iter() {
-            let sk = if let Ok(Some(secret_key)) =
-                k.get_key(&KeyRequest::Bip32(key_source.clone()), secp)
+            let sk = if let Ok(Some(secret_key)) = k.get_key(&KeyRequest::Bip32(key_source.clone()))
             {
                 secret_key
-            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::XOnlyPubkey(xonly), secp) {
+            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::XOnlyPubkey(xonly)) {
                 sk
             } else {
                 continue;
@@ -440,15 +427,15 @@ impl Psbt {
                 // According to BIP-0371, we also need to consider the condition leaf_hashes.is_empty() for a more accurate determination.
                 if internal_key == xonly && leaf_hashes.is_empty() && input.tap_key_sig.is_none() {
                     let (sighash, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
-                    let key_pair = Keypair::from_secret_key(secp, &sk.inner)
-                        .tap_tweak(secp, input.tap_merkle_root)
+                    let key_pair = Keypair::from_secret_key(&sk.inner)
+                        .tap_tweak(input.tap_merkle_root)
                         .to_keypair();
 
                     #[cfg(feature = "rand-std")]
-                    let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
+                    let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
                     #[cfg(not(feature = "rand-std"))]
                     let signature =
-                        secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);
+                        secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
                     let signature = taproot::Signature { signature, sighash_type };
                     input.tap_key_sig = Some(signature);
@@ -466,23 +453,26 @@ impl Psbt {
                     .collect::<Vec<_>>();
 
                 if !leaf_hashes.is_empty() {
-                    let key_pair = Keypair::from_secret_key(secp, &sk.inner);
+                    let key_pair = Keypair::from_secret_key(&sk.inner);
 
                     for lh in leaf_hashes {
                         let (sighash, sighash_type) =
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(feature = "rand-std")]
-                        let signature = secp.sign_schnorr(&sighash.to_byte_array(), &key_pair);
-                        #[cfg(not(feature = "rand-std"))]
                         let signature =
-                            secp.sign_schnorr_no_aux_rand(&sighash.to_byte_array(), &key_pair);
+                            secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
+                        #[cfg(not(feature = "rand-std"))]
+                        let signature = secp256k1::schnorr::sign_no_aux_rand(
+                            &sighash.to_byte_array(),
+                            &key_pair,
+                        );
 
                         let signature = taproot::Signature { signature, sighash_type };
                         input.tap_script_sigs.insert((xonly, lh), signature);
                     }
 
-                    used.push(sk.public_key(secp).into());
+                    used.push(sk.public_key().into());
                 }
             }
         }
@@ -801,33 +791,25 @@ pub trait GetKey {
     /// - `Some(key)` if the key is found.
     /// - `None` if the key was not found but no error was encountered.
     /// - `Err` if an error was encountered while looking for the key.
-    fn get_key<C: Signing>(
-        &self,
-        key_request: &KeyRequest,
-        secp: &Secp256k1<C>,
-    ) -> Result<Option<PrivateKey>, Self::Error>;
+    fn get_key(&self, key_request: &KeyRequest) -> Result<Option<PrivateKey>, Self::Error>;
 }
 
 impl GetKey for Xpriv {
     type Error = GetKeyError;
 
-    fn get_key<C: Signing>(
-        &self,
-        key_request: &KeyRequest,
-        secp: &Secp256k1<C>,
-    ) -> Result<Option<PrivateKey>, Self::Error> {
+    fn get_key(&self, key_request: &KeyRequest) -> Result<Option<PrivateKey>, Self::Error> {
         match key_request {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::XOnlyPubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
-                let key = if self.fingerprint(secp) == *fingerprint {
-                    let k = self.derive_xpriv(secp, path).map_err(GetKeyError::Bip32)?;
+                let key = if self.fingerprint() == *fingerprint {
+                    let k = self.derive_xpriv(path).map_err(GetKeyError::Bip32)?;
                     Some(k.to_private_key())
                 } else if self.parent_fingerprint == *fingerprint
                     && !path.is_empty()
                     && path[0] == self.child_number
                 {
-                    let k = self.derive_xpriv(secp, &path[1..]).map_err(GetKeyError::Bip32)?;
+                    let k = self.derive_xpriv(&path[1..]).map_err(GetKeyError::Bip32)?;
                     Some(k.to_private_key())
                 } else {
                     None
@@ -863,15 +845,14 @@ macro_rules! impl_get_key_for_set {
 impl GetKey for $set<Xpriv> {
     type Error = GetKeyError;
 
-    fn get_key<C: Signing>(
+    fn get_key(
         &self,
         key_request: &KeyRequest,
-        secp: &Secp256k1<C>
     ) -> Result<Option<PrivateKey>, Self::Error> {
         // OK to stop at the first error because Xpriv::get_key() can only fail
         // if this isn't a KeyRequest::Bip32, which would fail for all Xprivs.
         self.iter()
-            .find_map(|xpriv| xpriv.get_key(key_request, secp).transpose())
+            .find_map(|xpriv| xpriv.get_key(key_request).transpose())
             .transpose()
     }
 }}}
@@ -887,10 +868,9 @@ macro_rules! impl_get_key_for_pubkey_map {
 impl GetKey for $map<PublicKey, PrivateKey> {
     type Error = GetKeyError;
 
-    fn get_key<C: Signing>(
+    fn get_key(
         &self,
         key_request: &KeyRequest,
-        _: &Secp256k1<C>,
     ) -> Result<Option<PrivateKey>, Self::Error> {
         match key_request {
             KeyRequest::Pubkey(pk) => Ok(self.get(&pk).cloned()),
@@ -925,10 +905,9 @@ macro_rules! impl_get_key_for_xonly_map {
 impl GetKey for $map<XOnlyPublicKey, PrivateKey> {
     type Error = GetKeyError;
 
-    fn get_key<C: Signing>(
+    fn get_key(
         &self,
         key_request: &KeyRequest,
-        secp: &Secp256k1<C>,
     ) -> Result<Option<PrivateKey>, Self::Error> {
         match key_request {
             KeyRequest::XOnlyPubkey(xonly) => Ok(self.get(xonly).cloned()),
@@ -936,7 +915,7 @@ impl GetKey for $map<XOnlyPublicKey, PrivateKey> {
                 let (xonly, parity) = pk.inner.x_only_public_key();
 
                 if let Some(mut priv_key) = self.get(&XOnlyPublicKey::from(xonly)).cloned() {
-                    let computed_pk = priv_key.public_key(&secp);
+                    let computed_pk = priv_key.public_key();
                     let (_, computed_parity) = computed_pk.inner.x_only_public_key();
 
                     if computed_parity != parity {
@@ -1335,12 +1314,8 @@ mod tests {
     use hex_lit::hex;
     #[cfg(feature = "rand-std")]
     use {
-        crate::bip32::Fingerprint,
-        crate::locktime,
-        crate::script::ScriptPubKeyBufExt as _,
-        crate::witness_version::WitnessVersion,
-        crate::WitnessProgram,
-        secp256k1::{All, SecretKey},
+        crate::bip32::Fingerprint, crate::locktime, crate::script::ScriptPubKeyBufExt as _,
+        crate::witness_version::WitnessVersion, crate::WitnessProgram, secp256k1::SecretKey,
     };
 
     use super::*;
@@ -1492,14 +1467,13 @@ mod tests {
 
     #[test]
     fn serialize_then_deserialize_output() {
-        let secp = &Secp256k1::new();
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
         let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
 
         let mut sk: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed);
 
-        let fprint = sk.fingerprint(secp);
+        let fprint = sk.fingerprint();
 
         let dpath: Vec<ChildNumber> = vec![
             ChildNumber::ZERO_NORMAL,
@@ -1512,9 +1486,9 @@ mod tests {
             ChildNumber::from_normal_idx(31337).unwrap(),
         ];
 
-        sk = sk.derive_xpriv(secp, &dpath).unwrap();
+        sk = sk.derive_xpriv(&dpath).unwrap();
 
-        let pk = Xpub::from_xpriv(secp, &sk);
+        let pk = Xpub::from_xpriv(&sk);
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
@@ -2368,27 +2342,25 @@ mod tests {
     }
 
     #[cfg(feature = "rand-std")]
-    fn gen_keys() -> (PrivateKey, PublicKey, Secp256k1<All>) {
-        use secp256k1::rand::thread_rng;
+    fn gen_keys() -> (PrivateKey, PublicKey) {
+        use secp256k1::rand;
 
-        let secp = Secp256k1::new();
-
-        let sk = SecretKey::new(&mut thread_rng());
+        let sk = SecretKey::new(&mut rand::rng());
         let priv_key = PrivateKey::new(sk, NetworkKind::Test);
-        let pk = PublicKey::from_private_key(&secp, priv_key);
+        let pk = PublicKey::from_private_key(priv_key);
 
-        (priv_key, pk, secp)
+        (priv_key, pk)
     }
 
     #[test]
     #[cfg(feature = "rand-std")]
     fn get_key_btree_map() {
-        let (priv_key, pk, secp) = gen_keys();
+        let (priv_key, pk) = gen_keys();
 
         let mut key_map = BTreeMap::new();
         key_map.insert(pk, priv_key);
 
-        let got = key_map.get_key(&KeyRequest::Pubkey(pk), &secp).expect("failed to get key");
+        let got = key_map.get_key(&KeyRequest::Pubkey(pk)).expect("failed to get key");
         assert_eq!(got.unwrap(), priv_key)
     }
 
@@ -2397,7 +2369,7 @@ mod tests {
     fn pubkey_map_get_key_negates_odd_parity_keys() {
         use crate::psbt::{GetKey, KeyRequest};
 
-        let (mut priv_key, mut pk, secp) = gen_keys();
+        let (mut priv_key, mut pk) = gen_keys();
         let (xonly, parity) = pk.inner.x_only_public_key();
 
         let mut pubkey_map: HashMap<PublicKey, PrivateKey> = HashMap::new();
@@ -2408,16 +2380,16 @@ mod tests {
                 network: priv_key.network,
                 inner: priv_key.inner.negate(),
             };
-            pk = priv_key.public_key(&secp);
+            pk = priv_key.public_key();
         }
 
         pubkey_map.insert(pk, priv_key);
 
-        let req_result = pubkey_map.get_key(&KeyRequest::XOnlyPubkey(xonly.into()), &secp).unwrap();
+        let req_result = pubkey_map.get_key(&KeyRequest::XOnlyPubkey(xonly.into())).unwrap();
 
         let retrieved_key = req_result.unwrap();
 
-        let retrieved_pub_key = retrieved_key.public_key(&secp);
+        let retrieved_pub_key = retrieved_key.public_key();
         let (retrieved_xonly, retrieved_parity) = retrieved_pub_key.inner.x_only_public_key();
 
         assert_eq!(xonly, retrieved_xonly);
@@ -2430,21 +2402,17 @@ mod tests {
 
     #[test]
     fn get_key_xpriv_bip32_parent() {
-        let secp = Secp256k1::new();
-
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
         let parent_xpriv: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed);
         let path: DerivationPath = "m/1/2/3".parse().unwrap();
         let path_prefix: DerivationPath = "m/1".parse().unwrap();
 
-        let expected_private_key =
-            parent_xpriv.derive_xpriv(&secp, &path).unwrap().to_private_key();
+        let expected_private_key = parent_xpriv.derive_xpriv(&path).unwrap().to_private_key();
 
-        let derived_xpriv = parent_xpriv.derive_xpriv(&secp, &path_prefix).unwrap();
+        let derived_xpriv = parent_xpriv.derive_xpriv(&path_prefix).unwrap();
 
-        let derived_key = derived_xpriv
-            .get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(&secp), path)), &secp)
-            .unwrap();
+        let derived_key =
+            derived_xpriv.get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(), path))).unwrap();
 
         assert_eq!(derived_key, Some(expected_private_key));
     }
@@ -2554,7 +2522,7 @@ mod tests {
     #[test]
     #[cfg(feature = "rand-std")]
     fn hashmap_can_sign_taproot() {
-        let (priv_key, pk, secp) = gen_keys();
+        let (priv_key, pk) = gen_keys();
         let internal_key: XOnlyPublicKey = pk.inner.into();
 
         let tx = Transaction {
@@ -2568,7 +2536,7 @@ mod tests {
         psbt.inputs[0].tap_internal_key = Some(internal_key);
         psbt.inputs[0].witness_utxo = Some(transaction::TxOut {
             amount: Amount::from_sat_u32(10),
-            script_pubkey: ScriptPubKeyBuf::new_p2tr(&secp, internal_key, None),
+            script_pubkey: ScriptPubKeyBuf::new_p2tr(internal_key, None),
         });
 
         let mut key_map: HashMap<PublicKey, PrivateKey> = HashMap::new();
@@ -2579,7 +2547,7 @@ mod tests {
         tap_key_origins.insert(internal_key, (vec![], key_source));
         psbt.inputs[0].tap_key_origins = tap_key_origins;
 
-        let signing_keys = psbt.sign(&key_map, &secp).unwrap();
+        let signing_keys = psbt.sign(&key_map).unwrap();
         assert_eq!(signing_keys.len(), 1);
         assert_eq!(signing_keys[&0], SigningKeys::Schnorr(vec![internal_key]));
     }
@@ -2587,7 +2555,7 @@ mod tests {
     #[test]
     #[cfg(feature = "rand-std")]
     fn xonly_hashmap_can_sign_taproot() {
-        let (priv_key, pk, secp) = gen_keys();
+        let (priv_key, pk) = gen_keys();
         let internal_key: XOnlyPublicKey = pk.inner.into();
 
         let tx = Transaction {
@@ -2601,7 +2569,7 @@ mod tests {
         psbt.inputs[0].tap_internal_key = Some(internal_key);
         psbt.inputs[0].witness_utxo = Some(transaction::TxOut {
             amount: Amount::from_sat_u32(10),
-            script_pubkey: ScriptPubKeyBuf::new_p2tr(&secp, internal_key, None),
+            script_pubkey: ScriptPubKeyBuf::new_p2tr(internal_key, None),
         });
 
         let mut xonly_key_map: HashMap<XOnlyPublicKey, PrivateKey> = HashMap::new();
@@ -2612,7 +2580,7 @@ mod tests {
         tap_key_origins.insert(internal_key, (vec![], key_source));
         psbt.inputs[0].tap_key_origins = tap_key_origins;
 
-        let signing_keys = psbt.sign(&xonly_key_map, &secp).unwrap();
+        let signing_keys = psbt.sign(&xonly_key_map).unwrap();
         assert_eq!(signing_keys.len(), 1);
         assert_eq!(signing_keys[&0], SigningKeys::Schnorr(vec![internal_key]));
     }
@@ -2629,7 +2597,7 @@ mod tests {
         };
         let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).unwrap();
 
-        let (priv_key, pk, secp) = gen_keys();
+        let (priv_key, pk) = gen_keys();
 
         // key_map implements `GetKey` using KeyRequest::Pubkey. A pubkey key request does not use
         // keysource so we use default `KeySource` (fingerprint and derivation path) below.
@@ -2655,7 +2623,7 @@ mod tests {
         };
         psbt.inputs[1].witness_utxo = Some(txout_unknown_future);
 
-        let (signing_keys, _) = psbt.sign(&key_map, &secp).unwrap_err();
+        let (signing_keys, _) = psbt.sign(&key_map).unwrap_err();
 
         assert_eq!(signing_keys.len(), 1);
         assert_eq!(signing_keys[&0], SigningKeys::Ecdsa(vec![pk]));

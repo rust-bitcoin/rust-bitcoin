@@ -71,6 +71,9 @@ pub use units::{
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
 
+#[cfg(feature = "alloc")]
+#[doc(inline)]
+pub use self::script::{witness_program, witness_version, WitnessProgram, WitnessVersion};
 #[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::{

@@ -229,6 +229,7 @@ impl Deserialize for ecdsa::Signature {
             ecdsa::DecodeError::EmptySignature => Error::InvalidEcdsaSignature(e),
             ecdsa::DecodeError::SighashType(err) => Error::NonStandardSighashType(err.0),
             ecdsa::DecodeError::Secp256k1(..) => Error::InvalidEcdsaSignature(e),
+            _ => unreachable!("in crypto v0.1.0"),
         })
     }
 }
@@ -310,6 +311,7 @@ impl Deserialize for taproot::Signature {
             SighashType(err) => Error::NonStandardSighashType(err.0),
             InvalidSignatureSize(_) => Error::InvalidTaprootSignature(e),
             Secp256k1(..) => Error::InvalidTaprootSignature(e),
+            _ => unreachable!("in crypto v0.1.0"),
         })
     }
 }

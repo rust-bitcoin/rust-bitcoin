@@ -66,6 +66,9 @@ pub extern crate base58;
 /// Re-export the `bech32` crate.
 pub extern crate bech32;
 
+/// Re-export the `bitcoin-crypto` crate.
+pub extern crate crypto;
+
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
@@ -107,6 +110,7 @@ pub mod ext {
     #[rustfmt::skip] // Use terse custom grouping.
     pub use crate::{
         block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
+        network::NetworkExt as _,
         pow::CompactTargetExt as _,
         script::{ScriptExt as _, ScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
@@ -124,14 +128,13 @@ pub mod blockdata;
 pub mod consensus;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod consensus_validation;
-// Private until we either make this a crate or flatten it - still to be decided.
-pub(crate) mod crypto;
 pub mod hash_types;
 pub mod merkle_tree;
 pub mod network;
 pub mod policy;
 pub mod pow;
 pub mod psbt;
+pub mod sighash;
 pub mod sign_message;
 pub mod taproot;
 
@@ -148,7 +151,7 @@ pub use primitives::{
     pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{
         RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
-        TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf,
+        TapScript, TapScriptBuf, WitnessProgram, WitnessScript, WitnessScriptBuf, WitnessVersion,
     },
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
@@ -173,14 +176,16 @@ pub use crate::{
     address::{Address, AddressType, KnownHrp},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
+    // FIXME: Think harder about the crypto re-exports.
     crypto::key::{self, CompressedPublicKey, PrivateKey, PublicKey, XOnlyPublicKey},
-    crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::MerkleBlock,
     network::params::{self, Params},
     network::{Network, NetworkKind, TestnetVersion},
     pow::{Target, Work},
     psbt::Psbt,
+    script::{witness_program, witness_version},
     sighash::{EcdsaSighashType, TapSighashType},
+    sighash::{LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
 // Re-export all modules from `blockdata`, users should never need to use `blockdata` directly.
@@ -189,8 +194,6 @@ pub use crate::{
     // Also, re-export types and modules from `blockdata` that don't come from `primitives`.
     blockdata::locktime::{absolute, relative},
     blockdata::opcodes::{self, Opcode},
-    blockdata::script::witness_program::{self, WitnessProgram},
-    blockdata::script::witness_version::{self, WitnessVersion},
     // These modules also re-export all the respective `primitives` types.
     blockdata::{block, constants, fee_rate, locktime, script, transaction, weight, witness},
 };

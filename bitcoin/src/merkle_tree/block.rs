@@ -129,10 +129,7 @@ impl Encodable for MerkleBlock {
 
 impl Decodable for MerkleBlock {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self {
-            header: Decodable::consensus_decode(r)?,
-            txn: Decodable::consensus_decode(r)?,
-        })
+        Ok(Self { header: Decodable::consensus_decode(r)?, txn: Decodable::consensus_decode(r)? })
     }
 }
 
@@ -576,7 +573,7 @@ mod tests {
 
     #[cfg(feature = "rand-std")]
     fn pmt_test(tx_count: usize) {
-        let mut rng = thread_rng();
+        let mut rng = secp256k1::rand::rng();
         // Create some fake tx ids
         let tx_ids = (1..=tx_count)
             .map(|i| format!("{:064x}", i).parse::<Txid>().unwrap())
@@ -600,7 +597,7 @@ mod tests {
                 // Generate `att / 2` random bits
                 let rand_bits = match att / 2 {
                     0 => 0,
-                    bits => rng.gen::<u64>() >> (64 - bits),
+                    bits => rng.random::<u64>() >> (64 - bits),
                 };
                 let include = rand_bits == 0;
                 matches[j] = include;
@@ -748,8 +745,8 @@ mod tests {
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
         fn damage(&mut self, rng: &mut ThreadRng) {
-            let n = rng.gen_range(0..self.hashes.len());
-            let bit = rng.gen::<u8>();
+            let n = rng.random_range(0..self.hashes.len());
+            let bit = rng.random::<u8>();
             let hashes = &mut self.hashes;
             let mut hash = hashes[n].to_byte_array();
             hash[(bit >> 3) as usize] ^= 1 << (bit & 7);

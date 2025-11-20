@@ -5,7 +5,6 @@ use core::fmt;
 use hex::DisplayHex as _;
 use internals::array::ArrayExt; // For `split_first`.
 use internals::ToU64 as _;
-use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{
@@ -20,7 +19,7 @@ use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
-use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
+use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _, TapNodeHash};
 use crate::witness_program::P2A_PROGRAM;
 use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, WitnessScriptBuf};
 
@@ -257,6 +256,7 @@ internal_macros::define_extension_trait! {
     pub trait WitnessScriptExt impl for WitnessScript {
         /// Returns 256-bit hash of the script for P2WSH outputs.
         #[inline]
+        // FIXME: Do we want to keep this, we provide `WiScriptHash::try_from` also.
         fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
             WScriptHash::from_script(self)
         }
@@ -280,15 +280,14 @@ crate::internal_macros::define_extension_trait! {
 
         /// Computes P2TR output with a given internal key and a single script spending path equal to
         /// the current script, assuming that the script is a Tapscript.
-        fn to_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
+        fn to_p2tr<K: Into<UntweakedPublicKey>>(
             &self,
-            secp: &Secp256k1<C>,
             internal_key: K,
         ) -> ScriptPubKeyBuf {
             let internal_key = internal_key.into();
             let leaf_hash = self.tapscript_leaf_hash();
             let merkle_root = TapNodeHash::from(leaf_hash);
-            ScriptPubKeyBuf::new_p2tr(secp, internal_key, Some(merkle_root))
+            ScriptPubKeyBuf::new_p2tr(internal_key, Some(merkle_root))
         }
     }
 }

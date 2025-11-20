@@ -5,157 +5,90 @@
 //! This module provides support for Taproot tagged hashes.
 
 pub mod merkle_branch;
-pub mod serialized_signature;
 
 use core::cmp::{Ordering, Reverse};
 use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
+use crypto::TapTweakHashExt as _;
+use hashes::{sha256t, HashEngine as _};
 use hex::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
-use internals::{impl_to_hex_from_lower_hex, write_err};
+use internals::write_err;
 use io::Write;
-use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{
-    SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
+    ParseXOnlyPublicKeyError, SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey,
+    UntweakedPublicKey,
 };
-use crate::key::ParseXOnlyPublicKeyError;
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
 use crate::{TapScript, TapScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
 #[doc(inline)]
-pub use crate::crypto::taproot::{SigFromSliceError, Signature};
+pub use crate::crypto::taproot::{SerializedSignature, SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranchBuf;
+#[doc(inline)]
+pub use taproot_primitives::*;
 
 #[doc(inline)]
 pub use crate::XOnlyPublicKey;
 
 type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
 
-// Taproot test vectors from BIP-0341 state the hashes without any reversing
-sha256t_tag! {
-    pub struct TapLeafTag = hash_str("TapLeaf");
+/// The leaf script with its version.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct LeafScript<S> {
+    /// The version of the script.
+    pub version: LeafVersion,
+    /// The script, usually `TapScriptBuf` or `&TapScript`.
+    pub script: S,
 }
 
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapLeaf\".
-    ///
-    /// This is used for computing tapscript script spend hash.
-    pub struct TapLeafHash(sha256t::Hash<TapLeafTag>);
-}
+// type alias for versioned tap script corresponding Merkle proof
+type ScriptMerkleProofMap = BTreeMap<(TapScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
 
-hashes::impl_hex_for_newtype!(TapLeafHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapLeafHash);
-
-sha256t_tag! {
-    pub struct TapBranchTag = hash_str("TapBranch");
-}
-
-hash_newtype! {
-    /// Tagged hash used in Taproot trees.
-    ///
-    /// See BIP-0340 for tagging rules.
-    #[repr(transparent)]
-    pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
-}
-
-hashes::impl_hex_for_newtype!(TapNodeHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapNodeHash);
-
-sha256t_tag! {
-    pub struct TapTweakTag = hash_str("TapTweak");
-}
-
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapTweak\".
-    ///
-    /// This hash type is used while computing the tweaked public key.
-    pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
-}
-
-hashes::impl_hex_for_newtype!(TapTweakHash);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(TapTweakHash);
-
-impl From<TapLeafHash> for TapNodeHash {
-    fn from(leaf: TapLeafHash) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
-}
-
-impl TapTweakHash {
-    /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
-    /// `P` is the internal key and `R` is the Merkle root.
-    pub fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self {
-        let internal_key = internal_key.into();
-        let mut eng = sha256t::Hash::<TapTweakTag>::engine();
-        // always hash the key
-        eng.input(&internal_key.serialize());
-        if let Some(h) = merkle_root {
-            eng.input(h.as_ref());
-        } else {
-            // nothing to hash
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapLeafHash`] type.
+    pub trait TapLeafHashExt impl for TapLeafHash {
+        /// Computes the leaf hash from components.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
+            let mut eng = sha256t::Hash::<TapLeafTag>::engine();
+            ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
+            script.consensus_encode(&mut eng).expect("engines don't error");
+            let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
+            Self::from_byte_array(inner.to_byte_array())
         }
-        let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
-        Self::from_byte_array(inner.to_byte_array())
-    }
-
-    /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
-    pub fn to_scalar(self) -> Scalar {
-        // This is statistically extremely unlikely to panic.
-        Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
     }
 }
 
-impl TapLeafHash {
-    /// Computes the leaf hash from components.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
-        let mut eng = sha256t::Hash::<TapLeafTag>::engine();
-        ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
-        script.consensus_encode(&mut eng).expect("engines don't error");
-        let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
-        Self::from_byte_array(inner.to_byte_array())
-    }
-}
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapNodeHash`] type.
+    pub trait TapNodeHashExt impl for TapNodeHash {
+        /// Computes branch hash given two hashes of the nodes underneath it.
+        fn from_node_hashes(a: Self, b: Self) -> Self {
+            combine_node_hashes(a, b).0
+        }
 
-impl From<LeafNode> for TapNodeHash {
-    fn from(leaf: LeafNode) -> Self { leaf.node_hash() }
-}
+        /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
+        ///
+        /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
+        /// hash is constructed from a hidden node. This also has better ergonomics
+        /// because it does not require the caller to import the Hash trait.
+        fn assume_hidden(hash: [u8; 32]) -> Self { Self::from_byte_array(hash) }
 
-impl From<&LeafNode> for TapNodeHash {
-    fn from(leaf: &LeafNode) -> Self { leaf.node_hash() }
-}
-
-impl TapNodeHash {
-    /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: Self, b: Self) -> Self {
-        combine_node_hashes(a, b).0
-    }
-
-    /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
-    ///
-    /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
-    /// hash is constructed from a hidden node. This also has better ergonomics
-    /// because it does not require the caller to import the Hash trait.
-    pub fn assume_hidden(hash: [u8; 32]) -> Self { Self::from_byte_array(hash) }
-
-    /// Computes the [`TapNodeHash`] from a script and a leaf version.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
-        Self::from(TapLeafHash::from_script(script, ver))
+        /// Computes the [`TapNodeHash`] from a script and a leaf version.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
+            Self::from(TapLeafHash::from_script(script, ver))
+        }
     }
 }
 
@@ -174,39 +107,12 @@ fn combine_node_hashes(a: TapNodeHash, b: TapNodeHash) -> (TapNodeHash, bool) {
     (TapNodeHash::from_byte_array(inner.to_byte_array()), a < b)
 }
 
-/// Maximum depth of a Taproot tree script spend path.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
-pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
-/// Size of a Taproot control node.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L228
-pub const TAPROOT_CONTROL_NODE_SIZE: usize = 32;
-/// Tapleaf mask for getting the leaf version from first byte of control block.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L225
-pub const TAPROOT_LEAF_MASK: u8 = 0xfe;
-/// Tapscript leaf version.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L226
-pub const TAPROOT_LEAF_TAPSCRIPT: u8 = 0xc0;
-/// Taproot annex prefix.
-pub const TAPROOT_ANNEX_PREFIX: u8 = 0x50;
-/// Tapscript control base size.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L227
-pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
-/// Tapscript control max size.
-// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L230
-pub const TAPROOT_CONTROL_MAX_SIZE: usize =
-    TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
-
-/// The leaf script with its version.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct LeafScript<S> {
-    /// The version of the script.
-    pub version: LeafVersion,
-    /// The script, usually `TapScriptBuf` or `&TapScript`.
-    pub script: S,
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::TapTweakHash {}
+    impl Sealed for super::TapLeafHash {}
+    impl Sealed for super::TapNodeHash {}
 }
-
-// type alias for versioned tap script corresponding Merkle proof
-type ScriptMerkleProofMap = BTreeMap<(TapScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
 
 /// Represents Taproot spending information.
 ///
@@ -250,18 +156,16 @@ impl TaprootSpendInfo {
     /// weights of satisfaction for that script.
     ///
     /// See [`TaprootBuilder::with_huffman_tree`] for more detailed documentation.
-    pub fn with_huffman_tree<C, I, K>(
-        secp: &Secp256k1<C>,
+    pub fn with_huffman_tree<I, K>(
         internal_key: K,
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
     where
         I: IntoIterator<Item = (u32, TapScriptBuf)>,
-        C: secp256k1::Verification,
         K: Into<UntweakedPublicKey>,
     {
         let builder = TaprootBuilder::with_huffman_tree(script_weights)?;
-        Ok(builder.finalize(secp, internal_key).expect("Huffman tree is always complete"))
+        Ok(builder.finalize(internal_key).expect("Huffman tree is always complete"))
     }
 
     /// Constructs a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
@@ -275,13 +179,12 @@ impl TaprootSpendInfo {
     ///
     /// Refer to BIP 341 footnote ('Why should the output key always have a Taproot commitment, even
     /// if there is no script path?') for more details.
-    pub fn new_key_spend<C: secp256k1::Verification, K: Into<UntweakedPublicKey>>(
-        secp: &Secp256k1<C>,
+    pub fn new_key_spend<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let internal_key = internal_key.into();
-        let (output_key, parity) = internal_key.tap_tweak(secp, merkle_root);
+        let (output_key, parity) = internal_key.tap_tweak(merkle_root);
         Self {
             internal_key,
             merkle_root,
@@ -316,14 +219,10 @@ impl TaprootSpendInfo {
     ///
     /// This is useful when you want to manually build a Taproot tree without using
     /// [`TaprootBuilder`].
-    pub fn from_node_info<C: secp256k1::Verification, K: Into<UntweakedPublicKey>>(
-        secp: &Secp256k1<C>,
-        internal_key: K,
-        node: NodeInfo,
-    ) -> Self {
+    pub fn from_node_info<K: Into<UntweakedPublicKey>>(internal_key: K, node: NodeInfo) -> Self {
         // Create as if it is a key spend path with the given Merkle root
         let root_hash = Some(node.hash);
-        let mut info = Self::new_key_spend(secp, internal_key, root_hash);
+        let mut info = Self::new_key_spend(internal_key, root_hash);
 
         for leaves in node.leaves {
             match leaves.leaf {
@@ -428,9 +327,7 @@ impl TaprootBuilder {
     /// Constructs a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
     ///
     /// The size here should be maximum depth of the tree.
-    pub fn with_capacity(size: usize) -> Self {
-        Self { branch: Vec::with_capacity(size) }
-    }
+    pub fn with_capacity(size: usize) -> Self { Self { branch: Vec::with_capacity(size) } }
 
     /// Constructs a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
@@ -571,9 +468,7 @@ impl TaprootBuilder {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilderError::HiddenParts(Self {
-                branch: vec![Some(node)],
-            }));
+            return Err(IncompleteBuilderError::HiddenParts(Self { branch: vec![Some(node)] }));
         }
         Ok(TapTree(node))
     }
@@ -587,17 +482,16 @@ impl TaprootBuilder {
     ///
     /// Returns the unmodified builder as Err if the builder is not finalizable.
     /// See also [`TaprootBuilder::is_finalizable`]
-    pub fn finalize<C: secp256k1::Verification, K: Into<XOnlyPublicKey>>(
+    pub fn finalize<K: Into<XOnlyPublicKey>>(
         mut self,
-        secp: &Secp256k1<C>,
         internal_key: K,
     ) -> Result<TaprootSpendInfo, Self> {
         let internal_key = internal_key.into();
         match self.branch.len() {
-            0 => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
+            0 => Ok(TaprootSpendInfo::new_key_spend(internal_key, None)),
             1 =>
                 if let Some(Some(node)) = self.branch.pop() {
-                    Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+                    Ok(TaprootSpendInfo::from_node_info(internal_key, node))
                 } else {
                     unreachable!("size checked above. Builder guarantees the last element is Some")
                 },
@@ -1139,6 +1033,14 @@ impl LeafNode {
     pub fn leaf(&self) -> &TapLeaf { &self.leaf }
 }
 
+impl From<LeafNode> for TapNodeHash {
+    fn from(leaf: LeafNode) -> Self { leaf.node_hash() }
+}
+
+impl From<&LeafNode> for TapNodeHash {
+    fn from(leaf: &LeafNode) -> Self { leaf.node_hash() }
+}
+
 /// Script leaf node in a Taproot tree along with the Merkle proof to get this node.
 /// Returned by [`TapTree::script_leaves`]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1227,7 +1129,7 @@ impl<B, K> ControlBlock<B, K> {
             .split_first_chunk::<TAPROOT_CONTROL_BASE_SIZE>()
             .ok_or(InvalidControlBlockSizeError(sl.len()))?;
 
-        let (&first, internal_key) = base.split_first();
+        let (&first, internal_key_bytes) = base.split_first();
 
         let output_key_parity = match first & 1 {
             0 => secp256k1::Parity::Even,
@@ -1235,9 +1137,15 @@ impl<B, K> ControlBlock<B, K> {
         };
 
         let leaf_version = LeafVersion::from_consensus(first & TAPROOT_LEAF_MASK)?;
-        let internal_key = SerializedXOnlyPublicKey::from_bytes_ref(internal_key).into();
+        let internal_key_ref: &'a SerializedXOnlyPublicKey =
+            SerializedXOnlyPublicKey::from_bytes_ref(internal_key_bytes);
         let merkle_branch = TaprootMerkleBranch::decode(merkle_branch)?.into();
-        Ok(Self { leaf_version, output_key_parity, internal_key, merkle_branch })
+        Ok(Self {
+            leaf_version,
+            output_key_parity,
+            internal_key: internal_key_ref.into(),
+            merkle_branch,
+        })
     }
 }
 
@@ -1293,9 +1201,8 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
     ///
     /// Only checks that script is contained inside the [`TapTree`] described by output key. Full
     /// verification must also execute the script with witness data.
-    pub fn verify_taproot_commitment<C: secp256k1::Verification>(
+    pub fn verify_taproot_commitment(
         &self,
-        secp: &Secp256k1<C>,
         output_key: XOnlyPublicKey,
         script: &TapScript,
     ) -> bool {
@@ -1310,156 +1217,7 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
         // compute the taptweak
         let tweak =
             TapTweakHash::from_key_and_merkle_root(self.internal_key, Some(curr_hash)).to_scalar();
-        self.internal_key.tweak_add_check(secp, &output_key, self.output_key_parity, tweak)
-    }
-}
-
-/// Inner type representing future (non-tapscript) leaf versions. See [`LeafVersion::Future`].
-///
-/// NB: NO PUBLIC CONSTRUCTOR!
-/// The only way to construct this is by converting `u8` to [`LeafVersion`] and then extracting it.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct FutureLeafVersion(u8);
-
-impl FutureLeafVersion {
-    pub(self) fn from_consensus(
-        version: u8,
-    ) -> Result<Self, InvalidTaprootLeafVersionError> {
-        match version {
-            TAPROOT_LEAF_TAPSCRIPT => unreachable!(
-                "FutureLeafVersion::from_consensus should never be called for 0xC0 value"
-            ),
-            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
-            odd if odd & 0xFE != odd => Err(InvalidTaprootLeafVersionError(odd)),
-            even => Ok(Self(even)),
-        }
-    }
-
-    /// Returns the consensus representation of this [`FutureLeafVersion`].
-    #[inline]
-    pub fn to_consensus(self) -> u8 { self.0 }
-}
-
-impl fmt::Display for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl fmt::LowerHex for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-impl_to_hex_from_lower_hex!(FutureLeafVersion, |_| 2);
-
-impl fmt::UpperHex for FutureLeafVersion {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
-}
-
-/// The leaf version for tapleafs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum LeafVersion {
-    /// BIP-0342 tapscript.
-    TapScript,
-
-    /// Future leaf version.
-    Future(FutureLeafVersion),
-}
-
-impl LeafVersion {
-    /// Constructs a new [`LeafVersion`] from consensus byte representation.
-    ///
-    /// # Errors
-    ///
-    /// - If the last bit of the `version` is odd.
-    /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
-    pub fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
-        match version {
-            TAPROOT_LEAF_TAPSCRIPT => Ok(Self::TapScript),
-            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
-            future => FutureLeafVersion::from_consensus(future).map(LeafVersion::Future),
-        }
-    }
-
-    /// Returns the consensus representation of this [`LeafVersion`].
-    pub fn to_consensus(self) -> u8 {
-        match self {
-            Self::TapScript => TAPROOT_LEAF_TAPSCRIPT,
-            Self::Future(version) => version.to_consensus(),
-        }
-    }
-}
-
-impl fmt::Display for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match (self, f.alternate()) {
-            (Self::TapScript, true) => f.write_str("tapscript"),
-            (Self::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (Self::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
-            (Self::Future(version), false) => fmt::Display::fmt(version, f),
-        }
-    }
-}
-
-impl fmt::LowerHex for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.to_consensus(), f)
-    }
-}
-impl_to_hex_from_lower_hex!(LeafVersion, |_| 2);
-
-impl fmt::UpperHex for LeafVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.to_consensus(), f)
-    }
-}
-
-/// Serializes [`LeafVersion`] as a `u8` using consensus encoding.
-#[cfg(feature = "serde")]
-impl serde::Serialize for LeafVersion {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_u8(self.to_consensus())
-    }
-}
-
-/// Deserializes [`LeafVersion`] as a `u8` using consensus encoding.
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for LeafVersion {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct U8Visitor;
-        impl serde::de::Visitor<'_> for U8Visitor {
-            type Value = LeafVersion;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a valid consensus-encoded Taproot leaf version")
-            }
-
-            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                let value = u8::try_from(value).map_err(|_| {
-                    E::invalid_value(
-                        serde::de::Unexpected::Unsigned(value),
-                        &"consensus-encoded leaf version as u8",
-                    )
-                })?;
-                LeafVersion::from_consensus(value).map_err(|_| {
-                    E::invalid_value(
-                        ::serde::de::Unexpected::Unsigned(value as u64),
-                        &"consensus-encoded leaf version as u8",
-                    )
-                })
-            }
-        }
-
-        deserializer.deserialize_u8(U8Visitor)
+        self.internal_key.tweak_add_check(&output_key, self.output_key_parity, tweak)
     }
 }
 
@@ -1639,28 +1397,6 @@ impl fmt::Display for InvalidMerkleTreeDepthError {
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidMerkleTreeDepthError {}
 
-/// The last bit of tapleaf version must be zero.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidTaprootLeafVersionError(u8);
-
-impl InvalidTaprootLeafVersionError {
-    /// Accessor for the invalid leaf version.
-    pub fn invalid_leaf_version(&self) -> u8 { self.0 }
-}
-
-impl From<Infallible> for InvalidTaprootLeafVersionError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for InvalidTaprootLeafVersionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "leaf version({}) must have the least significant bit 0", self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidTaprootLeafVersionError {}
-
 /// Invalid control block size.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidControlBlockSizeError(usize);
@@ -1691,7 +1427,6 @@ impl std::error::Error for InvalidControlBlockSizeError {}
 mod test {
     use hashes::sha256;
     use hex::DisplayHex;
-    use secp256k1::VerifyOnly;
 
     use super::*;
     use crate::script::ScriptBufExt as _;
@@ -1782,79 +1517,64 @@ mod test {
         );
     }
 
-    fn _verify_tap_commitments(
-        secp: &Secp256k1<VerifyOnly>,
-        out_spk_hex: &str,
-        script_hex: &str,
-        control_block_hex: &str,
-    ) {
+    fn _verify_tap_commitments(out_spk_hex: &str, script_hex: &str, control_block_hex: &str) {
         let out_pk = out_spk_hex[4..].parse::<XOnlyPublicKey>().unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = TapScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
         let control_block = ControlBlock::from_hex(control_block_hex).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
-        assert!(control_block.verify_taproot_commitment(
-            secp,
-            out_pk.to_x_only_public_key(),
-            &script
-        ));
+        assert!(control_block.verify_taproot_commitment(out_pk.to_x_only_public_key(), &script));
     }
 
     #[test]
     fn control_block_verify() {
-        let secp = Secp256k1::verification_only();
         // test vectors obtained from printing values in feature_taproot.py from Bitcoin Core
-        _verify_tap_commitments(&secp, "51205dc8e62b15e0ebdf44751676be35ba32eed2e84608b290d4061bbff136cd7ba9", "6a", "c1a9d6f66cd4b25004f526bfa873e56942f98e8e492bd79ed6532b966104817c2bda584e7d32612381cf88edc1c02e28a296e807c16ad22f591ee113946e48a71e0641e660d1e5392fb79d64838c2b84faf04b7f5f283c9d8bf83e39e177b64372a0cd22eeab7e093873e851e247714eff762d8a30be699ba4456cfe6491b282e193a071350ae099005a5950d74f73ba13077a57bc478007fb0e4d1099ce9cf3d4");
-        _verify_tap_commitments(&secp, "5120e208c869c40d8827101c5ad3238018de0f3f5183d77a0c53d18ac28ddcbcd8ad", "f4", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f40090ab1f4890d51115998242ebce636efb9ede1b516d9eb8952dc1068e0335306199aaf103cceb41d9bc37ec231aca89b984b5fd3c65977ce764d51033ac65adb4da14e029b1e154a85bfd9139e7aa2720b6070a4ceba8264ca61d5d3ac27aceb9ef4b54cd43c2d1fd5e11b5c2e93cf29b91ea3dc5b832201f02f7473a28c63246");
+        _verify_tap_commitments("51205dc8e62b15e0ebdf44751676be35ba32eed2e84608b290d4061bbff136cd7ba9", "6a", "c1a9d6f66cd4b25004f526bfa873e56942f98e8e492bd79ed6532b966104817c2bda584e7d32612381cf88edc1c02e28a296e807c16ad22f591ee113946e48a71e0641e660d1e5392fb79d64838c2b84faf04b7f5f283c9d8bf83e39e177b64372a0cd22eeab7e093873e851e247714eff762d8a30be699ba4456cfe6491b282e193a071350ae099005a5950d74f73ba13077a57bc478007fb0e4d1099ce9cf3d4");
+        _verify_tap_commitments("5120e208c869c40d8827101c5ad3238018de0f3f5183d77a0c53d18ac28ddcbcd8ad", "f4", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f40090ab1f4890d51115998242ebce636efb9ede1b516d9eb8952dc1068e0335306199aaf103cceb41d9bc37ec231aca89b984b5fd3c65977ce764d51033ac65adb4da14e029b1e154a85bfd9139e7aa2720b6070a4ceba8264ca61d5d3ac27aceb9ef4b54cd43c2d1fd5e11b5c2e93cf29b91ea3dc5b832201f02f7473a28c63246");
         _verify_tap_commitments(
-            &secp,
             "5120567666e7df90e0450bb608e17c01ed3fbcfa5355a5f8273e34e583bfaa70ce09",
             "203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ac",
             "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400",
         );
-        _verify_tap_commitments(&secp, "5120580a19e47269414a55eb86d5d0c6c9b371455d9fd2154412a57dec840df99fe1", "6a", "bca0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f40042ba1bd1c63c03ccff60d4c4d53a653f87909eb3358e7fa45c9d805231fb08c933e1f4e0f9d17f591df1419df7d5b7eb5f744f404c5ef9ecdb1b89b18cafa3a816d8b5dba3205f9a9c05f866d91f40d2793a7586d502cb42f46c7a11f66ad4aa");
-        _verify_tap_commitments(&secp, "5120228b94a4806254a38d6efa8a134c28ebc89546209559dfe40b2b0493bafacc5b", "6a50", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4009c9aed3dfd11ab0e78bf87ef3bf296269dc4b0f7712140386d6980992bab4b45");
+        _verify_tap_commitments("5120580a19e47269414a55eb86d5d0c6c9b371455d9fd2154412a57dec840df99fe1", "6a", "bca0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f40042ba1bd1c63c03ccff60d4c4d53a653f87909eb3358e7fa45c9d805231fb08c933e1f4e0f9d17f591df1419df7d5b7eb5f744f404c5ef9ecdb1b89b18cafa3a816d8b5dba3205f9a9c05f866d91f40d2793a7586d502cb42f46c7a11f66ad4aa");
+        _verify_tap_commitments("5120228b94a4806254a38d6efa8a134c28ebc89546209559dfe40b2b0493bafacc5b", "6a50", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4009c9aed3dfd11ab0e78bf87ef3bf296269dc4b0f7712140386d6980992bab4b45");
         _verify_tap_commitments(
-            &secp,
             "5120567666e7df90e0450bb608e17c01ed3fbcfa5355a5f8273e34e583bfaa70ce09",
             "203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ac",
             "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400",
         );
         _verify_tap_commitments(
-            &secp,
             "5120b0a79103c31fe51eea61d2873bad8a25a310da319d7e7a85f825fa7a00ea3f85",
             "203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ad51",
             "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400",
         );
-        _verify_tap_commitments(&secp, "5120f2f62e854a0012aeba78cd4ba4a0832447a5262d4c6eb4f1c95c7914b536fc6c", "6a86", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4009ad3d30479f0689dbdf59a6b840d60ad485b2effbed1825a75ce19a44e460e09056f60ea686d79cfa4fb79f197b2e905ac857a983be4a5a41a4873e865aa950780c0237de279dc063e67deec46ef8e1bc351bf12c4d67a6d568001faf097e797e6ee620f53cfe0f8acaddf2063c39c3577853bb46d61ffcba5a024c3e1216837");
-        _verify_tap_commitments(&secp, "51202a4772070b49bae68b44315032cdbf9c40c7c2f896781b32b931b73dbfb26d7e", "6af8", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4006f183944a14618fc7fe9ceade0f58e43a19d3c3b179ea6c43c29616413b6971c99aaf103cceb41d9bc37ec231aca89b984b5fd3c65977ce764d51033ac65adb4c3462adec78cd04f3cc156bdadec50def99feae0dc6a23664e8a2b0d42d6ca9eb968dfdf46c23af642b2688351904e0a0630e71ffac5bcaba33b9b2c8a7495ec");
-        _verify_tap_commitments(&secp, "5120a32b0b8cfafe0f0f8d5870030ba4d19a8725ad345cb3c8420f86ac4e0dff6207", "4c", "e8a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400615da7ac8d078e5fc7f4690fc2127ba40f0f97cc070ade5b3a7919783d91ef3f13734aab908ae998e57848a01268fe8217d70bc3ee8ea8ceae158ae964a4b5f3af20b50d7019bf47fde210eee5c52f1cfe71cfca78f2d3e7c1fd828c80351525");
+        _verify_tap_commitments("5120f2f62e854a0012aeba78cd4ba4a0832447a5262d4c6eb4f1c95c7914b536fc6c", "6a86", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4009ad3d30479f0689dbdf59a6b840d60ad485b2effbed1825a75ce19a44e460e09056f60ea686d79cfa4fb79f197b2e905ac857a983be4a5a41a4873e865aa950780c0237de279dc063e67deec46ef8e1bc351bf12c4d67a6d568001faf097e797e6ee620f53cfe0f8acaddf2063c39c3577853bb46d61ffcba5a024c3e1216837");
+        _verify_tap_commitments("51202a4772070b49bae68b44315032cdbf9c40c7c2f896781b32b931b73dbfb26d7e", "6af8", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4006f183944a14618fc7fe9ceade0f58e43a19d3c3b179ea6c43c29616413b6971c99aaf103cceb41d9bc37ec231aca89b984b5fd3c65977ce764d51033ac65adb4c3462adec78cd04f3cc156bdadec50def99feae0dc6a23664e8a2b0d42d6ca9eb968dfdf46c23af642b2688351904e0a0630e71ffac5bcaba33b9b2c8a7495ec");
+        _verify_tap_commitments("5120a32b0b8cfafe0f0f8d5870030ba4d19a8725ad345cb3c8420f86ac4e0dff6207", "4c", "e8a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400615da7ac8d078e5fc7f4690fc2127ba40f0f97cc070ade5b3a7919783d91ef3f13734aab908ae998e57848a01268fe8217d70bc3ee8ea8ceae158ae964a4b5f3af20b50d7019bf47fde210eee5c52f1cfe71cfca78f2d3e7c1fd828c80351525");
         _verify_tap_commitments(
-            &secp,
             "5120b0a79103c31fe51eea61d2873bad8a25a310da319d7e7a85f825fa7a00ea3f85",
             "203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ad51",
             "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400",
         );
-        _verify_tap_commitments(&secp, "51208678459f1fa0f80e9b89b8ffdcaf46a022bdf60aa45f1fed9a96145edf4ec400", "6a50", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4001eff29e1a89e650076b8d3c56302881d09c9df215774ed99993aaed14acd6615");
-        _verify_tap_commitments(&secp, "5120017316303aed02bcdec424c851c9eacbe192b013139bd9634c4e19b3475b06e1", "61", "02a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f40050462265ca552b23cbb4fe021b474313c8cb87d4a18b3f7bdbeb2b418279ba31fc6509d829cd42336f563363cb3538d78758e0876c71e13012eb2b656eb0edb051a2420a840d5c8c6c762abc7410af2c311f606b20ca2ace56a8139f84b1379a");
-        _verify_tap_commitments(&secp, "5120896d4d5d2236e86c6e9320e86d1a7822e652907cbd508360e8c71aefc127c77d", "61", "14a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4001ab0e9d9a4858a0e69605fe9c5a42d739fbe26fa79650e7074f462b02645f7ea1c91802b298cd91e6b5af57c6a013d93397cd2ecbd5569382cc27becf44ff4fff8960b20f846160c159c58350f6b6072cf1b3daa5185b7a42524fb72cbc252576ae46732b8e31ac24bfa7d72f4c3713e8696f99d8ac6c07e4c820a03f249f144");
-        _verify_tap_commitments(&secp, "512093c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51", "04ffffffff203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ba04feffffff87ab", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400c9a5cd1f6c8a81f5648e39f9810591df1c9a8f1fe97c92e03ecd7c0c016c951983e05473c6e8238cb4c780ea2ce62552b2a3eee068ceffc00517cd7b97e10dad");
-        _verify_tap_commitments(&secp, "5120b28d75a7179de6feb66b8bb0bfa2b2c739d1a41cf7366a1b393804a844db8a28", "61", "c4a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400eebc95ded88fb8050094e8dfa958c3be0894eaff0fafae678206b26918d8d7ac47039d40fe34d04b4155df7f1be7f2a49253c7e87812ea9e569e683ac27459e652d6503aa32d64734d00adfee8798b2eed28858abf3bd038e8fa58eb7df4a2d9");
-        _verify_tap_commitments(&secp, "512043e4aa733fc6f43c78a31c2b3c192623acf5cc8c01199ebcc4de88067baca83e", "bd4c", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4003f7be6f8848b5bddf332c4d7bd83077f73701e2479f70e02b5730e841234d082b8b41ebea96ffd937715d9faeaa6895e6ef3b22919c554b75df12b3371d328023e443d1df50634ecc1cd169803a1e546f0d44304d8fc5056c408e597fed469b8437d6660eaad3cf72e35ba6e5ff7ddd5e293c1e7e813c871df4f46508e9946ec");
-        _verify_tap_commitments(&secp, "5120ee9aecb28f5f35ce1f8b5ec80275ac0f81bca4a21b29b4632fb4bcbef8823e6a", "2021a5981b13be29c9d4ea179ea44a8b773ea8c02d68f6f6eefd98de20d4bd055fac", "c13359c284c196b6e80f0cf1d93b6a397cf7ee722f0427b705bd954b88ada8838bd2622fd0e104fc50aa763b43c6a792d7d117029983abd687223b4344a9402c618bba7f5fc3fa8a57491f6842acde88c1e675ca35caea3b1a69ee2c2d9b10f615");
-        _verify_tap_commitments(&secp, "5120885274df2252b44764dcef53c21f21154e8488b7e79fafbc96b9ebb22ad0200d", "6a50", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4000793597254158918e3369507f2d6fdbef17d18b1028bbb0719450ded0f42c58f");
-        _verify_tap_commitments(&secp, "512066f6f6f91d47674d198a28388e1eb05ec24e6ddbba10f16396b1a80c08675121", "6a50", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400fe92aff70a2e8e2a4f34a913b99612468a41e0f8ecaff9a729a173d11013c27e");
-        _verify_tap_commitments(&secp, "5120868ed9307bd4637491ff03e3aa2c216a08fe213cac8b6cedbb9ab31dbfa6512c", "61", "a2a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400da584e7d32612381cf88edc1c02e28a296e807c16ad22f591ee113946e48a71e46c7eccffefd2d573ec014130e508f0c9963ccebd7830409f7b1b1301725e9fa759d4ef857ec8e0bb42d6d31609d3c7e77de3bfa28c38f93393a6ddbabe819ec560ed4f061fbe742a5fd2a648d5209469420434c8753da3fa7067cc2bb4c172a");
-        _verify_tap_commitments(&secp, "5120c1a00a9baa82888fd7d30291135a7eaa9e9966a5f16db2b10460572f8b108d8d", "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "5ba0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4007960d7b37dd1361aee34510e77acb4d27ddca17648a17e28475032538c1eb500f5a747f2c0893f79fe153ae918ac3d696de9322aa679aae62051ff5ed83aa502b338bd907346abd4cd9cf06117cb35d55a5a8dd950843522f8de7b5c7fba1804c38b0778d3d76b383f6db6fdf9d6e770da8fffbfa5152c0b8b38129885bcdee6");
-        _verify_tap_commitments(&secp, "5120bb9abeff7286b76dfc61800c548fe2621ff47506e47201a85c543b4a9a96fead", "75203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf47342796ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6eadac", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4003eb5cdc419e0a6a800f34583ce750f387be34879c26f4230991bd61da743ad9d34d288e79397b709ac22ad8cc57645d593af3e15b97a876362117177ab2519c000000000000000000000000000000000000000000000000000000000000000007160c3a48c8b17bc3aeaf01db9e0a96ac47a5a9fa329e046856e7765e89c8a93ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff07feb9aa7cd72c78e66a85414cd19289f8b0ab1415013dc2a007666aa9248ec1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001fccc8bea662a9442a94f7ba0643c1d7ee7cc689f3b3506b7c8c99fd3f3b3d7772972dcdf2550cf95b65098aea67f72fef10abdcf1cef9815af8f4c4644b060e0000000000000000000000000000000000000000000000000000000000000000");
-        _verify_tap_commitments(&secp, "5120afddc189ea51094b4cbf463806792e9c8b35dfdc5e01228c78376380d0046b00", "4d09024747703eb9f759ce5ecd839109fecc40974ab16f5173ea390daaa5a78f7abe898165c90990062af998c5dc7989818393158a2c62b7ece727e7f5400d2efd33db8732599f6d1dce6b5b68d2d47317f2de6c9df118f61227f98453225036618aaf058140f2415d134fa69ba041c724ad81387f8c568d12ddc49eb32a71532096181b3f85fd465b8e9a176bb19f45c070baad47a2cc4505414b88c31cb5b0a192b2d2d56c404a37070b04d42c875c4ac351224f5b254f9ad0b820f43cad292d6565f796bf083173e14723f1e543c85a61689ddd5cb6666b240c15c38ce3320bf0c3be9e0322e5ef72366c294d3a2d7e8b8e7db875e7ae814537554f10b91c72b8b413e026bd5d5e917de4b54fa8f43f38771a7f242aa32dcb7ca1b0588dbf54af7ab9455047fbb894cdfdd242166db784276430eb47d4df092a6b8cb160eb982fe7d14a44283bdb4a9861ca65c06fd8b2546cfbfe38bc77f527de1b9bfd2c95a3e283b7b1d1d2b2fa291256a90a7003aefcef47ceabf113865a494af43e96a38b0b00919855eb7722ea2363e0ddfc9c51c08631d01e2a2d56e786b4ff6f1e5d415facc9c2619c285d9ad43001878294157cb025f639fb954271fd1d6173f6bc16535672f6abdd72b0284b4ff3eaf5b7247719d7c39365622610efae6562bef6e08a0b370fba75bb04dbdb90a482d8417e057f8bd021ea6ac32d0d48b08be9f77833b11e5e739960c9837d7583", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400ff698adfda0327f188e2ee35f7aecc0f90c9138a350d450648d968c2b5dd7ef94ddd3ec418dc0d03ee4956feb708d838ed2b20e5a193465a6a1467fd3054e1ea141ea4c4c503a6271e19a090e2a69a24282e3be04c4f98720f7a0eb274d9693d13a8e3c139aa625fa2aefd09854570527f9ac545bda1b689719f5cb715612c07");
-        _verify_tap_commitments(&secp, "5120afddc189ea51094b4cbf463806792e9c8b35dfdc5e01228c78376380d0046b00", "83", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4007388cda01113397d4cd00bcfbd08fd68c3cfe3a42cbfe3a7651c1d5e6dacf1ad99aaf103cceb41d9bc37ec231aca89b984b5fd3c65977ce764d51033ac65adb4b59764bec92507e4a4c3f01a06f05980163ca10f1c549bfe01f85fa4f109a1295e607f5ed9f1008048474de336f11f67a1fbf2012f58944dede0ab19a3ca81f5");
-        _verify_tap_commitments(&secp, "512093c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51", "04ffffffff203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ba04feffffff87ab", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400c9a5cd1f6c8a81f5648e39f9810591df1c9a8f1fe97c92e03ecd7c0c016c951983e05473c6e8238cb4c780ea2ce62552b2a3eee068ceffc00517cd7b97e10dad");
+        _verify_tap_commitments("51208678459f1fa0f80e9b89b8ffdcaf46a022bdf60aa45f1fed9a96145edf4ec400", "6a50", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4001eff29e1a89e650076b8d3c56302881d09c9df215774ed99993aaed14acd6615");
+        _verify_tap_commitments("5120017316303aed02bcdec424c851c9eacbe192b013139bd9634c4e19b3475b06e1", "61", "02a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f40050462265ca552b23cbb4fe021b474313c8cb87d4a18b3f7bdbeb2b418279ba31fc6509d829cd42336f563363cb3538d78758e0876c71e13012eb2b656eb0edb051a2420a840d5c8c6c762abc7410af2c311f606b20ca2ace56a8139f84b1379a");
+        _verify_tap_commitments("5120896d4d5d2236e86c6e9320e86d1a7822e652907cbd508360e8c71aefc127c77d", "61", "14a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4001ab0e9d9a4858a0e69605fe9c5a42d739fbe26fa79650e7074f462b02645f7ea1c91802b298cd91e6b5af57c6a013d93397cd2ecbd5569382cc27becf44ff4fff8960b20f846160c159c58350f6b6072cf1b3daa5185b7a42524fb72cbc252576ae46732b8e31ac24bfa7d72f4c3713e8696f99d8ac6c07e4c820a03f249f144");
+        _verify_tap_commitments("512093c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51", "04ffffffff203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ba04feffffff87ab", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400c9a5cd1f6c8a81f5648e39f9810591df1c9a8f1fe97c92e03ecd7c0c016c951983e05473c6e8238cb4c780ea2ce62552b2a3eee068ceffc00517cd7b97e10dad");
+        _verify_tap_commitments("5120b28d75a7179de6feb66b8bb0bfa2b2c739d1a41cf7366a1b393804a844db8a28", "61", "c4a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400eebc95ded88fb8050094e8dfa958c3be0894eaff0fafae678206b26918d8d7ac47039d40fe34d04b4155df7f1be7f2a49253c7e87812ea9e569e683ac27459e652d6503aa32d64734d00adfee8798b2eed28858abf3bd038e8fa58eb7df4a2d9");
+        _verify_tap_commitments("512043e4aa733fc6f43c78a31c2b3c192623acf5cc8c01199ebcc4de88067baca83e", "bd4c", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4003f7be6f8848b5bddf332c4d7bd83077f73701e2479f70e02b5730e841234d082b8b41ebea96ffd937715d9faeaa6895e6ef3b22919c554b75df12b3371d328023e443d1df50634ecc1cd169803a1e546f0d44304d8fc5056c408e597fed469b8437d6660eaad3cf72e35ba6e5ff7ddd5e293c1e7e813c871df4f46508e9946ec");
+        _verify_tap_commitments("5120ee9aecb28f5f35ce1f8b5ec80275ac0f81bca4a21b29b4632fb4bcbef8823e6a", "2021a5981b13be29c9d4ea179ea44a8b773ea8c02d68f6f6eefd98de20d4bd055fac", "c13359c284c196b6e80f0cf1d93b6a397cf7ee722f0427b705bd954b88ada8838bd2622fd0e104fc50aa763b43c6a792d7d117029983abd687223b4344a9402c618bba7f5fc3fa8a57491f6842acde88c1e675ca35caea3b1a69ee2c2d9b10f615");
+        _verify_tap_commitments("5120885274df2252b44764dcef53c21f21154e8488b7e79fafbc96b9ebb22ad0200d", "6a50", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4000793597254158918e3369507f2d6fdbef17d18b1028bbb0719450ded0f42c58f");
+        _verify_tap_commitments("512066f6f6f91d47674d198a28388e1eb05ec24e6ddbba10f16396b1a80c08675121", "6a50", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400fe92aff70a2e8e2a4f34a913b99612468a41e0f8ecaff9a729a173d11013c27e");
+        _verify_tap_commitments("5120868ed9307bd4637491ff03e3aa2c216a08fe213cac8b6cedbb9ab31dbfa6512c", "61", "a2a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400da584e7d32612381cf88edc1c02e28a296e807c16ad22f591ee113946e48a71e46c7eccffefd2d573ec014130e508f0c9963ccebd7830409f7b1b1301725e9fa759d4ef857ec8e0bb42d6d31609d3c7e77de3bfa28c38f93393a6ddbabe819ec560ed4f061fbe742a5fd2a648d5209469420434c8753da3fa7067cc2bb4c172a");
+        _verify_tap_commitments("5120c1a00a9baa82888fd7d30291135a7eaa9e9966a5f16db2b10460572f8b108d8d", "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "5ba0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4007960d7b37dd1361aee34510e77acb4d27ddca17648a17e28475032538c1eb500f5a747f2c0893f79fe153ae918ac3d696de9322aa679aae62051ff5ed83aa502b338bd907346abd4cd9cf06117cb35d55a5a8dd950843522f8de7b5c7fba1804c38b0778d3d76b383f6db6fdf9d6e770da8fffbfa5152c0b8b38129885bcdee6");
+        _verify_tap_commitments("5120bb9abeff7286b76dfc61800c548fe2621ff47506e47201a85c543b4a9a96fead", "75203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf47342796ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6eadac", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4003eb5cdc419e0a6a800f34583ce750f387be34879c26f4230991bd61da743ad9d34d288e79397b709ac22ad8cc57645d593af3e15b97a876362117177ab2519c000000000000000000000000000000000000000000000000000000000000000007160c3a48c8b17bc3aeaf01db9e0a96ac47a5a9fa329e046856e7765e89c8a93ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff07feb9aa7cd72c78e66a85414cd19289f8b0ab1415013dc2a007666aa9248ec1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001fccc8bea662a9442a94f7ba0643c1d7ee7cc689f3b3506b7c8c99fd3f3b3d7772972dcdf2550cf95b65098aea67f72fef10abdcf1cef9815af8f4c4644b060e0000000000000000000000000000000000000000000000000000000000000000");
+        _verify_tap_commitments("5120afddc189ea51094b4cbf463806792e9c8b35dfdc5e01228c78376380d0046b00", "4d09024747703eb9f759ce5ecd839109fecc40974ab16f5173ea390daaa5a78f7abe898165c90990062af998c5dc7989818393158a2c62b7ece727e7f5400d2efd33db8732599f6d1dce6b5b68d2d47317f2de6c9df118f61227f98453225036618aaf058140f2415d134fa69ba041c724ad81387f8c568d12ddc49eb32a71532096181b3f85fd465b8e9a176bb19f45c070baad47a2cc4505414b88c31cb5b0a192b2d2d56c404a37070b04d42c875c4ac351224f5b254f9ad0b820f43cad292d6565f796bf083173e14723f1e543c85a61689ddd5cb6666b240c15c38ce3320bf0c3be9e0322e5ef72366c294d3a2d7e8b8e7db875e7ae814537554f10b91c72b8b413e026bd5d5e917de4b54fa8f43f38771a7f242aa32dcb7ca1b0588dbf54af7ab9455047fbb894cdfdd242166db784276430eb47d4df092a6b8cb160eb982fe7d14a44283bdb4a9861ca65c06fd8b2546cfbfe38bc77f527de1b9bfd2c95a3e283b7b1d1d2b2fa291256a90a7003aefcef47ceabf113865a494af43e96a38b0b00919855eb7722ea2363e0ddfc9c51c08631d01e2a2d56e786b4ff6f1e5d415facc9c2619c285d9ad43001878294157cb025f639fb954271fd1d6173f6bc16535672f6abdd72b0284b4ff3eaf5b7247719d7c39365622610efae6562bef6e08a0b370fba75bb04dbdb90a482d8417e057f8bd021ea6ac32d0d48b08be9f77833b11e5e739960c9837d7583", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400ff698adfda0327f188e2ee35f7aecc0f90c9138a350d450648d968c2b5dd7ef94ddd3ec418dc0d03ee4956feb708d838ed2b20e5a193465a6a1467fd3054e1ea141ea4c4c503a6271e19a090e2a69a24282e3be04c4f98720f7a0eb274d9693d13a8e3c139aa625fa2aefd09854570527f9ac545bda1b689719f5cb715612c07");
+        _verify_tap_commitments("5120afddc189ea51094b4cbf463806792e9c8b35dfdc5e01228c78376380d0046b00", "83", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f4007388cda01113397d4cd00bcfbd08fd68c3cfe3a42cbfe3a7651c1d5e6dacf1ad99aaf103cceb41d9bc37ec231aca89b984b5fd3c65977ce764d51033ac65adb4b59764bec92507e4a4c3f01a06f05980163ca10f1c549bfe01f85fa4f109a1295e607f5ed9f1008048474de336f11f67a1fbf2012f58944dede0ab19a3ca81f5");
+        _verify_tap_commitments("512093c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51", "04ffffffff203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ba04feffffff87ab", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400c9a5cd1f6c8a81f5648e39f9810591df1c9a8f1fe97c92e03ecd7c0c016c951983e05473c6e8238cb4c780ea2ce62552b2a3eee068ceffc00517cd7b97e10dad");
     }
 
     #[test]
     fn build_huffman_tree() {
-        let secp = Secp256k1::verification_only();
         let internal_key = "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51"
             .parse::<UntweakedPublicKey>()
             .unwrap();
@@ -1867,8 +1587,7 @@ mod test {
             (19, TapScriptBuf::from_hex_no_length_prefix("55").unwrap()),
         ];
         let tree_info =
-            TaprootSpendInfo::with_huffman_tree(&secp, internal_key, script_weights.clone())
-                .unwrap();
+            TaprootSpendInfo::with_huffman_tree(internal_key, script_weights.clone()).unwrap();
 
         /* The resulting tree should put the scripts into a tree similar
          * to the following:
@@ -1904,17 +1623,13 @@ mod test {
         for (_weights, script) in script_weights {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(
-                &secp,
-                output_key.to_x_only_public_key(),
-                &ver_script.0
-            ))
+            assert!(ctrl_block
+                .verify_taproot_commitment(output_key.to_x_only_public_key(), &ver_script.0))
         }
     }
 
     #[test]
     fn taptree_builder() {
-        let secp = Secp256k1::verification_only();
         let internal_key = "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51"
             .parse::<UntweakedPublicKey>()
             .unwrap();
@@ -1940,7 +1655,7 @@ mod test {
         let builder = builder.add_leaf(3, d.clone()).unwrap();
 
         // Trying to finalize an incomplete tree returns the Err(builder)
-        let builder = builder.finalize(&secp, internal_key).unwrap_err();
+        let builder = builder.finalize(internal_key).unwrap_err();
         let builder = builder.add_leaf(3, e.clone()).unwrap();
 
         #[cfg(feature = "serde")]
@@ -1972,17 +1687,14 @@ mod test {
             ],);
         }
 
-        let tree_info = builder.finalize(&secp, internal_key).unwrap();
+        let tree_info = builder.finalize(internal_key).unwrap();
         let output_key = tree_info.output_key();
 
         for script in [a, b, c, d, e] {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(
-                &secp,
-                output_key.to_x_only_public_key(),
-                &ver_script.0
-            ))
+            assert!(ctrl_block
+                .verify_taproot_commitment(output_key.to_x_only_public_key(), &ver_script.0))
         }
     }
 
@@ -2054,7 +1766,6 @@ mod test {
         let data = bip_341_read_json();
         // Check the version of data
         assert!(data["version"] == 1);
-        let secp = &secp256k1::Secp256k1::verification_only();
 
         for arr in data["scriptPubKey"].as_array().unwrap() {
             let internal_key =
@@ -2077,7 +1788,7 @@ mod test {
                 let mut builder = TaprootBuilder::new();
                 let mut leaves = vec![];
                 builder = process_script_trees(script_tree, builder, &mut leaves, 0);
-                let spend_info = builder.finalize(secp, internal_key).unwrap();
+                let spend_info = builder.finalize(internal_key).unwrap();
                 for (i, script_ver) in leaves.iter().enumerate() {
                     let expected_leaf_hash = leaf_hashes[i].as_str().unwrap();
                     let expected_ctrl_blk =
@@ -2108,8 +1819,8 @@ mod test {
                 .assume_checked();
 
             let tweak = TapTweakHash::from_key_and_merkle_root(internal_key, merkle_root);
-            let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
-            let addr = Address::p2tr(secp, internal_key, merkle_root, KnownHrp::Mainnet);
+            let (output_key, _parity) = internal_key.tap_tweak(merkle_root);
+            let addr = Address::p2tr(internal_key, merkle_root, KnownHrp::Mainnet);
             let spk = addr.script_pubkey();
 
             assert_eq!(expected_output_key, output_key.to_x_only_public_key());

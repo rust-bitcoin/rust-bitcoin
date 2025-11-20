@@ -489,9 +489,7 @@ impl<T: Encodable + 'static> Encodable for Vec<T> {
 
 impl<T: Decodable + 'static> Decodable for Vec<T> {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, Error> {
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         if TypeId::of::<T>() == TypeId::of::<u8>() {
             let len = r.read_compact_size()? as usize;
             // most real-world vec of bytes data, wouldn't be larger than 128KiB
@@ -988,12 +986,12 @@ mod tests {
     #[test]
     #[cfg(feature = "rand-std")]
     fn serialization_round_trips() {
-        use secp256k1::rand::{thread_rng, Rng};
+        use secp256k1::rand::{self, Rng};
 
         macro_rules! round_trip {
             ($($val_type:ty),*) => {
                 $(
-                    let r: $val_type = thread_rng().gen();
+                    let r: $val_type = rand::rng().random();
                     assert_eq!(deserialize::<$val_type>(&serialize(&r)).unwrap(), r);
                 )*
             };
@@ -1001,7 +999,7 @@ mod tests {
         macro_rules! round_trip_bytes {
             ($(($val_type:ty, $data:expr)),*) => {
                 $(
-                    thread_rng().fill(&mut $data[..]);
+                    rand::rng().fill(&mut $data[..]);
                     assert_eq!(deserialize::<$val_type>(&serialize(&$data)).unwrap()[..], $data[..]);
                 )*
             };
@@ -1016,7 +1014,7 @@ mod tests {
 
             data.clear();
             data64.clear();
-            let len = thread_rng().gen_range(1..256);
+            let len = rand::rng().random_range(1..256);
             data.resize(len, 0u8);
             data64.resize(len, 0u64);
             let mut arr33 = [0u8; 33];

@@ -1,14 +1,14 @@
 //! Error code for the address module.
-
+//!
+use alloc::string::String;
 use core::convert::Infallible;
 use core::fmt;
 
 use internals::write_err;
+use network::Network;
+use primitives::script::{witness_program, witness_version};
 
 use crate::address::{Address, NetworkUnchecked};
-use crate::prelude::String;
-use crate::script::{witness_program, witness_version};
-use crate::Network;
 
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]

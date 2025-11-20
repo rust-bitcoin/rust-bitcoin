@@ -102,8 +102,7 @@ impl LockTime {
     pub fn to_consensus_u32(self) -> u32 {
         match self {
             Self::Blocks(ref h) => u32::from(h.to_height()),
-            Self::Time(ref t) =>
-                Sequence::LOCK_TYPE_MASK | u32::from(t.to_512_second_intervals()),
+            Self::Time(ref t) => Sequence::LOCK_TYPE_MASK | u32::from(t.to_512_second_intervals()),
         }
     }
 
@@ -181,10 +180,7 @@ impl LockTime {
     /// Returns true if both lock times use the same unit i.e., both height based or both time based.
     #[inline]
     pub const fn is_same_unit(self, other: Self) -> bool {
-        matches!(
-            (self, other),
-            (Self::Blocks(_), Self::Blocks(_)) | (Self::Time(_), Self::Time(_))
-        )
+        matches!((self, other), (Self::Blocks(_), Self::Blocks(_)) | (Self::Time(_), Self::Time(_)))
     }
 
     /// Returns true if this lock time value is in units of block height.
@@ -234,8 +230,6 @@ impl LockTime {
         chain_tip: BlockHeight,
         utxo_mined_at: BlockHeight,
     ) -> Result<bool, IsSatisfiedByHeightError> {
-        
-
         match self {
             Self::Blocks(blocks) => blocks
                 .is_satisfied_by(chain_tip, utxo_mined_at)
@@ -258,8 +252,6 @@ impl LockTime {
         chain_tip: BlockMtp,
         utxo_mined_at: BlockMtp,
     ) -> Result<bool, IsSatisfiedByTimeError> {
-        
-
         match self {
             Self::Time(time) => time
                 .is_satisfied_by(chain_tip, utxo_mined_at)
@@ -299,8 +291,6 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn is_implied_by(self, other: Self) -> bool {
-        
-
         match (self, other) {
             (Self::Blocks(this), Self::Blocks(other)) => this <= other,
             (Self::Time(this), Self::Time(other)) => this <= other,
@@ -350,8 +340,6 @@ impl From<NumberOf512Seconds> for LockTime {
 
 impl fmt::Display for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
-
         if f.alternate() {
             match *self {
                 Self::Blocks(ref h) => write!(f, "block-height {}", h),
@@ -369,9 +357,7 @@ impl fmt::Display for LockTime {
 impl convert::TryFrom<Sequence> for LockTime {
     type Error = DisabledLockTimeError;
     #[inline]
-    fn try_from(seq: Sequence) -> Result<Self, DisabledLockTimeError> {
-        Self::from_sequence(seq)
-    }
+    fn try_from(seq: Sequence) -> Result<Self, DisabledLockTimeError> { Self::from_sequence(seq) }
 }
 
 impl From<LockTime> for Sequence {

@@ -245,6 +245,7 @@ impl Params {
             Network::Bitcoin => Self::MAINNET,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(_) => Self::TESTNET4, // unreachable in network 0.1.0
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
         }
@@ -265,11 +266,11 @@ impl From<&Network> for Params {
 }
 
 impl From<Network> for &'static Params {
-    fn from(value: Network) -> Self { value.params() }
+    fn from(value: Network) -> Self { super::params(value) }
 }
 
 impl From<&Network> for &'static Params {
-    fn from(value: &Network) -> Self { value.params() }
+    fn from(value: &Network) -> Self { super::params(*value) }
 }
 
 impl AsRef<Self> for Params {
@@ -277,5 +278,5 @@ impl AsRef<Self> for Params {
 }
 
 impl AsRef<Params> for Network {
-    fn as_ref(&self) -> &Params { Self::params(*self) }
+    fn as_ref(&self) -> &Params { super::params(*self) }
 }

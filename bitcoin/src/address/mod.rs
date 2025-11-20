@@ -10,12 +10,11 @@
 //!
 //! ```rust
 //! #[cfg(feature = "rand-std")] {
-//! use bitcoin::secp256k1::{rand, Secp256k1};
+//! use bitcoin::secp256k1::rand;
 //! use bitcoin::{Address, Network, PublicKey};
 //!
 //! // Generate random key pair.
-//! let secp = Secp256k1::new();
-//! let (_sk, pk) = secp.generate_keypair(&mut rand::thread_rng());
+//! let (_sk, pk) = secp256k1::generate_keypair(&mut rand::rng());
 //! let public_key = PublicKey::new(pk); // Or `PublicKey::from(pk)`.
 //!
 //! // Generate a mainnet pay-to-pubkey-hash address.
@@ -41,15 +40,26 @@
 
 pub mod error;
 
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::string::String;
 use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
+use crypto::WitnessProgramExt as _;
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt;
-use secp256k1::{Secp256k1, Verification};
+use network::{Network, NetworkKind};
+use primitives::script::witness_program::WitnessProgram;
+use primitives::script::witness_version::WitnessVersion;
+use primitives::script::{
+    RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf,
+    WScriptHash, WitnessScript, WitnessScriptSizeError,
+};
+use taproot_primitives::TapNodeHash;
 
 use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
@@ -59,16 +69,10 @@ use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
     XOnlyPublicKey,
 };
-use crate::network::{Network, NetworkKind, Params};
-use crate::prelude::{String, ToOwned};
-use crate::script::witness_program::WitnessProgram;
-use crate::script::witness_version::WitnessVersion;
+use crate::network::Params;
 use crate::script::{
-    self, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash, ScriptHashableTag,
-    ScriptPubKey, ScriptPubKeyBuf, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WScriptHash,
-    WitnessScript, WitnessScriptExt as _, WitnessScriptSizeError,
+    self, ScriptExt as _, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WitnessScriptExt as _,
 };
-use crate::taproot::TapNodeHash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -210,7 +214,7 @@ impl fmt::Display for AddressInner {
                 let hrp = hrp.to_hrp();
                 let version = Fe32::try_from(program.version().to_num())
                     .expect("version nums 0-16 are valid fe32 values");
-                let program = program.program().as_ref();
+                let program = program.program();
 
                 if fmt.alternate() {
                     bech32::segwit::encode_upper_to_fmt_unchecked(fmt, hrp, version, program)
@@ -576,14 +580,13 @@ impl Address {
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
-    pub fn p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
-        secp: &Secp256k1<C>,
+    pub fn p2tr<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
         hrp: impl Into<KnownHrp>,
     ) -> Self {
         let internal_key = internal_key.into();
-        let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
+        let program = WitnessProgram::p2tr(internal_key, merkle_root);
         Self::from_witness_program(program, hrp)
     }
 
@@ -715,7 +718,7 @@ impl Address {
             P2pkh { hash, network: _ } => ScriptPubKeyBuf::new_p2pkh(hash),
             P2sh { hash, network: _ } => ScriptPubKeyBuf::new_p2sh(hash),
             Segwit { ref program, hrp: _ } => {
-                let prog = program.program();
+                let prog = script::witness_program::WitnessProgramExt::program(program);
                 let version = program.version();
                 script::new_witness_program_unchecked(version, prog)
             }
@@ -784,7 +787,7 @@ impl Address {
             P2sh { ref hash, network: _ } if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
             Segwit { ref program, hrp: _ } if script.is_witness_program() =>
-                &script.as_bytes()[2..] == program.program().as_bytes(),
+                &script.as_bytes()[2..] == program.program(),
             P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
         }
     }
@@ -802,7 +805,7 @@ impl Address {
         match *self.inner() {
             P2sh { ref hash, network: _ } => hash.as_ref(),
             P2pkh { ref hash, network: _ } => hash.as_ref(),
-            Segwit { ref program, hrp: _ } => program.program().as_bytes(),
+            Segwit { ref program, hrp: _ } => program.program(),
         }
     }
 }
@@ -1352,8 +1355,7 @@ mod tests {
         let internal_key = "cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115"
             .parse::<XOnlyPublicKey>()
             .unwrap();
-        let secp = Secp256k1::verification_only();
-        let address = Address::p2tr(&secp, internal_key, None, KnownHrp::Mainnet);
+        let address = Address::p2tr(internal_key, None, KnownHrp::Mainnet);
         assert_eq!(
             address.to_string(),
             "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
