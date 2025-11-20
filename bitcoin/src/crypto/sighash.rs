@@ -1549,8 +1549,6 @@ mod tests {
     use crate::script::{
         ScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
     };
-    #[cfg(feature = "serde")]
-    use crate::taproot::TapTweakHashExt as _;
     use crate::TxIn;
 
     extern crate serde_json;

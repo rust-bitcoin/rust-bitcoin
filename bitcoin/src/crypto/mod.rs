@@ -12,6 +12,7 @@ pub(crate) mod taproot;
 
 use hashes::{sha256t, HashEngine as _};
 use primitives::script::{WScriptHash, WitnessProgram, WitnessScript, WitnessScriptSizeError};
+use secp256k1::Scalar;
 use taproot_primitives::{TapNodeHash, TapTweakHash, TapTweakTag};
 
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
@@ -24,6 +25,9 @@ pub trait TapTweakHashExt: sealed::Sealed {
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
     ) -> Self;
+
+    /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
+    fn to_scalar(self) -> Scalar;
 }
 
 impl TapTweakHashExt for TapTweakHash {
@@ -42,6 +46,11 @@ impl TapTweakHashExt for TapTweakHash {
         }
         let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
         Self::from_byte_array(inner.to_byte_array())
+    }
+
+     fn to_scalar(self) -> Scalar {
+        // This is statistically extremely unlikely to panic.
+        Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
     }
 }
 

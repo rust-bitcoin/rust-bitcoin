@@ -23,10 +23,6 @@ use taproot_primitives::{TapNodeHash, TapTweakHash};
 use super::{ecdsa, TapTweakHashExt as _};
 use crate::prelude::{DisplayHex, String, Vec};
 
-// TODO: We need to remove these.
-#[rustfmt::skip]
-use crate::taproot::TapTweakHashExt as _;
-
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Verification};
 #[cfg(feature = "rand-std")]

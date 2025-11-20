@@ -18,7 +18,6 @@ use internals::array::ArrayExt;
 use internals::slice::SliceExt;
 use internals::write_err;
 use io::Write;
-use secp256k1::Scalar;
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{
@@ -56,17 +55,6 @@ pub struct LeafScript<S> {
 
 // type alias for versioned tap script corresponding Merkle proof
 type ScriptMerkleProofMap = BTreeMap<(TapScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
-
-crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`TapTweakHash`] type.
-    pub trait TapTweakHashExt impl for TapTweakHash {
-        /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
-        fn to_scalar(self) -> Scalar {
-            // This is statistically extremely unlikely to panic.
-            Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
-        }
-    }
-}
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TapLeafHash`] type.
