@@ -256,6 +256,7 @@ internal_macros::define_extension_trait! {
     pub trait WitnessScriptExt impl for WitnessScript {
         /// Returns 256-bit hash of the script for P2WSH outputs.
         #[inline]
+        // FIXME: Do we want to keep this, we provide `WiScriptHash::try_from` also.
         fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
             WScriptHash::from_script(self)
         }

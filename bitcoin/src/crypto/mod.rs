@@ -16,10 +16,6 @@ use taproot_primitives::{TapNodeHash, TapTweakHash, TapTweakTag};
 
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
-// FIXME: We need to remove this.
-#[rustfmt::skip]
-use crate::script::WitnessScriptExt as _;
-
 /// Extension functionality for the [`TapTweakHash`] type.
 pub trait TapTweakHashExt: sealed::Sealed {
     /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
@@ -80,7 +76,7 @@ impl WitnessProgramExt for WitnessProgram {
     }
 
     fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
-        script.wscript_hash().map(Self::p2wsh_from_hash)
+        WScriptHash::try_from(script).map(Self::p2wsh_from_hash)
     }
 
     fn p2wsh_from_hash(hash: WScriptHash) -> Self { Self::new_p2wsh(hash.to_byte_array()) }
