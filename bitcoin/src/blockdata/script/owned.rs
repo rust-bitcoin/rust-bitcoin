@@ -5,7 +5,6 @@ use core::ops::Deref;
 
 use hex::FromHex as _;
 use internals::ToU64 as _;
-use secp256k1::{Secp256k1, Verification};
 
 use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
@@ -216,13 +215,12 @@ crate::internal_macros::define_extension_trait! {
 
         /// Generates P2TR for script spending path using an internal public key and some optional
         /// script tree Merkle root.
-        fn new_p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
-            secp: &Secp256k1<C>,
+        fn new_p2tr<K: Into<UntweakedPublicKey>>(
             internal_key: K,
             merkle_root: Option<TapNodeHash>,
         ) -> Self {
             let internal_key = internal_key.into();
-            let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
+            let (output_key, _) = internal_key.tap_tweak(merkle_root);
             // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
             script::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
         }
