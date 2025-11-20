@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin-crypto"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
@@ -14,12 +14,30 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "base58/std", "hashes/std", "hex/std", "internals/std", "primitives/std", "secp256k1/std", "taproot-primitives/std", "units/std"]
+alloc = ["base58/alloc", "hashes/alloc", "hex/alloc", "internals/alloc", "primitives/alloc", "secp256k1/alloc", "taproot-primitives/alloc", "units/alloc"]
+rand-std = ["secp256k1/rand", "std"]
+rand = ["secp256k1/rand"]
+serde = ["dep:serde", "hashes/serde", "internals/serde", "network/serde", "primitives/serde", "secp256k1/serde", "taproot-primitives/serde", "units/serde"]
+arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary"]
 
 [dependencies]
+base58 = { package = "base58ck", path = "../base58", version = "0.2.0", default-features = false, features = ["alloc"] }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.17.0", default-features = false, features = ["alloc", "hex"] }
+hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1", features = ["alloc", "hex"] }
+io = { package = "bitcoin-io", path = "../io", version = "0.2.0", default-features = false, features = ["alloc", "hashes"] }
+network = { package = "bitcoin-network", path = "../network", version = "0.1.0", default-features = false, features = ["alloc"] }
+primitives = { package = "bitcoin-primitives", path = "../primitives", version = "1.0.0-rc.0", default-features = false, features = ["alloc", "hex"] }
+secp256k1 = { version = "0.32.0-beta.2", default-features = false, features = ["alloc"] }
+taproot-primitives = { package = "bitcoin-taproot-primitives", path = "../taproot-primitives", version = "0.1.0", default-features = false, features = ["alloc"] }
+units = { package = "bitcoin-units", path = "../units", version = "1.0.0-rc.2", default-features = false, features = ["alloc"] }
+
+arbitrary = { version = "1.4.1", optional = true }
+serde = { version = "1.0.195", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
 [dev-dependencies]
+serde_test = "1.0.19"
 
 [package.metadata.docs.rs]
 all-features = true

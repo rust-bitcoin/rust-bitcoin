@@ -1,3 +1,3 @@
-# 0.0.0 - Initial dummy release
+# 0.1.0 - Initial migration
 
-- Empty crate to reserve the name on crates.io
+Migrate the code from `rust-bitcoin::crypto` to this crate. 

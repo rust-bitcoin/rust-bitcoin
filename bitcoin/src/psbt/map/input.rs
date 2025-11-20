@@ -172,6 +172,7 @@ impl FromStr for PsbtSighashType {
             return Ok(Self { inner });
         }
 
+        // FIXME: This no longer works with error in `crypto` crate.
         Err(SighashTypeParseError { unrecognized: s.to_owned() })
     }
 }

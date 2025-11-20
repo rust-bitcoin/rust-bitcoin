@@ -17,7 +17,6 @@ use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use network::NetworkKind;
 use io::{Read, Write};
-use primitives::script::WitnessScriptBuf;
 use taproot_primitives::{TapNodeHash, TapTweakHash};
 
 use super::{ecdsa, TapTweakHashExt as _};
@@ -181,16 +180,6 @@ impl PublicKey {
         } else {
             Err(UncompressedPublicKeyError)
         }
-    }
-
-    /// Returns the script code used to spend a P2WPKH input.
-    ///
-    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-    /// should not be used as one. It is a special template defined in BIP 143 which is used
-    /// in place of a witness script for purposes of sighash computation.
-    pub fn p2wpkh_script_code(&self) -> Result<WitnessScriptBuf, UncompressedPublicKeyError> {
-        let key = CompressedPublicKey::try_from(*self)?;
-        Ok(key.p2wpkh_script_code())
     }
 
     /// Writes the public key into a writer.
@@ -377,28 +366,6 @@ hashes::impl_hex_for_newtype!(PubkeyHash, WPubkeyHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(PubkeyHash, WPubkeyHash);
 
-// FIXME: Inline this or put it in `crypto::internal_macros` once we move stuff over to that crate.
-#[rustfmt::skip]
-macro_rules! impl_asref_push_bytes {
-    ($($hashtype:ident),*) => {
-        $(
-            impl AsRef<$crate::script::PushBytes> for $hashtype {
-                fn as_ref(&self) -> &$crate::script::PushBytes {
-                    self.as_byte_array().into()
-                }
-            }
-
-            impl From<$hashtype> for $crate::script::PushBytesBuf {
-                fn from(hash: $hashtype) -> Self {
-                    hash.as_byte_array().into()
-                }
-            }
-        )*
-    };
-}
-
-impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
-
 impl From<PublicKey> for PubkeyHash {
     fn from(key: PublicKey) -> Self { key.pubkey_hash() }
 }
@@ -418,16 +385,6 @@ impl CompressedPublicKey {
     /// Returns bitcoin 160-bit hash of the public key for witness program.
     pub fn wpubkey_hash(&self) -> WPubkeyHash {
         WPubkeyHash::from_byte_array(hash160::Hash::hash(&self.to_bytes()).to_byte_array())
-    }
-
-    /// Returns the script code used to spend a P2WPKH input.
-    ///
-    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-    /// should not be used as one. It is a special template defined in BIP 143 which is used
-    /// in place of a witness script for purposes of sighash computation.
-    pub fn p2wpkh_script_code(&self) -> WitnessScriptBuf {
-        // FIXME: Work out what to do about this.
-        crate::blockdata::script::p2wpkh_script_code(self.wpubkey_hash())
     }
 
     /// Writes the public key into a writer.
@@ -1348,7 +1305,9 @@ mod serialized_x_only {
         pub struct SerializedXOnlyPublicKey([u8; 32]);
 
         impl SerializedXOnlyPublicKey {
-            pub(crate) fn from_bytes_ref(bytes: &_) -> Self;
+            /// FIXME: This didn't used to be public but I can't get
+            /// `bitcoin::taproot` to build without making this public.
+            pub fn from_bytes_ref(bytes: &_) -> Self;
         }
     }
 
@@ -1430,64 +1389,12 @@ impl std::error::Error for TweakXOnlyPublicKeyError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::address::Address;
 
     #[test]
-    fn key_derivation() {
-        // mainnet compressed WIF with invalid compression flag.
-        let sk = PrivateKey::from_wif("L2x4uC2YgfFWZm9tF4pjDnVR6nJkheizFhEr2KvDNnTEmEqVzPJY");
-        assert!(matches!(
-            sk,
-            Err(FromWifError::InvalidWifCompressionFlag(InvalidWifCompressionFlagError {
-                invalid: 49
-            }))
-        ));
-
-        // testnet compressed
-        let sk =
-            PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, NetworkKind::Test);
-        assert!(sk.compressed);
-        assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
-
-        let pk = Address::p2pkh(sk.public_key(), sk.network);
-        assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
-
-        // test string conversion
-        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
-        let sk_str =
-            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
-        assert_eq!(&sk.to_wif(), &sk_str.to_wif());
-
-        // mainnet uncompressed
-        let sk =
-            PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, NetworkKind::Main);
-        assert!(!sk.compressed);
-        assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
-
-        let mut pk = sk.public_key();
-        assert!(!pk.compressed);
-        assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
-        assert_eq!(pk, "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
-        .parse::<PublicKey>().unwrap());
-        let addr = Address::p2pkh(pk, sk.network);
-        assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
-        pk.compressed = true;
-        assert_eq!(
-            &pk.to_string(),
-            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
-        );
-        assert_eq!(
-            pk,
-            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
-                .parse::<PublicKey>()
-                .unwrap()
-        );
-    }
-
-    #[test]
+    #[cfg(feature = "alloc")]
     fn pubkey_hash() {
+        use crate::prelude::ToString;
+
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
             .parse::<PublicKey>()
             .unwrap();
@@ -1498,7 +1405,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn wpubkey_hash() {
+        use crate::prelude::ToString;
+
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
             .parse::<PublicKey>()
             .unwrap();
@@ -1577,7 +1487,11 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn pubkey_read_write() {
+        use alloc::vec;
+        use alloc::vec::Vec;
+
         const N_KEYS: usize = 20;
         let keys: Vec<_> = (0..N_KEYS).map(|i| random_key(i as u8)).collect();
 
@@ -1625,7 +1539,11 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn pubkey_sort() {
+        use alloc::vec;
+        use alloc::vec::Vec;
+
         struct Vector {
             input: Vec<PublicKey>,
             expect: Vec<PublicKey>,
@@ -1824,7 +1742,7 @@ mod tests {
     #[allow(deprecated)] // tests the deprecated function
     #[allow(deprecated_in_future)]
     fn invalid_private_key_len() {
-        use crate::Network;
+        use network::Network;
         assert!(PrivateKey::from_slice(&[1u8; 31], Network::Regtest).is_err());
         assert!(PrivateKey::from_slice(&[1u8; 33], Network::Regtest).is_err());
     }

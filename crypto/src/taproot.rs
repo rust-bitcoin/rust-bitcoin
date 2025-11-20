@@ -16,8 +16,8 @@ use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
 pub use self::into_iter::IntoIter;
+use super::{InvalidSighashTypeError, TapSighashType};
 use crate::prelude::{DisplayHex, Vec};
-use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 
 const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
 

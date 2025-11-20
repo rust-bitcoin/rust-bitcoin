@@ -5,8 +5,9 @@
 use core::ops::{Deref, DerefMut};
 
 use crate::crypto::{ecdsa, taproot};
+use crate::key::{PubkeyHash, WPubkeyHash};
 use crate::prelude::{Borrow, BorrowMut};
-use crate::script;
+use crate::{internal_macros, script};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -401,6 +402,8 @@ impl AsRef<PushBytes> for taproot::SerializedSignature {
             .expect("max length 65 bytes is valid")
     }
 }
+
+internal_macros::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 /// Reports information about failed conversion into `PushBytes`.
 ///

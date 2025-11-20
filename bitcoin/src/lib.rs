@@ -66,6 +66,9 @@ pub extern crate base58;
 /// Re-export the `bech32` crate.
 pub extern crate bech32;
 
+/// Re-export the `bitcoin-crypto` crate.
+pub extern crate crypto;
+
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
@@ -125,14 +128,13 @@ pub mod blockdata;
 pub mod consensus;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod consensus_validation;
-// Private until we either make this a crate or flatten it - still to be decided.
-pub(crate) mod crypto;
 pub mod hash_types;
 pub mod merkle_tree;
 pub mod network;
 pub mod policy;
 pub mod pow;
 pub mod psbt;
+pub mod sighash;
 pub mod sign_message;
 pub mod taproot;
 
@@ -174,8 +176,9 @@ pub use crate::{
     address::{Address, AddressType, KnownHrp},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
+    // FIXME: Think harder about the crypto re-exports.
     crypto::key::{self, CompressedPublicKey, PrivateKey, PublicKey, XOnlyPublicKey},
-    crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
+    sighash::{LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::MerkleBlock,
     network::params::{self, Params},
     network::{Network, NetworkKind, TestnetVersion},

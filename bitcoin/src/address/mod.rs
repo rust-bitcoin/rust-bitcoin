@@ -49,6 +49,7 @@ use core::str::FromStr;
 
 use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
+use crypto::WitnessProgramExt as _;
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt;
 use network::{Network, NetworkKind};
@@ -68,7 +69,6 @@ use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
     XOnlyPublicKey,
 };
-use crate::crypto::WitnessProgramExt as _;
 use crate::network::Params;
 use crate::script::{
     self, ScriptExt as _, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WitnessScriptExt as _,

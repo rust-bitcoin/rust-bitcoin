@@ -16,7 +16,7 @@ use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
-use super::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
+use super::{EcdsaSighashType, NonStandardSighashTypeError};
 use crate::prelude::{DisplayHex, Vec};
 
 const MAX_SIG_LEN: usize = 73;
@@ -366,7 +366,10 @@ mod tests {
     const TEST_SIGNATURE_HEX: &str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn write_serialized_signature() {
+        use alloc::vec;
+
         let sig = Signature {
             signature: secp256k1::ecdsa::Signature::from_str(TEST_SIGNATURE_HEX).unwrap(),
             sighash_type: EcdsaSighashType::All,
