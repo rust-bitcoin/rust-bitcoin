@@ -25,7 +25,6 @@ use crate::prelude::{DisplayHex, String, Vec};
 
 // TODO: We need to remove these.
 #[rustfmt::skip]
-use crate::internal_macros::impl_asref_push_bytes;
 use crate::taproot::TapTweakHashExt as _;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -381,6 +380,26 @@ hashes::hash_newtype! {
 hashes::impl_hex_for_newtype!(PubkeyHash, WPubkeyHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(PubkeyHash, WPubkeyHash);
+
+// FIXME: Inline this or put it in `crypto::internal_macros` once we move stuff over to that crate.
+#[rustfmt::skip]
+macro_rules! impl_asref_push_bytes {
+    ($($hashtype:ident),*) => {
+        $(
+            impl AsRef<$crate::script::PushBytes> for $hashtype {
+                fn as_ref(&self) -> &$crate::script::PushBytes {
+                    self.as_byte_array().into()
+                }
+            }
+
+            impl From<$hashtype> for $crate::script::PushBytesBuf {
+                fn from(hash: $hashtype) -> Self {
+                    hash.as_byte_array().into()
+                }
+            }
+        )*
+    };
+}
 
 impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
