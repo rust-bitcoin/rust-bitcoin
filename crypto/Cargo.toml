@@ -14,7 +14,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "base58/std", "hashes/std", "hex/std", "internals/std", "primitives/std", "secp256k1/std", "taproot-primitives/std", "units/std"]
+std = ["alloc", "base58/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "secp256k1/std", "taproot-primitives/std", "units/std"]
 alloc = ["base58/alloc", "hashes/alloc", "hex/alloc", "internals/alloc", "primitives/alloc", "secp256k1/alloc", "taproot-primitives/alloc", "units/alloc"]
 rand-std = ["secp256k1/rand", "std"]
 rand = ["secp256k1/rand"]
