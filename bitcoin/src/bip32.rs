@@ -13,10 +13,10 @@ use core::{fmt, slice};
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
 use internals::write_err;
+use network::NetworkKind;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
 use crate::internal_macros;
-use network::NetworkKind;
 use crate::prelude::{String, Vec};
 
 /// Version bytes for extended public keys on the Bitcoin network.
@@ -619,9 +619,7 @@ impl From<base58::Error> for ParseError {
 }
 
 impl From<InvalidBase58PayloadLengthError> for ParseError {
-    fn from(e: InvalidBase58PayloadLengthError) -> Self {
-        Self::InvalidBase58PayloadLength(e)
-    }
+    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
 }
 
 /// A BIP-0032 error

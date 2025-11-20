@@ -51,28 +51,28 @@ use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt;
-
-use crate::constants::{
-    PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
-    SCRIPT_ADDRESS_PREFIX_TEST,
-};
-use crate::crypto::WitnessProgramExt as _;
-use crate::crypto::key::{
-    CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
-    XOnlyPublicKey,
-};
 use network::{Network, NetworkKind};
-use crate::network::Params;
 use primitives::script::witness_program::WitnessProgram;
 use primitives::script::witness_version::WitnessVersion;
 use primitives::script::{
     RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf,
     WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
+use taproot_primitives::TapNodeHash;
+
+use crate::constants::{
+    PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
+    SCRIPT_ADDRESS_PREFIX_TEST,
+};
+use crate::crypto::key::{
+    CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
+    XOnlyPublicKey,
+};
+use crate::crypto::WitnessProgramExt as _;
+use crate::network::Params;
 use crate::script::{
     self, ScriptExt as _, ScriptPubKeyBufExt as _, ScriptPubKeyExt as _, WitnessScriptExt as _,
 };
-use taproot_primitives::TapNodeHash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

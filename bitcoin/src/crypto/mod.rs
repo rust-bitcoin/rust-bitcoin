@@ -11,8 +11,8 @@ pub mod sighash;
 pub(crate) mod taproot;
 
 use hashes::{sha256t, HashEngine as _};
+use primitives::script::{WScriptHash, WitnessProgram, WitnessScript, WitnessScriptSizeError};
 use taproot_primitives::{TapNodeHash, TapTweakHash, TapTweakTag};
-use primitives::script::{WitnessScriptSizeError, WScriptHash, WitnessProgram, WitnessScript};
 
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
@@ -22,12 +22,12 @@ use crate::script::WitnessScriptExt as _;
 
 /// Extension functionality for the [`TapTweakHash`] type.
 pub trait TapTweakHashExt: sealed::Sealed {
-        /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
-        /// `P` is the internal key and `R` is the Merkle root.
-        fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
-            internal_key: K,
-            merkle_root: Option<TapNodeHash>,
-        ) -> Self;
+    /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
+    /// `P` is the internal key and `R` is the Merkle root.
+    fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
+        internal_key: K,
+        merkle_root: Option<TapNodeHash>,
+    ) -> Self;
 }
 
 impl TapTweakHashExt for TapTweakHash {
@@ -83,9 +83,7 @@ impl WitnessProgramExt for WitnessProgram {
         script.wscript_hash().map(Self::p2wsh_from_hash)
     }
 
-    fn p2wsh_from_hash(hash: WScriptHash) -> Self {
-        Self::new_p2wsh(hash.to_byte_array())
-    }
+    fn p2wsh_from_hash(hash: WScriptHash) -> Self { Self::new_p2wsh(hash.to_byte_array()) }
 
     fn p2tr<K: Into<UntweakedPublicKey>>(
         internal_key: K,

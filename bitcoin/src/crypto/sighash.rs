@@ -24,7 +24,8 @@ use taproot_primitives::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PRE
 
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
 use crate::{
-    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript, Witness
+    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, Witness,
+    WitnessScript,
 };
 
 // FIXME: We need to remove these.
@@ -1443,10 +1444,8 @@ impl<E> EncodeSigningDataResult<E> {
     {
         match self {
             Self::SighashSingleBug => EncodeSigningDataResult::SighashSingleBug,
-            Self::WriteResult(Err(e)) =>
-                EncodeSigningDataResult::WriteResult(Err(f(e))),
-            Self::WriteResult(Ok(o)) =>
-                EncodeSigningDataResult::WriteResult(Ok(o)),
+            Self::WriteResult(Err(e)) => EncodeSigningDataResult::WriteResult(Err(f(e))),
+            Self::WriteResult(Ok(o)) => EncodeSigningDataResult::WriteResult(Ok(o)),
         }
     }
 }
@@ -1545,12 +1544,12 @@ mod tests {
     use crate::consensus::deserialize;
     #[cfg(feature = "serde")]
     use crate::crypto::TapTweakHashExt as _;
-    #[cfg(feature = "serde")]
-    use crate::taproot::TapTweakHashExt as _;
     use crate::locktime::absolute;
     use crate::script::{
         ScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
     };
+    #[cfg(feature = "serde")]
+    use crate::taproot::TapTweakHashExt as _;
     use crate::TxIn;
 
     extern crate serde_json;

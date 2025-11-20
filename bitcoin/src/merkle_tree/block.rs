@@ -129,10 +129,7 @@ impl Encodable for MerkleBlock {
 
 impl Decodable for MerkleBlock {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self {
-            header: Decodable::consensus_decode(r)?,
-            txn: Decodable::consensus_decode(r)?,
-        })
+        Ok(Self { header: Decodable::consensus_decode(r)?, txn: Decodable::consensus_decode(r)? })
     }
 }
 

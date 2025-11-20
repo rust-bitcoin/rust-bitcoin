@@ -149,7 +149,7 @@ pub use primitives::{
     pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{
         RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,
-        TapScript, TapScriptBuf, WitnessScript, WitnessScriptBuf, WitnessVersion, WitnessProgram,
+        TapScript, TapScriptBuf, WitnessProgram, WitnessScript, WitnessScriptBuf, WitnessVersion,
     },
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},

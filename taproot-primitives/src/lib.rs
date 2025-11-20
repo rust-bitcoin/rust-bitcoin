@@ -213,9 +213,7 @@ impl<'de> serde::Deserialize<'de> for LeafVersion {
 pub struct FutureLeafVersion(u8);
 
 impl FutureLeafVersion {
-    pub(self) fn from_consensus(
-        version: u8,
-    ) -> Result<Self, InvalidTaprootLeafVersionError> {
+    pub(self) fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => unreachable!(
                 "FutureLeafVersion::from_consensus should never be called for 0xC0 value"

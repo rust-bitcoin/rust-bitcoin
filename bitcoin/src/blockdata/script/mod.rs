@@ -63,8 +63,8 @@ pub mod witness_program {
     //!
     //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
-    use crate::script::PushBytes;
     use crate::internal_macros;
+    use crate::script::PushBytes;
 
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(inline)]
@@ -103,7 +103,9 @@ pub mod witness_version {
     #[doc(inline)]
     pub use primitives::script::witness_version::WitnessVersion;
     #[doc(no_inline)]
-    pub use primitives::script::witness_version::{FromStrError, TryFromInstructionError, TryFromError};
+    pub use primitives::script::witness_version::{
+        FromStrError, TryFromError, TryFromInstructionError,
+    };
 }
 
 use core::convert::Infallible;

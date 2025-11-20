@@ -22,7 +22,8 @@ use secp256k1::Scalar;
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{
-    SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, ParseXOnlyPublicKeyError,
+    ParseXOnlyPublicKeyError, SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey,
+    UntweakedPublicKey,
 };
 use crate::crypto::TapTweakHashExt as _;
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
@@ -338,9 +339,7 @@ impl TaprootBuilder {
     /// Constructs a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
     ///
     /// The size here should be maximum depth of the tree.
-    pub fn with_capacity(size: usize) -> Self {
-        Self { branch: Vec::with_capacity(size) }
-    }
+    pub fn with_capacity(size: usize) -> Self { Self { branch: Vec::with_capacity(size) } }
 
     /// Constructs a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
@@ -481,9 +480,7 @@ impl TaprootBuilder {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilderError::HiddenParts(Self {
-                branch: vec![Some(node)],
-            }));
+            return Err(IncompleteBuilderError::HiddenParts(Self { branch: vec![Some(node)] }));
         }
         Ok(TapTree(node))
     }

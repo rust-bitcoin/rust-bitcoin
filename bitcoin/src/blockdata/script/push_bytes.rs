@@ -389,14 +389,16 @@ impl BorrowMut<PushBytes> for PushBytesBuf {
 impl AsRef<PushBytes> for ecdsa::SerializedSignature {
     #[inline]
     fn as_ref(&self) -> &PushBytes {
-        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self)).expect("max length 73 bytes is valid")
+        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self))
+            .expect("max length 73 bytes is valid")
     }
 }
 
 impl AsRef<PushBytes> for taproot::SerializedSignature {
     #[inline]
     fn as_ref(&self) -> &PushBytes {
-        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self)).expect("max length 65 bytes is valid") 
+        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self))
+            .expect("max length 65 bytes is valid")
     }
 }
 

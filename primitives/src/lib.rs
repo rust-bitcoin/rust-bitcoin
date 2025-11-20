@@ -71,6 +71,9 @@ pub use units::{
 #[doc(hidden)]
 pub type BlockInterval = BlockHeightInterval;
 
+#[cfg(feature = "alloc")]
+#[doc(inline)]
+pub use self::script::{witness_program, witness_version, WitnessProgram, WitnessVersion};
 #[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::{
@@ -91,10 +94,6 @@ pub use self::{
     pow::CompactTarget,
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
-
-#[cfg(feature = "alloc")]
-#[doc(inline)]
-pub use self::script::{witness_program, witness_version, WitnessProgram, WitnessVersion};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

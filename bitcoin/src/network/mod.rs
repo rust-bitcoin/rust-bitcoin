@@ -16,7 +16,7 @@ use crate::constants::ChainHash;
 #[doc(inline)]
 pub use self::params::Params;
 #[doc(inline)]
-pub use network::{Network, NetworkKind, TestnetVersion, ParseNetworkError};
+pub use network::{Network, NetworkKind, ParseNetworkError, TestnetVersion};
 
 /// Trait to extend the [`Network`] type.
 pub trait NetworkExt {
@@ -43,7 +43,9 @@ pub trait NetworkExt {
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
     /// ```
-    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> where Self: Sized;
+    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self>
+    where
+        Self: Sized;
 }
 
 /// Returns the associated network parameters.
@@ -62,9 +64,7 @@ pub fn params(network: Network) -> &'static Params {
 impl NetworkExt for Network {
     fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
 
-    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> {
-        Self::try_from(chain_hash).ok()
-    }
+    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> { Self::try_from(chain_hash).ok() }
 }
 
 #[cfg(feature = "serde")]
