@@ -15,18 +15,16 @@ use hex::{FromHex, HexToArrayError};
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
+use network::NetworkKind;
 use io::{Read, Write};
 use primitives::script::WitnessScriptBuf;
 use taproot_primitives::{TapNodeHash, TapTweakHash};
 
-use super::ecdsa;
+use super::{ecdsa, TapTweakHashExt as _};
 use crate::prelude::{DisplayHex, String, Vec};
 
 // TODO: We need to remove these.
 #[rustfmt::skip]
-use super::TapTweakHashExt as _;
-use network::NetworkKind;
-
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::taproot::TapTweakHashExt as _;
 

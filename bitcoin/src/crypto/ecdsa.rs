@@ -19,11 +19,6 @@ use io::Write;
 use super::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 use crate::prelude::{DisplayHex, Vec};
 
-// TODO: We need to remove this.
-#[cfg(doc)]
-#[rustfmt::skip]
-use crate::script::ScriptPubKeyBufExt as _;
-
 const MAX_SIG_LEN: usize = 73;
 
 /// An ECDSA signature with the corresponding hash type.
