@@ -1,5 +1,5 @@
+use bitcoin::crypto::key::{FromWifError, InvalidWifCompressionFlagError, PrivateKey, PublicKey};
 use bitcoin::{Address, NetworkKind};
-use bitcoin::crypto::key::{FromWifError, PrivateKey, PublicKey, InvalidWifCompressionFlagError};
 
 #[test]
 fn key_derivation() {
@@ -19,8 +19,7 @@ fn key_derivation() {
     // assert!(format!("{}", sk.unwrap_err()).contains("49"));
 
     // testnet compressed
-    let sk =
-        PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+    let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
     assert_eq!(sk.network, NetworkKind::Test);
     assert!(sk.compressed);
     assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
@@ -35,8 +34,7 @@ fn key_derivation() {
     assert_eq!(&sk.to_wif(), &sk_str.to_wif());
 
     // mainnet uncompressed
-    let sk =
-        PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+    let sk = PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
     assert_eq!(sk.network, NetworkKind::Main);
     assert!(!sk.compressed);
     assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
@@ -60,4 +58,3 @@ fn key_derivation() {
             .unwrap()
     );
 }
-

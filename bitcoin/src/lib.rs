@@ -178,7 +178,6 @@ pub use crate::{
     crypto::ecdsa,
     // FIXME: Think harder about the crypto re-exports.
     crypto::key::{self, CompressedPublicKey, PrivateKey, PublicKey, XOnlyPublicKey},
-    sighash::{LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::MerkleBlock,
     network::params::{self, Params},
     network::{Network, NetworkKind, TestnetVersion},
@@ -186,6 +185,7 @@ pub use crate::{
     psbt::Psbt,
     script::{witness_program, witness_version},
     sighash::{EcdsaSighashType, TapSighashType},
+    sighash::{LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
 // Re-export all modules from `blockdata`, users should never need to use `blockdata` directly.

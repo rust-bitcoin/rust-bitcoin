@@ -11,9 +11,9 @@ use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
 
+use crypto::TapTweakHashExt as _;
 use hashes::{sha256t, HashEngine as _};
 use hex::{FromHex, HexToBytesError};
-use crypto::TapTweakHashExt as _;
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
@@ -1128,23 +1128,23 @@ impl<B, K> ControlBlock<B, K> {
         let (base, merkle_branch) = sl
             .split_first_chunk::<TAPROOT_CONTROL_BASE_SIZE>()
             .ok_or(InvalidControlBlockSizeError(sl.len()))?;
- 
-       let (&first, internal_key_bytes) = base.split_first();
- 
-       let output_key_parity = match first & 1 {
+
+        let (&first, internal_key_bytes) = base.split_first();
+
+        let output_key_parity = match first & 1 {
             0 => secp256k1::Parity::Even,
             _ => secp256k1::Parity::Odd,
         };
- 
-       let leaf_version = LeafVersion::from_consensus(first & TAPROOT_LEAF_MASK)?;
-        let internal_key_ref: &'a SerializedXOnlyPublicKey = 
+
+        let leaf_version = LeafVersion::from_consensus(first & TAPROOT_LEAF_MASK)?;
+        let internal_key_ref: &'a SerializedXOnlyPublicKey =
             SerializedXOnlyPublicKey::from_bytes_ref(internal_key_bytes);
         let merkle_branch = TaprootMerkleBranch::decode(merkle_branch)?.into();
-        Ok(Self { 
-            leaf_version, 
-            output_key_parity, 
+        Ok(Self {
+            leaf_version,
+            output_key_parity,
             internal_key: internal_key_ref.into(),
-            merkle_branch 
+            merkle_branch,
         })
     }
 }

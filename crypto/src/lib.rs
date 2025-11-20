@@ -39,9 +39,9 @@ use primitives::script::{WScriptHash, WitnessProgram, WitnessScript, WitnessScri
 use secp256k1::Scalar;
 use taproot_primitives::{TapNodeHash, TapTweakHash, TapTweakTag};
 
+use crate::key::TapTweak as _;
 #[cfg(feature = "alloc")]
 use crate::prelude::{String, ToOwned};
-use crate::key::TapTweak as _;
 
 // FIXME: Brain fried right now, re-visit these re-exports.
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -354,7 +354,7 @@ impl TapTweakHashExt for TapTweakHash {
         Self::from_byte_array(inner.to_byte_array())
     }
 
-     fn to_scalar(self) -> Scalar {
+    fn to_scalar(self) -> Scalar {
         // This is statistically extremely unlikely to panic.
         Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
     }

@@ -15,8 +15,8 @@ use hex::{FromHex, HexToArrayError};
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
-use network::NetworkKind;
 use io::{Read, Write};
+use network::NetworkKind;
 use taproot_primitives::{TapNodeHash, TapTweakHash};
 
 use super::{ecdsa, TapTweakHashExt as _};
