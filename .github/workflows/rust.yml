@@ -439,5 +439,7 @@ jobs:
           persist-credentials: false
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: "Run API checker script"
-        run: contrib/generate-re-export-test.sh && cd ./primitives && cargo test --all-features
+      - name: "Run primitives API checker script"
+        run: |
+          contrib/generate-primitives-re-export-test.sh && (cd ./primitives && cargo test --all-features)
+          contrib/generate-bitcoin-re-export-test.sh && (cd ./bitcoin && cargo test --all-features)

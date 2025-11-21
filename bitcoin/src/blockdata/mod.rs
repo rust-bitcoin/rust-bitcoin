@@ -41,7 +41,12 @@ pub mod locktime {
 
         /// Re-export everything from the `units::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
-        pub use units::locktime::absolute::{ConversionError, Height, LockTime, ParseHeightError, ParseTimeError, MedianTimePast};
+        #[doc(inline)]
+        pub use units::locktime::absolute::{error, Height, LockTime, MedianTimePast};
+        #[doc(no_inline)]
+        pub use units::locktime::absolute::{
+            ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError, ParseTimeError,
+        };
 
         #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
         #[doc(hidden)]
@@ -70,9 +75,14 @@ pub mod locktime {
         //! whether bit 22 of the `u32` consensus value is set.
 
         /// Re-export everything from the `units::locktime::relative` module.
+        #[doc(inline)]
         pub use units::locktime::relative::{
-            DisabledLockTimeError, InvalidHeightError, InvalidTimeError, LockTime,
-            NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
+            error, LockTime, NumberOf512Seconds, NumberOfBlocks,
+        };
+        #[doc(no_inline)]
+        pub use units::locktime::relative::{
+            DisabledLockTimeError, InvalidHeightError, InvalidTimeError, IsSatisfiedByError,
+            IsSatisfiedByHeightError, IsSatisfiedByTimeError, TimeOverflowError,
         };
 
         #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
