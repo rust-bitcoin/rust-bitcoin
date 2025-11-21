@@ -39,7 +39,7 @@ For changes to our dependencies included in this release see:
 ## Changes
 
 - Deprecate unchecked `amount` ops [#3759](https://github.com/rust-bitcoin/rust-bitcoin/pull/3759)
-- Change paramater type used for whole bitcoin amounts [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
+- Change parameter type used for whole bitcoin amounts [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
 - Add `Weight::to_kwu_ceil` [#3740](https://github.com/rust-bitcoin/rust-bitcoin/pull/3740)
 - Remove `Weight::from_wu_usize` function [#3738](https://github.com/rust-bitcoin/rust-bitcoin/pull/3738)
 - Move script hash types to `primitives` [#3734](https://github.com/rust-bitcoin/rust-bitcoin/pull/3734)
