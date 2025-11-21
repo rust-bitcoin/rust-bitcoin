@@ -84,7 +84,9 @@ pub trait Read {
 
     /// Constructs a new adapter which will read at most `limit` bytes.
     #[inline]
-    fn take(&mut self, limit: u64) -> Take<'_, Self> { Take { reader: self, remaining: limit } }
+    fn take(self, limit: u64) -> Take<Self>
+        where Self: Sized,
+    { Take { reader: self, remaining: limit } }
 
     /// Attempts to read up to limit bytes from the reader, allocating space in `buf` as needed.
     ///
@@ -125,12 +127,12 @@ pub trait BufRead: Read {
 ///
 /// Created by calling `[Read::take]`.
 #[derive(Debug)]
-pub struct Take<'a, R: Read + ?Sized> {
-    reader: &'a mut R,
+pub struct Take<R> {
+    reader: R,
     remaining: u64,
 }
 
-impl<R: Read + ?Sized> Take<'_, R> {
+impl<R: Read> Take<R> {
     /// Reads all bytes until EOF from the underlying reader into `buf`.
     ///
     /// Allocates space in `buf` as needed.
@@ -158,7 +160,7 @@ impl<R: Read + ?Sized> Take<'_, R> {
     }
 }
 
-impl<R: Read + ?Sized> Read for Take<'_, R> {
+impl<R: Read> Read for Take<R> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let len = cmp::min(buf.len(), self.remaining.try_into().unwrap_or(buf.len()));
@@ -169,7 +171,7 @@ impl<R: Read + ?Sized> Read for Take<'_, R> {
 }
 
 // Impl copied from Rust stdlib.
-impl<R: BufRead + ?Sized> BufRead for Take<'_, R> {
+impl<R: BufRead> BufRead for Take<R> {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> {
         // Don't call into inner reader at all at EOF because it may still block
@@ -192,7 +194,7 @@ impl<R: BufRead + ?Sized> BufRead for Take<'_, R> {
     }
 }
 
-impl<T: Read> Read for &'_ mut T {
+impl<T: Read + ?Sized> Read for &'_ mut T {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> { (**self).read(buf) }
 
@@ -200,7 +202,7 @@ impl<T: Read> Read for &'_ mut T {
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> { (**self).read_exact(buf) }
 }
 
-impl<T: BufRead> BufRead for &'_ mut T {
+impl<T: BufRead + ?Sized> BufRead for &'_ mut T {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> { (**self).fill_buf() }
 
