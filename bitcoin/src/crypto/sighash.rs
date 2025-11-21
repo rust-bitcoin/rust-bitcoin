@@ -311,10 +311,8 @@ impl From<Infallible> for PrevoutsIndexError {
 impl fmt::Display for PrevoutsIndexError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidOneIndex =>
-                write!(f, "invalid index when accessing a Prevouts::One kind"),
-            Self::InvalidAllIndex =>
-                write!(f, "invalid index when accessing a Prevouts::All kind"),
+            Self::InvalidOneIndex => write!(f, "invalid index when accessing a Prevouts::One kind"),
+            Self::InvalidAllIndex => write!(f, "invalid index when accessing a Prevouts::All kind"),
         }
     }
 }
@@ -1284,8 +1282,7 @@ impl fmt::Display for P2wpkhError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Sighash(ref e) => write_err!(f, "error encoding SegWit v0 signing data"; e),
-            Self::NotP2wpkhScript =>
-                write!(f, "script is not a script pubkey for a p2wpkh output"),
+            Self::NotP2wpkhScript => write!(f, "script is not a script pubkey for a p2wpkh output"),
         }
     }
 }

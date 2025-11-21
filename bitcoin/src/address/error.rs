@@ -29,11 +29,9 @@ impl From<Infallible> for FromScriptError {
 impl fmt::Display for FromScriptError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::WitnessVersion(ref e) =>
-                write_err!(f, "witness version construction error"; e),
+            Self::WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
             Self::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            Self::UnrecognizedScript =>
-                write!(f, "script is not a p2pkh, p2sh or witness program"),
+            Self::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
         }
     }
 }
@@ -256,8 +254,7 @@ impl fmt::Display for Base58Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::ParseBase58(ref e) => write_err!(f, "legacy parsing error"; e),
-            Self::LegacyAddressTooLong(ref e) =>
-                write_err!(f, "legacy address length error"; e),
+            Self::LegacyAddressTooLong(ref e) => write_err!(f, "legacy address length error"; e),
             Self::InvalidBase58PayloadLength(ref e) =>
                 write_err!(f, "legacy payload length error"; e),
             Self::InvalidLegacyPrefix(ref e) => write_err!(f, "legacy prefix error"; e),

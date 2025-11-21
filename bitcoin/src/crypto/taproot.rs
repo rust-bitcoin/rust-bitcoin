@@ -105,8 +105,7 @@ impl fmt::Display for SigFromSliceError {
         match self {
             Self::SighashType(ref e) => write_err!(f, "sighash"; e),
             Self::Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
-            Self::InvalidSignatureSize(sz) =>
-                write!(f, "invalid Taproot signature size: {}", sz),
+            Self::InvalidSignatureSize(sz) => write!(f, "invalid Taproot signature size: {}", sz),
         }
     }
 }

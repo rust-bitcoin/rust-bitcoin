@@ -66,8 +66,7 @@ mod message_signing {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::InvalidEncoding(ref e) => Some(e),
-                Self::InvalidLength | Self::InvalidBase64 | Self::UnsupportedAddressType(_) =>
-                    None,
+                Self::InvalidLength | Self::InvalidBase64 | Self::UnsupportedAddressType(_) => None,
             }
         }
     }

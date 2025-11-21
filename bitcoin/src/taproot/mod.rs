@@ -1524,7 +1524,8 @@ impl fmt::Display for TaprootError {
         match self {
             Self::InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
             Self::InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
-            Self::InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
+            Self::InvalidTaprootLeafVersion(ref e) =>
+                write_err!(f, "invalid Taproot leaf version"; e),
             Self::InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
             Self::InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
             Self::InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
