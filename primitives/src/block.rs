@@ -114,7 +114,7 @@ impl Block<Unchecked> {
 impl Block<Checked> {
     /// Gets a reference to the block header.
     #[inline]
-    pub fn header(&self) -> &Header { &self.header }
+    pub const fn header(&self) -> &Header { &self.header }
 
     /// Gets a reference to the block's list of transactions.
     #[inline]
@@ -125,7 +125,7 @@ impl Block<Checked> {
     /// It is assumed that a block will have the witness root calculated and cached as part of the
     /// validation process.
     #[inline]
-    pub fn cached_witness_root(&self) -> Option<WitnessMerkleNode> { self.witness_root }
+    pub const fn cached_witness_root(&self) -> Option<WitnessMerkleNode> { self.witness_root }
 }
 
 #[cfg(feature = "alloc")]
@@ -549,7 +549,7 @@ impl Version {
     ///
     /// This is the data type used in consensus code in Bitcoin Core.
     #[inline]
-    pub fn to_consensus(self) -> i32 { self.0 }
+    pub const fn to_consensus(self) -> i32 { self.0 }
 
     /// Checks whether the version number is signalling a soft fork at the given bit.
     ///
@@ -595,7 +595,7 @@ pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
 impl VersionDecoder {
     /// Constructs a new [`Version`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for VersionDecoder {

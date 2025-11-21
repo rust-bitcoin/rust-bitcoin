@@ -45,10 +45,10 @@ pub struct IncompatibleHeightError {
 
 impl IncompatibleHeightError {
     /// Returns the value of the lock-by-time lock.
-    pub fn lock(&self) -> MedianTimePast { self.lock }
+    pub const fn lock(&self) -> MedianTimePast { self.lock }
 
     /// Returns the height that was erroneously used to try and satisfy a lock-by-time lock.
-    pub fn incompatible(&self) -> Height { self.incompatible }
+    pub const fn incompatible(&self) -> Height { self.incompatible }
 }
 
 impl fmt::Display for IncompatibleHeightError {
@@ -76,10 +76,10 @@ pub struct IncompatibleTimeError {
 
 impl IncompatibleTimeError {
     /// Returns the value of the lock-by-height lock.
-    pub fn lock(&self) -> Height { self.lock }
+    pub const fn lock(&self) -> Height { self.lock }
 
     /// Returns the MTP that was erroneously used to try and satisfy a lock-by-height lock.
-    pub fn incompatible(&self) -> MedianTimePast { self.incompatible }
+    pub const fn incompatible(&self) -> MedianTimePast { self.incompatible }
 }
 
 impl fmt::Display for IncompatibleTimeError {

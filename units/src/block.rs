@@ -173,7 +173,7 @@ impl Default for BlockHeightDecoder {
 #[cfg(feature = "encoding")]
 impl BlockHeightDecoder {
     /// Constructs a new [`BlockHeight`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]

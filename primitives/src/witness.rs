@@ -128,7 +128,7 @@ impl Witness {
 
     /// Returns the number of elements this witness holds.
     #[inline]
-    pub fn len(&self) -> usize { self.witness_elements }
+    pub const fn len(&self) -> usize { self.witness_elements }
 
     /// Returns the number of bytes this witness contributes to a transactions total size.
     ///
@@ -321,7 +321,7 @@ pub struct WitnessDecoder {
 
 impl WitnessDecoder {
     /// Constructs a new witness decoder.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             content: Vec::new(),
             cursor: 0,
