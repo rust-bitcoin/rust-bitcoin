@@ -209,8 +209,7 @@ impl fmt::Display for TryFromInstructionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::TryFrom(ref e) => write_err!(f, "opcode is not a valid witness version"; e),
-            Self::DataPush =>
-                write!(f, "non-zero data push opcode is not a valid witness version"),
+            Self::DataPush => write!(f, "non-zero data push opcode is not a valid witness version"),
         }
     }
 }

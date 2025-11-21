@@ -290,10 +290,7 @@ impl Psbt {
     ///
     /// If an error is returned some signatures may already have been added to the PSBT. Since
     /// `partial_sigs` is a [`BTreeMap`] it is safe to retry, previous sigs will be overwritten.
-    pub fn sign<K>(
-        &mut self,
-        k: &K,
-    ) -> Result<SigningKeysMap, (SigningKeysMap, SigningErrors)>
+    pub fn sign<K>(&mut self, k: &K) -> Result<SigningKeysMap, (SigningKeysMap, SigningErrors)>
     where
         K: GetKey,
     {
@@ -305,25 +302,22 @@ impl Psbt {
 
         for i in 0..self.inputs.len() {
             match self.signing_algorithm(i) {
-                Ok(SigningAlgorithm::Ecdsa) =>
-                    match self.bip32_sign_ecdsa(k, i, &mut cache) {
-                        Ok(v) => {
-                            used.insert(i, SigningKeys::Ecdsa(v));
-                        }
-                        Err(e) => {
-                            errors.insert(i, e);
-                        }
-                    },
-                Ok(SigningAlgorithm::Schnorr) => {
-                    match self.bip32_sign_schnorr(k, i, &mut cache) {
-                        Ok(v) => {
-                            used.insert(i, SigningKeys::Schnorr(v));
-                        }
-                        Err(e) => {
-                            errors.insert(i, e);
-                        }
+                Ok(SigningAlgorithm::Ecdsa) => match self.bip32_sign_ecdsa(k, i, &mut cache) {
+                    Ok(v) => {
+                        used.insert(i, SigningKeys::Ecdsa(v));
                     }
-                }
+                    Err(e) => {
+                        errors.insert(i, e);
+                    }
+                },
+                Ok(SigningAlgorithm::Schnorr) => match self.bip32_sign_schnorr(k, i, &mut cache) {
+                    Ok(v) => {
+                        used.insert(i, SigningKeys::Schnorr(v));
+                    }
+                    Err(e) => {
+                        errors.insert(i, e);
+                    }
+                },
                 Err(e) => {
                     errors.insert(i, e);
                 }
@@ -411,8 +405,7 @@ impl Psbt {
         let mut used = vec![]; // List of pubkeys used to sign the input.
 
         for (&xonly, (leaf_hashes, key_source)) in input.tap_key_origins.iter() {
-            let sk = if let Ok(Some(secret_key)) =
-                k.get_key(&KeyRequest::Bip32(key_source.clone()))
+            let sk = if let Ok(Some(secret_key)) = k.get_key(&KeyRequest::Bip32(key_source.clone()))
             {
                 secret_key
             } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::XOnlyPubkey(xonly)) {
@@ -467,10 +460,13 @@ impl Psbt {
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(feature = "rand-std")]
-                        let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
-                        #[cfg(not(feature = "rand-std"))]
                         let signature =
-                            secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair);
+                            secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
+                        #[cfg(not(feature = "rand-std"))]
+                        let signature = secp256k1::schnorr::sign_no_aux_rand(
+                            &sighash.to_byte_array(),
+                            &key_pair,
+                        );
 
                         let signature = taproot::Signature { signature, sighash_type };
                         input.tap_script_sigs.insert((xonly, lh), signature);
@@ -795,19 +791,13 @@ pub trait GetKey {
     /// - `Some(key)` if the key is found.
     /// - `None` if the key was not found but no error was encountered.
     /// - `Err` if an error was encountered while looking for the key.
-    fn get_key(
-        &self,
-        key_request: &KeyRequest,
-    ) -> Result<Option<PrivateKey>, Self::Error>;
+    fn get_key(&self, key_request: &KeyRequest) -> Result<Option<PrivateKey>, Self::Error>;
 }
 
 impl GetKey for Xpriv {
     type Error = GetKeyError;
 
-    fn get_key(
-        &self,
-        key_request: &KeyRequest,
-    ) -> Result<Option<PrivateKey>, Self::Error> {
+    fn get_key(&self, key_request: &KeyRequest) -> Result<Option<PrivateKey>, Self::Error> {
         match key_request {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::XOnlyPubkey(_) => Err(GetKeyError::NotSupported),
@@ -1075,8 +1065,7 @@ impl fmt::Display for SignError {
             Self::MissingRedeemScript => write!(f, "missing redeem script"),
             Self::MissingSpendUtxo => write!(f, "missing spend utxo in PSBT"),
             Self::MissingWitnessScript => write!(f, "missing witness script"),
-            Self::MismatchedAlgoKey =>
-                write!(f, "signing algorithm and key type does not match"),
+            Self::MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
             Self::NotEcdsa => write!(f, "attempted to ECDSA sign a non-ECDSA input"),
             Self::NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
             Self::SegwitV0Sighash(ref e) => write_err!(f, "SegWit v0 sighash"; e),
@@ -1308,12 +1297,8 @@ mod tests {
     use hex_lit::hex;
     #[cfg(feature = "rand-std")]
     use {
-        crate::bip32::Fingerprint,
-        crate::locktime,
-        crate::script::ScriptPubKeyBufExt as _,
-        crate::witness_version::WitnessVersion,
-        crate::WitnessProgram,
-        secp256k1::SecretKey,
+        crate::bip32::Fingerprint, crate::locktime, crate::script::ScriptPubKeyBufExt as _,
+        crate::witness_version::WitnessVersion, crate::WitnessProgram, secp256k1::SecretKey,
     };
 
     use super::*;
@@ -2405,14 +2390,12 @@ mod tests {
         let path: DerivationPath = "m/1/2/3".parse().unwrap();
         let path_prefix: DerivationPath = "m/1".parse().unwrap();
 
-        let expected_private_key =
-            parent_xpriv.derive_xpriv(&path).unwrap().to_private_key();
+        let expected_private_key = parent_xpriv.derive_xpriv(&path).unwrap().to_private_key();
 
         let derived_xpriv = parent_xpriv.derive_xpriv(&path_prefix).unwrap();
 
-        let derived_key = derived_xpriv
-            .get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(), path)))
-            .unwrap();
+        let derived_key =
+            derived_xpriv.get_key(&KeyRequest::Bip32((parent_xpriv.fingerprint(), path))).unwrap();
 
         assert_eq!(derived_key, Some(expected_private_key));
     }
