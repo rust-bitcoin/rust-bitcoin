@@ -349,20 +349,18 @@ impl fmt::Display for PublicKey {
 impl FromStr for PublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<Self, ParsePublicKeyError> {
-        use HexToArrayError::*;
-
         match s.len() {
             66 => {
                 let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    InvalidLength(_) => unreachable!("length checked already"),
+                    HexToArrayError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    HexToArrayError::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
             130 => {
                 let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    InvalidLength(_) => unreachable!("length checked already"),
+                    HexToArrayError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    HexToArrayError::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
@@ -1070,12 +1068,11 @@ impl From<Infallible> for FromSliceError {
 
 impl fmt::Display for FromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromSliceError::*;
-
         match self {
-            Secp256k1(e) => write_err!(f, "secp256k1"; e),
-            InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
-            InvalidLength(got) => write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
+            Self::Secp256k1(e) => write_err!(f, "secp256k1"; e),
+            Self::InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
+            Self::InvalidLength(got) =>
+                write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
         }
     }
 }
@@ -1083,11 +1080,9 @@ impl fmt::Display for FromSliceError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromSliceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromSliceError::*;
-
-        match *self {
-            Secp256k1(ref e) => Some(e),
-            InvalidKeyPrefix(_) | InvalidLength(_) => None,
+        match self {
+            Self::Secp256k1(ref e) => Some(e),
+            Self::InvalidKeyPrefix(_) | Self::InvalidLength(_) => None,
         }
     }
 }
@@ -1118,16 +1113,15 @@ impl From<Infallible> for FromWifError {
 
 impl fmt::Display for FromWifError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromWifError::*;
-
-        match *self {
-            Base58(ref e) => write_err!(f, "invalid base58"; e),
-            InvalidBase58PayloadLength(ref e) =>
+        match self {
+            Self::Base58(ref e) => write_err!(f, "invalid base58"; e),
+            Self::InvalidBase58PayloadLength(ref e) =>
                 write_err!(f, "decoded base58 data was an invalid length"; e),
-            InvalidAddressVersion(ref e) =>
+            Self::InvalidAddressVersion(ref e) =>
                 write_err!(f, "decoded base58 data contained an invalid address version byte"; e),
-            Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
-            InvalidWifCompressionFlag(ref e) => write_err!(f, "invalid WIF compression flag"; e),
+            Self::Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
+            Self::InvalidWifCompressionFlag(ref e) =>
+                write_err!(f, "invalid WIF compression flag"; e),
         }
     }
 }
@@ -1135,14 +1129,12 @@ impl fmt::Display for FromWifError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromWifError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromWifError::*;
-
-        match *self {
-            Base58(ref e) => Some(e),
-            InvalidBase58PayloadLength(ref e) => Some(e),
-            InvalidAddressVersion(ref e) => Some(e),
-            Secp256k1(ref e) => Some(e),
-            InvalidWifCompressionFlag(ref e) => Some(e),
+        match self {
+            Self::Base58(ref e) => Some(e),
+            Self::InvalidBase58PayloadLength(ref e) => Some(e),
+            Self::InvalidAddressVersion(ref e) => Some(e),
+            Self::Secp256k1(ref e) => Some(e),
+            Self::InvalidWifCompressionFlag(ref e) => Some(e),
         }
     }
 }
@@ -1184,11 +1176,10 @@ impl From<Infallible> for ParsePublicKeyError {
 
 impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParsePublicKeyError::*;
-        match *self {
-            Encoding(ref e) => write_err!(f, "string error"; e),
-            InvalidChar(ref e) => write_err!(f, "hex decoding"; e),
-            InvalidHexLength(got) =>
+        match self {
+            Self::Encoding(ref e) => write_err!(f, "string error"; e),
+            Self::InvalidChar(ref e) => write_err!(f, "hex decoding"; e),
+            Self::InvalidHexLength(got) =>
                 write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
         }
     }
@@ -1197,12 +1188,10 @@ impl fmt::Display for ParsePublicKeyError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParsePublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParsePublicKeyError::*;
-
-        match *self {
-            Encoding(ref e) => Some(e),
-            InvalidChar(ref e) => Some(e),
-            InvalidHexLength(_) => None,
+        match self {
+            Self::Encoding(ref e) => Some(e),
+            Self::InvalidChar(ref e) => Some(e),
+            Self::InvalidHexLength(_) => None,
         }
     }
 }
@@ -1226,10 +1215,9 @@ impl From<Infallible> for ParseCompressedPublicKeyError {
 
 impl fmt::Display for ParseCompressedPublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseCompressedPublicKeyError::*;
         match self {
-            Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            Hex(e) => write_err!(f, "invalid hex"; e),
+            Self::Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
+            Self::Hex(e) => write_err!(f, "invalid hex"; e),
         }
     }
 }
@@ -1237,11 +1225,9 @@ impl fmt::Display for ParseCompressedPublicKeyError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseCompressedPublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseCompressedPublicKeyError::*;
-
         match self {
-            Secp256k1(e) => Some(e),
-            Hex(e) => Some(e),
+            Self::Secp256k1(e) => Some(e),
+            Self::Hex(e) => Some(e),
         }
     }
 }

@@ -102,12 +102,11 @@ impl From<Infallible> for SigFromSliceError {
 
 impl fmt::Display for SigFromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use SigFromSliceError::*;
-
-        match *self {
-            SighashType(ref e) => write_err!(f, "sighash"; e),
-            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
-            InvalidSignatureSize(sz) => write!(f, "invalid Taproot signature size: {}", sz),
+        match self {
+            Self::SighashType(ref e) => write_err!(f, "sighash"; e),
+            Self::Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
+            Self::InvalidSignatureSize(sz) =>
+                write!(f, "invalid Taproot signature size: {}", sz),
         }
     }
 }
@@ -115,12 +114,10 @@ impl fmt::Display for SigFromSliceError {
 #[cfg(feature = "std")]
 impl std::error::Error for SigFromSliceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use SigFromSliceError::*;
-
-        match *self {
-            Secp256k1(ref e) => Some(e),
-            SighashType(ref e) => Some(e),
-            InvalidSignatureSize(_) => None,
+        match self {
+            Self::Secp256k1(ref e) => Some(e),
+            Self::SighashType(ref e) => Some(e),
+            Self::InvalidSignatureSize(_) => None,
         }
     }
 }

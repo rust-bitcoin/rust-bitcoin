@@ -661,8 +661,7 @@ fn unsigned_signed_conversion() {
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 #[allow(clippy::items_after_statements)] // Define functions where we use them.
 fn from_str() {
-    use ParseDenominationError::*;
-
+    use super::ParseDenominationError;
     use super::ParseAmountError as E;
 
     assert_eq!(
@@ -671,11 +670,11 @@ fn from_str() {
     );
     assert_eq!(
         "xBTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("xBTC".into())).into()),
     );
     assert_eq!(
         "5 BTC BTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("BTC BTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("BTC BTC".into())).into()),
     );
     assert_eq!(
         "5BTC BTC".parse::<Amount>(),
@@ -683,7 +682,7 @@ fn from_str() {
     );
     assert_eq!(
         "5 5 BTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("5 BTC".into())).into()),
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("5 BTC".into())).into()),
     );
 
     #[track_caller]
@@ -712,7 +711,10 @@ fn from_str() {
         assert_eq!(s.replace(' ', "").parse::<SignedAmount>(), expected);
     }
 
-    case("5 BCH", Err(Unknown(UnknownDenominationError("BCH".into()))));
+    case(
+        "5 BCH",
+        Err(ParseDenominationError::Unknown(UnknownDenominationError("BCH".into()))),
+    );
 
     case("-1 BTC", Err(OutOfRangeError::negative()));
     case("-0.0 BTC", Err(OutOfRangeError::negative()));
@@ -818,8 +820,7 @@ fn to_from_string_in() {
 #[cfg(feature = "alloc")]
 #[test]
 fn to_string_with_denomination_from_str_roundtrip() {
-    use ParseDenominationError::*;
-
+    use super::ParseDenominationError;
     use super::Denomination as D;
 
     let amt = sat(42);
@@ -833,11 +834,17 @@ fn to_string_with_denomination_from_str_roundtrip() {
 
     assert_eq!(
         "42 satoshi BTC".parse::<Amount>(),
-        Err(Unknown(UnknownDenominationError("satoshi BTC".into())).into()),
+        Err(
+            ParseDenominationError::Unknown(UnknownDenominationError("satoshi BTC".into()))
+                .into(),
+        ),
     );
     assert_eq!(
         "-42 satoshi BTC".parse::<SignedAmount>(),
-        Err(Unknown(UnknownDenominationError("satoshi BTC".into())).into()),
+        Err(
+            ParseDenominationError::Unknown(UnknownDenominationError("satoshi BTC".into()))
+                .into(),
+        ),
     );
 }
 

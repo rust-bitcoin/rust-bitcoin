@@ -89,11 +89,9 @@ impl From<Infallible> for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        use Error::*;
-
-        match *self {
-            UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
-            Io(ref e) => write_err!(f, "I/O error"; e),
+        match self {
+            Self::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
+            Self::Io(ref e) => write_err!(f, "I/O error"; e),
         }
     }
 }
@@ -101,11 +99,9 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            UtxoMissing(_) => None,
-            Io(ref e) => Some(e),
+        match self {
+            Self::UtxoMissing(_) => None,
+            Self::Io(ref e) => Some(e),
         }
     }
 }

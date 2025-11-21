@@ -166,11 +166,9 @@ impl From<Infallible> for FromStrError {
 
 impl fmt::Display for FromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromStrError::*;
-
-        match *self {
-            Unparsable(ref e) => write_err!(f, "integer parse error"; e),
-            Invalid(ref e) => write_err!(f, "invalid version number"; e),
+        match self {
+            Self::Unparsable(ref e) => write_err!(f, "integer parse error"; e),
+            Self::Invalid(ref e) => write_err!(f, "invalid version number"; e),
         }
     }
 }
@@ -178,11 +176,9 @@ impl fmt::Display for FromStrError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromStrError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromStrError::*;
-
-        match *self {
-            Unparsable(ref e) => Some(e),
-            Invalid(ref e) => Some(e),
+        match self {
+            Self::Unparsable(ref e) => Some(e),
+            Self::Invalid(ref e) => Some(e),
         }
     }
 }
@@ -211,11 +207,10 @@ impl From<Infallible> for TryFromInstructionError {
 
 impl fmt::Display for TryFromInstructionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use TryFromInstructionError::*;
-
-        match *self {
-            TryFrom(ref e) => write_err!(f, "opcode is not a valid witness version"; e),
-            DataPush => write!(f, "non-zero data push opcode is not a valid witness version"),
+        match self {
+            Self::TryFrom(ref e) => write_err!(f, "opcode is not a valid witness version"; e),
+            Self::DataPush =>
+                write!(f, "non-zero data push opcode is not a valid witness version"),
         }
     }
 }
@@ -223,11 +218,9 @@ impl fmt::Display for TryFromInstructionError {
 #[cfg(feature = "std")]
 impl std::error::Error for TryFromInstructionError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TryFromInstructionError::*;
-
-        match *self {
-            TryFrom(ref e) => Some(e),
-            DataPush => None,
+        match self {
+            Self::TryFrom(ref e) => Some(e),
+            Self::DataPush => None,
         }
     }
 }
