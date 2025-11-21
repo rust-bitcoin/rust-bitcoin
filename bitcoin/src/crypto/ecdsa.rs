@@ -4,7 +4,9 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+use core::borrow::Borrow;
 use core::convert::Infallible;
+use core::ops::Deref;
 use core::str::FromStr;
 use core::{fmt, iter};
 
@@ -15,7 +17,6 @@ use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
 use crate::prelude::{DisplayHex, Vec};
-use crate::script::PushBytes;
 #[cfg(doc)]
 use crate::script::ScriptPubKeyBufExt as _;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
@@ -110,6 +111,26 @@ pub struct SerializedSignature {
 }
 
 impl SerializedSignature {
+    /// Constructs a new SerializedSignature from a Signature.
+    ///
+    /// In other words this serializes a `Signature` into a `SerializedSignature`.
+    #[inline]
+    pub fn from_signature(sig: Signature) -> Self { sig.serialize() }
+
+    /// Converts the serialized signature into the [`Signature`] struct.
+    ///
+    /// In other words this deserializes the `SerializedSignature`.
+    #[inline]
+    pub fn to_signature(self) -> Result<Signature, DecodeError> {
+        Signature::from_slice(&self)
+    }
+
+    /// Returns the length of the serialized signature data.
+    #[inline]
+    // `len` is never 0, so `is_empty` would always return `false`.
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize { self.len }
+
     /// Returns an iterator over bytes of the signature.
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
@@ -119,43 +140,6 @@ impl SerializedSignature {
     pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         writer.write_all(self)
     }
-}
-
-impl core::ops::Deref for SerializedSignature {
-    type Target = [u8];
-
-    #[inline]
-    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
-}
-
-impl core::ops::DerefMut for SerializedSignature {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data[..self.len] }
-}
-
-impl AsRef<[u8]> for SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &[u8] { self }
-}
-
-impl AsMut<[u8]> for SerializedSignature {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [u8] { self }
-}
-
-impl AsRef<PushBytes> for SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &PushBytes { &<&PushBytes>::from(&self.data)[..self.len()] }
-}
-
-impl core::borrow::Borrow<[u8]> for SerializedSignature {
-    #[inline]
-    fn borrow(&self) -> &[u8] { self }
-}
-
-impl core::borrow::BorrowMut<[u8]> for SerializedSignature {
-    #[inline]
-    fn borrow_mut(&mut self) -> &mut [u8] { self }
 }
 
 impl fmt::Debug for SerializedSignature {
@@ -189,10 +173,59 @@ impl PartialEq for SerializedSignature {
     fn eq(&self, other: &Self) -> bool { **self == **other }
 }
 
+impl PartialEq<[u8]> for SerializedSignature {
+    #[inline]
+    fn eq(&self, other: &[u8]) -> bool { **self == *other }
+}
+
+impl PartialEq<SerializedSignature> for [u8] {
+    #[inline]
+    fn eq(&self, other: &SerializedSignature) -> bool { *self == **other }
+}
+
+impl PartialOrd for SerializedSignature {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for SerializedSignature {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
+}
+
+impl PartialOrd<[u8]> for SerializedSignature {
+    fn partial_cmp(&self, other: &[u8]) -> Option<core::cmp::Ordering> {
+        (**self).partial_cmp(other)
+    }
+}
+
+impl PartialOrd<SerializedSignature> for [u8] {
+    fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
+        self.partial_cmp(&**other)
+    }
+}
+
 impl Eq for SerializedSignature {}
 
 impl core::hash::Hash for SerializedSignature {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state) }
+}
+
+impl AsRef<[u8]> for SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &[u8] { &self.data[..self.len] }
+}
+
+impl Borrow<[u8]> for SerializedSignature {
+    #[inline]
+    fn borrow(&self) -> &[u8] { &self.data[..self.len] }
+}
+
+impl Deref for SerializedSignature {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
 }
 
 impl<'a> IntoIterator for &'a SerializedSignature {
