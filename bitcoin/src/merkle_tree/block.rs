@@ -534,7 +534,7 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 mod tests {
     use hex::{DisplayHex, FromHex};
     use hex_lit::hex;
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     use {core::cmp, secp256k1::rand::prelude::*};
 
     use super::*;
@@ -542,7 +542,7 @@ mod tests {
     use crate::consensus::encode;
     use crate::Txid;
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     macro_rules! pmt_tests {
         ($($name:ident),* $(,)?) => {
             $(
@@ -554,7 +554,7 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     pmt_tests!(
         pmt_test_1,
         pmt_test_4,
@@ -571,10 +571,10 @@ mod tests {
     );
 
     /// Parses the transaction count out of `name` with form: `pmt_test_$num`.
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn pmt_test_from_name(name: &str) { pmt_test(name[9..].parse().unwrap()) }
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn pmt_test(tx_count: usize) {
         let mut rng = secp256k1::rand::rng();
         // Create some fake tx ids
@@ -744,7 +744,7 @@ mod tests {
         assert_eq!(index.len(), 0);
     }
 
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
         fn damage(&mut self, rng: &mut ThreadRng) {

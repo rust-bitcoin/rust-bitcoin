@@ -3,6 +3,7 @@
 - TODO: Make a comment about `Amount::MAX_MONEY` (perhaps here in `bitcoin` release notes as well as in `amount`)
 
 - Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+- Remove rand-std feature. Just use rand (but you probably need std enabled as well). [#5293](https://github.com/rust-bitcoin/rust-bitcoin/pull/5293)
 
 ## Breaking changes
 

@@ -1,4 +1,6 @@
-#![cfg(not(feature = "rand-std"))]
+//! This test is excluded when the `rand` feature is enabled because Schnorr signatures use
+//! auxiliary randomness, making them non-deterministic and incompatible with hardcoded test vectors.
+#![cfg(all(feature = "std", not(feature = "rand")))]
 
 use std::collections::BTreeMap;
 

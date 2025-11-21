@@ -17,7 +17,6 @@ exclude = ["tests", "contrib"]
 [features]
 default = [ "std", "secp-recovery" ]
 std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "secp256k1/std", "units/std", "base64?/std", "bitcoinconsensus?/std"]
-rand-std = ["secp256k1/rand", "std"]
 rand = ["secp256k1/rand"]
 serde = ["base64", "dep:serde", "hashes/serde", "internals/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
 secp-global-context = ["secp256k1/global-context"]
@@ -62,27 +61,27 @@ required-features = ["std", "bitcoinconsensus"]
 
 [[example]]
 name = "ecdsa-psbt-simple"
-required-features = ["rand-std"]
+required-features = ["rand", "std"]
 
 [[example]]
 name = "create-p2wpkh-address"
-required-features = ["rand-std"]
+required-features = ["rand", "std"]
 
 [[example]]
 name = "sign-tx-segwit-v0"
-required-features = ["rand-std"]
+required-features = ["rand", "std"]
 
 [[example]]
 name = "sign-tx-taproot"
-required-features = ["rand-std"]
+required-features = ["rand", "std"]
 
 [[example]]
 name = "taproot-psbt"
-required-features = ["rand-std", "bitcoinconsensus"]
+required-features = ["rand", "std", "bitcoinconsensus"]
 
 [[example]]
 name = "taproot-psbt-simple"
-required-features = ["rand-std"]
+required-features = ["rand", "std"]
 
 [[example]]
 name = "sighash"
