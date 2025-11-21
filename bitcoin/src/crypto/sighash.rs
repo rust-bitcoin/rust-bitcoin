@@ -310,11 +310,11 @@ impl From<Infallible> for PrevoutsIndexError {
 
 impl fmt::Display for PrevoutsIndexError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use PrevoutsIndexError::*;
-
-        match *self {
-            InvalidOneIndex => write!(f, "invalid index when accessing a Prevouts::One kind"),
-            InvalidAllIndex => write!(f, "invalid index when accessing a Prevouts::All kind"),
+        match self {
+            Self::InvalidOneIndex =>
+                write!(f, "invalid index when accessing a Prevouts::One kind"),
+            Self::InvalidAllIndex =>
+                write!(f, "invalid index when accessing a Prevouts::All kind"),
         }
     }
 }
@@ -322,10 +322,8 @@ impl fmt::Display for PrevoutsIndexError {
 #[cfg(feature = "std")]
 impl std::error::Error for PrevoutsIndexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use PrevoutsIndexError::*;
-
-        match *self {
-            InvalidOneIndex | InvalidAllIndex => None,
+        match self {
+            Self::InvalidOneIndex | Self::InvalidAllIndex => None,
         }
     }
 }
@@ -1181,12 +1179,10 @@ pub struct Annex<'a>(&'a [u8]);
 impl<'a> Annex<'a> {
     /// Constructs a new `Annex` struct checking the first byte is `0x50`.
     pub fn new(annex_bytes: &'a [u8]) -> Result<Self, AnnexError> {
-        use AnnexError::*;
-
         match annex_bytes.first() {
             Some(&TAPROOT_ANNEX_PREFIX) => Ok(Annex(annex_bytes)),
-            Some(other) => Err(IncorrectPrefix(*other)),
-            None => Err(Empty),
+            Some(other) => Err(AnnexError::IncorrectPrefix(*other)),
+            None => Err(AnnexError::Empty),
         }
     }
 
@@ -1224,15 +1220,14 @@ impl From<Infallible> for TaprootError {
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use TaprootError::*;
-
-        match *self {
-            InputsIndex(ref e) => write_err!(f, "inputs index"; e),
-            SingleMissingOutput(ref e) => write_err!(f, "sighash single"; e),
-            PrevoutsSize(ref e) => write_err!(f, "prevouts size"; e),
-            PrevoutsIndex(ref e) => write_err!(f, "prevouts index"; e),
-            PrevoutsKind(ref e) => write_err!(f, "prevouts kind"; e),
-            InvalidSighashType(hash_ty) => write!(f, "invalid Taproot sighash type : {} ", hash_ty),
+        match self {
+            Self::InputsIndex(ref e) => write_err!(f, "inputs index"; e),
+            Self::SingleMissingOutput(ref e) => write_err!(f, "sighash single"; e),
+            Self::PrevoutsSize(ref e) => write_err!(f, "prevouts size"; e),
+            Self::PrevoutsIndex(ref e) => write_err!(f, "prevouts index"; e),
+            Self::PrevoutsKind(ref e) => write_err!(f, "prevouts kind"; e),
+            Self::InvalidSighashType(hash_ty) =>
+                write!(f, "invalid Taproot sighash type : {} ", hash_ty),
         }
     }
 }
@@ -1240,15 +1235,13 @@ impl fmt::Display for TaprootError {
 #[cfg(feature = "std")]
 impl std::error::Error for TaprootError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TaprootError::*;
-
-        match *self {
-            InputsIndex(ref e) => Some(e),
-            SingleMissingOutput(ref e) => Some(e),
-            PrevoutsSize(ref e) => Some(e),
-            PrevoutsIndex(ref e) => Some(e),
-            PrevoutsKind(ref e) => Some(e),
-            InvalidSighashType(_) => None,
+        match self {
+            Self::InputsIndex(ref e) => Some(e),
+            Self::SingleMissingOutput(ref e) => Some(e),
+            Self::PrevoutsSize(ref e) => Some(e),
+            Self::PrevoutsIndex(ref e) => Some(e),
+            Self::PrevoutsKind(ref e) => Some(e),
+            Self::InvalidSighashType(_) => None,
         }
     }
 }
@@ -1289,11 +1282,10 @@ impl From<transaction::InputsIndexError> for P2wpkhError {
 
 impl fmt::Display for P2wpkhError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use P2wpkhError::*;
-
-        match *self {
-            Sighash(ref e) => write_err!(f, "error encoding SegWit v0 signing data"; e),
-            NotP2wpkhScript => write!(f, "script is not a script pubkey for a p2wpkh output"),
+        match self {
+            Self::Sighash(ref e) => write_err!(f, "error encoding SegWit v0 signing data"; e),
+            Self::NotP2wpkhScript =>
+                write!(f, "script is not a script pubkey for a p2wpkh output"),
         }
     }
 }
@@ -1301,11 +1293,9 @@ impl fmt::Display for P2wpkhError {
 #[cfg(feature = "std")]
 impl std::error::Error for P2wpkhError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use P2wpkhError::*;
-
-        match *self {
-            Sighash(ref e) => Some(e),
-            NotP2wpkhScript => None,
+        match self {
+            Self::Sighash(ref e) => Some(e),
+            Self::NotP2wpkhScript => None,
         }
     }
 }
@@ -1352,11 +1342,9 @@ impl From<Infallible> for AnnexError {
 
 impl fmt::Display for AnnexError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use AnnexError::*;
-
-        match *self {
-            Empty => write!(f, "the annex is empty"),
-            IncorrectPrefix(byte) =>
+        match self {
+            Self::Empty => write!(f, "the annex is empty"),
+            Self::IncorrectPrefix(byte) =>
                 write!(f, "incorrect prefix byte in the annex {:02x}, expecting 0x50", byte),
         }
     }
@@ -1365,10 +1353,8 @@ impl fmt::Display for AnnexError {
 #[cfg(feature = "std")]
 impl std::error::Error for AnnexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use AnnexError::*;
-
-        match *self {
-            Empty | IncorrectPrefix(_) => None,
+        match self {
+            Self::Empty | Self::IncorrectPrefix(_) => None,
         }
     }
 }

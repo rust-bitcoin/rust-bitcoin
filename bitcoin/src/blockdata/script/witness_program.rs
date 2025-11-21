@@ -43,16 +43,14 @@ pub struct WitnessProgram {
 impl WitnessProgram {
     /// Constructs a new witness program, copying the content from the given byte slice.
     pub fn new(version: WitnessVersion, bytes: &[u8]) -> Result<Self, Error> {
-        use Error::*;
-
         let program_len = bytes.len();
         if program_len < MIN_SIZE || program_len > MAX_SIZE {
-            return Err(InvalidLength(program_len));
+            return Err(Error::InvalidLength(program_len));
         }
 
         // Specific SegWit v0 check. These addresses can never spend funds sent to them.
         if version == WitnessVersion::V0 && (program_len != 20 && program_len != 32) {
-            return Err(InvalidSegwitV0Length(program_len));
+            return Err(Error::InvalidSegwitV0Length(program_len));
         }
 
         let program = ArrayVec::from_slice(bytes);
@@ -161,12 +159,10 @@ impl From<Infallible> for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            InvalidLength(len) =>
+        match self {
+            Self::InvalidLength(len) =>
                 write!(f, "witness program must be between 2 and 40 bytes: length={}", len),
-            InvalidSegwitV0Length(len) =>
+            Self::InvalidSegwitV0Length(len) =>
                 write!(f, "a v0 witness program must be either 20 or 32 bytes: length={}", len),
         }
     }
@@ -175,10 +171,8 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            InvalidLength(_) | InvalidSegwitV0Length(_) => None,
+        match self {
+            Self::InvalidLength(_) | Self::InvalidSegwitV0Length(_) => None,
         }
     }
 }

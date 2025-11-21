@@ -17,7 +17,6 @@ use arbitrary::{Arbitrary, Unstructured};
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
-use self::MerkleBlockError::*;
 use crate::block::{self, Block, Checked};
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
@@ -115,7 +114,7 @@ impl MerkleBlock {
         if merkle_root.eq(&self.header.merkle_root) {
             Ok(())
         } else {
-            Err(MerkleRootMismatch)
+            Err(MerkleBlockError::MerkleRootMismatch)
         }
     }
 }
@@ -482,19 +481,17 @@ impl From<Infallible> for MerkleBlockError {
 
 impl fmt::Display for MerkleBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use MerkleBlockError::*;
-
-        match *self {
-            MerkleRootMismatch => write!(f, "Merkle header root doesn't match to the root calculated from the partial Merkle tree"),
-            NoTransactions => write!(f, "partial Merkle tree contains no transactions"),
-            TooManyTransactions => write!(f, "too many transactions"),
-            TooManyHashes => write!(f, "proof contains more hashes than transactions"),
-            NotEnoughBits => write!(f, "proof contains fewer bits than hashes"),
-            NotAllBitsConsumed => write!(f, "not all bits were consumed"),
-            NotAllHashesConsumed => write!(f, "not all hashes were consumed"),
-            BitsArrayOverflow => write!(f, "overflowed the bits array"),
-            HashesArrayOverflow => write!(f, "overflowed the hashes array"),
-            IdenticalHashesFound => write!(f, "found identical transaction hashes"),
+        match self {
+            Self::MerkleRootMismatch => write!(f, "Merkle header root doesn't match to the root calculated from the partial Merkle tree"),
+            Self::NoTransactions => write!(f, "partial Merkle tree contains no transactions"),
+            Self::TooManyTransactions => write!(f, "too many transactions"),
+            Self::TooManyHashes => write!(f, "proof contains more hashes than transactions"),
+            Self::NotEnoughBits => write!(f, "proof contains fewer bits than hashes"),
+            Self::NotAllBitsConsumed => write!(f, "not all bits were consumed"),
+            Self::NotAllHashesConsumed => write!(f, "not all hashes were consumed"),
+            Self::BitsArrayOverflow => write!(f, "overflowed the bits array"),
+            Self::HashesArrayOverflow => write!(f, "overflowed the hashes array"),
+            Self::IdenticalHashesFound => write!(f, "found identical transaction hashes"),
         }
     }
 }
@@ -502,12 +499,17 @@ impl fmt::Display for MerkleBlockError {
 #[cfg(feature = "std")]
 impl std::error::Error for MerkleBlockError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use MerkleBlockError::*;
-
-        match *self {
-            MerkleRootMismatch | NoTransactions | TooManyTransactions | TooManyHashes
-            | NotEnoughBits | NotAllBitsConsumed | NotAllHashesConsumed | BitsArrayOverflow
-            | HashesArrayOverflow | IdenticalHashesFound => None,
+        match self {
+            Self::MerkleRootMismatch
+            | Self::NoTransactions
+            | Self::TooManyTransactions
+            | Self::TooManyHashes
+            | Self::NotEnoughBits
+            | Self::NotAllBitsConsumed
+            | Self::NotAllHashesConsumed
+            | Self::BitsArrayOverflow
+            | Self::HashesArrayOverflow
+            | Self::IdenticalHashesFound => None,
         }
     }
 }
