@@ -592,4 +592,20 @@ mod tests {
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
     }
+
+    #[test]
+    fn iter_encoder() {
+        let test_array = TestArray([1u8, 2, 3, 4]);
+        let mut iter = crate::EncodableByteIter::new(&test_array);
+        let mut byte = iter.next().unwrap();
+        assert_eq!(byte, 1u8);
+        byte = iter.next().unwrap();
+        assert_eq!(byte, 2u8);
+        byte = iter.next().unwrap();
+        assert_eq!(byte, 3u8);
+        byte = iter.next().unwrap();
+        assert_eq!(byte, 4u8);
+        let none = iter.next();
+        assert_eq!(none, None);
+    }
 }
