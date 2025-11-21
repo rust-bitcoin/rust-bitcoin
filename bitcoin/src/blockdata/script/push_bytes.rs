@@ -3,6 +3,7 @@
 //! Contains `PushBytes` & co
 
 use core::ops::{Deref, DerefMut};
+use core::fmt;
 
 use crate::prelude::{Borrow, BorrowMut};
 use crate::script;
@@ -298,9 +299,9 @@ impl PushBytes {
     ///
     /// # Errors
     ///
-    /// * [`script::Error::NumericOverflow`] if result is not in range [-2^31 +1...2^31 -1].
-    /// * [`script::Error::NonMinimalPush`] if encoding is non-minimal.
-    pub fn read_scriptint(&self) -> Result<i32, script::Error> {
+    /// * [`ScriptIntError::NumericOverflow`] if result is not in range [-2^39 +1...2^39 -1].
+    /// * [`ScriptIntError::NonMinimal`] if encoding is non-minimal.
+    pub fn read_scriptint(&self) -> Result<i32, ScriptIntError> {
         // Cast is safe, since the function already checks for byte length > 4
         let ret = self.read_scriptint_internal(4)?;
         Ok(i32::try_from(ret).expect("4 bytes or less fits in an i32"))
@@ -325,9 +326,9 @@ impl PushBytes {
     ///
     /// # Errors
     ///
-    /// * [`script::Error::NumericOverflow`] if result is not in range [-2^39 +1...2^39 -1].
-    /// * [`script::Error::NonMinimalPush`] if encoding is non-minimal.
-    pub fn read_cltv_scriptint(&self) -> Result<i64, script::Error> {
+    /// * [`ScriptIntError::NumericOverflow`] if result is not in range [-2^39 +1...2^39 -1].
+    /// * [`ScriptIntError::NonMinimal`] if encoding is non-minimal.
+    pub fn read_cltv_scriptint(&self) -> Result<i64, ScriptIntError> {
         self.read_scriptint_internal(5)
     }
 
@@ -336,13 +337,13 @@ impl PushBytes {
     /// As with `read_cltv_scriptint`, this returns an i64, since that is the maximum size we might
     /// need to return data. In practice, if the max_size parameter is 4 or less, this function
     /// will always return a value that can fit into an i32, and can thus be safely cast.
-    fn read_scriptint_internal(&self, max_size: usize) -> Result<i64, script::Error> {
+    fn read_scriptint_internal(&self, max_size: usize) -> Result<i64, ScriptIntError> {
         let last = match self.as_bytes().last() {
             Some(last) => last,
             None => return Ok(0),
         };
         if self.len() > max_size {
-            return Err(script::Error::NumericOverflow);
+            return Err(ScriptIntError::NumericOverflow);
         }
         // Comment and code copied from Bitcoin Core:
         // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
@@ -356,7 +357,7 @@ impl PushBytes {
             // is +-255, which encode to 0xff00 and 0xff80 respectively.
             // (big-endian).
             if self.len() <= 1 || (self[self.len() - 2] & 0x80) == 0 {
-                return Err(script::Error::NonMinimalPush);
+                return Err(ScriptIntError::NonMinimal);
             }
         }
 
@@ -415,6 +416,28 @@ impl Borrow<PushBytes> for PushBytesBuf {
 
 impl BorrowMut<PushBytes> for PushBytesBuf {
     fn borrow_mut(&mut self) -> &mut PushBytes { self.as_mut_push_bytes() }
+}
+
+/// Possible errors that can arise from [`PushBytes::read_scriptint`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ScriptIntError {
+    /// The result is not in range [-2^31 +1...2^31 -1].
+    NumericOverflow,
+    /// The resulting encoding is non-minimal.
+    NonMinimal,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ScriptIntError {}
+
+impl fmt::Display for ScriptIntError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::NumericOverflow => f.write_str("script integer outside of valid range"),
+            Self::NonMinimal => f.write_str("non-minimal encoded script integer"),
+        }
+    }
 }
 
 /// Reports information about failed conversion into `PushBytes`.

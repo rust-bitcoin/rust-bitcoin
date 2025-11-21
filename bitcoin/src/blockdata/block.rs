@@ -18,7 +18,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::prelude::Vec;
-use crate::script::{self, ScriptExt as _};
+use crate::script::{self, ScriptIntError, ScriptExt as _};
 use crate::transaction::{Coinbase, Transaction, TransactionExt as _, Wtxid};
 use crate::{internal_macros, BlockTime, Target, Weight, Work};
 
@@ -364,7 +364,7 @@ impl BlockCheckedExt for Block<Checked> {
         match (push.script_num(), push.push_bytes().map(|b| b.read_scriptint())) {
             (Some(num), Some(Ok(_)) | None) =>
                 Ok(num.try_into().map_err(|_| Bip34Error::NegativeHeight)?),
-            (_, Some(Err(err))) => Err(to_bip34_error(err)),
+            (_, Some(Err(err))) => Err(err.into()),
             (None, _) => Err(Bip34Error::NotPresent),
         }
     }
@@ -505,6 +505,16 @@ impl std::error::Error for Bip34Error {
 
         match *self {
             Unsupported | NotPresent | NonMinimalPush | NegativeHeight => None,
+        }
+    }
+}
+
+impl From<ScriptIntError> for Bip34Error {
+    #[inline]
+    fn from(err: ScriptIntError) -> Self {
+        match err {
+            ScriptIntError::NonMinimal => Self::NonMinimalPush,
+            _ => Self::NotPresent,
         }
     }
 }
