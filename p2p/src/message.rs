@@ -442,8 +442,7 @@ impl Encodable for NetworkMessage {
             Self::BlockTxn(ref dat) => dat.consensus_encode(writer),
             Self::Alert(ref dat) => dat.consensus_encode(writer),
             Self::Reject(ref dat) => dat.consensus_encode(writer),
-            Self::FeeFilter(ref dat) =>
-                dat.to_sat_per_kvb_ceil().consensus_encode(writer),
+            Self::FeeFilter(ref dat) => dat.to_sat_per_kvb_ceil().consensus_encode(writer),
             Self::AddrV2(ref dat) => dat.consensus_encode(writer),
             Self::Verack
             | Self::SendHeaders
@@ -890,9 +889,7 @@ impl<'a> Arbitrary<'a> for CommandString {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HeadersMessage {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -935,10 +932,7 @@ impl<'a> Arbitrary<'a> for NetworkMessage {
             33 => Ok(Self::WtxidRelay),
             34 => Ok(Self::AddrV2(u.arbitrary()?)),
             35 => Ok(Self::SendAddrV2),
-            _ => Ok(Self::Unknown {
-                command: u.arbitrary()?,
-                payload: Vec::<u8>::arbitrary(u)?,
-            }),
+            _ => Ok(Self::Unknown { command: u.arbitrary()?, payload: Vec::<u8>::arbitrary(u)? }),
         }
     }
 }

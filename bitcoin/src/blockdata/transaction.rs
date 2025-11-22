@@ -700,10 +700,7 @@ impl Encodable for OutPoint {
 }
 impl Decodable for OutPoint {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Self {
-            txid: Decodable::consensus_decode(r)?,
-            vout: Decodable::consensus_decode(r)?,
-        })
+        Ok(Self { txid: Decodable::consensus_decode(r)?, vout: Decodable::consensus_decode(r)? })
     }
 }
 

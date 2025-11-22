@@ -42,8 +42,6 @@ pub enum IsSatisfiedByError {
 impl fmt::Display for IsSatisfiedByError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
-
         match *self {
             Self::Blocks(ref e) => write_err!(f, "blocks"; e),
             Self::Time(ref e) => write_err!(f, "time"; e),
@@ -54,8 +52,6 @@ impl fmt::Display for IsSatisfiedByError {
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        
-
         match *self {
             Self::Blocks(ref e) => Some(e),
             Self::Time(ref e) => Some(e),
@@ -76,8 +72,6 @@ pub enum IsSatisfiedByHeightError {
 impl fmt::Display for IsSatisfiedByHeightError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
-
         match *self {
             Self::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
             Self::Incompatible(time) =>
@@ -89,8 +83,6 @@ impl fmt::Display for IsSatisfiedByHeightError {
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByHeightError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        
-
         match *self {
             Self::Satisfaction(ref e) => Some(e),
             Self::Incompatible(_) => None,
@@ -111,8 +103,6 @@ pub enum IsSatisfiedByTimeError {
 impl fmt::Display for IsSatisfiedByTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
-
         match *self {
             Self::Satisfaction(ref e) => write_err!(f, "satisfaction"; e),
             Self::Incompatible(blocks) =>
@@ -124,8 +114,6 @@ impl fmt::Display for IsSatisfiedByTimeError {
 #[cfg(feature = "std")]
 impl std::error::Error for IsSatisfiedByTimeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        
-
         match *self {
             Self::Satisfaction(ref e) => Some(e),
             Self::Incompatible(_) => None,

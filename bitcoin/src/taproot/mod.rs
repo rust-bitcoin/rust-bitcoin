@@ -142,9 +142,7 @@ impl From<&LeafNode> for TapNodeHash {
 
 impl TapNodeHash {
     /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: Self, b: Self) -> Self {
-        combine_node_hashes(a, b).0
-    }
+    pub fn from_node_hashes(a: Self, b: Self) -> Self { combine_node_hashes(a, b).0 }
 
     /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
     ///
@@ -313,10 +311,7 @@ impl TaprootSpendInfo {
     ///
     /// This is useful when you want to manually build a Taproot tree without using
     /// [`TaprootBuilder`].
-    pub fn from_node_info<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        node: NodeInfo,
-    ) -> Self {
+    pub fn from_node_info<K: Into<UntweakedPublicKey>>(internal_key: K, node: NodeInfo) -> Self {
         // Create as if it is a key spend path with the given Merkle root
         let root_hash = Some(node.hash);
         let mut info = Self::new_key_spend(internal_key, root_hash);
@@ -424,9 +419,7 @@ impl TaprootBuilder {
     /// Constructs a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
     ///
     /// The size here should be maximum depth of the tree.
-    pub fn with_capacity(size: usize) -> Self {
-        Self { branch: Vec::with_capacity(size) }
-    }
+    pub fn with_capacity(size: usize) -> Self { Self { branch: Vec::with_capacity(size) } }
 
     /// Constructs a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
@@ -567,9 +560,7 @@ impl TaprootBuilder {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilderError::HiddenParts(Self {
-                branch: vec![Some(node)],
-            }));
+            return Err(IncompleteBuilderError::HiddenParts(Self { branch: vec![Some(node)] }));
         }
         Ok(TapTree(node))
     }
@@ -670,22 +661,18 @@ impl From<Infallible> for IncompleteBuilderError {
 impl IncompleteBuilderError {
     /// Converts error into the original incomplete [`TaprootBuilder`] instance.
     pub fn into_builder(self) -> TaprootBuilder {
-        use IncompleteBuilderError::*;
-
         match self {
-            NotFinalized(builder) | HiddenParts(builder) => builder,
+            Self::NotFinalized(builder) | Self::HiddenParts(builder) => builder,
         }
     }
 }
 
 impl core::fmt::Display for IncompleteBuilderError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        use IncompleteBuilderError::*;
-
         f.write_str(match self {
-            NotFinalized(_) =>
+            Self::NotFinalized(_) =>
                 "an attempt to construct a Taproot tree from a builder containing incomplete branches",
-            HiddenParts(_) =>
+            Self::HiddenParts(_) =>
                 "an attempt to construct a Taproot tree from a builder containing hidden parts",
         })
     }
@@ -694,10 +681,8 @@ impl core::fmt::Display for IncompleteBuilderError {
 #[cfg(feature = "std")]
 impl std::error::Error for IncompleteBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use IncompleteBuilderError::*;
-
-        match *self {
-            NotFinalized(_) | HiddenParts(_) => None,
+        match self {
+            Self::NotFinalized(_) | Self::HiddenParts(_) => None,
         }
     }
 }
@@ -718,20 +703,16 @@ impl From<Infallible> for HiddenNodesError {
 impl HiddenNodesError {
     /// Converts error into the original incomplete [`NodeInfo`] instance.
     pub fn into_node_info(self) -> NodeInfo {
-        use HiddenNodesError::*;
-
         match self {
-            HiddenParts(node_info) => node_info,
+            Self::HiddenParts(node_info) => node_info,
         }
     }
 }
 
 impl core::fmt::Display for HiddenNodesError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        use HiddenNodesError::*;
-
         f.write_str(match self {
-            HiddenParts(_) =>
+            Self::HiddenParts(_) =>
                 "an attempt to construct a Taproot tree from a node_info containing hidden parts",
         })
     }
@@ -740,10 +721,8 @@ impl core::fmt::Display for HiddenNodesError {
 #[cfg(feature = "std")]
 impl std::error::Error for HiddenNodesError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use HiddenNodesError::*;
-
         match self {
-            HiddenParts(_) => None,
+            Self::HiddenParts(_) => None,
         }
     }
 }
@@ -1316,9 +1295,7 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
 pub struct FutureLeafVersion(u8);
 
 impl FutureLeafVersion {
-    pub(self) fn from_consensus(
-        version: u8,
-    ) -> Result<Self, InvalidTaprootLeafVersionError> {
+    pub(self) fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => unreachable!(
                 "FutureLeafVersion::from_consensus should never be called for 0xC0 value"
@@ -1477,19 +1454,17 @@ impl From<Infallible> for TaprootBuilderError {
 
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use TaprootBuilderError::*;
-
-        match *self {
-            InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
-            NodeNotInDfsOrder => {
+        match self {
+            Self::InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
+            Self::NodeNotInDfsOrder => {
                 write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
             }
-            OverCompleteTree => write!(
+            Self::OverCompleteTree => write!(
                 f,
                 "attempted to create a tree with two nodes at depth 0. There must\
                 only be exactly one node at depth 0",
             ),
-            EmptyTree => {
+            Self::EmptyTree => {
                 write!(f, "called finalize on an empty tree")
             }
         }
@@ -1499,11 +1474,9 @@ impl fmt::Display for TaprootBuilderError {
 #[cfg(feature = "std")]
 impl std::error::Error for TaprootBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TaprootBuilderError::*;
-
-        match *self {
-            InvalidMerkleTreeDepth(ref e) => Some(e),
-            NodeNotInDfsOrder | OverCompleteTree | EmptyTree => None,
+        match self {
+            Self::InvalidMerkleTreeDepth(ref e) => Some(e),
+            Self::NodeNotInDfsOrder | Self::OverCompleteTree | Self::EmptyTree => None,
         }
     }
 }
@@ -1537,15 +1510,14 @@ impl From<Infallible> for TaprootError {
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use TaprootError::*;
-
-        match *self {
-            InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
-            InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
-            InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
-            InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
-            InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
-            InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
+        match self {
+            Self::InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
+            Self::InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
+            Self::InvalidTaprootLeafVersion(ref e) =>
+                write_err!(f, "invalid Taproot leaf version"; e),
+            Self::InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
+            Self::InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
+            Self::InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
         }
     }
 }
@@ -1553,14 +1525,12 @@ impl fmt::Display for TaprootError {
 #[cfg(feature = "std")]
 impl std::error::Error for TaprootError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TaprootError::*;
-
         match self {
-            InvalidInternalKey(e) => Some(e),
-            InvalidTaprootLeafVersion(ref e) => Some(e),
-            InvalidMerkleTreeDepth(ref e) => Some(e),
-            InvalidControlBlockHex(ref e) => Some(e),
-            InvalidMerkleBranchSize(_) | InvalidControlBlockSize(_) => None,
+            Self::InvalidInternalKey(e) => Some(e),
+            Self::InvalidTaprootLeafVersion(ref e) => Some(e),
+            Self::InvalidMerkleTreeDepth(ref e) => Some(e),
+            Self::InvalidControlBlockHex(ref e) => Some(e),
+            Self::InvalidMerkleBranchSize(_) | Self::InvalidControlBlockSize(_) => None,
         }
     }
 }
@@ -1775,20 +1745,13 @@ mod test {
         );
     }
 
-    fn _verify_tap_commitments(
-        out_spk_hex: &str,
-        script_hex: &str,
-        control_block_hex: &str,
-    ) {
+    fn _verify_tap_commitments(out_spk_hex: &str, script_hex: &str, control_block_hex: &str) {
         let out_pk = out_spk_hex[4..].parse::<XOnlyPublicKey>().unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = TapScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
         let control_block = ControlBlock::from_hex(control_block_hex).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
-        assert!(control_block.verify_taproot_commitment(
-            out_pk.to_x_only_public_key(),
-            &script
-        ));
+        assert!(control_block.verify_taproot_commitment(out_pk.to_x_only_public_key(), &script));
     }
 
     #[test]
@@ -1852,8 +1815,7 @@ mod test {
             (19, TapScriptBuf::from_hex_no_length_prefix("55").unwrap()),
         ];
         let tree_info =
-            TaprootSpendInfo::with_huffman_tree(internal_key, script_weights.clone())
-                .unwrap();
+            TaprootSpendInfo::with_huffman_tree(internal_key, script_weights.clone()).unwrap();
 
         /* The resulting tree should put the scripts into a tree similar
          * to the following:
@@ -1889,10 +1851,8 @@ mod test {
         for (_weights, script) in script_weights {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(
-                output_key.to_x_only_public_key(),
-                &ver_script.0
-            ))
+            assert!(ctrl_block
+                .verify_taproot_commitment(output_key.to_x_only_public_key(), &ver_script.0))
         }
     }
 
@@ -1961,10 +1921,8 @@ mod test {
         for script in [a, b, c, d, e] {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(
-                output_key.to_x_only_public_key(),
-                &ver_script.0
-            ))
+            assert!(ctrl_block
+                .verify_taproot_commitment(output_key.to_x_only_public_key(), &ver_script.0))
         }
     }
 

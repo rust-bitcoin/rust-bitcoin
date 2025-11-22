@@ -221,12 +221,10 @@ impl From<Infallible> for DecodeError {
 
 impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DecodeError::*;
-
-        match *self {
-            SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
-            EmptySignature => write!(f, "empty ECDSA signature"),
-            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
+        match self {
+            Self::SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
+            Self::EmptySignature => write!(f, "empty ECDSA signature"),
+            Self::Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
         }
     }
 }
@@ -234,12 +232,10 @@ impl fmt::Display for DecodeError {
 #[cfg(feature = "std")]
 impl std::error::Error for DecodeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use DecodeError::*;
-
-        match *self {
-            Secp256k1(ref e) => Some(e),
-            SighashType(ref e) => Some(e),
-            EmptySignature => None,
+        match self {
+            Self::Secp256k1(ref e) => Some(e),
+            Self::SighashType(ref e) => Some(e),
+            Self::EmptySignature => None,
         }
     }
 }
@@ -268,11 +264,9 @@ impl From<Infallible> for ParseSignatureError {
 
 impl fmt::Display for ParseSignatureError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseSignatureError::*;
-
-        match *self {
-            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
-            Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
+        match self {
+            Self::Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            Self::Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
         }
     }
 }
@@ -280,11 +274,9 @@ impl fmt::Display for ParseSignatureError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseSignatureError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseSignatureError::*;
-
-        match *self {
-            Hex(ref e) => Some(e),
-            Decode(ref e) => Some(e),
+        match self {
+            Self::Hex(ref e) => Some(e),
+            Self::Decode(ref e) => Some(e),
         }
     }
 }
