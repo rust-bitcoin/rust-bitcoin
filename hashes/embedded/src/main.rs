@@ -1,6 +1,6 @@
 #![cfg_attr(feature = "alloc", feature(alloc_error_handler))]
 #![no_std]
-#![no_main]
+#![cfg_attr(fuzzing, no_main)]
 
 #[macro_use]
 extern crate bitcoin_hashes;

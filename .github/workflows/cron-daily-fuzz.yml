@@ -34,6 +34,10 @@ jobs:
           bitcoin_parse_address,
           bitcoin_parse_outpoint,
           bitcoin_script_bytes_to_asm_fmt,
+          consensus_encoding_decode_array,
+          consensus_encoding_decode_byte_vec,
+          consensus_encoding_decode_compact_size,
+          consensus_encoding_decode_decoder2,
           hashes_json,
           hashes_ripemd160,
           hashes_sha1,
@@ -92,4 +96,4 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
-      - run: source ./fuzz/fuzz-util.sh && listTargetNames | sort | diff - executed
+      - run: cargo fuzz list | sort | diff - executed
