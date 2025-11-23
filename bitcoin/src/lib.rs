@@ -105,7 +105,7 @@ pub mod ext {
     //! ```
     #[rustfmt::skip] // Use terse custom grouping.
     pub use crate::{
-        block::{BlockUncheckedExt as _, BlockCheckedExt as _, HeaderExt as _},
+        block::{BlockCheckedExt as _, HeaderExt as _},
         pow::CompactTargetExt as _,
         script::{ScriptExt as _, ScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
@@ -141,7 +141,7 @@ pub use primitives::{
     block::{
         Block, BlockHash, Checked as BlockChecked, Header as BlockHeader,
         Unchecked as BlockUnchecked, Validation as BlockValidation, Version as BlockVersion,
-        WitnessCommitment,
+        WitnessCommitment, compute_merkle_root, compute_witness_root, InvalidBlockError,
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget, // No `pow` module outside of `primitives`.

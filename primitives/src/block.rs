@@ -29,6 +29,8 @@ use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
 use crate::{BlockTimeDecoder, BlockTimeDecoderError, Transaction, WitnessMerkleNode};
+#[cfg(feature = "alloc")]
+use crate::merkle_tree::MerkleNode;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -108,6 +110,86 @@ impl Block<Unchecked> {
     /// Decomposes block into its constituent parts.
     #[inline]
     pub fn into_parts(self) -> (Header, Vec<Transaction>) { (self.header, self.transactions) }
+
+    /// Validates (or checks) a block.
+    ///
+    /// We define valid as:
+    ///
+    /// * The Merkle root of the header matches Merkle root of the transaction list.
+    /// * The witness commitment in coinbase matches the transaction list.
+    pub fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
+        if self.transactions.is_empty() {
+            return Err(InvalidBlockError::NoTransactions);
+        }
+
+        if !self.transactions[0].is_coinbase() {
+            return Err(InvalidBlockError::InvalidCoinbase);
+        }
+
+        if !self.check_merkle_root() {
+            return Err(InvalidBlockError::InvalidMerkleRoot);
+        }
+
+        match self.check_witness_commitment() {
+            (false, _) => Err(InvalidBlockError::InvalidWitnessCommitment),
+            (true, witness_root) => {
+                let block = Self::new_unchecked(self.header, self.transactions);
+                Ok(block.assume_checked(witness_root))
+            }
+        }
+    }
+
+    /// Checks if Merkle root of header matches Merkle root of the transaction list.
+    pub fn check_merkle_root(&self) -> bool {
+        match compute_merkle_root(&self.transactions) {
+            Some(merkle_root) => self.header.merkle_root == merkle_root,
+            None => false,
+        }
+    }
+
+    /// Computes the witness commitment for a list of transactions.
+    pub fn compute_witness_commitment(&self, witness_reserved_value: &[u8]) -> Option<(WitnessMerkleNode, WitnessCommitment)> {
+        compute_witness_root(&self.transactions).map(|witness_root| {
+            let mut encoder = sha256d::Hash::engine();
+            encoder = hashes::encode_to_engine(&witness_root, encoder);
+            encoder.input(witness_reserved_value);
+            let witness_commitment =
+                WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array());
+            (witness_root, witness_commitment)
+        })
+    }
+
+    /// Checks if witness commitment in coinbase matches the transaction list.
+    // Returns the Merkle root if it was computed (so it can be cached in `assume_checked`).
+    pub fn check_witness_commitment(&self) -> (bool, Option<WitnessMerkleNode>) {
+        // Witness commitment is optional if there are no transactions using SegWit in the block.
+        if self.transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
+            return (true, None);
+        }
+
+        if self.transactions.is_empty() {
+            return (false, None);
+        }
+
+        if self.transactions[0].is_coinbase() {
+            let coinbase = self.transactions[0].clone();
+            if let Some(commitment) = witness_commitment_from_coinbase(&coinbase) {
+                // Witness reserved value is in coinbase input witness.
+                let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
+                if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
+                    if let Some((witness_root, witness_commitment)) =
+                        self.compute_witness_commitment(witness_vec[0])
+                    {
+                        if commitment == witness_commitment {
+                            return (true, Some(witness_root));
+                        }
+                    }
+                }
+            }
+        }
+
+        (false, None)
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -269,6 +351,100 @@ impl std::error::Error for BlockDecoderError {
             encoding::Decoder2Error::First(ref e) => Some(e),
             encoding::Decoder2Error::Second(ref e) => Some(e),
         }
+    }
+}
+
+/// Invalid block error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum InvalidBlockError {
+    /// Header Merkle root does not match the calculated Merkle root.
+    InvalidMerkleRoot,
+    /// The witness commitment in coinbase transaction does not match the calculated `witness_root`.
+    InvalidWitnessCommitment,
+    /// Block has no transactions (missing coinbase).
+    NoTransactions,
+    /// The first transaction is not a valid coinbase transaction.
+    InvalidCoinbase,
+}
+
+impl From<Infallible> for InvalidBlockError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for InvalidBlockError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::InvalidMerkleRoot =>
+                write!(f, "header Merkle root does not match the calculated Merkle root"),
+            Self::InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
+            Self::NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
+            Self::InvalidCoinbase =>
+                write!(f, "the first transaction is not a valid coinbase transaction"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidBlockError {}
+
+/// Computes the Merkle root for a list of transactions.
+///
+/// Returns `None` if the iterator was empty, or if the transaction list contains
+/// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
+/// transactions will always be invalid, so there is no harm in us refusing to
+/// compute their merkle roots.
+///
+/// Unless you are certain your transaction list is nonempty and has no duplicates,
+/// you should not unwrap the `Option` returned by this method!
+#[cfg(feature = "alloc")]
+pub fn compute_merkle_root(transactions: &[Transaction]) -> Option<TxMerkleNode> {
+    let hashes = transactions.iter().map(Transaction::compute_txid);
+    TxMerkleNode::calculate_root(hashes)
+}
+
+/// Computes the Merkle root of transactions hashed for witness.
+///
+/// Returns `None` if the iterator was empty, or if the transaction list contains
+/// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
+/// transactions will always be invalid, so there is no harm in us refusing to
+/// compute their merkle roots.
+///
+/// Unless you are certain your transaction list is nonempty and has no duplicates,
+/// you should not unwrap the `Option` returned by this method!
+#[cfg(feature = "alloc")]
+pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkleNode> {
+    let hashes = transactions.iter().enumerate().map(|(i, t)| {
+        if i == 0 {
+            // Replace the first hash with zeroes.
+            crate::Wtxid::COINBASE
+        } else {
+            t.compute_wtxid()
+        }
+    });
+    WitnessMerkleNode::calculate_root(hashes)
+}
+
+#[cfg(feature = "alloc")]
+fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCommitment> {
+    // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
+    const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
+
+    if !coinbase.is_coinbase() {
+        return None;
+    }
+
+    // Commitment is in the last output that starts with magic bytes.
+    if let Some(pos) = coinbase
+        .outputs
+        .iter()
+        .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
+    {
+        let bytes =
+            <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+        Some(WitnessCommitment::from_byte_array(bytes))
+    } else {
+        None
     }
 }
 
