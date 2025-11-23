@@ -469,21 +469,7 @@ impl Encodable for [u16; 8] {
 impl<T: Encodable + 'static> Encodable for Vec<T> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        if TypeId::of::<T>() == TypeId::of::<u8>() {
-            let len = self.len();
-            let ptr = self.as_ptr();
-
-            // unsafe: We've just checked that T is `u8`.
-            let v = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
-            consensus_encode_with_size(v, w)
-        } else {
-            let mut len = 0;
-            len += w.emit_compact_size(self.len())?;
-            for c in self.iter() {
-                len += c.consensus_encode(w)?;
-            }
-            Ok(len)
-        }
+        self[..].consensus_encode(w)
     }
 }
 
@@ -566,6 +552,33 @@ impl Decodable for Box<[u8]> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         <Vec<u8>>::consensus_decode_from_finite_reader(r).map(From::from)
+    }
+}
+
+impl<T: Encodable + 'static> Encodable for [T] {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        (&self).consensus_encode(w)
+    }
+}
+
+impl<T: Encodable + 'static> Encodable for &[T] {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        if TypeId::of::<T>() == TypeId::of::<u8>() {
+            let len = self.len();
+            let ptr = self.as_ptr();
+
+            // unsafe: We've just checked that T is `u8`.
+            let v = unsafe { slice::from_raw_parts(ptr.cast::<u8>(), len) };
+            consensus_encode_with_size(v, w)
+        } else {
+            let mut len = w.emit_compact_size(self.len())?;
+            for c in self.iter() {
+                len += c.consensus_encode(w)?;
+            }
+            Ok(len)
+        }
     }
 }
 
@@ -731,6 +744,57 @@ mod tests {
         input[0] = n;
         input[1..x.len() + 1].copy_from_slice(x);
         (&input[..]).read_compact_size()
+    }
+
+    #[test]
+    fn encode_t_slice() {
+        // Multi-element u8 case
+        let enc_buf = serialize(&[1u8, 2, 3, 4].as_slice());
+        assert_eq!(enc_buf, [4u8, 1, 2, 3, 4]);
+
+        // Empty u64 case
+        let enc_buf = serialize::<&[u64]>(&[0u64; 0].as_slice());
+        assert_eq!(enc_buf, [0u8]);
+
+        // multi-element u32 case
+        let enc_buf = serialize(&[654321u32, 123456].as_slice());
+        assert_eq!(enc_buf, [2u8, 241, 251, 9, 0, 64, 226, 1, 0])
+    }
+
+    #[test]
+    fn encode_u8_slice() {
+        // Multi-element case
+        let enc_buf = serialize([1u8, 2, 3, 4].as_slice());
+        assert_eq!(enc_buf, [4u8, 1, 2, 3, 4]);
+
+        // Empty case
+        let enc_buf = serialize::<[u8]>([0u8; 0].as_slice());
+        assert_eq!(enc_buf, [0u8]);
+
+        // Single-element case
+        let enc_buf = serialize([42u8].as_slice());
+        assert_eq!(enc_buf, [1u8, 42]);
+    }
+
+    #[test]
+    fn encode_u8_slice_matches_vec() {
+        let assert_vec_eq = |data: Vec<u8>| {
+            let enc_buf = serialize::<[u8]>(data.as_slice());
+            let vec_enc_buf = serialize::<Vec<u8>>(&data);
+            assert_eq!(enc_buf, vec_enc_buf);
+        };
+
+        // Multi-element case
+        let data = vec![1u8, 2, 3, 4];
+        assert_vec_eq(data);
+
+        // Empty case
+        let data = Vec::new();
+        assert_vec_eq(data);
+
+        // Single-element case
+        let data = vec![42u8];
+        assert_vec_eq(data);
     }
 
     #[test]
