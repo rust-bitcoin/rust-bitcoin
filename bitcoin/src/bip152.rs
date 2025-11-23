@@ -402,9 +402,7 @@ impl BlockTransactions {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ShortId {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -429,20 +427,14 @@ impl<'a> Arbitrary<'a> for HeaderAndShortIds {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactions {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            block_hash: u.arbitrary()?,
-            transactions: Vec::<Transaction>::arbitrary(u)?,
-        })
+        Ok(Self { block_hash: u.arbitrary()?, transactions: Vec::<Transaction>::arbitrary(u)? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            block_hash: u.arbitrary()?,
-            indexes: Vec::<u64>::arbitrary(u)?,
-        })
+        Ok(Self { block_hash: u.arbitrary()?, indexes: Vec::<u64>::arbitrary(u)? })
     }
 }
 

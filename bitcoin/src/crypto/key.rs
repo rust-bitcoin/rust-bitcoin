@@ -312,11 +312,7 @@ impl PublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key(
-        sk: PrivateKey,
-    ) -> Self {
-        sk.public_key()
-    }
+    pub fn from_private_key(sk: PrivateKey) -> Self { sk.public_key() }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
     pub fn verify(
@@ -452,9 +448,7 @@ impl CompressedPublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key(
-        sk: PrivateKey,
-    ) -> Result<Self, UncompressedPublicKeyError> {
+    pub fn from_private_key(sk: PrivateKey) -> Result<Self, UncompressedPublicKeyError> {
         sk.public_key().try_into()
     }
 
@@ -901,10 +895,7 @@ pub trait TapTweak {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak(
-        self,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self::TweakedAux;
+    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
 
     /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`].
     ///
@@ -930,10 +921,7 @@ impl TapTweak for UntweakedPublicKey {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak(
-        self,
-        merkle_root: Option<TapNodeHash>,
-    ) -> (TweakedPublicKey, Parity) {
+    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> (TweakedPublicKey, Parity) {
         let tweak = TapTweakHash::from_key_and_merkle_root(self, merkle_root).to_scalar();
         let (output_key, parity) = self.add_tweak(&tweak).expect("Tap tweak failed");
 
@@ -958,10 +946,7 @@ impl TapTweak for UntweakedKeypair {
     /// # Returns
     ///
     /// The tweaked keypair.
-    fn tap_tweak(
-        self,
-        merkle_root: Option<TapNodeHash>,
-    ) -> TweakedKeypair {
+    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
         let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
         let tweaked = self.add_xonly_tweak(&tweak).expect("Tap tweak failed");
@@ -1828,7 +1813,8 @@ mod tests {
     fn xonly_pubkey_from_bytes() {
         let key_bytes = &<[u8; 32]>::from_hex(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
-        ).expect("Failed to convert hex string to byte array");
+        )
+        .expect("Failed to convert hex string to byte array");
         let xonly_pub_key = XOnlyPublicKey::from_byte_array(key_bytes)
             .expect("Failed to create an XOnlyPublicKey from a byte array");
         // Confirm that the public key from bytes serializes back to the same bytes
@@ -1839,7 +1825,8 @@ mod tests {
     fn xonly_pubkey_into_inner() {
         let key_bytes = &<[u8; 32]>::from_hex(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
-        ).expect("Failed to convert hex string to byte array");
+        )
+        .expect("Failed to convert hex string to byte array");
         let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(*key_bytes)
             .expect("Failed to create a secp256k1 x-only public key from a byte array");
         let btc_pubkey = XOnlyPublicKey::new(inner_key);

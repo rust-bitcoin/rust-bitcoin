@@ -2,8 +2,8 @@
 
 //! Contains `PushBytes` & co
 
-use core::ops::{Deref, DerefMut};
 use core::fmt;
+use core::ops::{Deref, DerefMut};
 
 use crate::prelude::{Borrow, BorrowMut};
 use crate::script;
