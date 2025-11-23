@@ -1508,6 +1508,7 @@ pub fn bitcoin_primitives::transaction::Transaction::encoder(&self) -> Self::Enc
 pub fn bitcoin_primitives::transaction::Transaction::eq(&self, other: &bitcoin_primitives::transaction::Transaction) -> bool
 pub fn bitcoin_primitives::transaction::Transaction::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::transaction::Transaction::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::transaction::Transaction::is_coinbase(&self) -> bool
 pub fn bitcoin_primitives::transaction::Transaction::partial_cmp(&self, other: &Self) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::transaction::TransactionDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::TransactionDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
