@@ -19,7 +19,7 @@ use io::{BufRead, Write};
 
 use crate::block::{self, Block, Checked};
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
-use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
+use crate::merkle_tree::TxMerkleNode;
 use crate::prelude::Vec;
 use crate::transaction::{Transaction, Txid};
 use crate::Weight;
