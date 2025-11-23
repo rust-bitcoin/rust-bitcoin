@@ -60,6 +60,8 @@ impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Checke
 impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Unchecked
 impl bitcoin_primitives::block::Version
 impl bitcoin_primitives::block::VersionDecoder
+impl bitcoin_primitives::merkle_tree::MerkleNode for bitcoin_primitives::TxMerkleNode
+impl bitcoin_primitives::merkle_tree::MerkleNode for bitcoin_primitives::WitnessMerkleNode
 impl bitcoin_primitives::pow::CompactTarget
 impl bitcoin_primitives::pow::CompactTargetDecoder
 impl bitcoin_primitives::script::RedeemScriptSizeError
@@ -77,6 +79,8 @@ impl bitcoin_primitives::transaction::OutPoint
 impl bitcoin_primitives::transaction::OutPointDecoder
 impl bitcoin_primitives::transaction::Transaction
 impl bitcoin_primitives::transaction::TransactionDecoder
+impl bitcoin_primitives::transaction::TxIdentifier for bitcoin_primitives::Txid
+impl bitcoin_primitives::transaction::TxIdentifier for bitcoin_primitives::Wtxid
 impl bitcoin_primitives::transaction::TxIn
 impl bitcoin_primitives::transaction::TxMerkleNodeDecoder
 impl bitcoin_primitives::transaction::Version
@@ -1320,11 +1324,13 @@ pub fn bitcoin_primitives::TxMerkleNode::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::TxMerkleNode::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::TxMerkleNode::clone(&self) -> bitcoin_primitives::TxMerkleNode
 pub fn bitcoin_primitives::TxMerkleNode::cmp(&self, other: &bitcoin_primitives::TxMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin_primitives::TxMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin_primitives::TxMerkleNode::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::TxMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::TxMerkleNode, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_primitives::TxMerkleNode::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::TxMerkleNode::eq(&self, other: &bitcoin_primitives::TxMerkleNode) -> bool
 pub fn bitcoin_primitives::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::TxMerkleNode::from_leaf(leaf: Self::Leaf) -> Self
 pub fn bitcoin_primitives::TxMerkleNode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::TxMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::TxMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::TxMerkleNode) -> core::option::Option<core::cmp::Ordering>
@@ -1366,9 +1372,11 @@ pub fn bitcoin_primitives::WitnessMerkleNode::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::WitnessMerkleNode::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::WitnessMerkleNode::clone(&self) -> bitcoin_primitives::WitnessMerkleNode
 pub fn bitcoin_primitives::WitnessMerkleNode::cmp(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin_primitives::WitnessMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin_primitives::WitnessMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::WitnessMerkleNode, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_primitives::WitnessMerkleNode::eq(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> bool
 pub fn bitcoin_primitives::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::WitnessMerkleNode::from_leaf(leaf: Self::Leaf) -> Self
 pub fn bitcoin_primitives::WitnessMerkleNode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::WitnessMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::WitnessMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> core::option::Option<core::cmp::Ordering>
@@ -1484,6 +1492,9 @@ pub fn bitcoin_primitives::block::VersionDecoderError::from(never: core::convert
 pub fn bitcoin_primitives::block::VersionDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::block::VersionEncoder::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::VersionEncoder::current_chunk(&self) -> &[u8]
+pub fn bitcoin_primitives::merkle_tree::MerkleNode::calculate_root<I: core::iter::traits::iterator::Iterator<Item = Self::Leaf>>(iter: I) -> core::option::Option<Self>
+pub fn bitcoin_primitives::merkle_tree::MerkleNode::combine(&self, other: &Self) -> Self
+pub fn bitcoin_primitives::merkle_tree::MerkleNode::from_leaf(leaf: Self::Leaf) -> Self
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder::advance(&mut self) -> bool
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::pow::CompactTarget::clone(&self) -> bitcoin_primitives::pow::CompactTarget
@@ -1946,8 +1957,10 @@ pub struct bitcoin_primitives::witness::WitnessDecoderError(_)
 pub struct bitcoin_primitives::witness::WitnessEncoder<'a>(_)
 pub trait bitcoin_primitives::BlockValidation: bitcoin_primitives::block::sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
 pub trait bitcoin_primitives::block::Validation: bitcoin_primitives::block::sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
+pub trait bitcoin_primitives::merkle_tree::MerkleNode: core::marker::Copy + core::cmp::PartialEq
 pub trait bitcoin_primitives::script::ScriptHashableTag: bitcoin_primitives::script::sealed::Sealed
 pub trait bitcoin_primitives::script::Tag
+pub trait bitcoin_primitives::transaction::TxIdentifier: bitcoin_primitives::transaction::sealed::Sealed + core::convert::AsRef<[u8]>
 pub type &'a bitcoin_primitives::witness::Witness::IntoIter = bitcoin_primitives::witness::Iter<'a>
 pub type &'a bitcoin_primitives::witness::Witness::Item = &'a [u8]
 pub type bitcoin_primitives::BlockHash::Decoder = bitcoin_primitives::block::BlockHashDecoder
@@ -1965,9 +1978,11 @@ pub type bitcoin_primitives::TapScriptBuf = bitcoin_primitives::script::ScriptBu
 pub type bitcoin_primitives::TxMerkleNode::Decoder = bitcoin_primitives::transaction::TxMerkleNodeDecoder
 pub type bitcoin_primitives::TxMerkleNode::Encoder<'e> = bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder
 pub type bitcoin_primitives::TxMerkleNode::Err = hex_conservative::error::DecodeFixedLengthBytesError
+pub type bitcoin_primitives::TxMerkleNode::Leaf = bitcoin_primitives::Txid
 pub type bitcoin_primitives::Txid::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::WitnessCommitment::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::WitnessMerkleNode::Err = hex_conservative::error::DecodeFixedLengthBytesError
+pub type bitcoin_primitives::WitnessMerkleNode::Leaf = bitcoin_primitives::Wtxid
 pub type bitcoin_primitives::WitnessScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::WitnessScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::Wtxid::Err = hex_conservative::error::DecodeFixedLengthBytesError
@@ -1985,6 +2000,7 @@ pub type bitcoin_primitives::block::Version::Decoder = bitcoin_primitives::block
 pub type bitcoin_primitives::block::Version::Encoder<'e> = bitcoin_primitives::block::VersionEncoder
 pub type bitcoin_primitives::block::VersionDecoder::Error = bitcoin_primitives::block::VersionDecoderError
 pub type bitcoin_primitives::block::VersionDecoder::Output = bitcoin_primitives::block::Version
+pub type bitcoin_primitives::merkle_tree::MerkleNode::Leaf: bitcoin_primitives::transaction::TxIdentifier
 pub type bitcoin_primitives::pow::CompactTarget::Decoder = bitcoin_primitives::pow::CompactTargetDecoder
 pub type bitcoin_primitives::pow::CompactTarget::Encoder<'e> = bitcoin_primitives::pow::CompactTargetEncoder
 pub type bitcoin_primitives::pow::CompactTargetDecoder::Error = bitcoin_primitives::pow::CompactTargetDecoderError

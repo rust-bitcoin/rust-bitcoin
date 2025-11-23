@@ -32,7 +32,7 @@ use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut};
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut, TxIdentifier};
 
 impl Encodable for Txid {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -75,12 +75,6 @@ internal_macros::define_extension_trait! {
         fn all_zeros() -> Self { Self::COINBASE }
     }
 }
-
-/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
-pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
-
-impl TxIdentifier for Txid {}
-impl TxIdentifier for Wtxid {}
 
 // Duplicated in `primitives`.
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
