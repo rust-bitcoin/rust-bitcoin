@@ -489,9 +489,7 @@ impl<T: Encodable + 'static> Encodable for Vec<T> {
 
 impl<T: Decodable + 'static> Decodable for Vec<T> {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, Error> {
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         if TypeId::of::<T>() == TypeId::of::<u8>() {
             let len = r.read_compact_size()? as usize;
             // most real-world vec of bytes data, wouldn't be larger than 128KiB

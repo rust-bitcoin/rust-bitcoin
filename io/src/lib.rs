@@ -45,10 +45,10 @@ use encoding::Encoder;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
-#[cfg(feature = "hashes")]
-pub use self::hash::hash_reader;
 #[cfg(feature = "std")]
 pub use self::bridge::{FromStd, ToStd};
+#[cfg(feature = "hashes")]
+pub use self::hash::hash_reader;
 
 /// Result type returned by functions in this crate.
 pub type Result<T> = core::result::Result<T, Error>;
@@ -85,8 +85,11 @@ pub trait Read {
     /// Constructs a new adapter which will read at most `limit` bytes.
     #[inline]
     fn take(self, limit: u64) -> Take<Self>
-        where Self: Sized,
-    { Take { reader: self, remaining: limit } }
+    where
+        Self: Sized,
+    {
+        Take { reader: self, remaining: limit }
+    }
 
     /// Attempts to read up to limit bytes from the reader, allocating space in `buf` as needed.
     ///

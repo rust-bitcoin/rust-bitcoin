@@ -18,7 +18,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::prelude::Vec;
-use crate::script::{self, ScriptIntError, ScriptExt as _};
+use crate::script::{self, ScriptExt as _, ScriptIntError};
 use crate::transaction::{Coinbase, Transaction, TransactionExt as _, Wtxid};
 use crate::{internal_macros, BlockTime, Target, Weight, Work};
 

@@ -619,9 +619,7 @@ impl From<base58::Error> for ParseError {
 }
 
 impl From<InvalidBase58PayloadLengthError> for ParseError {
-    fn from(e: InvalidBase58PayloadLengthError) -> Self {
-        Self::InvalidBase58PayloadLength(e)
-    }
+    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
 }
 
 /// A BIP-0032 error
@@ -737,9 +735,7 @@ impl Xpriv {
     }
 
     /// Constructs a new extended public key from this extended private key.
-    pub fn to_xpub(self) -> Xpub {
-        Xpub::from_xpriv(&self)
-    }
+    pub fn to_xpub(self) -> Xpub { Xpub::from_xpriv(&self) }
 
     /// Constructs a new BIP-0340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
@@ -752,20 +748,14 @@ impl Xpriv {
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
     #[deprecated(since = "TBD", note = "use `derive_xpriv()` instead")]
-    pub fn derive_priv<P: AsRef<[ChildNumber]>>(
-        &self,
-        path: P,
-    ) -> Result<Self, DerivationError> {
+    pub fn derive_priv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         self.derive_xpriv(path)
     }
 
     /// Derives an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
-    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(
-        &self,
-        path: P,
-    ) -> Result<Self, DerivationError> {
+    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         let mut sk: Self = *self;
         for cnum in path.as_ref() {
             sk = sk.ckd_priv(*cnum)?;
@@ -774,10 +764,7 @@ impl Xpriv {
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv(
-        &self,
-        i: ChildNumber,
-    ) -> Result<Self, DerivationError> {
+    fn ckd_priv(&self, i: ChildNumber) -> Result<Self, DerivationError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
         match i {
             ChildNumber::Normal { .. } => {
@@ -795,9 +782,10 @@ impl Xpriv {
 
         engine.input(&u32::from(i).to_be_bytes());
         let hmac: Hmac<sha512::Hash> = engine.finalize();
-        let sk =
-            secp256k1::SecretKey::from_secret_bytes(*hmac.as_byte_array().split_array::<32, 32>().0)
-                .expect("statistically impossible to hit");
+        let sk = secp256k1::SecretKey::from_secret_bytes(
+            *hmac.as_byte_array().split_array::<32, 32>().0,
+        )
+        .expect("statistically impossible to hit");
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
@@ -854,9 +842,7 @@ impl Xpriv {
     }
 
     /// Returns the HASH160 of the public key belonging to the xpriv
-    pub fn identifier(&self) -> XKeyIdentifier {
-        Xpub::from_xpriv(self).identifier()
-    }
+    pub fn identifier(&self) -> XKeyIdentifier { Xpub::from_xpriv(self).identifier() }
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint(&self) -> Fingerprint {
@@ -867,9 +853,7 @@ impl Xpriv {
 impl Xpub {
     /// Constructs a new extended public key from an extended private key.
     #[deprecated(since = "TBD", note = "use `from_xpriv()` instead")]
-    pub fn from_priv(sk: &Xpriv) -> Self {
-        Self::from_xpriv(sk)
-    }
+    pub fn from_priv(sk: &Xpriv) -> Self { Self::from_xpriv(sk) }
 
     /// Constructs a new extended public key from an extended private key.
     pub fn from_xpriv(xpriv: &Xpriv) -> Self {
@@ -903,20 +887,14 @@ impl Xpub {
     ///
     /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
     #[deprecated(since = "TBD", note = "use `derive_xpub()` instead")]
-    pub fn derive_pub<P: AsRef<[ChildNumber]>>(
-        &self,
-        path: P,
-    ) -> Result<Self, DerivationError> {
+    pub fn derive_pub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         self.derive_xpub(path)
     }
 
     /// Attempts to derive an extended public key from a path.
     ///
     /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
-    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(
-        &self,
-        path: P,
-    ) -> Result<Self, DerivationError> {
+    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         let mut pk: Self = *self;
         for cnum in path.as_ref() {
             pk = pk.ckd_pub(*cnum)?
@@ -948,10 +926,7 @@ impl Xpub {
     }
 
     /// Public->Public child key derivation
-    pub fn ckd_pub(
-        &self,
-        i: ChildNumber,
-    ) -> Result<Self, DerivationError> {
+    pub fn ckd_pub(&self, i: ChildNumber) -> Result<Self, DerivationError> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let tweaked =
             self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
@@ -1307,10 +1282,7 @@ mod tests {
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(
-                pk.derive_xpub(&path),
-                Err(DerivationError::CannotDeriveHardenedChild)
-            );
+            assert_eq!(pk.derive_xpub(&path), Err(DerivationError::CannotDeriveHardenedChild));
         } else {
             assert_eq!(&pk.derive_xpub(&path).unwrap().to_string()[..], expected_pk);
         }
@@ -1325,10 +1297,7 @@ mod tests {
                     assert_eq!(pk, pk2);
                 }
                 Hardened { .. } => {
-                    assert_eq!(
-                        pk.ckd_pub(num),
-                        Err(DerivationError::CannotDeriveHardenedChild)
-                    );
+                    assert_eq!(pk.ckd_pub(num), Err(DerivationError::CannotDeriveHardenedChild));
                     pk = Xpub::from_xpriv(&sk);
                 }
             }
@@ -1389,7 +1358,6 @@ mod tests {
 
     #[test]
     fn vector_1() {
-
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
         // m
