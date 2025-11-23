@@ -14,7 +14,7 @@ fn do_test(data: &[u8]) {
         let (header, transactions) = block.clone().into_parts();
         block::compute_merkle_root(&transactions);
         // Use 32-byte zero array as witness_reserved_value per BIP-0141 requirement.
-        block::compute_witness_commitment(&transactions, &[0u8; 32]);
+        block.compute_witness_commitment(&[0u8; 32]);
         block::compute_witness_root(&transactions);
 
         if let Ok(block) = Block::new_checked(header, transactions) {
