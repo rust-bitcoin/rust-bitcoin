@@ -1318,13 +1318,16 @@ pub fn bitcoin_primitives::TxMerkleNode::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::TxMerkleNode::as_ref(&self) -> &[u8]
 pub fn bitcoin_primitives::TxMerkleNode::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::TxMerkleNode::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::TxMerkleNode::calculate_root<I: core::iter::traits::iterator::Iterator<Item = bitcoin_primitives::Txid>>(iter: I) -> core::option::Option<Self>
 pub fn bitcoin_primitives::TxMerkleNode::clone(&self) -> bitcoin_primitives::TxMerkleNode
 pub fn bitcoin_primitives::TxMerkleNode::cmp(&self, other: &bitcoin_primitives::TxMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin_primitives::TxMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin_primitives::TxMerkleNode::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::TxMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::TxMerkleNode, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_primitives::TxMerkleNode::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::TxMerkleNode::eq(&self, other: &bitcoin_primitives::TxMerkleNode) -> bool
 pub fn bitcoin_primitives::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::TxMerkleNode::from_leaf(leaf: bitcoin_primitives::Txid) -> Self
 pub fn bitcoin_primitives::TxMerkleNode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::TxMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::TxMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::TxMerkleNode) -> core::option::Option<core::cmp::Ordering>
@@ -1364,11 +1367,14 @@ pub fn bitcoin_primitives::WitnessMerkleNode::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::WitnessMerkleNode::as_ref(&self) -> &[u8]
 pub fn bitcoin_primitives::WitnessMerkleNode::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::WitnessMerkleNode::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::WitnessMerkleNode::calculate_root<I: core::iter::traits::iterator::Iterator<Item = bitcoin_primitives::Wtxid>>(iter: I) -> core::option::Option<Self>
 pub fn bitcoin_primitives::WitnessMerkleNode::clone(&self) -> bitcoin_primitives::WitnessMerkleNode
 pub fn bitcoin_primitives::WitnessMerkleNode::cmp(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin_primitives::WitnessMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin_primitives::WitnessMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::WitnessMerkleNode, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_primitives::WitnessMerkleNode::eq(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> bool
 pub fn bitcoin_primitives::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::WitnessMerkleNode::from_leaf(leaf: bitcoin_primitives::Wtxid) -> Self
 pub fn bitcoin_primitives::WitnessMerkleNode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::WitnessMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::WitnessMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> core::option::Option<core::cmp::Ordering>
