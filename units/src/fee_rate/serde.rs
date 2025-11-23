@@ -29,7 +29,7 @@ use core::fmt;
 pub mod as_sat_per_kwu_floor {
     //! Serialize and deserialize [`FeeRate`] denominated in satoshis per 1000 weight units.
     //!
-    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu")]`.
+    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor")]`.
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -51,7 +51,7 @@ pub mod as_sat_per_kwu_floor {
     pub mod opt {
         //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per 1000 weight units.
         //!
-        //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu::opt")]`.
+        //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::opt")]`.
 
         use core::fmt;
 
