@@ -10,21 +10,23 @@
 use core::convert::Infallible;
 use core::fmt;
 
-use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
-use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
+use crate::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::prelude::Vec;
 use crate::script::{self, ScriptIntError, ScriptExt as _};
-use crate::transaction::{Coinbase, Transaction, TransactionExt as _, Wtxid};
+use crate::transaction::{Coinbase, Transaction, TransactionExt as _};
 use crate::{internal_macros, BlockTime, Target, Weight, Work};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::block::{Block, Checked, Unchecked, Validation, Version, BlockHash, Header, WitnessCommitment};
+pub use primitives::block::{
+    Block, Checked, Unchecked, Validation, Version, BlockHash, Header,
+    WitnessCommitment, compute_merkle_root, compute_witness_root, InvalidBlockError,
+};
 #[doc(no_inline)]
 pub use units::block::TooBigForRelativeHeightError;
 #[doc(inline)]
@@ -108,155 +110,6 @@ impl Encodable for BlockTime {
 impl Decodable for BlockTime {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Self::from_u32)
-    }
-}
-
-/// Extension functionality for the [`Block<Unchecked>`] type.
-pub trait BlockUncheckedExt: sealed::Sealed {
-    /// Validates (or checks) a block.
-    ///
-    /// We define valid as:
-    ///
-    /// * The Merkle root of the header matches Merkle root of the transaction list.
-    /// * The witness commitment in coinbase matches the transaction list.
-    fn validate(self) -> Result<Block<Checked>, InvalidBlockError>;
-}
-
-impl BlockUncheckedExt for Block<Unchecked> {
-    fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
-        let (header, transactions) = self.into_parts();
-
-        if transactions.is_empty() {
-            return Err(InvalidBlockError::NoTransactions);
-        }
-
-        if !transactions[0].is_coinbase() {
-            return Err(InvalidBlockError::InvalidCoinbase);
-        }
-
-        if !check_merkle_root(&header, &transactions) {
-            return Err(InvalidBlockError::InvalidMerkleRoot);
-        }
-
-        match check_witness_commitment(&transactions) {
-            (false, _) => Err(InvalidBlockError::InvalidWitnessCommitment),
-            (true, witness_root) => {
-                let block = Self::new_unchecked(header, transactions);
-                Ok(block.assume_checked(witness_root))
-            }
-        }
-    }
-}
-
-/// Computes the Merkle root for a list of transactions.
-///
-/// Returns `None` if the iterator was empty, or if the transaction list contains
-/// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
-/// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their merkle roots.
-///
-/// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the `Option` returned by this method!
-pub fn compute_merkle_root(transactions: &[Transaction]) -> Option<TxMerkleNode> {
-    let hashes = transactions.iter().map(|obj| obj.compute_txid());
-    TxMerkleNode::calculate_root(hashes)
-}
-
-/// Computes the witness commitment for a list of transactions.
-pub fn compute_witness_commitment(
-    transactions: &[Transaction],
-    witness_reserved_value: &[u8],
-) -> Option<(WitnessMerkleNode, WitnessCommitment)> {
-    compute_witness_root(transactions).map(|witness_root| {
-        let mut encoder = sha256d::Hash::engine();
-        witness_root.consensus_encode(&mut encoder).expect("engines don't error");
-        encoder.input(witness_reserved_value);
-        let witness_commitment =
-            WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array());
-        (witness_root, witness_commitment)
-    })
-}
-
-/// Computes the Merkle root of transactions hashed for witness.
-///
-/// Returns `None` if the iterator was empty, or if the transaction list contains
-/// consecutive duplicates which would trigger CVE 2012-2459. Blocks with duplicate
-/// transactions will always be invalid, so there is no harm in us refusing to
-/// compute their merkle roots.
-///
-/// Unless you are certain your transaction list is nonempty and has no duplicates,
-/// you should not unwrap the `Option` returned by this method!
-pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkleNode> {
-    let hashes = transactions.iter().enumerate().map(|(i, t)| {
-        if i == 0 {
-            // Replace the first hash with zeroes.
-            Wtxid::COINBASE
-        } else {
-            t.compute_wtxid()
-        }
-    });
-    WitnessMerkleNode::calculate_root(hashes)
-}
-
-/// Checks if Merkle root of header matches Merkle root of the transaction list.
-fn check_merkle_root(header: &Header, transactions: &[Transaction]) -> bool {
-    match compute_merkle_root(transactions) {
-        Some(merkle_root) => header.merkle_root == merkle_root,
-        None => false,
-    }
-}
-
-/// Checks if witness commitment in coinbase matches the transaction list.
-// Returns the Merkle root if it was computed (so it can be cached in `assume_checked`).
-fn check_witness_commitment(transactions: &[Transaction]) -> (bool, Option<WitnessMerkleNode>) {
-    // Witness commitment is optional if there are no transactions using SegWit in the block.
-    if transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
-        return (true, None);
-    }
-
-    if transactions.is_empty() {
-        return (false, None);
-    }
-
-    if transactions[0].is_coinbase() {
-        let coinbase = transactions[0].clone();
-        if let Some(commitment) = witness_commitment_from_coinbase(&coinbase) {
-            // Witness reserved value is in coinbase input witness.
-            let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
-            if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
-                if let Some((witness_root, witness_commitment)) =
-                    compute_witness_commitment(transactions, witness_vec[0])
-                {
-                    if commitment == witness_commitment {
-                        return (true, Some(witness_root));
-                    }
-                }
-            }
-        }
-    }
-
-    (false, None)
-}
-
-fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCommitment> {
-    // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
-    const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
-
-    if !coinbase.is_coinbase() {
-        return None;
-    }
-
-    // Commitment is in the last output that starts with magic bytes.
-    if let Some(pos) = coinbase
-        .outputs
-        .iter()
-        .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
-    {
-        let bytes =
-            <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
-        Some(WitnessCommitment::from_byte_array(bytes))
-    } else {
-        None
     }
 }
 
@@ -433,40 +286,6 @@ mod sealed {
     impl<V: super::Validation> Sealed for super::Block<V> {}
 }
 
-/// Invalid block error.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum InvalidBlockError {
-    /// Header Merkle root does not match the calculated Merkle root.
-    InvalidMerkleRoot,
-    /// The witness commitment in coinbase transaction does not match the calculated witness_root.
-    InvalidWitnessCommitment,
-    /// Block has no transactions (missing coinbase).
-    NoTransactions,
-    /// The first transaction is not a valid coinbase transaction.
-    InvalidCoinbase,
-}
-
-impl From<Infallible> for InvalidBlockError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for InvalidBlockError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use InvalidBlockError::*;
-
-        match *self {
-            InvalidMerkleRoot => write!(f, "header Merkle root does not match the calculated Merkle root"),
-            InvalidWitnessCommitment => write!(f, "the witness commitment in coinbase transaction does not match the calculated witness_root"),
-            NoTransactions => write!(f, "block has no transactions (missing coinbase)"),
-            InvalidCoinbase => write!(f, "the first transaction is not a valid coinbase transaction"),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidBlockError {}
-
 /// An error when looking up a BIP-0034 block height.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -567,9 +386,11 @@ impl std::error::Error for ValidationError {
 mod tests {
     use hex_lit::hex;
     use internals::ToU64 as _;
+    use primitives::Wtxid;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::merkle_tree::{MerkleNode as _};
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
     use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
     use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
@@ -580,9 +401,9 @@ mod tests {
         // testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
         let segwit_block = include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
         let block: Block = deserialize(&segwit_block[..]).expect("failed to deserialize block");
-        let (header, transactions) = block.into_parts();
+        assert!(block.check_merkle_root());
 
-        assert!(block::check_merkle_root(&header, &transactions));
+        let (header, transactions) = block.into_parts();
         let block = Block::new_unchecked(header, transactions).assume_checked(None);
 
         // Same as `block.check_merkle_root` but do it explicitly.
@@ -657,12 +478,13 @@ mod tests {
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
 
-        let (header, transactions) = decode.unwrap().into_parts();
+        let block = decode.unwrap();
         // should be also ok for a non-witness block as commitment is optional in that case
         let (witness_commitment_matches, witness_root) =
-            block::check_witness_commitment(&transactions);
+            block.check_witness_commitment();
         assert!(witness_commitment_matches);
 
+        let (header, transactions) = block.into_parts();
         let real_decode =
             Block::new_unchecked(header, transactions.clone()).assume_checked(witness_root);
 
@@ -706,11 +528,12 @@ mod tests {
 
         assert!(decode.is_ok());
 
-        let (header, transactions) = decode.unwrap().into_parts();
+        let block = decode.unwrap();
         let (witness_commitment_matches, witness_root) =
-            block::check_witness_commitment(&transactions);
+            block.check_witness_commitment();
         assert!(witness_commitment_matches);
 
+        let (header, transactions) = block.into_parts();
         let real_decode =
             Block::new_unchecked(header, transactions.clone()).assume_checked(witness_root);
 

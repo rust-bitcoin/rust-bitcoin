@@ -46,7 +46,6 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::block::BlockUncheckedExt as _;
     /// use bitcoin::hex::FromHex;
     /// use bitcoin::{Block, MerkleBlock, Txid};
     ///
@@ -538,7 +537,7 @@ mod tests {
     use {core::cmp, secp256k1::rand::prelude::*};
 
     use super::*;
-    use crate::block::{BlockUncheckedExt as _, Unchecked};
+    use crate::block::Unchecked;
     use crate::consensus::encode;
     use crate::Txid;
 
