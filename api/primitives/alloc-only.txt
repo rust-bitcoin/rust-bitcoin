@@ -2,6 +2,7 @@
 #[repr(transparent)] pub struct bitcoin_primitives::script::Script<T>(_, _)
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::BlockHash
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::TxMerkleNode
+impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::WitnessMerkleNode
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Block
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Header
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Version
@@ -26,6 +27,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transac
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::witness::WitnessDecoder
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::BlockHash
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::TxMerkleNode
+impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::WitnessMerkleNode
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Block
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Header
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Version
@@ -1228,6 +1230,8 @@ pub fn bitcoin_primitives::WitnessMerkleNode::calculate_root<I: core::iter::trai
 pub fn bitcoin_primitives::WitnessMerkleNode::clone(&self) -> bitcoin_primitives::WitnessMerkleNode
 pub fn bitcoin_primitives::WitnessMerkleNode::cmp(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> core::cmp::Ordering
 pub fn bitcoin_primitives::WitnessMerkleNode::combine(&self, other: &Self) -> Self
+pub fn bitcoin_primitives::WitnessMerkleNode::decoder() -> Self::Decoder
+pub fn bitcoin_primitives::WitnessMerkleNode::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::WitnessMerkleNode::eq(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> bool
 pub fn bitcoin_primitives::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::WitnessMerkleNode::from_leaf(leaf: bitcoin_primitives::Wtxid) -> Self
@@ -1754,6 +1758,8 @@ pub type bitcoin_primitives::TapScript = bitcoin_primitives::script::Script<bitc
 pub type bitcoin_primitives::TapScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::TapScriptTag>
 pub type bitcoin_primitives::TxMerkleNode::Decoder = bitcoin_primitives::transaction::TxMerkleNodeDecoder
 pub type bitcoin_primitives::TxMerkleNode::Encoder<'e> = bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder
+pub type bitcoin_primitives::WitnessMerkleNode::Decoder = bitcoin_primitives::hash_types::witness_merkle_node::WitnessMerkleNodeDecoder
+pub type bitcoin_primitives::WitnessMerkleNode::Encoder<'e> = bitcoin_primitives::hash_types::witness_merkle_node::WitnessMerkleNodeEncoder
 pub type bitcoin_primitives::WitnessScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::WitnessScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::block::Block::Decoder = bitcoin_primitives::block::BlockDecoder
