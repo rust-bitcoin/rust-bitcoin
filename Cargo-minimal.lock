@@ -54,6 +54,7 @@ dependencies = [
  "base64",
  "bech32",
  "bincode",
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-primitives",

@@ -14,7 +14,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::{compact_size, const_casts, write_err, ToU64};
+use encoding::compact_size;
+use internals::{const_casts, write_err, ToU64};
 use io::{BufRead, Write};
 
 use super::Weight;

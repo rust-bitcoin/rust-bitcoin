@@ -14,13 +14,13 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::Decoder4;
 use encoding::{
     self, BytesEncoder, CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, Decoder,
-    Encodable, Encoder, Encoder2, LengthPrefixExceedsMaxError,
+    Encodable, Encoder, Encoder2, LengthPrefixExceedsMaxError, compact_size,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
 use internals::slice::SliceExt;
 use internals::wrap_debug::WrapDebug;
-use internals::{compact_size, write_err};
+use internals::write_err;
 
 use crate::prelude::{Box, Vec};
 #[cfg(doc)]

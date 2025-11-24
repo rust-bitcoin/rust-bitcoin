@@ -10,7 +10,8 @@
 use core::convert::Infallible;
 use core::fmt;
 
-use internals::{compact_size, ToU64};
+use encoding::compact_size;
+use internals::ToU64;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};

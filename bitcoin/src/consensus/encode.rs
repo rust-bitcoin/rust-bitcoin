@@ -17,9 +17,10 @@
 use core::any::TypeId;
 use core::{cmp, mem, slice};
 
+use encoding::compact_size;
 use hashes::{sha256, sha256d, Hash};
 use hex::DisplayHex as _;
-use internals::{compact_size, ToU64};
+use internals::ToU64;
 use io::{BufRead, Cursor, Read, Write};
 
 use super::IterReader;
@@ -184,7 +185,7 @@ impl<W: Write + ?Sized> WriteExt for W {
     }
     #[inline]
     fn emit_compact_size(&mut self, v: impl ToU64) -> Result<usize, io::Error> {
-        let encoded = compact_size::encode(v.to_u64());
+        let encoded = compact_size::encode(v.to_u64().try_into().unwrap_or(usize::MAX));
         self.emit_slice(&encoded)?;
         Ok(encoded.len())
     }
@@ -349,19 +350,16 @@ impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
 
 /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
+#[deprecated(since = "0.33.0", note = "use `consensus_encoding::compact_size::encoded_size_const` instead")]
 #[inline]
 pub const fn varint_size_u64(v: u64) -> usize {
-    match v {
-        0..=0xFC => 1,
-        0xFD..=0xFFFF => 3,
-        0x10000..=0xFFFFFFFF => 5,
-        _ => 9,
-    }
+    encoding::compact_size::encoded_size_const(v)
 }
 
 /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
+#[deprecated(since = "0.33.0", note = "use `consensus_encoding::compact_size::encoded_size` instead")]
 #[inline]
-pub fn varint_size(v: impl ToU64) -> usize { varint_size_u64(v.to_u64()) }
+pub fn varint_size(v: impl ToU64) -> usize { encoding::compact_size::encoded_size_const(v.to_u64()) }
 
 impl Encodable for bool {
     #[inline]
@@ -810,16 +808,17 @@ mod tests {
         assert_eq!(encode(0xFD), [0xFDu8, 0xFD, 0]);
         assert_eq!(encode(0xFFF), [0xFDu8, 0xFF, 0xF]);
         assert_eq!(encode(0xF0F0F0F), [0xFEu8, 0xF, 0xF, 0xF, 0xF]);
+        #[cfg(target_pointer_width = "64")]
         assert_eq!(encode(0xF0F0F0F0F0E0), vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0],);
         assert_eq!(test_varint_encode(0xFF, &0x100000000_u64.to_le_bytes()).unwrap(), 0x100000000,);
         assert_eq!(test_varint_encode(0xFE, &0x10000_u64.to_le_bytes()).unwrap(), 0x10000);
         assert_eq!(test_varint_encode(0xFD, &0xFD_u64.to_le_bytes()).unwrap(), 0xFD);
 
         // Test that length calc is working correctly
-        fn test_varint_len(varint: u64, expected: usize) {
+        fn test_varint_len(varint: usize, expected: usize) {
             let mut encoder = vec![];
             assert_eq!(encoder.emit_compact_size(varint).unwrap(), expected);
-            assert_eq!(varint_size(varint), expected);
+            assert_eq!(encoding::compact_size::encoded_size(varint), expected);
         }
         test_varint_len(0, 1);
         test_varint_len(0xFC, 1);
@@ -827,8 +826,11 @@ mod tests {
         test_varint_len(0xFFFF, 3);
         test_varint_len(0x10000, 5);
         test_varint_len(0xFFFFFFFF, 5);
-        test_varint_len(0xFFFFFFFF + 1, 9);
-        test_varint_len(u64::MAX, 9);
+        #[cfg(target_pointer_width = "64")]
+        {
+            test_varint_len(0xFFFFFFFF + 1, 9);
+            test_varint_len(u64::MAX as usize, 9);
+        }
     }
 
     #[test]
