@@ -30,7 +30,6 @@
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
 // Coding conventions.
 #![warn(missing_docs)]
