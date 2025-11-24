@@ -4,7 +4,7 @@
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
 
-use internals::compact_size;
+use encoding::compact_size;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Error, ReadExt, WriteExt, MAX_VEC_SIZE};
