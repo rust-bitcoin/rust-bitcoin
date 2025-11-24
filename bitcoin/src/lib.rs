@@ -20,13 +20,12 @@
 //! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
 //! * `rand` - (dependency), makes it more convenient to generate random values.
 //! * `serde` - (dependency), implements `serde`-based serialization and
-//!                 deserialization.
+//!   deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
-//! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it
-//!                            to this crate so it knows how to implement
-//!                            `std::error::Error`. At this time there's a hack to
-//!                            achieve the same without this feature but it could
-//!                            happen the implementations diverge one day.
+//! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it to this
+//!   crate so it knows how to implement `std::error::Error`. At this time there's a hack to
+//!   achieve the same without this feature but it could happen the implementations diverge one
+//!   day.
 //! * `ordered` - (dependency), adds implementations of `ArbitraryOrdOrd` to some structs.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]

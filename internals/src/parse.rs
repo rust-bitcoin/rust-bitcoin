@@ -1,6 +1,6 @@
-/// Support for parsing strings.
+//! Support for parsing strings.
 
-// Impls a single TryFrom conversion
+/// Implements a single TryFrom conversion
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_try_from_stringly {

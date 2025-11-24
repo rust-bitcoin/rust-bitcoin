@@ -30,7 +30,9 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 ///
 /// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
 /// ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`]. We also
-/// implement [`ordered::ArbitraryOrd`] if the "ordered" feature is enabled.
+/// implement [`ordered::ArbitraryOrd`].
+///
+/// [`ordered::ArbitraryOrd`]: <https://docs.rs/ordered/latest/ordered/trait.ArbitraryOrd.html>
 ///
 /// ### Relevant BIPs
 ///

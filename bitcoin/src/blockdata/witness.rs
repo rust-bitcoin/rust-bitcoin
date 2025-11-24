@@ -14,7 +14,10 @@ use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
 use crate::prelude::*;
-use crate::taproot::{self, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE, TAPROOT_LEAF_MASK};
+use crate::taproot::{
+    self, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE,
+    TAPROOT_LEAF_MASK,
+};
 use crate::{Script, VarInt};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
@@ -290,7 +293,7 @@ impl Witness {
     pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
 
     /// Returns a struct implementing [`Iterator`].
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter { inner: self.content.as_slice(), indices_start: self.indices_start, current_index: 0 }
     }
 
@@ -429,10 +432,13 @@ impl Witness {
     /// version.
     pub fn taproot_leaf_script(&self) -> Option<LeafScript<&Script>> {
         match P2TrSpend::from_witness(self) {
-            Some(P2TrSpend::Script { leaf_script, control_block, .. }) if control_block.len() >= TAPROOT_CONTROL_BASE_SIZE => {
-                let version = LeafVersion::from_consensus(control_block[0] & TAPROOT_LEAF_MASK).ok()?;
-                Some(LeafScript { version, script: leaf_script, })
-            },
+            Some(P2TrSpend::Script { leaf_script, control_block, .. })
+                if control_block.len() >= TAPROOT_CONTROL_BASE_SIZE =>
+            {
+                let version =
+                    LeafVersion::from_consensus(control_block[0] & TAPROOT_LEAF_MASK).ok()?;
+                Some(LeafScript { version, script: leaf_script })
+            }
             _ => None,
         }
     }
@@ -456,18 +462,14 @@ impl Witness {
     /// This does not guarantee that this represents a P2TR [`Witness`].
     ///
     /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
-    pub fn taproot_annex(&self) -> Option<&[u8]> {
-        P2TrSpend::from_witness(self)?.annex()
-    }
+    pub fn taproot_annex(&self) -> Option<&[u8]> { P2TrSpend::from_witness(self)?.annex() }
 
     /// Get the p2wsh witness script following BIP141 rules.
     ///
     /// This does not guarantee that this represents a P2WS [`Witness`]. See
     /// [Script::is_p2wsh](crate::blockdata::script::Script::is_p2wsh) to
     /// check whether this is actually a P2WSH witness.
-    pub fn witness_script(&self) -> Option<&Script> {
-        self.last().map(Script::from_bytes)
-    }
+    pub fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
 }
 
 impl Index<usize> for Witness {
@@ -520,14 +522,16 @@ impl<'a> P2TrSpend<'a> {
         // for the fact that annex is still there.
         match witness.len() {
             0 => None,
-            1 => Some(P2TrSpend::Key { /* signature: witness.last().expect("len > 0") ,*/ annex: None }),
+            1 => Some(P2TrSpend::Key {
+                /* signature: witness.last().expect("len > 0") ,*/ annex: None,
+            }),
             2 if witness.last().expect("len > 0").starts_with(&[TAPROOT_ANNEX_PREFIX]) => {
                 let spend = P2TrSpend::Key {
                     // signature: witness.second_to_last().expect("len > 1"),
                     annex: witness.last(),
                 };
                 Some(spend)
-            },
+            }
             // 2 => this is script spend without annex - same as when there are 3+ elements and the
             //   last one does NOT start with TAPROOT_ANNEX_PREFIX. This is handled in the catchall
             //   arm.
@@ -538,7 +542,7 @@ impl<'a> P2TrSpend<'a> {
                     annex: witness.last(),
                 };
                 Some(spend)
-            },
+            }
             _ => {
                 let spend = P2TrSpend::Script {
                     leaf_script: Script::from_bytes(witness.second_to_last().expect("len > 1")),
@@ -546,7 +550,7 @@ impl<'a> P2TrSpend<'a> {
                     annex: None,
                 };
                 Some(spend)
-            },
+            }
         }
     }
 
@@ -870,7 +874,8 @@ mod test {
     #[test]
     fn get_taproot_leaf_script() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        let control_block =
+            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
@@ -883,10 +888,8 @@ mod test {
         let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
         let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
 
-        let expected_leaf_script = LeafScript {
-            version: LeafVersion::TapScript,
-            script: Script::from_bytes(&tapscript),
-        };
+        let expected_leaf_script =
+            LeafScript { version: LeafVersion::TapScript, script: Script::from_bytes(&tapscript) };
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_leaf_script().unwrap(), expected_leaf_script);
@@ -911,7 +914,8 @@ mod test {
 
         let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
         let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
-        let witness_key_spend_annex = deserialize::<Witness>(&witness_serialized_key_spend_annex[..]).unwrap();
+        let witness_key_spend_annex =
+            deserialize::<Witness>(&witness_serialized_key_spend_annex[..]).unwrap();
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_control_block(), Some(&control_block[..]));

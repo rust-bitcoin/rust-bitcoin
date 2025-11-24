@@ -55,7 +55,7 @@ pub trait Read {
 
     /// Creates an adapter which will read at most `limit` bytes.
     #[inline]
-    fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
+    fn take(&mut self, limit: u64) -> Take<'_, Self> { Take { reader: self, remaining: limit } }
 
     /// Attempts to read up to limit bytes from the reader, allocating space in `buf` as needed.
     ///
@@ -211,8 +211,7 @@ impl<T: AsRef<[u8]>> Read for Cursor<T> {
         let start_pos = self.pos.try_into().unwrap_or(inner.len());
         let read = core::cmp::min(inner.len().saturating_sub(start_pos), buf.len());
         buf[..read].copy_from_slice(&inner[start_pos..start_pos + read]);
-        self.pos =
-            self.pos.saturating_add(read.try_into().unwrap_or(u64::MAX /* unreachable */));
+        self.pos = self.pos.saturating_add(read.try_into().unwrap_or(u64::MAX /* unreachable */));
         Ok(read)
     }
 }
@@ -267,7 +266,7 @@ impl Write for alloc::vec::Vec<u8> {
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
 
-impl<'a> Write for &'a mut [u8] {
+impl Write for &mut [u8] {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let cnt = core::cmp::min(self.len(), buf.len());

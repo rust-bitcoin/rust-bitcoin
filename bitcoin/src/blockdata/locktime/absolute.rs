@@ -42,6 +42,8 @@ pub use units::locktime::absolute::{
 /// consensus encoding to order it. We also implement [`ordered::ArbitraryOrd`] if the "ordered"
 /// feature is enabled.
 ///
+/// [`ordered::ArbitraryOrd`]: <https://docs.rs/ordered/latest/ordered/trait.ArbitraryOrd.html>
+///
 /// ### Relevant BIPs
 ///
 /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
@@ -297,25 +299,19 @@ impl FromStr for LockTime {
 impl TryFrom<&str> for LockTime {
     type Error = ParseIntError;
 
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        LockTime::from_str(s)
-    }
+    fn try_from(s: &str) -> Result<Self, Self::Error> { LockTime::from_str(s) }
 }
 
 impl TryFrom<String> for LockTime {
     type Error = ParseIntError;
 
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        LockTime::from_str(&s)
-    }
+    fn try_from(s: String) -> Result<Self, Self::Error> { LockTime::from_str(&s) }
 }
 
 impl TryFrom<Box<str>> for LockTime {
     type Error = ParseIntError;
 
-    fn try_from(s: Box<str>) -> Result<Self, Self::Error> {
-        LockTime::from_str(&s)
-    }
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> { LockTime::from_str(&s) }
 }
 
 impl From<Height> for LockTime {

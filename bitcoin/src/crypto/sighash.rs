@@ -406,9 +406,7 @@ impl EcdsaSighashType {
     /// type (after masking with 0x1f), regardless of the ANYONECANPAY flag.
     ///
     /// See: <https://github.com/bitcoin/bitcoin/blob/e486597/src/script/interpreter.cpp#L1618-L1619>
-    pub fn is_single(&self) -> bool {
-        matches!(self, Self::Single | Self::SinglePlusAnyoneCanPay)
-    }
+    pub fn is_single(&self) -> bool { matches!(self, Self::Single | Self::SinglePlusAnyoneCanPay) }
 
     /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     ///
