@@ -237,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
+    #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand", feature = "std"))]
     fn message_signature() {
         use secp256k1::ecdsa::RecoverableSignature;
         use crate::{Address, AddressType, Network, NetworkKind};

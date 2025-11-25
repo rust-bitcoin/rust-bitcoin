@@ -986,7 +986,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand-std")]
+    #[cfg(all(feature = "rand", feature = "std"))]
     fn serialization_round_trips() {
         use secp256k1::rand::{self, Rng};
 
