@@ -458,7 +458,8 @@ impl Decoder for TransactionDecoder {
                 }
                 State::Outputs(version, inputs, is_segwit, decoder) => {
                     let outputs = decoder.end()?;
-                    if is_segwit == IsSegwit::Yes {
+                    // Handle the zero-input case described in the `Transaction` docs.
+                    if is_segwit == IsSegwit::Yes && !inputs.is_empty() {
                         self.state = State::Witnesses(
                             version,
                             inputs,
@@ -2156,5 +2157,23 @@ mod tests {
             .expect_err("segwit tx with no witnesses should error");
 
         assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NoWitnesses));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decode_zero_inputs() {
+        // Test empty transaction with no inputs or outputs.
+        let block: u32 = 741_521;
+        let original_tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::from_height(block).expect("valid height"),
+            inputs: vec![],
+            outputs: vec![],
+        };
+
+        let encoded = encoding::encode_to_vec(&original_tx);
+        let decoded_tx = encoding::decode_from_slice(&encoded).unwrap();
+
+        assert_eq!(original_tx, decoded_tx);
     }
 }
