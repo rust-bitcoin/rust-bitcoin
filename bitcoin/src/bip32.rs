@@ -12,6 +12,7 @@ use core::{fmt, slice};
 
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
+use internals::impl_array_newtype_stringify;
 use internals::write_err;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
@@ -40,7 +41,7 @@ pub type ExtendedPrivKey = Xpriv;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
 internal_macros::impl_array_newtype!(ChainCode, u8, 32);
-internal_macros::impl_array_newtype_stringify!(ChainCode, 32);
+impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
@@ -52,7 +53,7 @@ impl ChainCode {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
 internal_macros::impl_array_newtype!(Fingerprint, u8, 4);
-internal_macros::impl_array_newtype_stringify!(Fingerprint, 4);
+impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
     /// Extended key identifier as defined in BIP-0032.
