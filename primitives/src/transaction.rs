@@ -27,6 +27,7 @@ use encoding::{
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
+use internals::array::ArrayExt as _;
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -1103,14 +1104,10 @@ impl encoding::Decoder for OutPointDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let encoded = self.0.end().map_err(OutPointDecoderError)?;
+        let (txid_buf, vout_buf) = encoded.split_array::<32, 4>();
 
-        let mut txid_buf = [0_u8; 32];
-        txid_buf.copy_from_slice(&encoded[..32]);
-        let txid = Txid::from_byte_array(txid_buf);
-
-        let mut vout_buf = [0_u8; 4];
-        vout_buf.copy_from_slice(&encoded[32..]);
-        let vout = u32::from_le_bytes(vout_buf);
+        let txid = Txid::from_byte_array(*txid_buf);
+        let vout = u32::from_le_bytes(*vout_buf);
 
         Ok(OutPoint { txid, vout })
     }
