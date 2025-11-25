@@ -124,67 +124,68 @@ impl From<Infallible> for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            InvalidMagic => f.write_str("invalid magic"),
-            MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
-            InvalidSeparator => f.write_str("invalid separator"),
-            PsbtUtxoOutOfbounds =>
+        match self {
+            Self::InvalidMagic => f.write_str("invalid magic"),
+            Self::MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
+            Self::InvalidSeparator => f.write_str("invalid separator"),
+            Self::PsbtUtxoOutOfbounds =>
                 f.write_str("output index is out of bounds of non witness script output array"),
-            InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
-            InvalidProprietaryKey =>
+            Self::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
+            Self::InvalidProprietaryKey =>
                 write!(f, "non-proprietary key type found when proprietary key was expected"),
-            DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
-            UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),
-            UnsignedTxHasScriptWitnesses =>
+            Self::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
+            Self::UnsignedTxHasScriptSigs =>
+                f.write_str("the unsigned transaction has script sigs"),
+            Self::UnsignedTxHasScriptWitnesses =>
                 f.write_str("the unsigned transaction has script witnesses"),
-            MustHaveUnsignedTx =>
+            Self::MustHaveUnsignedTx =>
                 f.write_str("partially signed transactions must have an unsigned transaction"),
-            NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
-            UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
+            Self::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
+            Self::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
                 f,
                 "different unsigned transaction: expected {}, actual {}",
                 e.compute_txid(),
                 a.compute_txid()
             ),
-            NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
-            InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
-            InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
+            Self::NonStandardSighashType(ref sht) =>
+                write!(f, "non-standard sighash type: {}", sht),
+            Self::InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
+            Self::InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash)
             }
-            CombineInconsistentKeySources(ref s) => {
+            Self::CombineInconsistentKeySources(ref s) => {
                 write!(f, "combine conflict: {}", s)
             }
-            ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
-            ConsensusDeserialize(ref e) =>
+            Self::ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
+            Self::ConsensusDeserialize(ref e) =>
                 write_err!(f, "bitcoin consensus deserialization error"; e),
-            ConsensusParse(ref e) =>
+            Self::ConsensusParse(ref e) =>
                 write_err!(f, "error parsing bitcoin consensus encoded object"; e),
-            NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
-            FeeOverflow => f.write_str("integer overflow in fee calculation"),
-            IncorrectNonWitnessUtxo { index, input_outpoint, non_witness_utxo_txid } => {
+            Self::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
+            Self::FeeOverflow => f.write_str("integer overflow in fee calculation"),
+            Self::IncorrectNonWitnessUtxo { index, input_outpoint, non_witness_utxo_txid } => {
                 write!(
                     f,
                     "non-witness utxo txid is {}, which does not match input {}'s outpoint {}",
                     non_witness_utxo_txid, index, input_outpoint
                 )
             }
-            InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
-            InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
-            InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
-            InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
-            InvalidTaprootSignature(ref e) => write_err!(f, "invalid Taproot signature"; e),
-            InvalidControlBlock => f.write_str("invalid control block"),
-            InvalidLeafVersion => f.write_str("invalid leaf version"),
-            Taproot(s) => write!(f, "Taproot error -  {}", s),
-            TapTree(ref e) => write_err!(f, "Taproot tree error"; e),
-            XPubKey(s) => write!(f, "xpub key error -  {}", s),
-            Version(s) => write!(f, "version error {}", s),
-            PartialDataConsumption =>
+            Self::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
+            Self::InvalidSecp256k1PublicKey(ref e) =>
+                write_err!(f, "invalid secp256k1 public key"; e),
+            Self::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
+            Self::InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
+            Self::InvalidTaprootSignature(ref e) => write_err!(f, "invalid Taproot signature"; e),
+            Self::InvalidControlBlock => f.write_str("invalid control block"),
+            Self::InvalidLeafVersion => f.write_str("invalid leaf version"),
+            Self::Taproot(s) => write!(f, "Taproot error -  {}", s),
+            Self::TapTree(ref e) => write_err!(f, "Taproot tree error"; e),
+            Self::XPubKey(s) => write!(f, "xpub key error -  {}", s),
+            Self::Version(s) => write!(f, "version error {}", s),
+            Self::PartialDataConsumption =>
                 f.write_str("data not consumed entirely when explicitly deserializing"),
-            Io(ref e) => write_err!(f, "I/O error"; e),
+            Self::Io(ref e) => write_err!(f, "I/O error"; e),
         }
     }
 }
@@ -192,44 +193,42 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            InvalidHash(ref e) => Some(e),
-            ConsensusEncoding(ref e) => Some(e),
-            ConsensusDeserialize(ref e) => Some(e),
-            ConsensusParse(ref e) => Some(e),
-            Io(ref e) => Some(e),
-            InvalidMagic
-            | MissingUtxo
-            | InvalidSeparator
-            | PsbtUtxoOutOfbounds
-            | InvalidKey(_)
-            | InvalidProprietaryKey
-            | DuplicateKey(_)
-            | UnsignedTxHasScriptSigs
-            | UnsignedTxHasScriptWitnesses
-            | MustHaveUnsignedTx
-            | NoMorePairs
-            | UnexpectedUnsignedTx { .. }
-            | NonStandardSighashType(_)
-            | InvalidPreimageHashPair { .. }
-            | CombineInconsistentKeySources(_)
-            | NegativeFee
-            | FeeOverflow
-            | IncorrectNonWitnessUtxo { .. }
-            | InvalidPublicKey(_)
-            | InvalidSecp256k1PublicKey(_)
-            | InvalidXOnlyPublicKey
-            | InvalidEcdsaSignature(_)
-            | InvalidTaprootSignature(_)
-            | InvalidControlBlock
-            | InvalidLeafVersion
-            | Taproot(_)
-            | TapTree(_)
-            | XPubKey(_)
-            | Version(_)
-            | PartialDataConsumption => None,
+        match self {
+            Self::InvalidHash(ref e) => Some(e),
+            Self::ConsensusEncoding(ref e) => Some(e),
+            Self::ConsensusDeserialize(ref e) => Some(e),
+            Self::ConsensusParse(ref e) => Some(e),
+            Self::Io(ref e) => Some(e),
+            Self::InvalidMagic
+            | Self::MissingUtxo
+            | Self::InvalidSeparator
+            | Self::PsbtUtxoOutOfbounds
+            | Self::InvalidKey(_)
+            | Self::InvalidProprietaryKey
+            | Self::DuplicateKey(_)
+            | Self::UnsignedTxHasScriptSigs
+            | Self::UnsignedTxHasScriptWitnesses
+            | Self::MustHaveUnsignedTx
+            | Self::NoMorePairs
+            | Self::UnexpectedUnsignedTx { .. }
+            | Self::NonStandardSighashType(_)
+            | Self::InvalidPreimageHashPair { .. }
+            | Self::CombineInconsistentKeySources(_)
+            | Self::NegativeFee
+            | Self::FeeOverflow
+            | Self::IncorrectNonWitnessUtxo { .. }
+            | Self::InvalidPublicKey(_)
+            | Self::InvalidSecp256k1PublicKey(_)
+            | Self::InvalidXOnlyPublicKey
+            | Self::InvalidEcdsaSignature(_)
+            | Self::InvalidTaprootSignature(_)
+            | Self::InvalidControlBlock
+            | Self::InvalidLeafVersion
+            | Self::Taproot(_)
+            | Self::TapTree(_)
+            | Self::XPubKey(_)
+            | Self::Version(_)
+            | Self::PartialDataConsumption => None,
         }
     }
 }

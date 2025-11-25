@@ -28,12 +28,10 @@ impl From<Infallible> for FromScriptError {
 
 impl fmt::Display for FromScriptError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromScriptError::*;
-
-        match *self {
-            WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
-            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
+        match self {
+            Self::WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
+            Self::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            Self::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
         }
     }
 }
@@ -41,12 +39,10 @@ impl fmt::Display for FromScriptError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromScriptError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromScriptError::*;
-
-        match *self {
-            UnrecognizedScript => None,
-            WitnessVersion(ref e) => Some(e),
-            WitnessProgram(ref e) => Some(e),
+        match self {
+            Self::UnrecognizedScript => None,
+            Self::WitnessVersion(ref e) => Some(e),
+            Self::WitnessProgram(ref e) => Some(e),
         }
     }
 }
@@ -93,12 +89,10 @@ impl From<Infallible> for ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseError::*;
-
-        match *self {
-            Base58(ref e) => write_err!(f, "base58 error"; e),
-            Bech32(ref e) => write_err!(f, "bech32 error"; e),
-            NetworkValidation(ref e) => write_err!(f, "validation error"; e),
+        match self {
+            Self::Base58(ref e) => write_err!(f, "base58 error"; e),
+            Self::Bech32(ref e) => write_err!(f, "bech32 error"; e),
+            Self::NetworkValidation(ref e) => write_err!(f, "validation error"; e),
         }
     }
 }
@@ -106,12 +100,10 @@ impl fmt::Display for ParseError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseError::*;
-
-        match *self {
-            Base58(ref e) => Some(e),
-            Bech32(ref e) => Some(e),
-            NetworkValidation(ref e) => Some(e),
+        match self {
+            Self::Base58(ref e) => Some(e),
+            Self::Bech32(ref e) => Some(e),
+            Self::NetworkValidation(ref e) => Some(e),
         }
     }
 }
@@ -186,13 +178,12 @@ impl From<Infallible> for Bech32Error {
 
 impl fmt::Display for Bech32Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Bech32Error::*;
-
-        match *self {
-            ParseBech32(ref e) => write_err!(f, "SegWit parsing error"; e),
-            WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
-            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            UnknownHrp(ref e) => write_err!(f, "unknown hrp error"; e),
+        match self {
+            Self::ParseBech32(ref e) => write_err!(f, "SegWit parsing error"; e),
+            Self::WitnessVersion(ref e) =>
+                write_err!(f, "witness version conversion/parsing error"; e),
+            Self::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            Self::UnknownHrp(ref e) => write_err!(f, "unknown hrp error"; e),
         }
     }
 }
@@ -200,13 +191,11 @@ impl fmt::Display for Bech32Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Bech32Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Bech32Error::*;
-
-        match *self {
-            ParseBech32(ref e) => Some(e),
-            WitnessVersion(ref e) => Some(e),
-            WitnessProgram(ref e) => Some(e),
-            UnknownHrp(ref e) => Some(e),
+        match self {
+            Self::ParseBech32(ref e) => Some(e),
+            Self::WitnessVersion(ref e) => Some(e),
+            Self::WitnessProgram(ref e) => Some(e),
+            Self::UnknownHrp(ref e) => Some(e),
         }
     }
 }
@@ -263,13 +252,12 @@ impl From<Infallible> for Base58Error {
 
 impl fmt::Display for Base58Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Base58Error::*;
-
-        match *self {
-            ParseBase58(ref e) => write_err!(f, "legacy parsing error"; e),
-            LegacyAddressTooLong(ref e) => write_err!(f, "legacy address length error"; e),
-            InvalidBase58PayloadLength(ref e) => write_err!(f, "legacy payload length error"; e),
-            InvalidLegacyPrefix(ref e) => write_err!(f, "legacy prefix error"; e),
+        match self {
+            Self::ParseBase58(ref e) => write_err!(f, "legacy parsing error"; e),
+            Self::LegacyAddressTooLong(ref e) => write_err!(f, "legacy address length error"; e),
+            Self::InvalidBase58PayloadLength(ref e) =>
+                write_err!(f, "legacy payload length error"; e),
+            Self::InvalidLegacyPrefix(ref e) => write_err!(f, "legacy prefix error"; e),
         }
     }
 }
@@ -277,13 +265,11 @@ impl fmt::Display for Base58Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Base58Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Base58Error::*;
-
-        match *self {
-            ParseBase58(ref e) => Some(e),
-            LegacyAddressTooLong(ref e) => Some(e),
-            InvalidBase58PayloadLength(ref e) => Some(e),
-            InvalidLegacyPrefix(ref e) => Some(e),
+        match self {
+            Self::ParseBase58(ref e) => Some(e),
+            Self::LegacyAddressTooLong(ref e) => Some(e),
+            Self::InvalidBase58PayloadLength(ref e) => Some(e),
+            Self::InvalidLegacyPrefix(ref e) => Some(e),
         }
     }
 }

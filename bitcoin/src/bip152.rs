@@ -48,10 +48,8 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
-
-        match *self {
-            UnknownVersion | InvalidPrefill => None,
+        match self {
+            Self::UnknownVersion | Self::InvalidPrefill => None,
         }
     }
 }

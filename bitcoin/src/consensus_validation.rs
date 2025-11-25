@@ -244,11 +244,10 @@ impl From<Infallible> for TxVerifyError {
 
 impl fmt::Display for TxVerifyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use TxVerifyError::*;
-
-        match *self {
-            ScriptVerification(ref e) => write_err!(f, "bitcoinconsensus verification failed"; e),
-            UnknownSpentOutput(ref p) => write!(f, "unknown spent output: {}", p),
+        match self {
+            Self::ScriptVerification(ref e) =>
+                write_err!(f, "bitcoinconsensus verification failed"; e),
+            Self::UnknownSpentOutput(ref p) => write!(f, "unknown spent output: {}", p),
         }
     }
 }
@@ -256,11 +255,9 @@ impl fmt::Display for TxVerifyError {
 #[cfg(feature = "std")]
 impl std::error::Error for TxVerifyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TxVerifyError::*;
-
-        match *self {
-            ScriptVerification(ref e) => Some(e),
-            UnknownSpentOutput(_) => None,
+        match self {
+            Self::ScriptVerification(ref e) => Some(e),
+            Self::UnknownSpentOutput(_) => None,
         }
     }
 }

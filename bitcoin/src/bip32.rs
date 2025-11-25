@@ -575,20 +575,20 @@ impl From<Infallible> for ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseError::*;
-
-        match *self {
-            Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
-            UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
-            WrongExtendedKeyLength(ref len) =>
+        match self {
+            Self::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+            Self::UnknownVersion(ref bytes) =>
+                write!(f, "unknown version magic bytes: {:?}", bytes),
+            Self::WrongExtendedKeyLength(ref len) =>
                 write!(f, "encoded extended key data has wrong length {}", len),
-            Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-            InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
-            InvalidPrivateKeyPrefix =>
+            Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
+            Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
+            Self::InvalidPrivateKeyPrefix =>
                 f.write_str("invalid private key prefix, byte 45 must be 0 as required by BIP-0032"),
-            NonZeroParentFingerprintForMasterKey =>
+            Self::NonZeroParentFingerprintForMasterKey =>
                 f.write_str("non-zero parent fingerprint in master key"),
-            NonZeroChildNumberForMasterKey => f.write_str("non-zero child number in master key"),
+            Self::NonZeroChildNumberForMasterKey =>
+                f.write_str("non-zero child number in master key"),
         }
     }
 }
@@ -596,16 +596,14 @@ impl fmt::Display for ParseError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseError::*;
-
-        match *self {
-            Secp256k1(ref e) => Some(e),
-            Base58(ref e) => Some(e),
-            InvalidBase58PayloadLength(ref e) => Some(e),
-            UnknownVersion(_) | WrongExtendedKeyLength(_) => None,
-            InvalidPrivateKeyPrefix => None,
-            NonZeroParentFingerprintForMasterKey => None,
-            NonZeroChildNumberForMasterKey => None,
+        match self {
+            Self::Secp256k1(ref e) => Some(e),
+            Self::Base58(ref e) => Some(e),
+            Self::InvalidBase58PayloadLength(ref e) => Some(e),
+            Self::UnknownVersion(_) | Self::WrongExtendedKeyLength(_) => None,
+            Self::InvalidPrivateKeyPrefix => None,
+            Self::NonZeroParentFingerprintForMasterKey => None,
+            Self::NonZeroChildNumberForMasterKey => None,
         }
     }
 }
