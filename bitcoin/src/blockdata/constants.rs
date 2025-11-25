@@ -7,7 +7,6 @@
 //! single transaction.
 
 use crate::block::{self, Block, Checked};
-use crate::internal_macros::impl_array_newtype;
 use crate::locktime::absolute;
 use crate::network::{Network, Params};
 use crate::opcodes::all::*;
@@ -15,6 +14,7 @@ use crate::pow::CompactTarget;
 use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
 use crate::{script, Amount, BlockHash, BlockTime, Sequence, TestnetVersion};
+use internals::impl_array_newtype;
 use internals::impl_array_newtype_stringify;
 
 /// How many seconds between blocks we expect on average.
