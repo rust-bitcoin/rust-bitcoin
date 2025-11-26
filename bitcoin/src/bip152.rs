@@ -14,10 +14,11 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::ToU64 as _;
+use internals::impl_array_newtype;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use crate::internal_macros::{self, impl_array_newtype, impl_array_newtype_stringify};
+use crate::internal_macros::{self, impl_array_newtype_stringify};
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
 use crate::{block, consensus, Block, BlockChecked, BlockHash, Transaction};
