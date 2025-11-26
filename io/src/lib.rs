@@ -10,9 +10,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// Experimental features we need.
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
-
 // Coding conventions.
 #![warn(missing_docs)]
 
@@ -62,7 +59,7 @@ pub trait Read {
 
     /// Creates an adapter which will read at most `limit` bytes.
     #[inline]
-    fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
+    fn take(&mut self, limit: u64) -> Take<'_, Self> { Take { reader: self, remaining: limit } }
 
     /// Attempts to read up to limit bytes from the reader, allocating space in `buf` as needed.
     ///
@@ -276,7 +273,7 @@ impl Write for alloc::vec::Vec<u8> {
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
 
-impl<'a> Write for &'a mut [u8] {
+impl Write for &'_ mut [u8] {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let cnt = core::cmp::min(self.len(), buf.len());
