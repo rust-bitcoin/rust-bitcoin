@@ -39,19 +39,24 @@ pub type ExtendedPrivKey = Xpriv;
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-internal_macros::impl_array_newtype!(ChainCode, u8, 32);
+internals::impl_array_newtype!(ChainCode, u8, 32);
 internal_macros::impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
         Self(*hmac.as_byte_array().split_array::<32, 32>().1)
     }
+
+    /// Copies the underlying bytes into a new `Vec`.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use to_vec instead")]
+    pub fn to_bytes(self) -> alloc::vec::Vec<u8> { self.to_vec() }
 }
 
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-internal_macros::impl_array_newtype!(Fingerprint, u8, 4);
+internals::impl_array_newtype!(Fingerprint, u8, 4);
 internal_macros::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
