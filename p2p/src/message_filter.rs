@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::block::BlockHash;
+use primitives::BlockHash;
 use hashes::{sha256d, HashEngine};
 use units::BlockHeight;
 
