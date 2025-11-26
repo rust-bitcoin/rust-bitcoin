@@ -327,7 +327,8 @@ fn amount_checked_div_by_fee_rate() {
 
     // Test ceiling division
     let weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
-    assert_eq!(weight, Weight::from_wu(500_000)); // Same result for exact division
+    // Minimum: (2 * 499_501 + 999) / 1000 = 1000
+    assert_eq!(weight, Weight::from_wu(499_501));
 
     // Test truncation behavior
     let amount = sat(1000);
@@ -335,7 +336,8 @@ fn amount_checked_div_by_fee_rate() {
     let floor_weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
     let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
     assert_eq!(floor_weight, Weight::from_wu(333_333));
-    assert_eq!(ceil_weight, Weight::from_wu(333_334));
+    // Minimum: (3 * 333_001 + 999) / 1000 = 1000
+    assert_eq!(ceil_weight, Weight::from_wu(333_001));
 
     // Test division by zero
     let zero_fee_rate = FeeRate::from_sat_per_kwu(0);
@@ -348,6 +350,38 @@ fn amount_checked_div_by_fee_rate() {
     let weight = max_amount.div_by_fee_rate_floor(small_fee_rate).unwrap();
     // 21_000_000_0000_0000 sats / (1 sat/kwu) = 2_100_000_000_000_000_000 wu
     assert_eq!(weight, Weight::from_wu(2_100_000_000_000_000_000));
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn div_by_fee_rate_ceil_sufficient_fee() {
+    // Test with fee_rate where floor != ceil to verify correct rounding
+    let amount = sat(1000);
+    let fee_rate = FeeRate::from_sat_per_kvb(5); // floor=1, ceil=2 sat/kwu
+    
+    let weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
+    // Minimum: (1 * 999_001 + 999) / 1000 = 1000
+    assert_eq!(weight, Weight::from_wu(999_001));
+    
+    // Verify resulting fee is sufficient
+    let actual_fee = fee_rate.to_fee(weight);
+    assert!(actual_fee >= amount);
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn div_by_fee_rate_floor_bounded_fee() {
+    // Test with fee_rate where floor != ceil
+    let amount = sat(1000);
+    let fee_rate = FeeRate::from_sat_per_kvb(5); // floor=1, ceil=2 sat/kwu
+    
+    let weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
+    // With rate ceil=2: 1000 sats * 1000 / 2 = 500,000 wu
+    assert_eq!(weight, Weight::from_wu(500_000));
+    
+    // Verify resulting fee doesn't exceed amount
+    let actual_fee = fee_rate.to_fee(weight);
+    assert!(actual_fee <= amount);
 }
 
 #[cfg(feature = "alloc")]

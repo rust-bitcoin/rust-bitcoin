@@ -265,8 +265,9 @@ mod tests {
         assert_eq!(weight.unwrap(), Weight::from_wu(333_333));
 
         // Verify that ceiling division gives different result
+        // Minimum: (3 * 333_001 + 999) / 1000 = 1000
         let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
-        assert_eq!(ceil_weight, Weight::from_wu(333_334));
+        assert_eq!(ceil_weight, Weight::from_wu(333_001));
 
         // Test that division by zero returns None
         let zero_rate = FeeRate::from_sat_per_kwu(0);

@@ -496,8 +496,8 @@ impl Amount {
     /// Computes the minimum weight that would result in a fee greater than or equal to this amount
     /// at the given `fee_rate`. Uses ceiling division to ensure the resulting weight is sufficient.
     pub const fn div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
-        // Use ceil because result is used as the divisor.
-        let rate = fee_rate.to_sat_per_kwu_ceil();
+        // Use floor rate to match mul_by_weight calculation.
+        let rate = fee_rate.to_sat_per_kwu_floor();
         // Early return so we do not have to use checked arithmetic below.
         if rate == 0 {
             return R::Error(E::while_doing(MathOp::Div));
@@ -505,13 +505,13 @@ impl Amount {
 
         debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
         let msats = self.to_sat() * 1_000;
-        match msats.checked_add(rate - 1) {
-            Some(bump) => {
-                let wu = bump / rate;
+        // Account for ceiling rounding in mul_by_weight: (rate * weight + 999) / 1000
+        match msats.checked_add(rate) {
+            Some(sum) if sum >= 1000 => {
+                let wu = (sum - 1000) / rate;
                 NumOpResult::Valid(Weight::from_wu(wu))
             }
-            // Use `MathOp::Add` because `Div` implies div by zero.
-            None => R::Error(E::while_doing(MathOp::Add)),
+            _ => R::Error(E::while_doing(MathOp::Add)),
         }
     }
 }
