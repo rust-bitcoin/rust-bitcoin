@@ -724,6 +724,9 @@ fn from_str() {
     scase("2100000000000001 SAT", Err(OutOfRangeError::too_big(true)));
     case("21000001 BTC", Err(OutOfRangeError::too_big(false)));
     case("18446744073709551616 sat", Err(OutOfRangeError::too_big(false)));
+    case("_1000 sat", Err(BadPositionError { char: '_', position: 0 }));
+    case("10__00 sat", Err(BadPositionError { char: '_', position: 3 }));
+    scase("-_10_00 sat", Err(BadPositionError { char: '_', position: 1 }));
 
     ok_case(".5 bits", sat(50));
     ok_scase("-.5 bits", ssat(-50));
@@ -734,6 +737,9 @@ fn from_str() {
     ok_case("21000000 BTC", Amount::MAX);
     ok_scase("21000000 BTC", SignedAmount::MAX);
     ok_scase("-21000000 BTC", SignedAmount::MIN);
+    ok_case("1_000 sat", sat(1000));
+    ok_case("1_0_0_0_0_0_0 satoshi", sat(1_000_000));
+    ok_scase("-0_._0_10_00 BTC", ssat(-1_000_000));
 }
 
 #[cfg(feature = "alloc")]
