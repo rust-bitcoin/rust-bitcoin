@@ -17,7 +17,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::block::HeaderExt;
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
-use bitcoin::{block, transaction};
+use primitives::{block, transaction};
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{self, BufRead, Read, Write};
@@ -958,9 +958,9 @@ mod test {
 
     use bitcoin::bip152::BlockTransactionsRequest;
     use bitcoin::bip158::{FilterHash, FilterHeader};
-    use bitcoin::block::{Block, BlockHash};
+    use primitives::{Block, BlockHash};
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use bitcoin::transaction::{Transaction, Txid};
+    use primitives::transaction::{Transaction, Txid};
     use hex_lit::hex;
     use units::BlockHeight;
 

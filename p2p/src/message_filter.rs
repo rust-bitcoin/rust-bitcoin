@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::bip158::{FilterHash, FilterHeader};
-use bitcoin::block::BlockHash;
+use primitives::BlockHash;
 use units::BlockHeight;
 
 use crate::consensus::impl_consensus_encoding;
