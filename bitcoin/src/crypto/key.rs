@@ -25,7 +25,7 @@ use crate::script::{self, WitnessScriptBuf};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use secp256k1::{constants, Keypair, Parity, Verification};
+pub use secp256k1::{constants, Parity, Verification};
 #[cfg(all(feature = "rand", feature = "std"))]
 pub use secp256k1::rand;
 pub use serialized_x_only::SerializedXOnlyPublicKey;
@@ -44,7 +44,7 @@ impl XOnlyPublicKey {
     /// Returns the x-only public key and the parity of the full public key.
     #[inline]
     pub fn from_keypair(keypair: &Keypair) -> (Self, Parity) {
-        let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(keypair);
+        let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(&keypair.into_inner());
         (Self::new(xonly), parity)
     }
 
@@ -137,6 +137,129 @@ impl_to_hex_from_lower_hex!(XOnlyPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SI
 
 impl fmt::Display for XOnlyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+/// A Bitcoin secret and public key pair.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Keypair(secp256k1::Keypair);
+
+impl Keypair {
+    /// Generates a new random key pair.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(all(feature = "rand", feature = "std"))] {
+    /// use bitcoin::{secp256k1::rand, Keypair};
+    ///
+    /// let keypair = Keypair::generate(&mut rand::rng());
+    /// # }
+    /// ```
+    #[inline]
+    #[cfg(feature = "rand")]
+    pub fn generate<R: secp256k1::rand::Rng + ?Sized>(rng: &mut R) -> Self {
+        Self::new(secp256k1::Keypair::new(rng))
+    }
+
+    /// Constructs a new [`Keypair`] from the provided `secp256k1::Keypair`.
+    pub fn new(key: impl Into<secp256k1::Keypair>) -> Self { Self(key.into()) }
+
+    /// Creates a [`Keypair`] directly from a secp256k1 secret key.
+    #[inline]
+    pub fn from_secret_key(sk: &secp256k1::SecretKey) -> Self {
+        Self::new(secp256k1::Keypair::from_secret_key(sk))
+    }
+
+    /// Creates a [`Keypair`] directly from a secret key byte array.
+    ///
+    /// # Errors
+    ///
+    /// [`ParseKeypairError::InvalidSecretKey`] if the encoded number is an invalid scalar.
+    #[inline]
+    pub fn from_seckey_byte_array(
+        data: [u8; constants::SECRET_KEY_SIZE],
+    ) -> Result<Self, ParseKeypairError> {
+        secp256k1::Keypair::from_seckey_byte_array(data)
+            .map(Self::new)
+            .map_err(|_| ParseKeypairError::InvalidSecretKey)
+    }
+
+    /// Returns the inner [`secp256k1::Keypair`].
+    #[inline]
+    pub fn into_inner(self) -> secp256k1::Keypair { self.0 }
+
+    /// Returns the [`PrivateKey`] for this [`Keypair`].
+    ///
+    /// This is equivalent to using [`secp256k1::SecretKey::from_keypair`] on the inner value.
+    #[inline]
+    pub fn secret_key(&self) -> secp256k1::SecretKey { secp256k1::SecretKey::from_keypair(&self.0) }
+
+    /// Returns the secret bytes for this [`Keypair`].
+    #[inline]
+    pub fn to_secret_bytes(self) -> [u8; constants::SECRET_KEY_SIZE] { self.0.to_secret_bytes() }
+
+    /// Returns the [`PublicKey`] for this [`Keypair`].
+    ///
+    /// This is equivalent to using [`PublicKey::from_keypair`].
+    #[inline]
+    pub fn public_key(&self) -> PublicKey { PublicKey::from_keypair(self) }
+
+    /// Returns the [`XOnlyPublicKey`] (and its [`Parity`]) for this [`Keypair`].
+    ///
+    /// This is equivalent to using [`XOnlyPublicKey::from_keypair`].
+    #[inline]
+    pub fn x_only_public_key(&self) -> (XOnlyPublicKey, Parity) {
+        XOnlyPublicKey::from_keypair(self)
+    }
+
+    /// Tweaks a keypair by first converting the public key to an xonly key and tweaking it.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`TweakKeypairError::InvalidTweak`] error if the resulting key would be invalid.
+    ///
+    /// NB: Will not error if the tweaked public key has an odd value and can't be used for
+    ///     BIP 340-342 purposes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(all(feature = "rand", feature = "std"))] {
+    /// use secp256k1::{rand, Scalar};
+    /// use bitcoin::key::Keypair;
+    ///
+    /// let tweak = Scalar::random();
+    ///
+    /// let mut keypair = Keypair::generate(&mut rand::rng());
+    /// let tweaked = keypair.add_xonly_tweak(&tweak).expect("Improbable to fail with a randomly generated tweak");
+    /// # }
+    /// ```
+    #[inline]
+    pub fn add_xonly_tweak(self, tweak: &secp256k1::Scalar) -> Result<Self, TweakKeypairError> {
+        self.0.add_xonly_tweak(tweak)
+            .map(Self::new)
+            .map_err(|_| TweakKeypairError::InvalidTweak)
+    }
+}
+
+impl FromStr for Keypair {
+    type Err = ParseKeypairError;
+    fn from_str(s: &str) -> Result<Self, ParseKeypairError> {
+        secp256k1::Keypair::from_str(s)
+            .map(Self::from)
+            .map_err(|_| ParseKeypairError::InvalidSecretKey)
+    }
+}
+
+impl From<secp256k1::Keypair> for Keypair {
+    fn from(pk: secp256k1::Keypair) -> Self { Self::new(pk) }
+}
+
+impl From<Keypair> for secp256k1::PublicKey {
+    fn from(kp: Keypair) -> Self {
+        kp.public_key().inner
+    }
 }
 
 /// A Bitcoin ECDSA public key.
@@ -316,6 +439,11 @@ impl PublicKey {
         sk: PrivateKey,
     ) -> Self {
         sk.public_key()
+    }
+
+    /// Extracts the public key from a Keypair
+    pub fn from_keypair(pair: &Keypair) -> Self {
+        Self::new(secp256k1::PublicKey::from_keypair(&pair.into_inner()))
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
@@ -867,7 +995,7 @@ pub type UntweakedKeypair = Keypair;
 /// # #[cfg(all(feature = "rand", feature = "std"))] {
 /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
 /// # use bitcoin::secp256k1::rand;
-/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&mut rand::rng()));
+/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::generate(&mut rand::rng()));
 /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
 /// let (_pk, _parity) = keypair.public_parts();
 /// let _pk = TweakedPublicKey::from_keypair(keypair);
@@ -974,7 +1102,7 @@ impl TweakedPublicKey {
     #[inline]
     pub fn from_keypair(keypair: TweakedKeypair) -> Self {
         let (xonly, _parity) = keypair.0.x_only_public_key();
-        Self(xonly.into())
+        Self(xonly)
     }
 
     /// Constructs a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
@@ -1031,7 +1159,7 @@ impl TweakedKeypair {
     #[inline]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
         let (xonly, parity) = self.0.x_only_public_key();
-        (TweakedPublicKey(xonly.into()), parity)
+        (TweakedPublicKey(xonly), parity)
     }
 }
 
@@ -1408,6 +1536,42 @@ impl fmt::Display for TweakXOnlyPublicKeyError {
 #[cfg(feature = "std")]
 impl std::error::Error for TweakXOnlyPublicKeyError {}
 
+/// Error that can occur when parsing an [`Keypair`] from bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ParseKeypairError {
+    /// Bad secret key.
+    InvalidSecretKey,
+}
+
+impl fmt::Display for ParseKeypairError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::InvalidSecretKey => write!(f, "malformed or out-of-range secret key"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseKeypairError {}
+
+/// Error that can occur when tweaking an [`Keypair`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TweakKeypairError {
+    /// The tweak value was invalid.
+    InvalidTweak,
+}
+
+impl fmt::Display for TweakKeypairError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::InvalidTweak => write!(f, "Invalid tweak value"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TweakKeypairError {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1720,7 +1884,7 @@ mod tests {
     fn public_key_constructors() {
         use secp256k1::rand;
 
-        let kp = Keypair::new(&mut rand::rng());
+        let kp = Keypair::generate(&mut rand::rng());
 
         let _ = PublicKey::new(kp);
         let _ = PublicKey::new_uncompressed(kp);
