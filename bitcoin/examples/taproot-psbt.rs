@@ -80,7 +80,7 @@ use std::collections::BTreeMap;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::ext::*;
-use bitcoin::key::{TapTweak, XOnlyPublicKey};
+use bitcoin::key::{Keypair, TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
@@ -399,7 +399,7 @@ impl BenefactorWallet {
 
         let taproot_spend_info = TaprootBuilder::new()
             .add_leaf(0, script.clone())?
-            .finalize(internal_keypair.x_only_public_key().0)
+            .finalize(internal_keypair.to_x_only_public_key().0)
             .expect("should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
         let script_pubkey = ScriptPubKeyBuf::new_p2tr(
@@ -435,7 +435,7 @@ impl BenefactorWallet {
             (vec![leaf_hash], (self.beneficiary_xpub.fingerprint(), derivation_path.clone())),
         );
         origins.insert(
-            internal_keypair.x_only_public_key().0.into(),
+            internal_keypair.to_x_only_public_key().0,
             (vec![], (self.master_xpriv.fingerprint(), derivation_path)),
         );
         let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
@@ -450,7 +450,7 @@ impl BenefactorWallet {
             tap_key_origins: origins,
             tap_merkle_root: taproot_spend_info.merkle_root(),
             sighash_type: Some(ty),
-            tap_internal_key: Some(internal_keypair.x_only_public_key().0.into()),
+            tap_internal_key: Some(internal_keypair.to_x_only_public_key().0),
             tap_scripts,
             ..Default::default()
         };
@@ -494,7 +494,7 @@ impl BenefactorWallet {
 
             let taproot_spend_info = TaprootBuilder::new()
                 .add_leaf(0, script.clone())?
-                .finalize(new_internal_keypair.x_only_public_key().0)
+                .finalize(new_internal_keypair.to_x_only_public_key().0)
                 .expect("should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();
@@ -599,7 +599,7 @@ impl BenefactorWallet {
                 tap_key_origins: origins,
                 tap_merkle_root: taproot_spend_info.merkle_root(),
                 sighash_type: Some(ty),
-                tap_internal_key: Some(new_internal_keypair.x_only_public_key().0.into()),
+                tap_internal_key: Some(new_internal_keypair.to_x_only_public_key().0),
                 tap_scripts,
                 ..Default::default()
             };
@@ -730,13 +730,13 @@ fn sign_psbt_taproot(
     hash: TapSighash,
     sighash_type: TapSighashType,
 ) {
-    let keypair = secp256k1::Keypair::from_seckey_byte_array(secret_key.to_secret_bytes()).unwrap();
+    let keypair = Keypair::from_secret_key(&secret_key);
     let keypair = match leaf_hash {
         None => keypair.tap_tweak(psbt_input.tap_merkle_root).to_keypair(),
         Some(_) => keypair, // no tweak for script spend
     };
 
-    let signature = secp256k1::schnorr::sign(&hash.to_byte_array(), &keypair);
+    let signature = secp256k1::schnorr::sign(&hash.to_byte_array(), &keypair.to_inner());
 
     let final_signature = taproot::Signature { signature, sighash_type };
 
