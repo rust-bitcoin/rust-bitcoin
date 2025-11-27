@@ -1,3 +1,7 @@
+# 0.18.0 - 2025-11-27
+
+* Add a dependency on the new `consensus_encoding` crate [#5181](https://github.com/rust-bitcoin/rust-bitcoin/pull/5181)
+
 # 0.17.0 - 2025-10-17
 
 * Bump MSRV from 1.63.0 to 1.74.0 for all crates in the repo [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
