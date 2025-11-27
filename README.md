@@ -76,13 +76,11 @@ For more information please see `./CONTRIBUTING.md`.
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should always compile with any combination of features (minus
-`no-std`) on **Rust 1.41.1** or **Rust 1.47** with `no-std`.
+This library should always compile with any combination of features on **Rust 1.51.0**.
 
-To build with the MSRV you will need to pin some dependencies (also for `no-std`):
+To build with the MSRV you may need to pin some dependencies:
 ```
-cargo update -p serde --precise 1.0.156
-cargo update -p syn --precise 1.0.107
+cargo update -p cc --precise 1.0.170
 ```
 
 ## Installing Rust

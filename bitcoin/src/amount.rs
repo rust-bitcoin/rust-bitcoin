@@ -261,7 +261,7 @@ fn parse_signed_to_satoshi(
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
-            let last_n = unsigned_abs(precision_diff).into();
+            let last_n = precision_diff.unsigned_abs().into();
             if is_too_precise(s, last_n) {
                 match s.parse::<i64>() {
                     Ok(0_i64) => return Ok((is_negative, 0)),
@@ -374,9 +374,6 @@ fn dec_width(mut num: u64) -> usize {
     width
 }
 
-// NIH due to MSRV, impl copied from `core::i8::unsigned_abs` (introduced in Rust 1.51.1).
-fn unsigned_abs(x: i8) -> u8 { x.wrapping_abs() as u8 }
-
 fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
     for _ in 0..count {
         f.write_char(c)?;
@@ -410,7 +407,7 @@ fn fmt_satoshi_in(
             trailing_decimal_zeros = options.precision.unwrap_or(0);
         }
         Ordering::Less => {
-            let precision = unsigned_abs(precision);
+            let precision = precision.unsigned_abs();
             let divisor = 10u64.pow(precision.into());
             num_before_decimal_point = satoshi / divisor;
             num_after_decimal_point = satoshi % divisor;
