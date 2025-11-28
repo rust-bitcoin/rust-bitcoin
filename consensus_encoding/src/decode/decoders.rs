@@ -1174,6 +1174,52 @@ mod tests {
             decode_byte_vec_multi_byte_length_prefix, [0xff; 256], two_fifty_six_bytes_encoded();
     }
 
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_reserves_in_batches() {
+        // A small number of extra bytes so we extend exactly by the remainder
+        // instead of another full batch.
+        let tail_length: usize = 11;
+
+        let total_len = MAX_VECTOR_ALLOCATE + tail_length;
+        let total_len_le = u32::try_from(total_len).expect("total_len fits u32").to_le_bytes();
+        let mut decoder = ByteVecDecoder::new();
+
+        let mut prefix = vec![0xFE]; // total_len_le is a compact size of four bytes.
+        prefix.extend_from_slice(&total_len_le);
+        prefix.push(0xAA);
+        let mut prefix_slice = prefix.as_slice();
+        decoder.push_bytes(&mut prefix_slice).expect("length plus first element");
+        assert!(prefix_slice.is_empty());
+
+        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.buffer.len(), 1);
+        assert_eq!(decoder.buffer[0], 0xAA);
+
+        let fill = vec![0xBB; MAX_VECTOR_ALLOCATE - 1];
+        let mut fill_slice = fill.as_slice();
+        decoder.push_bytes(&mut fill_slice).expect("fills to batch boundary, full capacity");
+        assert!(fill_slice.is_empty());
+
+        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.buffer.len(), MAX_VECTOR_ALLOCATE);
+        assert_eq!(decoder.buffer[MAX_VECTOR_ALLOCATE - 1], 0xBB);
+
+        let mut tail = vec![0xCC];
+        tail.extend([0xDD].repeat(tail_length - 1));
+        let mut tail_slice = tail.as_slice();
+        decoder.push_bytes(&mut tail_slice).expect("fills the remaining bytes");
+        assert!(tail_slice.is_empty());
+
+        assert_eq!(decoder.buffer.capacity(), MAX_VECTOR_ALLOCATE + tail_length);
+        assert_eq!(decoder.buffer.len(), total_len);
+        assert_eq!(decoder.buffer[MAX_VECTOR_ALLOCATE], 0xCC);
+
+        let result = decoder.end().unwrap();
+        assert_eq!(result.len(), total_len);
+        assert_eq!(result[total_len - 1 ], 0xDD);
+    }
+
     #[cfg(feature = "alloc")]
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Inner(u32);
@@ -1281,6 +1327,55 @@ mod tests {
         let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
 
         assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_reserves_in_batches() {
+        // A small number of extra elements so we extend exactly by the remainder
+        // instead of another full batch.
+        let tail_length: usize = 11;
+
+        let element_size = core::mem::size_of::<Inner>();
+        let batch_length = MAX_VECTOR_ALLOCATE / element_size;
+        assert!(batch_length > 1);
+        let total_len = batch_length + tail_length;
+        let total_len_le = u32::try_from(total_len).expect("total_len fits u32").to_le_bytes();
+        let mut decoder = Test::decoder();
+
+        let mut prefix = vec![0xFE]; // total_len_le is a compact size of four bytes.
+        prefix.extend_from_slice(&total_len_le);
+        prefix.extend_from_slice(&0xAA_u32.to_le_bytes());
+        let mut prefix_slice = prefix.as_slice();
+        decoder.push_bytes(&mut prefix_slice).expect("length plus first element");
+        assert!(prefix_slice.is_empty());
+
+        assert_eq!(decoder.0.buffer.capacity(), batch_length);
+        assert_eq!(decoder.0.buffer.len(), 1);
+        assert_eq!(decoder.0.buffer[0], Inner(0xAA));
+
+        let fill = 0xBB_u32.to_le_bytes().repeat(batch_length - 1);
+        let mut fill_slice = fill.as_slice();
+        decoder.push_bytes(&mut fill_slice).expect("fills to batch boundary, full capacity");
+        assert!(fill_slice.is_empty());
+
+        assert_eq!(decoder.0.buffer.capacity(), batch_length);
+        assert_eq!(decoder.0.buffer.len(), batch_length);
+        assert_eq!(decoder.0.buffer[batch_length - 1], Inner(0xBB));
+
+        let mut tail = 0xCC_u32.to_le_bytes().to_vec();
+        tail.extend(0xDD_u32.to_le_bytes().repeat(tail_length - 1));
+        let mut tail_slice = tail.as_slice();
+        decoder.push_bytes(&mut tail_slice).expect("fills the remaining bytes");
+        assert!(tail_slice.is_empty());
+
+        assert_eq!(decoder.0.buffer.capacity(), batch_length + tail_length);
+        assert_eq!(decoder.0.buffer.len(), total_len);
+        assert_eq!(decoder.0.buffer[batch_length], Inner(0xCC));
+
+        let Test(result) = decoder.end().unwrap();
+        assert_eq!(result.len(), total_len);
+        assert_eq!(result[total_len - 1 ], Inner(0xDD));
     }
 
     #[cfg(feature = "alloc")]
