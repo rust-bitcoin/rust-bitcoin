@@ -12,7 +12,7 @@
 //!
 
 use internals::array_vec::ArrayVec;
-use internals::{compact_size, ToU64};
+use internals::compact_size;
 
 use super::{Encodable, Encoder};
 
@@ -226,7 +226,16 @@ pub struct CompactSizeEncoder {
 
 impl CompactSizeEncoder {
     /// Constructs a new `CompactSizeEncoder`.
-    pub fn new(value: impl ToU64) -> Self { Self { buf: Some(compact_size::encode(value)) } }
+    ///
+    /// Encodings are defined only for the range of u64. On systems where usize is
+    /// larger than u64, it will be possible to call this method with out-of-range
+    /// values. In such cases we will ignore the passed value and encode [`u64::MAX`].
+    /// But even on such exotic systems, we expect users to pass the length of an
+    /// in-memory object, meaning that such large values are impossible to obtain.
+    pub fn new(value: usize) -> Self {
+        let enc_value = value.try_into().unwrap_or(u64::MAX);
+        Self { buf: Some(compact_size::encode(enc_value)) }
+    }
 }
 
 impl Encoder for CompactSizeEncoder {
@@ -554,42 +563,54 @@ mod tests {
     #[test]
     fn encode_compact_size() {
         // 1-byte
-        let mut e = CompactSizeEncoder::new(0x10u64);
+        let mut e = CompactSizeEncoder::new(0x10usize);
         assert_eq!(e.current_chunk(), &[0x10][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
-        let mut e = CompactSizeEncoder::new(0xFCu64);
+        let mut e = CompactSizeEncoder::new(0xFCusize);
         assert_eq!(e.current_chunk(), &[0xFC][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         // 0xFD + u16
-        let mut e = CompactSizeEncoder::new(0x00FDu64);
+        let mut e = CompactSizeEncoder::new(0x00FDusize);
         assert_eq!(e.current_chunk(), &[0xFD, 0xFD, 0x00][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
-        let mut e = CompactSizeEncoder::new(0x0FFFu64);
+        let mut e = CompactSizeEncoder::new(0x0FFFusize);
         assert_eq!(e.current_chunk(), &[0xFD, 0xFF, 0x0F][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         // 0xFE + u32
-        let mut e = CompactSizeEncoder::new(0x0001_0000u64);
+        let mut e = CompactSizeEncoder::new(0x0001_0000usize);
         assert_eq!(e.current_chunk(), &[0xFE, 0x00, 0x00, 0x01, 0x00][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
-        let mut e = CompactSizeEncoder::new(0x0F0F_0F0Fu64);
+        let mut e = CompactSizeEncoder::new(0x0F0F_0F0Fusize);
         assert_eq!(e.current_chunk(), &[0xFE, 0x0F, 0x0F, 0x0F, 0x0F][..]);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         // 0xFF + u64
-        let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64);
-        assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
-        assert!(!e.advance());
-        assert!(e.current_chunk().is_empty());
+        // This test only runs on systems with >= 64 bit usize.
+        if core::mem::size_of::<usize>() >= 8 {
+            let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64 as usize);
+            assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
+            assert!(!e.advance());
+            assert!(e.current_chunk().is_empty());
+        }
+
+        // > u64::MAX encodes as u64::MAX.
+        // This test only runs on systems with > 64 bit usize.
+        if core::mem::size_of::<usize>() > 8 {
+            let mut e = CompactSizeEncoder::new((u128::from(u64::MAX) + 5) as usize);
+            assert_eq!(e.current_chunk(), &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF][..]);
+            assert!(!e.advance());
+            assert!(e.current_chunk().is_empty());
+        }
     }
 }
