@@ -1995,7 +1995,7 @@ mod tests {
             };
 
             // tests
-            let keypair = secp256k1::Keypair::from_secret_key(&internal_priv_key);
+            let keypair = crate::key::Keypair::from_secret_key(&internal_priv_key);
             let (internal_key, _parity) = XOnlyPublicKey::from_keypair(&keypair);
             let tweak = TapTweakHash::from_key_and_merkle_root(internal_key, merkle_root);
             let tweaked_keypair = keypair.add_xonly_tweak(&tweak.to_scalar()).unwrap();
@@ -2016,7 +2016,7 @@ mod tests {
 
             let key_spend_sig = secp256k1::schnorr::sign_with_aux_rand(
                 &sighash.to_byte_array(),
-                &tweaked_keypair,
+                &tweaked_keypair.into_inner(),
                 &[0u8; 32],
             );
 
@@ -2027,7 +2027,7 @@ mod tests {
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
 
-            let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
+            let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair.into_inner());
             assert_eq!(expected.tweaked_privkey, tweaked_priv_key);
         }
     }
