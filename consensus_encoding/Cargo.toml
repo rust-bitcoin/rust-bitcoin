@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin-consensus-encoding"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Nick Johnson <nick@yonson.dev>", "Tobin C. Harding <me@tobin.cc>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -19,6 +19,9 @@ alloc = ["internals/alloc"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.0" }
+
+[dev-dependencies]
+hex = { package = "hex-conservative", version = "0.3.0" }
 
 [package.metadata.docs.rs]
 all-features = true

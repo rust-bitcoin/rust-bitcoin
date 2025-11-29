@@ -210,12 +210,9 @@ impl FeeRate {
     pub const fn mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
         let wu = weight.to_wu();
         if let Some(fee_kwu) = self.to_sat_per_kwu_floor().checked_mul(wu) {
-            // Bump by 999 to do ceil division using kwu.
-            if let Some(bump) = fee_kwu.checked_add(999) {
-                let fee = bump / 1_000;
-                if let Ok(fee_amount) = Amount::from_sat(fee) {
-                    return NumOpResult::Valid(fee_amount);
-                }
+            let fee = fee_kwu.div_ceil(1_000);
+            if let Ok(fee_amount) = Amount::from_sat(fee) {
+                return NumOpResult::Valid(fee_amount);
             }
         }
         NumOpResult::Error(E::while_doing(MathOp::Mul))
