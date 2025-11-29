@@ -201,7 +201,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
     let t = Hashes::<Sha256>::new_sha256();
     check_debug!(t; a, c, d, e, f, g, h, i, j, k, l);
 
-    // This tests `Debug` on `Hkdf` but not for all `T: GeneralHash`.
+    // This tests `Debug` on `Hkdf` but not for all `HashEngine` types.
     let t = Hkdf::<sha256::HashEngine>::new(&[], &[]);
     let debug = format!("{:?}", t);
     assert!(!debug.is_empty());
