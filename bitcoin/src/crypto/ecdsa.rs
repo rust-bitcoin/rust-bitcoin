@@ -7,6 +7,8 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
 use internals::write_err;
 use io::Write;
@@ -252,6 +254,41 @@ impl From<NonStandardSighashTypeError> for Error {
 
 impl From<hex::HexToBytesError> for Error {
     fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Signature {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // The valid range of r and s should be between 0 and n-1 where
+        // n = 0xFFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
+        let high_min = 0x0u128;
+        let high_max = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEu128;
+        let low_min = 0x0u128;
+        let low_max = 0xBAAEDCE6AF48A03BBFD25E8CD0364140u128;
+
+        // Equally weight the chances of getting a minimum value for a signature, maximum value for
+        // a signature, and an arbitrary valid signature
+        let choice = u.int_in_range(0..=2)?;
+        let (high, low) = match choice {
+            0 => (high_min, low_min),
+            1 => (high_max, low_max),
+            _ => (u.int_in_range(high_min..=high_max)?, u.int_in_range(low_min..=low_max)?),
+        };
+
+        // We can use the same bytes for r and s since they're just arbitrary values
+        let mut bytes: [u8; 32] = [0; 32];
+        bytes[..16].copy_from_slice(&high.to_be_bytes());
+        bytes[16..].copy_from_slice(&low.to_be_bytes());
+
+        let mut signature_bytes: [u8; 64] = [0; 64];
+        signature_bytes[..32].copy_from_slice(&bytes);
+        signature_bytes[32..].copy_from_slice(&bytes);
+
+        Ok(Signature{
+            signature: secp256k1::ecdsa::Signature::from_compact(&signature_bytes).unwrap(),
+            sighash_type: EcdsaSighashType::arbitrary(u)?,
+        })
+    }
 }
 
 #[cfg(test)]

@@ -50,6 +50,9 @@ use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
 use crate::prelude::*;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// Data structure that represents a block header paired to a partial merkle tree.
 ///
 /// NOTE: This assumes that the given Block has *at least* 1 transaction. If the Block has 0 txs,
@@ -536,6 +539,31 @@ impl std::error::Error for MerkleBlockError {
             | NotEnoughBits | NotAllBitsConsumed | NotAllHashesConsumed | BitsArrayOverflow
             | HashesArrayOverflow | IdenticalHashesFound => None,
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for TxMerkleNode {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxMerkleNode::from_byte_array(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PartialMerkleTree {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(PartialMerkleTree {
+            num_transactions: u.arbitrary()?,
+            bits: Vec::<bool>::arbitrary(u)?,
+            hashes: Vec::<TxMerkleNode>::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for MerkleBlock {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(MerkleBlock { header: u.arbitrary()?, txn: u.arbitrary()? })
     }
 }
 
