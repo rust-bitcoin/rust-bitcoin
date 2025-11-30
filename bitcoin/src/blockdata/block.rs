@@ -15,7 +15,7 @@ use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
-use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
+use crate::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::prelude::Vec;
 use crate::script::{self, ScriptIntError, ScriptExt as _};
