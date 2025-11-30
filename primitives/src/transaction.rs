@@ -25,9 +25,9 @@ use encoding::{
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
+use internals::array::ArrayExt as _;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
-use internals::array::ArrayExt as _;
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
