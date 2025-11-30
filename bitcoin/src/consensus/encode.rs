@@ -17,9 +17,10 @@
 use core::any::TypeId;
 use core::{cmp, mem, slice};
 
+use encoding::compact_size;
 use hashes::{sha256, sha256d, Hash};
 use hex::DisplayHex as _;
-use internals::{compact_size, ToU64};
+use internals::ToU64;
 use io::{BufRead, Cursor, Read, Write};
 
 use super::IterReader;
@@ -349,19 +350,16 @@ impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
 
 /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
+#[deprecated(since = "0.33.0", note = "use `consensus_encoding::compact_size::encoded_size_const` instead")]
 #[inline]
 pub const fn varint_size_u64(v: u64) -> usize {
-    match v {
-        0..=0xFC => 1,
-        0xFD..=0xFFFF => 3,
-        0x10000..=0xFFFFFFFF => 5,
-        _ => 9,
-    }
+    encoding::compact_size::encoded_size_const(v)
 }
 
 /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
+#[deprecated(since = "0.33.0", note = "use `consensus_encoding::compact_size::encoded_size` instead")]
 #[inline]
-pub fn varint_size(v: impl ToU64) -> usize { varint_size_u64(v.to_u64()) }
+pub fn varint_size(v: impl ToU64) -> usize { encoding::compact_size::encoded_size(v) }
 
 impl Encodable for bool {
     #[inline]
@@ -819,7 +817,7 @@ mod tests {
         fn test_varint_len(varint: u64, expected: usize) {
             let mut encoder = vec![];
             assert_eq!(encoder.emit_compact_size(varint).unwrap(), expected);
-            assert_eq!(varint_size(varint), expected);
+            assert_eq!(encoding::compact_size::encoded_size(varint), expected);
         }
         test_varint_len(0, 1);
         test_varint_len(0xFC, 1);

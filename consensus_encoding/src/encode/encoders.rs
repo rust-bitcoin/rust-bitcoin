@@ -12,9 +12,10 @@
 //!
 
 use internals::array_vec::ArrayVec;
-use internals::{compact_size, ToU64};
+use internals::ToU64;
 
 use super::{Encodable, Encoder};
+use crate::compact_size;
 
 /// The maximum length of a compact size encoding.
 const SIZE: usize = 9;
