@@ -91,8 +91,6 @@ pub mod _export {
     }
 }
 
-#[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
-mod error;
 mod internal_macros;
 
 pub mod cmp;
@@ -152,11 +150,6 @@ pub use sha512_256::Hash as Sha512_256;
 /// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
 #[doc(inline)]
 pub use siphash24::Hash as Siphash24;
-
-/// Attempted to create a hash from an invalid length slice.
-#[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
-#[allow(deprecated_in_future)]
-pub type FromSliceError = crate::error::FromSliceError; // Alias instead of re-export so we can deprecate it.
 
 /// Tagged SHA-256: Type alias for the [`sha256t::Hash`] hash type.
 pub type Sha256t<T> = sha256t::Hash<T>;
