@@ -153,19 +153,19 @@ fn encode_slice_encoder_mixed_empty_and_data() {
 #[test]
 fn encode_compact_size_boundary_values() {
     // Test CompactSizeEncoder with boundary values.
-    let mut encoder = CompactSizeEncoder::new(252u32);
+    let mut encoder = CompactSizeEncoder::new(252usize);
     assert_eq!(encoder.current_chunk(), &[252]);
     assert!(!encoder.advance());
 
-    let mut encoder = CompactSizeEncoder::new(253u32);
+    let mut encoder = CompactSizeEncoder::new(253usize);
     assert_eq!(encoder.current_chunk(), &[0xFD, 253, 0]);
     assert!(!encoder.advance());
 
-    let mut encoder = CompactSizeEncoder::new(0x10000u32);
+    let mut encoder = CompactSizeEncoder::new(0x10000usize);
     assert_eq!(encoder.current_chunk(), &[0xFE, 0, 0, 1, 0]);
     assert!(!encoder.advance());
 
-    let mut encoder = CompactSizeEncoder::new(0u32);
+    let mut encoder = CompactSizeEncoder::new(0usize);
     assert_eq!(encoder.current_chunk(), &[0]);
     assert!(!encoder.advance());
 }

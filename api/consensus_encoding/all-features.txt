@@ -334,7 +334,7 @@ pub fn bitcoin_consensus_encoding::CompactSizeDecoderError::eq(&self, other: &bi
 pub fn bitcoin_consensus_encoding::CompactSizeDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_consensus_encoding::CompactSizeEncoder::advance(&mut self) -> bool
 pub fn bitcoin_consensus_encoding::CompactSizeEncoder::current_chunk(&self) -> &[u8]
-pub fn bitcoin_consensus_encoding::CompactSizeEncoder::new(value: impl bitcoin_internals::ToU64) -> Self
+pub fn bitcoin_consensus_encoding::CompactSizeEncoder::new(value: usize) -> Self
 pub fn bitcoin_consensus_encoding::Decodable::decoder() -> Self::Decoder
 pub fn bitcoin_consensus_encoding::Decoder2<A, B>::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_consensus_encoding::Decoder2<A, B>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
