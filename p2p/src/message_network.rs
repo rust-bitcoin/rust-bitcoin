@@ -334,11 +334,7 @@ impl_vec_wrapper!(Alert, Vec<u8>);
 impl<'a> Arbitrary<'a> for ClientSoftwareVersion {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
-            true => Ok(Self::Date {
-                yyyy: u.arbitrary()?,
-                mm: u.arbitrary()?,
-                dd: u.arbitrary()?,
-            }),
+            true => Ok(Self::Date { yyyy: u.arbitrary()?, mm: u.arbitrary()?, dd: u.arbitrary()? }),
             false => Ok(Self::SemVer {
                 major: u.arbitrary()?,
                 minor: u.arbitrary()?,

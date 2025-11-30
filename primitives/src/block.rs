@@ -16,7 +16,9 @@ use core::marker::PhantomData;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::Encodable;
 #[cfg(feature = "alloc")]
-use encoding::{CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{
+    CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
+};
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
 
@@ -234,10 +236,7 @@ impl Decoder for BlockDecoder {
 impl Decodable for Block {
     type Decoder = BlockDecoder;
     fn decoder() -> Self::Decoder {
-        BlockDecoder(Decoder2::new(
-            Header::decoder(),
-            VecDecoder::<Transaction>::new(),
-        ))
+        BlockDecoder(Decoder2::new(Header::decoder(), VecDecoder::<Transaction>::new()))
     }
 }
 
@@ -925,14 +924,12 @@ mod tests {
         };
 
         let block: u32 = 741_521;
-        let transactions = vec![
-            Transaction {
-                version: crate::transaction::Version::ONE,
-                lock_time: units::absolute::LockTime::from_height(block).unwrap(),
-                inputs: vec![crate::transaction::TxIn::EMPTY_COINBASE],
-                outputs: Vec::new(),
-            },
-        ];
+        let transactions = vec![Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: units::absolute::LockTime::from_height(block).unwrap(),
+            inputs: vec![crate::transaction::TxIn::EMPTY_COINBASE],
+            outputs: Vec::new(),
+        }];
         let original_block = Block::new_unchecked(header, transactions);
 
         // Encode + decode the block

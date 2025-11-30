@@ -347,7 +347,9 @@ where
     B: Decoder,
 {
     /// Constructs a new composite decoder.
-    pub const fn new(first: A, second: B) -> Self { Self { state: Decoder2State::First(first, second) } }
+    pub const fn new(first: A, second: B) -> Self {
+        Self { state: Decoder2State::First(first, second) }
+    }
 }
 
 impl<A, B> Decoder for Decoder2<A, B>
@@ -1217,7 +1219,7 @@ mod tests {
 
         let result = decoder.end().unwrap();
         assert_eq!(result.len(), total_len);
-        assert_eq!(result[total_len - 1 ], 0xDD);
+        assert_eq!(result[total_len - 1], 0xDD);
     }
 
     #[cfg(feature = "alloc")]
@@ -1375,7 +1377,7 @@ mod tests {
 
         let Test(result) = decoder.end().unwrap();
         assert_eq!(result.len(), total_len);
-        assert_eq!(result[total_len - 1 ], Inner(0xDD));
+        assert_eq!(result[total_len - 1], Inner(0xDD));
     }
 
     #[cfg(feature = "alloc")]
