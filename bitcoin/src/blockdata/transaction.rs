@@ -32,7 +32,7 @@ use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut};
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut, TxIdentifier};
 
 impl Encodable for Txid {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -75,12 +75,6 @@ internal_macros::define_extension_trait! {
         fn all_zeros() -> Self { Self::COINBASE }
     }
 }
-
-/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
-pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
-
-impl TxIdentifier for Txid {}
-impl TxIdentifier for Wtxid {}
 
 // Duplicated in `primitives`.
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
@@ -318,15 +312,6 @@ pub trait TransactionExt: sealed::Sealed {
     /// [`policy`]: crate::policy
     fn vsize(&self) -> usize;
 
-    /// Checks if this is a coinbase transaction.
-    ///
-    /// The first transaction in the block distributes the mining reward and is called the coinbase
-    /// transaction. It is impossible to check if the transaction is first in the block, so this
-    /// function checks the structure of the transaction instead - the previous output must be
-    /// all-zeros (creates satoshis "out of thin air").
-    #[doc(alias = "is_coin_base")] // method previously had this name
-    fn is_coinbase(&self) -> bool;
-
     /// Returns `true` if the transaction itself opted in to be BIP-0125-replaceable (RBF).
     ///
     /// # Warning
@@ -434,11 +419,6 @@ impl TransactionExt for Transaction {
     fn vsize(&self) -> usize {
         // No overflow because it's computed from data in memory
         self.weight().to_vbytes_ceil() as usize
-    }
-
-    #[doc(alias = "is_coin_base")] // method previously had this name
-    fn is_coinbase(&self) -> bool {
-        self.inputs.len() == 1 && self.inputs[0].previous_output == OutPoint::COINBASE_PREVOUT
     }
 
     fn is_explicitly_rbf(&self) -> bool { self.inputs.iter().any(|input| input.sequence.is_rbf()) }

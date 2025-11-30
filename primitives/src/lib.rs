@@ -75,7 +75,7 @@ pub type BlockInterval = BlockHeightInterval;
 #[cfg(feature = "alloc")]
 pub use self::{
     block::{
-        Block, Checked as BlockChecked, Unchecked as BlockUnchecked, Validation as BlockValidation,
+        Block, Checked as BlockChecked, Unchecked as BlockUnchecked, Validation as BlockValidation, InvalidBlockError, compute_merkle_root
     },
     script::{
         RedeemScript, RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf,

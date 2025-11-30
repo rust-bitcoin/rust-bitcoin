@@ -195,6 +195,17 @@ impl Transaction {
         // `Transaction` docs for full explanation).
         self.inputs.is_empty()
     }
+
+    /// Checks if this is a coinbase transaction.
+    ///
+    /// The first transaction in the block distributes the mining reward and is called the coinbase
+    /// transaction. It is impossible to check if the transaction is first in the block, so this
+    /// function checks the structure of the transaction instead - the previous output must be
+    /// all-zeros (creates satoshis "out of thin air").
+    #[doc(alias = "is_coin_base")] // method previously had this name
+    pub fn is_coinbase(&self) -> bool {
+        self.inputs.len() == 1 && self.inputs[0].previous_output == OutPoint::COINBASE_PREVOUT
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -237,6 +248,18 @@ impl From<&Transaction> for Wtxid {
     #[inline]
     fn from(tx: &Transaction) -> Self { tx.compute_wtxid() }
 }
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Txid {}
+    impl Sealed for super::Wtxid {}
+}
+
+/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
+pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
+
+impl TxIdentifier for Txid {}
+impl TxIdentifier for Wtxid {}
 
 // Duplicated in `bitcoin`.
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
