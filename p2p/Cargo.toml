@@ -19,7 +19,7 @@ arbitrary = ["dep:arbitrary", "bitcoin/arbitrary"]
 
 [dependencies]
 bitcoin = { path = "../bitcoin/", default-features = false }
-hashes = { package = "bitcoin_hashes", path = "../hashes", default-features = false }
+hashes = { package = "bitcoin_hashes", version = "0.18.0", path = "../hashes", default-features = false }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
 internals = { package = "bitcoin-internals", path = "../internals", default-features = false }
 io = { package = "bitcoin-io", path = "../io", default-features = false }
