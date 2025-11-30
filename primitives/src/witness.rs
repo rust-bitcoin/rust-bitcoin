@@ -26,6 +26,10 @@ use crate::prelude::{Box, Vec};
 #[cfg(doc)]
 use crate::TxIn;
 
+/// Maximum amount of memory (in bytes) to allocate at once when deserializing vectors.
+#[cfg(feature = "alloc")]
+const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
+
 /// The Witness is the data used to unlock bitcoin since the [SegWit upgrade].
 ///
 /// Can be logically seen as an array of bytestrings, i.e. `Vec<Vec<u8>>`, and it is serialized on the wire
@@ -333,15 +337,26 @@ impl WitnessDecoder {
         }
     }
 
-    /// Resizes the content buffer if needed, doubling the size each time.
-    fn resize_if_needed(&mut self, required_len: usize) {
-        if required_len >= self.content.len() {
-            let mut new_len = self.content.len().max(1);
-            while new_len <= required_len {
-                new_len *= 2;
-            }
-            self.content.resize(new_len, 0);
+    /// Allocates buffer space in ~1MB batches
+    /// Returns buffer length (may be less than `required_len` !!)
+    fn reserve_batch(&mut self, required_len: usize) -> usize {
+        if required_len <= self.content.len() {
+            return self.content.len();
         }
+
+        let bytes_needed = required_len - self.content.len();
+        let available_capacity = self.content.capacity() - self.content.len();
+
+        if available_capacity == 0 {
+            let batch_size = bytes_needed.min(MAX_VECTOR_ALLOCATE);
+            self.content.reserve_exact(batch_size);
+        }
+
+        // Only extend up to current capacity to limit batch allocation
+        let can_extend = (self.content.capacity() - self.content.len()).min(bytes_needed);
+        let new_len = self.content.len() + can_extend;
+        self.content.resize(new_len, 0);
+        new_len
     }
 }
 
@@ -383,6 +398,7 @@ impl Decoder for WitnessDecoder {
             // and some overhead (e.g. P2WPKH witness is ~100 bytes),
             // without reallocating.
             let witness_index_space = witness_elements * 4;
+            // Initially the index space is at the front of the buffer then we rotate left in `end`.
             self.cursor = witness_index_space;
             self.content = alloc::vec![0u8; self.cursor + 128];
         }
@@ -406,17 +422,17 @@ impl Decoder for WitnessDecoder {
             // If we have some bytes to read, then reading element data.
             // Else we are reading the element's length.
             if let Some(bytes_to_read) = self.element_bytes_remaining {
-                let copy_len = bytes.len().min(bytes_to_read);
+                let required_len = self.cursor + bytes.len().min(bytes_to_read);
+                let actual_len = self.reserve_batch(required_len);
 
-                // Ensure we have enough space.
-                let required_len = self.cursor + copy_len;
-                self.resize_if_needed(required_len);
+                let available_space = actual_len.saturating_sub(self.cursor);
+                let can_copy = available_space.min(bytes.len()).min(bytes_to_read);
 
-                self.content[self.cursor..self.cursor + copy_len]
-                    .copy_from_slice(&bytes[..copy_len]);
-                self.cursor += copy_len;
-                *bytes = &bytes[copy_len..];
-                let remaining = bytes_to_read - copy_len;
+                self.content[self.cursor..self.cursor + can_copy]
+                    .copy_from_slice(&bytes[..can_copy]);
+                self.cursor += can_copy;
+                *bytes = &bytes[can_copy..];
+                let remaining = bytes_to_read - can_copy;
 
                 if remaining == 0 {
                     // Element complete, move to next element.
@@ -447,7 +463,7 @@ impl Decoder for WitnessDecoder {
                 // Re-encode the length back into the buffer.
                 let encoded_size = compact_size::encoded_size(element_length);
                 let required_len = self.cursor + encoded_size + element_length;
-                self.resize_if_needed(required_len);
+                self.reserve_batch(required_len);
                 let encoded_compact_size = compact_size::encode(element_length);
                 self.content[self.cursor..self.cursor + encoded_size]
                     .copy_from_slice(&encoded_compact_size);
@@ -1504,5 +1520,22 @@ mod test {
         assert_eq!(witness.len(), 2);
         assert_eq!(&witness[0], large_element.as_slice());
         assert_eq!(&witness[1], large_element.as_slice());
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_dos_protection() {
+        let mut encoded = Vec::new();
+        encoded.extend_from_slice(&[0xFE, 0x00, 0x09, 0x3D, 0x00]); // 4_000_000 (witness count)
+        encoded.extend_from_slice(&[0xFE, 0x00, 0x09, 0x3D, 0x00]); // 4_000_000 (1st element length)
+
+        let mut slice = encoded.as_slice();
+        let mut dec = WitnessDecoder::new();
+
+        assert!(dec.push_bytes(&mut slice).unwrap());
+
+        let allocated = dec.content.len();
+
+        assert!(allocated >= 16_000_000 && allocated < 17_500_000);
     }
 }
