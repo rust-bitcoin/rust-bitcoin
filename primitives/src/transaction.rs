@@ -365,7 +365,7 @@ pub struct TransactionDecoder {
 #[cfg(feature = "alloc")]
 impl TransactionDecoder {
     /// Constructs a new [`TransactionDecoder`].
-    pub fn new() -> Self { Self { state: TransactionDecoderState::Version(VersionDecoder::new()) } }
+    pub const fn new() -> Self { Self { state: TransactionDecoderState::Version(VersionDecoder::new()) } }
 }
 
 #[cfg(feature = "alloc")]
@@ -1085,7 +1085,7 @@ pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
 
 impl OutPointDecoder {
     /// Constructs a new [`OutPoint`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for OutPointDecoder {
@@ -1374,7 +1374,7 @@ pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
 impl VersionDecoder {
     /// Constructs a new [`Version`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for VersionDecoder {

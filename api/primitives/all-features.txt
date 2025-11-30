@@ -1231,7 +1231,12 @@ pub const fn bitcoin_primitives::WitnessMerkleNode::to_byte_array(self) -> [u8; 
 pub const fn bitcoin_primitives::Wtxid::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_primitives::Wtxid::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_primitives::Wtxid::to_byte_array(self) -> [u8; 32]
+pub const fn bitcoin_primitives::block::BlockHashDecoder::new() -> Self
 pub const fn bitcoin_primitives::block::Version::from_consensus(v: i32) -> Self
+pub const fn bitcoin_primitives::block::Version::to_consensus(self) -> i32
+pub const fn bitcoin_primitives::block::VersionDecoder::new() -> Self
+pub const fn bitcoin_primitives::pow::CompactTarget::to_consensus(self) -> u32
+pub const fn bitcoin_primitives::pow::CompactTargetDecoder::new() -> Self
 pub const fn bitcoin_primitives::script::Script<T>::as_bytes(&self) -> &[u8]
 pub const fn bitcoin_primitives::script::Script<T>::from_bytes(bytes: &[u8]) -> &Self
 pub const fn bitcoin_primitives::script::Script<T>::is_empty(&self) -> bool
@@ -1239,16 +1244,23 @@ pub const fn bitcoin_primitives::script::Script<T>::len(&self) -> usize
 pub const fn bitcoin_primitives::script::Script<T>::new() -> &'static Self
 pub const fn bitcoin_primitives::script::ScriptBuf<T>::from_bytes(bytes: alloc::vec::Vec<u8>) -> Self
 pub const fn bitcoin_primitives::script::ScriptBuf<T>::new() -> Self
+pub const fn bitcoin_primitives::script::ScriptBufDecoder<T>::new() -> Self
 pub const fn bitcoin_primitives::script::ScriptHash::as_byte_array(&self) -> &[u8; 20]
 pub const fn bitcoin_primitives::script::ScriptHash::from_byte_array(bytes: [u8; 20]) -> Self
 pub const fn bitcoin_primitives::script::ScriptHash::to_byte_array(self) -> [u8; 20]
 pub const fn bitcoin_primitives::script::WScriptHash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_primitives::script::WScriptHash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_primitives::script::WScriptHash::to_byte_array(self) -> [u8; 32]
+pub const fn bitcoin_primitives::transaction::OutPointDecoder::new() -> Self
+pub const fn bitcoin_primitives::transaction::TransactionDecoder::new() -> Self
+pub const fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::new() -> Self
 pub const fn bitcoin_primitives::transaction::Version::is_standard(self) -> bool
 pub const fn bitcoin_primitives::transaction::Version::maybe_non_standard(version: u32) -> Self
 pub const fn bitcoin_primitives::transaction::Version::to_u32(self) -> u32
+pub const fn bitcoin_primitives::transaction::VersionDecoder::new() -> Self
+pub const fn bitcoin_primitives::witness::Witness::len(&self) -> usize
 pub const fn bitcoin_primitives::witness::Witness::new() -> Self
+pub const fn bitcoin_primitives::witness::WitnessDecoder::new() -> Self
 pub enum bitcoin_primitives::BlockChecked
 pub enum bitcoin_primitives::BlockUnchecked
 pub enum bitcoin_primitives::block::Checked
@@ -1414,7 +1426,6 @@ pub fn bitcoin_primitives::block::BlockEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::BlockEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::block::BlockHashDecoder::default() -> Self
 pub fn bitcoin_primitives::block::BlockHashDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::block::BlockHashDecoder::new() -> Self
 pub fn bitcoin_primitives::block::BlockHashDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::block::BlockHashDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::block::BlockHashDecoderError::clone(&self) -> bitcoin_primitives::block::BlockHashDecoderError
@@ -1470,10 +1481,8 @@ pub fn bitcoin_primitives::block::Version::hash<__H: core::hash::Hasher>(&self, 
 pub fn bitcoin_primitives::block::Version::is_signalling_soft_fork(self, bit: u8) -> bool
 pub fn bitcoin_primitives::block::Version::partial_cmp(&self, other: &bitcoin_primitives::block::Version) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::block::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-pub fn bitcoin_primitives::block::Version::to_consensus(self) -> i32
 pub fn bitcoin_primitives::block::VersionDecoder::default() -> Self
 pub fn bitcoin_primitives::block::VersionDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::block::VersionDecoder::new() -> Self
 pub fn bitcoin_primitives::block::VersionDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::block::VersionDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::block::VersionDecoderError::clone(&self) -> bitcoin_primitives::block::VersionDecoderError
@@ -1497,11 +1506,9 @@ pub fn bitcoin_primitives::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin_primitives::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::pow::CompactTarget::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-pub fn bitcoin_primitives::pow::CompactTarget::to_consensus(self) -> u32
 pub fn bitcoin_primitives::pow::CompactTarget::to_hex(self) -> alloc::string::String
 pub fn bitcoin_primitives::pow::CompactTargetDecoder::default() -> Self
 pub fn bitcoin_primitives::pow::CompactTargetDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::pow::CompactTargetDecoder::new() -> Self
 pub fn bitcoin_primitives::pow::CompactTargetDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::pow::CompactTargetDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::pow::CompactTargetDecoderError::clone(&self) -> bitcoin_primitives::pow::CompactTargetDecoderError
@@ -1584,7 +1591,6 @@ pub fn bitcoin_primitives::script::ScriptBuf<T>::to_hex(&self) -> alloc::string:
 pub fn bitcoin_primitives::script::ScriptBuf<T>::with_capacity(capacity: usize) -> Self
 pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::default() -> Self
 pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::new() -> Self
 pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::read_limit(&self) -> usize
 pub fn bitcoin_primitives::script::ScriptBufDecoderError::clone(&self) -> bitcoin_primitives::script::ScriptBufDecoderError
@@ -1672,7 +1678,6 @@ pub fn bitcoin_primitives::transaction::OutPoint::partial_cmp(&self, other: &bit
 pub fn bitcoin_primitives::transaction::OutPoint::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin_primitives::transaction::OutPointDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::OutPointDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::transaction::OutPointDecoder::new() -> Self
 pub fn bitcoin_primitives::transaction::OutPointDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::transaction::OutPointDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::transaction::OutPointDecoderError::clone(&self) -> bitcoin_primitives::transaction::OutPointDecoderError
@@ -1700,7 +1705,6 @@ pub fn bitcoin_primitives::transaction::Transaction::hash<__H: core::hash::Hashe
 pub fn bitcoin_primitives::transaction::Transaction::partial_cmp(&self, other: &Self) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::transaction::TransactionDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::TransactionDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::transaction::TransactionDecoder::new() -> Self
 pub fn bitcoin_primitives::transaction::TransactionDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::transaction::TransactionDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::transaction::TransactionDecoderError::clone(&self) -> bitcoin_primitives::transaction::TransactionDecoderError
@@ -1736,7 +1740,6 @@ pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::advance(&mut self) -> b
 pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::new() -> Self
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoderError::clone(&self) -> bitcoin_primitives::transaction::TxMerkleNodeDecoderError
@@ -1777,7 +1780,6 @@ pub fn bitcoin_primitives::transaction::Version::partial_cmp(&self, other: &bitc
 pub fn bitcoin_primitives::transaction::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin_primitives::transaction::VersionDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::VersionDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::transaction::VersionDecoder::new() -> Self
 pub fn bitcoin_primitives::transaction::VersionDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::transaction::VersionDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::transaction::VersionDecoderError::clone(&self) -> bitcoin_primitives::transaction::VersionDecoderError
@@ -1836,7 +1838,6 @@ pub fn bitcoin_primitives::witness::Witness::index(&self, index: usize) -> &Self
 pub fn bitcoin_primitives::witness::Witness::is_empty(&self) -> bool
 pub fn bitcoin_primitives::witness::Witness::iter(&self) -> bitcoin_primitives::witness::Iter<'_>
 pub fn bitcoin_primitives::witness::Witness::last(&self) -> core::option::Option<&[u8]>
-pub fn bitcoin_primitives::witness::Witness::len(&self) -> usize
 pub fn bitcoin_primitives::witness::Witness::partial_cmp(&self, other: &bitcoin_primitives::witness::Witness) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::witness::Witness::push<T: core::convert::AsRef<[u8]>>(&mut self, new_element: T)
 pub fn bitcoin_primitives::witness::Witness::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
@@ -1844,7 +1845,6 @@ pub fn bitcoin_primitives::witness::Witness::size(&self) -> usize
 pub fn bitcoin_primitives::witness::Witness::to_vec(&self) -> alloc::vec::Vec<alloc::vec::Vec<u8>>
 pub fn bitcoin_primitives::witness::WitnessDecoder::default() -> Self
 pub fn bitcoin_primitives::witness::WitnessDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::witness::WitnessDecoder::new() -> Self
 pub fn bitcoin_primitives::witness::WitnessDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
 pub fn bitcoin_primitives::witness::WitnessDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::witness::WitnessDecoderError::clone(&self) -> bitcoin_primitives::witness::WitnessDecoderError
