@@ -330,11 +330,11 @@ impl Encodable for Transaction {
     fn encoder(&self) -> Self::Encoder<'_> {
         let version = self.version.encoder();
         let inputs = Encoder2::new(
-            CompactSizeEncoder::new(self.inputs.len() as u64),
+            CompactSizeEncoder::new(self.inputs.len()),
             SliceEncoder::without_length_prefix(self.inputs.as_ref()),
         );
         let outputs = Encoder2::new(
-            CompactSizeEncoder::new(self.outputs.len() as u64),
+            CompactSizeEncoder::new(self.outputs.len()),
             SliceEncoder::without_length_prefix(self.outputs.as_ref()),
         );
         let lock_time = self.lock_time.encoder();
