@@ -238,6 +238,15 @@ impl From<&Transaction> for Wtxid {
     fn from(tx: &Transaction) -> Self { tx.compute_wtxid() }
 }
 
+/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
+#[cfg(feature = "alloc")]
+pub(crate) trait TxIdentifier: AsRef<[u8]> {}
+
+#[cfg(feature = "alloc")]
+impl TxIdentifier for Txid {}
+#[cfg(feature = "alloc")]
+impl TxIdentifier for Wtxid {}
+
 // Duplicated in `bitcoin`.
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
 #[cfg(feature = "alloc")]
