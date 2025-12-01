@@ -20,13 +20,6 @@ use crate::Wtxid;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WitnessMerkleNode(sha256d::Hash);
 
-// The new hash wrapper type.
-type HashType = WitnessMerkleNode;
-// The inner hash type from `hashes`.
-type Inner = sha256d::Hash;
-
-include!("./generic.rs");
-
 #[cfg(feature = "alloc")]
 impl WitnessMerkleNode {
     /// Convert a [`Wtxid`] hash to a leaf node of the tree.
@@ -47,3 +40,10 @@ impl WitnessMerkleNode {
     /// you should not unwrap the `Option` returned by this method!
     pub fn calculate_root<I: Iterator<Item = Wtxid>>(iter: I) -> Option<Self> { MerkleNode::calculate_root(iter) }
 }
+
+// The new hash wrapper type.
+type HashType = WitnessMerkleNode;
+// The inner hash type from `hashes`.
+type Inner = sha256d::Hash;
+
+include!("./generic.rs");
