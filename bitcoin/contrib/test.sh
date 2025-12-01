@@ -23,20 +23,6 @@ if cargo --version | grep beta; then
     STABLE=false
 fi
 
-# Pin dependencies as required if we are using MSRV toolchain.
-if cargo --version | grep "1\.41"; then
-    # 1.0.157 uses syn 2.0 which requires edition 2018
-    cargo update -p serde --precise 1.0.156
-    # 1.0.108 uses `matches!` macro so does not work with Rust 1.41.1, bad `syn` no biscuit.
-    cargo update -p syn --precise 1.0.107
-fi
-
-# Pin dependencies as above (required for no-std tests that use Rust 1.47 toolchain).
-if cargo --version | grep "1\.47"; then
-    cargo update -p serde --precise 1.0.156
-    cargo update -p syn --precise 1.0.107
-fi
-
 # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
 # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
 duplicate_dependencies=$(
