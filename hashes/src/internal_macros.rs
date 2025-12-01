@@ -15,7 +15,7 @@
 ///
 /// Restrictions on usage:
 ///
-/// * The hash type must implement the `GeneralHash` trait.
+/// * The `Hash` type in scope must provide `from_byte_array`, `to_byte_array`, and `as_byte_array` (e.g., via `hash_type_no_default!`).
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         $crate::impl_bytelike_traits!(Hash, { $bits / 8 } $(, $gen: $gent)*);
@@ -55,7 +55,7 @@ pub(crate) use hash_trait_impls;
 ///
 /// Restrictions on usage:
 ///
-/// * The hash type must implement the `GeneralHash` trait.
+/// * Requires a `HashEngine` type in this module implementing `Default` and `crate::HashEngine<Hash = Hash, Bytes = [u8; $bits / 8]>`.
 macro_rules! general_hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
         /// Hashes some bytes.
