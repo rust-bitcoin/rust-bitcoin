@@ -14,7 +14,7 @@
 // Import using module style e.g., `sha256::Hash`.
 use bitcoin_hashes::{
     hash160, hash_newtype, hkdf, hmac, ripemd160, sha1, sha256, sha256d, sha256t, sha256t_tag,
-    sha384, sha3_256, sha512, sha512_256, siphash24, FromSliceError, Hash, HashEngine,
+    sha384, sha3_256, sha512, sha512_256, siphash24, Hash, HashEngine,
 };
 // Import using type alias style e.g., `Sha256`.
 use bitcoin_hashes::{
@@ -165,7 +165,6 @@ struct Keyed<T: Hash> {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
-    a: FromSliceError,
     b: hkdf::MaxLengthError,
     c: sha256::MidstateError,
 }
