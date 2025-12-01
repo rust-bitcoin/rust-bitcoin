@@ -80,7 +80,7 @@ use std::collections::BTreeMap;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::ext::*;
-use bitcoin::key::{TapTweak, XOnlyPublicKey};
+use bitcoin::key::{Keypair, TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
@@ -436,7 +436,7 @@ impl BenefactorWallet {
             (vec![leaf_hash], (self.beneficiary_xpub.fingerprint(), derivation_path.clone())),
         );
         origins.insert(
-            internal_keypair.x_only_public_key().0.into(),
+            internal_keypair.x_only_public_key().0,
             (vec![], (self.master_xpriv.fingerprint(), derivation_path)),
         );
         let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
@@ -451,7 +451,7 @@ impl BenefactorWallet {
             tap_key_origins: origins,
             tap_merkle_root: taproot_spend_info.merkle_root(),
             sighash_type: Some(ty),
-            tap_internal_key: Some(internal_keypair.x_only_public_key().0.into()),
+            tap_internal_key: Some(internal_keypair.x_only_public_key().0),
             tap_scripts,
             ..Default::default()
         };
@@ -602,7 +602,7 @@ impl BenefactorWallet {
                 tap_key_origins: origins,
                 tap_merkle_root: taproot_spend_info.merkle_root(),
                 sighash_type: Some(ty),
-                tap_internal_key: Some(new_internal_keypair.x_only_public_key().0.into()),
+                tap_internal_key: Some(new_internal_keypair.x_only_public_key().0),
                 tap_scripts,
                 ..Default::default()
             };
@@ -733,13 +733,13 @@ fn sign_psbt_taproot(
     hash: TapSighash,
     sighash_type: TapSighashType,
 ) {
-    let keypair = secp256k1::Keypair::from_seckey_byte_array(secret_key.to_secret_bytes()).unwrap();
+    let keypair = Keypair::from_seckey_byte_array(secret_key.to_secret_bytes()).unwrap();
     let keypair = match leaf_hash {
         None => keypair.tap_tweak(psbt_input.tap_merkle_root).to_keypair(),
         Some(_) => keypair, // no tweak for script spend
     };
 
-    let signature = secp256k1::schnorr::sign(&hash.to_byte_array(), &keypair);
+    let signature = secp256k1::schnorr::sign(&hash.to_byte_array(), &keypair.into_inner());
 
     let final_signature = taproot::Signature { signature, sighash_type };
 
