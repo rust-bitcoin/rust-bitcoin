@@ -6,8 +6,8 @@
 
 use core::borrow::Borrow;
 use core::convert::Infallible;
-use core::ops::Deref;
 use core::fmt;
+use core::ops::Deref;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -15,10 +15,9 @@ use internals::array::ArrayExt;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
+pub use self::into_iter::IntoIter;
 use crate::prelude::{DisplayHex, Vec};
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
-
-pub use self::into_iter::IntoIter;
 
 const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
 
@@ -187,9 +186,7 @@ impl PartialEq<SerializedSignature> for [u8] {
 }
 
 impl PartialOrd for SerializedSignature {
-    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
 }
 
 impl Ord for SerializedSignature {
@@ -268,7 +265,6 @@ impl<'a> TryFrom<&'a SerializedSignature> for Signature {
         value.to_signature()
     }
 }
-
 
 /// Separate mod to prevent outside code from accidentally breaking invariants.
 mod into_iter {

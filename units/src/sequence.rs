@@ -109,9 +109,7 @@ impl Sequence {
 
     /// Returns `true` if the sequence has a relative lock-time.
     #[inline]
-    pub fn is_relative_lock_time(self) -> bool {
-        self.0 & Self::LOCK_TIME_DISABLE_FLAG_MASK == 0
-    }
+    pub fn is_relative_lock_time(self) -> bool { self.0 & Self::LOCK_TIME_DISABLE_FLAG_MASK == 0 }
 
     /// Returns `true` if the sequence number encodes a block based relative lock-time.
     #[inline]
