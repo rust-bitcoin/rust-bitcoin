@@ -7,7 +7,7 @@
 //! single transaction.
 
 use crate::block::{self, Block, Checked};
-use crate::internal_macros::{impl_array_newtype, impl_array_newtype_stringify};
+use crate::internal_macros::impl_array_newtype_stringify;
 use crate::locktime::absolute;
 use crate::network::{Network, Params};
 use crate::opcodes::all::*;
@@ -192,7 +192,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
 /// The uniquely identifying hash of the target blockchain.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainHash([u8; 32]);
-impl_array_newtype!(ChainHash, u8, 32);
+internals::impl_array_newtype!(ChainHash, u8, 32);
 impl_array_newtype_stringify!(ChainHash, 32);
 
 impl ChainHash {
@@ -261,6 +261,11 @@ impl ChainHash {
     pub fn from_genesis_block_hash(block_hash: crate::BlockHash) -> Self {
         Self(block_hash.to_byte_array())
     }
+
+    /// Copies the underlying bytes into a new `Vec`.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use to_vec instead")]
+    pub fn to_bytes(self) -> alloc::vec::Vec<u8> { self.to_vec() }
 }
 
 #[cfg(test)]

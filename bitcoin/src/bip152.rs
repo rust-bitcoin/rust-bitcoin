@@ -17,7 +17,7 @@ use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use crate::internal_macros::{self, impl_array_newtype, impl_array_newtype_stringify};
+use crate::internal_macros::{self, impl_array_newtype_stringify};
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
 use crate::{block, consensus, Block, BlockChecked, BlockHash, Transaction};
@@ -99,7 +99,7 @@ impl Decodable for PrefilledTransaction {
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub struct ShortId([u8; 6]);
-impl_array_newtype!(ShortId, u8, 6);
+internals::impl_array_newtype!(ShortId, u8, 6);
 impl_array_newtype_stringify!(ShortId, 6);
 
 impl ShortId {
