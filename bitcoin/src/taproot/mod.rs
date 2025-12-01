@@ -694,7 +694,7 @@ impl TapTree {
     /// Gets the inner [`NodeInfo`] of this tree root.
     pub fn into_node_info(self) -> NodeInfo { self.0 }
 
-    /// Returns [`TapTreeIter<'_>`] iterator for a taproot script tree, operating in DFS order over
+    /// Returns [`ScriptLeaves`] iterator for a taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
     pub fn script_leaves(&self) -> ScriptLeaves { ScriptLeaves { leaf_iter: self.0.leaf_nodes() } }
 

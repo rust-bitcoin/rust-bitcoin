@@ -65,7 +65,7 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
       - name: Install test dependencies
         run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
       - uses: actions/checkout@v4
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: cache-fuzz
         with:
           path: |
@@ -84,7 +84,7 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
           echo "Using RUSTFLAGS \$RUSTFLAGS"
           cd fuzz && ./fuzz.sh "\${{ matrix.fuzz_target }}"
       - run: echo "\${{ matrix.fuzz_target }}" >executed_\${{ matrix.fuzz_target }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: executed_\${{ matrix.fuzz_target }}
           path: executed_\${{ matrix.fuzz_target }}
@@ -95,7 +95,7 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v5
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
