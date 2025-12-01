@@ -14,7 +14,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::Decoder4;
 use encoding::{
     self, BytesEncoder, CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, Decoder,
-    Encodable, Encoder, Encoder2, LengthPrefixExceedsMaxError,
+    Encodable, Encoder, Encoder2,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
@@ -350,9 +350,7 @@ impl Decoder for WitnessDecoder {
             }
             // Take ownership of the decoder in order to consume it.
             let decoder = core::mem::take(&mut self.witness_count_decoder);
-            let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-            let witness_elements = encoding::cast_to_usize_if_valid(length)
-                .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
+            let witness_elements = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
             self.witness_elements = Some(witness_elements);
 
             // Short circuit for zero witness elements.
@@ -419,9 +417,7 @@ impl Decoder for WitnessDecoder {
 
                 // Take ownership of the decoder so we can consume it.
                 let decoder = core::mem::take(&mut self.element_length_decoder);
-                let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-                let element_length = encoding::cast_to_usize_if_valid(length)
-                    .map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
+                let element_length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
 
                 // Store the element position in the index.
                 let position_after_rotation = self.cursor - witness_index_space;
@@ -808,8 +804,6 @@ pub struct WitnessDecoderError(WitnessDecoderErrorInner);
 enum WitnessDecoderErrorInner {
     /// Error decoding the vector length prefix.
     LengthPrefixDecode(CompactSizeDecoderError),
-    /// Length prefix exceeds 4,000,000.
-    LengthPrefixInvalid(LengthPrefixExceedsMaxError),
     /// Not enough bytes given to decoder.
     UnexpectedEof(UnexpectedEofError),
 }
@@ -824,7 +818,6 @@ impl fmt::Display for WitnessDecoderError {
 
         match self.0 {
             E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
-            E::LengthPrefixInvalid(ref e) => write_err!(f, "vec decoder error"; e),
             E::UnexpectedEof(ref e) => write_err!(f, "decoder error"; e),
         }
     }
@@ -837,7 +830,6 @@ impl std::error::Error for WitnessDecoderError {
 
         match self.0 {
             E::LengthPrefixDecode(ref e) => Some(e),
-            E::LengthPrefixInvalid(ref e) => Some(e),
             E::UnexpectedEof(ref e) => Some(e),
         }
     }
@@ -1338,7 +1330,7 @@ mod test {
         let err = decoder.push_bytes(&mut slice).unwrap_err();
         assert!(matches!(
             err,
-            WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixInvalid(_))
+            WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixDecode(_))
         ));
     }
 
