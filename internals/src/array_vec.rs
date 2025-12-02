@@ -69,6 +69,23 @@ mod safety_boundary {
             self.len += 1;
         }
 
+        /// Removes the last element, returning it.
+        ///
+        /// # Returns
+        ///
+        /// None if the ArrayVec is empty.
+        pub fn pop(&mut self) -> Option<T> {
+            if self.len > 0 {
+                self.len -= 1;
+                // SAFETY: All elements in 0..len are initialized
+                let res = self.data[self.len];
+                self.data[self.len] = MaybeUninit::uninit();
+                Some(unsafe { res.assume_init() })
+            } else {
+                None
+            }
+        }
+
         /// Copies and appends all elements from `slice` into `self`.
         ///
         /// # Panics
