@@ -9,7 +9,7 @@ use core::fmt;
 use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use io::{Read, Write};
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
@@ -695,7 +695,7 @@ impl Default for Witness {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Witness {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         let arbitrary_bytes = Vec::<Vec<u8>>::arbitrary(u)?;
         Ok(Witness::from_slice(&arbitrary_bytes))
     }

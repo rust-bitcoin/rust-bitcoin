@@ -42,7 +42,7 @@ use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, siphash24, Hash};
 use internals::write_err;
 use io::{Read, Write};
@@ -563,14 +563,14 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FilterHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(FilterHash::from_byte_array(u.arbitrary()?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FilterHeader {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(FilterHeader::from_byte_array(u.arbitrary()?))
     }
 }

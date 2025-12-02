@@ -14,7 +14,7 @@
 use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 use internals::write_err;
 use io::Write;
@@ -1450,7 +1450,7 @@ impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for EcdsaSighashType {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=5)?;
         match choice {
             0 => Ok(EcdsaSighashType::All),
@@ -1465,7 +1465,7 @@ impl<'a> Arbitrary<'a> for EcdsaSighashType {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TapSighashType {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=6)?;
         match choice {
             0 => Ok(TapSighashType::Default),

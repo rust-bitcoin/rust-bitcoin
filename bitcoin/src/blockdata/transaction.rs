@@ -39,7 +39,7 @@ use crate::{Amount, SignedAmount, VarInt};
 pub use crate::consensus::validation::TxVerifyError;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
@@ -1650,7 +1650,7 @@ impl InputWeightPrediction {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for InputWeightPrediction {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         // limit script size to 4Mwu block size.
         let max_block = Weight::MAX_BLOCK.to_wu() as usize;
         let input_script_len = u.int_in_range(0..=max_block)?;
@@ -1681,14 +1681,14 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for OutPoint {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(OutPoint { txid: Txid::arbitrary(u)?, vout: u32::arbitrary(u)? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Sequence {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         let choice_range = 8;
 
         // Equally weight the cases of meaningful sequence numbers
@@ -1709,7 +1709,7 @@ impl<'a> Arbitrary<'a> for Sequence {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Transaction {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         use absolute::LockTime;
 
         Ok(Transaction {
@@ -1723,7 +1723,7 @@ impl<'a> Arbitrary<'a> for Transaction {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxIn {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(TxIn {
             previous_output: OutPoint::arbitrary(u)?,
             script_sig: ScriptBuf::arbitrary(u)?,
@@ -1735,7 +1735,7 @@ impl<'a> Arbitrary<'a> for TxIn {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Txid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         let arbitrary_bytes = u.arbitrary()?;
         let t = sha256d::Hash::from_byte_array(arbitrary_bytes);
         Ok(Txid(t))
@@ -1744,14 +1744,14 @@ impl<'a> Arbitrary<'a> for Txid {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxOut {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Version {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         // Equally weight the case of normal version numbers
         let choice = u.int_in_range(0..=2)?;
         match choice {
@@ -1764,7 +1764,7 @@ impl<'a> Arbitrary<'a> for Version {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Wtxid {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(Wtxid::from_byte_array(u.arbitrary()?))
     }
 }

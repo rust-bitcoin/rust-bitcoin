@@ -9,7 +9,7 @@
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use io::{Read, Write};
 
 use super::serialize::{Deserialize, Serialize};
@@ -203,7 +203,7 @@ where
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ProprietaryKey {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(ProprietaryKey {
             prefix: Vec::<u8>::arbitrary(u)?,
             subtype: u8::arbitrary(u)?,
@@ -214,7 +214,7 @@ impl<'a> Arbitrary<'a> for ProprietaryKey {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Key {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(Key { type_value: u.arbitrary()?, key: Vec::<u8>::arbitrary(u)? })
     }
 }

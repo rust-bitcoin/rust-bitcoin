@@ -4,7 +4,7 @@
 use core::ops::Deref;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
 use secp256k1::{Secp256k1, Verification};
 
@@ -362,7 +362,7 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ScriptBuf {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         let v = Vec::<u8>::arbitrary(u)?;
         Ok(ScriptBuf(v))
     }

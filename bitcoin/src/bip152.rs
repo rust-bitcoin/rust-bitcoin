@@ -10,7 +10,7 @@ use core::{convert, fmt, mem};
 use std::error;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256, siphash24, Hash};
 use internals::impl_array_newtype;
 use io::{Read, Write};
@@ -376,7 +376,7 @@ impl BlockTransactions {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactions {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(BlockTransactions {
             block_hash: u.arbitrary()?,
             transactions: Vec::<Transaction>::arbitrary(u)?,
@@ -386,7 +386,7 @@ impl<'a> Arbitrary<'a> for BlockTransactions {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(BlockTransactionsRequest {
             block_hash: u.arbitrary()?,
             indexes: Vec::<u64>::arbitrary(u)?,
@@ -396,7 +396,7 @@ impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HeaderAndShortIds {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(HeaderAndShortIds {
             header: u.arbitrary()?,
             nonce: u.arbitrary()?,
@@ -408,14 +408,14 @@ impl<'a> Arbitrary<'a> for HeaderAndShortIds {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for PrefilledTransaction {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(PrefilledTransaction { idx: u.arbitrary()?, tx: u.arbitrary()? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ShortId {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(ShortId(u.arbitrary()?))
     }
 }
