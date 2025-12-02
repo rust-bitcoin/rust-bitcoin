@@ -47,12 +47,14 @@ impl Address {
     }
 
     /// Extracts socket address from an [Address] message.
-    /// This will return [io::Error] [io::ErrorKind::AddrNotAvailable]
-    /// if the message contains a Tor address.
-    pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the message contains a Tor V2 onion address.
+    pub fn socket_addr(&self) -> Result<SocketAddr, UnroutableAddressError> {
         let addr = &self.address;
         if addr[0..3] == ONION {
-            return Err(io::Error::from(io::ErrorKind::AddrNotAvailable));
+            return Err(UnroutableAddressError::TorV2);
         }
         let ipv6 =
             Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
@@ -126,7 +128,9 @@ impl fmt::Debug for Address {
 impl ToSocketAddrs for Address {
     type Iter = iter::Once<SocketAddr>;
     fn to_socket_addrs(&self) -> Result<Self::Iter, std::io::Error> {
-        Ok(iter::once(self.socket_addr()?))
+        self.socket_addr()
+            .map(iter::once)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))
     }
 }
 
@@ -148,16 +152,16 @@ pub enum AddrV2 {
 }
 
 impl TryFrom<AddrV2> for IpAddr {
-    type Error = AddrV2ToIpAddrError;
+    type Error = UnroutableAddressError;
 
     fn try_from(addr: AddrV2) -> Result<Self, Self::Error> {
         match addr {
             AddrV2::Ipv4(ip) => Ok(Self::V4(ip)),
             AddrV2::Ipv6(ip) => Ok(Self::V6(ip)),
-            AddrV2::Cjdns(_) => Err(AddrV2ToIpAddrError::Cjdns),
-            AddrV2::TorV3(_) => Err(AddrV2ToIpAddrError::TorV3),
-            AddrV2::I2p(_) => Err(AddrV2ToIpAddrError::I2p),
-            AddrV2::Unknown(_, _) => Err(AddrV2ToIpAddrError::Unknown),
+            AddrV2::Cjdns(_) => Err(UnroutableAddressError::Cjdns),
+            AddrV2::TorV3(_) => Err(UnroutableAddressError::TorV3),
+            AddrV2::I2p(_) => Err(UnroutableAddressError::I2p),
+            AddrV2::Unknown(_, _) => Err(UnroutableAddressError::Unknown),
         }
     }
 }
@@ -202,11 +206,15 @@ impl From<IpAddr> for AddrV2 {
 }
 
 impl From<Ipv4Addr> for AddrV2 {
-    fn from(addr: Ipv4Addr) -> Self { Self::Ipv4(addr) }
+    fn from(addr: Ipv4Addr) -> Self {
+        Self::Ipv4(addr)
+    }
 }
 
 impl From<Ipv6Addr> for AddrV2 {
-    fn from(addr: Ipv6Addr) -> Self { Self::Ipv6(addr) }
+    fn from(addr: Ipv6Addr) -> Self {
+        Self::Ipv6(addr)
+    }
 }
 
 impl Encodable for AddrV2 {
@@ -317,13 +325,19 @@ pub struct AddrV2Message {
 
 impl AddrV2Message {
     /// Extracts socket address from an [AddrV2Message] message.
-    /// This will return [io::Error] [io::ErrorKind::AddrNotAvailable]
-    /// if the address type can't be converted into a [SocketAddr].
-    pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the address type cannot be converted to a socket address
+    /// (e.g. Tor, I2P, CJDNS addresses).
+    pub fn socket_addr(&self) -> Result<SocketAddr, UnroutableAddressError> {
         match self.addr {
             AddrV2::Ipv4(addr) => Ok(SocketAddr::V4(SocketAddrV4::new(addr, self.port))),
             AddrV2::Ipv6(addr) => Ok(SocketAddr::V6(SocketAddrV6::new(addr, self.port, 0, 0))),
-            _ => Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+            AddrV2::TorV3(_) => Err(UnroutableAddressError::TorV3),
+            AddrV2::I2p(_) => Err(UnroutableAddressError::I2p),
+            AddrV2::Cjdns(_) => Err(UnroutableAddressError::Cjdns),
+            AddrV2::Unknown(_, _) => Err(UnroutableAddressError::Unknown),
         }
     }
 }
@@ -356,9 +370,45 @@ impl Decodable for AddrV2Message {
 impl ToSocketAddrs for AddrV2Message {
     type Iter = iter::Once<SocketAddr>;
     fn to_socket_addrs(&self) -> Result<Self::Iter, std::io::Error> {
-        Ok(iter::once(self.socket_addr()?))
+        self.socket_addr()
+            .map(iter::once)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))
     }
 }
+
+/// Error returned when an address cannot be converted to an IP-based address.
+///
+/// Addresses like Tor, I2P, and CJDNS use different routing mechanisms
+/// and cannot be represented as standard IP addresses or socket addresses.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum UnroutableAddressError {
+    /// Tor V2 onion address.
+    TorV2,
+    /// Tor V3 onion address.
+    TorV3,
+    /// I2P address.
+    I2p,
+    /// CJDNS address.
+    Cjdns,
+    /// Unknown address type.
+    Unknown,
+}
+
+impl fmt::Display for UnroutableAddressError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::TorV2 => write!(f, "Tor v2 addresses cannot be converted to IP addresses"),
+            Self::TorV3 => write!(f, "Tor v3 addresses cannot be converted to IP addresses"),
+            Self::I2p => write!(f, "I2P addresses cannot be converted to IP addresses"),
+            Self::Cjdns => write!(f, "CJDNS addresses cannot be converted to IP addresses"),
+            Self::Unknown => write!(f, "unknown address type cannot be converted to IP addresses"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnroutableAddressError {}
 
 /// Error types for [`AddrV2`] to [`IpAddr`] conversion.
 #[derive(Debug, PartialEq, Eq)]
@@ -794,7 +844,7 @@ mod test {
         let result = IpAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::Cjdns);
+        assert_eq!(result.unwrap_err(), UnroutableAddressError::Cjdns);
     }
 
     #[test]
@@ -803,7 +853,7 @@ mod test {
         let result = IpAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::TorV3);
+        assert_eq!(result.unwrap_err(), UnroutableAddressError::TorV3);
     }
 
     #[test]
@@ -812,7 +862,7 @@ mod test {
         let result = IpAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::I2p);
+        assert_eq!(result.unwrap_err(), UnroutableAddressError::I2p);
     }
 
     #[test]
@@ -821,7 +871,7 @@ mod test {
         let result = IpAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::Unknown);
+        assert_eq!(result.unwrap_err(), UnroutableAddressError::Unknown);
     }
 
     #[test]
