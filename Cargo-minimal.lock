@@ -123,6 +123,7 @@ version = "0.1.0"
 dependencies = [
  "arbitrary",
  "bitcoin",
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-units",

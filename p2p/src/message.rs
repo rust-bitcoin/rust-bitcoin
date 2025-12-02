@@ -18,6 +18,7 @@ use bitcoin::block::HeaderExt;
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
 use bitcoin::{block, transaction};
+use encoding;
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{self, BufRead, Read, Write};
@@ -203,6 +204,141 @@ impl_vec_wrapper!(InventoryPayload, message_blockdata::Inventory);
 impl_vec_wrapper!(AddrPayload, (u32, Address));
 impl_vec_wrapper!(AddrV2Payload, AddrV2Message);
 
+/// The `feefilter` message, wrapper around [`FeeRate`] for P2P wire format encoding.
+///
+/// This message is used to inform peers about the minimum fee rate for transactions
+/// that should be relayed which is defined in [BIP-0133].
+///
+/// [BIP-0133]: <https://github.com/bitcoin/bips/blob/master/bip-0133.mediawiki>
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct FeeFilter(FeeRate);
+
+impl FeeFilter {
+    /// Constructs a new `FeeFilter` from a [`FeeRate`].
+    pub const fn new(fee_rate: FeeRate) -> Self { Self(fee_rate) }
+
+    /// Returns the inner [`FeeRate`].
+    pub const fn fee_rate(self) -> FeeRate { self.0 }
+}
+
+impl From<FeeRate> for FeeFilter {
+    fn from(fee_rate: FeeRate) -> Self { Self(fee_rate) }
+}
+
+impl From<FeeFilter> for FeeRate {
+    fn from(filter: FeeFilter) -> Self { filter.0 }
+}
+
+impl bitcoin::consensus::encode::Encodable for FeeFilter {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        use encoding::Encoder;
+        let mut encoder = encoding::Encodable::encoder(self);
+        loop {
+            w.write_all(encoder.current_chunk())?;
+            if !encoder.advance() {
+                break;
+            }
+        }
+        Ok(8)
+    }
+}
+
+impl bitcoin::consensus::encode::Decodable for FeeFilter {
+    fn consensus_decode<R: BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, bitcoin::consensus::encode::Error> {
+        use encoding::Decoder;
+
+        let mut decoder = <Self as encoding::Decodable>::decoder();
+        let mut buffer = [0u8; 8];
+
+        r.read_exact(&mut buffer)?;
+
+        let mut slice = &buffer[..];
+        decoder.push_bytes(&mut slice).map_err(|_| {
+            bitcoin::consensus::encode::Error::Io(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "insufficient data for FeeFilter",
+            ))
+        })?;
+
+        decoder.end().map_err(|_| {
+            bitcoin::consensus::encode::Error::Io(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "insufficient data for FeeFilter",
+            ))
+        })
+    }
+}
+
+encoding::encoder_newtype! {
+    /// Encoder for [`FeeFilter`] type.
+    pub struct FeeFilterEncoder(encoding::ArrayEncoder<8>);
+}
+
+impl encoding::Encodable for FeeFilter {
+    type Encoder<'e> = FeeFilterEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        // Encode as sat/kvB in little-endian (BIP 133 wire format).
+        let kvb = self.0.to_sat_per_kvb_ceil();
+        FeeFilterEncoder(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
+    }
+}
+
+/// Decoder for [`FeeFilter`] type.
+pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
+
+impl FeeFilterDecoder {
+    /// Constructs a new [`FeeFilter`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for FeeFilterDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for FeeFilterDecoder {
+    type Output = FeeFilter;
+    type Error = encoding::UnexpectedEofError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let array = self.0.end()?;
+        let kvb = u64::from_le_bytes(array);
+
+        // BIP-0133 specifies feefilter as int64_t (signed), but negative values and values
+        // exceeding u32::MAX are invalid for fee rates. We saturate both cases to FeeRate::MAX.
+        let fee_rate = kvb.try_into().ok().map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb);
+
+        Ok(FeeFilter(fee_rate))
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for FeeFilter {
+    type Decoder = FeeFilterDecoder;
+
+    fn decoder() -> Self::Decoder { FeeFilterDecoder::new() }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FeeFilter {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=3)?;
+        match choice {
+            0 => Ok(Self(FeeRate::MIN)),
+            1 => Ok(Self(FeeRate::BROADCAST_MIN)),
+            2 => Ok(Self(FeeRate::DUST)),
+            _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=u32::MAX)?))),
+        }
+    }
+}
+
 /// A Network message payload. Proper documentation is available at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -272,7 +408,7 @@ pub enum NetworkMessage {
     /// `reject`
     Reject(message_network::Reject),
     /// `feefilter`
-    FeeFilter(FeeRate),
+    FeeFilter(FeeFilter),
     /// `wtxidrelay`
     WtxidRelay,
     /// `addrv2`
@@ -442,8 +578,7 @@ impl Encodable for NetworkMessage {
             Self::BlockTxn(ref dat) => dat.consensus_encode(writer),
             Self::Alert(ref dat) => dat.consensus_encode(writer),
             Self::Reject(ref dat) => dat.consensus_encode(writer),
-            Self::FeeFilter(ref dat) =>
-                dat.to_sat_per_kvb_ceil().consensus_encode(writer),
+            Self::FeeFilter(ref dat) => dat.consensus_encode(writer),
             Self::AddrV2(ref dat) => dat.consensus_encode(writer),
             Self::Verack
             | Self::SendHeaders
@@ -649,16 +784,9 @@ impl Decodable for RawNetworkMessage {
                 NetworkMessage::Reject(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "alert" =>
                 NetworkMessage::Alert(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
-            "feefilter" => {
-                NetworkMessage::FeeFilter(
-                    u64::consensus_decode_from_finite_reader(&mut mem_d)?
-                        .try_into()
-                        .ok()
-                        // Given some absurdly large value, using the maximum conveys that no
-                        // transactions should be relayed to this peer.
-                        .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb),
-                )
-            }
+            "feefilter" => NetworkMessage::FeeFilter(
+                FeeFilter::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
             "sendcmpct" => NetworkMessage::SendCmpct(
                 Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
@@ -717,14 +845,7 @@ impl Decodable for V2NetworkMessage {
             2u8 => NetworkMessage::Block(Decodable::consensus_decode_from_finite_reader(r)?),
             3u8 => NetworkMessage::BlockTxn(Decodable::consensus_decode_from_finite_reader(r)?),
             4u8 => NetworkMessage::CmpctBlock(Decodable::consensus_decode_from_finite_reader(r)?),
-            5u8 => NetworkMessage::FeeFilter(
-                u64::consensus_decode_from_finite_reader(r)?
-                    .try_into()
-                    .ok()
-                    // Given some absurdly large value, using the maximum conveys that no
-                    // transactions should be relayed to this peer.
-                    .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb),
-            ),
+            5u8 => NetworkMessage::FeeFilter(FeeFilter::consensus_decode_from_finite_reader(r)?),
             6u8 => NetworkMessage::FilterAdd(Decodable::consensus_decode_from_finite_reader(r)?),
             7u8 => NetworkMessage::FilterClear,
             8u8 => NetworkMessage::FilterLoad(Decodable::consensus_decode_from_finite_reader(r)?),
@@ -1083,7 +1204,7 @@ mod test {
                 reason: "Cause".into(),
                 hash: hash([255u8; 32]),
             }),
-            NetworkMessage::FeeFilter(FeeRate::BROADCAST_MIN),
+            NetworkMessage::FeeFilter(FeeFilter::from(FeeRate::BROADCAST_MIN)),
             NetworkMessage::WtxidRelay,
             NetworkMessage::AddrV2(AddrV2Payload(vec![AddrV2Message {
                 addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)),
