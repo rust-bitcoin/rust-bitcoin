@@ -11,7 +11,7 @@
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, Hash, HashEngine};
 use io::{Read, Write};
 
@@ -488,21 +488,21 @@ impl std::error::Error for ValidationError {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Block {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(Block { header: Header::arbitrary(u)?, txdata: Vec::<Transaction>::arbitrary(u)? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(BlockHash::from_byte_array(u.arbitrary()?))
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Header {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         Ok(Header {
             version: Version::arbitrary(u)?,
             prev_blockhash: BlockHash::from_byte_array(u.arbitrary()?),
@@ -516,7 +516,7 @@ impl<'a> Arbitrary<'a> for Header {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Version {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         // Equally weight known versions and arbitrary versions
         let choice = u.int_in_range(0..=3)?;
         match choice {

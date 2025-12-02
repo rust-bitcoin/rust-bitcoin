@@ -8,7 +8,7 @@ use core::str::FromStr;
 use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
 use internals::write_err;
 use io::Write;
@@ -258,7 +258,7 @@ impl From<hex::HexToBytesError> for Error {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Signature {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         // The valid range of r and s should be between 0 and n-1 where
         // n = 0xFFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
         let high_min = 0x0u128;

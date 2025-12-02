@@ -11,7 +11,7 @@ use core::fmt;
 use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{Arbitrary, Unstructured};
 use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
@@ -438,7 +438,7 @@ impl ordered::ArbitraryOrd for LockTime {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for LockTime {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> actual_arbitrary::Result<Self> {
         let l = u32::arbitrary(u)?;
         Ok(LockTime::from_consensus(l))
     }
