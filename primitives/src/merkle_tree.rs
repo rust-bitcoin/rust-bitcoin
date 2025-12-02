@@ -11,13 +11,12 @@
 // C'est la vie.
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
+#[cfg(not(feature = "alloc"))]
+use internals::array_vec::ArrayVec;
 
-#[cfg(feature = "alloc")]
 use hashes::{HashEngine, sha256d};
 
-#[cfg(feature = "alloc")]
 use crate::hash_types::{Txid, Wtxid};
-#[cfg(feature = "alloc")]
 use crate::transaction::TxIdentifier;
 
 #[doc(inline)]
@@ -32,7 +31,6 @@ pub use crate::hash_types::{TxMerkleNode, TxMerkleNodeEncoder, WitnessMerkleNode
 ///
 /// Other Merkle trees in Bitcoin, such as those used in Taproot commitments,
 /// do not use this algorithm and cannot use this trait.
-#[cfg(feature = "alloc")]
 pub(crate) trait MerkleNode: Copy + PartialEq {
     /// The hash (TXID or WTXID) of a transaction in the tree.
     type Leaf: TxIdentifier;
@@ -50,13 +48,23 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
     /// transactions will always be invalid, so there is no harm in us refusing to
     /// compute their merkle roots.
     ///
+    /// Also returns `None` if the `alloc` feature is disabled and `iter` has more than
+    /// 32,767 transactions.
+    ///
     /// Unless you are certain your transaction list is nonempty and has no duplicates,
     /// you should not unwrap the `Option` returned by this method!
     fn calculate_root<I: Iterator<Item = Self::Leaf>>(iter: I) -> Option<Self> {
         {
+            #[cfg(feature = "alloc")]
             let mut stack = Vec::<(usize, Self)>::with_capacity(32);
+            #[cfg(not(feature = "alloc"))]
+            let mut stack = ArrayVec::<(usize, Self), 15>::new();
+
             // Start with a standard Merkle tree root computation...
             for (mut n, leaf) in iter.enumerate() {
+                #[cfg(not(feature = "alloc"))]
+                // This is the only time that the stack actually grows, rather than being combined.
+                if stack.len() == 15 { return None; }
                 stack.push((0, Self::from_leaf(leaf)));
 
                 while n & 1 == 1 {
@@ -106,7 +114,6 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
 // our hash traits, it should be possible to put bounds on `MerkleNode`
 // and `MerkleNode::Leaf` which are sufficient to turn both methods into
 // provided methods in the trait definition.
-#[cfg(feature = "alloc")]
 impl MerkleNode for TxMerkleNode {
     type Leaf = Txid;
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
@@ -118,7 +125,6 @@ impl MerkleNode for TxMerkleNode {
         Self::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
     }
 }
-#[cfg(feature = "alloc")]
 impl MerkleNode for WitnessMerkleNode {
     type Leaf = Wtxid;
     fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
@@ -133,11 +139,9 @@ impl MerkleNode for WitnessMerkleNode {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
     use crate::hash_types::*;
 
     // Helper to make a Txid, TxMerkleNode pair with a single number byte array
-    #[cfg(feature = "alloc")]
     fn make_leaf_node(byte: u8) -> (Txid, TxMerkleNode) {
         let leaf = Txid::from_byte_array([byte; 32]);
         let node = TxMerkleNode::from_leaf(leaf);
@@ -145,7 +149,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn tx_merkle_node_single_leaf() {
         let (leaf, node) = make_leaf_node(1);
         let root = TxMerkleNode::calculate_root([leaf].into_iter());
@@ -154,7 +157,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn tx_merkle_node_two_leaves() {
         let (leaf1, node1) = make_leaf_node(1);
         let (leaf2, node2) = make_leaf_node(2);
@@ -169,7 +171,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn tx_merkle_node_duplicate_leaves() {
         let leaf = Txid::from_byte_array([3; 32]);
         // Duplicate transaction list should be rejected (CVE 2012‑2459).
@@ -178,13 +179,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn tx_merkle_node_empty() {
         assert!(TxMerkleNode::calculate_root([].into_iter()).is_none(), "Empty iterator should return None");
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn tx_merkle_node_2n_minus_1_unbalanced_tree() {
         // Test a tree with 2^n - 1 unique nodes and at least 3 layers deep.
         let (leaf1, node1) = make_leaf_node(1);
@@ -243,7 +242,30 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
+    fn tx_merkle_node_oversize_tree() {
+        // Confirm that with no-alloc, we return None for iter length >= 32768
+        let root = TxMerkleNode::calculate_root((0..32768u32).map(|i| {
+            let mut buf = [0u8; 32];
+            buf[..4].copy_from_slice(&i.to_le_bytes());
+            Txid::from_byte_array(buf)
+        }));
+
+        // We just want to confirm that we return None at the 32768 element boundary.
+        #[cfg(feature = "alloc")]
+        assert_ne!(root, None);
+        #[cfg(not(feature = "alloc"))]
+        assert_eq!(root, None);
+
+        // Check just under the boundary
+        let root = TxMerkleNode::calculate_root((0..32767u32).map(|i| {
+            let mut buf = [0u8; 32];
+            buf[..4].copy_from_slice(&i.to_le_bytes());
+            Txid::from_byte_array(buf)
+        }));
+        assert_ne!(root, None);
+    }
+
+    #[test]
     fn witness_merkle_node_single_leaf() {
         let leaf = Wtxid::from_byte_array([1; 32]);
         let root = WitnessMerkleNode::calculate_root([leaf].into_iter());
@@ -253,7 +275,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn witness_merkle_node_duplicate_leaves() {
         let leaf = Wtxid::from_byte_array([2; 32]);
         let root = WitnessMerkleNode::calculate_root([leaf, leaf].into_iter());

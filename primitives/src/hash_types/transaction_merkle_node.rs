@@ -12,9 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::write_err;
 
-#[cfg(feature = "alloc")]
 use crate::merkle_tree::MerkleNode;
-#[cfg(feature = "alloc")]
 use crate::Txid;
 
 /// A hash of the Merkle tree branch or root for transactions.
@@ -28,7 +26,6 @@ type Inner = sha256d::Hash;
 
 include!("./generic.rs");
 
-#[cfg(feature = "alloc")]
 impl TxMerkleNode {
     /// Convert a [`Txid`] hash to a leaf node of the tree.
     pub fn from_leaf(leaf: Txid) -> Self { MerkleNode::from_leaf(leaf) }
