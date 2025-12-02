@@ -276,7 +276,7 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     ///
     /// This is the whole wrapped buffer, including the bytes already read.
     #[inline]
-    #[deprecated(since = "TBD", note = "use `get_ref()` instead")]
+    #[deprecated(since = "0.3.0", note = "use `get_ref()` instead")]
     pub fn inner(&self) -> &T { &self.inner }
 }
 
