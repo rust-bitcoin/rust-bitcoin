@@ -9,7 +9,7 @@ use core::fmt;
 use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use io::{Read, Write};
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};

@@ -10,7 +10,7 @@ use core::{convert, fmt, mem};
 use std::error;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{sha256, siphash24, Hash};
 use internals::impl_array_newtype;
 use io::{Read, Write};

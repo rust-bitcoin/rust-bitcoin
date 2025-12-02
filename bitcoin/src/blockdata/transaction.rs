@@ -39,7 +39,7 @@ use crate::{Amount, SignedAmount, VarInt};
 pub use crate::consensus::validation::TxVerifyError;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.

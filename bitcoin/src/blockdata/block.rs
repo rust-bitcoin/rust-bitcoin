@@ -11,7 +11,7 @@
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{sha256d, Hash, HashEngine};
 use io::{Read, Write};
 
