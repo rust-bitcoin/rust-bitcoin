@@ -11,7 +11,7 @@ use core::fmt;
 use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;

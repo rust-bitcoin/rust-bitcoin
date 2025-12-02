@@ -8,7 +8,7 @@ use core::str::FromStr;
 use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hex::FromHex;
 use internals::write_err;
 use io::Write;

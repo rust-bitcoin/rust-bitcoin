@@ -41,7 +41,7 @@
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::Hash;
 use io::{Read, Write};
 

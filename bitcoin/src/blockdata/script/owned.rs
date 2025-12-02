@@ -4,7 +4,7 @@
 use core::ops::Deref;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hex::FromHex;
 use secp256k1::{Secp256k1, Verification};
 
