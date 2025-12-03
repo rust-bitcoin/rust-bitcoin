@@ -134,6 +134,82 @@ impl Decodable for CommandString {
     }
 }
 
+impl encoding::Encodable for CommandString {
+    type Encoder<'e> = encoding::ArrayEncoder<12>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let mut rawbytes = [0u8; 12];
+        let strbytes = self.0.as_bytes();
+        debug_assert!(strbytes.len() <= 12);
+        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
+        encoding::ArrayEncoder::without_length_prefix(rawbytes)
+    }
+}
+
+impl encoding::Decodable for CommandString {
+    type Decoder = CommandStringDecoder;
+
+    fn decoder() -> Self::Decoder { CommandStringDecoder { inner: encoding::ArrayDecoder::new() } }
+}
+
+/// Decoder for [`CommandString`].
+pub struct CommandStringDecoder {
+    inner: encoding::ArrayDecoder<12>,
+}
+
+impl encoding::Decoder for CommandStringDecoder {
+    type Output = CommandString;
+    type Error = CommandStringDecodeError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.inner.push_bytes(bytes).map_err(CommandStringDecodeError::UnexpectedEof)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let rawbytes = self.inner.end().map_err(CommandStringDecodeError::UnexpectedEof)?;
+        // Trim null padding from the end.
+        let trimmed =
+            rawbytes.iter().rposition(|&b| b != 0).map_or(&rawbytes[..0], |i| &rawbytes[..=i]);
+
+        if !trimmed.is_ascii() {
+            return Err(CommandStringDecodeError::NotAscii);
+        }
+
+        Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
+    }
+
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
+}
+
+/// Error decoding a [`CommandString`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum CommandStringDecodeError {
+    /// Unexpected end of data.
+    UnexpectedEof(encoding::UnexpectedEofError),
+    /// Command string contains non-ASCII characters.
+    NotAscii,
+}
+
+impl fmt::Display for CommandStringDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::UnexpectedEof(e) => write!(f, "unexpected end of data: {}", e),
+            Self::NotAscii => write!(f, "command string must be ASCII"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CommandStringDecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::UnexpectedEof(e) => Some(e),
+            Self::NotAscii => None,
+        }
+    }
+}
+
 /// Error returned when a command string is invalid.
 ///
 /// This is currently returned for command strings longer than 12.
