@@ -136,6 +136,21 @@ For changes to our dependencies included in this release see:
 - Change `TxIn::default()` to `TxIn::EMPTY_COINBASE` if appropriate.
 - Change `to_raw_hash()` to `to_byte_array()`.
 - `bitcoin::error::UnprefixedHexError` moved to `bitcoin::parse::UnprefixedHexError`.
+
+# 0.32.7 - 2025-07-30
+
+- Backport - Use `_u32` in `FeeRate` constructor instead of `_unchecked` [#4552](https://github.com/rust-bitcoin/rust-bitcoin/pull/4552)
+- Backport - Add support for pay to anchor outputs [#4691](https://github.com/rust-bitcoin/rust-bitcoin/pull/4691)
+- Backport - Remove `non_exhaustive` from `Network` [#4658](https://github.com/rust-bitcoin/rust-bitcoin/pull/4658)
+
+# 0.32.6 - 2025-05-06
+
+- Backport - Fix `is_invalid_use_of_sighash_single()` incompatibility with Bitcoin Core [#4122](https://github.com/rust-bitcoin/rust-bitcoin/pull/4122)
+- Backport - Backport witness fixes [#4101](https://github.com/rust-bitcoin/rust-bitcoin/pull/4101)
+- Backport - bip32: Return error when attempting to derive past maximum depth [#4434](https://github.com/rust-bitcoin/rust-bitcoin/pull/4434)
+- Backport - Add `XOnlyPublicKey` support for PSBT key retrieval and improve Taproot signing [#4443](https://github.com/rust-bitcoin/rust-bitcoin/pull/4443)
+- Backport - Add methods to retrieve inner types [#4450](https://github.com/rust-bitcoin/rust-bitcoin/pull/4450)
+
 # 0.32.5 - 2024-11-27
 
 - Backport - Re-export `bech32` crate [#3662](https://github.com/rust-bitcoin/rust-bitcoin/pull/3662)
