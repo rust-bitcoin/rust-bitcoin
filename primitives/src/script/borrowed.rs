@@ -116,7 +116,7 @@ impl<T> Script<T> {
 
     /// Returns a copy of the script data.
     #[inline]
-    #[deprecated(since = "TBD", note = "use to_vec instead")]
+    #[deprecated(since = "0.101.0", note = "use to_vec instead")]
     pub fn to_bytes(&self) -> Vec<u8> { self.to_vec() }
 
     /// Returns the length in bytes of the script.
@@ -149,7 +149,7 @@ impl<T> Script<T> {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     #[inline]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
