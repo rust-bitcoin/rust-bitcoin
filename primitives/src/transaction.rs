@@ -195,6 +195,17 @@ impl Transaction {
         // `Transaction` docs for full explanation).
         self.inputs.is_empty()
     }
+
+    /// Checks if this is a coinbase transaction.
+    ///
+    /// The first transaction in the block distributes the mining reward and is called the coinbase
+    /// transaction. It is impossible to check if the transaction is first in the block, so this
+    /// function checks the structure of the transaction instead - the previous output must be
+    /// all-zeros (creates satoshis "out of thin air").
+    #[doc(alias = "is_coin_base")] // method previously had this name
+    pub fn is_coinbase(&self) -> bool {
+        self.inputs.len() == 1 && self.inputs[0].previous_output == OutPoint::COINBASE_PREVOUT
+    }
 }
 
 #[cfg(feature = "alloc")]

@@ -2,7 +2,7 @@
 
 //! The `WitnessMerkleNode` type.
 
-#[cfg(not(feature = "hex"))]
+use core::convert::Infallible;
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
@@ -10,6 +10,7 @@ use core::str;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
+use internals::write_err;
 
 #[cfg(feature = "alloc")]
 use crate::merkle_tree::MerkleNode;
@@ -46,4 +47,75 @@ impl WitnessMerkleNode {
     /// Unless you are certain your transaction list is nonempty and has no duplicates,
     /// you should not unwrap the `Option` returned by this method!
     pub fn calculate_root<I: Iterator<Item = Wtxid>>(iter: I) -> Option<Self> { MerkleNode::calculate_root(iter) }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`WitnessMerkleNode`] type.
+    pub struct WitnessMerkleNodeEncoder(encoding::ArrayEncoder<32>);
+}
+
+impl encoding::Encodable for WitnessMerkleNode {
+    type Encoder<'e> = WitnessMerkleNodeEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        WitnessMerkleNodeEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
+    }
+}
+
+/// The decoder for the [`WitnessMerkleNode`] type.
+pub struct WitnessMerkleNodeDecoder(encoding::ArrayDecoder<32>);
+
+impl WitnessMerkleNodeDecoder {
+    /// Constructs a new [`WitnessMerkleNode`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for WitnessMerkleNodeDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for WitnessMerkleNodeDecoder {
+    type Output = WitnessMerkleNode;
+    type Error = WitnessMerkleNodeDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let a = self.0.end()?;
+        Ok(WitnessMerkleNode::from_byte_array(a))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for WitnessMerkleNode {
+    type Decoder = WitnessMerkleNodeDecoder;
+    fn decoder() -> Self::Decoder { WitnessMerkleNodeDecoder(encoding::ArrayDecoder::<32>::new()) }
+}
+
+/// An error consensus decoding an `WitnessMerkleNode`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WitnessMerkleNodeDecoderError(encoding::UnexpectedEofError);
+
+impl From<Infallible> for WitnessMerkleNodeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<encoding::UnexpectedEofError> for WitnessMerkleNodeDecoderError {
+    fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
+}
+
+impl fmt::Display for WitnessMerkleNodeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "sequence decoder error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for WitnessMerkleNodeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
