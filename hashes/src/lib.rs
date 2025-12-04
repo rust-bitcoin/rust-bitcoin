@@ -68,7 +68,6 @@
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 
 // Experimental features we need.
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
 
 // Coding conventions.

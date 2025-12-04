@@ -1,3 +1,7 @@
+# 0.14.1 - 2025-12-03
+
+* remove `doc_auto_cfg`
+
 # 0.14.0 - 2024-03-21
 
 * Bump MSRV to Rust version 1.56.1 [#2188](https://github.com/rust-bitcoin/rust-bitcoin/pull/2188)
