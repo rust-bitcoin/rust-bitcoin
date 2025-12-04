@@ -7,6 +7,7 @@ This changelog is a rolling description of everything that will eventually end u
 * Introduce limit to `Amount`
   * Prepare to enforce `MAX_MONEY` invariant [#4164](https://github.com/rust-bitcoin/rust-bitcoin/pull/4164)
   * Enforce `MAX_MONEY` invariant in amount types [#4157](https://github.com/rust-bitcoin/rust-bitcoin/pull/4157)
+* Allow underscores as separators in `Amount` values [#5309](https://github.com/rust-bitcoin/rust-bitcoin/pull/5309)
 * New `NumOpResult` type
   * Introduce monadic `NumOpResult` type [#4007](https://github.com/rust-bitcoin/rust-bitcoin/pull/4007)
   * Add impls for `NumOpResult` div and mul [#4337](https://github.com/rust-bitcoin/rust-bitcoin/pull/4337)
