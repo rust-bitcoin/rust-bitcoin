@@ -21,6 +21,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "hex")]
+pub extern crate hex;
+
 #[cfg(feature = "test-serde")]
 pub extern crate serde_json;
 

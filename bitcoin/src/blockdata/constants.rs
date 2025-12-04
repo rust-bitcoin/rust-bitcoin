@@ -7,7 +7,6 @@
 //! single transaction.
 
 use crate::block::{self, Block, Checked};
-use crate::internal_macros::impl_array_newtype_stringify;
 use crate::locktime::absolute;
 use crate::network::{Network, Params};
 use crate::opcodes::all::*;
@@ -193,7 +192,8 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainHash([u8; 32]);
 internals::impl_array_newtype!(ChainHash, u8, 32);
-impl_array_newtype_stringify!(ChainHash, 32);
+internals::impl_array_newtype_hex!(ChainHash, 32);
+internals::impl_array_newtype_serde!(ChainHash, 32);
 
 impl ChainHash {
     // Mainnet value can be verified at https://github.com/lightning/bolts/blob/master/00-introduction.md
