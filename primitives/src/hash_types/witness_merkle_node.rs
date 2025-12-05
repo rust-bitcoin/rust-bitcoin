@@ -12,9 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::write_err;
 
-#[cfg(feature = "alloc")]
 use crate::merkle_tree::MerkleNode;
-#[cfg(feature = "alloc")]
 use crate::Wtxid;
 
 /// A hash corresponding to the Merkle tree root for witness data.
@@ -28,7 +26,6 @@ type Inner = sha256d::Hash;
 
 include!("./generic.rs");
 
-#[cfg(feature = "alloc")]
 impl WitnessMerkleNode {
     /// Convert a [`Wtxid`] hash to a leaf node of the tree.
     pub fn from_leaf(leaf: Wtxid) -> Self { MerkleNode::from_leaf(leaf) }

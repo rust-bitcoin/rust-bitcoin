@@ -250,12 +250,9 @@ impl From<&Transaction> for Wtxid {
 }
 
 /// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
-#[cfg(feature = "alloc")]
 pub(crate) trait TxIdentifier: AsRef<[u8]> {}
 
-#[cfg(feature = "alloc")]
 impl TxIdentifier for Txid {}
-#[cfg(feature = "alloc")]
 impl TxIdentifier for Wtxid {}
 
 // Duplicated in `bitcoin`.
