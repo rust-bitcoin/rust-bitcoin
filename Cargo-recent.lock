@@ -169,7 +169,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
