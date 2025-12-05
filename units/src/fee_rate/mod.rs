@@ -323,6 +323,14 @@ mod tests {
         let mut f = FeeRate::from_sat_per_kwu(1);
         f += &FeeRate::from_sat_per_kwu(2);
         assert_eq!(f, FeeRate::from_sat_per_kwu(3));
+
+        let mut f = NumOpResult::Valid(FeeRate::from_sat_per_kwu(1));
+        f += FeeRate::from_sat_per_kwu(2);
+        assert_eq!(f, NumOpResult::Valid(FeeRate::from_sat_per_kwu(3)));
+
+        let mut f = NumOpResult::Valid(FeeRate::from_sat_per_kwu(1));
+        f += NumOpResult::Valid(FeeRate::from_sat_per_kwu(2));
+        assert_eq!(f, NumOpResult::Valid(FeeRate::from_sat_per_kwu(3)));
     }
 
     #[test]
@@ -334,6 +342,14 @@ mod tests {
         let mut f = FeeRate::from_sat_per_kwu(3);
         f -= &FeeRate::from_sat_per_kwu(2);
         assert_eq!(f, FeeRate::from_sat_per_kwu(1));
+
+        let mut f = NumOpResult::Valid(FeeRate::from_sat_per_kwu(3));
+        f -= FeeRate::from_sat_per_kwu(2);
+        assert_eq!(f, NumOpResult::Valid(FeeRate::from_sat_per_kwu(1)));
+
+        let mut f = NumOpResult::Valid(FeeRate::from_sat_per_kwu(3));
+        f -= NumOpResult::Valid(FeeRate::from_sat_per_kwu(2));
+        assert_eq!(f, NumOpResult::Valid(FeeRate::from_sat_per_kwu(1)));
     }
 
     #[test]
