@@ -8,7 +8,7 @@ use core::ops;
 use NumOpResult as R;
 
 use super::{Amount, SignedAmount};
-use crate::internal_macros::{impl_div_assign, impl_mul_assign};
+use crate::internal_macros::{impl_add_assign_for_results, impl_sub_assign_for_results, impl_div_assign, impl_mul_assign};
 use crate::result::{MathOp, NumOpError, NumOpResult, OptionExt};
 
 impl From<Amount> for NumOpResult<Amount> {
@@ -194,6 +194,11 @@ impl_mul_assign!(NumOpResult<SignedAmount>, i64);
 impl_div_assign!(NumOpResult<Amount>, u64);
 impl_div_assign!(NumOpResult<SignedAmount>, i64);
 
+impl_add_assign_for_results!(Amount);
+impl_add_assign_for_results!(SignedAmount);
+impl_sub_assign_for_results!(Amount);
+impl_sub_assign_for_results!(SignedAmount);
+
 impl ops::Neg for SignedAmount {
     type Output = Self;
 
@@ -321,5 +326,68 @@ mod tests {
 
         let sum: NumOpResult<SignedAmount> = amounts.into_iter().sum();
         assert!(matches!(sum, NumOpResult::Error(_)));
+    }
+
+    #[test]
+    fn test_op_assign_amount() {
+        let sat = Amount::from_sat_u32(50);
+
+        let mut res = sat + sat;
+        res += Amount::from_sat_u32(50);
+        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(150)));
+
+        let add_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        res += add_err; // Add an error result
+        assert_eq!(res, add_err);
+
+        let mut res = sat + sat;
+        res -= Amount::from_sat_u32(20);
+        assert_eq!(res, NumOpResult::Valid(Amount::from_sat_u32(80)));
+
+        let sub_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
+        res -= sub_err; // Subtract an error result
+        assert_eq!(res, sub_err);
+    }
+
+    #[test]
+    fn test_op_assign_signed_amount() {
+        let ssat = SignedAmount::from_sat_i32(50);
+
+        let mut res = ssat + ssat;
+        res += SignedAmount::from_sat_i32(-30);
+        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(70)));
+
+        let add_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        res += add_err; // Add an error result
+        assert_eq!(res, add_err);
+
+        let mut res = ssat + ssat;
+        res -= SignedAmount::from_sat_i32(25);
+        assert_eq!(res, NumOpResult::Valid(SignedAmount::from_sat_i32(75)));
+
+        let sub_err = NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
+        res -= sub_err; // Subtract an error result
+        assert_eq!(res, sub_err);
+    }
+
+    #[test]
+    fn test_op_assign_amount_error() {
+        let mut res: NumOpResult<Amount> = NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+
+        // Adding a valid amount to an error should make an Add error
+        res += Amount::from_sat_u32(10);
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Add)));
+
+        // Adding an error to an error change to an Add error
+        res += NumOpResult::Error(NumOpError::while_doing(MathOp::Sub));
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Add)));
+
+        // Subtracting a valid amount from an error should make a Sub error
+        res -= Amount::from_sat_u32(10);
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Sub)));
+
+        // Subtracting an error from an error change to a Sub error
+        res -= NumOpResult::Error(NumOpError::while_doing(MathOp::Add));
+        assert_eq!(res, NumOpResult::Error(NumOpError::while_doing(MathOp::Sub)));
     }
 }
