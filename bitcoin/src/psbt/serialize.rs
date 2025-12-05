@@ -6,7 +6,7 @@
 //! according to the BIP-0174 specification.
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
-use internals::compact_size;
+use encoding::compact_size;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
 

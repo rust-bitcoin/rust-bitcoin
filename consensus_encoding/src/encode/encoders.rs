@@ -12,9 +12,9 @@
 //!
 
 use internals::array_vec::ArrayVec;
-use internals::compact_size;
 
 use super::{Encodable, Encoder};
+use crate::compact_size;
 
 /// The maximum length of a compact size encoding.
 const SIZE: usize = 9;
@@ -227,14 +227,11 @@ pub struct CompactSizeEncoder {
 impl CompactSizeEncoder {
     /// Constructs a new `CompactSizeEncoder`.
     ///
-    /// Encodings are defined only for the range of u64. On systems where usize is
-    /// larger than u64, it will be possible to call this method with out-of-range
-    /// values. In such cases we will ignore the passed value and encode [`u64::MAX`].
-    /// But even on such exotic systems, we expect users to pass the length of an
-    /// in-memory object, meaning that such large values are impossible to obtain.
+    /// Encodings are defined only for the range of u64. Outside of this range, the
+    /// passed value is ignored, and [`u64::MAX`] encoded instead. See
+    /// [`compact_size::encode`] for more information.
     pub fn new(value: usize) -> Self {
-        let enc_value = value.try_into().unwrap_or(u64::MAX);
-        Self { buf: Some(compact_size::encode(enc_value)) }
+        Self { buf: Some(ArrayVec::from_slice(compact_size::encode(value).as_slice())) }
     }
 }
 

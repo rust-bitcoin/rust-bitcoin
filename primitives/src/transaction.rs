@@ -21,12 +21,10 @@ use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2, UnexpectedEofErr
 #[cfg(feature = "alloc")]
 use encoding::{
     CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder3, Encoder, Encoder3, Encoder6,
-    SliceEncoder, VecDecoder, VecDecoderError,
+    SliceEncoder, VecDecoder, VecDecoderError, compact_size,
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
-#[cfg(feature = "alloc")]
-use internals::compact_size;
 use internals::array::ArrayExt as _;
 use internals::write_err;
 #[cfg(feature = "serde")]
