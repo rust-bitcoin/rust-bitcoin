@@ -1,3 +1,12 @@
+# 0.5.0 - 2025-12-05
+
+- Remove `doc_auto_cfg` [#5162](https://github.com/rust-bitcoin/rust-bitcoin/pull/5162)
+- Move `impl_array_newtype` to `internals` [#5334](https://github.com/rust-bitcoin/rust-bitcoin/pull/5334)
+
+# 0.4.1 - TODO
+
+Note the docs build is broken on docs.rs because of `doc_auto_cfg`.
+
 # 0.4.0 - 2024-09-18
 
 - Introduce `ToU64` trait [#2929](https://github.com/rust-bitcoin/rust-bitcoin/pull/2929)
