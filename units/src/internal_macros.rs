@@ -83,6 +83,60 @@ macro_rules! impl_add_assign {
 }
 pub(crate) use impl_add_assign;
 
+/// Implement `ops::AddAssign` for `$ty` and `NumOpResult<$ty>` on `NumOpResult<$ty>`
+///
+/// This implements the same logic as the generic `NumOpResult` implementation in result.rs,
+/// but works for types that can't implement `AddAssign` on themselves (e.g. `Amount`, `SignedAmount`)
+macro_rules! impl_add_assign_for_results {
+    ($ty:ident) => {
+        impl ops::AddAssign<$ty> for NumOpResult<$ty> {
+            fn add_assign(&mut self, rhs: $ty) {
+                match self {
+                    Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Add)),
+                    Self::Valid(ref lhs) => *self = lhs + rhs
+                }
+            }
+        }
+
+        impl ops::AddAssign<Self> for NumOpResult<$ty> {
+            fn add_assign(&mut self, rhs: Self) {
+                match (&self, rhs) {
+                    (Self::Valid(_), Self::Valid(rhs)) => *self += rhs,
+                    (_, _) => *self = Self::Error(NumOpError::while_doing(MathOp::Add)),
+                }
+            }
+        }
+    };
+}
+pub(crate) use impl_add_assign_for_results;
+
+/// Implement `ops::SubAssign` for `$ty` and `NumOpResult<$ty>` on `NumOpResult<$ty>`
+///
+/// This implements the same logic as the generic `NumOpResult` implementation in result.rs,
+/// but works for types that can't implement `SubAssign` on themselves (e.g. `Amount`, `SignedAmount`)
+macro_rules! impl_sub_assign_for_results {
+    ($ty:ident) => {
+        impl ops::SubAssign<$ty> for NumOpResult<$ty> {
+            fn sub_assign(&mut self, rhs: $ty) {
+                match self {
+                    Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Sub)),
+                    Self::Valid(ref lhs) => *self = lhs - rhs
+                }
+            }
+        }
+
+        impl ops::SubAssign<Self> for NumOpResult<$ty> {
+            fn sub_assign(&mut self, rhs: Self) {
+                match (&self, rhs) {
+                    (Self::Valid(_), Self::Valid(rhs)) => *self -= rhs,
+                    (_, _) => *self = Self::Error(NumOpError::while_doing(MathOp::Sub)),
+                }
+            }
+        }
+    };
+}
+pub(crate) use impl_sub_assign_for_results;
+
 /// Implement `ops::SubAssign` for `$ty` and `&$ty`.
 macro_rules! impl_sub_assign {
     ($ty:ident) => {
