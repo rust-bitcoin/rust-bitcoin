@@ -4,6 +4,7 @@
 //!
 //! Implementation of compact blocks data structure and algorithms.
 
+use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
@@ -16,11 +17,9 @@ use internals::array::ArrayExt as _;
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use crate::internal_macros;
-use crate::prelude::Vec;
-use crate::transaction::TxIdentifier;
-use crate::{block, consensus, Block, BlockChecked, BlockHash, Transaction};
+use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
+use bitcoin::transaction::TxIdentifier;
+use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
 
 /// A BIP-0152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -89,7 +88,7 @@ impl Decodable for PrefilledTransaction {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let idx = r.read_compact_size()?;
         let idx = u16::try_from(idx).map_err(|_| {
-            consensus::parse_failed_error("BIP-0152 prefilled tx index out of bounds")
+            crate::consensus::parse_failed_error("BIP-0152 prefilled tx index out of bounds")
         })?;
         let tx = Transaction::consensus_decode(r)?;
         Ok(Self { idx, tx })
@@ -177,7 +176,7 @@ impl Decodable for HeaderAndShortIds {
         };
         match header_short_ids.short_ids.len().checked_add(header_short_ids.prefilled_txs.len()) {
             Some(x) if x <= u16::MAX.into() => Ok(header_short_ids),
-            _ => Err(consensus::parse_failed_error("indexes overflowed 16 bits")),
+            _ => Err(crate::consensus::parse_failed_error("indexes overflowed 16 bits")),
         }
     }
 }
@@ -313,7 +312,7 @@ impl Decodable for BlockTransactionsRequest {
                 // transactions that would be allowed in a vector.
                 let byte_size = nb_indexes
                     .checked_mul(mem::size_of::<Transaction>())
-                    .ok_or(consensus::parse_failed_error("invalid length"))?;
+                    .ok_or(crate::consensus::parse_failed_error("invalid length"))?;
                 if byte_size > encode::MAX_VEC_SIZE {
                     return Err(encode::ParseError::OversizedVectorAllocation {
                         requested: byte_size,
@@ -328,12 +327,12 @@ impl Decodable for BlockTransactionsRequest {
                     let differential = r.read_compact_size()?;
                     last_index = match last_index.checked_add(differential) {
                         Some(i) => i,
-                        None => return Err(consensus::parse_failed_error("block index overflow")),
+                        None => return Err(crate::consensus::parse_failed_error("block index overflow")),
                     };
                     indexes.push(last_index);
                     last_index = match last_index.checked_add(1) {
                         Some(i) => i,
-                        None => return Err(consensus::parse_failed_error("block index overflow")),
+                        None => return Err(crate::consensus::parse_failed_error("block index overflow")),
                     };
                 }
                 indexes
@@ -373,7 +372,7 @@ pub struct BlockTransactions {
     ///  The transactions provided.
     pub transactions: Vec<Transaction>,
 }
-internal_macros::impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
+crate::consensus::impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
 
 impl BlockTransactions {
     /// Constructs a new [`BlockTransactions`] from a [`BlockTransactionsRequest`] and
@@ -446,14 +445,15 @@ impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
 
 #[cfg(test)]
 mod test {
+    use alloc::vec;
     use hex::FromHex;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
-    use crate::locktime::absolute;
-    use crate::merkle_tree::TxMerkleNode;
-    use crate::transaction::OutPointExt;
-    use crate::{
+    use bitcoin::consensus::encode::{deserialize, serialize};
+    use bitcoin::locktime::absolute;
+    use bitcoin::merkle_tree::TxMerkleNode;
+    use bitcoin::transaction::OutPointExt;
+    use bitcoin::{
         transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptPubKeyBuf,
         ScriptSigBuf, Sequence, TxIn, TxOut, Txid, Witness,
     };
