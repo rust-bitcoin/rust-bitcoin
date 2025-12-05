@@ -77,7 +77,7 @@ fn main() {
     assert_eq!(decoded, script_code);
 
     // to/from bytes excludes the prefix, these are not encoding/decoding functions so this is sane.
-    let bytes = script_code.to_bytes();
+    let bytes = script_code.to_vec();
     let got = WitnessScriptBuf::from_bytes(bytes);
     assert_eq!(got, script_code);
 }

@@ -1,3 +1,7 @@
+# 0.19.0 - 2025-12-05
+
+* Upgrade `internals` dependency (forces this release).
+
 # 0.18.0 - 2025-11-27
 
 * Add a dependency on the new `consensus_encoding` crate [#5181](https://github.com/rust-bitcoin/rust-bitcoin/pull/5181)
