@@ -135,7 +135,6 @@ pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::fmt(&self, f: &mut core::
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::hash<H: core::hash::Hasher>(&self, state: &mut H)
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::pop(&mut self) -> core::option::Option<T>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::push(&mut self, element: T)
-pub fn bitcoin_internals::compact_size::decode_unchecked(slice: &mut &[u8]) -> u64
 pub fn bitcoin_internals::error::input_string::CannotParse<'_, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_internals::error::input_string::InputString::clone(&self) -> bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::cmp::Ordering
@@ -197,7 +196,6 @@ pub macro bitcoin_internals::write_err!
 pub mod bitcoin_internals
 pub mod bitcoin_internals::array
 pub mod bitcoin_internals::array_vec
-pub mod bitcoin_internals::compact_size
 pub mod bitcoin_internals::const_casts
 pub mod bitcoin_internals::const_tools
 pub mod bitcoin_internals::error
