@@ -5,8 +5,8 @@
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::bip152;
 
+use crate::bip152;
 use crate::consensus::impl_consensus_encoding;
 
 /// sendcmpct message

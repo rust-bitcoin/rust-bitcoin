@@ -15,7 +15,6 @@ use internals::array::ArrayExt;
 use internals::write_err;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
-use crate::internal_macros;
 use crate::network::NetworkKind;
 use crate::prelude::{String, Vec};
 
@@ -40,7 +39,8 @@ pub type ExtendedPrivKey = Xpriv;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
 internals::impl_array_newtype!(ChainCode, u8, 32);
-internal_macros::impl_array_newtype_stringify!(ChainCode, 32);
+internals::impl_array_newtype_hex!(ChainCode, 32);
+internals::impl_array_newtype_serde!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
@@ -57,7 +57,8 @@ impl ChainCode {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
 internals::impl_array_newtype!(Fingerprint, u8, 4);
-internal_macros::impl_array_newtype_stringify!(Fingerprint, 4);
+internals::impl_array_newtype_hex!(Fingerprint, 4);
+internals::impl_array_newtype_serde!(Fingerprint, 4);
 
 hash_newtype! {
     /// Extended key identifier as defined in BIP-0032.
