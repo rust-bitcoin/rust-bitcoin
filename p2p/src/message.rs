@@ -18,6 +18,7 @@ use bitcoin::block::HeaderExt;
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
 use bitcoin::{block, transaction};
+use encoding;
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{self, BufRead, Read, Write};
@@ -133,6 +134,82 @@ impl Decodable for CommandString {
     }
 }
 
+impl encoding::Encodable for CommandString {
+    type Encoder<'e> = encoding::ArrayEncoder<12>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let mut rawbytes = [0u8; 12];
+        let strbytes = self.0.as_bytes();
+        debug_assert!(strbytes.len() <= 12);
+        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
+        encoding::ArrayEncoder::without_length_prefix(rawbytes)
+    }
+}
+
+impl encoding::Decodable for CommandString {
+    type Decoder = CommandStringDecoder;
+
+    fn decoder() -> Self::Decoder { CommandStringDecoder { inner: encoding::ArrayDecoder::new() } }
+}
+
+/// Decoder for [`CommandString`].
+pub struct CommandStringDecoder {
+    inner: encoding::ArrayDecoder<12>,
+}
+
+impl encoding::Decoder for CommandStringDecoder {
+    type Output = CommandString;
+    type Error = CommandStringDecodeError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.inner.push_bytes(bytes).map_err(CommandStringDecodeError::UnexpectedEof)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let rawbytes = self.inner.end().map_err(CommandStringDecodeError::UnexpectedEof)?;
+        // Trim null padding from the end.
+        let trimmed =
+            rawbytes.iter().rposition(|&b| b != 0).map_or(&rawbytes[..0], |i| &rawbytes[..=i]);
+
+        if !trimmed.is_ascii() {
+            return Err(CommandStringDecodeError::NotAscii);
+        }
+
+        Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
+    }
+
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
+}
+
+/// Error decoding a [`CommandString`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum CommandStringDecodeError {
+    /// Unexpected end of data.
+    UnexpectedEof(encoding::UnexpectedEofError),
+    /// Command string contains non-ASCII characters.
+    NotAscii,
+}
+
+impl fmt::Display for CommandStringDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::UnexpectedEof(e) => write!(f, "unexpected end of data: {}", e),
+            Self::NotAscii => write!(f, "command string must be ASCII"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CommandStringDecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::UnexpectedEof(e) => Some(e),
+            Self::NotAscii => None,
+        }
+    }
+}
+
 /// Error returned when a command string is invalid.
 ///
 /// This is currently returned for command strings longer than 12.
@@ -203,6 +280,141 @@ impl_vec_wrapper!(InventoryPayload, message_blockdata::Inventory);
 impl_vec_wrapper!(AddrPayload, (u32, Address));
 impl_vec_wrapper!(AddrV2Payload, AddrV2Message);
 
+/// The `feefilter` message, wrapper around [`FeeRate`] for P2P wire format encoding.
+///
+/// This message is used to inform peers about the minimum fee rate for transactions
+/// that should be relayed which is defined in [BIP-0133].
+///
+/// [BIP-0133]: <https://github.com/bitcoin/bips/blob/master/bip-0133.mediawiki>
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct FeeFilter(FeeRate);
+
+impl FeeFilter {
+    /// Constructs a new `FeeFilter` from a [`FeeRate`].
+    pub const fn new(fee_rate: FeeRate) -> Self { Self(fee_rate) }
+
+    /// Returns the inner [`FeeRate`].
+    pub const fn fee_rate(self) -> FeeRate { self.0 }
+}
+
+impl From<FeeRate> for FeeFilter {
+    fn from(fee_rate: FeeRate) -> Self { Self(fee_rate) }
+}
+
+impl From<FeeFilter> for FeeRate {
+    fn from(filter: FeeFilter) -> Self { filter.0 }
+}
+
+impl bitcoin::consensus::encode::Encodable for FeeFilter {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        use encoding::Encoder;
+        let mut encoder = encoding::Encodable::encoder(self);
+        loop {
+            w.write_all(encoder.current_chunk())?;
+            if !encoder.advance() {
+                break;
+            }
+        }
+        Ok(8)
+    }
+}
+
+impl bitcoin::consensus::encode::Decodable for FeeFilter {
+    fn consensus_decode<R: BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, bitcoin::consensus::encode::Error> {
+        use encoding::Decoder;
+
+        let mut decoder = <Self as encoding::Decodable>::decoder();
+        let mut buffer = [0u8; 8];
+
+        r.read_exact(&mut buffer)?;
+
+        let mut slice = &buffer[..];
+        decoder.push_bytes(&mut slice).map_err(|_| {
+            bitcoin::consensus::encode::Error::Io(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "insufficient data for FeeFilter",
+            ))
+        })?;
+
+        decoder.end().map_err(|_| {
+            bitcoin::consensus::encode::Error::Io(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "insufficient data for FeeFilter",
+            ))
+        })
+    }
+}
+
+encoding::encoder_newtype! {
+    /// Encoder for [`FeeFilter`] type.
+    pub struct FeeFilterEncoder(encoding::ArrayEncoder<8>);
+}
+
+impl encoding::Encodable for FeeFilter {
+    type Encoder<'e> = FeeFilterEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        // Encode as sat/kvB in little-endian (BIP 133 wire format).
+        let kvb = self.0.to_sat_per_kvb_ceil();
+        FeeFilterEncoder(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
+    }
+}
+
+/// Decoder for [`FeeFilter`] type.
+pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
+
+impl FeeFilterDecoder {
+    /// Constructs a new [`FeeFilter`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for FeeFilterDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for FeeFilterDecoder {
+    type Output = FeeFilter;
+    type Error = encoding::UnexpectedEofError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let array = self.0.end()?;
+        let kvb = u64::from_le_bytes(array);
+
+        // BIP-0133 specifies feefilter as int64_t (signed), but negative values and values
+        // exceeding u32::MAX are invalid for fee rates. We saturate both cases to FeeRate::MAX.
+        let fee_rate = kvb.try_into().ok().map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb);
+
+        Ok(FeeFilter(fee_rate))
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for FeeFilter {
+    type Decoder = FeeFilterDecoder;
+
+    fn decoder() -> Self::Decoder { FeeFilterDecoder::new() }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FeeFilter {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=3)?;
+        match choice {
+            0 => Ok(Self(FeeRate::MIN)),
+            1 => Ok(Self(FeeRate::BROADCAST_MIN)),
+            2 => Ok(Self(FeeRate::DUST)),
+            _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=u32::MAX)?))),
+        }
+    }
+}
+
 /// A Network message payload. Proper documentation is available at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -272,7 +484,7 @@ pub enum NetworkMessage {
     /// `reject`
     Reject(message_network::Reject),
     /// `feefilter`
-    FeeFilter(FeeRate),
+    FeeFilter(FeeFilter),
     /// `wtxidrelay`
     WtxidRelay,
     /// `addrv2`
@@ -442,8 +654,7 @@ impl Encodable for NetworkMessage {
             Self::BlockTxn(ref dat) => dat.consensus_encode(writer),
             Self::Alert(ref dat) => dat.consensus_encode(writer),
             Self::Reject(ref dat) => dat.consensus_encode(writer),
-            Self::FeeFilter(ref dat) =>
-                dat.to_sat_per_kvb_ceil().consensus_encode(writer),
+            Self::FeeFilter(ref dat) => dat.consensus_encode(writer),
             Self::AddrV2(ref dat) => dat.consensus_encode(writer),
             Self::Verack
             | Self::SendHeaders
@@ -468,6 +679,520 @@ impl Encodable for RawNetworkMessage {
         Ok(len)
     }
 }
+
+struct NetworkMessageEncoder {
+    buffer: Vec<u8>,
+    exhausted: bool,
+}
+
+impl NetworkMessageEncoder {
+    fn new(msg: &NetworkMessage) -> Self {
+        let mut buffer = Vec::new();
+        // TODO: delegate to internal encoders once migrated to consensus_encoding.
+        bitcoin::consensus::encode::Encodable::consensus_encode(msg, &mut buffer)
+            .expect("encoding to vec cannot fail");
+        Self { buffer, exhausted: false }
+    }
+}
+
+impl encoding::Encoder for NetworkMessageEncoder {
+    fn current_chunk(&self) -> &[u8] {
+        if self.exhausted {
+            &[]
+        } else {
+            &self.buffer
+        }
+    }
+
+    fn advance(&mut self) -> bool {
+        self.exhausted = true;
+        false
+    }
+}
+
+encoding::encoder_newtype! {
+    /// Encoder for [`RawNetworkMessage`].
+    pub struct RawNetworkMessageEncoder(
+        encoding::Encoder2<
+            encoding::Encoder4<
+                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<12>,
+                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<4>,
+            >,
+            NetworkMessageEncoder,
+        >
+    );
+}
+
+impl encoding::Encodable for RawNetworkMessage {
+    type Encoder<'e> = RawNetworkMessageEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        RawNetworkMessageEncoder(encoding::Encoder2::new(
+            encoding::Encoder4::new(
+                encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
+                self.command().encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
+                encoding::ArrayEncoder::without_length_prefix(self.checksum),
+            ),
+            NetworkMessageEncoder::new(&self.payload),
+        ))
+    }
+}
+
+struct NetworkMessageDecoder {
+    command: CommandString,
+    payload_len: usize,
+    buffer: Vec<u8>,
+}
+
+impl NetworkMessageDecoder {
+    fn new(command: CommandString, payload_len: usize) -> Self {
+        Self { command, payload_len, buffer: Vec::new() }
+    }
+}
+
+impl encoding::Decoder for NetworkMessageDecoder {
+    type Output = NetworkMessage;
+    type Error = RawNetworkMessageDecodeError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        let remaining = self.payload_len - self.buffer.len();
+        let copy_len = bytes.len().min(remaining);
+
+        self.buffer.extend_from_slice(&bytes[..copy_len]);
+        *bytes = &bytes[copy_len..];
+
+        Ok(self.buffer.len() < self.payload_len)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let payload_bytes = self.buffer;
+
+        // Validate payload length matches actual data.
+        if payload_bytes.len() != self.payload_len {
+            return Err(RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload));
+        }
+
+        // TODO: delegate to internal decoders once migrated to consensus_encoding.
+        let mut mem_d = payload_bytes.as_slice();
+        let payload = match self.command.as_ref() {
+            "version" => NetworkMessage::Version(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "verack" => NetworkMessage::Verack,
+            "addr" => NetworkMessage::Addr(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "inv" => NetworkMessage::Inv(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "getdata" => NetworkMessage::GetData(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "notfound" => NetworkMessage::NotFound(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "getblocks" => NetworkMessage::GetBlocks(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "getheaders" => NetworkMessage::GetHeaders(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "mempool" => NetworkMessage::MemPool,
+            "block" => NetworkMessage::Block(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "headers" => NetworkMessage::Headers(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "sendheaders" => NetworkMessage::SendHeaders,
+            "getaddr" => NetworkMessage::GetAddr,
+            "ping" => NetworkMessage::Ping(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "pong" => NetworkMessage::Pong(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "merkleblock" => NetworkMessage::MerkleBlock(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "filterload" => NetworkMessage::FilterLoad(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "filteradd" => NetworkMessage::FilterAdd(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "filterclear" => NetworkMessage::FilterClear,
+            "getcfilters" => NetworkMessage::GetCFilters(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "cfilter" => NetworkMessage::CFilter(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "getcfheaders" => NetworkMessage::GetCFHeaders(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "cfheaders" => NetworkMessage::CFHeaders(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "getcfcheckpt" => NetworkMessage::GetCFCheckpt(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "cfcheckpt" => NetworkMessage::CFCheckpt(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "sendcmpct" => NetworkMessage::SendCmpct(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "cmpctblock" => NetworkMessage::CmpctBlock(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "getblocktxn" => NetworkMessage::GetBlockTxn(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "blocktxn" => NetworkMessage::BlockTxn(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "tx" => NetworkMessage::Tx(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "alert" => NetworkMessage::Alert(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "reject" => NetworkMessage::Reject(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "feefilter" => NetworkMessage::FeeFilter(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "wtxidrelay" => NetworkMessage::WtxidRelay,
+            "addrv2" => NetworkMessage::AddrV2(
+                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
+                    &mut mem_d,
+                )
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?,
+            ),
+            "sendaddrv2" => NetworkMessage::SendAddrV2,
+            _ => NetworkMessage::Unknown { command: self.command, payload: payload_bytes },
+        };
+
+        Ok(payload)
+    }
+
+    fn read_limit(&self) -> usize { self.payload_len - self.buffer.len() }
+}
+
+enum DecoderState {
+    ReadingHeader {
+        header_decoder: encoding::Decoder4<
+            encoding::ArrayDecoder<4>,
+            CommandStringDecoder,
+            encoding::ArrayDecoder<4>,
+            encoding::ArrayDecoder<4>,
+        >,
+    },
+    ReadingPayload {
+        magic_bytes: [u8; 4],
+        payload_len_bytes: [u8; 4],
+        checksum: [u8; 4],
+        payload_decoder: NetworkMessageDecoder,
+    },
+}
+
+/// Decoder for [`RawNetworkMessage`].
+///
+/// This decoder implements a two-phase decoding process for Bitcoin V1 P2P messages.
+/// It first decodes the fixed-sized header. It then uses the payload length information
+/// to decode the dynamically sized network message.
+pub struct RawNetworkMessageDecoder {
+    state: DecoderState,
+}
+
+impl encoding::Decoder for RawNetworkMessageDecoder {
+    type Output = RawNetworkMessage;
+    type Error = RawNetworkMessageDecodeError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        match &mut self.state {
+            DecoderState::ReadingHeader { header_decoder } => {
+                let need_more = header_decoder.push_bytes(bytes).map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
+                })?;
+
+                if !need_more {
+                    // Header complete, extract values and transition to payload state.
+                    let old_state = core::mem::replace(
+                        &mut self.state,
+                        DecoderState::ReadingHeader {
+                            header_decoder: encoding::Decoder4::new(
+                                encoding::ArrayDecoder::new(),
+                                CommandStringDecoder { inner: encoding::ArrayDecoder::new() },
+                                encoding::ArrayDecoder::new(),
+                                encoding::ArrayDecoder::new(),
+                            ),
+                        },
+                    );
+
+                    let header_decoder = match old_state {
+                        DecoderState::ReadingHeader { header_decoder } => header_decoder,
+                        _ => unreachable!("we are in ReadingHeader state"),
+                    };
+
+                    let (magic_bytes, command, payload_len_bytes, checksum) =
+                        header_decoder.end().map_err(|_| {
+                            RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
+                        })?;
+
+                    let payload_len = u32::from_le_bytes(payload_len_bytes) as usize;
+                    if payload_len > MAX_MSG_SIZE {
+                        return Err(RawNetworkMessageDecodeError(
+                            RawNetworkMessageDecodeErrorInner::PayloadTooLarge,
+                        ));
+                    }
+
+                    let payload_decoder = NetworkMessageDecoder::new(command, payload_len);
+                    self.state = DecoderState::ReadingPayload {
+                        magic_bytes,
+                        payload_len_bytes,
+                        checksum,
+                        payload_decoder,
+                    };
+
+                    // Continue with any remaining bytes.
+                    return self.push_bytes(bytes);
+                }
+
+                Ok(need_more)
+            }
+            DecoderState::ReadingPayload { payload_decoder, .. } =>
+                payload_decoder.push_bytes(bytes),
+        }
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        match self.state {
+            DecoderState::ReadingHeader { .. } =>
+                Err(RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)),
+            DecoderState::ReadingPayload {
+                magic_bytes,
+                payload_len_bytes,
+                checksum,
+                payload_decoder,
+                ..
+            } => {
+                let payload = payload_decoder.end()?;
+
+                Ok(RawNetworkMessage {
+                    magic: Magic::from_bytes(magic_bytes),
+                    payload,
+                    payload_len: u32::from_le_bytes(payload_len_bytes),
+                    checksum,
+                })
+            }
+        }
+    }
+
+    fn read_limit(&self) -> usize {
+        match &self.state {
+            DecoderState::ReadingHeader { header_decoder } => header_decoder.read_limit(),
+            DecoderState::ReadingPayload { payload_decoder, .. } => payload_decoder.read_limit(),
+        }
+    }
+}
+
+impl encoding::Decodable for RawNetworkMessage {
+    type Decoder = RawNetworkMessageDecoder;
+
+    fn decoder() -> Self::Decoder {
+        RawNetworkMessageDecoder {
+            state: DecoderState::ReadingHeader {
+                header_decoder: encoding::Decoder4::new(
+                    encoding::ArrayDecoder::new(),
+                    CommandStringDecoder { inner: encoding::ArrayDecoder::new() },
+                    encoding::ArrayDecoder::new(),
+                    encoding::ArrayDecoder::new(),
+                ),
+            },
+        }
+    }
+}
+
+/// Error decoding a raw network message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum RawNetworkMessageDecodeErrorInner {
+    /// Error decoding the message header.
+    Header,
+    /// Payload length exceeds maximum allowed message size.
+    PayloadTooLarge,
+    /// Error decoding the message payload.
+    Payload,
+}
+
+impl fmt::Display for RawNetworkMessageDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            RawNetworkMessageDecodeErrorInner::Header => {
+                write!(f, "error decoding message header")
+            }
+            RawNetworkMessageDecodeErrorInner::PayloadTooLarge => {
+                write!(f, "payload length exceeds maximum allowed message size")
+            }
+            RawNetworkMessageDecodeErrorInner::Payload => {
+                write!(f, "error decoding message payload")
+            }
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for RawNetworkMessageDecodeError {}
 
 impl Encodable for V2NetworkMessage {
     fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
@@ -649,16 +1374,9 @@ impl Decodable for RawNetworkMessage {
                 NetworkMessage::Reject(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "alert" =>
                 NetworkMessage::Alert(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
-            "feefilter" => {
-                NetworkMessage::FeeFilter(
-                    u64::consensus_decode_from_finite_reader(&mut mem_d)?
-                        .try_into()
-                        .ok()
-                        // Given some absurdly large value, using the maximum conveys that no
-                        // transactions should be relayed to this peer.
-                        .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb),
-                )
-            }
+            "feefilter" => NetworkMessage::FeeFilter(
+                FeeFilter::consensus_decode_from_finite_reader(&mut mem_d)?,
+            ),
             "sendcmpct" => NetworkMessage::SendCmpct(
                 Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
@@ -717,14 +1435,7 @@ impl Decodable for V2NetworkMessage {
             2u8 => NetworkMessage::Block(Decodable::consensus_decode_from_finite_reader(r)?),
             3u8 => NetworkMessage::BlockTxn(Decodable::consensus_decode_from_finite_reader(r)?),
             4u8 => NetworkMessage::CmpctBlock(Decodable::consensus_decode_from_finite_reader(r)?),
-            5u8 => NetworkMessage::FeeFilter(
-                u64::consensus_decode_from_finite_reader(r)?
-                    .try_into()
-                    .ok()
-                    // Given some absurdly large value, using the maximum conveys that no
-                    // transactions should be relayed to this peer.
-                    .map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb),
-            ),
+            5u8 => NetworkMessage::FeeFilter(FeeFilter::consensus_decode_from_finite_reader(r)?),
             6u8 => NetworkMessage::FilterAdd(Decodable::consensus_decode_from_finite_reader(r)?),
             7u8 => NetworkMessage::FilterClear,
             8u8 => NetworkMessage::FilterLoad(Decodable::consensus_decode_from_finite_reader(r)?),
@@ -1083,7 +1794,7 @@ mod test {
                 reason: "Cause".into(),
                 hash: hash([255u8; 32]),
             }),
-            NetworkMessage::FeeFilter(FeeRate::BROADCAST_MIN),
+            NetworkMessage::FeeFilter(FeeFilter::from(FeeRate::BROADCAST_MIN)),
             NetworkMessage::WtxidRelay,
             NetworkMessage::AddrV2(AddrV2Payload(vec![AddrV2Message {
                 addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)),
