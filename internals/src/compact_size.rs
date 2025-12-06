@@ -7,75 +7,6 @@
 //!
 //! [`CompactSize`]: <https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer>
 
-use crate::array_vec::ArrayVec;
-use crate::ToU64;
-
-/// The maximum size of a serialized object in bytes or number of elements
-/// (for eg vectors) when the size is encoded as `CompactSize`.
-///
-/// This is `MAX_SIZE` in Bitcoin Core.
-// Issue: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
-pub const MAX_ENCODABLE_VALUE: u64 = 0x0200_0000;
-
-/// The maximum length of an encoding.
-pub const MAX_ENCODING_SIZE: usize = 9;
-
-/// Returns the number of bytes used to encode this `CompactSize` value.
-///
-/// # Returns
-///
-/// - 1 for 0..=0xFC
-/// - 3 for 0xFD..=(2^16-1)
-/// - 5 for 0x10000..=(2^32-1)
-/// - 9 otherwise.
-#[inline]
-pub fn encoded_size(value: impl ToU64) -> usize { encoded_size_const(value.to_u64()) }
-
-/// Returns the number of bytes used to encode this `CompactSize` value (in const context).
-///
-/// # Returns
-///
-/// - 1 for 0..=0xFC
-/// - 3 for 0xFD..=(2^16-1)
-/// - 5 for 0x10000..=(2^32-1)
-/// - 9 otherwise.
-#[inline]
-pub const fn encoded_size_const(value: u64) -> usize {
-    match value {
-        0..=0xFC => 1,
-        0xFD..=0xFFFF => 3,
-        0x10000..=0xFFFF_FFFF => 5,
-        _ => 9,
-    }
-}
-
-/// Encodes `CompactSize` without allocating.
-#[inline]
-pub fn encode(value: impl ToU64) -> ArrayVec<u8, MAX_ENCODING_SIZE> {
-    let value = value.to_u64();
-    let mut res = ArrayVec::<u8, MAX_ENCODING_SIZE>::new();
-    match value {
-        0..=0xFC => {
-            res.push(value as u8); // Cast ok because of match.
-        }
-        0xFD..=0xFFFF => {
-            let v = value as u16; // Cast ok because of match.
-            res.push(0xFD);
-            res.extend_from_slice(&v.to_le_bytes());
-        }
-        0x10000..=0xFFFF_FFFF => {
-            let v = value as u32; // Cast ok because of match.
-            res.push(0xFE);
-            res.extend_from_slice(&v.to_le_bytes());
-        }
-        _ => {
-            res.push(0xFF);
-            res.extend_from_slice(&value.to_le_bytes());
-        }
-    }
-    res
-}
-
 /// Gets the compact size encoded value from `slice` and moves slice past the encoding.
 ///
 /// Caller to guarantee that the encoding is well formed. Well formed is defined as:
@@ -139,20 +70,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn encoded_value_1_byte() {
-        // Check lower bound, upper bound (and implicitly endian-ness).
-        for v in [0x00, 0x01, 0x02, 0xFA, 0xFB, 0xFC] {
-            let v = v as u32;
-            assert_eq!(encoded_size(v), 1);
-            // Should be encoded as the value as a u8.
-            let want = [v as u8];
-            let got = encode(v);
-            assert_eq!(got.as_slice().len(), 1); // sanity check
-            assert_eq!(got.as_slice(), want);
-        }
-    }
-
-    #[test]
     fn decode_value_1_byte() {
         // Check lower bound, upper bound.
         for v in [0x00, 0x01, 0x02, 0xFA, 0xFB, 0xFC] {
@@ -162,35 +79,6 @@ mod tests {
             assert_eq!(got, u64::from(v));
             assert!(slice.is_empty());
         }
-    }
-
-    macro_rules! check_encode {
-        ($($test_name:ident, $size:expr, $value:expr, $want:expr);* $(;)?) => {
-            $(
-                #[test]
-                fn $test_name() {
-                    let value = $value as u64; // Because default integer type is i32.
-                    let got = encode(value);
-                    assert_eq!(got.as_slice().len(), $size); // sanity check
-                    assert_eq!(got.as_slice(), &$want);
-                }
-            )*
-        }
-    }
-
-    check_encode! {
-        // 3 byte encoding.
-        encoded_value_3_byte_lower_bound, 3, 0xFD, [0xFD, 0xFD, 0x00]; // 0x00FD
-        encoded_value_3_byte_endianness, 3, 0xABCD, [0xFD, 0xCD, 0xAB];
-        encoded_value_3_byte_upper_bound, 3, 0xFFFF, [0xFD, 0xFF, 0xFF];
-        // 5 byte encoding.
-        encoded_value_5_byte_lower_bound, 5, 0x0001_0000, [0xFE, 0x00, 0x00, 0x01, 0x00];
-        encoded_value_5_byte_endianness, 5, 0x0123_4567, [0xFE, 0x67, 0x45, 0x23, 0x01];
-        encoded_value_5_byte_upper_bound, 5, 0xFFFF_FFFF, [0xFE, 0xFF, 0xFF, 0xFF, 0xFF];
-        // 9 byte encoding.
-        encoded_value_9_byte_lower_bound, 9, 0x0000_0001_0000_0000, [0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00];
-        encoded_value_9_byte_endianness, 9, 0x0123_4567_89AB_CDEF, [0xFF, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01];
-        encoded_value_9_byte_upper_bound, 9, u64::MAX, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     }
 
     macro_rules! check_decode {

@@ -10,7 +10,8 @@
 use core::convert::Infallible;
 use core::fmt;
 
-use internals::{compact_size, ToU64};
+use encoding::CompactSizeEncoder;
+use internals::ToU64;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
@@ -180,7 +181,7 @@ impl BlockCheckedExt for Block<Checked> {
     fn total_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += compact_size::encoded_size(self.transactions().len());
+        size += CompactSizeEncoder::encoded_size(self.transactions().len());
         size += self.transactions().iter().map(|tx| tx.total_size()).sum::<usize>();
 
         size
@@ -226,7 +227,7 @@ impl BlockCheckedExt for Block<Checked> {
 fn block_base_size(transactions: &[Transaction]) -> usize {
     let mut size = Header::SIZE;
 
-    size += compact_size::encoded_size(transactions.len());
+    size += CompactSizeEncoder::encoded_size(transactions.len());
     size += transactions.iter().map(|tx| tx.base_size()).sum::<usize>();
 
     size

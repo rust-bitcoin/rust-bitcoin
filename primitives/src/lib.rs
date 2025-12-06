@@ -104,3 +104,15 @@ mod prelude {
     #[cfg(all(feature = "alloc", target_has_atomic = "ptr"))]
     pub use alloc::sync;
 }
+
+#[cfg(feature = "alloc")]
+use encoding::Encoder;
+#[cfg(feature = "alloc")]
+use internals::array_vec::ArrayVec;
+
+// Encode a compact size to a slice without allocating
+#[cfg(feature = "alloc")]
+pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
+    let encoder = encoding::CompactSizeEncoder::new(value);
+    ArrayVec::from_slice(encoder.current_chunk())
+}

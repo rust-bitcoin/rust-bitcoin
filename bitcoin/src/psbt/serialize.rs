@@ -5,8 +5,8 @@
 //! Traits to serialize PSBT values to and from raw bytes
 //! according to the BIP-0174 specification.
 
+use encoding::CompactSizeEncoder;
 use hashes::{hash160, ripemd160, sha256, sha256d};
-use internals::compact_size;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
 
@@ -389,7 +389,7 @@ impl Serialize for TapTree {
         let capacity = self
             .script_leaves()
             .map(|l| {
-                l.script().len() + compact_size::encoded_size(l.script().len()) // script version
+                l.script().len() + CompactSizeEncoder::encoded_size(l.script().len()) // script version
             + 1 // merkle branch
             + 1 // leaf version
             })

@@ -76,14 +76,14 @@ impl Witness {
         let index_size = witness_elements * 4;
         let content_size = slice
             .iter()
-            .map(|elem| elem.as_ref().len() + compact_size::encoded_size(elem.as_ref().len()))
+            .map(|elem| elem.as_ref().len() + CompactSizeEncoder::encoded_size(elem.as_ref().len()))
             .sum();
 
         let mut content = alloc::vec![0u8; content_size + index_size];
         let mut cursor = 0usize;
         for (i, elem) in slice.iter().enumerate() {
             encode_cursor(&mut content, content_size, i, cursor);
-            let encoded = compact_size::encode(elem.as_ref().len());
+            let encoded = crate::compact_size_encode(elem.as_ref().len());
             let encoded_size = encoded.as_slice().len();
             content[cursor..cursor + encoded_size].copy_from_slice(encoded.as_slice());
             cursor += encoded_size;
@@ -121,12 +121,12 @@ impl Witness {
     pub fn size(&self) -> usize {
         let mut size: usize = 0;
 
-        size += compact_size::encoded_size(self.witness_elements);
+        size += CompactSizeEncoder::encoded_size(self.witness_elements);
         size += self
             .iter()
             .map(|witness_element| {
                 let len = witness_element.len();
-                compact_size::encoded_size(len) + len
+                CompactSizeEncoder::encoded_size(len) + len
             })
             .sum::<usize>();
 
@@ -151,7 +151,7 @@ impl Witness {
     fn push_slice(&mut self, new_element: &[u8]) {
         self.witness_elements += 1;
         let previous_content_end = self.indices_start;
-        let encoded = compact_size::encode(new_element.len());
+        let encoded = crate::compact_size_encode(new_element.len());
         let encoded_size = encoded.as_slice().len();
         let current_content_len = self.content.len();
         let new_item_total_len = encoded_size + new_element.len();
@@ -424,10 +424,10 @@ impl Decoder for WitnessDecoder {
                 encode_cursor(&mut self.content, 0, self.element_idx, position_after_rotation);
 
                 // Re-encode the length back into the buffer.
-                let encoded_size = compact_size::encoded_size(element_length);
+                let encoded_size = CompactSizeEncoder::encoded_size(element_length);
                 let required_len = self.cursor + encoded_size + element_length;
                 self.resize_if_needed(required_len);
-                let encoded_compact_size = compact_size::encode(element_length);
+                let encoded_compact_size = crate::compact_size_encode(element_length);
                 self.content[self.cursor..self.cursor + encoded_size]
                     .copy_from_slice(&encoded_compact_size);
                 self.cursor += encoded_size;
@@ -1326,8 +1326,8 @@ mod test {
     #[cfg(feature = "alloc")]
     fn decode_max_length() {
         let mut encoded = Vec::new();
-        encoded.extend_from_slice(compact_size::encode(1usize).as_slice());
-        encoded.extend_from_slice(compact_size::encode(4_000_000usize).as_slice());
+        encoded.extend_from_slice(crate::compact_size_encode(1usize).as_slice());
+        encoded.extend_from_slice(crate::compact_size_encode(4_000_000usize).as_slice());
         encoded.resize(encoded.len() + 4_000_000, 0u8);
 
         let mut slice = encoded.as_slice();
@@ -1337,8 +1337,8 @@ mod test {
         assert_eq!(witness[0].len(), 4_000_000);
 
         let mut encoded = Vec::new();
-        encoded.extend_from_slice(compact_size::encode(1usize).as_slice());
-        encoded.extend_from_slice(compact_size::encode(4_000_001usize).as_slice());
+        encoded.extend_from_slice(crate::compact_size_encode(1usize).as_slice());
+        encoded.extend_from_slice(crate::compact_size_encode(4_000_001usize).as_slice());
 
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
