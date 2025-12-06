@@ -4,7 +4,7 @@
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
 
-use internals::compact_size;
+use encoding::CompactSizeEncoder;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Error, ReadExt, WriteExt, MAX_VEC_SIZE};
@@ -49,7 +49,7 @@ impl Decodable for Witness {
 
             for i in 0..witness_elements {
                 let element_size = r.read_compact_size()? as usize;
-                let element_size_len = compact_size::encoded_size(element_size);
+                let element_size_len = CompactSizeEncoder::encoded_size(element_size);
                 let required_len = cursor
                     .checked_add(element_size)
                     .ok_or(encode::Error::Parse(encode::ParseError::OversizedVectorAllocation {
