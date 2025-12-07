@@ -360,7 +360,7 @@ impl SignedAmount {
     ///
     /// Returns [`None`] if overflow occurred. (`self == i64::MIN`)
     #[must_use]
-    #[deprecated(since = "TBD", note = "Never returns none, use `abs()` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "Never returns none, use `abs()` instead")]
     #[allow(clippy::unnecessary_wraps)] // To match stdlib function definition.
     pub const fn checked_abs(self) -> Option<Self> { Some(self.abs()) }
 

@@ -82,7 +82,7 @@ impl Weight {
     /// # Panics
     ///
     /// If the conversion from virtual bytes overflows.
-    #[deprecated(since = "TBD", note = "use `from_vb_unchecked` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `from_vb_unchecked` instead")]
     pub const fn from_vb_unwrap(vb: u64) -> Self {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
             Some(weight) => Self::from_wu(weight),
@@ -96,7 +96,7 @@ impl Weight {
     }
 
     /// Constructs a new [`Weight`] from witness size.
-    #[deprecated(since = "TBD", note = "use `from_wu` instead")]
+    #[deprecated(since = "1.0.0-rc.1", note = "use `from_wu` instead")]
     pub const fn from_witness_data_size(witness_size: u64) -> Self { Self::from_wu(witness_size) }
 
     /// Constructs a new [`Weight`] from non-witness size.
@@ -104,7 +104,7 @@ impl Weight {
     /// # Panics
     ///
     /// If the conversion from virtual bytes overflows.
-    #[deprecated(since = "TBD", note = "use `from_vb` or `from_vb_unchecked` instead")]
+    #[deprecated(since = "1.0.0-rc.1", note = "use `from_vb` or `from_vb_unchecked` instead")]
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
         Self::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }

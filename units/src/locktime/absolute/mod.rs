@@ -208,7 +208,7 @@ impl LockTime {
     }
 
     #[inline]
-    #[deprecated(since = "TBD", note = "use `from_mtp` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `from_mtp` instead")]
     #[doc(hidden)]
     pub fn from_time(n: u32) -> Result<Self, ConversionError> { Self::from_mtp(n) }
 
@@ -543,11 +543,11 @@ impl Height {
     /// If the input string is not a valid hex representation of a block height.
     pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> { parse_hex(s, Self::from_u32) }
 
-    #[deprecated(since = "TBD", note = "use `from_u32` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
     #[doc(hidden)]
     pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
 
-    #[deprecated(since = "TBD", note = "use `to_u32` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_u32` instead")]
     #[doc(hidden)]
     pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
 
@@ -607,7 +607,7 @@ impl fmt::Display for Height {
 
 parse_int::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
 
-#[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
+#[deprecated(since = "1.0.0-rc.0", note = "use `MedianTimePast` instead")]
 #[doc(hidden)]
 pub type Time = MedianTimePast;
 
@@ -655,11 +655,11 @@ impl MedianTimePast {
     /// If the input string is not a valid hex representation of a block time.
     pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_u32) }
 
-    #[deprecated(since = "TBD", note = "use `from_u32` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
     #[doc(hidden)]
     pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
 
-    #[deprecated(since = "TBD", note = "use `to_u32` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_u32` instead")]
     #[doc(hidden)]
     pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
 
