@@ -26,9 +26,9 @@ use core::str::FromStr;
 use arbitrary::{Arbitrary, Unstructured};
 
 use self::error::{
-    InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-    MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner, PossiblyConfusingDenominationError,
-    TooPreciseError, UnknownDenominationError, BadPositionError,
+    BadPositionError, InputTooLargeError, InvalidCharacterError, MissingDenominationError,
+    MissingDigitsError, MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner,
+    PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
 };
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -285,19 +285,26 @@ fn parse_signed_to_satoshi(
                 underscores = None;
             }
             '_' if i == 0 =>
-                // Leading underscore
-                return Err(InnerParseError::BadPosition(BadPositionError { char: '_', position: i + usize::from(is_negative) })),
+            // Leading underscore
+                return Err(InnerParseError::BadPosition(BadPositionError {
+                    char: '_',
+                    position: i + usize::from(is_negative),
+                })),
             '_' => match underscores {
                 None => underscores = Some(1),
                 // Consecutive underscores
-                _ => return Err(InnerParseError::BadPosition(BadPositionError { char: '_', position: i + usize::from(is_negative) })),
+                _ =>
+                    return Err(InnerParseError::BadPosition(BadPositionError {
+                        char: '_',
+                        position: i + usize::from(is_negative),
+                    })),
             },
             '.' => match decimals {
                 None if max_decimals <= 0 => break,
                 None => {
                     decimals = Some(0);
                     underscores = None;
-                },
+                }
                 // Double decimal dot.
                 _ =>
                     return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {

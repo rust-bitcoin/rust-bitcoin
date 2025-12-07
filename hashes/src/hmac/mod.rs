@@ -82,9 +82,7 @@ impl<T: HashEngine> HmacEngine<T> {
     }
 
     /// A special constructor giving direct access to the underlying "inner" and "outer" engines.
-    pub fn from_inner_engines(iengine: T, oengine: T) -> Self {
-        Self { iengine, oengine }
-    }
+    pub fn from_inner_engines(iengine: T, oengine: T) -> Self { Self { iengine, oengine } }
 }
 
 impl<T: HashEngine> HashEngine for HmacEngine<T> {

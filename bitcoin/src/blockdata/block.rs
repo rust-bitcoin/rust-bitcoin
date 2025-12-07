@@ -17,7 +17,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
 use crate::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::prelude::Vec;
-use crate::script::{self, ScriptIntError, ScriptExt as _};
+use crate::script::{self, ScriptExt as _, ScriptIntError};
 use crate::transaction::{Coinbase, Transaction, TransactionExt as _};
 use crate::{internal_macros, BlockTime, Target, Weight, Work};
 
@@ -472,8 +472,7 @@ mod tests {
 
         let block = decode.unwrap();
         // should be also ok for a non-witness block as commitment is optional in that case
-        let (witness_commitment_matches, witness_root) =
-            block.check_witness_commitment();
+        let (witness_commitment_matches, witness_root) = block.check_witness_commitment();
         assert!(witness_commitment_matches);
 
         let (header, transactions) = block.into_parts();
@@ -521,8 +520,7 @@ mod tests {
         assert!(decode.is_ok());
 
         let block = decode.unwrap();
-        let (witness_commitment_matches, witness_root) =
-            block.check_witness_commitment();
+        let (witness_commitment_matches, witness_root) = block.check_witness_commitment();
         assert!(witness_commitment_matches);
 
         let (header, transactions) = block.into_parts();

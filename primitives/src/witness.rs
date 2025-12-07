@@ -1024,8 +1024,7 @@ mod test {
         let witness_elements = 2;
         let content = append_u32_vec(&elements, &[0, 2]);
         let indices_start = elements.len();
-        let witness =
-            Witness::from_parts__unstable(content, witness_elements, indices_start);
+        let witness = Witness::from_parts__unstable(content, witness_elements, indices_start);
         assert_eq!(witness.get(0).unwrap(), [11_u8]);
         assert_eq!(witness.get(1).unwrap(), [21_u8, 22]);
         assert_eq!(witness.size(), 6);

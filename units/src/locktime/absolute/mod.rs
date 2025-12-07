@@ -248,8 +248,7 @@ impl LockTime {
     pub const fn is_same_unit(self, other: Self) -> bool {
         matches!(
             (self, other),
-            (Self::Blocks(_), Self::Blocks(_))
-                | (Self::Seconds(_), Self::Seconds(_))
+            (Self::Blocks(_), Self::Blocks(_)) | (Self::Seconds(_), Self::Seconds(_))
         )
     }
 
@@ -308,11 +307,10 @@ impl LockTime {
     /// Returns an error if this lock is not lock-by-height.
     #[inline]
     pub fn is_satisfied_by_height(self, height: Height) -> Result<bool, IncompatibleHeightError> {
-        
-
         match self {
             Self::Blocks(blocks) => Ok(blocks.is_satisfied_by(height)),
-            Self::Seconds(time) => Err(IncompatibleHeightError { lock: time, incompatible: height }),
+            Self::Seconds(time) =>
+                Err(IncompatibleHeightError { lock: time, incompatible: height }),
         }
     }
 
@@ -323,8 +321,6 @@ impl LockTime {
     /// Returns an error if this lock is not lock-by-time.
     #[inline]
     pub fn is_satisfied_by_time(self, mtp: MedianTimePast) -> Result<bool, IncompatibleTimeError> {
-        
-
         match self {
             Self::Seconds(time) => Ok(time.is_satisfied_by(mtp)),
             Self::Blocks(blocks) => Err(IncompatibleTimeError { lock: blocks, incompatible: mtp }),
@@ -358,8 +354,6 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn is_implied_by(self, other: Self) -> bool {
-        
-
         match (self, other) {
             (Self::Blocks(this), Self::Blocks(other)) => this <= other,
             (Self::Seconds(this), Self::Seconds(other)) => this <= other,
@@ -473,8 +467,6 @@ impl From<MedianTimePast> for LockTime {
 impl fmt::Debug for LockTime {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
-
         match *self {
             Self::Blocks(ref h) => write!(f, "{} blocks", h),
             Self::Seconds(ref t) => write!(f, "{} seconds", t),
@@ -484,8 +476,6 @@ impl fmt::Debug for LockTime {
 
 impl fmt::Display for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
-
         if f.alternate() {
             match *self {
                 Self::Blocks(ref h) => write!(f, "block-height {}", h),

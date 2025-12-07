@@ -149,8 +149,8 @@ impl fmt::Display for ParseAmountError {
             E::InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
             E::InvalidCharacter(ref error) => {
                 write_err!(f, "invalid character in the input"; error)
-            },
-            E::BadPosition(ref error) => write_err!(f, "valid character in bad position"; error)
+            }
+            E::BadPosition(ref error) => write_err!(f, "valid character in bad position"; error),
         }
     }
 }
@@ -230,9 +230,7 @@ impl fmt::Display for OutOfRangeError {
 impl std::error::Error for OutOfRangeError {}
 
 impl From<OutOfRangeError> for ParseAmountError {
-    fn from(value: OutOfRangeError) -> Self {
-        Self(ParseAmountErrorInner::OutOfRange(value))
-    }
+    fn from(value: OutOfRangeError) -> Self { Self(ParseAmountErrorInner::OutOfRange(value)) }
 }
 
 /// Error returned when the input string has higher precision than satoshis.
@@ -352,11 +350,7 @@ impl fmt::Display for BadPositionError {
                 1 => f.write_str("the input amount is prefixed with an underscore (_)"),
                 _ => f.write_str("there are consecutive underscores (_) in the input"),
             },
-            c => write!(
-                f,
-                "The character '{}' is at a bad position: {}",
-                c, self.position
-            ),
+            c => write!(f, "The character '{}' is at a bad position: {}", c, self.position),
         }
     }
 }

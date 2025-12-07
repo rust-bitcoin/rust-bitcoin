@@ -395,13 +395,15 @@ fn scriptint_round_trip() {
             Ok(i),
             PushBytes::read_scriptint(
                 <&PushBytes>::try_from(build_scriptint(i).as_slice()).unwrap()
-            ).map(i64::from)
+            )
+            .map(i64::from)
         );
         assert_eq!(
             Ok(-i),
             PushBytes::read_scriptint(
                 <&PushBytes>::try_from(build_scriptint(-i).as_slice()).unwrap()
-            ).map(i64::from)
+            )
+            .map(i64::from)
         );
         assert_eq!(Ok(i), read_scriptint_non_minimal(&build_scriptint(i)).map(i64::from));
         assert_eq!(Ok(-i), read_scriptint_non_minimal(&build_scriptint(-i)).map(i64::from));

@@ -45,7 +45,8 @@ pub mod locktime {
         pub use units::locktime::absolute::{error, Height, LockTime, MedianTimePast};
         #[doc(no_inline)]
         pub use units::locktime::absolute::{
-            ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError, ParseTimeError,
+            ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError,
+            ParseTimeError,
         };
 
         #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
@@ -76,9 +77,7 @@ pub mod locktime {
 
         /// Re-export everything from the `units::locktime::relative` module.
         #[doc(inline)]
-        pub use units::locktime::relative::{
-            error, LockTime, NumberOf512Seconds, NumberOfBlocks,
-        };
+        pub use units::locktime::relative::{error, LockTime, NumberOf512Seconds, NumberOfBlocks};
         #[doc(no_inline)]
         pub use units::locktime::relative::{
             DisabledLockTimeError, InvalidHeightError, InvalidTimeError, IsSatisfiedByError,
