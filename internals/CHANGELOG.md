@@ -1,3 +1,8 @@
+# 0.4.1 - 2024-10-18
+
+- Bump MSRV to Rust 1.74.0 [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
+- Add `hex-conservative` dependency
+
 # 0.4.0 - 2024-09-18
 
 - Introduce `ToU64` trait [#2929](https://github.com/rust-bitcoin/rust-bitcoin/pull/2929)
