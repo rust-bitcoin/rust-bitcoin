@@ -608,6 +608,7 @@ impl HashEngine {
         round!(d, e, f, g, h, a, b, c, 0xa4506ceb, w[13], w[11], w[6], w[14]);
         round!(c, d, e, f, g, h, a, b, 0xbef9a3f7, w[14], w[12], w[7], w[15]);
         round!(b, c, d, e, f, g, h, a, 0xc67178f2, w[15], w[13], w[8], w[0]);
+        let _ = w[15]; // silence "unnecessary assignment" lint in macro
 
         self.h[0] = self.h[0].wrapping_add(a);
         self.h[1] = self.h[1].wrapping_add(b);
