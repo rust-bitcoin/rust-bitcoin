@@ -866,10 +866,10 @@ mod tests {
     #[test]
     #[allow(deprecated_in_future)]
     fn sanity_check() {
-        assert_eq!(NumberOfBlocks::MAX.to_consensus_u32(), u32::from(u16::MAX));
-        assert_eq!(NumberOf512Seconds::from_512_second_intervals(100).value(), 100u16);
+        assert_eq!(LockTime::from(NumberOfBlocks::MAX).to_consensus_u32(), u32::from(u16::MAX));
+        assert_eq!(NumberOf512Seconds::from_512_second_intervals(100).to_512_second_intervals(), 100u16);
         assert_eq!(
-            NumberOf512Seconds::from_512_second_intervals(100).to_consensus_u32(),
+            LockTime::from(NumberOf512Seconds::from_512_second_intervals(100)).to_consensus_u32(),
             4_194_404u32
         ); // 0x400064
         assert_eq!(NumberOf512Seconds::from_512_second_intervals(1).to_seconds(), 512);
