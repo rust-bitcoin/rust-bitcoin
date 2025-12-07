@@ -4,7 +4,7 @@
 
 use bitcoin_units::amount::Denomination;
 use bitcoin_units::locktime::{absolute, relative};
-use bitcoin_units::{Amount, BlockHeight, BlockInterval, SignedAmount, Weight};
+use bitcoin_units::{Amount, BlockHeight, BlockHeightInterval, SignedAmount, Weight};
 
 macro_rules! check {
     ($($test_name:ident, $ty:path, $val:path, $str:literal);* $(;)?) => {
@@ -34,8 +34,8 @@ check! {
     block_height_min, BlockHeight, BlockHeight::MIN, "0";
     block_height_max, BlockHeight, BlockHeight::MAX, "4294967295";
 
-    block_interval_min, BlockInterval, BlockInterval::MIN, "0";
-    block_interval_max, BlockInterval, BlockInterval::MAX, "4294967295";
+    block_interval_min, BlockHeightInterval, BlockHeightInterval::MIN, "0";
+    block_interval_max, BlockHeightInterval, BlockHeightInterval::MAX, "4294967295";
 
     lock_by_height_absolute_min, absolute::Height, absolute::Height::MIN, "0";
     lock_by_height_absolute_max, absolute::Height, absolute::Height::MAX, "499999999";
