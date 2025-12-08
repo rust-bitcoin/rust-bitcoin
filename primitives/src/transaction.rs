@@ -29,7 +29,7 @@ use internals::array::ArrayExt as _;
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(feature = "hex")]
+#[cfg(all(feature = "hex", feature = "alloc"))]
 use units::parse_int;
 
 #[cfg(feature = "alloc")]
@@ -369,6 +369,47 @@ impl Encodable for Transaction {
             TransactionEncoder(Encoder6::new(version, None, inputs, outputs, None, lock_time))
         }
     }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl core::str::FromStr for Transaction {
+    type Err = ParseTransactionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> { crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseTransactionError) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::LowerHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::UpperHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+}
+
+/// An error that occurs during parsing of a [`Transaction`] from a hex string.
+#[cfg(all(feature = "hex", feature = "alloc"))]
+pub struct ParseTransactionError(crate::ParsePrimitiveError<Transaction>);
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Debug for ParseTransactionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Display for ParseTransactionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
+impl std::error::Error for ParseTransactionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { std::error::Error::source(&self.0) }
 }
 
 /// The decoder for the [`Transaction`] type.
@@ -1517,6 +1558,8 @@ mod tests {
     #[cfg(feature = "hex")]
     use alloc::string::ToString;
     use alloc::{format, vec};
+    #[cfg(feature = "hex")]
+    use core::str::FromStr as _;
 
     use encoding::Encoder as _;
     #[cfg(feature = "hex")]
@@ -1597,6 +1640,91 @@ mod tests {
 
         // Test partial ord
         assert!(tx > tx_orig);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn transaction_hex_display() {
+        let txin = TxIn {
+            previous_output: OutPoint {
+                txid: Txid::from_byte_array([0xAA; 32]), // Arbitrary invalid dummy value.
+                vout: 0,
+            },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::new(),
+        };
+
+        let txout = TxOut {
+            amount: Amount::from_sat(123_456_789).unwrap(),
+            script_pubkey: ScriptPubKeyBuf::new(),
+        };
+
+        let tx_orig = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::from_consensus(1_765_112_030), // The time this was written
+            inputs: vec![txin],
+            outputs: vec![txout],
+        };
+
+        let encoded_tx = "0100000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0115cd5b070000000000de783569";
+        let lower_hex_tx = format!("{:x}", tx_orig);
+        let upper_hex_tx = format!("{:X}", tx_orig);
+
+        // All of these should yield a lowercase hex
+        assert_eq!(encoded_tx, lower_hex_tx);
+        assert_eq!(encoded_tx, format!("{}", tx_orig));
+
+        // And this should yield uppercase hex
+        let upper_encoded = encoded_tx
+            .chars()
+            .map(|chr| chr.to_ascii_uppercase())
+            .collect::<alloc::string::String>();
+        assert_eq!(upper_encoded, upper_hex_tx);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn transaction_from_hex_str_round_trip() {
+        // Create a transaction and convert it to a hex string
+        let tx = Transaction {
+            version: Version::TWO,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![segwit_tx_in(), segwit_tx_in()],
+            outputs: vec![tx_out(), tx_out()],
+        };
+
+        let lower_hex_tx = format!("{:x}", tx);
+        let upper_hex_tx = format!("{:X}", tx);
+
+        // Parse the hex strings back into transactions
+        let parsed_lower = Transaction::from_str(&lower_hex_tx).unwrap();
+        let parsed_upper = Transaction::from_str(&upper_hex_tx).unwrap();
+
+        // The parsed transaction should match the originals
+        assert_eq!(tx, parsed_lower);
+        assert_eq!(tx, parsed_upper);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn transaction_from_hex_str_error() {
+        use crate::ParsePrimitiveError;
+
+        // OddLengthString error
+        let odd = "abc"; // 3 chars, odd length
+        let err = Transaction::from_str(odd).unwrap_err();
+        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::OddLengthString(..))));
+
+        // InvalidChar error
+        let invalid = "zz";
+        let err = Transaction::from_str(invalid).unwrap_err();
+        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::InvalidChar(..))));
+
+        // Decode error
+        let bad = "deadbeef00"; // arbitrary even-length hex that will fail decoding
+        let err = Transaction::from_str(bad).unwrap_err();
+        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::Decode(..))));
     }
 
     #[test]
