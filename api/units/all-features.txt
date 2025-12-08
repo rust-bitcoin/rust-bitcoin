@@ -892,10 +892,14 @@ impl core::ops::arith::AddAssign for bitcoin_units::FeeRate
 impl core::ops::arith::AddAssign for bitcoin_units::Weight
 impl core::ops::arith::AddAssign for bitcoin_units::block::BlockHeightInterval
 impl core::ops::arith::AddAssign for bitcoin_units::block::BlockMtpInterval
+impl core::ops::arith::AddAssign for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::AddAssign for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 impl core::ops::arith::AddAssign<&bitcoin_units::FeeRate> for bitcoin_units::FeeRate
 impl core::ops::arith::AddAssign<&bitcoin_units::Weight> for bitcoin_units::Weight
 impl core::ops::arith::AddAssign<&bitcoin_units::block::BlockHeightInterval> for bitcoin_units::block::BlockHeightInterval
 impl core::ops::arith::AddAssign<&bitcoin_units::block::BlockMtpInterval> for bitcoin_units::block::BlockMtpInterval
+impl core::ops::arith::AddAssign<bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::AddAssign<bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 impl core::ops::arith::Div for bitcoin_units::Amount
 impl core::ops::arith::Div for bitcoin_units::SignedAmount
 impl core::ops::arith::Div for bitcoin_units::Weight
@@ -1080,10 +1084,14 @@ impl core::ops::arith::SubAssign for bitcoin_units::FeeRate
 impl core::ops::arith::SubAssign for bitcoin_units::Weight
 impl core::ops::arith::SubAssign for bitcoin_units::block::BlockHeightInterval
 impl core::ops::arith::SubAssign for bitcoin_units::block::BlockMtpInterval
+impl core::ops::arith::SubAssign for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::SubAssign for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 impl core::ops::arith::SubAssign<&bitcoin_units::FeeRate> for bitcoin_units::FeeRate
 impl core::ops::arith::SubAssign<&bitcoin_units::Weight> for bitcoin_units::Weight
 impl core::ops::arith::SubAssign<&bitcoin_units::block::BlockHeightInterval> for bitcoin_units::block::BlockHeightInterval
 impl core::ops::arith::SubAssign<&bitcoin_units::block::BlockMtpInterval> for bitcoin_units::block::BlockMtpInterval
+impl core::ops::arith::SubAssign<bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::SubAssign<bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::Amount
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::BlockTime
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::FeeRate
@@ -1344,6 +1352,10 @@ impl<T: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin_units::result::Nu
 impl<T: core::fmt::Debug> bitcoin_units::result::NumOpResult<T>
 impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_units::result::NumOpResult<T>
 impl<T: core::marker::Copy> core::marker::Copy for bitcoin_units::result::NumOpResult<T>
+impl<T: core::ops::arith::AddAssign + core::marker::Copy> core::ops::arith::AddAssign for bitcoin_units::result::NumOpResult<T>
+impl<T: core::ops::arith::AddAssign> core::ops::arith::AddAssign<T> for bitcoin_units::result::NumOpResult<T>
+impl<T: core::ops::arith::SubAssign + core::marker::Copy> core::ops::arith::SubAssign for bitcoin_units::result::NumOpResult<T>
+impl<T: core::ops::arith::SubAssign> core::ops::arith::SubAssign<T> for bitcoin_units::result::NumOpResult<T>
 impl<T> bitcoin_units::result::NumOpResult<T>
 impl<T> core::marker::Freeze for bitcoin_units::result::NumOpResult<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for bitcoin_units::result::NumOpResult<T> where T: core::marker::Send
@@ -2355,6 +2367,8 @@ pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: &T) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: &bitcoin_units::result::NumOpResult<T>) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: Self) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::add(self, rhs: T) -> Self::Output
+pub fn bitcoin_units::result::NumOpResult<T>::add_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::result::NumOpResult<T>::add_assign(&mut self, rhs: T)
 pub fn bitcoin_units::result::NumOpResult<T>::and_then<F>(self, op: F) -> Self where F: core::ops::function::FnOnce(T) -> Self
 pub fn bitcoin_units::result::NumOpResult<T>::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::result::NumOpResult<T>::clone(&self) -> bitcoin_units::result::NumOpResult<T>
@@ -2370,10 +2384,14 @@ pub fn bitcoin_units::result::NumOpResult<T>::sub(self, rhs: &T) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::sub(self, rhs: &bitcoin_units::result::NumOpResult<T>) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::sub(self, rhs: Self) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<T>::sub(self, rhs: T) -> Self::Output
+pub fn bitcoin_units::result::NumOpResult<T>::sub_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::result::NumOpResult<T>::sub_assign(&mut self, rhs: T)
 pub fn bitcoin_units::result::NumOpResult<T>::unwrap(self) -> T
 pub fn bitcoin_units::result::NumOpResult<T>::unwrap_err(self) -> bitcoin_units::result::NumOpError
 pub fn bitcoin_units::result::NumOpResult<T>::unwrap_or(self, default: T) -> T
 pub fn bitcoin_units::result::NumOpResult<T>::unwrap_or_else<F>(self, f: F) -> T where F: core::ops::function::FnOnce() -> T
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::add_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::add_assign(&mut self, rhs: bitcoin_units::Amount)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &bitcoin_units::Weight) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>) -> Self::Output
@@ -2394,12 +2412,16 @@ pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::mul_assign(&mu
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::mul_assign(&mut self, rhs: u64)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::rem(self, modulus: u64) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::rem(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sub_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sub_assign(&mut self, rhs: bitcoin_units::Amount)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>::mul(self, rhs: &bitcoin_units::Weight) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>::mul(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>::mul(self, rhs: bitcoin_units::Weight) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>::mul(self, rhs: bitcoin_units::result::NumOpResult<bitcoin_units::Weight>) -> Self::Output
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::add_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::add_assign(&mut self, rhs: bitcoin_units::SignedAmount)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &i64) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: i64) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::div_assign(&mut self, rhs: &i64)
@@ -2412,6 +2434,8 @@ pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::mul_assi
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::mul_assign(&mut self, rhs: i64)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::rem(self, modulus: i64) -> Self::Output
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::rem(self, rhs: &i64) -> Self::Output
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sub_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sub_assign(&mut self, rhs: bitcoin_units::SignedAmount)
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a Self>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Weight>::mul(self, rhs: &bitcoin_units::FeeRate) -> Self::Output
