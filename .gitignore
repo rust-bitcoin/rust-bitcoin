@@ -22,3 +22,6 @@ hfuzz_workspace
 
 # Local tooling
 .maintainer-tools
+
+# Nix
+result
