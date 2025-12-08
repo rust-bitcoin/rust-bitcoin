@@ -1024,6 +1024,44 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_decoder_read_limit() {
+        let block = Block::new_unchecked(
+            dummy_header(),
+            vec![Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: crate::absolute::LockTime::ZERO,
+                inputs: vec![crate::TxIn::EMPTY_COINBASE],
+                outputs: vec![crate::TxOut {
+                    amount: units::Amount::MIN,
+                    script_pubkey: crate::ScriptPubKeyBuf::new(),
+                }],
+            }],
+        );
+
+        let bytes = encoding::encode_to_vec(&block);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        decoder.push_bytes(&mut view).unwrap();
+        let _ = decoder.read_limit();
+        assert_eq!(decoder.end().unwrap(), block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_read_limit() {
+        let header = dummy_header();
+        let bytes = encoding::encode_to_vec(&header);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Header::decoder();
+        decoder.push_bytes(&mut view).unwrap();
+        let _ = decoder.read_limit();
+        assert_eq!(decoder.end().unwrap(), header);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_optional() {
         // Valid block with optional witness commitment
         let mut header = dummy_header();
