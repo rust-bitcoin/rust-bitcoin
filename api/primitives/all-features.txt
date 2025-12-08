@@ -448,6 +448,7 @@ impl core::fmt::LowerHex for bitcoin_primitives::Txid
 impl core::fmt::LowerHex for bitcoin_primitives::WitnessCommitment
 impl core::fmt::LowerHex for bitcoin_primitives::WitnessMerkleNode
 impl core::fmt::LowerHex for bitcoin_primitives::Wtxid
+impl core::fmt::LowerHex for bitcoin_primitives::block::Header
 impl core::fmt::LowerHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::LowerHex for bitcoin_primitives::script::ScriptHash
 impl core::fmt::LowerHex for bitcoin_primitives::script::WScriptHash
@@ -459,6 +460,7 @@ impl core::fmt::UpperHex for bitcoin_primitives::Txid
 impl core::fmt::UpperHex for bitcoin_primitives::WitnessCommitment
 impl core::fmt::UpperHex for bitcoin_primitives::WitnessMerkleNode
 impl core::fmt::UpperHex for bitcoin_primitives::Wtxid
+impl core::fmt::UpperHex for bitcoin_primitives::block::Header
 impl core::fmt::UpperHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::UpperHex for bitcoin_primitives::script::ScriptHash
 impl core::fmt::UpperHex for bitcoin_primitives::script::WScriptHash
@@ -920,6 +922,7 @@ impl core::str::traits::FromStr for bitcoin_primitives::Txid
 impl core::str::traits::FromStr for bitcoin_primitives::WitnessCommitment
 impl core::str::traits::FromStr for bitcoin_primitives::WitnessMerkleNode
 impl core::str::traits::FromStr for bitcoin_primitives::Wtxid
+impl core::str::traits::FromStr for bitcoin_primitives::block::Header
 impl core::str::traits::FromStr for bitcoin_primitives::script::ScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::script::WScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::OutPoint
@@ -1504,6 +1507,7 @@ pub fn bitcoin_primitives::block::Header::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::block::Header::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::block::Header::eq(&self, other: &bitcoin_primitives::block::Header) -> bool
 pub fn bitcoin_primitives::block::Header::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::Header::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::block::Header::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::block::Header::partial_cmp(&self, other: &bitcoin_primitives::block::Header) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::block::HeaderDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
@@ -2043,6 +2047,7 @@ pub type bitcoin_primitives::block::BlockHashDecoder::Error = bitcoin_primitives
 pub type bitcoin_primitives::block::BlockHashDecoder::Output = bitcoin_primitives::BlockHash
 pub type bitcoin_primitives::block::Header::Decoder = bitcoin_primitives::block::HeaderDecoder
 pub type bitcoin_primitives::block::Header::Encoder<'e> = bitcoin_primitives::block::HeaderEncoder
+pub type bitcoin_primitives::block::Header::Err = bitcoin_primitives::ParsePrimitiveError<bitcoin_primitives::block::Header>
 pub type bitcoin_primitives::block::HeaderDecoder::Error = bitcoin_primitives::block::HeaderDecoderError
 pub type bitcoin_primitives::block::HeaderDecoder::Output = bitcoin_primitives::block::Header
 pub type bitcoin_primitives::block::Version::Decoder = bitcoin_primitives::block::VersionDecoder
