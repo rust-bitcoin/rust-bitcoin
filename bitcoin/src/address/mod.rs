@@ -590,6 +590,11 @@ impl Address {
         Self::from_witness_program(program, hrp)
     }
 
+    /// Constructs a new pay-to-anchor (P2A) [`Address`].
+    pub fn p2a(hrp: impl Into<KnownHrp>) -> Self {
+        Self::from_witness_program(WitnessProgram::p2a(), hrp)
+    }
+
     /// Constructs a new [`Address`] from an arbitrary [`WitnessProgram`].
     ///
     /// This only exists to support future witness versions. If you are doing normal mainnet things
