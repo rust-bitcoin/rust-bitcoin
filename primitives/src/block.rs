@@ -1091,6 +1091,51 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_decoder_read_limit() {
+        let mut coinbase_in = crate::TxIn::EMPTY_COINBASE;
+        coinbase_in.script_sig = crate::ScriptSigBuf::from_bytes(vec![0u8; 2]);
+
+        let block = Block::new_unchecked(
+            dummy_header(),
+            vec![Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: crate::absolute::LockTime::ZERO,
+                inputs: vec![coinbase_in],
+                outputs: vec![crate::TxOut {
+                    amount: units::Amount::MIN,
+                    script_pubkey: crate::ScriptPubKeyBuf::new(),
+                }],
+            }],
+        );
+
+        let bytes = encoding::encode_to_vec(&block);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        assert!(decoder.read_limit() > 0);
+        let needs_more = decoder.push_bytes(&mut view).unwrap();
+        assert!(!needs_more);
+        assert_eq!(decoder.read_limit(), 0);
+        assert_eq!(decoder.end().unwrap(), block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_read_limit() {
+        let header = dummy_header();
+        let bytes = encoding::encode_to_vec(&header);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Header::decoder();
+        assert!(decoder.read_limit() > 0);
+        let needs_more = decoder.push_bytes(&mut view).unwrap();
+        assert!(!needs_more);
+        assert_eq!(decoder.read_limit(), 0);
+        assert_eq!(decoder.end().unwrap(), header);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_optional() {
         // Valid block with optional witness commitment
         let mut header = dummy_header();
