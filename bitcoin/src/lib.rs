@@ -151,6 +151,7 @@ pub use primitives::{
     },
     transaction::{Ntxid, OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,
+    ParsePrimitiveError,
 };
 #[doc(inline)]
 pub use units::{
