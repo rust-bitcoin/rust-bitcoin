@@ -956,7 +956,6 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
-    use bitcoin::bip152::BlockTransactionsRequest;
     use bitcoin::bip158::{FilterHash, FilterHeader};
     use bitcoin::block::{Block, BlockHash};
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
@@ -966,6 +965,7 @@ mod test {
 
     use super::*;
     use crate::address::AddrV2;
+    use crate::bip152::BlockTransactionsRequest;
     use crate::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
     use crate::message_compact_blocks::{GetBlockTxn, SendCmpct};
