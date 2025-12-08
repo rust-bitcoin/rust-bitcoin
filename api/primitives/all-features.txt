@@ -357,6 +357,7 @@ impl core::error::Error for bitcoin_primitives::block::BlockDecoderError
 impl core::error::Error for bitcoin_primitives::block::BlockHashDecoderError
 impl core::error::Error for bitcoin_primitives::block::HeaderDecoderError
 impl core::error::Error for bitcoin_primitives::block::InvalidBlockError
+impl core::error::Error for bitcoin_primitives::block::ParseHeaderError
 impl core::error::Error for bitcoin_primitives::block::VersionDecoderError
 impl core::error::Error for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::error::Error for bitcoin_primitives::script::RedeemScriptSizeError
@@ -385,6 +386,7 @@ impl core::fmt::Debug for bitcoin_primitives::block::Checked
 impl core::fmt::Debug for bitcoin_primitives::block::Header
 impl core::fmt::Debug for bitcoin_primitives::block::HeaderDecoderError
 impl core::fmt::Debug for bitcoin_primitives::block::InvalidBlockError
+impl core::fmt::Debug for bitcoin_primitives::block::ParseHeaderError
 impl core::fmt::Debug for bitcoin_primitives::block::Unchecked
 impl core::fmt::Debug for bitcoin_primitives::block::Version
 impl core::fmt::Debug for bitcoin_primitives::block::VersionDecoderError
@@ -423,6 +425,7 @@ impl core::fmt::Display for bitcoin_primitives::block::BlockHashDecoderError
 impl core::fmt::Display for bitcoin_primitives::block::Header
 impl core::fmt::Display for bitcoin_primitives::block::HeaderDecoderError
 impl core::fmt::Display for bitcoin_primitives::block::InvalidBlockError
+impl core::fmt::Display for bitcoin_primitives::block::ParseHeaderError
 impl core::fmt::Display for bitcoin_primitives::block::VersionDecoderError
 impl core::fmt::Display for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::fmt::Display for bitcoin_primitives::script::RedeemScriptSizeError
@@ -450,6 +453,7 @@ impl core::fmt::LowerHex for bitcoin_primitives::Txid
 impl core::fmt::LowerHex for bitcoin_primitives::WitnessCommitment
 impl core::fmt::LowerHex for bitcoin_primitives::WitnessMerkleNode
 impl core::fmt::LowerHex for bitcoin_primitives::Wtxid
+impl core::fmt::LowerHex for bitcoin_primitives::block::Header
 impl core::fmt::LowerHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::LowerHex for bitcoin_primitives::script::ScriptHash
 impl core::fmt::LowerHex for bitcoin_primitives::script::WScriptHash
@@ -461,6 +465,7 @@ impl core::fmt::UpperHex for bitcoin_primitives::Txid
 impl core::fmt::UpperHex for bitcoin_primitives::WitnessCommitment
 impl core::fmt::UpperHex for bitcoin_primitives::WitnessMerkleNode
 impl core::fmt::UpperHex for bitcoin_primitives::Wtxid
+impl core::fmt::UpperHex for bitcoin_primitives::block::Header
 impl core::fmt::UpperHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::UpperHex for bitcoin_primitives::script::ScriptHash
 impl core::fmt::UpperHex for bitcoin_primitives::script::WScriptHash
@@ -523,6 +528,7 @@ impl core::marker::Freeze for bitcoin_primitives::block::HeaderDecoder
 impl core::marker::Freeze for bitcoin_primitives::block::HeaderDecoderError
 impl core::marker::Freeze for bitcoin_primitives::block::HeaderEncoder
 impl core::marker::Freeze for bitcoin_primitives::block::InvalidBlockError
+impl core::marker::Freeze for bitcoin_primitives::block::ParseHeaderError
 impl core::marker::Freeze for bitcoin_primitives::block::Unchecked
 impl core::marker::Freeze for bitcoin_primitives::block::Version
 impl core::marker::Freeze for bitcoin_primitives::block::VersionDecoder
@@ -585,6 +591,7 @@ impl core::marker::Send for bitcoin_primitives::block::HeaderDecoder
 impl core::marker::Send for bitcoin_primitives::block::HeaderDecoderError
 impl core::marker::Send for bitcoin_primitives::block::HeaderEncoder
 impl core::marker::Send for bitcoin_primitives::block::InvalidBlockError
+impl core::marker::Send for bitcoin_primitives::block::ParseHeaderError
 impl core::marker::Send for bitcoin_primitives::block::Unchecked
 impl core::marker::Send for bitcoin_primitives::block::Version
 impl core::marker::Send for bitcoin_primitives::block::VersionDecoder
@@ -690,6 +697,7 @@ impl core::marker::Sync for bitcoin_primitives::block::HeaderDecoder
 impl core::marker::Sync for bitcoin_primitives::block::HeaderDecoderError
 impl core::marker::Sync for bitcoin_primitives::block::HeaderEncoder
 impl core::marker::Sync for bitcoin_primitives::block::InvalidBlockError
+impl core::marker::Sync for bitcoin_primitives::block::ParseHeaderError
 impl core::marker::Sync for bitcoin_primitives::block::Unchecked
 impl core::marker::Sync for bitcoin_primitives::block::Version
 impl core::marker::Sync for bitcoin_primitives::block::VersionDecoder
@@ -752,6 +760,7 @@ impl core::marker::Unpin for bitcoin_primitives::block::HeaderDecoder
 impl core::marker::Unpin for bitcoin_primitives::block::HeaderDecoderError
 impl core::marker::Unpin for bitcoin_primitives::block::HeaderEncoder
 impl core::marker::Unpin for bitcoin_primitives::block::InvalidBlockError
+impl core::marker::Unpin for bitcoin_primitives::block::ParseHeaderError
 impl core::marker::Unpin for bitcoin_primitives::block::Unchecked
 impl core::marker::Unpin for bitcoin_primitives::block::Version
 impl core::marker::Unpin for bitcoin_primitives::block::VersionDecoder
@@ -815,6 +824,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Head
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::HeaderDecoderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::HeaderEncoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::InvalidBlockError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::ParseHeaderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Unchecked
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::VersionDecoder
@@ -877,6 +887,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::HeaderD
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::HeaderDecoderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::HeaderEncoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::InvalidBlockError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::ParseHeaderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Unchecked
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::VersionDecoder
@@ -928,6 +939,7 @@ impl core::str::traits::FromStr for bitcoin_primitives::Txid
 impl core::str::traits::FromStr for bitcoin_primitives::WitnessCommitment
 impl core::str::traits::FromStr for bitcoin_primitives::WitnessMerkleNode
 impl core::str::traits::FromStr for bitcoin_primitives::Wtxid
+impl core::str::traits::FromStr for bitcoin_primitives::block::Header
 impl core::str::traits::FromStr for bitcoin_primitives::script::ScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::script::WScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::OutPoint
@@ -1496,6 +1508,7 @@ pub fn bitcoin_primitives::block::Header::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::block::Header::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::block::Header::eq(&self, other: &bitcoin_primitives::block::Header) -> bool
 pub fn bitcoin_primitives::block::Header::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::Header::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::block::Header::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::block::Header::partial_cmp(&self, other: &bitcoin_primitives::block::Header) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::block::HeaderDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
@@ -1512,6 +1525,8 @@ pub fn bitcoin_primitives::block::InvalidBlockError::clone(&self) -> bitcoin_pri
 pub fn bitcoin_primitives::block::InvalidBlockError::eq(&self, other: &bitcoin_primitives::block::InvalidBlockError) -> bool
 pub fn bitcoin_primitives::block::InvalidBlockError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::block::InvalidBlockError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_primitives::block::ParseHeaderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::ParseHeaderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::block::Unchecked::clone(&self) -> bitcoin_primitives::block::Unchecked
 pub fn bitcoin_primitives::block::Unchecked::cmp(&self, other: &bitcoin_primitives::block::Unchecked) -> core::cmp::Ordering
 pub fn bitcoin_primitives::block::Unchecked::eq(&self, other: &bitcoin_primitives::block::Unchecked) -> bool
@@ -1946,6 +1961,7 @@ pub struct bitcoin_primitives::block::BlockHashEncoder(_)
 pub struct bitcoin_primitives::block::Header
 pub struct bitcoin_primitives::block::HeaderDecoder(_)
 pub struct bitcoin_primitives::block::HeaderEncoder(_)
+pub struct bitcoin_primitives::block::ParseHeaderError(_)
 pub struct bitcoin_primitives::block::Version(_)
 pub struct bitcoin_primitives::block::VersionDecoder(_)
 pub struct bitcoin_primitives::block::VersionDecoderError(_)
@@ -2038,6 +2054,7 @@ pub type bitcoin_primitives::block::BlockHashDecoder::Error = bitcoin_primitives
 pub type bitcoin_primitives::block::BlockHashDecoder::Output = bitcoin_primitives::BlockHash
 pub type bitcoin_primitives::block::Header::Decoder = bitcoin_primitives::block::HeaderDecoder
 pub type bitcoin_primitives::block::Header::Encoder<'e> = bitcoin_primitives::block::HeaderEncoder
+pub type bitcoin_primitives::block::Header::Err = bitcoin_primitives::block::ParseHeaderError
 pub type bitcoin_primitives::block::HeaderDecoder::Error = bitcoin_primitives::block::HeaderDecoderError
 pub type bitcoin_primitives::block::HeaderDecoder::Output = bitcoin_primitives::block::Header
 pub type bitcoin_primitives::block::Version::Decoder = bitcoin_primitives::block::VersionDecoder
