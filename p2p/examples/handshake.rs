@@ -1,9 +1,8 @@
-use std::io::{BufReader, Write};
+use std::io::BufReader;
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
-use bitcoin::consensus::{encode, Decodable};
 use bitcoin_p2p_messages::message_network::{ClientSoftwareVersion, UserAgent, UserAgentVersion};
 use bitcoin_p2p_messages::{
     self, address, message, message_network, Magic, ProtocolVersion, ServiceFlags,
@@ -36,7 +35,7 @@ fn main() {
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
-        let _ = stream.write_all(encode::serialize(&first_message).as_slice());
+        encoding::encode_to_writer(&first_message, &mut stream).unwrap();
         println!("Sent version message");
 
         // Setup StreamReader
@@ -44,7 +43,9 @@ fn main() {
         let mut stream_reader = BufReader::new(read_stream);
         loop {
             // Loop and retrieve new messages
-            let reply = message::RawNetworkMessage::consensus_decode(&mut stream_reader).unwrap();
+            let reply =
+                encoding::decode_from_read::<message::RawNetworkMessage, _>(&mut stream_reader)
+                    .unwrap();
             match reply.payload() {
                 message::NetworkMessage::Version(_) => {
                     println!("Received version message: {:?}", reply.payload());
@@ -54,7 +55,7 @@ fn main() {
                         message::NetworkMessage::Verack,
                     );
 
-                    let _ = stream.write_all(encode::serialize(&second_message).as_slice());
+                    encoding::encode_to_writer(&second_message, &mut stream).unwrap();
                     println!("Sent verack message");
                 }
                 message::NetworkMessage::Verack => {
