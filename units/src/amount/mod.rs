@@ -209,6 +209,7 @@ const INPUT_STRING_LEN_LIMIT: usize = 50;
 /// [`bool`] indicator for a negative amount.
 ///
 /// The `bool` is only needed to distinguish -0 from 0.
+#[allow(clippy::too_many_lines)]
 fn parse_signed_to_satoshi(
     mut s: &str,
     denom: Denomination,
