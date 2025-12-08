@@ -364,6 +364,7 @@ impl core::error::Error for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::error::Error for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::error::Error for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::ParseOutPointError
+impl core::error::Error for bitcoin_primitives::transaction::ParseTransactionError
 impl core::error::Error for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::TxInDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
@@ -397,6 +398,7 @@ impl core::fmt::Debug for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::fmt::Debug for bitcoin_primitives::transaction::OutPoint
 impl core::fmt::Debug for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::fmt::Debug for bitcoin_primitives::transaction::ParseOutPointError
+impl core::fmt::Debug for bitcoin_primitives::transaction::ParseTransactionError
 impl core::fmt::Debug for bitcoin_primitives::transaction::Transaction
 impl core::fmt::Debug for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::fmt::Debug for bitcoin_primitives::transaction::TxIn
@@ -431,6 +433,8 @@ impl core::fmt::Display for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::fmt::Display for bitcoin_primitives::transaction::OutPoint
 impl core::fmt::Display for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::ParseOutPointError
+impl core::fmt::Display for bitcoin_primitives::transaction::ParseTransactionError
+impl core::fmt::Display for bitcoin_primitives::transaction::Transaction
 impl core::fmt::Display for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::TxInDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
@@ -449,6 +453,7 @@ impl core::fmt::LowerHex for bitcoin_primitives::Wtxid
 impl core::fmt::LowerHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::LowerHex for bitcoin_primitives::script::ScriptHash
 impl core::fmt::LowerHex for bitcoin_primitives::script::WScriptHash
+impl core::fmt::LowerHex for bitcoin_primitives::transaction::Transaction
 impl core::fmt::UpperHex for bitcoin_primitives::BlockHash
 impl core::fmt::UpperHex for bitcoin_primitives::Ntxid
 impl core::fmt::UpperHex for bitcoin_primitives::TxMerkleNode
@@ -459,6 +464,7 @@ impl core::fmt::UpperHex for bitcoin_primitives::Wtxid
 impl core::fmt::UpperHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::UpperHex for bitcoin_primitives::script::ScriptHash
 impl core::fmt::UpperHex for bitcoin_primitives::script::WScriptHash
+impl core::fmt::UpperHex for bitcoin_primitives::transaction::Transaction
 impl core::hash::Hash for bitcoin_primitives::BlockHash
 impl core::hash::Hash for bitcoin_primitives::Ntxid
 impl core::hash::Hash for bitcoin_primitives::TxMerkleNode
@@ -541,6 +547,7 @@ impl core::marker::Freeze for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Freeze for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Freeze for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::marker::Freeze for bitcoin_primitives::transaction::ParseOutPointError
+impl core::marker::Freeze for bitcoin_primitives::transaction::ParseTransactionError
 impl core::marker::Freeze for bitcoin_primitives::transaction::Transaction
 impl core::marker::Freeze for bitcoin_primitives::transaction::TransactionDecoder
 impl core::marker::Freeze for bitcoin_primitives::transaction::TransactionDecoderError
@@ -602,6 +609,7 @@ impl core::marker::Send for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Send for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Send for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::marker::Send for bitcoin_primitives::transaction::ParseOutPointError
+impl core::marker::Send for bitcoin_primitives::transaction::ParseTransactionError
 impl core::marker::Send for bitcoin_primitives::transaction::Transaction
 impl core::marker::Send for bitcoin_primitives::transaction::TransactionDecoder
 impl core::marker::Send for bitcoin_primitives::transaction::TransactionDecoderError
@@ -706,6 +714,7 @@ impl core::marker::Sync for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Sync for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Sync for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::marker::Sync for bitcoin_primitives::transaction::ParseOutPointError
+impl core::marker::Sync for bitcoin_primitives::transaction::ParseTransactionError
 impl core::marker::Sync for bitcoin_primitives::transaction::Transaction
 impl core::marker::Sync for bitcoin_primitives::transaction::TransactionDecoder
 impl core::marker::Sync for bitcoin_primitives::transaction::TransactionDecoderError
@@ -767,6 +776,7 @@ impl core::marker::Unpin for bitcoin_primitives::transaction::OutPoint
 impl core::marker::Unpin for bitcoin_primitives::transaction::OutPointDecoder
 impl core::marker::Unpin for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::marker::Unpin for bitcoin_primitives::transaction::ParseOutPointError
+impl core::marker::Unpin for bitcoin_primitives::transaction::ParseTransactionError
 impl core::marker::Unpin for bitcoin_primitives::transaction::Transaction
 impl core::marker::Unpin for bitcoin_primitives::transaction::TransactionDecoder
 impl core::marker::Unpin for bitcoin_primitives::transaction::TransactionDecoderError
@@ -829,6 +839,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::OutPointDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::ParseOutPointError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::ParseTransactionError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::Transaction
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TransactionDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TransactionDecoderError
@@ -890,6 +901,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::O
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::OutPointDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::ParseOutPointError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::ParseTransactionError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::Transaction
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TransactionDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TransactionDecoderError
@@ -919,6 +931,7 @@ impl core::str::traits::FromStr for bitcoin_primitives::Wtxid
 impl core::str::traits::FromStr for bitcoin_primitives::script::ScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::script::WScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::OutPoint
+impl core::str::traits::FromStr for bitcoin_primitives::transaction::Transaction
 impl serde::ser::Serialize for bitcoin_primitives::BlockHash
 impl serde::ser::Serialize for bitcoin_primitives::Ntxid
 impl serde::ser::Serialize for bitcoin_primitives::TxMerkleNode
@@ -1730,6 +1743,8 @@ pub fn bitcoin_primitives::transaction::ParseOutPointError::eq(&self, other: &bi
 pub fn bitcoin_primitives::transaction::ParseOutPointError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::transaction::ParseOutPointError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::transaction::ParseOutPointError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_primitives::transaction::ParseTransactionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::ParseTransactionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::transaction::Transaction::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::transaction::Transaction::clone(&self) -> bitcoin_primitives::transaction::Transaction
 pub fn bitcoin_primitives::transaction::Transaction::cmp(&self, other: &Self) -> core::cmp::Ordering
@@ -1740,6 +1755,7 @@ pub fn bitcoin_primitives::transaction::Transaction::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::transaction::Transaction::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::transaction::Transaction::eq(&self, other: &bitcoin_primitives::transaction::Transaction) -> bool
 pub fn bitcoin_primitives::transaction::Transaction::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::Transaction::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::transaction::Transaction::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::transaction::Transaction::is_coinbase(&self) -> bool
 pub fn bitcoin_primitives::transaction::Transaction::partial_cmp(&self, other: &Self) -> core::option::Option<core::cmp::Ordering>
@@ -1957,6 +1973,7 @@ pub struct bitcoin_primitives::transaction::OutPoint
 pub struct bitcoin_primitives::transaction::OutPointDecoder(_)
 pub struct bitcoin_primitives::transaction::OutPointDecoderError(_)
 pub struct bitcoin_primitives::transaction::OutPointEncoder<'e>(_)
+pub struct bitcoin_primitives::transaction::ParseTransactionError(_)
 pub struct bitcoin_primitives::transaction::Transaction
 pub struct bitcoin_primitives::transaction::TransactionDecoder
 pub struct bitcoin_primitives::transaction::TransactionDecoderError(_)
@@ -2061,6 +2078,7 @@ pub type bitcoin_primitives::transaction::OutPointDecoder::Error = bitcoin_primi
 pub type bitcoin_primitives::transaction::OutPointDecoder::Output = bitcoin_primitives::transaction::OutPoint
 pub type bitcoin_primitives::transaction::Transaction::Decoder = bitcoin_primitives::transaction::TransactionDecoder
 pub type bitcoin_primitives::transaction::Transaction::Encoder<'e> where Self: 'e = bitcoin_primitives::transaction::TransactionEncoder<'e>
+pub type bitcoin_primitives::transaction::Transaction::Err = bitcoin_primitives::transaction::ParseTransactionError
 pub type bitcoin_primitives::transaction::TransactionDecoder::Error = bitcoin_primitives::transaction::TransactionDecoderError
 pub type bitcoin_primitives::transaction::TransactionDecoder::Output = bitcoin_primitives::transaction::Transaction
 pub type bitcoin_primitives::transaction::TxIn::Decoder = bitcoin_primitives::transaction::TxInDecoder
