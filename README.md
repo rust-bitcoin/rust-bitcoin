@@ -19,6 +19,9 @@
   </p>
 </div>
 
+This version (`v0.30.x`) is End-of-Life. Consider using a more recent version. If for some
+reason you are stuck on this version please raise an issue.
+
 [Documentation](https://docs.rs/bitcoin/)
 
 Supports (or should support)
