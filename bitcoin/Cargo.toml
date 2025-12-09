@@ -79,3 +79,4 @@ needless_question_mark = "allow" # https://github.com/rust-bitcoin/rust-bitcoin/
 manual_range_contains = "allow" # More readable than clippy's format.
 precedence = "allow"
 legacy_numeric_constants = "allow"
+match_like_matches_macro = "allow" # Just shoosh because we are about to EOL this version.
