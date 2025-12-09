@@ -3,6 +3,9 @@
 
 //! # Rust Bitcoin Library
 //!
+//! This version (`v0.30.x`) is End-of-Life. Consider using a more recent version. If for some
+//! reason you are stuck on this version please raise an issue.
+//!
 //! This is a library that supports the Bitcoin network protocol and associated
 //! primitives. It is designed for Rust programs built to work with the Bitcoin
 //! network.
