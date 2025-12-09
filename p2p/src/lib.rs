@@ -28,6 +28,7 @@ pub mod message_compact_blocks;
 pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
+pub mod message_utreexo;
 
 extern crate alloc;
 #[cfg(feature = "std")]
@@ -121,40 +122,48 @@ impl Decodable for ProtocolVersion {
 pub struct ServiceFlags(u64);
 
 impl ServiceFlags {
-    /// NONE means no services supported.
+    /// `NONE` means no services supported.
     pub const NONE: Self = Self(0);
 
-    /// NETWORK means that the node is capable of serving the complete block chain. It is currently
+    /// `NETWORK` means that the node is capable of serving the complete block chain. It is currently
     /// set by all Bitcoin Core non pruned nodes, and is unset by SPV clients or other light
     /// clients.
     pub const NETWORK: Self = Self(1 << 0);
 
-    /// GETUTXO means the node is capable of responding to the getutxo protocol request. Bitcoin
+    /// `GETUTXO` means the node is capable of responding to the getutxo protocol request. Bitcoin
     /// Core does not support this but a patch set called Bitcoin XT does.
     /// See BIP-0064 for details on how this is implemented.
     pub const GETUTXO: Self = Self(1 << 1);
 
-    /// BLOOM means the node is capable and willing to handle bloom-filtered connections. Bitcoin
+    /// `BLOOM` means the node is capable and willing to handle bloom-filtered connections. Bitcoin
     /// Core nodes used to support this by default, without advertising this bit, but no longer do
     /// as of protocol version 70011 (= NO_BLOOM_VERSION)
     pub const BLOOM: Self = Self(1 << 2);
 
-    /// WITNESS indicates that a node can be asked for blocks and transactions including witness
+    /// `WITNESS` indicates that a node can be asked for blocks and transactions including witness
     /// data.
     pub const WITNESS: Self = Self(1 << 3);
 
-    /// COMPACT_FILTERS means the node will service basic block filter requests.
+    /// `COMPACT_FILTERS` means the node will service basic block filter requests.
     /// See BIP-0157 and BIP-0158 for details on how this is implemented.
     pub const COMPACT_FILTERS: Self = Self(1 << 6);
 
-    /// NETWORK_LIMITED means the same as NODE_NETWORK with the limitation of only serving the last
+    /// `NETWORK_LIMITED` means the same as NODE_NETWORK with the limitation of only serving the last
     /// 288 (2 day) blocks.
     /// See BIP-0159 for details on how this is implemented.
     pub const NETWORK_LIMITED: Self = Self(1 << 10);
 
-    /// P2P_V2 indicates that the node supports the P2P v2 encrypted transport protocol.
+    /// `P2P_V2` indicates that the node supports the P2P v2 encrypted transport protocol.
     /// See BIP-0324 for details on how this is implemented.
     pub const P2P_V2: Self = Self(1 << 11);
+
+    /// `NODE_UTREEXO` indicates that the node supports Utreexo inclusion proof propagation
+    /// for new blocks and transactions.
+    pub const NODE_UTREEXO: Self = Self(1 << 12);
+
+    /// `NODE_UTREEXO_ARCHIVE` indicates that the node supports Utreexo inclusion proof propagation
+    /// for all blocks.
+    pub const NODE_UTREEXO_ARCHIVE: Self = Self(1 << 13);
 
     // NOTE: When adding new flags, remember to update the Display impl accordingly.
 
@@ -220,6 +229,8 @@ impl fmt::Display for ServiceFlags {
         write_flag!(COMPACT_FILTERS);
         write_flag!(NETWORK_LIMITED);
         write_flag!(P2P_V2);
+        write_flag!(NODE_UTREEXO);
+        write_flag!(NODE_UTREEXO_ARCHIVE);
         // If there are unknown flags left, we append them in hex.
         if flags != Self::NONE {
             if !first {
@@ -541,6 +552,8 @@ mod tests {
             ServiceFlags::COMPACT_FILTERS,
             ServiceFlags::NETWORK_LIMITED,
             ServiceFlags::P2P_V2,
+            ServiceFlags::NODE_UTREEXO,
+            ServiceFlags::NODE_UTREEXO_ARCHIVE,
         ];
 
         let mut flags = ServiceFlags::NONE;
@@ -567,11 +580,17 @@ mod tests {
         assert_eq!("ServiceFlags(NONE)", ServiceFlags::NONE.to_string());
         assert_eq!("ServiceFlags(WITNESS)", ServiceFlags::WITNESS.to_string());
         assert_eq!("ServiceFlags(P2P_V2)", ServiceFlags::P2P_V2.to_string());
+        assert_eq!("ServiceFlags(NODE_UTREEXO)", ServiceFlags::NODE_UTREEXO.to_string());
+        assert_eq!(
+            "ServiceFlags(NODE_UTREEXO_ARCHIVE)",
+            ServiceFlags::NODE_UTREEXO_ARCHIVE.to_string()
+        );
         let flag = ServiceFlags::WITNESS
             | ServiceFlags::BLOOM
             | ServiceFlags::NETWORK
-            | ServiceFlags::P2P_V2;
-        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS|P2P_V2)", flag.to_string());
+            | ServiceFlags::P2P_V2
+            | ServiceFlags::NODE_UTREEXO;
+        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS|P2P_V2|NODE_UTREEXO)", flag.to_string());
         let flag = ServiceFlags::WITNESS | 0xf0.into();
         assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
     }
