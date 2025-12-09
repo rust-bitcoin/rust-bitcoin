@@ -158,7 +158,7 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockHeightInterval, BlockInterval, BlockMtp, BlockMtpInterval,
+        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval,
         BlockTime, FeeRate, NumOpResult, SignedAmount, Weight,
     };
 }
@@ -210,8 +210,7 @@ fn api_can_use_all_types_from_module_locktime_relative() {
         InvalidHeightError as _, InvalidTimeError as _, TimeOverflowError as _,
     };
     use bitcoin_units::locktime::relative::{
-        Height, InvalidHeightError, InvalidTimeError, NumberOf512Seconds, NumberOfBlocks, Time,
-        TimeOverflowError,
+        InvalidHeightError, InvalidTimeError, NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
     };
 }
 

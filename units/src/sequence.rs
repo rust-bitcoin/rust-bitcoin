@@ -50,7 +50,7 @@ impl Sequence {
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Self::MIN_NO_RBF;
     /// The sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
-    #[deprecated(since = "TBD", note = "use `ENABLE_LOCKTIME_AND_RBF` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `ENABLE_LOCKTIME_AND_RBF` instead")]
     pub const ENABLE_RBF_NO_LOCKTIME: Self = Self(0xFFFF_FFFD);
     /// The maximum sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
@@ -203,7 +203,7 @@ impl Sequence {
     /// Gets the hex representation of this [`Sequence`].
     #[cfg(feature = "alloc")]
     #[inline]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.

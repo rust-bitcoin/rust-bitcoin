@@ -7,7 +7,7 @@
 
 use bincode::serialize;
 use bitcoin_units::{
-    amount, fee_rate, Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight,
+    amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, FeeRate, SignedAmount, Weight,
 };
 use serde::{Deserialize, Serialize};
 
@@ -46,7 +46,7 @@ struct Serde {
     opt_kwu: Option<FeeRate>,
 
     a: BlockHeight,
-    b: BlockInterval,
+    b: BlockHeightInterval,
     c: Weight,
 }
 
@@ -75,7 +75,7 @@ impl Serde {
             opt_kwu: Some(FeeRate::BROADCAST_MIN),
 
             a: BlockHeight::MAX,
-            b: BlockInterval::MAX,
+            b: BlockHeightInterval::MAX,
             c: Weight::MAX,
         }
     }

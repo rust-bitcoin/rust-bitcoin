@@ -400,7 +400,7 @@ impl<'de> serde::Deserialize<'de> for LockTime {
     }
 }
 
-#[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
+#[deprecated(since = "1.0.0-rc.0", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
 pub type Height = NumberOfBlocks;
 
@@ -430,14 +430,14 @@ impl NumberOfBlocks {
     /// Returns the inner `u16` value.
     #[inline]
     #[must_use]
-    #[deprecated(since = "TBD", note = "use `to_height` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_height` instead")]
     #[doc(hidden)]
     pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     #[deprecated(
-        since = "TBD",
+        since = "1.0.0-rc.0",
         note = "use `LockTime::from` followed by `to_consensus_u32` instead"
     )]
     pub const fn to_consensus_u32(self) -> u32 {
@@ -479,7 +479,7 @@ impl fmt::Display for NumberOfBlocks {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-#[deprecated(since = "TBD", note = "use `NumberOf512Seconds` instead")]
+#[deprecated(since = "1.0.0-rc.0", note = "use `NumberOf512Seconds` instead")]
 #[doc(hidden)]
 pub type Time = NumberOf512Seconds;
 
@@ -552,14 +552,14 @@ impl NumberOf512Seconds {
     /// Returns the inner `u16` value.
     #[inline]
     #[must_use]
-    #[deprecated(since = "TBD", note = "use `to_512_second_intervals` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `to_512_second_intervals` instead")]
     #[doc(hidden)]
     pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     #[deprecated(
-        since = "TBD",
+        since = "1.0.0-rc.0",
         note = "use `LockTime::from` followed by `to_consensus_u32` instead"
     )]
     pub const fn to_consensus_u32(self) -> u32 {
@@ -866,10 +866,10 @@ mod tests {
     #[test]
     #[allow(deprecated_in_future)]
     fn sanity_check() {
-        assert_eq!(NumberOfBlocks::MAX.to_consensus_u32(), u32::from(u16::MAX));
-        assert_eq!(NumberOf512Seconds::from_512_second_intervals(100).value(), 100u16);
+        assert_eq!(LockTime::from(NumberOfBlocks::MAX).to_consensus_u32(), u32::from(u16::MAX));
+        assert_eq!(NumberOf512Seconds::from_512_second_intervals(100).to_512_second_intervals(), 100u16);
         assert_eq!(
-            NumberOf512Seconds::from_512_second_intervals(100).to_consensus_u32(),
+            LockTime::from(NumberOf512Seconds::from_512_second_intervals(100)).to_consensus_u32(),
             4_194_404u32
         ); // 0x400064
         assert_eq!(NumberOf512Seconds::from_512_second_intervals(1).to_seconds(), 512);
