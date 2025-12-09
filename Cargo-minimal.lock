@@ -73,6 +73,10 @@ name = "bitcoin-addresses"
 version = "0.0.0"
 
 [[package]]
+name = "bitcoin-bip158"
+version = "0.0.0"
+
+[[package]]
 name = "bitcoin-consensus-encoding"
 version = "1.0.0-rc.2"
 dependencies = [
