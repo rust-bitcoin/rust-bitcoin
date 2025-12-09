@@ -24,3 +24,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 
 [dev-dependencies]
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_46)' ] }

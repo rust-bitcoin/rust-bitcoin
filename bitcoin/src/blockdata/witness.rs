@@ -215,7 +215,7 @@ impl Witness {
     }
 
     /// Returns a struct implementing [`Iterator`].
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter {
             inner: self.content.as_slice(),
             indices_start: self.indices_start,
@@ -370,7 +370,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for Iter<'a> {}
+impl ExactSizeIterator for Iter<'_> {}
 
 impl<'a> IntoIterator for &'a Witness {
     type IntoIter = Iter<'a>;
@@ -510,7 +510,7 @@ mod test {
         assert_eq!(witness.nth(1), None);
         assert_eq!(witness.nth(2), None);
         assert_eq!(witness.nth(3), None);
-        witness.push(&vec![0u8]);
+        witness.push(vec![0u8]);
         let expected = Witness {
             witness_elements: 1,
             content: append_u32_vec(vec![1u8, 0], &[0]),
@@ -524,7 +524,7 @@ mod test {
         assert_eq!(witness.nth(2), None);
         assert_eq!(witness.nth(3), None);
         assert_eq!(&witness[0], &[0u8][..]);
-        witness.push(&vec![2u8, 3u8]);
+        witness.push(vec![2u8, 3u8]);
         let expected = Witness {
             witness_elements: 2,
             content: append_u32_vec(vec![1u8, 0, 2, 2, 3], &[0, 2]),
@@ -539,7 +539,7 @@ mod test {
         assert_eq!(witness.nth(3), None);
         assert_eq!(&witness[0], &[0u8][..]);
         assert_eq!(&witness[1], &[2u8, 3u8][..]);
-        witness.push(&vec![4u8, 5u8]);
+        witness.push(vec![4u8, 5u8]);
         let expected = Witness {
             witness_elements: 3,
             content: append_u32_vec(vec![1u8, 0, 2, 2, 3, 2, 4, 5], &[0, 2, 5]),
@@ -563,7 +563,7 @@ mod test {
         let mut witness = Witness::default();
         for i in 0..5 {
             assert_eq!(witness.iter().len(), i);
-            witness.push(&vec![0u8]);
+            witness.push(vec![0u8]);
         }
         let mut iter = witness.iter();
         for i in (0..=5).rev() {

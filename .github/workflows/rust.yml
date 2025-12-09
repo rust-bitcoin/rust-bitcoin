@@ -61,7 +61,7 @@ jobs:
         run: ./contrib/test.sh
 
   MSRV:
-    name: Test - 1.41.1 toolchain
+    name: Test - 1.51.0 toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -69,14 +69,14 @@ jobs:
       - name: Checkout Crate
         uses: actions/checkout@v3
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@1.41.1
+        uses: dtolnay/rust-toolchain@1.51.0
       - name: Running test script
         env:
           DO_FEATURE_MATRIX: true
         run: ./contrib/test.sh
 
   NoStd:
-    name: Test - 1.47 toolchain
+    name: Test - 1.51.0 toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -84,7 +84,7 @@ jobs:
       - name: Checkout Crate
         uses: actions/checkout@v3
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@1.47
+        uses: dtolnay/rust-toolchain@1.51.0
       - name: Running test script
         env:
           DO_NO_STD: true
@@ -159,7 +159,7 @@ jobs:
       - name: Running address sanitizer
         env:
           DO_ASAN: true
-        run: cd hashes && ./contrib/test.sh
+        run: cp Cargo-recent.lock Cargo.lock && cd hashes && ./contrib/test.sh
 
   WASM:
     name: WebAssembly Build # hashes crate only.
@@ -172,4 +172,4 @@ jobs:
       - name: Running WASM build
         env:
           DO_WASM: true
-        run: cd hashes && ./contrib/test.sh
+        run: cp Cargo-recent.lock Cargo.lock && cd hashes && ./contrib/test.sh
