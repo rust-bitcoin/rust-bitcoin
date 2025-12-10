@@ -41,16 +41,13 @@ use core::cmp::{self, Ordering};
 use core::convert::Infallible;
 use core::fmt;
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
-use hashes::{sha256d, siphash24, HashEngine as _};
+use hashes::{sha256d, siphash24};
 use internals::array::ArrayExt as _;
 use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
 use crate::consensus::{ReadExt, WriteExt};
-use crate::internal_macros;
 use crate::prelude::{BTreeSet, Borrow, Vec};
 use crate::script::{ScriptPubKey, ScriptPubKeyExt as _};
 use crate::transaction::OutPoint;
@@ -58,20 +55,6 @@ use crate::transaction::OutPoint;
 /// Golomb encoding parameter as in BIP-0158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
 const M: u64 = 784931;
-
-hashes::hash_newtype! {
-    /// Filter hash, as defined in BIP-0157.
-    pub struct FilterHash(sha256d::Hash);
-    /// Filter header, as defined in BIP-0157.
-    pub struct FilterHeader(sha256d::Hash);
-}
-
-hashes::impl_hex_for_newtype!(FilterHash, FilterHeader);
-#[cfg(feature = "serde")]
-hashes::impl_serde_for_newtype!(FilterHash, FilterHeader);
-
-internal_macros::impl_hashencode!(FilterHash);
-internal_macros::impl_hashencode!(FilterHeader);
 
 /// Errors for blockfilter.
 #[derive(Debug)]
@@ -117,15 +100,6 @@ pub struct BlockFilter {
     pub content: Vec<u8>,
 }
 
-impl FilterHash {
-    /// Computes the filter header from a filter hash and previous filter header.
-    pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
-        let mut engine = sha256d::Hash::engine();
-        engine.input(self.as_ref());
-        engine.input(previous_filter_header.as_ref());
-        FilterHeader(sha256d::Hash::from_engine(engine))
-    }
-}
 
 impl BlockFilter {
     /// Constructs a new filter from pre-computed data.
@@ -150,17 +124,9 @@ impl BlockFilter {
         Ok(Self { content: out })
     }
 
-    /// Computes this filter's ID in a chain of filters (see [BIP 157]).
-    ///
-    /// [BIP-0157]: <https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#Filter_Headers>
-    pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
-        FilterHash(sha256d::Hash::hash(&self.content)).filter_header(previous_filter_header)
-    }
-
     /// Computes the canonical hash for the given filter.
-    pub fn filter_hash(&self) -> FilterHash {
-        let hash = sha256d::Hash::hash(&self.content);
-        FilterHash(hash)
+    pub fn filter_hash(&self) -> sha256d::Hash {
+        sha256d::Hash::hash(&self.content)
     }
 
     /// Returns true if any query matches against this [`BlockFilter`].
@@ -572,19 +538,6 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for FilterHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::from_byte_array(u.arbitrary()?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for FilterHeader {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::from_byte_array(u.arbitrary()?))
-    }
-}
 
 #[cfg(test)]
 mod test {
@@ -611,11 +564,7 @@ mod test {
             let block = block.assume_checked(None);
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
-            let previous_filter_header =
-                t.get(4).unwrap().as_str().unwrap().parse::<FilterHeader>().unwrap();
             let filter_content = hex(t.get(5).unwrap().as_str().unwrap());
-            let filter_header =
-                t.get(6).unwrap().as_str().unwrap().parse::<FilterHeader>().unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
@@ -661,8 +610,6 @@ mod test {
                         .unwrap());
                 }
             }
-
-            assert_eq!(filter_header, filter.filter_header(previous_filter_header));
         }
     }
 

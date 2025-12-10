@@ -8,11 +8,64 @@ use alloc::vec::Vec;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::bip158::{FilterHash, FilterHeader};
 use bitcoin::block::BlockHash;
+use hashes::{sha256d, HashEngine};
 use units::BlockHeight;
 
 use crate::consensus::impl_consensus_encoding;
+
+hashes::hash_newtype! {
+    /// Filter hash, as defined in BIP-0157.
+    pub struct FilterHash(pub sha256d::Hash);
+    /// Filter header, as defined in BIP-0157.
+    pub struct FilterHeader(pub sha256d::Hash);
+}
+
+hashes::impl_hex_for_newtype!(FilterHash, FilterHeader);
+
+impl FilterHash {
+    /// Computes the filter header from a filter hash and previous filter header.
+    pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
+        let mut engine = sha256d::Hash::engine();
+        engine.input(self.as_ref());
+        engine.input(previous_filter_header.as_ref());
+        FilterHeader(sha256d::Hash::from_engine(engine))
+    }
+}
+
+#[rustfmt::skip]
+macro_rules! impl_hashencode {
+    ($hashtype:ident) => {
+        impl bitcoin::consensus::Encodable for $hashtype {
+            fn consensus_encode<W: bitcoin::io::Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin::io::Error> {
+                self.as_byte_array().consensus_encode(w)
+            }
+        }
+
+        impl bitcoin::consensus::Decodable for $hashtype {
+            fn consensus_decode<R: bitcoin::io::BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error> {
+                Ok(Self::from_byte_array(<<$hashtype as hashes::Hash>::Bytes>::consensus_decode(r)?))
+            }
+        }
+    };
+}
+
+impl_hashencode!(FilterHash);
+impl_hashencode!(FilterHeader);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FilterHash {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_byte_array(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FilterHeader {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_byte_array(u.arbitrary()?))
+    }
+}
 
 /// getcfilters message
 #[derive(PartialEq, Eq, Clone, Debug)]
