@@ -14,7 +14,6 @@ use core::{cmp, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitcoin::block::HeaderExt;
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
 use bitcoin::{block, transaction};
@@ -1262,15 +1261,6 @@ impl HeadersMessage {
             .zip(self.0.iter().skip(1))
             .all(|(first, second)| first.block_hash().eq(&second.prev_blockhash))
     }
-
-    /// Each header passes its own proof-of-work target.
-    pub fn all_targets_satisfied(&self) -> bool {
-        !self.0.iter().any(|header| {
-            let target = header.target();
-            let valid_pow = header.validate_pow(target);
-            valid_pow.is_err()
-        })
-    }
 }
 
 impl Decodable for HeadersMessage {
@@ -2127,6 +2117,5 @@ mod test {
         ).unwrap();
         let headers_message = HeadersMessage(vec![block_900_000, block_900_001, block_900_002]);
         assert!(headers_message.is_connected());
-        assert!(headers_message.all_targets_satisfied());
     }
 }
