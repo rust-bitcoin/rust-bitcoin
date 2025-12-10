@@ -74,17 +74,10 @@ impl<T> Builder<T> {
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice<D: AsRef<PushBytes>>(self, data: D) -> Self {
-        let bytes = data.as_ref().as_bytes();
-        if bytes.len() == 1 {
-            match bytes[0] {
-                0x81 => self.push_opcode(OP_1NEGATE),
-                1..=16 => self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))),
-                _ => self.push_slice_non_minimal(data),
-            }
-        } else {
-            self.push_slice_non_minimal(data)
-        }
+    pub fn push_slice<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
+        self.0.push_slice(data);
+        self.1 = None;
+        self
     }
 
     /// Adds instructions to push some arbitrary data onto the stack without minimality.
