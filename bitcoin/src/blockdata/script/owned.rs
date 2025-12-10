@@ -76,12 +76,11 @@ internal_macros::define_extension_trait! {
         /// Adds instructions to push some arbitrary data onto the stack.
         fn push_slice<D: AsRef<PushBytes>>(&mut self, data: D) {
             let bytes = data.as_ref().as_bytes();
-            if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
+            if bytes.len() == 1 {
                 match bytes[0] {
                     0x81 => { self.push_opcode(OP_1NEGATE); },
-                    0 => { self.push_opcode(OP_PUSHBYTES_0); },
                     1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))); },
-                    _ => {}, // unreachable arm
+                    _ => { self.push_slice_non_minimal(data); },
                 }
             } else {
                 self.push_slice_non_minimal(data);
