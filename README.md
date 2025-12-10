@@ -102,6 +102,7 @@ of "our CI didn't fail with these versions". Specifically, we do not guarantee
 that the committed hashes are free from malware. It is your responsibility to
 review them.
 
+- Fuzz testing with [`libfuzzer`](https://github.com/rust-fuzz/libfuzzer)
 ## Policy on Altcoins/Altchains
 
 Since the altcoin landscape includes projects which [frequently appear and disappear, and are poorly
