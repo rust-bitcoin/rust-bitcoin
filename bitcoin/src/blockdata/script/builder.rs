@@ -76,10 +76,9 @@ impl<T> Builder<T> {
     /// Adds instructions to push some arbitrary data onto the stack.
     pub fn push_slice<D: AsRef<PushBytes>>(self, data: D) -> Self {
         let bytes = data.as_ref().as_bytes();
-        if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
+        if bytes.len() == 1 && (bytes[0] == 0x81 || (1..=16).contains(&bytes[0])) {
             match bytes[0] {
                 0x81 => self.push_opcode(OP_1NEGATE),
-                0 => self.push_opcode(OP_PUSHBYTES_0),
                 1..=16 => self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))),
                 _ => self, // unreachable arm
             }
