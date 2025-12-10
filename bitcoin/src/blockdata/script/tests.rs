@@ -16,7 +16,6 @@ type Script = crate::ScriptSig;
 type ScriptBuf = crate::ScriptSigBuf;
 
 #[test]
-#[ignore] // bad test; will be fixed in next commit
 #[rustfmt::skip]
 fn script() {
     let mut comp = vec![];
@@ -40,9 +39,10 @@ fn script() {
     // data
     script = script.push_slice(b"NRA4VR"); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     // data & number push minimality
-    // OP_0
-    script = script.push_slice([0u8]); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    // 0x00 (single byte)
+    script = script.push_slice([0u8]); comp.extend([1u8, 0].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     script = script.push_slice_non_minimal([0u8]); comp.extend([1, 0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    // OP_0 (empty byte array)
     script = script.push_int(0).unwrap(); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     script = script.push_int_non_minimal(0); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     // OP_1..16
