@@ -129,7 +129,7 @@ impl<T> ScriptBuf<T> {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     #[inline]
-    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
