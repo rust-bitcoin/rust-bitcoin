@@ -43,7 +43,11 @@ impl<T> Builder<T> {
     /// # Errors
     ///
     /// Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
-    pub fn push_int(mut self, n: i32) -> Result<Self, Error> { self.0.push_int(n).map(|_| self) }
+    pub fn push_int(mut self, n: i32) -> Result<Self, Error> {
+        self.0.push_int(n)?;
+        self.1 = None;
+        Ok(self)
+    }
 
     /// Adds instructions to push an unchecked integer onto the stack.
     ///
@@ -62,6 +66,7 @@ impl<T> Builder<T> {
     /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
     pub fn push_int_unchecked(mut self, n: i64) -> Self {
         self.0.push_int_unchecked(n);
+        self.1 = None;
         self
     }
 
@@ -70,6 +75,7 @@ impl<T> Builder<T> {
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
     pub(in crate::blockdata) fn push_int_non_minimal(mut self, data: i64) -> Self {
         self.0.push_int_non_minimal(data);
+        self.1 = None;
         self
     }
 
