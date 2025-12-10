@@ -1,4 +1,5 @@
 # .gitignore for rust-bitcoin repository workspace.
+fuzz/hfuzz_input/
 
 # Lock files
 Cargo.lock
@@ -15,10 +16,6 @@ hashes/target
 # Test artifacts
 bitcoin/dep_test
 mutants.out*
-
-# Fuzz artifacts
-hfuzz_target
-hfuzz_workspace
 
 # Local tooling
 .maintainer-tools
