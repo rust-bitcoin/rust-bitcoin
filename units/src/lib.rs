@@ -25,6 +25,8 @@
 #![doc(test(attr(warn(unused))))]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
+// Extra restriction lints.
+#![warn(clippy::indexing_slicing)] // Avoid implicit panics from indexing/slicing.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
