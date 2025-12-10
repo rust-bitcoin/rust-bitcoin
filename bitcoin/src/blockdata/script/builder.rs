@@ -74,6 +74,16 @@ impl<T> Builder<T> {
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
+    ///
+    /// If the data can be exactly produced by a numeric opcode, that opcode
+    /// will be used, since its behavior is equivalent but will not violate minimality
+    /// rules. To avoid this, use [`Builder::push_slice_non_minimal`] which will always
+    /// use a push opcode.
+    ///
+    /// However, this method does *not* enforce any numeric minimality rules.
+    /// If your pushes should be interpreted as numbers, ensure your input does
+    /// not have any leading zeros. In particular, the number 0 should be encoded
+    /// as an empty string rather than as a single 0 byte.
     pub fn push_slice<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice(data);
         self.1 = None;
