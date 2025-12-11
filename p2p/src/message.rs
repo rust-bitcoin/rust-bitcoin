@@ -1667,7 +1667,6 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
-    use bitcoin::bip158::{FilterHash, FilterHeader};
     use bitcoin::block::{Block, BlockHash};
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
     use bitcoin::transaction::{Transaction, Txid};
@@ -1681,7 +1680,7 @@ mod test {
     use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
     use crate::message_compact_blocks::{GetBlockTxn, SendCmpct};
     use crate::message_filter::{
-        CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
+        CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
     use crate::message_network::{Alert, Reject, RejectReason, VersionMessage};
     use crate::{ProtocolVersion, ServiceFlags};

@@ -684,7 +684,6 @@ mod tests {
     use core::mem::discriminant;
 
     use super::*;
-    use crate::bip158::FilterHash;
     use crate::block::BlockHash;
     use crate::merkle_tree::TxMerkleNode;
     use crate::prelude::{Cow, Vec};
@@ -1008,7 +1007,6 @@ mod tests {
 
         test_len_is_max_vec::<u8>();
         test_len_is_max_vec::<BlockHash>();
-        test_len_is_max_vec::<FilterHash>();
         test_len_is_max_vec::<TxMerkleNode>();
         test_len_is_max_vec::<Transaction>();
         test_len_is_max_vec::<TxOut>();

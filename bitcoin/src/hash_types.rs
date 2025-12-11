@@ -5,8 +5,6 @@
 //! This module is deprecated. You can find hash types in their respective, hopefully obvious, modules.
 
 #[deprecated(since = "TBD", note = "use `crate::T` instead")]
-pub use crate::bip158::{FilterHash, FilterHeader};
-#[deprecated(since = "TBD", note = "use `crate::T` instead")]
 pub use crate::{BlockHash, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode, Wtxid};
 
 #[cfg(test)]
@@ -93,13 +91,5 @@ mod tests {
             "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",
         );
 
-        assert_eq!(
-            FilterHash::from_byte_array(DUMMY32).to_string(),
-            "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
-        );
-        assert_eq!(
-            FilterHeader::from_byte_array(DUMMY32).to_string(),
-            "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
-        );
     }
 }
