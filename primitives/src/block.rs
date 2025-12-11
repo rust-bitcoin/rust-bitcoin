@@ -872,6 +872,7 @@ mod tests {
 
     #[cfg(feature = "arbitrary")]
     use arbitrary::Unstructured;
+    use encoding::{Decoder, Encoder};
 
     use super::*;
 
@@ -1389,5 +1390,39 @@ mod tests {
         let block = Block::new_unchecked(header, transactions);
         assert_eq!(block.check_witness_commitment(), (false, None));
         assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    fn version_encoder_emits_consensus_bytes() {
+        let version = Version::from_consensus(123_456_789);
+        let mut encoder = version.encoder();
+
+        assert_eq!(encoder.current_chunk(), &version.to_consensus().to_le_bytes());
+        assert!(!encoder.advance());
+    }
+
+    #[test]
+    fn version_decoder_end_and_read_limit() {
+        let mut decoder = VersionDecoder::new();
+        let bytes_arr = Version::TWO.to_consensus().to_le_bytes();
+        let mut bytes = bytes_arr.as_slice();
+
+        let finished = decoder.push_bytes(&mut bytes).unwrap();
+        assert!(bytes.is_empty());
+        let limit = decoder.read_limit();
+        let decoded = decoder.end().unwrap();
+        assert_eq!(decoded, Version::TWO);
+        assert!(finished || limit == 0);
+    }
+
+    #[test]
+    fn version_decoder_default_roundtrip() {
+        let version = Version::from_consensus(123_456_789);
+        let mut decoder = VersionDecoder::default();
+        let consensus = version.to_consensus().to_le_bytes();
+        let mut bytes = consensus.as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+
+        assert_eq!(decoder.end().unwrap(), version);
     }
 }
