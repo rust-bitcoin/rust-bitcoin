@@ -206,9 +206,7 @@ impl<R: Read + ?Sized> ReadExt for R {
     }
     #[inline]
     fn read_i8(&mut self) -> Result<i8, Error> {
-        let mut slice = [0u8; 1];
-        self.read_exact(&mut slice)?;
-        Ok(slice[0] as i8)
+        self.read_u8().map(|u| u as i8)
     }
     #[inline]
     fn read_bool(&mut self) -> Result<bool, Error> { ReadExt::read_i8(self).map(|bit| bit != 0) }
