@@ -112,8 +112,8 @@ mod tests {
 
         let hash = sha256d::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
-        let rinsed = hex.parse::<sha256d::Hash>().expect("failed to parse hex");
-        assert_eq!(rinsed, hash)
+        let roundtrip = hex.parse::<sha256d::Hash>().expect("failed to parse hex");
+        assert_eq!(roundtrip, hash)
     }
 
     #[test]

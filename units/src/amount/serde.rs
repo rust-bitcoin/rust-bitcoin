@@ -370,8 +370,8 @@ mod tests {
         let want = "{\"amount\":100000000,\"signed_amount\":100000000}";
         assert_eq!(json, want);
 
-        let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
-        assert_eq!(rinsed, orig);
+        let roundtrip: HasAmount = serde_json::from_str(&json).expect("failed to deser");
+        assert_eq!(roundtrip, orig);
     }
 
     #[test]
@@ -391,8 +391,8 @@ mod tests {
         let want = "{\"amount\":1.0,\"signed_amount\":1.0}";
         assert_eq!(json, want);
 
-        let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
-        assert_eq!(rinsed, orig);
+        let roundtrip: HasAmount = serde_json::from_str(&json).expect("failed to deser");
+        assert_eq!(roundtrip, orig);
     }
 
     #[test]
@@ -412,7 +412,7 @@ mod tests {
         let want = "{\"amount\":\"1\",\"signed_amount\":\"1\"}";
         assert_eq!(json, want);
 
-        let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
-        assert_eq!(rinsed, orig);
+        let roundtrip: HasAmount = serde_json::from_str(&json).expect("failed to deser");
+        assert_eq!(roundtrip, orig);
     }
 }
