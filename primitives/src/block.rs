@@ -870,6 +870,9 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::{format, vec};
 
+    #[cfg(feature = "arbitrary")]
+    use arbitrary::Unstructured;
+
     use super::*;
 
     fn dummy_header() -> Header {
@@ -921,6 +924,30 @@ mod tests {
     fn version_default() {
         let version = Version::default();
         assert_eq!(version.to_consensus(), Version::NO_SOFT_FORK_SIGNALLING.to_consensus());
+    }
+
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "arbitrary"))]
+    fn arbitrary_block_header_and_version() {
+        let data = [0u8; 256];
+        let mut unstructured = Unstructured::new(&data);
+
+        let block = Block::arbitrary(&mut unstructured).expect("arbitrary block");
+        let (header, _) = block.into_parts();
+        assert_eq!(header.version, header.version);
+
+        let mut choose_zero = Unstructured::new(&[0, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(Version::arbitrary(&mut choose_zero).unwrap(), Version::ONE);
+
+        let mut choose_one = Unstructured::new(&[1, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(Version::arbitrary(&mut choose_one).unwrap(), Version::TWO);
+
+        let mut choose_two = Unstructured::new(&[2, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(Version::arbitrary(&mut choose_two).unwrap(), Version::NO_SOFT_FORK_SIGNALLING);
+
+        let mut choose_three = Unstructured::new(&[3, 0, 0, 0, 0, 0, 0, 0]);
+        assert!(Version::arbitrary(&mut choose_three).is_ok());
     }
 
     // Check that the size of the header consensus serialization matches the const SIZE value
