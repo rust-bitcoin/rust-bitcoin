@@ -19,12 +19,3 @@ obviously named ones differ from this crate because:
 
 This crate uses [bitcoin_hashes](https://crates.io/crates/bitcoin_hashes) when hashing to calculate
 the checksum.
-
-## Minimum Supported Rust Version (MSRV)
-
-This library should always compile with any combination of features on **Rust 1.74.0**.
-
-## Licensing
-
-The code in this project is licensed under the [Creative Commons CC0 1.0 Universal license](../LICENSE).
-We use the [SPDX license list](https://spdx.org/licenses/) and [SPDX IDs](https://spdx.dev/ids/).
