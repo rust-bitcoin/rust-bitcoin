@@ -278,8 +278,8 @@ fn positive_sub() {
     assert!(ssat(10).positive_sub(ssat(11)).is_none());
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn amount_checked_div_by_weight_ceil() {
     let weight = Weight::from_kwu(1).unwrap();
     let fee_rate = sat(1).div_by_weight_ceil(weight).unwrap();
@@ -296,8 +296,8 @@ fn amount_checked_div_by_weight_ceil() {
     assert!(fee_rate.is_error());
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn amount_checked_div_by_weight_floor() {
     let weight = Weight::from_kwu(1).unwrap();
     let fee_rate = sat(1).div_by_weight_floor(weight).unwrap();
@@ -314,8 +314,8 @@ fn amount_checked_div_by_weight_floor() {
     assert!(fee_rate.is_error());
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn amount_checked_div_by_fee_rate() {
     let amount = sat(1000);
     let fee_rate = FeeRate::from_sat_per_kwu(2);
@@ -350,8 +350,8 @@ fn amount_checked_div_by_fee_rate() {
     assert_eq!(weight, Weight::from_wu(2_100_000_000_000_000_000));
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn floating_point() {
     use super::Denomination as D;
     let f = Amount::from_float_in;
@@ -477,8 +477,8 @@ fn to_string() {
 }
 
 // May help identify a problem sooner
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn test_repeat_char() {
     let mut buf = String::new();
     repeat_char(&mut buf, '0', 0).unwrap();
@@ -742,8 +742,8 @@ fn from_str() {
     ok_scase("-0_._0_10_00 BTC", ssat(-1_000_000));
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn to_from_string_in() {
     use super::Denomination as D;
@@ -819,8 +819,8 @@ fn to_from_string_in() {
     );
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn to_string_with_denomination_from_str_roundtrip() {
     use super::{Denomination as D, ParseDenominationError};
 

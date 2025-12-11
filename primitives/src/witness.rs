@@ -1232,8 +1232,8 @@ mod test {
         assert!(witness4.is_empty());
     }
 
-    #[cfg(feature = "hex")]
     #[test]
+    #[cfg(feature = "hex")]
     fn test_from_hex() {
         let hex_strings = [
             "30440220703350f1c8be5b41b4cb03b3b680c4f3337f987514a6b08e16d5d9f81e9b5f72022018fb269ba5b82864c0e1edeaf788829eb332fe34a859cc1f99c4a02edfb5d0df01",
@@ -1311,8 +1311,8 @@ mod test {
         (witness, encoded)
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_witness_one_single_call() {
         let (want, encoded) = witness_test_case();
 
@@ -1325,8 +1325,8 @@ mod test {
         assert_eq!(got, want);
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     #[allow(clippy::many_single_char_names)]
     fn decode_witness_many_calls() {
         let (want, encoded) = witness_test_case();
@@ -1354,8 +1354,8 @@ mod test {
         assert_eq!(got, want);
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_max_length() {
         let mut encoded = Vec::new();
         encoded.extend_from_slice(compact_size::encode(1usize).as_slice());
@@ -1381,8 +1381,8 @@ mod test {
         ));
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_empty_witness() {
         // Witness with 0 elements.
         let encoded = vec![0x00];
@@ -1396,8 +1396,8 @@ mod test {
         assert!(witness.is_empty());
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_single_element() {
         // Witness with 1 element containing [0xAB, 0xCD].
         let encoded = vec![0x01, 0x02, 0xAB, 0xCD];
@@ -1411,8 +1411,8 @@ mod test {
         assert_eq!(&witness[0], &[0xABu8, 0xCD][..]);
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_empty_element() {
         // Witness with 1 element that is empty (0 bytes).
         let encoded = vec![0x01, 0x00];
@@ -1426,8 +1426,8 @@ mod test {
         assert_eq!(&witness[0], &[] as &[u8]);
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_multiple_empty_elements() {
         // Witness with 3 empty elements.
         let encoded = vec![0x03, 0x00, 0x00, 0x00];
@@ -1443,8 +1443,8 @@ mod test {
         assert_eq!(&witness[2], &[] as &[u8]);
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_incomplete_witness_count() {
         // 3-byte compact size but only provide 2 bytes.
         let encoded = vec![0xFD, 0x03];
@@ -1457,8 +1457,8 @@ mod test {
         assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_incomplete_element_length() {
         // Witness count = 1, but element length is incomplete.
         let encoded = vec![0x01, 0xFD, 0x05]; // Element length should be 3 bytes.
@@ -1471,8 +1471,8 @@ mod test {
         assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_incomplete_element_data() {
         // Witness count = 1, element length = 5, but only 3 bytes of data provided.
         let encoded = vec![0x01, 0x05, 0xAA, 0xBB, 0xCC];
@@ -1485,8 +1485,8 @@ mod test {
         assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
     }
 
-    #[cfg(feature = "alloc")]
     #[test]
+    #[cfg(feature = "alloc")]
     fn decode_buffer_resizing() {
         // Create a witness with elements larger than initial 128-byte allocation.
         let large_element = vec![0xFF; 500];

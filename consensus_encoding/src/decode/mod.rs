@@ -315,8 +315,8 @@ mod tests {
         assert_eq!(decoded.0, [1, 2, 3, 4]);
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_extra_data() {
         let data = [1, 2, 3, 4, 5, 6];
         let mut cursor = Cursor::new(&data);
@@ -326,8 +326,8 @@ mod tests {
         assert_eq!(decoded.0, [1, 2, 3, 4]);
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_success() {
         let data = [1, 2, 3, 4];
         let cursor = Cursor::new(&data);
@@ -337,8 +337,8 @@ mod tests {
         assert_eq!(decoded.0, [1, 2, 3, 4]);
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_unexpected_eof() {
         let data = [1, 2, 3];
         let cursor = Cursor::new(&data);
@@ -346,8 +346,8 @@ mod tests {
         assert!(matches!(result, Err(ReadError::Decode(_))));
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_trait_object() {
         let data = [1, 2, 3, 4];
         let mut cursor = Cursor::new(&data);
@@ -359,8 +359,8 @@ mod tests {
         assert_eq!(decoded.0, [1, 2, 3, 4]);
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_by_reference() {
         let data = [1, 2, 3, 4];
         let mut cursor = Cursor::new(&data);
@@ -374,8 +374,8 @@ mod tests {
         let _ = cursor.read_to_end(&mut buf);
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_unbuffered_success() {
         let data = [1, 2, 3, 4];
         let cursor = Cursor::new(&data);
@@ -385,8 +385,8 @@ mod tests {
         assert_eq!(decoded.0, [1, 2, 3, 4]);
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_unbuffered_unexpected_eof() {
         let data = [1, 2, 3];
         let cursor = Cursor::new(&data);
@@ -394,8 +394,8 @@ mod tests {
         assert!(matches!(result, Err(ReadError::Decode(_))));
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_unbuffered_empty() {
         let data = [];
         let cursor = Cursor::new(&data);
@@ -403,8 +403,8 @@ mod tests {
         assert!(matches!(result, Err(ReadError::Decode(_))));
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn decode_from_read_unbuffered_extra_data() {
         let data = [1, 2, 3, 4, 5, 6];
         let cursor = Cursor::new(&data);
