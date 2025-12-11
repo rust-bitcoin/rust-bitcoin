@@ -930,6 +930,8 @@ impl<'a> Arbitrary<'a> for Version {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
     #[cfg(all(feature = "alloc", feature = "hex"))]
     use core::str::FromStr as _;
@@ -1560,5 +1562,87 @@ mod tests {
         decoder.push_bytes(&mut bytes).unwrap();
 
         assert_eq!(decoder.end().unwrap(), version);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_error() {
+        let err_first = Block::decoder().end().unwrap_err();
+        assert!(matches!(err_first.0, encoding::Decoder2Error::First(_)));
+        assert!(!err_first.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_first).is_some());
+
+        // Provide a complete header and a vec length prefix (1 tx) but omit any tx bytes.
+        // This forces the inner VecDecoder to error when finalizing.
+        let mut bytes = encoding::encode_to_vec(&dummy_header());
+        bytes.push(1u8);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        assert!(decoder.push_bytes(&mut view).unwrap());
+        assert!(view.is_empty());
+
+        let err_second = decoder.end().unwrap_err();
+        assert!(matches!(err_second.0, encoding::Decoder2Error::Second(_)));
+        assert!(!err_second.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_second).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_error() {
+        let header_bytes = encoding::encode_to_vec(&dummy_header());
+        // Number of bytes in the encoding up to the start of each field.
+        let lengths = [0usize, 4, 36, 68, 72, 76];
+
+        for &len in &lengths {
+            let mut decoder = Header::decoder();
+            let mut slice = header_bytes[..len].as_ref();
+            decoder.push_bytes(&mut slice).unwrap();
+            let err = decoder.end().unwrap_err();
+            match len {
+                0 => assert!(matches!(err, HeaderDecoderError::Version(_))),
+                4 => assert!(matches!(err, HeaderDecoderError::PrevBlockhash(_))),
+                36 => assert!(matches!(err, HeaderDecoderError::MerkleRoot(_))),
+                68 => assert!(matches!(err, HeaderDecoderError::Time(_))),
+                72 => assert!(matches!(err, HeaderDecoderError::Bits(_))),
+                76 => assert!(matches!(err, HeaderDecoderError::Nonce(_))),
+                _ => unreachable!(),
+            }
+            assert!(!err.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(std::error::Error::source(&err).is_some());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_block_error() {
+        #[cfg(feature = "std")]
+        use std::error::Error as _;
+
+        let variants = [
+            InvalidBlockError::InvalidMerkleRoot,
+            InvalidBlockError::InvalidWitnessCommitment,
+            InvalidBlockError::NoTransactions,
+            InvalidBlockError::InvalidCoinbase,
+        ];
+
+        for variant in variants {
+            assert!(!variant.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(variant.source().is_none());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decoder_error() {
+        let err = encoding::decode_from_slice::<Version>(&[0x01]).unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err).is_some());
     }
 }
