@@ -3,6 +3,9 @@
 
 //! # Rust Bitcoin Library
 //!
+//! This version (`v0.30.x`) is End-of-Life. Consider using a more recent version. If for some
+//! reason you are stuck on this version please raise an issue.
+//!
 //! This is a library that supports the Bitcoin network protocol and associated
 //! primitives. It is designed for Rust programs built to work with the Bitcoin
 //! network.
@@ -20,16 +23,13 @@
 //! * `secp-recovery` - enables calculating public key from a signature and message.
 //! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
 //! * `rand` - (dependency), makes it more convenient to generate random values.
-//! * `serde` - (dependency), implements `serde`-based serialization and
-//!                 deserialization.
+//! * `serde` - (dependency), implements `serde`-based serialization and deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
-//! * `no-std` - enables additional features required for this crate to be usable
-//!              without std. Does **not** disable `std`. Depends on `core2`.
-//! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it
-//!                            to this crate so it knows how to implement
-//!                            `std::error::Error`. At this time there's a hack to
-//!                            achieve the same without this feature but it could
-//!                            happen the implementations diverge one day.
+//! * `no-std` - enables additional features required for this crate to be usable without std. Does
+//!   **not** disable `std`. Depends on `core2`.
+//! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it to this crate
+//!   so it knows how to implement `std::error::Error`. At this time there's a hack to achieve the
+//!   same without this feature but it could happen the implementations diverge one day.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.
@@ -156,6 +156,7 @@ mod io_extras {
 }
 
 #[rustfmt::skip]
+#[allow(unused_imports)]
 mod prelude {
     #[cfg(all(not(feature = "std"), not(test)))]
     pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, Cow, ToOwned}, slice, rc};

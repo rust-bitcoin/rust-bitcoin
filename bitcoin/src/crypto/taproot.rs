@@ -10,10 +10,7 @@ use core::fmt;
 
 use bitcoin_internals::write_err;
 
-pub use secp256k1::{self, constants, Secp256k1, KeyPair, XOnlyPublicKey, Verification, Parity};
-
 use crate::prelude::*;
-
 use crate::sighash::TapSighashType;
 
 /// A BIP340-341 serialized taproot signature with the corresponding hash type.

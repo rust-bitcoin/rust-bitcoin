@@ -706,13 +706,13 @@ impl Decodable for CheckedData {
     }
 }
 
-impl<'a, T: Encodable> Encodable for &'a T {
+impl<T: Encodable> Encodable for &'_ T {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)
     }
 }
 
-impl<'a, T: Encodable> Encodable for &'a mut T {
+impl<T: Encodable> Encodable for &'_ mut T {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)
     }
