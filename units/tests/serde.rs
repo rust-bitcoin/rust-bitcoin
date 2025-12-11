@@ -90,10 +90,14 @@ fn serde_regression() {
 }
 
 #[track_caller]
-fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
+fn sat(sat: u64) -> Amount {
+    Amount::from_sat(sat).unwrap()
+}
 
 #[track_caller]
-fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
+fn ssat(ssat: i64) -> SignedAmount {
+    SignedAmount::from_sat(ssat).unwrap()
+}
 
 #[cfg(feature = "serde")]
 #[test]
@@ -284,6 +288,197 @@ fn serde_as_str_opt() {
         serde_json::from_str("{\"amt\": \"1.23456789\", \"samt\": \"-1.23456789\"}").unwrap();
     assert_eq!(with, serde_json::from_value(value_with).unwrap());
 
+    let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+    assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[track_caller]
+fn fee_rate_vb(vb: u32) -> FeeRate {
+    FeeRate::from_sat_per_vb(vb)
+}
+
+#[track_caller]
+fn fee_rate_kwu(vb: u32) -> FeeRate {
+    FeeRate::from_sat_per_kwu(vb)
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_fee_rate_as_sat_per_kwu_floor() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::fee_rate::serde::as_sat_per_kwu_floor")]
+        pub fee_rate: FeeRate,
+    }
+
+    serde_test::assert_tokens(
+        &T { fee_rate: fee_rate_kwu(123_456_789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("fee_rate"),
+            serde_test::Token::U64(123_456_789),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_fee_rate_as_sat_per_vb_floor() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_floor")]
+        pub fee_rate: FeeRate,
+    }
+
+    serde_test::assert_tokens(
+        &T { fee_rate: fee_rate_vb(123_456_789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("fee_rate"),
+            serde_test::Token::U64(123_456_789),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_fee_rate_as_sat_per_vb_ceil() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]
+        pub fee_rate: FeeRate,
+    }
+
+    serde_test::assert_tokens(
+        &T { fee_rate: fee_rate_vb(123_456_789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("fee_rate"),
+            serde_test::Token::U64(123_456_789),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+fn serde_fee_rate_floor_vs_ceil() {
+    use serde_json;
+
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    struct Floor {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_floor")]
+        fee_rate: FeeRate,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    struct Ceil {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]
+        fee_rate: FeeRate,
+    }
+
+    let fee_rate = FeeRate::from_sat_per_kwu(251);
+
+    let floor = Floor { fee_rate };
+    let ceil = Ceil { fee_rate };
+
+    let floor_json = serde_json::to_string(&floor).unwrap();
+    let ceil_json = serde_json::to_string(&ceil).unwrap();
+
+    assert!(floor_json.contains("\"fee_rate\":1"));
+    assert!(ceil_json.contains("\"fee_rate\":2"));
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_fee_rate_as_sat_per_kwu_floor_opt() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(default, with = "crate::fee_rate::serde::as_sat_per_kwu_floor::opt")]
+        pub fee_rate: Option<FeeRate>,
+    }
+
+    let with = T { fee_rate: Some(fee_rate_kwu(123_456_789)) };
+    let without = T { fee_rate: None };
+
+    // Test Roundtripping
+    for s in [&with, &without] {
+        let v = serde_json::to_string(s).unwrap();
+        let w: T = serde_json::from_str(&v).unwrap();
+        assert_eq!(w, *s);
+    }
+
+    let t: T = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(t, with);
+
+    let t: T = serde_json::from_str("{}").unwrap();
+    assert_eq!(t, without);
+
+    let value_with: serde_json::Value = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(with, serde_json::from_value(value_with).unwrap());
+    let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+    assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_fee_rate_as_sat_per_vb_floor_opt() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(default, with = "crate::fee_rate::serde::as_sat_per_vb_floor::opt")]
+        pub fee_rate: Option<FeeRate>,
+    }
+
+    let with = T { fee_rate: Some(fee_rate_vb(123_456_789)) };
+    let without = T { fee_rate: None };
+
+    // Test Roundtripping
+    for s in [&with, &without] {
+        let v = serde_json::to_string(s).unwrap();
+        let w: T = serde_json::from_str(&v).unwrap();
+        assert_eq!(w, *s);
+    }
+
+    let t: T = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(t, with);
+
+    let t: T = serde_json::from_str("{}").unwrap();
+    assert_eq!(t, without);
+
+    let value_with: serde_json::Value = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(with, serde_json::from_value(value_with).unwrap());
+    let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+    assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn serde_fee_rate_as_sat_per_vb_ceil_opt() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(default, with = "crate::fee_rate::serde::as_sat_per_vb_ceil::opt")]
+        pub fee_rate: Option<FeeRate>,
+    }
+
+    let with = T { fee_rate: Some(fee_rate_vb(123_456_789)) };
+    let without = T { fee_rate: None };
+
+    // Test Roundtripping
+    for s in [&with, &without] {
+        let v = serde_json::to_string(s).unwrap();
+        let w: T = serde_json::from_str(&v).unwrap();
+        assert_eq!(w, *s);
+    }
+
+    let t: T = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(t, with);
+
+    let t: T = serde_json::from_str("{}").unwrap();
+    assert_eq!(t, without);
+
+    let value_with: serde_json::Value = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(with, serde_json::from_value(value_with).unwrap());
     let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
     assert_eq!(without, serde_json::from_value(value_without).unwrap());
 }
