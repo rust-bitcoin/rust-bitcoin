@@ -17,8 +17,8 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
-// Exclude lints we don't think are valuable.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
+// Package-specific lint overrides.
+#![allow(clippy::missing_errors_doc)]    // TODO: Write errors section in docs.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
