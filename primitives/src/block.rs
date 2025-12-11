@@ -1385,6 +1385,30 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn witness_commitment_from_non_coinbase_returns_none() {
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn {
+                previous_output: crate::OutPoint {
+                    txid: crate::Txid::from_byte_array([1; 32]),
+                    vout: 0,
+                },
+                script_sig: crate::ScriptSigBuf::new(),
+                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                witness: crate::Witness::new(),
+            }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
+        };
+
+        assert!(witness_commitment_from_coinbase(&tx).is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_empty_script_pubkey() {
         let mut txin = crate::TxIn::EMPTY_COINBASE;
         let push = [11_u8];
