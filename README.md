@@ -116,12 +116,17 @@ Our code is public domain so by all means fork it and go wild :)
 
 Release notes are done per crate, see:
 
-- [`bitcoin` CHANGELOG](bitcoin/CHANGELOG.md)
 - [`addresses` CHANGELOG](addresses/CHANGELOG.md)
 - [`base58` CHANGELOG](base58/CHANGELOG.md)
+- [`bip158` CHANGELOG](bip158/CHANGELOG.md)
+- [`bitcoin` CHANGELOG](bitcoin/CHANGELOG.md)
+- [`chacha20_poly1305` CHANGELOG](chacha20_poly1305/CHANGELOG.md)
+- [`consensus_encoding` CHANGELOG](consensus_encoding/CHANGELOG.md)
+- [`crypto` CHANGELOG](crypto/CHANGELOG.md)
 - [`hashes` CHANGELOG](hashes/CHANGELOG.md)
 - [`internals` CHANGELOG](internals/CHANGELOG.md)
 - [`io` CHANGELOG](io/CHANGELOG.md)
+- [`p2p` CHANGELOG](p2p/CHANGELOG.md)
 - [`primitives` CHANGELOG](primitives/CHANGELOG.md)
 - [`units` CHANGELOG](units/CHANGELOG.md)
 
