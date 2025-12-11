@@ -868,6 +868,8 @@ impl<'a> Arbitrary<'a> for Version {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
 
     #[cfg(feature = "arbitrary")]
@@ -1448,5 +1450,82 @@ mod tests {
         decoder.push_bytes(&mut bytes).unwrap();
 
         assert_eq!(decoder.end().unwrap(), version);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_error() {
+        let mut decoder = Header::decoder();
+        let mut slice = [0u8; 0].as_ref();
+        decoder.push_bytes(&mut slice).unwrap();
+        let header_err = decoder.end().unwrap_err();
+
+        let err_first = BlockDecoderError(encoding::Decoder2Error::First(header_err));
+        matches!(err_first, BlockDecoderError(encoding::Decoder2Error::First(_)));
+        assert!(!err_first.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_first).is_some());
+
+        let mut vec_decoder = VecDecoder::<Transaction>::new();
+        let len_bytes = [1u8];
+        let mut len_view = len_bytes.as_ref();
+        vec_decoder.push_bytes(&mut len_view).unwrap();
+        let vec_err = vec_decoder.end().unwrap_err();
+
+        let err_second = BlockDecoderError(encoding::Decoder2Error::Second(vec_err));
+        matches!(err_second, BlockDecoderError(encoding::Decoder2Error::Second(_)));
+        assert!(!err_second.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_second).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_error() {
+        let header_bytes = encoding::encode_to_vec(&dummy_header());
+        let lengths = [0usize, 4, 36, 68, 72, 76];
+
+        for &len in &lengths {
+            let mut decoder = Header::decoder();
+            let mut slice = header_bytes[..len].as_ref();
+            decoder.push_bytes(&mut slice).unwrap();
+            let err = decoder.end().unwrap_err();
+            match len {
+                0 => assert!(matches!(err, HeaderDecoderError::Version(_))),
+                4 => assert!(matches!(err, HeaderDecoderError::PrevBlockhash(_))),
+                36 => assert!(matches!(err, HeaderDecoderError::MerkleRoot(_))),
+                68 => assert!(matches!(err, HeaderDecoderError::Time(_))),
+                72 => assert!(matches!(err, HeaderDecoderError::Bits(_))),
+                76 => assert!(matches!(err, HeaderDecoderError::Nonce(_))),
+                _ => unreachable!(),
+            }
+            assert!(!err.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(std::error::Error::source(&err).is_some());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_block_error() {
+        let variants = [
+            InvalidBlockError::InvalidMerkleRoot,
+            InvalidBlockError::InvalidWitnessCommitment,
+            InvalidBlockError::NoTransactions,
+            InvalidBlockError::InvalidCoinbase,
+        ];
+
+        for variant in variants {
+            assert!(!variant.to_string().is_empty());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decoder_error() {
+        let err = encoding::decode_from_slice::<Version>(&[0x01]).unwrap_err();
+        assert!(!format!("{err}").is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err).is_some());
     }
 }
