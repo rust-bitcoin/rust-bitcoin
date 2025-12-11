@@ -17,7 +17,6 @@ jobs:
       contents: read
     outputs:
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
-      maintainer_tools_version: ${{ steps.read_toolchain.outputs.maintainer_tools_version }}
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -27,11 +26,9 @@ jobs:
         id: read_toolchain
         run: |
           echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
-          echo "maintainer_tools_version=$(cat maintainer-tools-version)" >> $GITHUB_OUTPUT
 
   Stable:                       # 2 jobs, one per manifest.
     name: Test - stable toolchain
-    needs: Prepare
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -40,27 +37,17 @@ jobs:
       matrix:
         dep: [minimal, recent]
     steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/prepare
         with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
-          path: maintainer-tools
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh stable
+          toolchain: stable
+      - name: "Run tests"
+        run: cargo rbmt test stable --lock-file ${{ matrix.dep }}
 
   Nightly:                      # 2 jobs, one per manifest.
     name: Test - nightly toolchain
-    needs: Prepare
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -69,29 +56,17 @@ jobs:
       matrix:
         dep: [minimal, recent]
     steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/prepare
         with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
-          path: maintainer-tools
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh nightly
+          toolchain: nightly
+      - name: "Run tests"
+        run: cargo rbmt test nightly --lock-file ${{ matrix.dep }}
 
   MSRV:                         # 2 jobs, one per manifest.
     name: Test - MSRV toolchain
-    needs: Prepare
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -100,35 +75,17 @@ jobs:
       matrix:
         dep: [minimal, recent]
     steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
-          path: maintainer-tools
-          persist-credentials: false
-      - name: "Free disk space"
-        uses: endersonmenezes/free-disk-space@6c4664f43348c8c7011b53488d5ca65e9fc5cd1a # v3.0.0
-        with:
-          remove_android: true
-          remove_dotnet: true
-          remove_haskell: true
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+      - uses: ./.github/actions/prepare
         with:
           toolchain: "1.74.0"
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh msrv
+      - name: "Run tests"
+        run: cargo rbmt test msrv --lock-file ${{ matrix.dep }}
 
   Lint:
     name: Lint - nightly toolchain
-    needs: Prepare
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -137,31 +94,18 @@ jobs:
       matrix:
         dep: [recent]
     steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/prepare
         with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
-          path: maintainer-tools
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Install clippy"
-        run: rustup component add clippy
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh lint
+          toolchain: nightly
+          components: clippy
+      - name: "Run lint"
+        run: cargo rbmt lint
 
   Docs:
     name: Docs - stable toolchain
-    needs: Prepare
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -170,27 +114,17 @@ jobs:
       matrix:
         dep: [recent]
     steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/prepare
         with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
-          path: maintainer-tools
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh docs
+          toolchain: stable
+      - name: "Build docs"
+        run: cargo rbmt docs
 
   Docsrs:
     name: Docs - nightly toolchain
-    needs: Prepare
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -199,29 +133,17 @@ jobs:
       matrix:
         dep: [recent]
     steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/prepare
         with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
-          path: maintainer-tools
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh docsrs
+          toolchain: nightly
+      - name: "Build docs.rs docs"
+        run: cargo rbmt docsrs
 
   Bench:
     name: Bench - nightly toolchain
-    needs: Prepare
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -230,25 +152,14 @@ jobs:
       matrix:
         dep: [recent]
     steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/prepare
         with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: ${{ needs.Prepare.outputs.maintainer_tools_version }}
-          path: maintainer-tools
-          persist-credentials: false
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh bench
+          toolchain: nightly
+      - name: "Run benches"
+        run: cargo rbmt bench --lock-file ${{ matrix.dep }}
 
   Arch32bit:
     name: Test 32-bit version
@@ -444,7 +355,7 @@ jobs:
           contrib/generate-primitives-re-export-test.sh && (cd ./primitives && cargo test --all-features)
           contrib/generate-bitcoin-re-export-test.sh && (cd ./bitcoin && cargo test --all-features)
 
-  DiffMutants: 
+  DiffMutants:
     name: Check cargo mutants in diff - stable toolchain
     runs-on: ubuntu-24.04
     steps:
