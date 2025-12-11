@@ -1056,10 +1056,7 @@ mod tests {
         let transactions = Vec::new(); // Empty transactions
 
         let block = Block::new_unchecked(header, transactions);
-        match block.validate() {
-            Err(InvalidBlockError::NoTransactions) => (),
-            other => panic!("Expected NoTransactions error, got: {:?}", other),
-        }
+        matches!(block.validate(), Err(InvalidBlockError::NoTransactions));
     }
 
     #[test]
@@ -1089,10 +1086,7 @@ mod tests {
         let transactions = vec![non_coinbase_tx];
         let block = Block::new_unchecked(header, transactions);
 
-        match block.validate() {
-            Err(InvalidBlockError::InvalidCoinbase) => (),
-            other => panic!("Expected InvalidCoinbase error, got: {:?}", other),
-        }
+        matches!(block.validate(), Err(InvalidBlockError::InvalidCoinbase));
     }
 
     #[test]
