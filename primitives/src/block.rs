@@ -1445,8 +1445,12 @@ mod tests {
             }],
         };
 
-        let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
-        let result = block.check_witness_commitment();
-        assert_eq!(result, (false, None));
+        let mut header = dummy_header();
+        let transactions = vec![tx1, tx2];
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
     }
 }
