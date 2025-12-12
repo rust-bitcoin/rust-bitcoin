@@ -352,6 +352,10 @@ fn script_builder_verify() {
     assert_eq!(trick_slice.to_hex_string_no_length_prefix(), "01ae69");
     let trick_slice2 = Builder::from(vec![0x01, 0xae]).push_verify().into_script();
     assert_eq!(trick_slice2.to_hex_string_no_length_prefix(), "01ae69");
+
+    let pushint_then_verify =
+        Builder::new().push_opcode(OP_EQUAL).push_int(5).unwrap().push_verify().into_script();
+    assert_eq!(pushint_then_verify.to_hex_string_no_length_prefix(), "875569");
 }
 
 #[test]
