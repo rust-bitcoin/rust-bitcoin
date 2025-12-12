@@ -95,8 +95,8 @@ fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
 #[track_caller]
 fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
-#[cfg(feature = "serde")]
 #[test]
+#[cfg(feature = "serde")]
 fn serde_as_sat() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
@@ -119,9 +119,9 @@ fn serde_as_sat() {
     );
 }
 
+#[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
-#[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn serde_as_btc() {
     use serde_json;
@@ -145,9 +145,9 @@ fn serde_as_btc() {
     assert_eq!(t, serde_json::from_value(value).unwrap());
 }
 
+#[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
-#[test]
 fn serde_as_str() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
@@ -170,9 +170,9 @@ fn serde_as_str() {
     );
 }
 
+#[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
-#[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn serde_as_btc_opt() {
     use serde_json;
@@ -209,9 +209,9 @@ fn serde_as_btc_opt() {
     assert_eq!(without, serde_json::from_value(value_without).unwrap());
 }
 
+#[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
-#[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn serde_as_sat_opt() {
     use serde_json;
@@ -248,9 +248,9 @@ fn serde_as_sat_opt() {
     assert_eq!(without, serde_json::from_value(value_without).unwrap());
 }
 
+#[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
-#[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn serde_as_str_opt() {
     use serde_json;

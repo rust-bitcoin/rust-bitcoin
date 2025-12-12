@@ -167,8 +167,8 @@ fn decode_compact_size_single_byte_read_limit() {
     assert_eq!(result, 66);
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn decode_cast_to_usize_boundary_conditions() {
     // Test the 4MB boundary and some edge cases.
     use bitcoin_consensus_encoding::cast_to_usize_if_valid;
@@ -179,8 +179,8 @@ fn decode_cast_to_usize_boundary_conditions() {
     assert_eq!(cast_to_usize_if_valid(0).unwrap(), 0);
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn decode_byte_vec_decoder_empty() {
     // Test decoding empty byte vector, with length prefix of 0.
     use bitcoin_consensus_encoding::{ByteVecDecoder, Decoder};
@@ -195,8 +195,8 @@ fn decode_byte_vec_decoder_empty() {
     assert!(result.is_empty());
 }
 
-#[cfg(feature = "alloc")]
 #[test]
+#[cfg(feature = "alloc")]
 fn decode_byte_vec_decoder_does_not_overconsume() {
     use bitcoin_consensus_encoding::ByteVecDecoder;
 
