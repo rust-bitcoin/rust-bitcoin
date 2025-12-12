@@ -193,6 +193,7 @@ macro_rules! sha256t_tag_constructor {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     use crate::sha256;
     use crate::sha256t;
 
@@ -214,9 +215,11 @@ mod tests {
 
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     pub struct TestHashTag;
 
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     impl sha256t::Tag for TestHashTag {
         const MIDSTATE: sha256::Midstate = sha256::Midstate::new(TEST_MIDSTATE, 64);
     }
