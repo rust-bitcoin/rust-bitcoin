@@ -15,6 +15,9 @@ use core::fmt;
 #[cfg(feature = "alloc")]
 use core::{cmp, mem};
 
+#[cfg(feature = "alloc")]
+use alloc::collections::BTreeSet;
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayEncoder, BytesEncoder, Encodable, Encoder2, UnexpectedEofError};
@@ -536,7 +539,17 @@ impl Decoder for TransactionDecoder {
             State::Outputs(..) => Err(E(Inner::EarlyEnd("outputs"))),
             State::Witnesses(..) => Err(E(Inner::EarlyEnd("witnesses"))),
             State::LockTime(..) => Err(E(Inner::EarlyEnd("locktime"))),
-            State::Done(tx) => Ok(tx),
+            State::Done(tx) => {
+                // check for duplicate inputs (CVE-2018-17144)
+                let mut seen_outpoints = BTreeSet::new();
+                for input in &tx.inputs {
+                    if !seen_outpoints.insert(input.previous_output) {
+                        return Err(E(Inner::DuplicateInput(input.previous_output)));
+                    }
+                }
+
+                Ok(tx)
+            }
             State::Errored => panic!("call to end() after decoder errored"),
         }
     }
@@ -638,6 +651,8 @@ enum TransactionDecoderErrorInner {
     /// Attempt to call `end()` before the transaction was complete. Holds
     /// a description of the current state.
     EarlyEnd(&'static str),
+    /// Transaction has duplicate inputs (this check prevents CVE-2018-17144 ).
+    DuplicateInput(OutPoint),
 }
 
 #[cfg(feature = "alloc")]
@@ -690,6 +705,7 @@ impl fmt::Display for TransactionDecoderError {
             E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
             E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
             E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
+            E::DuplicateInput(ref outpoint) => write!(f, "duplicate input: {:?}:{}", outpoint.txid, outpoint.vout)
         }
     }
 }
@@ -709,6 +725,7 @@ impl std::error::Error for TransactionDecoderError {
             E::NoWitnesses => None,
             E::LockTime(ref e) => Some(e),
             E::EarlyEnd(_) => None,
+            E::DuplicateInput(_) => None,
         }
     }
 }
@@ -1516,10 +1533,15 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn transaction_encode_decode_roundtrip() {
+        // Create two different inputs to avoid duplicate input rejection
+        let tx_in_1 = segwit_tx_in();
+        let mut tx_in_2 = segwit_tx_in();
+        tx_in_2.previous_output.vout = 2;
+
         let tx = Transaction {
             version: Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            inputs: vec![segwit_tx_in(), segwit_tx_in()],
+            inputs: vec![tx_in_1, tx_in_2],
             outputs: vec![tx_out(), tx_out()],
         };
 
@@ -2189,5 +2211,30 @@ mod tests {
         let decoded_tx = encoding::decode_from_slice(&encoded).unwrap();
 
         assert_eq!(original_tx, decoded_tx);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_duplicate_inputs() {
+        // Test vector from Bitcoin Core tx_invalid.json:
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L50
+        // Transaction has two inputs both spending the same outpoint
+        let tx_bytes = hex!("01000000020001000000000000000000000000000000000000000000000000000000000000000000006c47304402204bb1197053d0d7799bf1b30cd503c44b58d6240cccbdc85b6fe76d087980208f02204beeed78200178ffc6c74237bb74b3f276bbb4098b5605d814304fe128bf1431012321039e8815e15952a7c3fada1905f8cf55419837133bd7756c0ef14fc8dfe50c0deaacffffffff0001000000000000000000000000000000000000000000000000000000000000000000006c47304402202306489afef52a6f62e90bf750bbcdf40c06f5c6b138286e6b6b86176bb9341802200dba98486ea68380f47ebb19a7df173b99e6bc9c681d6ccf3bde31465d1f16b3012321039e8815e15952a7c3fada1905f8cf55419837133bd7756c0ef14fc8dfe50c0deaacffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("transaction with duplicate inputs should be rejected");
+
+        let expected_outpoint = OutPoint {
+            txid: Txid::from_byte_array([
+                0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            ]),
+            vout: 0,
+        };
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::DuplicateInput(expected_outpoint)));
     }
 }
