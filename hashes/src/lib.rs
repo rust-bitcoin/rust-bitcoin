@@ -275,7 +275,6 @@ pub fn debug_hex(bytes: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::sha256d;
 
     hash_newtype! {
