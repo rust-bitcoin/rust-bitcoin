@@ -489,6 +489,13 @@ impl Header {
     }
 }
 
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl core::str::FromStr for Header {
+    type Err = crate::ParsePrimitiveError<Self>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> { crate::hex_codec::HexPrimitive::from_str(s) }
+}
+
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -509,6 +516,16 @@ impl fmt::Display for Header {
         .expect("total length of written objects is 160 characters");
         fmt::Display::fmt(&buf, f)
     }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::LowerHex for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::UpperHex for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
 }
 
 impl fmt::Debug for Header {
@@ -869,6 +886,8 @@ impl<'a> Arbitrary<'a> for Version {
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::{format, vec};
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    use core::str::FromStr as _;
 
     use super::*;
 
@@ -1138,6 +1157,52 @@ mod tests {
         let want = format!("{:.20}", want);
         let got = format!("{:.20}", header);
         assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn header_hex() {
+        let header = dummy_header();
+
+        let want = concat!(
+            "01000000",                                                         // version
+            "9999999999999999999999999999999999999999999999999999999999999999", // prev_blockhash
+            "7777777777777777777777777777777777777777777777777777777777777777", // merkle_root
+            "02000000",                                                         // time
+            "03000000",                                                         // bits
+            "04000000",                                                         // nonce
+        );
+
+        // All of these should yield a lowercase hex
+        assert_eq!(want, format!("{:x}", header));
+        assert_eq!(want, format!("{}", header));
+
+        // And these should yield uppercase hex
+        let upper_encoded = want
+            .chars()
+            .map(|chr| chr.to_ascii_uppercase())
+            .collect::<alloc::string::String>();
+        assert_eq!(upper_encoded, format!("{:X}", header));
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn header_from_hex_str_round_trip() {
+        // Create a transaction and convert it to a hex string
+        let header = dummy_header();
+
+        let lower_hex_header = format!("{:x}", header);
+        let upper_hex_header = format!("{:X}", header);
+
+        // Parse the hex strings back into transactions
+        let parsed_lower = Header::from_str(&lower_hex_header).unwrap();
+        let parsed_upper = Header::from_str(&upper_hex_header).unwrap();
+
+        // The parsed transaction should match the originals
+        assert_eq!(header, parsed_lower);
+        assert_eq!(header, parsed_upper);
     }
 
     #[test]
