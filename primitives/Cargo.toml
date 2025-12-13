@@ -14,7 +14,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std", "hex"]
-std = ["alloc", "hashes/std", "hex-stable?/std", "hex-unstable?/std", "internals/std", "units/std", "arrayvec/std"]
+std = ["alloc", "hashes/std", "hex-stable?/std", "hex-unstable?/std", "internals/std", "units/std"]
 alloc = ["hashes/alloc", "hex-stable?/alloc", "hex-unstable?/alloc", "internals/alloc", "units/alloc"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc", "hex"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
@@ -25,7 +25,6 @@ encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encodi
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.18.0", default-features = false }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1" }
 units = { package = "bitcoin-units", path = "../units", version = "=1.0.0-rc.3", default-features = false, features = [ "encoding" ] }
-arrayvec = { version = "0.7.2", default-features = false }
 
 arbitrary = { version = "1.4.1", optional = true }
 hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, optional = true }
