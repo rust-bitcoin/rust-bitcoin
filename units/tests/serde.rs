@@ -7,7 +7,7 @@
 
 use bincode::serialize;
 use bitcoin_units::{
-    amount, fee_rate, Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight,
+    amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, FeeRate, SignedAmount, Weight,
 };
 use serde::{Deserialize, Serialize};
 
@@ -45,9 +45,9 @@ struct Serde {
     #[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::opt")]
     opt_kwu: Option<FeeRate>,
 
-    a: BlockHeight,
-    b: BlockInterval,
-    c: Weight,
+    block_height: BlockHeight,
+    block_height_interval: BlockHeightInterval,
+    weight: Weight,
 }
 
 impl Serde {
@@ -74,9 +74,9 @@ impl Serde {
             opt_vb_ceil: Some(FeeRate::BROADCAST_MIN),
             opt_kwu: Some(FeeRate::BROADCAST_MIN),
 
-            a: BlockHeight::MAX,
-            b: BlockInterval::MAX,
-            c: Weight::MAX,
+            block_height: BlockHeight::MAX,
+            block_height_interval: BlockHeightInterval::MAX,
+            weight: Weight::MAX,
         }
     }
 }
@@ -90,14 +90,10 @@ fn serde_regression() {
 }
 
 #[track_caller]
-fn sat(sat: u64) -> Amount {
-    Amount::from_sat(sat).unwrap()
-}
+fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
 
 #[track_caller]
-fn ssat(ssat: i64) -> SignedAmount {
-    SignedAmount::from_sat(ssat).unwrap()
-}
+fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
 #[cfg(feature = "serde")]
 #[test]
@@ -152,7 +148,7 @@ fn serde_as_btc() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 #[test]
-fn serde_as_str() {
+fn serde_amount_as_str() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
         #[serde(with = "crate::amount::serde::as_str")]
@@ -178,7 +174,7 @@ fn serde_as_str() {
 #[cfg(feature = "alloc")]
 #[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-fn serde_as_btc_opt() {
+fn serde_amount_as_btc_opt() {
     use serde_json;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
@@ -217,7 +213,7 @@ fn serde_as_btc_opt() {
 #[cfg(feature = "alloc")]
 #[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-fn serde_as_sat_opt() {
+fn serde_amount_as_sat_opt() {
     use serde_json;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
@@ -256,7 +252,7 @@ fn serde_as_sat_opt() {
 #[cfg(feature = "alloc")]
 #[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-fn serde_as_str_opt() {
+fn serde_amount_as_str_opt() {
     use serde_json;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
@@ -481,4 +477,73 @@ fn serde_fee_rate_as_sat_per_vb_ceil_opt() {
     assert_eq!(with, serde_json::from_value(value_with).unwrap());
     let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
     assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+#[test]
+fn serde_as_block_height() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub block_height: BlockHeight
+    }
+
+    let orig = T {
+        block_height: BlockHeight::from_u32(123_456_789)
+    };
+
+    let json = "{\"block_height\": 123456789}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+#[test]
+fn serde_as_block_interval() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub block_interval: BlockHeightInterval
+    }
+
+    let orig = T {
+        block_interval: BlockHeightInterval::from_u32(144)
+    };
+
+    let json = "{\"block_interval\": 144}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+#[test]
+fn serde_as_weight() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub weight: Weight
+    }
+
+    let orig = T {
+        weight: Weight::from_wu(25)
+    };
+
+    let json = "{\"weight\": 25}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
 }
