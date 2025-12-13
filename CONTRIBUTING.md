@@ -13,6 +13,13 @@ changes to this document in a pull request.
 - [General](#general)
 - [Communication channels](#communication-channels)
 - [Asking questions](#asking-questions)
+- [Getting Started](#getting-started)
+  * [Installing Rust](#installing-rust)
+  * [Building](#building)
+- [Development Tools](#development-tools)
+  * [Just](#just)
+  * [Githooks](#githooks)
+  * [Building the docs](#building-the-docs)
 - [Contribution workflow](#contribution-workflow)
   * [Preparing PRs](#preparing-prs)
   * [Peer review](#peer-review)
@@ -25,6 +32,10 @@ changes to this document in a pull request.
   * [Policy](#policy)
 - [Security](#security)
 - [Testing](#testing)
+  * [Unit/Integration tests](#unitintegration-tests)
+  * [Benchmarks](#benchmarks)
+  * [Mutation tests](#mutation-tests)
+  * [Code verification](#code-verification)
 - [Going further](#going-further)
 
 
@@ -66,6 +77,58 @@ Major milestones are tracked [here](https://github.com/rust-bitcoin/rust-bitcoin
 
 We have a dedicated developer channel on IRC, #bitcoin-rust@libera.chat where
 you may get helpful advice if you have questions.
+
+
+## Getting Started
+
+### Installing Rust
+
+Rust can be installed using your package manager of choice or [rustup.rs](https://rustup.rs). The
+former way is considered more secure since it typically doesn't involve trust in the CA system. But
+you should be aware that the version of Rust shipped by your distribution might be out of date.
+Generally this isn't a problem for `rust-bitcoin` since we support much older versions than the
+current stable one (see MSRV section in [README.md](./README.md)).
+
+### Building
+
+The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
+
+```
+git clone git@github.com:rust-bitcoin/rust-bitcoin.git
+cd rust-bitcoin
+cargo build
+```
+
+You can run tests with:
+
+```
+cargo test
+```
+
+Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more
+detailed instructions.
+
+
+## Development Tools
+
+### Just
+
+We support [`just`](https://just.systems/man/en/) for running dev workflow commands. Run `just` from
+your shell to see a list of available sub-commands.
+
+### Githooks
+
+To assist devs in catching errors _before_ running CI we provide some githooks. Copy the hooks in `githooks/`
+to your githooks folder or run `just githooks-install` to copy them all.
+
+### Building the docs
+
+We build docs with the nightly toolchain, you may wish to use the following shell alias to check
+your documentation changes build correctly.
+
+```
+alias build-docs='RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --features="$FEATURES" -- -D rustdoc::broken-intra-doc-links'
+```
 
 
 ## Contribution workflow
@@ -248,8 +311,36 @@ seriously. Due to the modular nature of the project, writing new test cases is
 easy and good test coverage of the codebase is an important goal. Refactoring
 the project to enable fine-grained unit testing is also an ongoing effort.
 
-Various methods of testing are in use (e.g. fuzzing, mutation), please see
-the [readme](./README.md) for more information.
+Unit and integration tests are available for those interested, along with benchmarks. For project
+developers, especially new contributors looking for something to work on, we do:
+
+- Fuzz testing with [`Honggfuzz`](https://github.com/rust-fuzz/honggfuzz-rs)
+- Mutation testing with [`cargo-mutants`](https://github.com/sourcefrog/cargo-mutants)
+- Code verification with [`Kani`](https://github.com/model-checking/kani)
+
+There are always more tests to write and more bugs to find. PRs are extremely welcomed.
+Please consider testing code as a first-class citizen. We definitely do take PRs
+improving and cleaning up test code.
+
+### Unit/Integration tests
+
+Run as for any other Rust project `cargo test --all-features`.
+
+### Benchmarks
+
+We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
+bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+
+### Mutation tests
+
+We are doing mutation testing with [cargo-mutants](https://github.com/sourcefrog/cargo-mutants). To run
+these tests first install with `cargo install --locked cargo-mutants` then run with `cargo mutants --in-place --no-shuffle`.
+Note that running these mutation tests will take on the order of 10's of minutes.
+
+### Code verification
+
+We have started using [kani](https://github.com/model-checking/kani), install with `cargo install --locked kani-verifier`
+ (no need to run `cargo kani setup`). Run the tests with `cargo kani`.
 
 
 ## LLMs, GitHub bot accounts, and AI agents

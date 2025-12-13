@@ -7,10 +7,6 @@ since these are needed to display hashes anyway.
 
 [Documentation](https://docs.rs/bitcoin_hashes/)
 
-## Minimum Supported Rust Version (MSRV)
-
-This library should always compile with any combination of features on **Rust 1.74.0**.
-
 ## Contributions
 
 Contributions are welcome, including additional hash function implementations.
