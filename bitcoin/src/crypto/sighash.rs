@@ -140,7 +140,7 @@ struct TaprootCache {
 
 /// Contains outputs of previous transactions. In the case [`TapSighashType`] variant is
 /// `SIGHASH_ANYONECANPAY`, [`Prevouts::One`] may be used.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Prevouts<'u, T>
 where
     T: 'u + Borrow<TxOut>,
@@ -159,7 +159,7 @@ const KEY_VERSION_0: u8 = 0u8;
 /// Information related to the script path spending.
 ///
 /// This can be hashed into a [`TapLeafHash`].
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct ScriptPath<'s> {
     script: &'s TapScript,
     leaf_version: LeafVersion,
