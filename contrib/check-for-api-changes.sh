@@ -36,6 +36,9 @@ main() {
     generate_api_files "units"
     generate_api_files "primitives"
 
+    # Check crates under the stabilising crates
+    generate_api_files "internals"
+
     [ -f "Cargo.lock.tmp" ] && mv Cargo.lock.tmp Cargo.lock
 
     check_for_changes
