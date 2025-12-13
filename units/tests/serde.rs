@@ -6,9 +6,7 @@
 #![cfg(feature = "serde")]
 
 use bincode::serialize;
-use bitcoin_units::{
-    amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, FeeRate, SignedAmount, Weight,
-};
+use bitcoin_units::{amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, BlockTime, FeeRate, Sequence, SignedAmount, Weight};
 use serde::{Deserialize, Serialize};
 
 /// A struct that includes all the types that implement or support `serde` traits.
@@ -48,6 +46,9 @@ struct Serde {
     block_height: BlockHeight,
     block_height_interval: BlockHeightInterval,
     weight: Weight,
+
+    block_time: BlockTime,
+    seq: Sequence,
 }
 
 impl Serde {
@@ -77,6 +78,9 @@ impl Serde {
             block_height: BlockHeight::MAX,
             block_height_interval: BlockHeightInterval::MAX,
             weight: Weight::MAX,
+
+            block_time: BlockTime::from_u32(1_742_979_600),
+            seq: Sequence::MAX,
         }
     }
 }
@@ -540,6 +544,52 @@ fn serde_as_weight() {
     };
 
     let json = "{\"weight\": 25}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+#[test]
+fn serde_as_block_time() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub block_time: BlockTime
+    }
+
+    let orig = T {
+        block_time: BlockTime::from_u32(123_456_789)
+    };
+
+    let json = "{\"block_time\": 123456789}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+#[test]
+fn serde_as_sequence_from_hex() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub sequence: Sequence
+    }
+
+    let orig = T {
+        sequence: Sequence::from_hex("0x0040ffff").unwrap()
+    };
+
+    let json = "{\"sequence\": 4259839}";
 
     let t: T = serde_json::from_str(json).unwrap();
     assert_eq!(t, orig);
