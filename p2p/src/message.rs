@@ -16,7 +16,7 @@ use core::{cmp, fmt};
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
-use bitcoin::{block, transaction};
+use primitives::{block, transaction};
 use encoding;
 use hashes::sha256d;
 use internals::ToU64 as _;
@@ -1657,9 +1657,9 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
-    use bitcoin::block::{Block, BlockHash};
+    use primitives::{Block, BlockHash};
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use bitcoin::transaction::{Transaction, Txid};
+    use primitives::transaction::{Transaction, Txid};
     use hex_lit::hex;
     use units::BlockHeight;
 

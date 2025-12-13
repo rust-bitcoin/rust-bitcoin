@@ -130,6 +130,7 @@ dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-io",
+ "bitcoin-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
  "hex-conservative 0.3.0",
