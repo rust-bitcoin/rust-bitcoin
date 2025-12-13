@@ -379,8 +379,8 @@ mod test {
         let got_ser = encode::serialize(&got_witness);
         assert_eq!(got_ser, want_ser);
 
-        let rinsed: Witness = encode::deserialize(&got_ser).unwrap();
-        assert_eq!(rinsed, want_witness)
+        let roundtrip: Witness = encode::deserialize(&got_ser).unwrap();
+        assert_eq!(roundtrip, want_witness)
     }
 
     #[test]

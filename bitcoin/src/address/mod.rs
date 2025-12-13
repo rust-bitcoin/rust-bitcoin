@@ -1578,17 +1578,17 @@ mod tests {
         // Serialize with an unchecked address.
         let foo_unchecked = Foo { address: unchecked };
         let ser = serde_json::to_string(&foo_unchecked).expect("failed to serialize");
-        let rinsed: Foo<NetworkUnchecked> =
+        let roundtrip: Foo<NetworkUnchecked> =
             serde_json::from_str(&ser).expect("failed to deserialize");
-        assert_eq!(rinsed, foo_unchecked);
+        assert_eq!(roundtrip, foo_unchecked);
 
         // Serialize with a checked address.
         let foo_checked = Foo { address: unchecked.assume_checked() };
         let ser = serde_json::to_string(&foo_checked).expect("failed to serialize");
-        let rinsed: Foo<NetworkUnchecked> =
+        let roundtrip: Foo<NetworkUnchecked> =
             serde_json::from_str(&ser).expect("failed to deserialize");
-        assert_eq!(&rinsed.address, foo_checked.address.as_unchecked());
-        assert_eq!(rinsed, foo_unchecked);
+        assert_eq!(&roundtrip.address, foo_checked.address.as_unchecked());
+        assert_eq!(roundtrip, foo_unchecked);
     }
 
     #[test]

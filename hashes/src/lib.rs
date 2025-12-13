@@ -307,7 +307,7 @@ mod tests {
 
         let orig = DUMMY;
         let hex = format!("{}", orig);
-        let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
-        assert_eq!(rinsed, orig)
+        let roundtrip = hex.parse::<TestNewtype>().expect("failed to parse hex");
+        assert_eq!(roundtrip, orig)
     }
 }

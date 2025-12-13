@@ -1178,8 +1178,8 @@ mod test {
     fn serde_bincode_roundtrips() {
         let original = arbitrary_witness();
         let ser = bincode::serialize(&original).unwrap();
-        let rinsed: Witness = bincode::deserialize(&ser).unwrap();
-        assert_eq!(rinsed, original);
+        let roundtrip: Witness = bincode::deserialize(&ser).unwrap();
+        assert_eq!(roundtrip, original);
     }
 
     #[test]
@@ -1187,8 +1187,8 @@ mod test {
     fn serde_human_roundtrips() {
         let original = arbitrary_witness();
         let ser = serde_json::to_string(&original).unwrap();
-        let rinsed: Witness = serde_json::from_str(&ser).unwrap();
-        assert_eq!(rinsed, original);
+        let roundtrip: Witness = serde_json::from_str(&ser).unwrap();
+        assert_eq!(roundtrip, original);
     }
 
     #[test]
