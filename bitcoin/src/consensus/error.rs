@@ -12,7 +12,7 @@ use internals::write_err;
 use super::IterReader;
 
 /// Error deserializing from a slice.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum DeserializeError {
     /// Error parsing encoded object.
@@ -136,7 +136,7 @@ impl From<ParseError> for Error {
 }
 
 /// Encoding is invalid.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum ParseError {
     /// Missing data (early end of file or slice too short).
@@ -161,6 +161,8 @@ pub enum ParseError {
     ParseFailed(&'static str),
     /// Unsupported SegWit flag.
     UnsupportedSegwitFlag(u8),
+    /// Witness decoding error.
+    Witness(io::ReadError<primitives::witness::WitnessDecoderError>),
 }
 
 impl From<Infallible> for ParseError {
@@ -182,6 +184,7 @@ impl fmt::Display for ParseError {
             Self::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             Self::UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported SegWit version: {}", swflag),
+            Self::Witness(ref e) => write_err!(f, "witness"; e),
         }
     }
 }
@@ -190,6 +193,7 @@ impl fmt::Display for ParseError {
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            Self::Witness(ref e) => Some(e),
             Self::MissingData
             | Self::OversizedVectorAllocation { .. }
             | Self::InvalidChecksum { .. }
