@@ -263,7 +263,10 @@ jobs:
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Add architecture i386"
-        run: sudo dpkg --add-architecture i386
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update -y
+          sudo apt-get install -y gcc-multilib g++-multilib
       - name: "Install i686 gcc"
         run: sudo apt-get update -y && sudo apt-get install -y gcc-multilib
       - name: "Install target"
@@ -288,7 +291,7 @@ jobs:
         run: rustup target add s390x-unknown-linux-gnu
       - name: "Install cross"
         run: cargo install cross --locked
-      - name: "Run cross test"
+      - name: "Run s390x tests"
         run: cross test --target s390x-unknown-linux-gnu
 
   Embedded:
