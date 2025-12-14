@@ -4,8 +4,20 @@
 
 # 0.4.1 - 2024-10-18
 
+This was release violated semver rules, #3859 should have resulted in a `v0.5.0` release.
+
 - Bump MSRV to Rust 1.74.0 [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
 - Add `hex-conservative` dependency
+- Add `ArrayExt` [#4200](https://github.com/rust-bitcoin/rust-bitcoin/pull/4200)
+- Add `compact_size::encoded_size_const` [#2931](https://github.com/rust-bitcoin/rust-bitcoin/pull/2931)
+- Add `const_casts` module [#4743](https://github.com/rust-bitcoin/rust-bitcoin/pull/4743)
+- Move `const_assert` to internals
+- Add `SliceExt` [#4182](https://github.com/rust-bitcoin/rust-bitcoin/pull/4182)
+- Abstract out "debug-print hex fields" using `WrapDebug` [#4088](https://github.com/rust-bitcoin/rust-bitcoin/pull/4088)
+
+## Breaking change
+
+- Remove usage of `impl_from_infallible` in crates [#3859](https://github.com/rust-bitcoin/rust-bitcoin/pull/3859)
 
 # 0.4.0 - 2024-09-18
 
