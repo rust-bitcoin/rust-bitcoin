@@ -52,10 +52,7 @@ const SPEND_AMOUNT: Amount = Amount::from_sat_u32(25_000_000);
 const CHANGE_AMOUNT: Amount = Amount::from_sat_u32(4_990_000); // 10_000 sat fee.
 
 // Derive the external address xpriv.
-fn get_external_address_xpriv(
-    master_xpriv: Xpriv,
-    index: u32,
-) -> Xpriv {
+fn get_external_address_xpriv(master_xpriv: Xpriv, index: u32) -> Xpriv {
     let derivation_path =
         BIP86_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
     let child_xpriv =
@@ -67,10 +64,7 @@ fn get_external_address_xpriv(
 }
 
 // Derive the internal address xpriv.
-fn get_internal_address_xpriv(
-    master_xpriv: Xpriv,
-    index: u32,
-) -> Xpriv {
+fn get_internal_address_xpriv(master_xpriv: Xpriv, index: u32) -> Xpriv {
     let derivation_path =
         BIP86_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
     let child_xpriv =

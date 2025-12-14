@@ -100,7 +100,6 @@ pub struct BlockFilter {
     pub content: Vec<u8>,
 }
 
-
 impl BlockFilter {
     /// Constructs a new filter from pre-computed data.
     pub fn new(content: &[u8]) -> Self { Self { content: content.to_vec() } }
@@ -125,9 +124,7 @@ impl BlockFilter {
     }
 
     /// Computes the canonical hash for the given filter.
-    pub fn filter_hash(&self) -> sha256d::Hash {
-        sha256d::Hash::hash(&self.content)
-    }
+    pub fn filter_hash(&self) -> sha256d::Hash { sha256d::Hash::hash(&self.content) }
 
     /// Returns true if any query matches against this [`BlockFilter`].
     pub fn match_any<I>(&self, block_hash: BlockHash, query: I) -> Result<bool, Error>
@@ -452,9 +449,7 @@ pub struct BitStreamReader<'a, R: ?Sized> {
 
 impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
     /// Constructs a new [`BitStreamReader`] that reads bitwise from a given `reader`.
-    pub fn new(reader: &'a mut R) -> Self {
-        BitStreamReader { buffer: [0u8], reader, offset: 8 }
-    }
+    pub fn new(reader: &'a mut R) -> Self { BitStreamReader { buffer: [0u8], reader, offset: 8 } }
 
     /// Reads nbit bits, returning the bits in a `u64` starting with the rightmost bit.
     ///
@@ -500,9 +495,7 @@ pub struct BitStreamWriter<'a, W> {
 
 impl<'a, W: Write> BitStreamWriter<'a, W> {
     /// Constructs a new [`BitStreamWriter`] that writes bitwise to a given `writer`.
-    pub fn new(writer: &'a mut W) -> Self {
-        BitStreamWriter { buffer: [0u8], writer, offset: 0 }
-    }
+    pub fn new(writer: &'a mut W) -> Self { BitStreamWriter { buffer: [0u8], writer, offset: 0 } }
 
     /// Writes nbits bits from data.
     pub fn write(&mut self, data: u64, mut nbits: u8) -> Result<usize, io::Error> {
@@ -537,7 +530,6 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
         }
     }
 }
-
 
 #[cfg(test)]
 mod test {

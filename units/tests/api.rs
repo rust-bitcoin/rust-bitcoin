@@ -158,8 +158,8 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval,
-        BlockTime, FeeRate, NumOpResult, SignedAmount, Weight,
+        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
+        NumOpResult, SignedAmount, Weight,
     };
 }
 

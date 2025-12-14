@@ -16,7 +16,9 @@ use core::marker::PhantomData;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::Encodable;
 #[cfg(feature = "alloc")]
-use encoding::{CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{
+    CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
+};
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
 
@@ -146,13 +148,17 @@ impl Block<Unchecked> {
     }
 
     /// Computes the witness commitment for a list of transactions.
-    pub fn compute_witness_commitment(&self, witness_reserved_value: &[u8]) -> Option<(WitnessMerkleNode, WitnessCommitment)> {
+    pub fn compute_witness_commitment(
+        &self,
+        witness_reserved_value: &[u8],
+    ) -> Option<(WitnessMerkleNode, WitnessCommitment)> {
         compute_witness_root(&self.transactions).map(|witness_root| {
             let mut encoder = sha256d::Hash::engine();
             encoder = hashes::encode_to_engine(&witness_root, encoder);
             encoder.input(witness_reserved_value);
-            let witness_commitment =
-                WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array());
+            let witness_commitment = WitnessCommitment::from_byte_array(
+                sha256d::Hash::from_engine(encoder).to_byte_array(),
+            );
             (witness_root, witness_commitment)
         })
     }
@@ -314,10 +320,7 @@ impl Decoder for BlockDecoder {
 impl Decodable for Block {
     type Decoder = BlockDecoder;
     fn decoder() -> Self::Decoder {
-        BlockDecoder(Decoder2::new(
-            Header::decoder(),
-            VecDecoder::<Transaction>::new(),
-        ))
+        BlockDecoder(Decoder2::new(Header::decoder(), VecDecoder::<Transaction>::new()))
     }
 }
 
@@ -1016,7 +1019,10 @@ mod tests {
                 sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
                 witness: crate::Witness::new(),
             }],
-            outputs: vec![crate::TxOut { amount: units::Amount::ONE_BTC, script_pubkey: crate::ScriptPubKeyBuf::new() }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::ONE_BTC,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
         };
 
         let transactions = vec![non_coinbase_tx];
@@ -1166,14 +1172,12 @@ mod tests {
         };
 
         let block: u32 = 741_521;
-        let transactions = vec![
-            Transaction {
-                version: crate::transaction::Version::ONE,
-                lock_time: units::absolute::LockTime::from_height(block).unwrap(),
-                inputs: vec![crate::transaction::TxIn::EMPTY_COINBASE],
-                outputs: Vec::new(),
-            },
-        ];
+        let transactions = vec![Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: units::absolute::LockTime::from_height(block).unwrap(),
+            inputs: vec![crate::transaction::TxIn::EMPTY_COINBASE],
+            outputs: Vec::new(),
+        }];
         let original_block = Block::new_unchecked(header, transactions);
 
         // Encode + decode the block
@@ -1207,7 +1211,8 @@ mod tests {
         let magic = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
         let mut pubkey_bytes = [0; 38];
         pubkey_bytes[0..6].copy_from_slice(&magic);
-        let witness_commitment = WitnessCommitment::from_byte_array(pubkey_bytes[6..38].try_into().unwrap());
+        let witness_commitment =
+            WitnessCommitment::from_byte_array(pubkey_bytes[6..38].try_into().unwrap());
         let commitment_script = crate::script::ScriptBuf::from_bytes(pubkey_bytes.to_vec());
 
         // Create a coinbase transaction with witness commitment
@@ -1215,7 +1220,10 @@ mod tests {
             version: crate::transaction::Version::ONE,
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
-            outputs: vec![crate::TxOut { amount: units::Amount::MIN, script_pubkey: commitment_script }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: commitment_script,
+            }],
         };
 
         // Test if the witness commitment is extracted properly
@@ -1264,14 +1272,17 @@ mod tests {
         txin.witness.push(witness_bytes);
 
         // pubkey bytes must match the magic bytes followed by the hash of the witness bytes.
-        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex("6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb").unwrap();
+        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
+            "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
+        )
+        .unwrap();
         let tx1 = Transaction {
             version: crate::transaction::Version::ONE,
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![txin],
             outputs: vec![crate::TxOut {
                 amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec())
+                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
             }],
         };
 
@@ -1281,14 +1292,17 @@ mod tests {
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
                 amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::new()
+                script_pubkey: crate::script::ScriptBuf::new(),
             }],
         };
 
         let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
         let result = block.check_witness_commitment();
 
-        let exp_bytes: [u8; 32] = hex_unstable::FromHex::from_hex("fb848679079938b249a12f14b72d56aeb116df79254e17cdf72b46523bcb49db").unwrap();
+        let exp_bytes: [u8; 32] = hex_unstable::FromHex::from_hex(
+            "fb848679079938b249a12f14b72d56aeb116df79254e17cdf72b46523bcb49db",
+        )
+        .unwrap();
         let expected = WitnessMerkleNode::from_byte_array(exp_bytes);
         assert_eq!(result, (true, Some(expected)));
     }
@@ -1302,14 +1316,17 @@ mod tests {
         txin.witness.push(witness_bytes);
         txin.witness.push([12u8]);
 
-        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex("6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb").unwrap();
+        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
+            "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
+        )
+        .unwrap();
         let tx1 = Transaction {
             version: crate::transaction::Version::ONE,
             lock_time: crate::absolute::LockTime::ZERO,
             inputs: vec![txin],
             outputs: vec![crate::TxOut {
                 amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec())
+                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
             }],
         };
 
@@ -1319,7 +1336,7 @@ mod tests {
             inputs: vec![crate::TxIn::EMPTY_COINBASE],
             outputs: vec![crate::TxOut {
                 amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::new()
+                script_pubkey: crate::script::ScriptBuf::new(),
             }],
         };
 

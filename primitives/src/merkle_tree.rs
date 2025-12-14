@@ -11,16 +11,15 @@
 // C'est la vie.
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
+
+use hashes::{sha256d, HashEngine};
 #[cfg(not(feature = "alloc"))]
 use internals::array_vec::ArrayVec;
 
-use hashes::{HashEngine, sha256d};
-
-use crate::hash_types::{Txid, Wtxid};
-use crate::transaction::TxIdentifier;
-
 #[doc(inline)]
 pub use crate::hash_types::{TxMerkleNode, TxMerkleNodeEncoder, WitnessMerkleNode};
+use crate::hash_types::{Txid, Wtxid};
+use crate::transaction::TxIdentifier;
 
 /// A node in a Merkle tree of transactions or witness data within a block.
 ///
@@ -64,7 +63,9 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
             for (mut n, leaf) in iter.enumerate() {
                 #[cfg(not(feature = "alloc"))]
                 // This is the only time that the stack actually grows, rather than being combined.
-                if stack.len() == 15 { return None; }
+                if stack.len() == 15 {
+                    return None;
+                }
                 stack.push((0, Self::from_leaf(leaf)));
 
                 while n & 1 == 1 {
@@ -180,7 +181,10 @@ mod tests {
 
     #[test]
     fn tx_merkle_node_empty() {
-        assert!(TxMerkleNode::calculate_root([].into_iter()).is_none(), "Empty iterator should return None");
+        assert!(
+            TxMerkleNode::calculate_root([].into_iter()).is_none(),
+            "Empty iterator should return None"
+        );
     }
 
     #[test]
@@ -206,7 +210,7 @@ mod tests {
         let expected = subtree_ab.combine(&subtree_cd);
 
         let root = TxMerkleNode::calculate_root(
-            [leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7].into_iter()
+            [leaf1, leaf2, leaf3, leaf4, leaf5, leaf6, leaf7].into_iter(),
         );
         assert_eq!(root, Some(expected));
     }
@@ -216,29 +220,21 @@ mod tests {
     fn tx_merkle_node_balanced_multi_level_tree() {
         use alloc::vec::Vec;
 
-        let leaves: Vec<_> = (0..16)
-            .map(|i| Txid::from_byte_array([i; 32]))
-            .collect();
+        let leaves: Vec<_> = (0..16).map(|i| Txid::from_byte_array([i; 32])).collect();
 
         // Create nodes for the txids.
-        let mut level = leaves
-            .iter()
-            .map(|l| TxMerkleNode::from_leaf(*l))
-            .collect::<Vec<_>>();
+        let mut level = leaves.iter().map(|l| TxMerkleNode::from_leaf(*l)).collect::<Vec<_>>();
 
         // Combine the leaves into a tree, ordered from left-to-right in the initial vector.
         while level.len() > 1 {
-            level = level
-                .chunks(2)
-                .map(|chunk| chunk[0].combine(&chunk[1]))
-                .collect();
+            level = level.chunks(2).map(|chunk| chunk[0].combine(&chunk[1])).collect();
         }
 
         // Take the final node, which should be the root of the full tree.
         let expected = level.pop().unwrap();
 
         let root = TxMerkleNode::calculate_root(leaves.into_iter());
-        assert_eq!( root, Some(expected) );
+        assert_eq!(root, Some(expected));
     }
 
     #[test]

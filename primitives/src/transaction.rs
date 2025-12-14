@@ -25,9 +25,9 @@ use encoding::{
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
+use internals::array::ArrayExt as _;
 #[cfg(feature = "alloc")]
 use internals::compact_size;
-use internals::array::ArrayExt as _;
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -382,7 +382,9 @@ pub struct TransactionDecoder {
 #[cfg(feature = "alloc")]
 impl TransactionDecoder {
     /// Constructs a new [`TransactionDecoder`].
-    pub const fn new() -> Self { Self { state: TransactionDecoderState::Version(VersionDecoder::new()) } }
+    pub const fn new() -> Self {
+        Self { state: TransactionDecoderState::Version(VersionDecoder::new()) }
+    }
 }
 
 #[cfg(feature = "alloc")]

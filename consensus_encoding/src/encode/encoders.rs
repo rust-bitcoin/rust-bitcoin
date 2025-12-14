@@ -599,7 +599,10 @@ mod tests {
         // This test only runs on systems with >= 64 bit usize.
         if core::mem::size_of::<usize>() >= 8 {
             let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64 as usize);
-            assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
+            assert_eq!(
+                e.current_chunk(),
+                &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]
+            );
             assert!(!e.advance());
             assert!(e.current_chunk().is_empty());
         }
@@ -608,7 +611,10 @@ mod tests {
         // This test only runs on systems with > 64 bit usize.
         if core::mem::size_of::<usize>() > 8 {
             let mut e = CompactSizeEncoder::new((u128::from(u64::MAX) + 5) as usize);
-            assert_eq!(e.current_chunk(), &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF][..]);
+            assert_eq!(
+                e.current_chunk(),
+                &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF][..]
+            );
             assert!(!e.advance());
             assert!(e.current_chunk().is_empty());
         }

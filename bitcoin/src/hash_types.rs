@@ -90,6 +90,5 @@ mod tests {
             XKeyIdentifier::from_byte_array(DUMMY20).to_string(),
             "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",
         );
-
     }
 }

@@ -259,5 +259,3 @@ macro_rules! define_extension_trait {
     };
 }
 pub(crate) use define_extension_trait;
-
-

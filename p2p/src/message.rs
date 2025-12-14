@@ -1591,9 +1591,7 @@ impl<'a> Arbitrary<'a> for CommandString {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HeadersMessage {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -1636,10 +1634,7 @@ impl<'a> Arbitrary<'a> for NetworkMessage {
             33 => Ok(Self::WtxidRelay),
             34 => Ok(Self::AddrV2(u.arbitrary()?)),
             35 => Ok(Self::SendAddrV2),
-            _ => Ok(Self::Unknown {
-                command: u.arbitrary()?,
-                payload: Vec::<u8>::arbitrary(u)?,
-            }),
+            _ => Ok(Self::Unknown { command: u.arbitrary()?, payload: Vec::<u8>::arbitrary(u)? }),
         }
     }
 }
@@ -1670,7 +1665,8 @@ mod test {
     use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
     use crate::message_compact_blocks::{GetBlockTxn, SendCmpct};
     use crate::message_filter::{
-        CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders, GetCFilters,
+        CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
+        GetCFilters,
     };
     use crate::message_network::{Alert, Reject, RejectReason, VersionMessage};
     use crate::{ProtocolVersion, ServiceFlags};
