@@ -362,3 +362,66 @@ macro_rules! impl_array_newtype {
         }
     };
 }
+
+/// Derives `From<core::convert::Infallible>` for the given type.
+///
+/// Supports types with arbitrary combinations of lifetimes and type parameters.
+///
+/// Note: Paths are not supported (for ex. impl_from_infallible!(Hello<D: std::fmt::Display>).
+///
+/// # Examples
+///
+/// ```rust
+/// # #[allow(unused)]
+/// # fn main() {
+/// # use core::fmt::{Display, Debug};
+/// use bitcoin_internals::impl_from_infallible;
+///
+/// enum AlphaEnum { Item }
+/// impl_from_infallible!(AlphaEnum);
+///
+/// enum BetaEnum<'b> { Item(&'b usize) }
+/// impl_from_infallible!(BetaEnum<'b>);
+///
+/// enum GammaEnum<T> { Item(T) }
+/// impl_from_infallible!(GammaEnum<T>);
+///
+/// enum DeltaEnum<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a> {
+///     Item((&'b usize, &'a usize, T, D))
+/// }
+/// impl_from_infallible!(DeltaEnum<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a>);
+///
+/// struct AlphaStruct;
+/// impl_from_infallible!(AlphaStruct);
+///
+/// struct BetaStruct<'b>(&'b usize);
+/// impl_from_infallible!(BetaStruct<'b>);
+///
+/// struct GammaStruct<T>(T);
+/// impl_from_infallible!(GammaStruct<T>);
+///
+/// struct DeltaStruct<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a> {
+///     hello: &'a T,
+///     what: &'b D,
+/// }
+/// impl_from_infallible!(DeltaStruct<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a>);
+/// # }
+/// ```
+///
+/// See <https://stackoverflow.com/a/61189128> for more information about this macro.
+#[macro_export]
+// We removed this macro in PR #3859 but accidentally released the change in minor release 0.4.1
+// Add it back in so we can do a 0.4.3 point release as a band-aid fix to this mistake.
+// Will be removed again for 0.5.0
+#[doc(hidden)]
+macro_rules! impl_from_infallible {
+    ( $name:ident $(< $( $lt:tt $( : $clt:tt $(+ $dlt:tt )* )? ),+ >)? ) => {
+        impl $(< $( $lt $( : $clt $(+ $dlt )* )? ),+ >)?
+            From<core::convert::Infallible>
+        for $name
+            $(< $( $lt ),+ >)?
+        {
+            fn from(never: core::convert::Infallible) -> Self { match never {} }
+        }
+    }
+}
