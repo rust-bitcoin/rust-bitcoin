@@ -18,7 +18,7 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 // Package-specific lint overrides.
-#![allow(clippy::missing_errors_doc)]    // TODO: Write errors section in docs.
+#![allow(clippy::missing_errors_doc)] // TODO: Write errors section in docs.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

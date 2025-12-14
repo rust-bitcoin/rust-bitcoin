@@ -72,9 +72,7 @@ pub struct EncodableByteIter<'s, T: Encodable + 's> {
 
 impl<'s, T: Encodable + 's> EncodableByteIter<'s, T> {
     /// Constructs a new byte iterator around a provided encodable.
-    pub fn new(encodable: &'s T) -> Self {
-        Self { enc: encodable.encoder(), position: 0 }
-    }
+    pub fn new(encodable: &'s T) -> Self { Self { enc: encodable.encoder(), position: 0 } }
 }
 
 impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {

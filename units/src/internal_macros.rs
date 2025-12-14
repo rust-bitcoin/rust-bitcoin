@@ -93,7 +93,7 @@ macro_rules! impl_add_assign_for_results {
             fn add_assign(&mut self, rhs: $ty) {
                 match self {
                     Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Add)),
-                    Self::Valid(ref lhs) => *self = lhs + rhs
+                    Self::Valid(ref lhs) => *self = lhs + rhs,
                 }
             }
         }
@@ -120,7 +120,7 @@ macro_rules! impl_sub_assign_for_results {
             fn sub_assign(&mut self, rhs: $ty) {
                 match self {
                     Self::Error(_) => *self = Self::Error(NumOpError::while_doing(MathOp::Sub)),
-                    Self::Valid(ref lhs) => *self = lhs - rhs
+                    Self::Valid(ref lhs) => *self = lhs - rhs,
                 }
             }
         }

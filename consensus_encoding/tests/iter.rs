@@ -1,6 +1,5 @@
+use bitcoin_consensus_encoding::{ArrayEncoder, Encodable, EncodableByteIter, Encoder2};
 use hex::BytesToHexIter;
-
-use bitcoin_consensus_encoding::{Encodable, ArrayEncoder, Encoder2, EncodableByteIter};
 
 struct TestArray<const N: usize>([u8; N]);
 
@@ -21,7 +20,8 @@ impl<const N: usize, const M: usize> Encodable for TestCatArray<N, M> {
     where
         Self: 's;
 
-    fn encoder(&self) -> Self::Encoder<'_> { Encoder2::new(
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(
             ArrayEncoder::without_length_prefix(self.0),
             ArrayEncoder::without_length_prefix(self.1),
         )
