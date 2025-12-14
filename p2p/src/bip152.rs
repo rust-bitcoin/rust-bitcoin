@@ -475,7 +475,6 @@ mod test {
     use bitcoin::consensus::encode::{deserialize, serialize};
     use bitcoin::locktime::absolute;
     use bitcoin::merkle_tree::TxMerkleNode;
-    use bitcoin::transaction::OutPointExt;
     use bitcoin::{
         transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptPubKeyBuf,
         ScriptSigBuf, Sequence, TxIn, TxOut, Txid, Witness,
@@ -487,7 +486,7 @@ mod test {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::from_consensus(2),
             inputs: vec![TxIn {
-                previous_output: OutPoint::new(dummy_txid, 0),
+                previous_output: OutPoint { txid: dummy_txid, vout: 0 },
                 script_sig: ScriptSigBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
