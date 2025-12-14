@@ -75,6 +75,15 @@ version = "0.0.0"
 [[package]]
 name = "bitcoin-bip158"
 version = "0.0.0"
+dependencies = [
+ "bitcoin",
+ "bitcoin-internals",
+ "bitcoin-io",
+ "bitcoin_hashes",
+ "hex-conservative 0.3.0",
+ "hex_lit",
+ "serde_json",
+]
 
 [[package]]
 name = "bitcoin-consensus-encoding"

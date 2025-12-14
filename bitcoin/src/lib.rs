@@ -116,7 +116,6 @@ pub mod ext {
 }
 #[macro_use]
 pub mod address;
-pub mod bip158;
 pub mod bip32;
 pub mod blockdata;
 pub mod consensus;
