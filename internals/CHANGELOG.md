@@ -1,3 +1,7 @@
+# 0.4.3 - 2025-12-15
+
+- Add back in the `impl_from_infallible` macro
+
 # 0.4.2 - 2025-12-08
 
 - Move `impl_array_newtype` to internals [#5334](https://github.com/rust-bitcoin/rust-bitcoin/pull/5334)
