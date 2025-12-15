@@ -74,6 +74,9 @@ pub extern crate hex;
 /// Re-export the `bitcoin-io` crate.
 pub extern crate io;
 
+/// Re-export the `primitives` crate.
+pub extern crate primitives;
+
 /// Re-export the `rust-secp256k1` crate.
 ///
 /// Rust wrapper library for Pieter Wuille's libsecp256k1. Implements ECDSA and BIP-0340 signatures
