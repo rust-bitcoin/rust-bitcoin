@@ -16,8 +16,7 @@ source ./scripts/env.sh && cargo +nightly run --target thumbv7m-none-eabi
 Output should be something like:
 
 ```text
-heap size 524288
-secp buf size 66240
+heap size 262144
 Seed WIF: L1HKVVLHXiUhecWnwFYF6L3shkf1E12HUmuZTESvBXUdx3yqVP1D
 Address: bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993
 ```
