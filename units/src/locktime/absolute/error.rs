@@ -275,11 +275,11 @@ enum LockTimeUnit {
 
 impl fmt::Display for LockTimeUnit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
-
         match *self {
-            Self::Blocks => write!(f, "expected lock-by-height (must be < {})", LOCK_TIME_THRESHOLD),
-            Self::Seconds => write!(f, "expected lock-by-time (must be >= {})", LOCK_TIME_THRESHOLD),
+            Self::Blocks =>
+                write!(f, "expected lock-by-height (must be < {})", LOCK_TIME_THRESHOLD),
+            Self::Seconds =>
+                write!(f, "expected lock-by-time (must be >= {})", LOCK_TIME_THRESHOLD),
         }
     }
 }

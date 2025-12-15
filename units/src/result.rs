@@ -272,7 +272,9 @@ crate::internal_macros::impl_op_for_references! {
 // Implement AddAssign on NumOpResults for all wrapped types that already implement AddAssign on themselves
 impl<T: ops::AddAssign> ops::AddAssign<T> for NumOpResult<T> {
     fn add_assign(&mut self, rhs: T) {
-        if let Self::Valid(ref mut lhs) = self { *lhs += rhs }
+        if let Self::Valid(ref mut lhs) = self {
+            *lhs += rhs;
+        }
     }
 }
 
@@ -288,7 +290,9 @@ impl<T: ops::AddAssign + Copy> ops::AddAssign<Self> for NumOpResult<T> {
 // Implement SubAssign on NumOpResults for all wrapped types that already implement SubAssign on themselves
 impl<T: ops::SubAssign> ops::SubAssign<T> for NumOpResult<T> {
     fn sub_assign(&mut self, rhs: T) {
-        if let Self::Valid(ref mut lhs) = self { *lhs -= rhs }
+        if let Self::Valid(ref mut lhs) = self {
+            *lhs -= rhs;
+        }
     }
 }
 

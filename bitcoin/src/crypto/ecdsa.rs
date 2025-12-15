@@ -121,9 +121,7 @@ impl SerializedSignature {
     ///
     /// In other words this deserializes the `SerializedSignature`.
     #[inline]
-    pub fn to_signature(self) -> Result<Signature, DecodeError> {
-        Signature::from_slice(&self)
-    }
+    pub fn to_signature(self) -> Result<Signature, DecodeError> { Signature::from_slice(&self) }
 
     /// Returns the length of the serialized signature data.
     #[inline]
@@ -184,9 +182,7 @@ impl PartialEq<SerializedSignature> for [u8] {
 }
 
 impl PartialOrd for SerializedSignature {
-    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
 }
 
 impl Ord for SerializedSignature {

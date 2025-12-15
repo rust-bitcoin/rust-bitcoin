@@ -206,15 +206,11 @@ impl From<IpAddr> for AddrV2 {
 }
 
 impl From<Ipv4Addr> for AddrV2 {
-    fn from(addr: Ipv4Addr) -> Self {
-        Self::Ipv4(addr)
-    }
+    fn from(addr: Ipv4Addr) -> Self { Self::Ipv4(addr) }
 }
 
 impl From<Ipv6Addr> for AddrV2 {
-    fn from(addr: Ipv6Addr) -> Self {
-        Self::Ipv6(addr)
-    }
+    fn from(addr: Ipv6Addr) -> Self { Self::Ipv6(addr) }
 }
 
 impl Encodable for AddrV2 {

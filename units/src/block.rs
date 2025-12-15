@@ -140,9 +140,7 @@ impl TryFrom<BlockHeight> for absolute::Height {
     ///
     /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
     /// minus one, while [`BlockHeight`] may take the full range of `u32`.
-    fn try_from(h: BlockHeight) -> Result<Self, Self::Error> {
-        Self::from_u32(h.to_u32())
-    }
+    fn try_from(h: BlockHeight) -> Result<Self, Self::Error> { Self::from_u32(h.to_u32()) }
 }
 
 #[cfg(feature = "encoding")]
@@ -354,9 +352,7 @@ impl TryFrom<BlockMtp> for absolute::MedianTimePast {
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
-    fn try_from(h: BlockMtp) -> Result<Self, Self::Error> {
-        Self::from_u32(h.to_u32())
-    }
+    fn try_from(h: BlockMtp) -> Result<Self, Self::Error> { Self::from_u32(h.to_u32()) }
 }
 
 impl_u32_wrapper! {
