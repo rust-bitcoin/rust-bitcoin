@@ -1466,4 +1466,18 @@ mod test {
         assert_eq!(&witness[0], large_element.as_slice());
         assert_eq!(&witness[1], large_element.as_slice());
     }
+
+    #[test]
+    fn size_matches_encoding_length() {
+        let empty = Witness::new();
+        assert_eq!(empty.size(), encoding::encode_to_vec(&empty).len());
+
+        let mut witness = Witness::new();
+        witness.push([0u8; 0]);
+        assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
+        witness.push([0u8; 252]);
+        assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
+        witness.push([0u8; 253]);
+        assert_eq!(witness.size(), encoding::encode_to_vec(&witness).len());
+    }
 }
