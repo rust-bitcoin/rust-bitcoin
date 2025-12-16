@@ -1162,7 +1162,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // bad test; will be fixed in next commit
     #[cfg(feature = "alloc")]
     fn block_decode() {
         // Make a simple block, encode then decode. Verify equivalence.
@@ -1188,12 +1187,20 @@ mod tests {
         };
 
         let block: u32 = 741_521;
-        let transactions = vec![Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: units::absolute::LockTime::from_height(block).unwrap(),
-            inputs: vec![crate::transaction::TxIn::EMPTY_COINBASE],
-            outputs: Vec::new(),
-        }];
+        let transactions = vec![
+            Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: units::absolute::LockTime::from_height(block).unwrap(),
+                inputs: vec![crate::transaction::TxIn {
+                    previous_output: crate::transaction::OutPoint::COINBASE_PREVOUT,
+                    // Coinbase scriptSig must be 2-100 bytes
+                    script_sig: crate::script::ScriptSigBuf::from_bytes(vec![0x51, 0x51]),
+                    sequence: crate::sequence::Sequence::MAX,
+                    witness: crate::witness::Witness::new(),
+                }],
+                outputs: Vec::new(),
+            },
+        ];
         let original_block = Block::new_unchecked(header, transactions);
 
         // Encode + decode the block

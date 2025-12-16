@@ -780,6 +780,10 @@ pub struct TxIn {
 #[cfg(feature = "alloc")]
 impl TxIn {
     /// An empty transaction input with the previous output as for a coinbase transaction.
+    ///
+    /// This has a 0-byte scriptSig which is **invalid** per consensus rules
+    /// (coinbase scriptSig must be 2-100 bytes). This is kept for backwards compatibility
+    /// in PSBT workflows where the scriptSig is filled in later.
     pub const EMPTY_COINBASE: Self = Self {
         previous_output: OutPoint::COINBASE_PREVOUT,
         script_sig: ScriptSigBuf::new(),
