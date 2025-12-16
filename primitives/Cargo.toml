@@ -23,7 +23,7 @@ hex = ["dep:hex-stable", "dep:hex-unstable", "hashes/hex", "internals/hex"]
 [dependencies]
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "=1.0.0-rc.2", default-features = false }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.18.0", default-features = false }
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.4.1" }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
 units = { package = "bitcoin-units", path = "../units", version = "=1.0.0-rc.3", default-features = false, features = [ "encoding" ] }
 
 arbitrary = { version = "1.4.1", optional = true }

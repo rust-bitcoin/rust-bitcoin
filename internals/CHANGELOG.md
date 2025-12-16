@@ -1,3 +1,8 @@
+# 0.5.0 - 2025-12-05
+
+- Remove `doc_auto_cfg` [#5162](https://github.com/rust-bitcoin/rust-bitcoin/pull/5162)
+- Move `impl_array_newtype` to `internals` [#5334](https://github.com/rust-bitcoin/rust-bitcoin/pull/5334)
+
 # 0.4.2 - 2025-12-08
 
 Yanking this release because it is on top of the to-be-yanked `v0.4.1`.
