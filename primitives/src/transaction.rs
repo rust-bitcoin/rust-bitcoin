@@ -547,6 +547,16 @@ impl Decoder for TransactionDecoder {
                         }
                     }
                 }
+                // check coinbase scriptSig length (must be 2-100 bytes)
+                if tx.is_coinbase() {
+                    let len = tx.inputs[0].script_sig.len();
+                    if len < 2 {
+                        return Err(E(Inner::CoinbaseScriptSigTooSmall(len)));
+                    }
+                    if len > 100 {
+                        return Err(E(Inner::CoinbaseScriptSigTooLarge(len)));
+                    }
+                }
                 Ok(tx)
             }
             State::Errored => panic!("call to end() after decoder errored"),
@@ -652,6 +662,10 @@ enum TransactionDecoderErrorInner {
     EarlyEnd(&'static str),
     /// Null prevout in non-coinbase transaction.
     NullPrevoutInNonCoinbase(usize),
+    /// Coinbase scriptSig too small (must be at least 2 bytes).
+    CoinbaseScriptSigTooSmall(usize),
+    /// Coinbase scriptSig is too large (must be at most 100 bytes).
+    CoinbaseScriptSigTooLarge(usize),
 }
 
 #[cfg(feature = "alloc")]
@@ -705,6 +719,8 @@ impl fmt::Display for TransactionDecoderError {
             E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
             E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
             E::NullPrevoutInNonCoinbase(index) => write!(f, "null prevout in non-coinbase transaction at input {}", index),
+            E::CoinbaseScriptSigTooSmall(len) => write!(f, "coinbase scriptSig too small: {} bytes (min 2)", len),
+            E::CoinbaseScriptSigTooLarge(len) => write!(f, "coinbase scriptSig too large: {} bytes (max 100)", len),
         }
     }
 }
@@ -725,6 +741,8 @@ impl std::error::Error for TransactionDecoderError {
             E::LockTime(ref e) => Some(e),
             E::EarlyEnd(_) => None,
             E::NullPrevoutInNonCoinbase(_) => None,
+            E::CoinbaseScriptSigTooSmall(_) => None,
+            E::CoinbaseScriptSigTooLarge(_) => None,
         }
     }
 }
@@ -2221,5 +2239,65 @@ mod tests {
         let err = decoder.end().expect_err("null prevout in non-coinbase tx should be rejected");
 
         assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(0)));
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_coinbase_scriptsig_too_small() {
+        // Test vector taken from Bitcoin Core tx_invalid.json
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L57
+        // "Coinbase of size 1"
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("coinbase with 1-byte scriptSig should be rejected");
+
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooSmall(1)));
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_coinbase_scriptsig_too_large() {
+        // Test vector taken from Bitcoin Core tx_invalid.json:
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L62
+        // "Coinbase of size 101"
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff655151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("coinbase with 101-byte scriptSig should be rejected");
+
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooLarge(101)));
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn accept_coinbase_scriptsig_min_valid() {
+        // boundary test: 2 bytes is the minimum valid length
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff025151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let tx = decoder.end().expect("coinbase with 2-byte scriptSig should be accepted");
+
+        assert_eq!(tx.inputs[0].script_sig.len(), 2);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn accept_coinbase_scriptsig_max_valid() {
+        // boundary test: 100 bytes is the maximum valid length
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff6451515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let tx = decoder.end().expect("coinbase with 100-byte scriptSig should be accepted");
+
+        assert_eq!(tx.inputs[0].script_sig.len(), 100);
     }
 }
