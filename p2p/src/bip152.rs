@@ -12,14 +12,13 @@ use std::error;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
+use bitcoin::transaction::TxIdentifier;
+use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::ToU64 as _;
 use io::{BufRead, Write};
-
-use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use bitcoin::transaction::TxIdentifier;
-use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
 
 /// A BIP-0152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -350,12 +349,18 @@ impl Decodable for BlockTransactionsRequest {
                     let differential = r.read_compact_size()?;
                     last_index = match last_index.checked_add(differential) {
                         Some(i) => i,
-                        None => return Err(crate::consensus::parse_failed_error("block index overflow")),
+                        None =>
+                            return Err(crate::consensus::parse_failed_error(
+                                "block index overflow",
+                            )),
                     };
                     indexes.push(last_index);
                     last_index = match last_index.checked_add(1) {
                         Some(i) => i,
-                        None => return Err(crate::consensus::parse_failed_error("block index overflow")),
+                        None =>
+                            return Err(crate::consensus::parse_failed_error(
+                                "block index overflow",
+                            )),
                     };
                 }
                 indexes
@@ -422,9 +427,7 @@ impl BlockTransactions {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ShortId {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -449,29 +452,21 @@ impl<'a> Arbitrary<'a> for HeaderAndShortIds {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactions {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            block_hash: u.arbitrary()?,
-            transactions: Vec::<Transaction>::arbitrary(u)?,
-        })
+        Ok(Self { block_hash: u.arbitrary()?, transactions: Vec::<Transaction>::arbitrary(u)? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            block_hash: u.arbitrary()?,
-            indexes: Vec::<u64>::arbitrary(u)?,
-        })
+        Ok(Self { block_hash: u.arbitrary()?, indexes: Vec::<u64>::arbitrary(u)? })
     }
 }
 
 #[cfg(test)]
 mod test {
     use alloc::vec;
-    use hex::FromHex;
 
-    use super::*;
     use bitcoin::consensus::encode::{deserialize, serialize};
     use bitcoin::locktime::absolute;
     use bitcoin::merkle_tree::TxMerkleNode;
@@ -479,6 +474,9 @@ mod test {
         transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptPubKeyBuf,
         ScriptSigBuf, Sequence, TxIn, TxOut, Txid, Witness,
     };
+    use hex::FromHex;
+
+    use super::*;
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         let dummy_txid = Txid::from_byte_array(hashes::sha256::Hash::hash(nonce).to_byte_array());

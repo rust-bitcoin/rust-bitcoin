@@ -43,7 +43,9 @@ impl TxMerkleNode {
     ///
     /// Unless you are certain your transaction list is nonempty and has no duplicates,
     /// you should not unwrap the `Option` returned by this method!
-    pub fn calculate_root<I: Iterator<Item = Txid>>(iter: I) -> Option<Self> { MerkleNode::calculate_root(iter) }
+    pub fn calculate_root<I: Iterator<Item = Txid>>(iter: I) -> Option<Self> {
+        MerkleNode::calculate_root(iter)
+    }
 }
 
 encoding::encoder_newtype! {

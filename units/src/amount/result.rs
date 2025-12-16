@@ -8,7 +8,9 @@ use core::ops;
 use NumOpResult as R;
 
 use super::{Amount, SignedAmount};
-use crate::internal_macros::{impl_add_assign_for_results, impl_sub_assign_for_results, impl_div_assign, impl_mul_assign};
+use crate::internal_macros::{
+    impl_add_assign_for_results, impl_div_assign, impl_mul_assign, impl_sub_assign_for_results,
+};
 use crate::result::{MathOp, NumOpError, NumOpResult, OptionExt};
 
 impl From<Amount> for NumOpResult<Amount> {

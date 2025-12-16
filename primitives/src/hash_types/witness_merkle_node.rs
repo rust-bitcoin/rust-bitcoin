@@ -43,7 +43,9 @@ impl WitnessMerkleNode {
     ///
     /// Unless you are certain your transaction list is nonempty and has no duplicates,
     /// you should not unwrap the `Option` returned by this method!
-    pub fn calculate_root<I: Iterator<Item = Wtxid>>(iter: I) -> Option<Self> { MerkleNode::calculate_root(iter) }
+    pub fn calculate_root<I: Iterator<Item = Wtxid>>(iter: I) -> Option<Self> {
+        MerkleNode::calculate_root(iter)
+    }
 }
 
 encoding::encoder_newtype! {
@@ -54,7 +56,9 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for WitnessMerkleNode {
     type Encoder<'e> = WitnessMerkleNodeEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        WitnessMerkleNodeEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        WitnessMerkleNodeEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.to_byte_array(),
+        ))
     }
 }
 
