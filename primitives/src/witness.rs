@@ -1033,6 +1033,21 @@ mod test {
     }
 
     #[test]
+    fn witness_size() {
+        let mut witness = Witness::new();
+        let want = 1;           // Number of elements compact size encoded.
+        assert_eq!(witness.size(), want);
+
+        witness.push([1, 2, 3]);
+        let want = 5;           // 1 + 1 + 3
+        assert_eq!(witness.size(), want);
+
+        witness.push([4, 5]);
+        let want = 8;           // 5 + 1 + 2
+        assert_eq!(witness.size(), want);
+    }
+
+    #[test]
     fn partial_eq() {
         const EMPTY_BYTES: &[u8] = &[];
         const DATA_1: &[u8] = &[42];
