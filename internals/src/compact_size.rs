@@ -44,7 +44,7 @@ pub const fn encoded_size_const(value: u64) -> usize {
     match value {
         0..=0xFC => 1,
         0xFD..=0xFFFF => 3,
-        0x10000..=0xFFFFFFFF => 5,
+        0x10000..=0xFFFF_FFFF => 5,
         _ => 9,
     }
 }
@@ -63,7 +63,7 @@ pub fn encode(value: impl ToU64) -> ArrayVec<u8, MAX_ENCODING_SIZE> {
             res.push(0xFD);
             res.extend_from_slice(&v.to_le_bytes());
         }
-        0x10000..=0xFFFFFFFF => {
+        0x10000..=0xFFFF_FFFF => {
             let v = value as u32; // Cast ok because of match.
             res.push(0xFE);
             res.extend_from_slice(&v.to_le_bytes());
@@ -88,16 +88,12 @@ pub fn encode(value: impl ToU64) -> ArrayVec<u8, MAX_ENCODING_SIZE> {
 /// * Panics in release mode if the `slice` does not contain a valid minimal compact size encoding.
 /// * Panics in debug mode if the encoding is not minimal (referred to as "non-canonical" in Core).
 pub fn decode_unchecked(slice: &mut &[u8]) -> u64 {
-    if slice.is_empty() {
-        panic!("tried to decode an empty slice");
-    }
+    assert!(!slice.is_empty(), "tried to decode an empty slice");
 
     match slice[0] {
         0xFF => {
             const SIZE: usize = 9;
-            if slice.len() < SIZE {
-                panic!("slice too short, expected at least 9 bytes");
-            };
+            assert!(slice.len() >= SIZE, "slice too short, expected at least 9 bytes");
 
             let mut bytes = [0_u8; SIZE - 1];
             bytes.copy_from_slice(&slice[1..SIZE]);
@@ -109,9 +105,7 @@ pub fn decode_unchecked(slice: &mut &[u8]) -> u64 {
         }
         0xFE => {
             const SIZE: usize = 5;
-            if slice.len() < SIZE {
-                panic!("slice too short, expected at least 5 bytes");
-            };
+            assert!(slice.len() >= SIZE, "slice too short, expected at least 5 bytes");
 
             let mut bytes = [0_u8; SIZE - 1];
             bytes.copy_from_slice(&slice[1..SIZE]);
@@ -123,9 +117,7 @@ pub fn decode_unchecked(slice: &mut &[u8]) -> u64 {
         }
         0xFD => {
             const SIZE: usize = 3;
-            if slice.len() < SIZE {
-                panic!("slice too short, expected at least 3 bytes");
-            };
+            assert!(slice.len() >= SIZE, "slice too short, expected at least 3 bytes");
 
             let mut bytes = [0_u8; SIZE - 1];
             bytes.copy_from_slice(&slice[1..SIZE]);
@@ -239,14 +231,14 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "tried to decode an empty slice")]
     fn decode_from_empty_slice_panics() {
         let mut slice = [].as_slice();
         let _ = decode_unchecked(&mut slice);
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "slice too short")]
     // Non-minimal is referred to as non-canonical in Core (`bitcoin/src/serialize.h`).
     fn decode_non_minimal_panics() {
         let mut slice = [0xFE, 0xCD, 0xAB].as_slice();

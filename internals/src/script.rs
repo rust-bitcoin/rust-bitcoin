@@ -6,6 +6,10 @@
 ///
 /// A script push data instruction includes the length of the data being pushed, this function reads
 /// that length from an iterator (encoded in either 1, 2, or 4 bytes).
+///
+/// # Errors
+///
+/// Returns an error if the iterator does not contain enough bytes to read the length.
 // We internally use implementation based on iterator so that it automatically advances as needed.
 pub fn read_push_data_len(
     data: &mut core::slice::Iter<'_, u8>,
@@ -52,7 +56,7 @@ mod tests {
         let bytes = [0x01, 0x23, 0x45, 0x67];
         let want = u32::from_le_bytes([0x01, 0x23, 0x45, 0x67]);
         let got = read_push_data_len(&mut bytes.iter(), PushDataLenLen::Four).unwrap();
-        assert_eq!(got, want as usize)
+        assert_eq!(got, want as usize);
     }
 
     #[test]
@@ -60,7 +64,7 @@ mod tests {
         let bytes = [0x01, 0x23];
         let want = u16::from_le_bytes([0x01, 0x23]);
         let got = read_push_data_len(&mut bytes.iter(), PushDataLenLen::Two).unwrap();
-        assert_eq!(got, want as usize)
+        assert_eq!(got, want as usize);
     }
 
     #[test]
@@ -68,6 +72,6 @@ mod tests {
         let bytes = [0x01];
         let want = 0x01;
         let got = read_push_data_len(&mut bytes.iter(), PushDataLenLen::One).unwrap();
-        assert_eq!(got, want as usize)
+        assert_eq!(got, want as usize);
     }
 }

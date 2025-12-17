@@ -34,9 +34,5 @@ bincode = { version = "1.3.1", optional = true }
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(kani)'] }
-
-[lints.clippy]
-redundant_clone = "warn"
-use_self = "warn"
+[lints]
+workspace = true

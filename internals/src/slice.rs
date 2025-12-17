@@ -58,7 +58,7 @@ impl<T> SliceExt for [T] {
 
     fn bitcoin_as_chunks<const N: usize>(&self) -> (&[[Self::Item; N]], &[Self::Item]) {
         #[allow(clippy::let_unit_value)]
-        let _ = Hack::<N>::IS_NONZERO;
+        let () = Hack::<N>::IS_NONZERO;
 
         let chunks_count = self.len() / N;
         let total_left_len = chunks_count * N;
@@ -77,7 +77,7 @@ impl<T> SliceExt for [T] {
         &mut self,
     ) -> (&mut [[Self::Item; N]], &mut [Self::Item]) {
         #[allow(clippy::let_unit_value)]
-        let _ = Hack::<N>::IS_NONZERO;
+        let () = Hack::<N>::IS_NONZERO;
 
         let chunks_count = self.len() / N;
         let total_left_len = chunks_count * N;

@@ -77,7 +77,7 @@ impl<const N: usize, T> ArrayExt for [T; N] {
 
     fn sub_array<const OFFSET: usize, const LEN: usize>(&self) -> &[Self::Item; LEN] {
         #[allow(clippy::let_unit_value)]
-        let _ = Hack::<N, OFFSET, LEN>::IS_VALID_RANGE;
+        let () = Hack::<N, OFFSET, LEN>::IS_VALID_RANGE;
 
         self[OFFSET..(OFFSET + LEN)].try_into().expect("this is also compiler-checked above")
     }
@@ -86,7 +86,7 @@ impl<const N: usize, T> ArrayExt for [T; N] {
         &self,
     ) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT]) {
         #[allow(clippy::let_unit_value)]
-        let _ = Hack2::<N, LEFT, RIGHT>::IS_FULL_RANGE;
+        let () = Hack2::<N, LEFT, RIGHT>::IS_FULL_RANGE;
 
         (self.sub_array::<0, LEFT>(), self.sub_array::<LEFT, RIGHT>())
     }
