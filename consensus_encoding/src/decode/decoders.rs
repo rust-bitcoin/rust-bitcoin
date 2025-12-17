@@ -15,8 +15,10 @@ use super::Decodable;
 use super::Decoder;
 
 /// Maximum size, in bytes, of a vector we are allowed to decode.
-#[cfg(feature = "alloc")]
-const MAX_VEC_SIZE: u64 = 4_000_000;
+///
+/// This is also the default value limit that can be decoded with a decoder from
+/// [`CompactSizeDecoder::new`].
+const MAX_VEC_SIZE: usize = 4_000_000;
 
 /// Maximum amount of memory (in bytes) to allocate at once when deserializing vectors.
 #[cfg(feature = "alloc")]
@@ -83,11 +85,8 @@ impl Decoder for ByteVecDecoder {
                 self.prefix_decoder = Some(decoder);
                 return Ok(true);
             }
-            let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-
+            self.bytes_expected = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
             self.prefix_decoder = None;
-            self.bytes_expected =
-                cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
             // For DoS prevention, let's not allocate all memory upfront.
         }
@@ -191,14 +190,12 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
                 self.prefix_decoder = Some(decoder);
                 return Ok(true);
             }
-            let length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
-            if length == 0 {
+            self.length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
+            if self.length == 0 {
                 return Ok(false);
             }
 
             self.prefix_decoder = None;
-            self.length =
-                cast_to_usize_if_valid(length).map_err(|e| E(Inner::LengthPrefixInvalid(e)))?;
 
             // For DoS prevention, let's not allocate all memory upfront.
         }
@@ -255,24 +252,6 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
             items_left_to_decode * limit_per_decoder
         }
     }
-}
-
-/// Cast a decoded length prefix to a `usize`.
-///
-/// Consensus encoded vectors can be up to 4,000,000 bytes long.
-///
-/// This is a theoretical max since block size is 4 meg wu and minimum vector element is one byte.
-///
-/// # Errors
-///
-/// Errors if `n` is greater than 4,000,000 or won't fit in a `usize`.
-#[cfg(feature = "alloc")]
-pub fn cast_to_usize_if_valid(n: u64) -> Result<usize, LengthPrefixExceedsMaxError> {
-    if n > MAX_VEC_SIZE {
-        return Err(LengthPrefixExceedsMaxError { value: n });
-    }
-
-    usize::try_from(n).map_err(|_| LengthPrefixExceedsMaxError { value: n })
 }
 
 /// A decoder that expects exactly N bytes and returns them as an array.
@@ -625,11 +604,24 @@ where
 #[derive(Debug, Clone)]
 pub struct CompactSizeDecoder {
     buf: internals::array_vec::ArrayVec<u8, 9>,
+    limit: usize,
 }
 
 impl CompactSizeDecoder {
     /// Constructs a new compact size decoder.
-    pub const fn new() -> Self { Self { buf: internals::array_vec::ArrayVec::new() } }
+    ///
+    /// Consensus encoded vectors can be up to 4,000,000 bytes long.
+    /// This is a theoretical max since block size is 4 meg wu and minimum vector element is one byte.
+    ///
+    /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
+    /// decoded value exceeds 4,000,000 or won't fit in a `usize`.
+    pub const fn new() -> Self { Self { buf: internals::array_vec::ArrayVec::new(), limit: MAX_VEC_SIZE } }
+
+    /// Constructs a new compact size decoder with encoded value limited to the provided usize.
+    ///
+    /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
+    /// decoded value exceeds `limit` or won't fit in a `usize`.
+    pub const fn new_with_limit(limit: usize) -> Self { Self { buf: internals::array_vec::ArrayVec::new(), limit } }
 }
 
 impl Default for CompactSizeDecoder {
@@ -637,7 +629,7 @@ impl Default for CompactSizeDecoder {
 }
 
 impl Decoder for CompactSizeDecoder {
-    type Output = u64;
+    type Output = usize;
     type Error = CompactSizeDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
@@ -676,7 +668,7 @@ impl Decoder for CompactSizeDecoder {
             .split_first()
             .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
 
-        match *first {
+        let dec_value = match *first {
             0xFF => {
                 let x = u64::from_le_bytes(arr(payload)?);
                 if x < 0x100_000_000 {
@@ -702,7 +694,28 @@ impl Decoder for CompactSizeDecoder {
                 }
             }
             n => Ok(n.into()),
-        }
+        }?;
+
+        // This error is returned if dec_value is outside of the usize range, or
+        // if it is above the given limit.
+        let make_err = ||  {
+            CompactSizeDecoderError(
+                E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
+                    value: dec_value,
+                    limit: self.limit,
+                })
+            )
+        };
+
+        usize::try_from(dec_value)
+            .map_err(|_| make_err())
+            .and_then(|nsize| {
+                if nsize > self.limit {
+                    Err(make_err())
+                } else {
+                    Ok(nsize)
+                }
+            })
     }
 
     fn read_limit(&self) -> usize {
@@ -736,6 +749,8 @@ enum CompactSizeDecoderErrorInner {
         /// The encoded value.
         value: u64,
     },
+    /// Returned when the encoded value exceeds the decoder's limit.
+    ValueExceedsLimit(LengthPrefixExceedsMaxError),
 }
 
 impl fmt::Display for CompactSizeDecoderError {
@@ -755,12 +770,22 @@ impl fmt::Display for CompactSizeDecoderError {
                 required, received
             ),
             E::NonMinimal { value } => write!(f, "the value {} was not encoded minimally", value),
+            E::ValueExceedsLimit(ref e) => write_err!(f, "value exceeds limit"; e),
         }
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for CompactSizeDecoderError {}
+impl std::error::Error for CompactSizeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use CompactSizeDecoderErrorInner as E;
+
+        match self {
+            Self(E::ValueExceedsLimit(ref e)) => Some(e),
+            _ => None,
+        }
+    }
+}
 
 /// The error returned by the [`ByteVecDecoder`].
 #[cfg(feature = "alloc")]
@@ -772,8 +797,6 @@ pub struct ByteVecDecoderError(ByteVecDecoderErrorInner);
 enum ByteVecDecoderErrorInner {
     /// Error decoding the byte vector length prefix.
     LengthPrefixDecode(CompactSizeDecoderError),
-    /// Length prefix exceeds 4,000,000.
-    LengthPrefixInvalid(LengthPrefixExceedsMaxError),
     /// Not enough bytes given to decoder.
     UnexpectedEof(UnexpectedEofError),
 }
@@ -790,7 +813,6 @@ impl fmt::Display for ByteVecDecoderError {
 
         match self.0 {
             E::LengthPrefixDecode(ref e) => write_err!(f, "byte vec decoder error"; e),
-            E::LengthPrefixInvalid(ref e) => write_err!(f, "byte vec decoder error"; e),
             E::UnexpectedEof(ref e) => write_err!(f, "byte vec decoder error"; e),
         }
     }
@@ -803,7 +825,6 @@ impl std::error::Error for ByteVecDecoderError {
 
         match self.0 {
             E::LengthPrefixDecode(ref e) => Some(e),
-            E::LengthPrefixInvalid(ref e) => Some(e),
             E::UnexpectedEof(ref e) => Some(e),
         }
     }
@@ -819,8 +840,6 @@ pub struct VecDecoderError<Err>(VecDecoderErrorInner<Err>);
 enum VecDecoderErrorInner<Err> {
     /// Error decoding the vector length prefix.
     LengthPrefixDecode(CompactSizeDecoderError),
-    /// Length prefix exceeds 4,000,000.
-    LengthPrefixInvalid(LengthPrefixExceedsMaxError),
     /// Error while decoding an item.
     Item(Err),
     /// Not enough bytes given to decoder.
@@ -842,7 +861,6 @@ where
 
         match self.0 {
             E::LengthPrefixDecode(ref e) => write_err!(f, "vec decoder error"; e),
-            E::LengthPrefixInvalid(ref e) => write_err!(f, "vec decoder error"; e),
             E::Item(ref e) => write_err!(f, "vec decoder error"; e),
             E::UnexpectedEof(ref e) => write_err!(f, "vec decoder error"; e),
         }
@@ -859,35 +877,28 @@ where
 
         match self.0 {
             E::LengthPrefixDecode(ref e) => Some(e),
-            E::LengthPrefixInvalid(ref e) => Some(e),
             E::Item(ref e) => Some(e),
             E::UnexpectedEof(ref e) => Some(e),
         }
     }
 }
 
-/// Length prefix exceeds max value (4,000,000).
-#[cfg(feature = "alloc")]
+/// Length prefix exceeds the configured limit.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LengthPrefixExceedsMaxError {
     /// Decoded value of the compact encoded length prefix.
     value: u64,
+    /// The value limit that the length prefix exceeds.
+    limit: usize,
 }
 
-#[cfg(feature = "alloc")]
 impl core::fmt::Display for LengthPrefixExceedsMaxError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let max = match mem::size_of::<usize>() {
-            1 => u32::from(u8::MAX),
-            2 => u32::from(u16::MAX),
-            _ => 4_000_000,
-        };
-
-        write!(f, "length prefix {} exceeds max value {}", self.value, max)
+        write!(f, "length prefix {} exceeds max value {}", self.value, self.limit)
     }
 }
 
-#[cfg(all(feature = "std", feature = "alloc"))]
+#[cfg(feature = "std")]
 impl std::error::Error for LengthPrefixExceedsMaxError {}
 
 /// Not enough bytes given to decoder.
@@ -1107,12 +1118,12 @@ mod tests {
 
     // Stress test the push_bytes impl by passing in a single byte slice repeatedly.
     macro_rules! check_decode_one_byte_at_a_time {
-        ($decoder:ident $($test_name:ident, $want:expr, $array:expr);* $(;)?) => {
+        ($decoder:expr; $($test_name:ident, $want:expr, $array:expr);* $(;)?) => {
             $(
                 #[test]
                 #[allow(non_snake_case)]
                 fn $test_name() {
-                    let mut decoder = $decoder::default();
+                    let mut decoder = $decoder;
 
                     for (i, _) in $array.iter().enumerate() {
                         if i < $array.len() - 1 {
@@ -1134,14 +1145,35 @@ mod tests {
     }
 
     check_decode_one_byte_at_a_time! {
-        CompactSizeDecoder
+        CompactSizeDecoder::new_with_limit(0xF0F0_F0F0);
         decode_compact_size_0x10, 0x10, [0x10];
         decode_compact_size_0xFC, 0xFC, [0xFC];
         decode_compact_size_0xFD, 0xFD, [0xFD, 0xFD, 0x00];
         decode_compact_size_0x100, 0x100, [0xFD, 0x00, 0x01];
         decode_compact_size_0xFFF, 0x0FFF, [0xFD, 0xFF, 0x0F];
         decode_compact_size_0x0F0F_0F0F, 0x0F0F_0F0F, [0xFE, 0xF, 0xF, 0xF, 0xF];
-        decode_compact_size_0xF0F0_F0F0_F0E0, 0xF0F0_F0F0_F0E0, [0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0];
+    }
+
+    #[test]
+    #[cfg(target_pointer_width = "64")]
+    #[allow(non_snake_case)]
+    fn decode_compact_size_0xF0F0_F0F0_F0E0() {
+        let mut decoder = CompactSizeDecoder::new_with_limit(0xF0F0_F0F0_F0EF);
+        let array = [0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0];
+
+        for (i, _) in array.iter().enumerate() {
+            if i < array.len() - 1 {
+                let mut p = &array[i..=i];
+                assert!(decoder.push_bytes(&mut p).unwrap());
+            } else {
+                // last byte: `push_bytes` should return false since no more bytes required.
+                let mut p = &array[i..];
+                assert!(!decoder.push_bytes(&mut p).unwrap());
+            }
+        }
+
+        let got = decoder.end().unwrap();
+        assert_eq!(got, 0xF0F0_F0F0_F0E0);
     }
 
     #[test]
@@ -1170,7 +1202,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     check_decode_one_byte_at_a_time! {
-        ByteVecDecoder
+        ByteVecDecoder::default();
             decode_byte_vec, alloc::vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef],
         [0x08, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
             decode_byte_vec_multi_byte_length_prefix, [0xff; 256], two_fifty_six_bytes_encoded();
@@ -1395,7 +1427,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     check_decode_one_byte_at_a_time! {
-        TestDecoder
+        TestDecoder::default();
             decode_vec, Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]),
         vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
             decode_vec_multi_byte_length_prefix, two_fifty_six_elements(), two_fifty_six_elements_encoded();

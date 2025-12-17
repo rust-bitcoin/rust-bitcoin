@@ -271,6 +271,7 @@ pub const fn bitcoin_consensus_encoding::ArrayEncoder<N>::without_length_prefix(
 pub const fn bitcoin_consensus_encoding::ByteVecDecoder::new() -> Self
 pub const fn bitcoin_consensus_encoding::BytesEncoder<'sl>::without_length_prefix(sl: &'sl [u8]) -> Self
 pub const fn bitcoin_consensus_encoding::CompactSizeDecoder::new() -> Self
+pub const fn bitcoin_consensus_encoding::CompactSizeDecoder::new_with_limit(limit: usize) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder2<A, B>::new(first: A, second: B) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder3<A, B, C>::new(dec_1: A, dec_2: B, dec_3: C) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self
@@ -370,7 +371,6 @@ pub fn bitcoin_consensus_encoding::VecDecoderError<Err>::clone(&self) -> bitcoin
 pub fn bitcoin_consensus_encoding::VecDecoderError<Err>::eq(&self, other: &bitcoin_consensus_encoding::VecDecoderError<Err>) -> bool
 pub fn bitcoin_consensus_encoding::VecDecoderError<Err>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_consensus_encoding::VecDecoderError<Err>::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_consensus_encoding::cast_to_usize_if_valid(n: u64) -> core::result::Result<usize, bitcoin_consensus_encoding::LengthPrefixExceedsMaxError>
 pub fn bitcoin_consensus_encoding::decode_from_slice<T>(bytes: &[u8]) -> core::result::Result<T, <<T as bitcoin_consensus_encoding::Decodable>::Decoder as bitcoin_consensus_encoding::Decoder>::Error> where T: bitcoin_consensus_encoding::Decodable
 pub fn bitcoin_consensus_encoding::encode_to_vec<T>(object: &T) -> alloc::vec::Vec<u8> where T: bitcoin_consensus_encoding::Encodable + ?core::marker::Sized
 pub fn core::option::Option<T>::advance(&mut self) -> bool
@@ -408,7 +408,7 @@ pub type bitcoin_consensus_encoding::ArrayDecoder<N>::Output = [u8; N]
 pub type bitcoin_consensus_encoding::ByteVecDecoder::Error = bitcoin_consensus_encoding::ByteVecDecoderError
 pub type bitcoin_consensus_encoding::ByteVecDecoder::Output = alloc::vec::Vec<u8>
 pub type bitcoin_consensus_encoding::CompactSizeDecoder::Error = bitcoin_consensus_encoding::CompactSizeDecoderError
-pub type bitcoin_consensus_encoding::CompactSizeDecoder::Output = u64
+pub type bitcoin_consensus_encoding::CompactSizeDecoder::Output = usize
 pub type bitcoin_consensus_encoding::Decodable::Decoder: bitcoin_consensus_encoding::Decoder<Output = Self>
 pub type bitcoin_consensus_encoding::Decoder2<A, B>::Error = bitcoin_consensus_encoding::Decoder2Error<<A as bitcoin_consensus_encoding::Decoder>::Error, <B as bitcoin_consensus_encoding::Decoder>::Error>
 pub type bitcoin_consensus_encoding::Decoder2<A, B>::Output = (<A as bitcoin_consensus_encoding::Decoder>::Output, <B as bitcoin_consensus_encoding::Decoder>::Output)

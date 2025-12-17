@@ -34,7 +34,7 @@ fn do_test(data: &[u8]) {
                             1 => assert!(value < 0xFD),
                             3 => assert!((0xFD..=0xFFFF).contains(&value)),
                             5 => assert!((0x10000..=0xFFFFFFFF).contains(&value)),
-                            9 => assert!(value >= 0x100000000),
+                            9 => assert!((value as u64) >= 0x100000000), // Decoded values should only ever fit into a u64
                             _ => panic!("invalid compact size encoding length: {}", consumed),
                         }
 

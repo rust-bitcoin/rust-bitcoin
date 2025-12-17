@@ -214,6 +214,7 @@ pub const fn bitcoin_consensus_encoding::ArrayDecoder<N>::new() -> Self
 pub const fn bitcoin_consensus_encoding::ArrayEncoder<N>::without_length_prefix(arr: [u8; N]) -> Self
 pub const fn bitcoin_consensus_encoding::BytesEncoder<'sl>::without_length_prefix(sl: &'sl [u8]) -> Self
 pub const fn bitcoin_consensus_encoding::CompactSizeDecoder::new() -> Self
+pub const fn bitcoin_consensus_encoding::CompactSizeDecoder::new_with_limit(limit: usize) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder2<A, B>::new(first: A, second: B) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder3<A, B, C>::new(dec_1: A, dec_2: B, dec_3: C) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self
@@ -322,7 +323,7 @@ pub trait bitcoin_consensus_encoding::Encoder
 pub type bitcoin_consensus_encoding::ArrayDecoder<N>::Error = bitcoin_consensus_encoding::UnexpectedEofError
 pub type bitcoin_consensus_encoding::ArrayDecoder<N>::Output = [u8; N]
 pub type bitcoin_consensus_encoding::CompactSizeDecoder::Error = bitcoin_consensus_encoding::CompactSizeDecoderError
-pub type bitcoin_consensus_encoding::CompactSizeDecoder::Output = u64
+pub type bitcoin_consensus_encoding::CompactSizeDecoder::Output = usize
 pub type bitcoin_consensus_encoding::Decodable::Decoder: bitcoin_consensus_encoding::Decoder<Output = Self>
 pub type bitcoin_consensus_encoding::Decoder2<A, B>::Error = bitcoin_consensus_encoding::Decoder2Error<<A as bitcoin_consensus_encoding::Decoder>::Error, <B as bitcoin_consensus_encoding::Decoder>::Error>
 pub type bitcoin_consensus_encoding::Decoder2<A, B>::Output = (<A as bitcoin_consensus_encoding::Decoder>::Output, <B as bitcoin_consensus_encoding::Decoder>::Output)
