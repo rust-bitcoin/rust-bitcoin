@@ -26,8 +26,10 @@ exclude_re = [
     "units/.* FeeRate::fee_vb", # Deprecated
     "units/.* FeeRate::fee_wu", # Deprecated
     "units/.* SignedAmount::checked_abs", # Deprecated
+    "units/.* NumberOfBlocks::to_consensus_u32", # Deprecated
     "units/.* NumberOfBlocks::value", # Deprecated
     "units/.* NumberOf512Seconds::to_consensus_u32", # Deprecated
+    "units/.* NumberOf512Seconds::value", # Deprecated
     "units/.* MedianTimePast::to_consensus_u32", # Deprecated
     "units/.* Height::to_consensus_u32", # Deprecated
     "units/.* Sequence::to_hex", # Deprecated
