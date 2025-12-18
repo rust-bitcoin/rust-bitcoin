@@ -6,10 +6,10 @@
 #![cfg(feature = "serde")]
 
 use bincode::serialize;
-use bitcoin_units::{
-    amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, FeeRate, SignedAmount, Weight,
-};
+use bitcoin_units::{amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, BlockTime, FeeRate, Sequence, SignedAmount, Weight};
 use serde::{Deserialize, Serialize};
+use bitcoin_units::absolute::{LockTime as AbsoluteLockTime, Height, MedianTimePast};
+use bitcoin_units::relative::{LockTime as RelativeLockTime, NumberOf512Seconds, NumberOfBlocks};
 
 /// A struct that includes all the types that implement or support `serde` traits.
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,6 +48,12 @@ struct Serde {
     block_height: BlockHeight,
     block_height_interval: BlockHeightInterval,
     weight: Weight,
+
+    block_time: BlockTime,
+    seq: Sequence,
+
+    abs_locktime: AbsoluteLockTime,
+    rel_locktime: RelativeLockTime,
 }
 
 impl Serde {
@@ -77,6 +83,11 @@ impl Serde {
             block_height: BlockHeight::MAX,
             block_height_interval: BlockHeightInterval::MAX,
             weight: Weight::MAX,
+
+            block_time: BlockTime::from_u32(1_742_979_600),
+            seq: Sequence::MAX,
+            abs_locktime: AbsoluteLockTime::Blocks(Height::MAX),
+            rel_locktime: RelativeLockTime::Blocks(NumberOfBlocks::MAX),
         }
     }
 }
@@ -286,4 +297,368 @@ fn serde_amount_as_str_opt() {
 
     let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
     assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[track_caller]
+fn fee_rate_vb(vb: u32) -> FeeRate {
+    FeeRate::from_sat_per_vb(vb)
+}
+
+#[track_caller]
+fn fee_rate_kwu(vb: u32) -> FeeRate {
+    FeeRate::from_sat_per_kwu(vb)
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_fee_rate_as_sat_per_vb_floor() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_floor")]
+        pub fee_rate: FeeRate,
+    }
+
+    serde_test::assert_tokens(
+        &T { fee_rate: fee_rate_vb(123_456_789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("fee_rate"),
+            serde_test::Token::U64(123_456_789),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_fee_rate_as_sat_per_kwu_floor() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::fee_rate::serde::as_sat_per_kwu_floor")]
+        pub fee_rate: FeeRate,
+    }
+
+    serde_test::assert_tokens(
+        &T { fee_rate: fee_rate_kwu(123_456_789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("fee_rate"),
+            serde_test::Token::U64(123_456_789),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_fee_rate_as_sat_per_vb_ceil() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]
+        pub fee_rate: FeeRate,
+    }
+
+    serde_test::assert_tokens(
+        &T { fee_rate: fee_rate_vb(123_456_789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("fee_rate"),
+            serde_test::Token::U64(123_456_789),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_fee_rate_floor_vs_ceil() {
+    use serde_json;
+
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    struct Floor {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_floor")]
+        fee_rate: FeeRate,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    struct Ceil {
+        #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]
+        fee_rate: FeeRate,
+    }
+
+    let fee_rate = FeeRate::from_sat_per_kwu(251);
+
+    let floor = Floor { fee_rate };
+    let ceil = Ceil { fee_rate };
+
+    let floor_json = serde_json::to_string(&floor).unwrap();
+    let ceil_json = serde_json::to_string(&ceil).unwrap();
+
+    assert!(floor_json.contains("\"fee_rate\":1"));
+    assert!(ceil_json.contains("\"fee_rate\":2"));
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_fee_rate_as_sat_per_kwu_floor_opt() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(default, with = "crate::fee_rate::serde::as_sat_per_kwu_floor::opt")]
+        pub fee_rate: Option<FeeRate>,
+    }
+
+    let with = T { fee_rate: Some(fee_rate_kwu(123_456_789)) };
+    let without = T { fee_rate: None };
+
+    // Test Roundtripping
+    for s in [&with, &without] {
+        let v = serde_json::to_string(s).unwrap();
+        let w: T = serde_json::from_str(&v).unwrap();
+        assert_eq!(w, *s);
+    }
+
+    let t: T = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(t, with);
+
+    let t: T = serde_json::from_str("{}").unwrap();
+    assert_eq!(t, without);
+
+    let value_with: serde_json::Value = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(with, serde_json::from_value(value_with).unwrap());
+    let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+    assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_fee_rate_as_sat_per_vb_floor_opt() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(default, with = "crate::fee_rate::serde::as_sat_per_vb_floor::opt")]
+        pub fee_rate: Option<FeeRate>,
+    }
+
+    let with = T { fee_rate: Some(fee_rate_vb(123_456_789)) };
+    let without = T { fee_rate: None };
+
+    // Test Roundtripping
+    for s in [&with, &without] {
+        let v = serde_json::to_string(s).unwrap();
+        let w: T = serde_json::from_str(&v).unwrap();
+        assert_eq!(w, *s);
+    }
+
+    let t: T = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(t, with);
+
+    let t: T = serde_json::from_str("{}").unwrap();
+    assert_eq!(t, without);
+
+    let value_with: serde_json::Value = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(with, serde_json::from_value(value_with).unwrap());
+    let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+    assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_fee_rate_as_sat_per_vb_ceil_opt() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(default, with = "crate::fee_rate::serde::as_sat_per_vb_ceil::opt")]
+        pub fee_rate: Option<FeeRate>,
+    }
+
+    let with = T { fee_rate: Some(fee_rate_vb(123_456_789)) };
+    let without = T { fee_rate: None };
+
+    // Test Roundtripping
+    for s in [&with, &without] {
+        let v = serde_json::to_string(s).unwrap();
+        let w: T = serde_json::from_str(&v).unwrap();
+        assert_eq!(w, *s);
+    }
+
+    let t: T = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(t, with);
+
+    let t: T = serde_json::from_str("{}").unwrap();
+    assert_eq!(t, without);
+
+    let value_with: serde_json::Value = serde_json::from_str("{\"fee_rate\": 123456789}").unwrap();
+    assert_eq!(with, serde_json::from_value(value_with).unwrap());
+    let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+    assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_as_block_height() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub block_height: BlockHeight
+    }
+
+    let orig = T {
+        block_height: BlockHeight::from_u32(123_456_789)
+    };
+
+    let json = "{\"block_height\": 123456789}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_as_block_interval() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub block_interval: BlockHeightInterval
+    }
+
+    let orig = T {
+        block_interval: BlockHeightInterval::from_u32(144)
+    };
+
+    let json = "{\"block_interval\": 144}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_as_weight() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub weight: Weight
+    }
+
+    let orig = T {
+        weight: Weight::from_wu(25)
+    };
+
+    let json = "{\"weight\": 25}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_as_block_time() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub block_time: BlockTime
+    }
+
+    let orig = T {
+        block_time: BlockTime::from_u32(123_456_789)
+    };
+
+    let json = "{\"block_time\": 123456789}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_as_sequence_from_hex() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub sequence: Sequence
+    }
+
+    let orig = T {
+        sequence: Sequence::from_hex("0x0040ffff").unwrap()
+    };
+
+    let json = "{\"sequence\": 4259839}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_as_locktime_from_blocks() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub a_lt: AbsoluteLockTime,
+        pub r_lt: RelativeLockTime,
+    }
+
+    let orig = T {
+        a_lt: AbsoluteLockTime::Blocks(Height::from_u32(1_000).unwrap()),
+        r_lt: RelativeLockTime::Blocks(NumberOfBlocks::from_height(1_000)),
+    };
+
+    let json = "{\"a_lt\": 1000, \"r_lt\": 1000}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_as_locktime_from_time() {
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        pub a_lt: AbsoluteLockTime,
+        pub r_lt: RelativeLockTime,
+    }
+
+    let orig = T {
+        a_lt: AbsoluteLockTime::Seconds(MedianTimePast::from_u32(1_653_195_600).unwrap()),
+        r_lt: RelativeLockTime::Time(NumberOf512Seconds::from_512_second_intervals(70)),
+    };
+
+    let json = "{\"a_lt\": 1653195600, \"r_lt\": 4194374}";
+
+    let t: T = serde_json::from_str(json).unwrap();
+    assert_eq!(t, orig);
+
+    let value: serde_json::Value = serde_json::from_str(json).unwrap();
+    assert_eq!(t, serde_json::from_value(value).unwrap());
 }
