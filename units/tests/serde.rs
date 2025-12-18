@@ -97,7 +97,7 @@ fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
 #[test]
 #[cfg(feature = "serde")]
-fn serde_as_sat() {
+fn serde_amount_as_sat() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
         #[serde(with = "crate::amount::serde::as_sat")]
@@ -123,7 +123,7 @@ fn serde_as_sat() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-fn serde_as_btc() {
+fn serde_amount_as_btc() {
     use serde_json;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -148,7 +148,7 @@ fn serde_as_btc() {
 #[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
-fn serde_as_str() {
+fn serde_amount_as_str() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
         #[serde(with = "crate::amount::serde::as_str")]
@@ -174,7 +174,7 @@ fn serde_as_str() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-fn serde_as_btc_opt() {
+fn serde_amount_as_btc_opt() {
     use serde_json;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
@@ -213,7 +213,7 @@ fn serde_as_btc_opt() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-fn serde_as_sat_opt() {
+fn serde_amount_as_sat_opt() {
     use serde_json;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
@@ -252,7 +252,7 @@ fn serde_as_sat_opt() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-fn serde_as_str_opt() {
+fn serde_amount_as_str_opt() {
     use serde_json;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
