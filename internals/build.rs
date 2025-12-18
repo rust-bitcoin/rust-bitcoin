@@ -7,7 +7,7 @@ use std::io;
 
 fn main() {
     let rustc = std::env::var_os("RUSTC");
-    let rustc = rustc.as_ref().map(std::path::Path::new).unwrap_or_else(|| "rustc".as_ref());
+    let rustc = rustc.as_ref().map_or_else(|| "rustc".as_ref(), std::path::Path::new);
     let output = std::process::Command::new(rustc)
         .arg("--version")
         .output()
@@ -15,9 +15,7 @@ fn main() {
     assert!(output.status.success(), "{:?} -- version returned non-zero exit code", rustc);
     let stdout = String::from_utf8(output.stdout).expect("rustc produced non-UTF-8 output");
     let version_prefix = "rustc ";
-    if !stdout.starts_with(version_prefix) {
-        panic!("unexpected rustc output: {}", stdout);
-    }
+    assert!(stdout.starts_with(version_prefix), "unexpected rustc output: {}", stdout);
 
     let version = &stdout[version_prefix.len()..];
     let end = version.find(&[' ', '-'] as &[_]).unwrap_or(version.len());
@@ -32,7 +30,7 @@ fn main() {
         .expect("invalid Rust minor version");
 
     let msrv = std::env::var("CARGO_PKG_RUST_VERSION").unwrap();
-    let mut msrv = msrv.split(".");
+    let mut msrv = msrv.split('.');
     let msrv_major = msrv.next().unwrap();
     assert_eq!(msrv_major, "1", "unexpected Rust major version");
     let msrv_minor = msrv.next().unwrap().parse::<u64>().unwrap();
@@ -75,7 +73,7 @@ fn write_macro(mut macro_file: impl io::Write, msrv_minor: u64, minor: u64) -> i
         writeln!(macro_file, "        $($if_yes)*")?;
         writeln!(macro_file, "    }};")?;
     }
-    for version in (minor + 1)..(MAX_USED_VERSION + 1) {
+    for version in (minor + 1)..=MAX_USED_VERSION {
         writeln!(
             macro_file,
             "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{",

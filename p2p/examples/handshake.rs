@@ -101,7 +101,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let start_height: i32 = 0;
 
     // A formatted string describing the software in use.
-    let user_agent = UserAgent::new(SOFTWARE_NAME, USER_AGENT_VERSION);
+    let user_agent = UserAgent::new(SOFTWARE_NAME, &USER_AGENT_VERSION);
 
     // Construct the message
     message::NetworkMessage::Version(message_network::VersionMessage::new(

@@ -68,6 +68,10 @@ impl InputString {
     ///     }
     /// }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the write to the formatter fails.
     pub fn unknown_variant<T>(&self, what: &T, f: &mut fmt::Formatter) -> fmt::Result
     where
         T: fmt::Display + ?Sized,

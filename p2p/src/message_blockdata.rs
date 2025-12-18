@@ -47,7 +47,7 @@ pub enum Inventory {
 impl Inventory {
     /// Returns the item value represented as a SHA256-d hash.
     ///
-    /// Returns [None] only for [Inventory::Error] who's hash value is meaningless.
+    /// Returns [None] only for [`Inventory::Error`] who's hash value is meaningless.
     pub fn network_hash(&self) -> Option<[u8; 32]> {
         match self {
             Self::Error(_) => None,
@@ -76,8 +76,8 @@ impl Encodable for Inventory {
             Self::Block(ref b) => encode_inv!(2, b),
             Self::CompactBlock(ref b) => encode_inv!(4, b),
             Self::WTx(ref w) => encode_inv!(5, w),
-            Self::WitnessTransaction(ref t) => encode_inv!(0x40000001, t),
-            Self::WitnessBlock(ref b) => encode_inv!(0x40000002, b),
+            Self::WitnessTransaction(ref t) => encode_inv!(0x4000_0001, t),
+            Self::WitnessBlock(ref b) => encode_inv!(0x4000_0002, b),
             Self::Unknown { inv_type: t, hash: ref d } => encode_inv!(t, d),
         })
     }
@@ -93,8 +93,8 @@ impl Decodable for Inventory {
             2 => Self::Block(Decodable::consensus_decode(r)?),
             4 => Self::CompactBlock(Decodable::consensus_decode(r)?),
             5 => Self::WTx(Decodable::consensus_decode(r)?),
-            0x40000001 => Self::WitnessTransaction(Decodable::consensus_decode(r)?),
-            0x40000002 => Self::WitnessBlock(Decodable::consensus_decode(r)?),
+            0x4000_0001 => Self::WitnessTransaction(Decodable::consensus_decode(r)?),
+            0x4000_0002 => Self::WitnessBlock(Decodable::consensus_decode(r)?),
             tp => Self::Unknown { inv_type: tp, hash: Decodable::consensus_decode(r)? },
         })
     }
