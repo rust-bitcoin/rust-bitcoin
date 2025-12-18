@@ -45,9 +45,9 @@ struct Serde {
     #[serde(with = "fee_rate::serde::as_sat_per_kwu_floor::opt")]
     opt_kwu: Option<FeeRate>,
 
-    a: BlockHeight,
-    b: BlockHeightInterval,
-    c: Weight,
+    block_height: BlockHeight,
+    block_height_interval: BlockHeightInterval,
+    weight: Weight,
 }
 
 impl Serde {
@@ -74,9 +74,9 @@ impl Serde {
             opt_vb_ceil: Some(FeeRate::BROADCAST_MIN),
             opt_kwu: Some(FeeRate::BROADCAST_MIN),
 
-            a: BlockHeight::MAX,
-            b: BlockHeightInterval::MAX,
-            c: Weight::MAX,
+            block_height: BlockHeight::MAX,
+            block_height_interval: BlockHeightInterval::MAX,
+            weight: Weight::MAX,
         }
     }
 }
