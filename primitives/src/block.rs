@@ -15,6 +15,8 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::Encodable;
+#[cfg(feature = "hex")]
+use encoding::EncodableByteIter;
 #[cfg(feature = "alloc")]
 use encoding::{
     CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
@@ -494,23 +496,11 @@ impl Header {
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
+    #[allow(clippy::use_self)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use fmt::Write as _;
-        use hex_unstable::DisplayHex as _;
+        use hex_unstable::{fmt_hex_exact, Case};
 
-        let mut buf = arrayvec::ArrayString::<160>::new();
-        write!(
-            &mut buf,
-            "{}{}{}{}{}{}",
-            self.version.to_consensus().to_le_bytes().as_hex(),
-            self.prev_blockhash.as_byte_array().as_hex(),
-            self.merkle_root.as_byte_array().as_hex(),
-            self.time.to_u32().to_le_bytes().as_hex(),
-            self.bits.to_consensus().to_le_bytes().as_hex(),
-            self.nonce.to_le_bytes().as_hex(),
-        )
-        .expect("total length of written objects is 160 characters");
-        fmt::Display::fmt(&buf, f)
+        fmt_hex_exact!(f, Header::SIZE, HeaderIter(EncodableByteIter::new(self)), Case::Lower)
     }
 }
 
@@ -527,6 +517,23 @@ impl fmt::Debug for Header {
             .finish()
     }
 }
+
+/// A wrapper around [`encoding::EncodableByteIter`]
+///
+/// This wrapper implements `ExactSizeIterator` for use with `fmt_hex_exact!`.
+#[cfg(feature = "hex")]
+struct HeaderIter<'a>(EncodableByteIter<'a, Header>);
+
+#[cfg(feature = "hex")]
+impl Iterator for HeaderIter<'_> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> { self.0.next() }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { (Header::SIZE, Some(Header::SIZE)) }
+}
+#[cfg(feature = "hex")]
+impl ExactSizeIterator for HeaderIter<'_> {}
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Header`] type.
