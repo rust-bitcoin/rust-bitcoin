@@ -2548,4 +2548,18 @@ mod tests {
         let total: u64 = tx.outputs.iter().map(|o| o.amount.to_sat()).sum();
         assert_eq!(total, Amount::MAX_MONEY.to_sat());
     }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_output_value_greater_than_max_money() {
+        // Test vector taken from Bitcoin Core tx_invalid.json
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L44
+        // "MAX_MONEY + 1 output"
+        let tx_bytes = hex!("01000000010001000000000000000000000000000000000000000000000000000000000000000000006e493046022100e1eadba00d9296c743cb6ecc703fd9ddc9b3cd12906176a226ae4c18d6b00796022100a71aef7d2874deff681ba6080f1b278bac7bb99c61b08a85f4311970ffe7f63f012321030c0588dc44d92bdcbf8e72093466766fdc265ead8db64517b0c542275b70fffbacffffffff010140075af0750700015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        let result = decoder.push_bytes(&mut slice);
+        assert!(result.is_err(), "output value > MAX_MONEY should be rejected during decoding");
+    }
 }
