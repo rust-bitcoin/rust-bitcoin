@@ -614,6 +614,16 @@ impl Decoder for TransactionDecoder {
                         return Err(E(Inner::DuplicateInput(pair[0])));
                     }
                 }
+                // Check that sum of output values doesn't exceed MAX_MONEY (see CVE-2010-5139)
+                // Note: Individual output values are already validated by Amount::from_sat()
+                // during decoding, so we only need to check the sum here.
+                let mut total_out: u64 = 0;
+                for output in &tx.outputs {
+                    total_out = total_out.saturating_add(output.amount.to_sat());
+                    if total_out > Amount::MAX_MONEY.to_sat() {
+                        return Err(E(Inner::OutputValueSumTooLarge(total_out)));
+                    }
+                }
                 Ok(tx)
             }
             State::Errored => panic!("call to end() after decoder errored"),
@@ -725,6 +735,8 @@ enum TransactionDecoderErrorInner {
     CoinbaseScriptSigTooLarge(usize),
     /// Transaction has duplicate inputs (this check prevents CVE-2018-17144 ).
     DuplicateInput(OutPoint),
+    /// Sum of output values exceeds `MAX_MONEY`
+    OutputValueSumTooLarge(u64),
 }
 
 #[cfg(feature = "alloc")]
@@ -785,6 +797,8 @@ impl fmt::Display for TransactionDecoderError {
                 write!(f, "coinbase scriptSig too large: {} bytes (max 100)", len),
             E::DuplicateInput(ref outpoint) =>
                 write!(f, "duplicate input: {:?}:{}", outpoint.txid, outpoint.vout),
+            E::OutputValueSumTooLarge(val) =>
+                write!(f, "sum of output values {} satoshis exceeds MAX_MONEY", val),
         }
     }
 }
@@ -808,6 +822,7 @@ impl std::error::Error for TransactionDecoderError {
             E::CoinbaseScriptSigTooSmall(_) => None,
             E::CoinbaseScriptSigTooLarge(_) => None,
             E::DuplicateInput(_) => None,
+            E::OutputValueSumTooLarge(_) => None,
         }
     }
 }
@@ -2499,5 +2514,38 @@ mod tests {
             vout: 0,
         };
         assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::DuplicateInput(expected_outpoint)));
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_output_value_sum_too_large() {
+        // Test vector taken from Bitcoin Core tx_invalid.json
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L48
+        // "MAX_MONEY output + 1 output" (sum exceeds MAX_MONEY)
+        let tx_bytes = hex!("01000000010001000000000000000000000000000000000000000000000000000000000000000000006d483045022027deccc14aa6668e78a8c9da3484fbcd4f9dcc9bb7d1b85146314b21b9ae4d86022100d0b43dece8cfb07348de0ca8bc5b86276fa88f7f2138381128b7c36ab2e42264012321029bb13463ddd5d2cc05da6e84e37536cb9525703cfd8f43afdb414988987a92f6acffffffff020040075af075070001510001000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("sum of output values > MAX_MONEY should be rejected");
+
+        match err.0 {
+            TransactionDecoderErrorInner::OutputValueSumTooLarge(_) => (),
+            e => panic!("unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn accept_output_value_sum_equal_to_max_money() {
+        let tx_bytes = hex!("01000000010001000000000000000000000000000000000000000000000000000000000000000000006d483045022027deccc14aa6668e78a8c9da3484fbcd4f9dcc9bb7d1b85146314b21b9ae4d86022100d0b43dece8cfb07348de0ca8bc5b86276fa88f7f2138381128b7c36ab2e42264012321029bb13463ddd5d2cc05da6e84e37536cb9525703cfd8f43afdb414988987a92f6acffffffff020080c6a47e8d0300015100c040b571e80300015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let tx = decoder.end().expect("sum of output values == MAX_MONEY should be accepted");
+
+        let total: u64 = tx.outputs.iter().map(|o| o.amount.to_sat()).sum();
+        assert_eq!(total, Amount::MAX_MONEY.to_sat());
     }
 }
