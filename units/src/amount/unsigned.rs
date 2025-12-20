@@ -557,7 +557,7 @@ impl TryFrom<SignedAmount> for Amount {
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Amount`] type.
     pub struct AmountEncoder(encoding::ArrayEncoder<8>);
 }

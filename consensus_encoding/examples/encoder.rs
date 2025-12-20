@@ -61,7 +61,7 @@ impl Inner {
     pub fn to_array(&self) -> [u8; 4] { self.0.to_be_bytes() }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Inner`] type.
     pub struct InnerEncoder(ArrayEncoder<4>);
 }

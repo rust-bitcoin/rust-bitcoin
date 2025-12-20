@@ -81,7 +81,7 @@ impl<'de> Deserialize<'de> for BlockTime {
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`BlockTime`] type.
     pub struct BlockTimeEncoder(encoding::ArrayEncoder<4>);
 }

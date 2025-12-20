@@ -346,7 +346,7 @@ impl bitcoin::consensus::encode::Decodable for FeeFilter {
     }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// Encoder for [`FeeFilter`] type.
     pub struct FeeFilterEncoder(encoding::ArrayEncoder<8>);
 }

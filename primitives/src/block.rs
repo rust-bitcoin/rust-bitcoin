@@ -587,7 +587,7 @@ impl std::error::Error for ParseHeaderError {
     }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Header`] type.
     pub struct HeaderEncoder(
         encoding::Encoder6<
@@ -816,7 +816,7 @@ impl Default for Version {
     fn default() -> Self { Self::NO_SOFT_FORK_SIGNALLING }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Version`] type.
     pub struct VersionEncoder(encoding::ArrayEncoder<4>);
 }
