@@ -82,10 +82,25 @@ mod encapsulate {
         /// # Examples
         ///
         /// ```
-        /// # use bitcoin_units::{amount, Amount};
-        /// # let sat = 100_000;
-        /// let amount = Amount::from_sat(sat)?;
-        /// assert_eq!(amount.to_sat(), sat);
+        /// use bitcoin_units::amount::OutOfRangeError;
+        /// use bitcoin_units::Amount;
+        ///
+        /// // Common small amount: 50,000 satoshis (typical transaction fee)
+        /// let fee = Amount::from_sat(50_000)?;
+        /// assert_eq!(fee.to_sat(), 50_000);
+        ///
+        /// // Half a Bitcoin
+        /// let half_btc = Amount::from_sat(50_000_000)?;
+        /// assert_eq!(half_btc.to_sat(), 50_000_000);
+        ///
+        /// // One full Bitcoin
+        /// let one_btc = Amount::from_sat(100_000_000)?;
+        /// assert_eq!(one_btc.to_sat(), 100_000_000);
+        ///
+        /// // Error case: too large (more than 21 million BTC)
+        /// let too_big = Amount::from_sat(2_100_000_001_000_000);
+        /// assert!(matches!(too_big, Err(OutOfRangeError { .. })));
+        ///
         /// # Ok::<_, amount::OutOfRangeError>(())
         /// ```
         pub const fn from_sat(satoshi: u64) -> Result<Self, OutOfRangeError> {
