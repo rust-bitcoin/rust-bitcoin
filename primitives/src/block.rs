@@ -517,7 +517,7 @@ impl fmt::Display for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use hex_unstable::{fmt_hex_exact, Case};
 
-        fmt_hex_exact!(f, Header::SIZE, HeaderIter(EncodableByteIter::new(self)), Case::Lower)
+        fmt_hex_exact!(f, Header::SIZE, EncodableByteIter::new(self), Case::Lower)
     }
 }
 
@@ -548,23 +548,6 @@ impl fmt::Debug for Header {
             .finish()
     }
 }
-
-/// A wrapper around [`encoding::EncodableByteIter`]
-///
-/// This wrapper implements `ExactSizeIterator` for use with `fmt_hex_exact!`.
-#[cfg(feature = "hex")]
-struct HeaderIter<'a>(EncodableByteIter<'a, Header>);
-
-#[cfg(feature = "hex")]
-impl Iterator for HeaderIter<'_> {
-    type Item = u8;
-
-    fn next(&mut self) -> Option<Self::Item> { self.0.next() }
-
-    fn size_hint(&self) -> (usize, Option<usize>) { (Header::SIZE, Some(Header::SIZE)) }
-}
-#[cfg(feature = "hex")]
-impl ExactSizeIterator for HeaderIter<'_> {}
 
 /// An error that occurs during parsing of a [`Header`] from a hex string.
 #[cfg(all(feature = "hex", feature = "alloc"))]
