@@ -29,7 +29,7 @@ type Inner = sha256d::Hash;
 
 include!("./generic.rs");
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`BlockHash`] type.
     pub struct BlockHashEncoder(encoding::ArrayEncoder<32>);
 }

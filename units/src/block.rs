@@ -144,7 +144,7 @@ impl TryFrom<BlockHeight> for absolute::Height {
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`BlockHeight`] type.
     pub struct BlockHeightEncoder(encoding::ArrayEncoder<4>);
 }
