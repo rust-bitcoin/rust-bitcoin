@@ -598,7 +598,11 @@ impl<'a> core::iter::Sum<&'a Self> for BlockMtpInterval {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::locktime::relative::NumberOf512Seconds;
+
+    #[cfg(feature = "encoding")]
+    use encoding::{Decodable as _, Decoder as _, UnexpectedEofError};
+
+    use crate::relative::{NumberOf512Seconds, TimeOverflowError};
 
     #[test]
     fn sanity_check() {
@@ -727,4 +731,115 @@ mod tests {
         let interval = BlockMtpInterval::from(n);
         assert_eq!(interval, BlockMtpInterval(1024));
     }
+
+    #[test]
+    fn block_mtp_interval_to_relative_mtp_floor() {
+        let time = NumberOf512Seconds::from_512_second_intervals(0);
+        let interval = BlockMtpInterval::from_u32(0);
+        assert_eq!(interval.to_relative_mtp_interval_floor().unwrap(), time);
+
+        let time = NumberOf512Seconds::from_512_second_intervals(1);
+        let interval = BlockMtpInterval::from_u32(1023);
+        assert_eq!(interval.to_relative_mtp_interval_floor().unwrap(), time); // Should floor down to 1
+        assert_ne!(interval.to_relative_mtp_interval_ceil().unwrap(), time); // Should ceil up to 2
+
+        // Check overflow limit
+        let max_time = NumberOf512Seconds::from_512_second_intervals(u16::MAX);
+        let max_seconds = u32::from(u16::MAX) * 512 + 511;
+
+        let interval = BlockMtpInterval::from_u32(max_seconds);
+        assert_eq!(interval.to_relative_mtp_interval_floor().unwrap(), max_time);
+        let interval = BlockMtpInterval::from_u32(max_seconds + 1);
+        assert_eq!(
+            interval.to_relative_mtp_interval_floor().unwrap_err(),
+            TimeOverflowError { seconds: max_seconds + 1 }
+        );
+    }
+
+
+    #[test]
+    fn block_mtp_interval_to_relative_mtp_ceil() {
+        let time = NumberOf512Seconds::from_512_second_intervals(0);
+        let interval = BlockMtpInterval::from_u32(0);
+        assert_eq!(interval.to_relative_mtp_interval_ceil().unwrap(), time);
+
+        let time = NumberOf512Seconds::from_512_second_intervals(2);
+        let interval = BlockMtpInterval::from_u32(1023);
+        assert_eq!(interval.to_relative_mtp_interval_ceil().unwrap(), time); // Should ceil up to 2
+        assert_ne!(interval.to_relative_mtp_interval_floor().unwrap(), time); // Should floor down to 1
+
+        // Check overflow limit
+        let max_time = NumberOf512Seconds::from_512_second_intervals(u16::MAX);
+        let max_seconds = u32::from(u16::MAX) * 512;
+
+        let interval = BlockMtpInterval::from_u32(max_seconds);
+        assert_eq!(interval.to_relative_mtp_interval_ceil().unwrap(), max_time);
+        let interval = BlockMtpInterval::from_u32(max_seconds + 1);
+        assert_eq!(
+            interval.to_relative_mtp_interval_ceil().unwrap_err(),
+            TimeOverflowError { seconds: max_seconds + 1 }
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    fn block_height_encoding_round_trip() {
+        let blockheight = BlockHeight(0x7FFF_FFFF);
+        let expected_bytes = alloc::vec![0xff, 0xff, 0xff, 0x7f];
+
+        let encoded = encoding::encode_to_vec(&blockheight);
+        assert_eq!(encoded, expected_bytes);
+
+        let decoded = encoding::decode_from_slice::<BlockHeight>(encoded.as_slice()).unwrap();
+        assert_eq!(decoded, blockheight);
+    }
+
+    #[test]
+    #[cfg(feature = "encoding")]
+    fn block_height_decoding() {
+        let bytes = [0xff, 0xff, 0xff, 0xff];
+        let expected = BlockHeight(0xFFFF_FFFF);
+
+        let mut decoder = BlockHeight::decoder();
+        assert_eq!(decoder.read_limit(), 4);
+        assert!(!decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+        assert_eq!(decoder.read_limit(), 0);
+
+        let decoded = decoder.end().unwrap();
+        assert_eq!(decoded, expected);
+    }
+
+    #[test]
+    #[cfg(feature = "encoding")]
+    fn block_height_decoding_error() {
+        let bytes = [0xff, 0xff, 0xff]; // 3 bytes is an EOF error
+
+        let mut decoder = BlockHeightDecoder::default();
+        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+
+        let error = decoder.end().unwrap_err();
+        assert!(matches!(error, BlockHeightDecoderError(UnexpectedEofError { .. })));
+    }
+
+    // Test a impl_u32_wrapper! type serde serialisation roundtrip.
+    macro_rules! serde_roundtrip_test {
+        { $test_name:tt, $typ:ident } => {
+            #[test]
+            #[cfg(feature = "serde")]
+            fn $test_name() {
+                let t = $typ(1_654_321);
+
+                let json = serde_json::to_string(&t).unwrap();
+                assert_eq!(json, "1654321"); // ASCII number representation
+
+                let roundtrip = serde_json::from_str::<$typ>(&json).unwrap();
+                assert_eq!(t, roundtrip);
+            }
+        }
+    }
+
+    serde_roundtrip_test!(block_height_serde_round_trip, BlockHeight);
+    serde_roundtrip_test!(block_height_interval_serde_round_trip, BlockHeightInterval);
+    serde_roundtrip_test!(block_mtp_serde_round_trip, BlockMtp);
+    serde_roundtrip_test!(block_mtp_interval_serde_round_trip, BlockMtpInterval);
 }
