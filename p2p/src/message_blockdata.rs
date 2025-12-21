@@ -9,10 +9,10 @@ use alloc::vec::Vec;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use primitives::BlockHash;
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use primitives::transaction::{Txid, Wtxid};
 use io::{BufRead, Write};
+use primitives::transaction::{Txid, Wtxid};
+use primitives::BlockHash;
 
 use crate::consensus::impl_consensus_encoding;
 use crate::ProtocolVersion;

@@ -31,7 +31,7 @@ pub trait IntoDeError: Sized {
 }
 
 mod impls {
-    use super::{IntoDeError, de};
+    use super::{de, IntoDeError};
 
     impl IntoDeError for core::convert::Infallible {
         fn into_de_error<E: de::Error>(self, _expected: Option<&dyn de::Expected>) -> E {

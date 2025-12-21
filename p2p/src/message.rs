@@ -16,11 +16,11 @@ use core::{cmp, fmt};
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
-use primitives::{block, transaction};
 use encoding;
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{self, BufRead, Read, Write};
+use primitives::{block, transaction};
 use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
@@ -1660,10 +1660,10 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
-    use primitives::{Block, BlockHash};
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use primitives::transaction::{Transaction, Txid};
     use hex_lit::hex;
+    use primitives::transaction::{Transaction, Txid};
+    use primitives::{Block, BlockHash};
     use units::BlockHeight;
 
     use super::*;

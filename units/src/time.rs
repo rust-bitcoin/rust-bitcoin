@@ -168,12 +168,12 @@ impl<'a> Arbitrary<'a> for BlockTime {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _};
     #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
+    #[cfg(feature = "encoding")]
+    use encoding::{Decodable as _, Decoder as _};
+
+    use super::*;
 
     #[test]
     fn block_time_round_trip() {
