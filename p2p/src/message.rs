@@ -30,6 +30,8 @@ use crate::{
     Magic,
 };
 
+use encoding::Decodable as Decodeable;
+
 /// The maximum number of [`super::message_blockdata::Inventory`] items in an `inv` message.
 ///
 /// This limit is not currently enforced by this implementation.
@@ -991,14 +993,20 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
                 })?,
             ),
-            "alert" => NetworkMessage::Alert(
-                bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
-                    &mut mem_d,
-                )
+            "alert" => {
+                let mut decoder = message_network::Alert::decoder();
+                decoder.push_bytes(&mut mem_d)
                 .map_err(|_| {
                     RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
-                })?,
-            ),
+                })?;
+
+                let decoded = decoder.end()
+                .map_err(|_| {
+                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                })?;
+
+                NetworkMessage::Alert(decoded)
+            }
             "reject" => NetworkMessage::Reject(
                 bitcoin::consensus::encode::Decodable::consensus_decode_from_finite_reader(
                     &mut mem_d,
