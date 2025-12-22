@@ -20,6 +20,7 @@
 //! * `serde` (dependency) - implements `serde`-based serialization and deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `secp-recovery` - enables calculating public key from a signature and message.
+//! * `no-aux-rand` - disables auxiliary randomness for Schnorr signatures
 //! * `std` - the usual dependency on `std`.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]

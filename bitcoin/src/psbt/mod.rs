@@ -431,9 +431,13 @@ impl Psbt {
                         .tap_tweak(input.tap_merkle_root)
                         .to_keypair();
 
-                    #[cfg(all(feature = "rand", feature = "std"))]
+                    #[cfg(all(feature = "rand", feature = "std", not(feature = "no-aux-rand")))]
                     let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
-                    #[cfg(not(all(feature = "rand", feature = "std")))]
+                    #[cfg(not(all(
+                        feature = "rand",
+                        feature = "std",
+                        not(feature = "no-aux-rand")
+                    )))]
                     let signature =
                         secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair);
 
@@ -459,10 +463,18 @@ impl Psbt {
                         let (sighash, sighash_type) =
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
-                        #[cfg(all(feature = "rand", feature = "std"))]
+                        #[cfg(all(
+                            feature = "rand",
+                            feature = "std",
+                            not(feature = "no-aux-rand")
+                        ))]
                         let signature =
                             secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair);
-                        #[cfg(not(all(feature = "rand", feature = "std")))]
+                        #[cfg(not(all(
+                            feature = "rand",
+                            feature = "std",
+                            not(feature = "no-aux-rand")
+                        )))]
                         let signature = secp256k1::schnorr::sign_no_aux_rand(
                             &sighash.to_byte_array(),
                             &key_pair,
