@@ -328,8 +328,8 @@ Run as for any other Rust project `cargo test --all-features`.
 
 ### Benchmarks
 
-We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
-bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+We use a custom Rust compiler configuration conditional to guard the benchmark code. To run the
+benchmarks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
 
 ### Mutation tests
 
