@@ -615,13 +615,17 @@ impl CompactSizeDecoder {
     ///
     /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
     /// decoded value exceeds 4,000,000 or won't fit in a `usize`.
-    pub const fn new() -> Self { Self { buf: internals::array_vec::ArrayVec::new(), limit: MAX_VEC_SIZE } }
+    pub const fn new() -> Self {
+        Self { buf: internals::array_vec::ArrayVec::new(), limit: MAX_VEC_SIZE }
+    }
 
     /// Constructs a new compact size decoder with encoded value limited to the provided usize.
     ///
     /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
     /// decoded value exceeds `limit` or won't fit in a `usize`.
-    pub const fn new_with_limit(limit: usize) -> Self { Self { buf: internals::array_vec::ArrayVec::new(), limit } }
+    pub const fn new_with_limit(limit: usize) -> Self {
+        Self { buf: internals::array_vec::ArrayVec::new(), limit }
+    }
 }
 
 impl Default for CompactSizeDecoder {
@@ -698,24 +702,20 @@ impl Decoder for CompactSizeDecoder {
 
         // This error is returned if dec_value is outside of the usize range, or
         // if it is above the given limit.
-        let make_err = ||  {
-            CompactSizeDecoderError(
-                E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
-                    value: dec_value,
-                    limit: self.limit,
-                })
-            )
+        let make_err = || {
+            CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
+                value: dec_value,
+                limit: self.limit,
+            }))
         };
 
-        usize::try_from(dec_value)
-            .map_err(|_| make_err())
-            .and_then(|nsize| {
-                if nsize > self.limit {
-                    Err(make_err())
-                } else {
-                    Ok(nsize)
-                }
-            })
+        usize::try_from(dec_value).map_err(|_| make_err()).and_then(|nsize| {
+            if nsize > self.limit {
+                Err(make_err())
+            } else {
+                Ok(nsize)
+            }
+        })
     }
 
     fn read_limit(&self) -> usize {
