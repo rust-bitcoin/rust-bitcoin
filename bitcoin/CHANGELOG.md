@@ -2,7 +2,7 @@
 
 This series of beta releases is meant for two things:
 
-1. To allow testing of the upcoming `bitcoin v0.33.0`. Its been a long
+1. To allow testing of the upcoming `bitcoin v0.33.0`. It's been a long
    time since we released and there is a lot in this.
 
 2. To allow testing of the `1.0.0` RC releases of:
@@ -26,7 +26,7 @@ For changes to our dependencies included in this release see:
 - `bitcoin-units 1.0.0-rc`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
 - `bitcoin-consensus-encoding 1.0.0-rc` [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/consensus_encoding/CHANGELOG.md)
 
-## Worthy on note
+## Worthy of note
 
 This release introduces an upper limit on the `Amount` type.
 
@@ -132,7 +132,7 @@ The `serde` serialization for `Psbt` has changed.
   you may want to use `MAX_REDEEM_SCRIPT_SIZE` or perhaps `MAX_STACK_ELEMENT_SIZE` (see `bitcoin/src/blockdata/constants`).
 - `ecdsa::Error` was replaced by `ecdsa::DecodeError` and `ecdsa::ParseSignatureError`
   (returned by `ecdsa::Signature::from_slice` and `from_str` respectively).
-- `script::read_scriptint` was move to be a method on `PushBytes`.
+- `script::read_scriptint` was moved to be a method on `PushBytes`.
 - You can likely just remove the `hashes::Hash` trait import.
 - Change `OutPoint::default()` to `OutPoint::COINBASE_PREVOUT` if appropriate.
 - Change `TxIn::default()` to `TxIn::EMPTY_COINBASE` if appropriate.
@@ -234,7 +234,7 @@ In particular consider having some type that implements `AsRef<Params>`, we have
 - Remove `Network` from `AddressInner` [#1832](https://github.com/rust-bitcoin/rust-bitcoin/pull/1832)
 - Add consts to `Params` for individual networks [#2396](https://github.com/rust-bitcoin/rust-bitcoin/pull/2396)
 - Add `params()` method to `Network` [#2172](https://github.com/rust-bitcoin/rust-bitcoin/pull/2172)
-- Use `KnowHrp`` instead of `Network` [#2387](https://github.com/rust-bitcoin/rust-bitcoin/pull/2387)
+- Use `KnownHrp` instead of `Network` [#2387](https://github.com/rust-bitcoin/rust-bitcoin/pull/2387)
 - Add check to max difficulty transition threshold [#2337](https://github.com/rust-bitcoin/rust-bitcoin/pull/2337)
 
 ## Other API additions
@@ -847,3 +847,4 @@ See `Transaction::verify` and `Script::verify` methods.
 
 * Remove `num` dependency at Matt's request; agree this is obnoxious to require all
 downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
+
