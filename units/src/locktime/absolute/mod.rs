@@ -398,7 +398,7 @@ impl LockTime {
 parse_int::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`LockTime`] type.
     pub struct LockTimeEncoder(encoding::ArrayEncoder<4>);
 }

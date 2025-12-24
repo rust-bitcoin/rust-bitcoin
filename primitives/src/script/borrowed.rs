@@ -153,7 +153,7 @@ impl<T> Script<T> {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Script<T>`] type.
     pub struct ScriptEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }

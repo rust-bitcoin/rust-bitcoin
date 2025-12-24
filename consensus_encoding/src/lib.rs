@@ -41,4 +41,4 @@ pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
     SliceEncoder,
 };
-pub use self::encode::{Encodable, EncodableByteIter, Encoder};
+pub use self::encode::{Encodable, EncodableByteIter, Encoder, ExactSizeEncoder};

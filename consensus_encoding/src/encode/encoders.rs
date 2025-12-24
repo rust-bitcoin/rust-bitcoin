@@ -8,13 +8,14 @@
 //! to your newtype. This avoids leaking encoding implementation details to the
 //! users of your type.
 //!
-//! For implementing these newtypes, we provide the [`encoder_newtype`] macro.
+//! For implementing these newtypes, we provide the [`encoder_newtype`] and
+//! [`encoder_newtype_exact`] macros.
 //!
 
 use internals::array_vec::ArrayVec;
 use internals::compact_size;
 
-use super::{Encodable, Encoder};
+use super::{Encodable, Encoder, ExactSizeEncoder};
 
 /// The maximum length of a compact size encoding.
 const SIZE: usize = 9;
@@ -38,6 +39,13 @@ impl Encoder for BytesEncoder<'_> {
     }
 }
 
+impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
+    #[inline]
+    fn len(&self) -> usize {
+        self.sl.map_or(0, <[u8]>::len)
+    }
+}
+
 /// An encoder for a single array.
 pub struct ArrayEncoder<const N: usize> {
     arr: Option<[u8; N]>,
@@ -57,6 +65,11 @@ impl<const N: usize> Encoder for ArrayEncoder<N> {
         self.arr = None;
         false
     }
+}
+
+impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
+    #[inline]
+    fn len(&self) -> usize { self.arr.map_or(0, |a| a.len()) }
 }
 
 /// An encoder for a list of encodable types.
@@ -150,6 +163,15 @@ impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
     }
 }
 
+impl<A, B> ExactSizeEncoder for Encoder2<A, B>
+where
+    A: Encoder + ExactSizeEncoder,
+    B: Encoder + ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.enc_1.len() + self.enc_2.len() }
+}
+
 // For now we implement every higher encoder by composing Encoder2s, because
 // I'm lazy and this is trivial both to write and to review. For efficiency, we
 // should eventually unroll all of these. There are only a couple of them. The
@@ -174,6 +196,16 @@ impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<A, B, C> {
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
 
+impl<A, B, C> ExactSizeEncoder for Encoder3<A, B, C>
+where
+    A: Encoder + ExactSizeEncoder,
+    B: Encoder + ExactSizeEncoder,
+    C: Encoder + ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.inner.len() }
+}
+
 /// An encoder which encodes four objects, one after the other.
 pub struct Encoder4<A, B, C, D> {
     inner: Encoder2<Encoder2<A, B>, Encoder2<C, D>>,
@@ -191,6 +223,17 @@ impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<A, B, 
     fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
+}
+
+impl<A, B, C, D> ExactSizeEncoder for Encoder4<A, B, C, D>
+where
+    A: Encoder + ExactSizeEncoder,
+    B: Encoder + ExactSizeEncoder,
+    C: Encoder + ExactSizeEncoder,
+    D: Encoder + ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.inner.len() }
 }
 
 /// An encoder which encodes six objects, one after the other.
@@ -217,6 +260,19 @@ impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Enc
     fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
+}
+
+impl<A, B, C, D, E, F> ExactSizeEncoder for Encoder6<A, B, C, D, E, F>
+where
+    A: Encoder + ExactSizeEncoder,
+    B: Encoder + ExactSizeEncoder,
+    C: Encoder + ExactSizeEncoder,
+    D: Encoder + ExactSizeEncoder,
+    E: Encoder + ExactSizeEncoder,
+    F: Encoder + ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.inner.len() }
 }
 
 /// Encoder for a compact size encoded integer.
@@ -247,6 +303,11 @@ impl Encoder for CompactSizeEncoder {
         self.buf = None;
         false
     }
+}
+
+impl ExactSizeEncoder for CompactSizeEncoder {
+    #[inline]
+    fn len(&self) -> usize { self.buf.map_or(0, |buf| buf.len()) }
 }
 
 #[cfg(test)]
@@ -280,6 +341,8 @@ mod tests {
         // Should have one chunk with the array data, then exhausted.
         let test_array = TestArray([1u8, 2, 3, 4]);
         let mut encoder = test_array.encoder();
+        assert_eq!(encoder.len(), 4);
+        assert!(!encoder.is_empty());
         assert_eq!(encoder.current_chunk(), &[1u8, 2, 3, 4][..]);
         assert!(!encoder.advance());
         assert!(encoder.current_chunk().is_empty());
@@ -290,6 +353,8 @@ mod tests {
         // Empty array should have one empty chunk, then exhausted.
         let test_array = TestArray([]);
         let mut encoder = test_array.encoder();
+        assert_eq!(encoder.len(), 0);
+        assert!(encoder.is_empty());
         assert!(encoder.current_chunk().is_empty());
         assert!(!encoder.advance());
         assert!(encoder.current_chunk().is_empty());
@@ -302,6 +367,9 @@ mod tests {
         let test_bytes = TestBytes(&obj);
         let mut encoder = test_bytes.encoder();
 
+        assert_eq!(encoder.len(), 3);
+        assert!(!encoder.is_empty());
+
         assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
         assert!(!encoder.advance());
         assert!(encoder.current_chunk().is_empty());
@@ -313,6 +381,9 @@ mod tests {
         let obj = [];
         let test_bytes = TestBytes(&obj);
         let mut encoder = test_bytes.encoder();
+
+        assert_eq!(encoder.len(), 0);
+        assert!(encoder.is_empty());
 
         assert!(encoder.current_chunk().is_empty());
         assert!(!encoder.advance());
@@ -361,6 +432,9 @@ mod tests {
         let enc2 = TestArray([3u8, 4]).encoder();
         let mut encoder = Encoder2::new(enc1, enc2);
 
+        assert_eq!(encoder.len(), 4);
+        assert!(!encoder.is_empty());
+
         assert_eq!(encoder.current_chunk(), &[1u8, 2][..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[3u8, 4][..]);
@@ -374,6 +448,9 @@ mod tests {
         let enc1 = TestArray([]).encoder();
         let enc2 = TestArray([]).encoder();
         let mut encoder = Encoder2::new(enc1, enc2);
+
+        assert_eq!(encoder.len(), 0);
+        assert!(encoder.is_empty());
 
         assert!(encoder.current_chunk().is_empty());
         assert!(encoder.advance());
@@ -389,6 +466,9 @@ mod tests {
         let enc2 = TestArray([2u8, 3u8]).encoder();
         let enc3 = TestArray([4u8, 5u8, 6u8]).encoder();
         let mut encoder = Encoder3::new(enc1, enc2, enc3);
+
+        assert_eq!(encoder.len(), 6);
+        assert!(!encoder.is_empty());
 
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
@@ -407,6 +487,9 @@ mod tests {
         let enc3 = TestArray([0x30]).encoder();
         let enc4 = TestArray([0x40]).encoder();
         let mut encoder = Encoder4::new(enc1, enc2, enc3, enc4);
+
+        assert_eq!(encoder.len(), 4);
+        assert!(!encoder.is_empty());
 
         assert_eq!(encoder.current_chunk(), &[0x10][..]);
         assert!(encoder.advance());
@@ -430,6 +513,9 @@ mod tests {
         let enc6 = TestArray([0x06]).encoder();
         let mut encoder = Encoder6::new(enc1, enc2, enc3, enc4, enc5, enc6);
 
+        assert_eq!(encoder.len(), 6);
+        assert!(!encoder.is_empty());
+
         assert_eq!(encoder.current_chunk(), &[0x01][..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[0x02][..]);
@@ -452,6 +538,9 @@ mod tests {
         let enc2 = TestArray([0xDD, 0xCC]).encoder();
         let mut encoder = Encoder2::new(enc1, enc2);
 
+        assert_eq!(encoder.len(), 4);
+        assert!(!encoder.is_empty());
+
         assert_eq!(encoder.current_chunk(), &[0xFF, 0xEE][..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[0xDD, 0xCC][..]);
@@ -466,6 +555,9 @@ mod tests {
         let enc2 = TestArray([0x42]).encoder();
         let enc3 = TestArray([0x43, 0x44, 0x45]).encoder();
         let mut encoder = Encoder3::new(enc1, enc2, enc3);
+
+        assert_eq!(encoder.len(), 4);
+        assert!(!encoder.is_empty());
 
         assert!(encoder.current_chunk().is_empty());
         assert!(encoder.advance());
@@ -565,33 +657,39 @@ mod tests {
         // 1-byte
         let mut e = CompactSizeEncoder::new(0x10usize);
         assert_eq!(e.current_chunk(), &[0x10][..]);
+        assert_eq!(e.len(), 1);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         let mut e = CompactSizeEncoder::new(0xFCusize);
         assert_eq!(e.current_chunk(), &[0xFC][..]);
+        assert_eq!(e.len(), 1);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         // 0xFD + u16
         let mut e = CompactSizeEncoder::new(0x00FDusize);
         assert_eq!(e.current_chunk(), &[0xFD, 0xFD, 0x00][..]);
+        assert_eq!(e.len(), 3);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         let mut e = CompactSizeEncoder::new(0x0FFFusize);
         assert_eq!(e.current_chunk(), &[0xFD, 0xFF, 0x0F][..]);
+        assert_eq!(e.len(), 3);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         // 0xFE + u32
         let mut e = CompactSizeEncoder::new(0x0001_0000usize);
         assert_eq!(e.current_chunk(), &[0xFE, 0x00, 0x00, 0x01, 0x00][..]);
+        assert_eq!(e.len(), 5);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
         let mut e = CompactSizeEncoder::new(0x0F0F_0F0Fusize);
         assert_eq!(e.current_chunk(), &[0xFE, 0x0F, 0x0F, 0x0F, 0x0F][..]);
+        assert_eq!(e.len(), 5);
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
 
@@ -603,6 +701,7 @@ mod tests {
                 e.current_chunk(),
                 &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]
             );
+            assert_eq!(e.len(), 9);
             assert!(!e.advance());
             assert!(e.current_chunk().is_empty());
         }
@@ -615,6 +714,7 @@ mod tests {
                 e.current_chunk(),
                 &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF][..]
             );
+            assert_eq!(e.len(), 9);
             assert!(!e.advance());
             assert!(e.current_chunk().is_empty());
         }
@@ -624,15 +724,17 @@ mod tests {
     fn iter_encoder() {
         let test_array = TestArray([1u8, 2, 3, 4]);
         let mut iter = crate::EncodableByteIter::new(&test_array);
-        let mut byte = iter.next().unwrap();
-        assert_eq!(byte, 1u8);
-        byte = iter.next().unwrap();
-        assert_eq!(byte, 2u8);
-        byte = iter.next().unwrap();
-        assert_eq!(byte, 3u8);
-        byte = iter.next().unwrap();
-        assert_eq!(byte, 4u8);
-        let none = iter.next();
-        assert_eq!(none, None);
+
+        assert_eq!(iter.len(), 4);
+
+        assert_eq!(iter.next().unwrap(), 1);
+        assert_eq!(iter.len(), 3);
+        assert_eq!(iter.next().unwrap(), 2);
+        assert_eq!(iter.len(), 2);
+        assert_eq!(iter.next().unwrap(), 3);
+        assert_eq!(iter.len(), 1);
+        assert_eq!(iter.next().unwrap(), 4);
+        assert_eq!(iter.len(), 0);
+        assert!(iter.next().is_none());
     }
 }
