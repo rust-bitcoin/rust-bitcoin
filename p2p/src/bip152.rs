@@ -13,7 +13,6 @@ use std::error;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use bitcoin::transaction::TxIdentifier;
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
@@ -92,6 +91,18 @@ impl Decodable for PrefilledTransaction {
         let tx = Transaction::consensus_decode(r)?;
         Ok(Self { idx, tx })
     }
+}
+
+/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
+pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
+
+impl TxIdentifier for bitcoin::Txid {}
+impl TxIdentifier for bitcoin::Wtxid {}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for bitcoin::Txid {}
+    impl Sealed for bitcoin::Wtxid {}
 }
 
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.

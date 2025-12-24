@@ -76,12 +76,6 @@ internal_macros::define_extension_trait! {
     }
 }
 
-/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
-pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
-
-impl TxIdentifier for Txid {}
-impl TxIdentifier for Wtxid {}
-
 // Duplicated in `primitives`.
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-0141)
 const SEGWIT_MARKER: u8 = 0x00;
