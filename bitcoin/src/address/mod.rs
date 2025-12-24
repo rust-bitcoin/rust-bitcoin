@@ -584,7 +584,7 @@ impl Address {
         Self::from_witness_program(program, hrp)
     }
 
-    /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from a pre-tweaked output key.
+    /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from a tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2tr_tweaked(output_key);
         Self::from_witness_program(program, hrp)
