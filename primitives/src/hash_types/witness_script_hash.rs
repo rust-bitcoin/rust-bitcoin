@@ -30,6 +30,10 @@ impl WScriptHash {
     /// > witnessScript must match the 32-byte witness program.
     ///
     /// ref: [BIP-0141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 10,000 bytes.
     #[inline]
     pub fn from_script(witness_script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
         if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {

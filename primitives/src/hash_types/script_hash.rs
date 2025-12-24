@@ -32,6 +32,10 @@ impl ScriptHash {
     /// > spend a P2SH output if the redemption script it refers to is >520 bytes in length.
     ///
     /// ref: [BIP-0016](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 520 bytes.
     #[inline]
     pub fn from_script<T>(redeem_script: &Script<T>) -> Result<Self, RedeemScriptSizeError>
     where

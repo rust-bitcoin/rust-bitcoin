@@ -109,11 +109,17 @@ impl UserAgent {
     const MAX_USER_AGENT_LEN: usize = 256;
 
     fn panic_invalid_chars(agent_str: &str) {
-        assert!(!agent_str.chars().any(|c| matches!(c, '/' | '(' | ')' | ':')), "user agent configuration cannot contain: / ( ) :");
+        assert!(
+            !agent_str.chars().any(|c| matches!(c, '/' | '(' | ')' | ':')),
+            "user agent configuration cannot contain: / ( ) :"
+        );
     }
 
     fn panic_max_len(agent_str: &str) {
-        assert!(agent_str.chars().count() <= Self::MAX_USER_AGENT_LEN, "user agent cannot exceed 256 characters.");
+        assert!(
+            agent_str.chars().count() <= Self::MAX_USER_AGENT_LEN,
+            "user agent cannot exceed 256 characters."
+        );
     }
     /// Builds a new user agent from the lowest level client software. For example: `Satoshi` is
     /// used by Bitcoin Core.

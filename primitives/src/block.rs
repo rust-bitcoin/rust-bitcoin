@@ -119,6 +119,14 @@ impl Block<Unchecked> {
     ///
     /// * The Merkle root of the header matches Merkle root of the transaction list.
     /// * The witness commitment in coinbase matches the transaction list.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// * The block has no transactions.
+    /// * The first transaction is not a coinbase transaction.
+    /// * The Merkle root of the header does not match the Merkle root of the transaction list.
+    /// * The witness commitment in the coinbase does not match the transaction list.
     pub fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
         if self.transactions.is_empty() {
             return Err(InvalidBlockError::NoTransactions);
