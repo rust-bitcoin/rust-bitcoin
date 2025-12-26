@@ -676,25 +676,7 @@ impl BeneficiaryWallet {
 
         // FINALIZER
         psbt.inputs.iter_mut().for_each(|input| {
-            let mut script_witness: Witness = Witness::new();
-            for (_, signature) in input.tap_script_sigs.iter() {
-                script_witness.push(signature.to_vec());
-            }
-            for (control_block, (script, _)) in input.tap_scripts.iter() {
-                script_witness.push(script.to_vec());
-                script_witness.push(control_block.serialize());
-            }
-            input.final_script_witness = Some(script_witness);
-
-            // Clear all the data fields as per the spec.
-            input.partial_sigs = BTreeMap::new();
-            input.sighash_type = None;
-            input.redeem_script = None;
-            input.witness_script = None;
-            input.bip32_derivation = BTreeMap::new();
-            input.tap_script_sigs = BTreeMap::new();
-            input.tap_scripts = BTreeMap::new();
-            input.tap_key_sig = None;
+            input.finalize_taproot_script_path_input();
         });
 
         // EXTRACTOR

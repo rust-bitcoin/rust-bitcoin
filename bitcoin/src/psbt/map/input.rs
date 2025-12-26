@@ -377,6 +377,34 @@ impl Input {
         Ok(())
     }
 
+    /// Builds the witness stack for a Taproot script path input.
+    fn build_tapscript_witness(&mut self) {
+        let mut script_witness: Witness = Witness::new();
+        for (_, signature) in self.tap_script_sigs.iter() {
+            script_witness.push(signature.to_vec());
+        }
+        for (control_block, (script, _)) in self.tap_scripts.iter() {
+            script_witness.push(script.to_bytes());
+            script_witness.push(control_block.serialize());
+        }
+        self.final_script_witness = Some(script_witness);
+    }
+
+    /// Finalizes a Taproot script path input by building the witness stack
+    /// then clearing PSBT data fields per BIP-0174.
+    pub fn finalize_taproot_script_path_input(&mut self) {
+        self.build_tapscript_witness();
+
+        self.partial_sigs = BTreeMap::new();
+        self.sighash_type = None;
+        self.redeem_script = None;
+        self.witness_script = None;
+        self.bip32_derivation = BTreeMap::new();
+        self.tap_script_sigs = BTreeMap::new();
+        self.tap_scripts = BTreeMap::new();
+        self.tap_key_sig = None;
+    }
+
     /// Combines this [`Input`] with `other` `Input` (as described by BIP 174).
     pub fn combine(&mut self, other: Self) {
         combine!(non_witness_utxo, self, other);
