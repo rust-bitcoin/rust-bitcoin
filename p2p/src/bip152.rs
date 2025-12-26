@@ -480,13 +480,13 @@ mod test {
     use alloc::vec;
 
     use bitcoin::consensus::encode::{deserialize, serialize};
-    use bitcoin::locktime::absolute;
     use bitcoin::merkle_tree::TxMerkleNode;
-    use bitcoin::{
+    use hex::FromHex;
+    use primitives::locktime::absolute;
+    use primitives::{
         transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptPubKeyBuf,
         ScriptSigBuf, Sequence, TxIn, TxOut, Txid, Witness,
     };
-    use hex::FromHex;
 
     use super::*;
 
