@@ -9,13 +9,14 @@ use bitcoin::consensus::encode::serialize_hex;
 use bitcoin::opcodes::all::OP_CHECKSIG;
 use bitcoin::psbt::{GetKey, Input, KeyRequest, PsbtSighashType, SignError};
 use bitcoin::script::TapScriptExt as _;
-use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
+use bitcoin::sighash::TapSighashType;
+use bitcoin::taproot::{self, LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
     absolute, script, Address, Amount, Network, OutPoint, PrivateKey, Psbt, ScriptSigBuf, Sequence,
     TapScriptBuf, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
-use secp256k1::Keypair;
+use secp256k1::{Keypair, SecretKey};
 
 #[test]
 fn psbt_sign_taproot() {
@@ -159,6 +160,60 @@ fn psbt_sign_taproot() {
         let tx_bytes = "0200000000010176a3c94a6b21d742e8ca192130ad10fdfc4c83510cb6baba8572a5fc70677c9d0000000000ffffffff0170170000000000002251202258f2d4637b2ca3fd27614868b33dee1a242b42582d5474f51730005fa99ce803419c1466e1631a58c55fcb8642ce5f7896314f4b565d92c5c80b17aa9abf56d22e0b5e5dcbcfe836bbd7d409491f58aa9e1f68a491ef8f05eef62fb50ffac857270122203058679f6d60b87ef921d98a2a9a1f1e0779dae27bedbd1cdb2f147a07835ac9ac61c1b68df382cad577d8304d5a8e640c3cb42d77c10016ab754caa4d6e68b6cb296d9b9d92a717ebeba858f75182936f0da5a7aecc434b0eebb2dc8a6af5409422ccf87f124e735a592a8ff390a68f6f05469ba8422e246dc78b0b57cd1576ffa98c00000000";
         assert_eq!(tx_bytes, tx_hex);
     }
+}
+
+#[test]
+fn finalize_taproot_script_path_input_signature_order() {
+    let kp_a = Keypair::from_secret_key(&SecretKey::from_secret_bytes([1; 32]).unwrap());
+    let pubkey_a = XOnlyPublicKey::from(kp_a.x_only_public_key().0);
+    let kp_b = Keypair::from_secret_key(&SecretKey::from_secret_bytes([2; 32]).unwrap());
+    let pubkey_b = XOnlyPublicKey::from(kp_b.x_only_public_key().0);
+
+    // Script order: pubkey_a, pubkey_b
+    let script = script::Builder::new()
+        .push_slice(pubkey_a.serialize())
+        .push_slice(pubkey_b.serialize())
+        .into_script();
+
+    let mut sig_a_bytes = vec![0xaa; 64];
+    sig_a_bytes.push(TapSighashType::Default as u8);
+    let sig_a = taproot::Signature::from_slice(&sig_a_bytes).expect("failed to create signature");
+    let mut sig_b_bytes = vec![0xbb; 64];
+    sig_b_bytes.push(TapSighashType::Default as u8);
+    let sig_b = taproot::Signature::from_slice(&sig_b_bytes).expect("failed to create signature");
+
+    let control_block = TaprootBuilder::new()
+        .add_leaf(0, script.clone())
+        .expect("failed to add leaf")
+        .finalize(pubkey_a)
+        .expect("failed to finalize")
+        .control_block(&(script.clone(), LeafVersion::TapScript))
+        .expect("failed to get control block");
+
+    let leaf_hash = script.tapscript_leaf_hash();
+    let sig_a_vec = sig_a.to_vec();
+    let sig_b_vec = sig_b.to_vec();
+    let script_bytes = script.to_vec();
+    let control_block_bytes = control_block.serialize();
+
+    let mut input = Input {
+        tap_scripts: BTreeMap::from([(control_block, (script, LeafVersion::TapScript))]),
+        tap_script_sigs: BTreeMap::from([
+            ((pubkey_a, leaf_hash), sig_a),
+            ((pubkey_b, leaf_hash), sig_b),
+        ]),
+        ..Default::default()
+    };
+
+    input.finalize_taproot_script_path_input();
+
+    let witness = input.final_script_witness.as_ref().expect("failed to get witness");
+
+    // Witness: [sig_b, sig_a, script, control_block] - reverse script order per BIP-0342
+    assert_eq!(&witness[0], sig_b_vec.as_slice());
+    assert_eq!(&witness[1], sig_a_vec.as_slice());
+    assert_eq!(&witness[2], script_bytes.as_slice());
+    assert_eq!(&witness[3], control_block_bytes.as_slice());
 }
 
 fn create_basic_single_sig_script(sk: &str) -> TapScriptBuf {

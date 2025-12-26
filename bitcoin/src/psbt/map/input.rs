@@ -6,13 +6,17 @@ use core::str::FromStr;
 use hashes::{hash160, ripemd160, sha256, sha256d};
 
 use crate::bip32::KeySource;
+use crate::crypto::key::constants::SCHNORR_PUBLIC_KEY_SIZE;
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{error, raw, Error};
-use crate::script::{RedeemScriptBuf, ScriptSigBuf, TapScriptBuf, WitnessScriptBuf};
+use crate::script::{
+    Instruction, RedeemScriptBuf, ScriptExt, ScriptSigBuf, TapScriptBuf, TapScriptExt,
+    WitnessScriptBuf,
+};
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
     TapSighashType,
@@ -380,13 +384,36 @@ impl Input {
     /// Builds the witness stack for a Taproot script path input.
     fn build_tapscript_witness(&mut self) {
         let mut script_witness: Witness = Witness::new();
-        for (_, signature) in self.tap_script_sigs.iter() {
-            script_witness.push(signature.to_vec());
-        }
+
         for (control_block, (script, _)) in self.tap_scripts.iter() {
-            script_witness.push(script.to_bytes());
+            // Extract 32-byte script pushes that validate as pubkeys, preserving script order
+            let mut pubkeys_in_order = Vec::new();
+            for instruction in script.instructions().flatten() {
+                if let Instruction::PushBytes(push_bytes) = instruction {
+                    if push_bytes.len() == SCHNORR_PUBLIC_KEY_SIZE {
+                        let candidate_bytes =
+                            push_bytes.as_bytes().try_into().expect("length checked above");
+                        if let Ok(pubkey) = XOnlyPublicKey::from_byte_array(&candidate_bytes) {
+                            pubkeys_in_order.push(pubkey);
+                        }
+                    }
+                }
+            }
+
+            let leaf_hash = script.tapscript_leaf_hash();
+
+            // Push signatures in reverse order
+            for pubkey in pubkeys_in_order.iter().rev() {
+                if let Some(sig) = self.tap_script_sigs.get(&(*pubkey, leaf_hash)) {
+                    script_witness.push(sig.to_vec());
+                }
+            }
+
+            // Push script and control block
+            script_witness.push(script.to_vec());
             script_witness.push(control_block.serialize());
         }
+
         self.final_script_witness = Some(script_witness);
     }
 
