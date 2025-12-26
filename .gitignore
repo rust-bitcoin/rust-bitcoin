@@ -16,9 +16,5 @@ hashes/target
 bitcoin/dep_test
 mutants.out*
 
-# Fuzz artifacts
-hfuzz_target
-hfuzz_workspace
-
 # Local tooling
 .maintainer-tools
