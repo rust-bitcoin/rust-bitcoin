@@ -71,7 +71,9 @@ mod encapsulate {
         /// # use bitcoin_units::Amount;
         /// assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
         /// ```
-        pub const fn to_sat(self) -> u64 { self.0 }
+        pub const fn to_sat(self) -> u64 {
+            self.0
+        }
 
         /// Constructs a new [`Amount`] from the given number of satoshis.
         ///
@@ -82,11 +84,26 @@ mod encapsulate {
         /// # Examples
         ///
         /// ```
-        /// # use bitcoin_units::{amount, Amount};
-        /// # let sat = 100_000;
-        /// let amount = Amount::from_sat(sat)?;
-        /// assert_eq!(amount.to_sat(), sat);
-        /// # Ok::<_, amount::OutOfRangeError>(())
+        /// use bitcoin_units::amount::OutOfRangeError;
+        /// use bitcoin_units::Amount;
+        ///
+        /// // Common small amount: 50,000 satoshis (typical transaction fee)
+        /// let fee = Amount::from_sat(50_000)?;
+        /// assert_eq!(fee.to_sat(), 50_000);
+        ///
+        /// // Half a Bitcoin
+        /// let half_btc = Amount::from_sat(50_000_000)?;
+        /// assert_eq!(half_btc.to_sat(), 50_000_000);
+        ///
+        /// // One full Bitcoin — using the built-in constant for clarity
+        /// let one_btc = Amount::ONE_BTC;
+        /// assert_eq!(one_btc.to_sat(), 100_000_000);
+        ///
+        /// // Error case: too large (more than 21 million BTC)
+        /// let too_big = Amount::from_sat(2_100_000_001_000_000);
+        /// assert!(matches!(too_big, Err(OutOfRangeError { .. })));
+        ///
+        /// # Ok::<_, bitcoin_units::amount::OutOfRangeError>(())
         /// ```
         pub const fn from_sat(satoshi: u64) -> Result<Self, OutOfRangeError> {
             if satoshi > Self::MAX_MONEY.to_sat() {
@@ -123,8 +140,9 @@ impl Amount {
         let sats = const_casts::u32_to_u64(satoshi);
         match Self::from_sat(sats) {
             Ok(amount) => amount,
-            Err(_) =>
-                panic!("unreachable - u32 input [0 to 4,294,967,295 satoshis] is within range"),
+            Err(_) => {
+                panic!("unreachable - u32 input [0 to 4,294,967,295 satoshis] is within range")
+            }
         }
     }
 
@@ -240,7 +258,9 @@ impl Amount {
     /// # Ok::<_, amount::ParseError>(())
     /// ```
     #[cfg(feature = "alloc")]
-    pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
+    pub fn to_btc(self) -> f64 {
+        self.to_float_in(Denomination::Bitcoin)
+    }
 
     /// Converts this [`Amount`] in floating-point notation in the given [`Denomination`].
     ///
@@ -310,7 +330,9 @@ impl Amount {
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[cfg(feature = "alloc")]
-    pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
+    pub fn to_string_in(self, denom: Denomination) -> String {
+        self.display_in(denom).to_string()
+    }
 
     /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`],
     /// suffixed with the abbreviation for the denomination.
@@ -431,10 +453,11 @@ impl Amount {
         // Mul by 1,000 because we use per/kwu.
         if let Some(sats) = self.to_sat().checked_mul(1_000) {
             match sats.checked_div(wu) {
-                Some(fee_rate) =>
+                Some(fee_rate) => {
                     if let Ok(amount) = Self::from_sat(fee_rate) {
                         return FeeRate::from_per_kwu(amount);
-                    },
+                    }
+                }
                 None => return R::Error(E::while_doing(MathOp::Div)),
             }
         }
@@ -509,7 +532,9 @@ impl Amount {
 }
 
 impl default::Default for Amount {
-    fn default() -> Self { Self::ZERO }
+    fn default() -> Self {
+        Self::ZERO
+    }
 }
 
 impl fmt::Debug for Amount {
@@ -553,7 +578,9 @@ impl FromStr for Amount {
 impl TryFrom<SignedAmount> for Amount {
     type Error = OutOfRangeError;
 
-    fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
+    fn try_from(value: SignedAmount) -> Result<Self, Self::Error> {
+        value.to_unsigned()
+    }
 }
 
 #[cfg(feature = "encoding")]
@@ -577,12 +604,16 @@ pub struct AmountDecoder(encoding::ArrayDecoder<8>);
 #[cfg(feature = "encoding")]
 impl AmountDecoder {
     /// Constructs a new [`Amount`] decoder.
-    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub const fn new() -> Self {
+        Self(encoding::ArrayDecoder::new())
+    }
 }
 
 #[cfg(feature = "encoding")]
 impl Default for AmountDecoder {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(feature = "encoding")]
@@ -602,13 +633,17 @@ impl encoding::Decoder for AmountDecoder {
     }
 
     #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
+    fn read_limit(&self) -> usize {
+        self.0.read_limit()
+    }
 }
 
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for Amount {
     type Decoder = AmountDecoder;
-    fn decoder() -> Self::Decoder { AmountDecoder(encoding::ArrayDecoder::<8>::new()) }
+    fn decoder() -> Self::Decoder {
+        AmountDecoder(encoding::ArrayDecoder::<8>::new())
+    }
 }
 
 #[cfg(feature = "arbitrary")]
