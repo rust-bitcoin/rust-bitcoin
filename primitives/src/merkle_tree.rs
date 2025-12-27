@@ -141,6 +141,8 @@ impl MerkleNode for WitnessMerkleNode {
 #[cfg(test)]
 mod tests {
     use crate::hash_types::*;
+    #[cfg(feature = "alloc")]
+    use alloc::vec;
 
     // Helper to make a Txid, TxMerkleNode pair with a single number byte array
     fn make_leaf_node(byte: u8) -> (Txid, TxMerkleNode) {
@@ -276,4 +278,23 @@ mod tests {
         let root = WitnessMerkleNode::calculate_root([leaf, leaf].into_iter());
         assert!(root.is_none(), "Duplicate witness leaves should return None");
     }
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witness_merkle_root_is_deterministic() {
+        let leaves = vec![
+            Wtxid::from_byte_array([1u8; 32]),
+            Wtxid::from_byte_array([2u8; 32]),
+            Wtxid::from_byte_array([3u8; 32]),
+        ];
+    
+        let root1 =
+            WitnessMerkleNode::calculate_root(leaves.iter().copied())
+                .expect("root must exist");
+    
+        let root2 =
+            WitnessMerkleNode::calculate_root(leaves.iter().copied())
+                .expect("root must exist");
+    
+        assert_eq!(root1, root2);
+    }     
 }
