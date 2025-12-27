@@ -26,8 +26,6 @@ use encoding::{
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
 use internals::array::ArrayExt as _;
-#[cfg(feature = "alloc")]
-use internals::compact_size;
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -279,14 +277,14 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 
     // Encode inputs (excluding witness data) with leading compact size encoded int.
     let input_len = tx.inputs.len();
-    enc.input(compact_size::encode(input_len).as_slice());
+    enc.input(crate::compact_size_encode(input_len).as_slice());
     for input in &tx.inputs {
         // Encode each input same as we do in `Encodable for TxIn`.
         enc.input(input.previous_output.txid.as_byte_array());
         enc.input(&input.previous_output.vout.to_le_bytes());
 
         let script_sig_bytes = input.script_sig.as_bytes();
-        enc.input(compact_size::encode(script_sig_bytes.len()).as_slice());
+        enc.input(crate::compact_size_encode(script_sig_bytes.len()).as_slice());
         enc.input(script_sig_bytes);
 
         enc.input(&input.sequence.0.to_le_bytes());
@@ -294,13 +292,13 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 
     // Encode outputs with leading compact size encoded int.
     let output_len = tx.outputs.len();
-    enc.input(compact_size::encode(output_len).as_slice());
+    enc.input(crate::compact_size_encode(output_len).as_slice());
     for output in &tx.outputs {
         // Encode each output same as we do in `Encodable for TxOut`.
         enc.input(&output.amount.to_sat().to_le_bytes());
 
         let script_pubkey_bytes = output.script_pubkey.as_bytes();
-        enc.input(compact_size::encode(script_pubkey_bytes.len()).as_slice());
+        enc.input(crate::compact_size_encode(script_pubkey_bytes.len()).as_slice());
         enc.input(script_pubkey_bytes);
     }
 
@@ -308,9 +306,9 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         // BIP-0141 (SegWit) transaction serialization also includes the witness data.
         for input in &tx.inputs {
             // Same as `Encodable for Witness`.
-            enc.input(compact_size::encode(input.witness.len()).as_slice());
+            enc.input(crate::compact_size_encode(input.witness.len()).as_slice());
             for element in &input.witness {
-                enc.input(compact_size::encode(element.len()).as_slice());
+                enc.input(crate::compact_size_encode(element.len()).as_slice());
                 enc.input(element);
             }
         }
