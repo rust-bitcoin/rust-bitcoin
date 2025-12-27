@@ -31,6 +31,11 @@ name = "witness"
 path = "bitcoin/witness.rs"
 harness = false
 
+[[bench]]
+name = "duplicate_inputs"
+path = "bitcoin/duplicate_inputs.rs"
+harness = false
+
 
 [[bench]]
 name = "chacha20poly1305"
