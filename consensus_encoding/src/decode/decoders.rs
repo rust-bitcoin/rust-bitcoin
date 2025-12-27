@@ -107,6 +107,12 @@ impl Decoder for ByteVecDecoder {
 
     fn end(self) -> Result<Self::Output, Self::Error> {
         use {ByteVecDecoderError as E, ByteVecDecoderErrorInner as Inner};
+        
+        if let Some(ref prefix_decoder) = self.prefix_decoder {  
+            return Err(E(Inner::UnexpectedEof(UnexpectedEofError {
+                missing: prefix_decoder.read_limit(), 
+            })));
+        }
 
         if self.bytes_written == self.bytes_expected {
             Ok(self.buffer)
@@ -1208,6 +1214,65 @@ mod tests {
             decode_byte_vec_multi_byte_length_prefix, [0xff; 256], two_fifty_six_bytes_encoded();
     }
 
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_decode_empty_slice() {
+        let mut decoder = ByteVecDecoder::new();
+        let data = [];
+        let _ = decoder.push_bytes(&mut data.as_slice());
+        let err = decoder.end().unwrap_err();
+        
+        if let ByteVecDecoderErrorInner::UnexpectedEof(e) = err.0 {
+            assert_eq!(e.missing, 1);
+        } else {
+            panic!("Expected UnexpectedEof error");
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_incomplete_0xfd_prefix() {
+        let mut decoder = ByteVecDecoder::new();
+        let data = [0xFD];
+        let _ = decoder.push_bytes(&mut data.as_slice());
+        let err = decoder.end().unwrap_err();
+
+        if let ByteVecDecoderErrorInner::UnexpectedEof(e) = err.0 {
+            assert_eq!(e.missing, 2);
+        } else {
+            panic!("Expected UnexpectedEof error");
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_incomplete_0xfe_prefix() {
+        let mut decoder = ByteVecDecoder::new();
+        let data = [0xFE];
+        let _ = decoder.push_bytes(&mut data.as_slice());
+        let err = decoder.end().unwrap_err();
+        
+        if let ByteVecDecoderErrorInner::UnexpectedEof(e) = err.0 {
+            assert_eq!(e.missing, 4);
+        } else {
+            panic!("Expected UnexpectedEof error");
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn byte_vec_decoder_incomplete_0xff_prefix() {
+        let mut decoder = ByteVecDecoder::new();
+        let data = [0xFF];
+        let _ = decoder.push_bytes(&mut data.as_slice());
+        let err = decoder.end().unwrap_err();
+        
+        if let ByteVecDecoderErrorInner::UnexpectedEof(e) = err.0 {
+            assert_eq!(e.missing, 8);
+        } else {
+            panic!("Expected UnexpectedEof error");
+        }
+    }
     #[test]
     #[cfg(feature = "alloc")]
     fn byte_vec_decoder_reserves_in_batches() {
