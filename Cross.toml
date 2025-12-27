@@ -1,0 +1,2 @@
+[target.s390x-unknown-linux-gnu]
+dockerfile = ".github/docker/Dockerfile.s390x"
