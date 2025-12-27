@@ -16,7 +16,7 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
 name = "base58ck"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bitcoin-internals",
  "bitcoin_hashes",
@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.33.0-beta.0"
+version = "0.33.0-beta.1"
 dependencies = [
  "arbitrary",
  "base58ck",
@@ -78,7 +78,7 @@ version = "0.0.0"
 
 [[package]]
 name = "bitcoin-consensus-encoding"
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 dependencies = [
  "bitcoin-internals",
  "hex-conservative 0.3.0",
@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-internals"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "bincode",
  "hex-conservative 0.3.0",
@@ -139,7 +139,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-primitives"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "arbitrary",
  "bincode",
@@ -156,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-units"
-version = "1.0.0-rc.3"
+version = "1.0.0-rc.4"
 dependencies = [
  "arbitrary",
  "bincode",
@@ -169,7 +169,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",

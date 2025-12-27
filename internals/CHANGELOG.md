@@ -1,11 +1,34 @@
+# 0.5.0 - 2025-12-05
+
+- Remove `doc_auto_cfg` [#5162](https://github.com/rust-bitcoin/rust-bitcoin/pull/5162)
+- Move `impl_array_newtype` to `internals` [#5334](https://github.com/rust-bitcoin/rust-bitcoin/pull/5334)
+
 # 0.4.2 - 2025-12-08
+
+Yanking this release because it is on top of the to-be-yanked `v0.4.1`.
 
 - Move `impl_array_newtype` to internals [#5334](https://github.com/rust-bitcoin/rust-bitcoin/pull/5334)
 
 # 0.4.1 - 2024-10-18
 
-- Bump MSRV to Rust 1.74.0 [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
+This release violated semver rules, sorry - yanking.
+
 - Add `hex-conservative` dependency
+- Add `ArrayExt` [#4200](https://github.com/rust-bitcoin/rust-bitcoin/pull/4200)
+- Add `compact_size::encoded_size_const` [#2931](https://github.com/rust-bitcoin/rust-bitcoin/pull/2931)
+- Add `const_casts` module [#4743](https://github.com/rust-bitcoin/rust-bitcoin/pull/4743)
+- Add `transparent_newtype` macro [#4281](https://github.com/rust-bitcoin/rust-bitcoin/pull/4281)
+- Move `const_assert` to internals
+- Add `SliceExt` [#4182](https://github.com/rust-bitcoin/rust-bitcoin/pull/4182)
+- Abstract out "debug-print hex fields" using `WrapDebug` [#4088](https://github.com/rust-bitcoin/rust-bitcoin/pull/4088)
+
+## Breaking changes
+
+This release will be yanked because the following were included and are breaking changes:
+
+- Bump MSRV to Rust 1.74.0 [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
+- Remove usage of `impl_from_infallible` in crates [#3859](https://github.com/rust-bitcoin/rust-bitcoin/pull/3859)
+- Removed `impl_array_newtype` [#3544](https://github.com/rust-bitcoin/rust-bitcoin/pull/3544)
 
 # 0.4.0 - 2024-09-18
 
