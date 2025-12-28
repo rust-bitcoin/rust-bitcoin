@@ -115,7 +115,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-io"
-version = "0.3.0"
+version = "0.4.0-rc.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
