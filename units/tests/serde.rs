@@ -6,10 +6,13 @@
 #![cfg(feature = "serde")]
 
 use bincode::serialize;
-use bitcoin_units::{amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, BlockTime, FeeRate, Sequence, SignedAmount, Weight};
-use serde::{Deserialize, Serialize};
-use bitcoin_units::absolute::{LockTime as AbsoluteLockTime, Height, MedianTimePast};
+use bitcoin_units::absolute::{Height, LockTime as AbsoluteLockTime, MedianTimePast};
 use bitcoin_units::relative::{LockTime as RelativeLockTime, NumberOf512Seconds, NumberOfBlocks};
+use bitcoin_units::{
+    amount, fee_rate, Amount, BlockHeight, BlockHeightInterval, BlockTime, FeeRate, Sequence,
+    SignedAmount, Weight,
+};
+use serde::{Deserialize, Serialize};
 
 /// A struct that includes all the types that implement or support `serde` traits.
 #[derive(Debug, Serialize, Deserialize)]
@@ -300,14 +303,10 @@ fn serde_amount_as_str_opt() {
 }
 
 #[track_caller]
-fn fee_rate_vb(vb: u32) -> FeeRate {
-    FeeRate::from_sat_per_vb(vb)
-}
+fn fee_rate_vb(vb: u32) -> FeeRate { FeeRate::from_sat_per_vb(vb) }
 
 #[track_caller]
-fn fee_rate_kwu(vb: u32) -> FeeRate {
-    FeeRate::from_sat_per_kwu(vb)
-}
+fn fee_rate_kwu(vb: u32) -> FeeRate { FeeRate::from_sat_per_kwu(vb) }
 
 #[test]
 #[cfg(feature = "serde")]
@@ -502,15 +501,12 @@ fn serde_fee_rate_as_sat_per_vb_ceil_opt() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 fn serde_as_block_height() {
-
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
-        pub block_height: BlockHeight
+        pub block_height: BlockHeight,
     }
 
-    let orig = T {
-        block_height: BlockHeight::from_u32(123_456_789)
-    };
+    let orig = T { block_height: BlockHeight::from_u32(123_456_789) };
 
     let json = "{\"block_height\": 123456789}";
 
@@ -525,15 +521,12 @@ fn serde_as_block_height() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 fn serde_as_block_interval() {
-
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
-        pub block_interval: BlockHeightInterval
+        pub block_interval: BlockHeightInterval,
     }
 
-    let orig = T {
-        block_interval: BlockHeightInterval::from_u32(144)
-    };
+    let orig = T { block_interval: BlockHeightInterval::from_u32(144) };
 
     let json = "{\"block_interval\": 144}";
 
@@ -548,15 +541,12 @@ fn serde_as_block_interval() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 fn serde_as_weight() {
-
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
-        pub weight: Weight
+        pub weight: Weight,
     }
 
-    let orig = T {
-        weight: Weight::from_wu(25)
-    };
+    let orig = T { weight: Weight::from_wu(25) };
 
     let json = "{\"weight\": 25}";
 
@@ -571,15 +561,12 @@ fn serde_as_weight() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 fn serde_as_block_time() {
-
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
-        pub block_time: BlockTime
+        pub block_time: BlockTime,
     }
 
-    let orig = T {
-        block_time: BlockTime::from_u32(123_456_789)
-    };
+    let orig = T { block_time: BlockTime::from_u32(123_456_789) };
 
     let json = "{\"block_time\": 123456789}";
 
@@ -594,15 +581,12 @@ fn serde_as_block_time() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 fn serde_as_sequence_from_hex() {
-
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
-        pub sequence: Sequence
+        pub sequence: Sequence,
     }
 
-    let orig = T {
-        sequence: Sequence::from_hex("0x0040ffff").unwrap()
-    };
+    let orig = T { sequence: Sequence::from_hex("0x0040ffff").unwrap() };
 
     let json = "{\"sequence\": 4259839}";
 
@@ -617,7 +601,6 @@ fn serde_as_sequence_from_hex() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 fn serde_as_locktime_from_blocks() {
-
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
         pub a_lt: AbsoluteLockTime,
@@ -642,7 +625,6 @@ fn serde_as_locktime_from_blocks() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 fn serde_as_locktime_from_time() {
-
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
         pub a_lt: AbsoluteLockTime,
