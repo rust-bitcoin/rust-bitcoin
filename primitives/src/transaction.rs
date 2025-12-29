@@ -538,7 +538,17 @@ impl Decoder for TransactionDecoder {
             State::Outputs(..) => Err(E(Inner::EarlyEnd("outputs"))),
             State::Witnesses(..) => Err(E(Inner::EarlyEnd("witnesses"))),
             State::LockTime(..) => Err(E(Inner::EarlyEnd("locktime"))),
-            State::Done(tx) => Ok(tx),
+            State::Done(tx) => {
+                // check for null prevout in non-coinbase txs
+                if tx.inputs.len() > 1 {
+                    for (index, input) in tx.inputs.iter().enumerate() {
+                        if input.previous_output == OutPoint::COINBASE_PREVOUT {
+                            return Err(E(Inner::NullPrevoutInNonCoinbase(index)));
+                        }
+                    }
+                }
+                Ok(tx)
+            }
             State::Errored => panic!("call to end() after decoder errored"),
         }
     }
@@ -640,6 +650,8 @@ enum TransactionDecoderErrorInner {
     /// Attempt to call `end()` before the transaction was complete. Holds
     /// a description of the current state.
     EarlyEnd(&'static str),
+    /// Null prevout in non-coinbase transaction.
+    NullPrevoutInNonCoinbase(usize),
 }
 
 #[cfg(feature = "alloc")]
@@ -692,6 +704,7 @@ impl fmt::Display for TransactionDecoderError {
             E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
             E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
             E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
+            E::NullPrevoutInNonCoinbase(index) => write!(f, "null prevout in non-coinbase transaction at input {}", index),
         }
     }
 }
@@ -711,6 +724,7 @@ impl std::error::Error for TransactionDecoderError {
             E::NoWitnesses => None,
             E::LockTime(ref e) => Some(e),
             E::EarlyEnd(_) => None,
+            E::NullPrevoutInNonCoinbase(_) => None,
         }
     }
 }
@@ -2191,5 +2205,21 @@ mod tests {
         let decoded_tx = encoding::decode_from_slice(&encoded).unwrap();
 
         assert_eq!(original_tx, decoded_tx);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_null_prevout_in_non_coinbase_transaction() {
+        // Test vector taken from Bitcoin Core tx_invalid.json
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L64
+        // "Null txin, but without being a coinbase (because there are two inputs)"
+        let tx_bytes = hex!("01000000020000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff00010000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("null prevout in non-coinbase tx should be rejected");
+
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(0)));
     }
 }
