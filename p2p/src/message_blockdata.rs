@@ -6,10 +6,14 @@
 //! Bitcoin data (blocks and transactions) around.
 
 use alloc::vec::Vec;
+use core::convert::Infallible;
+use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
+use encoding::{ArrayDecoder, ArrayEncoder, Decoder2, Encoder2};
+use internals::write_err;
 use io::{BufRead, Write};
 use primitives::transaction::{Txid, Wtxid};
 use primitives::BlockHash;
@@ -98,6 +102,93 @@ impl Decodable for Inventory {
             tp => Self::Unknown { inv_type: tp, hash: Decodable::consensus_decode(r)? },
         })
     }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`Inventory`] type.
+    pub struct InventoryEncoder(Encoder2<ArrayEncoder<4>, ArrayEncoder<32>>);
+}
+
+impl encoding::Encodable for Inventory {
+    type Encoder<'e> = InventoryEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let (prefix, bytes) = match *self {
+            Self::Error(e) => (0, e),
+            Self::Transaction(t) => (1, t.to_byte_array()),
+            Self::Block(b) => (2, b.to_byte_array()),
+            Self::CompactBlock(b) => (4, b.to_byte_array()),
+            Self::WTx(w) => (5, w.to_byte_array()),
+            Self::WitnessTransaction(t) => (0x4000_0001, t.to_byte_array()),
+            Self::WitnessBlock(b) => (0x4000_0002, b.to_byte_array()),
+            Self::Unknown { inv_type: t, hash: d } => (t, d),
+        };
+        InventoryEncoder(Encoder2::new(
+            ArrayEncoder::without_length_prefix(prefix.to_le_bytes()),
+            ArrayEncoder::without_length_prefix(bytes))
+        )
+    }
+}
+
+type InventoryInnerDecoder = Decoder2<ArrayDecoder<4>, ArrayDecoder<32>>;
+
+/// The decoder for the [`Inventory`] type.
+pub struct InventoryDecoder(InventoryInnerDecoder);
+
+impl encoding::Decoder for InventoryDecoder {
+    type Output = Inventory;
+    type Error = InventoryDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(InventoryDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (ty, inv) = self.0.end().map_err(InventoryDecoderError)?;
+        let inv_type = u32::from_le_bytes(ty);
+        Ok(match inv_type {
+            0 => Self::Output::Error(inv),
+            1 => Self::Output::Transaction(Txid::from_byte_array(inv)),
+            2 => Self::Output::Block(BlockHash::from_byte_array(inv)),
+            4 => Self::Output::CompactBlock(BlockHash::from_byte_array(inv)),
+            5 => Self::Output::WTx(Wtxid::from_byte_array(inv)),
+            0x4000_0001 => Self::Output::WitnessTransaction(Txid::from_byte_array(inv)),
+            0x4000_0002 => Self::Output::WitnessBlock(BlockHash::from_byte_array(inv)),
+            tp => Self::Output::Unknown { inv_type: tp, hash: inv },
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Inventory {
+    type Decoder = InventoryDecoder;
+    fn decoder() -> Self::Decoder {
+        InventoryDecoder(Decoder2::new(ArrayDecoder::<4>::new(), ArrayDecoder::<32>::new()))
+    }
+}
+
+/// An error consensus decoding an [`Inventory`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InventoryDecoderError(<InventoryInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for InventoryDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+
+impl fmt::Display for InventoryDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "inventory error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InventoryDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 // Some simple messages
