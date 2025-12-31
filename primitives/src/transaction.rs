@@ -606,6 +606,14 @@ impl Decoder for TransactionDecoder {
                         return Err(E(Inner::CoinbaseScriptSigTooLarge(len)));
                     }
                 }
+                // check for duplicate inputs (CVE-2018-17144).
+                let mut outpoints: Vec<_> = tx.inputs.iter().map(|i| i.previous_output).collect();
+                outpoints.sort_unstable();
+                for pair in outpoints.windows(2) {
+                    if pair[0] == pair[1] {
+                        return Err(E(Inner::DuplicateInput(pair[0])));
+                    }
+                }
                 Ok(tx)
             }
             State::Errored => panic!("call to end() after decoder errored"),
@@ -715,6 +723,8 @@ enum TransactionDecoderErrorInner {
     CoinbaseScriptSigTooSmall(usize),
     /// Coinbase scriptSig is too large (must be at most 100 bytes).
     CoinbaseScriptSigTooLarge(usize),
+    /// Transaction has duplicate inputs (this check prevents CVE-2018-17144 ).
+    DuplicateInput(OutPoint),
 }
 
 #[cfg(feature = "alloc")]
@@ -773,6 +783,8 @@ impl fmt::Display for TransactionDecoderError {
                 write!(f, "coinbase scriptSig too small: {} bytes (min 2)", len),
             E::CoinbaseScriptSigTooLarge(len) =>
                 write!(f, "coinbase scriptSig too large: {} bytes (max 100)", len),
+            E::DuplicateInput(ref outpoint) =>
+                write!(f, "duplicate input: {:?}:{}", outpoint.txid, outpoint.vout),
         }
     }
 }
@@ -795,6 +807,7 @@ impl std::error::Error for TransactionDecoderError {
             E::NullPrevoutInNonCoinbase(_) => None,
             E::CoinbaseScriptSigTooSmall(_) => None,
             E::CoinbaseScriptSigTooLarge(_) => None,
+            E::DuplicateInput(_) => None,
         }
     }
 }
@@ -1608,10 +1621,15 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn transaction_encode_decode_roundtrip() {
+        // Create two different inputs to avoid duplicate input rejection
+        let tx_in_1 = segwit_tx_in();
+        let mut tx_in_2 = segwit_tx_in();
+        tx_in_2.previous_output.vout = 2;
+
         let tx = Transaction {
             version: Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            inputs: vec![segwit_tx_in(), segwit_tx_in()],
+            inputs: vec![tx_in_1, tx_in_2],
             outputs: vec![tx_out(), tx_out()],
         };
 
@@ -1721,11 +1739,16 @@ mod tests {
     #[test]
     #[cfg(feature = "hex")]
     fn transaction_from_hex_str_round_trip() {
+        // Create two different inputs to avoid duplicate input rejection
+        let tx_in_1 = segwit_tx_in();
+        let mut tx_in_2 = segwit_tx_in();
+        tx_in_2.previous_output.vout = 2;
+
         // Create a transaction and convert it to a hex string
         let tx = Transaction {
             version: Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            inputs: vec![segwit_tx_in(), segwit_tx_in()],
+            inputs: vec![tx_in_1, tx_in_2],
             outputs: vec![tx_out(), tx_out()],
         };
 
@@ -2451,5 +2474,30 @@ mod tests {
         let tx = decoder.end().expect("coinbase with 100-byte scriptSig should be accepted");
 
         assert_eq!(tx.inputs[0].script_sig.len(), 100);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_duplicate_inputs() {
+        // Test vector from Bitcoin Core tx_invalid.json:
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L50
+        // Transaction has two inputs both spending the same outpoint
+        let tx_bytes = hex!("01000000020001000000000000000000000000000000000000000000000000000000000000000000006c47304402204bb1197053d0d7799bf1b30cd503c44b58d6240cccbdc85b6fe76d087980208f02204beeed78200178ffc6c74237bb74b3f276bbb4098b5605d814304fe128bf1431012321039e8815e15952a7c3fada1905f8cf55419837133bd7756c0ef14fc8dfe50c0deaacffffffff0001000000000000000000000000000000000000000000000000000000000000000000006c47304402202306489afef52a6f62e90bf750bbcdf40c06f5c6b138286e6b6b86176bb9341802200dba98486ea68380f47ebb19a7df173b99e6bc9c681d6ccf3bde31465d1f16b3012321039e8815e15952a7c3fada1905f8cf55419837133bd7756c0ef14fc8dfe50c0deaacffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("transaction with duplicate inputs should be rejected");
+
+        let expected_outpoint = OutPoint {
+            txid: Txid::from_byte_array([
+                0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            ]),
+            vout: 0,
+        };
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::DuplicateInput(expected_outpoint)));
     }
 }
