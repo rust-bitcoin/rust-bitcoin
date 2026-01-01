@@ -388,6 +388,36 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
+    fn try_from_string() {
+        let weight_value: alloc::string::String = "10".into();
+        let got = Weight::try_from(weight_value).unwrap();
+        let want = Weight::from_wu(10);
+        assert_eq!(got, want);
+
+        // Only base-10 integers should parse
+        let weight_value: alloc::string::String = "0xab".into();
+        assert!(Weight::try_from(weight_value).is_err());
+        let weight_value: alloc::string::String = "10.123".into();
+        assert!(Weight::try_from(weight_value).is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn try_from_box() {
+        let weight_value: alloc::boxed::Box<str> = "10".into();
+        let got = Weight::try_from(weight_value).unwrap();
+        let want = Weight::from_wu(10);
+        assert_eq!(got, want);
+
+        // Only base-10 integers should parse
+        let weight_value: alloc::boxed::Box<str> = "0xab".into();
+        assert!(Weight::try_from(weight_value).is_err());
+        let weight_value: alloc::boxed::Box<str> = "10.123".into();
+        assert!(Weight::try_from(weight_value).is_err());
+    }
+
+    #[test]
     fn to_kwu_floor() {
         assert_eq!(Weight::from_wu(5_000).to_kwu_floor(), 5);
         assert_eq!(Weight::from_wu(5_999).to_kwu_floor(), 5);
