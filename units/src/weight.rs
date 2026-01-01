@@ -576,4 +576,40 @@ mod tests {
         weight %= 3;
         assert_eq!(weight, Weight::from_wu(1));
     }
+
+    #[test]
+    fn iter_sum() {
+        let values = [
+            Weight::from_wu(10),
+            Weight::from_wu(50),
+            Weight::from_wu(30),
+            Weight::from_wu(5),
+            Weight::from_wu(5),
+        ];
+        let got: Weight = values.into_iter().sum();
+        let want = Weight::from_wu(100);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn iter_sum_ref() {
+        let values = [
+            Weight::from_wu(10),
+            Weight::from_wu(50),
+            Weight::from_wu(30),
+            Weight::from_wu(5),
+            Weight::from_wu(5),
+        ];
+        let got: Weight = values.iter().sum();
+        let want = Weight::from_wu(100);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn iter_sum_empty() {
+        let values: [Weight; 0] = [];
+        let got: Weight = values.into_iter().sum();
+        let want = Weight::from_wu(0);
+        assert_eq!(got, want);
+    }
 }
