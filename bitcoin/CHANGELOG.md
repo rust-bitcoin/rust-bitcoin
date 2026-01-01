@@ -1,4 +1,4 @@
-# 0.33.0-beta.0 - 2025-11-03
+# 0.33.0-beta.0 - 2025-12-29
 
 This series of beta releases is meant for two things:
 
