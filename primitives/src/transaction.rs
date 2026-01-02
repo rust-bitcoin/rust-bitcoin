@@ -537,6 +537,10 @@ impl Decoder for TransactionDecoder {
             State::Witnesses(..) => Err(E(Inner::EarlyEnd("witnesses"))),
             State::LockTime(..) => Err(E(Inner::EarlyEnd("locktime"))),
             State::Done(tx) => {
+                // Reject transactions with no outputs
+                if tx.outputs.is_empty() {
+                    return Err(E(Inner::NoOutputs));
+                }
                 // check for null prevout in non-coinbase txs
                 if tx.inputs.len() > 1 {
                     for (index, input) in tx.inputs.iter().enumerate() {
@@ -650,6 +654,8 @@ enum TransactionDecoderErrorInner {
     EarlyEnd(&'static str),
     /// Null prevout in non-coinbase transaction.
     NullPrevoutInNonCoinbase(usize),
+    /// Transaction has no outputs.
+    NoOutputs,
 }
 
 #[cfg(feature = "alloc")]
@@ -703,6 +709,7 @@ impl fmt::Display for TransactionDecoderError {
             E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
             E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
             E::NullPrevoutInNonCoinbase(index) => write!(f, "null prevout in non-coinbase transaction at input {}", index),
+            E::NoOutputs => write!(f, "transaction has no outputs"),
         }
     }
 }
@@ -723,6 +730,7 @@ impl std::error::Error for TransactionDecoderError {
             E::LockTime(ref e) => Some(e),
             E::EarlyEnd(_) => None,
             E::NullPrevoutInNonCoinbase(_) => None,
+            E::NoOutputs => None,
         }
     }
 }
@@ -2190,13 +2198,13 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn decode_zero_inputs() {
-        // Test empty transaction with no inputs or outputs.
+        // Test transaction with no inputs (but with one output to satisfy validation).
         let block: u32 = 741_521;
         let original_tx = Transaction {
             version: Version::ONE,
             lock_time: absolute::LockTime::from_height(block).expect("valid height"),
             inputs: vec![],
-            outputs: vec![],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
         };
 
         let encoded = encoding::encode_to_vec(&original_tx);
@@ -2219,5 +2227,20 @@ mod tests {
         let err = decoder.end().expect_err("null prevout in non-coinbase tx should be rejected");
 
         assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(0)));
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_transaction_with_no_outputs() {
+        // Test vector taken from Bitcoin Core tx_invalid.json
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L36
+        // "No outputs"
+        let tx_bytes = hex!("01000000010001000000000000000000000000000000000000000000000000000000000000000000006d483045022100f16703104aab4e4088317c862daec83440242411b039d14280e03dd33b487ab802201318a7be236672c5c56083eb7a5a195bc57a40af7923ff8545016cd3b571e2a601232103c40e5d339df3f30bf753e7e04450ae4ef76c9e45587d1d993bdc4cd06f0651c7acffffffff0000000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().unwrap_err();
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NoOutputs));
     }
 }
