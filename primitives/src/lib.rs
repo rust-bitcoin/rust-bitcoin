@@ -118,9 +118,9 @@ pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
 #[cfg(feature = "hex")]
 pub(crate) mod hex_codec {
     use core::fmt;
+    use core::fmt::Write as _;
 
     use encoding::{Decodable, Decoder, Encodable, EncodableByteIter};
-    #[cfg(feature = "alloc")]
     use hex_unstable::{BytesToHexIter, Case};
     use internals::write_err;
 
@@ -169,19 +169,6 @@ pub(crate) mod hex_codec {
                 Self::Decode(_) => None,
             }
         }
-    }
-
-    /// Writes an Encodable object to the given formatter in the requested case.
-    #[inline]
-    #[cfg(feature = "alloc")]
-    fn hex_write_with_case<T: Encodable + Decodable>(
-        obj: &HexPrimitive<T>,
-        f: &mut fmt::Formatter,
-        case: Case,
-    ) -> fmt::Result {
-        let iter = BytesToHexIter::new(encoding::EncodableByteIter::new(obj.0), case);
-        let collection = iter.collect::<alloc::string::String>();
-        f.pad(&collection)
     }
 
     /// Hex encoding wrapper type for Encodable + Decodable types.
@@ -236,34 +223,88 @@ pub(crate) mod hex_codec {
 
             decoder.end().map_err(ParsePrimitiveError::Decode)
         }
+
+        /// Writes an Encodable object to the given formatter in the requested case.
+        #[inline]
+        fn fmt_hex(
+            &self,
+            f: &mut fmt::Formatter,
+            case: Case,
+        ) -> fmt::Result {
+            // Closure to write a given pad character out a given number of times.
+            let write_pad = |f: &mut fmt::Formatter, pad_len: usize| -> fmt::Result {
+                for _ in 0..pad_len {
+                    f.write_char(f.fill())?;
+                }
+                Ok(())
+            };
+
+            // Count hex chars
+            let len = EncodableByteIter::new(self.0).count() * 2;
+            let iter = BytesToHexIter::new(
+                EncodableByteIter::new(self.0),
+                case,
+            );
+
+            let extra_len = if f.alternate() { 2 } else { 0 };
+            let total_len = len + extra_len;
+
+            // We pad for width, and truncate for precision, but not vice-versa
+            let pad_width = f.width().unwrap_or(total_len);
+            let trunc_width = f.precision()
+                .map_or(len, |v| v.saturating_sub(extra_len));
+
+            let pad_diff = pad_width.saturating_sub(total_len);
+
+
+            // Left padding
+            let left_pad = match f.align() {
+                Some(fmt::Alignment::Left) => 0,
+                Some(fmt::Alignment::Center) => pad_diff / 2,
+                Some(fmt::Alignment::Right) => pad_diff,
+                None => 0,
+            };
+            write_pad(f, left_pad)?;
+
+            // Alt characters
+            if f.alternate() {
+                f.write_str(match case {
+                    hex_unstable::Case::Lower => "0x",
+                    hex_unstable::Case::Upper => "0X",
+                })?;
+            }
+
+            // Hex data
+            for (i, ch) in iter.enumerate() {
+                if i >= trunc_width { break; }
+                f.write_char(ch)?;
+            }
+
+            // Right padding
+            write_pad(f, pad_diff.saturating_sub(left_pad))?;
+
+            Ok(())
+        }
     }
 
-    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::Display for HexPrimitive<'_, T> {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
     }
 
-    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::Debug for HexPrimitive<'_, T> {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
     }
 
-    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::LowerHex for HexPrimitive<'_, T> {
         #[inline]
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            hex_write_with_case(self, f, Case::Lower)
-        }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Lower) }
     }
 
-    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::UpperHex for HexPrimitive<'_, T> {
         #[inline]
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            hex_write_with_case(self, f, Case::Upper)
-        }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Upper) }
     }
 }
 

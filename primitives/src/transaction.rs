@@ -35,7 +35,7 @@ use units::parse_int;
 #[cfg(feature = "alloc")]
 use crate::amount::{AmountDecoder, AmountEncoder};
 #[cfg(all(feature = "hex", feature = "alloc"))]
-use crate::hex_codec::ParsePrimitiveError;
+use crate::hex_codec::{HexPrimitive, ParsePrimitiveError};
 #[cfg(feature = "alloc")]
 use crate::locktime::absolute::{LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder};
 #[cfg(feature = "alloc")]
@@ -381,28 +381,28 @@ impl core::str::FromStr for Transaction {
     type Err = ParseTransactionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseTransactionError)
+        HexPrimitive::from_str(s).map_err(ParseTransactionError)
     }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Display for Transaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&crate::hex_codec::HexPrimitive(self), f)
+        fmt::Display::fmt(&HexPrimitive(self), f)
     }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::LowerHex for Transaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
     }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::UpperHex for Transaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
     }
 }
 

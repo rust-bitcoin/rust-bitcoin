@@ -15,8 +15,6 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{Encodable, Decodable, Decoder, Decoder6};
-#[cfg(feature = "hex")]
-use encoding::EncodableByteIter;
 #[cfg(feature = "alloc")]
 use encoding::{
     CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder,
@@ -26,7 +24,7 @@ use internals::write_err;
 
 use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
 #[cfg(feature = "hex")]
-use crate::hex_codec::ParsePrimitiveError;
+use crate::hex_codec::{HexPrimitive, ParsePrimitiveError};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
@@ -512,32 +510,23 @@ impl core::str::FromStr for Header {
     type Err = ParseHeaderError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseHeaderError)
+        HexPrimitive::from_str(s).map_err(ParseHeaderError)
     }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
-    #[allow(clippy::use_self)]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use hex_unstable::{fmt_hex_exact, Case};
-
-        fmt_hex_exact!(f, Header::SIZE, EncodableByteIter::new(self), Case::Lower)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&HexPrimitive(self), f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&HexPrimitive(self), f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&HexPrimitive(self), f) }
 }
 
 impl fmt::Debug for Header {
@@ -1263,6 +1252,10 @@ mod tests {
         let want = format!("{:.20}", want);
         let got = format!("{:.20}", header);
         assert_eq!(got, want);
+
+        let want = format!("{:.0}", want);
+        let got = format!("{:.0}", header);
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -1271,7 +1264,7 @@ mod tests {
     fn header_hex() {
         let header = dummy_header();
 
-        let want = concat!(
+        let lower_hex = concat!(
             "01000000",                                                         // version
             "9999999999999999999999999999999999999999999999999999999999999999", // prev_blockhash
             "7777777777777777777777777777777777777777777777777777777777777777", // merkle_root
@@ -1281,13 +1274,33 @@ mod tests {
         );
 
         // All of these should yield a lowercase hex
-        assert_eq!(want, format!("{:x}", header));
-        assert_eq!(want, format!("{}", header));
+        assert_eq!(lower_hex, format!("{:x}", header));
+        assert_eq!(lower_hex, format!("{}", header));
 
         // And these should yield uppercase hex
-        let upper_encoded =
-            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
-        assert_eq!(upper_encoded, format!("{:X}", header));
+        let upper_hex = lower_hex.to_ascii_uppercase();
+        assert_eq!(upper_hex, format!("{:X}", header));
+
+        // Check padding (right, left, center, custom char)
+        assert_eq!(format!("{:>164}", lower_hex), format!("{:>164x}", header));
+        assert_eq!(format!("{:<164}", lower_hex), format!("{:<164x}", header));
+        assert_eq!(format!("{:^164}", lower_hex), format!("{:^164x}", header));
+        assert_eq!(format!("{:_>164}", lower_hex), format!("{:_>164x}", header));
+
+        // Alt forms
+        let lower_hex_alt = format!("0x{}", lower_hex);
+        assert_eq!(lower_hex_alt, format!("{:#x}", header));
+        assert_eq!(format!("0X{}", upper_hex), format!("{:#X}", header));
+
+        // Alternate + padding
+        assert_eq!(format!("{:>166}", lower_hex_alt), format!("{:>#166x}", header));
+        assert_eq!(format!("{:<166}", lower_hex_alt), format!("{:<#166x}", header));
+        assert_eq!(format!("{:^166}", lower_hex_alt), format!("{:^#166x}", header));
+
+        // Alt + truncate
+        assert_eq!(format!("{:>.20}", lower_hex_alt), format!("{:>#.20x}", header));
+        assert_eq!(format!("{:<.20}", lower_hex_alt), format!("{:<#.20x}", header));
+        assert_eq!(format!("{:^.20}", lower_hex_alt), format!("{:^#.20x}", header));
     }
 
     #[test]
