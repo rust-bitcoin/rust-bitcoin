@@ -115,80 +115,65 @@ pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
     ArrayVec::from_slice(encoder.current_chunk())
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
-use core::{convert, fmt};
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-use encoding::{Decodable, Decoder};
-#[cfg(all(feature = "hex", feature = "alloc"))]
-use internals::write_err;
-
-/// An error type for errors that can occur during parsing of a `Decodable` type from hex.
-#[cfg(all(feature = "hex", feature = "alloc"))]
-enum ParsePrimitiveError<T: Decodable> {
-    /// Tried to decode an odd length string
-    OddLengthString(hex::error::OddLengthStringError),
-    /// Encountered an invalid hex character
-    InvalidChar(hex::error::InvalidCharError),
-    /// A decode error from `consensus_encoding`
-    Decode(<T::Decoder as Decoder>::Error),
-}
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
-            Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
-            // Decoder error types don't have Debug, so we only provide this generic error
-            Self::Decode(_) =>
-                write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
-        }
-    }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-impl<T: Decodable> fmt::Display for ParsePrimitiveError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-impl<T: Decodable> From<hex::DecodeVariableLengthBytesError> for ParsePrimitiveError<T> {
-    fn from(dec_err: hex::DecodeVariableLengthBytesError) -> Self {
-        use hex::DecodeVariableLengthBytesError as D;
-
-        match dec_err {
-            D::InvalidChar(err) => Self::InvalidChar(err),
-            D::OddLengthString(err) => Self::OddLengthString(err),
-        }
-    }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
-impl<T: Decodable> From<convert::Infallible> for ParsePrimitiveError<T> {
-    fn from(never: convert::Infallible) -> Self { match never {} }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
-impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::OddLengthString(ref e) => Some(e),
-            Self::InvalidChar(ref e) => Some(e),
-            Self::Decode(_) => None,
-        }
-    }
-}
-
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 pub(crate) mod hex_codec {
-    use encoding::{Encodable, EncodableByteIter};
-    use hex_unstable::{BytesToHexIter, Case};
+    use core::fmt;
 
-    use super::{fmt, Decodable, ParsePrimitiveError};
+    use encoding::{Decodable, Decoder, Encodable, EncodableByteIter};
+    #[cfg(feature = "alloc")]
+    use hex_unstable::{BytesToHexIter, Case};
+    use internals::write_err;
+
+    /// An error type for errors that can occur during parsing of a `Decodable` type from hex.
+    pub(crate) enum ParsePrimitiveError<T: Decodable> {
+        /// Tried to decode an odd length string
+        OddLengthString(hex_unstable::OddLengthStringError),
+        /// Encountered an invalid hex character
+        InvalidChar(hex_unstable::InvalidCharError),
+        /// A decode error from `consensus_encoding`
+        Decode(<T::Decoder as Decoder>::Error),
+    }
+
+    impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
+                Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
+                Self::Decode(_) => write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
+            }
+        }
+    }
+
+    impl<T: Decodable> fmt::Display for ParsePrimitiveError<T> {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+    }
+
+    impl<T: Decodable> From<hex_unstable::OddLengthStringError> for ParsePrimitiveError<T> {
+        fn from(err: hex_unstable::OddLengthStringError) -> Self { Self::OddLengthString(err) }
+    }
+
+    impl<T: Decodable> From<hex_unstable::InvalidCharError> for ParsePrimitiveError<T> {
+        fn from(err: hex_unstable::InvalidCharError) -> Self { Self::InvalidChar(err) }
+    }
+
+    impl<T: Decodable> From<core::convert::Infallible> for ParsePrimitiveError<T> {
+        fn from(never: core::convert::Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::OddLengthString(ref e) => Some(e),
+                Self::InvalidChar(ref e) => Some(e),
+                Self::Decode(_) => None,
+            }
+        }
+    }
 
     /// Writes an Encodable object to the given formatter in the requested case.
     #[inline]
+    #[cfg(feature = "alloc")]
     fn hex_write_with_case<T: Encodable + Decodable>(
         obj: &HexPrimitive<T>,
         f: &mut fmt::Formatter,
@@ -226,22 +211,46 @@ pub(crate) mod hex_codec {
         /// [`ParsePrimitiveError::OddLengthString`] if the input string is an odd length.
         /// [`ParsePrimitiveError::Decode`] if an error occurs during decoding of the object.
         pub(crate) fn from_str(s: &str) -> Result<T, ParsePrimitiveError<T>> {
-            let bytes = hex::decode_to_vec(s).map_err(ParsePrimitiveError::from)?;
+            let iter = hex_unstable::HexToBytesIter::new(s)?;
 
-            encoding::decode_from_slice(&bytes).map_err(ParsePrimitiveError::Decode)
+            let mut decoder = T::decoder();
+            let mut buffer = [0u8; 4096]; // 4MB is bigger than most decodables, reducing push_bytes calls.
+            let mut index = 0;
+
+            for result in iter {
+                if index == buffer.len() {
+                    // Flush buffer to decoder
+                    decoder
+                        .push_bytes(&mut (buffer.as_slice()))
+                        .map_err(ParsePrimitiveError::Decode)?;
+                    index = 0;
+                }
+                buffer[index] = result?;
+                index += 1;
+            }
+
+            // Flush remaining buffer to decoder
+            decoder
+                .push_bytes(&mut (&buffer[..index]))
+                .map_err(ParsePrimitiveError::Decode)?;
+
+            decoder.end().map_err(ParsePrimitiveError::Decode)
         }
     }
 
+    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::Display for HexPrimitive<'_, T> {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
     }
 
+    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::Debug for HexPrimitive<'_, T> {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
     }
 
+    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::LowerHex for HexPrimitive<'_, T> {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -249,6 +258,7 @@ pub(crate) mod hex_codec {
         }
     }
 
+    #[cfg(feature = "alloc")]
     impl<T: Encodable + Decodable> fmt::UpperHex for HexPrimitive<'_, T> {
         #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -263,7 +273,9 @@ mod tests {
     use alloc::{format, string::ToString};
 
     #[cfg(feature = "alloc")]
-    use super::*;
+    use super::block;
+    #[cfg(feature = "hex")]
+    use crate::hex_codec::{self, ParsePrimitiveError};
 
     #[test]
     #[cfg(all(feature = "alloc", feature = "hex"))]

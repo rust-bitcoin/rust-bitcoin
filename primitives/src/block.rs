@@ -14,23 +14,22 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::Encodable;
+use encoding::{Encodable, Decodable, Decoder, Decoder6};
 #[cfg(feature = "hex")]
 use encoding::EncodableByteIter;
 #[cfg(feature = "alloc")]
 use encoding::{
-    CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
+    CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder,
 };
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
 
-#[cfg(feature = "alloc")]
 use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
+#[cfg(feature = "hex")]
+use crate::hex_codec::ParsePrimitiveError;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
-#[cfg(feature = "alloc")]
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
-#[cfg(feature = "alloc")]
 use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
@@ -508,7 +507,7 @@ impl Header {
     }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl core::str::FromStr for Header {
     type Err = ParseHeaderError;
 
@@ -556,20 +555,20 @@ impl fmt::Debug for Header {
 }
 
 /// An error that occurs during parsing of a [`Header`] from a hex string.
-#[cfg(all(feature = "hex", feature = "alloc"))]
-pub struct ParseHeaderError(crate::ParsePrimitiveError<Header>);
+#[cfg(feature = "hex")]
+pub struct ParseHeaderError(ParsePrimitiveError<Header>);
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::Debug for ParseHeaderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::Display for ParseHeaderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
+#[cfg(all(feature = "hex", feature = "std"))]
 impl std::error::Error for ParseHeaderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         std::error::Error::source(&self.0)
@@ -605,7 +604,6 @@ impl Encodable for Header {
     }
 }
 
-#[cfg(feature = "alloc")]
 type HeaderInnerDecoder = Decoder6<
     VersionDecoder,
     BlockHashDecoder,
@@ -616,10 +614,8 @@ type HeaderInnerDecoder = Decoder6<
 >;
 
 /// The decoder for the [`Header`] type.
-#[cfg(feature = "alloc")]
 pub struct HeaderDecoder(HeaderInnerDecoder);
 
-#[cfg(feature = "alloc")]
 impl HeaderDecoder {
     fn from_inner(e: <HeaderInnerDecoder as Decoder>::Error) -> HeaderDecoderError {
         match e {
@@ -633,7 +629,6 @@ impl HeaderDecoder {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl Decoder for HeaderDecoder {
     type Output = Header;
     type Error = HeaderDecoderError;
@@ -655,7 +650,6 @@ impl Decoder for HeaderDecoder {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-#[cfg(feature = "alloc")]
 impl Decodable for Header {
     type Decoder = HeaderDecoder;
     fn decoder() -> Self::Decoder {
@@ -671,7 +665,6 @@ impl Decodable for Header {
 }
 
 /// An error consensus decoding a `Header`.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum HeaderDecoderError {
@@ -689,12 +682,10 @@ pub enum HeaderDecoderError {
     Nonce(encoding::UnexpectedEofError),
 }
 
-#[cfg(feature = "alloc")]
 impl From<Infallible> for HeaderDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for HeaderDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -709,7 +700,6 @@ impl fmt::Display for HeaderDecoderError {
 }
 
 #[cfg(feature = "std")]
-#[cfg(feature = "alloc")]
 impl std::error::Error for HeaderDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
