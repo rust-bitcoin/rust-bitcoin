@@ -215,6 +215,7 @@ pub const fn bitcoin_consensus_encoding::ArrayEncoder<N>::without_length_prefix(
 pub const fn bitcoin_consensus_encoding::BytesEncoder<'sl>::without_length_prefix(sl: &'sl [u8]) -> Self
 pub const fn bitcoin_consensus_encoding::CompactSizeDecoder::new() -> Self
 pub const fn bitcoin_consensus_encoding::CompactSizeDecoder::new_with_limit(limit: usize) -> Self
+pub const fn bitcoin_consensus_encoding::CompactSizeEncoder::encoded_size(value: usize) -> usize
 pub const fn bitcoin_consensus_encoding::Decoder2<A, B>::new(first: A, second: B) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder3<A, B, C>::new(dec_1: A, dec_2: B, dec_3: C) -> Self
 pub const fn bitcoin_consensus_encoding::Decoder4<A, B, C, D>::new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self

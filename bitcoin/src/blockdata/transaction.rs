@@ -14,7 +14,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::{compact_size, const_casts, write_err, ToU64};
+use encoding::CompactSizeEncoder;
+use internals::{const_casts, write_err, ToU64};
 use io::{BufRead, Write};
 
 use super::Weight;
@@ -166,7 +167,7 @@ internal_macros::define_extension_trait! {
         fn base_size(&self) -> usize {
             let mut size = OutPoint::SIZE;
 
-            size += compact_size::encoded_size(self.script_sig.len());
+            size += CompactSizeEncoder::encoded_size(self.script_sig.len());
             size += self.script_sig.len();
 
             size + Sequence::SIZE
@@ -243,7 +244,7 @@ internal_macros::define_extension_trait! {
 /// Returns the total number of bytes that this script pubkey would contribute to a transaction.
 fn size_from_script_pubkey(script_pubkey: &ScriptPubKey) -> usize {
     let len = script_pubkey.len();
-    Amount::SIZE + compact_size::encoded_size(len) + len
+    Amount::SIZE + CompactSizeEncoder::encoded_size(len) + len
 }
 
 /// Extension functionality for the [`Transaction`] type.
@@ -384,10 +385,10 @@ impl TransactionExt for Transaction {
     fn base_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
 
-        size += compact_size::encoded_size(self.inputs.len());
+        size += CompactSizeEncoder::encoded_size(self.inputs.len());
         size += self.inputs.iter().map(|input| input.base_size()).sum::<usize>();
 
-        size += compact_size::encoded_size(self.outputs.len());
+        size += CompactSizeEncoder::encoded_size(self.outputs.len());
         size += self.outputs.iter().map(|output| output.size()).sum::<usize>();
 
         size + absolute::LockTime::SIZE
@@ -402,14 +403,14 @@ impl TransactionExt for Transaction {
             size += 2; // 1 byte for the marker and 1 for the flag.
         }
 
-        size += compact_size::encoded_size(self.inputs.len());
+        size += CompactSizeEncoder::encoded_size(self.inputs.len());
         size += self
             .inputs
             .iter()
             .map(|input| if uses_segwit { input.total_size() } else { input.base_size() })
             .sum::<usize>();
 
-        size += compact_size::encoded_size(self.outputs.len());
+        size += CompactSizeEncoder::encoded_size(self.outputs.len());
         size += self.outputs.iter().map(|output| output.size()).sum::<usize>();
 
         size + absolute::LockTime::SIZE
@@ -871,7 +872,7 @@ where
 
     let (output_count, output_scripts_size) =
         output_script_lens.into_iter().fold((0, 0), |(count, scripts_size), script_len| {
-            (count + 1, scripts_size + script_len + compact_size::encoded_size(script_len))
+            (count + 1, scripts_size + script_len + CompactSizeEncoder::encoded_size(script_len))
         });
 
     predict_weight_internal(
@@ -893,8 +894,8 @@ const fn predict_weight_internal(
     // The value field of a TxOut is 8 bytes.
     let output_size = 8 * output_count + output_scripts_size;
     let non_input_size = 4 // version
-        + compact_size::encoded_size_const(input_count as u64) // Can't use ToU64 in const context.
-        + compact_size::encoded_size_const(output_count as u64)
+        + CompactSizeEncoder::encoded_size(input_count) // Can't use ToU64 in const context.
+        + CompactSizeEncoder::encoded_size(output_count)
         + output_size
         + 4; // locktime
     let weight = if inputs_with_witnesses == 0 {
@@ -933,7 +934,7 @@ pub const fn predict_weight_from_slices(
     i = 0;
     while i < output_script_lens.len() {
         let script_len = output_script_lens[i];
-        output_scripts_size += script_len + compact_size::encoded_size_const(script_len as u64);
+        output_scripts_size += script_len + CompactSizeEncoder::encoded_size(script_len);
         i += 1;
     }
 

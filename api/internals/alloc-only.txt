@@ -85,12 +85,9 @@ impl<const N: usize, T> bitcoin_internals::array::ArrayExt for [T; N]
 pub bitcoin_internals::script::PushDataLenLen::Four = 4
 pub bitcoin_internals::script::PushDataLenLen::One = 1
 pub bitcoin_internals::script::PushDataLenLen::Two = 2
-pub const bitcoin_internals::compact_size::MAX_ENCODABLE_VALUE: u64
-pub const bitcoin_internals::compact_size::MAX_ENCODING_SIZE: usize
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::as_slice(&self) -> &[T]
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::from_slice(slice: &[T]) -> Self
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::new() -> Self
-pub const fn bitcoin_internals::compact_size::encoded_size_const(value: u64) -> usize
 pub const fn bitcoin_internals::const_casts::i16_to_i64(value: i16) -> i64
 pub const fn bitcoin_internals::const_casts::u16_to_u32(value: u16) -> u32
 pub const fn bitcoin_internals::const_casts::u16_to_u64(value: u16) -> u64
@@ -127,9 +124,6 @@ pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::fmt(&self, f: &mut core::
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::hash<H: core::hash::Hasher>(&self, state: &mut H)
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::pop(&mut self) -> core::option::Option<T>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::push(&mut self, element: T)
-pub fn bitcoin_internals::compact_size::decode_unchecked(slice: &mut &[u8]) -> u64
-pub fn bitcoin_internals::compact_size::encode(value: impl bitcoin_internals::ToU64) -> bitcoin_internals::array_vec::ArrayVec<u8, MAX_ENCODING_SIZE>
-pub fn bitcoin_internals::compact_size::encoded_size(value: impl bitcoin_internals::ToU64) -> usize
 pub fn bitcoin_internals::error::input_string::CannotParse<'_, T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_internals::error::input_string::InputString::clone(&self) -> bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::cmp::Ordering
@@ -180,7 +174,6 @@ pub macro bitcoin_internals::write_err!
 pub mod bitcoin_internals
 pub mod bitcoin_internals::array
 pub mod bitcoin_internals::array_vec
-pub mod bitcoin_internals::compact_size
 pub mod bitcoin_internals::const_casts
 pub mod bitcoin_internals::const_tools
 pub mod bitcoin_internals::error
