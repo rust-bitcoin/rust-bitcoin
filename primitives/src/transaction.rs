@@ -2397,16 +2397,15 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // bad test; will be fixed in next commit
     #[cfg(feature = "alloc")]
     fn decode_zero_inputs() {
-        // Test empty transaction with no inputs or outputs.
+        // Test transaction with no inputs (but with one output to satisfy validation).
         let block: u32 = 741_521;
         let original_tx = Transaction {
             version: Version::ONE,
             lock_time: absolute::LockTime::from_height(block).expect("valid height"),
             inputs: vec![],
-            outputs: vec![],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
         };
 
         let encoded = encoding::encode_to_vec(&original_tx);
