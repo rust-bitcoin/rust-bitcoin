@@ -403,7 +403,7 @@ impl fmt::UpperHex for Transaction {
 
 /// An error that occurs during parsing of a [`Transaction`] from a hex string.
 #[cfg(all(feature = "hex", feature = "alloc"))]
-pub struct ParseTransactionError(crate::ParsePrimitiveError<Transaction>);
+pub struct ParseTransactionError(crate::hex_codec::ParsePrimitiveError<Transaction>);
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Debug for ParseTransactionError {
@@ -1767,7 +1767,7 @@ mod tests {
     #[test]
     #[cfg(feature = "hex")]
     fn transaction_from_hex_str_error() {
-        use crate::ParsePrimitiveError;
+        use crate::hex_codec::ParsePrimitiveError;
 
         // OddLengthString error
         let odd = "abc"; // 3 chars, odd length
