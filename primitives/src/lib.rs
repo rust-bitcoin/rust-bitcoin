@@ -19,7 +19,6 @@
 #![doc(test(attr(warn(unused))))]
 // Package-specific lint overrides.
 
-
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
