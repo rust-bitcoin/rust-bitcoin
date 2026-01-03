@@ -6,16 +6,21 @@
 //! Bitcoin data (blocks and transactions) around.
 
 use alloc::vec::Vec;
+use core::convert::Infallible;
+use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
+use encoding::{CompactSizeEncoder, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
+use internals::write_err;
 use io::{BufRead, Write};
+use primitives::block::{BlockHashDecoder, BlockHashEncoder};
 use primitives::transaction::{Txid, Wtxid};
 use primitives::BlockHash;
 
 use crate::consensus::impl_consensus_encoding;
-use crate::ProtocolVersion;
+use crate::{ProtocolVersion, ProtocolVersionDecoder, ProtocolVersionEncoder};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -126,6 +131,183 @@ pub struct GetHeadersMessage {
     pub locator_hashes: Vec<BlockHash>,
     /// References the header to stop at, or zero to just fetch the maximum 2000 headers
     pub stop_hash: BlockHash,
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for [`GetHeadersMessage`] or [`GetBlocksMessage`].
+    pub struct GetBlocksOrHeadersEncoder<'e>(
+        Encoder3<
+            ProtocolVersionEncoder,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, BlockHash>>,
+            BlockHashEncoder,
+        >
+    );
+}
+
+impl encoding::Encodable for GetHeadersMessage {
+    type Encoder<'e> = GetBlocksOrHeadersEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        GetBlocksOrHeadersEncoder(
+            Encoder3::new(
+                self.version.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.locator_hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.locator_hashes),
+                ),
+                self.stop_hash.encoder(),
+            ),
+        )
+    }
+}
+
+impl encoding::Encodable for GetBlocksMessage {
+    type Encoder<'e> = GetBlocksOrHeadersEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        GetBlocksOrHeadersEncoder(
+            Encoder3::new(
+                self.version.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.locator_hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.locator_hashes),
+                ),
+                self.stop_hash.encoder(),
+            ),
+        )
+    }
+}
+
+type GetBlocksOrHeadersInnerDecoder = Decoder3<ProtocolVersionDecoder, VecDecoder<BlockHash>, BlockHashDecoder>;
+
+/// Decoder type for [`GetBlocksMessage`].
+pub struct GetBlocksMessageDecoder(GetBlocksOrHeadersInnerDecoder);
+
+/// Decoder type for [`GetHeadersMessage`].
+pub struct GetHeadersMessageDecoder(GetBlocksOrHeadersInnerDecoder);
+
+impl encoding::Decoder for GetHeadersMessageDecoder {
+    type Output = GetHeadersMessage;
+    type Error = GetHeadersMessageDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(GetHeadersMessageDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (version, locator_hashes, stop_hash) = self.0.end().map_err(GetHeadersMessageDecoderError)?;
+        Ok(GetHeadersMessage { version, locator_hashes, stop_hash })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decoder for GetBlocksMessageDecoder {
+    type Output = GetBlocksMessage;
+    type Error = GetBlocksMessageDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(GetBlocksMessageDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (version, locator_hashes, stop_hash) = self.0.end().map_err(GetBlocksMessageDecoderError)?;
+        Ok(GetBlocksMessage { version, locator_hashes, stop_hash })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for GetBlocksMessage {
+    type Decoder = GetBlocksMessageDecoder;
+    fn decoder() -> Self::Decoder {
+        GetBlocksMessageDecoder(Decoder3::new(
+                ProtocolVersionDecoder::new(),
+                VecDecoder::<BlockHash>::new(),
+                BlockHashDecoder::new(),
+            )
+        )
+    }
+}
+
+impl encoding::Decodable for GetHeadersMessage {
+    type Decoder = GetHeadersMessageDecoder;
+    fn decoder() -> Self::Decoder {
+        GetHeadersMessageDecoder(Decoder3::new(
+                ProtocolVersionDecoder::new(),
+                VecDecoder::<BlockHash>::new(),
+                BlockHashDecoder::new(),
+            )
+        )
+    }
+}
+
+/// An error consensus decoding a [`GetBlocksMessage`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GetBlocksMessageDecoderError(<GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for GetBlocksMessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for GetBlocksMessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.0 {
+            encoding::Decoder3Error::First(ref e) => write_err!(f, "getblocks decoder error"; e),
+            encoding::Decoder3Error::Second(ref e) => write_err!(f, "getblocks decoder error"; e),
+            encoding::Decoder3Error::Third(ref e) => write_err!(f, "getblocks decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for GetBlocksMessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match &self.0 {
+            encoding::Decoder3Error::First(ref e) => Some(e),
+            encoding::Decoder3Error::Second(ref e) => Some(e),
+            encoding::Decoder3Error::Third(ref e) => Some(e),
+        }
+    }
+}
+
+/// An error consensus decoding a [`GetHeadersMessage`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GetHeadersMessageDecoderError(<GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for GetHeadersMessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for GetHeadersMessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.0 {
+            encoding::Decoder3Error::First(ref e) => write_err!(f, "getheaders decoder error"; e),
+            encoding::Decoder3Error::Second(ref e) => write_err!(f, "getheaders decoder error"; e),
+            encoding::Decoder3Error::Third(ref e) => write_err!(f, "getheaders decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for GetHeadersMessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match &self.0 {
+            encoding::Decoder3Error::First(ref e) => Some(e),
+            encoding::Decoder3Error::Second(ref e) => Some(e),
+            encoding::Decoder3Error::Third(ref e) => Some(e),
+        }
+    }
 }
 
 impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
