@@ -26,7 +26,7 @@ use crate::{internal_macros, BlockTime, Target, Weight, Work};
 #[doc(inline)]
 pub use primitives::block::{
     Block, Checked, Unchecked, Validation, Version, BlockHash, Header,
-    WitnessCommitment, compute_merkle_root, compute_witness_root, InvalidBlockError,
+    WitnessCommitment, compute_merkle_root, compute_witness_root, InvalidBlockError, ParseHeaderError,
 };
 #[doc(no_inline)]
 pub use units::block::TooBigForRelativeHeightError;

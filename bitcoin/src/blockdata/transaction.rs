@@ -33,7 +33,7 @@ use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut};
+pub use primitives::transaction::{OutPoint, ParseTransactionError, ParseOutPointError, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut};
 
 impl Encodable for Txid {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
