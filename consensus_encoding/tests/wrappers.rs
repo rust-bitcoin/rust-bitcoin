@@ -5,12 +5,12 @@
 use bitcoin_consensus_encoding as encoding;
 use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// An encoder that uses an inner `ArrayEncoder`.
     pub struct TestArrayEncoder(ArrayEncoder<4>);
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// An encoder that uses an inner `BytesEncoder`.
     pub struct TestBytesEncoder<'e>(BytesEncoder<'e>);
 }
@@ -113,7 +113,7 @@ fn slice_encoder() {
     #[derive(Debug, Default, Clone)]
     pub struct Inner(u32);
 
-    encoding::encoder_newtype! {
+    encoding::encoder_newtype_exact! {
         /// The encoder for the [`Inner`] type.
         pub struct InnerArrayEncoder(ArrayEncoder<4>);
     }

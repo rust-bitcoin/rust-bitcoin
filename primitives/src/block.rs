@@ -508,7 +508,7 @@ impl fmt::Display for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use hex_unstable::{fmt_hex_exact, Case};
 
-        fmt_hex_exact!(f, Header::SIZE, HeaderIter(EncodableByteIter::new(self)), Case::Lower)
+        fmt_hex_exact!(f, Header::SIZE, EncodableByteIter::new(self), Case::Lower)
     }
 }
 
@@ -526,24 +526,7 @@ impl fmt::Debug for Header {
     }
 }
 
-/// A wrapper around [`encoding::EncodableByteIter`]
-///
-/// This wrapper implements `ExactSizeIterator` for use with `fmt_hex_exact!`.
-#[cfg(feature = "hex")]
-struct HeaderIter<'a>(EncodableByteIter<'a, Header>);
-
-#[cfg(feature = "hex")]
-impl Iterator for HeaderIter<'_> {
-    type Item = u8;
-
-    fn next(&mut self) -> Option<Self::Item> { self.0.next() }
-
-    fn size_hint(&self) -> (usize, Option<usize>) { (Header::SIZE, Some(Header::SIZE)) }
-}
-#[cfg(feature = "hex")]
-impl ExactSizeIterator for HeaderIter<'_> {}
-
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Header`] type.
     pub struct HeaderEncoder(
         encoding::Encoder6<
@@ -772,7 +755,7 @@ impl Default for Version {
     fn default() -> Self { Self::NO_SOFT_FORK_SIGNALLING }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Version`] type.
     pub struct VersionEncoder(encoding::ArrayEncoder<4>);
 }
