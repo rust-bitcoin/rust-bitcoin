@@ -592,6 +592,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_u32_from_hex_prefixed_upper() {
+        let want = 171;
+        let got = hex_u32("0XAB").expect("failed to parse prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
     fn parse_u32_from_hex_no_prefix() {
         let want = 171;
         let got = hex_u32("ab").expect("failed to parse non-prefixed hex");
@@ -606,6 +613,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_hex_u32_upper_prefixed() {
+        let want = 171; // 0xab
+        assert_eq!(hex_u32_prefixed("0Xab").unwrap(), want);
+        assert!(hex_u32_unprefixed("0Xab").is_err());
+    }
+
+    #[test]
     fn parse_hex_u32_unprefixed() {
         let want = 171; // 0xab
         assert_eq!(hex_u32_unprefixed("ab").unwrap(), want);
@@ -616,6 +630,13 @@ mod tests {
     fn parse_u128_from_hex_prefixed() {
         let want = 3_735_928_559;
         let got = hex_u128("0xdeadbeef").expect("failed to parse prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_u128_from_hex_upper_prefixed() {
+        let want = 3_735_928_559;
+        let got = hex_u128("0Xdeadbeef").expect("failed to parse prefixed hex");
         assert_eq!(got, want);
     }
 
@@ -634,6 +655,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_hex_u128_upper_prefixed() {
+        let want = 3_735_928_559;
+        assert_eq!(hex_u128_prefixed("0Xdeadbeef").unwrap(), want);
+        assert!(hex_u128_unprefixed("0Xdeadbeef").is_err());
+    }
+
+    #[test]
     fn parse_hex_u128_unprefixed() {
         let want = 3_735_928_559;
         assert_eq!(hex_u128_unprefixed("deadbeef").unwrap(), want);
@@ -643,5 +671,24 @@ mod tests {
     #[test]
     fn parse_u32_from_hex_unchecked_errors_on_prefix() {
         assert!(hex_u32_unchecked("0xab").is_err());
+        assert!(hex_u32_unchecked("0Xab").is_err());
+    }
+
+    #[test]
+    fn parse_u32_from_hex_unchecked_errors_on_overflow() {
+        assert!(hex_u32_unchecked("1234abcd").is_ok());
+        assert!(hex_u32_unchecked("1234abcd1").is_err());
+    }
+
+    #[test]
+    fn parse_u128_from_hex_unchecked_errors_on_prefix() {
+        assert!(hex_u128_unchecked("0xdeadbeef").is_err());
+        assert!(hex_u128_unchecked("0Xdeadbeef").is_err());
+    }
+
+    #[test]
+    fn parse_u128_from_hex_unchecked_errors_on_overflow() {
+        assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff").is_ok());
+        assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff1").is_err());
     }
 }
