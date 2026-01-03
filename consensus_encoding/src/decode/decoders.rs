@@ -184,7 +184,7 @@ impl<T: Decodable> Default for VecDecoder<T> {
 }
 
 #[cfg(feature = "alloc")]
-impl<T: Decodable> Decoder for VecDecoder<T> {
+impl<T: Decodable + Clone> Decoder for VecDecoder<T> {
     type Output = Vec<T>;
     type Error = VecDecoderError<<<T as Decodable>::Decoder as Decoder>::Error>;
 
@@ -261,6 +261,7 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
 }
 
 /// A decoder that expects exactly N bytes and returns them as an array.
+#[derive(Clone)]
 pub struct ArrayDecoder<const N: usize> {
     buffer: [u8; N],
     bytes_written: usize,
@@ -309,6 +310,7 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
 }
 
 /// A decoder which wraps two inner decoders and returns the output of both.
+#[derive(Clone)]
 pub struct Decoder2<A, B>
 where
     A: Decoder,
@@ -317,6 +319,7 @@ where
     state: Decoder2State<A, B>,
 }
 
+#[derive(Clone)]
 enum Decoder2State<A: Decoder, B: Decoder> {
     /// Decoding the first decoder, with second decoder waiting.
     First(A, B),
@@ -467,6 +470,7 @@ where
 }
 
 /// A decoder which decodes four objects, one after the other.
+#[derive(Clone)]
 pub struct Decoder4<A, B, C, D>
 where
     A: Decoder,

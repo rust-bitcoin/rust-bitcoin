@@ -18,7 +18,7 @@ pub trait Decodable {
 /// A push decoder for a consensus-decodable object.
 pub trait Decoder: Sized {
     /// The type that this decoder produces when decoding is complete.
-    type Output;
+    type Output: Clone;
     /// The error type that this decoder can produce.
     type Error;
 

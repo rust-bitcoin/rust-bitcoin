@@ -20,6 +20,8 @@ use crate::address::Address;
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::{ProtocolVersion, ServiceFlags};
 
+use encoding::{ByteVecDecoder, ByteVecDecoderError, Decoder, Decodable as Decodeable};
+
 // Some simple messages
 
 /// The `version` message
@@ -331,6 +333,37 @@ impl Alert {
 }
 
 impl_vec_wrapper!(Alert, Vec<u8>);
+
+/// The decoder for the [`Alert`] type.
+pub struct AlertDecoder(ByteVecDecoder);
+
+impl Decoder for AlertDecoder {
+    type Output = Alert;
+    type Error = AlertDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> { Ok(Alert(self.0.end()?)) }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl Decodeable for Alert {
+    type Decoder = AlertDecoder;
+    fn decoder() -> Self::Decoder { AlertDecoder(ByteVecDecoder::new()) }
+}
+
+/// An error consensus decoding an `Alert`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AlertDecoderError(ByteVecDecoderError);
+impl From<ByteVecDecoderError> for AlertDecoderError {
+    fn from(e: ByteVecDecoderError) -> Self { Self(e) }
+}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ClientSoftwareVersion {

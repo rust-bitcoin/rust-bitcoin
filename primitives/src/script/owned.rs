@@ -162,7 +162,7 @@ impl<T> Default for ScriptBufDecoder<T> {
     fn default() -> Self { Self::new() }
 }
 
-impl<T> Decoder for ScriptBufDecoder<T> {
+impl<T: Clone> Decoder for ScriptBufDecoder<T> {
     type Output = ScriptBuf<T>;
     type Error = ScriptBufDecoderError;
 
@@ -178,7 +178,7 @@ impl<T> Decoder for ScriptBufDecoder<T> {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-impl<T> Decodable for ScriptBuf<T> {
+impl<T: Clone> Decodable for ScriptBuf<T> {
     type Decoder = ScriptBufDecoder<T>;
     fn decoder() -> Self::Decoder { ScriptBufDecoder(ByteVecDecoder::new(), PhantomData) }
 }

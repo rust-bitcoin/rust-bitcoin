@@ -30,6 +30,8 @@ use crate::{
     Magic,
 };
 
+use encoding::Decodable as Decodeable;
+
 /// The maximum number of [`super::message_blockdata::Inventory`] items in an `inv` message.
 ///
 /// This limit is not currently enforced by this implementation.
@@ -152,6 +154,7 @@ impl encoding::Decodable for CommandString {
 }
 
 /// Decoder for [`CommandString`].
+#[derive(Clone)]
 pub struct CommandStringDecoder {
     inner: encoding::ArrayDecoder<12>,
 }
@@ -1034,30 +1037,22 @@ impl encoding::Decoder for NetworkMessageDecoder {
     fn read_limit(&self) -> usize { self.payload_len - self.buffer.len() }
 }
 
-enum DecoderState {
-    ReadingHeader {
-        header_decoder: encoding::Decoder4<
-            encoding::ArrayDecoder<4>,
-            CommandStringDecoder,
-            encoding::ArrayDecoder<4>,
-            encoding::ArrayDecoder<4>,
-        >,
-    },
-    ReadingPayload {
-        magic_bytes: [u8; 4],
-        payload_len_bytes: [u8; 4],
-        checksum: [u8; 4],
-        payload_decoder: NetworkMessageDecoder,
-    },
-}
-
 /// Decoder for [`RawNetworkMessage`].
 ///
 /// This decoder implements a two-phase decoding process for Bitcoin V1 P2P messages.
 /// It first decodes the fixed-sized header. It then uses the payload length information
 /// to decode the dynamically sized network message.
 pub struct RawNetworkMessageDecoder {
-    state: DecoderState,
+    header_decoder: encoding::Decoder4<
+        encoding::ArrayDecoder<4>, // magic bytes
+        CommandStringDecoder, // command
+        encoding::ArrayDecoder<4>, // payload length
+        encoding::ArrayDecoder<4>, // checksum
+    >,
+    magic_bytes: [u8; 4],
+    payload_len_bytes: [u8; 4],
+    checksum: [u8; 4],
+    network_message: Option<NetworkMessage>
 }
 
 impl encoding::Decoder for RawNetworkMessageDecoder {
@@ -1065,89 +1060,72 @@ impl encoding::Decoder for RawNetworkMessageDecoder {
     type Error = RawNetworkMessageDecodeError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        match &mut self.state {
-            DecoderState::ReadingHeader { header_decoder } => {
-                let need_more = header_decoder.push_bytes(bytes).map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
-                })?;
+        self.header_decoder.push_bytes(bytes).map_err(|_| {
+            RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
+        })?;
 
-                if !need_more {
-                    // Header complete, extract values and transition to payload state.
-                    let old_state = core::mem::replace(
-                        &mut self.state,
-                        DecoderState::ReadingHeader {
-                            header_decoder: encoding::Decoder4::new(
-                                encoding::ArrayDecoder::new(),
-                                CommandStringDecoder { inner: encoding::ArrayDecoder::new() },
-                                encoding::ArrayDecoder::new(),
-                                encoding::ArrayDecoder::new(),
-                            ),
-                        },
-                    );
+        let (magic_bytes, command, payload_len_bytes, checksum) =
+            self.header_decoder.clone().end().map_err(|_| {
+                RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
+        })?;
+        self.magic_bytes = magic_bytes;
+        self.checksum = checksum;
+        self.payload_len_bytes = payload_len_bytes;
 
-                    let DecoderState::ReadingHeader { header_decoder } = old_state else {
-                        unreachable!("we are in ReadingHeader state")
-                    };
-
-                    let (magic_bytes, command, payload_len_bytes, checksum) =
-                        header_decoder.end().map_err(|_| {
-                            RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
-                        })?;
-
-                    let payload_len = u32::from_le_bytes(payload_len_bytes) as usize;
-                    if payload_len > MAX_MSG_SIZE {
-                        return Err(RawNetworkMessageDecodeError(
-                            RawNetworkMessageDecodeErrorInner::PayloadTooLarge,
-                        ));
-                    }
-
-                    let payload_decoder = NetworkMessageDecoder::new(command, payload_len);
-                    self.state = DecoderState::ReadingPayload {
-                        magic_bytes,
-                        payload_len_bytes,
-                        checksum,
-                        payload_decoder,
-                    };
-
-                    // Continue with any remaining bytes.
-                    return self.push_bytes(bytes);
-                }
-
-                Ok(need_more)
-            }
-            DecoderState::ReadingPayload { payload_decoder, .. } =>
-                payload_decoder.push_bytes(bytes),
+        let payload_len = u32::from_le_bytes(payload_len_bytes) as usize;
+        if payload_len > MAX_MSG_SIZE {
+            return Err(RawNetworkMessageDecodeError(
+                RawNetworkMessageDecodeErrorInner::PayloadTooLarge,
+            ));
         }
+
+        let NetworkMessageDecoder { command, payload_len, buffer } =
+            NetworkMessageDecoder::new(command, payload_len);
+
+        let mut decoder = match command.as_ref() {
+            "alert" => message_network::Alert::decoder(),
+            _ => unimplemented!(),
+        };
+
+        decoder.push_bytes(&mut &buffer[..])
+            .map_err(|_| {
+                RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+            })?;
+
+        let decoded = decoder.end()
+            .map_err(|_| {
+                RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+            })?;
+
+        let message = match command.as_ref() {
+            "alert" => NetworkMessage::Alert(decoded),
+            _ => unimplemented!(),
+        };
+
+        self.network_message = Some(message);
+
+        Ok(true)
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
-        match self.state {
-            DecoderState::ReadingHeader { .. } =>
-                Err(RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)),
-            DecoderState::ReadingPayload {
-                magic_bytes,
-                payload_len_bytes,
-                checksum,
-                payload_decoder,
-                ..
-            } => {
-                let payload = payload_decoder.end()?;
-
-                Ok(RawNetworkMessage {
-                    magic: Magic::from_bytes(magic_bytes),
-                    payload,
-                    payload_len: u32::from_le_bytes(payload_len_bytes),
-                    checksum,
-                })
+        let msg = self.network_message.unwrap();
+        Ok(
+            RawNetworkMessage {
+                magic: Magic::from_bytes(self.magic_bytes),
+                payload: msg,
+                payload_len: u32::from_le_bytes(self.payload_len_bytes),
+                checksum: self.checksum,
             }
-        }
+        )
     }
 
     fn read_limit(&self) -> usize {
-        match &self.state {
-            DecoderState::ReadingHeader { header_decoder } => header_decoder.read_limit(),
-            DecoderState::ReadingPayload { payload_decoder, .. } => payload_decoder.read_limit(),
-        }
+        0
+        // TODO
+        //match &self.state {
+            //DecoderState::ReadingHeader { header_decoder } => header_decoder.read_limit(),
+            //DecoderState::ReadingPayload { payload_decoder, .. } => payload_decoder.read_limit(),
+        //}
     }
 }
 
@@ -1156,14 +1134,16 @@ impl encoding::Decodable for RawNetworkMessage {
 
     fn decoder() -> Self::Decoder {
         RawNetworkMessageDecoder {
-            state: DecoderState::ReadingHeader {
-                header_decoder: encoding::Decoder4::new(
-                    encoding::ArrayDecoder::new(),
-                    CommandStringDecoder { inner: encoding::ArrayDecoder::new() },
-                    encoding::ArrayDecoder::new(),
-                    encoding::ArrayDecoder::new(),
-                ),
-            },
+            header_decoder: encoding::Decoder4::new(
+                encoding::ArrayDecoder::new(),
+                CommandStringDecoder { inner: encoding::ArrayDecoder::new() },
+                encoding::ArrayDecoder::new(),
+                encoding::ArrayDecoder::new(),
+            ),
+            magic_bytes: [0, 0, 0, 0],
+            payload_len_bytes: [0, 0, 0, 0],
+            checksum: [0, 0, 0, 0],
+            network_message: None,
         }
     }
 }

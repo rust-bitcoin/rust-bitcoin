@@ -60,6 +60,9 @@ fn main() {
                 }
                 message::NetworkMessage::Verack => {
                     println!("Received verack message: {:?}", reply.payload());
+                }
+                message::NetworkMessage::Alert(a) => {
+                    println!("Danger, will robinson!: {:?}", a);
                     break;
                 }
                 _ => {
