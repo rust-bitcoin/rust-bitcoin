@@ -26,8 +26,7 @@ use units::FeeRate;
 use crate::address::{AddrV2Message, Address};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::{
-    message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
-    Magic,
+    bip152, message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network, Magic
 };
 
 /// The maximum number of [`super::message_blockdata::Inventory`] items in an `inv` message.
@@ -473,11 +472,11 @@ pub enum NetworkMessage {
     /// BIP-0152 sendcmpct
     SendCmpct(message_compact_blocks::SendCmpct),
     /// BIP-0152 cmpctblock
-    CmpctBlock(message_compact_blocks::CmpctBlock),
+    CmpctBlock(bip152::HeaderAndShortIds),
     /// BIP-0152 getblocktxn
-    GetBlockTxn(message_compact_blocks::GetBlockTxn),
+    GetBlockTxn(bip152::BlockTransactionsRequest),
     /// BIP-0152 blocktxn
-    BlockTxn(message_compact_blocks::BlockTxn),
+    BlockTxn(bip152::BlockTransactions),
     /// `alert`
     Alert(message_network::Alert),
     /// `reject`
@@ -1671,7 +1670,7 @@ mod test {
     use crate::bip152::BlockTransactionsRequest;
     use crate::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
-    use crate::message_compact_blocks::{GetBlockTxn, SendCmpct};
+    use crate::message_compact_blocks::SendCmpct;
     use crate::message_filter::{
         CFCheckpt, CFHeaders, CFilter, FilterHash, FilterHeader, GetCFCheckpt, GetCFHeaders,
         GetCFilters,
@@ -1798,11 +1797,9 @@ mod test {
             }])),
             NetworkMessage::SendAddrV2,
             NetworkMessage::CmpctBlock(cmptblock),
-            NetworkMessage::GetBlockTxn(GetBlockTxn {
-                txs_request: BlockTransactionsRequest {
-                    block_hash: BlockHash::from_byte_array(hash([11u8; 32]).to_byte_array()),
-                    indexes: vec![0, 1, 2, 3, 10, 3002],
-                },
+            NetworkMessage::GetBlockTxn(BlockTransactionsRequest {
+                block_hash: BlockHash::from_byte_array(hash([11u8; 32]).to_byte_array()),
+                indexes: vec![0, 1, 2, 3, 10, 3002],
             }),
             NetworkMessage::BlockTxn(blocktxn),
             NetworkMessage::SendCmpct(SendCmpct { send_compact: true, version: 8333 }),
