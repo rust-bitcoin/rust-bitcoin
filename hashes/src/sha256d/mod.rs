@@ -2,6 +2,9 @@
 
 //! SHA256d implementation (double SHA256).
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use crate::sha256;
 
 crate::internal_macros::general_hash_type! {
@@ -43,6 +46,13 @@ impl crate::HashEngine for HashEngine {
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Hash {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
 }
 
 #[cfg(test)]
