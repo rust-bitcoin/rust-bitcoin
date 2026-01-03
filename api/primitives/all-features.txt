@@ -919,20 +919,20 @@ impl core::str::traits::FromStr for bitcoin_primitives::Wtxid
 impl core::str::traits::FromStr for bitcoin_primitives::script::ScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::script::WScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::OutPoint
-impl serde::ser::Serialize for bitcoin_primitives::BlockHash
-impl serde::ser::Serialize for bitcoin_primitives::Ntxid
-impl serde::ser::Serialize for bitcoin_primitives::TxMerkleNode
-impl serde::ser::Serialize for bitcoin_primitives::Txid
-impl serde::ser::Serialize for bitcoin_primitives::WitnessCommitment
-impl serde::ser::Serialize for bitcoin_primitives::WitnessMerkleNode
-impl serde::ser::Serialize for bitcoin_primitives::Wtxid
-impl serde::ser::Serialize for bitcoin_primitives::block::Version
-impl serde::ser::Serialize for bitcoin_primitives::pow::CompactTarget
-impl serde::ser::Serialize for bitcoin_primitives::script::ScriptHash
-impl serde::ser::Serialize for bitcoin_primitives::script::WScriptHash
-impl serde::ser::Serialize for bitcoin_primitives::transaction::OutPoint
-impl serde::ser::Serialize for bitcoin_primitives::transaction::Version
-impl serde::ser::Serialize for bitcoin_primitives::witness::Witness
+impl serde_core::ser::Serialize for bitcoin_primitives::BlockHash
+impl serde_core::ser::Serialize for bitcoin_primitives::Ntxid
+impl serde_core::ser::Serialize for bitcoin_primitives::TxMerkleNode
+impl serde_core::ser::Serialize for bitcoin_primitives::Txid
+impl serde_core::ser::Serialize for bitcoin_primitives::WitnessCommitment
+impl serde_core::ser::Serialize for bitcoin_primitives::WitnessMerkleNode
+impl serde_core::ser::Serialize for bitcoin_primitives::Wtxid
+impl serde_core::ser::Serialize for bitcoin_primitives::block::Version
+impl serde_core::ser::Serialize for bitcoin_primitives::pow::CompactTarget
+impl serde_core::ser::Serialize for bitcoin_primitives::script::ScriptHash
+impl serde_core::ser::Serialize for bitcoin_primitives::script::WScriptHash
+impl serde_core::ser::Serialize for bitcoin_primitives::transaction::OutPoint
+impl serde_core::ser::Serialize for bitcoin_primitives::transaction::Version
+impl serde_core::ser::Serialize for bitcoin_primitives::witness::Witness
 impl<'a, T> arbitrary::Arbitrary<'a> for &'a bitcoin_primitives::script::Script<T>
 impl<'a, T> arbitrary::Arbitrary<'a> for bitcoin_primitives::script::ScriptBuf<T>
 impl<'a, T> core::convert::From<&'a bitcoin_primitives::script::Script<T>> for alloc::borrow::Cow<'a, bitcoin_primitives::script::Script<T>>
@@ -975,22 +975,22 @@ impl<'a> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness::WitnessEncoder<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness::Iter<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness::WitnessEncoder<'a>
-impl<'de, T> serde::de::Deserialize<'de> for &'de bitcoin_primitives::script::Script<T>
-impl<'de, T> serde::de::Deserialize<'de> for bitcoin_primitives::script::ScriptBuf<T>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::BlockHash
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::Ntxid
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::TxMerkleNode
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::Txid
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::WitnessCommitment
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::WitnessMerkleNode
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::Wtxid
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::block::Version
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::pow::CompactTarget
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::script::ScriptHash
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::script::WScriptHash
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::transaction::OutPoint
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::transaction::Version
-impl<'de> serde::de::Deserialize<'de> for bitcoin_primitives::witness::Witness
+impl<'de, T> serde_core::de::Deserialize<'de> for &'de bitcoin_primitives::script::Script<T>
+impl<'de, T> serde_core::de::Deserialize<'de> for bitcoin_primitives::script::ScriptBuf<T>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::BlockHash
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::Ntxid
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::TxMerkleNode
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::Txid
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::WitnessCommitment
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::WitnessMerkleNode
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::Wtxid
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::block::Version
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::pow::CompactTarget
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::script::ScriptHash
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::script::WScriptHash
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::transaction::OutPoint
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::transaction::Version
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin_primitives::witness::Witness
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::BlockEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::OutPointEncoder<'e>
@@ -1133,8 +1133,8 @@ impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::Script<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptBuf<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptBufDecoder<T> where T: core::panic::unwind_safe::UnwindSafe
-impl<T> serde::ser::Serialize for bitcoin_primitives::script::Script<T>
-impl<T> serde::ser::Serialize for bitcoin_primitives::script::ScriptBuf<T>
+impl<T> serde_core::ser::Serialize for bitcoin_primitives::script::Script<T>
+impl<T> serde_core::ser::Serialize for bitcoin_primitives::script::ScriptBuf<T>
 impl<V: bitcoin_primitives::block::Validation> bitcoin_primitives::block::Block<V>
 impl<V> core::clone::Clone for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::clone::Clone
 impl<V> core::cmp::Eq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::Eq
@@ -1294,7 +1294,7 @@ pub enum bitcoin_primitives::script::WitnessScriptTag
 pub extern crate bitcoin_primitives::hex
 pub fn &'a bitcoin_primitives::script::Script<T>::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn &'a bitcoin_primitives::witness::Witness::into_iter(self) -> Self::IntoIter
-pub fn &'de bitcoin_primitives::script::Script<T>::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn &'de bitcoin_primitives::script::Script<T>::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 pub fn &[T; N]::eq(&self, rhs: &bitcoin_primitives::witness::Witness) -> bool
 pub fn &[T]::eq(&self, rhs: &bitcoin_primitives::witness::Witness) -> bool
 pub fn &bitcoin_primitives::script::Script<T>::default() -> Self
@@ -1320,7 +1320,7 @@ pub fn bitcoin_primitives::BlockHash::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::BlockHash::clone(&self) -> bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::cmp(&self, other: &bitcoin_primitives::BlockHash) -> core::cmp::Ordering
 pub fn bitcoin_primitives::BlockHash::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::BlockHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::BlockHash, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::BlockHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::BlockHash, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::BlockHash::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::BlockHash::eq(&self, other: &bitcoin_primitives::BlockHash) -> bool
 pub fn bitcoin_primitives::BlockHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1331,7 +1331,7 @@ pub fn bitcoin_primitives::BlockHash::from(header: bitcoin_primitives::block::He
 pub fn bitcoin_primitives::BlockHash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::BlockHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::BlockHash::partial_cmp(&self, other: &bitcoin_primitives::BlockHash) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::BlockHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::BlockHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::Ntxid::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::Ntxid::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::Ntxid::as_ref(&self) -> &[u8]
@@ -1339,13 +1339,13 @@ pub fn bitcoin_primitives::Ntxid::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::Ntxid::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::Ntxid::clone(&self) -> bitcoin_primitives::Ntxid
 pub fn bitcoin_primitives::Ntxid::cmp(&self, other: &bitcoin_primitives::Ntxid) -> core::cmp::Ordering
-pub fn bitcoin_primitives::Ntxid::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::Ntxid, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::Ntxid::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::Ntxid, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::Ntxid::eq(&self, other: &bitcoin_primitives::Ntxid) -> bool
 pub fn bitcoin_primitives::Ntxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::Ntxid::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::Ntxid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::Ntxid::partial_cmp(&self, other: &bitcoin_primitives::Ntxid) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::Ntxid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::Ntxid::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::TxMerkleNode::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::TxMerkleNode::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::TxMerkleNode::as_ref(&self) -> &[u8]
@@ -1356,7 +1356,7 @@ pub fn bitcoin_primitives::TxMerkleNode::clone(&self) -> bitcoin_primitives::TxM
 pub fn bitcoin_primitives::TxMerkleNode::cmp(&self, other: &bitcoin_primitives::TxMerkleNode) -> core::cmp::Ordering
 pub fn bitcoin_primitives::TxMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin_primitives::TxMerkleNode::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::TxMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::TxMerkleNode, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::TxMerkleNode::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::TxMerkleNode, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::TxMerkleNode::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::TxMerkleNode::eq(&self, other: &bitcoin_primitives::TxMerkleNode) -> bool
 pub fn bitcoin_primitives::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1364,7 +1364,7 @@ pub fn bitcoin_primitives::TxMerkleNode::from_leaf(leaf: bitcoin_primitives::Txi
 pub fn bitcoin_primitives::TxMerkleNode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::TxMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::TxMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::TxMerkleNode) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::TxMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::TxMerkleNode::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::Txid::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::Txid::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::Txid::as_ref(&self) -> &[u8]
@@ -1372,7 +1372,7 @@ pub fn bitcoin_primitives::Txid::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::Txid::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::Txid::clone(&self) -> bitcoin_primitives::Txid
 pub fn bitcoin_primitives::Txid::cmp(&self, other: &bitcoin_primitives::Txid) -> core::cmp::Ordering
-pub fn bitcoin_primitives::Txid::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::Txid, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::Txid::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::Txid, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::Txid::eq(&self, other: &bitcoin_primitives::Txid) -> bool
 pub fn bitcoin_primitives::Txid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::Txid::from(tx: &bitcoin_primitives::transaction::Transaction) -> Self
@@ -1380,7 +1380,7 @@ pub fn bitcoin_primitives::Txid::from(tx: bitcoin_primitives::transaction::Trans
 pub fn bitcoin_primitives::Txid::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::Txid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::Txid::partial_cmp(&self, other: &bitcoin_primitives::Txid) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::Txid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::Txid::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::WitnessCommitment::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::WitnessCommitment::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::WitnessCommitment::as_ref(&self) -> &[u8]
@@ -1388,13 +1388,13 @@ pub fn bitcoin_primitives::WitnessCommitment::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::WitnessCommitment::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::WitnessCommitment::clone(&self) -> bitcoin_primitives::WitnessCommitment
 pub fn bitcoin_primitives::WitnessCommitment::cmp(&self, other: &bitcoin_primitives::WitnessCommitment) -> core::cmp::Ordering
-pub fn bitcoin_primitives::WitnessCommitment::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::WitnessCommitment, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::WitnessCommitment::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::WitnessCommitment, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::WitnessCommitment::eq(&self, other: &bitcoin_primitives::WitnessCommitment) -> bool
 pub fn bitcoin_primitives::WitnessCommitment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::WitnessCommitment::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::WitnessCommitment::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::WitnessCommitment::partial_cmp(&self, other: &bitcoin_primitives::WitnessCommitment) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::WitnessCommitment::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::WitnessCommitment::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::WitnessMerkleNode::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::WitnessMerkleNode::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::WitnessMerkleNode::as_ref(&self) -> &[u8]
@@ -1405,7 +1405,7 @@ pub fn bitcoin_primitives::WitnessMerkleNode::clone(&self) -> bitcoin_primitives
 pub fn bitcoin_primitives::WitnessMerkleNode::cmp(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> core::cmp::Ordering
 pub fn bitcoin_primitives::WitnessMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin_primitives::WitnessMerkleNode::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::WitnessMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::WitnessMerkleNode, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::WitnessMerkleNode::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::WitnessMerkleNode, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::WitnessMerkleNode::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::WitnessMerkleNode::eq(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> bool
 pub fn bitcoin_primitives::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1413,7 +1413,7 @@ pub fn bitcoin_primitives::WitnessMerkleNode::from_leaf(leaf: bitcoin_primitives
 pub fn bitcoin_primitives::WitnessMerkleNode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::WitnessMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::WitnessMerkleNode::partial_cmp(&self, other: &bitcoin_primitives::WitnessMerkleNode) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::WitnessMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::WitnessMerkleNode::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::Wtxid::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::Wtxid::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::Wtxid::as_ref(&self) -> &[u8]
@@ -1421,7 +1421,7 @@ pub fn bitcoin_primitives::Wtxid::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::Wtxid::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::Wtxid::clone(&self) -> bitcoin_primitives::Wtxid
 pub fn bitcoin_primitives::Wtxid::cmp(&self, other: &bitcoin_primitives::Wtxid) -> core::cmp::Ordering
-pub fn bitcoin_primitives::Wtxid::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::Wtxid, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::Wtxid::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::Wtxid, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::Wtxid::eq(&self, other: &bitcoin_primitives::Wtxid) -> bool
 pub fn bitcoin_primitives::Wtxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::Wtxid::from(tx: &bitcoin_primitives::transaction::Transaction) -> Self
@@ -1429,7 +1429,7 @@ pub fn bitcoin_primitives::Wtxid::from(tx: bitcoin_primitives::transaction::Tran
 pub fn bitcoin_primitives::Wtxid::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::Wtxid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::Wtxid::partial_cmp(&self, other: &bitcoin_primitives::Wtxid) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::Wtxid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::Wtxid::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::block::Block::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::block::Block::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::block::Block::encoder(&self) -> Self::Encoder
@@ -1437,9 +1437,10 @@ pub fn bitcoin_primitives::block::Block<V>::block_hash(&self) -> bitcoin_primiti
 pub fn bitcoin_primitives::block::Block<V>::clone(&self) -> bitcoin_primitives::block::Block<V>
 pub fn bitcoin_primitives::block::Block<V>::eq(&self, other: &bitcoin_primitives::block::Block<V>) -> bool
 pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::block::Block<V>::header(&self) -> &bitcoin_primitives::block::Header
+pub fn bitcoin_primitives::block::Block<V>::transactions(&self) -> &[bitcoin_primitives::transaction::Transaction]
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>::cached_witness_root(&self) -> core::option::Option<bitcoin_primitives::WitnessMerkleNode>
-pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>::header(&self) -> &bitcoin_primitives::block::Header
-pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>::transactions(&self) -> &[bitcoin_primitives::transaction::Transaction]
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::as_parts(&self) -> (&bitcoin_primitives::block::Header, &[bitcoin_primitives::transaction::Transaction])
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::assume_checked(self, witness_root: core::option::Option<bitcoin_primitives::WitnessMerkleNode>) -> bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::check_merkle_root(&self) -> bool
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::check_witness_commitment(&self) -> (bool, core::option::Option<bitcoin_primitives::WitnessMerkleNode>)
@@ -1510,14 +1511,14 @@ pub fn bitcoin_primitives::block::Version::clone(&self) -> bitcoin_primitives::b
 pub fn bitcoin_primitives::block::Version::cmp(&self, other: &bitcoin_primitives::block::Version) -> core::cmp::Ordering
 pub fn bitcoin_primitives::block::Version::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::block::Version::default() -> Self
-pub fn bitcoin_primitives::block::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_primitives::block::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 pub fn bitcoin_primitives::block::Version::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::block::Version::eq(&self, other: &bitcoin_primitives::block::Version) -> bool
 pub fn bitcoin_primitives::block::Version::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::block::Version::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::block::Version::is_signalling_soft_fork(self, bit: u8) -> bool
 pub fn bitcoin_primitives::block::Version::partial_cmp(&self, other: &bitcoin_primitives::block::Version) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::block::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_primitives::block::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 pub fn bitcoin_primitives::block::VersionDecoder::default() -> Self
 pub fn bitcoin_primitives::block::VersionDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_primitives::block::VersionDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
@@ -1537,14 +1538,14 @@ pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder::current_chunk(&self
 pub fn bitcoin_primitives::pow::CompactTarget::clone(&self) -> bitcoin_primitives::pow::CompactTarget
 pub fn bitcoin_primitives::pow::CompactTarget::cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::cmp::Ordering
 pub fn bitcoin_primitives::pow::CompactTarget::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::pow::CompactTarget::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_primitives::pow::CompactTarget::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 pub fn bitcoin_primitives::pow::CompactTarget::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::pow::CompactTarget::eq(&self, other: &bitcoin_primitives::pow::CompactTarget) -> bool
 pub fn bitcoin_primitives::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin_primitives::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::pow::CompactTarget::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_primitives::pow::CompactTarget::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 pub fn bitcoin_primitives::pow::CompactTarget::to_hex(self) -> alloc::string::String
 pub fn bitcoin_primitives::pow::CompactTargetDecoder::default() -> Self
 pub fn bitcoin_primitives::pow::CompactTargetDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
@@ -1590,7 +1591,7 @@ pub fn bitcoin_primitives::script::Script<T>::index(&self, index: core::ops::ran
 pub fn bitcoin_primitives::script::Script<T>::into_script_buf(self: alloc::boxed::Box<Self>) -> bitcoin_primitives::script::ScriptBuf<T>
 pub fn bitcoin_primitives::script::Script<T>::partial_cmp(&self, other: &bitcoin_primitives::script::Script<T>) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::script::Script<T>::partial_cmp(&self, other: &bitcoin_primitives::script::ScriptBuf<T>) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::script::Script<T>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin_primitives::script::Script<T>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 pub fn bitcoin_primitives::script::Script<T>::to_bytes(&self) -> alloc::vec::Vec<u8>
 pub fn bitcoin_primitives::script::Script<T>::to_hex(&self) -> alloc::string::String
 pub fn bitcoin_primitives::script::Script<T>::to_owned(&self) -> Self::Owned
@@ -1611,7 +1612,7 @@ pub fn bitcoin_primitives::script::ScriptBuf<T>::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::script::ScriptBuf<T>::default() -> Self
 pub fn bitcoin_primitives::script::ScriptBuf<T>::deref(&self) -> &Self::Target
 pub fn bitcoin_primitives::script::ScriptBuf<T>::deref_mut(&mut self) -> &mut Self::Target
-pub fn bitcoin_primitives::script::ScriptBuf<T>::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bitcoin_primitives::script::ScriptBuf<T>::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::eq(&self, other: &bitcoin_primitives::script::Script<T>) -> bool
 pub fn bitcoin_primitives::script::ScriptBuf<T>::eq(&self, other: &bitcoin_primitives::script::ScriptBuf<T>) -> bool
 pub fn bitcoin_primitives::script::ScriptBuf<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1625,7 +1626,7 @@ pub fn bitcoin_primitives::script::ScriptBuf<T>::partial_cmp(&self, other: &bitc
 pub fn bitcoin_primitives::script::ScriptBuf<T>::partial_cmp(&self, other: &bitcoin_primitives::script::ScriptBuf<T>) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::reserve(&mut self, additional_len: usize)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::reserve_exact(&mut self, additional_len: usize)
-pub fn bitcoin_primitives::script::ScriptBuf<T>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin_primitives::script::ScriptBuf<T>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 pub fn bitcoin_primitives::script::ScriptBuf<T>::to_hex(&self) -> alloc::string::String
 pub fn bitcoin_primitives::script::ScriptBuf<T>::with_capacity(capacity: usize) -> Self
 pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::default() -> Self
@@ -1647,7 +1648,7 @@ pub fn bitcoin_primitives::script::ScriptHash::borrow(&self) -> &[u8; 20]
 pub fn bitcoin_primitives::script::ScriptHash::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::script::ScriptHash::clone(&self) -> bitcoin_primitives::script::ScriptHash
 pub fn bitcoin_primitives::script::ScriptHash::cmp(&self, other: &bitcoin_primitives::script::ScriptHash) -> core::cmp::Ordering
-pub fn bitcoin_primitives::script::ScriptHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::script::ScriptHash, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::script::ScriptHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::script::ScriptHash, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::script::ScriptHash::eq(&self, other: &bitcoin_primitives::script::ScriptHash) -> bool
 pub fn bitcoin_primitives::script::ScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::script::ScriptHash::from_script<T>(redeem_script: &bitcoin_primitives::script::Script<T>) -> core::result::Result<Self, bitcoin_primitives::script::RedeemScriptSizeError> where T: bitcoin_primitives::script::ScriptHashableTag
@@ -1655,7 +1656,7 @@ pub fn bitcoin_primitives::script::ScriptHash::from_script_unchecked<T>(script: 
 pub fn bitcoin_primitives::script::ScriptHash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::script::ScriptHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::script::ScriptHash::partial_cmp(&self, other: &bitcoin_primitives::script::ScriptHash) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::script::ScriptHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::script::ScriptHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::script::ScriptHash::try_from(redeem_script: &bitcoin_primitives::script::Script<T>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_primitives::script::ScriptHash::try_from(redeem_script: &bitcoin_primitives::script::ScriptBuf<T>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_primitives::script::ScriptHash::try_from(redeem_script: bitcoin_primitives::script::ScriptBuf<T>) -> core::result::Result<Self, Self::Error>
@@ -1681,7 +1682,7 @@ pub fn bitcoin_primitives::script::WScriptHash::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::script::WScriptHash::borrow(&self) -> &[u8]
 pub fn bitcoin_primitives::script::WScriptHash::clone(&self) -> bitcoin_primitives::script::WScriptHash
 pub fn bitcoin_primitives::script::WScriptHash::cmp(&self, other: &bitcoin_primitives::script::WScriptHash) -> core::cmp::Ordering
-pub fn bitcoin_primitives::script::WScriptHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::script::WScriptHash, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_primitives::script::WScriptHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_primitives::script::WScriptHash, <D as serde_core::de::Deserializer>::Error>
 pub fn bitcoin_primitives::script::WScriptHash::eq(&self, other: &bitcoin_primitives::script::WScriptHash) -> bool
 pub fn bitcoin_primitives::script::WScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::script::WScriptHash::from_script(witness_script: &bitcoin_primitives::script::WitnessScript) -> core::result::Result<Self, bitcoin_primitives::script::WitnessScriptSizeError>
@@ -1689,7 +1690,7 @@ pub fn bitcoin_primitives::script::WScriptHash::from_script_unchecked(script: &b
 pub fn bitcoin_primitives::script::WScriptHash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::script::WScriptHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::script::WScriptHash::partial_cmp(&self, other: &bitcoin_primitives::script::WScriptHash) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::script::WScriptHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::script::WScriptHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: &bitcoin_primitives::script::WitnessScript) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: &bitcoin_primitives::script::WitnessScriptBuf) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: bitcoin_primitives::script::WitnessScriptBuf) -> core::result::Result<Self, Self::Error>
@@ -1707,14 +1708,14 @@ pub fn bitcoin_primitives::transaction::OutPoint::arbitrary(u: &mut arbitrary::u
 pub fn bitcoin_primitives::transaction::OutPoint::clone(&self) -> bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::cmp::Ordering
 pub fn bitcoin_primitives::transaction::OutPoint::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::transaction::OutPoint::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bitcoin_primitives::transaction::OutPoint::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 pub fn bitcoin_primitives::transaction::OutPoint::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::transaction::OutPoint::eq(&self, other: &bitcoin_primitives::transaction::OutPoint) -> bool
 pub fn bitcoin_primitives::transaction::OutPoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::transaction::OutPoint::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::transaction::OutPoint::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::transaction::OutPoint::partial_cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::transaction::OutPoint::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin_primitives::transaction::OutPoint::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 pub fn bitcoin_primitives::transaction::OutPointDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::OutPointDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_primitives::transaction::OutPointDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
@@ -1811,13 +1812,13 @@ pub fn bitcoin_primitives::transaction::Version::arbitrary(u: &mut arbitrary::un
 pub fn bitcoin_primitives::transaction::Version::clone(&self) -> bitcoin_primitives::transaction::Version
 pub fn bitcoin_primitives::transaction::Version::cmp(&self, other: &bitcoin_primitives::transaction::Version) -> core::cmp::Ordering
 pub fn bitcoin_primitives::transaction::Version::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::transaction::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_primitives::transaction::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 pub fn bitcoin_primitives::transaction::Version::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::transaction::Version::eq(&self, other: &bitcoin_primitives::transaction::Version) -> bool
 pub fn bitcoin_primitives::transaction::Version::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::transaction::Version::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::transaction::Version::partial_cmp(&self, other: &bitcoin_primitives::transaction::Version) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::transaction::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_primitives::transaction::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 pub fn bitcoin_primitives::transaction::VersionDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::VersionDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_primitives::transaction::VersionDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
@@ -1844,7 +1845,7 @@ pub fn bitcoin_primitives::witness::Witness::clone(&self) -> bitcoin_primitives:
 pub fn bitcoin_primitives::witness::Witness::cmp(&self, other: &bitcoin_primitives::witness::Witness) -> core::cmp::Ordering
 pub fn bitcoin_primitives::witness::Witness::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::witness::Witness::default() -> Self
-pub fn bitcoin_primitives::witness::Witness::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bitcoin_primitives::witness::Witness::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 pub fn bitcoin_primitives::witness::Witness::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::witness::Witness::eq(&self, other: &bitcoin_primitives::witness::Witness) -> bool
 pub fn bitcoin_primitives::witness::Witness::eq(&self, rhs: &&[T; N]) -> bool
@@ -1880,7 +1881,7 @@ pub fn bitcoin_primitives::witness::Witness::iter(&self) -> bitcoin_primitives::
 pub fn bitcoin_primitives::witness::Witness::last(&self) -> core::option::Option<&[u8]>
 pub fn bitcoin_primitives::witness::Witness::partial_cmp(&self, other: &bitcoin_primitives::witness::Witness) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::witness::Witness::push<T: core::convert::AsRef<[u8]>>(&mut self, new_element: T)
-pub fn bitcoin_primitives::witness::Witness::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin_primitives::witness::Witness::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 pub fn bitcoin_primitives::witness::Witness::size(&self) -> usize
 pub fn bitcoin_primitives::witness::Witness::to_vec(&self) -> alloc::vec::Vec<alloc::vec::Vec<u8>>
 pub fn bitcoin_primitives::witness::WitnessDecoder::default() -> Self

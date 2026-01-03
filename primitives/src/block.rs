@@ -113,6 +113,10 @@ impl Block<Unchecked> {
     #[inline]
     pub fn into_parts(self) -> (Header, Vec<Transaction>) { (self.header, self.transactions) }
 
+    /// Returns the constituent parts of the block by reference.
+    #[inline]
+    pub fn as_parts(&self) -> (&Header, &[Transaction]) { (&self.header, &self.transactions) }
+
     /// Validates (or checks) a block.
     ///
     /// We define valid as:
@@ -208,14 +212,6 @@ impl Block<Unchecked> {
 
 #[cfg(feature = "alloc")]
 impl Block<Checked> {
-    /// Gets a reference to the block header.
-    #[inline]
-    pub fn header(&self) -> &Header { &self.header }
-
-    /// Gets a reference to the block's list of transactions.
-    #[inline]
-    pub fn transactions(&self) -> &[Transaction] { &self.transactions }
-
     /// Returns the cached witness root if one is present.
     ///
     /// It is assumed that a block will have the witness root calculated and cached as part of the
@@ -226,6 +222,14 @@ impl Block<Checked> {
 
 #[cfg(feature = "alloc")]
 impl<V: Validation> Block<V> {
+    /// Gets a reference to the block header.
+    #[inline]
+    pub fn header(&self) -> &Header { &self.header }
+
+    /// Gets a reference to the block's list of transactions.
+    #[inline]
+    pub fn transactions(&self) -> &[Transaction] { &self.transactions }
+
     /// Returns the block hash.
     #[inline]
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
@@ -1366,5 +1370,22 @@ mod tests {
         let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
         let result = block.check_witness_commitment();
         assert_eq!(result, (false, None));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_transactions_accessor() {
+        let header = dummy_header();
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![],
+        };
+        let transactions = vec![tx.clone()];
+        let block = Block::new_unchecked(header, transactions);
+
+        assert_eq!(block.transactions().len(), 1);
+        assert_eq!(block.transactions()[0], tx);
     }
 }
