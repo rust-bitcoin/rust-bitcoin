@@ -532,15 +532,53 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 mod tests {
     use hex::{DisplayHex, FromHex};
     use hex_lit::hex;
-    #[cfg(all(feature = "rand", feature = "std"))]
-    use {core::cmp, secp256k1::rand::prelude::*};
+    #[cfg(feature = "std")]
+    use core::cmp;
 
     use super::*;
     use crate::block::Unchecked;
     use crate::consensus::encode;
     use crate::Txid;
 
-    #[cfg(all(feature = "rand", feature = "std"))]
+    // `bloc` in hex.
+    #[cfg(feature = "std")]
+    const PRNG_SEED: usize = 0x626C6F63;
+
+    // Simple and deterministic PRNG, not suitable for cryptographic use cases.
+    #[cfg(feature = "std")]
+    struct LcgPrng {
+        state: usize,
+    }
+
+    #[cfg(feature = "std")]
+    impl LcgPrng {
+        const P: usize = 1039;
+        const Q: usize = 677;
+
+        const fn new(seed: usize) -> Self {
+            Self {
+                state: seed
+            }
+        }
+
+        #[inline]
+        fn next_usize(&mut self) -> usize {
+            self.state = self.state.wrapping_mul(Self::P).wrapping_add(Self::Q);
+            self.state
+        }
+
+        #[inline]
+        fn next_in_range(&mut self, max: usize) -> usize {
+            self.next_usize() % max
+        }
+
+        #[inline]
+        fn next_u8(&mut self) -> u8 {
+            self.next_usize().to_le_bytes()[0]
+        }
+    }
+
+    #[cfg(feature = "std")]
     macro_rules! pmt_tests {
         ($($name:ident),* $(,)?) => {
             $(
@@ -552,7 +590,7 @@ mod tests {
         }
     }
 
-    #[cfg(all(feature = "rand", feature = "std"))]
+    #[cfg(feature = "std")]
     pmt_tests!(
         pmt_test_1,
         pmt_test_4,
@@ -569,12 +607,12 @@ mod tests {
     );
 
     /// Parses the transaction count out of `name` with form: `pmt_test_$num`.
-    #[cfg(all(feature = "rand", feature = "std"))]
+    #[cfg(feature = "std")]
     fn pmt_test_from_name(name: &str) { pmt_test(name[9..].parse().unwrap()) }
 
-    #[cfg(all(feature = "rand", feature = "std"))]
+    #[cfg(feature = "std")]
     fn pmt_test(tx_count: usize) {
-        let mut rng = secp256k1::rand::rng();
+        let mut rng = LcgPrng::new(PRNG_SEED ^ tx_count);
         // Create some fake tx ids
         let tx_ids = (1..=tx_count)
             .map(|i| format!("{:064x}", i).parse::<Txid>().unwrap())
@@ -598,7 +636,7 @@ mod tests {
                 // Generate `att / 2` random bits
                 let rand_bits = match att / 2 {
                     0 => 0,
-                    bits => rng.random::<u64>() >> (64 - bits),
+                    bits => rng.next_usize().rotate_right(64 - bits),
                 };
                 let include = rand_bits == 0;
                 matches[j] = include;
@@ -742,12 +780,12 @@ mod tests {
         assert_eq!(index.len(), 0);
     }
 
-    #[cfg(all(feature = "rand", feature = "std"))]
+    #[cfg(feature = "std")]
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
-        fn damage(&mut self, rng: &mut ThreadRng) {
-            let n = rng.random_range(0..self.hashes.len());
-            let bit = rng.random::<u8>();
+        fn damage(&mut self, rng: &mut LcgPrng) {
+            let n = rng.next_in_range(self.hashes.len());
+            let bit = rng.next_u8();
             let hashes = &mut self.hashes;
             let mut hash = hashes[n].to_byte_array();
             hash[(bit >> 3) as usize] ^= 1 << (bit & 7);
