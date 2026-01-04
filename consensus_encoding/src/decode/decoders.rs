@@ -107,10 +107,10 @@ impl Decoder for ByteVecDecoder {
 
     fn end(self) -> Result<Self::Output, Self::Error> {
         use {ByteVecDecoderError as E, ByteVecDecoderErrorInner as Inner};
-        
-        if let Some(ref prefix_decoder) = self.prefix_decoder {  
+
+        if let Some(ref prefix_decoder) = self.prefix_decoder {
             return Err(E(Inner::UnexpectedEof(UnexpectedEofError {
-                missing: prefix_decoder.read_limit(), 
+                missing: prefix_decoder.read_limit(),
             })));
         }
 
@@ -1221,7 +1221,7 @@ mod tests {
         let data = [];
         let _ = decoder.push_bytes(&mut data.as_slice());
         let err = decoder.end().unwrap_err();
-        
+
         if let ByteVecDecoderErrorInner::UnexpectedEof(e) = err.0 {
             assert_eq!(e.missing, 1);
         } else {
@@ -1251,7 +1251,7 @@ mod tests {
         let data = [0xFE];
         let _ = decoder.push_bytes(&mut data.as_slice());
         let err = decoder.end().unwrap_err();
-        
+
         if let ByteVecDecoderErrorInner::UnexpectedEof(e) = err.0 {
             assert_eq!(e.missing, 4);
         } else {
@@ -1266,7 +1266,7 @@ mod tests {
         let data = [0xFF];
         let _ = decoder.push_bytes(&mut data.as_slice());
         let err = decoder.end().unwrap_err();
-        
+
         if let ByteVecDecoderErrorInner::UnexpectedEof(e) = err.0 {
             assert_eq!(e.missing, 8);
         } else {
