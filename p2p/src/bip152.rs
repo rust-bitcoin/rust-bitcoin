@@ -14,9 +14,7 @@ use std::error;
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
-use encoding::{
-    CompactSizeDecoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder,
-};
+use encoding::{ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::write_err;
@@ -278,6 +276,70 @@ impl Decodable for ShortId {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Self(Decodable::consensus_decode(r)?))
     }
+}
+
+encoding::encoder_newtype! {
+    /// Encoder type for a [`ShortId`].
+    pub struct ShortIdEncoder<'e>(ArrayEncoder<6>);
+}
+
+impl encoding::Encodable for ShortId {
+    type Encoder<'e> = ShortIdEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ShortIdEncoder::new(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+    }
+}
+
+type ShortIdInnerDecoder = ArrayDecoder<6>;
+
+/// Decoder type for a [`ShortId`].
+pub struct ShortIdDecoder(ShortIdInnerDecoder);
+
+impl encoding::Decoder for ShortIdDecoder {
+    type Output = ShortId;
+    type Error = ShortIdDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(ShortIdDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let arr = self.0.end().map_err(ShortIdDecoderError)?;
+        Ok(ShortId(arr))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for ShortId {
+    type Decoder = ShortIdDecoder;
+
+    fn decoder() -> Self::Decoder {
+        ShortIdDecoder(ShortIdInnerDecoder::new())
+    }
+}
+
+/// An error decoding a [`ShortId`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShortIdDecoderError(<ShortIdInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for ShortIdDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for ShortIdDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "shortid error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ShortIdDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// A structure to relay a block header, short IDs, and a select few transactions.
