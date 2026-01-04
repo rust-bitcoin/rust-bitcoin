@@ -22,6 +22,7 @@ use internals::array::ArrayExt as _;
 use internals::write_err;
 use io::{BufRead, Write};
 use primitives::block::{BlockHashDecoder, BlockHashEncoder};
+use primitives::transaction::{TransactionDecoder, TransactionEncoder};
 
 /// A BIP-0152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -76,6 +77,97 @@ pub struct PrefilledTransaction {
 
 impl convert::AsRef<Transaction> for PrefilledTransaction {
     fn as_ref(&self) -> &Transaction { &self.tx }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for a [`PrefilledTransaction`] message.
+    pub struct PrefilledTransactionEncoder<'e>(Encoder2<CompactSizeEncoder, TransactionEncoder<'e>>);
+}
+
+impl encoding::Encodable for PrefilledTransaction {
+    type Encoder<'e> =PrefilledTransactionEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        PrefilledTransactionEncoder::new(
+            Encoder2::new(CompactSizeEncoder::new(self.idx.into()), self.tx.encoder())
+        )
+    }
+}
+
+type PrefilledTransactionInnerDecoder = Decoder2<CompactSizeDecoder, TransactionDecoder>;
+
+/// The decoder for a [`PrefilledTransaction`] message.
+pub struct PrefilledTransactionDecoder(PrefilledTransactionInnerDecoder);
+
+impl PrefilledTransactionDecoder {
+    fn err_from_inner(inner: <PrefilledTransactionInnerDecoder as encoding::Decoder>::Error) -> PrefilledTransactionDecoderError {
+        PrefilledTransactionDecoderError::Decoder(inner)
+    }
+}
+
+impl encoding::Decoder for PrefilledTransactionDecoder {
+    type Output = PrefilledTransaction;
+    type Error = PrefilledTransactionDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (cs, tx) = self.0.end().map_err(Self::err_from_inner)?;
+        let idx = u16::try_from(cs)
+            .map_err(|_| PrefilledTransactionDecoderError::InvalidIndex(cs))?;
+        Ok(PrefilledTransaction { idx, tx })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for PrefilledTransaction {
+    type Decoder = PrefilledTransactionDecoder;
+
+    fn decoder() -> Self::Decoder {
+        PrefilledTransactionDecoder(
+            Decoder2::new(CompactSizeDecoder::new(), TransactionDecoder::new())
+        )
+    }
+}
+
+/// An error occuring when decoding a [`PrefilledTransaction`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PrefilledTransactionDecoderError {
+    /// Inner decoder error.
+    Decoder(<PrefilledTransactionInnerDecoder as encoding::Decoder>::Error),
+    /// The differential encoding may be no more than 16 bits.
+    InvalidIndex(usize),
+}
+
+impl From<Infallible> for PrefilledTransactionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for PrefilledTransactionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "prefilled transaction error"; d),
+            Self::InvalidIndex(idx) => write!(f, "index overflowed u16 {}", idx),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for PrefilledTransactionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::InvalidIndex(_idx) => None,
+        }
+    }
 }
 
 impl Encodable for PrefilledTransaction {
