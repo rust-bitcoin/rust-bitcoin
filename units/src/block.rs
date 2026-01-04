@@ -597,11 +597,10 @@ impl<'a> core::iter::Sum<&'a Self> for BlockMtpInterval {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[cfg(feature = "encoding")]
     use encoding::{Decodable as _, Decoder as _, UnexpectedEofError};
 
+    use super::*;
     use crate::relative::{NumberOf512Seconds, TimeOverflowError};
 
     #[test]
@@ -755,7 +754,6 @@ mod tests {
             TimeOverflowError { seconds: max_seconds + 1 }
         );
     }
-
 
     #[test]
     fn block_mtp_interval_to_relative_mtp_ceil() {
