@@ -11,7 +11,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
-use encoding::{ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Encoder2};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Encoder2};
 use internals::write_err;
 use io::{BufRead, Write};
 
@@ -41,6 +41,101 @@ pub enum BloomFlags {
     All,
     /// Only update the filter with outpoints if it is P2PK or P2MS
     PubkeyOnly,
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for [`BloomFlags`].
+    pub struct BloomFlagsEncoder(ArrayEncoder<1>);
+}
+
+impl encoding::Encodable for BloomFlags {
+    type Encoder<'e> = BloomFlagsEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BloomFlagsEncoder(ArrayEncoder::without_length_prefix(
+         [match self {
+                Self::None => 0,
+                Self::All => 1,
+                Self::PubkeyOnly => 2,
+            }]
+        ))
+    }
+}
+
+type BloomFlagsInnerDecoder = ArrayDecoder<1>;
+
+/// The decoder for [`BloomFlags`].
+pub struct BloomFlagsDecoder(BloomFlagsInnerDecoder);
+
+impl BloomFlagsDecoder {
+    fn err_from_inner(inner: <ArrayDecoder<1> as encoding::Decoder>::Error) -> BloomFlagsDecoderError {
+        BloomFlagsDecoderError::Decoder(inner)
+    }
+}
+
+impl encoding::Decoder for BloomFlagsDecoder {
+    type Output = BloomFlags;
+    type Error = BloomFlagsDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bloom_flag_arr = self.0.end().map_err(Self::err_from_inner)?;
+        let bloom_flag = u8::from_le_bytes(bloom_flag_arr);
+        Ok(match bloom_flag {
+            0 => BloomFlags::None,
+            1 => BloomFlags::All,
+            2 => BloomFlags::PubkeyOnly,
+            flag => return Err(BloomFlagsDecoderError::UnknownFlag(flag)),
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for BloomFlags {
+    type Decoder = BloomFlagsDecoder;
+
+    fn decoder() -> Self::Decoder {
+        BloomFlagsDecoder(ArrayDecoder::new())
+    }
+}
+
+/// An error occurring when decoding a [`BloomFlags`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BloomFlagsDecoderError {
+    /// Inner decoder error.
+    Decoder(<ArrayDecoder<1> as encoding::Decoder>::Error),
+    /// The flag is not known.
+    UnknownFlag(u8),
+}
+
+impl From<Infallible> for BloomFlagsDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for BloomFlagsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "bloomflags error"; d),
+            Self::UnknownFlag(flag) => write!(f, "unknown bloomflag {}", flag),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BloomFlagsDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::UnknownFlag(_f) => None,
+        }
+    }
 }
 
 impl Encodable for BloomFlags {
