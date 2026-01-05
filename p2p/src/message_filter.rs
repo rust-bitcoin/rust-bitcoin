@@ -186,6 +186,87 @@ pub struct GetCFHeaders {
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }
+
+encoding::encoder_newtype! {
+    /// Encoder type for the [`GetCFHeaders`] message.
+    pub struct GetCFHeadersEncoder(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder>);
+}
+
+impl encoding::Encodable for GetCFHeaders {
+    type Encoder<'e> = GetCFHeadersEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        GetCFHeadersEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.start_height.encoder(),
+                self.stop_hash.encoder()
+            )
+        )
+    }
+}
+
+type GetCFHeadersInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHeightDecoder, BlockHashDecoder>;
+
+/// Decoder type for the [`GetCFHeaders`] message.
+pub struct GetCFHeadersDecoder(GetCFHeadersInnerDecoder);
+
+impl encoding::Decoder for GetCFHeadersDecoder {
+    type Output = GetCFHeaders;
+    type Error = GetCFHeadersDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(GetCFHeadersDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (ty, start_height, stop_hash) = self.0.end().map_err(GetCFHeadersDecoderError)?;
+        Ok(GetCFHeaders {
+            filter_type: u8::from_le_bytes(ty),
+            start_height,
+            stop_hash
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for GetCFHeaders {
+    type Decoder = GetCFHeadersDecoder;
+
+    fn decoder() -> Self::Decoder {
+        GetCFHeadersDecoder(
+            Decoder3::new(
+                ArrayDecoder::new(),
+                BlockHeightDecoder::new(),
+                BlockHashDecoder::new()
+            )
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`GetCFHeaders`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GetCFHeadersDecoderError(<GetCFHeadersInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for GetCFHeadersDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for GetCFHeadersDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "getcfheaders error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for GetCFHeadersDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_consensus_encoding!(GetCFHeaders, filter_type, start_height, stop_hash);
 
 /// cfheaders message
