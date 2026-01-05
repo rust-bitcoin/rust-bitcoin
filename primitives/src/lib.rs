@@ -117,7 +117,7 @@ pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
-use core::{fmt, convert};
+use core::{convert, fmt};
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 use encoding::{Decodable, Decoder};
@@ -142,7 +142,8 @@ impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
             Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
             Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
             // Decoder error types don't have Debug, so we only provide this generic error
-            Self::Decode(_) => write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
+            Self::Decode(_) =>
+                write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
         }
     }
 }
@@ -182,18 +183,19 @@ impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 pub(crate) mod hex_codec {
-    use super::{fmt, Decodable, ParsePrimitiveError};
-
     use encoding::{Encodable, EncodableByteIter};
     use hex_unstable::{BytesToHexIter, Case};
 
+    use super::{fmt, Decodable, ParsePrimitiveError};
+
     /// Writes an Encodable object to the given formatter in the requested case.
     #[inline]
-    fn hex_write_with_case<T: Encodable + Decodable>(obj: &HexPrimitive<T>, f: &mut fmt::Formatter, case: Case) -> fmt::Result {
-        let iter = BytesToHexIter::new(
-            encoding::EncodableByteIter::new(obj.0),
-            case
-        );
+    fn hex_write_with_case<T: Encodable + Decodable>(
+        obj: &HexPrimitive<T>,
+        f: &mut fmt::Formatter,
+        case: Case,
+    ) -> fmt::Result {
+        let iter = BytesToHexIter::new(encoding::EncodableByteIter::new(obj.0), case);
         let collection = iter.collect::<alloc::string::String>();
         f.pad(&collection)
     }
@@ -209,9 +211,7 @@ pub(crate) mod hex_codec {
         type Item = u8;
         type IntoIter = EncodableByteIter<'a, T>;
 
-        fn into_iter(self) -> Self::IntoIter {
-            EncodableByteIter::new(self.0)
-        }
+        fn into_iter(self) -> Self::IntoIter { EncodableByteIter::new(self.0) }
     }
 
     impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
@@ -245,11 +245,15 @@ pub(crate) mod hex_codec {
 
     impl<T: Encodable + Decodable> fmt::LowerHex for HexPrimitive<'_, T> {
         #[inline]
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { hex_write_with_case(self, f, Case::Lower) }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            hex_write_with_case(self, f, Case::Lower)
+        }
     }
 
     impl<T: Encodable + Decodable> fmt::UpperHex for HexPrimitive<'_, T> {
         #[inline]
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { hex_write_with_case(self, f, Case::Upper) }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            hex_write_with_case(self, f, Case::Upper)
+        }
     }
 }

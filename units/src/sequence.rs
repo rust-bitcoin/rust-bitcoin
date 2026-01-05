@@ -392,12 +392,12 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
 
-    use super::*;
-
-    #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _};
     #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
+    #[cfg(feature = "encoding")]
+    use encoding::{Decodable as _, Decoder as _};
+
+    use super::*;
 
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
 

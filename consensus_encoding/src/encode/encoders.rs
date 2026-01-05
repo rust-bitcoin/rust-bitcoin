@@ -11,9 +11,9 @@
 //! For implementing these newtypes, we provide the [`encoder_newtype`] macro.
 //!
 
-use super::{Encodable, Encoder};
-
 use internals::array_vec::ArrayVec;
+
+use super::{Encodable, Encoder};
 
 /// The maximum length of a compact size encoding.
 const SIZE: usize = 9;
@@ -231,9 +231,7 @@ impl CompactSizeEncoder {
     /// values. In such cases we will ignore the passed value and encode [`u64::MAX`].
     /// But even on such exotic systems, we expect users to pass the length of an
     /// in-memory object, meaning that such large values are impossible to obtain.
-    pub fn new(value: usize) -> Self {
-        Self { buf: Some(Self::encode(value)) }
-    }
+    pub fn new(value: usize) -> Self { Self { buf: Some(Self::encode(value)) } }
 
     /// Returns the number of bytes used to encode this `CompactSize` value.
     ///
