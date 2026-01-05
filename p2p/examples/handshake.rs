@@ -43,13 +43,10 @@ fn main() {
         let mut stream_reader = BufReader::new(read_stream);
         loop {
             // Loop and retrieve new messages
-            let reply =
-                encoding::decode_from_read::<message::RawNetworkMessage, _>(&mut stream_reader)
-                    .unwrap();
-            match reply.payload() {
+            let reply = message::decode_network_message(&mut stream_reader).unwrap();
+            match reply {
                 message::NetworkMessage::Version(_) => {
-                    println!("Received version message: {:?}", reply.payload());
-
+                    println!("Received version message: {:?}", reply);
                     let second_message = message::RawNetworkMessage::new(
                         Magic::BITCOIN,
                         message::NetworkMessage::Verack,
@@ -59,11 +56,11 @@ fn main() {
                     println!("Sent verack message");
                 }
                 message::NetworkMessage::Verack => {
-                    println!("Received verack message: {:?}", reply.payload());
+                    println!("Received verack message: {:?}", reply);
                     break;
                 }
                 _ => {
-                    println!("Received unknown message: {:?}", reply.payload());
+                    println!("Received unknown message: {:?}", reply);
                     break;
                 }
             }
