@@ -5,12 +5,16 @@
 //! This module describes BIP-0157 Client Side Block Filtering network messages.
 
 use alloc::vec::Vec;
+use core::convert::Infallible;
+use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{ArrayDecoder, ArrayEncoder, Decoder3, Encoder3};
 use hashes::{sha256d, HashEngine};
-use primitives::BlockHash;
-use units::BlockHeight;
+use internals::write_err;
+use primitives::{block::{BlockHashDecoder, BlockHashEncoder}, BlockHash};
+use units::{block::{BlockHeightDecoder, BlockHeightEncoder}, BlockHeight};
 
 use crate::consensus::impl_consensus_encoding;
 
@@ -77,6 +81,87 @@ pub struct GetCFilters {
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }
+
+encoding::encoder_newtype! {
+    /// Encoder type for the [`GetCFilters`] message.
+    pub struct GetCFiltersEncoder(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder>);
+}
+
+impl encoding::Encodable for GetCFilters {
+    type Encoder<'e> = GetCFiltersEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        GetCFiltersEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.start_height.encoder(),
+                self.stop_hash.encoder()
+            )
+        )
+    }
+}
+
+type GetCFiltersInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHeightDecoder, BlockHashDecoder>;
+
+/// Decoder type for the [`GetCFilters`] message.
+pub struct GetCFiltersDecoder(GetCFiltersInnerDecoder);
+
+impl encoding::Decoder for GetCFiltersDecoder {
+    type Output = GetCFilters;
+    type Error = GetCFiltersDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(GetCFiltersDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (ty, start_height, stop_hash) = self.0.end().map_err(GetCFiltersDecoderError)?;
+        Ok(GetCFilters {
+            filter_type: u8::from_le_bytes(ty),
+            start_height,
+            stop_hash
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for GetCFilters {
+    type Decoder = GetCFiltersDecoder;
+
+    fn decoder() -> Self::Decoder {
+        GetCFiltersDecoder(
+            Decoder3::new(
+                ArrayDecoder::new(),
+                BlockHeightDecoder::new(),
+                BlockHashDecoder::new()
+            )
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`GetCFilters`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GetCFiltersDecoderError(<GetCFiltersInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for GetCFiltersDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for GetCFiltersDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "getcfilters error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for GetCFiltersDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_consensus_encoding!(GetCFilters, filter_type, start_height, stop_hash);
 
 /// cfilter message
