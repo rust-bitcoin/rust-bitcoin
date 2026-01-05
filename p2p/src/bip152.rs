@@ -717,6 +717,88 @@ pub struct BlockTransactions {
     ///  The transactions provided.
     pub transactions: Vec<Transaction>,
 }
+
+encoding::encoder_newtype! {
+    /// Encoder type for [`BlockTransactions`].
+    pub struct BlockTransactionsEncoder<'e>(
+        Encoder2<
+            BlockHashEncoder<'e>,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>
+        >
+    );
+}
+
+impl encoding::Encodable for BlockTransactions {
+    type Encoder<'e> = BlockTransactionsEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockTransactionsEncoder::new(
+            Encoder2::new(
+                self.block_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.transactions.len()),
+                    SliceEncoder::without_length_prefix(&self.transactions),
+                )
+            )
+        )
+    }
+}
+
+type BlockTransactionsInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Transaction>>;
+
+/// Decoder type for a [`BlockTransactions`] message.
+pub struct BlockTransactionsDecoder(BlockTransactionsInnerDecoder);
+
+impl encoding::Decoder for BlockTransactionsDecoder {
+    type Output = BlockTransactions;
+    type Error = BlockTransactionsDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(BlockTransactionsDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (block_hash, transactions) = self.0.end().map_err(BlockTransactionsDecoderError)?;
+        Ok(BlockTransactions { block_hash, transactions })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for BlockTransactions {
+    type Decoder = BlockTransactionsDecoder;
+
+    fn decoder() -> Self::Decoder {
+        BlockTransactionsDecoder(
+            Decoder2::new(BlockHashDecoder::new(), VecDecoder::<Transaction>::new())
+        )
+    }
+}
+
+/// An error occuring decoding a [`BlockTransactions`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockTransactionsDecoderError(<BlockTransactionsInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for BlockTransactionsDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for BlockTransactionsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "blocktxn error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BlockTransactionsDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 crate::consensus::impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
 
 impl BlockTransactions {
