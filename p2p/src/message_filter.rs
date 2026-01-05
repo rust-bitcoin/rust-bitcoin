@@ -10,7 +10,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
 use hashes::{sha256d, HashEngine};
 use internals::write_err;
 use primitives::{block::{BlockHashDecoder, BlockHashEncoder}, BlockHash};
@@ -592,6 +592,94 @@ pub struct CFCheckpt {
     /// The filter headers at intervals of 1,000
     pub filter_headers: Vec<FilterHeader>,
 }
+
+encoding::encoder_newtype! {
+    /// Encoder type for a [`CFCheckpt`] message.
+    pub struct CFCheckptEncoder<'e>(
+        Encoder3<
+            ArrayEncoder<1>,
+            BlockHashEncoder,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHeader>>
+        >
+    );
+}
+
+impl encoding::Encodable for CFCheckpt {
+    type Encoder<'e> = CFCheckptEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CFCheckptEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.stop_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.filter_headers.len()),
+                    SliceEncoder::without_length_prefix(&self.filter_headers)
+                )
+            )
+        )
+    }
+}
+
+type CFCheckptInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHashDecoder, VecDecoder<FilterHeader>>;
+
+/// Decoder type for a [`CFCheckpt`] message.
+pub struct CFCheckptDecoder(CFCheckptInnerDecoder);
+
+impl encoding::Decoder for CFCheckptDecoder {
+    type Output = CFCheckpt;
+    type Error = CFCheckptDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(CFCheckptDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (ty, stop_hash, filter_headers) = self.0.end().map_err(CFCheckptDecoderError)?;
+        Ok(CFCheckpt {
+            filter_type: u8::from_le_bytes(ty),
+            stop_hash,
+            filter_headers,
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for CFCheckpt {
+    type Decoder = CFCheckptDecoder;
+
+    fn decoder() -> Self::Decoder {
+        CFCheckptDecoder(
+            Decoder3::new(ArrayDecoder::new(), BlockHashDecoder::new(), VecDecoder::new())
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`CFCheckpt`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CFCheckptDecoderError(<CFCheckptInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for CFCheckptDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for CFCheckptDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "cfcheckpt error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CFCheckptDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_consensus_encoding!(CFCheckpt, filter_type, stop_hash, filter_headers);
 
 #[cfg(feature = "arbitrary")]
