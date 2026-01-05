@@ -375,22 +375,30 @@ impl Encodable for Transaction {
 impl core::str::FromStr for Transaction {
     type Err = ParseTransactionError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> { crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseTransactionError) }
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseTransactionError)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Display for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::LowerHex for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::UpperHex for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
 }
 
 /// An error that occurs during parsing of a [`Transaction`] from a hex string.
@@ -409,7 +417,9 @@ impl fmt::Display for ParseTransactionError {
 
 #[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
 impl std::error::Error for ParseTransactionError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { std::error::Error::source(&self.0) }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        std::error::Error::source(&self.0)
+    }
 }
 
 /// The decoder for the [`Transaction`] type.
@@ -757,9 +767,12 @@ impl fmt::Display for TransactionDecoderError {
             E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
             E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
             E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
-            E::NullPrevoutInNonCoinbase(index) => write!(f, "null prevout in non-coinbase transaction at input {}", index),
-            E::CoinbaseScriptSigTooSmall(len) => write!(f, "coinbase scriptSig too small: {} bytes (min 2)", len),
-            E::CoinbaseScriptSigTooLarge(len) => write!(f, "coinbase scriptSig too large: {} bytes (max 100)", len),
+            E::NullPrevoutInNonCoinbase(index) =>
+                write!(f, "null prevout in non-coinbase transaction at input {}", index),
+            E::CoinbaseScriptSigTooSmall(len) =>
+                write!(f, "coinbase scriptSig too small: {} bytes (min 2)", len),
+            E::CoinbaseScriptSigTooLarge(len) =>
+                write!(f, "coinbase scriptSig too large: {} bytes (max 100)", len),
         }
     }
 }
@@ -2368,7 +2381,10 @@ mod tests {
         decoder.push_bytes(&mut slice).unwrap();
         let err = decoder.end().expect_err("null prevout in non-coinbase tx should be rejected");
 
-        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(0)));
+        assert_eq!(
+            err,
+            TransactionDecoderError(TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(0))
+        );
     }
 
     #[test]
@@ -2384,7 +2400,10 @@ mod tests {
         decoder.push_bytes(&mut slice).unwrap();
         let err = decoder.end().expect_err("coinbase with 1-byte scriptSig should be rejected");
 
-        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooSmall(1)));
+        assert_eq!(
+            err,
+            TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooSmall(1))
+        );
     }
 
     #[test]
@@ -2400,7 +2419,10 @@ mod tests {
         decoder.push_bytes(&mut slice).unwrap();
         let err = decoder.end().expect_err("coinbase with 101-byte scriptSig should be rejected");
 
-        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooLarge(101)));
+        assert_eq!(
+            err,
+            TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooLarge(101))
+        );
     }
 
     #[test]

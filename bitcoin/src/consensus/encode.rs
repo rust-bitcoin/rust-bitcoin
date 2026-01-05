@@ -351,7 +351,10 @@ impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
 
 /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
-#[deprecated(since = "0.33.0", note = "use `consensus_encoding::CompactSizeEncoder::encoded_size` instead")]
+#[deprecated(
+    since = "0.33.0",
+    note = "use `consensus_encoding::CompactSizeEncoder::encoded_size` instead"
+)]
 #[inline]
 pub const fn varint_size_u64(v: u64) -> usize {
     const LIMIT: u64 = if core::mem::size_of::<usize>() <= 8 {
@@ -368,7 +371,10 @@ pub const fn varint_size_u64(v: u64) -> usize {
 }
 
 /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
-#[deprecated(since = "0.33.0", note = "use `consensus_encoding::CompactSizeEncoder::encoded_size` instead")]
+#[deprecated(
+    since = "0.33.0",
+    note = "use `consensus_encoding::CompactSizeEncoder::encoded_size` instead"
+)]
 #[inline]
 pub fn varint_size(v: impl ToU64) -> usize {
     encoding::CompactSizeEncoder::encoded_size(v.to_u64().try_into().unwrap_or(usize::MAX))

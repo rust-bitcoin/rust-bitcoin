@@ -523,12 +523,16 @@ impl fmt::Display for Header {
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::LowerHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::UpperHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
 }
 
 impl fmt::Debug for Header {
@@ -578,7 +582,9 @@ impl fmt::Display for ParseHeaderError {
 
 #[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
 impl std::error::Error for ParseHeaderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { std::error::Error::source(&self.0) }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        std::error::Error::source(&self.0)
+    }
 }
 
 encoding::encoder_newtype! {
@@ -1221,10 +1227,8 @@ mod tests {
         assert_eq!(want, format!("{}", header));
 
         // And these should yield uppercase hex
-        let upper_encoded = want
-            .chars()
-            .map(|chr| chr.to_ascii_uppercase())
-            .collect::<alloc::string::String>();
+        let upper_encoded =
+            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
         assert_eq!(upper_encoded, format!("{:X}", header));
     }
 
@@ -1273,20 +1277,18 @@ mod tests {
         };
 
         let block: u32 = 741_521;
-        let transactions = vec![
-            Transaction {
-                version: crate::transaction::Version::ONE,
-                lock_time: units::absolute::LockTime::from_height(block).unwrap(),
-                inputs: vec![crate::transaction::TxIn {
-                    previous_output: crate::transaction::OutPoint::COINBASE_PREVOUT,
-                    // Coinbase scriptSig must be 2-100 bytes
-                    script_sig: crate::script::ScriptSigBuf::from_bytes(vec![0x51, 0x51]),
-                    sequence: crate::sequence::Sequence::MAX,
-                    witness: crate::witness::Witness::new(),
-                }],
-                outputs: Vec::new(),
-            },
-        ];
+        let transactions = vec![Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: units::absolute::LockTime::from_height(block).unwrap(),
+            inputs: vec![crate::transaction::TxIn {
+                previous_output: crate::transaction::OutPoint::COINBASE_PREVOUT,
+                // Coinbase scriptSig must be 2-100 bytes
+                script_sig: crate::script::ScriptSigBuf::from_bytes(vec![0x51, 0x51]),
+                sequence: crate::sequence::Sequence::MAX,
+                witness: crate::witness::Witness::new(),
+            }],
+            outputs: Vec::new(),
+        }];
         let original_block = Block::new_unchecked(header, transactions);
 
         // Encode + decode the block
