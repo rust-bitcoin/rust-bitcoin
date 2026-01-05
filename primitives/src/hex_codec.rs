@@ -1,0 +1,253 @@
+// SPDX-License-Identifier: CC0-1.0
+
+//! Hex encoding utilities.
+//!
+//! Various types in primitives need to be rendered and parsed from
+//! hexadecimal encodings. Since `consensus_encoding` doesn't provide
+//! a convenient way to do this, this module provides utilities and
+//! associated errors for encoding and decoding `Encodable` types
+//! within the primitives crate.
+
+use core::fmt;
+use core::fmt::Write as _;
+
+use encoding::{Decodable, Decoder, Encodable, EncodableByteIter};
+use hex_unstable::{BytesToHexIter, Case};
+use internals::write_err;
+
+/// An error type for errors that can occur during parsing of a `Decodable` type from hex.
+pub(crate) enum ParsePrimitiveError<T: Decodable> {
+    /// Tried to decode an odd length string
+    OddLengthString(hex_unstable::OddLengthStringError),
+    /// Encountered an invalid hex character
+    InvalidChar(hex_unstable::InvalidCharError),
+    /// A decode error from `consensus_encoding`
+    Decode(<T::Decoder as Decoder>::Error),
+}
+
+impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
+            Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
+            Self::Decode(_) => write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
+        }
+    }
+}
+
+impl<T: Decodable> fmt::Display for ParsePrimitiveError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+}
+
+impl<T: Decodable> From<hex_unstable::OddLengthStringError> for ParsePrimitiveError<T> {
+    fn from(err: hex_unstable::OddLengthStringError) -> Self { Self::OddLengthString(err) }
+}
+
+impl<T: Decodable> From<hex_unstable::InvalidCharError> for ParsePrimitiveError<T> {
+    fn from(err: hex_unstable::InvalidCharError) -> Self { Self::InvalidChar(err) }
+}
+
+impl<T: Decodable> From<core::convert::Infallible> for ParsePrimitiveError<T> {
+    fn from(never: core::convert::Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "std")]
+impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::OddLengthString(ref e) => Some(e),
+            Self::InvalidChar(ref e) => Some(e),
+            Self::Decode(_) => None,
+        }
+    }
+}
+
+/// Hex encoding wrapper type for Encodable + Decodable types.
+///
+/// Provides default implementations for `Display`, `Debug`, `LowerHex`, and `UpperHex`.
+/// Also provides [`Self::from_str`] for parsing a string to a `T`.
+/// This can be used to implement hex display traits for any encodable types.
+pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub &'a T);
+
+impl<'a, T: Encodable + Decodable> IntoIterator for &HexPrimitive<'a, T> {
+    type Item = u8;
+    type IntoIter = EncodableByteIter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter { EncodableByteIter::new(self.0) }
+}
+
+impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
+    /// Parses a given string into an instance of the type `T`.
+    ///
+    /// Since `FromStr` would return an instance of Self and thus a &T, this function
+    /// is implemented directly on the struct to return the owned instance of T.
+    /// Other `FromStr` implementations can directly return the result of
+    /// [`HexPrimitive::from_str`].
+    ///
+    /// # Errors
+    ///
+    /// [`ParsePrimitiveError::OddLengthString`] if the input string is an odd length.
+    /// [`ParsePrimitiveError::Decode`] if an error occurs during decoding of the object.
+    pub(crate) fn from_str(s: &str) -> Result<T, ParsePrimitiveError<T>> {
+        let iter = hex_unstable::HexToBytesIter::new(s)?;
+
+        let mut decoder = T::decoder();
+        let mut buffer = [0u8; 4096]; // 4MB is bigger than most decodables, reducing push_bytes calls.
+        let mut index = 0;
+
+        for result in iter {
+            if index == buffer.len() {
+                // Flush buffer to decoder
+                decoder
+                    .push_bytes(&mut (buffer.as_slice()))
+                    .map_err(ParsePrimitiveError::Decode)?;
+                index = 0;
+            }
+            buffer[index] = result?;
+            index += 1;
+        }
+
+        // Flush remaining buffer to decoder
+        decoder
+            .push_bytes(&mut (&buffer[..index]))
+            .map_err(ParsePrimitiveError::Decode)?;
+
+        decoder.end().map_err(ParsePrimitiveError::Decode)
+    }
+
+    /// Writes an Encodable object to the given formatter in the requested case.
+    #[inline]
+    fn fmt_hex(
+        &self,
+        f: &mut fmt::Formatter,
+        case: Case,
+    ) -> fmt::Result {
+        // Closure to write a given pad character out a given number of times.
+        let write_pad = |f: &mut fmt::Formatter, pad_len: usize| -> fmt::Result {
+            for _ in 0..pad_len {
+                f.write_char(f.fill())?;
+            }
+            Ok(())
+        };
+
+        // Count hex chars
+        let len = EncodableByteIter::new(self.0).count() * 2;
+        let iter = BytesToHexIter::new(
+            EncodableByteIter::new(self.0),
+            case,
+        );
+
+        let extra_len = if f.alternate() { 2 } else { 0 };
+        let total_len = len + extra_len;
+
+        // We pad for width, and truncate for precision, but not vice-versa
+        let pad_width = f.width().unwrap_or(total_len);
+        let trunc_width = f.precision()
+            .map_or(len, |v| v.saturating_sub(extra_len));
+
+        let pad_diff = pad_width.saturating_sub(total_len);
+
+
+        // Left padding
+        let left_pad = match f.align() {
+            Some(fmt::Alignment::Left) => 0,
+            Some(fmt::Alignment::Center) => pad_diff / 2,
+            Some(fmt::Alignment::Right) => pad_diff,
+            None => 0,
+        };
+        write_pad(f, left_pad)?;
+
+        // Alt characters
+        if f.alternate() {
+            f.write_str(match case {
+                hex_unstable::Case::Lower => "0x",
+                hex_unstable::Case::Upper => "0X",
+            })?;
+        }
+
+        // Hex data
+        for (i, ch) in iter.enumerate() {
+            if i >= trunc_width { break; }
+            f.write_char(ch)?;
+        }
+
+        // Right padding
+        write_pad(f, pad_diff.saturating_sub(left_pad))?;
+
+        Ok(())
+    }
+}
+
+impl<T: Encodable + Decodable> fmt::Display for HexPrimitive<'_, T> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl<T: Encodable + Decodable> fmt::Debug for HexPrimitive<'_, T> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl<T: Encodable + Decodable> fmt::LowerHex for HexPrimitive<'_, T> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Lower) }
+}
+
+impl<T: Encodable + Decodable> fmt::UpperHex for HexPrimitive<'_, T> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Upper) }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::{format, string::ToString};
+
+    use crate::block;
+
+    #[cfg(feature = "alloc")]
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn parse_primitive_error_display() {
+        let odd: ParsePrimitiveError<block::Header> =
+            HexPrimitive::from_str("0").unwrap_err();
+        let invalid: ParsePrimitiveError<block::Header> =
+            HexPrimitive::from_str("zz").unwrap_err();
+        let decode: ParsePrimitiveError<block::Header> =
+            HexPrimitive::from_str("00").unwrap_err();
+
+        assert!(!odd.to_string().is_empty());
+        assert!(!invalid.to_string().is_empty());
+        assert!(!decode.to_string().is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn parse_primitive_error_source() {
+        use std::error::Error as _;
+
+        let odd: ParsePrimitiveError<block::Header> =
+            HexPrimitive::from_str("0").unwrap_err();
+        let invalid: ParsePrimitiveError<block::Header> =
+            HexPrimitive::from_str("zz").unwrap_err();
+        let decode: ParsePrimitiveError<block::Header> =
+            HexPrimitive::from_str("00").unwrap_err();
+
+        assert!(odd.source().is_some());
+        assert!(invalid.source().is_some());
+        assert!(decode.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn hex_primitive_iter_and_debug() {
+        let header: block::Header =
+            encoding::decode_from_slice(&[0u8; block::Header::SIZE]).expect("valid header");
+        let hex = HexPrimitive(&header);
+
+        assert_eq!((&hex).into_iter().next(), Some(0u8));
+        assert!(!format!("{hex:?}").is_empty());
+    }
+}
