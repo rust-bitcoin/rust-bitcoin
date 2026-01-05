@@ -10,7 +10,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayDecoder, ArrayEncoder, Decoder2, Decoder3, Encoder2, Encoder3};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3};
 use hashes::{sha256d, HashEngine};
 use internals::write_err;
 use primitives::{block::{BlockHashDecoder, BlockHashEncoder}, BlockHash};
@@ -174,6 +174,94 @@ pub struct CFilter {
     /// The serialized compact filter for this block
     pub filter: Vec<u8>,
 }
+
+encoding::encoder_newtype! {
+    /// Encoder type for a [`CFilter`] message.
+    pub struct CFilterEncoder<'e>(
+        Encoder3<
+            ArrayEncoder<1>,
+            BlockHashEncoder,
+            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+        >
+    );
+}
+
+impl encoding::Encodable for CFilter {
+    type Encoder<'e> = CFilterEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CFilterEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.block_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.filter.len()),
+                    BytesEncoder::without_length_prefix(&self.filter)
+                )
+            )
+        )
+    }
+}
+
+type CFilterInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHashDecoder, ByteVecDecoder>;
+
+/// Decoder type for a [`CFilter`] message.
+pub struct CFilterDecoder(CFilterInnerDecoder);
+
+impl encoding::Decoder for CFilterDecoder {
+    type Output = CFilter;
+    type Error = CFilterDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(CFilterDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (ty, block_hash, filter) = self.0.end().map_err(CFilterDecoderError)?;
+        Ok(CFilter {
+            filter_type: u8::from_le_bytes(ty),
+            block_hash,
+            filter,
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for CFilter {
+    type Decoder = CFilterDecoder;
+
+    fn decoder() -> Self::Decoder {
+        CFilterDecoder(
+            Decoder3::new(ArrayDecoder::new(), BlockHashDecoder::new(), ByteVecDecoder::new())
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`CFilter`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CFilterDecoderError(<CFilterInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for CFilterDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for CFilterDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "cfilter error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CFilterDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_consensus_encoding!(CFilter, filter_type, block_hash, filter);
 
 /// getcfheaders message
