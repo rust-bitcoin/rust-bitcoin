@@ -255,6 +255,60 @@ pub struct V1MessageHeader {
     pub checksum: [u8; 4],
 }
 
+type V1MessageHeaderInnerDecoder = encoding::Decoder4<
+            encoding::ArrayDecoder<4>,
+            CommandStringDecoder,
+            encoding::ArrayDecoder<4>,
+            encoding::ArrayDecoder<4>,
+        >;
+
+/// The Decoder for V1MessageHeader
+pub struct V1MessageHeaderDecoder(V1MessageHeaderInnerDecoder);
+
+use encoding::{Decoder, Decodable as Decodeable};
+
+impl Decoder for V1MessageHeaderDecoder {
+    type Output = V1MessageHeader;
+    type Error = V1MessageHeaderDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes).unwrap())
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (magic, command, length, checksum) = self.0.end().map_err(V1MessageHeaderDecoderError)?;
+        Ok(
+            V1MessageHeader {
+                magic: Magic(magic),
+                command,
+                length: u32::from_le_bytes(length),
+                checksum
+            }
+        )
+
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { 4 + 12 + 4 + 4 }
+}
+
+impl Decodeable for V1MessageHeader {
+    type Decoder = V1MessageHeaderDecoder;
+    fn decoder() -> Self::Decoder {
+        V1MessageHeaderDecoder (encoding::Decoder4::new(
+            encoding::ArrayDecoder::<4>::new(),
+            CommandString::decoder(),
+            encoding::ArrayDecoder::<4>::new(),
+            encoding::ArrayDecoder::<4>::new()
+        ))
+    }
+}
+
+/// An error consensus decoding a [`V1MessageHeaderDecoderError`].
+pub struct V1MessageHeaderDecoderError(<V1MessageHeaderInnerDecoder as encoding::Decoder>::Error);
+
 impl_consensus_encoding!(V1MessageHeader, magic, command, length, checksum);
 
 /// A Network message using the v2 p2p protocol defined in BIP-0324.
