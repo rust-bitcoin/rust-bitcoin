@@ -307,6 +307,7 @@ impl Decodeable for V1MessageHeader {
 }
 
 /// An error consensus decoding a [`V1MessageHeaderDecoderError`].
+#[derive(Debug)]
 pub struct V1MessageHeaderDecoderError(<V1MessageHeaderInnerDecoder as encoding::Decoder>::Error);
 
 impl_consensus_encoding!(V1MessageHeader, magic, command, length, checksum);
@@ -465,6 +466,27 @@ impl<'a> Arbitrary<'a> for FeeFilter {
             2 => Ok(Self(FeeRate::DUST)),
             _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=u32::MAX)?))),
         }
+    }
+}
+
+/// Read stream decoding the header first, then, consume the remaining bytes and decode the
+/// message.
+pub fn decode_network_message<R>(mut reader: R) -> Result<NetworkMessage, V1MessageHeaderDecoderError >
+where
+    R: std::io::BufRead,
+{
+    // read buffer until length of command is reached as defined by Decoder::limit()
+    let V1MessageHeader {command, ..} =
+        encoding::decode_from_read_unbuffered::<V1MessageHeader, _>(&mut reader)
+                    .unwrap();
+
+    // consume the remainnder of the buffer returning the message
+    match command.as_ref() {
+        "alert" => {
+            let msg = encoding::decode_from_read::<message_network::Alert, _>(&mut reader).unwrap();
+            Ok(NetworkMessage::Alert(msg))
+        },
+        _ => unimplemented!()
     }
 }
 
