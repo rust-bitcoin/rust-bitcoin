@@ -14,12 +14,12 @@ use std::error;
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
-use encoding::{ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Decoder4, Encoder2, Encoder4, SliceEncoder, VecDecoder};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::write_err;
 use io::{BufRead, Write};
-use primitives::block::{BlockHashDecoder, BlockHashEncoder};
+use primitives::block::{Header, BlockHashDecoder, BlockHashEncoder, HeaderDecoder, HeaderEncoder};
 use primitives::transaction::{TransactionDecoder, TransactionEncoder};
 
 /// A BIP-0152 error
@@ -359,6 +359,128 @@ pub struct HeaderAndShortIds {
     ///  Used to provide the coinbase transaction and a select few
     ///  which we expect a peer may be missing.
     pub prefilled_txs: Vec<PrefilledTransaction>,
+}
+
+type HeaderAndShortIdsInnerEncoder<'e> = Encoder4<
+            HeaderEncoder<'e>,
+            ArrayEncoder<8>,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, ShortId>>,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, PrefilledTransaction>>,
+        >;
+
+encoding::encoder_newtype! {
+    /// Encoder type for a [`HeaderAndShortIds`] message.
+    pub struct HeaderAndShortIdsEncoder<'e>(
+        HeaderAndShortIdsInnerEncoder<'e>
+    );
+}
+
+impl encoding::Encodable for HeaderAndShortIds {
+    type Encoder<'e> = HeaderAndShortIdsEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        HeaderAndShortIdsEncoder::new(
+            Encoder4::new(
+                self.header.encoder(),
+                ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.short_ids.len()),
+                    SliceEncoder::without_length_prefix(&self.short_ids)),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.prefilled_txs.len()),
+                    SliceEncoder::without_length_prefix(&self.prefilled_txs),
+                )
+            )
+        )
+    }
+}
+
+type HeaderAndShortIdsInnerDecoder = Decoder4<HeaderDecoder, ArrayDecoder<8>, VecDecoder<ShortId>, VecDecoder<PrefilledTransaction>>;
+
+/// Decoder type for the [`HeaderAndShortIds`] message.
+pub struct HeaderAndShortIdsDecoder(HeaderAndShortIdsInnerDecoder);
+
+impl HeaderAndShortIdsDecoder {
+    fn err_from_inner(inner: <HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error) -> HeaderAndShortIdsDecoderError {
+        HeaderAndShortIdsDecoderError::Decoder(inner)
+    }
+}
+
+impl encoding::Decoder for HeaderAndShortIdsDecoder {
+    type Output = HeaderAndShortIds;
+    type Error = HeaderAndShortIdsDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (header, nonce, short_ids, prefilled_txs) = self.0.end().map_err(Self::err_from_inner)?;
+        let overflow_check = short_ids.len().checked_add(prefilled_txs.len()).ok_or(HeaderAndShortIdsDecoderError::IndexOverflow)?;
+        if overflow_check > u16::MAX.into() {
+            return Err(HeaderAndShortIdsDecoderError::IndexOverflow);
+        }
+        Ok(HeaderAndShortIds {
+            header,
+            nonce: u64::from_le_bytes(nonce),
+            short_ids,
+            prefilled_txs
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for HeaderAndShortIds {
+    type Decoder = HeaderAndShortIdsDecoder;
+
+    fn decoder() -> Self::Decoder {
+        HeaderAndShortIdsDecoder(
+            Decoder4::new(
+                Header::decoder(),
+                ArrayDecoder::new(),
+                VecDecoder::<ShortId>::new(),
+                VecDecoder::<PrefilledTransaction>::new(),
+            )
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`HeaderAndShortIds`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HeaderAndShortIdsDecoderError {
+    /// Inner decoder error.
+    Decoder(<HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error),
+    /// Block indexes overflowed.
+    IndexOverflow,
+}
+
+impl From<Infallible> for HeaderAndShortIdsDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for HeaderAndShortIdsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "headerandshortids error"; d),
+            Self::IndexOverflow => write!(f, "block index overflowed"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for HeaderAndShortIdsDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::IndexOverflow => None,
+        }
+    }
 }
 
 impl Decodable for HeaderAndShortIds {
