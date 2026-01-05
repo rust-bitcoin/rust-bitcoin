@@ -122,6 +122,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-network-kind"
+version = "0.1.0"
+dependencies = [
+ "bitcoin-internals",
+ "serde",
+ "serde_json",
+ "serde_test",
+]
+
+[[package]]
 name = "bitcoin-p2p-messages"
 version = "0.1.0"
 dependencies = [
