@@ -10,7 +10,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayDecoder, ArrayEncoder, Decoder3, Encoder3};
+use encoding::{ArrayDecoder, ArrayEncoder, Decoder2, Decoder3, Encoder2, Encoder3};
 use hashes::{sha256d, HashEngine};
 use internals::write_err;
 use primitives::{block::{BlockHashDecoder, BlockHashEncoder}, BlockHash};
@@ -291,6 +291,81 @@ pub struct GetCFCheckpt {
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }
+
+encoding::encoder_newtype! {
+    /// Encoder type for the [`GetCFCheckpt`] message.
+    pub struct GetCFCheckptEncoder(Encoder2<ArrayEncoder<1>, BlockHashEncoder>);
+}
+
+impl encoding::Encodable for GetCFCheckpt {
+    type Encoder<'e> = GetCFCheckptEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        GetCFCheckptEncoder(
+            Encoder2::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.stop_hash.encoder()
+            )
+        )
+    }
+}
+
+type GetCFCheckptInnerDecoder = Decoder2<ArrayDecoder<1>, BlockHashDecoder>;
+
+/// Decoder type for a [`GetCFCheckpt`] message.
+pub struct GetCFCheckptDecoder(GetCFCheckptInnerDecoder);
+
+impl encoding::Decoder for GetCFCheckptDecoder {
+    type Output = GetCFCheckpt;
+    type Error = GetCFCheckptDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(GetCFCheckptDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (ty, stop_hash) = self.0.end().map_err(GetCFCheckptDecoderError)?;
+        Ok(GetCFCheckpt {
+            filter_type: u8::from_le_bytes(ty),
+            stop_hash
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for GetCFCheckpt {
+    type Decoder = GetCFCheckptDecoder;
+
+    fn decoder() -> Self::Decoder {
+        GetCFCheckptDecoder(
+            Decoder2::new(ArrayDecoder::new(), BlockHashDecoder::new())
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`GetCFCheckpt`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GetCFCheckptDecoderError(<GetCFCheckptInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for GetCFCheckptDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for GetCFCheckptDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "getcfcheckpt error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for GetCFCheckptDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_consensus_encoding!(GetCFCheckpt, filter_type, stop_hash);
 
 /// cfcheckpt message
