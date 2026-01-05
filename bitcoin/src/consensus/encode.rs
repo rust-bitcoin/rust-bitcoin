@@ -360,7 +360,7 @@ pub const fn varint_size_u64(v: u64) -> usize {
         u64::MAX
     };
 
-    #[allow(unreachable_patterns)] // Disable lint because this match is reachable on < 64 bit platforms
+    #[allow(unreachable_patterns)] // This is only reachable on < 64 bit platforms
     match v {
         0..=LIMIT => encoding::CompactSizeEncoder::encoded_size(v as usize), // cast is ok because we just checked bounds
         _ => encoding::CompactSizeEncoder::encoded_size(usize::MAX),
