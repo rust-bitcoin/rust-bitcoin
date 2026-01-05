@@ -57,6 +57,132 @@ macro_rules! impl_hashencode {
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
 
+encoding::encoder_newtype! {
+    /// Encoder type for [`FilterHash`].
+    pub struct FilterHashEncoder(ArrayEncoder<32>);
+}
+
+impl encoding::Encodable for FilterHash {
+    type Encoder<'e> = FilterHashEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        FilterHashEncoder(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+    }
+}
+
+encoding::encoder_newtype! {
+    /// Encoder type for [`FilterHeader`].
+    pub struct FilterHeaderEncoder(ArrayEncoder<32>);
+}
+
+impl encoding::Encodable for FilterHeader {
+    type Encoder<'e> = FilterHeaderEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        FilterHeaderEncoder(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+    }
+}
+
+type HashInnerDecoder = ArrayDecoder<32>;
+
+/// Decoder for the [`FilterHash`] type.
+pub struct FilterHashDecoder(HashInnerDecoder);
+
+impl encoding::Decoder for FilterHashDecoder {
+    type Output = FilterHash;
+    type Error = FilterHashDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(FilterHashDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let arr = self.0.end().map_err(FilterHashDecoderError)?;
+        Ok(FilterHash::from_byte_array(arr))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for FilterHash {
+    type Decoder = FilterHashDecoder;
+
+    fn decoder() -> Self::Decoder {
+        FilterHashDecoder(ArrayDecoder::new())
+    }
+}
+
+/// Errors occuring when decoding a [`FilterHash`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FilterHashDecoderError(<HashInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for FilterHashDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for FilterHashDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "filterhash error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for FilterHashDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+/// Decoder for the [`FilterHeader`] type.
+pub struct FilterHeaderDecoder(HashInnerDecoder);
+
+impl encoding::Decoder for FilterHeaderDecoder {
+    type Output = FilterHeader;
+    type Error = FilterHeaderDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(FilterHeaderDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let arr = self.0.end().map_err(FilterHeaderDecoderError)?;
+        Ok(FilterHeader::from_byte_array(arr))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for FilterHeader {
+    type Decoder = FilterHeaderDecoder;
+
+    fn decoder() -> Self::Decoder {
+        FilterHeaderDecoder(ArrayDecoder::new())
+    }
+}
+
+/// Errors occuring when decoding a [`FilterHash`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FilterHeaderDecoderError(<HashInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for FilterHeaderDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for FilterHeaderDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "filterheader error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for FilterHeaderDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FilterHash {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
