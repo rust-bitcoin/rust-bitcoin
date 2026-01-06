@@ -532,7 +532,6 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 mod tests {
     use hex::{DisplayHex, FromHex};
     use hex_lit::hex;
-    #[cfg(feature = "std")]
     use core::cmp;
 
     use super::*;
@@ -541,16 +540,13 @@ mod tests {
     use crate::Txid;
 
     // `bloc` in hex.
-    #[cfg(feature = "std")]
     const PRNG_SEED: usize = 0x626C6F63;
 
     // Simple and deterministic PRNG, not suitable for cryptographic use cases.
-    #[cfg(feature = "std")]
     struct LcgPrng {
         state: usize,
     }
 
-    #[cfg(feature = "std")]
     impl LcgPrng {
         const P: usize = 1039;
         const Q: usize = 677;
@@ -578,7 +574,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "std")]
     macro_rules! pmt_tests {
         ($($name:ident),* $(,)?) => {
             $(
@@ -590,7 +585,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "std")]
     pmt_tests!(
         pmt_test_1,
         pmt_test_4,
@@ -607,10 +601,8 @@ mod tests {
     );
 
     /// Parses the transaction count out of `name` with form: `pmt_test_$num`.
-    #[cfg(feature = "std")]
     fn pmt_test_from_name(name: &str) { pmt_test(name[9..].parse().unwrap()) }
 
-    #[cfg(feature = "std")]
     fn pmt_test(tx_count: usize) {
         let mut rng = LcgPrng::new(PRNG_SEED ^ tx_count);
         // Create some fake tx ids
@@ -780,7 +772,6 @@ mod tests {
         assert_eq!(index.len(), 0);
     }
 
-    #[cfg(feature = "std")]
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
         fn damage(&mut self, rng: &mut LcgPrng) {
