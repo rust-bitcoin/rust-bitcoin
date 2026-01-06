@@ -182,6 +182,7 @@ impl Midstate {
     /// # Panics
     ///
     /// Panics if `bytes_hashed` is not a multiple of 64.
+    #[track_caller]
     pub const fn new(state: [u8; 32], bytes_hashed: u64) -> Self {
         if bytes_hashed % 64 != 0 {
             panic!("bytes hashed is not a multiple of 64");
