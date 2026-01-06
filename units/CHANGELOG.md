@@ -1,3 +1,12 @@
+# 0.3.0 - 2026-01-08
+
+It was found that the `1.0.0-rc.x` releases were troublesome because
+of how `cargo` resolves version numbers that include a suffix. For
+this reason we elected to go back to pre-1.0 version numbers.
+
+`v0.3.0` is a re-release of `v1.0.0-rc.4`. The only change is the
+`consensus_encoding` dependency version.
+
 # 1.0.0 - 2025-02-24
 
 BOOM! A long time in the making but here goes, our first 1.0 crate release.
