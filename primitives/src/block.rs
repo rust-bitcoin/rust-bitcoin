@@ -113,6 +113,10 @@ impl Block<Unchecked> {
     #[inline]
     pub fn into_parts(self) -> (Header, Vec<Transaction>) { (self.header, self.transactions) }
 
+    /// Returns the constituent parts of the block by reference.
+    #[inline]
+    pub fn as_parts(&self) -> (&Header, &[Transaction]) { (&self.header, &self.transactions) }
+
     /// Validates (or checks) a block.
     ///
     /// We define valid as:

@@ -1276,6 +1276,7 @@ pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Format
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>::cached_witness_root(&self) -> core::option::Option<bitcoin_primitives::WitnessMerkleNode>
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>::header(&self) -> &bitcoin_primitives::block::Header
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>::transactions(&self) -> &[bitcoin_primitives::transaction::Transaction]
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::as_parts(&self) -> (&bitcoin_primitives::block::Header, &[bitcoin_primitives::transaction::Transaction])
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::assume_checked(self, witness_root: core::option::Option<bitcoin_primitives::WitnessMerkleNode>) -> bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::check_merkle_root(&self) -> bool
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::check_witness_commitment(&self) -> (bool, core::option::Option<bitcoin_primitives::WitnessMerkleNode>)

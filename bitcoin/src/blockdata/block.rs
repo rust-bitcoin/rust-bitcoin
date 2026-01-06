@@ -236,10 +236,14 @@ fn block_base_size(transactions: &[Transaction]) -> usize {
 impl Encodable for Block<Unchecked> {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        // TODO: Should we be able to encode without cloning?
-        // This is ok, we decode as unchecked anyway.
-        let block = self.clone().assume_checked(None);
-        block.consensus_encode(w)
+        let (header, transactions) = self.as_parts();
+        let mut len = 0;
+        len += header.consensus_encode(w)?;
+        len += w.emit_compact_size(transactions.len())?;
+        for tx in transactions.iter() {
+            len += tx.consensus_encode(w)?;
+        }
+        Ok(len)
     }
 }
 
