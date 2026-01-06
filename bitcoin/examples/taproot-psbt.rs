@@ -677,10 +677,31 @@ impl BeneficiaryWallet {
         // FINALIZER
         psbt.inputs.iter_mut().for_each(|input| {
             let mut script_witness: Witness = Witness::new();
-            for (_, signature) in input.tap_script_sigs.iter() {
-                script_witness.push(signature.to_vec());
-            }
             for (control_block, (script, _)) in input.tap_scripts.iter() {
+                // Extract 32-byte script pushes that validate as pubkeys, preserving script order
+                let mut pubkeys_in_order = Vec::new();
+                for instruction in script.instructions().flatten() {
+                    if let script::Instruction::PushBytes(push_bytes) = instruction {
+                        if push_bytes.len() == 32 {
+                            let candidate_bytes: [u8; 32] =
+                                push_bytes.as_bytes().try_into().expect("length checked above");
+                            if let Ok(pubkey) = XOnlyPublicKey::from_byte_array(&candidate_bytes) {
+                                pubkeys_in_order.push(pubkey);
+                            }
+                        }
+                    }
+                }
+
+                let leaf_hash = script.tapscript_leaf_hash();
+
+                // Push signatures in reverse order
+                for pubkey in pubkeys_in_order.iter().rev() {
+                    if let Some(sig) = input.tap_script_sigs.get(&(*pubkey, leaf_hash)) {
+                        script_witness.push(sig.to_vec());
+                    }
+                }
+
+                // Push script and control block
                 script_witness.push(script.to_vec());
                 script_witness.push(control_block.serialize());
             }
