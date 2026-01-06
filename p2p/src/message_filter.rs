@@ -10,7 +10,7 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, Decoder4, Encoder2, Encoder3, Encoder4, SliceEncoder, VecDecoder};
 use hashes::{sha256d, HashEngine};
 use internals::write_err;
 use primitives::{block::{BlockHashDecoder, BlockHashEncoder}, BlockHash};
@@ -494,6 +494,99 @@ pub struct CFHeaders {
     pub previous_filter_header: FilterHeader,
     /// The filter hashes for each block in the requested range
     pub filter_hashes: Vec<FilterHash>,
+}
+
+encoding::encoder_newtype! {
+    /// Encoder type for a [`CFHeaders`] message.
+    pub struct CFHeadersEncoder<'e>(
+        Encoder4<
+            ArrayEncoder<1>,
+            BlockHashEncoder,
+            FilterHeaderEncoder,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHash>>
+        >
+    );
+}
+
+impl encoding::Encodable for CFHeaders {
+    type Encoder<'e> = CFHeadersEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CFHeadersEncoder(
+            Encoder4::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.stop_hash.encoder(),
+                self.previous_filter_header.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.filter_hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.filter_hashes),
+                )
+            )
+        )
+    }
+}
+
+type CFHeadersInnerDecoder = Decoder4<ArrayDecoder<1>, BlockHashDecoder, FilterHeaderDecoder, VecDecoder<FilterHash>>;
+
+/// Decoder type for a [`CFHeaders`] message.
+pub struct CFHeadersDecoder(CFHeadersInnerDecoder);
+
+impl encoding::Decoder for CFHeadersDecoder {
+    type Output = CFHeaders;
+    type Error = CFHeadersDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(CFHeadersDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (ty, stop_hash, previous_filter_header, filter_hashes) = self.0.end().map_err(CFHeadersDecoderError)?;
+        Ok(CFHeaders {
+            filter_type: u8::from_le_bytes(ty),
+            stop_hash,
+            previous_filter_header,
+            filter_hashes
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for CFHeaders {
+    type Decoder = CFHeadersDecoder;
+
+    fn decoder() -> Self::Decoder {
+        CFHeadersDecoder(
+            Decoder4::new(
+                ArrayDecoder::new(),
+                BlockHashDecoder::new(),
+                FilterHeader::decoder(),
+                VecDecoder::new()
+            )
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`GetCFCheckpt`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CFHeadersDecoderError(<CFHeadersInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for CFHeadersDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for CFHeadersDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "cfheaders error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CFHeadersDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 impl_consensus_encoding!(CFHeaders, filter_type, stop_hash, previous_filter_header, filter_hashes);
 
