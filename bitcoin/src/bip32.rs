@@ -743,8 +743,7 @@ impl Xpriv {
     /// Constructs a new BIP-0340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair(self) -> Keypair {
-        Keypair::from_seckey_byte_array(self.private_key.to_secret_bytes())
-            .expect("BIP-0032 internal private key representation is broken")
+        Keypair::from_secret_key(&self.private_key)
     }
 
     /// Derives an extended private key from a path.

@@ -178,7 +178,7 @@ pub use crate::{
     address::{Address, AddressType, KnownHrp},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
-    crypto::key::{self, CompressedPublicKey, PrivateKey, PublicKey, XOnlyPublicKey},
+    crypto::key::{self, CompressedPublicKey, Keypair, PrivateKey, PublicKey, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::MerkleBlock,
     network::params::{self, Params},

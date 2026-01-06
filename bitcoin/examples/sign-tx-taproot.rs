@@ -19,7 +19,7 @@ const CHANGE_AMOUNT: Amount = Amount::from_sat_u32(14_999_000); // 1000 sat fee.
 fn main() {
     // Get a keypair we control. In a real application these would come from a stored secret.
     let keypair = senders_keys();
-    let (internal_key, _parity) = keypair.x_only_public_key();
+    let (internal_key, _parity) = keypair.to_x_only_public_key();
 
     // Get an unspent output that is locked to the key above that we control.
     // In a real application these would come from the chain.
@@ -67,7 +67,7 @@ fn main() {
 
     // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
     let tweaked: TweakedKeypair = keypair.tap_tweak(None);
-    let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), tweaked.as_keypair());
+    let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &tweaked.as_keypair().to_inner());
 
     // Update the witness stack.
     let signature = bitcoin::taproot::Signature { signature, sighash_type };
