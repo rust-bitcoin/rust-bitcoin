@@ -15,7 +15,6 @@ use core::{cmp, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use bitcoin::merkle_tree::MerkleBlock;
 use encoding;
 use hashes::sha256d;
 use internals::ToU64 as _;
@@ -25,6 +24,7 @@ use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
+use crate::merkle_tree::MerkleBlock;
 use crate::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
     Magic,
