@@ -1,6 +1,20 @@
+# 0.20.0 - 2026-01-08
+
+It was found that the `1.0.0-rc.x` releases were troublesome because
+of how `cargo` resolves version numbers that include a suffix. For
+this reason we elected to go back to pre-1.0 version numbers.
+
+During this saga (and specifically in the `0.19.0` release) we started
+using `=1.0.0-rc.3` to specify the version number of
+`consensus_encoding`. To remove this and use the latest
+`consensus_encoding 0.1.0` requires a version bump of this crate.
+
+`v0.19.0` will be yanked.
+
 # 0.19.0 - 2025-12-05
 
 * Upgrade `internals` dependency (forces this release).
+* Pin version of `consensus_encoding` using `=` syntax.
 
 # 0.18.0 - 2025-11-27
 
