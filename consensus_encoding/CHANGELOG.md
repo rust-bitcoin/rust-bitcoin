@@ -1,4 +1,17 @@
-# 1.0.0 - 2025-10-10
+# 0.1.0 - 2026-02-17
+
+It was found that the `1.0.0-rc.x` releases were troublesome because
+of how `cargo` resolves version numbers that include a suffix. For
+this reason we elected to go back to pre-1.0 version numbers.
+
+`v0.1.0` is a re-release of `v1.0.0-rc.3`
+
+- Add array ref encoder [#5572](https://github.com/rust-bitcoin/rust-bitcoin/pull/5572)
+- Introduce lifetimes to all public Encoders [#5556](https://github.com/rust-bitcoin/rust-bitcoin/pull/5556)
+- Add `flush_to_*` functions [#5534](https://github.com/rust-bitcoin/rust-bitcoin/pull/5534)
+- Add `ExactSizeEncoder` for known-length Encoders [#5445](https://github.com/rust-bitcoin/rust-bitcoin/pull/5445)
+
+# 1.0.0 Release Candidates - 2025-10-10
 
 This changelog is a rolling description of everything that will eventually end up in `v1.0`.
 

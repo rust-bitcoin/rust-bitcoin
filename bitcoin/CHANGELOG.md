@@ -1,4 +1,4 @@
-# 0.33.0-beta.0 - 2025-12-29
+# 0.33.0-beta - 2026-02-17
 
 This series of beta releases is meant for two things:
 
@@ -14,16 +14,19 @@ This series of beta releases is meant for two things:
 `cargo` can be surprising when there is a `-` in the version number
 (see discussion on [#5229](https://github.com/rust-bitcoin/rust-bitcoin/discussions/5229)).
 
-We do not currently intend on releasing `bitcoin 0.33.0` until the `1.0` releases above are done.
+We do not intend on ever releasing `0.33.0`. The next release will be
+`0.34.0-beta` (excluding possible `0.33.x-beta` point releases). We
+will remove the `-beta` suffix from release versions once `units`,
+`primitives`, and `consensus_encoding` `v1.0.0` are done.
 
 For changes to our dependencies included in this release see:
 
-- `bitcoin-primitives: 1.0.0-rc`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
-- `bitcoin-units 1.0.0-rc`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
-- `bitcoin-consensus-encoding 1.0.0-rc` [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/consensus_encoding/CHANGELOG.md)
-- `bitcoin_hashes 0.19`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
-- `base58ck 0.3.0`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/base58/CHANGELOG.md)
-- `bitcoin-io 0.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
+- `bitcoin-primitives: 0.102`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
+- `bitcoin-units 0.3`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
+- `bitcoin-consensus-encoding 0.1` [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/consensus_encoding/CHANGELOG.md)
+- `bitcoin_hashes 0.20`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
+- `base58ck 0.4`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/base58/CHANGELOG.md)
+- `bitcoin-io 0.5`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
 - `hex-conservative 1.0.0`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/1.x/CHANGELOG.md)
 - `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
 

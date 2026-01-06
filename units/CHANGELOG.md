@@ -1,8 +1,17 @@
-# 1.0.0 - 2025-02-24
+# 0.3.0 - 2026-02-17
+
+It was found that the `1.0.0-rc.x` releases were troublesome because
+of how `cargo` resolves version numbers that include a suffix. For
+this reason we elected to go back to pre-1.0 version numbers.
+
+- Add next target calculation [#5544](https://github.com/rust-bitcoin/rust-bitcoin/pull/5544)
+
+# 1.0.0 Release Candidates - 2025-02-24
 
 BOOM! A long time in the making but here goes, our first 1.0 crate release.
 
 This changelog is a rolling description of everything that will eventually end up in `v1.0`.
+EDIT: This changelog is for `1.0.0-rc.0` through `1.0.0-rc.4` and may well be missing stuff.
 
 * Introduce limit to `Amount`
   * Prepare to enforce `MAX_MONEY` invariant [#4164](https://github.com/rust-bitcoin/rust-bitcoin/pull/4164)
