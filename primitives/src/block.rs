@@ -930,9 +930,15 @@ impl<'a> Arbitrary<'a> for Version {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
     #[cfg(all(feature = "alloc", feature = "hex"))]
     use core::str::FromStr as _;
+
+    #[cfg(feature = "arbitrary")]
+    use arbitrary::Unstructured;
+    use encoding::{Decoder, Encoder};
 
     use super::*;
 
@@ -985,6 +991,30 @@ mod tests {
     fn version_default() {
         let version = Version::default();
         assert_eq!(version.to_consensus(), Version::NO_SOFT_FORK_SIGNALLING.to_consensus());
+    }
+
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "arbitrary"))]
+    fn arbitrary_block_header_and_version() {
+        let data = [0u8; 256];
+        let mut unstructured = Unstructured::new(&data);
+
+        let block = Block::arbitrary(&mut unstructured).expect("arbitrary block");
+        let (header, _) = block.into_parts();
+        assert_eq!(header.version, header.version);
+
+        let mut choose_zero = Unstructured::new(&[0, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(Version::arbitrary(&mut choose_zero).unwrap(), Version::ONE);
+
+        let mut choose_one = Unstructured::new(&[1, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(Version::arbitrary(&mut choose_one).unwrap(), Version::TWO);
+
+        let mut choose_two = Unstructured::new(&[2, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(Version::arbitrary(&mut choose_two).unwrap(), Version::NO_SOFT_FORK_SIGNALLING);
+
+        let mut choose_three = Unstructured::new(&[3, 0, 0, 0, 0, 0, 0, 0]);
+        assert!(Version::arbitrary(&mut choose_three).is_ok());
     }
 
     // Check that the size of the header consensus serialization matches the const SIZE value
@@ -1056,10 +1086,7 @@ mod tests {
         let transactions = Vec::new(); // Empty transactions
 
         let block = Block::new_unchecked(header, transactions);
-        match block.validate() {
-            Err(InvalidBlockError::NoTransactions) => (),
-            other => panic!("Expected NoTransactions error, got: {:?}", other),
-        }
+        matches!(block.validate(), Err(InvalidBlockError::NoTransactions));
     }
 
     #[test]
@@ -1089,10 +1116,45 @@ mod tests {
         let transactions = vec![non_coinbase_tx];
         let block = Block::new_unchecked(header, transactions);
 
-        match block.validate() {
-            Err(InvalidBlockError::InvalidCoinbase) => (),
-            other => panic!("Expected InvalidCoinbase error, got: {:?}", other),
-        }
+        matches!(block.validate(), Err(InvalidBlockError::InvalidCoinbase));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_read_limit() {
+        let block = Block::new_unchecked(
+            dummy_header(),
+            vec![Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: crate::absolute::LockTime::ZERO,
+                inputs: vec![crate::TxIn::EMPTY_COINBASE],
+                outputs: vec![crate::TxOut {
+                    amount: units::Amount::MIN,
+                    script_pubkey: crate::ScriptPubKeyBuf::new(),
+                }],
+            }],
+        );
+
+        let bytes = encoding::encode_to_vec(&block);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        decoder.push_bytes(&mut view).unwrap();
+        let _ = decoder.read_limit();
+        assert_eq!(decoder.end().unwrap(), block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_read_limit() {
+        let header = dummy_header();
+        let bytes = encoding::encode_to_vec(&header);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Header::decoder();
+        decoder.push_bytes(&mut view).unwrap();
+        let _ = decoder.read_limit();
+        assert_eq!(decoder.end().unwrap(), header);
     }
 
     #[test]
@@ -1344,6 +1406,30 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn witness_commitment_from_non_coinbase_returns_none() {
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn {
+                previous_output: crate::OutPoint {
+                    txid: crate::Txid::from_byte_array([1; 32]),
+                    vout: 0,
+                },
+                script_sig: crate::ScriptSigBuf::new(),
+                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                witness: crate::Witness::new(),
+            }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
+        };
+
+        assert!(witness_commitment_from_coinbase(&tx).is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_empty_script_pubkey() {
         let mut txin = crate::TxIn::EMPTY_COINBASE;
         let push = [11_u8];
@@ -1451,8 +1537,123 @@ mod tests {
             }],
         };
 
-        let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
-        let result = block.check_witness_commitment();
-        assert_eq!(result, (false, None));
+        let mut header = dummy_header();
+        let transactions = vec![tx1, tx2];
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    fn version_encoder_emits_consensus_bytes() {
+        let version = Version::from_consensus(123_456_789);
+        let mut encoder = version.encoder();
+
+        assert_eq!(encoder.current_chunk(), &version.to_consensus().to_le_bytes());
+        assert!(!encoder.advance());
+    }
+
+    #[test]
+    fn version_decoder_end_and_read_limit() {
+        let mut decoder = VersionDecoder::new();
+        let bytes_arr = Version::TWO.to_consensus().to_le_bytes();
+        let mut bytes = bytes_arr.as_slice();
+
+        let finished = decoder.push_bytes(&mut bytes).unwrap();
+        assert!(bytes.is_empty());
+        let limit = decoder.read_limit();
+        let decoded = decoder.end().unwrap();
+        assert_eq!(decoded, Version::TWO);
+        assert!(finished || limit == 0);
+    }
+
+    #[test]
+    fn version_decoder_default_roundtrip() {
+        let version = Version::from_consensus(123_456_789);
+        let mut decoder = VersionDecoder::default();
+        let consensus = version.to_consensus().to_le_bytes();
+        let mut bytes = consensus.as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+
+        assert_eq!(decoder.end().unwrap(), version);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_error() {
+        let mut decoder = Header::decoder();
+        let mut slice = [0u8; 0].as_ref();
+        decoder.push_bytes(&mut slice).unwrap();
+        let header_err = decoder.end().unwrap_err();
+
+        let err_first = BlockDecoderError(encoding::Decoder2Error::First(header_err));
+        matches!(err_first, BlockDecoderError(encoding::Decoder2Error::First(_)));
+        assert!(!err_first.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_first).is_some());
+
+        let mut vec_decoder = VecDecoder::<Transaction>::new();
+        let len_bytes = [1u8];
+        let mut len_view = len_bytes.as_ref();
+        vec_decoder.push_bytes(&mut len_view).unwrap();
+        let vec_err = vec_decoder.end().unwrap_err();
+
+        let err_second = BlockDecoderError(encoding::Decoder2Error::Second(vec_err));
+        matches!(err_second, BlockDecoderError(encoding::Decoder2Error::Second(_)));
+        assert!(!err_second.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_second).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_error() {
+        let header_bytes = encoding::encode_to_vec(&dummy_header());
+        let lengths = [0usize, 4, 36, 68, 72, 76];
+
+        for &len in &lengths {
+            let mut decoder = Header::decoder();
+            let mut slice = header_bytes[..len].as_ref();
+            decoder.push_bytes(&mut slice).unwrap();
+            let err = decoder.end().unwrap_err();
+            match len {
+                0 => assert!(matches!(err, HeaderDecoderError::Version(_))),
+                4 => assert!(matches!(err, HeaderDecoderError::PrevBlockhash(_))),
+                36 => assert!(matches!(err, HeaderDecoderError::MerkleRoot(_))),
+                68 => assert!(matches!(err, HeaderDecoderError::Time(_))),
+                72 => assert!(matches!(err, HeaderDecoderError::Bits(_))),
+                76 => assert!(matches!(err, HeaderDecoderError::Nonce(_))),
+                _ => unreachable!(),
+            }
+            assert!(!err.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(std::error::Error::source(&err).is_some());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_block_error() {
+        let variants = [
+            InvalidBlockError::InvalidMerkleRoot,
+            InvalidBlockError::InvalidWitnessCommitment,
+            InvalidBlockError::NoTransactions,
+            InvalidBlockError::InvalidCoinbase,
+        ];
+
+        for variant in variants {
+            assert!(!variant.to_string().is_empty());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decoder_error() {
+        let err = encoding::decode_from_slice::<Version>(&[0x01]).unwrap_err();
+        assert!(!format!("{err}").is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err).is_some());
     }
 }
