@@ -1236,17 +1236,17 @@ mod tests {
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn header_from_hex_str_round_trip() {
-        // Create a transaction and convert it to a hex string
+        // Create a header and convert it to a hex string
         let header = dummy_header();
 
         let lower_hex_header = format!("{:x}", header);
         let upper_hex_header = format!("{:X}", header);
 
-        // Parse the hex strings back into transactions
+        // Parse the hex strings back into headers
         let parsed_lower = Header::from_str(&lower_hex_header).unwrap();
         let parsed_upper = Header::from_str(&upper_hex_header).unwrap();
 
-        // The parsed transaction should match the originals
+        // The parsed header should match the originals
         assert_eq!(header, parsed_lower);
         assert_eq!(header, parsed_upper);
     }
