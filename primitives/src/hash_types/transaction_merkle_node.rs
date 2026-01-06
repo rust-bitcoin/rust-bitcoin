@@ -48,7 +48,7 @@ impl TxMerkleNode {
     }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`TxMerkleNode`] type.
     pub struct TxMerkleNodeEncoder(encoding::ArrayEncoder<32>);
 }

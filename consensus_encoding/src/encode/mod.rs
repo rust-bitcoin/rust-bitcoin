@@ -64,6 +64,27 @@ macro_rules! encoder_newtype{
     }
 }
 
+/// Implements a newtype around an exact-size encoder which
+/// implements the [`Encoder`] and [`ExactSizeEncoder`] traits
+/// by forwarding to the wrapped encoder.
+#[macro_export]
+macro_rules! encoder_newtype_exact{
+    (
+        $(#[$($struct_attr:tt)*])*
+        pub struct $name:ident$(<$lt:lifetime>)?($encoder:ty);
+    ) => {
+        $crate::encoder_newtype! {
+            $(#[$($struct_attr)*])*
+            pub struct $name$(<$lt>)?($encoder);
+        }
+
+        impl$(<$lt>)? $crate::ExactSizeEncoder for $name$(<$lt>)? {
+            #[inline]
+            fn len(&self) -> usize { self.0.len() }
+        }
+    }
+}
+
 /// Yields bytes from any [`Encodable`] instance.
 pub struct EncodableByteIter<'s, T: Encodable + 's> {
     enc: T::Encoder<'s>,
@@ -89,6 +110,24 @@ impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {
             self.position = 0;
         }
     }
+}
+
+impl<'s, T> ExactSizeIterator for EncodableByteIter<'s, T>
+where
+    T: Encodable + 's,
+    T::Encoder<'s>: ExactSizeEncoder
+{
+    fn len(&self) -> usize { self.enc.len() - self.position }
+}
+
+
+/// An encoder with a known size.
+pub trait ExactSizeEncoder: Encoder {
+    /// The number of bytes remaining that the encoder will yield.
+    fn len(&self) -> usize;
+
+    /// Returns whether the encoder would yield an empty response.
+    fn is_empty(&self) -> bool { self.len() == 0 }
 }
 
 /// Encodes an object into a vector.
