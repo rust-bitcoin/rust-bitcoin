@@ -20,7 +20,7 @@ use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
 
-use crate::address::Address;
+use crate::address::{Address, AddressDecoder};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::{ProtocolVersion, ServiceFlags};
 
@@ -83,6 +83,79 @@ impl VersionMessage {
         }
     }
 }
+
+type VersionMessageInnerDecoder = encoding::Decoder2<
+    encoding::Decoder6<
+        crate::ProtocolVersionDecoder,
+        crate::ServiceFlagsDecoder,
+        encoding::ArrayDecoder<8>,
+        AddressDecoder,
+        AddressDecoder,
+        encoding::ArrayDecoder<8>,
+    >,
+    encoding::Decoder3<UserAgentDecoder, encoding::ArrayDecoder<4>, encoding::ArrayDecoder<1>>,
+>;
+
+/// The Decoder for [`VersionMessage`].
+pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+
+impl encoding::Decoder for VersionMessageDecoder {
+    type Output = VersionMessage;
+    type Error = VersionMessageDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes).unwrap())
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (
+            (version, services, timestamp, receiver, sender, nonce),
+            (user_agent, start_height, relay),
+        ) = self.0.end().unwrap();
+
+        Ok(VersionMessage {
+            version,
+            services,
+            timestamp: i64::from_le_bytes(timestamp),
+            receiver,
+            sender,
+            nonce: u64::from_le_bytes(nonce),
+            user_agent,
+            start_height: i32::from_le_bytes(start_height),
+            relay: relay[0] != 0,
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for VersionMessage {
+    type Decoder = VersionMessageDecoder;
+    fn decoder() -> Self::Decoder {
+        VersionMessageDecoder(encoding::Decoder2::new(
+            encoding::Decoder6::new(
+                crate::ProtocolVersion::decoder(),
+                crate::ServiceFlags::decoder(),
+                encoding::ArrayDecoder::<8>::new(),
+                crate::address::Address::decoder(),
+                crate::address::Address::decoder(),
+                encoding::ArrayDecoder::<8>::new(),
+            ),
+            encoding::Decoder3::new(
+                UserAgent::decoder(),
+                encoding::ArrayDecoder::<4>::new(),
+                encoding::ArrayDecoder::<1>::new(),
+            ),
+        ))
+    }
+}
+
+/// An error consensus decoding a [`VersionMessage`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VersionMessageDecoderError(<VersionMessageInnerDecoder as encoding::Decoder>::Error);
 
 impl_consensus_encoding!(
     VersionMessage,
