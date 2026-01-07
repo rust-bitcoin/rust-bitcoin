@@ -2,10 +2,16 @@
 
 //! Proof-of-work related integer types.
 
+#[cfg(feature = "encoding")]
 use core::convert::Infallible;
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "encoding")]
 use internals::write_err;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// Encoding of 256-bit target as 32-bit float.
 ///
@@ -51,11 +57,21 @@ impl fmt::UpperHex for CompactTarget {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for CompactTarget {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let bits = u.int_in_range(0..=u32::MAX)?;
+        Ok(Self::from_consensus(bits))
+    }
+}
+
+#[cfg(feature = "encoding")]
 encoding::encoder_newtype! {
     /// The encoder for the [`CompactTarget`] type.
     pub struct CompactTargetEncoder(encoding::ArrayEncoder<4>);
 }
 
+#[cfg(feature = "encoding")]
 impl encoding::Encodable for CompactTarget {
     type Encoder<'e> = CompactTargetEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -66,17 +82,21 @@ impl encoding::Encodable for CompactTarget {
 }
 
 /// The decoder for the [`CompactTarget`] type.
+#[cfg(feature = "encoding")]
 pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
 
+#[cfg(feature = "encoding")]
 impl CompactTargetDecoder {
     /// Constructs a new [`CompactTarget`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
+#[cfg(feature = "encoding")]
 impl Default for CompactTargetDecoder {
     fn default() -> Self { Self::new() }
 }
 
+#[cfg(feature = "encoding")]
 impl encoding::Decoder for CompactTargetDecoder {
     type Output = CompactTarget;
     type Error = CompactTargetDecoderError;
@@ -96,6 +116,7 @@ impl encoding::Decoder for CompactTargetDecoder {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
+#[cfg(feature = "encoding")]
 impl encoding::Decodable for CompactTarget {
     type Decoder = CompactTargetDecoder;
     fn decoder() -> Self::Decoder { CompactTargetDecoder(encoding::ArrayDecoder::<4>::new()) }
@@ -103,16 +124,20 @@ impl encoding::Decodable for CompactTarget {
 
 /// An error consensus decoding an `CompactTarget`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg(feature = "encoding")]
 pub struct CompactTargetDecoderError(encoding::UnexpectedEofError);
 
+#[cfg(feature = "encoding")]
 impl From<Infallible> for CompactTargetDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
+#[cfg(feature = "encoding")]
 impl From<encoding::UnexpectedEofError> for CompactTargetDecoderError {
     fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
 }
 
+#[cfg(feature = "encoding")]
 impl fmt::Display for CompactTargetDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write_err!(f, "sequence decoder error"; self.0)
@@ -120,6 +145,7 @@ impl fmt::Display for CompactTargetDecoderError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "encoding")]
 impl std::error::Error for CompactTargetDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }

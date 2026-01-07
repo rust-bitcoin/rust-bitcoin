@@ -17,7 +17,7 @@ use arbitrary::Arbitrary;
 use bitcoin_primitives::block::{Checked, Unchecked};
 use bitcoin_primitives::script::{self, ScriptHash, WScriptHash};
 use bitcoin_primitives::{
-    absolute, block, merkle_tree, pow, relative, transaction, witness, OutPoint, RedeemScript,
+    absolute, block, merkle_tree, relative, transaction, witness, OutPoint, RedeemScript,
     RedeemScriptBuf, ScriptPubKey, ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, TapScript,
     TapScriptBuf, Transaction, TxIn, TxOut, Txid, Witness, WitnessScript, WitnessScriptBuf, Wtxid,
 };
@@ -43,7 +43,6 @@ struct Structs<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
     j1: &'a RedeemScript,
     j2: &'a ScriptPubKey,
     j3: &'a ScriptSig,
@@ -87,7 +86,6 @@ struct CommonTraits {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
@@ -119,7 +117,6 @@ struct Clone<'a> {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
     // j: &'a Script,
     k: ScriptHash,
     l: WScriptHash,
@@ -152,7 +149,6 @@ struct Ord {
     f: block::WitnessCommitment,
     g: merkle_tree::TxMerkleNode,
     h: merkle_tree::WitnessMerkleNode,
-    i: pow::CompactTarget,
     // j: &'a Script,  // Doesn't implement `Clone`.
     k: ScriptHash,
     l: WScriptHash,
@@ -238,7 +234,7 @@ fn api_can_use_all_units_types_from_module_amount_error() {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_primitives::{
-        block, locktime, merkle_tree, pow, script, sequence, transaction, witness,
+        block, locktime, merkle_tree, script, sequence, transaction, witness,
     };
 }
 
@@ -301,7 +297,6 @@ fn api_all_non_error_types_have_non_empty_debug() {
         block::WitnessCommitment::from_byte_array(BYTES);
         merkle_tree::TxMerkleNode::from_byte_array(BYTES);
         merkle_tree::WitnessMerkleNode::from_byte_array(BYTES);
-        pow::CompactTarget::from_consensus(0x1d00_ffff);
         REDEEM_SCRIPT.as_script();
         SCRIPT_SIG.as_script();
         SCRIPT_PUB_KEY.as_script();
