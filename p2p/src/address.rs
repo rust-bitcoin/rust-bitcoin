@@ -134,6 +134,57 @@ impl ToSocketAddrs for Address {
     }
 }
 
+type AddressInnerDecoder = encoding::Decoder3<
+    crate::ServiceFlagsDecoder,
+    encoding::ArrayDecoder<16>,
+    encoding::ArrayDecoder<2>,
+>;
+
+/// The Decoder for [`Address`].
+pub struct AddressDecoder(AddressInnerDecoder);
+
+impl encoding::Decoder for AddressDecoder {
+    type Output = Address;
+    type Error = AddressDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AddressDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (services, raw_address, port) = self.0.end().map_err(AddressDecoderError)?;
+        let mut address: [u16; 8] = [0; 8];
+
+        for (index, value) in raw_address.chunks(2).enumerate() {
+            let arr: [u8; 2] =
+                <&[u8] as TryInto<[u8; 2]>>::try_into(value).expect("16 bytes decoded");
+            address[index] = u16::from_be_bytes(arr);
+        }
+
+        Ok(Address { services, address, port: u16::from_be_bytes(port) })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Address {
+    type Decoder = AddressDecoder;
+    fn decoder() -> Self::Decoder {
+        AddressDecoder(encoding::Decoder3::new(
+            ServiceFlags::decoder(),
+            encoding::ArrayDecoder::<16>::new(),
+            encoding::ArrayDecoder::<2>::new(),
+        ))
+    }
+}
+
+/// An error consensus decoding a [`AddressDecoderError`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddressDecoderError(<AddressInnerDecoder as encoding::Decoder>::Error);
+
 /// Supported networks for use in BIP-0155 addrv2 message
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum AddrV2 {
