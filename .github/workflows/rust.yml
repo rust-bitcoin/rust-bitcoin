@@ -458,7 +458,7 @@ jobs:
       - name: "Fetch base branch for diff"
         run: git fetch origin master
       - name: "Retrieve relative diff"
-        run: git diff origin/master.. | tee git.diff
+        run: git diff origin/master.. -- '*.rs' | tee git.diff
       - uses: taiki-e/install-action@81ee1d48d9194cdcab880cbdc7d36e87d39874cb # v2.62.45
         with:
           tool: cargo-mutants
