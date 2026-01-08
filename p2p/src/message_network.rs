@@ -9,11 +9,15 @@ use alloc::borrow::Cow;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::convert::Infallible;
+use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
+use encoding::{ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Encoder2};
 use hashes::sha256d;
+use internals::write_err;
 use io::{BufRead, Write};
 
 use crate::address::Address;
@@ -101,6 +105,89 @@ impl_consensus_encoding!(
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UserAgent {
     user_agent: String,
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for a [`UserAgent`] string.
+    pub struct UserAgentEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+}
+
+impl encoding::Encodable for UserAgent {
+    type Encoder<'e> = UserAgentEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        UserAgentEncoder(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.user_agent.len()),
+                BytesEncoder::without_length_prefix(self.user_agent.as_bytes())
+            )
+        )
+    }
+}
+
+type UserAgentInnerDecoder = ByteVecDecoder;
+
+/// The decoder for the [`UserAgent`] message.
+pub struct UserAgentDecoder(UserAgentInnerDecoder);
+
+impl encoding::Decoder for UserAgentDecoder {
+    type Output = UserAgent;
+    type Error = UserAgentDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(UserAgentDecoderError::Decoder)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(UserAgentDecoderError::Decoder)?;
+        let user_agent = String::from_utf8(bytes).map_err(|_| UserAgentDecoderError::InvalidUtf8)?;
+        Ok(UserAgent { user_agent })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for UserAgent {
+    type Decoder = UserAgentDecoder;
+
+    fn decoder() -> Self::Decoder {
+        UserAgentDecoder(UserAgentInnerDecoder::new())
+    }
+}
+
+/// An error decoding a [`UserAgent`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum UserAgentDecoderError {
+    /// Inner decoder error.
+    Decoder(<UserAgentInnerDecoder as encoding::Decoder>::Error),
+    /// The string did not contain valid UTF-8.
+    InvalidUtf8,
+}
+
+impl From<Infallible> for UserAgentDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for UserAgentDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "useragent error"; d),
+            Self::InvalidUtf8 => write!(f, "invalid utf-8."),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UserAgentDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::InvalidUtf8 => None,
+        }
+    }
 }
 
 impl_consensus_encoding!(UserAgent, user_agent);
