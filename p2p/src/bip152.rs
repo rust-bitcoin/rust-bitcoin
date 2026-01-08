@@ -14,10 +14,14 @@ use std::error;
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
+use encoding::{ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Decoder4, Encoder2, Encoder4, SliceEncoder, VecDecoder};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::ToU64 as _;
+use internals::write_err;
 use io::{BufRead, Write};
+use primitives::block::{Header, BlockHashDecoder, BlockHashEncoder, HeaderDecoder, HeaderEncoder};
+use primitives::transaction::{TransactionDecoder, TransactionEncoder};
 
 /// A BIP-0152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -72,6 +76,97 @@ pub struct PrefilledTransaction {
 
 impl convert::AsRef<Transaction> for PrefilledTransaction {
     fn as_ref(&self) -> &Transaction { &self.tx }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for a [`PrefilledTransaction`] message.
+    pub struct PrefilledTransactionEnoder<'e>(Encoder2<CompactSizeEncoder, TransactionEncoder<'e>>);
+}
+
+impl encoding::Encodable for PrefilledTransaction {
+    type Encoder<'e> =PrefilledTransactionEnoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        PrefilledTransactionEnoder(
+            Encoder2::new(CompactSizeEncoder::new(self.idx.into()), self.tx.encoder())
+        )
+    }
+}
+
+type PrefilledTransactionInnerDecoder = Decoder2<CompactSizeDecoder, TransactionDecoder>;
+
+/// The decoder for a [`PrefilledTransaction`] message.
+pub struct PrefilledTransactionDecoder(PrefilledTransactionInnerDecoder);
+
+impl PrefilledTransactionDecoder {
+    fn err_from_inner(inner: <PrefilledTransactionInnerDecoder as encoding::Decoder>::Error) -> PrefilledTransactionDecoderError {
+        PrefilledTransactionDecoderError::Decoder(inner)
+    }
+}
+
+impl encoding::Decoder for PrefilledTransactionDecoder {
+    type Output = PrefilledTransaction;
+    type Error = PrefilledTransactionDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (cs, tx) = self.0.end().map_err(Self::err_from_inner)?;
+        let idx = u16::try_from(cs)
+            .map_err(|_| PrefilledTransactionDecoderError::InvalidIndex(cs))?;
+        Ok(PrefilledTransaction { idx, tx })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for PrefilledTransaction {
+    type Decoder = PrefilledTransactionDecoder;
+
+    fn decoder() -> Self::Decoder {
+        PrefilledTransactionDecoder(
+            Decoder2::new(CompactSizeDecoder::new(), TransactionDecoder::new())
+        )
+    }
+}
+
+/// An error occuring when decoding a [`PrefilledTransaction`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PrefilledTransactionDecoderError {
+    /// Inner decoder error.
+    Decoder(<PrefilledTransactionInnerDecoder as encoding::Decoder>::Error),
+    /// The differential encoding may be no more than 16 bits.
+    InvalidIndex(usize),
+}
+
+impl From<Infallible> for PrefilledTransactionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for PrefilledTransactionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "prefilled transaction error"; d),
+            Self::InvalidIndex(idx) => write_err!(f, "index overflowed u16"; idx),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for PrefilledTransactionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::InvalidIndex(_idx) => None,
+        }
+    }
 }
 
 impl Encodable for PrefilledTransaction {
@@ -184,6 +279,70 @@ impl Decodable for ShortId {
     }
 }
 
+encoding::encoder_newtype! {
+    /// Encoder type for a [`ShortId`].
+    pub struct ShortIdEncoder(ArrayEncoder<6>);
+}
+
+impl encoding::Encodable for ShortId {
+    type Encoder<'e> = ShortIdEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ShortIdEncoder(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+    }
+}
+
+type ShortIdInnerDecoder = ArrayDecoder<6>;
+
+/// Decoder type for a [`ShortId`].
+pub struct ShortIdDecoder(ShortIdInnerDecoder);
+
+impl encoding::Decoder for ShortIdDecoder {
+    type Output = ShortId;
+    type Error = ShortIdDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(ShortIdDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let arr = self.0.end().map_err(ShortIdDecoderError)?;
+        Ok(ShortId(arr))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for ShortId {
+    type Decoder = ShortIdDecoder;
+
+    fn decoder() -> Self::Decoder {
+        ShortIdDecoder(ShortIdInnerDecoder::new())
+    }
+}
+
+/// An error decoding a [`ShortId`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShortIdDecoderError(<ShortIdInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for ShortIdDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for ShortIdDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "shortid error"; self)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ShortIdDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// A structure to relay a block header, short IDs, and a select few transactions.
 ///
 /// A [`HeaderAndShortIds`] structure is used to relay a block header, the short
@@ -201,6 +360,125 @@ pub struct HeaderAndShortIds {
     ///  Used to provide the coinbase transaction and a select few
     ///  which we expect a peer may be missing.
     pub prefilled_txs: Vec<PrefilledTransaction>,
+}
+
+encoding::encoder_newtype! {
+    /// Encoder type for a [`HeaderAndShortIds`] message.
+    pub struct HeaderAndShortIdsEncoder<'e>(
+        Encoder4<
+            HeaderEncoder,
+            ArrayEncoder<8>,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, ShortId>>,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, PrefilledTransaction>>,
+        >
+    );
+}
+
+impl encoding::Encodable for HeaderAndShortIds {
+    type Encoder<'e> = HeaderAndShortIdsEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        HeaderAndShortIdsEncoder(
+            Encoder4::new(
+                self.header.encoder(),
+                ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.short_ids.len()),
+                    SliceEncoder::without_length_prefix(&self.short_ids)),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.prefilled_txs.len()),
+                    SliceEncoder::without_length_prefix(&self.prefilled_txs),
+                )
+            )
+        )
+    }
+}
+
+type HeaderAndShortIdsInnerDecoder = Decoder4<HeaderDecoder, ArrayDecoder<8>, VecDecoder<ShortId>, VecDecoder<PrefilledTransaction>>;
+
+/// Decoder type for the [`HeaderAndShortIds`] message.
+pub struct HeaderAndShortIdsDecoder(HeaderAndShortIdsInnerDecoder);
+
+impl HeaderAndShortIdsDecoder {
+    fn err_from_inner(inner: <HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error) -> HeaderAndShortIdsDecoderError {
+        HeaderAndShortIdsDecoderError::Decoder(inner)
+    }
+}
+
+impl encoding::Decoder for HeaderAndShortIdsDecoder {
+    type Output = HeaderAndShortIds;
+    type Error = HeaderAndShortIdsDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (header, nonce, short_ids, prefilled_txs) = self.0.end().map_err(Self::err_from_inner)?;
+        if short_ids.len().checked_add(prefilled_txs.len()).is_none() {
+            return Err(HeaderAndShortIdsDecoderError::IndexOverflow);
+        }
+        Ok(HeaderAndShortIds {
+            header,
+            nonce: u64::from_le_bytes(nonce),
+            short_ids,
+            prefilled_txs
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for HeaderAndShortIds {
+    type Decoder = HeaderAndShortIdsDecoder;
+
+    fn decoder() -> Self::Decoder {
+        HeaderAndShortIdsDecoder(
+            Decoder4::new(
+                Header::decoder(),
+                ArrayDecoder::new(),
+                VecDecoder::<ShortId>::new(),
+                VecDecoder::<PrefilledTransaction>::new(),
+            )
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`HeaderAndShortIds`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HeaderAndShortIdsDecoderError {
+    /// Inner decoder error.
+    Decoder(<HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error),
+    /// Block indexes overflowed.
+    IndexOverflow,
+}
+
+impl From<Infallible> for HeaderAndShortIdsDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for HeaderAndShortIdsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "headerandshortids error"; d),
+            Self::IndexOverflow => write!(f, "block index overflowed"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for HeaderAndShortIdsDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::IndexOverflow => None,
+        }
+    }
 }
 
 impl Decodable for HeaderAndShortIds {
@@ -419,6 +697,88 @@ pub struct BlockTransactions {
     ///  The transactions provided.
     pub transactions: Vec<Transaction>,
 }
+
+encoding::encoder_newtype! {
+    /// Encoder type for [`BlockTransactions`].
+    pub struct BlockTransactionsEncoder<'e>(
+        Encoder2<
+            BlockHashEncoder,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>
+        >
+    );
+}
+
+impl encoding::Encodable for BlockTransactions {
+    type Encoder<'e> = BlockTransactionsEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockTransactionsEncoder(
+            Encoder2::new(
+                self.block_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.transactions.len()),
+                    SliceEncoder::without_length_prefix(&self.transactions),
+                )
+            )
+        )
+    }
+}
+
+type BlockTransactionsInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Transaction>>;
+
+/// Decoder type for a [`BlockTransactions`] message.
+pub struct BlockTransactionsDecoder(BlockTransactionsInnerDecoder);
+
+impl encoding::Decoder for BlockTransactionsDecoder {
+    type Output = BlockTransactions;
+    type Error = BlockTransactionsDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(BlockTransactionsDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (block_hash, transactions) = self.0.end().map_err(BlockTransactionsDecoderError)?;
+        Ok(BlockTransactions { block_hash, transactions })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for BlockTransactions {
+    type Decoder = BlockTransactionsDecoder;
+
+    fn decoder() -> Self::Decoder {
+        BlockTransactionsDecoder(
+            Decoder2::new(BlockHashDecoder::new(), VecDecoder::<Transaction>::new())
+        )
+    }
+}
+
+/// An error occuring decoding a [`BlockTransactions`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockTransactionsDecoderError(<BlockTransactionsInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for BlockTransactionsDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for BlockTransactionsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "blocktxn error"; self)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BlockTransactionsDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 crate::consensus::impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
 
 impl BlockTransactions {
