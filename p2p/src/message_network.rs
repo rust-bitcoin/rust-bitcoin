@@ -15,7 +15,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Encoder2};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4, Encoder2, Encoder4};
 use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
@@ -476,6 +476,122 @@ pub struct Reject {
     pub reason: Cow<'static, str>,
     /// reference to rejected item
     pub hash: sha256d::Hash,
+}
+
+encoding::encoder_newtype! {
+    /// The encoder type for a [`Reject`] message.
+    pub struct RejectEncoder<'e>(
+        Encoder4<
+            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            RejectReasonEncoder,
+            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            ArrayEncoder<32>,
+        >
+    );
+}
+
+impl encoding::Encodable for Reject {
+    type Encoder<'e> = RejectEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        RejectEncoder(
+            Encoder4::new(
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.message.len()),
+                    BytesEncoder::without_length_prefix(self.message.as_bytes())
+                ),
+                self.ccode.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.reason.len()),
+                    BytesEncoder::without_length_prefix(self.reason.as_bytes())
+                ),
+                ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
+            )
+        )
+    }
+}
+
+type RejectInnerDecoder = Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
+
+/// The decoder type for a [`Reject`] message.
+pub struct RejectDecoder(RejectInnerDecoder);
+
+impl encoding::Decoder for RejectDecoder {
+    type Output = Reject;
+    type Error = RejectDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(RejectDecoderError::Decoder)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (message, ccode, reason, hash) = self.0.end().map_err(RejectDecoderError::Decoder)?;
+        let message = String::from_utf8(message)
+            .map_err(|_| RejectDecoderError::InvalidUtf8)
+            .map(Cow::Owned)?;
+        let reason = String::from_utf8(reason)
+            .map_err(|_| RejectDecoderError::InvalidUtf8)
+            .map(Cow::Owned)?;
+        let hash = sha256d::Hash::from_byte_array(hash);
+        Ok(Reject {
+            message,
+            ccode,
+            reason,
+            hash,
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Reject {
+    type Decoder = RejectDecoder;
+
+    fn decoder() -> Self::Decoder {
+        RejectDecoder(
+            Decoder4::new(
+                ByteVecDecoder::new(),
+                RejectReason::decoder(),
+                ByteVecDecoder::new(),
+                ArrayDecoder::new()
+            )
+        )
+    }
+}
+
+/// Errors occuring when decoding a [`Reject`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RejectDecoderError {
+    /// Inner decoder error.
+    Decoder(<RejectInnerDecoder as encoding::Decoder>::Error),
+    /// Invalid UTF-8 string.
+    InvalidUtf8,
+}
+
+impl From<Infallible> for RejectDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for RejectDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "reject error"; d),
+            Self::InvalidUtf8 => write!(f, "invalid utf-8"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for RejectDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::InvalidUtf8 => None,
+        }
+    }
 }
 
 impl_consensus_encoding!(Reject, message, ccode, reason, hash);
