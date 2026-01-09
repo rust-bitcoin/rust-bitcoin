@@ -377,24 +377,6 @@ impl_to_hex_from_lower_hex!(Target, |_| 64);
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
     pub trait CompactTargetExt impl for CompactTarget {
-        /// Constructs a new `CompactTarget` from a prefixed hex string.
-        fn from_hex(s: &str) -> Result<Self, PrefixedHexError>
-        where
-            Self: Sized
-        {
-            let target = parse_int::hex_u32_prefixed(s)?;
-            Ok(Self::from_consensus(target))
-        }
-
-        /// Constructs a new `CompactTarget` from an unprefixed hex string.
-        fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError>
-        where
-            Self: Sized
-        {
-            let target = parse_int::hex_u32_unprefixed(s)?;
-            Ok(Self::from_consensus(target))
-        }
-
         /// Computes the [`CompactTarget`] from a difficulty adjustment.
         ///
         /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
@@ -1786,37 +1768,6 @@ mod tests {
 
         let u = u128::MAX;
         assert!(((U256::from(u) << 128) + U256::from(u)).is_max());
-    }
-
-    #[test]
-    fn compact_target_from_hex_lower() {
-        let target = CompactTarget::from_hex("0x010034ab").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_hex_upper() {
-        let target = CompactTarget::from_hex("0X010034AB").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_unprefixed_hex_lower() {
-        let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_unprefixed_hex_upper() {
-        let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_hex_invalid_hex_should_err() {
-        let hex = "0xzbf9";
-        let result = CompactTarget::from_hex(hex);
-        assert!(result.is_err());
     }
 
     #[test]
