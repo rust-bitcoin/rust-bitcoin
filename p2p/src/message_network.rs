@@ -15,7 +15,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Encoder2};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Encoder2};
 use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
@@ -354,6 +354,92 @@ pub enum RejectReason {
     Fee = 0x42,
     /// checkpoint
     Checkpoint = 0x43,
+}
+
+encoding::encoder_newtype! {
+    /// The encoder type for a [`RejectReason`].
+    pub struct RejectReasonEncoder(ArrayEncoder<1>);
+}
+
+impl encoding::Encodable for RejectReason {
+    type Encoder<'e> = RejectReasonEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        RejectReasonEncoder(ArrayEncoder::without_length_prefix([*self as u8]))
+    }
+}
+
+/// The decoder type for a [`RejectReason`].
+pub struct RejectReasonDecoder(ArrayDecoder<1>);
+
+impl encoding::Decoder for RejectReasonDecoder {
+    type Output = RejectReason;
+    type Error = RejectReasonDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(RejectReasonDecoderError::Decoder)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let code_arr = self.0.end().map_err(RejectReasonDecoderError::Decoder)?;
+        let code = u8::from_le_bytes(code_arr);
+        Ok(match code {
+            0x01 => RejectReason::Malformed,
+            0x10 => RejectReason::Invalid,
+            0x11 => RejectReason::Obsolete,
+            0x12 => RejectReason::Duplicate,
+            0x40 => RejectReason::NonStandard,
+            0x41 => RejectReason::Dust,
+            0x42 => RejectReason::Fee,
+            0x43 => RejectReason::Checkpoint,
+            unknown => return Err(RejectReasonDecoderError::UnknownRejectCode(unknown)),
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for RejectReason {
+    type Decoder = RejectReasonDecoder;
+
+    fn decoder() -> Self::Decoder {
+        RejectReasonDecoder(ArrayDecoder::new())
+    }
+}
+
+/// Errors occuring when decoding a [`RejectReason`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RejectReasonDecoderError {
+    /// Inner decoder error.
+    Decoder(<ArrayDecoder<1> as encoding::Decoder>::Error),
+    /// Unknown reject code.
+    UnknownRejectCode(u8),
+}
+
+impl From<Infallible> for RejectReasonDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for RejectReasonDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "rejectreason error"; d),
+            Self::UnknownRejectCode(code) => write!(f, "unknown reject code {}", code),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for RejectReasonDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(e) => Some(e),
+            Self::UnknownRejectCode(_) => None,
+        }
+    }
 }
 
 impl Encodable for RejectReason {
