@@ -7,4 +7,5 @@
 # - hashes because of secp v0.30
 # - io because of hashes
 # - hex because 1.0 only has decoding
-DUPLICATE_DEPS=("bitcoin_hashes" "hex-conservative" "bitcoin-io")
+# - libc v0.2.159 appears twice (runtime vs build-dependency) but is the same version, so Cargo deduplicates correctly
+DUPLICATE_DEPS=("bitcoin_hashes" "hex-conservative" "bitcoin-io" "libc")
