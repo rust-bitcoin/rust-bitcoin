@@ -9,13 +9,16 @@ publish = false
 [package.metadata]
 cargo-fuzz = true
 
-[dependencies]
-honggfuzz = { version = "0.5.58", default-features = false }
-bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
-p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
-bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
-arbitrary = { version = "1.4.1" }
+[features]
+fuzzing = []
 
+[dependencies]
+bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
+bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
+p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
+
+arbitrary = { version = "1.4.1" }
+libfuzzer-sys = { version = "0.4.0" }
 serde = { version = "1.0.195", features = [ "derive" ] }
 serde_json = "1.0.68"
 standard_test = "0.1.0"
@@ -30,119 +33,209 @@ use_self = "warn"
 [[bin]]
 name = "bitcoin_arbitrary_block"
 path = "fuzz_targets/bitcoin/arbitrary_block.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_arbitrary_script"
 path = "fuzz_targets/bitcoin/arbitrary_script.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_arbitrary_transaction"
 path = "fuzz_targets/bitcoin/arbitrary_transaction.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_arbitrary_witness"
 path = "fuzz_targets/bitcoin/arbitrary_witness.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_deserialize_block"
 path = "fuzz_targets/bitcoin/deserialize_block.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_deserialize_prefilled_transaction"
 path = "fuzz_targets/bitcoin/deserialize_prefilled_transaction.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_deserialize_psbt"
 path = "fuzz_targets/bitcoin/deserialize_psbt.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_deserialize_script"
 path = "fuzz_targets/bitcoin/deserialize_script.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_deserialize_transaction"
 path = "fuzz_targets/bitcoin/deserialize_transaction.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_deserialize_witness"
 path = "fuzz_targets/bitcoin/deserialize_witness.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_parse_address"
 path = "fuzz_targets/bitcoin/parse_address.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_parse_outpoint"
 path = "fuzz_targets/bitcoin/parse_outpoint.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "consensus_encoding_decode_array"
 path = "fuzz_targets/consensus_encoding/decode_array.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "consensus_encoding_decode_byte_vec"
 path = "fuzz_targets/consensus_encoding/decode_byte_vec.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "consensus_encoding_decode_compact_size"
 path = "fuzz_targets/consensus_encoding/decode_compact_size.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "consensus_encoding_decode_decoder2"
 path = "fuzz_targets/consensus_encoding/decode_decoder2.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "hashes_json"
 path = "fuzz_targets/hashes/json.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "hashes_ripemd160"
 path = "fuzz_targets/hashes/ripemd160.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "hashes_sha1"
 path = "fuzz_targets/hashes/sha1.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "hashes_sha256"
 path = "fuzz_targets/hashes/sha256.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "hashes_sha512"
 path = "fuzz_targets/hashes/sha512.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "hashes_sha512_256"
 path = "fuzz_targets/hashes/sha512_256.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "p2p_arbitrary_addrv2"
 path = "fuzz_targets/p2p/arbitrary_addrv2.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "p2p_deserialize_addrv2"
 path = "fuzz_targets/p2p/deserialize_addrv2.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "p2p_deserialize_raw_net_msg"
 path = "fuzz_targets/p2p/deserialize_raw_net_msg.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "units_arbitrary_weight"
 path = "fuzz_targets/units/arbitrary_weight.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "units_parse_amount"
 path = "fuzz_targets/units/parse_amount.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "units_parse_int"
 path = "fuzz_targets/units/parse_int.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "units_standard_checks"
 path = "fuzz_targets/units/standard_checks.rs"
+test = false
+doc = false
+bench = false

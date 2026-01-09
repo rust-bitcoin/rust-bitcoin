@@ -3,7 +3,7 @@
 # Continuously cycle over fuzz targets running each for 1 hour.
 # It uses chrt SCHED_IDLE so that other process takes priority.
 #
-# For hfuzz options see https://github.com/google/honggfuzz/blob/master/docs/USAGE.md
+# For cargo-fuzz usage see https://github.com/rust-fuzz/cargo-fuzz?tab=readme-ov-file#usage
 
 set -euo pipefail
 
@@ -19,9 +19,8 @@ do
     echo "Fuzzing target $targetName ($targetFile)"
 
     # fuzz for one hour
-    HFUZZ_RUN_ARGS='--run_time 3600' chrt -i 0 cargo hfuzz run "$targetName"
-    # minimize the corpus
-    HFUZZ_RUN_ARGS="-i hfuzz_workspace/$targetName/input/ -P -M" chrt -i 0 cargo hfuzz run "$targetName"
+    chrt -i 0 cargo +nightly fuzz run "$targetName" -- -max_total_time=3600
+    cargo +nightly fuzz cmin "$targetName" 
   done
 done
 

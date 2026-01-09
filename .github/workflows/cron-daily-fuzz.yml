@@ -59,7 +59,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-
         id: cache-fuzz
         with:
           path: |
@@ -97,4 +96,4 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
-      - run: source ./fuzz/fuzz-util.sh && listTargetNames | sort | diff - executed
+      - run: cargo fuzz list | sort | diff - executed

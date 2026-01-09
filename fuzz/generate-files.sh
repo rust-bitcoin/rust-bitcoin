@@ -21,13 +21,16 @@ publish = false
 [package.metadata]
 cargo-fuzz = true
 
-[dependencies]
-honggfuzz = { version = "0.5.58", default-features = false }
-bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
-p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
-bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
-arbitrary = { version = "1.4.1" }
+[features]
+fuzzing = []
 
+[dependencies]
+bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
+bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
+p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
+
+arbitrary = { version = "1.4.1" }
+libfuzzer-sys = { version = "0.4.0" }
 serde = { version = "1.0.195", features = [ "derive" ] }
 serde_json = "1.0.68"
 standard_test = "0.1.0"
@@ -47,6 +50,9 @@ for targetFile in $(listTargetFiles); do
 [[bin]]
 name = "$targetName"
 path = "$targetFile"
+test = false
+doc = false
+bench = false
 EOF
 done
 
@@ -75,7 +81,7 @@ jobs:
         # We only get 20 jobs at a time, we probably don't want to go
         # over that limit with fuzzing because of the hour run time.
         fuzz_target: [
-$(for name in $(listTargetNames); do echo "          $name,"; done)
+$(for name in $(cargo fuzz list); do echo "          $name,"; done)
         ]
     steps:
       - name: Install test dependencies
@@ -84,7 +90,6 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
         with:
           persist-credentials: false
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-
         id: cache-fuzz
         with:
           path: |
@@ -122,6 +127,6 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
-      - run: source ./fuzz/fuzz-util.sh && listTargetNames | sort | diff - executed
+      - run: cargo fuzz list | sort | diff - executed
 EOF
 

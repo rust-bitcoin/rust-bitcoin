@@ -20,12 +20,6 @@ targetFileToName() {
     | sed 's/^_//g'
 }
 
-listTargetNames() {
-  for target in $(listTargetFiles); do
-    targetFileToName "$target"
-  done
-}
-
 # Utility function to avoid CI failures on Windows
 checkWindowsFiles() {
   incorrectFilenames=$(find . -type f -name "*,*" -o -name "*:*" -o -name "*<*" -o -name "*>*" -o -name "*|*" -o -name "*\?*" -o -name "*\**" -o -name "*\"*" | wc -l)
@@ -35,13 +29,16 @@ checkWindowsFiles() {
   fi
 }
 
-# Checks whether a fuzz case outputs some report, and dumps it in hex
+# Checks whether a fuzz case has artifacts, and dumps them in hex
 checkReport() {
-  reportFile="hfuzz_workspace/$1/HONGGFUZZ.REPORT.TXT"
-  if [ -f "$reportFile" ]; then
-    cat "$reportFile"
-    for CASE in "hfuzz_workspace/$1/SIG"*; do
-      xxd -p -c10000 < "$CASE"
+  artifactDir="fuzz/artifacts/$1"
+  if [ -d "$artifactDir" ] && [ -n "$(ls -A "$artifactDir" 2>/dev/null)" ]; then
+    echo "Artifacts found for target: $1"
+    for artifact in "$artifactDir"/*; do
+      if [ -f "$artifact" ]; then
+        echo "Artifact: $(basename "$artifact")"
+        xxd -p -c10000 < "$artifact"
+      fi
     done
     exit 1
   fi
