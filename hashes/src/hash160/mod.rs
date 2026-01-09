@@ -7,6 +7,9 @@
 
 //! HASH160 (SHA256 then RIPEMD160) implementation.
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use crate::{ripemd160, sha256};
 
 crate::internal_macros::general_hash_type! {
@@ -48,6 +51,13 @@ impl crate::HashEngine for HashEngine {
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Hash {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
 }
 
 #[cfg(test)]
