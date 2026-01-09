@@ -1,0 +1,36 @@
+FROM ubuntu:24.04
+
+# Install both native (x86_64) and cross (s390x) compilation toolchains
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc g++ \
+    gcc-13-s390x-linux-gnu \
+    g++-13-s390x-linux-gnu \
+    libc6-dev-s390x-cross \
+    qemu-user-static \
+    binfmt-support \
+    curl \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set up alternatives to use GCC 13 for s390x
+RUN update-alternatives --install /usr/bin/s390x-linux-gnu-gcc s390x-linux-gnu-gcc /usr/bin/s390x-linux-gnu-gcc-13 100 && \
+    update-alternatives --install /usr/bin/s390x-linux-gnu-g++ s390x-linux-gnu-g++ /usr/bin/s390x-linux-gnu-g++-13 100
+
+# Register QEMU for s390x binary execution
+RUN update-binfmts --enable qemu-s390x || true
+
+# Verify GCC versions
+RUN gcc --version && \
+    s390x-linux-gnu-gcc --version && \
+    s390x-linux-gnu-g++ --version
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup target add s390x-unknown-linux-gnu
+
+# Set up cross-compilation environment
+ENV CARGO_TARGET_S390X_UNKNOWN_LINUX_GNU_LINKER=s390x-linux-gnu-gcc \
+    CARGO_TARGET_S390X_UNKNOWN_LINUX_GNU_RUNNER="qemu-s390x-static -L /usr/s390x-linux-gnu" \
+    CC_s390x_unknown_linux_gnu=s390x-linux-gnu-gcc \
+    CXX_s390x_unknown_linux_gnu=s390x-linux-gnu-g++

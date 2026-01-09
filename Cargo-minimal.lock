@@ -90,20 +90,6 @@ name = "bitcoin-crypto"
 version = "0.0.0"
 
 [[package]]
-name = "bitcoin-fuzz"
-version = "0.0.1"
-dependencies = [
- "arbitrary",
- "bitcoin",
- "bitcoin-consensus-encoding",
- "bitcoin-p2p-messages",
- "honggfuzz",
- "serde",
- "serde_json",
- "standard_test",
-]
-
-[[package]]
 name = "bitcoin-internals"
 version = "0.5.0"
 dependencies = [
@@ -263,43 +249,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
 
 [[package]]
-name = "honggfuzz"
-version = "0.5.58"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e8319f3cc8fe416e7aa1ab95dcc04fd49f35397a47d0b2f0f225f6dba346a07"
-dependencies = [
- "lazy_static",
- "memmap2",
- "rustc_version",
- "semver",
-]
-
-[[package]]
 name = "itoa"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1306f3464951f30e30d12373d31c79fbd52d236e5e896fd92f96ec7babbbe60b"
 
 [[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
-
-[[package]]
 name = "libc"
 version = "0.2.155"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
-
-[[package]]
-name = "memmap2"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "deaba38d7abf1d4cca21cc89e932e542ba2b9258664d2a9ef0e61512039c9375"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "ppv-lite86"
@@ -357,15 +316,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustc_version"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
-dependencies = [
- "semver",
-]
-
-[[package]]
 name = "ryu"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -390,12 +340,6 @@ checksum = "6d3be00697c88c00fe102af8dc316038cc2062eab8da646e7463f4c0e70ca9fd"
 dependencies = [
  "cc",
 ]
-
-[[package]]
-name = "semver"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76b5842e81eb9bbea19276a9dbbda22ac042532f390a67ab08b895617978abf3"
 
 [[package]]
 name = "serde"
@@ -435,15 +379,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "482765e11e55174e2d74a611674d09ed96712c00e0777e305a0c416dfef5fa40"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "standard_test"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af4bac6cd647192c3cb6e687af2703eb3a30e9187e555c664520cd848443ae70"
-dependencies = [
- "arbitrary",
 ]
 
 [[package]]
