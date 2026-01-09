@@ -389,7 +389,6 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::pow::test_utils::{u128_to_work, u64_to_work};
     use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
     use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
     use crate::{block, Amount, CompactTarget, Network, Sequence, TestnetVersion, Witness};
@@ -468,7 +467,7 @@ mod tests {
 
         let prevhash = hex!("4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000");
         let merkle = hex!("bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c");
-        let work = u128_to_work(0x100010001_u128);
+        let work = Work::from_hex("0x100010001").unwrap();
 
         let decode: Result<Block, _> = deserialize(&some_block);
         let bad_decode: Result<Block, _> = deserialize(&cutoff_block);
@@ -521,7 +520,7 @@ mod tests {
 
         let prevhash = hex!("2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000");
         let merkle = hex!("10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e");
-        let work = u64_to_work(0x257c3becdacc64_u64);
+        let work = Work::from_hex("0x257c3becdacc64").unwrap();
 
         assert!(decode.is_ok());
 
