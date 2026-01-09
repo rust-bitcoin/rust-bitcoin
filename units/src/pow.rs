@@ -205,4 +205,41 @@ mod tests {
         assert_eq!(format!("{:X}", compact_target), "1D00FFFF");
         assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);
     }
+
+    #[test]
+    fn compact_target_from_hex_lower() {
+        let target = CompactTarget::from_hex("0x010034ab").unwrap();
+        assert_eq!(target, CompactTarget::from_consensus(0x0100_34ab));
+    }
+
+    #[test]
+    fn compact_target_from_hex_upper() {
+        let target = CompactTarget::from_hex("0X010034AB").unwrap();
+        assert_eq!(target, CompactTarget::from_consensus(0x0100_34ab));
+    }
+
+    #[test]
+    fn compact_target_from_unprefixed_hex_lower() {
+        let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
+        assert_eq!(target, CompactTarget::from_consensus(0x0100_34ab));
+    }
+
+    #[test]
+    fn compact_target_from_unprefixed_hex_upper() {
+        let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
+        assert_eq!(target, CompactTarget::from_consensus(0x0100_34ab));
+    }
+
+    #[test]
+    fn compact_target_from_hex_invalid_hex_should_err() {
+        let hex = "0xzbf9";
+        let result = CompactTarget::from_hex(hex);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn compact_target_lower_hex_and_upper_hex() {
+        assert_eq!(format!("{:08x}", CompactTarget::from_consensus(0x01D0_F456)), "01d0f456");
+        assert_eq!(format!("{:08X}", CompactTarget::from_consensus(0x01d0_f456)), "01D0F456");
+    }
 }

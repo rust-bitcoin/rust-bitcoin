@@ -1727,43 +1727,6 @@ mod tests {
     }
 
     #[test]
-    fn compact_target_from_hex_lower() {
-        let target = CompactTarget::from_hex("0x010034ab").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_hex_upper() {
-        let target = CompactTarget::from_hex("0X010034AB").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_unprefixed_hex_lower() {
-        let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_unprefixed_hex_upper() {
-        let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
-        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_hex_invalid_hex_should_err() {
-        let hex = "0xzbf9";
-        let result = CompactTarget::from_hex(hex);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn compact_target_lower_hex_and_upper_hex() {
-        assert_eq!(format!("{:08x}", CompactTarget::from_consensus(0x01D0F456)), "01d0f456");
-        assert_eq!(format!("{:08X}", CompactTarget::from_consensus(0x01d0f456)), "01D0F456");
-    }
-
-    #[test]
     fn compact_target_from_upwards_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
