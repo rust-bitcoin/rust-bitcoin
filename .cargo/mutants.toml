@@ -35,6 +35,15 @@ exclude_re = [
     "units/.* Height::to_consensus_u32", # Deprecated
     "units/.* Sequence::to_hex", # Deprecated
     "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* \\| with \\^ in Target::to_compact_lossy", # compact | (size << 24). compact and size are independent, so impossible to tell ^ from |.
+    "units/.* kani::Arbitrary for U256.*", # We shouldn't test kani-related code
+    "units/.* verification::check_mul_u64", # We shouldn't test kani-related code
+    "units/.* \\|= with \\^= in U256::overflowing_add", # Not possible to overflow the upper 128 bits twice in one addition
+    "units/.* replace -= with /= in U256::div_rem", # Replacing -= with /= causes an infinite loop due to divide by 1
+    "units/.* replace > with >= in U256::saturating_to_u128", # at the boundary, we return the same value whether the check passes or fails.
+    "units/.* replace \\| with \\^ in U256::mul_u64", # low and high u64s or'ed together as u128 and are bitwise independent, so can't distinguish ^ from |.
+    "units/.* replace \\| with \\^ in U256::to_f64", # The only bit from this that affects the output if the MSB. The MSB is unchanged from this mutant.
+    "units/.* replace \\|= with \\^= in U256::div_rem", # |= -> ^= is equivalent because each quotient bit is set at most once.
 
     # primitives
     "primitives/.* Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
