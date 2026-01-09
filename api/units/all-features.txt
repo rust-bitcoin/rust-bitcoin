@@ -2414,6 +2414,8 @@ pub fn bitcoin_units::pow::CompactTarget::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::pow::CompactTarget::eq(&self, other: &bitcoin_units::pow::CompactTarget) -> bool
 pub fn bitcoin_units::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::pow::CompactTarget::from_consensus(bits: u32) -> Self
+pub fn bitcoin_units::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError> where Self: core::marker::Sized
+pub fn bitcoin_units::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError> where Self: core::marker::Sized
 pub fn bitcoin_units::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_units::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::pow::CompactTarget::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer

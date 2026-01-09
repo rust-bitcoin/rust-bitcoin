@@ -13,6 +13,8 @@ use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
+
 /// Encoding of 256-bit target as 32-bit float.
 ///
 /// This is used to encode a target into the block header. Satoshi made this part of consensus code
@@ -45,6 +47,34 @@ impl CompactTarget {
     #[inline]
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
+
+    /// Constructs a new `CompactTarget` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// - If the input string does not contain a `0x` (or `0X`) prefix.
+    /// - If the input string is not a valid hex encoding of a `u32`.
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError>
+    where
+        Self: Sized
+    {
+        let target = parse_int::hex_u32_prefixed(s)?;
+        Ok(Self::from_consensus(target))
+    }
+
+    /// Constructs a new `CompactTarget` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// - If the input string contains a `0x` (or `0X`) prefix.
+    /// - If the input string is not a valid hex encoding of a `u32`.
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError>
+    where
+        Self: Sized
+    {
+        let target = parse_int::hex_u32_unprefixed(s)?;
+        Ok(Self::from_consensus(target))
+    }
 }
 
 impl fmt::LowerHex for CompactTarget {
