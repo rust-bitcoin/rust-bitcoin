@@ -50,6 +50,7 @@ pub mod block;
 pub mod fee_rate;
 pub mod locktime;
 pub mod parse_int;
+pub mod pow;
 pub mod result;
 pub mod sequence;
 pub mod time;
