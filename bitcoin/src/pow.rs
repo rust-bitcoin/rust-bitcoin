@@ -394,7 +394,7 @@ internal_macros::define_extension_trait! {
             let prev_target: Target = last.into();
             let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
             let retarget = prev_target.0; // bnNew
-            let retarget = retarget.mul(u128::try_from(actual_timespan).expect("clamped value won't be negative").into());
+            let (retarget, _) = retarget.mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"));
             let retarget = retarget.div(params.pow_target_timespan.into());
             let retarget = Target(retarget);
             if retarget.ge(&maximum_retarget) {
@@ -701,18 +701,19 @@ impl U256 {
         let mut ret = Self::ZERO;
         let mut ret_overflow = false;
 
-        for i in 0..3 {
+        for i in 0..=3 {
             let to_mul = (rhs >> (64 * i)).low_u64();
-            let (mul_res, _) = self.mul_u64(to_mul);
-            ret = ret.wrapping_add(mul_res << (64 * i));
-        }
+            let (mul_res, overflow) = self.mul_u64(to_mul);
+            ret_overflow |= overflow; // If multiplying lhs by the u64 overflowed, that's an overflow
 
-        let to_mul = (rhs >> 192).low_u64();
-        let (mul_res, overflow) = self.mul_u64(to_mul);
-        ret_overflow |= overflow;
-        let (sum, overflow) = ret.overflowing_add(mul_res);
-        ret = sum;
-        ret_overflow |= overflow;
+            // Calculate the bits that will overflow during the shift below.
+            let overflow_bits = if i > 0 { mul_res >> (256 - (64 * i)) } else { Self::ZERO };
+            ret_overflow |= overflow_bits > Self::ZERO; // If there are bits that will be shifted out below, that's an overflow
+
+            let (sum, overflow) = ret.overflowing_add(mul_res << (64 * i));
+            ret = sum;
+            ret_overflow |= overflow; // If adding the mul_u64 result overflowed, that's an overflow
+        }
 
         (ret, ret_overflow)
     }
@@ -1555,11 +1556,57 @@ mod tests {
         let (got, overflow) = x.overflowing_mul(y);
 
         let want = U256(
-            0x0000_0000_0000_0008_0000_0000_0000_0008,
-            0x0000_0000_0000_0006_0000_0000_0000_0004,
+            0x0000_0000_0000_0008_0000_0000_0000_0006,
+            0x0000_0000_0000_0004_0000_0000_0000_0002,
         );
-        assert!(!overflow);
+        assert!(overflow);
         assert_eq!(got, want)
+    }
+
+   #[test]
+    fn u256_overflowing_mul() {
+        let a = U256(u128::MAX, 0);
+        let b = U256(1 << 65 | 1, 0);
+        let (res, overflow) = a.overflowing_mul(b);
+        assert_eq!(res, U256::ZERO);
+        assert!(overflow);
+
+        let a = U256(1 << 64, 0);
+        let b = U256(1, 0);
+        let (res, overflow) = a.overflowing_mul(b);
+        assert_eq!(res, U256::ZERO);
+        assert!(overflow);
+
+        let a = U256(0, 1 << 63);
+        let b = U256(1, 0);
+        let (res, overflow) = a.overflowing_mul(b);
+        assert_eq!(res, b << 63);
+        assert!(!overflow);
+
+        let (res, overflow) = U256::ONE.overflowing_mul(U256::ONE);
+        assert_eq!(res, U256::ONE);
+        assert!(!overflow);
+
+        // Simple case near upper edge
+        let a = U256(1 << 125, 0);
+        let b = U256(0, 4);
+        let (res, overflow) = a.overflowing_mul(b);
+        assert_eq!(res, U256(1 << 127, 0));
+        assert!(!overflow);
+
+        // Check case where bits overflow during shift. Kills * -> + and - -> + mutants.
+        let a = U256::ONE << 2;
+        let b = U256::ONE << 254;
+        let (res, overflow) = a.overflowing_mul(b);
+        assert_eq!(res, U256::ZERO);
+        assert!(overflow);
+
+        // mul_u64 overflows twice but no other overflows. Kills |= -> ^= mutant.
+        let a = U256::ONE << 255;
+        let b = U256(1<<1 | 1<<65, 0);
+        let (res, overflow) = a.overflowing_mul(b);
+        assert_eq!(res, U256::ZERO);
+        assert!(overflow);
     }
 
     #[test]
