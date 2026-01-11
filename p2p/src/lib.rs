@@ -30,6 +30,7 @@ extern crate std;
 use alloc::borrow::ToOwned;
 use alloc::string::String;
 use core::borrow::{Borrow, BorrowMut};
+use core::convert::Infallible;
 use core::str::FromStr;
 use core::{fmt, ops};
 
@@ -38,7 +39,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use bitcoin::network::{Network, Params, TestnetVersion};
 use hex::FromHex;
-use internals::impl_to_hex_from_lower_hex;
+use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
 
 #[rustfmt::skip]
@@ -110,6 +111,74 @@ impl Decodable for ProtocolVersion {
     }
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`ProtocolVersion`] type.
+    pub struct ProtocolVersionEncoder(encoding::ArrayEncoder<4>);
+}
+
+impl encoding::Encodable for ProtocolVersion {
+    type Encoder<'e> = ProtocolVersionEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ProtocolVersionEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.0.to_le_bytes(),
+        ))
+    }
+}
+
+/// The decoder for the [`ProtocolVersion`] type.
+pub struct ProtocolVersionDecoder(encoding::ArrayDecoder<4>);
+
+impl ProtocolVersionDecoder {
+    /// Constructs a new [`ProtocolVersion`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for ProtocolVersionDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for ProtocolVersionDecoder {
+    type Output = ProtocolVersion;
+    type Error = ProtocolVersionDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes).map_err(ProtocolVersionDecoderError)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let n = u32::from_le_bytes(self.0.end().map_err(ProtocolVersionDecoderError)?);
+        Ok(ProtocolVersion(n))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for ProtocolVersion {
+    type Decoder = ProtocolVersionDecoder;
+    fn decoder() -> Self::Decoder { ProtocolVersionDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+/// An error consensus decoding an `ProtocolVersion`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProtocolVersionDecoderError(<encoding::ArrayDecoder<4> as encoding::Decoder>::Error);
+
+impl From<Infallible> for ProtocolVersionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for ProtocolVersionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "protocolversion error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ProtocolVersionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 /// Flags to indicate which network services a node supports.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ServiceFlags(u64);
@@ -266,6 +335,76 @@ impl Decodable for ServiceFlags {
         Ok(Self(Decodable::consensus_decode(r)?))
     }
 }
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`ServiceFlags`] type.
+    pub struct ServiceFlagsEncoder(encoding::ArrayEncoder<8>);
+}
+
+impl encoding::Encodable for ServiceFlags {
+    type Encoder<'e> = ServiceFlagsEncoder;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ServiceFlagsEncoder(encoding::ArrayEncoder::without_length_prefix(
+            self.0.to_le_bytes(),
+        ))
+    }
+}
+
+/// The decoder for the [`ServiceFlags`] type.
+pub struct ServiceFlagsDecoder(encoding::ArrayDecoder<8>);
+
+impl ServiceFlagsDecoder {
+    /// Constructs a new [`ServiceFlags`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+impl Default for ServiceFlagsDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl encoding::Decoder for ServiceFlagsDecoder {
+    type Output = ServiceFlags;
+    type Error = ServiceFlagsDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(self.0.push_bytes(bytes).map_err(ServiceFlagsDecoderError)?)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let n = u64::from_le_bytes(self.0.end().map_err(ServiceFlagsDecoderError)?);
+        Ok(ServiceFlags(n))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for ServiceFlags {
+    type Decoder = ServiceFlagsDecoder;
+    fn decoder() -> Self::Decoder { ServiceFlagsDecoder(encoding::ArrayDecoder::<8>::new()) }
+}
+
+/// An error consensus decoding an `ServiceFlags`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ServiceFlagsDecoderError(<encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
+
+impl From<Infallible> for ServiceFlagsDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for ServiceFlagsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "serviceflags error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ServiceFlagsDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// Network magic bytes to identify the cryptocurrency network the message was intended for.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct Magic([u8; 4]);
