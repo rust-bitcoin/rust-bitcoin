@@ -197,7 +197,7 @@ pub mod as_core_arg {
     #![allow(clippy::missing_errors_doc)]
 
     use crate::Network;
-    
+
     #[allow(clippy::trivially_copy_pass_by_ref)] // `serde` controls the API.
     pub fn serialize<S>(network: &Network, serializer: S) -> Result<S::Ok, S::Error>
     where
