@@ -1500,6 +1500,75 @@ impl HeadersMessage {
 
 impl_vec_wrapper!(HeadersMessage, NetworkHeader);
 
+encoding::encoder_newtype! {
+    /// The encoder type for a [`HeadersMessage`].
+    pub struct HeadersMessageEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, NetworkHeader>>);
+}
+
+impl encoding::Encodable for HeadersMessage {
+    type Encoder<'e> = HeadersMessageEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        HeadersMessageEncoder::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.0.len()),
+                SliceEncoder::without_length_prefix(&self.0)
+            )
+        )
+    }
+}
+
+type HeadersMessageInnerDecoder = VecDecoder<NetworkHeader>;
+
+/// The decoder type for a [`HeadersMessage`].
+pub struct HeadersMessageDecoder(HeadersMessageInnerDecoder);
+
+impl encoding::Decoder for HeadersMessageDecoder {
+    type Output = HeadersMessage;
+    type Error = HeadersMessageDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(HeadersMessageDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let headers = self.0.end().map_err(HeadersMessageDecoderError)?;
+        Ok(HeadersMessage(headers))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for HeadersMessage {
+    type Decoder = HeadersMessageDecoder;
+
+    fn decoder() -> Self::Decoder {
+        HeadersMessageDecoder(VecDecoder::new())
+    }
+}
+
+/// An error decoding a [`HeadersMessage`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeadersMessageDecoderError(<HeadersMessageInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for HeadersMessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for HeadersMessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "headersmessage error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for HeadersMessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl Decodable for RawNetworkMessage {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
