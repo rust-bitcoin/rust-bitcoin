@@ -25,16 +25,26 @@ pub use primitives::CompactTarget;
 macro_rules! do_impl {
     ($ty:ident) => {
         impl $ty {
-            #[doc = "Constructs `"]
+            #[doc = "Constructs a new `"]
             #[doc = stringify!($ty)]
-            #[doc = "` from a prefixed hex string."]
+            #[doc = "` from a prefixed hex string.\n"]
+            #[doc = "\n# Errors\n"]
+            #[doc = "\n - If the input string does not contain a `0x` (or `0X`) prefix."]
+            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
+            #[doc = stringify!($ty)]
+            #[doc = "`."]
             pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
                 Ok($ty(U256::from_hex(s)?))
             }
 
-            #[doc = "Constructs `"]
+            #[doc = "Constructs a new `"]
             #[doc = stringify!($ty)]
-            #[doc = "` from an unprefixed hex string."]
+            #[doc = "` from an unprefixed hex string.\n"]
+            #[doc = "\n# Errors\n"]
+            #[doc = "\n - If the input string contains a `0x` (or `0X`) prefix."]
+            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
+            #[doc = stringify!($ty)]
+            #[doc = "`."]
             pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
                 Ok($ty(U256::from_unprefixed_hex(s)?))
             }
