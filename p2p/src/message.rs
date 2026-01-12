@@ -16,12 +16,12 @@ use core::{cmp, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{self, CompactSizeEncoder, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{self, ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
 use hashes::sha256d;
 use internals::ToU64 as _;
 use internals::write_err;
 use io::{self, BufRead, Read, Write};
-use primitives::{block, transaction};
+use primitives::{block::{self, HeaderDecoder, HeaderEncoder}, transaction};
 use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
@@ -1386,6 +1386,78 @@ impl NetworkHeader {
     pub const fn from_header(header: block::Header) -> Self {
         Self { header, length: 0 }
     }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder type for a [`NetworkHeader`].
+    pub struct NetworkHeaderEncoder<'e>(Encoder2<HeaderEncoder<'e>, ArrayEncoder<1>>);
+}
+
+impl encoding::Encodable for NetworkHeader {
+    type Encoder<'e> = NetworkHeaderEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        NetworkHeaderEncoder::new(Encoder2::new(
+            self.header.encoder(),
+            ArrayEncoder::without_length_prefix([self.length]),
+        ))
+    }
+}
+
+type NetworkHeaderInnerDecoder = Decoder2<HeaderDecoder, ArrayDecoder<1>>;
+
+/// The decoder type for a [`NetworkHeader`].
+pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
+
+impl encoding::Decoder for NetworkHeaderDecoder {
+    type Output = NetworkHeader;
+    type Error = NetworkHeaderDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(NetworkHeaderDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (header, length) = self.0.end().map_err(NetworkHeaderDecoderError)?;
+        Ok(NetworkHeader {
+            header,
+            length: u8::from_le_bytes(length),
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for NetworkHeader {
+    type Decoder = NetworkHeaderDecoder;
+
+    fn decoder() -> Self::Decoder {
+        NetworkHeaderDecoder(
+            Decoder2::new(block::Header::decoder(), ArrayDecoder::new()),
+        )
+    }
+}
+
+/// An error decoding a [`NetworkHeader`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NetworkHeaderDecoderError(<NetworkHeaderInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for NetworkHeaderDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for NetworkHeaderDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "network header error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for NetworkHeaderDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Decodable for NetworkHeader {
