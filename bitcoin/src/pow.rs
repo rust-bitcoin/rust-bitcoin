@@ -8,7 +8,6 @@
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
 
-use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
 use units::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
@@ -117,7 +116,6 @@ impl Work {
     pub fn log2(self) -> f64 { self.0.to_f64().log2() }
 }
 do_impl!(Work);
-impl_to_hex_from_lower_hex!(Work, |_| 64);
 
 impl Add for Work {
     type Output = Self;
@@ -283,7 +281,16 @@ impl Target {
     }
 }
 do_impl!(Target);
-impl_to_hex_from_lower_hex!(Target, |_| 64);
+
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Work`] type.
+    pub trait WorkExt impl for Work {
+        /// Gets the hex representation of the [`Work`] value as a [`String`].
+        #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
+        fn to_hex(&self) -> alloc::string::String { format!("{self:x}") }
+    }
+}
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Target`] type.
@@ -376,6 +383,10 @@ internal_macros::define_extension_trait! {
         /// The return value should be checked against [`Params::max_attainable_target`] or use one of
         /// the `Target::MAX_ATTAINABLE_FOO` constants.
         fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
+
+        /// Gets the hex representation of the [`Target`] value as a [`String`].
+        #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
+        fn to_hex(&self) -> alloc::string::String { format!("{self:x}") }
     }
 }
 
@@ -552,6 +563,7 @@ mod sealed {
     pub trait Sealed {}
     impl Sealed for super::CompactTarget {}
     impl Sealed for super::Target {}
+    impl Sealed for super::Work {}
 }
 
 impl From<CompactTarget> for Target {
