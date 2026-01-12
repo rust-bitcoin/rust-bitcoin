@@ -13,6 +13,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
+use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder};
 use io::{BufRead, Read, Write};
 
 use crate::ServiceFlags;
@@ -211,6 +212,137 @@ impl From<Ipv4Addr> for AddrV2 {
 
 impl From<Ipv6Addr> for AddrV2 {
     fn from(addr: Ipv6Addr) -> Self { Self::Ipv6(addr) }
+}
+
+/// The encoder type for [`AddrV2`].
+pub struct AddrV2Encoder<'e> {
+    network: Option<ArrayEncoder<1>>,
+    size: Option<CompactSizeEncoder>,
+    bytes4: Option<ArrayEncoder<4>>,
+    bytes16: Option<ArrayEncoder<16>>,
+    bytes32: Option<ArrayEncoder<32>>,
+    nbytes: Option<BytesEncoder<'e>>,
+}
+
+impl<'e> AddrV2Encoder<'e> {
+    const EMPTY: Self = Self { network: None, size: None, bytes4: None, bytes16: None, bytes32: None, nbytes: None };
+    /// Construct a new [`AddrV2`] encoder.
+    pub fn new(addr_v2: &'e AddrV2) -> Self {
+        // Each address is prefixed with the network type and length of the byte array.
+        match addr_v2 {
+            AddrV2::Ipv4(ipv4) => {
+                let octets = ipv4.octets();
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([1])),
+                    size: Some(CompactSizeEncoder::new(4)),
+                    bytes4: Some(ArrayEncoder::without_length_prefix(octets)),
+                    ..Self::EMPTY
+                }
+            }
+            AddrV2::Ipv6(ipv6) => {
+                let octets = ipv6.octets();
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([2])),
+                    size: Some(CompactSizeEncoder::new(16)),
+                    bytes16: Some(ArrayEncoder::without_length_prefix(octets)),
+                    ..Self::EMPTY
+                }
+            }
+            AddrV2::TorV3(onion) => {
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([4])),
+                    size: Some(CompactSizeEncoder::new(32)),
+                    bytes32: Some(ArrayEncoder::without_length_prefix(*onion)),
+                    ..Self::EMPTY
+                }
+            }
+            AddrV2::I2p(i2p) => {
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([5])),
+                    size: Some(CompactSizeEncoder::new(32)),
+                    bytes32: Some(ArrayEncoder::without_length_prefix(*i2p)),
+                    ..Self::EMPTY
+                }
+            }
+            AddrV2::Cjdns(ipv6) => {
+                let octets = ipv6.octets();
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([6])),
+                    size: Some(CompactSizeEncoder::new(16)),
+                    bytes16: Some(ArrayEncoder::without_length_prefix(octets)),
+                    ..Self::EMPTY
+                }
+            }
+            AddrV2::Unknown(network, bytes) => {
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([*network])),
+                    size: Some(CompactSizeEncoder::new(bytes.len())),
+                    nbytes: Some(BytesEncoder::<'e>::without_length_prefix(bytes.as_slice())),
+                    ..Self::EMPTY
+                }
+            }
+        }
+    }
+}
+
+impl<'e> encoding::Encoder for AddrV2Encoder<'e> {
+    fn current_chunk(&self) -> &[u8] {
+        if let Some(network) = &self.network {
+            return network.current_chunk();
+        }
+        if let Some(cs) = &self.size {
+            return cs.current_chunk();
+        }
+        if let Some(b) = &self.bytes4 {
+            return b.current_chunk();
+        }
+        if let Some(b) = &self.bytes16 {
+            return b.current_chunk();
+        }
+        if let Some(b) = &self.bytes32 {
+            return b.current_chunk();
+        }
+        if let Some(b) = &self.nbytes {
+            return b.current_chunk();
+        }
+        &[]
+    }
+
+    fn advance(&mut self) -> bool {
+        if self.network.is_some() && !self.network.advance() {
+            self.network = None;
+            return true;
+        }
+        if self.size.is_some() && !self.size.advance() {
+            self.size = None;
+            return true;
+        }
+        if self.bytes4.is_some() && !self.bytes4.advance() {
+            self.bytes4 = None;
+            return false;
+        }
+        if self.bytes16.is_some() && !self.bytes16.advance() {
+            self.bytes16 = None;
+            return false;
+        }
+        if self.bytes32.is_some() && !self.bytes32.advance() {
+            self.bytes32 = None;
+            return false;
+        }
+        if self.nbytes.is_some() && !self.nbytes.advance() {
+            self.nbytes = None;
+            return false;
+        }
+        true
+    }
+}
+
+impl encoding::Encodable for AddrV2 {
+    type Encoder<'e> = AddrV2Encoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AddrV2Encoder::new(self)
+    }
 }
 
 impl Encodable for AddrV2 {
