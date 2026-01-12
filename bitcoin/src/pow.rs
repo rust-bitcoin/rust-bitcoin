@@ -224,15 +224,6 @@ impl Target {
         CompactTarget::from_consensus(compact | (size << 24))
     }
 
-    /// Returns true if block hash is less than or equal to this [`Target`].
-    ///
-    /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
-    /// to the target.
-    pub fn is_met_by(&self, hash: BlockHash) -> bool {
-        let hash = U256::from_le_bytes(hash.to_byte_array());
-        hash <= self.0
-    }
-
     /// Converts this [`Target`] to [`Work`].
     ///
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
@@ -291,48 +282,6 @@ impl Target {
         max_target.0.to_f64() / self.0.to_f64()
     }
 
-    /// Computes the popular "difficulty" measure for mining.
-    ///
-    /// This function calculates the difficulty measure using the max attainable target
-    /// set on the provided [`Params`].
-    /// See [`Target::difficulty_with_max`] for details.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
-        let max = params.as_ref().max_attainable_target;
-        self.difficulty_with_max(&max)
-    }
-
-    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    ///
-    /// This function calculates the difficulty measure using the max attainable target
-    /// set on the provided [`Params`].
-    /// See [`Target::difficulty_with_max`] for details.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    ///
-    /// [`difficulty`]: Target::difficulty
-    pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
-        let max = params.as_ref().max_attainable_target;
-        self.difficulty_float_with_max(&max)
-    }
-
-    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
-    pub fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
-    pub fn max_difficulty_transition_threshold(&self) -> Self {
-        self.max_transition_threshold_unchecked()
-    }
-
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
     ///
@@ -350,19 +299,6 @@ impl Target {
     /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
     /// adjustment period.
     ///
-    /// We also check that the calculated target is not greater than the maximum allowed target,
-    /// this value is network specific - hence the `params` parameter.
-    pub fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
-        let max_attainable = params.as_ref().max_attainable_target;
-        cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
-    }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    ///
-    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
-    /// adjustment period.
-    ///
     /// # Returns
     ///
     /// This function may return a value greater than the maximum allowed target for this network.
@@ -373,6 +309,75 @@ impl Target {
 }
 do_impl!(Target);
 impl_to_hex_from_lower_hex!(Target, |_| 64);
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Target`] type.
+    pub trait TargetExt impl for Target {
+        /// Returns true if block hash is less than or equal to this [`Target`].
+        ///
+        /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
+        /// to the target.
+        fn is_met_by(&self, hash: BlockHash) -> bool {
+            let hash = U256::from_le_bytes(hash.to_byte_array());
+            hash <= self.0
+        }
+
+        /// Computes the popular "difficulty" measure for mining.
+        ///
+        /// This function calculates the difficulty measure using the max attainable target
+        /// set on the provided [`Params`].
+        /// See [`Target::difficulty_with_max`] for details.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+            let max = params.as_ref().max_attainable_target;
+            self.difficulty_with_max(&max)
+        }
+
+        /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+        ///
+        /// This function calculates the difficulty measure using the max attainable target
+        /// set on the provided [`Params`].
+        /// See [`Target::difficulty_with_max`] for details.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        ///
+        /// [`difficulty`]: Target::difficulty
+        fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
+            let max = params.as_ref().max_attainable_target;
+            self.difficulty_float_with_max(&max)
+        }
+
+        /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
+        fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
+        fn max_difficulty_transition_threshold(&self) -> Self {
+            self.max_transition_threshold_unchecked()
+        }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        ///
+        /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+        /// adjustment period.
+        ///
+        /// We also check that the calculated target is not greater than the maximum allowed target,
+        /// this value is network specific - hence the `params` parameter.
+        fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
+            let max_attainable = params.as_ref().max_attainable_target;
+            cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
+        }
+    }
+}
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
@@ -460,6 +465,7 @@ internal_macros::define_extension_trait! {
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::CompactTarget {}
+    impl Sealed for super::Target {}
 }
 
 impl From<CompactTarget> for Target {
