@@ -187,9 +187,9 @@ impl Target {
         let (mant, expt) = {
             let unshifted_expt = bits >> 24;
             if unshifted_expt <= 3 {
-                ((bits & 0xFFFFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
+                ((bits & 0xFF_FFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
             } else {
-                (bits & 0xFFFFFF, 8 * ((bits >> 24) - 3))
+                (bits & 0xFF_FFFF, 8 * ((bits >> 24) - 3))
             }
         };
 
@@ -289,6 +289,7 @@ impl Target {
     /// # Returns
     ///
     /// In line with Bitcoin Core this function may return a target value of zero.
+    #[must_use]
     pub fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
 
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
@@ -303,6 +304,7 @@ impl Target {
     ///
     /// The return value should be checked against [`Params::max_attainable_target`] or use one of
     /// the `Target::MAX_ATTAINABLE_FOO` constants.
+    #[must_use]
     pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
 }
 do_impl!(Target);
@@ -362,11 +364,13 @@ internal_macros::define_extension_trait! {
         /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
         /// adjustment occurs.
         #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
+        #[must_use]
         fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
 
         /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
         /// adjustment occurs.
         #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
+        #[must_use]
         fn max_difficulty_transition_threshold(&self) -> Self {
             self.max_transition_threshold_unchecked()
         }
@@ -379,6 +383,7 @@ internal_macros::define_extension_trait! {
         ///
         /// We also check that the calculated target is not greater than the maximum allowed target,
         /// this value is network specific - hence the `params` parameter.
+        #[must_use]
         fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
             let max_attainable = params.as_ref().max_attainable_target;
             cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
@@ -712,6 +717,7 @@ impl U256 {
     /// # Panics
     ///
     /// If `rhs` is zero.
+    #[allow(clippy::indexing_slicing)]
     fn div_rem(self, rhs: Self) -> (Self, Self) {
         let mut sub_copy = self;
         let mut shift_copy = rhs;
@@ -855,14 +861,14 @@ impl U256 {
     /// returned to the other end. We do not currently support `rotate_left`.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     fn wrapping_shl(self, rhs: u32) -> Self {
-        let shift = rhs & 0x000000ff;
+        let shift = rhs & 0x0000_00ff;
 
         let mut ret = Self::ZERO;
         let word_shift = shift >= 128;
         let bit_shift = shift % 128;
 
         if word_shift {
-            ret.0 = self.1 << bit_shift
+            ret.0 = self.1 << bit_shift;
         } else {
             ret.0 = self.0 << bit_shift;
             if bit_shift > 0 {
@@ -881,14 +887,14 @@ impl U256 {
     /// returned to the other end. We do not currently support `rotate_right`.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     fn wrapping_shr(self, rhs: u32) -> Self {
-        let shift = rhs & 0x000000ff;
+        let shift = rhs & 0x0000_00ff;
 
         let mut ret = Self::ZERO;
         let word_shift = shift >= 128;
         let bit_shift = shift % 128;
 
         if word_shift {
-            ret.1 = self.0 >> bit_shift
+            ret.1 = self.0 >> bit_shift;
         } else {
             ret.0 = self.0 >> bit_shift;
             ret.1 = self.1 >> bit_shift;
@@ -900,6 +906,7 @@ impl U256 {
     }
 
     /// Format `self` to `f` as a decimal when value is known to be non-zero.
+    #[allow(clippy::indexing_slicing)]
     fn fmt_decimal(&self, f: &mut fmt::Formatter) -> fmt::Result {
         const DIGITS: usize = 78; // U256::MAX has 78 base 10 digits.
         const TEN: U256 = U256(0, 10);
@@ -951,7 +958,7 @@ impl U256 {
         // If self is 0, exponent should be 0 (special meaning) and mantissa will end up 0 too
         // Otherwise, (255 - n) + 1022 so it simplifies to 1277 - n
         // 1023 and 1022 are the cutoffs for the exponent having the msb next to the decimal point
-        let exponent = if self == Self::ZERO { 0 } else { 1277 - leading_zeroes as u64 };
+        let exponent = if self == Self::ZERO { 0 } else { 1277 - u64::from(leading_zeroes) };
         // Step 7: sign bit is always 0, exponent is shifted into place
         // Use addition instead of bitwise OR to saturate the exponent if mantissa overflows
         f64::from_bits((exponent << 52) + mantissa)
@@ -1181,9 +1188,7 @@ mod tests {
 
     impl U256 {
         fn bit_at(&self, index: usize) -> bool {
-            if index > 255 {
-                panic!("index out of bounds");
-            }
+            assert!(index <= 255, "index out of bounds");
 
             let word = if index < 128 { self.1 } else { self.0 };
             (word & (1 << (index % 128))) != 0
@@ -1192,8 +1197,8 @@ mod tests {
         /// Constructs a new U256 from a big-endian array of u64's
         fn from_array(a: [u64; 4]) -> Self {
             let mut ret = Self::ZERO;
-            ret.0 = ((a[0] as u128) << 64) ^ (a[1] as u128);
-            ret.1 = ((a[2] as u128) << 64) ^ (a[3] as u128);
+            ret.0 = (u128::from(a[0]) << 64) ^ u128::from(a[1]);
+            ret.1 = (u128::from(a[2]) << 64) ^ u128::from(a[3]);
             ret
         }
     }
@@ -1203,14 +1208,14 @@ mod tests {
         assert_eq!(U256::from(255_u64).bits(), 8);
         assert_eq!(U256::from(256_u64).bits(), 9);
         assert_eq!(U256::from(300_u64).bits(), 9);
-        assert_eq!(U256::from(60000_u64).bits(), 16);
-        assert_eq!(U256::from(70000_u64).bits(), 17);
+        assert_eq!(U256::from(60_000_u64).bits(), 16);
+        assert_eq!(U256::from(70_000_u64).bits(), 17);
 
         let u = U256::from(u128::MAX) << 1;
         assert_eq!(u.bits(), 129);
 
         // Try to read the following lines out loud quickly
-        let mut shl = U256::from(70000_u64);
+        let mut shl = U256::from(70_000_u64);
         shl = shl << 100;
         assert_eq!(shl.bits(), 117);
         shl = shl << 100;
@@ -1237,11 +1242,11 @@ mod tests {
     #[test]
     fn u256_lower_hex() {
         assert_eq!(
-            format!("{:x}", U256::from(0xDEADBEEF_u64)),
+            format!("{:x}", U256::from(0xDEAD_BEEF_u64)),
             "00000000000000000000000000000000000000000000000000000000deadbeef",
         );
         assert_eq!(
-            format!("{:#x}", U256::from(0xDEADBEEF_u64)),
+            format!("{:#x}", U256::from(0xDEAD_BEEF_u64)),
             "0x00000000000000000000000000000000000000000000000000000000deadbeef",
         );
         assert_eq!(
@@ -1257,11 +1262,11 @@ mod tests {
     #[test]
     fn u256_upper_hex() {
         assert_eq!(
-            format!("{:X}", U256::from(0xDEADBEEF_u64)),
+            format!("{:X}", U256::from(0xDEAD_BEEF_u64)),
             "00000000000000000000000000000000000000000000000000000000DEADBEEF",
         );
         assert_eq!(
-            format!("{:#X}", U256::from(0xDEADBEEF_u64)),
+            format!("{:#X}", U256::from(0xDEAD_BEEF_u64)),
             "0x00000000000000000000000000000000000000000000000000000000DEADBEEF",
         );
         assert_eq!(
@@ -1406,8 +1411,8 @@ mod tests {
 
     #[test]
     fn u256_from_u32() {
-        let u = U256::from(0xdeadbeef_u32);
-        assert_eq!(u, U256(0, 0xdeadbeef));
+        let u = U256::from(0xdead_beef_u32);
+        assert_eq!(u, U256(0, 0xdead_beef));
     }
 
     #[test]
@@ -1510,7 +1515,7 @@ mod tests {
         assert_eq!(div, U256::from_array([0, 0, 0x0001_BD5B_7DDF_BD5A, 0x9F30_4110_2152_4112]));
 
         assert_eq!(U256::from(105_u32) % U256::from(5_u32), U256::ZERO);
-        assert_eq!(U256::from(35498456_u32) % U256::from(3435_u32), U256::from(1166_u32));
+        assert_eq!(U256::from(35_498_456_u32) % U256::from(3435_u32), U256::from(1166_u32));
         let rem_src = mult.wrapping_mul(U256::from(39842_u32)).wrapping_add(U256::from(9054_u32));
         assert_eq!(rem_src % U256::from(39842_u32), U256::from(9054_u32));
     }
@@ -1650,7 +1655,7 @@ mod tests {
             0x0000_0000_0000_0004_0000_0000_0000_0002,
         );
         assert!(overflow);
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -1788,7 +1793,7 @@ mod tests {
 
         check(U256::ZERO, "0000000000000000000000000000000000000000000000000000000000000000");
         check(
-            U256::from(0xDEADBEEF_u32),
+            U256::from(0xDEAD_BEEF_u32),
             "00000000000000000000000000000000000000000000000000000000deadbeef",
         );
         check(
@@ -1822,7 +1827,7 @@ mod tests {
     fn u256_is_max_correct_negative() {
         let tc = [U256::ZERO, U256::ONE, U256::from(u128::MAX)];
         for t in tc {
-            assert!(!t.is_max())
+            assert!(!t.is_max());
         }
     }
 
@@ -1837,24 +1842,24 @@ mod tests {
     #[test]
     fn compact_target_from_upwards_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
-        let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
-        let start_time: i64 = 1598918400; // Genesis block unix time
-        let end_time: i64 = 1599332177; // Block 2015 unix time
+        let starting_bits = CompactTarget::from_consensus(503_543_726); // Genesis compact target on Signet
+        let start_time: i64 = 1_598_918_400; // Genesis block unix time
+        let end_time: i64 = 1_599_332_177; // Block 2015 unix time
         let timespan = end_time - start_time; // Faster than expected
         let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
-        let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+        let adjustment_bits = CompactTarget::from_consensus(503_394_215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
 
     #[test]
     fn compact_target_from_downwards_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
-        let starting_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
-        let start_time: i64 = 1599332844; // Block 2016 unix time
-        let end_time: i64 = 1600591200; // Block 4031 unix time
+        let starting_bits = CompactTarget::from_consensus(503_394_215); // Block 2016 compact target
+        let start_time: i64 = 1_599_332_844; // Block 2016 unix time
+        let end_time: i64 = 1_600_591_200; // Block 4031 unix time
         let timespan = end_time - start_time; // Slower than expected
         let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
-        let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
+        let adjustment_bits = CompactTarget::from_consensus(503_397_348); // Block 4032 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
 
@@ -1871,13 +1876,13 @@ mod tests {
             version: Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
-            time: BlockTime::from_u32(1599332177),
+            time: BlockTime::from_u32(1_599_332_177),
             bits: epoch_start.bits,
             nonce: epoch_start.nonce,
         };
         let adjustment =
             CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
-        let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+        let adjustment_bits = CompactTarget::from_consensus(503_394_215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
 
@@ -1886,14 +1891,14 @@ mod tests {
         use crate::block::Version;
         use crate::TxMerkleNode;
         let params = Params::new(crate::Network::Signet);
-        let starting_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+        let starting_bits = CompactTarget::from_consensus(503_394_215); // Block 2016 compact target
 
         // Block 2016, the only information used is `time`
         let epoch_start = Header {
             version: Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
-            time: BlockTime::from_u32(1599332844),
+            time: BlockTime::from_u32(1_599_332_844),
             bits: starting_bits,
             nonce: 0,
         };
@@ -1903,20 +1908,20 @@ mod tests {
             version: Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
-            time: BlockTime::from_u32(1600591200),
+            time: BlockTime::from_u32(1_600_591_200),
             bits: starting_bits,
             nonce: 0,
         };
         let adjustment =
             CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
-        let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
+        let adjustment_bits = CompactTarget::from_consensus(503_397_348); // Block 4032 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
 
     #[test]
     fn compact_target_from_maximum_upward_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
-        let starting_bits = CompactTarget::from_consensus(503403001);
+        let starting_bits = CompactTarget::from_consensus(503_403_001);
         let timespan = params.pow_target_timespan / 5;
         let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), params);
         let want =
@@ -1927,7 +1932,7 @@ mod tests {
     #[test]
     fn compact_target_from_maximum_upward_difficulty_adjustment_with_negative_timespan() {
         let params = Params::new(crate::Network::Signet);
-        let starting_bits = CompactTarget::from_consensus(503403001);
+        let starting_bits = CompactTarget::from_consensus(503_403_001);
         let timespan: i64 = -i64::from(params.pow_target_timespan);
         let got = CompactTarget::from_next_work_required(starting_bits, timespan, params);
         let want =
@@ -1938,7 +1943,7 @@ mod tests {
     #[test]
     fn compact_target_from_minimum_downward_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
-        let starting_bits = CompactTarget::from_consensus(403403001); // High difficulty for Signet
+        let starting_bits = CompactTarget::from_consensus(403_403_001); // High difficulty for Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
         let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
         let want =
@@ -1949,7 +1954,7 @@ mod tests {
     #[test]
     fn compact_target_from_adjustment_is_max_target() {
         let params = Params::new(crate::Network::Signet);
-        let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
+        let starting_bits = CompactTarget::from_consensus(503_543_726); // Genesis compact target on Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
         let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
         let want = params.max_attainable_target.to_compact_lossy();
@@ -1987,10 +1992,10 @@ mod tests {
     #[test]
     fn max_target_from_compact() {
         // The highest possible target is defined as 0x1d00ffff
-        let bits = 0x1d00ffff_u32;
+        let bits = 0x1d00_ffff_u32;
         let want = Target::MAX;
         let got = Target::from_compact(CompactTarget::from_consensus(bits));
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -2029,19 +2034,19 @@ mod tests {
 
         assert_eq!(Target::MAX.difficulty_float(&params), 1.0_f64);
         assert_eq!(
-            Target::from_compact(CompactTarget::from_consensus(0x1c00ffff_u32))
+            Target::from_compact(CompactTarget::from_consensus(0x1c00_ffff_u32))
                 .difficulty_float(&params),
             256.0_f64
         );
         assert_eq!(
-            Target::from_compact(CompactTarget::from_consensus(0x1b00ffff_u32))
+            Target::from_compact(CompactTarget::from_consensus(0x1b00_ffff_u32))
                 .difficulty_float(&params),
             65536.0_f64
         );
         assert_eq!(
-            Target::from_compact(CompactTarget::from_consensus(0x1a00f3a2_u32))
+            Target::from_compact(CompactTarget::from_consensus(0x1a00_f3a2_u32))
                 .difficulty_float(&params),
-            17628585.065897066_f64
+            17_628_585.065_897_066_f64
         );
     }
 
@@ -2060,10 +2065,10 @@ mod tests {
 
     #[test]
     fn roundtrip_target_work() {
-        let target = u32_to_target(0xdeadbeef_u32);
+        let target = u32_to_target(0xdead_beef_u32);
         let work = target.to_work();
         let back = work.to_target();
-        assert_eq!(back, target)
+        assert_eq!(back, target);
     }
 
     #[test]
@@ -2072,17 +2077,17 @@ mod tests {
         // Compare work log2 to historical Bitcoin Core values found in Core logs.
         let tests: &[(u128, f64)] = &[
             // (chainwork, core log2)                // height
-            (0x200020002, 33.000022),                // 1
-            (0xa97d67041c5e51596ee7, 79.405055),     // 308004
-            (0x1dc45d79394baa8ab18b20, 84.895644),   // 418141
-            (0x8c85acb73287e335d525b98, 91.134654),  // 596624
-            (0x2ef447e01d1642c40a184ada, 93.553183), // 738965
+            (0x2_0002_0002, 33.000_022),                // 1
+            (0xa97d_6704_1c5e_5159_6ee7, 79.405_055),     // 308004
+            (0x1d_c45d_7939_4baa_8ab1_8b20, 84.895_644),   // 418141
+            (0x8c8_5acb_7328_7e33_5d52_5b98, 91.134_654),  // 596624
+            (0x2ef4_47e0_1d16_42c4_0a18_4ada, 93.553_183), // 738965
         ];
 
         for &(chainwork, core_log2) in tests {
             // Core log2 in the logs is rounded to 6 decimal places.
             let log2 = (u128_to_work(chainwork).log2() * 1e6).round() / 1e6;
-            assert_eq!(log2, core_log2)
+            assert_eq!(log2, core_log2);
         }
 
         assert_eq!(Work(U256::ONE).log2(), 0.0);
@@ -2100,7 +2105,7 @@ mod tests {
     fn u256_max_min_inverse_roundtrip() {
         let max = U256::MAX;
 
-        for min in [U256::ZERO, U256::ONE].iter() {
+        for min in &[U256::ZERO, U256::ONE] {
             // lower target means more work required.
             assert_eq!(Target(max).to_work(), Work(U256::ONE));
             assert_eq!(Target(*min).to_work(), Work(max));
@@ -2130,41 +2135,41 @@ mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic(expected = "overflowed")]
     fn u256_overflowing_addition_panics() { let _ = U256::MAX + U256::ONE; }
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic(expected = "overflowed")]
     fn u256_overflowing_subtraction_panics() { let _ = U256::ZERO - U256::ONE; }
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic(expected = "overflowed")]
     fn u256_multiplication_by_max_panics() { let _ = U256::MAX * U256::MAX; }
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic(expected = "overflowed")]
     fn work_overflowing_addition_panics() { let _ = Work(U256::MAX) + Work(U256::ONE); }
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic(expected = "overflowed")]
     fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
 
     #[test]
     fn u256_to_f64() {
         assert_eq!(U256::ZERO.to_f64(), 0.0_f64);
         assert_eq!(U256::ONE.to_f64(), 1.0_f64);
-        assert_eq!(U256::MAX.to_f64(), 1.157920892373162e77_f64);
-        assert_eq!((U256::MAX >> 1).to_f64(), 5.78960446186581e76_f64);
-        assert_eq!((U256::MAX >> 128).to_f64(), 3.402823669209385e38_f64);
-        assert_eq!((U256::MAX >> (256 - 54)).to_f64(), 1.8014398509481984e16_f64);
+        assert_eq!(U256::MAX.to_f64(), 1.157_920_892_373_162e77_f64);
+        assert_eq!((U256::MAX >> 1).to_f64(), 5.789_604_461_865_81e76_f64);
+        assert_eq!((U256::MAX >> 128).to_f64(), 3.402_823_669_209_385e38_f64);
+        assert_eq!((U256::MAX >> (256 - 54)).to_f64(), 1.801_439_850_948_198_4e16_f64);
         // 53 bits and below should not use exponents
-        assert_eq!((U256::MAX >> (256 - 53)).to_f64(), 9007199254740991.0_f64);
-        assert_eq!((U256::MAX >> (256 - 32)).to_f64(), 4294967295.0_f64);
-        assert_eq!((U256::MAX >> (256 - 16)).to_f64(), 65535.0_f64);
+        assert_eq!((U256::MAX >> (256 - 53)).to_f64(), 9_007_199_254_740_991.0_f64);
+        assert_eq!((U256::MAX >> (256 - 32)).to_f64(), 4_294_967_295.0_f64);
+        assert_eq!((U256::MAX >> (256 - 16)).to_f64(), 65_535.0_f64);
         assert_eq!((U256::MAX >> (256 - 8)).to_f64(), 255.0_f64);
     }
 }
