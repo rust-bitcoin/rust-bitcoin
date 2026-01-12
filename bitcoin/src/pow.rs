@@ -293,8 +293,8 @@ internal_macros::define_extension_trait! {
         /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
         /// to the target.
         fn is_met_by(&self, hash: BlockHash) -> bool {
-            let hash = U256::from_le_bytes(hash.to_byte_array());
-            hash <= self.0
+            let hash = Target::from_le_bytes(hash.to_byte_array());
+            hash <= *self
         }
 
         /// Computes the popular "difficulty" measure for mining.
@@ -379,6 +379,75 @@ internal_macros::define_extension_trait! {
     }
 }
 
+/// A trait to provide multiplication and division for [`Target`].
+///
+/// This is required for various reasons:
+///  - [`Target`] has been, or will be, moved to `units`. This move will also cause us to lose
+///    access to `U256` in this context.
+///  - Coupled with the requirement to keep [`from_next_work_required`] in `bitcoin`, we need a
+///    way to multiply and divide [`Target`] values.
+///  - Since we don't want to export `U256`, we need to replicate subsections of its logic here.
+trait TargetMath {
+    /// Multiply a [`Target`] by a [`u64`].
+    ///
+    /// Overflow is discarded, making this a wrapped multiplication.
+    /// This closely mimics `mul_u64` from `U256`, but works over the byte array of [`Target`],
+    /// since we won't/can't access the inner u128s of [`Target`]'s `U256`.
+    fn mul_u64(self, rhs: u64) -> Target;
+
+    /// Divide a [`Target`] by a [`u64`].
+    ///
+    /// This function discards any remainder and only returns the integer division result.
+    fn div_u64(self, rhs: u64) -> Target;
+}
+
+impl TargetMath for Target {
+    fn mul_u64(self, rhs: u64) -> Target {
+        let mut carry: u128 = 0;
+        let mut out_bytes: [u8; 32] = [0u8; 32];
+
+        let le_bytes = self.to_le_bytes();
+
+        for i in 0..4 {
+            let word = u64::from_le_bytes(
+                le_bytes[i * 8..(i + 1) * 8].try_into().expect("slice is 8 bytes")
+            );
+
+            // This will not overflow, for proof see https://github.com/rust-bitcoin/rust-bitcoin/pull/1496#issuecomment-1365938572
+            let n = carry + u128::from(rhs) * u128::from(word);
+
+            let low = n as u64; // Intentional truncation, save the low bits
+            carry = n >> 64; // and carry the high bits.
+
+            out_bytes[i * 8..(i + 1) * 8]
+                .copy_from_slice(&low.to_le_bytes());
+        }
+
+        Self::from_le_bytes(out_bytes)
+    }
+
+    fn div_u64(self, rhs: u64) -> Target {
+        let bytes = self.to_be_bytes();
+
+        assert!(rhs != 0, "division by zero");
+
+        let mut result = [0u8; 32];
+        let mut rem: u128 = 0;
+
+        for i in 0..32 {
+            // Bring down the next byte (base-256 long division)
+            rem = (rem << 8) | bytes[i] as u128;
+
+            let q = rem / rhs as u128;
+            rem %= rhs as u128;
+
+            result[i] = q as u8;
+        }
+
+        Self::from_be_bytes(result)
+    }
+}
+
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
     pub trait CompactTargetExt impl for CompactTarget {
@@ -440,10 +509,9 @@ internal_macros::define_extension_trait! {
             let actual_timespan = timespan.clamp(min_timespan.into(), max_timespan.into());
             let prev_target: Target = last.into();
             let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
-            let retarget = prev_target.0; // bnNew
-            let (retarget, _) = retarget.mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"));
-            let retarget = retarget.div(params.pow_target_timespan.into());
-            let retarget = Target(retarget);
+            let retarget = prev_target // bnNew
+                .mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"))
+                .div_u64(params.pow_target_timespan.into());
             if retarget.ge(&maximum_retarget) {
                 return maximum_retarget.to_compact_lossy();
             }
@@ -1951,6 +2019,81 @@ mod tests {
         let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
         let want = params.max_attainable_target.to_compact_lossy();
         assert_eq!(got, want);
+    }
+
+    #[test]
+    fn target_mul_u64() {
+        let u64_val = Target(U256::from(0xDEAD_BEEF_DEAD_BEEF_u64));
+
+        let u96_res = u64_val.mul_u64(0xFFFF_FFFF);
+        let u128_res = u96_res.mul_u64(0xFFFF_FFFF);
+        let u160_res = u128_res.mul_u64(0xFFFF_FFFF);
+        let u192_res = u160_res.mul_u64(0xFFFF_FFFF);
+        let u224_res = u192_res.mul_u64(0xFFFF_FFFF);
+        let u256_res = u224_res.mul_u64(0xFFFF_FFFF);
+
+        assert_eq!(u96_res.0, U256::from_array([0, 0, 0xDEAD_BEEE, 0xFFFF_FFFF_2152_4111]));
+        assert_eq!(
+            u128_res.0,
+            U256::from_array([0, 0, 0xDEAD_BEEE_2152_4110, 0x2152_4111_DEAD_BEEF])
+        );
+        assert_eq!(
+            u160_res.0,
+            U256::from_array([0, 0xDEAD_BEED, 0x42A4_8222_0000_0001, 0xBD5B_7DDD_2152_4111])
+        );
+        assert_eq!(
+            u192_res.0,
+            U256::from_array([
+                0,
+                0xDEAD_BEEC_63F6_C334,
+                0xBD5B_7DDF_BD5B_7DDB,
+                0x63F6_C333_DEAD_BEEF
+            ])
+        );
+        assert_eq!(
+            u224_res.0,
+            U256::from_array([
+                0xDEAD_BEEB,
+                0x8549_0448_5964_BAAA,
+                0xFFFF_FFFB_A69B_4558,
+                0x7AB6_FBBB_2152_4111
+            ])
+        );
+        assert_eq!(
+            u256_res.0,
+            U256(
+                0xDEAD_BEEA_A69B_455C_D41B_B662_A69B_4550,
+                0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF,
+            )
+        );
+    }
+
+    #[test]
+    fn target_div_u64() {
+        let test_values = [
+            (U256::from(105_u32), 5, U256::from(21_u32)),
+            (U256::from(7_u32), 2, U256::from(3_u32)),
+            (U256::from(3_u32), 5, U256::ZERO),
+            (U256::from(0xDEAD_BEEF_u64), 0xDEAD_BEEF, U256::ONE),
+            (U256::from(42_u32), 1, U256::from(42_u32)),
+            (U256(1, 0), 3, U256(0, 0x5555_5555_5555_5555_5555_5555_5555_5555)),
+            (U256::MAX, 2, U256(u128::MAX >> 1, u128::MAX)),
+        ];
+        for (initial, divisor, want) in test_values {
+            let got = Target(initial).div_u64(divisor);
+            assert_eq!(got, Target(want));
+        }
+
+        // Large value and divisor
+        let tgt = Target(U256(0x2000, 0));
+        let got = tgt.div_u64(u64::MAX);
+        assert_eq!(got, Target(U256(0, 0x2000_0000_0000_0000_2000)));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempted to divide")]
+    fn target_div_u64_by_zero() {
+        let _ = U256::from(1_u32).div_rem(U256::ZERO);
     }
 
     #[test]
