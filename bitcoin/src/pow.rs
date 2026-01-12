@@ -318,8 +318,8 @@ internal_macros::define_extension_trait! {
         /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
         /// to the target.
         fn is_met_by(&self, hash: BlockHash) -> bool {
-            let hash = U256::from_le_bytes(hash.to_byte_array());
-            hash <= self.0
+            let hash = Target::from_le_bytes(hash.to_byte_array());
+            hash <= *self
         }
 
         /// Computes the popular "difficulty" measure for mining.
@@ -379,6 +379,53 @@ internal_macros::define_extension_trait! {
     }
 }
 
+// Helper function to multiply a Target by a u64, returning a Target
+fn mul_target_u64(tgt: Target, rhs: u64) -> Target {
+    let mut carry: u128 = 0;
+    let mut out_bytes: [u8; 32] = [0u8; 32];
+
+    let le_bytes = tgt.to_le_bytes();
+
+    for i in 0..4 {
+        let word = u64::from_le_bytes(
+            le_bytes[i * 8..(i + 1) * 8].try_into().expect("slice is 8 bytes")
+        );
+
+        // This will not overflow, for proof see https://github.com/rust-bitcoin/rust-bitcoin/pull/1496#issuecomment-1365938572
+        let n = carry + u128::from(rhs) * u128::from(word);
+
+        let low = n as u64; // Intentional truncation, save the low bits
+        carry = n >> 64; // and carry the high bits.
+
+        out_bytes[i * 8..(i + 1) * 8]
+            .copy_from_slice(&low.to_le_bytes());
+    }
+
+    Target::from_le_bytes(out_bytes)
+}
+
+// Helper function to divide a Target by a u64, returning a Target
+fn div_target_u64(tgt: Target, rhs: u64) -> Target {
+    let bytes = tgt.to_be_bytes();
+
+    assert!(rhs != 0, "division by zero");
+
+    let mut result = [0u8; 32];
+    let mut rem: u128 = 0;
+
+    for i in 0..32 {
+        // Bring down the next byte (base-256 long division)
+        rem = (rem << 8) | bytes[i] as u128;
+
+        let q = rem / rhs as u128;
+        rem %= rhs as u128;
+
+        result[i] = q as u8;
+    }
+
+    Target::from_be_bytes(result)
+}
+
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
     pub trait CompactTargetExt impl for CompactTarget {
@@ -422,10 +469,9 @@ internal_macros::define_extension_trait! {
             let actual_timespan = timespan.clamp(min_timespan.into(), max_timespan.into());
             let prev_target: Target = last.into();
             let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
-            let retarget = prev_target.0; // bnNew
-            let (retarget, _) = retarget.mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"));
-            let retarget = retarget.div(params.pow_target_timespan.into());
-            let retarget = Target(retarget);
+            let retarget = prev_target; // bnNew
+            let retarget = mul_target_u64(retarget, u64::try_from(actual_timespan).expect("clamped value won't be negative"));
+            let retarget = div_target_u64(retarget, params.pow_target_timespan.into());
             if retarget.ge(&maximum_retarget) {
                 return maximum_retarget.to_compact_lossy();
             }
