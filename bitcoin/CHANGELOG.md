@@ -2,7 +2,7 @@
 
 This series of beta releases is meant for two things:
 
-1. To allow testing of the upcoming `bitcoin v0.33.0`. Its been a long
+1. To allow testing of the upcoming `bitcoin v0.33.0`. It's been a long
    time since we released and there is a lot in this.
 
 2. To allow testing of the `1.0.0` RC releases of:
@@ -27,7 +27,7 @@ For changes to our dependencies included in this release see:
 - `hex-conservative 1.0.0`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/1.x/CHANGELOG.md)
 - `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
 
-## Worthy on note
+## Worthy of note
 
 This release introduces an upper limit on the `Amount` type.
 
@@ -134,7 +134,7 @@ The `serde` serialization for `Psbt` has changed.
   you may want to use `MAX_REDEEM_SCRIPT_SIZE` or perhaps `MAX_STACK_ELEMENT_SIZE` (see `bitcoin/src/blockdata/constants`).
 - `ecdsa::Error` was replaced by `ecdsa::DecodeError` and `ecdsa::ParseSignatureError`
   (returned by `ecdsa::Signature::from_slice` and `from_str` respectively).
-- `script::read_scriptint` was move to be a method on `PushBytes`.
+- `script::read_scriptint` was moved to be a method on `PushBytes`.
 - You can likely just remove the `hashes::Hash` trait import.
 - Change `OutPoint::default()` to `OutPoint::COINBASE_PREVOUT` if appropriate.
 - Change `TxIn::default()` to `TxIn::EMPTY_COINBASE` if appropriate.
@@ -236,7 +236,7 @@ In particular consider having some type that implements `AsRef<Params>`, we have
 - Remove `Network` from `AddressInner` [#1832](https://github.com/rust-bitcoin/rust-bitcoin/pull/1832)
 - Add consts to `Params` for individual networks [#2396](https://github.com/rust-bitcoin/rust-bitcoin/pull/2396)
 - Add `params()` method to `Network` [#2172](https://github.com/rust-bitcoin/rust-bitcoin/pull/2172)
-- Use `KnowHrp`` instead of `Network` [#2387](https://github.com/rust-bitcoin/rust-bitcoin/pull/2387)
+- Use `KnownHrp` instead of `Network` [#2387](https://github.com/rust-bitcoin/rust-bitcoin/pull/2387)
 - Add check to max difficulty transition threshold [#2337](https://github.com/rust-bitcoin/rust-bitcoin/pull/2337)
 
 ## Other API additions
@@ -341,7 +341,7 @@ In particular consider having some type that implements `AsRef<Params>`, we have
   - Rename `TaprootSpendInfo::as_script_map` to `script_map` [#1897](https://github.com/rust-bitcoin/rust-bitcoin/pull/1897)
   - Rename `Script::empty` to `Script::new` [#1925](https://github.com/rust-bitcoin/rust-bitcoin/pull/1925)
   - Rename `PartiallySignedTransaction` to `Psbt` [#1938](https://github.com/rust-bitcoin/rust-bitcoin/pull/1938)
-  - Rename `XpubIdenifier` to `XKeyIdentifier` [#2021](https://github.com/rust-bitcoin/rust-bitcoin/pull/2021)
+  - Rename `XpubIdentifier` to `XKeyIdentifier` [#2021](https://github.com/rust-bitcoin/rust-bitcoin/pull/2021)
   - Rename `ExtendedPubKey` to `Xpub` [#2019](https://github.com/rust-bitcoin/rust-bitcoin/pull/2019)
   - Rename `ExtendedPrivKey` to `Xpriv` [#2019](https://github.com/rust-bitcoin/rust-bitcoin/pull/2019)
   - Remove `_v0` from various function names (eg, `new_v0_p2wpkh`) [#1994](https://github.com/rust-bitcoin/rust-bitcoin/pull/1994)

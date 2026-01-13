@@ -171,7 +171,7 @@ Prerequisites that a PR must satisfy for merging into the `master` branch:
 * the tip of any PR branch must also compile and pass tests with no errors on
   MSRV (check [README.md] on current MSRV requirements) and pass fuzz tests on
   nightly rust;
-* contain all necessary tests for the introduced functional (either as a part of
+* contain all necessary tests for the introduced functionality (either as a part of
   commits, or, more preferably, as separate commits, so that it's easy to
   reorder them during review and check that the new tests fail without the new
   code);
@@ -328,8 +328,8 @@ Run as for any other Rust project `cargo test --all-features`.
 
 ### Benchmarks
 
-We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
-bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+We use a custom Rust compiler configuration conditional to guard the benchmark code. To run the
+benchmarks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
 
 ### Mutation tests
 
