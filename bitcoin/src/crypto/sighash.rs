@@ -438,7 +438,7 @@ impl EcdsaSighashType {
 
     /// Constructs a new [`EcdsaSighashType`] from a raw `u32`.
     ///
-    /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
+    /// **Note**: this replicates consensus behavior, for current standardness rules correctness
     /// you probably want [`Self::from_standard`].
     ///
     /// This might cause unexpected behavior because it does not roundtrip. That is,
@@ -959,7 +959,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             // We cannot correctly handle the SIGHASH_SINGLE bug here because usage of this function
             // will result in the data written to the writer being hashed, however the correct
             // handling of the SIGHASH_SINGLE bug is to return the 'one array' - either implement
-            // this behaviour manually or use `signature_hash()`.
+            // this behavior manually or use `signature_hash()`.
             return EncodeSigningDataResult::SighashSingleBug;
         }
 

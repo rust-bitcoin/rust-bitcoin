@@ -467,7 +467,7 @@ impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
         if nbits > 64 {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
-                "can not read more than 64 bits at once",
+                "cannot read more than 64 bits at once",
             ));
         }
         let mut data = 0u64;
@@ -502,7 +502,7 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
         if nbits > 64 {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
-                "can not write more than 64 bits at once",
+                "cannot write more than 64 bits at once",
             ));
         }
         let mut wrote = 0;

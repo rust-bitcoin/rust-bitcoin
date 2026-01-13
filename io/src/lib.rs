@@ -122,7 +122,7 @@ pub trait BufRead: Read {
     ///
     /// # Panics
     ///
-    /// May panic if `amount` is greater than amount of data read by `fill_buf`.
+    /// May panic if `amount` is greater than the amount of data read by `fill_buf`.
     fn consume(&mut self, amount: usize);
 }
 
@@ -665,7 +665,7 @@ mod tests {
 
         let v = [1_u8; BUF_LEN];
 
-        // Sanity check the stdlib Cursor's behaviour.
+        // Sanity check the stdlib Cursor's behavior.
         let mut c = std::io::Cursor::new(v);
         for pos in [BUF_LEN, BUF_LEN + 1, BUF_LEN * 2] {
             c.set_position(pos as u64);

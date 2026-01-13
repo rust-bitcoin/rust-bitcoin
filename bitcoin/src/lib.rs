@@ -93,14 +93,14 @@ pub mod ext {
     //! Re-export all the extension traits so downstream can use wildcard imports.
     //!
     //! As part of stabilizing `primitives` and `units` we created a bunch of extension traits in
-    //! `rust-bitcoin` to hold all then API that we are not yet ready to stabilize. This module
+    //! `rust-bitcoin` to hold all the API that we are not yet ready to stabilize. This module
     //! re-exports all of them to improve ergonomics for users comfortable with wildcard imports.
     //!
     //! # Examples
     //!
     //! ```
     //! # #![allow(unused_imports)] // Because that is what we are demoing.
-    //! // Wildcard import all of the extension crates.
+    //! // Wildcard import all of the extension traits.
     //! use bitcoin::ext::*;
     //!
     //! // If, for some reason, you want the name to be in scope access it via the module. E.g.

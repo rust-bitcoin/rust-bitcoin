@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides a monodic type returned by mathematical operations (`core::ops`).
+//! Provides a monadic type returned by mathematical operations (`core::ops`).
 
 use core::convert::Infallible;
 use core::{fmt, ops};

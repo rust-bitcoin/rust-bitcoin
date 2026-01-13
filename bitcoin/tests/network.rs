@@ -23,7 +23,7 @@ fn can_use_network_kind() {
     // Returns true if `n` is any mainnet.
     fn is_mainnet(n: Network) -> bool { NetworkKind::from(n).is_mainnet() }
 
-    // Returns true if `n` is a any testnet.
+    // Returns true if `n` is any testnet.
     fn is_testnet(n: Network) -> bool { !NetworkKind::from(n).is_mainnet() }
 
     assert!(is_mainnet(Network::Bitcoin));

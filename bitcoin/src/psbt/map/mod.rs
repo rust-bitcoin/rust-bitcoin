@@ -24,9 +24,12 @@ pub(super) trait Map {
     ///
     /// <map> := <keypair>* 0x00
     ///
-    /// Why is the separator here 0x00 instead of 0xff? The separator here is used to distinguish between each chunk of data.
-    /// A separator of 0x00 would mean that the unserializer can read it as a key length of 0, which would never occur with
-    /// actual keys. It can thus be used as a separator and allow for easier unserializer implementation.
+    /// Why is the separator here 0x00 instead of 0xff? The separator here is used to distinguish
+    /// between each chunk of data.
+    ///
+    /// A separator of 0x00 would mean that the deserializer can read it as a key length of 0,
+    /// which would never occur with actual keys. It can thus be used as a separator and allow for
+    /// easier deserializer implementation.
     fn serialize_map(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         for pair in Map::get_pairs(self) {

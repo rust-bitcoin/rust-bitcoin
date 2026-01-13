@@ -309,7 +309,7 @@ warnings.
 
 ### Links
 
-We favour links at the bottom of the docs section:
+We favor links at the bottom of the docs section:
 
 ```rust
     /// it is a real Taproot script spend (and not some other kind of output contrived

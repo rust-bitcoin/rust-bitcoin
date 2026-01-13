@@ -458,7 +458,7 @@ impl TaprootBuilder {
             let (p1, s1) = node_weights.pop().expect("len must be at least two");
             let (p2, s2) = node_weights.pop().expect("len must be at least two");
             // Insert the sum of first two in the tree as a new node
-            // N.B.: p1 + p2 can not practically saturate as you would need to have 2**32 max u32s
+            // N.B.: p1 + p2 cannot practically saturate as you would need to have 2**32 max u32s
             // from the input to overflow. However, saturating is a reasonable behavior here as
             // Huffman tree construction would treat all such elements as "very likely".
             let p = Reverse(p1.0.saturating_add(p2.0));
@@ -1163,7 +1163,7 @@ impl ControlBlock {
     ///
     /// This is an extra witness element that provides the proof that Taproot script pubkey is
     /// correctly computed with some specified leaf hash. This is the last element in Taproot
-    /// witness when spending a output via script path.
+    /// witness when spending an output via script path.
     ///
     /// # Errors
     ///

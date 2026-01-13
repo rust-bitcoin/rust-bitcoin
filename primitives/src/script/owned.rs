@@ -105,7 +105,7 @@ impl<T> ScriptBuf<T> {
     /// `self.len() + additional`. Does nothing if the capacity is already sufficient.
     ///
     /// Note that the allocator may give the collection more space than it requests. Therefore,
-    /// capacity can not be relied upon to be precisely minimal. Prefer [`reserve`](Self::reserve)
+    /// capacity cannot be relied upon to be precisely minimal. Prefer [`reserve`](Self::reserve)
     /// if future insertions are expected.
     ///
     /// # Panics

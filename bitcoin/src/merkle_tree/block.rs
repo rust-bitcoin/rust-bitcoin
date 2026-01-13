@@ -185,13 +185,14 @@ impl PartialMerkleTree {
     /// Returns the transaction ids and internal hashes of the partial Merkle tree.
     pub fn hashes(&self) -> &Vec<TxMerkleNode> { &self.hashes }
 
-    /// Constructs a new partial Merkle tree
-    /// The `txids` are the transaction hashes of the block and the `matches` is the contains flags
-    /// wherever a tx hash should be included in the proof.
+    /// Constructs a new partial Merkle tree.
+    ///
+    /// The `txids` are the transaction hashes of the block and `matches` contains flags indicating
+    /// whether each txid should be included in the proof.
     ///
     /// # Panics
     ///
-    /// Panics when `txids` is empty or when `matches` has a different length
+    /// Panics when `txids` is empty or when `matches` has a different length.
     ///
     /// # Examples
     ///

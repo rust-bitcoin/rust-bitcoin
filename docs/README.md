@@ -1,7 +1,7 @@
 # rust-bitcoin documentation
 
 This directory holds documentation for the `rust-bitcoin` repository and potentially various other
-directly related crates from the `rust-bitcoin` GitHub organisation (e.g. `rust-secp256k1`).
+directly related crates from the `rust-bitcoin` GitHub organization (e.g. `rust-secp256k1`).
 
 In general, PR discussions on source code should be about the technical content of changes. To debate
 whether a change should be made at all, or the strategy for making changes, it is better to first PR to

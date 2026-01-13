@@ -251,9 +251,9 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes.
     NumericOverflow,
-    /// Can not find the spent output.
+    /// Cannot find the spent output.
     UnknownSpentOutput(OutPoint),
-    /// Can not serialize the spending transaction.
+    /// Cannot serialize the spending transaction.
     Serialization,
 }
 

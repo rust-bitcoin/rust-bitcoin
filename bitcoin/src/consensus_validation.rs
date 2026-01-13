@@ -234,7 +234,7 @@ impl std::error::Error for BitcoinconsensusError {
 pub enum TxVerifyError {
     /// Error validating the script with bitcoinconsensus library.
     ScriptVerification(BitcoinconsensusError),
-    /// Can not find the spent output.
+    /// Cannot find the spent output.
     UnknownSpentOutput(OutPoint),
 }
 

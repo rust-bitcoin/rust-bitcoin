@@ -10,7 +10,7 @@
 //! This crate can be used in a no-std environment but a lot of the functionality requires an
 //! allocator i.e., requires the `alloc` feature to be enabled.
 //!
-//! [`rust-bitcoin`]: <https://github.com/rust-bitcoin>
+//! [`rust-bitcoin`]: <https://github.com/rust-bitcoin/rust-bitcoin>
 
 #![no_std]
 // Coding conventions.

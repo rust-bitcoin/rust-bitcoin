@@ -283,7 +283,7 @@ pub trait TransactionExt: sealed::Sealed {
 
     /// Returns the base transaction size.
     ///
-    /// > Base transaction size is the size of the transaction serialised with the witness data stripped.
+    /// > Base transaction size is the size of the transaction serialized with the witness data stripped.
     ///
     /// # Panics
     ///

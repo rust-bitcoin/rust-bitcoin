@@ -87,7 +87,7 @@ impl Sequence {
     ///
     /// The term 'final' is an archaic Bitcoin term, it may have come about because the sequence
     /// number in the original Bitcoin code was intended to be incremented in order to replace a
-    /// transaction, so once the sequence number got to `u64::MAX` it could no longer be increased,
+    /// transaction, so once the sequence number got to `u32::MAX` it could no longer be increased,
     /// hence it was 'final'.
     ///
     ///

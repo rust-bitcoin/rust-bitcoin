@@ -132,7 +132,7 @@ impl fmt::Display for TooShortError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "base58 decoded data was not long enough, must be at least 4 byte: {}",
+            "base58 decoded data was not long enough, must be at least 4 bytes: {}",
             self.length
         )
     }
