@@ -14,10 +14,12 @@ use std::error;
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
-use encoding::{CompactSizeDecoder, CompactSizeEncoder};
+use encoding::{CompactSizeDecoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
+use internals::write_err;
 use io::{BufRead, Write};
+use primitives::block::{BlockHashDecoder, BlockHashEncoder};
 
 /// A BIP-0152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -413,6 +415,83 @@ impl BlockTransactionsRequest {
         }
         Ok(indexes)
     }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for [`BlockTransactionsRequest`].
+    pub struct BlockTransactionsRequestEncoder<'e>(
+        Encoder2<
+            BlockHashEncoder,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, Offset>>
+        >
+    );
+}
+
+impl encoding::Encodable for BlockTransactionsRequest {
+    type Encoder<'e> = BlockTransactionsRequestEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockTransactionsRequestEncoder(
+            Encoder2::new(
+                self.block_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.offsets.len()),
+                    SliceEncoder::without_length_prefix(&self.offsets)
+                )
+            )
+        )
+    }
+}
+
+type BlockTransactionsRequestInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Offset>>;
+
+/// The encoder type for a [`BlockTransactionsRequest`].
+pub struct BlockTransactionsRequestDecoder(BlockTransactionsRequestInnerDecoder);
+
+impl encoding::Decoder for BlockTransactionsRequestDecoder {
+    type Output = BlockTransactionsRequest;
+    type Error = BlockTransactionsRequestDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(BlockTransactionsRequestDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (block_hash, offsets) = self.0.end().map_err(BlockTransactionsRequestDecoderError)?;
+        Ok(BlockTransactionsRequest { block_hash, offsets })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for BlockTransactionsRequest {
+    type Decoder = BlockTransactionsRequestDecoder;
+
+    fn decoder() -> Self::Decoder {
+        BlockTransactionsRequestDecoder(Decoder2::new(BlockHashDecoder::new(), VecDecoder::new()))
+    }
+}
+
+/// An error decoding a [`BlockTransactionsRequest`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockTransactionsRequestDecoderError(<BlockTransactionsRequestInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for BlockTransactionsRequestDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for BlockTransactionsRequestDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "blocktxnrequest error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BlockTransactionsRequestDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Encodable for BlockTransactionsRequest {
