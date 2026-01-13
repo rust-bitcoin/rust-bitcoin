@@ -482,7 +482,7 @@ impl NumberOf512Seconds {
     /// The minimum relative block time (0), can be included in any block.
     pub const MIN: Self = Self::ZERO;
 
-    /// The maximum relative block time (33,554,432 seconds or approx 388 days).
+    /// The maximum relative block time (33,553,920 seconds or approx 388 days).
     pub const MAX: Self = Self(u16::MAX);
 
     /// Constructs a new [`NumberOf512Seconds`] using time intervals where each interval is

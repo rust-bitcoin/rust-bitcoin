@@ -397,7 +397,7 @@ impl Amount {
         match self.to_sat().checked_rem(rhs) {
             Some(res) => match Self::from_sat(res) {
                 Ok(amount) => Some(amount),
-                Err(_) => None, // Unreachable because of checked_div above.
+                Err(_) => None, // Unreachable because of checked_rem above.
             },
             None => None,
         }
