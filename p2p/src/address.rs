@@ -185,6 +185,39 @@ impl encoding::Decodable for Address {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AddressDecoderError(<AddressInnerDecoder as encoding::Decoder>::Error);
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`Address`] type.
+    pub struct AddressEncoder(encoding::Encoder3<
+        crate::ServiceFlagsEncoder,
+        encoding::ArrayEncoder<16>,
+        encoding::ArrayEncoder<2>
+    >);
+}
+
+impl encoding::Encodable for Address {
+    type Encoder<'a>
+        = AddressEncoder
+    where
+        Self: 'a;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let mut address: [u8; 16] = [0; 16];
+        for (index, value) in self.address.iter().enumerate() {
+            let arr: [u8; 2] = value.to_be_bytes();
+            address[index * 2] = arr[0];
+            address[index * 2 + 1] = arr[1];
+        }
+
+        let enc = encoding::Encoder3::new(
+            self.services.encoder(),
+            encoding::ArrayEncoder::without_length_prefix(address),
+            encoding::ArrayEncoder::without_length_prefix(self.port.to_be_bytes()),
+        );
+
+        AddressEncoder(enc)
+    }
+}
+
 /// Supported networks for use in BIP-0155 addrv2 message
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum AddrV2 {
