@@ -154,6 +154,39 @@ impl ToSocketAddrs for Address {
     }
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`Address`] type.
+    pub struct AddressEncoder<'e>(encoding::Encoder3<
+        crate::ServiceFlagsEncoder<'e>,
+        encoding::ArrayEncoder<16>,
+        encoding::ArrayEncoder<2>
+    >);
+}
+
+impl encoding::Encodable for Address {
+    type Encoder<'e>
+        = AddressEncoder<'e>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let mut address: [u8; 16] = [0; 16];
+        for (index, value) in self.address.iter().enumerate() {
+            let arr: [u8; 2] = value.to_be_bytes();
+            address[index * 2] = arr[0];
+            address[index * 2 + 1] = arr[1];
+        }
+
+        let enc = encoding::Encoder3::new(
+            self.services.encoder(),
+            encoding::ArrayEncoder::without_length_prefix(address),
+            encoding::ArrayEncoder::without_length_prefix(self.port.to_be_bytes()),
+        );
+
+        AddressEncoder::new(enc)
+    }
+}
+
 type AddressInnerDecoder = encoding::Decoder3<
     crate::ServiceFlagsDecoder,
     encoding::ArrayDecoder<16>,
@@ -947,7 +980,7 @@ mod test {
     #[test]
     fn serialize_address() {
         assert_eq!(
-            serialize(&Address {
+            encoding::encode_to_vec(&Address {
                 services: ServiceFlags::NETWORK,
                 address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
                 port: 8333
