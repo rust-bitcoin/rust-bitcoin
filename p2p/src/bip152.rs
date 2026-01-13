@@ -14,9 +14,9 @@ use std::error;
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
+use encoding::{CompactSizeDecoder, CompactSizeEncoder};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
-use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 /// A BIP-0152 error
@@ -314,27 +314,114 @@ impl HeaderAndShortIds {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Offset(usize);
+
+impl encoding::Encodable for Offset {
+    type Encoder<'e> = CompactSizeEncoder;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CompactSizeEncoder::new(self.0)
+    }
+}
+
+struct OffsetDecoder(CompactSizeDecoder);
+
+impl encoding::Decoder for OffsetDecoder {
+    type Output = Offset;
+    type Error = <CompactSizeDecoder as encoding::Decoder>::Error;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        Ok(Offset(self.0.end()?))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Offset {
+    type Decoder = OffsetDecoder;
+
+    fn decoder() -> Self::Decoder {
+        OffsetDecoder(CompactSizeDecoder::new())
+    }
+}
+
 /// A [`BlockTransactionsRequest`] structure is used to list transaction indexes
 /// in a block being requested.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 pub struct BlockTransactionsRequest {
     ///  The blockhash of the block which the transactions being requested are in.
     pub block_hash: BlockHash,
-    ///  The indexes of the transactions being requested in the block.
+    // The run-length between block indices in the request.
+    offsets: Vec<Offset>,
+}
+
+impl BlockTransactionsRequest {
+    /// Build a request for a [`BlockHash`] and implicitly sort the indices on construction.
+    pub fn from_unsorted_indices(block_hash: BlockHash, mut indexes: Vec<usize>) -> Self {
+        indexes.sort_unstable();
+        let mut offsets = Vec::with_capacity(indexes.len());
+        let mut last_idx = 0;
+        for idx in indexes {
+            offsets.push(Offset(idx - last_idx));
+            last_idx = idx + 1;
+        }
+        Self { block_hash, offsets }
+    }
+
+    /// Build a request for a [`BlockHash`] assuming the indices are already sorted.
     ///
-    ///  Warning: Encoding panics with [`u64::MAX`] values. See [`BlockTransactionsRequest::consensus_encode()`]
-    pub indexes: Vec<u64>,
+    /// # Panics
+    ///
+    /// If the list is not in ascending order.
+    pub fn from_indices_unchecked(block_hash: BlockHash, indexes: Vec<usize>) -> Self {
+        let mut offsets = Vec::with_capacity(indexes.len());
+        let mut last_idx = 0;
+        for idx in indexes {
+            offsets.push(Offset(idx - last_idx));
+            last_idx = idx + 1;
+        }
+        Self { block_hash, offsets }
+    }
+
+    /// Get the list of indices in the block.
+    ///
+    /// # Errors
+    ///
+    /// If the block index is out of range.
+    pub fn indices(&self) -> Result<Vec<usize>, TxIndexOutOfRangeError> {
+        let mut last_cs: usize = 0;
+        let mut indexes = Vec::with_capacity(self.offsets.len());
+        for offset in &self.offsets {
+            last_cs = match last_cs.checked_add(offset.0) {
+                Some(next) => {
+                    indexes.push(next);
+                    next
+                },
+                None => {
+                    return Err(TxIndexOutOfRangeError(last_cs as u64))
+                }
+            };
+            last_cs = last_cs.checked_add(1).ok_or(TxIndexOutOfRangeError(last_cs as u64))?;
+        }
+        Ok(indexes)
+    }
 }
 
 impl Encodable for BlockTransactionsRequest {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.block_hash.consensus_encode(w)?;
         // Manually encode indexes because they are differentially encoded as CompactSize.
-        len += w.emit_compact_size(self.indexes.len())?;
-        let mut last_idx = 0;
-        for idx in &self.indexes {
-            len += w.emit_compact_size(*idx - last_idx)?;
-            last_idx = *idx + 1; // can panic here
+        len += w.emit_compact_size(self.offsets.len())?;
+        for idx in &self.offsets {
+            len += w.emit_compact_size(idx.0)?;
         }
         Ok(len)
     }
@@ -344,7 +431,7 @@ impl Decodable for BlockTransactionsRequest {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Self {
             block_hash: BlockHash::consensus_decode(r)?,
-            indexes: {
+            offsets: {
                 // Manually decode indexes because they are differentially encoded as CompactSize.
                 let nb_indexes = r.read_compact_size()? as usize;
 
@@ -361,28 +448,12 @@ impl Decodable for BlockTransactionsRequest {
                     }
                     .into());
                 }
-
-                let mut indexes = Vec::with_capacity(nb_indexes);
-                let mut last_index: u64 = 0;
+                let mut offsets = Vec::with_capacity(nb_indexes);
                 for _ in 0..nb_indexes {
                     let differential = r.read_compact_size()?;
-                    last_index = match last_index.checked_add(differential) {
-                        Some(i) => i,
-                        None =>
-                            return Err(crate::consensus::parse_failed_error(
-                                "block index overflow",
-                            )),
-                    };
-                    indexes.push(last_index);
-                    last_index = match last_index.checked_add(1) {
-                        Some(i) => i,
-                        None =>
-                            return Err(crate::consensus::parse_failed_error(
-                                "block index overflow",
-                            )),
-                    };
+                    offsets.push(Offset(differential as usize));
                 }
-                indexes
+                offsets
             },
         })
     }
@@ -435,12 +506,13 @@ impl BlockTransactions {
         Ok(Self {
             block_hash: request.block_hash,
             transactions: {
-                let mut txs = Vec::with_capacity(request.indexes.len());
-                for idx in &request.indexes {
-                    if *idx >= block.transactions().len().to_u64() {
-                        return Err(TxIndexOutOfRangeError(*idx));
+                let mut txs = Vec::with_capacity(request.offsets.len());
+                let indexes = request.indices()?;
+                for idx in indexes {
+                    if idx >= block.transactions().len() {
+                        return Err(TxIndexOutOfRangeError(idx as u64));
                     }
-                    txs.push(block.transactions()[*idx as usize].clone());
+                    txs.push(block.transactions()[idx].clone());
                 }
                 txs
             },
@@ -480,9 +552,16 @@ impl<'a> Arbitrary<'a> for BlockTransactions {
 }
 
 #[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Offset {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self { block_hash: u.arbitrary()?, indexes: Vec::<u64>::arbitrary(u)? })
+        Ok(Self { block_hash: u.arbitrary()?, offsets: Vec::<Offset>::arbitrary(u)? })
     }
 }
 
@@ -584,14 +663,11 @@ mod test {
                 let mut raw: Vec<u8> = vec![0u8; 32];
                 raw.extend(testcase.0.clone());
                 let btr: BlockTransactionsRequest = deserialize(&raw.clone()).unwrap();
-                assert_eq!(testcase.1, btr.indexes);
+                assert_eq!(testcase.1, btr.indices().unwrap());
             }
             {
                 // test serialization
-                let raw: Vec<u8> = serialize(&BlockTransactionsRequest {
-                    block_hash: BlockHash::from_byte_array([0; 32]),
-                    indexes: testcase.1,
-                });
+                let raw: Vec<u8> = serialize(&&BlockTransactionsRequest::from_indices_unchecked(BlockHash::from_byte_array([0; 32]), testcase.1));
                 let mut expected_raw: Vec<u8> = [0u8; 32].to_vec();
                 expected_raw.extend(testcase.0);
                 assert_eq!(expected_raw, raw);
@@ -602,18 +678,19 @@ mod test {
                 // test that we return Err() if deserialization fails (and don't panic)
                 let mut raw: Vec<u8> = [0u8; 32].to_vec();
                 raw.extend(errorcase);
-                assert!(deserialize::<BlockTransactionsRequest>(&raw.clone()).is_err());
+                let get_block_txn = deserialize::<BlockTransactionsRequest>(&raw.clone()).unwrap();
+                assert!(get_block_txn.indices().is_err());
             }
         }
     }
 
     #[test]
-    #[cfg(debug_assertions)]
-    #[should_panic(expected = "attempt to add with overflow")]
     fn getblocktx_panic_when_encoding_u64_max() {
-        serialize(&BlockTransactionsRequest {
+        assert!(BlockTransactionsRequest {
             block_hash: BlockHash::from_byte_array([0; 32]),
-            indexes: vec![u64::MAX],
-        });
+            offsets: vec![Offset(usize::MAX)],
+        }
+        .indices()
+        .is_err());
     }
 }
