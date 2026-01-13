@@ -1296,7 +1296,7 @@ pub struct FutureLeafVersion(u8);
 impl FutureLeafVersion {
     pub(self) fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
         match version {
-            TAPROOT_LEAF_TAPSCRIPT => unreachable!(
+            TAPROOT_LEAF_TAPSCRIPT => panic!(
                 "FutureLeafVersion::from_consensus should never be called for 0xC0 value"
             ),
             TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
