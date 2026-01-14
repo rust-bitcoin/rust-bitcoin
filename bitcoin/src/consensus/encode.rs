@@ -704,6 +704,58 @@ mod tests {
     use crate::prelude::{Cow, Vec};
     use crate::transaction::{Transaction, TxIn, TxOut};
 
+    // `enco` in hex.
+    #[cfg(feature = "std")]
+    const PRNG_SEED: usize = 0x656E636F;
+
+    // Simple and deterministic PRNG, not suitable for cryptographic use cases.
+    #[cfg(feature = "std")]
+    struct LcgPrng {
+        state: usize,
+    }
+
+    #[cfg(feature = "std")]
+    impl LcgPrng {
+        const P: usize = 1039;
+        const Q: usize = 677;
+
+        const fn new(seed: usize) -> Self {
+            Self { state: seed }
+        }
+
+        #[inline]
+        fn next_usize(&mut self) -> usize {
+            self.state = self.state.wrapping_mul(Self::P).wrapping_add(Self::Q);
+            self.state
+        }
+
+        #[inline]
+        fn next_in_range(&mut self, max: usize) -> usize {
+            self.next_usize() % max
+        }
+
+        #[inline]
+        fn fill_bytes(&mut self, dest: &mut [u8]) {
+            for byte in dest.iter_mut() {
+                *byte = self.next_usize().to_le_bytes()[0];
+            }
+        }
+
+        #[inline]
+        fn fill_u64s(&mut self, dest: &mut [u64]) {
+            for val in dest.iter_mut() {
+                *val = self.next_usize() as u64;
+            }
+        }
+
+        #[inline]
+        fn fill_u16s(&mut self, dest: &mut [u16]) {
+            for val in dest.iter_mut() {
+                *val = self.next_usize() as u16;
+            }
+        }
+    }
+
     #[test]
     fn serialize_int() {
         // bool
@@ -1067,23 +1119,15 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "rand", feature = "std"))]
+    #[cfg(feature = "std")]
     fn serialization_round_trips() {
-        use secp256k1::rand::{self, Rng};
+        let mut rng = LcgPrng::new(PRNG_SEED);
 
         macro_rules! round_trip {
-            ($($val_type:ty),*) => {
+            ($rng:expr, $($val_type:ty),*) => {
                 $(
-                    let r: $val_type = rand::rng().random();
+                    let r: $val_type = $rng.next_usize() as $val_type;
                     assert_eq!(deserialize::<$val_type>(&serialize(&r)).unwrap(), r);
-                )*
-            };
-        }
-        macro_rules! round_trip_bytes {
-            ($(($val_type:ty, $data:expr)),*) => {
-                $(
-                    rand::rng().fill(&mut $data[..]);
-                    assert_eq!(deserialize::<$val_type>(&serialize(&$data)).unwrap()[..], $data[..]);
                 )*
             };
         }
@@ -1091,18 +1135,78 @@ mod tests {
         let mut data = Vec::with_capacity(256);
         let mut data64 = Vec::with_capacity(256);
         for _ in 0..10 {
-            round_trip! {bool, i8, u8, i16, u16, i32, u32, i64, u64,
-            (bool, i8, u16, i32), (u64, i64, u32, i32, u16, i16), (i8, u8, i16, u16, i32, u32, i64, u64),
-            [u8; 2], [u8; 4], [u8; 8], [u8; 12], [u8; 16], [u8; 32]};
+            round_trip! {rng, i8, u8, i16, u16, i32, u32, i64, u64};
+
+            // Test tuples with random values
+            let tuple1: (bool, i8, u16, i32) = (
+                rng.next_usize() % 2 == 0,
+                rng.next_usize() as i8,
+                rng.next_usize() as u16,
+                rng.next_usize() as i32,
+            );
+            assert_eq!(deserialize::<(bool, i8, u16, i32)>(&serialize(&tuple1)).unwrap(), tuple1);
+
+            let tuple2: (u64, i64, u32, i32, u16, i16) = (
+                rng.next_usize() as u64,
+                rng.next_usize() as i64,
+                rng.next_usize() as u32,
+                rng.next_usize() as i32,
+                rng.next_usize() as u16,
+                rng.next_usize() as i16,
+            );
+            assert_eq!(deserialize::<(u64, i64, u32, i32, u16, i16)>(&serialize(&tuple2)).unwrap(), tuple2);
+
+            let tuple3: (i8, u8, i16, u16, i32, u32, i64, u64) = (
+                rng.next_usize() as i8,
+                rng.next_usize() as u8,
+                rng.next_usize() as i16,
+                rng.next_usize() as u16,
+                rng.next_usize() as i32,
+                rng.next_usize() as u32,
+                rng.next_usize() as i64,
+                rng.next_usize() as u64,
+            );
+            assert_eq!(deserialize::<(i8, u8, i16, u16, i32, u32, i64, u64)>(&serialize(&tuple3)).unwrap(), tuple3);
+
+            // Test fixed-size arrays
+            let mut arr2 = [0u8; 2];
+            let mut arr4 = [0u8; 4];
+            let mut arr8 = [0u8; 8];
+            let mut arr12 = [0u8; 12];
+            let mut arr16_bytes = [0u8; 16];
+            let mut arr32 = [0u8; 32];
+            rng.fill_bytes(&mut arr2);
+            rng.fill_bytes(&mut arr4);
+            rng.fill_bytes(&mut arr8);
+            rng.fill_bytes(&mut arr12);
+            rng.fill_bytes(&mut arr16_bytes);
+            rng.fill_bytes(&mut arr32);
+            assert_eq!(deserialize::<[u8; 2]>(&serialize(&arr2)).unwrap(), arr2);
+            assert_eq!(deserialize::<[u8; 4]>(&serialize(&arr4)).unwrap(), arr4);
+            assert_eq!(deserialize::<[u8; 8]>(&serialize(&arr8)).unwrap(), arr8);
+            assert_eq!(deserialize::<[u8; 12]>(&serialize(&arr12)).unwrap(), arr12);
+            assert_eq!(deserialize::<[u8; 16]>(&serialize(&arr16_bytes)).unwrap(), arr16_bytes);
+            assert_eq!(deserialize::<[u8; 32]>(&serialize(&arr32)).unwrap(), arr32);
 
             data.clear();
             data64.clear();
-            let len = rand::rng().random_range(1..256);
+            let len = rng.next_in_range(255) + 1; // 1..256
             data.resize(len, 0u8);
             data64.resize(len, 0u64);
             let mut arr33 = [0u8; 33];
             let mut arr16 = [0u16; 8];
-            round_trip_bytes! {(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)};
+
+            rng.fill_bytes(&mut data);
+            assert_eq!(deserialize::<Vec<u8>>(&serialize(&data)).unwrap()[..], data[..]);
+
+            rng.fill_bytes(&mut arr33);
+            assert_eq!(deserialize::<[u8; 33]>(&serialize(&arr33)).unwrap()[..], arr33[..]);
+
+            rng.fill_u16s(&mut arr16);
+            assert_eq!(deserialize::<[u16; 8]>(&serialize(&arr16)).unwrap()[..], arr16[..]);
+
+            rng.fill_u64s(&mut data64);
+            assert_eq!(deserialize::<Vec<u64>>(&serialize(&data64)).unwrap()[..], data64[..]);
         }
     }
 
