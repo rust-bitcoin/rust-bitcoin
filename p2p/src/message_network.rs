@@ -178,6 +178,52 @@ impl_consensus_encoding!(
     relay
 );
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`VersionMessage`] type.
+    pub struct VersionMessageEncoder<'e>(
+        encoding::Encoder2<
+            encoding::Encoder3<
+                crate::ProtocolVersionEncoder<'e>,
+                crate::ServiceFlagsEncoder<'e>,
+                encoding::ArrayEncoder<8>
+            >,
+            encoding::Encoder6<
+                crate::address::AddressEncoder<'e>,
+                crate::address::AddressEncoder<'e>,
+                encoding::ArrayEncoder<8>,
+                UserAgentEncoder<'e>,
+                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<1>
+            >
+        >
+    );
+}
+
+impl encoding::Encodable for VersionMessage {
+    type Encoder<'a>
+        = VersionMessageEncoder<'a>
+    where
+        Self: 'a;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionMessageEncoder::new(encoding::Encoder2::new(
+            encoding::Encoder3::new(
+                self.version.encoder(),
+                self.services.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.timestamp.to_le_bytes()),
+            ),
+            encoding::Encoder6::new(
+                self.receiver.encoder(),
+                self.sender.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+                self.user_agent.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.start_height.to_le_bytes()),
+                encoding::ArrayEncoder::without_length_prefix([u8::from(self.relay)]),
+            ),
+        ))
+    }
+}
+
 /// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
 /// connection between two peers is established. It is intended to advertise client software in a
 /// well-defined format.
@@ -868,7 +914,7 @@ mod tests {
         assert_eq!(real_decode.start_height, 302_892);
         assert!(real_decode.relay);
 
-        assert_eq!(serialize(&real_decode), from_sat);
+        assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
     }
 
     #[test]
