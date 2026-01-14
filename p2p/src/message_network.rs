@@ -170,6 +170,52 @@ impl_consensus_encoding!(
     relay
 );
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`VersionMessage`] type.
+    pub struct VersionMessageEncoder<'a>(
+        encoding::Encoder2<
+            encoding::Encoder6<
+                crate::ProtocolVersionEncoder,
+                crate::ServiceFlagsEncoder,
+                encoding::ArrayEncoder<8>,
+                crate::address::AddressEncoder,
+                crate::address::AddressEncoder,
+                encoding::ArrayEncoder<8>
+            >,
+            encoding::Encoder3<
+                UserAgentEncoder<'a>,
+                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<1>
+            >
+        >
+    );
+}
+
+impl encoding::Encodable for VersionMessage {
+    type Encoder<'a>
+        = VersionMessageEncoder<'a>
+    where
+        Self: 'a;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionMessageEncoder(encoding::Encoder2::new(
+            encoding::Encoder6::new(
+                self.version.encoder(),
+                self.services.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.timestamp.to_le_bytes()),
+                self.receiver.encoder(),
+                self.sender.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+            ),
+            encoding::Encoder3::new(
+                self.user_agent.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.start_height.to_le_bytes()),
+                encoding::ArrayEncoder::without_length_prefix([u8::from(self.relay)]),
+            ),
+        ))
+    }
+}
+
 /// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
 /// connection between two peers is established. It is intended to advertise client software in a
 /// well-defined format.
