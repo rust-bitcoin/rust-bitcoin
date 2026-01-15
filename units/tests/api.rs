@@ -14,7 +14,7 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse_int, result, sequence, time, weight, Amount,
+    amount, block, fee_rate, locktime, parse_int, pow, result, sequence, time, weight, Amount,
     BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult,
     Sequence, SignedAmount, Weight,
 };
@@ -58,9 +58,10 @@ struct Structs {
     j: locktime::absolute::MedianTimePast,
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
-    m: sequence::Sequence,
-    n: time::BlockTime,
-    o: weight::Weight,
+    m: pow::CompactTarget,
+    n: sequence::Sequence,
+    o: time::BlockTime,
+    p: weight::Weight,
 }
 
 impl Structs {
@@ -78,9 +79,10 @@ impl Structs {
             j: absolute::MedianTimePast::MAX,
             k: relative::NumberOf512Seconds::MAX,
             l: relative::NumberOfBlocks::MAX,
-            m: sequence::Sequence::MAX,
-            n: BlockTime::from_u32(u32::MAX),
-            o: Weight::MAX,
+            m: pow::CompactTarget::from_consensus(u32::MAX),
+            n: sequence::Sequence::MAX,
+            o: BlockTime::from_u32(u32::MAX),
+            p: Weight::MAX,
         }
     }
 }
@@ -113,8 +115,9 @@ struct CommonTraits {
     j: locktime::absolute::MedianTimePast,
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
-    m: time::BlockTime,
-    n: weight::Weight,
+    m: pow::CompactTarget,
+    n: time::BlockTime,
+    o: weight::Weight,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -156,6 +159,8 @@ struct Errors {
     t: parse_int::ParseIntError,
     u: parse_int::PrefixedHexError,
     v: parse_int::UnprefixedHexError,
+    #[cfg(feature = "encoding")]
+    w: pow::CompactTargetDecoderError,
 }
 
 /// A struct that includes all public decoder error types.
@@ -173,15 +178,15 @@ struct DecoderErrors {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_units::{
-        amount, block, fee_rate, locktime, parse_int, result, sequence, time, weight,
+        amount, block, fee_rate, locktime, parse_int, pow, result, sequence, time, weight,
     };
 }
 
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
-        NumOpResult, Sequence, SignedAmount, Weight,
+        Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime,
+        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Weight,
     };
 }
 
@@ -263,6 +268,13 @@ fn api_can_use_all_types_from_module_parse() {
 }
 
 #[test]
+fn api_can_use_all_types_from_module_pow() {
+    use bitcoin_units::pow::CompactTarget;
+    #[cfg(feature = "encoding")]
+    use bitcoin_units::pow::{CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder};
+}
+
+#[test]
 fn api_can_use_all_types_from_module_time() {
     use bitcoin_units::time::BlockTime;
     #[cfg(feature = "encoding")]
@@ -319,6 +331,8 @@ fn api_all_non_error_types_have_non_empty_debug() {
     let debug = format!("{:?}", t.b.n);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.b.o);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.b.p);
     assert!(!debug.is_empty());
 }
 
@@ -387,9 +401,10 @@ impl<'a> Arbitrary<'a> for Structs {
             j: absolute::MedianTimePast::arbitrary(u)?,
             k: relative::NumberOf512Seconds::arbitrary(u)?,
             l: relative::NumberOfBlocks::arbitrary(u)?,
-            m: sequence::Sequence::arbitrary(u)?,
-            n: BlockTime::arbitrary(u)?,
-            o: Weight::arbitrary(u)?,
+            m: pow::CompactTarget::from_consensus(u.int_in_range(0..=u32::MAX)?),
+            n: sequence::Sequence::arbitrary(u)?,
+            o: BlockTime::arbitrary(u)?,
+            p: Weight::arbitrary(u)?,
         };
         Ok(a)
     }
