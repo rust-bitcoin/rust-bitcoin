@@ -23,9 +23,9 @@ use encoding::{
 };
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
-
 #[cfg(feature = "alloc")]
-use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
+use units::pow::{CompactTargetDecoder, CompactTargetDecoderError};
+
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
@@ -584,7 +584,7 @@ encoding::encoder_newtype_exact! {
             BlockHashEncoder,
             crate::merkle_tree::TxMerkleNodeEncoder,
             crate::time::BlockTimeEncoder,
-            crate::pow::CompactTargetEncoder,
+            units::pow::CompactTargetEncoder,
             encoding::ArrayEncoder<4>,
         >
     );
