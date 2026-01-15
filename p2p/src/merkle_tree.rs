@@ -17,11 +17,11 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
 use internals::ToU64 as _;
 use internals::write_err;
 use io::{BufRead, Write};
-use primitives::block::{self, Block, Checked};
+use primitives::block::{self, Block, Checked, HeaderDecoder, HeaderEncoder};
 use primitives::merkle_tree::TxMerkleNode;
 use primitives::transaction::{Transaction, Txid};
 use primitives::Weight;
@@ -123,6 +123,71 @@ impl MerkleBlock {
             Err(MerkleBlockError::MerkleRootMismatch)
         }
     }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder type for a [`MerkleBlock`].
+    pub struct MerkleBlockEncoder<'e>(Encoder2<HeaderEncoder<'e>, PartialMerkleTreeEncoder<'e>>);
+}
+
+impl encoding::Encodable for MerkleBlock {
+    type Encoder<'e> = MerkleBlockEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        MerkleBlockEncoder::new(
+            Encoder2::new(self.header.encoder(), self.txn.encoder())
+        )
+    }
+}
+
+type MerkleBlockInnerDecoder = Decoder2<HeaderDecoder, PartialMerkleTreeDecoder>;
+
+/// The decoder for a [`MerkleBlock`].
+pub struct MerkleBlockDecoder(MerkleBlockInnerDecoder);
+
+impl encoding::Decoder for MerkleBlockDecoder {
+    type Output = MerkleBlock;
+    type Error = MerkleBlockDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(MerkleBlockDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (header, txn) = self.0.end().map_err(MerkleBlockDecoderError)?;
+        Ok(MerkleBlock { header, txn })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for MerkleBlock {
+    type Decoder = MerkleBlockDecoder;
+    fn decoder() -> Self::Decoder {
+        MerkleBlockDecoder(Decoder2::new(block::Header::decoder(), PartialMerkleTree::decoder()))
+    }
+}
+
+/// An error occuring when decoding a [`MerkleBlock`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MerkleBlockDecoderError(<MerkleBlockInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for MerkleBlockDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for MerkleBlockDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "merkleblock error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MerkleBlockDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Encodable for MerkleBlock {
