@@ -943,6 +943,7 @@ impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::Wtxid
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::block::Block
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::block::Header
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::block::Version
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::pow::CompactTarget
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::script::ScriptHash
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::script::WScriptHash
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_primitives::transaction::OutPoint
@@ -1598,6 +1599,7 @@ pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::advance(&mut se
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::len(&self) -> usize
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<32>) -> bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
+pub fn bitcoin_primitives::pow::CompactTarget::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::pow::CompactTarget::clone(&self) -> bitcoin_primitives::pow::CompactTarget
 pub fn bitcoin_primitives::pow::CompactTarget::cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::cmp::Ordering
 pub fn bitcoin_primitives::pow::CompactTarget::decoder() -> Self::Decoder

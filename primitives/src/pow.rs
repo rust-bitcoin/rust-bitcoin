@@ -5,6 +5,8 @@
 use core::convert::Infallible;
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::write_err;
 
 /// Encoding of 256-bit target as 32-bit float.
@@ -133,6 +135,13 @@ impl fmt::Display for CompactTargetDecoderError {
 #[cfg(feature = "std")]
 impl std::error::Error for CompactTargetDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for CompactTarget {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_consensus(u.arbitrary()?))
+    }
 }
 
 #[cfg(test)]
