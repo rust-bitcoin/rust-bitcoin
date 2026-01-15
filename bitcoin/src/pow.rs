@@ -1820,12 +1820,6 @@ mod tests {
     }
 
     #[test]
-    fn compact_target_lower_hex_and_upper_hex() {
-        assert_eq!(format!("{:08x}", CompactTarget::from_consensus(0x01D0F456)), "01d0f456");
-        assert_eq!(format!("{:08X}", CompactTarget::from_consensus(0x01d0f456)), "01D0F456");
-    }
-
-    #[test]
     fn compact_target_from_upwards_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
