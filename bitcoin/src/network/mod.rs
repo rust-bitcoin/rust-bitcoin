@@ -162,47 +162,9 @@ impl Network {
         Ok(network)
     }
 
-    /// Return the network's chain hash (genesis block hash).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use bitcoin::Network;
-    /// use bitcoin::constants::ChainHash;
-    ///
-    /// let network = Network::Bitcoin;
-    /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
-    /// ```
-    pub fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
-
-    /// Constructs a new `Network` from the chain hash (genesis block hash).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use bitcoin::Network;
-    /// use bitcoin::constants::ChainHash;
-    ///
-    /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
-    /// ```
-    pub fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> {
-        Self::try_from(chain_hash).ok()
-    }
-
-    /// Returns the associated network parameters.
-    pub const fn params(self) -> &'static Params {
-        match self {
-            Self::Bitcoin => &Params::BITCOIN,
-            Self::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
-            Self::Testnet(TestnetVersion::V4) => &Params::TESTNET4,
-            Self::Signet => &Params::SIGNET,
-            Self::Regtest => &Params::REGTEST,
-        }
-    }
-
     /// Returns a string representation of the `Network` enum variant.
     /// This is useful for displaying the network type as a string.
-    const fn as_display_str(self) -> &'static str {
+    const fn as_display_str(&self) -> &'static str {
         match self {
             Self::Bitcoin => "bitcoin",
             Self::Testnet(TestnetVersion::V3) => "testnet",
@@ -211,6 +173,63 @@ impl Network {
             Self::Regtest => "regtest",
         }
     }
+}
+
+/// Extension functionality for the [`Network`] type.
+// `define_extension_trait` chokes on the rustdoc example code.
+pub trait NetworkExt: sealed::Sealed {
+    /// Return the network's chain hash (genesis block hash).
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin::Network;
+    /// use bitcoin::network::NetworkExt as _;
+    /// use bitcoin::constants::ChainHash;
+    ///
+    /// let network = Network::Bitcoin;
+    /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
+    /// ```
+    fn chain_hash(self) -> ChainHash;
+
+    /// Constructs a new `Network` from the chain hash (genesis block hash).
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin::Network;
+    /// use bitcoin::network::NetworkExt as _;
+    /// use bitcoin::constants::ChainHash;
+    ///
+    /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
+    /// ```
+    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self>;
+
+    /// Returns the associated network parameters.
+    fn params(self) -> &'static Params;
+}
+impl NetworkExt for Network {
+    fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
+
+    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> {
+        Self::try_from(chain_hash).ok()
+    }
+
+    /// Returns the associated network parameters.
+    fn params(self) -> &'static Params {
+        match self {
+            Self::Bitcoin => &Params::BITCOIN,
+            Self::Testnet(TestnetVersion::V3) => &Params::TESTNET3,
+            Self::Testnet(TestnetVersion::V4) => &Params::TESTNET4,
+            Self::Signet => &Params::SIGNET,
+            Self::Regtest => &Params::REGTEST,
+        }
+    }
+}
+
+mod sealed {
+    pub trait Sealed: Sized {}
+    impl Sealed for super::Network {}
 }
 
 #[cfg(feature = "serde")]
