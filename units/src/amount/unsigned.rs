@@ -119,6 +119,7 @@ impl Amount {
     /// Accepts an `u32` which is guaranteed to be in range for the type, but which can only
     /// represent roughly 0 to 42.95 BTC.
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub const fn from_sat_u32(satoshi: u32) -> Self {
         let sats = const_casts::u32_to_u64(satoshi);
         match Self::from_sat(sats) {
@@ -223,6 +224,7 @@ impl Amount {
     /// ```
     #[cfg(feature = "alloc")]
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
     }
@@ -406,6 +408,7 @@ impl Amount {
     /// Converts to a signed amount.
     #[rustfmt::skip] // Moves code comments to the wrong line.
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub fn to_signed(self) -> SignedAmount {
         SignedAmount::from_sat(self.to_sat() as i64) // Cast ok, signed amount and amount share positive range.
             .expect("range of Amount is within range of SignedAmount")
@@ -416,6 +419,7 @@ impl Amount {
     /// Since `SignedAmount::MIN` is equivalent to `-Amount::MAX` subtraction of two signed amounts
     /// can never overflow a `SignedAmount`.
     #[must_use]
+    #[track_caller]
     pub fn signed_sub(self, rhs: Self) -> SignedAmount {
         (self.to_signed() - rhs.to_signed())
             .expect("difference of two amounts is always within SignedAmount range")

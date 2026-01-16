@@ -83,6 +83,7 @@ impl Weight {
     ///
     /// If the conversion from virtual bytes overflows.
     #[deprecated(since = "1.0.0-rc.0", note = "use `from_vb_unchecked` instead")]
+    #[track_caller]
     pub const fn from_vb_unwrap(vb: u64) -> Self {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
             Some(weight) => Self::from_wu(weight),
