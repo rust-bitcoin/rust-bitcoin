@@ -36,7 +36,7 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use bitcoin::network::{Network, TestnetVersion};
+use network::{Network, TestnetVersion};
 use hex::FromHex;
 use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};

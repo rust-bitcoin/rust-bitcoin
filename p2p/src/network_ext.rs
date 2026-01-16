@@ -4,7 +4,7 @@
 //! with getter methods for the default P2P port and default
 //! network [`Magic`] bytes.
 
-use bitcoin::{Network, TestnetVersion};
+use network::{Network, TestnetVersion};
 
 use crate::Magic;
 
