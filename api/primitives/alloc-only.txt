@@ -1863,8 +1863,6 @@ pub use bitcoin_primitives::BlockHeightInterval
 pub use bitcoin_primitives::BlockMtp
 pub use bitcoin_primitives::BlockMtpInterval
 pub use bitcoin_primitives::BlockTime
-pub use bitcoin_primitives::BlockTimeDecoder
-pub use bitcoin_primitives::BlockTimeDecoderError
 pub use bitcoin_primitives::FeeRate
 pub use bitcoin_primitives::NumOpResult
 pub use bitcoin_primitives::Sequence
