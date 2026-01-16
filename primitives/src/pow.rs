@@ -129,13 +129,14 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
 
-    use super::*;
+    use crate::test_cases::tc;
 
     #[test]
     fn compact_target_ordering() {
-        let lower = CompactTarget::from_consensus(0x1d00_fffe);
-        let lower_copy = CompactTarget::from_consensus(0x1d00_fffe);
-        let higher = CompactTarget::from_consensus(0x1d00_ffff);
+        let cases = tc::compact_target_cases();
+        let lower = cases.ubm1;
+        let lower_copy = cases.ubm1;
+        let higher = cases.max;
 
         assert!(lower < higher);
         assert!(lower == lower_copy);
@@ -144,7 +145,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn compact_target_formatting() {
-        let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
+        let compact_target = tc::compact_target_cases().max;
         assert_eq!(format!("{:x}", compact_target), "1d00ffff");
         assert_eq!(format!("{:X}", compact_target), "1D00FFFF");
         assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);

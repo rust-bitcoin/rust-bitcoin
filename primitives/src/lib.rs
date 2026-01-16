@@ -53,6 +53,9 @@ pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
 
+#[cfg(test)]
+pub(crate) mod test_cases;
+
 #[doc(inline)]
 pub use units::{
     amount::{self, Amount, SignedAmount},

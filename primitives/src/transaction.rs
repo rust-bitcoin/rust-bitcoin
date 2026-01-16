@@ -1601,19 +1601,14 @@ mod tests {
     use hex_lit::hex;
 
     use super::*;
-    #[cfg(all(feature = "alloc", feature = "hex"))]
-    use crate::absolute::LockTime;
+
+    use crate::test_cases::tc;
 
     #[test]
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn transaction_encode_decode_roundtrip() {
-        let tx = Transaction {
-            version: Version::TWO,
-            lock_time: absolute::LockTime::ZERO,
-            inputs: vec![segwit_tx_in(), segwit_tx_in()],
-            outputs: vec![tx_out(), tx_out()],
-        };
+        let tx = tc::segwit_transaction_2in_2out();
 
         let encoded = encoding::encode_to_vec(&tx);
 
@@ -1722,12 +1717,7 @@ mod tests {
     #[cfg(feature = "hex")]
     fn transaction_from_hex_str_round_trip() {
         // Create a transaction and convert it to a hex string
-        let tx = Transaction {
-            version: Version::TWO,
-            lock_time: absolute::LockTime::ZERO,
-            inputs: vec![segwit_tx_in(), segwit_tx_in()],
-            outputs: vec![tx_out(), tx_out()],
-        };
+        let tx = tc::segwit_transaction_2in_2out();
 
         let lower_hex_tx = format!("{:x}", tx);
         let upper_hex_tx = format!("{:X}", tx);
@@ -1824,20 +1814,13 @@ mod tests {
         assert_eq!(format!("{}", version), "123");
     }
 
-    // Creates an arbitrary dummy outpoint.
-    #[cfg(any(feature = "hex", feature = "serde"))]
-    fn tc_out_point() -> OutPoint {
-        let s = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1";
-        s.parse::<OutPoint>().unwrap()
-    }
-
     #[test]
     #[cfg(feature = "serde")]
     fn out_point_serde_deserialize_human_readable() {
         // `sered` serialization is the same as `Display` but includes quotes.
         let ser = "\"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1\"";
         let got = serde_json::from_str::<OutPoint>(ser).unwrap();
-        let want = tc_out_point();
+        let want = tc::example_out_point();
 
         assert_eq!(got, want);
     }
@@ -1860,7 +1843,7 @@ mod tests {
         ];
 
         let got = bincode::deserialize::<OutPoint>(&bytes).unwrap();
-        let want = tc_out_point();
+        let want = tc::example_out_point();
 
         assert_eq!(got, want);
     }
@@ -1868,7 +1851,7 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     fn out_point_serde_human_readable_rountrips() {
-        let out_point = tc_out_point();
+        let out_point = tc::example_out_point();
 
         let ser = serde_json::to_string(&out_point).unwrap();
         let got = serde_json::from_str::<OutPoint>(&ser).unwrap();
@@ -1879,7 +1862,7 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     fn out_point_serde_non_human_readable_rountrips() {
-        let out_point = tc_out_point();
+        let out_point = tc::example_out_point();
 
         let ser = bincode::serialize(&out_point).unwrap();
         let got = bincode::deserialize::<OutPoint>(&ser).unwrap();
@@ -1887,40 +1870,11 @@ mod tests {
         assert_eq!(got, out_point);
     }
 
-    #[cfg(feature = "alloc")]
-    fn tx_out() -> TxOut { TxOut { amount: Amount::ONE_SAT, script_pubkey: tc_script_pubkey() } }
-
-    #[cfg(any(feature = "hex", feature = "serde"))]
-    fn segwit_tx_in() -> TxIn {
-        let bytes = [1u8, 2, 3];
-        let data = [&bytes[..]];
-        let witness = Witness::from_iter(data);
-
-        TxIn {
-            previous_output: tc_out_point(),
-            script_sig: tc_script_sig(),
-            sequence: Sequence::MAX,
-            witness,
-        }
-    }
-
-    #[cfg(feature = "alloc")]
-    fn tc_script_pubkey() -> ScriptPubKeyBuf {
-        let script_bytes = vec![1, 2, 3];
-        ScriptPubKeyBuf::from_bytes(script_bytes)
-    }
-
-    #[cfg(any(feature = "hex", feature = "serde"))]
-    fn tc_script_sig() -> ScriptSigBuf {
-        let script_bytes = vec![1, 2, 3];
-        ScriptSigBuf::from_bytes(script_bytes)
-    }
-
     #[test]
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn encode_out_point() {
-        let out_point = tc_out_point();
+        let out_point = tc::example_out_point();
         let mut encoder = out_point.encoder();
 
         // The txid
@@ -1944,7 +1898,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn encode_tx_out() {
-        let out = tx_out();
+        let out = tc::one_sat_tx_out();
         let mut encoder = out.encoder();
 
         // The amount.
@@ -1967,7 +1921,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn encode_tx_in() {
-        let txin = segwit_tx_in();
+        let txin = tc::segwit_tx_in();
         let mut encoder = txin.encoder();
 
         // The outpoint (same as tested above).
@@ -1999,12 +1953,7 @@ mod tests {
     #[test]
     #[cfg(all(feature = "alloc", feature = "hex"))]
     fn encode_segwit_transaction() {
-        let tx = Transaction {
-            version: Version::TWO,
-            lock_time: LockTime::ZERO,
-            inputs: vec![segwit_tx_in()],
-            outputs: vec![tx_out()],
-        };
+        let tx = tc::segwit_transaction_1in_1out();
 
         let mut encoder = tx.encoder();
 
@@ -2064,15 +2013,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn encode_non_segwit_transaction() {
-        let mut tx_in = segwit_tx_in();
-        tx_in.witness = Witness::default();
-
-        let tx = Transaction {
-            version: Version::TWO,
-            lock_time: LockTime::ZERO,
-            inputs: vec![tx_in],
-            outputs: vec![tx_out()],
-        };
+        let tx = tc::non_segwit_transaction_1in_1out();
 
         let mut encoder = tx.encoder();
 
@@ -2144,12 +2085,7 @@ mod tests {
             nonce: 0xcafe,
         };
 
-        let tx = Transaction {
-            version: Version::TWO,
-            lock_time: LockTime::ZERO,
-            inputs: vec![segwit_tx_in()],
-            outputs: vec![tx_out()],
-        };
+        let tx = tc::segwit_transaction_1in_1out();
 
         let block = Block::new_unchecked(header, vec![tx]);
         let mut encoder = block.encoder();
