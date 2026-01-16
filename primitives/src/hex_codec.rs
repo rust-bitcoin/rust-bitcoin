@@ -15,53 +15,6 @@ use encoding::{Decodable, Decoder, Encodable, EncodableByteIter};
 use hex_unstable::{BytesToHexIter, Case};
 use internals::write_err;
 
-/// An error type for errors that can occur during parsing of a `Decodable` type from hex.
-pub(crate) enum ParsePrimitiveError<T: Decodable> {
-    /// Tried to decode an odd length string
-    OddLengthString(hex_unstable::OddLengthStringError),
-    /// Encountered an invalid hex character
-    InvalidChar(hex_unstable::InvalidCharError),
-    /// A decode error from `consensus_encoding`
-    Decode(<T::Decoder as Decoder>::Error),
-}
-
-impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
-            Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
-            Self::Decode(_) => write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
-        }
-    }
-}
-
-impl<T: Decodable> fmt::Display for ParsePrimitiveError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
-}
-
-impl<T: Decodable> From<hex_unstable::OddLengthStringError> for ParsePrimitiveError<T> {
-    fn from(err: hex_unstable::OddLengthStringError) -> Self { Self::OddLengthString(err) }
-}
-
-impl<T: Decodable> From<hex_unstable::InvalidCharError> for ParsePrimitiveError<T> {
-    fn from(err: hex_unstable::InvalidCharError) -> Self { Self::InvalidChar(err) }
-}
-
-impl<T: Decodable> From<core::convert::Infallible> for ParsePrimitiveError<T> {
-    fn from(never: core::convert::Infallible) -> Self { match never {} }
-}
-
-#[cfg(feature = "std")]
-impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::OddLengthString(ref e) => Some(e),
-            Self::InvalidChar(ref e) => Some(e),
-            Self::Decode(_) => None,
-        }
-    }
-}
-
 /// Hex encoding wrapper type for Encodable + Decodable types.
 ///
 /// Provides default implementations for `Display`, `Debug`, `LowerHex`, and `UpperHex`.
@@ -196,6 +149,53 @@ impl<T: Encodable + Decodable> fmt::LowerHex for HexPrimitive<'_, T> {
 impl<T: Encodable + Decodable> fmt::UpperHex for HexPrimitive<'_, T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Upper) }
+}
+
+/// An error type for errors that can occur during parsing of a `Decodable` type from hex.
+pub(crate) enum ParsePrimitiveError<T: Decodable> {
+    /// Tried to decode an odd length string
+    OddLengthString(hex_unstable::OddLengthStringError),
+    /// Encountered an invalid hex character
+    InvalidChar(hex_unstable::InvalidCharError),
+    /// A decode error from `consensus_encoding`
+    Decode(<T::Decoder as Decoder>::Error),
+}
+
+impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
+            Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
+            Self::Decode(_) => write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
+        }
+    }
+}
+
+impl<T: Decodable> fmt::Display for ParsePrimitiveError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+}
+
+impl<T: Decodable> From<hex_unstable::OddLengthStringError> for ParsePrimitiveError<T> {
+    fn from(err: hex_unstable::OddLengthStringError) -> Self { Self::OddLengthString(err) }
+}
+
+impl<T: Decodable> From<hex_unstable::InvalidCharError> for ParsePrimitiveError<T> {
+    fn from(err: hex_unstable::InvalidCharError) -> Self { Self::InvalidChar(err) }
+}
+
+impl<T: Decodable> From<core::convert::Infallible> for ParsePrimitiveError<T> {
+    fn from(never: core::convert::Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "std")]
+impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::OddLengthString(ref e) => Some(e),
+            Self::InvalidChar(ref e) => Some(e),
+            Self::Decode(_) => None,
+        }
+    }
 }
 
 #[cfg(test)]
