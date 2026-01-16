@@ -242,7 +242,7 @@ impl From<Sequence> for u32 {
 
 impl fmt::Display for Sequence {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "0x{:08x}", self.0) }
 }
 
 impl fmt::LowerHex for Sequence {
@@ -467,12 +467,11 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn sequence_display() {
-        use alloc::string::ToString;
-
         let sequence = Sequence(0x7FFF_FFFF);
-        let want: u32 = 0x7FFF_FFFF;
-        assert_eq!(format!("{}", sequence), want.to_string());
-    }
+        assert_eq!(format!("{}", sequence), "0x7fffffff");
+}
+
+
 
     #[test]
     #[cfg(feature = "alloc")]
