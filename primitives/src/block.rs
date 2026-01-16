@@ -934,18 +934,9 @@ mod tests {
     #[cfg(all(feature = "alloc", feature = "hex"))]
     use core::str::FromStr as _;
 
-    use super::*;
+    use crate::test_cases::tc;
 
-    fn dummy_header() -> Header {
-        Header {
-            version: Version::ONE,
-            prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
-            merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
-            time: BlockTime::from(2),
-            bits: CompactTarget::from_consensus(3),
-            nonce: 4,
-        }
-    }
+    use super::*;
 
     #[test]
     fn version_is_not_signalling_with_invalid_bit() {
@@ -990,7 +981,7 @@ mod tests {
     // Check that the size of the header consensus serialization matches the const SIZE value
     #[test]
     fn header_size() {
-        let header = dummy_header();
+        let header = tc::default_header();
 
         // Calculate the size of the block header in bytes from the sum of the serialized lengths
         // its fields: version, prev_blockhash, merkle_root, time, bits, nonce.
@@ -1007,7 +998,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_new_unchecked() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions.clone());
         assert_eq!(block.header, header);
@@ -1017,7 +1008,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_assume_checked() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions.clone());
         let witness_root = Some(WitnessMerkleNode::from_byte_array([0x88; 32]));
@@ -1030,7 +1021,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_into_parts() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions.clone());
         let (block_header, block_transactions) = block.into_parts();
@@ -1041,7 +1032,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_cached_witness_root() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions);
         let witness_root = Some(WitnessMerkleNode::from_byte_array([0x88; 32]));
@@ -1052,7 +1043,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_validation_no_transactions() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = Vec::new(); // Empty transactions
 
         let block = Block::new_unchecked(header, transactions);
@@ -1065,7 +1056,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_validation_invalid_coinbase() {
-        let header = dummy_header();
+        let header = tc::default_header();
 
         // Create a non-coinbase transaction (has a real previous output, not all zeros)
         let non_coinbase_tx = Transaction {
@@ -1099,14 +1090,9 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_optional() {
         // Valid block with optional witness commitment
-        let mut header = dummy_header();
+        let mut header = tc::default_header();
         header.merkle_root = TxMerkleNode::from_byte_array([0u8; 32]);
-        let coinbase = Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: crate::absolute::LockTime::ZERO,
-            inputs: vec![crate::TxIn::EMPTY_COINBASE],
-            outputs: vec![],
-        };
+        let coinbase = tc::empty_coinbase_tx();
 
         let transactions = vec![coinbase];
         let block = Block::new_unchecked(header, transactions);
@@ -1118,7 +1104,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_block_hash() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions);
         assert_eq!(block.block_hash(), header.block_hash());
@@ -1126,14 +1112,14 @@ mod tests {
 
     #[test]
     fn block_hash_from_header() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let block_hash = header.block_hash();
         assert_eq!(block_hash, BlockHash::from(header));
     }
 
     #[test]
     fn block_hash_from_header_ref() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let block_hash: BlockHash = BlockHash::from(&header);
         assert_eq!(block_hash, header.block_hash());
     }
@@ -1141,7 +1127,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_hash_from_block() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions);
         let block_hash: BlockHash = BlockHash::from(block);
@@ -1151,7 +1137,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn block_hash_from_block_ref() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let transactions = vec![];
         let block = Block::new_unchecked(header, transactions);
         let block_hash: BlockHash = BlockHash::from(&block);
@@ -1161,7 +1147,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn header_debug() {
-        let header = dummy_header();
+        let header = tc::default_header();
         let expected = format!(
             "Header {{ block_hash: {:?}, version: {:?}, prev_blockhash: {:?}, merkle_root: {:?}, time: {:?}, bits: {:?}, nonce: {:?} }}",
             header.block_hash(),
@@ -1211,7 +1197,7 @@ mod tests {
     #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn header_hex() {
-        let header = dummy_header();
+        let header = tc::default_header();
 
         let want = concat!(
             "01000000",                                                         // version
@@ -1237,7 +1223,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn header_from_hex_str_round_trip() {
         // Create a transaction and convert it to a hex string
-        let header = dummy_header();
+        let header = tc::default_header();
 
         let lower_hex_header = format!("{:x}", header);
         let upper_hex_header = format!("{:X}", header);
@@ -1318,24 +1304,12 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn witness_commitment_from_coinbase_simple() {
-        // Add witness commitment to the coinbase
-        let magic = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
-        let mut pubkey_bytes = [0; 38];
-        pubkey_bytes[0..6].copy_from_slice(&magic);
-        let witness_commitment =
-            WitnessCommitment::from_byte_array(pubkey_bytes[6..38].try_into().unwrap());
-        let commitment_script = crate::script::ScriptBuf::from_bytes(pubkey_bytes.to_vec());
-
-        // Create a coinbase transaction with witness commitment
-        let tx = Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: crate::absolute::LockTime::ZERO,
-            inputs: vec![crate::TxIn::EMPTY_COINBASE],
-            outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
-                script_pubkey: commitment_script,
-            }],
-        };
+        let witness_commitment = WitnessCommitment::from_byte_array([0; 32]);
+        let script_pubkey = tc::witness_commitment_script_pubkey(witness_commitment);
+        let tx = tc::coinbase_transaction(
+            crate::TxIn::EMPTY_COINBASE,
+            vec![tc::min_amount_tx_out(script_pubkey)],
+        );
 
         // Test if the witness commitment is extracted properly
         let extracted = witness_commitment_from_coinbase(&tx);
@@ -1349,18 +1323,13 @@ mod tests {
         let push = [11_u8];
         txin.witness.push(push);
 
-        let tx = Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: crate::absolute::LockTime::ZERO,
-            inputs: vec![txin],
-            outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
-                // Empty scriptbuf means there is no witness commitment due to no magic bytes.
-                script_pubkey: crate::script::ScriptBuf::new(),
-            }],
-        };
+        // Empty scriptbuf means there is no witness commitment due to no magic bytes.
+        let tx = tc::coinbase_transaction(
+            txin,
+            vec![tc::min_amount_tx_out([])],
+        );
 
-        let block = Block::new_unchecked(dummy_header(), vec![tx]);
+        let block = Block::new_unchecked(tc::default_header(), vec![tx]);
         let result = block.check_witness_commitment();
         assert_eq!(result, (false, None)); // (false, None) since there's no valid witness commitment
     }
@@ -1369,7 +1338,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_no_transactions() {
         // Test case of block with no transactions
-        let empty_block = Block::new_unchecked(dummy_header(), vec![]);
+        let empty_block = Block::new_unchecked(tc::default_header(), vec![]);
         let result = empty_block.check_witness_commitment();
         assert_eq!(result, (false, None));
     }
@@ -1377,37 +1346,22 @@ mod tests {
     #[test]
     #[cfg(all(feature = "alloc", feature = "hex"))]
     fn block_check_witness_commitment_with_witness() {
-        let mut txin = crate::TxIn::EMPTY_COINBASE;
-        // Single witness item of 32 bytes.
-        let witness_bytes: [u8; 32] = [11u8; 32];
-        txin.witness.push(witness_bytes);
+        let txin1 = tc::coinbase_txin_with_witness_32(11);
 
         // pubkey bytes must match the magic bytes followed by the hash of the witness bytes.
         let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
             "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
         )
         .unwrap();
-        let tx1 = Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: crate::absolute::LockTime::ZERO,
-            inputs: vec![txin],
-            outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
-            }],
-        };
+        let txout1 = vec![tc::min_amount_tx_out(script_pubkey_bytes)];
+        let tx1 = tc::coinbase_transaction(txin1, txout1);
 
-        let tx2 = Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: crate::absolute::LockTime::ZERO,
-            inputs: vec![crate::TxIn::EMPTY_COINBASE],
-            outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::new(),
-            }],
-        };
+        let tx2 = tc::coinbase_transaction(
+            crate::TxIn::EMPTY_COINBASE,
+            vec![tc::min_amount_tx_out([])],
+        );
 
-        let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
+        let block = Block::new_unchecked(tc::default_header(), vec![tx1, tx2]);
         let result = block.check_witness_commitment();
 
         let exp_bytes: [u8; 32] = hex_unstable::FromHex::from_hex(
@@ -1415,43 +1369,27 @@ mod tests {
         )
         .unwrap();
         let expected = WitnessMerkleNode::from_byte_array(exp_bytes);
+
         assert_eq!(result, (true, Some(expected)));
     }
 
     #[test]
     #[cfg(all(feature = "alloc", feature = "hex"))]
     fn block_check_witness_commitment_invalid_witness() {
-        let mut txin = crate::TxIn::EMPTY_COINBASE;
-        let witness_bytes: [u8; 32] = [11u8; 32];
-        // First witness item is 32 bytes, but there are two witness elements.
-        txin.witness.push(witness_bytes);
-        txin.witness.push([12u8]);
+        let txin1 = tc::coinbase_txin_with_witness_32_and_extra(11, 12);
 
         let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
             "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
         )
         .unwrap();
-        let tx1 = Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: crate::absolute::LockTime::ZERO,
-            inputs: vec![txin],
-            outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::from_bytes(script_pubkey_bytes.to_vec()),
-            }],
-        };
+        let txout1 = vec![tc::min_amount_tx_out(script_pubkey_bytes)];
+        let tx1 = tc::coinbase_transaction(txin1, txout1);
 
-        let tx2 = Transaction {
-            version: crate::transaction::Version::ONE,
-            lock_time: crate::absolute::LockTime::ZERO,
-            inputs: vec![crate::TxIn::EMPTY_COINBASE],
-            outputs: vec![crate::TxOut {
-                amount: units::Amount::MIN,
-                script_pubkey: crate::script::ScriptBuf::new(),
-            }],
-        };
+        let txin2 = crate::TxIn::EMPTY_COINBASE;
+        let txout2 = vec![tc::min_amount_tx_out([])];
+        let tx2 = tc::coinbase_transaction(txin2, txout2);
 
-        let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
+        let block = Block::new_unchecked(tc::default_header(), vec![tx1, tx2]);
         let result = block.check_witness_commitment();
         assert_eq!(result, (false, None));
     }
