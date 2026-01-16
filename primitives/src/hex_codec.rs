@@ -1,3 +1,13 @@
+// SPDX-License-Identifier: CC0-1.0
+
+//! Hex encoding utilities.
+//!
+//! Various types in primitives need to be rendered and parsed from
+//! hexadecimal encodings. Since `consensus_encoding` doesn't provide
+//! a convenient way to do this, this module provides utilities and
+//! associated errors for encoding and decoding `Encodable` types
+//! within the primitives crate.
+
 use core::fmt;
 use core::fmt::Write as _;
 
