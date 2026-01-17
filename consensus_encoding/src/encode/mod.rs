@@ -98,6 +98,15 @@ where
     T: Encodable + ?Sized,
 {
     let mut encoder = object.encoder();
+    flush_to_vec(&mut encoder)
+}
+
+/// Flushes the output of an [`Encoder`] into a vector.
+#[cfg(feature = "alloc")]
+pub fn flush_to_vec<T>(encoder: &mut T) -> Vec<u8>
+where
+    T: Encoder + ?Sized,
+{
     let mut vec = Vec::new();
     loop {
         vec.extend_from_slice(encoder.current_chunk());
@@ -121,12 +130,28 @@ where
 ///
 /// Returns any I/O error encountered while writing to the writer.
 #[cfg(feature = "std")]
-pub fn encode_to_writer<T, W>(object: &T, mut writer: W) -> Result<(), std::io::Error>
+pub fn encode_to_writer<T, W>(object: &T, writer: W) -> Result<(), std::io::Error>
 where
     T: Encodable + ?Sized,
     W: std::io::Write,
 {
     let mut encoder = object.encoder();
+    flush_to_writer(&mut encoder, writer)
+}
+
+/// Flushes the output of an [`Encoder`] to a standard I/O writer.
+///
+/// See [`encode_to_writer`] for more information.
+///
+/// # Errors
+///
+/// Returns any I/O error encountered while writing to the writer.
+#[cfg(feature = "std")]
+pub fn flush_to_writer<T, W>(encoder: &mut T, mut writer: W) -> Result<(), std::io::Error>
+where
+    T: Encoder + ?Sized,
+    W: std::io::Write,
+{
     loop {
         writer.write_all(encoder.current_chunk())?;
         if !encoder.advance() {
