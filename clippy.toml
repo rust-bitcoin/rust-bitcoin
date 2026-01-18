@@ -1,4 +1,3 @@
-msrv = "1.74.0"
-too-many-arguments-threshold = 13
-avoid-breaking-exported-api = false
+# Clippy config for `rust-bitcoin`.
+
 doc-valid-idents = ["SegWit", "OpenSSL"]
