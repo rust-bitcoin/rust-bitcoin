@@ -1896,6 +1896,36 @@ mod tests {
     }
 
     #[test]
+    fn target_attainable_constants_from_original() {
+        // The plain target values for the various nets from Bitcoin Core with no conversions.
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L88
+        const MAX_MAINNET: Target = Target(U256(u128::MAX >> 32, u128::MAX));
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
+        const MAX_TESTNET: Target = Target(U256(u128::MAX >> 32, u128::MAX));
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
+        const MAX_REGTEST: Target = Target(U256(u128::MAX >> 1, u128::MAX));
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
+        const MAX_SIGNET: Target = Target(U256(0x3_77aeu128 << 88, 0));
+
+        assert_eq!(
+            Target::MAX_ATTAINABLE_MAINNET,
+            Target::from_compact(MAX_MAINNET.to_compact_lossy())
+        );
+        assert_eq!(
+            Target::MAX_ATTAINABLE_TESTNET,
+            Target::from_compact(MAX_TESTNET.to_compact_lossy())
+        );
+        assert_eq!(
+            Target::MAX_ATTAINABLE_REGTEST,
+            Target::from_compact(MAX_REGTEST.to_compact_lossy())
+        );
+        assert_eq!(
+            Target::MAX_ATTAINABLE_SIGNET,
+            Target::from_compact(MAX_SIGNET.to_compact_lossy())
+        );
+    }
+
+    #[test]
     fn target_difficulty_float() {
         let params = Params::new(crate::Network::Bitcoin);
 
