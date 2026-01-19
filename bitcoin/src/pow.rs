@@ -8,7 +8,7 @@
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
 
-use internals::impl_to_hex_from_lower_hex;
+use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
 use units::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
@@ -953,6 +953,41 @@ impl fmt::Debug for U256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#x}", self) }
 }
 
+// 10^38 is the largest power of 10 that fits in a u128
+const POW10_38: u128 = 10_u128.pow(38);
+impl core::str::FromStr for U256 {
+    type Err = ParseU256Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut result = Self::ZERO;
+
+        if s.is_empty() {
+            return Err(ParseU256Error::Empty);
+        }
+
+        for chunk in s.as_bytes().rchunks(38).rev() {
+            let chunk_str = core::str::from_utf8(chunk)
+                .map_err(ParseU256Error::InvalidEncoding)?;
+
+            let val: u128 = chunk_str
+                .parse()
+                .map_err(ParseU256Error::InvalidDigit)?;
+
+            // Shift decimals and add chunk
+            let (res, carry1) = result.overflowing_mul(POW10_38.into());
+            let (res, carry2) = res.overflowing_add(val.into());
+
+            if carry1 | carry2 {
+                return Err(ParseU256Error::Overflow);
+            }
+
+            result = res;
+        }
+
+        Ok(result)
+    }
+}
+
 macro_rules! impl_hex {
     ($hex:path, $case:expr) => {
         impl $hex for U256 {
@@ -1066,6 +1101,47 @@ fn split_in_half(a: [u8; 32]) -> ([u8; 16], [u8; 16]) {
     low.copy_from_slice(&a[16..]);
 
     (high, low)
+}
+
+/// Error returned when parsing a [`U256`] from a string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+enum ParseU256Error {
+    /// Numeric value exceeded [`U256::MAX`].
+    Overflow,
+    /// Parsed string was empty.
+    Empty,
+    /// Failed parsing a target from an integer string.
+    InvalidDigit(core::num::ParseIntError),
+    /// Failed parsing due to non-ASCII encoding on the string.
+    InvalidEncoding(core::str::Utf8Error),
+}
+
+impl From<core::convert::Infallible> for ParseU256Error {
+    fn from(never: core::convert::Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for ParseU256Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Overflow => write!(f, "parsed value exceeded unsigned 256-bit range"),
+            Self::Empty => write!(f, "parsed string is empty"),
+            Self::InvalidEncoding(ref e) => write_err!(f, "parsed number contained non-ascii chars"; e),
+            Self::InvalidDigit(ref e) => write_err!(f, "parsed number contained invalid digit"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseU256Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Overflow => None,
+            Self::Empty => None,
+            Self::InvalidEncoding(ref e) => Some(e),
+            Self::InvalidDigit(ref e) => Some(e),
+        }
+    }
 }
 
 #[cfg(kani)]
