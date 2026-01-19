@@ -189,11 +189,13 @@ pub mod serde_details {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "serde")]
+    const DUMMY_TXID_HEX_STR: &str =
+        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389";
+
     // Creates an arbitrary dummy hash type object.
     #[cfg(feature = "serde")]
-    fn dummy_test_case() -> Txid {
-        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse::<Txid>().unwrap()
-    }
+    fn dummy_test_case() -> Txid { DUMMY_TXID_HEX_STR.parse::<Txid>().unwrap() }
 
     #[test]
     #[cfg(feature = "serde")] // Implies alloc and hex
