@@ -227,6 +227,19 @@ mod tests {
     }
 
     #[test]
+    fn as_ref_and_borrow_match_as_byte_array() {
+        let tc = Txid::from_byte_array([0x11; 32]);
+
+        let as_array: &[u8; 32] = tc.as_ref();
+        let as_slice: &[u8] = tc.as_ref();
+        let borrowed: &[u8; 32] = core::borrow::Borrow::<[u8; 32]>::borrow(&tc);
+
+        assert_eq!(as_array, tc.as_byte_array());
+        assert_eq!(borrowed, tc.as_byte_array());
+        assert_eq!(as_slice, tc.as_byte_array());
+    }
+
+    #[test]
     // This is solely to test that we can debug print WITHOUT "hex" so its ok to require "alloc".
     #[cfg(feature = "alloc")]
     #[cfg(not(feature = "hex"))]
