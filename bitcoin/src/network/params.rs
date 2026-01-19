@@ -60,7 +60,7 @@
 //! # }
 //! ```
 
-use super::{Network, TestnetVersion};
+use super::{Network, TestnetVersion, NetworkExt as _};
 #[cfg(doc)]
 use crate::pow::CompactTarget;
 use crate::pow::Target;
@@ -245,6 +245,7 @@ impl Params {
             Network::Bitcoin => Self::MAINNET,
             Network::Testnet(TestnetVersion::V3) => Self::TESTNET3,
             Network::Testnet(TestnetVersion::V4) => Self::TESTNET4,
+            Network::Testnet(_) => Self::TESTNET3,
             Network::Signet => Self::SIGNET,
             Network::Regtest => Self::REGTEST,
         }

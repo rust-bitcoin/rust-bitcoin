@@ -1294,6 +1294,7 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
 pub struct FutureLeafVersion(u8);
 
 impl FutureLeafVersion {
+    #[track_caller]
     pub(self) fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => unreachable!(
