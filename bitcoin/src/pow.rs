@@ -23,7 +23,7 @@ pub use primitives::CompactTarget;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
-    ($ty:ident) => {
+    ($ty:ident, $err_ty:ident) => {
         impl $ty {
             #[doc = "Constructs a new `"]
             #[doc = stringify!($ty)]
@@ -94,6 +94,32 @@ macro_rules! do_impl {
                 fmt::UpperHex::fmt(&self.0, f)
             }
         }
+
+        impl core::str::FromStr for $ty {
+            type Err = $err_ty;
+
+            #[inline]
+            fn from_str(s: &str) -> Result<Self, Self::Err> { U256::from_str(s).map($ty).map_err($err_ty) }
+        }
+
+        #[doc = "Error returned when parsing a [`"]
+        #[doc = stringify!($ty)]
+        #[doc = "`] from a string."]
+        #[derive(Debug, Clone, PartialEq, Eq)]
+        pub struct $err_ty(ParseU256Error);
+
+        impl From<core::convert::Infallible> for $err_ty {
+            fn from(never: core::convert::Infallible) -> Self { match never {} }
+        }
+
+        impl fmt::Display for $err_ty {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt(f) }
+        }
+
+        #[cfg(feature = "std")]
+        impl std::error::Error for $err_ty {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        }
     };
 }
 
@@ -116,7 +142,7 @@ impl Work {
     #[cfg(feature = "std")]
     pub fn log2(self) -> f64 { self.0.to_f64().log2() }
 }
-do_impl!(Work);
+do_impl!(Work, ParseWorkError);
 impl_to_hex_from_lower_hex!(Work, |_| 64);
 
 impl Add for Work {
@@ -341,7 +367,7 @@ impl Target {
     /// the `Target::MAX_ATTAINABLE_FOO` constants.
     pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
 }
-do_impl!(Target);
+do_impl!(Target, ParseTargetError);
 impl_to_hex_from_lower_hex!(Target, |_| 64);
 
 internal_macros::define_extension_trait! {
@@ -2011,6 +2037,88 @@ mod tests {
             assert_eq!(got, want);
         }
     }
+
+    macro_rules! check_from_str {
+        ($ty:ident, $err_ty:ident, $mod_name:ident) => {
+            mod $mod_name {
+                use super::{ParseU256Error, U256};
+                use super::{$ty, $err_ty};
+
+                use core::str::FromStr;
+
+                #[test]
+                fn target_from_str_decimal() {
+                    assert_eq!($ty::from_str("0").unwrap(), $ty(U256::ZERO));
+                    assert_eq!("1".parse::<$ty>().unwrap(), $ty(U256(0, 1)));
+                    assert_eq!("123456789".parse::<$ty>().unwrap(), $ty(U256(0, 123_456_789)));
+
+                    let str_tgt = "340282366920938463463374607431768211455";
+                    let got = str_tgt.parse::<$ty>().unwrap();
+                    assert_eq!(got, $ty(u128::MAX.into()));
+
+                    // 2^128
+                    let str_tgt = "340282366920938463463374607431768211456";
+                    let got = str_tgt.parse::<$ty>().unwrap();
+                    assert_eq!(got, $ty(U256(1, 0)));
+
+                    // 2^256 - 1
+                    let str_tgt = concat!(
+                        "115792089237316195423570985008687907853",
+                        "269984665640564039457584007913129639935"
+                    );
+                    let got = str_tgt.parse::<$ty>().unwrap();
+                    assert_eq!(got, $ty(U256::MAX));
+
+                    // Padding
+                    let got = "00000000000042".parse::<$ty>().unwrap();
+                    assert_eq!(got, $ty(U256(0, 42)));
+
+                    // roundtrip
+                    let want = $ty(u128::MAX.into());
+                    let got = want.to_string().parse::<$ty>().unwrap();
+                    assert_eq!(got, want);
+                }
+
+                #[test]
+                fn target_from_str_error() {
+                    assert!(matches!(
+                        "".parse::<$ty>().unwrap_err(),
+                        $err_ty(ParseU256Error::Empty),
+                    ));
+                    assert!(matches!(
+                        "12a34".parse::<$ty>().unwrap_err(),
+                        $err_ty(ParseU256Error::InvalidDigit(_)),
+                    ));
+                    assert!(matches!(
+                        " 42".parse::<$ty>().unwrap_err(),
+                        $err_ty(ParseU256Error::InvalidDigit(_)),
+                    ));
+                    assert!(matches!(
+                        "-1".parse::<$ty>().unwrap_err(),
+                        $err_ty(ParseU256Error::InvalidDigit(_)),
+                    ));
+
+                    assert!(matches!(
+                        "1157ééééé92089237316195423570985008687907853".parse::<$ty>().unwrap_err(),
+                        $err_ty(ParseU256Error::InvalidEncoding(_)),
+                    ));
+
+                    // 2^256
+                    let tgt_str = concat!(
+                        "115792089237316195423570985008687907853",
+                        "269984665640564039457584007913129639936"
+                    );
+                    assert!(matches!(
+                        tgt_str.parse::<$ty>().unwrap_err(),
+                        $err_ty(ParseU256Error::Overflow),
+                    ));
+                }
+            }
+        };
+    }
+
+    check_from_str!(Target, ParseTargetError, target_from_str);
+    check_from_str!(Work, ParseWorkError, work_from_str);
 
     #[test]
     fn target_is_met_by_for_target_equals_hash() {
