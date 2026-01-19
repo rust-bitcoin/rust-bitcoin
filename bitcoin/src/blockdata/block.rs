@@ -10,7 +10,8 @@
 use core::convert::Infallible;
 use core::fmt;
 
-use internals::{compact_size, ToU64};
+use encoding::CompactSizeEncoder;
+use internals::ToU64;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, WriteExt as _};
@@ -25,7 +26,7 @@ use crate::{internal_macros, BlockTime, Target, Weight, Work};
 #[doc(inline)]
 pub use primitives::block::{
     Block, Checked, Unchecked, Validation, Version, BlockHash, Header,
-    WitnessCommitment, compute_merkle_root, compute_witness_root, InvalidBlockError,
+    WitnessCommitment, compute_merkle_root, compute_witness_root, InvalidBlockError, ParseHeaderError,
 };
 #[doc(no_inline)]
 pub use units::block::TooBigForRelativeHeightError;
@@ -180,7 +181,7 @@ impl BlockCheckedExt for Block<Checked> {
     fn total_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += compact_size::encoded_size(self.transactions().len());
+        size += CompactSizeEncoder::encoded_size(self.transactions().len());
         size += self.transactions().iter().map(|tx| tx.total_size()).sum::<usize>();
 
         size
@@ -226,7 +227,7 @@ impl BlockCheckedExt for Block<Checked> {
 fn block_base_size(transactions: &[Transaction]) -> usize {
     let mut size = Header::SIZE;
 
-    size += compact_size::encoded_size(transactions.len());
+    size += CompactSizeEncoder::encoded_size(transactions.len());
     size += transactions.iter().map(|tx| tx.base_size()).sum::<usize>();
 
     size
@@ -235,10 +236,14 @@ fn block_base_size(transactions: &[Transaction]) -> usize {
 impl Encodable for Block<Unchecked> {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        // TODO: Should we be able to encode without cloning?
-        // This is ok, we decode as unchecked anyway.
-        let block = self.clone().assume_checked(None);
-        block.consensus_encode(w)
+        let (header, transactions) = self.as_parts();
+        let mut len = 0;
+        len += header.consensus_encode(w)?;
+        len += w.emit_compact_size(transactions.len())?;
+        for tx in transactions.iter() {
+            len += tx.consensus_encode(w)?;
+        }
+        Ok(len)
     }
 }
 

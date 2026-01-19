@@ -73,7 +73,7 @@ mod safety_boundary {
         ///
         /// # Returns
         ///
-        /// None if the ArrayVec is empty.
+        /// None if the `ArrayVec` is empty.
         pub fn pop(&mut self) -> Option<T> {
             if self.len > 0 {
                 self.len -= 1;
@@ -114,6 +114,7 @@ impl<T: Copy, const CAP: usize> Default for ArrayVec<T, CAP> {
 /// Because we avoid copying the uninitialized part of the array this copies the value faster than
 /// memcpy.
 #[allow(clippy::non_canonical_clone_impl)]
+#[allow(clippy::expl_impl_clone_on_copy)]
 impl<T: Copy, const CAP: usize> Clone for ArrayVec<T, CAP> {
     fn clone(&self) -> Self { Self::from_slice(self) }
 }
@@ -190,14 +191,14 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "assertion failed")]
     fn overflow_push() {
         let mut av = ArrayVec::<_, 0>::new();
         av.push(42);
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "buffer overflow")]
     fn overflow_extend() {
         let mut av = ArrayVec::<_, 0>::new();
         av.extend_from_slice(&[42]);

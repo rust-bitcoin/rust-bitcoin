@@ -7,12 +7,6 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
-// Pedantic lints that we enforce.
-#![warn(clippy::return_self_not_must_use)]
-// Exclude lints we don't think are valuable.
-#![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
-#![allow(clippy::manual_range_contains)] // More readable than clippy's format.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 mod consensus;
 mod network_ext;
@@ -68,9 +62,9 @@ pub use self::{address::Address, message::CheckedData};
 /// 70014 - Support compact block messages `sendcmpct`, `cmpctblock`, `getblocktxn` and `blocktxn`
 /// 70013 - Support `feefilter` message
 /// 70012 - Support `sendheaders` message and announce new blocks via headers rather than inv
-/// 70011 - Support NODE_BLOOM service flag and don't support bloom filter messages if it is not set
+/// 70011 - Support `NODE_BLOOM` service flag and don't support bloom filter messages if it is not set
 /// 70002 - Support `reject` message
-/// 70001 - Support bloom filter messages `filterload`, `filterclear` `filteradd`, `merkleblock` and FILTERED_BLOCK inventory type
+/// 70001 - Support bloom filter messages `filterload`, `filterclear` `filteradd`, `merkleblock` and `FILTERED_BLOCK` inventory type
 /// 60002 - Support `mempool` message
 /// 60001 - Support `pong` message and nonce in `ping` message
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -136,29 +130,29 @@ impl ServiceFlags {
 
     /// BLOOM means the node is capable and willing to handle bloom-filtered connections. Bitcoin
     /// Core nodes used to support this by default, without advertising this bit, but no longer do
-    /// as of protocol version 70011 (= NO_BLOOM_VERSION)
+    /// as of protocol version 70011 (= `NO_BLOOM_VERSION`)
     pub const BLOOM: Self = Self(1 << 2);
 
     /// WITNESS indicates that a node can be asked for blocks and transactions including witness
     /// data.
     pub const WITNESS: Self = Self(1 << 3);
 
-    /// COMPACT_FILTERS means the node will service basic block filter requests.
+    /// `COMPACT_FILTERS` means the node will service basic block filter requests.
     /// See BIP-0157 and BIP-0158 for details on how this is implemented.
     pub const COMPACT_FILTERS: Self = Self(1 << 6);
 
-    /// NETWORK_LIMITED means the same as NODE_NETWORK with the limitation of only serving the last
+    /// `NETWORK_LIMITED` means the same as `NODE_NETWORK` with the limitation of only serving the last
     /// 288 (2 day) blocks.
     /// See BIP-0159 for details on how this is implemented.
     pub const NETWORK_LIMITED: Self = Self(1 << 10);
 
-    /// P2P_V2 indicates that the node supports the P2P v2 encrypted transport protocol.
+    /// `P2P_V2` indicates that the node supports the P2P v2 encrypted transport protocol.
     /// See BIP-0324 for details on how this is implemented.
     pub const P2P_V2: Self = Self(1 << 11);
 
     // NOTE: When adding new flags, remember to update the Display impl accordingly.
 
-    /// Add [ServiceFlags] together.
+    /// Add [`ServiceFlags`] together.
     ///
     /// Returns itself.
     #[must_use]
@@ -167,7 +161,7 @@ impl ServiceFlags {
         *self
     }
 
-    /// Removes [ServiceFlags] from this.
+    /// Removes [`ServiceFlags`] from this.
     ///
     /// Returns itself.
     #[must_use]
@@ -176,7 +170,7 @@ impl ServiceFlags {
         *self
     }
 
-    /// Checks whether [ServiceFlags] are included in this one.
+    /// Checks whether [`ServiceFlags`] are included in this one.
     pub fn has(self, flags: Self) -> bool { (self.0 | flags.0) == self.0 }
 
     /// Gets the integer representation of this [`ServiceFlags`].
@@ -321,7 +315,7 @@ impl TryFrom<Network> for Magic {
             Network::Testnet(TestnetVersion::V4) => Ok(Self::TESTNET4),
             Network::Signet => Ok(Self::SIGNET),
             Network::Regtest => Ok(Self::REGTEST),
-            _ => Err(UnknownNetworkError(network)),
+            Network::Testnet(_) => Err(UnknownNetworkError(network)),
         }
     }
 }
@@ -540,7 +534,7 @@ mod tests {
         ];
 
         let mut flags = ServiceFlags::NONE;
-        for f in all.iter() {
+        for f in &all {
             assert!(!flags.has(*f));
         }
 
@@ -548,7 +542,7 @@ mod tests {
         assert_eq!(flags, ServiceFlags::WITNESS);
 
         let mut flags2 = flags | ServiceFlags::GETUTXO;
-        for f in all.iter() {
+        for f in &all {
             assert_eq!(flags2.has(*f), *f == ServiceFlags::WITNESS || *f == ServiceFlags::GETUTXO);
         }
 

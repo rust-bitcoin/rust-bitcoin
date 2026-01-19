@@ -18,6 +18,10 @@ pub trait IntoDeError: Sized {
     ///
     /// If the error type doesn't contain enough information to explain the error precisely this
     /// should return `Err(self)` allowing the caller to use its information instead.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(self)` if the error cannot be converted to a deserializer error.
     fn try_into_de_error<E>(self, expected: Option<&dyn de::Expected>) -> Result<E, Self>
     where
         E: de::Error,
@@ -27,7 +31,7 @@ pub trait IntoDeError: Sized {
 }
 
 mod impls {
-    use super::*;
+    use super::{de, IntoDeError};
 
     impl IntoDeError for core::convert::Infallible {
         fn into_de_error<E: de::Error>(self, _expected: Option<&dyn de::Expected>) -> E {
@@ -124,7 +128,7 @@ macro_rules! serde_string_impl {
 }
 
 /// A combination macro where the human-readable serialization is done like
-/// serde_string_impl and the non-human-readable impl is done as a struct.
+/// `serde_string_impl` and the non-human-readable impl is done as a struct.
 #[macro_export]
 macro_rules! serde_struct_human_string_impl {
     ($name:ident, $expecting:literal, $($fe:ident),*) => (

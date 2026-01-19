@@ -207,7 +207,7 @@ impl Sequence {
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
     pub fn to_relative_lock_time(self) -> Option<relative::LockTime> {
-        use crate::locktime::relative::{LockTime, NumberOf512Seconds, NumberOfBlocks};
+        use crate::locktime::relative::{LockTime, NumberOfBlocks};
 
         if !self.is_relative_lock_time() {
             return None;
@@ -388,9 +388,14 @@ impl<'a> Arbitrary<'a> for Sequence {
 }
 
 #[cfg(test)]
-#[cfg(feature = "alloc")]
 mod tests {
+    #[cfg(feature = "alloc")]
     use alloc::format;
+
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    use encoding::UnexpectedEofError;
+    #[cfg(feature = "encoding")]
+    use encoding::{Decodable as _, Decoder as _};
 
     use super::*;
 
@@ -467,5 +472,72 @@ mod tests {
         let sequence = Sequence(0x7FFF_FFFF);
         let want: u32 = 0x7FFF_FFFF;
         assert_eq!(format!("{}", sequence), want.to_string());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn sequence_unprefixed_hex_roundtrip() {
+        let sequence = Sequence(0x7FFF_FFFF);
+
+        let hex_str = format!("{:x}", sequence);
+        assert_eq!(hex_str, "7fffffff");
+
+        let roundtrip = Sequence::from_unprefixed_hex(&hex_str).unwrap();
+        assert_eq!(sequence, roundtrip);
+    }
+
+    #[test]
+    fn sequence_from_height() {
+        // Check near the boundaries
+        assert_eq!(Sequence::from_height(0), Sequence(0));
+        assert_eq!(Sequence::from_height(1), Sequence(1));
+        assert_eq!(Sequence::from_height(0x7FFF), Sequence(0x7FFF));
+        assert_eq!(Sequence::from_height(0xFFFF), Sequence(0xFFFF));
+
+        // Check steps throughout the whole range
+        let step = 512;
+        for v in (0..=u16::MAX).step_by(step) {
+            assert_eq!(Sequence::from_height(v), Sequence(v.into()));
+        }
+    }
+
+    #[test]
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    fn sequence_encoding_round_trip() {
+        let sequence = Sequence(0x7FFF_FFFF);
+        let expected_bytes = alloc::vec![0xff, 0xff, 0xff, 0x7f];
+
+        let encoded = encoding::encode_to_vec(&sequence);
+        assert_eq!(encoded, expected_bytes);
+
+        let decoded = encoding::decode_from_slice::<Sequence>(encoded.as_slice()).unwrap();
+        assert_eq!(decoded, sequence);
+    }
+
+    #[test]
+    #[cfg(feature = "encoding")]
+    fn sequence_decoding() {
+        let bytes = [0xff, 0xff, 0xff, 0xff];
+        let expected = Sequence::default();
+
+        let mut decoder = Sequence::decoder();
+        assert_eq!(decoder.read_limit(), 4);
+        assert!(!decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+        assert_eq!(decoder.read_limit(), 0);
+
+        let decoded = decoder.end().unwrap();
+        assert_eq!(decoded, expected);
+    }
+
+    #[test]
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    fn sequence_decoding_error() {
+        let bytes = [0xff, 0xff, 0xff]; // 3 bytes is an EOF error
+
+        let mut decoder = SequenceDecoder::default();
+        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+
+        let error = decoder.end().unwrap_err();
+        assert!(matches!(error, SequenceDecoderError(UnexpectedEofError { .. })));
     }
 }

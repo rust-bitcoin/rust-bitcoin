@@ -1261,6 +1261,7 @@ impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::block::BlockMtpInterval
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Height
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::LockTime
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::MedianTimePast
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::LockTime
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::NumberOfBlocks
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::result::MathOp
@@ -2246,6 +2247,7 @@ pub fn bitcoin_units::locktime::absolute::error::ParseTimeError::clone(&self) ->
 pub fn bitcoin_units::locktime::absolute::error::ParseTimeError::eq(&self, other: &bitcoin_units::locktime::absolute::error::ParseTimeError) -> bool
 pub fn bitcoin_units::locktime::absolute::error::ParseTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::locktime::absolute::error::ParseTimeError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::locktime::relative::LockTime::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::relative::LockTime::clone(&self) -> bitcoin_units::locktime::relative::LockTime
 pub fn bitcoin_units::locktime::relative::LockTime::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::locktime::relative::LockTime::eq(&self, other: &bitcoin_units::locktime::relative::LockTime) -> bool

@@ -37,7 +37,7 @@ impl Address {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
             SocketAddr::V6(addr) => (addr.ip().segments(), addr.port()),
         };
-        Self { address, port, services }
+        Self { services, address, port }
     }
 
     /// Builds a useless address that cannot be connected to. One may find this desirable if it is
@@ -101,7 +101,7 @@ fn read_be_address<R: Read + ?Sized>(r: &mut R) -> Result<[u16; 8], encode::Erro
 
     for word in &mut address {
         Read::read_exact(r, &mut buf)?;
-        *word = u16::from_be_bytes(buf)
+        *word = u16::from_be_bytes(buf);
     }
     Ok(address)
 }
@@ -320,7 +320,7 @@ pub struct AddrV2Message {
 }
 
 impl AddrV2Message {
-    /// Extracts socket address from an [AddrV2Message] message.
+    /// Extracts socket address from an [`AddrV2Message`] message.
     ///
     /// # Errors
     ///
@@ -800,7 +800,7 @@ mod test {
             vec![
                 AddrV2Message {
                     services: ServiceFlags::NETWORK,
-                    time: 0x4966bc61,
+                    time: 0x4966_bc61,
                     port: 8333,
                     addr: AddrV2::Unknown(153, hex!("abab").to_vec())
                 },
@@ -808,7 +808,7 @@ mod test {
                     services: ServiceFlags::NETWORK_LIMITED
                         | ServiceFlags::WITNESS
                         | ServiceFlags::COMPACT_FILTERS,
-                    time: 0x83766279,
+                    time: 0x8376_6279,
                     port: 8333,
                     addr: AddrV2::Ipv4(Ipv4Addr::new(9, 9, 9, 9))
                 },

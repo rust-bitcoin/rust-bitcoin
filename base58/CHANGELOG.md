@@ -1,3 +1,7 @@
+# 0.3.0 - 2025-12-15
+
+- Bump MSRV from 1.63.0 to 1.74.0 for all crates in the repo [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
+
 # 0.2.0 - 2024-12-10
 
 - Bump MSRV to `1.63` [#3100](https://github.com/rust-bitcoin/rust-bitcoin/pull/3100)

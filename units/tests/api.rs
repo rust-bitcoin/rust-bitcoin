@@ -14,31 +14,36 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse_int, result, time, weight, Amount, BlockHeight,
-    BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult, SignedAmount,
-    Weight,
+    amount, block, fee_rate, locktime, parse_int, result, sequence, time, weight, Amount,
+    BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult,
+    Sequence, SignedAmount, Weight,
 };
 
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Enums {
     a: amount::Denomination,
-    b: NumOpResult<Amount>,
-    c: result::MathOp,
+    b: absolute::LockTime,
+    c: relative::LockTime,
+    d: result::MathOp,
+    e: result::NumOpResult<Amount>,
 }
 
 impl Enums {
     fn new() -> Self {
         Self {
             a: amount::Denomination::Bitcoin,
-            b: NumOpResult::Valid(Amount::MAX),
-            c: result::MathOp::Add,
+            b: absolute::LockTime::Blocks(absolute::Height::MAX),
+            c: relative::LockTime::Blocks(relative::NumberOfBlocks::MAX),
+            d: result::MathOp::Add,
+            e: result::NumOpResult::Valid(Amount::MAX),
         }
     }
 }
 
 /// A struct that includes all public non-error structs.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
+                 // Does not include encoders and decoders.
 struct Structs {
     // Full path to show alphabetic sort order.
     a: amount::Amount,
@@ -53,8 +58,9 @@ struct Structs {
     j: locktime::absolute::MedianTimePast,
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
-    m: time::BlockTime,
-    n: weight::Weight,
+    m: sequence::Sequence,
+    n: time::BlockTime,
+    o: weight::Weight,
 }
 
 impl Structs {
@@ -72,8 +78,9 @@ impl Structs {
             j: absolute::MedianTimePast::MAX,
             k: relative::NumberOf512Seconds::MAX,
             l: relative::NumberOfBlocks::MAX,
-            m: BlockTime::from_u32(u32::MAX),
-            n: Weight::MAX,
+            m: sequence::Sequence::MAX,
+            n: BlockTime::from_u32(u32::MAX),
+            o: Weight::MAX,
         }
     }
 }
@@ -119,9 +126,10 @@ struct Default {
     d: BlockMtpInterval,
     e: relative::NumberOf512Seconds,
     f: relative::NumberOfBlocks,
+    g: Sequence,
 }
 
-/// A struct that includes all public error types.
+/// A struct that includes all public error types (excl. decode errors).
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
@@ -150,16 +158,30 @@ struct Errors {
     v: parse_int::UnprefixedHexError,
 }
 
+/// A struct that includes all public decoder error types.
+// These derives are the policy of `rust-bitcoin` not Rust API guidelines.
+#[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
+#[cfg(feature = "encoding")]
+struct DecoderErrors {
+    a: amount::error::AmountDecoderError,
+    b: block::BlockHeightDecoderError,
+    c: locktime::absolute::LockTimeDecoderError,
+    d: sequence::SequenceDecoderError,
+    e: time::BlockTimeDecoderError,
+}
+
 #[test]
 fn api_can_use_modules_from_crate_root() {
-    use bitcoin_units::{amount, block, fee_rate, locktime, parse_int, time, weight};
+    use bitcoin_units::{
+        amount, block, fee_rate, locktime, parse_int, result, sequence, time, weight,
+    };
 }
 
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
         Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
-        NumOpResult, SignedAmount, Weight,
+        NumOpResult, Sequence, SignedAmount, Weight,
     };
 }
 
@@ -169,13 +191,15 @@ fn api_can_use_all_types_from_module_amount() {
         Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
         ParseError, SignedAmount,
     };
+    #[cfg(feature = "encoding")]
+    use bitcoin_units::amount::{AmountDecoder, AmountDecoderError, AmountEncoder};
 }
 
 #[test]
 fn api_can_use_all_types_from_module_amount_error() {
     use bitcoin_units::amount::error::{
-        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
+        BadPositionError, InputTooLargeError, InvalidCharacterError, MissingDenominationError,
+        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
         PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     };
 }
@@ -185,6 +209,15 @@ fn api_can_use_all_types_from_module_block() {
     use bitcoin_units::block::{
         BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, TooBigForRelativeHeightError,
     };
+    #[cfg(feature = "encoding")]
+    use bitcoin_units::block::{BlockHeightDecoder, BlockHeightDecoderError, BlockHeightEncoder};
+}
+
+#[test]
+fn api_can_use_all_types_from_module_sequence() {
+    use bitcoin_units::sequence::Sequence;
+    #[cfg(feature = "encoding")]
+    use bitcoin_units::sequence::{SequenceDecoder, SequenceDecoderError, SequenceEncoder};
 }
 
 #[test]
@@ -196,21 +229,31 @@ fn api_can_use_all_types_from_module_fee_rate() {
 
 #[test]
 fn api_can_use_all_types_from_module_locktime_absolute() {
+    #[cfg(feature = "encoding")]
+    use bitcoin_units::locktime::absolute::error::LockTimeDecoderError as _;
     use bitcoin_units::locktime::absolute::error::{
-        ConversionError as _, ParseHeightError as _, ParseTimeError as _,
+        ConversionError as _, IncompatibleHeightError as _, IncompatibleTimeError as _,
+        ParseHeightError as _, ParseTimeError as _,
     };
     use bitcoin_units::locktime::absolute::{
-        ConversionError, Height, MedianTimePast, ParseHeightError, ParseTimeError,
+        ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError,
+        ParseTimeError,
+    };
+    #[cfg(feature = "encoding")]
+    use bitcoin_units::locktime::absolute::{
+        LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder,
     };
 }
 
 #[test]
 fn api_can_use_all_types_from_module_locktime_relative() {
     use bitcoin_units::locktime::relative::error::{
-        InvalidHeightError as _, InvalidTimeError as _, TimeOverflowError as _,
+        DisabledLockTimeError as _, InvalidHeightError as _, InvalidTimeError as _,
+        TimeOverflowError as _,
     };
     use bitcoin_units::locktime::relative::{
-        InvalidHeightError, InvalidTimeError, NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
+        DisabledLockTimeError, InvalidHeightError, InvalidTimeError, NumberOf512Seconds,
+        NumberOfBlocks, TimeOverflowError,
     };
 }
 
@@ -222,6 +265,8 @@ fn api_can_use_all_types_from_module_parse() {
 #[test]
 fn api_can_use_all_types_from_module_time() {
     use bitcoin_units::time::BlockTime;
+    #[cfg(feature = "encoding")]
+    use bitcoin_units::time::{BlockTimeDecoder, BlockTimeDecoderError, BlockTimeEncoder};
 }
 
 #[test]
@@ -235,6 +280,14 @@ fn api_all_non_error_types_have_non_empty_debug() {
     let t = Types::new();
 
     let debug = format!("{:?}", t.a.a);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.a.b);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.a.c);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.a.d);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.a.e);
     assert!(!debug.is_empty());
 
     let debug = format!("{:?}", t.b.a);
@@ -260,6 +313,12 @@ fn api_all_non_error_types_have_non_empty_debug() {
     let debug = format!("{:?}", t.b.k);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.b.l);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.b.m);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.b.n);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.b.o);
     assert!(!debug.is_empty());
 }
 
@@ -287,6 +346,7 @@ fn regression_default() {
         d: BlockMtpInterval::ZERO,
         e: relative::NumberOf512Seconds::ZERO,
         f: relative::NumberOfBlocks::ZERO,
+        g: Sequence::MAX,
     };
     assert_eq!(got, want);
 }
@@ -327,8 +387,9 @@ impl<'a> Arbitrary<'a> for Structs {
             j: absolute::MedianTimePast::arbitrary(u)?,
             k: relative::NumberOf512Seconds::arbitrary(u)?,
             l: relative::NumberOfBlocks::arbitrary(u)?,
-            m: BlockTime::arbitrary(u)?,
-            n: Weight::arbitrary(u)?,
+            m: sequence::Sequence::arbitrary(u)?,
+            n: BlockTime::arbitrary(u)?,
+            o: Weight::arbitrary(u)?,
         };
         Ok(a)
     }
@@ -339,8 +400,10 @@ impl<'a> Arbitrary<'a> for Enums {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = Self {
             a: amount::Denomination::arbitrary(u)?,
-            b: NumOpResult::<Amount>::arbitrary(u)?,
-            c: result::MathOp::arbitrary(u)?,
+            b: absolute::LockTime::arbitrary(u)?,
+            c: relative::LockTime::arbitrary(u)?,
+            d: result::MathOp::arbitrary(u)?,
+            e: result::NumOpResult::<Amount>::arbitrary(u)?,
         };
         Ok(a)
     }

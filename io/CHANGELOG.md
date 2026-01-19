@@ -1,3 +1,7 @@
+# 0.4.0 - 2025-12-29
+
+* Upgrade dependencies: `bitcoin-internals`, `bitcoin-consensus-encoding`, and `bitcoin_hashes`.
+
 # 0.3.0 - 2025-12-01
 
 * Bump MSRV to Rust `1.74` [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/)

@@ -26,12 +26,10 @@ use encoding::{
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
 use internals::array::ArrayExt as _;
-#[cfg(feature = "alloc")]
-use internals::compact_size;
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(feature = "hex")]
+#[cfg(all(feature = "hex", feature = "alloc"))]
 use units::parse_int;
 
 #[cfg(feature = "alloc")]
@@ -279,14 +277,14 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 
     // Encode inputs (excluding witness data) with leading compact size encoded int.
     let input_len = tx.inputs.len();
-    enc.input(compact_size::encode(input_len).as_slice());
+    enc.input(crate::compact_size_encode(input_len).as_slice());
     for input in &tx.inputs {
         // Encode each input same as we do in `Encodable for TxIn`.
         enc.input(input.previous_output.txid.as_byte_array());
         enc.input(&input.previous_output.vout.to_le_bytes());
 
         let script_sig_bytes = input.script_sig.as_bytes();
-        enc.input(compact_size::encode(script_sig_bytes.len()).as_slice());
+        enc.input(crate::compact_size_encode(script_sig_bytes.len()).as_slice());
         enc.input(script_sig_bytes);
 
         enc.input(&input.sequence.0.to_le_bytes());
@@ -294,13 +292,13 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 
     // Encode outputs with leading compact size encoded int.
     let output_len = tx.outputs.len();
-    enc.input(compact_size::encode(output_len).as_slice());
+    enc.input(crate::compact_size_encode(output_len).as_slice());
     for output in &tx.outputs {
         // Encode each output same as we do in `Encodable for TxOut`.
         enc.input(&output.amount.to_sat().to_le_bytes());
 
         let script_pubkey_bytes = output.script_pubkey.as_bytes();
-        enc.input(compact_size::encode(script_pubkey_bytes.len()).as_slice());
+        enc.input(crate::compact_size_encode(script_pubkey_bytes.len()).as_slice());
         enc.input(script_pubkey_bytes);
     }
 
@@ -308,9 +306,9 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         // BIP-0141 (SegWit) transaction serialization also includes the witness data.
         for input in &tx.inputs {
             // Same as `Encodable for Witness`.
-            enc.input(compact_size::encode(input.witness.len()).as_slice());
+            enc.input(crate::compact_size_encode(input.witness.len()).as_slice());
             for element in &input.witness {
-                enc.input(compact_size::encode(element.len()).as_slice());
+                enc.input(crate::compact_size_encode(element.len()).as_slice());
                 enc.input(element);
             }
         }
@@ -370,6 +368,57 @@ impl Encodable for Transaction {
         } else {
             TransactionEncoder(Encoder6::new(version, None, inputs, outputs, None, lock_time))
         }
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl core::str::FromStr for Transaction {
+    type Err = ParseTransactionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseTransactionError)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::LowerHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::UpperHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
+}
+
+/// An error that occurs during parsing of a [`Transaction`] from a hex string.
+#[cfg(all(feature = "hex", feature = "alloc"))]
+pub struct ParseTransactionError(crate::ParsePrimitiveError<Transaction>);
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Debug for ParseTransactionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Display for ParseTransactionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
+impl std::error::Error for ParseTransactionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        std::error::Error::source(&self.0)
     }
 }
 
@@ -538,7 +587,35 @@ impl Decoder for TransactionDecoder {
             State::Outputs(..) => Err(E(Inner::EarlyEnd("outputs"))),
             State::Witnesses(..) => Err(E(Inner::EarlyEnd("witnesses"))),
             State::LockTime(..) => Err(E(Inner::EarlyEnd("locktime"))),
-            State::Done(tx) => Ok(tx),
+            State::Done(tx) => {
+                // check for null prevout in non-coinbase txs
+                if tx.inputs.len() > 1 {
+                    for (index, input) in tx.inputs.iter().enumerate() {
+                        if input.previous_output == OutPoint::COINBASE_PREVOUT {
+                            return Err(E(Inner::NullPrevoutInNonCoinbase(index)));
+                        }
+                    }
+                }
+                // check coinbase scriptSig length (must be 2-100 bytes)
+                if tx.is_coinbase() {
+                    let len = tx.inputs[0].script_sig.len();
+                    if len < 2 {
+                        return Err(E(Inner::CoinbaseScriptSigTooSmall(len)));
+                    }
+                    if len > 100 {
+                        return Err(E(Inner::CoinbaseScriptSigTooLarge(len)));
+                    }
+                }
+                // check for duplicate inputs (CVE-2018-17144).
+                let mut outpoints: Vec<_> = tx.inputs.iter().map(|i| i.previous_output).collect();
+                outpoints.sort_unstable();
+                for pair in outpoints.windows(2) {
+                    if pair[0] == pair[1] {
+                        return Err(E(Inner::DuplicateInput(pair[0])));
+                    }
+                }
+                Ok(tx)
+            }
             State::Errored => panic!("call to end() after decoder errored"),
         }
     }
@@ -640,6 +717,14 @@ enum TransactionDecoderErrorInner {
     /// Attempt to call `end()` before the transaction was complete. Holds
     /// a description of the current state.
     EarlyEnd(&'static str),
+    /// Null prevout in non-coinbase transaction.
+    NullPrevoutInNonCoinbase(usize),
+    /// Coinbase scriptSig too small (must be at least 2 bytes).
+    CoinbaseScriptSigTooSmall(usize),
+    /// Coinbase scriptSig is too large (must be at most 100 bytes).
+    CoinbaseScriptSigTooLarge(usize),
+    /// Transaction has duplicate inputs (this check prevents CVE-2018-17144 ).
+    DuplicateInput(OutPoint),
 }
 
 #[cfg(feature = "alloc")]
@@ -692,6 +777,14 @@ impl fmt::Display for TransactionDecoderError {
             E::NoWitnesses => write!(f, "non-empty Segwit transaction with no witnesses"),
             E::LockTime(ref e) => write_err!(f, "transaction decoder error"; e),
             E::EarlyEnd(s) => write!(f, "early end of transaction (still decoding {})", s),
+            E::NullPrevoutInNonCoinbase(index) =>
+                write!(f, "null prevout in non-coinbase transaction at input {}", index),
+            E::CoinbaseScriptSigTooSmall(len) =>
+                write!(f, "coinbase scriptSig too small: {} bytes (min 2)", len),
+            E::CoinbaseScriptSigTooLarge(len) =>
+                write!(f, "coinbase scriptSig too large: {} bytes (max 100)", len),
+            E::DuplicateInput(ref outpoint) =>
+                write!(f, "duplicate input: {:?}:{}", outpoint.txid, outpoint.vout),
         }
     }
 }
@@ -711,6 +804,10 @@ impl std::error::Error for TransactionDecoderError {
             E::NoWitnesses => None,
             E::LockTime(ref e) => Some(e),
             E::EarlyEnd(_) => None,
+            E::NullPrevoutInNonCoinbase(_) => None,
+            E::CoinbaseScriptSigTooSmall(_) => None,
+            E::CoinbaseScriptSigTooLarge(_) => None,
+            E::DuplicateInput(_) => None,
         }
     }
 }
@@ -748,6 +845,10 @@ pub struct TxIn {
 #[cfg(feature = "alloc")]
 impl TxIn {
     /// An empty transaction input with the previous output as for a coinbase transaction.
+    ///
+    /// This has a 0-byte scriptSig which is **invalid** per consensus rules
+    /// (coinbase scriptSig must be 2-100 bytes). This is kept for backwards compatibility
+    /// in PSBT workflows where the scriptSig is filled in later.
     pub const EMPTY_COINBASE: Self = Self {
         previous_output: OutPoint::COINBASE_PREVOUT,
         script_sig: ScriptSigBuf::new(),
@@ -1505,6 +1606,8 @@ mod tests {
     #[cfg(feature = "hex")]
     use alloc::string::ToString;
     use alloc::{format, vec};
+    #[cfg(feature = "hex")]
+    use core::str::FromStr as _;
 
     use encoding::Encoder as _;
     #[cfg(feature = "hex")]
@@ -1518,10 +1621,15 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     fn transaction_encode_decode_roundtrip() {
+        // Create two different inputs to avoid duplicate input rejection
+        let tx_in_1 = segwit_tx_in();
+        let mut tx_in_2 = segwit_tx_in();
+        tx_in_2.previous_output.vout = 2;
+
         let tx = Transaction {
             version: Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            inputs: vec![segwit_tx_in(), segwit_tx_in()],
+            inputs: vec![tx_in_1, tx_in_2],
             outputs: vec![tx_out(), tx_out()],
         };
 
@@ -1585,6 +1693,96 @@ mod tests {
 
         // Test partial ord
         assert!(tx > tx_orig);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn transaction_hex_display() {
+        let txin = TxIn {
+            previous_output: OutPoint {
+                txid: Txid::from_byte_array([0xAA; 32]), // Arbitrary invalid dummy value.
+                vout: 0,
+            },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::new(),
+        };
+
+        let txout = TxOut {
+            amount: Amount::from_sat(123_456_789).unwrap(),
+            script_pubkey: ScriptPubKeyBuf::new(),
+        };
+
+        let tx_orig = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::from_consensus(1_765_112_030), // The time this was written
+            inputs: vec![txin],
+            outputs: vec![txout],
+        };
+
+        let encoded_tx = "0100000001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff0115cd5b070000000000de783569";
+        let lower_hex_tx = format!("{:x}", tx_orig);
+        let upper_hex_tx = format!("{:X}", tx_orig);
+
+        // All of these should yield a lowercase hex
+        assert_eq!(encoded_tx, lower_hex_tx);
+        assert_eq!(encoded_tx, format!("{}", tx_orig));
+
+        // And this should yield uppercase hex
+        let upper_encoded = encoded_tx
+            .chars()
+            .map(|chr| chr.to_ascii_uppercase())
+            .collect::<alloc::string::String>();
+        assert_eq!(upper_encoded, upper_hex_tx);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn transaction_from_hex_str_round_trip() {
+        // Create two different inputs to avoid duplicate input rejection
+        let tx_in_1 = segwit_tx_in();
+        let mut tx_in_2 = segwit_tx_in();
+        tx_in_2.previous_output.vout = 2;
+
+        // Create a transaction and convert it to a hex string
+        let tx = Transaction {
+            version: Version::TWO,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![tx_in_1, tx_in_2],
+            outputs: vec![tx_out(), tx_out()],
+        };
+
+        let lower_hex_tx = format!("{:x}", tx);
+        let upper_hex_tx = format!("{:X}", tx);
+
+        // Parse the hex strings back into transactions
+        let parsed_lower = Transaction::from_str(&lower_hex_tx).unwrap();
+        let parsed_upper = Transaction::from_str(&upper_hex_tx).unwrap();
+
+        // The parsed transaction should match the originals
+        assert_eq!(tx, parsed_lower);
+        assert_eq!(tx, parsed_upper);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn transaction_from_hex_str_error() {
+        use crate::ParsePrimitiveError;
+
+        // OddLengthString error
+        let odd = "abc"; // 3 chars, odd length
+        let err = Transaction::from_str(odd).unwrap_err();
+        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::OddLengthString(..))));
+
+        // InvalidChar error
+        let invalid = "zz";
+        let err = Transaction::from_str(invalid).unwrap_err();
+        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::InvalidChar(..))));
+
+        // Decode error
+        let bad = "deadbeef00"; // arbitrary even-length hex that will fail decoding
+        let err = Transaction::from_str(bad).unwrap_err();
+        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::Decode(..))));
     }
 
     #[test]
@@ -2191,5 +2389,115 @@ mod tests {
         let decoded_tx = encoding::decode_from_slice(&encoded).unwrap();
 
         assert_eq!(original_tx, decoded_tx);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_null_prevout_in_non_coinbase_transaction() {
+        // Test vector taken from Bitcoin Core tx_invalid.json
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L64
+        // "Null txin, but without being a coinbase (because there are two inputs)"
+        let tx_bytes = hex!("01000000020000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff00010000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("null prevout in non-coinbase tx should be rejected");
+
+        assert_eq!(
+            err,
+            TransactionDecoderError(TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(0))
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_coinbase_scriptsig_too_small() {
+        // Test vector taken from Bitcoin Core tx_invalid.json
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L57
+        // "Coinbase of size 1"
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("coinbase with 1-byte scriptSig should be rejected");
+
+        assert_eq!(
+            err,
+            TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooSmall(1))
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_coinbase_scriptsig_too_large() {
+        // Test vector taken from Bitcoin Core tx_invalid.json:
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L62
+        // "Coinbase of size 101"
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff655151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("coinbase with 101-byte scriptSig should be rejected");
+
+        assert_eq!(
+            err,
+            TransactionDecoderError(TransactionDecoderErrorInner::CoinbaseScriptSigTooLarge(101))
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn accept_coinbase_scriptsig_min_valid() {
+        // boundary test: 2 bytes is the minimum valid length
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff025151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let tx = decoder.end().expect("coinbase with 2-byte scriptSig should be accepted");
+
+        assert_eq!(tx.inputs[0].script_sig.len(), 2);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn accept_coinbase_scriptsig_max_valid() {
+        // boundary test: 100 bytes is the maximum valid length
+        let tx_bytes = hex!("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff6451515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151515151ffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let tx = decoder.end().expect("coinbase with 100-byte scriptSig should be accepted");
+
+        assert_eq!(tx.inputs[0].script_sig.len(), 100);
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn reject_duplicate_inputs() {
+        // Test vector from Bitcoin Core tx_invalid.json:
+        // https://github.com/bitcoin/bitcoin/blob/master/src/test/data/tx_invalid.json#L50
+        // Transaction has two inputs both spending the same outpoint
+        let tx_bytes = hex!("01000000020001000000000000000000000000000000000000000000000000000000000000000000006c47304402204bb1197053d0d7799bf1b30cd503c44b58d6240cccbdc85b6fe76d087980208f02204beeed78200178ffc6c74237bb74b3f276bbb4098b5605d814304fe128bf1431012321039e8815e15952a7c3fada1905f8cf55419837133bd7756c0ef14fc8dfe50c0deaacffffffff0001000000000000000000000000000000000000000000000000000000000000000000006c47304402202306489afef52a6f62e90bf750bbcdf40c06f5c6b138286e6b6b86176bb9341802200dba98486ea68380f47ebb19a7df173b99e6bc9c681d6ccf3bde31465d1f16b3012321039e8815e15952a7c3fada1905f8cf55419837133bd7756c0ef14fc8dfe50c0deaacffffffff010000000000000000015100000000");
+
+        let mut decoder = Transaction::decoder();
+        let mut slice = tx_bytes.as_slice();
+        decoder.push_bytes(&mut slice).unwrap();
+        let err = decoder.end().expect_err("transaction with duplicate inputs should be rejected");
+
+        let expected_outpoint = OutPoint {
+            txid: Txid::from_byte_array([
+                0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            ]),
+            vout: 0,
+        };
+        assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::DuplicateInput(expected_outpoint)));
     }
 }

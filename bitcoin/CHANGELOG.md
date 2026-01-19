@@ -1,4 +1,4 @@
-# 0.33.0-beta.0 - 2025-11-03
+# 0.33.0-beta.0 - 2025-12-29
 
 This series of beta releases is meant for two things:
 
@@ -18,13 +18,14 @@ We do not currently intend on releasing `bitcoin 0.33.0` until the `1.0` release
 
 For changes to our dependencies included in this release see:
 
-- `bitcoin_hashes 0.17`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
-- `hex-conservative 1.0.0`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/1.x/CHANGELOG.md)
-- `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
-- `bitcoin-io 0.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
 - `bitcoin-primitives: 1.0.0-rc`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
 - `bitcoin-units 1.0.0-rc`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md)
 - `bitcoin-consensus-encoding 1.0.0-rc` [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/consensus_encoding/CHANGELOG.md)
+- `bitcoin_hashes 0.19`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
+- `base58ck 0.3.0`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/base58/CHANGELOG.md)
+- `bitcoin-io 0.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
+- `hex-conservative 1.0.0`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/1.x/CHANGELOG.md)
+- `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
 
 ## Worthy on note
 
@@ -41,6 +42,7 @@ The `serde` serialization for `Psbt` has changed.
 
 ## Changes
 
+- Bump MSRV from 1.63.0 to 1.74.0 for all crates in the repo [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
 - Deprecate unchecked `amount` ops [#3759](https://github.com/rust-bitcoin/rust-bitcoin/pull/3759)
 - Change parameter type used for whole bitcoin amounts [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
 - Add `Weight::to_kwu_ceil` [#3740](https://github.com/rust-bitcoin/rust-bitcoin/pull/3740)

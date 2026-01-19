@@ -38,6 +38,7 @@ main() {
 
     # Check crates under the stabilising crates
     generate_api_files "internals"
+    generate_api_files "hashes"
 
     [ -f "Cargo.lock.tmp" ] && mv Cargo.lock.tmp Cargo.lock
 

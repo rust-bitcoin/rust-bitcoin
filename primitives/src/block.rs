@@ -113,12 +113,24 @@ impl Block<Unchecked> {
     #[inline]
     pub fn into_parts(self) -> (Header, Vec<Transaction>) { (self.header, self.transactions) }
 
+    /// Returns the constituent parts of the block by reference.
+    #[inline]
+    pub fn as_parts(&self) -> (&Header, &[Transaction]) { (&self.header, &self.transactions) }
+
     /// Validates (or checks) a block.
     ///
     /// We define valid as:
     ///
     /// * The Merkle root of the header matches Merkle root of the transaction list.
     /// * The witness commitment in coinbase matches the transaction list.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// * The block has no transactions.
+    /// * The first transaction is not a coinbase transaction.
+    /// * The Merkle root of the header does not match the Merkle root of the transaction list.
+    /// * The witness commitment in the coinbase does not match the transaction list.
     pub fn validate(self) -> Result<Block<Checked>, InvalidBlockError> {
         if self.transactions.is_empty() {
             return Err(InvalidBlockError::NoTransactions);
@@ -494,6 +506,15 @@ impl Header {
     }
 }
 
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl core::str::FromStr for Header {
+    type Err = ParseHeaderError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseHeaderError)
+    }
+}
+
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
     #[allow(clippy::use_self)]
@@ -501,6 +522,20 @@ impl fmt::Display for Header {
         use hex_unstable::{fmt_hex_exact, Case};
 
         fmt_hex_exact!(f, Header::SIZE, HeaderIter(EncodableByteIter::new(self)), Case::Lower)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::LowerHex for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::UpperHex for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
     }
 }
 
@@ -534,6 +569,27 @@ impl Iterator for HeaderIter<'_> {
 }
 #[cfg(feature = "hex")]
 impl ExactSizeIterator for HeaderIter<'_> {}
+
+/// An error that occurs during parsing of a [`Header`] from a hex string.
+#[cfg(all(feature = "hex", feature = "alloc"))]
+pub struct ParseHeaderError(crate::ParsePrimitiveError<Header>);
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Debug for ParseHeaderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Display for ParseHeaderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
+impl std::error::Error for ParseHeaderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        std::error::Error::source(&self.0)
+    }
+}
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Header`] type.
@@ -879,6 +935,8 @@ impl<'a> Arbitrary<'a> for Version {
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::{format, vec};
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    use core::str::FromStr as _;
 
     use super::*;
 
@@ -1154,6 +1212,50 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn header_hex() {
+        let header = dummy_header();
+
+        let want = concat!(
+            "01000000",                                                         // version
+            "9999999999999999999999999999999999999999999999999999999999999999", // prev_blockhash
+            "7777777777777777777777777777777777777777777777777777777777777777", // merkle_root
+            "02000000",                                                         // time
+            "03000000",                                                         // bits
+            "04000000",                                                         // nonce
+        );
+
+        // All of these should yield a lowercase hex
+        assert_eq!(want, format!("{:x}", header));
+        assert_eq!(want, format!("{}", header));
+
+        // And these should yield uppercase hex
+        let upper_encoded =
+            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
+        assert_eq!(upper_encoded, format!("{:X}", header));
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn header_from_hex_str_round_trip() {
+        // Create a transaction and convert it to a hex string
+        let header = dummy_header();
+
+        let lower_hex_header = format!("{:x}", header);
+        let upper_hex_header = format!("{:X}", header);
+
+        // Parse the hex strings back into transactions
+        let parsed_lower = Header::from_str(&lower_hex_header).unwrap();
+        let parsed_upper = Header::from_str(&upper_hex_header).unwrap();
+
+        // The parsed transaction should match the originals
+        assert_eq!(header, parsed_lower);
+        assert_eq!(header, parsed_upper);
+    }
+
+    #[test]
     #[cfg(feature = "alloc")]
     fn block_decode() {
         // Make a simple block, encode then decode. Verify equivalence.
@@ -1182,7 +1284,13 @@ mod tests {
         let transactions = vec![Transaction {
             version: crate::transaction::Version::ONE,
             lock_time: units::absolute::LockTime::from_height(block).unwrap(),
-            inputs: vec![crate::transaction::TxIn::EMPTY_COINBASE],
+            inputs: vec![crate::transaction::TxIn {
+                previous_output: crate::transaction::OutPoint::COINBASE_PREVOUT,
+                // Coinbase scriptSig must be 2-100 bytes
+                script_sig: crate::script::ScriptSigBuf::from_bytes(vec![0x51, 0x51]),
+                sequence: crate::sequence::Sequence::MAX,
+                witness: crate::witness::Witness::new(),
+            }],
             outputs: Vec::new(),
         }];
         let original_block = Block::new_unchecked(header, transactions);

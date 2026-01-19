@@ -580,6 +580,18 @@ impl fmt::Display for NumberOf512Seconds {
 }
 
 #[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for LockTime {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=1)?;
+
+        match choice {
+            0 => Ok(Self::Blocks(NumberOfBlocks::arbitrary(u)?)),
+            _ => Ok(Self::Time(NumberOf512Seconds::arbitrary(u)?)),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for NumberOfBlocks {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;

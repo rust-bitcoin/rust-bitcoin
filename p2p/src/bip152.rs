@@ -13,7 +13,6 @@ use std::error;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use bitcoin::transaction::TxIdentifier;
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
@@ -94,13 +93,29 @@ impl Decodable for PrefilledTransaction {
     }
 }
 
+/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
+pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
+
+impl TxIdentifier for bitcoin::Txid {}
+impl TxIdentifier for bitcoin::Wtxid {}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for bitcoin::Txid {}
+    impl Sealed for bitcoin::Wtxid {}
+}
+
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub struct ShortId([u8; 6]);
 internals::impl_array_newtype!(ShortId, u8, 6);
 
 impl ShortId {
-    /// Calculates the SipHash24 keys used to calculate short IDs.
+    /// Calculates the `SipHash24` keys used to calculate short IDs.
+    ///
+    /// # Panics
+    ///
+    /// Panics if consensus encoding fails (should never happen for in-memory operations).
     pub fn calculate_siphash_keys(header: &block::Header, nonce: u64) -> (u64, u64) {
         // 1. single-SHA256 hashing the block header with the nonce appended (in little-endian)
         let h = {
@@ -118,7 +133,7 @@ impl ShortId {
         )
     }
 
-    /// Calculates the short ID with the given (w)txid and using the provided SipHash keys.
+    /// Calculates the short ID with the given (w)txid and using the provided `SipHash` keys.
     pub fn with_siphash_keys<T: TxIdentifier>(txid: &T, siphash_keys: (u64, u64)) -> Self {
         // 2. Running SipHash-2-4 with the input being the transaction ID and the keys (k0/k1)
         // set to the first two little-endian 64-bit integers from the above hash, respectively.
@@ -181,7 +196,7 @@ pub struct HeaderAndShortIds {
     ///  A nonce for use in short transaction ID calculations.
     pub nonce: u64,
     ///  The short transaction IDs calculated from the transactions
-    ///  which were not provided explicitly in prefilled_txs.
+    ///  which were not provided explicitly in `prefilled_txs`.
     pub short_ids: Vec<ShortId>,
     ///  Used to provide the coinbase transaction and a select few
     ///  which we expect a peer may be missing.
@@ -225,6 +240,10 @@ impl HeaderAndShortIds {
     /// coinbase tx is always prefilled.
     ///
     /// > Nodes SHOULD NOT use the same nonce across multiple different blocks.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the version is not 1 or 2, or if the prefill indexes are invalid.
     pub fn from_block(
         block: &Block<BlockChecked>,
         nonce: u64,
@@ -405,6 +424,10 @@ crate::consensus::impl_consensus_encoding!(BlockTransactions, block_hash, transa
 impl BlockTransactions {
     /// Constructs a new [`BlockTransactions`] from a [`BlockTransactionsRequest`] and
     /// the corresponding full [`Block`] by providing all requested transactions.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any requested transaction index is out of range for the block.
     pub fn from_request(
         request: &BlockTransactionsRequest,
         block: &Block<BlockChecked>,
@@ -468,13 +491,13 @@ mod test {
     use alloc::vec;
 
     use bitcoin::consensus::encode::{deserialize, serialize};
-    use bitcoin::locktime::absolute;
     use bitcoin::merkle_tree::TxMerkleNode;
-    use bitcoin::{
+    use hex::FromHex;
+    use primitives::locktime::absolute;
+    use primitives::{
         transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptPubKeyBuf,
         ScriptSigBuf, Sequence, TxIn, TxOut, Txid, Witness,
     };
-    use hex::FromHex;
 
     use super::*;
 
@@ -534,7 +557,7 @@ mod test {
 
         let block: Block = deserialize(&raw_block).unwrap();
         let block = block.assume_checked(None);
-        let nonce = 18053200567810711460;
+        let nonce = 18_053_200_567_810_711_460;
         let compact = HeaderAndShortIds::from_block(&block, nonce, 2, &[]).unwrap();
         let compact_expected = deserialize(&raw_compact).unwrap();
 
@@ -560,7 +583,7 @@ mod test {
                 // test deserialization
                 let mut raw: Vec<u8> = vec![0u8; 32];
                 raw.extend(testcase.0.clone());
-                let btr: BlockTransactionsRequest = deserialize(&raw.to_vec()).unwrap();
+                let btr: BlockTransactionsRequest = deserialize(&raw.clone()).unwrap();
                 assert_eq!(testcase.1, btr.indexes);
             }
             {
@@ -579,14 +602,14 @@ mod test {
                 // test that we return Err() if deserialization fails (and don't panic)
                 let mut raw: Vec<u8> = [0u8; 32].to_vec();
                 raw.extend(errorcase);
-                assert!(deserialize::<BlockTransactionsRequest>(&raw.to_vec()).is_err());
+                assert!(deserialize::<BlockTransactionsRequest>(&raw.clone()).is_err());
             }
         }
     }
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic] // 'attempt to add with overflow' in consensus_encode()
+    #[should_panic(expected = "attempt to add with overflow")]
     fn getblocktx_panic_when_encoding_u64_max() {
         serialize(&BlockTransactionsRequest {
             block_hash: BlockHash::from_byte_array([0; 32]),

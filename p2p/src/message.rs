@@ -16,11 +16,11 @@ use core::{cmp, fmt};
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
-use bitcoin::{block, transaction};
 use encoding;
 use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{self, BufRead, Read, Write};
+use primitives::{block, transaction};
 use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
@@ -30,7 +30,7 @@ use crate::{
     Magic,
 };
 
-/// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
+/// The maximum number of [`super::message_blockdata::Inventory`] items in an `inv` message.
 ///
 /// This limit is not currently enforced by this implementation.
 pub const MAX_INV_SIZE: usize = 50_000;
@@ -503,9 +503,9 @@ pub enum NetworkMessage {
 impl NetworkMessage {
     /// Returns the message command as a static string reference.
     ///
-    /// This returns `"unknown"` for [NetworkMessage::Unknown],
+    /// This returns `"unknown"` for [`NetworkMessage::Unknown`],
     /// regardless of the actual command in the unknown message.
-    /// Use the [Self::command] method to get the command for unknown messages.
+    /// Use the [`Self::command`] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str {
         match *self {
             Self::Version(_) => "version",
@@ -548,7 +548,11 @@ impl NetworkMessage {
         }
     }
 
-    /// Returns the CommandString for the message command.
+    /// Returns the `CommandString` for the message command.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the command string is invalid (should never happen for valid message types).
     pub fn command(&self) -> CommandString {
         match *self {
             Self::Unknown { command: ref c, .. } => c.clone(),
@@ -558,7 +562,11 @@ impl NetworkMessage {
 }
 
 impl RawNetworkMessage {
-    /// Constructs a new [RawNetworkMessage]
+    /// Constructs a new [`RawNetworkMessage`]
+    ///
+    /// # Panics
+    ///
+    /// Panics if message encoding fails or if the payload length exceeds `u32::MAX`.
     pub fn new(magic: Magic, payload: NetworkMessage) -> Self {
         let mut engine = sha256d::Hash::engine();
         let payload_len = payload.consensus_encode(&mut engine).expect("engine doesn't error");
@@ -569,7 +577,7 @@ impl RawNetworkMessage {
         Self { magic, payload, payload_len, checksum }
     }
 
-    /// Consumes the [RawNetworkMessage] instance and returns the inner payload.
+    /// Consumes the [`RawNetworkMessage`] instance and returns the inner payload.
     pub fn into_payload(self) -> NetworkMessage { self.payload }
 
     /// The actual message data
@@ -580,20 +588,20 @@ impl RawNetworkMessage {
 
     /// Returns the message command as a static string reference.
     ///
-    /// This returns `"unknown"` for [NetworkMessage::Unknown],
+    /// This returns `"unknown"` for [`NetworkMessage::Unknown`],
     /// regardless of the actual command in the unknown message.
-    /// Use the [Self::command] method to get the command for unknown messages.
+    /// Use the [`Self::command`] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str { self.payload.cmd() }
 
-    /// Returns the CommandString for the message command.
+    /// Returns the `CommandString` for the message command.
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
 impl V2NetworkMessage {
-    /// Constructs a new [V2NetworkMessage].
+    /// Constructs a new [`V2NetworkMessage`].
     pub fn new(payload: NetworkMessage) -> Self { Self { payload } }
 
-    /// Consumes the [V2NetworkMessage] instance and returns the inner payload.
+    /// Consumes the [`V2NetworkMessage`] instance and returns the inner payload.
     pub fn into_payload(self) -> NetworkMessage { self.payload }
 
     /// The actual message data
@@ -601,12 +609,12 @@ impl V2NetworkMessage {
 
     /// Returns the message command as a static string reference.
     ///
-    /// This returns `"unknown"` for [NetworkMessage::Unknown],
+    /// This returns `"unknown"` for [`NetworkMessage::Unknown`],
     /// regardless of the actual command in the unknown message.
-    /// Use the [Self::command] method to get the command for unknown messages.
+    /// Use the [`Self::command`] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str { self.payload.cmd() }
 
-    /// Returns the CommandString for the message command.
+    /// Returns the `CommandString` for the message command.
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
@@ -615,7 +623,7 @@ impl Encodable for HeadersMessage {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += w.emit_compact_size(self.0.len())?;
-        for header in self.0.iter() {
+        for header in &self.0 {
             len += header.consensus_encode(w)?;
             len += 0u8.consensus_encode(w)?;
         }
@@ -766,6 +774,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
         Ok(self.buffer.len() < self.payload_len)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let payload_bytes = self.buffer;
 
@@ -1076,9 +1085,8 @@ impl encoding::Decoder for RawNetworkMessageDecoder {
                         },
                     );
 
-                    let header_decoder = match old_state {
-                        DecoderState::ReadingHeader { header_decoder } => header_decoder,
-                        _ => unreachable!("we are in ReadingHeader state"),
+                    let DecoderState::ReadingHeader { header_decoder } = old_state else {
+                        unreachable!("we are in ReadingHeader state")
                     };
 
                     let (magic_bytes, command, payload_len_bytes, checksum) =
@@ -1512,14 +1520,14 @@ impl Decodable for CheckedData {
         let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: encode::MAX_VEC_SIZE };
         let data = read_bytes_from_finite_reader(r, opts)?;
         let expected_checksum = sha2_checksum(&data);
-        if expected_checksum != checksum {
+        if expected_checksum == checksum {
+            Ok(Self { data, checksum })
+        } else {
             Err(encode::ParseError::InvalidChecksum {
                 expected: expected_checksum,
                 actual: checksum,
             }
             .into())
-        } else {
-            Ok(Self { data, checksum })
         }
     }
 }
@@ -1652,10 +1660,10 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
-    use bitcoin::block::{Block, BlockHash};
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use bitcoin::transaction::{Transaction, Txid};
     use hex_lit::hex;
+    use primitives::transaction::{Transaction, Txid};
+    use primitives::{Block, BlockHash};
     use units::BlockHeight;
 
     use super::*;
@@ -1674,6 +1682,7 @@ mod test {
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn full_round_ser_der_raw_network_message() {
         let version_msg: VersionMessage = deserialize(&hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001")).unwrap();
         let tx: Transaction = deserialize(&hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000")).unwrap();
@@ -1992,10 +2001,10 @@ mod test {
                     | ServiceFlags::WITNESS
                     | ServiceFlags::NETWORK_LIMITED
             );
-            assert_eq!(version_msg.timestamp, 1548554224);
-            assert_eq!(version_msg.nonce, 13952548347456104954);
+            assert_eq!(version_msg.timestamp, 1_548_554_224);
+            assert_eq!(version_msg.nonce, 13_952_548_347_456_104_954);
             assert_eq!(version_msg.user_agent.to_string(), "/Satoshi:0.17.1/");
-            assert_eq!(version_msg.start_height, 560275);
+            assert_eq!(version_msg.start_height, 560_275);
             assert!(version_msg.relay);
         } else {
             panic!("wrong message type");
@@ -2010,14 +2019,14 @@ mod test {
             0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00, // "version" command
             0x7f, 0x11, 0x01, 0x00, // version: 70015
             0x0d, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // services
-            0xf0, 0x0f, 0x4d, 0x5c, 0x00, 0x00, 0x00, 0x00, // timestamp: 1548554224
+            0xf0, 0x0f, 0x4d, 0x5c, 0x00, 0x00, 0x00, 0x00, // timestamp: 1_548_554_224
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // receiver services: NONE
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5b, 0xf0, 0x8c, 0x80, 0xb4, 0xbd, // addr_recv
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // sender services: NONE
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // addr_from
             0xfa, 0xa9, 0x95, 0x59, 0xcc, 0x68, 0xa1, 0xc1, // nonce
             0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68, 0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31, 0x2f, // user_agent: "/Satoshi:0.17.1/"
-            0x93, 0x8c, 0x08, 0x00, // start_height: 560275
+            0x93, 0x8c, 0x08, 0x00, // start_height: 560_275
             0x01 // relay: true
         ]).unwrap();
 
@@ -2030,10 +2039,10 @@ mod test {
                     | ServiceFlags::WITNESS
                     | ServiceFlags::NETWORK_LIMITED
             );
-            assert_eq!(version_msg.timestamp, 1548554224);
-            assert_eq!(version_msg.nonce, 13952548347456104954);
+            assert_eq!(version_msg.timestamp, 1_548_554_224);
+            assert_eq!(version_msg.nonce, 13_952_548_347_456_104_954);
             assert_eq!(version_msg.user_agent.to_string(), "/Satoshi:0.17.1/");
-            assert_eq!(version_msg.start_height, 560275);
+            assert_eq!(version_msg.start_height, 560_275);
             assert!(version_msg.relay);
         } else {
             panic!("wrong message type");
@@ -2076,10 +2085,10 @@ mod test {
                     | ServiceFlags::WITNESS
                     | ServiceFlags::NETWORK_LIMITED
             );
-            assert_eq!(version_msg.timestamp, 1548554224);
-            assert_eq!(version_msg.nonce, 13952548347456104954);
+            assert_eq!(version_msg.timestamp, 1_548_554_224);
+            assert_eq!(version_msg.nonce, 13_952_548_347_456_104_954);
             assert_eq!(version_msg.user_agent.to_string(), "/Satoshi:0.17.1/");
-            assert_eq!(version_msg.start_height, 560275);
+            assert_eq!(version_msg.start_height, 560_275);
             assert!(version_msg.relay);
         } else {
             panic!("wrong message type");
