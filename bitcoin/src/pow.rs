@@ -12,7 +12,7 @@ use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
 use units::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
-use crate::block::{BlockHash, Header};
+use crate::block::{BlockHash, BlockHeight, BlockHeightInterval, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros;
 use crate::network::Params;
@@ -400,6 +400,80 @@ impl Target {
 do_impl!(Target, ParseTargetError);
 impl_to_hex_from_lower_hex!(Target, |_| 64);
 
+/// Gets the target for the block after `current_header`.
+///
+/// Implements the [`GetNextWorkRequired`] function from Bitcoin core.
+///
+/// Note, `new_block_timestamp` is only used when `params.allow_min_difficulty_blocks = true` i.e.,
+/// on testnet and regtest.
+///
+/// > Special difficulty rule for testnet: If the new block's timestamp is more
+/// > than 2*10 minutes then allow mining of a min-difficulty block.
+///
+/// # Panics
+///
+/// If we are on testnet/regtest and `new_block_timestamp` is `None`.
+///
+/// [`GetNextWorkRequired`]: <https://github.com/bitcoin/bitcoin/blob/830583eb9d07e054c54a177907a98153ab3e29ae/src/pow.cpp#L13>
+pub fn next_target_after<F, E>(
+    current_header: Header,
+    current_height: BlockHeight,
+    params: &Params,
+    new_block_timestamp: Option<u32>,
+    mut get_block_header_by_height: F,
+) -> Result<CompactTarget, E>
+where
+    F: FnMut(BlockHeight) -> Result<Header, E>
+{
+    // explicitly dropping the high bits because they make no sense since block height is only u32
+    let adjustment_interval = params.difficulty_adjustment_interval() as u32;
+
+    // if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
+    if !is_retarget_height(current_height.saturating_add(1.into()), adjustment_interval) {
+        if params.allow_min_difficulty_blocks { // Only true for testnet and regtest.
+            let new_block_timestamp = new_block_timestamp
+                .expect("new_block_timestamp must contain a value when on testnet/regtest");
+
+            // Special difficulty rule for testnet: If the new block's timestamp is more
+            // than 2*10 minutes then allow mining of a min-difficulty block.
+            let pow_limit = params.max_attainable_target.to_compact_lossy();
+            let pow_target_spacing = u32::try_from(params.pow_target_spacing & u64::from(u32::MAX)).unwrap();
+
+            // if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + params.nPowTargetSpacing*2)
+            if new_block_timestamp > current_header.time.to_u32() + pow_target_spacing * 2 {
+                Ok(pow_limit)
+            } else {
+                let mut header = current_header;
+                let mut height = current_height;
+                // while (pindex->pprev && pindex->nHeight % params.DifficultyAdjustmentInterval() != 0 && pindex->nBits == nProofOfWorkLimit)
+                while header.prev_blockhash != BlockHash::GENESIS_PREVIOUS_BLOCK_HASH
+                    && !is_retarget_height(height, adjustment_interval)
+                    && header.bits == pow_limit
+                {
+                    // pindex = pindex->pprev;
+                    height = height.saturating_sub(1.into());
+                    header = get_block_header_by_height(height)?;
+                }
+                Ok(header.bits)
+            }
+        } else {
+            Ok(current_header.bits)
+        }
+    } else {
+        // Go back by what we want to be 14 days worth of blocks
+        let back_step = BlockHeightInterval::from_u32(adjustment_interval - 1);
+        let height_first = current_height.saturating_sub(back_step);
+        let block_first = get_block_header_by_height(height_first)?;
+
+        Ok(CompactTarget::from_header_difficulty_adjustment(block_first, current_header, params))
+    }
+}
+
+/// Returns true if `height` ends the difficulty period.
+fn is_retarget_height(height: BlockHeight, adjustment_interval: u32) -> bool {
+    height.to_u32() % adjustment_interval == 0
+}
+
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
     pub trait CompactTargetExt impl for CompactTarget {
@@ -495,7 +569,16 @@ internal_macros::define_extension_trait! {
             params: impl AsRef<Params>,
         ) -> Self {
             let timespan = i64::from(current.time.to_u32()) - i64::from(last_epoch_boundary.time.to_u32());
-            let bits = current.bits;
+
+            // Special difficulty rule for testnet4.
+            // Take target from start of epoch instead of end of epoch.
+            // See https://github.com/bitcoin/bitcoin/blob/4d7d5f6b79d4c11c47e7a828d81296918fd11d4d/src/pow.cpp#L67
+            let bits = if params.as_ref().enforce_bip94 {
+                last_epoch_boundary.bits
+            } else {
+                current.bits
+            };
+
             CompactTarget::from_next_work_required(bits, timespan, params)
         }
     }
@@ -1230,6 +1313,9 @@ pub mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use core::str::FromStr;
+
     #[cfg(feature = "std")]
     use crate::pow::test_utils::u128_to_work;
     use crate::pow::test_utils::{u32_to_target, u64_to_target};
@@ -2050,6 +2136,45 @@ mod tests {
     }
 
     #[test]
+    fn compact_target_from_adjustment_bip94() {
+        // Two different compact targets to use for epoch_start and current headers.
+        let bits_start = CompactTarget::from_consensus(0x1c00ffff); // Higher difficulty
+        let bits_end = CompactTarget::from_consensus(0x1d00ffff); // Minimum difficulty
+
+        // Same timestamps for both networks to keep timespan consistent.
+        let start_time = BlockTime::from_u32(1_000_000);
+        let end_time = BlockTime::from_u32(1_000_000 + 14 * 24 * 60 * 60); // +14 days. No adjustment.
+
+        let epoch_start = Header {
+            version: crate::block::Version::ONE,
+            prev_blockhash: BlockHash::from_byte_array([0; 32]),
+            merkle_root: crate::TxMerkleNode::from_byte_array([0; 32]),
+            time: start_time,
+            bits: bits_start,
+            nonce: 0,
+        };
+
+        let current = Header {
+            version: crate::block::Version::ONE,
+            prev_blockhash: BlockHash::from_byte_array([0; 32]),
+            merkle_root: crate::TxMerkleNode::from_byte_array([0; 32]),
+            time: end_time,
+            bits: bits_end,
+            nonce: 0,
+        };
+
+        // Test mainnet (enforce_bip94 = false): should use current.bits
+        let mainnet_result =
+            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, &Params::MAINNET);
+        assert_eq!(mainnet_result, bits_end);
+
+        // Test testnet4 (enforce_bip94 = true): should use epoch_start.bits
+        let testnet_result =
+            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, &Params::TESTNET4);
+        assert_eq!(testnet_result, bits_start);
+    }
+
+    #[test]
     fn target_from_compact() {
         // (nBits, target)
         let tests = [
@@ -2341,6 +2466,149 @@ mod tests {
         assert_eq!((U256::MAX >> (256 - 32)).to_f64(), 4294967295.0_f64);
         assert_eq!((U256::MAX >> (256 - 16)).to_f64(), 65535.0_f64);
         assert_eq!((U256::MAX >> (256 - 8)).to_f64(), 255.0_f64);
+    }
+
+    fn current_header() -> Header {
+        Header {
+            version: crate::block::Version::from_consensus(0x2431_a000),
+            prev_blockhash: BlockHash::from_str(
+                "0000000000000000000387dab5f3cf88824c983770f70f8a8eb7a9a240a257a5",
+            )
+            .unwrap(),
+            merkle_root: crate::TxMerkleNode::from_str(
+                "07bf4eafca7979d59b0ec2dc03131c08c1b9ea2ddb8b8945846fcb0ce92cdbe3",
+            )
+            .unwrap(),
+            time: 0x651b_c919.into(), // 2023-10-03 18:56:09 GMT +11 -> 1696359369 -> 651BC919
+            bits: CompactTarget::from_consensus(0x1704_ed7f),
+            nonce: 0xc637_a163,
+        }
+    }
+
+    // Test target calculated going from block 808416 to block 810432 on mainnet.
+    #[test]
+    fn next_target_mainnet() {
+        // Only time and bits are used.
+        let header_810431 = current_header();
+
+        // This closure should return the header for 808416 since 810431 - 2015 is 808416
+        fn fetch_header_808416(height: BlockHeight) -> Result<Header, core::convert::Infallible> {
+            assert_eq!(height, BlockHeight::from_u32(808_416)); // sanity check
+
+            // Header for 808416
+            Ok(Header {
+                version: crate::block::Version::TWO,
+                prev_blockhash: BlockHash::from_str(
+                    "000000000000000000027ecc78c2da1cc5c0b0496706baa7e4d7c80812c10bf3",
+                )
+                .unwrap(),
+                merkle_root: crate::TxMerkleNode::from_str(
+                    "b920d5b5ebef4e9d106072944e0729cea8bf6defc583a7d87063041a316a757b",
+                )
+                .unwrap(),
+                time: 0x6509_64b5.into(), // 2023-09-19 09:07:01 GMT -> 1695114421 -> 650964B5
+                bits: CompactTarget::from_consensus(0x1704_ed7f),
+                nonce: 0x82d6_8990,
+            })
+        }
+
+        let params = Params::new(crate::Network::Bitcoin);
+        let height = BlockHeight::from_u32(810_431);
+
+        let want = CompactTarget::from_consensus(0x1704_e90f); // Bits from block 810432.
+        let got = next_target_after(header_810431, height, &params, None, fetch_header_808416)
+            .expect("failed to calculate next target");
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn next_target_mainnet_same_target() {
+        let header_810430 = current_header();
+
+        // This closure should be unused if the target remains the same
+        fn fetch_header(_height: BlockHeight) -> Result<Header, core::num::ParseIntError> {
+            unreachable!("get_block_header_by_height should not be called");
+        }
+
+        let params = Params::new(crate::Network::Bitcoin);
+        let height = BlockHeight::from_u32(810_430);
+
+        // On mainnet, non-retargeting height should return the same block target
+        let want = header_810430.bits; // Bits from block 810430.
+        let got = next_target_after(header_810430, height, &params, None, fetch_header)
+            .expect("failed to calculate next target");
+
+        assert_eq!(got, want);
+    }
+
+    // Test that on testnet, if the new block's timestamp is more than 20 minutes after
+    // the current header's time, we return the pow_limit (minimum difficulty).
+    #[test]
+    fn next_target_testnet_min_difficulty_when_slow() {
+        let header = current_header();
+
+        fn fetch_header(_height: BlockHeight) -> Result<Header, core::convert::Infallible> {
+            unreachable!("fetcher should not be called for min difficulty case");
+        }
+
+        let params = Params::TESTNET3;
+        let height = BlockHeight::from_u32(100); // non-retarget height
+
+        // New block timestamp is more than 2 * 10 minutes = 20 minutes after current header
+        let new_block_timestamp = Some(header.time.to_u32() + 20 * 60 + 1);
+
+        // Should return pow_limit (minimum difficulty)
+        let want = params.max_attainable_target.to_compact_lossy();
+        let got = next_target_after(header, height, &params, new_block_timestamp, fetch_header)
+            .expect("failed to calculate next target");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn next_target_testnet_walk_back_for_real_target() {
+        let current_time: u32 = 1_700_000_000;
+
+        let params = Params::TESTNET3;
+        let pow_limit = params.max_attainable_target.to_compact_lossy();
+        let want = CompactTarget::from_consensus(0x1d00_ffff);
+
+        // Current header is at a retarget boundary (height divisible by 2016) with pow_limit bits
+        let adjustment_interval = u32::try_from(params.difficulty_adjustment_interval()).unwrap();
+        let current_height = BlockHeight::from_u32(adjustment_interval * 5);
+
+        let current_header = Header {
+            version: crate::block::Version::from_consensus(0x2000_0000),
+            prev_blockhash: BlockHash::from_byte_array([1u8; 32]),
+            merkle_root: crate::TxMerkleNode::from_byte_array([2u8; 32]),
+            time: current_time.into(),
+            bits: pow_limit, // Current header has pow_limit
+            nonce: 0,
+        };
+
+        // New block timestamp is within 20 minutes
+        let new_block_timestamp = Some(current_time + 10 * 60);
+
+        // The fetcher: heights at retarget boundaries with pow_limit should be walked back,
+        // until we find one that doesn't have pow_limit or isn't at a retarget boundary.
+        let fetch_header = move |height: BlockHeight| -> Result<Header, core::convert::Infallible> {
+            assert_eq!(height.to_u32(), 10_079);
+
+            Ok(Header {
+                version: crate::block::Version::from_consensus(0x2000_0000),
+                prev_blockhash: BlockHash::from_byte_array([1u8; 32]),
+                merkle_root: crate::TxMerkleNode::from_byte_array([2u8; 32]),
+                time: (current_time - 600).into(),
+                bits: want,
+                nonce: 0,
+            })
+        };
+
+        let got = next_target_after(current_header, current_height, &params, new_block_timestamp, fetch_header)
+            .expect("failed to calculate next target");
+
+        // Should return the real_target from the walked-back header
+        assert_eq!(got, want);
     }
 }
 
