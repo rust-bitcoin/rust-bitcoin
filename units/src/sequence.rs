@@ -454,15 +454,47 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn sequence_formatting() {
+    fn sequence_from() {
         let sequence = Sequence(0x7FFF_FFFF);
-        assert_eq!(format!("{:x}", sequence), "7fffffff");
-        assert_eq!(format!("{:X}", sequence), "7FFFFFFF");
 
         // Test From<Sequence> for u32
         let sequence_u32: u32 = sequence.into();
         assert_eq!(sequence_u32, 0x7FFF_FFFF);
-    }
+   }
+
+   
+   #[test]
+  fn sequence_format_traits() {
+    // zero
+    let v = Sequence(0);
+    assert_eq!(format!("{}", v), "0");
+    assert_eq!(format!("{:x}", v), "0");
+    assert_eq!(format!("{:X}", v), "0");
+    assert_eq!(format!("{:?}", v), "Sequence(0x00000000)");
+
+    // simple
+    let v = Sequence(1);
+    assert_eq!(format!("{}", v), "1");
+    assert_eq!(format!("{:x}", v), "1");
+    assert_eq!(format!("{:X}", v), "1");
+    assert_eq!(format!("{:?}", v), "Sequence(0x00000001)");
+
+    // leading zeros input
+    let v = Sequence(0x0000_0001);
+    assert_eq!(format!("{}", v), "1");
+    assert_eq!(format!("{:x}", v), "1");
+    assert_eq!(format!("{:X}", v), "1");
+    assert_eq!(format!("{:?}", v), "Sequence(0x00000001)");
+
+    // max example
+    let v = Sequence(0x7FFF_FFFF);
+    assert_eq!(format!("{}", v), "2147483647");
+    assert_eq!(format!("{:x}", v), "7fffffff");
+    assert_eq!(format!("{:X}", v), "7FFFFFFF");
+    assert_eq!(format!("{:?}", v), "Sequence(0x7fffffff)");
+}
+
+
 
     #[test]
     #[cfg(feature = "alloc")]
