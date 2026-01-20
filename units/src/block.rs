@@ -597,8 +597,13 @@ impl<'a> core::iter::Sum<&'a Self> for BlockMtpInterval {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
     #[cfg(feature = "encoding")]
-    use encoding::{Decoder as _, UnexpectedEofError};
+    use encoding::{Decodable as _, Decoder as _, UnexpectedEofError};
 
     use super::*;
     use crate::relative::{NumberOf512Seconds, TimeOverflowError};
@@ -812,4 +817,26 @@ mod tests {
     serde_roundtrip_test!(block_height_interval_serde_round_trip, BlockHeightInterval);
     serde_roundtrip_test!(block_mtp_serde_round_trip, BlockMtp);
     serde_roundtrip_test!(block_mtp_interval_serde_round_trip, BlockMtpInterval);
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // TooBigForRelativeHeightError - block interval too big for relative height
+        let big_interval = BlockHeightInterval::from_u32(u32::MAX);
+        let e = relative::NumberOfBlocks::try_from(big_interval).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        #[cfg(feature = "encoding")]
+        {
+            // BlockHeightDecoderError
+            let mut decoder = BlockHeight::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+        }
+    }
 }

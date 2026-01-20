@@ -483,3 +483,173 @@ impl std::error::Error for AmountDecoderError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
+    use core::str::FromStr;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
+    #[cfg(feature = "encoding")]
+    use encoding::{Decodable as _, Decoder as _};
+
+    #[cfg(feature = "alloc")]
+    use crate::{
+        amount::{Amount, Denomination, ParseDenominationError, ParseError}
+    };
+    #[cfg(feature = "alloc")]
+    use super::{ParseAmountError, ParseAmountErrorInner, ParseErrorInner};
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // A helper macro to break out a ParseAmountErrorInner type and assert display down the chain.
+        macro_rules! assert_amount_err {
+            ($e:expr, $enum_arm:ident, $err_msg:expr) => {
+                assert!(!$e.to_string().is_empty());
+                let ParseError(ParseErrorInner::Amount(err)) = $e
+                    else { panic!($err_msg) };
+                assert!(!err.to_string().is_empty());
+                #[cfg(feature = "std")]
+                assert!(err.source().is_some());
+
+                let ParseAmountError(ParseAmountErrorInner::$enum_arm(err)) = err
+                    else { panic!($err_msg) };
+                assert!(!err.to_string().is_empty());
+                // The inner-most types have no source
+                #[cfg(feature = "std")]
+                assert!(err.source().is_none());
+            };
+        }
+
+        // InputTooLargeError
+        // one char too long
+        let long_input = alloc::format!("{} BTC", "1".repeat(51));
+        let e = Amount::from_str(&long_input).unwrap_err();
+        assert_amount_err!(e, InputTooLarge, "error should be InputTooLargeError");
+        // n chars too long
+        let long_input = alloc::format!("{} BTC", "1".repeat(52));
+        let e = Amount::from_str(&long_input).unwrap_err();
+        assert_amount_err!(e, InputTooLarge, "error should be InputTooLargeError");
+
+        // InvalidCharacterError
+        // invalid character in amount string
+        let e = Amount::from_str("12x34 BTC").unwrap_err();
+        assert_amount_err!(e, InvalidCharacter, "error should be InvalidCharacterError");
+        // too many decimal points
+        let e = Amount::from_str("12.3.4 BTC").unwrap_err();
+        assert_amount_err!(e, InvalidCharacter, "error should be InvalidCharacterError");
+        // too many minus signs
+        let e = Amount::from_str("--1234 BTC").unwrap_err();
+        assert_amount_err!(e, InvalidCharacter, "error should be InvalidCharacterError");
+
+        // MissingDigitsError
+        // no numeric value
+        let e = Amount::from_str("BTC").unwrap_err();
+        assert_amount_err!(e, MissingDigits, "error should be MissingDigitsError");
+        // Only a minus sign
+        let e = Amount::from_str("- BTC").unwrap_err();
+        assert_amount_err!(e, MissingDigits, "error should be MissingDigitsError");
+
+        // OutOfRangeError
+        // amount too large
+        let e = Amount::from_str("21000001 BTC").unwrap_err();
+        assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
+        // less than 0
+        let e = Amount::from_str("-10 BTC").unwrap_err();
+        assert_amount_err!(e, OutOfRange, "error should be OutOfRangeError");
+
+        // TooPreciseError - sub-satoshi precision
+        let e = Amount::from_str("0.000000001 BTC").unwrap_err();
+        assert_amount_err!(e, TooPrecise, "error should be TooPreciseError");
+
+        // BadPositionError
+        // underscore in bad position
+        let e = Amount::from_str("_123 BTC").unwrap_err();
+        assert_amount_err!(e, BadPosition, "error should be BadPositionError");
+        // underscore in bad position (negative)
+        let e = Amount::from_str("-_123 BTC").unwrap_err();
+        assert_amount_err!(e, BadPosition, "error should be BadPositionError");
+        // consecutive underscores
+        let e = Amount::from_str("1__23 BTC").unwrap_err();
+        assert_amount_err!(e, BadPosition, "error should be BadPositionError");
+
+        // ParseAmountError - parent type for the errors above
+        let e = Amount::from_str_in("invalid", Denomination::Bitcoin).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // UnknownDenominationError - amount with unknown denomination string
+        let e = Denomination::from_str("XYZ").unwrap_err();
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let ParseDenominationError::Unknown(e) = e
+            else { panic!("error should be UnknownDenominationError") };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // PossiblyConfusingDenominationError - confusing denomination like "MBTC"
+        let e = Denomination::from_str("MBTC").unwrap_err();
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let ParseDenominationError::PossiblyConfusing(e) = e
+            else { panic!("error should be PossiblyConfusingDenominationError") };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // ParseDenominationError - parent error for the above *DenominationError types
+        // Unknown type
+        let e = Denomination::from_str("UNKNOWN").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // Possibly confusing type
+        let e = Denomination::from_str("MBTC").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // ParseError - parent type for all of the above
+        // Amount type
+        let e = "invalid BTC".parse::<Amount>().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // bad denomination type
+        let e = "123 GBTC".parse::<Amount>().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // missing denomination type
+        let e = "123".parse::<Amount>().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        #[cfg(feature = "encoding")]
+        {
+            // AmountDecoderError
+            // EOF type
+            let mut decoder = Amount::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+
+            // Out of range type
+            let mut decoder = Amount::decoder();
+            let _ = decoder.push_bytes(&mut (21_000_001 * 100_000_000_u64).to_le_bytes().as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+        }
+    }
+}
