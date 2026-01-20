@@ -62,7 +62,7 @@ pub use units::{
     parse_int,
     result::{self, NumOpResult},
     sequence::{self, Sequence},
-    time::{self, BlockTime, BlockTimeDecoder, BlockTimeDecoderError},
+    time::{self, BlockTime},
     weight::{self, Weight},
 };
 

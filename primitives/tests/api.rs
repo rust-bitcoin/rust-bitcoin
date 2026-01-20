@@ -213,8 +213,7 @@ fn api_can_use_units_modules_from_crate_root() {
 fn api_can_use_units_types_from_crate_root() {
     use bitcoin_primitives::{
         Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime,
-        BlockTimeDecoder, BlockTimeDecoderError, FeeRate, NumOpResult, Sequence, SignedAmount,
-        Weight,
+        FeeRate, NumOpResult, Sequence, SignedAmount, Weight,
     };
 }
 

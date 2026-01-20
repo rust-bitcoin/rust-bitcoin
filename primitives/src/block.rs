@@ -29,10 +29,12 @@ use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
+use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
+#[cfg(feature = "alloc")]
 use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
-use crate::{BlockTimeDecoder, BlockTimeDecoderError, Transaction, WitnessMerkleNode};
+use crate::{Transaction, WitnessMerkleNode};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
