@@ -391,6 +391,10 @@ impl<'a> Arbitrary<'a> for Sequence {
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    use alloc::string::ToString;
+    #[cfg(all(feature = "encoding", feature = "std"))]
+    use std::error::Error;
 
     #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
@@ -539,5 +543,20 @@ mod tests {
 
         let error = decoder.end().unwrap_err();
         assert!(matches!(error, SequenceDecoderError(UnexpectedEofError { .. })));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder_error_display_is_non_empty() {
+        #[cfg(feature = "encoding")]
+        {
+            // SequenceDecoderError
+            let mut decoder = Sequence::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+        }
     }
 }
