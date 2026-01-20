@@ -526,8 +526,10 @@ impl std::error::Error for ContainsPrefixError {}
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
     #[cfg(feature = "std")]
-    use std::panic;
+    use std::{error::Error, panic};
 
     use super::*;
 
@@ -690,5 +692,49 @@ mod tests {
     fn parse_u128_from_hex_unchecked_errors_on_overflow() {
         assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff").is_ok());
         assert!(hex_u128_unchecked("deadbeefabcdffffdeadbeefabcdffff1").is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // ParseIntError - parse invalid integer
+        let e = int_from_str::<u32>("not_a_number").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // PrefixedHexError
+        // missing prefix type
+        let e = hex_u32_prefixed("abc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let PrefixedHexError(PrefixedHexErrorInner::MissingPrefix(e)) = e
+            else { panic!("should be a MissingPrefixError") };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+        // bad number type
+        let e = hex_u32_prefixed("0xgabc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // UnprefixedHexError
+        // has prefix type
+        let e = hex_u32_unprefixed("0xabc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        let UnprefixedHexError(UnprefixedHexErrorInner::ContainsPrefix(e)) = e
+            else { panic!("should be a ContainsPrefixError") };
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+        // bad number type
+        let e = hex_u32_unprefixed("gabc").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
     }
 }

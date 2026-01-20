@@ -286,17 +286,80 @@ impl fmt::Display for LockTimeUnit {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::{format, string::ToString};
+    #[cfg(feature = "alloc")]
+    use core::str::FromStr;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    use encoding::{Decodable as _, Decoder as _};
+
+    #[cfg(feature = "alloc")]
+    use super::LockTimeUnit;
+    #[cfg(feature = "alloc")]
+    use crate::{
+        BlockHeight,
+        locktime::absolute::{Height, LockTime, MedianTimePast}
+    };
+
+
     #[test]
     #[cfg(feature = "alloc")]
     fn locktime_unit_display() {
-        use alloc::format;
-
-        use super::LockTimeUnit;
-
         let blocks = LockTimeUnit::Blocks;
         let seconds = LockTimeUnit::Seconds;
 
         assert_eq!(format!("{}", blocks), "expected lock-by-height (must be < 500000000)");
         assert_eq!(format!("{}", seconds), "expected lock-by-time (must be >= 500000000)");
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // ConversionError - converting BlockHeight to absolute::Height
+        let too_big = BlockHeight::from_u32(u32::MAX);
+        let e = Height::try_from(too_big).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // IncompatibleHeightError - satisfy time lock with height
+        let time_lock = LockTime::from_mtp(MedianTimePast::MIN.to_u32()).unwrap();
+        let e = time_lock.is_satisfied_by_height(Height::MIN).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // IncompatibleTimeError - satisfy height lock with time
+        let height_lock = LockTime::from_height(Height::MIN.to_u32()).unwrap();
+        let e = height_lock.is_satisfied_by_time(MedianTimePast::MIN).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // ParseHeightError - parse invalid height
+        let e = Height::from_str("invalid").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // ParseTimeError - parse invalid time
+        let e = MedianTimePast::from_str("invalid").unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        #[cfg(feature = "encoding")]
+        {
+            // LockTimeDecoderError
+            let mut decoder = LockTime::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+        }
     }
 }
