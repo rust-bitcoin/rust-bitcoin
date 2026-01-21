@@ -71,11 +71,11 @@ impl XOnlyPublicKey {
 
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
-    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.0.serialize() }
+    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.to_inner().serialize() }
 
     /// Converts this x-only public key to a full public key given the parity.
     #[inline]
-    pub fn public_key(&self, parity: Parity) -> PublicKey { self.0.public_key(parity).into() }
+    pub fn public_key(&self, parity: Parity) -> PublicKey { self.to_inner().public_key(parity).into() }
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
     ///
@@ -88,7 +88,7 @@ impl XOnlyPublicKey {
         tweaked_parity: Parity,
         tweak: secp256k1::Scalar,
     ) -> bool {
-        self.0.tweak_add_check(&tweaked_key.0, tweaked_parity, tweak)
+        self.to_inner().tweak_add_check(&tweaked_key.to_inner(), tweaked_parity, tweak)
     }
 
     /// Tweaks an [`XOnlyPublicKey`] by adding the generator multiplied with the given tweak to it.
@@ -107,8 +107,8 @@ impl XOnlyPublicKey {
         &self,
         tweak: &secp256k1::Scalar,
     ) -> Result<(Self, Parity), TweakXOnlyPublicKeyError> {
-        match self.0.add_tweak(tweak) {
-            Ok((xonly, parity)) => Ok((Self(xonly), parity)),
+        match self.to_inner().add_tweak(tweak) {
+            Ok((xonly, parity)) => Ok((Self::new(xonly), parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
                 Err(TweakXOnlyPublicKeyError::ParityError),
@@ -135,13 +135,13 @@ impl From<secp256k1::PublicKey> for XOnlyPublicKey {
 }
 
 impl fmt::LowerHex for XOnlyPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.to_inner(), f) }
 }
 // Allocate for serialized size
 impl_to_hex_from_lower_hex!(XOnlyPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SIZE * 2);
 
 impl fmt::Display for XOnlyPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.to_inner(), f) }
 }
 
 /// A Bitcoin secret and public key pair.
@@ -533,11 +533,11 @@ impl CompressedPublicKey {
     ///
     /// Note that this can be used as a sort key to get BIP-0067-compliant sorting.
     /// That's why this type doesn't have the `to_sort_key` method - it would duplicate this one.
-    pub fn to_bytes(self) -> [u8; 33] { self.0.serialize() }
+    pub fn to_bytes(self) -> [u8; 33] { self.to_inner().serialize() }
 
     /// Deserializes a public key from a slice.
     pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {
-        secp256k1::PublicKey::from_slice(data).map(CompressedPublicKey)
+        secp256k1::PublicKey::from_slice(data).map(Self::from_secp)
     }
 
     /// Computes the public key as supposed to be used with this secret.
@@ -551,7 +551,7 @@ impl CompressedPublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp256k1::ecdsa::verify(&sig.signature, msg, &self.0)?)
+        Ok(secp256k1::ecdsa::verify(&sig.signature, msg, &self.to_inner())?)
     }
 }
 
@@ -580,7 +580,7 @@ impl TryFrom<PublicKey> for CompressedPublicKey {
 
     fn try_from(value: PublicKey) -> Result<Self, Self::Error> {
         if value.compressed {
-            Ok(Self(value.inner))
+            Ok(Self::from_secp(value.inner))
         } else {
             Err(UncompressedPublicKeyError)
         }
@@ -588,11 +588,11 @@ impl TryFrom<PublicKey> for CompressedPublicKey {
 }
 
 impl From<CompressedPublicKey> for PublicKey {
-    fn from(value: CompressedPublicKey) -> Self { Self::new(value.0) }
+    fn from(value: CompressedPublicKey) -> Self { Self::new(value.to_inner()) }
 }
 
 impl From<CompressedPublicKey> for XOnlyPublicKey {
-    fn from(pk: CompressedPublicKey) -> Self { pk.0.into() }
+    fn from(pk: CompressedPublicKey) -> Self { pk.to_inner().into() }
 }
 
 impl From<CompressedPublicKey> for PubkeyHash {
@@ -936,13 +936,13 @@ pub type UntweakedPublicKey = XOnlyPublicKey;
 pub struct TweakedPublicKey(XOnlyPublicKey);
 
 impl fmt::LowerHex for TweakedPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_x_only_public_key(), f) }
 }
 // Allocate for serialized size
 impl_to_hex_from_lower_hex!(TweakedPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SIZE * 2);
 
 impl fmt::Display for TweakedPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_x_only_public_key(), f) }
 }
 
 /// Untweaked BIP-0340 key pair.
@@ -1019,10 +1019,10 @@ impl TapTweak for UntweakedPublicKey {
         let (output_key, parity) = self.add_tweak(&tweak).expect("Tap tweak failed");
 
         debug_assert!(self.tweak_add_check(&output_key, parity, tweak));
-        (TweakedPublicKey(output_key), parity)
+        (TweakedPublicKey::dangerous_assume_tweaked(output_key), parity)
     }
 
-    fn dangerous_assume_tweaked(self) -> TweakedPublicKey { TweakedPublicKey(self) }
+    fn dangerous_assume_tweaked(self) -> TweakedPublicKey { TweakedPublicKey::dangerous_assume_tweaked(self) }
 }
 
 impl TapTweak for UntweakedKeypair {
@@ -1043,10 +1043,10 @@ impl TapTweak for UntweakedKeypair {
         let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
         let tweaked = self.to_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
-        TweakedKeypair(Self::from(tweaked))
+        TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
     }
 
-    fn dangerous_assume_tweaked(self) -> TweakedKeypair { TweakedKeypair(self) }
+    fn dangerous_assume_tweaked(self) -> TweakedKeypair { TweakedKeypair::dangerous_assume_tweaked(self) }
 }
 
 impl TweakedPublicKey {
@@ -1069,7 +1069,7 @@ impl TweakedPublicKey {
     #[inline]
     #[doc(hidden)]
     #[deprecated(since = "0.32.6", note = "use to_x_only_public_key() instead")]
-    pub fn to_inner(self) -> XOnlyPublicKey { self.0 }
+    pub fn to_inner(self) -> XOnlyPublicKey { self.to_x_only_public_key() }
 
     /// Returns the underlying x-only public key.
     #[inline]
@@ -1081,7 +1081,7 @@ impl TweakedPublicKey {
 
     /// Serializes the key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
-    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.0.serialize() }
+    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.as_x_only_public_key().serialize() }
 }
 
 impl TweakedKeypair {
@@ -1097,7 +1097,7 @@ impl TweakedKeypair {
     #[inline]
     #[doc(hidden)]
     #[deprecated(since = "0.32.6", note = "use to_keypair() instead")]
-    pub fn to_inner(self) -> Keypair { self.0 }
+    pub fn to_inner(self) -> Keypair { self.to_keypair() }
 
     /// Returns the underlying key pair.
     #[inline]
@@ -1110,14 +1110,14 @@ impl TweakedKeypair {
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
-        let (xonly, parity) = self.to_keypair().to_x_only_public_key();
-        (TweakedPublicKey(xonly), parity)
+        let (xonly, parity) = self.as_keypair().to_x_only_public_key();
+        (TweakedPublicKey::dangerous_assume_tweaked(xonly), parity)
     }
 }
 
 impl From<TweakedPublicKey> for XOnlyPublicKey {
     #[inline]
-    fn from(pair: TweakedPublicKey) -> Self { pair.0 }
+    fn from(pair: TweakedPublicKey) -> Self { pair.to_x_only_public_key() }
 }
 
 impl From<TweakedKeypair> for Keypair {
