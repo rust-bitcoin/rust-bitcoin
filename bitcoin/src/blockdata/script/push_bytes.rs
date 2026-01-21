@@ -471,7 +471,7 @@ impl PushBytesErrorReport for core::convert::Infallible {
     fn input_len(&self) -> usize { match *self {} }
 }
 
-#[doc(inline)]
+#[doc(no_inline)]
 pub use error::PushBytesError;
 
 #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
