@@ -11,7 +11,7 @@ fn main() {
     let private_key = PrivateKey::new(secret_key, Network::Bitcoin);
 
     // Create a compressed Bitcoin public key from the secp256k1 public key.
-    let public_key = CompressedPublicKey(public_key);
+    let public_key = CompressedPublicKey::from_secp(public_key);
 
     // Create a Bitcoin P2WPKH address.
     let address = Address::p2wpkh(public_key, Network::Bitcoin);
