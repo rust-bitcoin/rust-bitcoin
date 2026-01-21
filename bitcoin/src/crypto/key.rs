@@ -28,17 +28,158 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 pub use secp256k1::{constants, Parity, Verification};
 #[cfg(all(feature = "rand", feature = "std"))]
 pub use secp256k1::rand;
-pub use serialized_x_only::SerializedXOnlyPublicKey;
+pub use encapsulate::{
+    CompressedPublicKey, Keypair, SerializedXOnlyPublicKey, TweakedKeypair,
+    TweakedPublicKey, XOnlyPublicKey,
+};
 
-/// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct XOnlyPublicKey(secp256k1::XOnlyPublicKey);
+/// Encapsulation module to provide a clear barrier for construction/destruction of types.
+mod encapsulate {
+    /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    pub struct XOnlyPublicKey(secp256k1::XOnlyPublicKey);
+
+    impl XOnlyPublicKey {
+        /// Constructs a new x-only public key from the provided generic secp256k1 x-only public key.
+        pub fn new(key: impl Into<secp256k1::XOnlyPublicKey>) -> Self { Self(key.into()) }
+
+        /// Returns the inner secp256k1 x-only public key.
+        #[inline]
+        pub fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
+
+        /// Returns the inner secp256k1 x-only public key.
+        #[inline]
+        #[deprecated(since = "TBD", note = "use `to_inner()` instead")]
+        pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.to_inner() }
+    }
+
+    /// A Bitcoin secret and public key pair.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    pub struct Keypair(secp256k1::Keypair);
+
+    impl Keypair {
+        /// Constructs a keypair from a provided secp256k1 keypair.
+        #[inline]
+        pub fn from_secp(keypair: impl Into<secp256k1::Keypair>) -> Self { Self(keypair.into()) }
+
+        /// Returns the inner [`secp256k1::Keypair`].
+        #[inline]
+        pub fn to_inner(self) -> secp256k1::Keypair { self.0 }
+    }
+
+    /// An always-compressed Bitcoin ECDSA public key.
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct CompressedPublicKey(secp256k1::PublicKey);
+
+    impl CompressedPublicKey {
+        /// Constructs a new compressed public key from the provided secp public key.
+        #[inline]
+        pub fn from_secp(inner: secp256k1::PublicKey) -> Self { Self(inner) }
+
+        /// Returns the inner [`secp256k1::PublicKey`].
+        #[inline]
+        pub fn to_inner(self) -> secp256k1::PublicKey { self.0 }
+    }
+
+    /// Tweaked BIP-0340 X-coord-only public key.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
+    pub struct TweakedPublicKey(XOnlyPublicKey);
+
+    impl TweakedPublicKey {
+        /// Returns the [`TweakedPublicKey`] for `keypair`.
+        #[inline]
+        pub fn from_keypair(keypair: TweakedKeypair) -> Self {
+            let (xonly, _parity) = keypair.to_keypair().to_x_only_public_key();
+            Self(xonly)
+        }
+
+        /// Constructs a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
+        /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
+        ///
+        /// This method is dangerous and can lead to loss of funds if used incorrectly.
+        /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
+        ///
+        /// [`UntweakedPublicKey`]: super::UntweakedPublicKey
+        #[inline]
+        pub fn dangerous_assume_tweaked(key: XOnlyPublicKey) -> Self { Self(key) }
+
+        /// Returns the underlying x-only public key.
+        #[inline]
+        pub fn to_x_only_public_key(self) -> XOnlyPublicKey { self.0 }
+
+        /// Returns a reference to the underlying x-only public key.
+        #[inline]
+        pub fn as_x_only_public_key(&self) -> &XOnlyPublicKey { &self.0 }
+    }
+
+    /// Tweaked BIP-0340 key pair.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(all(feature = "rand", feature = "std"))] {
+    /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
+    /// # use bitcoin::secp256k1::rand;
+    /// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::generate(&mut rand::rng()));
+    /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
+    /// let (_pk, _parity) = keypair.public_parts();
+    /// let _pk = TweakedPublicKey::from_keypair(keypair);
+    /// let _pk = TweakedPublicKey::from(keypair);
+    /// # }
+    /// ```
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
+    pub struct TweakedKeypair(Keypair);
+
+    impl TweakedKeypair {
+        /// Constructs a new [`TweakedKeypair`] from a [`Keypair`]. No tweak is applied, consider
+        /// calling `tap_tweak` on an [`UntweakedKeypair`](super::UntweakedKeypair) instead of using this constructor.
+        ///
+        /// This method is dangerous and can lead to loss of funds if used incorrectly.
+        /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
+        #[inline]
+        pub fn dangerous_assume_tweaked(pair: Keypair) -> Self { Self(pair) }
+
+        /// Returns the underlying key pair.
+        #[inline]
+        pub fn to_keypair(self) -> Keypair { self.0 }
+
+        /// Returns a reference to the underlying key pair.
+        #[inline]
+        pub fn as_keypair(&self) -> &Keypair { &self.0 }
+    }
+
+    internals::transparent_newtype! {
+        /// An array of bytes that's semantically an x-only public but was **not** validated.
+        ///
+        /// This can be useful when validation is not desired but semantics of the bytes should be
+        /// preserved. The validation can still happen using `to_validated()` method.
+        #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+        pub struct SerializedXOnlyPublicKey([u8; 32]);
+
+        impl SerializedXOnlyPublicKey {
+            pub(crate) fn from_bytes_ref(bytes: &_) -> Self;
+        }
+    }
+
+    impl SerializedXOnlyPublicKey {
+        /// Marks the supplied bytes as a serialized x-only public key.
+        pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self(bytes) }
+
+        /// Returns the raw bytes.
+        pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+        /// Returns a reference to the raw bytes.
+        pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+    }
+}
 
 impl XOnlyPublicKey {
-    /// Constructs a new x-only public key from the provided generic secp256k1 x-only public key.
-    pub fn new(key: impl Into<secp256k1::XOnlyPublicKey>) -> Self { Self(key.into()) }
-
     /// Constructs an x-only public key from a keypair.
     ///
     /// Returns the x-only public key and the parity of the full public key.
@@ -59,15 +200,6 @@ impl XOnlyPublicKey {
             .map(Self::new)
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
-
-    /// Returns the inner secp256k1 x-only public key.
-    #[inline]
-    pub fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
-
-    /// Returns the inner secp256k1 x-only public key.
-    #[inline]
-    #[deprecated(since = "TBD", note = "use `to_inner()` instead")]
-    pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.to_inner() }
 
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
@@ -144,20 +276,7 @@ impl fmt::Display for XOnlyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.to_inner(), f) }
 }
 
-/// A Bitcoin secret and public key pair.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Keypair(secp256k1::Keypair);
-
 impl Keypair {
-    /// Constructs a keypair from a provided secp256k1 keypair.
-    #[inline]
-    pub fn from_secp(keypair: impl Into<secp256k1::Keypair>) -> Self { Self(keypair.into()) }
-
-    /// Returns the inner [`secp256k1::Keypair`].
-    #[inline]
-    pub fn to_inner(self) -> secp256k1::Keypair { self.0 }
-
     /// Generates a new random key pair.
     ///
     /// # Examples
@@ -475,19 +594,7 @@ impl From<&PublicKey> for PubkeyHash {
     fn from(key: &PublicKey) -> Self { key.pubkey_hash() }
 }
 
-/// An always-compressed Bitcoin ECDSA public key.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct CompressedPublicKey(secp256k1::PublicKey);
-
 impl CompressedPublicKey {
-    /// Constructs a new compressed public key from the provided secp public key.
-    #[inline]
-    pub fn from_secp(inner: secp256k1::PublicKey) -> Self { Self(inner) }
-
-    /// Returns the inner [`secp256k1::PublicKey`].
-    #[inline]
-    pub fn to_inner(self) -> secp256k1::PublicKey { self.0 }
-
     /// Returns bitcoin 160-bit hash of the public key.
     pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.to_bytes())) }
 
@@ -931,12 +1038,6 @@ impl<'de> serde::Deserialize<'de> for CompressedPublicKey {
 /// Untweaked BIP-0340 X-coord-only public key.
 pub type UntweakedPublicKey = XOnlyPublicKey;
 
-/// Tweaked BIP-0340 X-coord-only public key.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-pub struct TweakedPublicKey(XOnlyPublicKey);
-
 impl fmt::LowerHex for TweakedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_x_only_public_key(), f) }
 }
@@ -949,26 +1050,6 @@ impl fmt::Display for TweakedPublicKey {
 
 /// Untweaked BIP-0340 key pair.
 pub type UntweakedKeypair = Keypair;
-
-/// Tweaked BIP-0340 key pair.
-///
-/// # Examples
-///
-/// ```
-/// # #[cfg(all(feature = "rand", feature = "std"))] {
-/// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
-/// # use bitcoin::secp256k1::rand;
-/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::generate(&mut rand::rng()));
-/// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
-/// let (_pk, _parity) = keypair.public_parts();
-/// let _pk = TweakedPublicKey::from_keypair(keypair);
-/// let _pk = TweakedPublicKey::from(keypair);
-/// # }
-/// ```
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-pub struct TweakedKeypair(Keypair);
 
 /// A trait for tweaking BIP-0340 key types (x-only public keys and key pairs).
 pub trait TapTweak {
@@ -1052,34 +1133,11 @@ impl TapTweak for UntweakedKeypair {
 }
 
 impl TweakedPublicKey {
-    /// Returns the [`TweakedPublicKey`] for `keypair`.
-    #[inline]
-    pub fn from_keypair(keypair: TweakedKeypair) -> Self {
-        let (xonly, _parity) = keypair.to_keypair().to_x_only_public_key();
-        Self(xonly)
-    }
-
-    /// Constructs a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
-    /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
-    ///
-    /// This method is dangerous and can lead to loss of funds if used incorrectly.
-    /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
-    #[inline]
-    pub fn dangerous_assume_tweaked(key: XOnlyPublicKey) -> Self { Self(key) }
-
     /// Returns the underlying public key.
     #[inline]
     #[doc(hidden)]
     #[deprecated(since = "0.32.6", note = "use to_x_only_public_key() instead")]
     pub fn to_inner(self) -> XOnlyPublicKey { self.to_x_only_public_key() }
-
-    /// Returns the underlying x-only public key.
-    #[inline]
-    pub fn to_x_only_public_key(self) -> XOnlyPublicKey { self.0 }
-
-    /// Returns a reference to the underlying x-only public key.
-    #[inline]
-    pub fn as_x_only_public_key(&self) -> &XOnlyPublicKey { &self.0 }
 
     /// Serializes the key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
@@ -1087,27 +1145,11 @@ impl TweakedPublicKey {
 }
 
 impl TweakedKeypair {
-    /// Constructs a new [`TweakedKeypair`] from a [`Keypair`]. No tweak is applied, consider
-    /// calling `tap_tweak` on an [`UntweakedKeypair`] instead of using this constructor.
-    ///
-    /// This method is dangerous and can lead to loss of funds if used incorrectly.
-    /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
-    #[inline]
-    pub fn dangerous_assume_tweaked(pair: Keypair) -> Self { Self(pair) }
-
     /// Returns the underlying key pair.
     #[inline]
     #[doc(hidden)]
     #[deprecated(since = "0.32.6", note = "use to_keypair() instead")]
     pub fn to_inner(self) -> Keypair { self.to_keypair() }
-
-    /// Returns the underlying key pair.
-    #[inline]
-    pub fn to_keypair(self) -> Keypair { self.0 }
-
-    /// Returns a reference to the underlying key pair.
-    #[inline]
-    pub fn as_keypair(&self) -> &Keypair { &self.0 }
 
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
@@ -1419,32 +1461,6 @@ impl fmt::Display for InvalidWifCompressionFlagError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidWifCompressionFlagError {}
-
-mod serialized_x_only {
-    internals::transparent_newtype! {
-        /// An array of bytes that's semantically an x-only public but was **not** validated.
-        ///
-        /// This can be useful when validation is not desired but semantics of the bytes should be
-        /// preserved. The validation can still happen using `to_validated()` method.
-        #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-        pub struct SerializedXOnlyPublicKey([u8; 32]);
-
-        impl SerializedXOnlyPublicKey {
-            pub(crate) fn from_bytes_ref(bytes: &_) -> Self;
-        }
-    }
-
-    impl SerializedXOnlyPublicKey {
-        /// Marks the supplied bytes as a serialized x-only public key.
-        pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self(bytes) }
-
-        /// Returns the raw bytes.
-        pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
-
-        /// Returns a reference to the raw bytes.
-        pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
-    }
-}
 
 impl SerializedXOnlyPublicKey {
     /// Returns `XOnlyPublicKey` if the bytes are valid.
