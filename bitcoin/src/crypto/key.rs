@@ -62,7 +62,12 @@ impl XOnlyPublicKey {
 
     /// Returns the inner secp256k1 x-only public key.
     #[inline]
-    pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
+    pub fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
+
+    /// Returns the inner secp256k1 x-only public key.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `to_inner()` instead")]
+    pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.to_inner() }
 
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
@@ -1917,7 +1922,7 @@ mod tests {
     }
 
     #[test]
-    fn xonly_pubkey_into_inner() {
+    fn xonly_pubkey_to_inner() {
         let key_bytes = &<[u8; 32]>::from_hex(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
         )
@@ -1925,8 +1930,8 @@ mod tests {
         let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(*key_bytes)
             .expect("Failed to create a secp256k1 x-only public key from a byte array");
         let btc_pubkey = XOnlyPublicKey::new(inner_key);
-        // Confirm that the into_inner() returns the same data that was initially wrapped
-        assert_eq!(inner_key, btc_pubkey.into_inner());
+        // Confirm that the to_inner() returns the same data that was initially wrapped
+        assert_eq!(inner_key, btc_pubkey.to_inner());
     }
 
     #[test]
