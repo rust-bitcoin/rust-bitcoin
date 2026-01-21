@@ -206,7 +206,7 @@ impl WatchOnly {
         let fingerprint = self.master_fingerprint;
         let path = input_derivation_path()?;
         let mut map = BTreeMap::new();
-        map.insert(pk.0, (fingerprint, path));
+        map.insert(pk.to_inner(), (fingerprint, path));
         input.bip32_derivation = map;
 
         let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
