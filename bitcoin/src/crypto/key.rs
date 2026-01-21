@@ -468,9 +468,17 @@ impl From<&PublicKey> for PubkeyHash {
 
 /// An always-compressed Bitcoin ECDSA public key.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct CompressedPublicKey(pub secp256k1::PublicKey);
+pub struct CompressedPublicKey(secp256k1::PublicKey);
 
 impl CompressedPublicKey {
+    /// Constructs a new compressed public key from the provided secp public key.
+    #[inline]
+    pub fn from_secp(inner: secp256k1::PublicKey) -> Self { Self(inner) }
+
+    /// Returns the inner [`secp256k1::PublicKey`].
+    #[inline]
+    pub fn to_inner(self) -> secp256k1::PublicKey { self.0 }
+
     /// Returns bitcoin 160-bit hash of the public key.
     pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.to_bytes())) }
 
