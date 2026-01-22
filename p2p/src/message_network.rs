@@ -417,6 +417,74 @@ impl Alert {
     pub fn is_final_alert(&self) -> bool { self.0.eq(&Self::FINAL_ALERT) }
 }
 
+encoding::encoder_newtype! {
+    /// The encoder type for an [`Alert`] message.
+    pub struct AlertEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+}
+
+impl encoding::Encodable for Alert {
+    type Encoder<'e> = AlertEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AlertEncoder(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.0.len()),
+                BytesEncoder::without_length_prefix(&self.0)
+            )
+        )
+    }
+}
+
+type AlertInnerDecoder = ByteVecDecoder;
+
+/// The decoder for the [`Alert`] message.
+pub struct AlertDecoder(AlertInnerDecoder);
+
+impl encoding::Decoder for AlertDecoder {
+    type Output = Alert;
+    type Error = AlertDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AlertDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        Ok(Alert(self.0.end().map_err(AlertDecoderError)?))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Alert {
+    type Decoder = AlertDecoder;
+
+    fn decoder() -> Self::Decoder {
+        AlertDecoder(AlertInnerDecoder::new())
+    }
+}
+
+/// An error decoding a [`Alert`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AlertDecoderError(<AlertInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for AlertDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for AlertDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "alert error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AlertDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_vec_wrapper!(Alert, Vec<u8>);
 
 #[cfg(feature = "arbitrary")]
