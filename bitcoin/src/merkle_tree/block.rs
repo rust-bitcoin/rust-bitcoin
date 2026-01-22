@@ -531,9 +531,10 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
+    use core::cmp;
+
     use hex::{DisplayHex, FromHex};
     use hex_lit::hex;
-    use core::cmp;
 
     use super::*;
     use crate::block::Unchecked;
@@ -552,11 +553,7 @@ mod tests {
         const P: usize = 1039;
         const Q: usize = 677;
 
-        const fn new(seed: usize) -> Self {
-            Self {
-                state: seed
-            }
-        }
+        const fn new(seed: usize) -> Self { Self { state: seed } }
 
         #[inline]
         fn next_usize(&mut self) -> usize {
@@ -565,14 +562,10 @@ mod tests {
         }
 
         #[inline]
-        fn next_in_range(&mut self, max: usize) -> usize {
-            self.next_usize() % max
-        }
+        fn next_in_range(&mut self, max: usize) -> usize { self.next_usize() % max }
 
         #[inline]
-        fn next_u8(&mut self) -> u8 {
-            self.next_usize().to_le_bytes()[0]
-        }
+        fn next_u8(&mut self) -> u8 { self.next_usize().to_le_bytes()[0] }
     }
 
     macro_rules! pmt_tests {

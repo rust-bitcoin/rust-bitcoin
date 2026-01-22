@@ -2508,54 +2508,49 @@ mod tests {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             inputs: vec![],
-            outputs: vec![
-                TxOut {
-                    amount: Amount::default(),
-                    script_pubkey: ScriptPubKeyBuf::new()
-                }
-            ],
+            outputs: vec![TxOut {
+                amount: Amount::default(),
+                script_pubkey: ScriptPubKeyBuf::new(),
+            }],
         };
-        
+
         let unsigned_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            inputs: vec![
-                TxIn {
-                    previous_output: OutPoint {
-                        txid: prev_tx.compute_txid(),
-                        vout: 5, // This doesn't have a corresponding output 
-                    },
-                    script_sig: ScriptSigBuf::new(),
-                    sequence: Sequence::default(),
-                    witness: Witness::new(),
-                }
-            ],
-            outputs: vec![
-                TxOut {
-                    amount: Amount::default(),
-                    script_pubkey: ScriptPubKeyBuf::new(),
-                }
-            ],
+            inputs: vec![TxIn {
+                previous_output: OutPoint {
+                    txid: prev_tx.compute_txid(),
+                    vout: 5, // This doesn't have a corresponding output
+                },
+                script_sig: ScriptSigBuf::new(),
+                sequence: Sequence::default(),
+                witness: Witness::new(),
+            }],
+            outputs: vec![TxOut {
+                amount: Amount::default(),
+                script_pubkey: ScriptPubKeyBuf::new(),
+            }],
         };
-        
+
         let psbt = Psbt {
             unsigned_tx,
             version: 0,
-            xpub: Default::default(), 
+            xpub: Default::default(),
             proprietary: Default::default(),
             unknown: Default::default(),
-            inputs: vec![
-                Input {
-                    non_witness_utxo: Some(prev_tx),  
-                    witness_utxo: None,  
-                    ..Default::default()
-                }
-            ],
+            inputs: vec![Input {
+                non_witness_utxo: Some(prev_tx),
+                witness_utxo: None,
+                ..Default::default()
+            }],
             outputs: vec![Output::default()],
         };
-        
+
         assert!(matches!(psbt.fee(), Err(Error::PsbtUtxoOutOfbounds)));
-        assert!(matches!(psbt.internal_extract_tx_with_fee_rate_limit(FeeRate::MAX), Err(ExtractTxError::MissingInputAmount { tx: _ })))
+        assert!(matches!(
+            psbt.internal_extract_tx_with_fee_rate_limit(FeeRate::MAX),
+            Err(ExtractTxError::MissingInputAmount { tx: _ })
+        ))
     }
 
     #[test]
