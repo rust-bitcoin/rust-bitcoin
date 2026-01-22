@@ -143,7 +143,7 @@ impl Decodable for CommandString {
 }
 
 impl encoding::Encodable for CommandString {
-    type Encoder<'e> = encoding::ArrayEncoder<12>;
+    type Encoder<'e> = encoding::ArrayEncoder<'e, 12>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         encoding::ArrayEncoder::without_length_prefix(self.to_consensus_bytes())
@@ -410,7 +410,7 @@ impl bitcoin::consensus::encode::Decodable for FeeFilter {
 
 encoding::encoder_newtype_exact! {
     /// Encoder for [`FeeFilter`] type.
-    pub struct FeeFilterEncoder<'e>(encoding::ArrayEncoder<8>);
+    pub struct FeeFilterEncoder<'e>(encoding::ArrayEncoder<'e, 8>);
 }
 
 impl encoding::Encodable for FeeFilter {
@@ -784,10 +784,10 @@ encoding::encoder_newtype! {
     pub struct RawNetworkMessageEncoder<'e>(
         encoding::Encoder2<
             encoding::Encoder4<
-                encoding::ArrayEncoder<4>,
-                encoding::ArrayEncoder<12>,
-                encoding::ArrayEncoder<4>,
-                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<'e, 4>,
+                encoding::ArrayEncoder<'e, 12>,
+                encoding::ArrayEncoder<'e, 4>,
+                encoding::ArrayEncoder<'e, 4>,
             >,
             NetworkMessageEncoder,
         >

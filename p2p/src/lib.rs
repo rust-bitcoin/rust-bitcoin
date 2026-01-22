@@ -113,7 +113,7 @@ impl Decodable for ProtocolVersion {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`ProtocolVersion`] type.
-    pub struct ProtocolVersionEncoder<'e>(encoding::ArrayEncoder<4>);
+    pub struct ProtocolVersionEncoder<'e>(encoding::ArrayEncoder<'e, 4>);
 }
 
 impl encoding::Encodable for ProtocolVersion {
@@ -338,7 +338,7 @@ impl Decodable for ServiceFlags {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`ServiceFlags`] type.
-    pub struct ServiceFlagsEncoder<'e>(encoding::ArrayEncoder<8>);
+    pub struct ServiceFlagsEncoder<'e>(encoding::ArrayEncoder<'e, 8>);
 }
 
 impl encoding::Encodable for ServiceFlags {

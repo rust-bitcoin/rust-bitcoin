@@ -585,7 +585,7 @@ encoding::encoder_newtype_exact! {
             crate::merkle_tree::TxMerkleNodeEncoder<'e>,
             crate::time::BlockTimeEncoder<'e>,
             crate::pow::CompactTargetEncoder<'e>,
-            encoding::ArrayEncoder<4>,
+            encoding::ArrayEncoder<'e, 4>,
         >
     );
 }
@@ -807,7 +807,7 @@ impl Default for Version {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Version`] type.
-    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<'e, 4>);
 }
 
 impl Encodable for Version {

@@ -357,7 +357,7 @@ pub enum RejectReason {
 
 encoding::encoder_newtype! {
     /// The encoder type for a [`RejectReason`].
-    pub struct RejectReasonEncoder<'e>(ArrayEncoder<1>);
+    pub struct RejectReasonEncoder<'e>(ArrayEncoder<'e, 1>);
 }
 
 impl encoding::Encodable for RejectReason {
@@ -484,7 +484,7 @@ encoding::encoder_newtype! {
             Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
             RejectReasonEncoder<'e>,
             Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
-            ArrayEncoder<32>,
+            ArrayEncoder<'e, 32>,
         >
     );
 }

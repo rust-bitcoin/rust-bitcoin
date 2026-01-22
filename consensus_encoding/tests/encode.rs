@@ -18,7 +18,7 @@ struct TestData(u32);
 #[cfg(feature = "alloc")]
 impl Encodable for TestData {
     type Encoder<'s>
-        = ArrayEncoder<4>
+        = ArrayEncoder<'s, 4>
     where
         Self: 's;
 
@@ -34,7 +34,7 @@ struct EmptyData;
 #[cfg(feature = "alloc")]
 impl Encodable for EmptyData {
     type Encoder<'s>
-        = ArrayEncoder<0>
+        = ArrayEncoder<'s, 0>
     where
         Self: 's;
 
@@ -111,12 +111,12 @@ fn encode_newtype_lifetime_flexibility() {
         pub struct CustomEncoder<'data>(BytesEncoder<'data>);
     }
     bitcoin_consensus_encoding::encoder_newtype! {
-        pub struct NoLifetimeEncoder<'e>(ArrayEncoder<4>);
+        pub struct OtherLifetimeEncoder<'e>(ArrayEncoder<'e, 4>);
     }
 
     let test_data = b"hello world";
     let custom_encoder = CustomEncoder::new(BytesEncoder::without_length_prefix(test_data));
-    let no_lifetime_encoder = NoLifetimeEncoder::new(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
+    let no_lifetime_encoder = OtherLifetimeEncoder::new(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
 
     assert_eq!(custom_encoder.current_chunk(), test_data.as_slice());
     assert_eq!(no_lifetime_encoder.current_chunk(), &[1, 2, 3, 4][..]);

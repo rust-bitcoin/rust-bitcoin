@@ -36,8 +36,8 @@ encoding::encoder_newtype! {
         Encoder2<
             Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
             Encoder3<
-                ArrayEncoder<4>,
-                ArrayEncoder<4>,
+                ArrayEncoder<'e, 4>,
+                ArrayEncoder<'e, 4>,
                 BloomFlagsEncoder<'e>
             >
         >
@@ -140,7 +140,7 @@ pub enum BloomFlags {
 
 encoding::encoder_newtype! {
     /// The encoder for [`BloomFlags`].
-    pub struct BloomFlagsEncoder<'e>(ArrayEncoder<1>);
+    pub struct BloomFlagsEncoder<'e>(ArrayEncoder<'e, 1>);
 }
 
 impl encoding::Encodable for BloomFlags {

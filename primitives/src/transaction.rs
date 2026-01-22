@@ -325,7 +325,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 #[cfg(feature = "alloc")]
 type TransactionEncoderInner<'e> = Encoder6<
         VersionEncoder<'e>,
-        Option<ArrayEncoder<2>>,
+        Option<ArrayEncoder<'e, 2>>,
         Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, TxIn>>,
         Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, TxOut>>,
         Option<WitnessesEncoder<'e>>,
@@ -1160,7 +1160,7 @@ impl OutPoint {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`OutPoint`] type.
-    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
+    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<'e, 4>>);
 }
 
 impl Encodable for OutPoint {
@@ -1505,7 +1505,7 @@ impl From<Version> for u32 {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Version`] type.
-    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<'e, 4>);
 }
 
 impl encoding::Encodable for Version {

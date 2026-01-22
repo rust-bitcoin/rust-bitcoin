@@ -46,16 +46,17 @@ impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
 }
 
 /// An encoder for a single array.
-pub struct ArrayEncoder<const N: usize> {
+pub struct ArrayEncoder<'e, const N: usize> {
     arr: Option<[u8; N]>,
+    _marker: PhantomData<&'e ()>,
 }
 
-impl<const N: usize> ArrayEncoder<N> {
+impl<const N: usize> ArrayEncoder<'_, N> {
     /// Constructs an encoder which encodes the array with no length prefix.
-    pub const fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
+    pub const fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr), _marker: PhantomData } }
 }
 
-impl<const N: usize> Encoder for ArrayEncoder<N> {
+impl<const N: usize> Encoder for ArrayEncoder<'_, N> {
     #[inline]
     fn current_chunk(&self) -> &[u8] { self.arr.as_ref().map(|x| &x[..]).unwrap_or_default() }
 
@@ -66,7 +67,7 @@ impl<const N: usize> Encoder for ArrayEncoder<N> {
     }
 }
 
-impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
+impl<const N: usize> ExactSizeEncoder for ArrayEncoder<'_, N> {
     #[inline]
     fn len(&self) -> usize { self.arr.map_or(0, |a| a.len()) }
 }
@@ -370,7 +371,7 @@ mod tests {
 
     impl<const N: usize> Encodable for TestArray<N> {
         type Encoder<'s>
-            = ArrayEncoder<N>
+            = ArrayEncoder<'s, N>
         where
             Self: 's;
 
