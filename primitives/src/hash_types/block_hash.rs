@@ -31,7 +31,7 @@ include!("./generic.rs");
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`BlockHash`] type.
-    pub struct BlockHashEncoder<'e>(encoding::ArrayEncoder<32>);
+    pub struct BlockHashEncoder<'e>(encoding::ArrayEncoder<'e, 32>);
 }
 
 impl Encodable for BlockHash {

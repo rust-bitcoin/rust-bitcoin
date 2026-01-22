@@ -7,7 +7,7 @@ use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encode
 
 encoding::encoder_newtype_exact! {
     /// An encoder that uses an inner `ArrayEncoder`.
-    pub struct TestArrayEncoder<'e>(ArrayEncoder<4>);
+    pub struct TestArrayEncoder<'e>(ArrayEncoder<'e, 4>);
 }
 
 encoding::encoder_newtype_exact! {
@@ -115,7 +115,7 @@ fn slice_encoder() {
 
     encoding::encoder_newtype_exact! {
         /// The encoder for the [`Inner`] type.
-        pub struct InnerArrayEncoder<'e>(ArrayEncoder<4>);
+        pub struct InnerArrayEncoder<'e>(ArrayEncoder<'e, 4>);
     }
 
     impl Encodable for Inner {

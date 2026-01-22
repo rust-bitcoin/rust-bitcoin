@@ -63,7 +63,7 @@ impl Inner {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Inner`] type.
-    pub struct InnerEncoder<'e>(ArrayEncoder<4>);
+    pub struct InnerEncoder<'e>(ArrayEncoder<'e, 4>);
 }
 
 impl Encodable for Inner {

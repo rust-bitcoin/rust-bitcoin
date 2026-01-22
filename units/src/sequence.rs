@@ -269,7 +269,7 @@ parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Sequence`] type.
-    pub struct SequenceEncoder<'e>(encoding::ArrayEncoder<4>);
+    pub struct SequenceEncoder<'e>(encoding::ArrayEncoder<'e, 4>);
 }
 
 #[cfg(feature = "encoding")]

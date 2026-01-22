@@ -764,7 +764,7 @@ mod tests {
 
     impl encoding::Encodable for TestData {
         type Encoder<'s>
-            = ArrayEncoder<4>
+            = ArrayEncoder<'s, 4>
         where
             Self: 's;
 
