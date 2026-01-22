@@ -269,14 +269,14 @@ parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Sequence`] type.
-    pub struct SequenceEncoder(encoding::ArrayEncoder<4>);
+    pub struct SequenceEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for Sequence {
-    type Encoder<'e> = SequenceEncoder;
+    type Encoder<'e> = SequenceEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        SequenceEncoder(encoding::ArrayEncoder::without_length_prefix(
+        SequenceEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus_u32().to_le_bytes(),
         ))
     }
