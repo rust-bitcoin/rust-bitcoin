@@ -64,6 +64,15 @@ impl CommandString {
             Ok(Self(cow))
         }
     }
+
+    /// Create an owned copy of the bytes in this command string
+    fn to_consensus_bytes(&self) -> [u8; 12] {
+        let mut rawbytes = [0u8; 12];
+        let strbytes = self.0.as_bytes();
+        debug_assert!(strbytes.len() <= 12);
+        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
+        rawbytes
+    }
 }
 
 impl TryFrom<String> for CommandString {
@@ -137,11 +146,7 @@ impl encoding::Encodable for CommandString {
     type Encoder<'e> = encoding::ArrayEncoder<12>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        let mut rawbytes = [0u8; 12];
-        let strbytes = self.0.as_bytes();
-        debug_assert!(strbytes.len() <= 12);
-        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
-        encoding::ArrayEncoder::without_length_prefix(rawbytes)
+        encoding::ArrayEncoder::without_length_prefix(self.to_consensus_bytes())
     }
 }
 
@@ -796,7 +801,7 @@ impl encoding::Encodable for RawNetworkMessage {
         RawNetworkMessageEncoder(encoding::Encoder2::new(
             encoding::Encoder4::new(
                 encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
-                self.command().encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.command().to_consensus_bytes()),
                 encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
                 encoding::ArrayEncoder::without_length_prefix(self.checksum),
             ),
