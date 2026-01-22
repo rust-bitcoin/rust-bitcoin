@@ -323,18 +323,19 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
-    /// The encoder for the [`Transaction`] type.
-    pub struct TransactionEncoder<'e>(
-        Encoder6<
-            VersionEncoder,
+type TransactionEncoderInner<'e> = Encoder6<
+        VersionEncoder,
         Option<ArrayEncoder<2>>,
         Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
         Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
         Option<WitnessesEncoder<'e>>,
         LockTimeEncoder,
-        >
-    );
+    >;
+
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Transaction`] type.
+    pub struct TransactionEncoder<'e>(TransactionEncoderInner<'e>);
 }
 
 #[cfg(feature = "alloc")]
