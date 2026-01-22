@@ -415,7 +415,7 @@ encoding::encoder_newtype! {
     /// The encoder for [`BlockTransactionsRequest`].
     pub struct BlockTransactionsRequestEncoder<'e>(
         Encoder2<
-            BlockHashEncoder,
+            BlockHashEncoder<'e>,
             Encoder2<CompactSizeEncoder, SliceEncoder<'e, Offset>>
         >
     );
@@ -425,13 +425,15 @@ impl encoding::Encodable for BlockTransactionsRequest {
     type Encoder<'e> = BlockTransactionsRequestEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTransactionsRequestEncoder(Encoder2::new(
-            self.block_hash.encoder(),
+        BlockTransactionsRequestEncoder::new(
             Encoder2::new(
-                CompactSizeEncoder::new(self.offsets.len()),
-                SliceEncoder::without_length_prefix(&self.offsets),
-            ),
-        ))
+                self.block_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.offsets.len()),
+                    SliceEncoder::without_length_prefix(&self.offsets),
+                ),
+            )
+        )
     }
 }
 

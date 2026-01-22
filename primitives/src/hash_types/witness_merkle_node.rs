@@ -50,13 +50,13 @@ impl WitnessMerkleNode {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`WitnessMerkleNode`] type.
-    pub struct WitnessMerkleNodeEncoder(encoding::ArrayEncoder<32>);
+    pub struct WitnessMerkleNodeEncoder<'e>(encoding::ArrayEncoder<32>);
 }
 
 impl encoding::Encodable for WitnessMerkleNode {
-    type Encoder<'e> = WitnessMerkleNodeEncoder;
+    type Encoder<'e> = WitnessMerkleNodeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        WitnessMerkleNodeEncoder(encoding::ArrayEncoder::without_length_prefix(
+        WitnessMerkleNodeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_byte_array(),
         ))
     }

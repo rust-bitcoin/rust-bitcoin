@@ -41,7 +41,7 @@ encoding::encoder_newtype! {
             Encoder3<
                 ArrayEncoder<4>,
                 ArrayEncoder<4>,
-                BloomFlagsEncoder
+                BloomFlagsEncoder<'e>
             >
         >
     );
@@ -51,7 +51,7 @@ impl encoding::Encodable for FilterLoad {
     type Encoder<'e> = FilterLoadEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterLoadEncoder(Encoder2::new(
+        FilterLoadEncoder::new(Encoder2::new(
             Encoder2::new(
                 CompactSizeEncoder::new(self.filter.len()),
                 BytesEncoder::without_length_prefix(&self.filter),
@@ -142,18 +142,20 @@ pub enum BloomFlags {
 
 encoding::encoder_newtype! {
     /// The encoder for [`BloomFlags`].
-    pub struct BloomFlagsEncoder(ArrayEncoder<1>);
+    pub struct BloomFlagsEncoder<'e>(ArrayEncoder<1>);
 }
 
 impl encoding::Encodable for BloomFlags {
-    type Encoder<'e> = BloomFlagsEncoder;
+    type Encoder<'e> = BloomFlagsEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BloomFlagsEncoder(ArrayEncoder::without_length_prefix([match self {
-            Self::None => 0,
-            Self::All => 1,
-            Self::PubkeyOnly => 2,
-        }]))
+        BloomFlagsEncoder::new(ArrayEncoder::without_length_prefix(
+         [match self {
+                Self::None => 0,
+                Self::All => 1,
+                Self::PubkeyOnly => 2,
+            }]
+        ))
     }
 }
 
@@ -271,10 +273,12 @@ impl encoding::Encodable for FilterAdd {
     type Encoder<'e> = FilterAddEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterAddEncoder(Encoder2::new(
-            CompactSizeEncoder::new(self.data.len()),
-            BytesEncoder::without_length_prefix(&self.data),
-        ))
+        FilterAddEncoder::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.data.len()),
+                BytesEncoder::without_length_prefix(&self.data)
+            )
+        )
     }
 }
 

@@ -7,7 +7,7 @@ use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encode
 
 encoding::encoder_newtype_exact! {
     /// An encoder that uses an inner `ArrayEncoder`.
-    pub struct TestArrayEncoder(ArrayEncoder<4>);
+    pub struct TestArrayEncoder<'e>(ArrayEncoder<4>);
 }
 
 encoding::encoder_newtype_exact! {
@@ -21,9 +21,9 @@ fn array_encoder() {
     pub struct Test(u32);
 
     impl Encodable for Test {
-        type Encoder<'e> = TestArrayEncoder;
+        type Encoder<'e> = TestArrayEncoder<'e>;
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
+            TestArrayEncoder::new(ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
         }
     }
 
@@ -47,7 +47,7 @@ fn bytes_encoder_without_length_prefix() {
             Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestBytesEncoder(BytesEncoder::without_length_prefix(self.0.as_ref()))
+            TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.0.as_ref()))
         }
     }
 
@@ -71,8 +71,8 @@ fn two_encoder() {
         type Encoder<'e> = Encoder2<TestBytesEncoder<'e>, TestBytesEncoder<'e>>;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            let a = TestBytesEncoder(BytesEncoder::without_length_prefix(self.a.as_ref()));
-            let b = TestBytesEncoder(BytesEncoder::without_length_prefix(self.b.as_ref()));
+            let a = TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.a.as_ref()));
+            let b = TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.b.as_ref()));
 
             Encoder2::new(a, b)
         }
@@ -103,7 +103,7 @@ fn slice_encoder() {
             Self: 'a;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestEncoder(Encoder2::new(
+            TestEncoder::new(Encoder2::new(
                 CompactSizeEncoder::new(self.0.len()),
                 SliceEncoder::without_length_prefix(&self.0),
             ))
@@ -115,14 +115,14 @@ fn slice_encoder() {
 
     encoding::encoder_newtype_exact! {
         /// The encoder for the [`Inner`] type.
-        pub struct InnerArrayEncoder(ArrayEncoder<4>);
+        pub struct InnerArrayEncoder<'e>(ArrayEncoder<4>);
     }
 
     impl Encodable for Inner {
-        type Encoder<'e> = InnerArrayEncoder;
+        type Encoder<'e> = InnerArrayEncoder<'e>;
         fn encoder(&self) -> Self::Encoder<'_> {
             // Big-endian to make reading the test assertion easier.
-            InnerArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
+            InnerArrayEncoder::new(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
         }
     }
 

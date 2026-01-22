@@ -324,12 +324,12 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 
 #[cfg(feature = "alloc")]
 type TransactionEncoderInner<'e> = Encoder6<
-        VersionEncoder,
+        VersionEncoder<'e>,
         Option<ArrayEncoder<2>>,
         Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
         Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
         Option<WitnessesEncoder<'e>>,
-        LockTimeEncoder,
+        LockTimeEncoder<'e>,
     >;
 
 #[cfg(feature = "alloc")]
@@ -360,7 +360,7 @@ impl Encodable for Transaction {
         if self.uses_segwit_serialization() {
             let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
             let witnesses = WitnessesEncoder::new(self.inputs.as_slice());
-            TransactionEncoder(Encoder6::new(
+            TransactionEncoder::new(Encoder6::new(
                 version,
                 Some(segwit),
                 inputs,
@@ -369,7 +369,7 @@ impl Encodable for Transaction {
                 lock_time,
             ))
         } else {
-            TransactionEncoder(Encoder6::new(version, None, inputs, outputs, None, lock_time))
+            TransactionEncoder::new(Encoder6::new(version, None, inputs, outputs, None, lock_time))
         }
     }
 }
@@ -887,14 +887,14 @@ impl TxIn {
 encoding::encoder_newtype! {
     /// The encoder for the [`TxIn`] type.
     pub struct TxInEncoder<'e>(
-        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder>
+        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
     );
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for TxIn {
     type Encoder<'e>
-        = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder>
+        = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
     where
         Self: 'e;
 
@@ -1054,13 +1054,13 @@ pub struct TxOut {
 #[cfg(feature = "alloc")]
 encoding::encoder_newtype! {
     /// The encoder for the [`TxOut`] type.
-    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder, ScriptEncoder<'e>>);
+    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>);
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for TxOut {
     type Encoder<'e>
-        = Encoder2<AmountEncoder, ScriptEncoder<'e>>
+        = Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>
     where
         Self: 'e;
 
@@ -1170,7 +1170,7 @@ impl Encodable for OutPoint {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        OutPointEncoder(Encoder2::new(
+        OutPointEncoder::new(Encoder2::new(
             BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
             ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
         ))
@@ -1505,13 +1505,13 @@ impl From<Version> for u32 {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Version`] type.
-    pub struct VersionEncoder(encoding::ArrayEncoder<4>);
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 impl encoding::Encodable for Version {
-    type Encoder<'e> = VersionEncoder;
+    type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
+        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
     }
 }
 

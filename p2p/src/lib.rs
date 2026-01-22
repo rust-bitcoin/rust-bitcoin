@@ -113,13 +113,15 @@ impl Decodable for ProtocolVersion {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`ProtocolVersion`] type.
-    pub struct ProtocolVersionEncoder(encoding::ArrayEncoder<4>);
+    pub struct ProtocolVersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 impl encoding::Encodable for ProtocolVersion {
-    type Encoder<'e> = ProtocolVersionEncoder;
+    type Encoder<'e> = ProtocolVersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ProtocolVersionEncoder(encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
+        ProtocolVersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.0.to_le_bytes(),
+        ))
     }
 }
 
@@ -336,13 +338,15 @@ impl Decodable for ServiceFlags {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`ServiceFlags`] type.
-    pub struct ServiceFlagsEncoder(encoding::ArrayEncoder<8>);
+    pub struct ServiceFlagsEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
 impl encoding::Encodable for ServiceFlags {
-    type Encoder<'e> = ServiceFlagsEncoder;
+    type Encoder<'e> = ServiceFlagsEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ServiceFlagsEncoder(encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
+        ServiceFlagsEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.0.to_le_bytes(),
+        ))
     }
 }
 
