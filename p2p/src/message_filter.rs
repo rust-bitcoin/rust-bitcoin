@@ -300,7 +300,7 @@ encoding::encoder_newtype! {
         Encoder3<
             ArrayEncoder<1>,
             BlockHashEncoder<'e>,
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
         >
     );
 }
@@ -485,7 +485,7 @@ encoding::encoder_newtype! {
             ArrayEncoder<1>,
             BlockHashEncoder<'e>,
             FilterHeaderEncoder<'e>,
-            Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHash>>
+            Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, FilterHash>>
         >
     );
 }
@@ -665,7 +665,7 @@ encoding::encoder_newtype! {
         Encoder3<
             ArrayEncoder<1>,
             BlockHashEncoder<'e>,
-            Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHeader>>
+            Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, FilterHeader>>
         >
     );
 }

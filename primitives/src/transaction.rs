@@ -326,8 +326,8 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 type TransactionEncoderInner<'e> = Encoder6<
         VersionEncoder<'e>,
         Option<ArrayEncoder<2>>,
-        Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
-        Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
+        Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, TxIn>>,
+        Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, TxOut>>,
         Option<WitnessesEncoder<'e>>,
         LockTimeEncoder<'e>,
     >;

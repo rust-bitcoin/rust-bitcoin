@@ -93,7 +93,7 @@ fn slice_encoder() {
 
     encoding::encoder_newtype! {
         /// An encoder that uses an inner `SliceEncoder`.
-        pub struct TestEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, Inner>>);
+        pub struct TestEncoder<'e>(Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Inner>>);
     }
 
     impl Encodable for Test {

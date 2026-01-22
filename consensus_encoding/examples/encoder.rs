@@ -29,7 +29,7 @@ impl Adt {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Adt`] type.
-    pub struct AdtEncoder<'e>(Encoder2<Encoder2<CompactSizeEncoder, SliceEncoder<'e, Inner>>, BytesEncoder<'e>>);
+    pub struct AdtEncoder<'e>(Encoder2<Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Inner>>, BytesEncoder<'e>>);
 }
 
 impl Encodable for Adt {

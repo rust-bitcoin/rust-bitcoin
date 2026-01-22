@@ -109,7 +109,7 @@ pub struct UserAgent {
 
 encoding::encoder_newtype! {
     /// The encoder for a [`UserAgent`] string.
-    pub struct UserAgentEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct UserAgentEncoder<'e>(Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl encoding::Encodable for UserAgent {
@@ -481,9 +481,9 @@ encoding::encoder_newtype! {
     /// The encoder type for a [`Reject`] message.
     pub struct RejectEncoder<'e>(
         Encoder4<
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
             RejectReasonEncoder<'e>,
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
             ArrayEncoder<32>,
         >
     );
@@ -620,7 +620,7 @@ impl Alert {
 
 encoding::encoder_newtype! {
     /// The encoder type for an [`Alert`] message.
-    pub struct AlertEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct AlertEncoder<'e>(Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl encoding::Encodable for Alert {
