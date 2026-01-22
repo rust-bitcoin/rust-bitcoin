@@ -277,6 +277,12 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - s390x-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -285,11 +291,11 @@ jobs:
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Install target"
-        run: rustup target add s390x-unknown-linux-gnu
+        run: rustup target add ${{ matrix.target }}
       - name: "Install cross"
         run: cargo install cross --locked
       - name: "Run cross test"
-        run: cross test --target s390x-unknown-linux-gnu
+        run: cross test --target ${{ matrix.target }}
 
   Embedded:
     name: Embedded - nightly toolchain
