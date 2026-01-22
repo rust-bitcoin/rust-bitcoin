@@ -85,7 +85,7 @@ impl fmt::Debug for KeccakState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for y in 0..B {
             for x in 0..B {
-                writeln!(f, "[{},{}]: {:016x}", x, y, self.lane(x, y).to_le())?;
+                writeln!(f, "[{},{}]: {:02x?}", x, y, self.lane(x, y).to_le_bytes())?;
             }
         }
         Ok(())
