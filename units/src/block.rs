@@ -146,14 +146,14 @@ impl TryFrom<BlockHeight> for absolute::Height {
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`BlockHeight`] type.
-    pub struct BlockHeightEncoder(encoding::ArrayEncoder<4>);
+    pub struct BlockHeightEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for BlockHeight {
-    type Encoder<'e> = BlockHeightEncoder;
+    type Encoder<'e> = BlockHeightEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHeightEncoder(encoding::ArrayEncoder::without_length_prefix(
+        BlockHeightEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_u32().to_le_bytes(),
         ))
     }

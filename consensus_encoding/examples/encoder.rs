@@ -45,7 +45,7 @@ impl Encodable for Adt {
         );
         let b = BytesEncoder::without_length_prefix(self.b.as_ref());
 
-        AdtEncoder(Encoder2::new(a, b))
+        AdtEncoder::new(Encoder2::new(a, b))
     }
 }
 
@@ -63,12 +63,12 @@ impl Inner {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Inner`] type.
-    pub struct InnerEncoder(ArrayEncoder<4>);
+    pub struct InnerEncoder<'e>(ArrayEncoder<4>);
 }
 
 impl Encodable for Inner {
-    type Encoder<'e> = InnerEncoder;
+    type Encoder<'e> = InnerEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        InnerEncoder(ArrayEncoder::without_length_prefix(self.to_array()))
+        InnerEncoder::new(ArrayEncoder::without_length_prefix(self.to_array()))
     }
 }

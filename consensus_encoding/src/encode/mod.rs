@@ -49,12 +49,19 @@ pub trait Encoder {
 macro_rules! encoder_newtype{
     (
         $(#[$($struct_attr:tt)*])*
-        pub struct $name:ident$(<$lt:lifetime>)?($encoder:ty);
+        pub struct $name:ident<$lt:lifetime>($encoder:ty);
     ) => {
         $(#[$($struct_attr)*])*
-        pub struct $name$(<$lt>)?($encoder);
+        pub struct $name<$lt>($encoder, core::marker::PhantomData<&$lt $encoder>);
 
-        impl$(<$lt>)? $crate::Encoder for $name$(<$lt>)? {
+        impl<$lt> $name<$lt> {
+            /// Construct a new instance of the newtype encoder
+            pub fn new(encoder: $encoder) -> $name<$lt> {
+                $name(encoder, core::marker::PhantomData)
+            }
+        }
+
+        impl<$lt> $crate::Encoder for $name<$lt> {
             #[inline]
             fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 

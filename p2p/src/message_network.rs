@@ -116,10 +116,12 @@ impl encoding::Encodable for UserAgent {
     type Encoder<'e> = UserAgentEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        UserAgentEncoder(Encoder2::new(
-            CompactSizeEncoder::new(self.user_agent.len()),
-            BytesEncoder::without_length_prefix(self.user_agent.as_bytes()),
-        ))
+        UserAgentEncoder::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.user_agent.len()),
+                BytesEncoder::without_length_prefix(self.user_agent.as_bytes())
+            )
+        )
     }
 }
 
@@ -423,7 +425,7 @@ impl encoding::Encodable for Alert {
     type Encoder<'e> = AlertEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        AlertEncoder(Encoder2::new(
+        AlertEncoder::new(Encoder2::new(
             CompactSizeEncoder::new(self.0.len()),
             BytesEncoder::without_length_prefix(&self.0),
         ))

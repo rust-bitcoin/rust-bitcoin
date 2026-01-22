@@ -559,14 +559,14 @@ impl TryFrom<SignedAmount> for Amount {
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Amount`] type.
-    pub struct AmountEncoder(encoding::ArrayEncoder<8>);
+    pub struct AmountEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for Amount {
-    type Encoder<'e> = AmountEncoder;
+    type Encoder<'e> = AmountEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        AmountEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_sat().to_le_bytes()))
+        AmountEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_sat().to_le_bytes()))
     }
 }
 
