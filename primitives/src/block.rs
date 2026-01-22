@@ -281,14 +281,14 @@ mod sealed {
 encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
     pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Transaction>>>
     );
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for Block {
     type Encoder<'e>
-        = Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        = Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Transaction>>>
     where
         Self: 'e;
 
