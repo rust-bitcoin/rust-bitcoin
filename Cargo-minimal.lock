@@ -142,6 +142,7 @@ dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-io",
+ "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
