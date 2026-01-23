@@ -51,7 +51,7 @@ impl fmt::UpperHex for CompactTarget {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`CompactTarget`] type.
     pub struct CompactTargetEncoder(encoding::ArrayEncoder<4>);
 }

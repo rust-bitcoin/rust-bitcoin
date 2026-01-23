@@ -1132,7 +1132,7 @@ impl OutPoint {
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`OutPoint`] type.
     pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
 }
@@ -1477,7 +1477,7 @@ impl From<Version> for u32 {
     fn from(version: Version) -> Self { version.0 }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Version`] type.
     pub struct VersionEncoder(encoding::ArrayEncoder<4>);
 }

@@ -48,7 +48,7 @@ impl WitnessMerkleNode {
     }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`WitnessMerkleNode`] type.
     pub struct WitnessMerkleNodeEncoder(encoding::ArrayEncoder<32>);
 }
