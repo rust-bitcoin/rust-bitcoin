@@ -919,9 +919,13 @@ impl<'a> Arbitrary<'a> for Version {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
     #[cfg(all(feature = "alloc", feature = "hex"))]
     use core::str::FromStr as _;
+
+    use encoding::{Decoder, Encoder};
 
     use super::*;
 
@@ -1045,10 +1049,7 @@ mod tests {
         let transactions = Vec::new(); // Empty transactions
 
         let block = Block::new_unchecked(header, transactions);
-        match block.validate() {
-            Err(InvalidBlockError::NoTransactions) => (),
-            other => panic!("Expected NoTransactions error, got: {:?}", other),
-        }
+        matches!(block.validate(), Err(InvalidBlockError::NoTransactions));
     }
 
     #[test]
@@ -1078,10 +1079,52 @@ mod tests {
         let transactions = vec![non_coinbase_tx];
         let block = Block::new_unchecked(header, transactions);
 
-        match block.validate() {
-            Err(InvalidBlockError::InvalidCoinbase) => (),
-            other => panic!("Expected InvalidCoinbase error, got: {:?}", other),
-        }
+        matches!(block.validate(), Err(InvalidBlockError::InvalidCoinbase));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_read_limit() {
+        let mut coinbase_in = crate::TxIn::EMPTY_COINBASE;
+        coinbase_in.script_sig = crate::ScriptSigBuf::from_bytes(vec![0u8; 2]);
+
+        let block = Block::new_unchecked(
+            dummy_header(),
+            vec![Transaction {
+                version: crate::transaction::Version::ONE,
+                lock_time: crate::absolute::LockTime::ZERO,
+                inputs: vec![coinbase_in],
+                outputs: vec![crate::TxOut {
+                    amount: units::Amount::MIN,
+                    script_pubkey: crate::ScriptPubKeyBuf::new(),
+                }],
+            }],
+        );
+
+        let bytes = encoding::encode_to_vec(&block);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        assert!(decoder.read_limit() > 0);
+        let needs_more = decoder.push_bytes(&mut view).unwrap();
+        assert!(!needs_more);
+        assert_eq!(decoder.read_limit(), 0);
+        assert_eq!(decoder.end().unwrap(), block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_read_limit() {
+        let header = dummy_header();
+        let bytes = encoding::encode_to_vec(&header);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Header::decoder();
+        assert!(decoder.read_limit() > 0);
+        let needs_more = decoder.push_bytes(&mut view).unwrap();
+        assert!(!needs_more);
+        assert_eq!(decoder.read_limit(), 0);
+        assert_eq!(decoder.end().unwrap(), header);
     }
 
     #[test]
@@ -1333,6 +1376,30 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn witness_commitment_from_non_coinbase_returns_none() {
+        let tx = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn {
+                previous_output: crate::OutPoint {
+                    txid: crate::Txid::from_byte_array([1; 32]),
+                    vout: 0,
+                },
+                script_sig: crate::ScriptSigBuf::new(),
+                sequence: units::Sequence::ENABLE_LOCKTIME_AND_RBF,
+                witness: crate::Witness::new(),
+            }],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::MIN,
+                script_pubkey: crate::ScriptPubKeyBuf::new(),
+            }],
+        };
+
+        assert!(witness_commitment_from_coinbase(&tx).is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_check_witness_commitment_empty_script_pubkey() {
         let mut txin = crate::TxIn::EMPTY_COINBASE;
         let push = [11_u8];
@@ -1440,8 +1507,131 @@ mod tests {
             }],
         };
 
-        let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
-        let result = block.check_witness_commitment();
-        assert_eq!(result, (false, None));
+        let mut header = dummy_header();
+        let transactions = vec![tx1, tx2];
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    fn version_encoder_emits_consensus_bytes() {
+        let version = Version::from_consensus(123_456_789);
+        let mut encoder = version.encoder();
+
+        assert_eq!(encoder.current_chunk(), &version.to_consensus().to_le_bytes());
+        assert!(!encoder.advance());
+    }
+
+    #[test]
+    fn version_decoder_end_and_read_limit() {
+        let mut decoder = VersionDecoder::new();
+        let bytes_arr = Version::TWO.to_consensus().to_le_bytes();
+        let mut bytes = bytes_arr.as_slice();
+
+        assert!(decoder.read_limit() > 0);
+
+        let needs_more = decoder.push_bytes(&mut bytes).unwrap();
+        assert!(!needs_more);
+        assert!(bytes.is_empty());
+
+        assert_eq!(decoder.read_limit(), 0);
+        let decoded = decoder.end().unwrap();
+        assert_eq!(decoded, Version::TWO);
+    }
+
+    #[test]
+    fn version_decoder_default_roundtrip() {
+        let version = Version::from_consensus(123_456_789);
+        let mut decoder = VersionDecoder::default();
+        let consensus = version.to_consensus().to_le_bytes();
+        let mut bytes = consensus.as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+
+        assert_eq!(decoder.end().unwrap(), version);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decoder_error() {
+        let err_first = Block::decoder().end().unwrap_err();
+        assert!(matches!(err_first.0, encoding::Decoder2Error::First(_)));
+        assert!(!err_first.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_first).is_some());
+
+        // Provide a complete header and a vec length prefix (1 tx) but omit any tx bytes.
+        // This forces the inner VecDecoder to error when finalizing.
+        let mut bytes = encoding::encode_to_vec(&dummy_header());
+        bytes.push(1u8);
+        let mut view = bytes.as_slice();
+
+        let mut decoder = Block::decoder();
+        assert!(decoder.push_bytes(&mut view).unwrap());
+        assert!(view.is_empty());
+
+        let err_second = decoder.end().unwrap_err();
+        assert!(matches!(err_second.0, encoding::Decoder2Error::Second(_)));
+        assert!(!err_second.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err_second).is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn header_decoder_error() {
+        let header_bytes = encoding::encode_to_vec(&dummy_header());
+        // Number of bytes in the encoding up to the start of each field.
+        let lengths = [0usize, 4, 36, 68, 72, 76];
+
+        for &len in &lengths {
+            let mut decoder = Header::decoder();
+            let mut slice = header_bytes[..len].as_ref();
+            decoder.push_bytes(&mut slice).unwrap();
+            let err = decoder.end().unwrap_err();
+            match len {
+                0 => assert!(matches!(err, HeaderDecoderError::Version(_))),
+                4 => assert!(matches!(err, HeaderDecoderError::PrevBlockhash(_))),
+                36 => assert!(matches!(err, HeaderDecoderError::MerkleRoot(_))),
+                68 => assert!(matches!(err, HeaderDecoderError::Time(_))),
+                72 => assert!(matches!(err, HeaderDecoderError::Bits(_))),
+                76 => assert!(matches!(err, HeaderDecoderError::Nonce(_))),
+                _ => unreachable!(),
+            }
+            assert!(!err.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(std::error::Error::source(&err).is_some());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_block_error() {
+        #[cfg(feature = "std")]
+        use std::error::Error as _;
+
+        let variants = [
+            InvalidBlockError::InvalidMerkleRoot,
+            InvalidBlockError::InvalidWitnessCommitment,
+            InvalidBlockError::NoTransactions,
+            InvalidBlockError::InvalidCoinbase,
+        ];
+
+        for variant in variants {
+            assert!(!variant.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(variant.source().is_none());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decoder_error() {
+        let err = encoding::decode_from_slice::<Version>(&[0x01]).unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(std::error::Error::source(&err).is_some());
     }
 }
