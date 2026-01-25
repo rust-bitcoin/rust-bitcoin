@@ -428,6 +428,8 @@ pub fn bitcoin_consensus_encoding::decode_from_read_unbuffered_with<T, R, const 
 pub fn bitcoin_consensus_encoding::decode_from_slice<T>(bytes: &[u8]) -> core::result::Result<T, <<T as bitcoin_consensus_encoding::Decodable>::Decoder as bitcoin_consensus_encoding::Decoder>::Error> where T: bitcoin_consensus_encoding::Decodable
 pub fn bitcoin_consensus_encoding::encode_to_vec<T>(object: &T) -> alloc::vec::Vec<u8> where T: bitcoin_consensus_encoding::Encodable + ?core::marker::Sized
 pub fn bitcoin_consensus_encoding::encode_to_writer<T, W>(object: &T, writer: W) -> core::result::Result<(), std::io::error::Error> where T: bitcoin_consensus_encoding::Encodable + ?core::marker::Sized, W: std::io::Write
+pub fn bitcoin_consensus_encoding::flush_to_vec<T>(encoder: &mut T) -> alloc::vec::Vec<u8> where T: bitcoin_consensus_encoding::Encoder + ?core::marker::Sized
+pub fn bitcoin_consensus_encoding::flush_to_writer<T, W>(encoder: &mut T, writer: W) -> core::result::Result<(), std::io::error::Error> where T: bitcoin_consensus_encoding::Encoder + ?core::marker::Sized, W: std::io::Write
 pub fn core::option::Option<T>::advance(&mut self) -> bool
 pub fn core::option::Option<T>::current_chunk(&self) -> &[u8]
 pub macro bitcoin_consensus_encoding::encoder_newtype!

@@ -392,6 +392,7 @@ pub fn bitcoin_consensus_encoding::VecDecoderError<Err>::fmt(&self, f: &mut core
 pub fn bitcoin_consensus_encoding::VecDecoderError<Err>::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_consensus_encoding::decode_from_slice<T>(bytes: &[u8]) -> core::result::Result<T, <<T as bitcoin_consensus_encoding::Decodable>::Decoder as bitcoin_consensus_encoding::Decoder>::Error> where T: bitcoin_consensus_encoding::Decodable
 pub fn bitcoin_consensus_encoding::encode_to_vec<T>(object: &T) -> alloc::vec::Vec<u8> where T: bitcoin_consensus_encoding::Encodable + ?core::marker::Sized
+pub fn bitcoin_consensus_encoding::flush_to_vec<T>(encoder: &mut T) -> alloc::vec::Vec<u8> where T: bitcoin_consensus_encoding::Encoder + ?core::marker::Sized
 pub fn core::option::Option<T>::advance(&mut self) -> bool
 pub fn core::option::Option<T>::current_chunk(&self) -> &[u8]
 pub macro bitcoin_consensus_encoding::encoder_newtype!
