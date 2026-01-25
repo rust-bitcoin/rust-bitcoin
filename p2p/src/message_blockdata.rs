@@ -125,8 +125,8 @@ impl encoding::Encodable for Inventory {
         };
         InventoryEncoder(Encoder2::new(
             ArrayEncoder::without_length_prefix(prefix.to_le_bytes()),
-            ArrayEncoder::without_length_prefix(bytes))
-        )
+            ArrayEncoder::without_length_prefix(bytes),
+        ))
     }
 }
 
@@ -178,7 +178,6 @@ pub struct InventoryDecoderError(<InventoryInnerDecoder as encoding::Decoder>::E
 impl From<Infallible> for InventoryDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
 }
-
 
 impl fmt::Display for InventoryDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

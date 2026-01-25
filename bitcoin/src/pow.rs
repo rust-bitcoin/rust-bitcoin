@@ -1573,7 +1573,7 @@ mod tests {
         assert_eq!(got, want)
     }
 
-   #[test]
+    #[test]
     fn u256_overflowing_mul() {
         let a = U256(u128::MAX, 0);
         let b = U256(1 << 65 | 1, 0);
@@ -1613,7 +1613,7 @@ mod tests {
 
         // mul_u64 overflows twice but no other overflows. Kills |= -> ^= mutant.
         let a = U256::ONE << 255;
-        let b = U256(1<<1 | 1<<65, 0);
+        let b = U256(1 << 1 | 1 << 65, 0);
         let (res, overflow) = a.overflowing_mul(b);
         assert_eq!(res, U256::ZERO);
         assert!(overflow);

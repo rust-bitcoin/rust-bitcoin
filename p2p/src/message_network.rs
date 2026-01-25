@@ -116,12 +116,10 @@ impl encoding::Encodable for UserAgent {
     type Encoder<'e> = UserAgentEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        UserAgentEncoder(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.user_agent.len()),
-                BytesEncoder::without_length_prefix(self.user_agent.as_bytes())
-            )
-        )
+        UserAgentEncoder(Encoder2::new(
+            CompactSizeEncoder::new(self.user_agent.len()),
+            BytesEncoder::without_length_prefix(self.user_agent.as_bytes()),
+        ))
     }
 }
 
@@ -142,7 +140,8 @@ impl encoding::Decoder for UserAgentDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let bytes = self.0.end().map_err(UserAgentDecoderError::Decoder)?;
-        let user_agent = String::from_utf8(bytes).map_err(|_| UserAgentDecoderError::InvalidUtf8)?;
+        let user_agent =
+            String::from_utf8(bytes).map_err(|_| UserAgentDecoderError::InvalidUtf8)?;
         Ok(UserAgent { user_agent })
     }
 
@@ -153,9 +152,7 @@ impl encoding::Decoder for UserAgentDecoder {
 impl encoding::Decodable for UserAgent {
     type Decoder = UserAgentDecoder;
 
-    fn decoder() -> Self::Decoder {
-        UserAgentDecoder(UserAgentInnerDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { UserAgentDecoder(UserAgentInnerDecoder::new()) }
 }
 
 /// An error decoding a [`UserAgent`] message.
@@ -426,12 +423,10 @@ impl encoding::Encodable for Alert {
     type Encoder<'e> = AlertEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        AlertEncoder(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.0.len()),
-                BytesEncoder::without_length_prefix(&self.0)
-            )
-        )
+        AlertEncoder(Encoder2::new(
+            CompactSizeEncoder::new(self.0.len()),
+            BytesEncoder::without_length_prefix(&self.0),
+        ))
     }
 }
 
@@ -461,9 +456,7 @@ impl encoding::Decoder for AlertDecoder {
 impl encoding::Decodable for Alert {
     type Decoder = AlertDecoder;
 
-    fn decoder() -> Self::Decoder {
-        AlertDecoder(AlertInnerDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { AlertDecoder(AlertInnerDecoder::new()) }
 }
 
 /// An error decoding a [`Alert`] message.

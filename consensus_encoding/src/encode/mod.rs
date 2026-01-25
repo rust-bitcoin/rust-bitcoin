@@ -115,11 +115,10 @@ impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {
 impl<'s, T> ExactSizeIterator for EncodableByteIter<'s, T>
 where
     T: Encodable + 's,
-    T::Encoder<'s>: ExactSizeEncoder
+    T::Encoder<'s>: ExactSizeEncoder,
 {
     fn len(&self) -> usize { self.enc.len() - self.position }
 }
-
 
 /// An encoder with a known size.
 pub trait ExactSizeEncoder: Encoder {

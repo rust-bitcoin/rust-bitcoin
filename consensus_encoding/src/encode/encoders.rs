@@ -40,9 +40,7 @@ impl Encoder for BytesEncoder<'_> {
 
 impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
     #[inline]
-    fn len(&self) -> usize {
-        self.sl.map_or(0, <[u8]>::len)
-    }
+    fn len(&self) -> usize { self.sl.map_or(0, <[u8]>::len) }
 }
 
 /// An encoder for a single array.

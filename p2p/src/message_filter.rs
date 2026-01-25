@@ -10,11 +10,16 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, Decoder4, Encoder2, Encoder3, Encoder4, SliceEncoder, VecDecoder};
+use encoding::{
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2,
+    Decoder3, Decoder4, Encoder2, Encoder3, Encoder4, SliceEncoder, VecDecoder,
+};
 use hashes::{sha256d, HashEngine};
 use internals::write_err;
-use primitives::{block::{BlockHashDecoder, BlockHashEncoder}, BlockHash};
-use units::{block::{BlockHeightDecoder, BlockHeightEncoder}, BlockHeight};
+use primitives::block::{BlockHashDecoder, BlockHashEncoder};
+use primitives::BlockHash;
+use units::block::{BlockHeightDecoder, BlockHeightEncoder};
+use units::BlockHeight;
 
 use crate::consensus::impl_consensus_encoding;
 
@@ -110,9 +115,7 @@ impl encoding::Decoder for FilterHashDecoder {
 impl encoding::Decodable for FilterHash {
     type Decoder = FilterHashDecoder;
 
-    fn decoder() -> Self::Decoder {
-        FilterHashDecoder(ArrayDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { FilterHashDecoder(ArrayDecoder::new()) }
 }
 
 /// Errors occuring when decoding a [`FilterHash`] message.
@@ -159,9 +162,7 @@ impl encoding::Decoder for FilterHeaderDecoder {
 impl encoding::Decodable for FilterHeader {
     type Decoder = FilterHeaderDecoder;
 
-    fn decoder() -> Self::Decoder {
-        FilterHeaderDecoder(ArrayDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { FilterHeaderDecoder(ArrayDecoder::new()) }
 }
 
 /// Errors occuring when decoding a [`FilterHash`] message.
@@ -217,13 +218,11 @@ impl encoding::Encodable for GetCFilters {
     type Encoder<'e> = GetCFiltersEncoder;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFiltersEncoder(
-            Encoder3::new(
-                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-                self.start_height.encoder(),
-                self.stop_hash.encoder()
-            )
-        )
+        GetCFiltersEncoder(Encoder3::new(
+            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+            self.start_height.encoder(),
+            self.stop_hash.encoder(),
+        ))
     }
 }
 
@@ -244,11 +243,7 @@ impl encoding::Decoder for GetCFiltersDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let (ty, start_height, stop_hash) = self.0.end().map_err(GetCFiltersDecoderError)?;
-        Ok(GetCFilters {
-            filter_type: u8::from_le_bytes(ty),
-            start_height,
-            stop_hash
-        })
+        Ok(GetCFilters { filter_type: u8::from_le_bytes(ty), start_height, stop_hash })
     }
 
     #[inline]
@@ -259,13 +254,11 @@ impl encoding::Decodable for GetCFilters {
     type Decoder = GetCFiltersDecoder;
 
     fn decoder() -> Self::Decoder {
-        GetCFiltersDecoder(
-            Decoder3::new(
-                ArrayDecoder::new(),
-                BlockHeightDecoder::new(),
-                BlockHashDecoder::new()
-            )
-        )
+        GetCFiltersDecoder(Decoder3::new(
+            ArrayDecoder::new(),
+            BlockHeightDecoder::new(),
+            BlockHashDecoder::new(),
+        ))
     }
 }
 
@@ -313,21 +306,20 @@ encoding::encoder_newtype! {
 }
 
 impl encoding::Encodable for CFilter {
-    type Encoder<'e> = CFilterEncoder<'e>
+    type Encoder<'e>
+        = CFilterEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFilterEncoder(
-            Encoder3::new(
-                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-                self.block_hash.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.filter.len()),
-                    BytesEncoder::without_length_prefix(&self.filter)
-                )
-            )
-        )
+        CFilterEncoder(Encoder3::new(
+            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+            self.block_hash.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.filter.len()),
+                BytesEncoder::without_length_prefix(&self.filter),
+            ),
+        ))
     }
 }
 
@@ -348,11 +340,7 @@ impl encoding::Decoder for CFilterDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let (ty, block_hash, filter) = self.0.end().map_err(CFilterDecoderError)?;
-        Ok(CFilter {
-            filter_type: u8::from_le_bytes(ty),
-            block_hash,
-            filter,
-        })
+        Ok(CFilter { filter_type: u8::from_le_bytes(ty), block_hash, filter })
     }
 
     #[inline]
@@ -363,9 +351,11 @@ impl encoding::Decodable for CFilter {
     type Decoder = CFilterDecoder;
 
     fn decoder() -> Self::Decoder {
-        CFilterDecoder(
-            Decoder3::new(ArrayDecoder::new(), BlockHashDecoder::new(), ByteVecDecoder::new())
-        )
+        CFilterDecoder(Decoder3::new(
+            ArrayDecoder::new(),
+            BlockHashDecoder::new(),
+            ByteVecDecoder::new(),
+        ))
     }
 }
 
@@ -410,13 +400,11 @@ impl encoding::Encodable for GetCFHeaders {
     type Encoder<'e> = GetCFHeadersEncoder;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFHeadersEncoder(
-            Encoder3::new(
-                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-                self.start_height.encoder(),
-                self.stop_hash.encoder()
-            )
-        )
+        GetCFHeadersEncoder(Encoder3::new(
+            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+            self.start_height.encoder(),
+            self.stop_hash.encoder(),
+        ))
     }
 }
 
@@ -437,11 +425,7 @@ impl encoding::Decoder for GetCFHeadersDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let (ty, start_height, stop_hash) = self.0.end().map_err(GetCFHeadersDecoderError)?;
-        Ok(GetCFHeaders {
-            filter_type: u8::from_le_bytes(ty),
-            start_height,
-            stop_hash
-        })
+        Ok(GetCFHeaders { filter_type: u8::from_le_bytes(ty), start_height, stop_hash })
     }
 
     #[inline]
@@ -452,13 +436,11 @@ impl encoding::Decodable for GetCFHeaders {
     type Decoder = GetCFHeadersDecoder;
 
     fn decoder() -> Self::Decoder {
-        GetCFHeadersDecoder(
-            Decoder3::new(
-                ArrayDecoder::new(),
-                BlockHeightDecoder::new(),
-                BlockHashDecoder::new()
-            )
-        )
+        GetCFHeadersDecoder(Decoder3::new(
+            ArrayDecoder::new(),
+            BlockHeightDecoder::new(),
+            BlockHashDecoder::new(),
+        ))
     }
 }
 
@@ -512,21 +494,20 @@ impl encoding::Encodable for CFHeaders {
     type Encoder<'e> = CFHeadersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFHeadersEncoder(
-            Encoder4::new(
-                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-                self.stop_hash.encoder(),
-                self.previous_filter_header.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.filter_hashes.len()),
-                    SliceEncoder::without_length_prefix(&self.filter_hashes),
-                )
-            )
-        )
+        CFHeadersEncoder(Encoder4::new(
+            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+            self.stop_hash.encoder(),
+            self.previous_filter_header.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.filter_hashes.len()),
+                SliceEncoder::without_length_prefix(&self.filter_hashes),
+            ),
+        ))
     }
 }
 
-type CFHeadersInnerDecoder = Decoder4<ArrayDecoder<1>, BlockHashDecoder, FilterHeaderDecoder, VecDecoder<FilterHash>>;
+type CFHeadersInnerDecoder =
+    Decoder4<ArrayDecoder<1>, BlockHashDecoder, FilterHeaderDecoder, VecDecoder<FilterHash>>;
 
 /// Decoder type for a [`CFHeaders`] message.
 pub struct CFHeadersDecoder(CFHeadersInnerDecoder);
@@ -542,12 +523,13 @@ impl encoding::Decoder for CFHeadersDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (ty, stop_hash, previous_filter_header, filter_hashes) = self.0.end().map_err(CFHeadersDecoderError)?;
+        let (ty, stop_hash, previous_filter_header, filter_hashes) =
+            self.0.end().map_err(CFHeadersDecoderError)?;
         Ok(CFHeaders {
             filter_type: u8::from_le_bytes(ty),
             stop_hash,
             previous_filter_header,
-            filter_hashes
+            filter_hashes,
         })
     }
 
@@ -559,14 +541,12 @@ impl encoding::Decodable for CFHeaders {
     type Decoder = CFHeadersDecoder;
 
     fn decoder() -> Self::Decoder {
-        CFHeadersDecoder(
-            Decoder4::new(
-                ArrayDecoder::new(),
-                BlockHashDecoder::new(),
-                FilterHeader::decoder(),
-                VecDecoder::new()
-            )
-        )
+        CFHeadersDecoder(Decoder4::new(
+            ArrayDecoder::new(),
+            BlockHashDecoder::new(),
+            FilterHeader::decoder(),
+            VecDecoder::new(),
+        ))
     }
 }
 
@@ -608,12 +588,10 @@ impl encoding::Encodable for GetCFCheckpt {
     type Encoder<'e> = GetCFCheckptEncoder;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFCheckptEncoder(
-            Encoder2::new(
-                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-                self.stop_hash.encoder()
-            )
-        )
+        GetCFCheckptEncoder(Encoder2::new(
+            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+            self.stop_hash.encoder(),
+        ))
     }
 }
 
@@ -634,10 +612,7 @@ impl encoding::Decoder for GetCFCheckptDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let (ty, stop_hash) = self.0.end().map_err(GetCFCheckptDecoderError)?;
-        Ok(GetCFCheckpt {
-            filter_type: u8::from_le_bytes(ty),
-            stop_hash
-        })
+        Ok(GetCFCheckpt { filter_type: u8::from_le_bytes(ty), stop_hash })
     }
 
     #[inline]
@@ -648,9 +623,7 @@ impl encoding::Decodable for GetCFCheckpt {
     type Decoder = GetCFCheckptDecoder;
 
     fn decoder() -> Self::Decoder {
-        GetCFCheckptDecoder(
-            Decoder2::new(ArrayDecoder::new(), BlockHashDecoder::new())
-        )
+        GetCFCheckptDecoder(Decoder2::new(ArrayDecoder::new(), BlockHashDecoder::new()))
     }
 }
 
@@ -698,21 +671,20 @@ encoding::encoder_newtype! {
 }
 
 impl encoding::Encodable for CFCheckpt {
-    type Encoder<'e> = CFCheckptEncoder<'e>
+    type Encoder<'e>
+        = CFCheckptEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFCheckptEncoder(
-            Encoder3::new(
-                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-                self.stop_hash.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.filter_headers.len()),
-                    SliceEncoder::without_length_prefix(&self.filter_headers)
-                )
-            )
-        )
+        CFCheckptEncoder(Encoder3::new(
+            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+            self.stop_hash.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.filter_headers.len()),
+                SliceEncoder::without_length_prefix(&self.filter_headers),
+            ),
+        ))
     }
 }
 
@@ -733,11 +705,7 @@ impl encoding::Decoder for CFCheckptDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let (ty, stop_hash, filter_headers) = self.0.end().map_err(CFCheckptDecoderError)?;
-        Ok(CFCheckpt {
-            filter_type: u8::from_le_bytes(ty),
-            stop_hash,
-            filter_headers,
-        })
+        Ok(CFCheckpt { filter_type: u8::from_le_bytes(ty), stop_hash, filter_headers })
     }
 
     #[inline]
@@ -748,9 +716,11 @@ impl encoding::Decodable for CFCheckpt {
     type Decoder = CFCheckptDecoder;
 
     fn decoder() -> Self::Decoder {
-        CFCheckptDecoder(
-            Decoder3::new(ArrayDecoder::new(), BlockHashDecoder::new(), VecDecoder::new())
-        )
+        CFCheckptDecoder(Decoder3::new(
+            ArrayDecoder::new(),
+            BlockHashDecoder::new(),
+            VecDecoder::new(),
+        ))
     }
 }
 

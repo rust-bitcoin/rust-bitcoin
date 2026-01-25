@@ -26,7 +26,8 @@ use units::FeeRate;
 use crate::address::{AddrV2Message, Address};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::{
-    bip152, message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network, Magic
+    bip152, message_blockdata, message_bloom, message_compact_blocks, message_filter,
+    message_network, Magic,
 };
 
 /// The maximum number of [`super::message_blockdata::Inventory`] items in an `inv` message.
@@ -255,11 +256,11 @@ pub struct V1MessageHeader {
 }
 
 type V1MessageHeaderInnerDecoder = encoding::Decoder4<
-            encoding::ArrayDecoder<4>,
-            CommandStringDecoder,
-            encoding::ArrayDecoder<4>,
-            encoding::ArrayDecoder<4>,
-        >;
+    encoding::ArrayDecoder<4>,
+    CommandStringDecoder,
+    encoding::ArrayDecoder<4>,
+    encoding::ArrayDecoder<4>,
+>;
 
 /// The Decoder for `V1MessageHeader`
 pub struct V1MessageHeaderDecoder(V1MessageHeaderInnerDecoder);
@@ -275,15 +276,14 @@ impl encoding::Decoder for V1MessageHeaderDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (magic, command, length, checksum) = self.0.end().map_err(V1MessageHeaderDecoderError)?;
-        Ok(
-            V1MessageHeader {
-                magic: Magic(magic),
-                command,
-                length: u32::from_le_bytes(length),
-                checksum
-            }
-        )
+        let (magic, command, length, checksum) =
+            self.0.end().map_err(V1MessageHeaderDecoderError)?;
+        Ok(V1MessageHeader {
+            magic: Magic(magic),
+            command,
+            length: u32::from_le_bytes(length),
+            checksum,
+        })
     }
 
     #[inline]
@@ -293,11 +293,11 @@ impl encoding::Decoder for V1MessageHeaderDecoder {
 impl encoding::Decodable for V1MessageHeader {
     type Decoder = V1MessageHeaderDecoder;
     fn decoder() -> Self::Decoder {
-        V1MessageHeaderDecoder (encoding::Decoder4::new(
+        V1MessageHeaderDecoder(encoding::Decoder4::new(
             encoding::ArrayDecoder::<4>::new(),
             CommandString::decoder(),
             encoding::ArrayDecoder::<4>::new(),
-            encoding::ArrayDecoder::<4>::new()
+            encoding::ArrayDecoder::<4>::new(),
         ))
     }
 }

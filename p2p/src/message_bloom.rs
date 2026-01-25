@@ -81,12 +81,10 @@ impl encoding::Encodable for FilterAdd {
     type Encoder<'e> = FilterAddEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterAddEncoder(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.data.len()),
-                BytesEncoder::without_length_prefix(&self.data)
-            )
-        )
+        FilterAddEncoder(Encoder2::new(
+            CompactSizeEncoder::new(self.data.len()),
+            BytesEncoder::without_length_prefix(&self.data),
+        ))
     }
 }
 
@@ -117,9 +115,7 @@ impl encoding::Decoder for FilterAddDecoder {
 impl encoding::Decodable for FilterAdd {
     type Decoder = FilterAddDecoder;
 
-    fn decoder() -> Self::Decoder {
-        FilterAddDecoder(FilterAddInnerDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { FilterAddDecoder(FilterAddInnerDecoder::new()) }
 }
 
 /// An error decoding a [`FilterAdd`] message.
