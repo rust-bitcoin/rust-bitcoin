@@ -15,10 +15,10 @@ use crate::constants::ChainHash;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::params::Params;
-#[doc(inline)]
-pub use network::{Network, NetworkKind, TestnetVersion};
 #[doc(no_inline)]
 pub use network::ParseNetworkError;
+#[doc(inline)]
+pub use network::{Network, NetworkKind, TestnetVersion};
 
 /// Extension functionality for the [`Network`] type.
 // `define_extension_trait` chokes on the rustdoc example code.
@@ -57,9 +57,7 @@ pub trait NetworkExt: sealed::Sealed {
 impl NetworkExt for Network {
     fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
 
-    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> {
-        Self::try_from(chain_hash).ok()
-    }
+    fn from_chain_hash(chain_hash: ChainHash) -> Option<Self> { Self::try_from(chain_hash).ok() }
 
     /// Returns the associated network parameters.
     fn params(self) -> &'static Params {

@@ -37,10 +37,10 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use network::{Network, TestnetVersion};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
+use network::{Network, TestnetVersion};
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -119,9 +119,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for ProtocolVersion {
     type Encoder<'e> = ProtocolVersionEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ProtocolVersionEncoder(encoding::ArrayEncoder::without_length_prefix(
-            self.0.to_le_bytes(),
-        ))
+        ProtocolVersionEncoder(encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
     }
 }
 
@@ -344,9 +342,7 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for ServiceFlags {
     type Encoder<'e> = ServiceFlagsEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ServiceFlagsEncoder(encoding::ArrayEncoder::without_length_prefix(
-            self.0.to_le_bytes(),
-        ))
+        ServiceFlagsEncoder(encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
     }
 }
 

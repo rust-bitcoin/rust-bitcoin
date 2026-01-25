@@ -60,7 +60,7 @@
 //! # }
 //! ```
 
-use super::{Network, TestnetVersion, NetworkExt as _};
+use super::{Network, NetworkExt as _, TestnetVersion};
 #[cfg(doc)]
 use crate::pow::CompactTarget;
 use crate::pow::Target;
