@@ -543,6 +543,8 @@ impl U256 {
 
     /// Calculates 2^256 / (x + 1) where x is a 256 bit unsigned integer.
     ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/5fe753b56f450b054c42227c5df8346c72447490/src/chain.cpp#L133>
+    ///
     /// 2**256 / (x + 1) == ~x / (x + 1) + 1
     ///
     /// (Equation shamelessly stolen from bitcoind)
