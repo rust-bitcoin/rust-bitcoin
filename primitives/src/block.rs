@@ -1319,7 +1319,10 @@ mod tests {
                 sequence: crate::sequence::Sequence::MAX,
                 witness: crate::witness::Witness::new(),
             }],
-            outputs: Vec::new(),
+            outputs: vec![crate::transaction::TxOut {
+                amount: units::Amount::ONE_SAT,
+                script_pubkey: crate::script::ScriptPubKeyBuf::new(),
+            }],
         }];
         let original_block = Block::new_unchecked(header, transactions);
 
