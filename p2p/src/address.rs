@@ -7,13 +7,15 @@
 
 use alloc::vec;
 use alloc::vec::Vec;
+use core::convert::Infallible;
 use core::{fmt, iter};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder};
+use encoding::{ArrayDecoder, ArrayEncoder, BytesEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2};
+use internals::write_err;
 use io::{BufRead, Read, Write};
 
 use crate::ServiceFlags;
@@ -30,6 +32,7 @@ pub struct Address {
 }
 
 const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
+const IPV4_EMBEDDED_IPV6: [u16; 6] = [0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFF];
 
 impl Address {
     /// Constructs a new address message for a socket
@@ -342,6 +345,162 @@ impl encoding::Encodable for AddrV2 {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         AddrV2Encoder::new(self)
+    }
+}
+
+type AddrV2InnerDecoder = Decoder2<ArrayDecoder<1>, ByteVecDecoder>;
+
+/// The decoder type for an [`AddrV2`] type.
+pub struct AddrV2Decoder(AddrV2InnerDecoder);
+
+impl AddrV2Decoder {
+    #[inline]
+    const fn be_bytes_to_segments(bytes: [u8; 16]) -> [u16; 8] {
+        [
+            u16::from_be_bytes([bytes[0], bytes[1]]),
+            u16::from_be_bytes([bytes[2], bytes[3]]),
+            u16::from_be_bytes([bytes[4], bytes[5]]),
+            u16::from_be_bytes([bytes[6], bytes[7]]),
+            u16::from_be_bytes([bytes[8], bytes[9]]),
+            u16::from_be_bytes([bytes[10], bytes[11]]),
+            u16::from_be_bytes([bytes[12], bytes[13]]),
+            u16::from_be_bytes([bytes[14], bytes[15]]),
+        ]
+    }
+
+    #[inline]
+    const fn ipv6_from_segments(segments: [u16; 8]) -> Ipv6Addr {
+        Ipv6Addr::new(
+            segments[0],
+            segments[1],
+            segments[2],
+            segments[3],
+            segments[4],
+            segments[5],
+            segments[6],
+            segments[7]
+        )
+    }
+
+    #[inline]
+    fn to_fixed_size_slice<const N: usize>(addr_bytes: Vec<u8>) -> Result<[u8; N], AddrV2DecoderError> {
+        Ok(addr_bytes
+            .try_into()
+            .map_err(|e: Vec<u8>| AddrV2DecoderError::InvalidAddressLength { expected: N, got: e.len() })?
+        )
+    }
+}
+
+impl encoding::Decoder for AddrV2Decoder {
+    type Output = AddrV2;
+    type Error = AddrV2DecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AddrV2DecoderError::Decoder)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (net_type, addr_bytes) = self.0.end().map_err(AddrV2DecoderError::Decoder)?;
+        match u8::from_le_bytes(net_type) {
+            1 => {
+                let octets = Self::to_fixed_size_slice::<4>(addr_bytes)?;
+                Ok(AddrV2::Ipv4(Ipv4Addr::new(octets[0], octets[1], octets[2], octets[3])))
+            }
+            2 => {
+                let bytes = Self::to_fixed_size_slice::<16>(addr_bytes)?;
+                let octets = Self::be_bytes_to_segments(bytes);
+                if octets[0..3] == ONION {
+                    return Err(AddrV2DecoderError::WrappedOnionCat);
+                }
+                if octets[0..6] == IPV4_EMBEDDED_IPV6 {
+                    return Err(AddrV2DecoderError::WrappedIpv4);
+                }
+                Ok(AddrV2::Ipv6(Self::ipv6_from_segments(octets)))
+            }
+            4 => {
+                let onion = Self::to_fixed_size_slice::<32>(addr_bytes)?;
+                Ok(AddrV2::TorV3(onion))
+            }
+            5 => {
+                let i2p = Self::to_fixed_size_slice::<32>(addr_bytes)?;
+                Ok(AddrV2::I2p(i2p))
+            }
+            6 => {
+                let octets = Self::to_fixed_size_slice::<16>(addr_bytes)?;
+                if octets[0] != 0xFC {
+                    return Err(AddrV2DecoderError::NotCjdns)
+                }
+                Ok(AddrV2::Cjdns(Self::ipv6_from_segments(Self::be_bytes_to_segments(octets))))
+            }
+            any => Ok(AddrV2::Unknown(any, addr_bytes)),
+        }
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for AddrV2 {
+    type Decoder = AddrV2Decoder;
+
+    fn decoder() -> Self::Decoder {
+        AddrV2Decoder(
+            Decoder2::new(
+                ArrayDecoder::new(),
+                ByteVecDecoder::new(),
+            )
+        )
+    }
+}
+
+/// An error decoding a [`AddrV2`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AddrV2DecoderError {
+    /// Inner decoder failure.
+    Decoder(<AddrV2InnerDecoder as encoding::Decoder>::Error),
+    /// The address cannot be decoded given the buffer size.
+    InvalidAddressLength {
+        /// The expected size given the address type.
+        expected: usize,
+        /// Actual size of the buffer.
+        got: usize,
+    },
+    /// Expected CJDNS address but got an invalid mask.
+    NotCjdns,
+    /// `OnionCat` address sent as IPV6 is invalid.
+    WrappedOnionCat,
+    /// Wrapped IPV4 sent as IPV6 is invalid.
+    WrappedIpv4,
+}
+
+impl From<Infallible> for AddrV2DecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for AddrV2DecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "addrv2 error"; d),
+            Self::InvalidAddressLength { expected, got } => write!(f, "invalid length. expected {}, got {}", expected, got),
+            Self::NotCjdns => write!(f, "CJDNS address must start with a reserved byte."),
+            Self::WrappedOnionCat => write!(f, "OnionCat address sent as IPv6 is invalid."),
+            Self::WrappedIpv4 => write!(f, "wrapped IPv4 sent as IPv6 is invalid."),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AddrV2DecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::InvalidAddressLength { expected: _, got: _ } => None,
+            Self::NotCjdns => None,
+            Self::WrappedOnionCat => None,
+            Self::WrappedIpv4 => None,
+        }
     }
 }
 
