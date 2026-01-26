@@ -69,7 +69,20 @@ impl HashEngine {
     /// Please see docs on [`Midstate`] before using this function.
     pub fn midstate(&self) -> Result<Midstate, MidstateError> {
         if !self.can_extract_midstate() {
-            return Err(MidstateError { invalid_n_bytes_hashed: self.bytes_hashed });
+            let unprocessed_len = (self.bytes_hashed % BLOCK_SIZE as u64) as usize;
+            let aligned_bytes = self.bytes_hashed - unprocessed_len as u64;
+
+            let mut midstate_bytes = [0; 32];
+            for (val, ret_bytes) in self.h.iter().zip(midstate_bytes.bitcoin_as_chunks_mut::<4>().0) {
+                *ret_bytes = val.to_be_bytes();
+            }
+
+            return Err(MidstateError {
+                invalid_n_bytes_hashed: self.bytes_hashed,
+                block_aligned_midstate: Midstate { bytes: midstate_bytes, bytes_hashed: aligned_bytes },
+                unprocessed_bytes: self.buffer,
+                unprocessed_bytes_len: unprocessed_len
+            });
         }
         Ok(self.midstate_unchecked())
     }
@@ -241,6 +254,17 @@ impl convert::AsRef<[u8]> for Midstate {
 pub struct MidstateError {
     /// The invalid number of bytes hashed.
     invalid_n_bytes_hashed: u64,
+    block_aligned_midstate: Midstate,
+    unprocessed_bytes: [u8; BLOCK_SIZE],
+    unprocessed_bytes_len: usize,
+}
+
+impl MidstateError {
+    /// Returns block-aligned midstate
+    pub const fn midstate(&self) -> &Midstate { &self.block_aligned_midstate }
+
+    /// returns the unprocessed bytes remaining in the buffer.
+    pub fn unprocessed_bytes(&self) -> &[u8] { &self.unprocessed_bytes[..self.unprocessed_bytes_len] }
 }
 
 impl fmt::Display for MidstateError {
