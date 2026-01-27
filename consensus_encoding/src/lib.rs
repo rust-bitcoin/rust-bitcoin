@@ -38,7 +38,7 @@ pub use self::encode::encode_to_vec;
 #[cfg(feature = "std")]
 pub use self::encode::encode_to_writer;
 pub use self::encode::encoders::{
-    ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
-    SliceEncoder,
+    ArrayEncoder, ArrayRefEncoder, BytesEncoder, CompactSizeEncoder, Encoder2, Encoder3, Encoder4,
+    Encoder6, SliceEncoder,
 };
 pub use self::encode::{Encodable, EncodableByteIter, Encoder, ExactSizeEncoder};
