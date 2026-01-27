@@ -31,13 +31,13 @@ include!("./generic.rs");
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`BlockHash`] type.
-    pub struct BlockHashEncoder<'e>(encoding::ArrayEncoder<32>);
+    pub struct BlockHashEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
 impl Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHashEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        BlockHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(self.as_byte_array()))
     }
 }
 
