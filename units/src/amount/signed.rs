@@ -472,6 +472,8 @@ impl SignedAmount {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(SignedAmount, to_sat);
+
 impl default::Default for SignedAmount {
     fn default() -> Self { Self::ZERO }
 }

@@ -454,6 +454,8 @@ impl NumberOfBlocks {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(NumberOfBlocks);
+
 impl From<u16> for NumberOfBlocks {
     #[inline]
     fn from(value: u16) -> Self { Self(value) }
@@ -572,6 +574,8 @@ impl NumberOf512Seconds {
         }
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(NumberOf512Seconds);
 
 parse_int::impl_parse_str_from_int_infallible!(NumberOf512Seconds, u16, from_512_second_intervals);
 

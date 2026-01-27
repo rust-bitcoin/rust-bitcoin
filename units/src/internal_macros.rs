@@ -178,3 +178,61 @@ macro_rules! impl_div_assign {
     };
 }
 pub(crate) use impl_div_assign;
+
+/// Implements Lower/UpperHex, Octal and Binary for a new-type `$ty`.
+///
+/// This macro can be used on raw new-types (e.g. `BlockHeight`), or those encapsulated
+/// per the privacy rules by accessing the inner value with a method `$fn`.
+macro_rules! impl_fmt_traits_for_u32_wrapper {
+    ($ty:ident) => {
+        impl core::fmt::LowerHex for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::LowerHex::fmt(&self.0, f)
+            }
+        }
+
+        impl core::fmt::UpperHex for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::UpperHex::fmt(&self.0, f)
+            }
+        }
+
+        impl core::fmt::Octal for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::Octal::fmt(&self.0, f)
+            }
+        }
+
+        impl core::fmt::Binary for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::Binary::fmt(&self.0, f)
+            }
+        }
+    };
+    ($ty:ident, $fn:ident) => {
+        impl core::fmt::LowerHex for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::LowerHex::fmt(&self.$fn(), f)
+            }
+        }
+
+        impl core::fmt::UpperHex for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::UpperHex::fmt(&self.$fn(), f)
+            }
+        }
+
+        impl core::fmt::Octal for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::Octal::fmt(&self.$fn(), f)
+            }
+        }
+
+        impl core::fmt::Binary for $ty {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::Binary::fmt(&self.$fn(), f)
+            }
+        }
+    };
+}
+pub(crate) use impl_fmt_traits_for_u32_wrapper;

@@ -20,6 +20,10 @@ mod encapsulate {
     ///
     /// This is an integer newtype representing fee rate. It provides protection
     /// against mixing up the types, conversion functions, and basic formatting.
+    ///
+    /// NOTE: `FeeRate` explicitly does not have any format/display trait implementations, as it
+    /// doesn't have a standard unit for measure. Users are expected to format it on their own by
+    /// extracting values in desired units with `from_sat_per*` functions.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     pub struct FeeRate(u64);
 

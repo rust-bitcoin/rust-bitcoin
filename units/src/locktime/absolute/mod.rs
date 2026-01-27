@@ -591,6 +591,8 @@ impl Height {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Height);
+
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
@@ -705,6 +707,8 @@ impl MedianTimePast {
         self <= time
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(MedianTimePast);
 
 impl fmt::Display for MedianTimePast {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
