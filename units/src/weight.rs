@@ -179,6 +179,8 @@ impl Weight {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Weight, to_wu);
+
 /// Alternative will display the unit.
 impl fmt::Display for Weight {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
