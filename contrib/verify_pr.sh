@@ -38,18 +38,18 @@ fi
 
 # 3. Format Check
 echo -e "\n${YELLOW}=== 1. Checking Formatting ===${NC}"
-if cargo +$NIGHTLY_VERSION fmt --all -- --check; then
+if cargo +"$NIGHTLY_VERSION" fmt --all -- --check; then
     echo -e "${GREEN}Formatting passed.${NC}"
 else
     echo -e "${RED}Formatting failed.${NC}"
     echo -e "Running formatter to fix issues..."
-    cargo +$NIGHTLY_VERSION fmt --all
+    cargo +"$NIGHTLY_VERSION" fmt --all
     echo -e "${YELLOW}Formatting fixed. Please verify the changes.${NC}"
 fi
 
 # 4. Lint (Clippy)
 echo -e "\n${YELLOW}=== 2. Running Lints (Clippy) ===${NC}"
-cargo +$NIGHTLY_VERSION clippy --quiet --workspace --all-targets --all-features -- --deny warnings
+cargo +"$NIGHTLY_VERSION" clippy --quiet --workspace --all-targets --all-features -- --deny warnings
 echo -e "${GREEN}Lints passed.${NC}"
 
 # 5. Tests (No Default Features)
@@ -65,7 +65,7 @@ echo -e "${GREEN}All-features tests passed.${NC}"
 # 7. Documentation
 echo -e "\n${YELLOW}=== 5. Building Documentation ===${NC}"
 export RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links"
-cargo +$NIGHTLY_VERSION doc --no-deps --all-features
+cargo +"$NIGHTLY_VERSION" doc --no-deps --all-features
 echo -e "${GREEN}Documentation build passed.${NC}"
 
 echo -e "\n${GREEN}=== Verification Complete! ===${NC}"
