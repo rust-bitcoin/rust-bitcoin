@@ -229,6 +229,8 @@ impl Sequence {
     const fn low_u16(self) -> u16 { self.0 as u16 }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Sequence);
+
 impl Default for Sequence {
     /// The default value of sequence is 0xffffffff.
     #[inline]
@@ -243,16 +245,6 @@ impl From<Sequence> for u32 {
 impl fmt::Display for Sequence {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl fmt::LowerHex for Sequence {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl fmt::UpperHex for Sequence {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
 impl fmt::Debug for Sequence {
