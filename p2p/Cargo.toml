@@ -37,6 +37,30 @@ hex_lit = "0.1.1"
 name = "handshake"
 required-features = ["std"]
 
+[[example]]
+name = "get_headers"
+required-features = ["std"]
+
+[[example]]
+name = "get_blocks"
+required-features = ["std"]
+
+[[example]]
+name = "get_addr"
+required-features = ["std"]
+
+[[example]]
+name = "ping_pong"
+required-features = ["std"]
+
+[[example]]
+name = "mempool_monitor"
+required-features = ["std"]
+
+[[example]]
+name = "broadcast_tx"
+required-features = ["std"]
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
