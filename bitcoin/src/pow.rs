@@ -248,34 +248,68 @@ impl Target {
     /// For example, a difficulty of 6,695,826 means that at a given hash rate, it will, on average,
     /// take ~6.6 million times as long to find a valid block as it would at a difficulty of 1, or
     /// alternatively, it will take, again on average, ~6.6 million times as many hashes to find a
-    /// valid block
+    /// valid block.
+    ///
+    /// Values for the `max_target` paramter can be taken from const values on [`Target`]
+    /// (e.g. [`Target::MAX_ATTAINABLE_MAINNET`]).
     ///
     /// # Note
     ///
     /// Difficulty is calculated using the following algorithm `max / current` where [max] is
-    /// defined for the Bitcoin network and `current` is the current [target] for this block. As
-    /// such, a low target implies a high difficulty. Since [`Target`] is represented as a 256 bit
-    /// integer but `difficulty()` returns only 128 bits this means for targets below approximately
-    /// `0xffff_ffff_ffff_ffff_ffff_ffff` `difficulty()` will saturate at `u128::MAX`.
+    /// defined for the Bitcoin network and `current` is the current target for this block (i.e. `self`).
+    /// As such, a low target implies a high difficulty. Since [`Target`] is represented as a 256 bit
+    /// integer but `difficulty_with_max()` returns only 128 bits this means for targets below
+    /// approximately `0xffff_ffff_ffff_ffff_ffff_ffff` `difficulty_with_max()` will saturate at `u128::MAX`.
     ///
     /// # Panics
     ///
     /// Panics if `self` is zero (divide by zero).
     ///
     /// [max]: Target::max
-    /// [target]: crate::block::HeaderExt::target
-    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+    pub fn difficulty_with_max(&self, max_target: &Self) -> u128 {
         // Panic here may be easier to debug than during the actual division.
         assert_ne!(self.0, U256::ZERO, "divide by zero");
 
-        let max = params.as_ref().max_attainable_target;
-        let d = max.0 / self.0;
+        let d = max_target.0 / self.0;
         d.saturating_to_u128()
     }
 
     /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
     ///
-    /// See [`difficulty`] for details.
+    /// See [`difficulty_with_max`] for details.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self` is zero (divide by zero).
+    ///
+    /// [`difficulty_with_max`]: Target::difficulty_with_max
+    pub fn difficulty_float_with_max(&self, max_target: &Self) -> f64 {
+        // We want to explicitly panic to be uniform with `difficulty()`
+        // (float division by zero does not panic).
+        // Note, target 0 is basically impossible to obtain by any "normal" means.
+        assert_ne!(self.0, U256::ZERO, "divide by zero");
+        max_target.0.to_f64() / self.0.to_f64()
+    }
+
+    /// Computes the popular "difficulty" measure for mining.
+    ///
+    /// This function calculates the difficulty measure using the max attainable target
+    /// set on the provided [`Params`].
+    /// See [`Target::difficulty_with_max`] for details.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self` is zero (divide by zero).
+    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+        let max = params.as_ref().max_attainable_target;
+        self.difficulty_with_max(&max)
+    }
+
+    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+    ///
+    /// This function calculates the difficulty measure using the max attainable target
+    /// set on the provided [`Params`].
+    /// See [`Target::difficulty_with_max`] for details.
     ///
     /// # Panics
     ///
@@ -283,12 +317,8 @@ impl Target {
     ///
     /// [`difficulty`]: Target::difficulty
     pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
-        // We want to explicitly panic to be uniform with `difficulty()`
-        // (float division by zero does not panic).
-        // Note, target 0 is basically impossible to obtain by any "normal" means.
-        assert_ne!(self.0, U256::ZERO, "divide by zero");
         let max = params.as_ref().max_attainable_target;
-        max.0.to_f64() / self.0.to_f64()
+        self.difficulty_float_with_max(&max)
     }
 
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
