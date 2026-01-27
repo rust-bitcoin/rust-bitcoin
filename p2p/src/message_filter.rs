@@ -211,11 +211,11 @@ pub struct GetCFilters {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFilters`] message.
-    pub struct GetCFiltersEncoder(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder>);
+    pub struct GetCFiltersEncoder<'e>(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFilters {
-    type Encoder<'e> = GetCFiltersEncoder;
+    type Encoder<'e> = GetCFiltersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         GetCFiltersEncoder(Encoder3::new(
@@ -299,7 +299,7 @@ encoding::encoder_newtype! {
     pub struct CFilterEncoder<'e>(
         Encoder3<
             ArrayEncoder<1>,
-            BlockHashEncoder,
+            BlockHashEncoder<'e>,
             Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
         >
     );
@@ -393,11 +393,11 @@ pub struct GetCFHeaders {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFHeaders`] message.
-    pub struct GetCFHeadersEncoder(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder>);
+    pub struct GetCFHeadersEncoder<'e>(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFHeaders {
-    type Encoder<'e> = GetCFHeadersEncoder;
+    type Encoder<'e> = GetCFHeadersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         GetCFHeadersEncoder(Encoder3::new(
@@ -483,7 +483,7 @@ encoding::encoder_newtype! {
     pub struct CFHeadersEncoder<'e>(
         Encoder4<
             ArrayEncoder<1>,
-            BlockHashEncoder,
+            BlockHashEncoder<'e>,
             FilterHeaderEncoder,
             Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHash>>
         >
@@ -581,11 +581,11 @@ pub struct GetCFCheckpt {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFCheckpt`] message.
-    pub struct GetCFCheckptEncoder(Encoder2<ArrayEncoder<1>, BlockHashEncoder>);
+    pub struct GetCFCheckptEncoder<'e>(Encoder2<ArrayEncoder<1>, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFCheckpt {
-    type Encoder<'e> = GetCFCheckptEncoder;
+    type Encoder<'e> = GetCFCheckptEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         GetCFCheckptEncoder(Encoder2::new(
@@ -664,7 +664,7 @@ encoding::encoder_newtype! {
     pub struct CFCheckptEncoder<'e>(
         Encoder3<
             ArrayEncoder<1>,
-            BlockHashEncoder,
+            BlockHashEncoder<'e>,
             Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHeader>>
         >
     );
