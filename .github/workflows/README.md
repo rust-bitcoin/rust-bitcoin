@@ -32,9 +32,10 @@ Run from rust.yml unless stated otherwise. Unfortunately we are now exceeding th
 18. `Policy` - enforce repository coding policy.
 19. `Re-exports`
 20. `DiffMutants`
-21. `release` - run by `release.yml`
-22. `labeler` - run by `manage-pr.yml`
-23. `Shellcheck` - run by `shellcheck.yml`
+21. `Encodable-coverage` - Checks coverage of Encodable types in fuzz
+22. `release` - run by `release.yml`
+23. `labeler` - run by `manage-pr.yml`
+24. `Shellcheck` - run by `shellcheck.yml`
 
 If any change touches the `.github/` directory then the `zizmor`, run by `zizmor.yml`, will be
 triggered for that PR.
