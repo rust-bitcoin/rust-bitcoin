@@ -43,6 +43,8 @@ impl bitcoin_units::parse_int::Integer for u32
 impl bitcoin_units::parse_int::Integer for u64
 impl bitcoin_units::parse_int::Integer for u8
 impl bitcoin_units::pow::CompactTarget
+impl bitcoin_units::pow::Target
+impl bitcoin_units::pow::Work
 impl bitcoin_units::result::MathOp
 impl bitcoin_units::result::NumOpError
 impl bitcoin_units::sequence::Sequence
@@ -92,6 +94,8 @@ impl core::clone::Clone for bitcoin_units::parse_int::ParseIntError
 impl core::clone::Clone for bitcoin_units::parse_int::PrefixedHexError
 impl core::clone::Clone for bitcoin_units::parse_int::UnprefixedHexError
 impl core::clone::Clone for bitcoin_units::pow::CompactTarget
+impl core::clone::Clone for bitcoin_units::pow::Target
+impl core::clone::Clone for bitcoin_units::pow::Work
 impl core::clone::Clone for bitcoin_units::result::MathOp
 impl core::clone::Clone for bitcoin_units::result::NumOpError
 impl core::clone::Clone for bitcoin_units::sequence::Sequence
@@ -140,6 +144,8 @@ impl core::cmp::Eq for bitcoin_units::parse_int::ParseIntError
 impl core::cmp::Eq for bitcoin_units::parse_int::PrefixedHexError
 impl core::cmp::Eq for bitcoin_units::parse_int::UnprefixedHexError
 impl core::cmp::Eq for bitcoin_units::pow::CompactTarget
+impl core::cmp::Eq for bitcoin_units::pow::Target
+impl core::cmp::Eq for bitcoin_units::pow::Work
 impl core::cmp::Eq for bitcoin_units::result::MathOp
 impl core::cmp::Eq for bitcoin_units::result::NumOpError
 impl core::cmp::Eq for bitcoin_units::sequence::Sequence
@@ -157,6 +163,8 @@ impl core::cmp::Ord for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::cmp::Ord for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::cmp::Ord for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::cmp::Ord for bitcoin_units::pow::CompactTarget
+impl core::cmp::Ord for bitcoin_units::pow::Target
+impl core::cmp::Ord for bitcoin_units::pow::Work
 impl core::cmp::Ord for bitcoin_units::sequence::Sequence
 impl core::cmp::PartialEq for bitcoin_units::Amount
 impl core::cmp::PartialEq for bitcoin_units::BlockTime
@@ -203,6 +211,8 @@ impl core::cmp::PartialEq for bitcoin_units::parse_int::ParseIntError
 impl core::cmp::PartialEq for bitcoin_units::parse_int::PrefixedHexError
 impl core::cmp::PartialEq for bitcoin_units::parse_int::UnprefixedHexError
 impl core::cmp::PartialEq for bitcoin_units::pow::CompactTarget
+impl core::cmp::PartialEq for bitcoin_units::pow::Target
+impl core::cmp::PartialEq for bitcoin_units::pow::Work
 impl core::cmp::PartialEq for bitcoin_units::result::MathOp
 impl core::cmp::PartialEq for bitcoin_units::result::NumOpError
 impl core::cmp::PartialEq for bitcoin_units::sequence::Sequence
@@ -220,6 +230,8 @@ impl core::cmp::PartialOrd for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::cmp::PartialOrd for bitcoin_units::pow::CompactTarget
+impl core::cmp::PartialOrd for bitcoin_units::pow::Target
+impl core::cmp::PartialOrd for bitcoin_units::pow::Work
 impl core::cmp::PartialOrd for bitcoin_units::sequence::Sequence
 impl core::convert::AsRef<core::num::error::ParseIntError> for bitcoin_units::parse_int::ParseIntError
 impl core::convert::From<&bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
@@ -259,6 +271,7 @@ impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for 
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_units::parse_int::PrefixedHexError
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_units::parse_int::UnprefixedHexError
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for core::num::error::ParseIntError
+impl core::convert::From<bitcoin_units::pow::CompactTarget> for bitcoin_units::pow::Target
 impl core::convert::From<bitcoin_units::sequence::Sequence> for u32
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseAmountError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseDenominationError
@@ -362,6 +375,8 @@ impl core::fmt::Debug for bitcoin_units::parse_int::ParseIntError
 impl core::fmt::Debug for bitcoin_units::parse_int::PrefixedHexError
 impl core::fmt::Debug for bitcoin_units::parse_int::UnprefixedHexError
 impl core::fmt::Debug for bitcoin_units::pow::CompactTarget
+impl core::fmt::Debug for bitcoin_units::pow::Target
+impl core::fmt::Debug for bitcoin_units::pow::Work
 impl core::fmt::Debug for bitcoin_units::result::MathOp
 impl core::fmt::Debug for bitcoin_units::result::NumOpError
 impl core::fmt::Debug for bitcoin_units::sequence::Sequence
@@ -407,12 +422,18 @@ impl core::fmt::Display for bitcoin_units::locktime::relative::error::TimeOverfl
 impl core::fmt::Display for bitcoin_units::parse_int::ParseIntError
 impl core::fmt::Display for bitcoin_units::parse_int::PrefixedHexError
 impl core::fmt::Display for bitcoin_units::parse_int::UnprefixedHexError
+impl core::fmt::Display for bitcoin_units::pow::Target
+impl core::fmt::Display for bitcoin_units::pow::Work
 impl core::fmt::Display for bitcoin_units::result::MathOp
 impl core::fmt::Display for bitcoin_units::result::NumOpError
 impl core::fmt::Display for bitcoin_units::sequence::Sequence
 impl core::fmt::LowerHex for bitcoin_units::pow::CompactTarget
+impl core::fmt::LowerHex for bitcoin_units::pow::Target
+impl core::fmt::LowerHex for bitcoin_units::pow::Work
 impl core::fmt::LowerHex for bitcoin_units::sequence::Sequence
 impl core::fmt::UpperHex for bitcoin_units::pow::CompactTarget
+impl core::fmt::UpperHex for bitcoin_units::pow::Target
+impl core::fmt::UpperHex for bitcoin_units::pow::Work
 impl core::fmt::UpperHex for bitcoin_units::sequence::Sequence
 impl core::hash::Hash for bitcoin_units::Amount
 impl core::hash::Hash for bitcoin_units::BlockTime
@@ -431,6 +452,8 @@ impl core::hash::Hash for bitcoin_units::locktime::relative::LockTime
 impl core::hash::Hash for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::hash::Hash for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::hash::Hash for bitcoin_units::pow::CompactTarget
+impl core::hash::Hash for bitcoin_units::pow::Target
+impl core::hash::Hash for bitcoin_units::pow::Work
 impl core::hash::Hash for bitcoin_units::sequence::Sequence
 impl core::iter::traits::accum::Sum for bitcoin_units::FeeRate
 impl core::iter::traits::accum::Sum for bitcoin_units::Weight
@@ -456,6 +479,8 @@ impl core::marker::Copy for bitcoin_units::locktime::relative::LockTime
 impl core::marker::Copy for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::marker::Copy for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::marker::Copy for bitcoin_units::pow::CompactTarget
+impl core::marker::Copy for bitcoin_units::pow::Target
+impl core::marker::Copy for bitcoin_units::pow::Work
 impl core::marker::Copy for bitcoin_units::result::MathOp
 impl core::marker::Copy for bitcoin_units::result::NumOpError
 impl core::marker::Copy for bitcoin_units::sequence::Sequence
@@ -505,6 +530,8 @@ impl core::marker::Freeze for bitcoin_units::parse_int::ParseIntError
 impl core::marker::Freeze for bitcoin_units::parse_int::PrefixedHexError
 impl core::marker::Freeze for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Freeze for bitcoin_units::pow::CompactTarget
+impl core::marker::Freeze for bitcoin_units::pow::Target
+impl core::marker::Freeze for bitcoin_units::pow::Work
 impl core::marker::Freeze for bitcoin_units::result::MathOp
 impl core::marker::Freeze for bitcoin_units::result::NumOpError
 impl core::marker::Freeze for bitcoin_units::sequence::Sequence
@@ -554,6 +581,8 @@ impl core::marker::Send for bitcoin_units::parse_int::ParseIntError
 impl core::marker::Send for bitcoin_units::parse_int::PrefixedHexError
 impl core::marker::Send for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Send for bitcoin_units::pow::CompactTarget
+impl core::marker::Send for bitcoin_units::pow::Target
+impl core::marker::Send for bitcoin_units::pow::Work
 impl core::marker::Send for bitcoin_units::result::MathOp
 impl core::marker::Send for bitcoin_units::result::NumOpError
 impl core::marker::Send for bitcoin_units::sequence::Sequence
@@ -602,6 +631,8 @@ impl core::marker::StructuralPartialEq for bitcoin_units::parse_int::ParseIntErr
 impl core::marker::StructuralPartialEq for bitcoin_units::parse_int::PrefixedHexError
 impl core::marker::StructuralPartialEq for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::StructuralPartialEq for bitcoin_units::pow::CompactTarget
+impl core::marker::StructuralPartialEq for bitcoin_units::pow::Target
+impl core::marker::StructuralPartialEq for bitcoin_units::pow::Work
 impl core::marker::StructuralPartialEq for bitcoin_units::result::MathOp
 impl core::marker::StructuralPartialEq for bitcoin_units::result::NumOpError
 impl core::marker::StructuralPartialEq for bitcoin_units::sequence::Sequence
@@ -651,6 +682,8 @@ impl core::marker::Sync for bitcoin_units::parse_int::ParseIntError
 impl core::marker::Sync for bitcoin_units::parse_int::PrefixedHexError
 impl core::marker::Sync for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Sync for bitcoin_units::pow::CompactTarget
+impl core::marker::Sync for bitcoin_units::pow::Target
+impl core::marker::Sync for bitcoin_units::pow::Work
 impl core::marker::Sync for bitcoin_units::result::MathOp
 impl core::marker::Sync for bitcoin_units::result::NumOpError
 impl core::marker::Sync for bitcoin_units::sequence::Sequence
@@ -700,6 +733,8 @@ impl core::marker::Unpin for bitcoin_units::parse_int::ParseIntError
 impl core::marker::Unpin for bitcoin_units::parse_int::PrefixedHexError
 impl core::marker::Unpin for bitcoin_units::parse_int::UnprefixedHexError
 impl core::marker::Unpin for bitcoin_units::pow::CompactTarget
+impl core::marker::Unpin for bitcoin_units::pow::Target
+impl core::marker::Unpin for bitcoin_units::pow::Work
 impl core::marker::Unpin for bitcoin_units::result::MathOp
 impl core::marker::Unpin for bitcoin_units::result::NumOpError
 impl core::marker::Unpin for bitcoin_units::sequence::Sequence
@@ -709,6 +744,7 @@ impl core::ops::arith::Add for bitcoin_units::SignedAmount
 impl core::ops::arith::Add for bitcoin_units::Weight
 impl core::ops::arith::Add for bitcoin_units::block::BlockHeightInterval
 impl core::ops::arith::Add for bitcoin_units::block::BlockMtpInterval
+impl core::ops::arith::Add for bitcoin_units::pow::Work
 impl core::ops::arith::Add<&bitcoin_units::Amount> for bitcoin_units::Amount
 impl core::ops::arith::Add<&bitcoin_units::FeeRate> for bitcoin_units::FeeRate
 impl core::ops::arith::Add<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
@@ -897,6 +933,7 @@ impl core::ops::arith::Sub for bitcoin_units::block::BlockHeight
 impl core::ops::arith::Sub for bitcoin_units::block::BlockHeightInterval
 impl core::ops::arith::Sub for bitcoin_units::block::BlockMtp
 impl core::ops::arith::Sub for bitcoin_units::block::BlockMtpInterval
+impl core::ops::arith::Sub for bitcoin_units::pow::Work
 impl core::ops::arith::Sub<&bitcoin_units::Amount> for bitcoin_units::Amount
 impl core::ops::arith::Sub<&bitcoin_units::FeeRate> for bitcoin_units::FeeRate
 impl core::ops::arith::Sub<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
@@ -983,6 +1020,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse_int::Parse
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse_int::PrefixedHexError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse_int::UnprefixedHexError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::pow::CompactTarget
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::pow::Target
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::pow::Work
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::result::MathOp
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::result::NumOpError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::sequence::Sequence
@@ -1032,6 +1071,8 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse_int::ParseInt
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse_int::PrefixedHexError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse_int::UnprefixedHexError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::pow::CompactTarget
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::pow::Target
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::pow::Work
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::result::MathOp
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::result::NumOpError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::sequence::Sequence
@@ -1264,6 +1305,12 @@ pub const bitcoin_units::locktime::relative::NumberOf512Seconds::ZERO: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MAX: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::MIN: Self
 pub const bitcoin_units::locktime::relative::NumberOfBlocks::ZERO: Self
+pub const bitcoin_units::pow::Target::MAX: Self
+pub const bitcoin_units::pow::Target::MAX_ATTAINABLE_MAINNET: Self
+pub const bitcoin_units::pow::Target::MAX_ATTAINABLE_REGTEST: Self
+pub const bitcoin_units::pow::Target::MAX_ATTAINABLE_SIGNET: Self
+pub const bitcoin_units::pow::Target::MAX_ATTAINABLE_TESTNET: Self
+pub const bitcoin_units::pow::Target::ZERO: Self
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_AND_RBF: Self
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_NO_RBF: Self
 pub const bitcoin_units::sequence::Sequence::ENABLE_RBF_NO_LOCKTIME: Self
@@ -2018,6 +2065,41 @@ pub fn bitcoin_units::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::
 pub fn bitcoin_units::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_units::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::pow::CompactTarget::to_hex(self) -> alloc::string::String
+pub fn bitcoin_units::pow::Target::clone(&self) -> bitcoin_units::pow::Target
+pub fn bitcoin_units::pow::Target::cmp(&self, other: &bitcoin_units::pow::Target) -> core::cmp::Ordering
+pub fn bitcoin_units::pow::Target::difficulty_float_with_max(&self, max_target: &Self) -> f64
+pub fn bitcoin_units::pow::Target::difficulty_with_max(&self, max_target: &Self) -> u128
+pub fn bitcoin_units::pow::Target::eq(&self, other: &bitcoin_units::pow::Target) -> bool
+pub fn bitcoin_units::pow::Target::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::pow::Target::from(c: bitcoin_units::pow::CompactTarget) -> Self
+pub fn bitcoin_units::pow::Target::from_be_bytes(bytes: [u8; 32]) -> bitcoin_units::pow::Target
+pub fn bitcoin_units::pow::Target::from_compact(c: bitcoin_units::pow::CompactTarget) -> Self
+pub fn bitcoin_units::pow::Target::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::pow::Target::from_le_bytes(bytes: [u8; 32]) -> bitcoin_units::pow::Target
+pub fn bitcoin_units::pow::Target::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::pow::Target::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::pow::Target::max_transition_threshold_unchecked(&self) -> Self
+pub fn bitcoin_units::pow::Target::min_transition_threshold(&self) -> Self
+pub fn bitcoin_units::pow::Target::partial_cmp(&self, other: &bitcoin_units::pow::Target) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::pow::Target::to_be_bytes(self) -> [u8; 32]
+pub fn bitcoin_units::pow::Target::to_compact_lossy(self) -> bitcoin_units::pow::CompactTarget
+pub fn bitcoin_units::pow::Target::to_le_bytes(self) -> [u8; 32]
+pub fn bitcoin_units::pow::Target::to_work(self) -> bitcoin_units::pow::Work
+pub fn bitcoin_units::pow::Work::add(self, rhs: Self) -> Self
+pub fn bitcoin_units::pow::Work::clone(&self) -> bitcoin_units::pow::Work
+pub fn bitcoin_units::pow::Work::cmp(&self, other: &bitcoin_units::pow::Work) -> core::cmp::Ordering
+pub fn bitcoin_units::pow::Work::eq(&self, other: &bitcoin_units::pow::Work) -> bool
+pub fn bitcoin_units::pow::Work::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::pow::Work::from_be_bytes(bytes: [u8; 32]) -> bitcoin_units::pow::Work
+pub fn bitcoin_units::pow::Work::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::pow::Work::from_le_bytes(bytes: [u8; 32]) -> bitcoin_units::pow::Work
+pub fn bitcoin_units::pow::Work::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::pow::Work::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::pow::Work::partial_cmp(&self, other: &bitcoin_units::pow::Work) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::pow::Work::sub(self, rhs: Self) -> Self
+pub fn bitcoin_units::pow::Work::to_be_bytes(self) -> [u8; 32]
+pub fn bitcoin_units::pow::Work::to_le_bytes(self) -> [u8; 32]
+pub fn bitcoin_units::pow::Work::to_target(self) -> bitcoin_units::pow::Target
 pub fn bitcoin_units::result::MathOp::clone(&self) -> bitcoin_units::result::MathOp
 pub fn bitcoin_units::result::MathOp::eq(&self, other: &bitcoin_units::result::MathOp) -> bool
 pub fn bitcoin_units::result::MathOp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -2240,6 +2322,8 @@ pub struct bitcoin_units::locktime::relative::error::TimeOverflowError
 pub struct bitcoin_units::parse_int::PrefixedHexError(_)
 pub struct bitcoin_units::parse_int::UnprefixedHexError(_)
 pub struct bitcoin_units::pow::CompactTarget(_)
+pub struct bitcoin_units::pow::Target(_)
+pub struct bitcoin_units::pow::Work(_)
 pub struct bitcoin_units::relative::DisabledLockTimeError(_)
 pub struct bitcoin_units::relative::InvalidHeightError
 pub struct bitcoin_units::relative::InvalidTimeError
@@ -2418,6 +2502,7 @@ pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Err = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::block::TooBigForRelativeHeightError
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::pow::Work::Output = bitcoin_units::pow::Work
 pub type bitcoin_units::result::NumOpResult<T>::Output = <bitcoin_units::result::NumOpResult<T> as core::ops::arith::Add<T>>::Output
 pub type bitcoin_units::result::NumOpResult<T>::Output = <bitcoin_units::result::NumOpResult<T> as core::ops::arith::Add>::Output
 pub type bitcoin_units::result::NumOpResult<T>::Output = <bitcoin_units::result::NumOpResult<T> as core::ops::arith::Sub<T>>::Output
