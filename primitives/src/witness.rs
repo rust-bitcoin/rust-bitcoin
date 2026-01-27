@@ -403,7 +403,7 @@ impl Decoder for WitnessDecoder {
             // If we have some bytes to read, then reading element data.
             // Else we are reading the element's length.
             if let Some(bytes_to_read) = self.element_bytes_remaining {
-                let required_len = self.cursor + bytes.len().min(bytes_to_read);
+                let required_len = self.cursor.saturating_add(bytes.len().min(bytes_to_read));
                 let actual_len = self.reserve_batch(required_len);
 
                 let available_space = actual_len.saturating_sub(self.cursor);
@@ -441,7 +441,7 @@ impl Decoder for WitnessDecoder {
 
                 // Re-encode the length back into the buffer.
                 let encoded_size = CompactSizeEncoder::encoded_size(element_length);
-                let required_len = self.cursor + encoded_size + element_length;
+                let required_len = self.cursor.saturating_add(encoded_size).saturating_add(element_length);
                 self.reserve_batch(required_len);
                 let encoded_compact_size = crate::compact_size_encode(element_length);
                 self.content[self.cursor..self.cursor + encoded_size]
