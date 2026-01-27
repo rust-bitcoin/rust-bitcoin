@@ -424,6 +424,19 @@ impl core::error::Error for bitcoin_units::pow::CompactTargetDecoderError
 impl core::error::Error for bitcoin_units::result::NumOpError
 impl core::error::Error for bitcoin_units::sequence::SequenceDecoderError
 impl core::error::Error for bitcoin_units::time::BlockTimeDecoderError
+impl core::fmt::Binary for bitcoin_units::Amount
+impl core::fmt::Binary for bitcoin_units::BlockTime
+impl core::fmt::Binary for bitcoin_units::SignedAmount
+impl core::fmt::Binary for bitcoin_units::Weight
+impl core::fmt::Binary for bitcoin_units::block::BlockHeight
+impl core::fmt::Binary for bitcoin_units::block::BlockHeightInterval
+impl core::fmt::Binary for bitcoin_units::block::BlockMtp
+impl core::fmt::Binary for bitcoin_units::block::BlockMtpInterval
+impl core::fmt::Binary for bitcoin_units::locktime::absolute::Height
+impl core::fmt::Binary for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::fmt::Binary for bitcoin_units::locktime::relative::NumberOf512Seconds
+impl core::fmt::Binary for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::fmt::Binary for bitcoin_units::sequence::Sequence
 impl core::fmt::Debug for bitcoin_units::Amount
 impl core::fmt::Debug for bitcoin_units::BlockTime
 impl core::fmt::Debug for bitcoin_units::FeeRate
@@ -483,6 +496,7 @@ impl core::fmt::Debug for bitcoin_units::sequence::Sequence
 impl core::fmt::Debug for bitcoin_units::sequence::SequenceDecoderError
 impl core::fmt::Debug for bitcoin_units::time::BlockTimeDecoderError
 impl core::fmt::Display for bitcoin_units::Amount
+impl core::fmt::Display for bitcoin_units::BlockTime
 impl core::fmt::Display for bitcoin_units::SignedAmount
 impl core::fmt::Display for bitcoin_units::Weight
 impl core::fmt::Display for bitcoin_units::amount::Denomination
@@ -536,10 +550,47 @@ impl core::fmt::Display for bitcoin_units::result::NumOpError
 impl core::fmt::Display for bitcoin_units::sequence::Sequence
 impl core::fmt::Display for bitcoin_units::sequence::SequenceDecoderError
 impl core::fmt::Display for bitcoin_units::time::BlockTimeDecoderError
+impl core::fmt::LowerHex for bitcoin_units::Amount
+impl core::fmt::LowerHex for bitcoin_units::BlockTime
+impl core::fmt::LowerHex for bitcoin_units::SignedAmount
+impl core::fmt::LowerHex for bitcoin_units::Weight
+impl core::fmt::LowerHex for bitcoin_units::block::BlockHeight
+impl core::fmt::LowerHex for bitcoin_units::block::BlockHeightInterval
+impl core::fmt::LowerHex for bitcoin_units::block::BlockMtp
+impl core::fmt::LowerHex for bitcoin_units::block::BlockMtpInterval
+impl core::fmt::LowerHex for bitcoin_units::locktime::absolute::Height
+impl core::fmt::LowerHex for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::fmt::LowerHex for bitcoin_units::locktime::relative::NumberOf512Seconds
+impl core::fmt::LowerHex for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::fmt::LowerHex for bitcoin_units::pow::CompactTarget
 impl core::fmt::LowerHex for bitcoin_units::pow::Target
 impl core::fmt::LowerHex for bitcoin_units::pow::Work
 impl core::fmt::LowerHex for bitcoin_units::sequence::Sequence
+impl core::fmt::Octal for bitcoin_units::Amount
+impl core::fmt::Octal for bitcoin_units::BlockTime
+impl core::fmt::Octal for bitcoin_units::SignedAmount
+impl core::fmt::Octal for bitcoin_units::Weight
+impl core::fmt::Octal for bitcoin_units::block::BlockHeight
+impl core::fmt::Octal for bitcoin_units::block::BlockHeightInterval
+impl core::fmt::Octal for bitcoin_units::block::BlockMtp
+impl core::fmt::Octal for bitcoin_units::block::BlockMtpInterval
+impl core::fmt::Octal for bitcoin_units::locktime::absolute::Height
+impl core::fmt::Octal for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::fmt::Octal for bitcoin_units::locktime::relative::NumberOf512Seconds
+impl core::fmt::Octal for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::fmt::Octal for bitcoin_units::sequence::Sequence
+impl core::fmt::UpperHex for bitcoin_units::Amount
+impl core::fmt::UpperHex for bitcoin_units::BlockTime
+impl core::fmt::UpperHex for bitcoin_units::SignedAmount
+impl core::fmt::UpperHex for bitcoin_units::Weight
+impl core::fmt::UpperHex for bitcoin_units::block::BlockHeight
+impl core::fmt::UpperHex for bitcoin_units::block::BlockHeightInterval
+impl core::fmt::UpperHex for bitcoin_units::block::BlockMtp
+impl core::fmt::UpperHex for bitcoin_units::block::BlockMtpInterval
+impl core::fmt::UpperHex for bitcoin_units::locktime::absolute::Height
+impl core::fmt::UpperHex for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::fmt::UpperHex for bitcoin_units::locktime::relative::NumberOf512Seconds
+impl core::fmt::UpperHex for bitcoin_units::locktime::relative::NumberOfBlocks
 impl core::fmt::UpperHex for bitcoin_units::pow::CompactTarget
 impl core::fmt::UpperHex for bitcoin_units::pow::Target
 impl core::fmt::UpperHex for bitcoin_units::pow::Work
@@ -1903,6 +1954,7 @@ pub fn bitcoin_units::Amount::div(self, rhs: u64) -> Self::Output
 pub fn bitcoin_units::Amount::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::Amount::eq(&self, other: &bitcoin_units::Amount) -> bool
 pub fn bitcoin_units::Amount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::Amount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::Amount::from_btc(btc: f64) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_int_btc<T: core::convert::Into<u16>>(whole_bitcoin: T) -> Self
@@ -1934,6 +1986,7 @@ pub fn bitcoin_units::BlockTime::deserialize<D>(d: D) -> core::result::Result<Se
 pub fn bitcoin_units::BlockTime::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::BlockTime::eq(&self, other: &bitcoin_units::BlockTime) -> bool
 pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::BlockTime::from(t: u32) -> Self
 pub fn bitcoin_units::BlockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::BlockTime::partial_cmp(&self, other: &bitcoin_units::BlockTime) -> core::option::Option<core::cmp::Ordering>
@@ -1981,6 +2034,7 @@ pub fn bitcoin_units::SignedAmount::div(self, rhs: core::num::nonzero::NonZeroI6
 pub fn bitcoin_units::SignedAmount::div(self, rhs: i64) -> Self::Output
 pub fn bitcoin_units::SignedAmount::eq(&self, other: &bitcoin_units::SignedAmount) -> bool
 pub fn bitcoin_units::SignedAmount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::SignedAmount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 pub fn bitcoin_units::SignedAmount::from_btc(btc: f64) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::SignedAmount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
@@ -2026,6 +2080,7 @@ pub fn bitcoin_units::Weight::div(self, rhs: u64) -> Self::Output
 pub fn bitcoin_units::Weight::div_assign(&mut self, rhs: u64)
 pub fn bitcoin_units::Weight::eq(&self, other: &bitcoin_units::Weight) -> bool
 pub fn bitcoin_units::Weight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::Weight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::Weight::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::Weight::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::Weight::mul(self, rhs: &bitcoin_units::FeeRate) -> Self::Output
@@ -2158,6 +2213,7 @@ pub fn bitcoin_units::block::BlockHeight::deserialize<D>(d: D) -> core::result::
 pub fn bitcoin_units::block::BlockHeight::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::block::BlockHeight::eq(&self, other: &bitcoin_units::block::BlockHeight) -> bool
 pub fn bitcoin_units::block::BlockHeight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::block::BlockHeight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockHeight::from(h: bitcoin_units::locktime::absolute::Height) -> Self
 pub fn bitcoin_units::block::BlockHeight::from(inner: u32) -> Self
 pub fn bitcoin_units::block::BlockHeight::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -2197,6 +2253,7 @@ pub fn bitcoin_units::block::BlockHeightInterval::default() -> bitcoin_units::bl
 pub fn bitcoin_units::block::BlockHeightInterval::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::block::BlockHeightInterval::eq(&self, other: &bitcoin_units::block::BlockHeightInterval) -> bool
 pub fn bitcoin_units::block::BlockHeightInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::block::BlockHeightInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockHeightInterval::from(h: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self
 pub fn bitcoin_units::block::BlockHeightInterval::from(inner: u32) -> Self
 pub fn bitcoin_units::block::BlockHeightInterval::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -2222,6 +2279,7 @@ pub fn bitcoin_units::block::BlockMtp::cmp(&self, other: &bitcoin_units::block::
 pub fn bitcoin_units::block::BlockMtp::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::block::BlockMtp::eq(&self, other: &bitcoin_units::block::BlockMtp) -> bool
 pub fn bitcoin_units::block::BlockMtp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::block::BlockMtp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockMtp::from(h: bitcoin_units::locktime::absolute::MedianTimePast) -> Self
 pub fn bitcoin_units::block::BlockMtp::from(inner: u32) -> Self
 pub fn bitcoin_units::block::BlockMtp::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -2249,6 +2307,7 @@ pub fn bitcoin_units::block::BlockMtpInterval::default() -> bitcoin_units::block
 pub fn bitcoin_units::block::BlockMtpInterval::deserialize<D>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::block::BlockMtpInterval::eq(&self, other: &bitcoin_units::block::BlockMtpInterval) -> bool
 pub fn bitcoin_units::block::BlockMtpInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::block::BlockMtpInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockMtpInterval::from(h: bitcoin_units::locktime::relative::NumberOf512Seconds) -> Self
 pub fn bitcoin_units::block::BlockMtpInterval::from(inner: u32) -> Self
 pub fn bitcoin_units::block::BlockMtpInterval::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -2288,6 +2347,7 @@ pub fn bitcoin_units::locktime::absolute::Height::clone(&self) -> bitcoin_units:
 pub fn bitcoin_units::locktime::absolute::Height::cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::absolute::Height::eq(&self, other: &bitcoin_units::locktime::absolute::Height) -> bool
 pub fn bitcoin_units::locktime::absolute::Height::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::Height::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::locktime::absolute::Height::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseHeightError>
 pub fn bitcoin_units::locktime::absolute::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::absolute::Height::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
@@ -2335,6 +2395,7 @@ pub fn bitcoin_units::locktime::absolute::MedianTimePast::clone(&self) -> bitcoi
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::cmp(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::eq(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> bool
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseTimeError>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
@@ -2397,6 +2458,7 @@ pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::cmp(&self, other: 
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::default() -> bitcoin_units::locktime::relative::NumberOf512Seconds
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::eq(&self, other: &bitcoin_units::locktime::relative::NumberOf512Seconds) -> bool
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
@@ -2410,6 +2472,7 @@ pub fn bitcoin_units::locktime::relative::NumberOfBlocks::cmp(&self, other: &bit
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::default() -> bitcoin_units::locktime::relative::NumberOfBlocks
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::eq(&self, other: &bitcoin_units::locktime::relative::NumberOfBlocks) -> bool
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from(value: u16) -> Self
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
@@ -2641,6 +2704,7 @@ pub fn bitcoin_units::sequence::Sequence::enables_absolute_lock_time(self) -> bo
 pub fn bitcoin_units::sequence::Sequence::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::sequence::Sequence::eq(&self, other: &bitcoin_units::sequence::Sequence) -> bool
 pub fn bitcoin_units::sequence::Sequence::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::sequence::Sequence::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::sequence::Sequence::from(lt: bitcoin_units::locktime::relative::LockTime) -> Self
 pub fn bitcoin_units::sequence::Sequence::from_512_second_intervals(intervals: u16) -> Self
 pub fn bitcoin_units::sequence::Sequence::from_consensus(n: u32) -> Self
