@@ -8,6 +8,7 @@ use super::{HashEngine, BLOCK_SIZE};
 #[macro_use]
 mod small_hash {
     #[rustfmt::skip]
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn round(a: u32, _b: u32, c: u32, _d: u32, e: u32,
                         x: u32, bits: u32, add: u32, round: u32,
     ) -> (u32, u32) {

@@ -1,0 +1,28 @@
+# Configuration for rbmt (Rust Bitcoin Maintainer Tools)
+
+[test]
+# Examples to run with specific features enabled.
+# Format: "example_name:feature1 feature2"
+examples = [
+    "bip32",
+    "bip32:-",
+    "ecdsa-psbt:std bitcoinconsensus",
+    "sign-tx-segwit-v0:rand std",
+    "sign-tx-taproot:rand std",
+    "taproot-psbt:bitcoinconsensus rand std",
+    "sighash:std",
+    "serde:std serde",
+]
+
+# Features to test with the conventional `std` feature enabled.
+# Tests each feature alone with std, all pairs, and all together.
+features_with_std = ["rand", "serde", "secp-recovery", "bitcoinconsensus", "base64", "arbitrary"]
+
+# Features to test without the `std` feature.
+# Tests each feature alone, all pairs, and all together.
+features_without_std = ["rand", "serde", "secp-recovery", "bitcoinconsensus", "base64", "arbitrary"]
+
+[lint]
+allowed_duplicates = [
+    "hex-conservative",
+]
