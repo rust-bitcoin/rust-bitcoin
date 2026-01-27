@@ -322,6 +322,41 @@ fn api_all_non_error_types_have_non_empty_debug() {
     assert!(!debug.is_empty());
 }
 
+macro_rules! assert_format_matches {
+    ($type:expr, $num:expr) => {
+        let got = format!("{:o}", $type);
+        let want = format!("{:o}", $num);
+        assert_eq!(got, want);
+
+        let got = format!("{:b}", $type);
+        let want = format!("{:b}", $num);
+        assert_eq!(got, want);
+
+        let got = format!("{:x}", $type);
+        let want = format!("{:x}", $num);
+        assert_eq!(got, want);
+
+        let got = format!("{:X}", $type);
+        let want = format!("{:X}", $num);
+        assert_eq!(got, want);
+    };
+}
+#[test]
+fn api_all_wrapper_types_fmt_as_inner() {
+    // Confirm that for a set of pseudo-random numbers, formatting is equivalent to the inner value
+    let mut rand_num = 10;
+    for _ in 0..50 {
+        assert_format_matches!(BlockHeight::from(rand_num), rand_num);
+        assert_format_matches!(BlockHeightInterval::from(rand_num), rand_num);
+        assert_format_matches!(BlockMtp::from(rand_num), rand_num);
+        assert_format_matches!(BlockMtpInterval::from(rand_num), rand_num);
+        assert_format_matches!(BlockTime::from(rand_num), rand_num);
+        assert_format_matches!(Weight::from_wu(rand_num.into()), u64::from(rand_num));
+
+        rand_num = rand_num.wrapping_mul(1039).wrapping_add(677);
+    }
+}
+
 #[test]
 fn all_types_implement_send_sync() {
     fn assert_send<T: Send>() {}
