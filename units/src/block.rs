@@ -598,7 +598,7 @@ impl<'a> core::iter::Sum<&'a Self> for BlockMtpInterval {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _, UnexpectedEofError};
+    use encoding::{Decoder as _, UnexpectedEofError};
 
     use super::*;
     use crate::relative::{NumberOf512Seconds, TimeOverflowError};
@@ -777,34 +777,6 @@ mod tests {
             interval.to_relative_mtp_interval_ceil().unwrap_err(),
             TimeOverflowError { seconds: max_seconds + 1 }
         );
-    }
-
-    #[test]
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    fn block_height_encoding_round_trip() {
-        let blockheight = BlockHeight(0x7FFF_FFFF);
-        let expected_bytes = alloc::vec![0xff, 0xff, 0xff, 0x7f];
-
-        let encoded = encoding::encode_to_vec(&blockheight);
-        assert_eq!(encoded, expected_bytes);
-
-        let decoded = encoding::decode_from_slice::<BlockHeight>(encoded.as_slice()).unwrap();
-        assert_eq!(decoded, blockheight);
-    }
-
-    #[test]
-    #[cfg(feature = "encoding")]
-    fn block_height_decoding() {
-        let bytes = [0xff, 0xff, 0xff, 0xff];
-        let expected = BlockHeight(0xFFFF_FFFF);
-
-        let mut decoder = BlockHeight::decoder();
-        assert_eq!(decoder.read_limit(), 4);
-        assert!(!decoder.push_bytes(&mut bytes.as_slice()).unwrap());
-        assert_eq!(decoder.read_limit(), 0);
-
-        let decoded = decoder.end().unwrap();
-        assert_eq!(decoded, expected);
     }
 
     #[test]

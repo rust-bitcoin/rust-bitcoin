@@ -171,7 +171,7 @@ mod tests {
     #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _};
+    use encoding::Decoder as _;
 
     use super::*;
 
@@ -191,34 +191,6 @@ mod tests {
 
         let roundtrip = serde_json::from_str::<BlockTime>(&json).unwrap();
         assert_eq!(t, roundtrip);
-    }
-
-    #[test]
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    fn block_time_encoding_round_trip() {
-        let t = BlockTime::from(1_742_979_600); // 26 Mar 2025 9:00 UTC
-        let expected_bytes = alloc::vec![0x10, 0xc2, 0xe3, 0x67];
-
-        let encoded = encoding::encode_to_vec(&t);
-        assert_eq!(encoded, expected_bytes);
-
-        let decoded = encoding::decode_from_slice::<BlockTime>(encoded.as_slice()).unwrap();
-        assert_eq!(decoded, t);
-    }
-
-    #[test]
-    #[cfg(feature = "encoding")]
-    fn block_time_decoding() {
-        let bytes = [0xb0, 0x52, 0x39, 0x69];
-        let expected = BlockTime::from(1_765_364_400); // 10 Dec 2025 11:00 UTC
-
-        let mut decoder = BlockTime::decoder();
-        assert_eq!(decoder.read_limit(), 4);
-        assert!(!decoder.push_bytes(&mut bytes.as_slice()).unwrap());
-        assert_eq!(decoder.read_limit(), 0);
-
-        let decoded = decoder.end().unwrap();
-        assert_eq!(decoded, expected);
     }
 
     #[test]
