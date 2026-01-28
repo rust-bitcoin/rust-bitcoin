@@ -7,12 +7,15 @@
 
 use alloc::vec;
 use alloc::vec::Vec;
+use core::convert::Infallible;
 use core::{fmt, iter};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
+use encoding::{ArrayDecoder, ArrayEncoder, BytesEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2};
+use internals::write_err;
 use io::{BufRead, Read, Write};
 
 use crate::ServiceFlags;
@@ -211,6 +214,264 @@ impl From<Ipv4Addr> for AddrV2 {
 
 impl From<Ipv6Addr> for AddrV2 {
     fn from(addr: Ipv6Addr) -> Self { Self::Ipv6(addr) }
+}
+
+/// The encoder type for [`AddrV2`].
+#[derive(Default)]
+pub struct AddrV2Encoder<'e> {
+    network: Option<ArrayEncoder<1>>,
+    size: Option<CompactSizeEncoder>,
+    bytes4: Option<ArrayEncoder<4>>,
+    bytes16: Option<ArrayEncoder<16>>,
+    bytes32: Option<ArrayEncoder<32>>,
+    nbytes: Option<BytesEncoder<'e>>,
+}
+
+impl<'e> AddrV2Encoder<'e> {
+    /// Construct a new [`AddrV2`] encoder.
+    pub fn new(addr_v2: &'e AddrV2) -> Self {
+        // Each address is prefixed with the network type and length of the byte array.
+        match addr_v2 {
+            AddrV2::Ipv4(ipv4) => {
+                let octets = ipv4.octets();
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([1])),
+                    size: Some(CompactSizeEncoder::new(4)),
+                    bytes4: Some(ArrayEncoder::without_length_prefix(octets)),
+                    ..Default::default()
+                }
+            }
+            AddrV2::Ipv6(ipv6) => {
+                let octets = ipv6.octets();
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([2])),
+                    size: Some(CompactSizeEncoder::new(16)),
+                    bytes16: Some(ArrayEncoder::without_length_prefix(octets)),
+                    ..Default::default()
+                }
+            }
+            AddrV2::TorV3(onion) => {
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([4])),
+                    size: Some(CompactSizeEncoder::new(32)),
+                    bytes32: Some(ArrayEncoder::without_length_prefix(*onion)),
+                    ..Default::default()
+                }
+            }
+            AddrV2::I2p(i2p) => {
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([5])),
+                    size: Some(CompactSizeEncoder::new(32)),
+                    bytes32: Some(ArrayEncoder::without_length_prefix(*i2p)),
+                    ..Default::default()
+                }
+            }
+            AddrV2::Cjdns(ipv6) => {
+                let octets = ipv6.octets();
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([6])),
+                    size: Some(CompactSizeEncoder::new(16)),
+                    bytes16: Some(ArrayEncoder::without_length_prefix(octets)),
+                    ..Default::default()
+                }
+            }
+            AddrV2::Unknown(network, bytes) => {
+                Self {
+                    network: Some(ArrayEncoder::without_length_prefix([*network])),
+                    size: Some(CompactSizeEncoder::new(bytes.len())),
+                    nbytes: Some(BytesEncoder::<'e>::without_length_prefix(bytes.as_slice())),
+                    ..Default::default()
+                }
+            }
+        }
+    }
+}
+
+impl<'e> encoding::Encoder for AddrV2Encoder<'e> {
+    fn current_chunk(&self) -> &[u8] {
+        if let Some(network) = &self.network {
+            return network.current_chunk();
+        }
+        if let Some(cs) = &self.size {
+            return cs.current_chunk();
+        }
+        if let Some(b) = &self.bytes4 {
+            return b.current_chunk();
+        }
+        if let Some(b) = &self.bytes16 {
+            return b.current_chunk();
+        }
+        if let Some(b) = &self.bytes32 {
+            return b.current_chunk();
+        }
+        if let Some(b) = &self.nbytes {
+            return b.current_chunk();
+        }
+        &[]
+    }
+
+    fn advance(&mut self) -> bool {
+        if self.network.is_some() && !self.network.advance() {
+            self.network = None;
+            return true;
+        }
+        if self.size.is_some() && !self.size.advance() {
+            self.size = None;
+            return true;
+        }
+        if self.bytes4.is_some() && !self.bytes4.advance() {
+            self.bytes4 = None;
+            return false;
+        }
+        if self.bytes16.is_some() && !self.bytes16.advance() {
+            self.bytes16 = None;
+            return false;
+        }
+        if self.bytes32.is_some() && !self.bytes32.advance() {
+            self.bytes32 = None;
+            return false;
+        }
+        if self.nbytes.is_some() && !self.nbytes.advance() {
+            self.nbytes = None;
+            return false;
+        }
+        true
+    }
+}
+
+impl encoding::Encodable for AddrV2 {
+    type Encoder<'e> = AddrV2Encoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AddrV2Encoder::new(self)
+    }
+}
+
+type AddrV2InnerDecoder = Decoder2<ArrayDecoder<1>, ByteVecDecoder>;
+
+/// The decoder type for an [`AddrV2`] type.
+pub struct AddrV2Decoder(AddrV2InnerDecoder);
+
+impl AddrV2Decoder {
+    #[inline]
+    const fn ipv6_from_bytes(bytes: [u8; 16]) -> Ipv6Addr {
+        Ipv6Addr::new(
+            u16::from_be_bytes([bytes[0], bytes[1]]),
+            u16::from_be_bytes([bytes[2], bytes[3]]),
+            u16::from_be_bytes([bytes[4], bytes[5]]),
+            u16::from_be_bytes([bytes[6], bytes[7]]),
+            u16::from_be_bytes([bytes[8], bytes[9]]),
+            u16::from_be_bytes([bytes[10], bytes[11]]),
+            u16::from_be_bytes([bytes[12], bytes[13]]),
+            u16::from_be_bytes([bytes[14], bytes[15]]),
+        )
+    }
+
+    #[inline]
+    fn to_fixed_size_slice<const N: usize>(addr_bytes: Vec<u8>) -> Result<[u8; N], AddrV2DecoderError> {
+        Ok(addr_bytes
+            .try_into()
+            .map_err(|e: Vec<u8>| AddrV2DecoderError::InvalidAddressLength { expected: N, got: e.len() })?
+        )
+    }
+}
+
+impl encoding::Decoder for AddrV2Decoder {
+    type Output = AddrV2;
+    type Error = AddrV2DecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AddrV2DecoderError::Decoder)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (net_type, addr_bytes) = self.0.end().map_err(AddrV2DecoderError::Decoder)?;
+        match u8::from_le_bytes(net_type) {
+            1 => {
+                let octets = Self::to_fixed_size_slice::<4>(addr_bytes)?;
+                Ok(AddrV2::Ipv4(Ipv4Addr::new(octets[0], octets[1], octets[2], octets[3])))
+            }
+            2 => {
+                let octets = Self::to_fixed_size_slice::<16>(addr_bytes)?;
+                Ok(AddrV2::Ipv6(Self::ipv6_from_bytes(octets)))
+            }
+            4 => {
+                let onion = Self::to_fixed_size_slice::<32>(addr_bytes)?;
+                Ok(AddrV2::TorV3(onion))
+            }
+            5 => {
+                let i2p = Self::to_fixed_size_slice::<32>(addr_bytes)?;
+                Ok(AddrV2::I2p(i2p))
+            }
+            6 => {
+                let octets = Self::to_fixed_size_slice::<16>(addr_bytes)?;
+                if octets[0] != 0xFC {
+                    return Err(AddrV2DecoderError::NotCjdns)
+                }
+                Ok(AddrV2::Cjdns(Self::ipv6_from_bytes(octets)))
+            }
+            any => Ok(AddrV2::Unknown(any, addr_bytes)),
+        }
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for AddrV2 {
+    type Decoder = AddrV2Decoder;
+
+    fn decoder() -> Self::Decoder {
+        AddrV2Decoder(
+            Decoder2::new(
+                ArrayDecoder::new(),
+                ByteVecDecoder::new(),
+            )
+        )
+    }
+}
+
+/// An error decoding a [`AddrV2`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AddrV2DecoderError {
+    /// Inner decoder failure.
+    Decoder(<AddrV2InnerDecoder as encoding::Decoder>::Error),
+    /// The address cannot be decoded given the buffer size.
+    InvalidAddressLength {
+        /// The expected size given the address type.
+        expected: usize,
+        /// Actual size of the buffer.
+        got: usize,
+    },
+    /// Expected CJDNS address but got an invalid mask.
+    NotCjdns,
+}
+
+impl From<Infallible> for AddrV2DecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for AddrV2DecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(d) => write_err!(f, "addrv2 error"; d),
+            Self::InvalidAddressLength { expected, got } => write!(f, "invalid length. expected {}, got {}", expected, got),
+            Self::NotCjdns => write!(f, "CJDNS address must start with a reserved byte."),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AddrV2DecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(d) => Some(d),
+            Self::InvalidAddressLength { expected: _, got: _ } => None,
+            Self::NotCjdns => None,
+        }
+    }
 }
 
 impl Encodable for AddrV2 {
