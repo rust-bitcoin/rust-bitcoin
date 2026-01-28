@@ -1,0 +1,10 @@
+[package]
+name = "verification"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bitcoin = { path = "../bitcoin", features = ["std"] }
+
+[lints]
+workspace = true
