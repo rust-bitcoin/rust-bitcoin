@@ -3,7 +3,6 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
-use bitcoin::consensus::Decodable;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::Transaction;
 use bitcoin_p2p_messages::message::InventoryPayload;
@@ -51,11 +50,12 @@ fn main() {
         eprintln!("Invalid hex string: {}", e);
         process::exit(1);
     });
-    let tx: Transaction =
-        Decodable::consensus_decode(&mut tx_bytes.as_slice()).unwrap_or_else(|e| {
-            eprintln!("Invalid transaction data: {}", e);
-            process::exit(1);
-        });
+    // Use fully qualified path for the one-off decoding to avoid top-level import "pollution"
+    // This helps clarify that we are dipping into the 'old' bitcoin encoding for this specific type.
+    let tx: Transaction = bitcoin::consensus::deserialize(&tx_bytes).unwrap_or_else(|e| {
+        eprintln!("Invalid transaction data: {}", e);
+        process::exit(1);
+    });
     let txid = tx.compute_txid();
     println!("Parsed transaction with TXID: {}", txid);
 
