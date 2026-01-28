@@ -43,6 +43,11 @@ impl Encodable for BlockHash {
     }
 }
 
+impl encoding::Decodable for BlockHash {
+    type Decoder = BlockHashDecoder;
+    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
+}
+
 /// The decoder for the [`BlockHash`] type.
 pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
 
@@ -72,11 +77,6 @@ impl encoding::Decoder for BlockHashDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-impl encoding::Decodable for BlockHash {
-    type Decoder = BlockHashDecoder;
-    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
 }
 
 /// An error consensus decoding an `BlockHash`.
