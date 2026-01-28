@@ -29,16 +29,21 @@ type Inner = sha256d::Hash;
 
 include!("./generic.rs");
 
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`BlockHash`] type.
-    pub struct BlockHashEncoder(encoding::ArrayEncoder<32>);
-}
-
 impl Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockHashEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
     }
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`BlockHash`] type.
+    pub struct BlockHashEncoder(encoding::ArrayEncoder<32>);
+}
+
+impl encoding::Decodable for BlockHash {
+    type Decoder = BlockHashDecoder;
+    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
 }
 
 /// The decoder for the [`BlockHash`] type.
@@ -70,11 +75,6 @@ impl encoding::Decoder for BlockHashDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-impl encoding::Decodable for BlockHash {
-    type Decoder = BlockHashDecoder;
-    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
 }
 
 /// An error consensus decoding an `BlockHash`.
