@@ -304,24 +304,28 @@ impl Keypair {
     ///
     /// This is equivalent to using [`secp256k1::SecretKey::from_keypair`] on the inner value.
     #[inline]
-    pub fn to_secret_key(self) -> secp256k1::SecretKey { secp256k1::SecretKey::from_keypair(self.as_inner()) }
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_secret_key(&self) -> secp256k1::SecretKey { secp256k1::SecretKey::from_keypair(self.as_inner()) }
 
     /// Returns the secret bytes for this [`Keypair`].
     #[inline]
-    pub fn to_secret_bytes(self) -> [u8; constants::SECRET_KEY_SIZE] { self.as_inner().to_secret_bytes() }
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_secret_bytes(&self) -> [u8; constants::SECRET_KEY_SIZE] { self.as_inner().to_secret_bytes() }
 
     /// Returns the [`PublicKey`] for this [`Keypair`].
     ///
     /// This is equivalent to using [`PublicKey::from_keypair`].
     #[inline]
-    pub fn to_public_key(self) -> PublicKey { PublicKey::from_keypair(&self) }
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_public_key(&self) -> PublicKey { PublicKey::from_keypair(self) }
 
     /// Returns the [`XOnlyPublicKey`] (and its [`Parity`]) for this [`Keypair`].
     ///
     /// This is equivalent to using [`XOnlyPublicKey::from_keypair`].
     #[inline]
-    pub fn to_x_only_public_key(self) -> (XOnlyPublicKey, Parity) {
-        XOnlyPublicKey::from_keypair(&self)
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_x_only_public_key(&self) -> (XOnlyPublicKey, Parity) {
+        XOnlyPublicKey::from_keypair(self)
     }
 
     /// Sign a message slice with this keypair, optionally using auxiliary random data.
