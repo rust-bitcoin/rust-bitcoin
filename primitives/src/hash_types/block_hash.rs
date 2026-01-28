@@ -9,7 +9,6 @@ use core::str;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::Encodable;
 use hashes::sha256d;
 use internals::write_err;
 
@@ -36,7 +35,7 @@ encoding::encoder_newtype_exact! {
     pub struct BlockHashEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
-impl Encodable for BlockHash {
+impl encoding::Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(self.as_byte_array()))
