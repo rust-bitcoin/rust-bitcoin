@@ -186,8 +186,7 @@ mod encapsulate {
         /// Returns the [`TweakedPublicKey`] for `keypair`.
         #[inline]
         pub fn from_keypair(keypair: TweakedKeypair) -> Self {
-            let xonly = keypair.to_keypair().to_x_only_public_key();
-            Self(xonly)
+            Self(keypair.to_keypair().to_x_only_public_key())
         }
 
         /// Constructs a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
@@ -447,7 +446,7 @@ impl Keypair {
     #[inline]
     pub fn to_public_key(self) -> PublicKey { PublicKey::from_keypair(&self) }
 
-    /// Returns the [`XOnlyPublicKey`] (and its [`Parity`]) for this [`Keypair`].
+    /// Returns the [`XOnlyPublicKey`] for this [`Keypair`].
     ///
     /// This is equivalent to using [`XOnlyPublicKey::from_keypair`].
     #[inline]
