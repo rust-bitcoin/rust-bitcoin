@@ -180,7 +180,6 @@ pub use crate::{
     crypto::ecdsa,
     crypto::key::{self, CompressedPublicKey, Keypair, PrivateKey, PublicKey, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
-    merkle_tree::MerkleBlock,
     network::params::{self, Params},
     network::{Network, NetworkKind, TestnetVersion},
     pow::{Target, Work},

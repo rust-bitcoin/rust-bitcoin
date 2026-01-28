@@ -9,20 +9,20 @@
 //!
 //! Support proofs that transaction(s) belong to a block.
 
+use alloc::vec;
+use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
 use internals::ToU64 as _;
 use io::{BufRead, Write};
-
-use crate::block::{self, Block, Checked};
-use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
-use crate::merkle_tree::TxMerkleNode;
-use crate::prelude::Vec;
-use crate::transaction::{Transaction, Txid};
-use crate::Weight;
+use primitives::block::{self, Block, Checked};
+use primitives::merkle_tree::TxMerkleNode;
+use primitives::transaction::{Transaction, Txid};
+use primitives::Weight;
 
 /// Data structure that represents a block header paired to a partial Merkle tree.
 ///
@@ -37,7 +37,7 @@ pub struct MerkleBlock {
 }
 
 impl MerkleBlock {
-    /// Constructs a new MerkleBlock from a block, that contains proofs for specific txids.
+    /// Constructs a new [`MerkleBlock`] from a block, that contains proofs for specific txids.
     ///
     /// The `block` is a full block containing the header and transactions and `match_txids` is a
     /// function that returns true for the ids that should be included in the partial Merkle tree.
@@ -46,7 +46,8 @@ impl MerkleBlock {
     ///
     /// ```rust
     /// use bitcoin::hex::FromHex;
-    /// use bitcoin::{Block, MerkleBlock, Txid};
+    /// use bitcoin_p2p_messages::merkle_tree::MerkleBlock;
+    /// use primitives::{Block, Txid};
     ///
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
@@ -82,7 +83,7 @@ impl MerkleBlock {
         Self::from_header_txids_with_predicate(block.header(), &block_txids, match_txids)
     }
 
-    /// Constructs a new MerkleBlock from the block's header and txids, that contain proofs for specific txids.
+    /// Constructs a new [`MerkleBlock`] from the block's header and txids, that contain proofs for specific txids.
     ///
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
     /// `match_txids` is a function that returns true for the ids that should be included in the partial Merkle tree.
@@ -103,6 +104,10 @@ impl MerkleBlock {
     /// Extracts the matching txid's represented by this partial Merkle tree
     /// and their respective indices within the partial tree.
     /// returns Ok(()) on success, or error in case of failure
+    ///
+    /// # Errors
+    ///
+    /// See [`MerkleBlockError`] for cases.
     pub fn extract_matches(
         &self,
         matches: &mut Vec<Txid>,
@@ -154,14 +159,14 @@ impl Decodable for MerkleBlock {
 /// Where N represents the number of leaf nodes of the partial tree. N itself
 /// is bounded by:
 ///
-///   N <= total_transactions
-///   N <= 1 + matched_transactions*tree_height
+///   N <= `total_transactions`
+///   N <= 1 + `matched_transactions`*`tree_height`
 ///
 /// The serialization format:
-///  - uint32       total_transactions (4 bytes)
-///  - CompactSize  number of hashes   (1-3 bytes)
+///  - uint32       `total_transactions` (4 bytes)
+///  - `CompactSize`  number of hashes   (1-3 bytes)
 ///  - uint256[]    hashes in depth-first order (<= 32*N bytes)
-///  - CompactSize  number of bytes of flag bits (1-3 bytes)
+///  - `CompactSize`  number of bytes of flag bits (1-3 bytes)
 ///  - byte[]       flag bits, packed per 8 in a byte, least significant bit first (<= 2*N-1 bits)
 ///
 /// The size constraints follow from this.
@@ -197,8 +202,8 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::Txid;
-    /// use bitcoin::merkle_tree::PartialMerkleTree;
+    /// use bitcoin_p2p_messages::merkle_tree::PartialMerkleTree;
+    /// use primitives::Txid;
     ///
     /// // Block 80000
     /// let txids: Vec<Txid> = [
@@ -233,7 +238,11 @@ impl PartialMerkleTree {
 
     /// Extracts the matching txid's represented by this partial Merkle tree
     /// and their respective indices within the partial tree.
-    /// returns the Merkle root, or error in case of failure
+    /// returns the Merkle root
+    ///
+    /// # Errors
+    ///
+    /// See [`MerkleBlockError`] for cases.
     pub fn extract_matches(
         &self,
         matches: &mut Vec<Txid>,
@@ -338,7 +347,7 @@ impl PartialMerkleTree {
     }
 
     /// Recursive function that traverses tree nodes, consuming the bits and hashes produced by
-    /// TraverseAndBuild. It returns the hash of the respective node and its respective index.
+    /// `TraverseAndBuild`. It returns the hash of the respective node and its respective index.
     fn traverse_and_extract(
         &self,
         height: u32,
@@ -410,7 +419,7 @@ impl Encodable for PartialMerkleTree {
         for chunk in self.bits.chunks(8) {
             let mut byte = 0u8;
             for (i, bit) in chunk.iter().enumerate() {
-                byte |= (*bit as u8) << i;
+                byte |= u8::from(*bit) << i;
             }
             ret += byte.consensus_encode(w)?;
         }
@@ -441,7 +450,7 @@ impl Decodable for PartialMerkleTree {
             }
         }
 
-        Ok(Self { num_transactions, hashes, bits })
+        Ok(Self { num_transactions, bits, hashes })
     }
 }
 
@@ -535,14 +544,12 @@ mod tests {
 
     use hex::{DisplayHex, FromHex};
     use hex_lit::hex;
+    use primitives::block::Unchecked;
 
     use super::*;
-    use crate::block::Unchecked;
-    use crate::consensus::encode;
-    use crate::Txid;
 
     // `bloc` in hex.
-    const PRNG_SEED: usize = 0x626C6F63;
+    const PRNG_SEED: usize = 0x626C_6F63;
 
     // Simple and deterministic PRNG, not suitable for cryptographic use cases.
     struct LcgPrng {
@@ -601,7 +608,7 @@ mod tests {
         let mut rng = LcgPrng::new(PRNG_SEED ^ tx_count);
         // Create some fake tx ids
         let tx_ids = (1..=tx_count)
-            .map(|i| format!("{:064x}", i).parse::<Txid>().unwrap())
+            .map(|i| alloc::format!("{:064x}", i).parse::<Txid>().unwrap())
             .collect::<Vec<_>>();
 
         // Calculate the Merkle root and height
@@ -674,7 +681,7 @@ mod tests {
         // Create some fake tx ids with the last 2 hashes repeating
         let txids: Vec<Txid> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 10]
             .iter()
-            .map(|i| format!("{:064x}", i).parse::<Txid>().unwrap())
+            .map(|i| alloc::format!("{:064x}", i).parse::<Txid>().unwrap())
             .collect();
 
         let matches =
@@ -690,7 +697,7 @@ mod tests {
     fn merkleblock_serialization() {
         // Got it by running the rpc call
         // `gettxoutproof '["220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"]'`
-        let mb_hex = include_str!("../../tests/data/merkle_block.hex");
+        let mb_hex = include_str!("../tests/data/merkle_block.hex");
 
         let bytes = Vec::from_hex(mb_hex).unwrap();
         let mb: MerkleBlock = encode::deserialize(&bytes).unwrap();
@@ -703,7 +710,7 @@ mod tests {
         assert_eq!(mb_hex, encode::serialize(&mb).to_lower_hex_string().as_str());
     }
 
-    /// Constructs a new MerkleBlock using a list of txids which will be found in the
+    /// Constructs a new [`MerkleBlock`] using a list of txids which will be found in the
     /// given block.
     #[test]
     fn merkleblock_construct_from_txids_found() {
@@ -742,7 +749,7 @@ mod tests {
         assert_eq!(index[1], 8);
     }
 
-    /// Constructs a new MerkleBlock using a list of txids which will not be found in the given block
+    /// Constructs a new [`MerkleBlock`] using a list of txids which will not be found in the given block
     #[test]
     fn merkleblock_construct_from_txids_not_found() {
         let block = get_block_13b8a();
@@ -781,7 +788,7 @@ mod tests {
     /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
     /// with 9 txs.
     fn get_block_13b8a() -> Block<Checked> {
-        let block_hex = include_str!("../../tests/data/block_13b8a.hex");
+        let block_hex = include_str!("../tests/data/block_13b8a.hex");
         let block: Block<Unchecked> =
             encode::deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap();
         block.validate().expect("block should be valid")
