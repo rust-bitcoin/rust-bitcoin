@@ -57,7 +57,7 @@ fn psbt_sign_taproot() {
     // Just use one of the secret keys for the key path spend.
     let kp = sk_path[2].0.parse::<Keypair>().expect("failed to create keypair");
 
-    let internal_key = kp.to_x_only_public_key(); // Ignore the parity.
+    let internal_key = kp.to_x_only_public_key();
 
     let tree = create_taproot_tree(script1, script2.clone(), script3, internal_key);
 
