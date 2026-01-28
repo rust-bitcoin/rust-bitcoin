@@ -42,6 +42,8 @@ encoding::encoder_newtype_exact! {
 
 impl encoding::Decodable for BlockHash {
     type Decoder = BlockHashDecoder;
+
+    #[inline]
     fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
 }
 
@@ -50,10 +52,12 @@ pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
 
 impl BlockHashDecoder {
     /// Constructs a new [`BlockHash`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for BlockHashDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
