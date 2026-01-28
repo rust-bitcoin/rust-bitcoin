@@ -62,6 +62,10 @@ check-api:
 @query-api crate command:
  {{justfile_directory()}}/contrib/api.sh $1 $2
 
+# Update the lockfiles and check the API is correct.
+[group('scripts')]
+fix-locks: update-lock-files check-api
+
 # Update the recent and minimal lock files.
 [group('scripts')]
 update-lock-files:
