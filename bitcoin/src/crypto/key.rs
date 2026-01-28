@@ -150,6 +150,14 @@ impl fmt::Display for XOnlyPublicKey {
 pub struct Keypair(secp256k1::Keypair);
 
 impl Keypair {
+    /// Constructs a keypair from a provided secp256k1 keypair.
+    #[inline]
+    pub fn from_secp(keypair: impl Into<secp256k1::Keypair>) -> Self { Self(keypair.into()) }
+
+    /// Returns the inner [`secp256k1::Keypair`].
+    #[inline]
+    pub fn to_inner(self) -> secp256k1::Keypair { self.0 }
+
     /// Generates a new random key pair.
     ///
     /// # Examples
@@ -172,10 +180,6 @@ impl Keypair {
     pub fn from_secret_key(sk: &secp256k1::SecretKey) -> Self {
         Self::from(secp256k1::Keypair::from_secret_key(sk))
     }
-
-    /// Returns the inner [`secp256k1::Keypair`].
-    #[inline]
-    pub fn to_inner(self) -> secp256k1::Keypair { self.0 }
 
     /// Returns the [`PrivateKey`] for this [`Keypair`].
     ///
@@ -212,7 +216,7 @@ impl FromStr for Keypair {
 }
 
 impl From<secp256k1::Keypair> for Keypair {
-    fn from(pk: secp256k1::Keypair) -> Self { Self(pk) }
+    fn from(pk: secp256k1::Keypair) -> Self { Self::from_secp(pk) }
 }
 
 impl From<Keypair> for secp256k1::PublicKey {
