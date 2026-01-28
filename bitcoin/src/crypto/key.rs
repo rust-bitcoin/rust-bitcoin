@@ -93,8 +93,7 @@ mod encapsulate {
         /// Returns the [`TweakedPublicKey`] for `keypair`.
         #[inline]
         pub fn from_keypair(keypair: TweakedKeypair) -> Self {
-            let (xonly, _parity) = keypair.to_keypair().to_x_only_public_key();
-            Self(xonly)
+            Self(keypair.to_keypair().to_x_only_public_key())
         }
 
         /// Constructs a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
@@ -321,13 +320,14 @@ impl Keypair {
     #[allow(clippy::wrong_self_convention)]
     pub fn to_public_key(&self) -> PublicKey { PublicKey::from_keypair(self) }
 
-    /// Returns the [`XOnlyPublicKey`] (and its [`Parity`]) for this [`Keypair`].
+    /// Returns the [`XOnlyPublicKey`] for this [`Keypair`].
     ///
-    /// This is equivalent to using [`XOnlyPublicKey::from_keypair`].
+    /// If the corresponding [`Parity`] is required, consider using
+    /// [`XOnlyPublicKey::from_keypair`] instead.
     #[inline]
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_x_only_public_key(&self) -> (XOnlyPublicKey, Parity) {
-        XOnlyPublicKey::from_keypair(self)
+    pub fn to_x_only_public_key(&self) -> XOnlyPublicKey {
+        XOnlyPublicKey::from_keypair(self).0
     }
 
     /// Sign a message slice with this keypair, optionally using auxiliary random data.
@@ -1174,7 +1174,7 @@ impl TweakedKeypair {
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
-        let (xonly, parity) = self.as_keypair().to_x_only_public_key();
+        let (xonly, parity) = XOnlyPublicKey::from_keypair(self.as_keypair());
         (TweakedPublicKey::dangerous_assume_tweaked(xonly), parity)
     }
 }

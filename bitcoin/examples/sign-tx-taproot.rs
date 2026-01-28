@@ -19,7 +19,7 @@ const CHANGE_AMOUNT: Amount = Amount::from_sat_u32(14_999_000); // 1000 sat fee.
 fn main() {
     // Get a keypair we control. In a real application these would come from a stored secret.
     let keypair = senders_keys();
-    let (internal_key, _parity) = keypair.to_x_only_public_key();
+    let internal_key = keypair.to_x_only_public_key();
 
     // Get an unspent output that is locked to the key above that we control.
     // In a real application these would come from the chain.
