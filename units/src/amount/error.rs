@@ -385,7 +385,8 @@ impl fmt::Display for ParseDenominationError {
 impl std::error::Error for ParseDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
-            Self::Unknown(_) | Self::PossiblyConfusing(_) => None,
+            Self::Unknown(ref e) => Some(e),
+            Self::PossiblyConfusing(ref e) => Some(e),
         }
     }
 }
