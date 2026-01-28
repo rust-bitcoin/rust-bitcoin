@@ -9,7 +9,6 @@ use core::str;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::Encodable;
 use hashes::sha256d;
 use internals::write_err;
 
@@ -29,7 +28,7 @@ type Inner = sha256d::Hash;
 
 include!("./generic.rs");
 
-impl Encodable for BlockHash {
+impl encoding::Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder;
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockHashEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
