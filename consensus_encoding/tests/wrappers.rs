@@ -97,10 +97,10 @@ fn slice_encoder() {
     }
 
     impl Encodable for Test {
-        type Encoder<'a>
-            = TestEncoder<'a>
+        type Encoder<'e>
+            = TestEncoder<'e>
         where
-            Self: 'a;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
             TestEncoder::new(Encoder2::new(

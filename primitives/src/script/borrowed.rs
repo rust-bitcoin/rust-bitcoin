@@ -159,10 +159,10 @@ encoding::encoder_newtype_exact! {
 }
 
 impl<T> Encodable for Script<T> {
-    type Encoder<'a>
-        = ScriptEncoder<'a>
+    type Encoder<'e>
+        = ScriptEncoder<'e>
     where
-        Self: 'a;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         ScriptEncoder::new(Encoder2::new(
