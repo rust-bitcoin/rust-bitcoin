@@ -786,6 +786,19 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn invalid_height_error() {
+        // If chain tip precedes mined_at, should return an invalid height error
+        let mined_at = BlockHeight::from_u32(900_000);
+        let chain_tip = BlockHeight::from_u32(800_000);
+
+        let block_count = NumberOfBlocks::from_height(70); // Arbitrary value.
+        let err = block_count.is_satisfied_by(chain_tip, mined_at).unwrap_err();
+
+        assert!(matches!(err, InvalidHeightError { chain_tip: _, utxo_mined_at: _ }));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn incompatible_time_error() {
         // This is an error test these values are not used in the error path.
         let mined_at = BlockMtp::from_u32(1_234_567_890);
@@ -797,6 +810,19 @@ mod tests {
         let expected_height = NumberOfBlocks::from(10);
         assert_eq!(err, IsSatisfiedByTimeError::Incompatible(expected_height));
         assert!(!format!("{}", err).is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn invalid_time_error() {
+        // If chain tip precedes mined_at, should return an invalid time error
+        let mined_at = BlockMtp::from_u32(1_734_567_890);
+        let chain_tip = BlockMtp::from_u32(1_600_000_000);
+
+        let time_interval = NumberOf512Seconds::from_512_second_intervals(10); // Arbitrary value.
+        let err = time_interval.is_satisfied_by(chain_tip, mined_at).unwrap_err();
+
+        assert!(matches!(err, InvalidTimeError { chain_tip: _, utxo_mined_at: _ }));
     }
 
     #[test]
@@ -954,47 +980,57 @@ mod tests {
 
         // Test case 1: Satisfaction (current_mtp >= utxo_mtp + required_seconds)
         // 10 intervals × 512 seconds = 5120 seconds
-        let time_lock = NumberOf512Seconds::from_512_second_intervals(10);
+        let time_lock = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(10));
         let chain_state1 = BlockMtp::new(timestamps);
         let utxo_state1 = BlockMtp::new(utxo_timestamps);
-        assert!(time_lock.is_satisfied_by(chain_state1, utxo_state1).unwrap());
+        assert!(time_lock.is_satisfied_by_time(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_mtp < utxo_mtp + required_seconds)
         let chain_state2 = BlockMtp::new(timestamps2);
         let utxo_state2 = BlockMtp::new(utxo_timestamps2);
-        assert!(!time_lock.is_satisfied_by(chain_state2, utxo_state2).unwrap());
+        assert!(!time_lock.is_satisfied_by_time(chain_state2, utxo_state2).unwrap());
 
         // Test case 3: Test with a larger value (100 intervals = 51200 seconds)
-        let larger_lock = NumberOf512Seconds::from_512_second_intervals(100);
+        let larger_lock = LockTime::Time(NumberOf512Seconds::from_512_second_intervals(100));
         let chain_state3 = BlockMtp::new(timestamps3);
         let utxo_state3 = BlockMtp::new(utxo_timestamps3);
-        assert!(larger_lock.is_satisfied_by(chain_state3, utxo_state3).unwrap());
+        assert!(larger_lock.is_satisfied_by_time(chain_state3, utxo_state3).unwrap());
 
-        // Test case 4: Overflow handling - tests that is_satisfied_by handles overflow gracefully
-        let max_time_lock = NumberOf512Seconds::MAX;
+        // Test case 4: Overflow handling - tests that is_satisfied_by_time handles overflow gracefully
+        let max_time_lock = LockTime::Time(NumberOf512Seconds::MAX);
         let chain_state4 = BlockMtp::new(timestamps);
         let utxo_state4 = BlockMtp::new(utxo_timestamps);
-        assert!(!max_time_lock.is_satisfied_by(chain_state4, utxo_state4).unwrap());
+        assert!(!max_time_lock.is_satisfied_by_time(chain_state4, utxo_state4).unwrap());
     }
 
     #[test]
     fn test_height_chain_state() {
-        let height_lock = NumberOfBlocks(10);
+        let height_lock = LockTime::Blocks(NumberOfBlocks(10));
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
         let chain_state1 = BlockHeight::from_u32(89);
         let utxo_state1 = BlockHeight::from_u32(80);
-        assert!(height_lock.is_satisfied_by(chain_state1, utxo_state1).unwrap());
+        assert!(height_lock.is_satisfied_by_height(chain_state1, utxo_state1).unwrap());
 
         // Test case 2: Not satisfied (current_height < utxo_height + required)
         let chain_state2 = BlockHeight::from_u32(88);
         let utxo_state2 = BlockHeight::from_u32(80);
-        assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2).unwrap());
+        assert!(!height_lock.is_satisfied_by_height(chain_state2, utxo_state2).unwrap());
 
-        // Test case 3: Overflow handling - tests that is_satisfied_by handles overflow gracefully
-        let max_height_lock = NumberOfBlocks::MAX;
+        // Test case 3: Overflow handling - tests that is_satisfied_by_height handles overflow gracefully
+        let max_height_lock = LockTime::Blocks(NumberOfBlocks::MAX);
         let chain_state3 = BlockHeight::from_u32(1000);
         let utxo_state3 = BlockHeight::from_u32(80);
-        assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3).unwrap());
+        assert!(!max_height_lock.is_satisfied_by_height(chain_state3, utxo_state3).unwrap());
+    }
+
+    #[test]
+    fn test_max_height_satisfaction() {
+        // If the difference between these two is u32::MAX, we should get Ok(true)
+        let mined_at = BlockHeight::from_u32(u32::MIN);
+        let chain_tip = BlockHeight::from_u32(u32::MAX);
+
+        let block_height = NumberOfBlocks::from(10); // Arbitrary value.
+        assert!(block_height.is_satisfied_by(chain_tip, mined_at).unwrap());
     }
 }
