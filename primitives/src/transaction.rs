@@ -2600,4 +2600,307 @@ mod tests {
         let err = decoder.end().unwrap_err();
         assert_eq!(err, TransactionDecoderError(TransactionDecoderErrorInner::NoOutputs));
     }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn compute_ntxid_ignores_script_sig_and_witness() {
+        let mut tx_in = TxIn::EMPTY_COINBASE;
+        tx_in.script_sig = ScriptSigBuf::from_bytes(vec![1, 2, 3]);
+        tx_in.witness = Witness::from_slice(&[&[0xAAu8][..]]);
+
+        let mut tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![tx_in],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let ntxid = tx.compute_ntxid();
+
+        tx.inputs[0].script_sig = ScriptSigBuf::new();
+        tx.inputs[0].witness = Witness::default();
+
+        assert_eq!(ntxid, Ntxid::from_byte_array(tx.compute_txid().to_byte_array()));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_after_done_is_false() {
+        let tx_bytes = [
+            0x01, 0x00, 0x00, 0x00, // version
+            0x01, // input count
+            // prevout.txid
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // prevout.vout
+            0x00, // script_sig len
+            0xff, 0xff, 0xff, 0xff, // sequence
+            0x01, // output count
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // value
+            0x00, // script_pubkey len
+            0x00, 0x00, 0x00, 0x00, // lock_time
+        ];
+
+        let mut decoder = TransactionDecoder::new();
+        let mut bytes = tx_bytes.as_slice();
+        assert!(!decoder.push_bytes(&mut bytes).unwrap());
+
+        let mut empty = [].as_slice();
+        assert!(!decoder.push_bytes(&mut empty).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_inputs_needs_more() {
+        use TransactionDecoderState as S;
+        let mut decoder = TransactionDecoder {
+            state: S::Inputs(Version::ONE, Attempt::First, VecDecoder::new()),
+        };
+        let mut bytes = [].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_lock_time_completes() {
+        use TransactionDecoderState as S;
+
+        let mut decoder = TransactionDecoder {
+            state: S::LockTime(
+                Version::ONE,
+                vec![],
+                vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+                LockTimeDecoder::new(),
+            ),
+        };
+        let mut bytes = [0u8, 0, 0, 0].as_slice();
+
+        assert!(!decoder.push_bytes(&mut bytes).unwrap());
+        assert!(bytes.is_empty());
+
+        let tx = decoder.end().unwrap();
+        assert_eq!(tx.lock_time, absolute::LockTime::ZERO);
+        assert!(tx.inputs.is_empty());
+        assert_eq!(tx.outputs.len(), 1);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_lock_time_needs_more() {
+        use TransactionDecoderState as S;
+        let mut decoder = TransactionDecoder {
+            state: S::LockTime(
+                Version::ONE,
+                vec![],
+                vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+                LockTimeDecoder::new(),
+            ),
+        };
+        let mut bytes = [].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_outputs_needs_more() {
+        use TransactionDecoderState as S;
+        let mut decoder = TransactionDecoder {
+            state: S::Outputs(Version::ONE, vec![], IsSegwit::No, VecDecoder::new()),
+        };
+        let mut bytes = [].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_segwit_flag_empty_needs_more() {
+        use TransactionDecoderState as S;
+        let mut decoder = TransactionDecoder { state: S::SegwitFlag(Version::ONE) };
+        let mut bytes = [].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_version_needs_more() {
+        let mut decoder = TransactionDecoder::new();
+        let mut bytes = [].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_push_bytes_witnesses_needs_more() {
+        use TransactionDecoderState as S;
+        let tx_in = TxIn::EMPTY_COINBASE;
+        let mut decoder = TransactionDecoder {
+            state: S::Witnesses(
+                Version::ONE,
+                vec![tx_in],
+                vec![],
+                Iteration(0),
+                WitnessDecoder::new(),
+            ),
+        };
+        let mut bytes = [].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_rejects_unsupported_segwit_flag() {
+        let mut decoder = TransactionDecoder::new();
+        let mut bytes = [1u8, 0, 0, 0, 0, 2].as_slice();
+        let err = decoder.push_bytes(&mut bytes).unwrap_err();
+        assert!(matches!(err.0, TransactionDecoderErrorInner::UnsupportedSegwitFlag(2)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_end_rejects_null_prevout_at_nonzero_index() {
+        use TransactionDecoderState as S;
+
+        let input_0 = TxIn {
+            previous_output: OutPoint { txid: Txid::from_byte_array([1u8; 32]), vout: 0 },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        };
+        let input_1 = TxIn {
+            previous_output: OutPoint::COINBASE_PREVOUT,
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        };
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![input_0, input_1],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let decoder = TransactionDecoder { state: S::Done(tx) };
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err.0, TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(1)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[allow(clippy::should_panic_without_expect)]
+    #[should_panic]
+    fn transaction_decoder_end_after_error_panics() {
+        use TransactionDecoderState as S;
+        let decoder = TransactionDecoder { state: S::Errored };
+        let _ = decoder.end();
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[allow(clippy::should_panic_without_expect)]
+    #[should_panic]
+    fn transaction_decoder_push_bytes_after_error_panics() {
+        use TransactionDecoderState as S;
+
+        let mut decoder = TransactionDecoder { state: S::Errored };
+        let mut bytes = [].as_slice();
+        let _ = decoder.push_bytes(&mut bytes);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txid_from_transaction_matches_compute_txid() {
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![TxIn::EMPTY_COINBASE],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        assert_eq!(Txid::from(&tx), tx.compute_txid());
+        assert_eq!(Txid::from(tx.clone()), tx.compute_txid());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn wtxid_from_transaction_matches_compute_wtxid() {
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![TxIn::EMPTY_COINBASE],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        assert_eq!(Wtxid::from(&tx), tx.compute_wtxid());
+        assert_eq!(Wtxid::from(tx.clone()), tx.compute_wtxid());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witnesses_encoder_advance_switch_path() {
+        let tx_in_1 = TxIn {
+            previous_output: OutPoint { txid: Txid::from_byte_array([0xAA; 32]), vout: 0 },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::from_slice(&[&[0x01u8][..]]),
+        };
+
+        let empty = [].as_slice();
+        let many = vec![empty; 253];
+        let tx_in_2 = TxIn {
+            previous_output: OutPoint { txid: Txid::from_byte_array([0xBB; 32]), vout: 1 },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::from_slice(&many),
+        };
+
+        let inputs = [tx_in_1, tx_in_2];
+
+        let mut finished = inputs[0].witness.encoder();
+        while finished.advance() {}
+        assert!(!finished.advance());
+        let expected = inputs[1].witness.encoder().current_chunk().to_vec();
+        assert!(!expected.is_empty());
+
+        let mut encoder = WitnessesEncoder { inputs: &inputs, cur_enc: Some(finished) };
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), expected.as_slice());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witnesses_encoder_empty_inputs() {
+        let mut encoder = WitnessesEncoder::new(&[]);
+        assert!(!encoder.advance());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witnesses_encoder_switches_to_next_input_with_nonempty_chunk() {
+        let input_0 = TxIn {
+            previous_output: OutPoint { txid: Txid::from_byte_array([0xAA; 32]), vout: 0 },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        };
+
+        let input_1 = TxIn {
+            previous_output: OutPoint { txid: Txid::from_byte_array([0xBB; 32]), vout: 2 },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::from_slice(&[&[1u8][..]]),
+        };
+
+        let inputs = vec![input_0, input_1];
+        let mut encoder = WitnessesEncoder::new(&inputs);
+
+        let next = inputs[1].witness.encoder();
+        assert!(!next.current_chunk().is_empty());
+
+        let mut exhausted = inputs[0].witness.encoder();
+        while exhausted.advance() {}
+        encoder.cur_enc = Some(exhausted);
+
+        let advanced = encoder.advance();
+        assert!(advanced);
+    }
 }
