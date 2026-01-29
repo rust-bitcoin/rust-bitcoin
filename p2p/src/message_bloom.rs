@@ -34,8 +34,10 @@ encoding::encoder_newtype! {
     /// The encoder for the [`FilterLoad`] message.
     pub struct FilterLoadEncoder<'e>(
         Encoder2<
-            Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
+            'e,
+            Encoder2<'e, CompactSizeEncoder<'e>, BytesEncoder<'e>>,
             Encoder3<
+                'e,
                 ArrayEncoder<'e, 4>,
                 ArrayEncoder<'e, 4>,
                 BloomFlagsEncoder<'e>
@@ -264,7 +266,7 @@ pub struct FilterAdd {
 
 encoding::encoder_newtype! {
     /// The encoder of the [`FilterAdd`] message.
-    pub struct FilterAddEncoder<'e>(Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>);
+    pub struct FilterAddEncoder<'e>(Encoder2<'e, CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl encoding::Encodable for FilterAdd {

@@ -323,11 +323,11 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 }
 
 #[cfg(feature = "alloc")]
-type TransactionEncoderInner<'e> = Encoder6<
+type TransactionEncoderInner<'e> = Encoder6<'e,
         VersionEncoder<'e>,
         Option<ArrayEncoder<'e, 2>>,
-        Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, TxIn>>,
-        Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, TxOut>>,
+        Encoder2<'e, CompactSizeEncoder<'e>, SliceEncoder<'e, TxIn>>,
+        Encoder2<'e, CompactSizeEncoder<'e>, SliceEncoder<'e, TxOut>>,
         Option<WitnessesEncoder<'e>>,
         LockTimeEncoder<'e>,
     >;
@@ -887,14 +887,14 @@ impl TxIn {
 encoding::encoder_newtype! {
     /// The encoder for the [`TxIn`] type.
     pub struct TxInEncoder<'e>(
-        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
+        Encoder3<'e, OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
     );
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for TxIn {
     type Encoder<'e>
-        = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
+        = Encoder3<'e, OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
     where
         Self: 'e;
 
@@ -1054,13 +1054,13 @@ pub struct TxOut {
 #[cfg(feature = "alloc")]
 encoding::encoder_newtype! {
     /// The encoder for the [`TxOut`] type.
-    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>);
+    pub struct TxOutEncoder<'e>(Encoder2<'e, AmountEncoder<'e>, ScriptEncoder<'e>>);
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for TxOut {
     type Encoder<'e>
-        = Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>
+        = Encoder2<'e, AmountEncoder<'e>, ScriptEncoder<'e>>
     where
         Self: 'e;
 
@@ -1160,7 +1160,7 @@ impl OutPoint {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`OutPoint`] type.
-    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<'e, 4>>);
+    pub struct OutPointEncoder<'e>(Encoder2<'e, BytesEncoder<'e>, ArrayEncoder<'e, 4>>);
 }
 
 impl Encodable for OutPoint {

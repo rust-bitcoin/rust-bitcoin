@@ -259,7 +259,7 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
 }
 
 /// The encoder for the [`Witness`] type.
-pub struct WitnessEncoder<'a>(Encoder2<CompactSizeEncoder<'a>, BytesEncoder<'a>>);
+pub struct WitnessEncoder<'a>(Encoder2<'a, CompactSizeEncoder<'a>, BytesEncoder<'a>>);
 
 impl Encodable for Witness {
     type Encoder<'a>

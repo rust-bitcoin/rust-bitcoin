@@ -129,18 +129,19 @@ impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
 }
 
 /// An encoder which encodes two objects, one after the other.
-pub struct Encoder2<A, B> {
+pub struct Encoder2<'e, A, B> {
     enc_idx: usize,
     enc_1: A,
     enc_2: B,
+    _marker: PhantomData<&'e ()>,
 }
 
-impl<A, B> Encoder2<A, B> {
+impl<A, B> Encoder2<'_, A, B> {
     /// Constructs a new composite encoder.
-    pub const fn new(enc_1: A, enc_2: B) -> Self { Self { enc_idx: 0, enc_1, enc_2 } }
+    pub const fn new(enc_1: A, enc_2: B) -> Self { Self { enc_idx: 0, enc_1, enc_2, _marker: PhantomData } }
 }
 
-impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
+impl<A: Encoder, B: Encoder> Encoder for Encoder2<'_, A, B> {
     #[inline]
     fn current_chunk(&self) -> &[u8] {
         if self.enc_idx == 0 {
@@ -163,7 +164,7 @@ impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
     }
 }
 
-impl<A, B> ExactSizeEncoder for Encoder2<A, B>
+impl<A, B> ExactSizeEncoder for Encoder2<'_, A, B>
 where
     A: Encoder + ExactSizeEncoder,
     B: Encoder + ExactSizeEncoder,
@@ -178,25 +179,25 @@ where
 // unrolled versions should be macro-izable, if we want to do that.
 
 /// An encoder which encodes three objects, one after the other.
-pub struct Encoder3<A, B, C> {
-    inner: Encoder2<Encoder2<A, B>, C>,
+pub struct Encoder3<'e, A, B, C> {
+    inner: Encoder2<'e, Encoder2<'e, A, B>, C>,
 }
 
-impl<A, B, C> Encoder3<A, B, C> {
+impl<A, B, C> Encoder3<'_, A, B, C> {
     /// Constructs a new composite encoder.
     pub const fn new(enc_1: A, enc_2: B, enc_3: C) -> Self {
         Self { inner: Encoder2::new(Encoder2::new(enc_1, enc_2), enc_3) }
     }
 }
 
-impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<A, B, C> {
+impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<'_, A, B, C> {
     #[inline]
     fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
 
-impl<A, B, C> ExactSizeEncoder for Encoder3<A, B, C>
+impl<A, B, C> ExactSizeEncoder for Encoder3<'_, A, B, C>
 where
     A: Encoder + ExactSizeEncoder,
     B: Encoder + ExactSizeEncoder,
@@ -207,25 +208,25 @@ where
 }
 
 /// An encoder which encodes four objects, one after the other.
-pub struct Encoder4<A, B, C, D> {
-    inner: Encoder2<Encoder2<A, B>, Encoder2<C, D>>,
+pub struct Encoder4<'e, A, B, C, D> {
+    inner: Encoder2<'e, Encoder2<'e, A, B>, Encoder2<'e, C, D>>,
 }
 
-impl<A, B, C, D> Encoder4<A, B, C, D> {
+impl<A, B, C, D> Encoder4<'_, A, B, C, D> {
     /// Constructs a new composite encoder.
     pub const fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D) -> Self {
         Self { inner: Encoder2::new(Encoder2::new(enc_1, enc_2), Encoder2::new(enc_3, enc_4)) }
     }
 }
 
-impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<A, B, C, D> {
+impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<'_, A, B, C, D> {
     #[inline]
     fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
     #[inline]
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
 
-impl<A, B, C, D> ExactSizeEncoder for Encoder4<A, B, C, D>
+impl<A, B, C, D> ExactSizeEncoder for Encoder4<'_, A, B, C, D>
 where
     A: Encoder + ExactSizeEncoder,
     B: Encoder + ExactSizeEncoder,
@@ -237,11 +238,11 @@ where
 }
 
 /// An encoder which encodes six objects, one after the other.
-pub struct Encoder6<A, B, C, D, E, F> {
-    inner: Encoder2<Encoder3<A, B, C>, Encoder3<D, E, F>>,
+pub struct Encoder6<'e, A, B, C, D, E, F> {
+    inner: Encoder2<'e, Encoder3<'e, A, B, C>, Encoder3<'e, D, E, F>>,
 }
 
-impl<A, B, C, D, E, F> Encoder6<A, B, C, D, E, F> {
+impl<A, B, C, D, E, F> Encoder6<'_, A, B, C, D, E, F> {
     /// Constructs a new composite encoder.
     pub const fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D, enc_5: E, enc_6: F) -> Self {
         Self {
@@ -254,7 +255,7 @@ impl<A, B, C, D, E, F> Encoder6<A, B, C, D, E, F> {
 }
 
 impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Encoder
-    for Encoder6<A, B, C, D, E, F>
+    for Encoder6<'_, A, B, C, D, E, F>
 {
     #[inline]
     fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
@@ -262,7 +263,7 @@ impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Enc
     fn advance(&mut self) -> bool { self.inner.advance() }
 }
 
-impl<A, B, C, D, E, F> ExactSizeEncoder for Encoder6<A, B, C, D, E, F>
+impl<A, B, C, D, E, F> ExactSizeEncoder for Encoder6<'_, A, B, C, D, E, F>
 where
     A: Encoder + ExactSizeEncoder,
     B: Encoder + ExactSizeEncoder,

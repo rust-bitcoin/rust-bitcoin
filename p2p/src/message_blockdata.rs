@@ -106,7 +106,7 @@ impl Decodable for Inventory {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Inventory`] type.
-    pub struct InventoryEncoder<'e>(Encoder2<ArrayEncoder<'e, 4>, ArrayEncoder<'e, 32>>);
+    pub struct InventoryEncoder<'e>(Encoder2<'e, ArrayEncoder<'e, 4>, ArrayEncoder<'e, 32>>);
 }
 
 impl encoding::Encodable for Inventory {

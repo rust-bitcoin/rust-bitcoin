@@ -211,7 +211,7 @@ pub struct GetCFilters {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFilters`] message.
-    pub struct GetCFiltersEncoder<'e>(Encoder3<ArrayEncoder<'e, 1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
+    pub struct GetCFiltersEncoder<'e>(Encoder3<'e, ArrayEncoder<'e, 1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFilters {
@@ -298,9 +298,10 @@ encoding::encoder_newtype! {
     /// Encoder type for a [`CFilter`] message.
     pub struct CFilterEncoder<'e>(
         Encoder3<
+            'e,
             ArrayEncoder<'e, 1>,
             BlockHashEncoder<'e>,
-            Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
+            Encoder2<'e, CompactSizeEncoder<'e>, BytesEncoder<'e>>,
         >
     );
 }
@@ -393,7 +394,7 @@ pub struct GetCFHeaders {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFHeaders`] message.
-    pub struct GetCFHeadersEncoder<'e>(Encoder3<ArrayEncoder<'e, 1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
+    pub struct GetCFHeadersEncoder<'e>(Encoder3<'e, ArrayEncoder<'e, 1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFHeaders {
@@ -482,10 +483,11 @@ encoding::encoder_newtype! {
     /// Encoder type for a [`CFHeaders`] message.
     pub struct CFHeadersEncoder<'e>(
         Encoder4<
+            'e,
             ArrayEncoder<'e, 1>,
             BlockHashEncoder<'e>,
             FilterHeaderEncoder<'e>,
-            Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, FilterHash>>
+            Encoder2<'e, CompactSizeEncoder<'e>, SliceEncoder<'e, FilterHash>>
         >
     );
 }
@@ -581,7 +583,7 @@ pub struct GetCFCheckpt {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFCheckpt`] message.
-    pub struct GetCFCheckptEncoder<'e>(Encoder2<ArrayEncoder<'e, 1>, BlockHashEncoder<'e>>);
+    pub struct GetCFCheckptEncoder<'e>(Encoder2<'e, ArrayEncoder<'e, 1>, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFCheckpt {
@@ -663,9 +665,10 @@ encoding::encoder_newtype! {
     /// Encoder type for a [`CFCheckpt`] message.
     pub struct CFCheckptEncoder<'e>(
         Encoder3<
+            'e,
             ArrayEncoder<'e, 1>,
             BlockHashEncoder<'e>,
-            Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, FilterHeader>>
+            Encoder2<'e, CompactSizeEncoder<'e>, SliceEncoder<'e, FilterHeader>>
         >
     );
 }

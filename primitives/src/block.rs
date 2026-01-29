@@ -281,14 +281,14 @@ mod sealed {
 encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
     pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Transaction>>>
+        Encoder2<'e, HeaderEncoder<'e>, Encoder2<'e, CompactSizeEncoder<'e>, SliceEncoder<'e, Transaction>>>
     );
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for Block {
     type Encoder<'e>
-        = Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Transaction>>>
+        = Encoder2<'e, HeaderEncoder<'e>, Encoder2<'e, CompactSizeEncoder<'e>, SliceEncoder<'e, Transaction>>>
     where
         Self: 'e;
 
@@ -579,7 +579,7 @@ impl std::error::Error for ParseHeaderError {
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Header`] type.
     pub struct HeaderEncoder<'e>(
-        encoding::Encoder6<
+        encoding::Encoder6<'e,
             VersionEncoder<'e>,
             BlockHashEncoder<'e>,
             crate::merkle_tree::TxMerkleNodeEncoder<'e>,

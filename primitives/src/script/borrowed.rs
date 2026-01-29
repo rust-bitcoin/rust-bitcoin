@@ -155,7 +155,7 @@ impl<T> Script<T> {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Script<T>`] type.
-    pub struct ScriptEncoder<'e>(Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>);
+    pub struct ScriptEncoder<'e>(Encoder2<'e, CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl<T> Encodable for Script<T> {

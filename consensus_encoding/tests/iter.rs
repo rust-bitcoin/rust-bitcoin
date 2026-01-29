@@ -16,7 +16,7 @@ struct TestCatArray<const N: usize, const M: usize>([u8; N], [u8; M]);
 
 impl<const N: usize, const M: usize> Encodable for TestCatArray<N, M> {
     type Encoder<'s>
-        = Encoder2<ArrayEncoder<'s, N>, ArrayEncoder<'s, M>>
+        = Encoder2<'s, ArrayEncoder<'s, N>, ArrayEncoder<'s, M>>
     where
         Self: 's;
 

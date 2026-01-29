@@ -68,7 +68,7 @@ fn two_encoder() {
     }
 
     impl Encodable for Test {
-        type Encoder<'e> = Encoder2<TestBytesEncoder<'e>, TestBytesEncoder<'e>>;
+        type Encoder<'e> = Encoder2<'e, TestBytesEncoder<'e>, TestBytesEncoder<'e>>;
 
         fn encoder(&self) -> Self::Encoder<'_> {
             let a = TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.a.as_ref()));
@@ -93,7 +93,7 @@ fn slice_encoder() {
 
     encoding::encoder_newtype! {
         /// An encoder that uses an inner `SliceEncoder`.
-        pub struct TestEncoder<'e>(Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Inner>>);
+        pub struct TestEncoder<'e>(Encoder2<'e, CompactSizeEncoder<'e>, SliceEncoder<'e, Inner>>);
     }
 
     impl Encodable for Test {

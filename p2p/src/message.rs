@@ -783,7 +783,9 @@ encoding::encoder_newtype! {
     /// Encoder for [`RawNetworkMessage`].
     pub struct RawNetworkMessageEncoder<'e>(
         encoding::Encoder2<
+            'e,
             encoding::Encoder4<
+                'e,
                 encoding::ArrayEncoder<'e, 4>,
                 encoding::ArrayEncoder<'e, 12>,
                 encoding::ArrayEncoder<'e, 4>,
