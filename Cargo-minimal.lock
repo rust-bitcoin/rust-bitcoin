@@ -102,7 +102,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "bitcoin-io",
  "hex-conservative",
