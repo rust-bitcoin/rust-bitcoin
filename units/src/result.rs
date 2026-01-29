@@ -439,7 +439,8 @@ impl<'a> Arbitrary<'a> for MathOp {
 
 #[cfg(test)]
 mod tests {
-    use crate::result::MathOp;
+    use super::{MathOp, NumOpError, NumOpResult};
+    use crate::{Amount, FeeRate, Weight};
 
     #[test]
     fn mathop_predicates() {
@@ -465,5 +466,146 @@ mod tests {
 
         assert!(MathOp::Neg.is_negation());
         assert!(!MathOp::Add.is_negation());
+    }
+
+    #[test]
+    fn mathop_map() {
+        // op is evaluated for valid results
+        let res = NumOpResult::Valid(Amount::from_sat_u32(100));
+        let new_value = res.map(|val| (val / FeeRate::from_sat_per_kwu(10)).unwrap());
+        assert_eq!(new_value, NumOpResult::Valid(Weight::from_wu(10_000)));
+
+        // op is not evaluated for error results
+        let res = NumOpResult::<Weight>::Error(NumOpError::while_doing(MathOp::Add));
+        let res_err = res.map(|_| {
+            panic!("map should not evaluate for wrapped error values");
+        });
+        assert_eq!(res_err, res);
+    }
+
+    #[test]
+    fn mathop_expect() {
+        let amounts = [
+            Amount::from_sat_u32(0),
+            Amount::from_sat_u32(10_000_000),
+            Amount::from_sat_u32(u32::MAX),
+        ];
+        for amount in amounts {
+            assert_eq!(
+                NumOpResult::Valid(amount).expect("unreachable"),
+                NumOpResult::Valid(amount).unwrap(),
+            );
+            assert_eq!(NumOpResult::Valid(amount).expect("unreachable"), amount);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "test error message")]
+    fn mathop_expect_panics_on_error() {
+        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add)).expect("test error message");
+    }
+
+    #[test]
+    fn mathop_unwrap() {
+        let amounts = [
+            Amount::from_sat_u32(0),
+            Amount::from_sat_u32(10_000_000),
+            Amount::from_sat_u32(u32::MAX),
+        ];
+        for amount in amounts {
+            assert_eq!(NumOpResult::Valid(amount).unwrap(), amount);
+        }
+        let weights = [
+            Weight::from_wu(0),
+            Weight::from_wu(16_384_000),
+            Weight::from_wu(u64::MAX),
+        ];
+        for weight in weights {
+            assert_eq!(NumOpResult::Valid(weight).unwrap(), weight);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "")]
+    fn mathop_unwrap_panics_on_err() {
+        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add)).unwrap();
+    }
+
+    #[test]
+    fn mathop_unwrap_err() {
+        let errs = [
+            NumOpError::while_doing(MathOp::Add),
+            NumOpError::while_doing(MathOp::Sub),
+            NumOpError::while_doing(MathOp::Mul),
+            NumOpError::while_doing(MathOp::Div),
+            NumOpError::while_doing(MathOp::Neg),
+            NumOpError::while_doing(MathOp::Rem),
+        ];
+        for err in errs {
+            assert_eq!(NumOpResult::<Amount>::Error(err).unwrap_err(), err);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "")]
+    fn mathop_unwrap_err_panics_on_valid() {
+        let value = Amount::from_sat_u32(150);
+        NumOpResult::<Amount>::Valid(value).unwrap_err();
+    }
+
+    #[test]
+    fn mathop_unwrap_or() {
+        let base_amount = Amount::from_sat_u32(100);
+
+        // default is returned for error results
+        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add));
+        let res_default = res.unwrap_or(base_amount);
+        assert_eq!(res_default, base_amount);
+
+        // wrapped value is returned for valid results
+        let res = NumOpResult::Valid(base_amount);
+        let new_amount = res.unwrap_or(Amount::from_sat_u32(50));
+        assert_eq!(new_amount, base_amount);
+    }
+
+    #[test]
+    fn mathop_unwrap_or_else() {
+        let base_amount = Amount::from_sat_u32(100);
+
+        // op is evaluated for error results
+        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add));
+        let res_default = res.unwrap_or_else(|| base_amount);
+        assert_eq!(res_default, base_amount);
+
+        // op is not evaluated for valid results
+        let res = NumOpResult::<Amount>::Valid(base_amount);
+        let new_amount = res.unwrap_or_else(|| {
+            panic!("unwrap_or_else should not evaluate for wrapped valid values");
+        });
+        assert_eq!(new_amount, base_amount);
+    }
+
+    #[test]
+    fn mathop_ok() {
+        let amt = Amount::from_sat_u32(150);
+        assert_eq!(NumOpResult::Valid(amt).ok(), Some(amt));
+
+        let err = NumOpError::while_doing(MathOp::Add);
+        assert_eq!(NumOpResult::<Amount>::Error(err).ok(), None);
+    }
+
+    #[test]
+    fn mathop_and_then() {
+        // op is evaluated for valid results
+        let res = NumOpResult::Valid(Amount::from_sat_u32(100));
+        let new_value = res.and_then(|val| val + Amount::from_sat_u32(50));
+        assert_eq!(new_value, NumOpResult::Valid(Amount::from_sat_u32(150)));
+
+        // op is not evaluated for error results
+        let res = NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add));
+        let res_err = res.and_then(|_| {
+            panic!("and_then should not evaluate for wrapped error values");
+        });
+        assert_eq!(res_err, res);
     }
 }
