@@ -17,7 +17,7 @@ struct CompositeData {
 }
 
 impl Encodable for CompositeData {
-    type Encoder<'e> = Encoder2<ArrayEncoder<4>, ArrayEncoder<2>>;
+    type Encoder<'e> = Encoder2<'e, ArrayEncoder<'e, 4>, ArrayEncoder<'e, 2>>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         Encoder2::new(

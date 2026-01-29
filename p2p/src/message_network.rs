@@ -109,17 +109,19 @@ pub struct UserAgent {
 
 encoding::encoder_newtype! {
     /// The encoder for a [`UserAgent`] string.
-    pub struct UserAgentEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct UserAgentEncoder<'e>(Encoder2<'e, CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl encoding::Encodable for UserAgent {
     type Encoder<'e> = UserAgentEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        UserAgentEncoder(Encoder2::new(
-            CompactSizeEncoder::new(self.user_agent.len()),
-            BytesEncoder::without_length_prefix(self.user_agent.as_bytes()),
-        ))
+        UserAgentEncoder::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.user_agent.len()),
+                BytesEncoder::without_length_prefix(self.user_agent.as_bytes())
+            )
+        )
     }
 }
 
@@ -416,14 +418,14 @@ impl Alert {
 
 encoding::encoder_newtype! {
     /// The encoder type for an [`Alert`] message.
-    pub struct AlertEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct AlertEncoder<'e>(Encoder2<'e, CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl encoding::Encodable for Alert {
     type Encoder<'e> = AlertEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        AlertEncoder(Encoder2::new(
+        AlertEncoder::new(Encoder2::new(
             CompactSizeEncoder::new(self.0.len()),
             BytesEncoder::without_length_prefix(&self.0),
         ))

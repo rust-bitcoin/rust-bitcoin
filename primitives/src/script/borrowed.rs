@@ -155,17 +155,17 @@ impl<T> Script<T> {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Script<T>`] type.
-    pub struct ScriptEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct ScriptEncoder<'e>(Encoder2<'e, CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl<T> Encodable for Script<T> {
-    type Encoder<'a>
-        = ScriptEncoder<'a>
+    type Encoder<'e>
+        = ScriptEncoder<'e>
     where
-        Self: 'a;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        ScriptEncoder(Encoder2::new(
+        ScriptEncoder::new(Encoder2::new(
             CompactSizeEncoder::new(self.as_bytes().len()),
             BytesEncoder::without_length_prefix(self.as_bytes()),
         ))
