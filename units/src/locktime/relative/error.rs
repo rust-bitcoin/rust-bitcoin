@@ -179,3 +179,116 @@ impl fmt::Display for InvalidTimeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidTimeError {}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
+    #[cfg(feature = "alloc")]
+    use crate::{
+        BlockHeight, BlockMtp, BlockMtpInterval, Sequence,
+        locktime::relative::{LockTime, NumberOf512Seconds, NumberOfBlocks}
+    };
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // DisabledLockTimeError - parse disabled lock time
+        let disabled = Sequence::MAX; // Sequence with disable flag set
+        let e = LockTime::from_sequence(disabled).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // TimeOverflowError - time too large for relative locktime
+        let too_big = BlockMtpInterval::MAX;
+        let e = too_big.to_relative_mtp_interval_floor().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // InvalidHeightError - is_satisfied_by with invalid args
+        let blocks = NumberOfBlocks::from(10u16);
+        let e = blocks.is_satisfied_by(BlockHeight::from_u32(5), BlockHeight::from_u32(10)).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // InvalidTimeError - is_satisfied_by with invalid args
+        let time = NumberOf512Seconds::from_512_second_intervals(10);
+        let e = time.is_satisfied_by(BlockMtp::from_u32(5), BlockMtp::from_u32(10)).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+
+        // IsSatisfiedBy*Error
+        let time_lock = LockTime::from_512_second_intervals(10);
+        let height_lock = LockTime::from_height(10);
+
+        // IsSatisfiedByError - wraps InvalidHeightError or InvalidTimeError
+        // Error when chain_tip < utxo_mined_at (args wrong way around)
+        // blocks type
+        let e = height_lock
+            .is_satisfied_by(
+                BlockHeight::from_u32(5),
+                BlockMtp::ZERO,
+                BlockHeight::from_u32(10),
+                BlockMtp::ZERO,
+            )
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+        // time type
+        let e = time_lock
+            .is_satisfied_by(
+                BlockHeight::ZERO,
+                BlockMtp::from_u32(5),
+                BlockHeight::ZERO,
+                BlockMtp::from_u32(10),
+            )
+            .unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // IsSatisfiedByHeightError
+        // Incompatible type
+        let e = time_lock.is_satisfied_by_height(
+            BlockHeight::from_u32(5),
+            BlockHeight::from_u32(10)
+        ).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+        // Satisfaction type
+        let e = height_lock.is_satisfied_by_height(
+            BlockHeight::from_u32(5),
+            BlockHeight::from_u32(10)
+        ).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+
+        // IsSatisfiedByTimeError
+        // Incompatible type
+        let e = height_lock.is_satisfied_by_time(
+            BlockMtp::from_u32(5),
+            BlockMtp::from_u32(10)
+        ).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
+        // Satisfaction type
+        let e = time_lock.is_satisfied_by_time(
+            BlockMtp::from_u32(5),
+            BlockMtp::from_u32(10)
+        ).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
+    }
+}
