@@ -1419,7 +1419,11 @@ mod test {
         decoder.push_bytes(&mut slice).unwrap();
         let witness = decoder.end().unwrap();
         assert_eq!(witness[0].len(), 4_000_000);
+    }
 
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decode_length_prefix_error() {
         let mut encoded = Vec::new();
         encoded.extend_from_slice(crate::compact_size_encode(1usize).as_slice());
         encoded.extend_from_slice(crate::compact_size_encode(4_000_001usize).as_slice());
