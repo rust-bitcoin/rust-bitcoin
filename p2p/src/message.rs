@@ -158,20 +158,20 @@ pub struct CommandStringDecoder {
 
 impl encoding::Decoder for CommandStringDecoder {
     type Output = CommandString;
-    type Error = CommandStringDecodeError;
+    type Error = CommandStringDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.inner.push_bytes(bytes).map_err(CommandStringDecodeError::UnexpectedEof)
+        self.inner.push_bytes(bytes).map_err(CommandStringDecoderError::UnexpectedEof)
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let rawbytes = self.inner.end().map_err(CommandStringDecodeError::UnexpectedEof)?;
+        let rawbytes = self.inner.end().map_err(CommandStringDecoderError::UnexpectedEof)?;
         // Trim null padding from the end.
         let trimmed =
             rawbytes.iter().rposition(|&b| b != 0).map_or(&rawbytes[..0], |i| &rawbytes[..=i]);
 
         if !trimmed.is_ascii() {
-            return Err(CommandStringDecodeError::NotAscii);
+            return Err(CommandStringDecoderError::NotAscii);
         }
 
         Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
@@ -183,14 +183,14 @@ impl encoding::Decoder for CommandStringDecoder {
 /// Error decoding a [`CommandString`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum CommandStringDecodeError {
+pub enum CommandStringDecoderError {
     /// Unexpected end of data.
     UnexpectedEof(encoding::UnexpectedEofError),
     /// Command string contains non-ASCII characters.
     NotAscii,
 }
 
-impl fmt::Display for CommandStringDecodeError {
+impl fmt::Display for CommandStringDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::UnexpectedEof(e) => write!(f, "unexpected end of data: {}", e),
@@ -200,7 +200,7 @@ impl fmt::Display for CommandStringDecodeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for CommandStringDecodeError {
+impl std::error::Error for CommandStringDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::UnexpectedEof(e) => Some(e),
@@ -819,7 +819,7 @@ impl NetworkMessageDecoder {
 
 impl encoding::Decoder for NetworkMessageDecoder {
     type Output = NetworkMessage;
-    type Error = RawNetworkMessageDecodeError;
+    type Error = RawNetworkMessageDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         let remaining = self.payload_len - self.buffer.len();
@@ -837,7 +837,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
 
         // Validate payload length matches actual data.
         if payload_bytes.len() != self.payload_len {
-            return Err(RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload));
+            return Err(RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload));
         }
 
         // TODO: delegate to internal decoders once migrated to consensus_encoding.
@@ -848,7 +848,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "verack" => NetworkMessage::Verack,
@@ -857,7 +857,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "inv" => NetworkMessage::Inv(
@@ -865,7 +865,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "getdata" => NetworkMessage::GetData(
@@ -873,7 +873,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "notfound" => NetworkMessage::NotFound(
@@ -881,7 +881,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "getblocks" => NetworkMessage::GetBlocks(
@@ -889,7 +889,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "getheaders" => NetworkMessage::GetHeaders(
@@ -897,7 +897,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "mempool" => NetworkMessage::MemPool,
@@ -906,7 +906,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "headers" => NetworkMessage::Headers(
@@ -914,7 +914,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "sendheaders" => NetworkMessage::SendHeaders,
@@ -924,7 +924,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "pong" => NetworkMessage::Pong(
@@ -932,7 +932,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "merkleblock" => NetworkMessage::MerkleBlock(
@@ -940,7 +940,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "filterload" => NetworkMessage::FilterLoad(
@@ -948,7 +948,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "filteradd" => NetworkMessage::FilterAdd(
@@ -956,7 +956,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "filterclear" => NetworkMessage::FilterClear,
@@ -965,7 +965,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "cfilter" => NetworkMessage::CFilter(
@@ -973,7 +973,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "getcfheaders" => NetworkMessage::GetCFHeaders(
@@ -981,7 +981,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "cfheaders" => NetworkMessage::CFHeaders(
@@ -989,7 +989,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "getcfcheckpt" => NetworkMessage::GetCFCheckpt(
@@ -997,7 +997,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "cfcheckpt" => NetworkMessage::CFCheckpt(
@@ -1005,7 +1005,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "sendcmpct" => NetworkMessage::SendCmpct(
@@ -1013,7 +1013,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "cmpctblock" => NetworkMessage::CmpctBlock(
@@ -1021,7 +1021,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "getblocktxn" => NetworkMessage::GetBlockTxn(
@@ -1029,7 +1029,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "blocktxn" => NetworkMessage::BlockTxn(
@@ -1037,7 +1037,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "tx" => NetworkMessage::Tx(
@@ -1045,7 +1045,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "alert" => NetworkMessage::Alert(
@@ -1053,7 +1053,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "reject" => NetworkMessage::Reject(
@@ -1061,7 +1061,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "feefilter" => NetworkMessage::FeeFilter(
@@ -1069,7 +1069,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "wtxidrelay" => NetworkMessage::WtxidRelay,
@@ -1078,7 +1078,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
                     &mut mem_d,
                 )
                 .map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Payload)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Payload)
                 })?,
             ),
             "sendaddrv2" => NetworkMessage::SendAddrV2,
@@ -1119,13 +1119,13 @@ pub struct RawNetworkMessageDecoder {
 
 impl encoding::Decoder for RawNetworkMessageDecoder {
     type Output = RawNetworkMessage;
-    type Error = RawNetworkMessageDecodeError;
+    type Error = RawNetworkMessageDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         match &mut self.state {
             DecoderState::ReadingHeader { header_decoder } => {
                 let need_more = header_decoder.push_bytes(bytes).map_err(|_| {
-                    RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
+                    RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Header)
                 })?;
 
                 if !need_more {
@@ -1148,13 +1148,13 @@ impl encoding::Decoder for RawNetworkMessageDecoder {
 
                     let (magic_bytes, command, payload_len_bytes, checksum) =
                         header_decoder.end().map_err(|_| {
-                            RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)
+                            RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Header)
                         })?;
 
                     let payload_len = u32::from_le_bytes(payload_len_bytes) as usize;
                     if payload_len > MAX_MSG_SIZE {
-                        return Err(RawNetworkMessageDecodeError(
-                            RawNetworkMessageDecodeErrorInner::PayloadTooLarge,
+                        return Err(RawNetworkMessageDecoderError(
+                            RawNetworkMessageDecoderErrorInner::PayloadTooLarge,
                         ));
                     }
 
@@ -1180,7 +1180,7 @@ impl encoding::Decoder for RawNetworkMessageDecoder {
     fn end(self) -> Result<Self::Output, Self::Error> {
         match self.state {
             DecoderState::ReadingHeader { .. } =>
-                Err(RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner::Header)),
+                Err(RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Header)),
             DecoderState::ReadingPayload {
                 magic_bytes,
                 payload_len_bytes,
@@ -1227,10 +1227,10 @@ impl encoding::Decodable for RawNetworkMessage {
 
 /// Error decoding a raw network message.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RawNetworkMessageDecodeError(RawNetworkMessageDecodeErrorInner);
+pub struct RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum RawNetworkMessageDecodeErrorInner {
+enum RawNetworkMessageDecoderErrorInner {
     /// Error decoding the message header.
     Header,
     /// Payload length exceeds maximum allowed message size.
@@ -1239,16 +1239,16 @@ enum RawNetworkMessageDecodeErrorInner {
     Payload,
 }
 
-impl fmt::Display for RawNetworkMessageDecodeError {
+impl fmt::Display for RawNetworkMessageDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
-            RawNetworkMessageDecodeErrorInner::Header => {
+            RawNetworkMessageDecoderErrorInner::Header => {
                 write!(f, "error decoding message header")
             }
-            RawNetworkMessageDecodeErrorInner::PayloadTooLarge => {
+            RawNetworkMessageDecoderErrorInner::PayloadTooLarge => {
                 write!(f, "payload length exceeds maximum allowed message size")
             }
-            RawNetworkMessageDecodeErrorInner::Payload => {
+            RawNetworkMessageDecoderErrorInner::Payload => {
                 write!(f, "error decoding message payload")
             }
         }
@@ -1256,7 +1256,7 @@ impl fmt::Display for RawNetworkMessageDecodeError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for RawNetworkMessageDecodeError {}
+impl std::error::Error for RawNetworkMessageDecoderError {}
 
 impl Encodable for V2NetworkMessage {
     fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
