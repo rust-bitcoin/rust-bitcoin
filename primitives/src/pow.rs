@@ -128,8 +128,51 @@ impl std::error::Error for CompactTargetDecoderError {
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error as _;
+
+    use encoding::Decoder as _;
 
     use super::*;
+
+    #[test]
+    fn compact_target_decoder_read_limit() {
+        // read_limit is one u32 = 4 bytes for empty decoder
+        assert_eq!(CompactTargetDecoder::default().read_limit(), 4);
+        assert_eq!(<CompactTarget as encoding::Decodable>::decoder().read_limit(), 4);
+    }
+
+    #[test]
+    fn compact_target_decoder_round_trip() {
+        let bits: u32 = 0x1d00_ffff;
+        let compact_target =
+            encoding::decode_from_slice::<CompactTarget>(&bits.to_le_bytes()).unwrap();
+        assert_eq!(compact_target.to_consensus(), bits);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[allow(deprecated)]
+    fn compact_target_to_hex() {
+        let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
+        assert_eq!(compact_target.to_hex(), "1d00ffff");
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn compact_target_decoder_error_display_and_source() {
+        let mut slice = [0u8; 3].as_slice();
+        let mut decoder = CompactTargetDecoder::new();
+
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
 
     #[test]
     fn compact_target_ordering() {
