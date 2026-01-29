@@ -118,3 +118,33 @@ impl fmt::Display for TxMerkleNodeDecoderError {
 impl std::error::Error for TxMerkleNodeDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
+
+#[cfg(test)]
+mod tests {
+    use encoding::Decoder as _;
+
+    use super::*;
+
+    #[test]
+    fn decoder_full_read_limit() {
+        assert_eq!(TxMerkleNodeDecoder::default().read_limit(), 32);
+        assert_eq!(<TxMerkleNode as encoding::Decodable>::decoder().read_limit(), 32);
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn decoder_error_display() {
+        use std::error::Error as _;
+        use std::string::ToString as _;
+
+        const NODE_LEN: usize = 32;
+
+        let mut decoder = TxMerkleNodeDecoder::new();
+        let mut bytes = &[0u8; NODE_LEN - 1][..];
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(!err.to_string().is_empty());
+        assert!(err.source().is_some());
+    }
+}

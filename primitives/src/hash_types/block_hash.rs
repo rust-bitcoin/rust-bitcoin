@@ -99,3 +99,33 @@ impl fmt::Display for BlockHashDecoderError {
 impl std::error::Error for BlockHashDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
+
+#[cfg(test)]
+mod tests {
+    use encoding::Decoder as _;
+
+    use super::*;
+
+    #[test]
+    fn decoder_full_read_limit() {
+        assert_eq!(BlockHashDecoder::default().read_limit(), 32);
+        assert_eq!(<BlockHash as encoding::Decodable>::decoder().read_limit(), 32);
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn decoder_error_display() {
+        use std::error::Error as _;
+        use std::string::ToString as _;
+
+        let mut decoder = BlockHashDecoder::new();
+        let mut bytes = &[0u8; 31][..];
+
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+
+        let err = decoder.end().unwrap_err();
+
+        assert!(!err.to_string().is_empty());
+        assert!(err.source().is_some());
+    }
+}
