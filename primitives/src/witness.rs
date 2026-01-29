@@ -957,7 +957,10 @@ fn decode_unchecked(slice: &mut &[u8]) -> u64 {
 #[cfg(test)]
 mod test {
     #[cfg(feature = "alloc")]
-    use alloc::vec;
+    use alloc::{format, vec};
+
+    #[cfg(feature = "alloc")]
+    use encoding::Decodable as _;
 
     use super::*;
 
@@ -1190,6 +1193,13 @@ mod test {
         // Explicitly dereference the slice to invoke the `[T]` implementation.
         assert_eq!(*container, witness);
         assert_ne!(*different, witness);
+    }
+
+    #[test]
+    fn partial_eq_len_mismatch() {
+        let witness = Witness::from_slice(&[&[1u8][..]]);
+        let rhs = vec![vec![1u8], vec![2u8]];
+        assert_ne!(witness, rhs.as_slice());
     }
 
     #[test]
@@ -1529,6 +1539,57 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn decoder_read_limit() {
+        let mut decoder = Witness::decoder();
+        // witness_count_decoder is CompactSize: needs 1 byte.
+        assert_eq!(decoder.read_limit(), 1);
+
+        // Set witness count = 1.
+        let mut bytes = [0x01u8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        // element_length_decoder is CompactSize: needs 1 byte..
+        assert_eq!(decoder.read_limit(), 1);
+
+        // Provide only first byte of a 3 byte CompactSize.
+        let mut bytes = [0xFDu8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        assert_eq!(decoder.read_limit(), 2);
+
+        // Set element length to 500 (0x01F4 little-endian).
+        let mut bytes = [0xF4u8, 0x01].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        // Decoder now reads element data and the limit becomes the element length.
+        assert_eq!(decoder.read_limit(), 500);
+
+        // Provide 1 byte of element data decreasing the read limit by 1.
+        let mut bytes = [0xAAu8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        assert_eq!(decoder.read_limit(), 499);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn reserve_batch_returns_existing_len() {
+        let mut decoder = WitnessDecoder::new();
+        decoder.content = vec![0u8; 4];
+        assert_eq!(decoder.reserve_batch(4), 4);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn reserve_batch_reserves_when_full() {
+        let mut decoder = WitnessDecoder::new();
+        let content = vec![0; 1];
+        decoder.content = content;
+        assert_eq!(decoder.content.capacity(), decoder.content.len());
+
+        let new_len = decoder.reserve_batch(2);
+        assert_eq!(decoder.content.len(), new_len);
+        assert!(decoder.content.len() >= 2);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn decode_buffer_resizing() {
         // Create a witness with elements larger than initial 128-byte allocation.
         let large_element = vec![0xFF; 500];
@@ -1546,6 +1607,34 @@ mod test {
         assert_eq!(witness.len(), 2);
         assert_eq!(&witness[0], large_element.as_slice());
         assert_eq!(&witness[1], large_element.as_slice());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn iter_next_none_if_cursor_decode_fails() {
+        let witness = Witness { content: vec![], witness_elements: 1, indices_start: 0 };
+        assert!(witness.iter().next().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn iter_next_none_if_element_len_too_big() {
+        // Element length = 4_000_001 which is larger than MAX_VEC_SIZE (4_000_000).
+        let mut content = vec![0xFE];
+        content.extend_from_slice(&4_000_001u32.to_le_bytes());
+        let indices_start = content.len();
+        content.extend_from_slice(&u32::to_ne_bytes(0));
+
+        let witness = Witness { content, witness_elements: 1, indices_start };
+        assert!(witness.iter().next().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witness_debug() {
+        let witness = Witness::from_slice(&[&[0xAAu8][..]]);
+        let s = format!("{:?}", witness);
+        assert!(!s.is_empty());
     }
 
     #[test]
