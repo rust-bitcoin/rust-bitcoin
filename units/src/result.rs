@@ -439,7 +439,14 @@ impl<'a> Arbitrary<'a> for MathOp {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
     use crate::result::MathOp;
+    #[cfg(feature = "alloc")]
+    use crate::Amount;
 
     #[test]
     fn mathop_predicates() {
@@ -465,5 +472,15 @@ mod tests {
 
         assert!(MathOp::Neg.is_negation());
         assert!(!MathOp::Add.is_negation());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // NumOpError - math operation error
+        let e = (Amount::MAX + Amount::MAX).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
     }
 }
