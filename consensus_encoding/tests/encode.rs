@@ -17,10 +17,10 @@ struct TestData(u32);
 
 #[cfg(feature = "alloc")]
 impl Encodable for TestData {
-    type Encoder<'s>
+    type Encoder<'e>
         = ArrayEncoder<4>
     where
-        Self: 's;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         ArrayEncoder::without_length_prefix(self.0.to_le_bytes())
@@ -33,10 +33,10 @@ struct EmptyData;
 
 #[cfg(feature = "alloc")]
 impl Encodable for EmptyData {
-    type Encoder<'s>
+    type Encoder<'e>
         = ArrayEncoder<0>
     where
-        Self: 's;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix([]) }
 }
@@ -129,10 +129,10 @@ fn encode_slice_encoder_mixed_empty_and_data() {
     struct TestBytes(Vec<u8>);
 
     impl Encodable for TestBytes {
-        type Encoder<'s>
-            = BytesEncoder<'s>
+        type Encoder<'e>
+            = BytesEncoder<'e>
         where
-            Self: 's;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> { BytesEncoder::without_length_prefix(&self.0) }
     }

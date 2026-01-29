@@ -15,9 +15,9 @@ pub mod encoders;
 pub trait Encodable {
     /// The encoder associated with this type. Conceptually, the encoder is like
     /// an iterator which yields byte slices.
-    type Encoder<'s>: Encoder
+    type Encoder<'e>: Encoder
     where
-        Self: 's;
+        Self: 'e;
 
     /// Constructs a "default encoder" for the type.
     fn encoder(&self) -> Self::Encoder<'_>;
@@ -93,17 +93,17 @@ macro_rules! encoder_newtype_exact{
 }
 
 /// Yields bytes from any [`Encodable`] instance.
-pub struct EncodableByteIter<'s, T: Encodable + 's> {
-    enc: T::Encoder<'s>,
+pub struct EncodableByteIter<'e, T: Encodable + 'e> {
+    enc: T::Encoder<'e>,
     position: usize,
 }
 
-impl<'s, T: Encodable + 's> EncodableByteIter<'s, T> {
+impl<'e, T: Encodable + 'e> EncodableByteIter<'e, T> {
     /// Constructs a new byte iterator around a provided encodable.
-    pub fn new(encodable: &'s T) -> Self { Self { enc: encodable.encoder(), position: 0 } }
+    pub fn new(encodable: &'e T) -> Self { Self { enc: encodable.encoder(), position: 0 } }
 }
 
-impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {
+impl<'e, T: Encodable + 'e> Iterator for EncodableByteIter<'e, T> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -119,10 +119,10 @@ impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {
     }
 }
 
-impl<'s, T> ExactSizeIterator for EncodableByteIter<'s, T>
+impl<'e, T> ExactSizeIterator for EncodableByteIter<'e, T>
 where
-    T: Encodable + 's,
-    T::Encoder<'s>: ExactSizeEncoder,
+    T: Encodable + 'e,
+    T::Encoder<'e>: ExactSizeEncoder,
 {
     fn len(&self) -> usize { self.enc.len() - self.position }
 }

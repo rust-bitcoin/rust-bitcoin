@@ -4,10 +4,10 @@ use hex::BytesToHexIter;
 struct TestArray<const N: usize>([u8; N]);
 
 impl<const N: usize> Encodable for TestArray<N> {
-    type Encoder<'s>
+    type Encoder<'e>
         = ArrayEncoder<N>
     where
-        Self: 's;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
 }
@@ -15,10 +15,10 @@ impl<const N: usize> Encodable for TestArray<N> {
 struct TestCatArray<const N: usize, const M: usize>([u8; N], [u8; M]);
 
 impl<const N: usize, const M: usize> Encodable for TestCatArray<N, M> {
-    type Encoder<'s>
+    type Encoder<'e>
         = Encoder2<ArrayEncoder<N>, ArrayEncoder<M>>
     where
-        Self: 's;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         Encoder2::new(

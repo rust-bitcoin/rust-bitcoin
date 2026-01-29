@@ -33,10 +33,10 @@ encoding::encoder_newtype! {
 }
 
 impl Encodable for Adt {
-    type Encoder<'a>
-        = AdtEncoder<'a>
+    type Encoder<'e>
+        = AdtEncoder<'e>
     where
-        Self: 'a;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let a = Encoder2::new(

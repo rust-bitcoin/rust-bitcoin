@@ -355,10 +355,10 @@ mod tests {
     struct TestBytes<'a>(&'a [u8]);
 
     impl Encodable for TestBytes<'_> {
-        type Encoder<'s>
-            = BytesEncoder<'s>
+        type Encoder<'e>
+            = BytesEncoder<'e>
         where
-            Self: 's;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> { BytesEncoder::without_length_prefix(self.0) }
     }
@@ -366,10 +366,10 @@ mod tests {
     struct TestArray<const N: usize>([u8; N]);
 
     impl<const N: usize> Encodable for TestArray<N> {
-        type Encoder<'s>
+        type Encoder<'e>
             = ArrayEncoder<N>
         where
-            Self: 's;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
     }
