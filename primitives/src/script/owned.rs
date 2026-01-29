@@ -220,6 +220,10 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     use alloc::vec;
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error as _;
 
     use super::*;
 
@@ -331,5 +335,19 @@ mod tests {
         let mut push = [0xAA_u8].as_slice();
         decoder.push_bytes(&mut push).unwrap();
         assert_eq!(decoder.read_limit(), 31);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder_error_display() {
+        let bytes = vec![0x01_u8];
+        let mut push = bytes.as_slice();
+        let mut decoder = <ScriptBuf as Decodable>::Decoder::default();
+        decoder.push_bytes(&mut push).unwrap();
+
+        let err = decoder.end().unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
     }
 }
