@@ -53,25 +53,33 @@ macro_rules! do_impl {
             #[doc = stringify!($ty)]
             #[doc = "` from a big-endian byte array."]
             #[inline]
-            pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
+            pub fn from_be_bytes(bytes: [u8; 32]) -> $ty {
+                $ty(U256::from_be_bytes(bytes))
+            }
 
             #[doc = "Constructs `"]
             #[doc = stringify!($ty)]
             #[doc = "` from a little-endian byte array."]
             #[inline]
-            pub fn from_le_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_le_bytes(bytes)) }
+            pub fn from_le_bytes(bytes: [u8; 32]) -> $ty {
+                $ty(U256::from_le_bytes(bytes))
+            }
 
             #[doc = "Converts `"]
             #[doc = stringify!($ty)]
             #[doc = "` to a big-endian byte array."]
             #[inline]
-            pub fn to_be_bytes(self) -> [u8; 32] { self.0.to_be_bytes() }
+            pub fn to_be_bytes(self) -> [u8; 32] {
+                self.0.to_be_bytes()
+            }
 
             #[doc = "Converts `"]
             #[doc = stringify!($ty)]
             #[doc = "` to a little-endian byte array."]
             #[inline]
-            pub fn to_le_bytes(self) -> [u8; 32] { self.0.to_le_bytes() }
+            pub fn to_le_bytes(self) -> [u8; 32] {
+                self.0.to_le_bytes()
+            }
         }
 
         impl fmt::Display for $ty {
@@ -106,7 +114,9 @@ pub struct Work(U256);
 
 impl Work {
     /// Converts this [`Work`] to [`Target`].
-    pub fn to_target(self) -> Target { Target(self.0.inverse()) }
+    pub fn to_target(self) -> Target {
+        Target(self.0.inverse())
+    }
 
     /// Returns log2 of this work.
     ///
@@ -114,19 +124,25 @@ impl Work {
     /// used mainly for informative and displaying purposes, similarly to Bitcoin Core's
     /// `log2_work` output in its logs.
     #[cfg(feature = "std")]
-    pub fn log2(self) -> f64 { self.0.to_f64().log2() }
+    pub fn log2(self) -> f64 {
+        self.0.to_f64().log2()
+    }
 }
 do_impl!(Work);
 impl_to_hex_from_lower_hex!(Work, |_| 64);
 
 impl Add for Work {
     type Output = Self;
-    fn add(self, rhs: Self) -> Self { Self(self.0 + rhs.0) }
+    fn add(self, rhs: Self) -> Self {
+        Self(self.0 + rhs.0)
+    }
 }
 
 impl Sub for Work {
     type Output = Self;
-    fn sub(self, rhs: Self) -> Self { Self(self.0 - rhs.0) }
+    fn sub(self, rhs: Self) -> Self {
+        Self(self.0 - rhs.0)
+    }
 }
 
 /// A 256 bit integer representing target.
@@ -238,7 +254,9 @@ impl Target {
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
     /// block with this target (see `Self::difficulty`).
-    pub fn to_work(self) -> Work { Work(self.0.inverse()) }
+    pub fn to_work(self) -> Work {
+        Work(self.0.inverse())
+    }
 
     /// Computes the popular "difficulty" measure for mining.
     ///
@@ -324,7 +342,9 @@ impl Target {
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
     #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
-    pub fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
+    pub fn min_difficulty_transition_threshold(&self) -> Self {
+        self.min_transition_threshold()
+    }
 
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
@@ -342,7 +362,9 @@ impl Target {
     /// # Returns
     ///
     /// In line with Bitcoin Core this function may return a target value of zero.
-    pub fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
+    pub fn min_transition_threshold(&self) -> Self {
+        Self(self.0 >> 2)
+    }
 
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
@@ -369,7 +391,9 @@ impl Target {
     ///
     /// The return value should be checked against [`Params::max_attainable_target`] or use one of
     /// the `Target::MAX_ATTAINABLE_FOO` constants.
-    pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
+    pub fn max_transition_threshold_unchecked(&self) -> Self {
+        Self(self.0 << 2)
+    }
 }
 do_impl!(Target);
 impl_to_hex_from_lower_hex!(Target, |_| 64);
@@ -481,7 +505,9 @@ mod sealed {
 }
 
 impl From<CompactTarget> for Target {
-    fn from(c: CompactTarget) -> Self { Self::from_compact(c) }
+    fn from(c: CompactTarget) -> Self {
+        Self::from_compact(c)
+    }
 }
 
 impl Encodable for CompactTarget {
@@ -599,20 +625,32 @@ impl U256 {
         ret.wrapping_inc()
     }
 
-    fn is_zero(&self) -> bool { self.0 == 0 && self.1 == 0 }
+    fn is_zero(&self) -> bool {
+        self.0 == 0 && self.1 == 0
+    }
 
-    fn is_one(&self) -> bool { self.0 == 0 && self.1 == 1 }
+    fn is_one(&self) -> bool {
+        self.0 == 0 && self.1 == 1
+    }
 
-    fn is_max(&self) -> bool { self.0 == u128::MAX && self.1 == u128::MAX }
+    fn is_max(&self) -> bool {
+        self.0 == u128::MAX && self.1 == u128::MAX
+    }
 
     /// Returns the low 32 bits.
-    fn low_u32(&self) -> u32 { self.low_u128() as u32 }
+    fn low_u32(&self) -> u32 {
+        self.low_u128() as u32
+    }
 
     /// Returns the low 64 bits.
-    fn low_u64(&self) -> u64 { self.low_u128() as u64 }
+    fn low_u64(&self) -> u64 {
+        self.low_u128() as u64
+    }
 
     /// Returns the low 128 bits.
-    fn low_u128(&self) -> u128 { self.1 }
+    fn low_u128(&self) -> u128 {
+        self.1
+    }
 
     /// Returns this `U256` as a `u128` saturating to `u128::MAX` if `self` is too big.
     // Mutagen gives false positive because >= and > both return u128::MAX
@@ -913,7 +951,9 @@ impl U256 {
 }
 
 impl<T: Into<u128>> From<T> for U256 {
-    fn from(x: T) -> Self { Self(0, x.into()) }
+    fn from(x: T) -> Self {
+        Self(0, x.into())
+    }
 }
 
 impl Add for U256 {
@@ -945,28 +985,38 @@ impl Mul for U256 {
 
 impl Div for U256 {
     type Output = Self;
-    fn div(self, rhs: Self) -> Self { self.div_rem(rhs).0 }
+    fn div(self, rhs: Self) -> Self {
+        self.div_rem(rhs).0
+    }
 }
 
 impl Rem for U256 {
     type Output = Self;
-    fn rem(self, rhs: Self) -> Self { self.div_rem(rhs).1 }
+    fn rem(self, rhs: Self) -> Self {
+        self.div_rem(rhs).1
+    }
 }
 
 impl Not for U256 {
     type Output = Self;
 
-    fn not(self) -> Self { Self(!self.0, !self.1) }
+    fn not(self) -> Self {
+        Self(!self.0, !self.1)
+    }
 }
 
 impl Shl<u32> for U256 {
     type Output = Self;
-    fn shl(self, shift: u32) -> Self { self.wrapping_shl(shift) }
+    fn shl(self, shift: u32) -> Self {
+        self.wrapping_shl(shift)
+    }
 }
 
 impl Shr<u32> for U256 {
     type Output = Self;
-    fn shr(self, shift: u32) -> Self { self.wrapping_shr(shift) }
+    fn shr(self, shift: u32) -> Self {
+        self.wrapping_shr(shift)
+    }
 }
 
 impl fmt::Display for U256 {
@@ -980,7 +1030,9 @@ impl fmt::Display for U256 {
 }
 
 impl fmt::Debug for U256 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#x}", self) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:#x}", self)
+    }
 }
 
 macro_rules! impl_hex {
@@ -1004,7 +1056,9 @@ impl crate::serde::Serialize for U256 {
         struct DisplayHex(U256);
 
         impl fmt::Display for DisplayHex {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:x}", self.0) }
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "{:x}", self.0)
+            }
         }
 
         if serializer.is_human_readable() {
@@ -1113,16 +1167,24 @@ pub mod test_utils {
     use crate::pow::{Target, Work, U256};
 
     /// Converts a `u64` to a [`Work`]
-    pub fn u64_to_work(u: u64) -> Work { Work(U256::from(u)) }
+    pub fn u64_to_work(u: u64) -> Work {
+        Work(U256::from(u))
+    }
 
     /// Converts a `u128` to a [`Work`]
-    pub fn u128_to_work(u: u128) -> Work { Work(U256::from(u)) }
+    pub fn u128_to_work(u: u128) -> Work {
+        Work(U256::from(u))
+    }
 
     /// Converts a `u32` to a [`Target`]
-    pub fn u32_to_target(u: u32) -> Target { Target(U256::from(u)) }
+    pub fn u32_to_target(u: u32) -> Target {
+        Target(U256::from(u))
+    }
 
     /// Converts a `u64` to a [`Target`]
-    pub fn u64_to_target(u: u64) -> Target { Target(U256::from(u)) }
+    pub fn u64_to_target(u: u64) -> Target {
+        Target(U256::from(u))
+    }
 }
 
 #[cfg(test)]
@@ -2122,27 +2184,37 @@ mod tests {
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn u256_overflowing_addition_panics() { let _ = U256::MAX + U256::ONE; }
+    fn u256_overflowing_addition_panics() {
+        let _ = U256::MAX + U256::ONE;
+    }
 
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn u256_overflowing_subtraction_panics() { let _ = U256::ZERO - U256::ONE; }
+    fn u256_overflowing_subtraction_panics() {
+        let _ = U256::ZERO - U256::ONE;
+    }
 
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn u256_multiplication_by_max_panics() { let _ = U256::MAX * U256::MAX; }
+    fn u256_multiplication_by_max_panics() {
+        let _ = U256::MAX * U256::MAX;
+    }
 
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn work_overflowing_addition_panics() { let _ = Work(U256::MAX) + Work(U256::ONE); }
+    fn work_overflowing_addition_panics() {
+        let _ = Work(U256::MAX) + Work(U256::ONE);
+    }
 
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
+    fn work_overflowing_subtraction_panics() {
+        let _ = Work(U256::ZERO) - Work(U256::ONE);
+    }
 
     #[test]
     fn u256_to_f64() {
@@ -2157,6 +2229,15 @@ mod tests {
         assert_eq!((U256::MAX >> (256 - 32)).to_f64(), 4294967295.0_f64);
         assert_eq!((U256::MAX >> (256 - 16)).to_f64(), 65535.0_f64);
         assert_eq!((U256::MAX >> (256 - 8)).to_f64(), 255.0_f64);
+    }
+    #[test]
+    fn test_max_attainable_regtest() {
+        let target = Target::MAX_ATTAINABLE_REGTEST;
+        // 0x7FFF_FF00 << 96 fits in the top 32 bits of the high 128-bit word.
+        // So the hex representation should start with 7fffff00 and be followed by zeros.
+        // 64 hex chars total.
+        let expected = "7fffff0000000000000000000000000000000000000000000000000000000000";
+        assert_eq!(format!("{:064x}", target), expected);
     }
 }
 
