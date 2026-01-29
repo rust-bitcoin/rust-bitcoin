@@ -91,7 +91,7 @@ version = "0.1.2"
 
 [[package]]
 name = "bitcoin-units"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bitcoin-internals",
  "serde",
@@ -101,7 +101,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "bitcoin-io",
  "hex-conservative",
