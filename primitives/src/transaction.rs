@@ -1665,6 +1665,22 @@ mod tests {
     #[cfg(all(feature = "alloc", feature = "hex"))]
     use crate::absolute::LockTime;
 
+    const TC_TXID_BYTES: [u8; 32] = [
+        32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10,
+        9, 8, 7, 6, 5, 4, 3, 2, 1,
+    ];
+    const TC_VOUT_BYTES: [u8; 4] = [1, 0, 0, 0];
+    const TC_SCRIPT_BYTES: [u8; 3] = [1, 2, 3];
+    #[cfg(feature = "hex")]
+    const TC_SEQ_MAX_BYTES: [u8; 4] = [0xff, 0xff, 0xff, 0xff];
+    #[cfg(feature = "hex")]
+    const TC_LOCK_TIME_ZERO_BYTES: [u8; 4] = [0, 0, 0, 0];
+    const TC_ONE_SAT_BYTES: [u8; 8] = [1, 0, 0, 0, 0, 0, 0, 0];
+    #[cfg(feature = "hex")]
+    const TC_SEGWIT_MARKER_AND_FLAG: [u8; 2] = [0, 1];
+    #[cfg(feature = "hex")]
+    const TC_WITNESS_ELEM_LEN_AND_DATA: [u8; 4] = [3, 1, 2, 3];
+
     #[test]
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
@@ -1971,8 +1987,7 @@ mod tests {
 
     #[cfg(any(feature = "hex", feature = "serde"))]
     fn segwit_tx_in() -> TxIn {
-        let bytes = [1u8, 2, 3];
-        let data = [&bytes[..]];
+        let data = [&TC_SCRIPT_BYTES[..]];
         let witness = Witness::from_iter(data);
 
         TxIn {
@@ -1985,15 +2000,11 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     fn tc_script_pubkey() -> ScriptPubKeyBuf {
-        let script_bytes = vec![1, 2, 3];
-        ScriptPubKeyBuf::from_bytes(script_bytes)
+        ScriptPubKeyBuf::from_bytes(TC_SCRIPT_BYTES.to_vec())
     }
 
     #[cfg(any(feature = "hex", feature = "serde"))]
-    fn tc_script_sig() -> ScriptSigBuf {
-        let script_bytes = vec![1, 2, 3];
-        ScriptSigBuf::from_bytes(script_bytes)
-    }
+    fn tc_script_sig() -> ScriptSigBuf { ScriptSigBuf::from_bytes(TC_SCRIPT_BYTES.to_vec()) }
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -2003,17 +2014,11 @@ mod tests {
         let mut encoder = out_point.encoder();
 
         // The txid
-        assert_eq!(
-            encoder.current_chunk(),
-            &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
-                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-            ][..]
-        );
+        assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
         assert!(encoder.advance());
 
         // The vout
-        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
         assert!(!encoder.advance());
 
         // Exhausted
@@ -2027,7 +2032,7 @@ mod tests {
         let mut encoder = out.encoder();
 
         // The amount.
-        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
         assert!(encoder.advance());
 
         // The script pubkey length prefix.
@@ -2035,7 +2040,7 @@ mod tests {
         assert!(encoder.advance());
 
         // The script pubkey data.
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(!encoder.advance());
 
         // Exhausted
@@ -2050,25 +2055,19 @@ mod tests {
         let mut encoder = txin.encoder();
 
         // The outpoint (same as tested above).
-        assert_eq!(
-            encoder.current_chunk(),
-            &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
-                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-            ][..]
-        );
+        assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
         assert!(encoder.advance());
 
         // The script sig
         assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(encoder.advance());
 
         // The sequence
-        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
         assert!(!encoder.advance());
 
         // Exhausted
@@ -2092,47 +2091,41 @@ mod tests {
         assert!(encoder.advance());
 
         // The segwit marker and flag
-        assert_eq!(encoder.current_chunk(), &[0u8, 1][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SEGWIT_MARKER_AND_FLAG[..]);
         assert!(encoder.advance());
 
         // The input (same as tested above) but with vec length prefix.
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(
-            encoder.current_chunk(),
-            &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
-                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-            ][..]
-        );
+        assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
         assert!(encoder.advance());
 
         // The output (same as tested above) but with vec length prefix.
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(encoder.advance());
 
         // The witness
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[3u8, 1, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_WITNESS_ELEM_LEN_AND_DATA[..]);
         assert!(encoder.advance());
 
         // The lock time.
-        assert_eq!(encoder.current_chunk(), &[0, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_LOCK_TIME_ZERO_BYTES[..]);
         assert!(!encoder.advance());
 
         // Exhausted
@@ -2165,38 +2158,32 @@ mod tests {
         // The input (same as tested above) but with vec length prefix.
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(
-            encoder.current_chunk(),
-            &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
-                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-            ][..]
-        );
+        assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
         assert!(encoder.advance());
 
         // The output (same as tested above) but with vec length prefix.
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(encoder.advance());
 
         // Advance past the optional witnesses encoder.
         assert!(encoder.advance());
 
         // The lock time.
-        assert_eq!(encoder.current_chunk(), &[0, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_LOCK_TIME_ZERO_BYTES[..]);
         assert!(!encoder.advance());
 
         // Exhausted
@@ -2276,43 +2263,37 @@ mod tests {
         assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
         assert!(encoder.advance());
         // The segwit marker and flag
-        assert_eq!(encoder.current_chunk(), &[0u8, 1][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SEGWIT_MARKER_AND_FLAG[..]);
         assert!(encoder.advance());
         // The input (same as tested above) but with vec length prefix.
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(
-            encoder.current_chunk(),
-            &[
-                32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,
-                11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-            ][..]
-        );
+        assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[0xffu8, 0xff, 0xff, 0xff][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
         assert!(encoder.advance());
         // The output (same as tested above) but with vec length prefix.
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1, 0, 0, 0, 0, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[3u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
         assert!(encoder.advance());
         // The witness
         assert_eq!(encoder.current_chunk(), &[1u8][..]);
         assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), &[3u8, 1, 2, 3][..]);
+        assert_eq!(encoder.current_chunk(), &TC_WITNESS_ELEM_LEN_AND_DATA[..]);
         assert!(encoder.advance());
         // The lock time.
-        assert_eq!(encoder.current_chunk(), &[0, 0, 0, 0][..]);
+        assert_eq!(encoder.current_chunk(), &TC_LOCK_TIME_ZERO_BYTES[..]);
         assert!(!encoder.advance());
 
         // Exhausted
