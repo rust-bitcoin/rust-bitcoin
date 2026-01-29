@@ -957,7 +957,11 @@ fn decode_unchecked(slice: &mut &[u8]) -> u64 {
 #[cfg(test)]
 mod test {
     #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
     use alloc::{format, vec};
+    #[cfg(feature = "std")]
+    use std::error::Error as _;
 
     #[cfg(feature = "alloc")]
     use encoding::Decodable as _;
@@ -1435,6 +1439,9 @@ mod test {
             err,
             WitnessDecoderError(WitnessDecoderErrorInner::LengthPrefixDecode(_))
         ));
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
     }
 
     #[test]
@@ -1569,6 +1576,35 @@ mod test {
         let mut bytes = [0xAAu8].as_slice();
         decoder.push_bytes(&mut bytes).unwrap();
         assert_eq!(decoder.read_limit(), 499);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder_end_without_witness_count_errors() {
+        let err = WitnessDecoder::new().end().unwrap_err();
+        assert!(matches!(
+            err,
+            WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(UnexpectedEofError {
+                missing_elements: 0
+            }))
+        ));
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder_unexpected_eof_error() {
+        let mut decoder = WitnessDecoder::new();
+        let mut slice = [0x01].as_slice(); // witness element count = 1.
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let inner = match decoder.end().unwrap_err() {
+            WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(inner)) => inner,
+            err => panic!("unexpected error: {err}"),
+        };
+        assert!(!inner.to_string().is_empty());
     }
 
     #[test]
