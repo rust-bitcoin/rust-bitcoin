@@ -8,7 +8,6 @@
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
 
-use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
 use units::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
@@ -117,7 +116,6 @@ impl Work {
     pub fn log2(self) -> f64 { self.0.to_f64().log2() }
 }
 do_impl!(Work);
-impl_to_hex_from_lower_hex!(Work, |_| 64);
 
 impl Add for Work {
     type Output = Self;
@@ -224,15 +222,6 @@ impl Target {
         CompactTarget::from_consensus(compact | (size << 24))
     }
 
-    /// Returns true if block hash is less than or equal to this [`Target`].
-    ///
-    /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
-    /// to the target.
-    pub fn is_met_by(&self, hash: BlockHash) -> bool {
-        let hash = U256::from_le_bytes(hash.to_byte_array());
-        hash <= self.0
-    }
-
     /// Converts this [`Target`] to [`Work`].
     ///
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
@@ -290,89 +279,185 @@ impl Target {
         assert_ne!(self.0, U256::ZERO, "divide by zero");
         max_target.0.to_f64() / self.0.to_f64()
     }
-
-    /// Computes the popular "difficulty" measure for mining.
-    ///
-    /// This function calculates the difficulty measure using the max attainable target
-    /// set on the provided [`Params`].
-    /// See [`Target::difficulty_with_max`] for details.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
-        let max = params.as_ref().max_attainable_target;
-        self.difficulty_with_max(&max)
-    }
-
-    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    ///
-    /// This function calculates the difficulty measure using the max attainable target
-    /// set on the provided [`Params`].
-    /// See [`Target::difficulty_with_max`] for details.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    ///
-    /// [`difficulty`]: Target::difficulty
-    pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
-        let max = params.as_ref().max_attainable_target;
-        self.difficulty_float_with_max(&max)
-    }
-
-    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
-    pub fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
-    pub fn max_difficulty_transition_threshold(&self) -> Self {
-        self.max_transition_threshold_unchecked()
-    }
-
-    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    ///
-    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
-    /// adjustment period.
-    ///
-    /// # Returns
-    ///
-    /// In line with Bitcoin Core this function may return a target value of zero.
-    pub fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    ///
-    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
-    /// adjustment period.
-    ///
-    /// We also check that the calculated target is not greater than the maximum allowed target,
-    /// this value is network specific - hence the `params` parameter.
-    pub fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
-        let max_attainable = params.as_ref().max_attainable_target;
-        cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
-    }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    ///
-    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
-    /// adjustment period.
-    ///
-    /// # Returns
-    ///
-    /// This function may return a value greater than the maximum allowed target for this network.
-    ///
-    /// The return value should be checked against [`Params::max_attainable_target`] or use one of
-    /// the `Target::MAX_ATTAINABLE_FOO` constants.
-    pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
 }
 do_impl!(Target);
-impl_to_hex_from_lower_hex!(Target, |_| 64);
+
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Work`] type.
+    pub trait WorkExt impl for Work {
+        /// Gets the hex representation of the [`Work`] value as a [`String`].
+        #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
+        fn to_hex(&self) -> alloc::string::String { format!("{self:x}") }
+    }
+}
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Target`] type.
+    pub trait TargetExt impl for Target {
+        /// Returns true if block hash is less than or equal to this [`Target`].
+        ///
+        /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
+        /// to the target.
+        fn is_met_by(&self, hash: BlockHash) -> bool {
+            let hash = Target::from_le_bytes(hash.to_byte_array());
+            hash <= *self
+        }
+
+        /// Computes the popular "difficulty" measure for mining.
+        ///
+        /// This function calculates the difficulty measure using the max attainable target
+        /// set on the provided [`Params`].
+        /// See [`Target::difficulty_with_max`] for details.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+            let max = params.as_ref().max_attainable_target;
+            self.difficulty_with_max(&max)
+        }
+
+        /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+        ///
+        /// This function calculates the difficulty measure using the max attainable target
+        /// set on the provided [`Params`].
+        /// See [`Target::difficulty_with_max`] for details.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        ///
+        /// [`difficulty`]: Target::difficulty
+        fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
+            let max = params.as_ref().max_attainable_target;
+            self.difficulty_float_with_max(&max)
+        }
+
+        /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
+        fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
+        fn max_difficulty_transition_threshold(&self) -> Self {
+            self.max_transition_threshold_unchecked()
+        }
+
+        /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        ///
+        /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+        /// adjustment period.
+        ///
+        /// # Returns
+        ///
+        /// In line with Bitcoin Core this function may return a target value of zero.
+        fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        ///
+        /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+        /// adjustment period.
+        ///
+        /// We also check that the calculated target is not greater than the maximum allowed target,
+        /// this value is network specific - hence the `params` parameter.
+        fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
+            let max_attainable = params.as_ref().max_attainable_target;
+            cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
+        }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        ///
+        /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+        /// adjustment period.
+        ///
+        /// # Returns
+        ///
+        /// This function may return a value greater than the maximum allowed target for this network.
+        ///
+        /// The return value should be checked against [`Params::max_attainable_target`] or use one of
+        /// the `Target::MAX_ATTAINABLE_FOO` constants.
+        fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
+
+        /// Gets the hex representation of the [`Target`] value as a [`String`].
+        #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
+        fn to_hex(&self) -> alloc::string::String { format!("{self:x}") }
+    }
+}
+
+/// A trait to provide multiplication and division for [`Target`].
+///
+/// This is required for various reasons:
+///  - [`Target`] has been, or will be, moved to `units`. This move will also cause us to lose
+///    access to `U256` in this context.
+///  - Coupled with the requirement to keep [`from_next_work_required`] in `bitcoin`, we need a
+///    way to multiply and divide [`Target`] values.
+///  - Since we don't want to export `U256`, we need to replicate subsections of its logic here.
+trait TargetMath {
+    /// Multiply a [`Target`] by a [`u64`].
+    ///
+    /// Overflow is discarded, making this a wrapped multiplication.
+    /// This closely mimics `mul_u64` from `U256`, but works over the byte array of [`Target`],
+    /// since we won't/can't access the inner u128s of [`Target`]'s `U256`.
+    fn mul_u64(self, rhs: u64) -> Target;
+
+    /// Divide a [`Target`] by a [`u64`].
+    ///
+    /// This function discards any remainder and only returns the integer division result.
+    fn div_u64(self, rhs: u64) -> Target;
+}
+
+impl TargetMath for Target {
+    fn mul_u64(self, rhs: u64) -> Target {
+        let mut carry: u128 = 0;
+        let mut out_bytes: [u8; 32] = [0u8; 32];
+
+        let le_bytes = self.to_le_bytes();
+
+        for i in 0..4 {
+            let word = u64::from_le_bytes(
+                le_bytes[i * 8..(i + 1) * 8].try_into().expect("slice is 8 bytes")
+            );
+
+            // This will not overflow, for proof see https://github.com/rust-bitcoin/rust-bitcoin/pull/1496#issuecomment-1365938572
+            let n = carry + u128::from(rhs) * u128::from(word);
+
+            let low = n as u64; // Intentional truncation, save the low bits
+            carry = n >> 64; // and carry the high bits.
+
+            out_bytes[i * 8..(i + 1) * 8]
+                .copy_from_slice(&low.to_le_bytes());
+        }
+
+        Self::from_le_bytes(out_bytes)
+    }
+
+    fn div_u64(self, rhs: u64) -> Target {
+        let bytes = self.to_be_bytes();
+
+        assert!(rhs != 0, "division by zero");
+
+        let mut result = [0u8; 32];
+        let mut rem: u128 = 0;
+
+        for i in 0..32 {
+            // Bring down the next byte (base-256 long division)
+            rem = (rem << 8) | bytes[i] as u128;
+
+            let q = rem / rhs as u128;
+            rem %= rhs as u128;
+
+            result[i] = q as u8;
+        }
+
+        Self::from_be_bytes(result)
+    }
+}
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
@@ -435,10 +520,9 @@ internal_macros::define_extension_trait! {
             let actual_timespan = timespan.clamp(min_timespan.into(), max_timespan.into());
             let prev_target: Target = last.into();
             let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
-            let retarget = prev_target.0; // bnNew
-            let (retarget, _) = retarget.mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"));
-            let retarget = retarget.div(params.pow_target_timespan.into());
-            let retarget = Target(retarget);
+            let retarget = prev_target // bnNew
+                .mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"))
+                .div_u64(params.pow_target_timespan.into());
             if retarget.ge(&maximum_retarget) {
                 return maximum_retarget.to_compact_lossy();
             }
@@ -478,6 +562,8 @@ internal_macros::define_extension_trait! {
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::CompactTarget {}
+    impl Sealed for super::Target {}
+    impl Sealed for super::Work {}
 }
 
 impl From<CompactTarget> for Target {
@@ -1945,6 +2031,81 @@ mod tests {
         let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
         let want = params.max_attainable_target.to_compact_lossy();
         assert_eq!(got, want);
+    }
+
+    #[test]
+    fn target_mul_u64() {
+        let u64_val = Target(U256::from(0xDEAD_BEEF_DEAD_BEEF_u64));
+
+        let u96_res = u64_val.mul_u64(0xFFFF_FFFF);
+        let u128_res = u96_res.mul_u64(0xFFFF_FFFF);
+        let u160_res = u128_res.mul_u64(0xFFFF_FFFF);
+        let u192_res = u160_res.mul_u64(0xFFFF_FFFF);
+        let u224_res = u192_res.mul_u64(0xFFFF_FFFF);
+        let u256_res = u224_res.mul_u64(0xFFFF_FFFF);
+
+        assert_eq!(u96_res.0, U256::from_array([0, 0, 0xDEAD_BEEE, 0xFFFF_FFFF_2152_4111]));
+        assert_eq!(
+            u128_res.0,
+            U256::from_array([0, 0, 0xDEAD_BEEE_2152_4110, 0x2152_4111_DEAD_BEEF])
+        );
+        assert_eq!(
+            u160_res.0,
+            U256::from_array([0, 0xDEAD_BEED, 0x42A4_8222_0000_0001, 0xBD5B_7DDD_2152_4111])
+        );
+        assert_eq!(
+            u192_res.0,
+            U256::from_array([
+                0,
+                0xDEAD_BEEC_63F6_C334,
+                0xBD5B_7DDF_BD5B_7DDB,
+                0x63F6_C333_DEAD_BEEF
+            ])
+        );
+        assert_eq!(
+            u224_res.0,
+            U256::from_array([
+                0xDEAD_BEEB,
+                0x8549_0448_5964_BAAA,
+                0xFFFF_FFFB_A69B_4558,
+                0x7AB6_FBBB_2152_4111
+            ])
+        );
+        assert_eq!(
+            u256_res.0,
+            U256(
+                0xDEAD_BEEA_A69B_455C_D41B_B662_A69B_4550,
+                0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF,
+            )
+        );
+    }
+
+    #[test]
+    fn target_div_u64() {
+        let test_values = [
+            (U256::from(105_u32), 5, U256::from(21_u32)),
+            (U256::from(7_u32), 2, U256::from(3_u32)),
+            (U256::from(3_u32), 5, U256::ZERO),
+            (U256::from(0xDEAD_BEEF_u64), 0xDEAD_BEEF, U256::ONE),
+            (U256::from(42_u32), 1, U256::from(42_u32)),
+            (U256(1, 0), 3, U256(0, 0x5555_5555_5555_5555_5555_5555_5555_5555)),
+            (U256::MAX, 2, U256(u128::MAX >> 1, u128::MAX)),
+        ];
+        for (initial, divisor, want) in test_values {
+            let got = Target(initial).div_u64(divisor);
+            assert_eq!(got, Target(want));
+        }
+
+        // Large value and divisor
+        let tgt = Target(U256(0x2000, 0));
+        let got = tgt.div_u64(u64::MAX);
+        assert_eq!(got, Target(U256(0, 0x2000_0000_0000_0000_2000)));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempted to divide")]
+    fn target_div_u64_by_zero() {
+        let _ = U256::from(1_u32).div_rem(U256::ZERO);
     }
 
     #[test]
