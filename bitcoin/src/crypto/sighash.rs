@@ -1994,7 +1994,7 @@ mod tests {
 
             // tests
             let keypair = Keypair::from_secret_key(&internal_priv_key);
-            let (internal_key, _parity) = XOnlyPublicKey::from_keypair(&keypair);
+            let internal_key = XOnlyPublicKey::from_keypair(&keypair);
             let tweaked_keypair = keypair.tap_tweak(merkle_root);
             let mut sig_msg = Vec::new();
             cache
@@ -2017,7 +2017,8 @@ mod tests {
                 &[0u8; 32],
             );
 
-            assert_eq!(expected.internal_pubkey, internal_key);
+            // Only compare the inner key, not the parity
+            assert_eq!(expected.internal_pubkey.to_inner(), internal_key.to_inner());
             assert_eq!(expected.sig_msg, sig_msg.to_lower_hex_string());
             assert_eq!(expected.sig_hash, sighash);
             assert_eq!(expected_hash_ty, hash_ty);
