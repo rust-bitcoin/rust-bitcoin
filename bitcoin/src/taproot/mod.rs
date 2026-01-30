@@ -275,11 +275,11 @@ impl TaprootSpendInfo {
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let internal_key = internal_key.into();
-        let (output_key, parity) = internal_key.tap_tweak(merkle_root);
+        let output_key = internal_key.tap_tweak(merkle_root);
         Self {
             internal_key,
             merkle_root,
-            output_key_parity: parity,
+            output_key_parity: output_key.as_x_only_public_key().parity(),
             output_key,
             script_map: BTreeMap::new(),
         }
@@ -1282,7 +1282,7 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
         // compute the taptweak
         let tweak =
             TapTweakHash::from_key_and_merkle_root(self.internal_key, Some(curr_hash)).to_scalar();
-        self.internal_key.tweak_add_check(&output_key, self.output_key_parity, tweak)
+        self.internal_key.tweak_add_check(&output_key.with_parity(self.output_key_parity), tweak)
     }
 }
 
@@ -2047,11 +2047,12 @@ mod test {
                 .assume_checked();
 
             let tweak = TapTweakHash::from_key_and_merkle_root(internal_key, merkle_root);
-            let (output_key, _parity) = internal_key.tap_tweak(merkle_root);
+            let output_key = internal_key.tap_tweak(merkle_root);
             let addr = Address::p2tr(internal_key, merkle_root, KnownHrp::Mainnet);
             let spk = addr.script_pubkey();
 
-            assert_eq!(expected_output_key, output_key.to_x_only_public_key());
+            // Compare just the key bytes, not the parity
+            assert_eq!(expected_output_key.serialize().0, output_key.to_x_only_public_key().serialize().0);
             assert_eq!(expected_tweak, tweak);
             assert_eq!(expected_addr, addr);
             assert_eq!(expected_spk, spk);
