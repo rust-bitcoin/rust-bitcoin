@@ -37,21 +37,41 @@ pub use secp256k1::rand;
 
 /// Encapsulation module to provide a clear barrier for construction/destruction of types.
 mod encapsulate {
+    use secp256k1::Parity;
+
     /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
+    ///
+    /// This type also holds the parity of the full public key.
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct XOnlyPublicKey(secp256k1::XOnlyPublicKey);
+    pub struct XOnlyPublicKey {
+        inner: secp256k1::XOnlyPublicKey,
+        parity: Parity,
+    }
 
     impl XOnlyPublicKey {
-        /// Constructs a new x-only public key from the provided generic secp256k1 x-only public key.
-        pub fn new(key: impl Into<secp256k1::XOnlyPublicKey>) -> Self { Self(key.into()) }
+        /// Constructs a new x-only public key from the provided secp256k1 x-only public key.
+        ///
+        /// This constructor sets an even parity. Use [`XOnlyPublicKey::with_parity`] if you need
+        /// a different parity value.
+        pub fn new(key: impl Into<secp256k1::XOnlyPublicKey>) -> Self {
+            Self { inner: key.into(), parity: Parity::Even }
+        }
+
+        /// Sets the parity of this [`XOnlyPublicKey`].
+        ///
+        /// This returns a new `XOnlyPublicKey` with the same inner value, but the given parity.
+        pub fn with_parity(self, parity: Parity) -> Self { Self { parity, ..self } }
+
+        /// Returns the parity of this x-only public key.
+        pub fn parity(&self) -> Parity { self.parity }
 
         /// Returns a reference to the inner secp256k1 x-only public key.
         #[inline]
-        pub fn as_inner(&self) -> &secp256k1::XOnlyPublicKey { &self.0 }
+        pub fn as_inner(&self) -> &secp256k1::XOnlyPublicKey { &self.inner }
 
         /// Returns the inner secp256k1 x-only public key.
         #[inline]
-        pub fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
+        pub fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.inner }
 
         /// Returns the inner secp256k1 x-only public key.
         #[inline]
