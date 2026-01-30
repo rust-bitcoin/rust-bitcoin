@@ -232,10 +232,16 @@ impl XOnlyPublicKey {
         (self.as_inner().serialize(), self.parity())
     }
 
-    /// Converts this x-only public key to a full public key given the parity.
+    /// Converts this x-only public key to a full public key.
+    ///
+    /// The [`PublicKey`] is constructed using the parity in this x-only public key.
     #[inline]
-    pub fn public_key(&self, parity: Parity) -> PublicKey {
-        self.as_inner().public_key(parity).into()
+    // to_* functions are used for non-free conversions to owned types. Clippy complains
+    // since XOnlyPublicKey is Copy but we intentionally use &self to remove a copy and
+    // to_* to indicate the cost of the operation.
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_public_key(&self) -> PublicKey {
+        self.as_inner().public_key(self.parity()).into()
     }
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
