@@ -764,7 +764,7 @@ impl Address {
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
         (*pubkey_hash.as_byte_array() == *payload)
-            || (xonly_pubkey.serialize() == *payload)
+            || (xonly_pubkey.serialize().0 == *payload)
             || (*segwit_redeem_hash(pubkey_hash).as_byte_array() == *payload)
     }
 
@@ -773,7 +773,7 @@ impl Address {
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.
     pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: XOnlyPublicKey) -> bool {
-        xonly_pubkey.serialize() == *self.payload_as_bytes()
+        xonly_pubkey.serialize().0 == *self.payload_as_bytes()
     }
 
     /// Returns true if the address creates a particular script
