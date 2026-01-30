@@ -146,7 +146,7 @@ impl<T> Builder<T> {
 
     /// Adds instructions to push an XOnly public key onto the stack.
     pub fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Self {
-        self.push_slice(x_only_key.serialize())
+        self.push_slice(x_only_key.serialize().0)
     }
 
     /// Adds instructions to push an absolute lock time onto the stack.

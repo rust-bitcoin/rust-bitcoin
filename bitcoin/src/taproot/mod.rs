@@ -103,7 +103,7 @@ impl TapTweakHash {
         let internal_key = internal_key.into();
         let mut eng = sha256t::Hash::<TapTweakTag>::engine();
         // always hash the key
-        eng.input(&internal_key.serialize());
+        eng.input(&internal_key.serialize().0);
         if let Some(h) = merkle_root {
             eng.input(h.as_ref());
         } else {
@@ -1245,7 +1245,7 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
         let first_byte: u8 =
             i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
         write(&[first_byte])?;
-        write(&self.internal_key.serialize())?;
+        write(&self.internal_key.serialize().0)?;
         write(self.merkle_branch.as_ref().as_bytes())?;
         Ok(())
     }

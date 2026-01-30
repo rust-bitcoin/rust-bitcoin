@@ -228,8 +228,8 @@ impl XOnlyPublicKey {
 
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
-    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] {
-        self.as_inner().serialize()
+    pub fn serialize(&self) -> ([u8; constants::SCHNORR_PUBLIC_KEY_SIZE], Parity) {
+        (self.as_inner().serialize(), self.parity())
     }
 
     /// Converts this x-only public key to a full public key given the parity.
@@ -1203,7 +1203,7 @@ impl TweakedPublicKey {
     /// Serializes the key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
     pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] {
-        self.as_x_only_public_key().serialize()
+        self.as_x_only_public_key().serialize().0
     }
 }
 
@@ -1999,7 +1999,7 @@ mod tests {
         let xonly_pub_key = XOnlyPublicKey::from_byte_array(key_bytes)
             .expect("Failed to create an XOnlyPublicKey from a byte array");
         // Confirm that the public key from bytes serializes back to the same bytes
-        assert_eq!(&xonly_pub_key.serialize(), key_bytes);
+        assert_eq!(&xonly_pub_key.serialize().0, key_bytes);
     }
 
     #[test]

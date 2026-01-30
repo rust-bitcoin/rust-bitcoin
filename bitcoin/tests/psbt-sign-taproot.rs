@@ -164,7 +164,7 @@ fn create_basic_single_sig_script(sk: &str) -> TapScriptBuf {
     let kp = sk.parse::<Keypair>().expect("failed to create keypair");
     let x_only_pubkey = kp.to_x_only_public_key().0;
     script::Builder::new()
-        .push_slice(x_only_pubkey.serialize())
+        .push_slice(x_only_pubkey.serialize().0)
         .push_opcode(OP_CHECKSIG)
         .into_script()
 }
