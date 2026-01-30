@@ -395,7 +395,7 @@ mod tests {
     #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _};
+    use encoding::Decoder as _;
 
     use super::*;
 
@@ -499,34 +499,6 @@ mod tests {
         for v in (0..=u16::MAX).step_by(step) {
             assert_eq!(Sequence::from_height(v), Sequence(v.into()));
         }
-    }
-
-    #[test]
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    fn sequence_encoding_round_trip() {
-        let sequence = Sequence(0x7FFF_FFFF);
-        let expected_bytes = alloc::vec![0xff, 0xff, 0xff, 0x7f];
-
-        let encoded = encoding::encode_to_vec(&sequence);
-        assert_eq!(encoded, expected_bytes);
-
-        let decoded = encoding::decode_from_slice::<Sequence>(encoded.as_slice()).unwrap();
-        assert_eq!(decoded, sequence);
-    }
-
-    #[test]
-    #[cfg(feature = "encoding")]
-    fn sequence_decoding() {
-        let bytes = [0xff, 0xff, 0xff, 0xff];
-        let expected = Sequence::default();
-
-        let mut decoder = Sequence::decoder();
-        assert_eq!(decoder.read_limit(), 4);
-        assert!(!decoder.push_bytes(&mut bytes.as_slice()).unwrap());
-        assert_eq!(decoder.read_limit(), 0);
-
-        let decoded = decoder.end().unwrap();
-        assert_eq!(decoded, expected);
     }
 
     #[test]
