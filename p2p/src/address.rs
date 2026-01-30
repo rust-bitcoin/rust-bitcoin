@@ -978,6 +978,16 @@ mod test {
     use crate::message::AddrV2Payload;
 
     #[test]
+    fn encode_decode_address_roundtrip() {
+        let sock = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8333);
+        let addr = Address::new(&sock, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
+        let encoded_addr = encoding::encode_to_vec(&addr);
+        let decoded_addr = encoding::decode_from_slice::<Address>(&encoded_addr).unwrap();
+
+        assert_eq!(decoded_addr, addr);
+    }
+
+    #[test]
     fn serialize_address() {
         assert_eq!(
             encoding::encode_to_vec(&Address {
