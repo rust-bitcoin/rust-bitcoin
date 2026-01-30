@@ -246,25 +246,24 @@ impl XOnlyPublicKey {
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
     ///
-    /// Should be called on the original untweaked key. Takes the tweaked key and output parity from
+    /// Should be called on the original untweaked key. Takes the tweaked key with its output parity from
     /// [`XOnlyPublicKey::add_tweak`] as input.
     #[inline]
     pub fn tweak_add_check(
         &self,
         tweaked_key: &Self,
-        tweaked_parity: Parity,
         tweak: secp256k1::Scalar,
     ) -> bool {
-        self.as_inner().tweak_add_check(tweaked_key.as_inner(), tweaked_parity, tweak)
+        self.as_inner().tweak_add_check(tweaked_key.as_inner(), tweaked_key.parity(), tweak)
     }
 
     /// Tweaks an [`XOnlyPublicKey`] by adding the generator multiplied with the given tweak to it.
     ///
     /// # Returns
     ///
-    /// The newly tweaked key plus an opaque type representing the parity of the tweaked key, this
-    /// should be provided to `tweak_add_check` which can be used to verify a tweak more efficiently
-    /// than regenerating it and checking equality.
+    /// The newly tweaked key. This key has its parity set according to the parity following the
+    /// tweak. This key should be provided to `tweak_add_check` which can be used to verify a tweak
+    /// more efficiently than regenerating it and checking equality.
     ///
     /// # Errors
     ///
@@ -273,9 +272,9 @@ impl XOnlyPublicKey {
     pub fn add_tweak(
         &self,
         tweak: &secp256k1::Scalar,
-    ) -> Result<(Self, Parity), TweakXOnlyPublicKeyError> {
+    ) -> Result<Self, TweakXOnlyPublicKeyError> {
         match self.as_inner().add_tweak(tweak) {
-            Ok((xonly, parity)) => Ok((Self::from_secp(xonly), parity)),
+            Ok((xonly, parity)) => Ok(Self::from_secp(xonly).with_parity(parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
                 Err(TweakXOnlyPublicKeyError::ParityError),
@@ -1133,7 +1132,7 @@ pub trait TapTweak {
     ///
     /// # Returns
     ///
-    /// The tweaked key and its parity.
+    /// The tweaked key, with the required parity.
     fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
 
     /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`].
@@ -1144,7 +1143,7 @@ pub trait TapTweak {
 }
 
 impl TapTweak for UntweakedPublicKey {
-    type TweakedAux = (TweakedPublicKey, Parity);
+    type TweakedAux = TweakedPublicKey;
     type TweakedKey = TweakedPublicKey;
 
     /// Tweaks an untweaked public key with corresponding public key value and optional script tree
@@ -1160,12 +1159,12 @@ impl TapTweak for UntweakedPublicKey {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> (TweakedPublicKey, Parity) {
+    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedPublicKey {
         let tweak = TapTweakHash::from_key_and_merkle_root(self, merkle_root).to_scalar();
-        let (output_key, parity) = self.add_tweak(&tweak).expect("Tap tweak failed");
+        let output_key = self.add_tweak(&tweak).expect("Tap tweak failed");
 
-        debug_assert!(self.tweak_add_check(&output_key, parity, tweak));
-        (TweakedPublicKey::dangerous_assume_tweaked(output_key), parity)
+        debug_assert!(self.tweak_add_check(&output_key, tweak));
+        TweakedPublicKey::dangerous_assume_tweaked(output_key)
     }
 
     fn dangerous_assume_tweaked(self) -> TweakedPublicKey {

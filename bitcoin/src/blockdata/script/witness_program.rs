@@ -95,7 +95,7 @@ impl WitnessProgram {
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let internal_key = internal_key.into();
-        let (output_key, _parity) = internal_key.tap_tweak(merkle_root);
+        let output_key = internal_key.tap_tweak(merkle_root);
         let (pubkey, _) = output_key.as_x_only_public_key().serialize();
         Self::new_p2tr(pubkey)
     }
