@@ -44,6 +44,10 @@ mod encapsulate {
         /// Constructs a new x-only public key from the provided generic secp256k1 x-only public key.
         pub fn new(key: impl Into<secp256k1::XOnlyPublicKey>) -> Self { Self(key.into()) }
 
+        /// Returns a reference to the inner secp256k1 x-only public key.
+        #[inline]
+        pub fn as_inner(&self) -> &secp256k1::XOnlyPublicKey { &self.0 }
+
         /// Returns the inner secp256k1 x-only public key.
         #[inline]
         pub fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
@@ -204,13 +208,13 @@ impl XOnlyPublicKey {
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
     pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] {
-        self.to_inner().serialize()
+        self.as_inner().serialize()
     }
 
     /// Converts this x-only public key to a full public key given the parity.
     #[inline]
     pub fn public_key(&self, parity: Parity) -> PublicKey {
-        self.to_inner().public_key(parity).into()
+        self.as_inner().public_key(parity).into()
     }
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
@@ -224,7 +228,7 @@ impl XOnlyPublicKey {
         tweaked_parity: Parity,
         tweak: secp256k1::Scalar,
     ) -> bool {
-        self.to_inner().tweak_add_check(&tweaked_key.to_inner(), tweaked_parity, tweak)
+        self.as_inner().tweak_add_check(tweaked_key.as_inner(), tweaked_parity, tweak)
     }
 
     /// Tweaks an [`XOnlyPublicKey`] by adding the generator multiplied with the given tweak to it.
@@ -243,7 +247,7 @@ impl XOnlyPublicKey {
         &self,
         tweak: &secp256k1::Scalar,
     ) -> Result<(Self, Parity), TweakXOnlyPublicKeyError> {
-        match self.to_inner().add_tweak(tweak) {
+        match self.as_inner().add_tweak(tweak) {
             Ok((xonly, parity)) => Ok((Self::new(xonly), parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
@@ -271,13 +275,13 @@ impl From<secp256k1::PublicKey> for XOnlyPublicKey {
 }
 
 impl fmt::LowerHex for XOnlyPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.to_inner(), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_inner(), f) }
 }
 // Allocate for serialized size
 impl_to_hex_from_lower_hex!(XOnlyPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SIZE * 2);
 
 impl fmt::Display for XOnlyPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.to_inner(), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_inner(), f) }
 }
 
 impl Keypair {
