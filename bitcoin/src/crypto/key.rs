@@ -21,6 +21,8 @@ use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
+#[cfg(feature = "serde")]
+use crate::serde::{Serialize, Serializer, Deserialize, Deserializer};
 use crate::script::{self, WitnessScriptBuf};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
@@ -37,7 +39,6 @@ pub use secp256k1::rand;
 mod encapsulate {
     /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct XOnlyPublicKey(secp256k1::XOnlyPublicKey);
 
     impl XOnlyPublicKey {
@@ -283,6 +284,28 @@ impl_to_hex_from_lower_hex!(XOnlyPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SI
 impl fmt::Display for XOnlyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_inner(), f) }
 }
+
+// XOnlyPublicKey should serialize/deserialize identically to the inner type.
+#[cfg(feature = "serde")]
+impl Serialize for XOnlyPublicKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        <secp256k1::XOnlyPublicKey as Serialize>::serialize(self.as_inner(), serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for XOnlyPublicKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::new(secp256k1::XOnlyPublicKey::deserialize(deserializer)?))
+    }
+}
+
 
 impl Keypair {
     /// Generates a new random key pair.
