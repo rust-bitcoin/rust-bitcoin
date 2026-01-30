@@ -20,6 +20,5 @@ exclude = ["tests", "contrib"]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.clippy]
-redundant_clone = "warn"
-use_self = "warn"
+[lints]
+workspace = true
