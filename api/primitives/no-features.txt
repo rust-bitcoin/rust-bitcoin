@@ -156,7 +156,6 @@ impl core::convert::AsRef<[u8]> for bitcoin_primitives::WitnessCommitment
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::WitnessMerkleNode
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::Wtxid
 impl core::convert::From<&bitcoin_primitives::block::Header> for bitcoin_primitives::BlockHash
-impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_primitives::block::BlockHashDecoderError
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_primitives::block::VersionDecoderError
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::convert::From<bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError> for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
@@ -584,7 +583,6 @@ pub fn bitcoin_primitives::block::BlockHashDecoder::read_limit(&self) -> usize
 pub fn bitcoin_primitives::block::BlockHashDecoderError::clone(&self) -> bitcoin_primitives::block::BlockHashDecoderError
 pub fn bitcoin_primitives::block::BlockHashDecoderError::eq(&self, other: &bitcoin_primitives::block::BlockHashDecoderError) -> bool
 pub fn bitcoin_primitives::block::BlockHashDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_primitives::block::BlockHashDecoderError::from(e: bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError) -> Self
 pub fn bitcoin_primitives::block::BlockHashDecoderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::block::BlockHashEncoder::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::BlockHashEncoder::current_chunk(&self) -> &[u8]
