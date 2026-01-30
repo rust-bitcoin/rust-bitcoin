@@ -120,3 +120,53 @@ impl fmt::Display for WitnessMerkleNodeDecoderError {
 impl std::error::Error for WitnessMerkleNodeDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
+
+#[cfg(test)]
+mod tests {
+    use encoding::Decoder as _;
+
+    use super::*;
+
+    #[test]
+    fn combine_delegates_to_merkle_node_trait() {
+        let a = WitnessMerkleNode::from_leaf(Wtxid::from_byte_array([1; 32]));
+        let b = WitnessMerkleNode::from_leaf(Wtxid::from_byte_array([2; 32]));
+
+        assert_eq!(a.combine(&b), MerkleNode::combine(&a, &b));
+    }
+
+    #[test]
+    fn decoder_full_read_limit() {
+        assert_eq!(WitnessMerkleNodeDecoder::new().read_limit(), 32);
+        // These two are the same decoder but we want 100% coverage.
+        assert_eq!(WitnessMerkleNodeDecoder::default().read_limit(), 32);
+        assert_eq!(<WitnessMerkleNode as encoding::Decodable>::decoder().read_limit(), 32);
+    }
+
+    #[test]
+    fn decoder_successfully_decodes() {
+        let expected = WitnessMerkleNode::from_byte_array([0x55; 32]);
+        let mut decoder = WitnessMerkleNodeDecoder::new();
+        let mut bytes = &[0x55u8; 32][..];
+
+        let _done = decoder.push_bytes(&mut bytes).unwrap();
+
+        assert_eq!(decoder.end().unwrap(), expected);
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn decoder_error_display() {
+        use std::error::Error as _;
+        use std::string::ToString as _;
+
+        let mut decoder = WitnessMerkleNodeDecoder::new();
+        let mut bytes = &[0u8; 31][..];
+
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(!err.to_string().is_empty());
+        assert!(err.source().is_some());
+    }
+}
