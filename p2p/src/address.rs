@@ -799,36 +799,42 @@ mod test {
     fn serialize_addrv2() {
         // Taken from https://github.com/bitcoin/bitcoin/blob/12a1c3ad1a43634d2a98717e49e3f02c4acea2fe/src/test/net_tests.cpp#L348
 
+        let ip_bytes = hex!("010401020304");
         let ip = AddrV2::Ipv4(Ipv4Addr::new(1, 2, 3, 4));
-        assert_eq!(serialize(&ip), hex!("010401020304"));
+        assert_eq!(serialize(&ip), ip_bytes);
+        assert_eq!(encoding::encode_to_vec(&ip).as_slice(), ip_bytes);
 
+        let ip_bytes = hex!("02101a1b2a2b3a3b4a4b5a5b6a6b7a7b8a8b");
         let ip =
             AddrV2::Ipv6("1a1b:2a2b:3a3b:4a4b:5a5b:6a6b:7a7b:8a8b".parse::<Ipv6Addr>().unwrap());
-        assert_eq!(serialize(&ip), hex!("02101a1b2a2b3a3b4a4b5a5b6a6b7a7b8a8b"));
+        assert_eq!(serialize(&ip), ip_bytes);
+        assert_eq!(encoding::encode_to_vec(&ip).as_slice(), ip_bytes);
 
+        let tor_bytes = hex!("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88");
         let ip = AddrV2::TorV3(
             FromHex::from_hex("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
                 .unwrap(),
         );
-        assert_eq!(
-            serialize(&ip),
-            hex!("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
-        );
+        assert_eq!(serialize(&ip), tor_bytes);
+        assert_eq!(encoding::encode_to_vec(&ip), tor_bytes);
 
+        let i2p_bytes = hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87");
         let ip = AddrV2::I2p(
             FromHex::from_hex("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
                 .unwrap(),
         );
-        assert_eq!(
-            serialize(&ip),
-            hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
-        );
+        assert_eq!(serialize(&ip), i2p_bytes);
+        assert_eq!(encoding::encode_to_vec(&ip).as_slice(), i2p_bytes);
 
+        let cjdns_bytes = hex!("0610fc010001000200030004000500060007");
         let ip = AddrV2::Cjdns("fc01:1:2:3:4:5:6:7".parse::<Ipv6Addr>().unwrap());
-        assert_eq!(serialize(&ip), hex!("0610fc010001000200030004000500060007"));
+        assert_eq!(serialize(&ip), cjdns_bytes);
+        assert_eq!(encoding::encode_to_vec(&ip).as_slice(), cjdns_bytes);
 
+        let unk_bytes = hex!("aa0401020304");
         let ip = AddrV2::Unknown(170, hex!("01020304").to_vec());
-        assert_eq!(serialize(&ip), hex!("aa0401020304"));
+        assert_eq!(serialize(&ip), unk_bytes);
+        assert_eq!(encoding::encode_to_vec(&ip).as_slice(), unk_bytes);
     }
 
     #[test]
