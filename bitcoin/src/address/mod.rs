@@ -121,6 +121,13 @@ impl FromStr for AddressType {
         }
     }
 }
+impl TryFrom<&str> for AddressType {
+    type Error = UnknownAddressTypeError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        core::str::FromStr::from_str(s)
+    }
+}
 
 mod sealed {
     pub trait NetworkValidation {}
