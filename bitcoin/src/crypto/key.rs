@@ -118,7 +118,7 @@ mod encapsulate {
         /// Returns the [`TweakedPublicKey`] for `keypair`.
         #[inline]
         pub fn from_keypair(keypair: TweakedKeypair) -> Self {
-            let (xonly, _parity) = keypair.to_keypair().to_x_only_public_key();
+            let xonly = keypair.to_keypair().to_x_only_public_key();
             Self(xonly)
         }
 
@@ -207,11 +207,11 @@ mod encapsulate {
 impl XOnlyPublicKey {
     /// Constructs an x-only public key from a keypair.
     ///
-    /// Returns the x-only public key and the parity of the full public key.
+    /// Returns the x-only public key, with the relevant parity set from the full public key.
     #[inline]
-    pub fn from_keypair(keypair: &Keypair) -> (Self, Parity) {
+    pub fn from_keypair(keypair: &Keypair) -> Self {
         let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(&keypair.to_inner());
-        (Self::from_secp(xonly), parity)
+        Self::from_secp(xonly).with_parity(parity)
     }
 
     /// Constructs an x-only public key from a 32-byte x-coordinate.
@@ -375,7 +375,7 @@ impl Keypair {
     ///
     /// This is equivalent to using [`XOnlyPublicKey::from_keypair`].
     #[inline]
-    pub fn to_x_only_public_key(self) -> (XOnlyPublicKey, Parity) {
+    pub fn to_x_only_public_key(self) -> XOnlyPublicKey {
         XOnlyPublicKey::from_keypair(&self)
     }
 }
@@ -1182,7 +1182,7 @@ impl TapTweak for UntweakedKeypair {
     ///
     /// The tweaked keypair.
     fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
-        let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
+        let pubkey = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
         let tweaked = self.to_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
@@ -1217,8 +1217,8 @@ impl TweakedKeypair {
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
-        let (xonly, parity) = self.as_keypair().to_x_only_public_key();
-        (TweakedPublicKey::dangerous_assume_tweaked(xonly), parity)
+        let xonly = self.as_keypair().to_x_only_public_key();
+        (TweakedPublicKey::dangerous_assume_tweaked(xonly), xonly.parity())
     }
 }
 

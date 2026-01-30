@@ -57,7 +57,7 @@ fn psbt_sign_taproot() {
     // Just use one of the secret keys for the key path spend.
     let kp = sk_path[2].0.parse::<Keypair>().expect("failed to create keypair");
 
-    let internal_key = kp.to_x_only_public_key().0; // Ignore the parity.
+    let internal_key = kp.to_x_only_public_key(); // Ignore the parity.
 
     let tree = create_taproot_tree(script1, script2.clone(), script3, internal_key);
 
@@ -109,7 +109,7 @@ fn psbt_sign_taproot() {
     {
         // use private key of path "m/86'/1'/0'/0/1" as signing key
         let kp = sk_path[1].0.parse::<Keypair>().expect("failed to create keypair");
-        let x_only_pubkey = kp.to_x_only_public_key().0;
+        let x_only_pubkey = kp.to_x_only_public_key().with_parity(secp256k1::Parity::Even);
         let signing_key_path = sk_path[1].1;
 
         let keystore = Keystore {
@@ -162,7 +162,7 @@ fn psbt_sign_taproot() {
 
 fn create_basic_single_sig_script(sk: &str) -> TapScriptBuf {
     let kp = sk.parse::<Keypair>().expect("failed to create keypair");
-    let x_only_pubkey = kp.to_x_only_public_key().0;
+    let x_only_pubkey = kp.to_x_only_public_key();
     script::Builder::new()
         .push_slice(x_only_pubkey.serialize().0)
         .push_opcode(OP_CHECKSIG)
