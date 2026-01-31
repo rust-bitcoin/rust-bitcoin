@@ -19,10 +19,6 @@
 #![doc(test(attr(warn(unused))))]
 // Pedantic lints that we enforce.
 #![warn(clippy::return_self_not_must_use)]
-// Exclude lints we don't think are valuable.
-#![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
-#![allow(clippy::manual_range_contains)] // More readable than clippy's format.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -62,6 +58,10 @@ pub trait Read {
     /// # Returns
     ///
     /// The number of bytes read if successful or an [`Error`] if reading fails.
+    ///
+    /// # Errors
+    ///
+    /// If the underlying reader encounters an I/O error.
     fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
 
     /// Reads bytes from source until `buf` is full.
@@ -101,6 +101,10 @@ pub trait Read {
     /// # Returns
     ///
     /// The number of bytes read if successful or an [`Error`] if reading fails.
+    ///
+    /// # Errors
+    ///
+    /// If an I/O error occurs while reading from the underlying reader.
     #[doc(alias = "read_to_end")]
     #[cfg(feature = "alloc")]
     #[inline]
@@ -143,6 +147,10 @@ impl<R: Read> Take<R> {
     /// # Returns
     ///
     /// The number of bytes read if successful or an [`Error`] if reading fails.
+    ///
+    /// # Errors
+    ///
+    /// If an I/O error occurs while reading from the underlying reader.
     #[cfg(feature = "alloc")]
     #[inline]
     pub fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
@@ -330,13 +338,25 @@ impl<T: AsMut<[u8]>> Write for Cursor<T> {
 /// See [`std::io::Write`] for more information.
 pub trait Write {
     /// Writes `buf` into this writer, returning how many bytes were written.
+    ///
+    /// # Errors
+    ///
+    /// If an I/O error occurs while writing to the underlying writer.
     fn write(&mut self, buf: &[u8]) -> Result<usize>;
 
     /// Flushes this output stream, ensuring that all intermediately buffered contents
     /// reach their destination.
+    ///
+    /// # Errors
+    ///
+    /// If an I/O error occurs while flushing the underlying writer.
     fn flush(&mut self) -> Result<()>;
 
     /// Attempts to write an entire buffer into this writer.
+    ///
+    /// # Errors
+    ///
+    /// If an I/O error occurs while writing to the underlying writer.
     #[inline]
     fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
         while !buf.is_empty() {
@@ -424,7 +444,11 @@ pub const fn from_std<T>(std_io: T) -> FromStd<T> { FromStd::new(std_io) }
 #[inline]
 pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std_io) }
 
-/// Encodes a consensus_encoding object to an I/O writer.
+/// Encodes a `consensus_encoding` object to an I/O writer.
+///
+/// # Errors
+///
+/// If an I/O error occurs while writing to the underlying writer.
 pub fn encode_to_writer<T, W>(object: &T, mut writer: W) -> Result<()>
 where
     T: encoding::Encodable + ?Sized,
@@ -642,7 +666,7 @@ mod tests {
         // 32 is greater than the reader length.
         let read = reader.read_to_limit(&mut buf, 32).expect("failed to read to limit");
         assert_eq!(read, s.len());
-        assert_eq!(&buf, s.as_bytes())
+        assert_eq!(&buf, s.as_bytes());
     }
 
     #[test]
@@ -654,7 +678,7 @@ mod tests {
 
         let read = reader.read_to_limit(&mut buf, 2).expect("failed to read to limit");
         assert_eq!(read, 2);
-        assert_eq!(&buf, "16".as_bytes())
+        assert_eq!(&buf, "16".as_bytes());
     }
 
     #[test]
