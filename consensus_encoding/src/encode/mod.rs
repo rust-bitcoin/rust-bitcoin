@@ -15,9 +15,9 @@ pub mod encoders;
 pub trait Encodable {
     /// The encoder associated with this type. Conceptually, the encoder is like
     /// an iterator which yields byte slices.
-    type Encoder<'s>: Encoder
+    type Encoder<'e>: Encoder
     where
-        Self: 's;
+        Self: 'e;
 
     /// Constructs a "default encoder" for the type.
     fn encoder(&self) -> Self::Encoder<'_>;
@@ -49,12 +49,19 @@ pub trait Encoder {
 macro_rules! encoder_newtype{
     (
         $(#[$($struct_attr:tt)*])*
-        pub struct $name:ident$(<$lt:lifetime>)?($encoder:ty);
+        pub struct $name:ident<$lt:lifetime>($encoder:ty);
     ) => {
         $(#[$($struct_attr)*])*
-        pub struct $name$(<$lt>)?($encoder);
+        pub struct $name<$lt>($encoder, core::marker::PhantomData<&$lt $encoder>);
 
-        impl$(<$lt>)? $crate::Encoder for $name$(<$lt>)? {
+        impl<$lt> $name<$lt> {
+            /// Construct a new instance of the newtype encoder
+            pub fn new(encoder: $encoder) -> $name<$lt> {
+                $name(encoder, core::marker::PhantomData)
+            }
+        }
+
+        impl<$lt> $crate::Encoder for $name<$lt> {
             #[inline]
             fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
@@ -71,14 +78,14 @@ macro_rules! encoder_newtype{
 macro_rules! encoder_newtype_exact{
     (
         $(#[$($struct_attr:tt)*])*
-        pub struct $name:ident$(<$lt:lifetime>)?($encoder:ty);
+        pub struct $name:ident<$lt:lifetime>($encoder:ty);
     ) => {
         $crate::encoder_newtype! {
             $(#[$($struct_attr)*])*
-            pub struct $name$(<$lt>)?($encoder);
+            pub struct $name<$lt>($encoder);
         }
 
-        impl$(<$lt>)? $crate::ExactSizeEncoder for $name$(<$lt>)? {
+        impl<$lt> $crate::ExactSizeEncoder for $name<$lt> {
             #[inline]
             fn len(&self) -> usize { self.0.len() }
         }
@@ -86,17 +93,17 @@ macro_rules! encoder_newtype_exact{
 }
 
 /// Yields bytes from any [`Encodable`] instance.
-pub struct EncodableByteIter<'s, T: Encodable + 's> {
-    enc: T::Encoder<'s>,
+pub struct EncodableByteIter<'e, T: Encodable + 'e> {
+    enc: T::Encoder<'e>,
     position: usize,
 }
 
-impl<'s, T: Encodable + 's> EncodableByteIter<'s, T> {
+impl<'e, T: Encodable + 'e> EncodableByteIter<'e, T> {
     /// Constructs a new byte iterator around a provided encodable.
-    pub fn new(encodable: &'s T) -> Self { Self { enc: encodable.encoder(), position: 0 } }
+    pub fn new(encodable: &'e T) -> Self { Self { enc: encodable.encoder(), position: 0 } }
 }
 
-impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {
+impl<'e, T: Encodable + 'e> Iterator for EncodableByteIter<'e, T> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -112,10 +119,10 @@ impl<'s, T: Encodable + 's> Iterator for EncodableByteIter<'s, T> {
     }
 }
 
-impl<'s, T> ExactSizeIterator for EncodableByteIter<'s, T>
+impl<'e, T> ExactSizeIterator for EncodableByteIter<'e, T>
 where
-    T: Encodable + 's,
-    T::Encoder<'s>: ExactSizeEncoder,
+    T: Encodable + 'e,
+    T::Encoder<'e>: ExactSizeEncoder,
 {
     fn len(&self) -> usize { self.enc.len() - self.position }
 }

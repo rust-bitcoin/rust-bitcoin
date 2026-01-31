@@ -12,6 +12,8 @@
 //! [`encoder_newtype_exact`] macros.
 //!
 
+use core::marker::PhantomData;
+
 use internals::array_vec::ArrayVec;
 
 use super::{Encodable, Encoder, ExactSizeEncoder};
@@ -44,16 +46,17 @@ impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
 }
 
 /// An encoder for a single array.
-pub struct ArrayEncoder<const N: usize> {
+pub struct ArrayEncoder<'e, const N: usize> {
     arr: Option<[u8; N]>,
+    _marker: PhantomData<&'e ()>,
 }
 
-impl<const N: usize> ArrayEncoder<N> {
+impl<const N: usize> ArrayEncoder<'_, N> {
     /// Constructs an encoder which encodes the array with no length prefix.
-    pub const fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr) } }
+    pub const fn without_length_prefix(arr: [u8; N]) -> Self { Self { arr: Some(arr), _marker: PhantomData } }
 }
 
-impl<const N: usize> Encoder for ArrayEncoder<N> {
+impl<const N: usize> Encoder for ArrayEncoder<'_, N> {
     #[inline]
     fn current_chunk(&self) -> &[u8] { self.arr.as_ref().map(|x| &x[..]).unwrap_or_default() }
 
@@ -64,7 +67,7 @@ impl<const N: usize> Encoder for ArrayEncoder<N> {
     }
 }
 
-impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
+impl<const N: usize> ExactSizeEncoder for ArrayEncoder<'_, N> {
     #[inline]
     fn len(&self) -> usize { self.arr.map_or(0, |a| a.len()) }
 }
@@ -273,11 +276,12 @@ where
 }
 
 /// Encoder for a compact size encoded integer.
-pub struct CompactSizeEncoder {
+pub struct CompactSizeEncoder<'e> {
     buf: Option<ArrayVec<u8, SIZE>>,
+    _marker: PhantomData<&'e ()>,
 }
 
-impl CompactSizeEncoder {
+impl CompactSizeEncoder<'_> {
     /// Constructs a new `CompactSizeEncoder`.
     ///
     /// Encodings are defined only for the range of u64. On systems where usize is
@@ -285,7 +289,7 @@ impl CompactSizeEncoder {
     /// values. In such cases we will ignore the passed value and encode [`u64::MAX`].
     /// But even on such exotic systems, we expect users to pass the length of an
     /// in-memory object, meaning that such large values are impossible to obtain.
-    pub fn new(value: usize) -> Self { Self { buf: Some(Self::encode(value)) } }
+    pub fn new(value: usize) -> Self { Self { buf: Some(Self::encode(value)), _marker: PhantomData } }
 
     /// Returns the number of bytes used to encode this `CompactSize` value.
     ///
@@ -332,7 +336,7 @@ impl CompactSizeEncoder {
     }
 }
 
-impl Encoder for CompactSizeEncoder {
+impl Encoder for CompactSizeEncoder<'_> {
     #[inline]
     fn current_chunk(&self) -> &[u8] { self.buf.as_ref().map(|b| &b[..]).unwrap_or_default() }
 
@@ -343,7 +347,7 @@ impl Encoder for CompactSizeEncoder {
     }
 }
 
-impl ExactSizeEncoder for CompactSizeEncoder {
+impl ExactSizeEncoder for CompactSizeEncoder<'_> {
     #[inline]
     fn len(&self) -> usize { self.buf.map_or(0, |buf| buf.len()) }
 }
@@ -355,10 +359,10 @@ mod tests {
     struct TestBytes<'a>(&'a [u8]);
 
     impl Encodable for TestBytes<'_> {
-        type Encoder<'s>
-            = BytesEncoder<'s>
+        type Encoder<'e>
+            = BytesEncoder<'e>
         where
-            Self: 's;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> { BytesEncoder::without_length_prefix(self.0) }
     }
@@ -366,10 +370,10 @@ mod tests {
     struct TestArray<const N: usize>([u8; N]);
 
     impl<const N: usize> Encodable for TestArray<N> {
-        type Encoder<'s>
-            = ArrayEncoder<N>
+        type Encoder<'e>
+            = ArrayEncoder<'e, N>
         where
-            Self: 's;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix(self.0) }
     }

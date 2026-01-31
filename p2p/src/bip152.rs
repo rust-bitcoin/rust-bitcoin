@@ -320,7 +320,7 @@ impl HeaderAndShortIds {
 struct Offset(usize);
 
 impl encoding::Encodable for Offset {
-    type Encoder<'e> = CompactSizeEncoder;
+    type Encoder<'e> = CompactSizeEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         CompactSizeEncoder::new(self.0)
@@ -421,8 +421,8 @@ encoding::encoder_newtype! {
     /// The encoder for [`BlockTransactionsRequest`].
     pub struct BlockTransactionsRequestEncoder<'e>(
         Encoder2<
-            BlockHashEncoder,
-            Encoder2<CompactSizeEncoder, SliceEncoder<'e, Offset>>
+            BlockHashEncoder<'e>,
+            Encoder2<CompactSizeEncoder<'e>, SliceEncoder<'e, Offset>>
         >
     );
 }
@@ -431,7 +431,7 @@ impl encoding::Encodable for BlockTransactionsRequest {
     type Encoder<'e> = BlockTransactionsRequestEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTransactionsRequestEncoder(
+        BlockTransactionsRequestEncoder::new(
             Encoder2::new(
                 self.block_hash.encoder(),
                 Encoder2::new(

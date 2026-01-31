@@ -64,6 +64,15 @@ impl CommandString {
             Ok(Self(cow))
         }
     }
+
+    /// Create an owned copy of the bytes in this command string
+    fn to_consensus_bytes(&self) -> [u8; 12] {
+        let mut rawbytes = [0u8; 12];
+        let strbytes = self.0.as_bytes();
+        debug_assert!(strbytes.len() <= 12);
+        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
+        rawbytes
+    }
 }
 
 impl TryFrom<String> for CommandString {
@@ -134,14 +143,10 @@ impl Decodable for CommandString {
 }
 
 impl encoding::Encodable for CommandString {
-    type Encoder<'e> = encoding::ArrayEncoder<12>;
+    type Encoder<'e> = encoding::ArrayEncoder<'e, 12>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        let mut rawbytes = [0u8; 12];
-        let strbytes = self.0.as_bytes();
-        debug_assert!(strbytes.len() <= 12);
-        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
-        encoding::ArrayEncoder::without_length_prefix(rawbytes)
+        encoding::ArrayEncoder::without_length_prefix(self.to_consensus_bytes())
     }
 }
 
@@ -405,16 +410,16 @@ impl bitcoin::consensus::encode::Decodable for FeeFilter {
 
 encoding::encoder_newtype_exact! {
     /// Encoder for [`FeeFilter`] type.
-    pub struct FeeFilterEncoder(encoding::ArrayEncoder<8>);
+    pub struct FeeFilterEncoder<'e>(encoding::ArrayEncoder<'e, 8>);
 }
 
 impl encoding::Encodable for FeeFilter {
-    type Encoder<'e> = FeeFilterEncoder;
+    type Encoder<'e> = FeeFilterEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         // Encode as sat/kvB in little-endian (BIP 133 wire format).
         let kvb = self.0.to_sat_per_kvb_ceil();
-        FeeFilterEncoder(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
+        FeeFilterEncoder::new(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
     }
 }
 
@@ -776,13 +781,13 @@ impl encoding::Encoder for NetworkMessageEncoder {
 
 encoding::encoder_newtype! {
     /// Encoder for [`RawNetworkMessage`].
-    pub struct RawNetworkMessageEncoder(
+    pub struct RawNetworkMessageEncoder<'e>(
         encoding::Encoder2<
             encoding::Encoder4<
-                encoding::ArrayEncoder<4>,
-                encoding::ArrayEncoder<12>,
-                encoding::ArrayEncoder<4>,
-                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<'e, 4>,
+                encoding::ArrayEncoder<'e, 12>,
+                encoding::ArrayEncoder<'e, 4>,
+                encoding::ArrayEncoder<'e, 4>,
             >,
             NetworkMessageEncoder,
         >
@@ -790,13 +795,13 @@ encoding::encoder_newtype! {
 }
 
 impl encoding::Encodable for RawNetworkMessage {
-    type Encoder<'e> = RawNetworkMessageEncoder;
+    type Encoder<'e> = RawNetworkMessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        RawNetworkMessageEncoder(encoding::Encoder2::new(
+        RawNetworkMessageEncoder::new(encoding::Encoder2::new(
             encoding::Encoder4::new(
                 encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
-                self.command().encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.command().to_consensus_bytes()),
                 encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
                 encoding::ArrayEncoder::without_length_prefix(self.checksum),
             ),

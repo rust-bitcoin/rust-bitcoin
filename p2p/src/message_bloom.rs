@@ -34,11 +34,11 @@ encoding::encoder_newtype! {
     /// The encoder for the [`FilterLoad`] message.
     pub struct FilterLoadEncoder<'e>(
         Encoder2<
-            Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
+            Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>,
             Encoder3<
-                ArrayEncoder<4>,
-                ArrayEncoder<4>,
-                BloomFlagsEncoder
+                ArrayEncoder<'e, 4>,
+                ArrayEncoder<'e, 4>,
+                BloomFlagsEncoder<'e>
             >
         >
     );
@@ -48,7 +48,7 @@ impl encoding::Encodable for FilterLoad {
     type Encoder<'e> = FilterLoadEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterLoadEncoder(Encoder2::new(
+        FilterLoadEncoder::new(Encoder2::new(
             Encoder2::new(
                 CompactSizeEncoder::new(self.filter.len()),
                 BytesEncoder::without_length_prefix(&self.filter)
@@ -140,14 +140,14 @@ pub enum BloomFlags {
 
 encoding::encoder_newtype! {
     /// The encoder for [`BloomFlags`].
-    pub struct BloomFlagsEncoder(ArrayEncoder<1>);
+    pub struct BloomFlagsEncoder<'e>(ArrayEncoder<'e, 1>);
 }
 
 impl encoding::Encodable for BloomFlags {
-    type Encoder<'e> = BloomFlagsEncoder;
+    type Encoder<'e> = BloomFlagsEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BloomFlagsEncoder(ArrayEncoder::without_length_prefix(
+        BloomFlagsEncoder::new(ArrayEncoder::without_length_prefix(
          [match self {
                 Self::None => 0,
                 Self::All => 1,
@@ -264,17 +264,19 @@ pub struct FilterAdd {
 
 encoding::encoder_newtype! {
     /// The encoder of the [`FilterAdd`] message.
-    pub struct FilterAddEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+    pub struct FilterAddEncoder<'e>(Encoder2<CompactSizeEncoder<'e>, BytesEncoder<'e>>);
 }
 
 impl encoding::Encodable for FilterAdd {
     type Encoder<'e> = FilterAddEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterAddEncoder(Encoder2::new(
-            CompactSizeEncoder::new(self.data.len()),
-            BytesEncoder::without_length_prefix(&self.data),
-        ))
+        FilterAddEncoder::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.data.len()),
+                BytesEncoder::without_length_prefix(&self.data)
+            )
+        )
     }
 }
 

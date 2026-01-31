@@ -107,11 +107,11 @@ impl Decodable for Inventory {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Inventory`] type.
-    pub struct InventoryEncoder(Encoder2<ArrayEncoder<4>, ArrayEncoder<32>>);
+    pub struct InventoryEncoder<'e>(Encoder2<ArrayEncoder<'e, 4>, ArrayEncoder<'e, 32>>);
 }
 
 impl encoding::Encodable for Inventory {
-    type Encoder<'e> = InventoryEncoder;
+    type Encoder<'e> = InventoryEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let (prefix, bytes) = match *self {
@@ -124,7 +124,7 @@ impl encoding::Encodable for Inventory {
             Self::WitnessBlock(b) => (0x4000_0002, b.to_byte_array()),
             Self::Unknown { inv_type: t, hash: d } => (t, d),
         };
-        InventoryEncoder(Encoder2::new(
+        InventoryEncoder::new(Encoder2::new(
             ArrayEncoder::without_length_prefix(prefix.to_le_bytes()),
             ArrayEncoder::without_length_prefix(bytes),
         ))
