@@ -50,6 +50,7 @@ impl bitcoin_hashes::sha1::HashEngine
 impl bitcoin_hashes::sha256::Hash
 impl bitcoin_hashes::sha256::HashEngine
 impl bitcoin_hashes::sha256::Midstate
+impl bitcoin_hashes::sha256::MidstateError
 impl bitcoin_hashes::sha256d::Hash
 impl bitcoin_hashes::sha256d::HashEngine
 impl bitcoin_hashes::sha384::Hash
@@ -616,6 +617,7 @@ pub const fn bitcoin_hashes::sha256::Midstate::as_parts(&self) -> (&[u8; 32], u6
 pub const fn bitcoin_hashes::sha256::Midstate::hash_tag(tag: &[u8]) -> Self
 pub const fn bitcoin_hashes::sha256::Midstate::new(state: [u8; 32], bytes_hashed: u64) -> Self
 pub const fn bitcoin_hashes::sha256::Midstate::to_parts(self) -> ([u8; 32], u64)
+pub const fn bitcoin_hashes::sha256::MidstateError::midstate(&self) -> &bitcoin_hashes::sha256::Midstate
 pub const fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256d::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256d::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
@@ -834,6 +836,7 @@ pub fn bitcoin_hashes::sha256::Midstate::partial_cmp(&self, other: &bitcoin_hash
 pub fn bitcoin_hashes::sha256::MidstateError::clone(&self) -> bitcoin_hashes::sha256::MidstateError
 pub fn bitcoin_hashes::sha256::MidstateError::eq(&self, other: &bitcoin_hashes::sha256::MidstateError) -> bool
 pub fn bitcoin_hashes::sha256::MidstateError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_hashes::sha256::MidstateError::unprocessed_bytes(&self) -> &[u8]
 pub fn bitcoin_hashes::sha256::hash(data: &[u8]) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::sha256::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &Self::Bytes
