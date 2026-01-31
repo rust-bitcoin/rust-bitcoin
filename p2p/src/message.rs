@@ -10,15 +10,17 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
+use core::convert::Infallible;
 use core::{cmp, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::merkle_tree::MerkleBlock;
-use encoding;
+use encoding::{self, CompactSizeEncoder, Encoder2, SliceEncoder, VecDecoder};
 use hashes::sha256d;
 use internals::ToU64 as _;
+use internals::write_err;
 use io::{self, BufRead, Read, Write};
 use primitives::{block, transaction};
 use units::FeeRate;
@@ -323,6 +325,74 @@ pub struct V2NetworkMessage {
 /// A list of inventory items.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct InventoryPayload(pub Vec<message_blockdata::Inventory>);
+
+encoding::encoder_newtype! {
+    /// The encoder for an [`InventoryPayload`].
+    pub struct InventoryPayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, message_blockdata::Inventory>>);
+}
+
+impl encoding::Encodable for InventoryPayload {
+    type Encoder<'e>
+        = Encoder2<CompactSizeEncoder, SliceEncoder<'e, message_blockdata::Inventory>>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(
+            CompactSizeEncoder::new(self.0.len()),
+            SliceEncoder::without_length_prefix(&self.0)
+        )
+    }
+}
+
+type InventoryInnerDecoder = VecDecoder<message_blockdata::Inventory>;
+
+/// Decoder type for [`InventoryPayload`].
+pub struct InventoryPayloadDecoder(InventoryInnerDecoder);
+
+impl encoding::Decoder for InventoryPayloadDecoder {
+    type Output = InventoryPayload;
+    type Error = InventoryPayloadDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(InventoryPayloadDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+       Ok(InventoryPayload(self.0.end().map_err(InventoryPayloadDecoderError)?))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for InventoryPayload {
+    type Decoder = InventoryPayloadDecoder;
+    fn decoder() -> Self::Decoder {
+        InventoryPayloadDecoder(VecDecoder::<message_blockdata::Inventory>::new())
+    }
+}
+
+/// An error decoding a [`InventoryPayload`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InventoryPayloadDecoderError(<InventoryInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for InventoryPayloadDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for InventoryPayloadDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "inventory payload error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InventoryPayloadDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 /// A list of legacy p2p address messages.
 #[derive(Clone, PartialEq, Eq, Debug)]
