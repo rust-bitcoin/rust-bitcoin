@@ -21,6 +21,7 @@ mod small_hash {
     use super::*;
 
     #[rustfmt::skip]
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn round(a: u64, b: u64, c: u64, d: &mut u64, e: u64,
                         f: u64, g: u64, h: &mut u64, k: u64, w: u64,
     ) {
@@ -31,6 +32,7 @@ mod small_hash {
         *h = t1.wrapping_add(t2);
     }
     #[rustfmt::skip]
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn later_round(a: u64, b: u64, c: u64, d: &mut u64, e: u64,
                               f: u64, g: u64, h: &mut u64, k: u64, w: u64,
                               w1: u64, w2: u64, w3: u64,
