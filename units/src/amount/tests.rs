@@ -11,11 +11,10 @@ use core::num::{NonZeroI64, NonZeroU64};
 use std::panic;
 
 use super::*;
+use crate::result::{MathOp, NumOpError, NumOpResult};
 #[cfg(feature = "alloc")]
-use crate::result::MathOp;
-use crate::result::NumOpResult;
-#[cfg(feature = "alloc")]
-use crate::{FeeRate, Weight};
+use crate::FeeRate;
+use crate::Weight;
 
 #[track_caller]
 fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
@@ -1382,4 +1381,153 @@ fn signed_sub() {
     assert!(diff2.is_negative());
     assert_eq!(diff1.to_sat(), (Amount::MAX_MONEY.to_sat() - 1) as i64);
     assert_eq!(diff2.to_sat(), -((Amount::MAX_MONEY.to_sat() - 1) as i64));
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn to_btc() {
+    assert_eq!(Amount::ONE_BTC.to_btc(), 1.0);
+    assert_eq!(Amount::ONE_SAT.to_btc(), 0.000_000_01);
+    assert_eq!(Amount::ZERO.to_btc(), 0.0);
+
+    assert_eq!(SignedAmount::ONE_BTC.to_btc(), 1.0);
+    assert_eq!(SignedAmount::ONE_SAT.to_btc(), 0.000_000_01);
+    assert_eq!(SignedAmount::ZERO.to_btc(), 0.0);
+
+    let amt_pairs = [
+        (200_000_000, 2.0),
+        (50_000_000, 0.5),
+        (100_000, 0.001),
+        (1, 0.000_000_01),
+    ];
+    for (sats, btc) in amt_pairs {
+        assert_eq!(ssat(sats).to_btc(), btc);
+        assert_eq!(ssat(-sats).to_btc(), -btc);
+        assert_eq!(sat(sats as u64).to_btc(), btc);
+    }
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn display_dynamic() {
+    // consts
+    assert_eq!(Amount::ZERO.display_dynamic().to_string(), "0 satoshi");
+    assert_eq!(Amount::ONE_SAT.display_dynamic().to_string(), "1 satoshi");
+    assert_eq!(Amount::ONE_BTC.display_dynamic().to_string(), "1 BTC");
+    assert_eq!(Amount::MAX_MONEY.display_dynamic().to_string(), "21000000 BTC");
+    assert_eq!(Amount::MAX.display_dynamic().to_string(), "21000000 BTC");
+
+    assert_eq!(SignedAmount::ZERO.display_dynamic().to_string(), "0 satoshi");
+    assert_eq!(SignedAmount::ONE_SAT.display_dynamic().to_string(), "1 satoshi");
+    assert_eq!(SignedAmount::ONE_BTC.display_dynamic().to_string(), "1 BTC");
+    assert_eq!(SignedAmount::MAX_MONEY.display_dynamic().to_string(), "21000000 BTC");
+    assert_eq!(SignedAmount::MAX.display_dynamic().to_string(), "21000000 BTC");
+
+    // dynamic values
+    let format_pairs = [
+        (100_000_000, "1 BTC"),
+        (200_000_000, "2 BTC"),
+        (150_000_000, "1.5 BTC"),
+        (99_999_999, "99999999 satoshi"),
+        (1, "1 satoshi"),
+        (1000, "1000 satoshi"),
+    ];
+    for (value, render_str) in format_pairs {
+        assert_eq!(sat(value).display_dynamic().to_string(), render_str);
+        assert_eq!(ssat(value as i64).display_dynamic().to_string(), render_str);
+        assert_eq!(
+            ssat(-(value as i64)).display_dynamic().to_string(),
+            format!("-{}", render_str),
+        );
+
+    }
+}
+
+#[test]
+fn checked_mul_none() {
+    // Overflows return None
+    // Amount
+    assert_eq!(Amount::MAX.checked_mul(2), None);
+    assert_eq!(sat(1).checked_mul(u64::MAX), None);
+    assert_eq!(sat(Amount::MAX.to_sat() / 2 + 1).checked_mul(2), None);
+
+    // SignedAmount
+    assert_eq!(SignedAmount::MAX.checked_mul(2), None);
+    assert_eq!(SignedAmount::MIN.checked_mul(2), None);
+    assert_eq!(ssat(1).checked_mul(i64::MAX), None);
+    assert_eq!(ssat(1).checked_mul(i64::MIN), None);
+    assert_eq!(ssat(-1).checked_mul(i64::MIN), None);
+    assert_eq!(ssat(SignedAmount::MAX.to_sat() / 2 + 1).checked_mul(2), None);
+    assert_eq!(ssat(SignedAmount::MIN.to_sat() / 2 - 1).checked_mul(2), None);
+}
+
+#[test]
+fn checked_mul() {
+    // Valid multiplications return Some
+    // Amount
+    assert_eq!(sat(100).checked_mul(10), Some(sat(1000)));
+    assert_eq!(Amount::ZERO.checked_mul(u64::MAX), Some(Amount::ZERO));
+
+    // SignedAmount
+    assert_eq!(ssat(100).checked_mul(10), Some(ssat(1000)));
+    assert_eq!(ssat(-100).checked_mul(10), Some(ssat(-1000)));
+    assert_eq!(ssat(100).checked_mul(-10), Some(ssat(-1000)));
+    assert_eq!(ssat(-100).checked_mul(-10), Some(ssat(1000)));
+    assert_eq!(SignedAmount::ZERO.checked_mul(i64::MAX), Some(SignedAmount::ZERO));
+    assert_eq!(SignedAmount::ZERO.checked_mul(i64::MIN), Some(SignedAmount::ZERO));
+}
+
+#[test]
+fn checked_rem_none() {
+    // Remainder by zero returns None
+    // Amount
+    assert_eq!(sat(100).checked_rem(0), None);
+    assert_eq!(Amount::MAX.checked_rem(0), None);
+    assert_eq!(Amount::ZERO.checked_rem(0), None);
+
+    // SignedAmount
+    assert_eq!(ssat(100).checked_rem(0), None);
+    assert_eq!(ssat(-100).checked_rem(0), None);
+    assert_eq!(SignedAmount::MAX.checked_rem(0), None);
+    assert_eq!(SignedAmount::MIN.checked_rem(0), None);
+    assert_eq!(SignedAmount::ZERO.checked_rem(0), None);
+}
+
+#[test]
+fn checked_rem() {
+    // Valid remainders return Some
+    let rem_pairs = [
+        (100, 1),
+        (99, 0),
+        (7, 1)
+    ];
+    for (amt, rem) in rem_pairs {
+        // SignedAmount +-
+        assert_eq!(ssat(amt).checked_rem(3), Some(ssat(rem)));
+        assert_eq!(ssat(-amt).checked_rem(3), Some(ssat(-rem)));
+        // Amount
+        assert_eq!(sat(amt as u64).checked_rem(3), Some(sat(rem as u64)));
+    }
+}
+
+#[test]
+fn amount_div_by_weight_floor_error() {
+    // Division by zero weight returns error
+    let err = sat(100).div_by_weight_floor(Weight::ZERO).unwrap_err();
+    assert_eq!(err, NumOpError::while_doing(MathOp::Div));
+
+    // Overflow case: Amount::MAX * 1000 overflows
+    let err = Amount::MAX.div_by_weight_floor(Weight::from_wu(1)).unwrap_err();
+    assert_eq!(err, NumOpError::while_doing(MathOp::Mul));
+}
+
+#[test]
+fn amount_div_by_weight_ceil_error() {
+    // Division by zero weight returns error
+    let err = sat(100).div_by_weight_ceil(Weight::ZERO).unwrap_err();
+    assert_eq!(err, NumOpError::while_doing(MathOp::Div));
+
+    // Overflow case: Amount::MAX * 1000 overflows
+    let err = Amount::MAX.div_by_weight_ceil(Weight::from_wu(1)).unwrap_err();
+    assert_eq!(err, NumOpError::while_doing(MathOp::Mul));
 }
