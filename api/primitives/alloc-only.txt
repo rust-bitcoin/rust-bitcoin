@@ -354,6 +354,9 @@ impl core::default::Default for bitcoin_primitives::transaction::TxMerkleNodeDec
 impl core::default::Default for bitcoin_primitives::transaction::VersionDecoder
 impl core::default::Default for bitcoin_primitives::witness::Witness
 impl core::default::Default for bitcoin_primitives::witness::WitnessDecoder
+impl core::fmt::Binary for bitcoin_primitives::block::Version
+impl core::fmt::Binary for bitcoin_primitives::pow::CompactTarget
+impl core::fmt::Binary for bitcoin_primitives::transaction::Version
 impl core::fmt::Debug for bitcoin_primitives::BlockHash
 impl core::fmt::Debug for bitcoin_primitives::Ntxid
 impl core::fmt::Debug for bitcoin_primitives::TxMerkleNode
@@ -395,7 +398,9 @@ impl core::fmt::Display for bitcoin_primitives::block::BlockDecoderError
 impl core::fmt::Display for bitcoin_primitives::block::BlockHashDecoderError
 impl core::fmt::Display for bitcoin_primitives::block::HeaderDecoderError
 impl core::fmt::Display for bitcoin_primitives::block::InvalidBlockError
+impl core::fmt::Display for bitcoin_primitives::block::Version
 impl core::fmt::Display for bitcoin_primitives::block::VersionDecoderError
+impl core::fmt::Display for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::Display for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::fmt::Display for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::fmt::Display for bitcoin_primitives::script::ScriptBufDecoderError
@@ -409,8 +414,15 @@ impl core::fmt::Display for bitcoin_primitives::transaction::Version
 impl core::fmt::Display for bitcoin_primitives::transaction::VersionDecoderError
 impl core::fmt::Display for bitcoin_primitives::witness::UnexpectedEofError
 impl core::fmt::Display for bitcoin_primitives::witness::WitnessDecoderError
+impl core::fmt::LowerHex for bitcoin_primitives::block::Version
 impl core::fmt::LowerHex for bitcoin_primitives::pow::CompactTarget
+impl core::fmt::LowerHex for bitcoin_primitives::transaction::Version
+impl core::fmt::Octal for bitcoin_primitives::block::Version
+impl core::fmt::Octal for bitcoin_primitives::pow::CompactTarget
+impl core::fmt::Octal for bitcoin_primitives::transaction::Version
+impl core::fmt::UpperHex for bitcoin_primitives::block::Version
 impl core::fmt::UpperHex for bitcoin_primitives::pow::CompactTarget
+impl core::fmt::UpperHex for bitcoin_primitives::transaction::Version
 impl core::hash::Hash for bitcoin_primitives::BlockHash
 impl core::hash::Hash for bitcoin_primitives::Ntxid
 impl core::hash::Hash for bitcoin_primitives::TxMerkleNode

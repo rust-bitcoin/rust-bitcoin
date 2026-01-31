@@ -800,6 +800,32 @@ impl Version {
     }
 }
 
+impl fmt::Display for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+impl fmt::LowerHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+}
+
+impl fmt::UpperHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+impl fmt::Octal for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Octal::fmt(&self.0, f) }
+}
+
+impl fmt::Binary for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.0, f) }
+
+}
+
 impl Default for Version {
     #[inline]
     fn default() -> Self { Self::NO_SOFT_FORK_SIGNALLING }
@@ -978,6 +1004,21 @@ mod tests {
     fn version_default() {
         let version = Version::default();
         assert_eq!(version.to_consensus(), Version::NO_SOFT_FORK_SIGNALLING.to_consensus());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_display() {
+        let version = Version(75);
+        assert_eq!(format!("{}", version), "75");
+        assert_eq!(format!("{:x}", version), "4b");
+        assert_eq!(format!("{:#x}", version), "0x4b");
+        assert_eq!(format!("{:X}", version), "4B");
+        assert_eq!(format!("{:#X}", version), "0x4B");
+        assert_eq!(format!("{:o}", version), "113");
+        assert_eq!(format!("{:#o}", version), "0o113");
+        assert_eq!(format!("{:b}", version), "1001011");
+        assert_eq!(format!("{:#b}", version), "0b1001011");
     }
 
     // Check that the size of the header consensus serialization matches the const SIZE value

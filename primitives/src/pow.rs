@@ -41,6 +41,11 @@ impl CompactTarget {
     pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
+impl fmt::Display for CompactTarget {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
 impl fmt::LowerHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
@@ -49,6 +54,16 @@ impl fmt::LowerHex for CompactTarget {
 impl fmt::UpperHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+impl fmt::Octal for CompactTarget {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Octal::fmt(&self.0, f) }
+}
+
+impl fmt::Binary for CompactTarget {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.0, f) }
 }
 
 encoding::encoder_newtype_exact! {
@@ -188,8 +203,15 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn compact_target_formatting() {
         let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
+        assert_eq!(format!("{}", compact_target), "486604799");
         assert_eq!(format!("{:x}", compact_target), "1d00ffff");
+        assert_eq!(format!("{:#x}", compact_target), "0x1d00ffff");
         assert_eq!(format!("{:X}", compact_target), "1D00FFFF");
+        assert_eq!(format!("{:#X}", compact_target), "0x1D00FFFF");
+        assert_eq!(format!("{:o}", compact_target), "3500177777");
+        assert_eq!(format!("{:#o}", compact_target), "0o3500177777");
+        assert_eq!(format!("{:b}", compact_target), "11101000000001111111111111111");
+        assert_eq!(format!("{:#b}", compact_target), "0b11101000000001111111111111111");
         assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);
     }
 }
