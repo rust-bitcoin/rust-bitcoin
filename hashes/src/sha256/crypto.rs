@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#[cfg(all(feature = "std", target_arch = "aarch64"))]
+use core::arch::aarch64::*;
 #[cfg(all(feature = "std", target_arch = "x86"))]
 use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
-#[cfg(all(feature = "std", target_arch = "aarch64"))]
-use core::arch::aarch64::*;
 
 use internals::slice::SliceExt;
 

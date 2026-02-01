@@ -14,7 +14,9 @@ use std::error;
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use bitcoin::{block, Block, BlockChecked, BlockHash, Transaction};
-use encoding::{CompactSizeDecoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{
+    CompactSizeDecoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder,
+};
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use internals::write_err;
@@ -322,9 +324,7 @@ struct Offset(usize);
 impl encoding::Encodable for Offset {
     type Encoder<'e> = CompactSizeEncoder;
 
-    fn encoder(&self) -> Self::Encoder<'_> {
-        CompactSizeEncoder::new(self.0)
-    }
+    fn encoder(&self) -> Self::Encoder<'_> { CompactSizeEncoder::new(self.0) }
 }
 
 struct OffsetDecoder(CompactSizeDecoder);
@@ -339,9 +339,7 @@ impl encoding::Decoder for OffsetDecoder {
     }
 
     #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        Ok(Offset(self.0.end()?))
-    }
+    fn end(self) -> Result<Self::Output, Self::Error> { Ok(Offset(self.0.end()?)) }
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
@@ -350,9 +348,7 @@ impl encoding::Decoder for OffsetDecoder {
 impl encoding::Decodable for Offset {
     type Decoder = OffsetDecoder;
 
-    fn decoder() -> Self::Decoder {
-        OffsetDecoder(CompactSizeDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { OffsetDecoder(CompactSizeDecoder::new()) }
 }
 
 /// A [`BlockTransactionsRequest`] structure is used to list transaction indexes
@@ -406,10 +402,8 @@ impl BlockTransactionsRequest {
                 Some(next) => {
                     indexes.push(next);
                     next
-                },
-                None => {
-                    return Err(TxIndexOutOfRangeError(last_cs as u64))
                 }
+                None => return Err(TxIndexOutOfRangeError(last_cs as u64)),
             };
             last_cs = last_cs.checked_add(1).ok_or(TxIndexOutOfRangeError(last_cs as u64))?;
         }
@@ -431,15 +425,13 @@ impl encoding::Encodable for BlockTransactionsRequest {
     type Encoder<'e> = BlockTransactionsRequestEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTransactionsRequestEncoder(
+        BlockTransactionsRequestEncoder(Encoder2::new(
+            self.block_hash.encoder(),
             Encoder2::new(
-                self.block_hash.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.offsets.len()),
-                    SliceEncoder::without_length_prefix(&self.offsets)
-                )
-            )
-        )
+                CompactSizeEncoder::new(self.offsets.len()),
+                SliceEncoder::without_length_prefix(&self.offsets),
+            ),
+        ))
     }
 }
 
@@ -477,7 +469,9 @@ impl encoding::Decodable for BlockTransactionsRequest {
 
 /// An error decoding a [`BlockTransactionsRequest`] message.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct BlockTransactionsRequestDecoderError(<BlockTransactionsRequestInnerDecoder as encoding::Decoder>::Error);
+pub struct BlockTransactionsRequestDecoderError(
+    <BlockTransactionsRequestInnerDecoder as encoding::Decoder>::Error,
+);
 
 impl From<Infallible> for BlockTransactionsRequestDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
@@ -632,9 +626,7 @@ impl<'a> Arbitrary<'a> for BlockTransactions {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Offset {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary()?))
-    }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -746,7 +738,10 @@ mod test {
             }
             {
                 // test serialization
-                let raw: Vec<u8> = serialize(&&BlockTransactionsRequest::from_indices_unchecked(BlockHash::from_byte_array([0; 32]), testcase.1));
+                let raw: Vec<u8> = serialize(&&BlockTransactionsRequest::from_indices_unchecked(
+                    BlockHash::from_byte_array([0; 32]),
+                    testcase.1,
+                ));
                 let mut expected_raw: Vec<u8> = [0u8; 32].to_vec();
                 expected_raw.extend(testcase.0);
                 assert_eq!(expected_raw, raw);

@@ -15,7 +15,10 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4, Encoder2, Encoder4};
+use encoding::{
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4,
+    Encoder2, Encoder4,
+};
 use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
@@ -402,9 +405,7 @@ impl encoding::Decoder for RejectReasonDecoder {
 impl encoding::Decodable for RejectReason {
     type Decoder = RejectReasonDecoder;
 
-    fn decoder() -> Self::Decoder {
-        RejectReasonDecoder(ArrayDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { RejectReasonDecoder(ArrayDecoder::new()) }
 }
 
 /// Errors occuring when decoding a [`RejectReason`].
@@ -491,24 +492,23 @@ impl encoding::Encodable for Reject {
     type Encoder<'e> = RejectEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        RejectEncoder(
-            Encoder4::new(
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.message.len()),
-                    BytesEncoder::without_length_prefix(self.message.as_bytes())
-                ),
-                self.ccode.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.reason.len()),
-                    BytesEncoder::without_length_prefix(self.reason.as_bytes())
-                ),
-                ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
-            )
-        )
+        RejectEncoder(Encoder4::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.message.len()),
+                BytesEncoder::without_length_prefix(self.message.as_bytes()),
+            ),
+            self.ccode.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.reason.len()),
+                BytesEncoder::without_length_prefix(self.reason.as_bytes()),
+            ),
+            ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
+        ))
     }
 }
 
-type RejectInnerDecoder = Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
+type RejectInnerDecoder =
+    Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
 
 /// The decoder type for a [`Reject`] message.
 pub struct RejectDecoder(RejectInnerDecoder);
@@ -532,12 +532,7 @@ impl encoding::Decoder for RejectDecoder {
             .map_err(|_| RejectDecoderError::InvalidUtf8)
             .map(Cow::Owned)?;
         let hash = sha256d::Hash::from_byte_array(hash);
-        Ok(Reject {
-            message,
-            ccode,
-            reason,
-            hash,
-        })
+        Ok(Reject { message, ccode, reason, hash })
     }
 
     #[inline]
@@ -548,14 +543,12 @@ impl encoding::Decodable for Reject {
     type Decoder = RejectDecoder;
 
     fn decoder() -> Self::Decoder {
-        RejectDecoder(
-            Decoder4::new(
-                ByteVecDecoder::new(),
-                RejectReason::decoder(),
-                ByteVecDecoder::new(),
-                ArrayDecoder::new()
-            )
-        )
+        RejectDecoder(Decoder4::new(
+            ByteVecDecoder::new(),
+            RejectReason::decoder(),
+            ByteVecDecoder::new(),
+            ArrayDecoder::new(),
+        ))
     }
 }
 

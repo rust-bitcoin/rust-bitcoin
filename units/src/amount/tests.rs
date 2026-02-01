@@ -1394,12 +1394,7 @@ fn to_btc() {
     assert_eq!(SignedAmount::ONE_SAT.to_btc(), 0.000_000_01);
     assert_eq!(SignedAmount::ZERO.to_btc(), 0.0);
 
-    let amt_pairs = [
-        (200_000_000, 2.0),
-        (50_000_000, 0.5),
-        (100_000, 0.001),
-        (1, 0.000_000_01),
-    ];
+    let amt_pairs = [(200_000_000, 2.0), (50_000_000, 0.5), (100_000, 0.001), (1, 0.000_000_01)];
     for (sats, btc) in amt_pairs {
         assert_eq!(ssat(sats).to_btc(), btc);
         assert_eq!(ssat(-sats).to_btc(), -btc);
@@ -1435,11 +1430,7 @@ fn display_dynamic() {
     for (value, render_str) in format_pairs {
         assert_eq!(sat(value).display_dynamic().to_string(), render_str);
         assert_eq!(ssat(value as i64).display_dynamic().to_string(), render_str);
-        assert_eq!(
-            ssat(-(value as i64)).display_dynamic().to_string(),
-            format!("-{}", render_str),
-        );
-
+        assert_eq!(ssat(-(value as i64)).display_dynamic().to_string(), format!("-{}", render_str),);
     }
 }
 
@@ -1496,11 +1487,7 @@ fn checked_rem_none() {
 #[test]
 fn checked_rem() {
     // Valid remainders return Some
-    let rem_pairs = [
-        (100, 1),
-        (99, 0),
-        (7, 1)
-    ];
+    let rem_pairs = [(100, 1), (99, 0), (7, 1)];
     for (amt, rem) in rem_pairs {
         // SignedAmount +-
         assert_eq!(ssat(amt).checked_rem(3), Some(ssat(rem)));
