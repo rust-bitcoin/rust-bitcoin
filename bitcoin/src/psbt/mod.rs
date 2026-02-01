@@ -24,7 +24,7 @@ use secp256k1::Message;
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
-use crate::key::{TapTweak, XOnlyPublicKey, Keypair};
+use crate::key::{Keypair, TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
 use crate::script::{ScriptExt as _, ScriptPubKeyExt as _};
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
@@ -432,10 +432,13 @@ impl Psbt {
                         .to_keypair();
 
                     #[cfg(all(feature = "rand", feature = "std"))]
-                    let signature = secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair.to_inner());
-                    #[cfg(not(all(feature = "rand", feature = "std")))]
                     let signature =
-                        secp256k1::schnorr::sign_no_aux_rand(&sighash.to_byte_array(), &key_pair.to_inner());
+                        secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair.to_inner());
+                    #[cfg(not(all(feature = "rand", feature = "std")))]
+                    let signature = secp256k1::schnorr::sign_no_aux_rand(
+                        &sighash.to_byte_array(),
+                        &key_pair.to_inner(),
+                    );
 
                     let signature = taproot::Signature { signature, sighash_type };
                     input.tap_key_sig = Some(signature);
@@ -460,8 +463,10 @@ impl Psbt {
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(all(feature = "rand", feature = "std"))]
-                        let signature =
-                            secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair.to_inner());
+                        let signature = secp256k1::schnorr::sign(
+                            &sighash.to_byte_array(),
+                            &key_pair.to_inner(),
+                        );
                         #[cfg(not(all(feature = "rand", feature = "std")))]
                         let signature = secp256k1::schnorr::sign_no_aux_rand(
                             &sighash.to_byte_array(),

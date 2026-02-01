@@ -441,7 +441,8 @@ impl Decoder for WitnessDecoder {
 
                 // Re-encode the length back into the buffer.
                 let encoded_size = CompactSizeEncoder::encoded_size(element_length);
-                let required_len = self.cursor.saturating_add(encoded_size).saturating_add(element_length);
+                let required_len =
+                    self.cursor.saturating_add(encoded_size).saturating_add(element_length);
                 self.reserve_batch(required_len);
                 let encoded_compact_size = crate::compact_size_encode(element_length);
                 self.content[self.cursor..self.cursor + encoded_size]

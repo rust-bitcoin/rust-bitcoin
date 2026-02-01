@@ -502,7 +502,8 @@ mod tests {
     #[test]
     #[should_panic(expected = "test error message")]
     fn mathop_expect_panics_on_error() {
-        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add)).expect("test error message");
+        NumOpResult::<Amount>::Error(NumOpError::while_doing(MathOp::Add))
+            .expect("test error message");
     }
 
     #[test]
@@ -515,11 +516,7 @@ mod tests {
         for amount in amounts {
             assert_eq!(NumOpResult::Valid(amount).unwrap(), amount);
         }
-        let weights = [
-            Weight::from_wu(0),
-            Weight::from_wu(16_384_000),
-            Weight::from_wu(u64::MAX),
-        ];
+        let weights = [Weight::from_wu(0), Weight::from_wu(16_384_000), Weight::from_wu(u64::MAX)];
         for weight in weights {
             assert_eq!(NumOpResult::Valid(weight).unwrap(), weight);
         }

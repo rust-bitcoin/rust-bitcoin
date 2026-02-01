@@ -12,8 +12,8 @@ use bitcoin::script::{ScriptExt, TapScriptExt as _};
 use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
-    absolute, script, Address, Amount, Keypair, Network, OutPoint, PrivateKey, Psbt,
-    ScriptSigBuf, Sequence, TapScriptBuf, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
+    absolute, script, Address, Amount, Keypair, Network, OutPoint, PrivateKey, Psbt, ScriptSigBuf,
+    Sequence, TapScriptBuf, Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
 
 #[test]
