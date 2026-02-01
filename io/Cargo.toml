@@ -31,9 +31,5 @@ hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.19.0", d
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.rust]
-unexpected_cfgs = { level = "deny" }
-
-[lints.clippy]
-redundant_clone = "warn"
-use_self = "warn"
+[lints]
+workspace = true
