@@ -7,6 +7,8 @@
 
 pub mod encode;
 mod error;
+#[cfg(kani)]
+mod verification;
 #[cfg(feature = "serde")]
 pub mod serde;
 
