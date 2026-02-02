@@ -837,12 +837,12 @@ impl encoding::Decoder for VersionDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        Ok(self.0.push_bytes(bytes)?)
+        self.0.push_bytes(bytes).map_err(VersionDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = i32::from_le_bytes(self.0.end()?);
+        let n = i32::from_le_bytes(self.0.end().map_err(VersionDecoderError)?);
         Ok(Version::from_consensus(n))
     }
 
@@ -861,10 +861,6 @@ pub struct VersionDecoderError(encoding::UnexpectedEofError);
 
 impl From<Infallible> for VersionDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<encoding::UnexpectedEofError> for VersionDecoderError {
-    fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
 }
 
 impl fmt::Display for VersionDecoderError {

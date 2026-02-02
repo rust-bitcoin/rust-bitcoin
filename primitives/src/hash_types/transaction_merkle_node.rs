@@ -78,12 +78,12 @@ impl encoding::Decoder for TxMerkleNodeDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        Ok(self.0.push_bytes(bytes)?)
+        self.0.push_bytes(bytes).map_err(TxMerkleNodeDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let a = self.0.end()?;
+        let a = self.0.end().map_err(TxMerkleNodeDecoderError)?;
         Ok(TxMerkleNode::from_byte_array(a))
     }
 
@@ -102,10 +102,6 @@ pub struct TxMerkleNodeDecoderError(encoding::UnexpectedEofError);
 
 impl From<Infallible> for TxMerkleNodeDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<encoding::UnexpectedEofError> for TxMerkleNodeDecoderError {
-    fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
 }
 
 impl fmt::Display for TxMerkleNodeDecoderError {
