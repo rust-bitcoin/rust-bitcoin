@@ -52,12 +52,7 @@ impl str::FromStr for HashType {
 
 #[cfg(not(feature = "hex"))]
 impl fmt::Debug for HashType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for byte in self.as_byte_array() {
-            write!(f, "{:02x}", byte)?;
-        }
-        Ok(())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
 
 #[cfg(feature = "arbitrary")]
