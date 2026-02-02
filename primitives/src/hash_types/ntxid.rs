@@ -2,7 +2,6 @@
 
 //! The `Txid` type.
 
-#[cfg(not(feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
