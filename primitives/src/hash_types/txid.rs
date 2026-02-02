@@ -4,7 +4,6 @@
 //!
 //! In order to print and parse txids enable the "hex" feature.
 
-#[cfg(not(feature = "hex"))]
 use core::fmt;
 #[cfg(feature = "hex")]
 use core::str;
