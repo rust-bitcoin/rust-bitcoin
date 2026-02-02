@@ -1651,11 +1651,12 @@ impl<'a> Arbitrary<'a> for Version {
 #[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "hex")]
     use alloc::string::ToString;
     use alloc::{format, vec};
     #[cfg(feature = "hex")]
     use core::str::FromStr as _;
+    #[cfg(feature = "std")]
+    use std::error::Error as _;
 
     use encoding::Encoder as _;
     #[cfg(feature = "hex")]
@@ -3040,5 +3041,599 @@ mod tests {
         let mut bytes = [0u8].as_slice();
         decoder.push_bytes(&mut bytes).unwrap();
         assert_eq!(decoder.read_limit(), 3);
+    }
+
+    #[test]
+    #[cfg(all(feature = "hex", feature = "alloc"))]
+    fn parse_transaction_error_debug() {
+        use crate::ParsePrimitiveError;
+
+        let err = Transaction::from_str("deadbeef00").unwrap_err();
+        assert!(matches!(err, ParseTransactionError(ParsePrimitiveError::Decode(..))));
+
+        let dbg = format!("{:?}", err);
+        assert!(!dbg.is_empty());
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn out_point_decoder_error() {
+        let mut decoder = OutPoint::decoder();
+        let mut slice = &[][..];
+
+        let needs_more = decoder.push_bytes(&mut slice).unwrap();
+        assert!(needs_more);
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err, OutPointDecoderError(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn parse_out_point_txid_error() {
+        let err = ("z".repeat(64) + ":0").parse::<OutPoint>().unwrap_err();
+        assert!(matches!(err, ParseOutPointError::Txid(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn parse_out_point_vout_error() {
+        let txid = "0".repeat(64);
+
+        let err = format!("{}:{}", txid, "x").parse::<OutPoint>().unwrap_err();
+        assert!(matches!(err, ParseOutPointError::Vout(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn parse_out_point_format_error() {
+        let txid = "0".repeat(64);
+        let err = txid.parse::<OutPoint>().unwrap_err();
+        assert!(matches!(err, ParseOutPointError::Format));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn parse_out_point_too_long_error() {
+        let txid = "0".repeat(64);
+        let err = format!("{}:{}", txid, "12345678900").parse::<OutPoint>().unwrap_err();
+        assert!(matches!(err, ParseOutPointError::TooLong));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
+    fn parse_out_point_vout_not_canonical_error() {
+        let txid = "0".repeat(64);
+        let err = format!("{}:{}", txid, "01").parse::<OutPoint>().unwrap_err();
+        assert!(matches!(err, ParseOutPointError::VoutNotCanonical));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decoder_error() {
+        let mut decoder = Version::decoder();
+        let mut slice = &[][..];
+
+        let needs_more = decoder.push_bytes(&mut slice).unwrap();
+        assert!(needs_more);
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err, VersionDecoderError(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_version_error() {
+        let mut decoder = VersionDecoder::new();
+        let mut bytes = [0u8, 0, 0].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        let err = TransactionDecoderError::from(decoder.end().unwrap_err());
+        assert!(matches!(err.0, TransactionDecoderErrorInner::Version(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_unsupported_segwit_flag_error() {
+        let mut decoder = TransactionDecoder::new();
+        let mut bytes = [1u8, 0, 0, 0, 0, 2].as_slice();
+        let err = decoder.push_bytes(&mut bytes).unwrap_err();
+        assert!(matches!(err.0, TransactionDecoderErrorInner::UnsupportedSegwitFlag(2)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_inputs_error() {
+        let mut decoder = VecDecoder::<TxIn>::new();
+        let mut bytes = [1u8].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        let err = TransactionDecoderError::from(decoder.end().unwrap_err());
+        assert!(matches!(err.0, TransactionDecoderErrorInner::Inputs(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_outputs_error() {
+        let mut decoder = VecDecoder::<TxOut>::new();
+        let mut bytes = [1u8].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        let err = TransactionDecoderError::from(decoder.end().unwrap_err());
+        assert!(matches!(err.0, TransactionDecoderErrorInner::Outputs(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_witness_error() {
+        let mut decoder = WitnessDecoder::new();
+        let mut bytes = [1u8].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        let err = TransactionDecoderError::from(decoder.end().unwrap_err());
+        assert!(matches!(err.0, TransactionDecoderErrorInner::Witness(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_no_witnesses_error() {
+        let tx_bytes = [
+            0x02, 0x00, 0x00, 0x00, // version
+            0x00, 0x01, // segwit marker + flag
+            0x01, // input count
+            // prevout.txid
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // prevout.vout
+            0x00, // script_sig len
+            0xff, 0xff, 0xff, 0xff, // sequence
+            0x01, // output count
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // value (1 sat)
+            0x00, // script_pubkey len
+            0x00, 0x00, 0x00, 0x00, // lock_time
+        ];
+
+        let mut slice = tx_bytes.as_slice();
+        let err = Transaction::decoder().push_bytes(&mut slice).unwrap_err();
+        assert!(matches!(err.0, TransactionDecoderErrorInner::NoWitnesses));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_lock_time_error() {
+        let mut decoder = LockTimeDecoder::new();
+        let mut bytes = [0u8, 0, 0].as_slice();
+        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        let err = TransactionDecoderError::from(decoder.end().unwrap_err());
+        assert!(matches!(err.0, TransactionDecoderErrorInner::LockTime(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_early_end_version_error() {
+        let err = decode_error_from_bytes(&[0u8, 0, 0]);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::EarlyEnd("version")));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_early_end_inputs_error() {
+        let bytes = [
+            0x01, 0x00, 0x00, 0x00, // version
+        ];
+        let err = decode_error_from_bytes(&bytes);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::EarlyEnd("inputs")));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_early_end_segwit_flag_error() {
+        let bytes = [
+            0x01, 0x00, 0x00, 0x00, // version
+            0x00, // segwit marker (no flag)
+        ];
+        let err = decode_error_from_bytes(&bytes);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::EarlyEnd("segwit flag")));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_early_end_outputs_error() {
+        let bytes = [
+            0x01, 0x00, 0x00, 0x00, // version
+            0x01, // input count
+            // prevout.txid
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, // prevout.vout
+            0x00, 0x00, 0x00, 0x00, 0x00, // script_sig len
+            0xff, 0xff, 0xff, 0xff, // sequence
+        ];
+        let err = decode_error_from_bytes(&bytes);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::EarlyEnd("outputs")));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_early_end_witnesses_error() {
+        let tx_bytes = [
+            0x01, 0x00, 0x00, 0x00, // version
+            0x00, 0x01, // segwit marker + flag
+            0x01, // input count
+            // prevout.txid
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, // prevout.vout
+            0x00, 0x00, 0x00, 0x00, 0x00, // script_sig len
+            0xff, 0xff, 0xff, 0xff, // sequence
+            0x01, // output count
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // value (1 sat)
+            0x00, // script_pubkey len
+        ];
+
+        let err = decode_error_from_bytes(&tx_bytes);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::EarlyEnd("witnesses")));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_early_end_locktime_error() {
+        let tx_bytes = [
+            0x01, 0x00, 0x00, 0x00, // version
+            0x01, // input count
+            // prevout.txid
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, // prevout.vout
+            0x00, 0x00, 0x00, 0x00, 0x00, // script_sig len
+            0xff, 0xff, 0xff, 0xff, // sequence
+            0x01, // output count
+            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // value (1 sat)
+            0x00, // script_pubkey len
+        ];
+
+        let err = decode_error_from_bytes(&tx_bytes);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::EarlyEnd("locktime")));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_null_prevout_in_non_coinbase_error() {
+        let input_0 = TxIn::EMPTY_COINBASE;
+        let input_1 = TxIn {
+            previous_output: OutPoint { txid: Txid::from_byte_array([1u8; 32]), vout: 0 },
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        };
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![input_0, input_1],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let err = decode_error_from_tx(&tx);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::NullPrevoutInNonCoinbase(0)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_coinbase_script_sig_too_small_error() {
+        let input_0 = TxIn {
+            previous_output: OutPoint::COINBASE_PREVOUT,
+            script_sig: ScriptSigBuf::from_bytes(vec![0x51]),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        };
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![input_0],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let err = decode_error_from_tx(&tx);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::CoinbaseScriptSigTooSmall(1)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_coinbase_script_sig_too_large_error() {
+        let input_0 = TxIn {
+            previous_output: OutPoint::COINBASE_PREVOUT,
+            script_sig: ScriptSigBuf::from_bytes(vec![0x51; 101]),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        };
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![input_0],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let err = decode_error_from_tx(&tx);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::CoinbaseScriptSigTooLarge(101)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_duplicate_input_error() {
+        let outpoint = OutPoint { txid: Txid::from_byte_array([2u8; 32]), vout: 1 };
+        let input_0 = TxIn {
+            previous_output: outpoint,
+            script_sig: ScriptSigBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        };
+        let input_1 = input_0.clone();
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![input_0, input_1],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+
+        let err = decode_error_from_tx(&tx);
+        assert!(matches!(
+            err.0,
+            TransactionDecoderErrorInner::DuplicateInput(got) if got == outpoint
+        ));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_output_value_sum_too_large_error() {
+        let expected = Amount::MAX_MONEY.to_sat() + 1;
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![TxIn {
+                previous_output: OutPoint { txid: Txid::from_byte_array([1u8; 32]), vout: 0 },
+                script_sig: ScriptSigBuf::new(),
+                sequence: Sequence::MAX,
+                witness: Witness::default(),
+            }],
+            outputs: vec![
+                TxOut { amount: Amount::MAX_MONEY, script_pubkey: ScriptPubKeyBuf::new() },
+                TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() },
+            ],
+        };
+
+        let err = decode_error_from_tx(&tx);
+        assert!(matches!(
+            err.0,
+            TransactionDecoderErrorInner::OutputValueSumTooLarge(got) if got == expected
+        ));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_no_outputs_error() {
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![TxIn {
+                previous_output: OutPoint { txid: Txid::from_byte_array([1u8; 32]), vout: 0 },
+                script_sig: ScriptSigBuf::new(),
+                sequence: Sequence::MAX,
+                witness: Witness::default(),
+            }],
+            outputs: vec![],
+        };
+
+        let err = decode_error_from_tx(&tx);
+        assert!(matches!(err.0, TransactionDecoderErrorInner::NoOutputs));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txin_decoder_first_error() {
+        let mut decoder = TxIn::decoder();
+        let mut slice = [].as_slice();
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err.0, encoding::Decoder3Error::First(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txin_decoder_second_error() {
+        let mut bytes = vec![];
+        bytes.extend_from_slice(&TC_TXID_BYTES);
+        bytes.extend_from_slice(&TC_VOUT_BYTES);
+        bytes.push(1); // scriptSig length = 1
+
+        let mut decoder = TxIn::decoder();
+        let mut slice = bytes.as_slice();
+
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err.0, encoding::Decoder3Error::Second(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txin_decoder_third_error() {
+        let mut bytes = vec![];
+        bytes.extend_from_slice(&TC_TXID_BYTES);
+        bytes.extend_from_slice(&TC_VOUT_BYTES);
+        bytes.push(0); // scriptSig length = 0
+
+        let mut decoder = TxIn::decoder();
+        let mut slice = bytes.as_slice();
+
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err.0, encoding::Decoder3Error::Third(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txout_decoder_first_error() {
+        let mut decoder = TxOut::decoder();
+        let mut slice = [].as_slice();
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err.0, encoding::Decoder2Error::First(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txout_decoder_second_error() {
+        let mut bytes = vec![];
+        bytes.extend_from_slice(&TC_ONE_SAT_BYTES);
+        let mut decoder = TxOut::decoder();
+        let mut slice = bytes.as_slice();
+
+        assert!(decoder.push_bytes(&mut slice).unwrap());
+
+        let err = decoder.end().unwrap_err();
+        assert!(matches!(err.0, encoding::Decoder2Error::Second(_)));
+
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
+    }
+
+    // Helper function to decode a transaction from bytes and return the decoding error.
+    #[cfg(feature = "alloc")]
+    fn decode_error_from_bytes(bytes: &[u8]) -> TransactionDecoderError {
+        let mut decoder = TransactionDecoder::new();
+        let mut slice = bytes;
+        decoder.push_bytes(&mut slice).unwrap();
+        decoder.end().unwrap_err()
+    }
+
+    // Helper function to encode a transaction and decode it to get the decoding error.
+    #[cfg(feature = "alloc")]
+    fn decode_error_from_tx(tx: &Transaction) -> TransactionDecoderError {
+        let tx_bytes = encoding::encode_to_vec(tx);
+        decode_error_from_bytes(&tx_bytes)
     }
 }
