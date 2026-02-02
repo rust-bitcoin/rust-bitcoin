@@ -2903,4 +2903,142 @@ mod tests {
         let advanced = encoder.advance();
         assert!(advanced);
     }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn out_point_decoder_default_read_limit() {
+        let decoder_default = OutPointDecoder::default();
+        // OutPointDecoder wraps ArrayDecoder<36>: needs 36 bytes.
+        assert_eq!(decoder_default.read_limit(), 36);
+
+        let mut decoder = OutPoint::decoder();
+        assert_eq!(decoder.read_limit(), 36);
+
+        // Provide 1 byte decreasing the limit by 1.
+        let mut bytes = [0u8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        assert_eq!(decoder.read_limit(), 35);
+
+        // Provide the remaining 35 bytes completing the decode.
+        let mut bytes = [0u8; 35].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        assert_eq!(decoder.read_limit(), 0);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn transaction_decoder_read_limit() {
+        use TransactionDecoderState as S;
+
+        let decoder = TransactionDecoder::default();
+        // Default TransactionDecoder starts by decoding version: needs 4 bytes.
+        assert_eq!(decoder.read_limit(), 4);
+
+        let decoder = TransactionDecoder {
+            state: S::Inputs(Version::ONE, Attempt::First, VecDecoder::<TxIn>::new()),
+        };
+        // VecDecoder<TxIn>: CompactSize needs 1 byte.
+        assert_eq!(decoder.read_limit(), 1);
+
+        let decoder = TransactionDecoder { state: S::SegwitFlag(Version::ONE) };
+        // Segwit flag: needs 1 byte.
+        assert_eq!(decoder.read_limit(), 1);
+
+        let decoder = TransactionDecoder {
+            state: S::Outputs(Version::ONE, vec![], IsSegwit::No, VecDecoder::<TxOut>::new()),
+        };
+        // VecDecoder<TxOut>: CompactSize needs 1 byte.
+        assert_eq!(decoder.read_limit(), 1);
+
+        let decoder = TransactionDecoder {
+            state: S::Witnesses(
+                Version::ONE,
+                vec![TxIn::EMPTY_COINBASE],
+                vec![],
+                Iteration(0),
+                WitnessDecoder::new(),
+            ),
+        };
+        // WitnessDecoder: CompactSize needs 1 byte.
+        assert_eq!(decoder.read_limit(), 1);
+
+        let decoder = TransactionDecoder {
+            state: S::LockTime(Version::ONE, vec![], vec![], LockTimeDecoder::new()),
+        };
+        // lock_time: needs 4 bytes.
+        assert_eq!(decoder.read_limit(), 4);
+
+        let tx = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            inputs: vec![TxIn::EMPTY_COINBASE],
+            outputs: vec![TxOut { amount: Amount::ONE_SAT, script_pubkey: ScriptPubKeyBuf::new() }],
+        };
+        let decoder = TransactionDecoder { state: S::Done(tx) };
+        // Done/Errored: no more bytes needed.
+        assert_eq!(decoder.read_limit(), 0);
+
+        let decoder = TransactionDecoder { state: S::Errored };
+        assert_eq!(decoder.read_limit(), 0);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txin_decoder_read_limit() {
+        let mut decoder = TxIn::decoder();
+        // Decoder3: needs outpoint (36) + script_sig len CompactSize (1) + sequence (4) = 41.
+        assert_eq!(decoder.read_limit(), 41);
+
+        // Provide the full outpoint, advancing to script_sig length.
+        let mut bytes = [0u8; 36].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        // Remaining: needs script_sig len CompactSize (1) + sequence (4) = 5.
+        assert_eq!(decoder.read_limit(), 5);
+
+        // Set script_sig length = 0, advancing to sequence.
+        let mut bytes = [0x00u8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        // Sequence: needs 4 bytes.
+        assert_eq!(decoder.read_limit(), 4);
+
+        // Provide 1 byte of sequence.
+        let mut bytes = [0x00u8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        assert_eq!(decoder.read_limit(), 3);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn txout_decoder_read_limit() {
+        let mut decoder = TxOut::decoder();
+        // Decoder2: needs amount (8) + script_pubkey len CompactSize (1) = 9.
+        assert_eq!(decoder.read_limit(), 9);
+
+        // Provide full amount, advancing to script_pubkey length.
+        let mut bytes = [0u8; 8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        // script_pubkey length: CompactSize needs 1 byte.
+        assert_eq!(decoder.read_limit(), 1);
+
+        // Set script_pubkey length = 0, completing the decode.
+        let mut bytes = [0x00u8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        assert_eq!(decoder.read_limit(), 0);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn version_decoder_default_read_limit() {
+        let decoder_default = VersionDecoder::default();
+        // VersionDecoder wraps ArrayDecoder<4>: needs 4 bytes.
+        assert_eq!(decoder_default.read_limit(), 4);
+
+        let mut decoder = Version::decoder();
+        assert_eq!(decoder.read_limit(), 4);
+
+        // Provide 1 byte decreasing the limit by 1.
+        let mut bytes = [0u8].as_slice();
+        decoder.push_bytes(&mut bytes).unwrap();
+        assert_eq!(decoder.read_limit(), 3);
+    }
 }
