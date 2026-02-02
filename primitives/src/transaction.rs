@@ -2555,10 +2555,7 @@ mod tests {
         decoder.push_bytes(&mut slice).unwrap();
         let err = decoder.end().expect_err("sum of output values > MAX_MONEY should be rejected");
 
-        match err.0 {
-            TransactionDecoderErrorInner::OutputValueSumTooLarge(_) => (),
-            e => panic!("unexpected error: {:?}", e),
-        }
+        assert!(matches!(err.0, TransactionDecoderErrorInner::OutputValueSumTooLarge(_)));
     }
 
     #[test]
