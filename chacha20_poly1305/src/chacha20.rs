@@ -14,7 +14,7 @@ const WORD_4: u32 = 0x6b206574;
 const CHACHA_BLOCKSIZE: usize = 64;
 
 /// A 256-bit secret key shared by the parties communicating.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Key([u8; 32]);
 
 impl Key {
@@ -23,7 +23,7 @@ impl Key {
 }
 
 /// A 96-bit initialization vector (IV), or nonce.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Nonce([u8; 12]);
 
 impl Nonce {
@@ -64,7 +64,7 @@ impl UpTo3<3> for () {}
 /// In the future, a "blacklist" for the alignment option might be useful to
 /// disable it on architectures which definitely do not support SIMD in order to avoid
 /// needless memory inefficiencies.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct U32x4([u32; 4]);
 
 impl U32x4 {
@@ -143,7 +143,7 @@ impl BitXor for U32x4 {
 ///   4   5   6   7
 ///   8   9  10  11
 ///  12  13  14  15
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct State {
     matrix: [U32x4; 4],
 }
@@ -252,6 +252,7 @@ impl State {
 ///
 /// The 20-round IETF version uses a 96-bit nonce and 32-bit block counter. This is the
 /// variant used in the Bitcoin ecosystem, including BIP-0324.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChaCha20 {
     /// Secret key shared by the parties communicating.
     key: Key,
