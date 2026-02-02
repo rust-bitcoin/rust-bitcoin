@@ -18,7 +18,7 @@
 // To read this file, follow the example code: https://keccak.team/keccak_specs_summary.html
 // For a detailed specification: https://keccak.team/files/Keccak-reference-3.0.pdf
 
-use core::fmt;
+use core::{cmp, fmt};
 
 crate::internal_macros::general_hash_type! {
     256,
@@ -165,15 +165,22 @@ fn keccakf1600(state: &mut KeccakState) {
 }
 
 /// Engine to compute the Sha3-256 hash function.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct HashEngine {
     state: KeccakState,
     bytes_hashed: u64,
+    buffer: [u8; RATE],
+}
+
+impl Default for HashEngine {
+    fn default() -> Self { Self::new() }
 }
 
 impl HashEngine {
     /// Construct a new Sha3-256 hash engine.
-    pub const fn new() -> Self { Self { state: KeccakState::new(), bytes_hashed: 0 } }
+    pub const fn new() -> Self {
+        Self { state: KeccakState::new(), bytes_hashed: 0, buffer: [0; RATE] }
+    }
 
     fn absorb(&mut self, block: [u8; RATE]) {
         for lane in 0..RATE_LANES {
@@ -185,6 +192,11 @@ impl HashEngine {
             self.state.xor_assign(x, y, shuffle);
         }
     }
+
+    fn process_block(&mut self) {
+        self.absorb(self.buffer);
+        keccakf1600(&mut self.state);
+    }
 }
 
 impl crate::HashEngine for HashEngine {
@@ -192,27 +204,17 @@ impl crate::HashEngine for HashEngine {
     type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = RATE;
 
-    fn input(&mut self, mut data: &[u8]) {
-        while data.len().ge(&RATE) {
-            let mut block = [0u8; RATE];
-            block.copy_from_slice(&data[..RATE]);
-            self.bytes_hashed += RATE as u64;
-            self.absorb(block);
-            keccakf1600(&mut self.state);
-            data = &data[RATE..];
-        }
-        let mut final_block = [0u8; RATE];
-        final_block[..data.len()].copy_from_slice(data);
-        self.bytes_hashed += data.len() as u64;
-        final_block[data.len()] = 0x06;
-        final_block[RATE - 1] ^= 0x80;
-        self.absorb(final_block);
-        keccakf1600(&mut self.state);
-    }
+    crate::internal_macros::engine_input_impl!();
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
-    fn finalize(self) -> Self::Hash {
+    fn finalize(mut self) -> Self::Hash {
+        let incomplete_block_len = crate::incomplete_block_len(&self);
+        self.buffer[incomplete_block_len + 1..].fill(0);
+        self.buffer[incomplete_block_len] = 0x06;
+        self.buffer[RATE - 1] ^= 0x80;
+        self.process_block();
+
         let mut out = [0u8; 32];
         out[..8].copy_from_slice(&self.state.lane(0, 0).to_le_bytes());
         out[8..16].copy_from_slice(&self.state.lane(1, 0).to_le_bytes());
@@ -247,6 +249,14 @@ mod tests {
                 let mut sha3 = super::HashEngine::new();
                 let input_bytes = Vec::from_hex(test.input).unwrap();
                 sha3.input(&input_bytes);
+                let hash = sha3.finalize();
+                assert_eq!(hash.to_string(), test.output);
+
+                // Hash through engine, checking that we can input byte by byte
+                let mut sha3 = super::HashEngine::new();
+                for ch in input_bytes {
+                    sha3.input(&[ch]);
+                }
                 let hash = sha3.finalize();
                 assert_eq!(hash.to_string(), test.output);
             }
