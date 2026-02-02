@@ -978,7 +978,8 @@ mod tests {
         let want = Height::from_u32(10).unwrap();
         assert_eq!("10".parse::<Height>().unwrap(), want);
         assert_eq!(Height::try_from("10").unwrap(), want);
-        #[cfg(feature = "alloc")] {
+        #[cfg(feature = "alloc")]
+        {
             assert_eq!(Height::try_from(String::from("10")).unwrap(), want);
             assert_eq!(Height::try_from(Box::<str>::from("10")).unwrap(), want);
         }
@@ -989,7 +990,8 @@ mod tests {
         // Only base-10 values should parse
         assert!("0xab".parse::<Height>().is_err());
         assert!(Height::try_from("0xab").is_err());
-        #[cfg(feature = "alloc")] {
+        #[cfg(feature = "alloc")]
+        {
             assert!(Height::try_from(String::from("0xab")).is_err());
             assert!(Height::try_from(Box::<str>::from("0xab")).is_err());
         }
@@ -1000,7 +1002,8 @@ mod tests {
         // Only integers should parse
         assert!("10.123".parse::<Height>().is_err());
         assert!(Height::try_from("10.123").is_err());
-        #[cfg(feature = "alloc")] {
+        #[cfg(feature = "alloc")]
+        {
             assert!(Height::try_from(String::from("10.123")).is_err());
             assert!(Height::try_from(Box::<str>::from("10.123")).is_err());
         }

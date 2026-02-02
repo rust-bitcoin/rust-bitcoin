@@ -35,7 +35,9 @@ use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
 #[doc(no_inline)]
 pub use primitives::transaction::{ParseTransactionError, ParseOutPointError};
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, Transaction, Ntxid, Txid, Wtxid, Version, TxIn, TxOut};
+pub use primitives::transaction::{
+    Ntxid, OutPoint, Transaction, TxIn, TxOut, Txid, Version, Wtxid,
+};
 
 impl Encodable for Txid {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {

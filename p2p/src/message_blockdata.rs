@@ -12,7 +12,10 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use encoding::{ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
+use encoding::{
+    ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3,
+    SliceEncoder, VecDecoder,
+};
 use internals::write_err;
 use io::{BufRead, Write};
 use primitives::block::{BlockHashDecoder, BlockHashEncoder};
@@ -219,7 +222,11 @@ pub struct GetHeadersMessage {
     pub stop_hash: BlockHash,
 }
 
-type GetBlocksOrHeadersInnerEncoder<'e> = Encoder3<ProtocolVersionEncoder, Encoder2<CompactSizeEncoder, SliceEncoder<'e, BlockHash>>, BlockHashEncoder>;
+type GetBlocksOrHeadersInnerEncoder<'e> = Encoder3<
+    ProtocolVersionEncoder,
+    Encoder2<CompactSizeEncoder, SliceEncoder<'e, BlockHash>>,
+    BlockHashEncoder,
+>;
 
 encoding::encoder_newtype! {
     /// The encoder for [`GetBlocksMessage`].
@@ -232,44 +239,43 @@ encoding::encoder_newtype! {
 }
 
 impl encoding::Encodable for GetHeadersMessage {
-    type Encoder<'e> = GetHeadersEncoder<'e>
+    type Encoder<'e>
+        = GetHeadersEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetHeadersEncoder(
-            Encoder3::new(
-                self.version.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.locator_hashes.len()),
-                    SliceEncoder::without_length_prefix(&self.locator_hashes),
-                ),
-                self.stop_hash.encoder(),
+        GetHeadersEncoder(Encoder3::new(
+            self.version.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.locator_hashes.len()),
+                SliceEncoder::without_length_prefix(&self.locator_hashes),
             ),
-        )
+            self.stop_hash.encoder(),
+        ))
     }
 }
 
 impl encoding::Encodable for GetBlocksMessage {
-    type Encoder<'e> = GetBlocksEncoder<'e>
+    type Encoder<'e>
+        = GetBlocksEncoder<'e>
     where
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetBlocksEncoder(
-            Encoder3::new(
-                self.version.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.locator_hashes.len()),
-                    SliceEncoder::without_length_prefix(&self.locator_hashes),
-                ),
-                self.stop_hash.encoder(),
+        GetBlocksEncoder(Encoder3::new(
+            self.version.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.locator_hashes.len()),
+                SliceEncoder::without_length_prefix(&self.locator_hashes),
             ),
-        )
+            self.stop_hash.encoder(),
+        ))
     }
 }
 
-type GetBlocksOrHeadersInnerDecoder = Decoder3<ProtocolVersionDecoder, VecDecoder<BlockHash>, BlockHashDecoder>;
+type GetBlocksOrHeadersInnerDecoder =
+    Decoder3<ProtocolVersionDecoder, VecDecoder<BlockHash>, BlockHashDecoder>;
 
 /// Decoder type for [`GetBlocksMessage`].
 pub struct GetBlocksMessageDecoder(GetBlocksOrHeadersInnerDecoder);
@@ -288,7 +294,8 @@ impl encoding::Decoder for GetHeadersMessageDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (version, locator_hashes, stop_hash) = self.0.end().map_err(GetHeadersMessageDecoderError)?;
+        let (version, locator_hashes, stop_hash) =
+            self.0.end().map_err(GetHeadersMessageDecoderError)?;
         Ok(GetHeadersMessage { version, locator_hashes, stop_hash })
     }
 
@@ -307,7 +314,8 @@ impl encoding::Decoder for GetBlocksMessageDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (version, locator_hashes, stop_hash) = self.0.end().map_err(GetBlocksMessageDecoderError)?;
+        let (version, locator_hashes, stop_hash) =
+            self.0.end().map_err(GetBlocksMessageDecoderError)?;
         Ok(GetBlocksMessage { version, locator_hashes, stop_hash })
     }
 
@@ -319,11 +327,10 @@ impl encoding::Decodable for GetBlocksMessage {
     type Decoder = GetBlocksMessageDecoder;
     fn decoder() -> Self::Decoder {
         GetBlocksMessageDecoder(Decoder3::new(
-                ProtocolVersionDecoder::new(),
-                VecDecoder::<BlockHash>::new(),
-                BlockHashDecoder::new(),
-            )
-        )
+            ProtocolVersionDecoder::new(),
+            VecDecoder::<BlockHash>::new(),
+            BlockHashDecoder::new(),
+        ))
     }
 }
 
@@ -331,17 +338,18 @@ impl encoding::Decodable for GetHeadersMessage {
     type Decoder = GetHeadersMessageDecoder;
     fn decoder() -> Self::Decoder {
         GetHeadersMessageDecoder(Decoder3::new(
-                ProtocolVersionDecoder::new(),
-                VecDecoder::<BlockHash>::new(),
-                BlockHashDecoder::new(),
-            )
-        )
+            ProtocolVersionDecoder::new(),
+            VecDecoder::<BlockHash>::new(),
+            BlockHashDecoder::new(),
+        ))
     }
 }
 
 /// An error consensus decoding a [`GetBlocksMessage`].
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GetBlocksMessageDecoderError(<GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error);
+pub struct GetBlocksMessageDecoderError(
+    <GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error,
+);
 
 impl From<Infallible> for GetBlocksMessageDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
@@ -360,7 +368,9 @@ impl std::error::Error for GetBlocksMessageDecoderError {
 
 /// An error consensus decoding a [`GetHeadersMessage`].
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GetHeadersMessageDecoderError(<GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error);
+pub struct GetHeadersMessageDecoderError(
+    <GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error,
+);
 
 impl From<Infallible> for GetHeadersMessageDecoderError {
     fn from(never: Infallible) -> Self { match never {} }

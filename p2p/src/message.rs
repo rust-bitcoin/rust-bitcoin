@@ -1855,12 +1855,10 @@ mod test {
             }])),
             NetworkMessage::SendAddrV2,
             NetworkMessage::CmpctBlock(cmptblock),
-            NetworkMessage::GetBlockTxn(
-                BlockTransactionsRequest::from_indices_unchecked(
-                    BlockHash::from_byte_array(hash([11u8; 32]).to_byte_array()),
-                    vec![0, 1, 2, 3, 10, 3002]
-                ),
-            ),
+            NetworkMessage::GetBlockTxn(BlockTransactionsRequest::from_indices_unchecked(
+                BlockHash::from_byte_array(hash([11u8; 32]).to_byte_array()),
+                vec![0, 1, 2, 3, 10, 3002],
+            )),
             NetworkMessage::BlockTxn(blocktxn),
             NetworkMessage::SendCmpct(SendCmpct { send_compact: true, version: 8333 }),
         ];

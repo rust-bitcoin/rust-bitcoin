@@ -11,7 +11,10 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::{encode, Decodable, Encodable, ReadExt};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4, Encoder2, Encoder3};
+use encoding::{
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4,
+    Encoder2, Encoder3,
+};
 use internals::write_err;
 use io::{BufRead, Write};
 
@@ -51,7 +54,7 @@ impl encoding::Encodable for FilterLoad {
         FilterLoadEncoder(Encoder2::new(
             Encoder2::new(
                 CompactSizeEncoder::new(self.filter.len()),
-                BytesEncoder::without_length_prefix(&self.filter)
+                BytesEncoder::without_length_prefix(&self.filter),
             ),
             Encoder3::new(
                 ArrayEncoder::without_length_prefix(self.hash_funcs.to_le_bytes()),
@@ -62,7 +65,8 @@ impl encoding::Encodable for FilterLoad {
     }
 }
 
-type FilterLoadInnerDecoder = Decoder4<ByteVecDecoder, ArrayDecoder<4>, ArrayDecoder<4>, BloomFlagsDecoder>;
+type FilterLoadInnerDecoder =
+    Decoder4<ByteVecDecoder, ArrayDecoder<4>, ArrayDecoder<4>, BloomFlagsDecoder>;
 
 /// The decoder for the [`FilterLoad`] message.
 pub struct FilterLoadDecoder(FilterLoadInnerDecoder);
@@ -83,7 +87,7 @@ impl encoding::Decoder for FilterLoadDecoder {
             filter,
             hash_funcs: u32::from_le_bytes(hash_funcs),
             tweak: u32::from_le_bytes(tweak),
-            flags
+            flags,
         })
     }
 
@@ -95,14 +99,12 @@ impl encoding::Decodable for FilterLoad {
     type Decoder = FilterLoadDecoder;
 
     fn decoder() -> Self::Decoder {
-        FilterLoadDecoder(
-            Decoder4::new(
-                ByteVecDecoder::new(),
-                ArrayDecoder::new(),
-                ArrayDecoder::new(),
-                BloomFlags::decoder(),
-            )
-        )
+        FilterLoadDecoder(Decoder4::new(
+            ByteVecDecoder::new(),
+            ArrayDecoder::new(),
+            ArrayDecoder::new(),
+            BloomFlags::decoder(),
+        ))
     }
 }
 
@@ -147,13 +149,11 @@ impl encoding::Encodable for BloomFlags {
     type Encoder<'e> = BloomFlagsEncoder;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BloomFlagsEncoder(ArrayEncoder::without_length_prefix(
-         [match self {
-                Self::None => 0,
-                Self::All => 1,
-                Self::PubkeyOnly => 2,
-            }]
-        ))
+        BloomFlagsEncoder(ArrayEncoder::without_length_prefix([match self {
+            Self::None => 0,
+            Self::All => 1,
+            Self::PubkeyOnly => 2,
+        }]))
     }
 }
 
@@ -163,7 +163,9 @@ type BloomFlagsInnerDecoder = ArrayDecoder<1>;
 pub struct BloomFlagsDecoder(BloomFlagsInnerDecoder);
 
 impl BloomFlagsDecoder {
-    fn err_from_inner(inner: <ArrayDecoder<1> as encoding::Decoder>::Error) -> BloomFlagsDecoderError {
+    fn err_from_inner(
+        inner: <ArrayDecoder<1> as encoding::Decoder>::Error,
+    ) -> BloomFlagsDecoderError {
         BloomFlagsDecoderError::Decoder(inner)
     }
 }
@@ -196,9 +198,7 @@ impl encoding::Decoder for BloomFlagsDecoder {
 impl encoding::Decodable for BloomFlags {
     type Decoder = BloomFlagsDecoder;
 
-    fn decoder() -> Self::Decoder {
-        BloomFlagsDecoder(ArrayDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { BloomFlagsDecoder(ArrayDecoder::new()) }
 }
 
 /// An error occurring when decoding a [`BloomFlags`].

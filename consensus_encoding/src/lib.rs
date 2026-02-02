@@ -33,12 +33,12 @@ pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with, ReadError,
 };
 pub use self::decode::{decode_from_slice, Decodable, Decoder};
-#[cfg(feature = "alloc")]
-pub use self::encode::{encode_to_vec, flush_to_vec};
-#[cfg(feature = "std")]
-pub use self::encode::{encode_to_writer, flush_to_writer};
 pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
     SliceEncoder,
 };
+#[cfg(feature = "alloc")]
+pub use self::encode::{encode_to_vec, flush_to_vec};
+#[cfg(feature = "std")]
+pub use self::encode::{encode_to_writer, flush_to_writer};
 pub use self::encode::{Encodable, EncodableByteIter, Encoder, ExactSizeEncoder};
