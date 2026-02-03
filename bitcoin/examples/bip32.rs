@@ -1,4 +1,4 @@
-use std::{env, process};
+use std::env;
 
 use bitcoin::address::{Address, KnownHrp};
 use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
@@ -14,12 +14,12 @@ fn main() {
     // cargo run --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
 
     let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        eprintln!("not enough arguments. usage: {} <hex-encoded 32-byte seed>", &args[0]);
-        process::exit(1);
-    }
+    let seed_hex = if args.len() < 2 {
+        "7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd"
+    } else {
+        &args[1]
+    };
 
-    let seed_hex = &args[1];
     println!("Seed: {seed_hex}");
     println!("Using mainnet network");
 

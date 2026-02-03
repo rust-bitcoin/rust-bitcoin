@@ -1,0 +1,4 @@
+[lint]
+allowed_duplicates = [
+    "hex-conservative",
+]

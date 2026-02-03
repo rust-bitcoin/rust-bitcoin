@@ -63,6 +63,7 @@ pub struct VersionMessage {
 
 impl VersionMessage {
     /// Constructs a new `version` message with `relay` set to false
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         version: ProtocolVersion,
         services: ServiceFlags,
