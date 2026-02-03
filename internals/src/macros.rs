@@ -202,7 +202,7 @@ macro_rules! _transparent_ref_conversion {
 }
 
 #[doc(hidden)]
-#[deprecated(note="Temporary deprecation.")]
+#[deprecated(since="TBD",note="Temporary deprecation.")]
 #[macro_export]
 macro_rules! _check_tts_eq {
     ($left:tt, $right:tt, $message:literal) => {
