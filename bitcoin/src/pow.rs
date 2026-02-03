@@ -135,16 +135,25 @@ pub struct Work(U256);
 impl Work {
     /// Converts this [`Work`] to [`Target`].
     pub fn to_target(self) -> Target { Target(self.0.inverse()) }
+}
 
+do_impl!(Work, ParseWorkError);
+
+/// Extension functionality for the [`Work`] type.
+// This can't be defined with the extension trait macro because it ignores the feature gate.
+pub trait WorkExt {
     /// Returns log2 of this work.
     ///
     /// The result inherently suffers from a loss of precision and is, therefore, meant to be
     /// used mainly for informative and displaying purposes, similarly to Bitcoin Core's
     /// `log2_work` output in its logs.
     #[cfg(feature = "std")]
-    pub fn log2(self) -> f64 { self.0.to_f64().log2() }
+    fn log2(self) -> f64;
 }
-do_impl!(Work, ParseWorkError);
+impl WorkExt for Work {
+    #[cfg(feature = "std")]
+    fn log2(self) -> f64 { self.0.to_f64().log2() }
+}
 impl_to_hex_from_lower_hex!(Work, |_| 64);
 
 impl Add for Work {
@@ -256,154 +265,159 @@ impl Target {
         CompactTarget::from_consensus(compact | (size << 24))
     }
 
-    /// Returns true if block hash is less than or equal to this [`Target`].
-    ///
-    /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
-    /// to the target.
-    pub fn is_met_by(&self, hash: BlockHash) -> bool {
-        let hash = U256::from_le_bytes(hash.to_byte_array());
-        hash <= self.0
-    }
-
     /// Converts this [`Target`] to [`Work`].
     ///
     /// "Work" is defined as the work done to mine a block with this target value (recorded in the
     /// block header in compact form as nBits). This is not the same as the difficulty to mine a
     /// block with this target (see `Self::difficulty`).
     pub fn to_work(self) -> Work { Work(self.0.inverse()) }
-
-    /// Computes the popular "difficulty" measure for mining.
-    ///
-    /// Difficulty represents how difficult the current target makes it to find a block, relative to
-    /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
-    ///
-    /// For example, a difficulty of 6,695,826 means that at a given hash rate, it will, on average,
-    /// take ~6.6 million times as long to find a valid block as it would at a difficulty of 1, or
-    /// alternatively, it will take, again on average, ~6.6 million times as many hashes to find a
-    /// valid block.
-    ///
-    /// Values for the `max_target` paramter can be taken from const values on [`Target`]
-    /// (e.g. [`Target::MAX_ATTAINABLE_MAINNET`]).
-    ///
-    /// # Note
-    ///
-    /// Difficulty is calculated using the following algorithm `max / current` where [max] is
-    /// defined for the Bitcoin network and `current` is the current target for this block (i.e. `self`).
-    /// As such, a low target implies a high difficulty. Since [`Target`] is represented as a 256 bit
-    /// integer but `difficulty_with_max()` returns only 128 bits this means for targets below
-    /// approximately `0xffff_ffff_ffff_ffff_ffff_ffff` `difficulty_with_max()` will saturate at `u128::MAX`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    ///
-    /// [max]: Target::max
-    pub fn difficulty_with_max(&self, max_target: &Self) -> u128 {
-        // Panic here may be easier to debug than during the actual division.
-        assert_ne!(self.0, U256::ZERO, "divide by zero");
-
-        let d = max_target.0 / self.0;
-        d.saturating_to_u128()
-    }
-
-    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    ///
-    /// See [`difficulty_with_max`] for details.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    ///
-    /// [`difficulty_with_max`]: Target::difficulty_with_max
-    pub fn difficulty_float_with_max(&self, max_target: &Self) -> f64 {
-        // We want to explicitly panic to be uniform with `difficulty()`
-        // (float division by zero does not panic).
-        // Note, target 0 is basically impossible to obtain by any "normal" means.
-        assert_ne!(self.0, U256::ZERO, "divide by zero");
-        max_target.0.to_f64() / self.0.to_f64()
-    }
-
-    /// Computes the popular "difficulty" measure for mining.
-    ///
-    /// This function calculates the difficulty measure using the max attainable target
-    /// set on the provided [`Params`].
-    /// See [`Target::difficulty_with_max`] for details.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
-        let max = params.as_ref().max_attainable_target;
-        self.difficulty_with_max(&max)
-    }
-
-    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    ///
-    /// This function calculates the difficulty measure using the max attainable target
-    /// set on the provided [`Params`].
-    /// See [`Target::difficulty_with_max`] for details.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self` is zero (divide by zero).
-    ///
-    /// [`difficulty`]: Target::difficulty
-    pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
-        let max = params.as_ref().max_attainable_target;
-        self.difficulty_float_with_max(&max)
-    }
-
-    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
-    pub fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
-    pub fn max_difficulty_transition_threshold(&self) -> Self {
-        self.max_transition_threshold_unchecked()
-    }
-
-    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    ///
-    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
-    /// adjustment period.
-    ///
-    /// # Returns
-    ///
-    /// In line with Bitcoin Core this function may return a target value of zero.
-    pub fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    ///
-    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
-    /// adjustment period.
-    ///
-    /// We also check that the calculated target is not greater than the maximum allowed target,
-    /// this value is network specific - hence the `params` parameter.
-    pub fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
-        let max_attainable = params.as_ref().max_attainable_target;
-        cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
-    }
-
-    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
-    /// adjustment occurs.
-    ///
-    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
-    /// adjustment period.
-    ///
-    /// # Returns
-    ///
-    /// This function may return a value greater than the maximum allowed target for this network.
-    ///
-    /// The return value should be checked against [`Params::max_attainable_target`] or use one of
-    /// the `Target::MAX_ATTAINABLE_FOO` constants.
-    pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
 }
 do_impl!(Target, ParseTargetError);
+
+internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Target`] type.
+    pub trait TargetExt impl for Target {
+        /// Returns true if block hash is less than or equal to this [`Target`].
+        ///
+        /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
+        /// to the target.
+        fn is_met_by(&self, hash: BlockHash) -> bool {
+            let hash = U256::from_le_bytes(hash.to_byte_array());
+            hash <= self.0
+        }
+
+        /// Computes the popular "difficulty" measure for mining.
+        ///
+        /// Difficulty represents how difficult the current target makes it to find a block, relative to
+        /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
+        ///
+        /// For example, a difficulty of 6,695,826 means that at a given hash rate, it will, on average,
+        /// take ~6.6 million times as long to find a valid block as it would at a difficulty of 1, or
+        /// alternatively, it will take, again on average, ~6.6 million times as many hashes to find a
+        /// valid block.
+        ///
+        /// Values for the `max_target` paramter can be taken from const values on [`Target`]
+        /// (e.g. [`Target::MAX_ATTAINABLE_MAINNET`]).
+        ///
+        /// # Note
+        ///
+        /// Difficulty is calculated using the following algorithm `max / current` where [max] is
+        /// defined for the Bitcoin network and `current` is the current target for this block (i.e. `self`).
+        /// As such, a low target implies a high difficulty. Since [`Target`] is represented as a 256 bit
+        /// integer but `difficulty_with_max()` returns only 128 bits this means for targets below
+        /// approximately `0xffff_ffff_ffff_ffff_ffff_ffff` `difficulty_with_max()` will saturate at `u128::MAX`.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        ///
+        /// [max]: Target::max
+        fn difficulty_with_max(&self, max_target: &Self) -> u128 {
+            // Panic here may be easier to debug than during the actual division.
+            assert_ne!(self.0, U256::ZERO, "divide by zero");
+
+            let d = max_target.0 / self.0;
+            d.saturating_to_u128()
+        }
+
+        /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+        ///
+        /// See [`difficulty_with_max`] for details.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        ///
+        /// [`difficulty_with_max`]: Target::difficulty_with_max
+        fn difficulty_float_with_max(&self, max_target: &Self) -> f64 {
+            // We want to explicitly panic to be uniform with `difficulty()`
+            // (float division by zero does not panic).
+            // Note, target 0 is basically impossible to obtain by any "normal" means.
+            assert_ne!(self.0, U256::ZERO, "divide by zero");
+            max_target.0.to_f64() / self.0.to_f64()
+        }
+
+        /// Computes the popular "difficulty" measure for mining.
+        ///
+        /// This function calculates the difficulty measure using the max attainable target
+        /// set on the provided [`Params`].
+        /// See [`Target::difficulty_with_max`] for details.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+            let max = params.as_ref().max_attainable_target;
+            self.difficulty_with_max(&max)
+        }
+
+        /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+        ///
+        /// This function calculates the difficulty measure using the max attainable target
+        /// set on the provided [`Params`].
+        /// See [`Target::difficulty_with_max`] for details.
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self` is zero (divide by zero).
+        ///
+        /// [`difficulty`]: Target::difficulty
+        fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
+            let max = params.as_ref().max_attainable_target;
+            self.difficulty_float_with_max(&max)
+        }
+
+        /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
+        fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
+        fn max_difficulty_transition_threshold(&self) -> Self {
+            self.max_transition_threshold_unchecked()
+        }
+
+        /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        ///
+        /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+        /// adjustment period.
+        ///
+        /// # Returns
+        ///
+        /// In line with Bitcoin Core this function may return a target value of zero.
+        fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        ///
+        /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+        /// adjustment period.
+        ///
+        /// We also check that the calculated target is not greater than the maximum allowed target,
+        /// this value is network specific - hence the `params` parameter.
+        fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
+            let max_attainable = params.as_ref().max_attainable_target;
+            cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
+        }
+
+        /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+        /// adjustment occurs.
+        ///
+        /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+        /// adjustment period.
+        ///
+        /// # Returns
+        ///
+        /// This function may return a value greater than the maximum allowed target for this network.
+        ///
+        /// The return value should be checked against [`Params::max_attainable_target`] or use one of
+        /// the `Target::MAX_ATTAINABLE_FOO` constants.
+        fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
+    }
+}
 impl_to_hex_from_lower_hex!(Target, |_| 64);
 
 /// Gets the target for the block after `current_header`.
@@ -574,6 +588,8 @@ internal_macros::define_extension_trait! {
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::CompactTarget {}
+    impl Sealed for super::Target {}
+    impl Sealed for super::Work {}
 }
 
 impl From<CompactTarget> for Target {
