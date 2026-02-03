@@ -763,10 +763,10 @@ mod tests {
     struct TestData(u32);
 
     impl encoding::Encodable for TestData {
-        type Encoder<'s>
+        type Encoder<'e>
             = ArrayEncoder<4>
         where
-            Self: 's;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
             ArrayEncoder::without_length_prefix(self.0.to_le_bytes())

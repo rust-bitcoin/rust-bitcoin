@@ -17,10 +17,10 @@ struct TestData(u32);
 
 #[cfg(feature = "alloc")]
 impl Encodable for TestData {
-    type Encoder<'s>
+    type Encoder<'e>
         = ArrayEncoder<4>
     where
-        Self: 's;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         ArrayEncoder::without_length_prefix(self.0.to_le_bytes())
@@ -33,10 +33,10 @@ struct EmptyData;
 
 #[cfg(feature = "alloc")]
 impl Encodable for EmptyData {
-    type Encoder<'s>
+    type Encoder<'e>
         = ArrayEncoder<0>
     where
-        Self: 's;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> { ArrayEncoder::without_length_prefix([]) }
 }
@@ -111,12 +111,12 @@ fn encode_newtype_lifetime_flexibility() {
         pub struct CustomEncoder<'data>(BytesEncoder<'data>);
     }
     bitcoin_consensus_encoding::encoder_newtype! {
-        pub struct NoLifetimeEncoder(ArrayEncoder<4>);
+        pub struct NoLifetimeEncoder<'e>(ArrayEncoder<4>);
     }
 
     let test_data = b"hello world";
-    let custom_encoder = CustomEncoder(BytesEncoder::without_length_prefix(test_data));
-    let no_lifetime_encoder = NoLifetimeEncoder(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
+    let custom_encoder = CustomEncoder::new(BytesEncoder::without_length_prefix(test_data));
+    let no_lifetime_encoder = NoLifetimeEncoder::new(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
 
     assert_eq!(custom_encoder.current_chunk(), test_data.as_slice());
     assert_eq!(no_lifetime_encoder.current_chunk(), &[1, 2, 3, 4][..]);
@@ -129,10 +129,10 @@ fn encode_slice_encoder_mixed_empty_and_data() {
     struct TestBytes(Vec<u8>);
 
     impl Encodable for TestBytes {
-        type Encoder<'s>
-            = BytesEncoder<'s>
+        type Encoder<'e>
+            = BytesEncoder<'e>
         where
-            Self: 's;
+            Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> { BytesEncoder::without_length_prefix(&self.0) }
     }

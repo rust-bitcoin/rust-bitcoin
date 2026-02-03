@@ -83,14 +83,14 @@ impl<'de> Deserialize<'de> for BlockTime {
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`BlockTime`] type.
-    pub struct BlockTimeEncoder(encoding::ArrayEncoder<4>);
+    pub struct BlockTimeEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for BlockTime {
-    type Encoder<'e> = BlockTimeEncoder;
+    type Encoder<'e> = BlockTimeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTimeEncoder(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
+        BlockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
     }
 }
 

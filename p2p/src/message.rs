@@ -405,16 +405,16 @@ impl bitcoin::consensus::encode::Decodable for FeeFilter {
 
 encoding::encoder_newtype_exact! {
     /// Encoder for [`FeeFilter`] type.
-    pub struct FeeFilterEncoder(encoding::ArrayEncoder<8>);
+    pub struct FeeFilterEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
 impl encoding::Encodable for FeeFilter {
-    type Encoder<'e> = FeeFilterEncoder;
+    type Encoder<'e> = FeeFilterEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         // Encode as sat/kvB in little-endian (BIP 133 wire format).
         let kvb = self.0.to_sat_per_kvb_ceil();
-        FeeFilterEncoder(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
+        FeeFilterEncoder::new(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
     }
 }
 
@@ -776,7 +776,7 @@ impl encoding::Encoder for NetworkMessageEncoder {
 
 encoding::encoder_newtype! {
     /// Encoder for [`RawNetworkMessage`].
-    pub struct RawNetworkMessageEncoder(
+    pub struct RawNetworkMessageEncoder<'e>(
         encoding::Encoder2<
             encoding::Encoder4<
                 encoding::ArrayEncoder<4>,
@@ -790,10 +790,10 @@ encoding::encoder_newtype! {
 }
 
 impl encoding::Encodable for RawNetworkMessage {
-    type Encoder<'e> = RawNetworkMessageEncoder;
+    type Encoder<'e> = RawNetworkMessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        RawNetworkMessageEncoder(encoding::Encoder2::new(
+        RawNetworkMessageEncoder::new(encoding::Encoder2::new(
             encoding::Encoder4::new(
                 encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
                 self.command().encoder(),

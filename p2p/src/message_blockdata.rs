@@ -110,11 +110,11 @@ impl Decodable for Inventory {
 
 encoding::encoder_newtype! {
     /// The encoder for the [`Inventory`] type.
-    pub struct InventoryEncoder(Encoder2<ArrayEncoder<4>, ArrayEncoder<32>>);
+    pub struct InventoryEncoder<'e>(Encoder2<ArrayEncoder<4>, ArrayEncoder<32>>);
 }
 
 impl encoding::Encodable for Inventory {
-    type Encoder<'e> = InventoryEncoder;
+    type Encoder<'e> = InventoryEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let (prefix, bytes) = match *self {
@@ -127,7 +127,7 @@ impl encoding::Encodable for Inventory {
             Self::WitnessBlock(b) => (0x4000_0002, b.to_byte_array()),
             Self::Unknown { inv_type: t, hash: d } => (t, d),
         };
-        InventoryEncoder(Encoder2::new(
+        InventoryEncoder::new(Encoder2::new(
             ArrayEncoder::without_length_prefix(prefix.to_le_bytes()),
             ArrayEncoder::without_length_prefix(bytes),
         ))
@@ -223,9 +223,9 @@ pub struct GetHeadersMessage {
 }
 
 type GetBlocksOrHeadersInnerEncoder<'e> = Encoder3<
-    ProtocolVersionEncoder,
+    ProtocolVersionEncoder<'e>,
     Encoder2<CompactSizeEncoder, SliceEncoder<'e, BlockHash>>,
-    BlockHashEncoder,
+    BlockHashEncoder<'e>,
 >;
 
 encoding::encoder_newtype! {
@@ -245,7 +245,7 @@ impl encoding::Encodable for GetHeadersMessage {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetHeadersEncoder(Encoder3::new(
+        GetHeadersEncoder::new(Encoder3::new(
             self.version.encoder(),
             Encoder2::new(
                 CompactSizeEncoder::new(self.locator_hashes.len()),
@@ -263,7 +263,7 @@ impl encoding::Encodable for GetBlocksMessage {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetBlocksEncoder(Encoder3::new(
+        GetBlocksEncoder::new(Encoder3::new(
             self.version.encoder(),
             Encoder2::new(
                 CompactSizeEncoder::new(self.locator_hashes.len()),

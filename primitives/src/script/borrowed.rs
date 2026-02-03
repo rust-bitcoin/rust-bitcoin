@@ -159,13 +159,13 @@ encoding::encoder_newtype_exact! {
 }
 
 impl<T> Encodable for Script<T> {
-    type Encoder<'a>
-        = ScriptEncoder<'a>
+    type Encoder<'e>
+        = ScriptEncoder<'e>
     where
-        Self: 'a;
+        Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        ScriptEncoder(Encoder2::new(
+        ScriptEncoder::new(Encoder2::new(
             CompactSizeEncoder::new(self.as_bytes().len()),
             BytesEncoder::without_length_prefix(self.as_bytes()),
         ))

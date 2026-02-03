@@ -53,13 +53,13 @@ impl fmt::UpperHex for CompactTarget {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`CompactTarget`] type.
-    pub struct CompactTargetEncoder(encoding::ArrayEncoder<4>);
+    pub struct CompactTargetEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 impl encoding::Encodable for CompactTarget {
-    type Encoder<'e> = CompactTargetEncoder;
+    type Encoder<'e> = CompactTargetEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        CompactTargetEncoder(encoding::ArrayEncoder::without_length_prefix(
+        CompactTargetEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus().to_le_bytes(),
         ))
     }

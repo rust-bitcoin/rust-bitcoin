@@ -119,10 +119,12 @@ impl encoding::Encodable for UserAgent {
     type Encoder<'e> = UserAgentEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        UserAgentEncoder(Encoder2::new(
-            CompactSizeEncoder::new(self.user_agent.len()),
-            BytesEncoder::without_length_prefix(self.user_agent.as_bytes()),
-        ))
+        UserAgentEncoder::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.user_agent.len()),
+                BytesEncoder::without_length_prefix(self.user_agent.as_bytes())
+            )
+        )
     }
 }
 
@@ -358,14 +360,14 @@ pub enum RejectReason {
 
 encoding::encoder_newtype! {
     /// The encoder type for a [`RejectReason`].
-    pub struct RejectReasonEncoder(ArrayEncoder<1>);
+    pub struct RejectReasonEncoder<'e>(ArrayEncoder<1>);
 }
 
 impl encoding::Encodable for RejectReason {
-    type Encoder<'e> = RejectReasonEncoder;
+    type Encoder<'e> = RejectReasonEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        RejectReasonEncoder(ArrayEncoder::without_length_prefix([*self as u8]))
+        RejectReasonEncoder::new(ArrayEncoder::without_length_prefix([*self as u8]))
     }
 }
 
@@ -481,7 +483,7 @@ encoding::encoder_newtype! {
     pub struct RejectEncoder<'e>(
         Encoder4<
             Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
-            RejectReasonEncoder,
+            RejectReasonEncoder<'e>,
             Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
             ArrayEncoder<32>,
         >
@@ -492,18 +494,20 @@ impl encoding::Encodable for Reject {
     type Encoder<'e> = RejectEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        RejectEncoder(Encoder4::new(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.message.len()),
-                BytesEncoder::without_length_prefix(self.message.as_bytes()),
-            ),
-            self.ccode.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.reason.len()),
-                BytesEncoder::without_length_prefix(self.reason.as_bytes()),
-            ),
-            ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
-        ))
+        RejectEncoder::new(
+            Encoder4::new(
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.message.len()),
+                    BytesEncoder::without_length_prefix(self.message.as_bytes())
+                ),
+                self.ccode.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.reason.len()),
+                    BytesEncoder::without_length_prefix(self.reason.as_bytes())
+                ),
+                ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
+            )
+        )
     }
 }
 
@@ -618,7 +622,7 @@ impl encoding::Encodable for Alert {
     type Encoder<'e> = AlertEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        AlertEncoder(Encoder2::new(
+        AlertEncoder::new(Encoder2::new(
             CompactSizeEncoder::new(self.0.len()),
             BytesEncoder::without_length_prefix(&self.0),
         ))

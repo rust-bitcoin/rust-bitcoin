@@ -64,27 +64,27 @@ impl_hashencode!(FilterHeader);
 
 encoding::encoder_newtype! {
     /// Encoder type for [`FilterHash`].
-    pub struct FilterHashEncoder(ArrayEncoder<32>);
+    pub struct FilterHashEncoder<'e>(ArrayEncoder<32>);
 }
 
 impl encoding::Encodable for FilterHash {
-    type Encoder<'e> = FilterHashEncoder;
+    type Encoder<'e> = FilterHashEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterHashEncoder(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        FilterHashEncoder::new(ArrayEncoder::without_length_prefix(self.to_byte_array()))
     }
 }
 
 encoding::encoder_newtype! {
     /// Encoder type for [`FilterHeader`].
-    pub struct FilterHeaderEncoder(ArrayEncoder<32>);
+    pub struct FilterHeaderEncoder<'e>(ArrayEncoder<32>);
 }
 
 impl encoding::Encodable for FilterHeader {
-    type Encoder<'e> = FilterHeaderEncoder;
+    type Encoder<'e> = FilterHeaderEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterHeaderEncoder(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        FilterHeaderEncoder::new(ArrayEncoder::without_length_prefix(self.to_byte_array()))
     }
 }
 
@@ -211,14 +211,14 @@ pub struct GetCFilters {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFilters`] message.
-    pub struct GetCFiltersEncoder(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder>);
+    pub struct GetCFiltersEncoder<'e>(Encoder3<ArrayEncoder<1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFilters {
-    type Encoder<'e> = GetCFiltersEncoder;
+    type Encoder<'e> = GetCFiltersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFiltersEncoder(Encoder3::new(
+        GetCFiltersEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.start_height.encoder(),
             self.stop_hash.encoder(),
@@ -299,7 +299,7 @@ encoding::encoder_newtype! {
     pub struct CFilterEncoder<'e>(
         Encoder3<
             ArrayEncoder<1>,
-            BlockHashEncoder,
+            BlockHashEncoder<'e>,
             Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
         >
     );
@@ -312,7 +312,7 @@ impl encoding::Encodable for CFilter {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFilterEncoder(Encoder3::new(
+        CFilterEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.block_hash.encoder(),
             Encoder2::new(
@@ -393,14 +393,14 @@ pub struct GetCFHeaders {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFHeaders`] message.
-    pub struct GetCFHeadersEncoder(Encoder3<ArrayEncoder<1>, BlockHeightEncoder, BlockHashEncoder>);
+    pub struct GetCFHeadersEncoder<'e>(Encoder3<ArrayEncoder<1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFHeaders {
-    type Encoder<'e> = GetCFHeadersEncoder;
+    type Encoder<'e> = GetCFHeadersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFHeadersEncoder(Encoder3::new(
+        GetCFHeadersEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.start_height.encoder(),
             self.stop_hash.encoder(),
@@ -483,8 +483,8 @@ encoding::encoder_newtype! {
     pub struct CFHeadersEncoder<'e>(
         Encoder4<
             ArrayEncoder<1>,
-            BlockHashEncoder,
-            FilterHeaderEncoder,
+            BlockHashEncoder<'e>,
+            FilterHeaderEncoder<'e>,
             Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHash>>
         >
     );
@@ -494,7 +494,7 @@ impl encoding::Encodable for CFHeaders {
     type Encoder<'e> = CFHeadersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFHeadersEncoder(Encoder4::new(
+        CFHeadersEncoder::new(Encoder4::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.stop_hash.encoder(),
             self.previous_filter_header.encoder(),
@@ -581,14 +581,14 @@ pub struct GetCFCheckpt {
 
 encoding::encoder_newtype! {
     /// Encoder type for the [`GetCFCheckpt`] message.
-    pub struct GetCFCheckptEncoder(Encoder2<ArrayEncoder<1>, BlockHashEncoder>);
+    pub struct GetCFCheckptEncoder<'e>(Encoder2<ArrayEncoder<1>, BlockHashEncoder<'e>>);
 }
 
 impl encoding::Encodable for GetCFCheckpt {
-    type Encoder<'e> = GetCFCheckptEncoder;
+    type Encoder<'e> = GetCFCheckptEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFCheckptEncoder(Encoder2::new(
+        GetCFCheckptEncoder::new(Encoder2::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.stop_hash.encoder(),
         ))
@@ -664,7 +664,7 @@ encoding::encoder_newtype! {
     pub struct CFCheckptEncoder<'e>(
         Encoder3<
             ArrayEncoder<1>,
-            BlockHashEncoder,
+            BlockHashEncoder<'e>,
             Encoder2<CompactSizeEncoder, SliceEncoder<'e, FilterHeader>>
         >
     );
@@ -677,7 +677,7 @@ impl encoding::Encodable for CFCheckpt {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFCheckptEncoder(Encoder3::new(
+        CFCheckptEncoder::new(Encoder3::new(
             ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
             self.stop_hash.encoder(),
             Encoder2::new(

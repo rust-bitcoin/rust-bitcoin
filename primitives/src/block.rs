@@ -281,14 +281,14 @@ mod sealed {
 encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
     pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
     );
 }
 
 #[cfg(feature = "alloc")]
 impl Encodable for Block {
     type Encoder<'e>
-        = Encoder2<HeaderEncoder, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+        = Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
     where
         Self: 'e;
 
@@ -578,23 +578,23 @@ impl std::error::Error for ParseHeaderError {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Header`] type.
-    pub struct HeaderEncoder(
+    pub struct HeaderEncoder<'e>(
         encoding::Encoder6<
-            VersionEncoder,
-            BlockHashEncoder,
-            crate::merkle_tree::TxMerkleNodeEncoder,
-            crate::time::BlockTimeEncoder,
-            crate::pow::CompactTargetEncoder,
+            VersionEncoder<'e>,
+            BlockHashEncoder<'e>,
+            crate::merkle_tree::TxMerkleNodeEncoder<'e>,
+            crate::time::BlockTimeEncoder<'e>,
+            crate::pow::CompactTargetEncoder<'e>,
             encoding::ArrayEncoder<4>,
         >
     );
 }
 
 impl Encodable for Header {
-    type Encoder<'e> = HeaderEncoder;
+    type Encoder<'e> = HeaderEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        HeaderEncoder(encoding::Encoder6::new(
+        HeaderEncoder::new(encoding::Encoder6::new(
             self.version.encoder(),
             self.prev_blockhash.encoder(),
             self.merkle_root.encoder(),
@@ -807,13 +807,13 @@ impl Default for Version {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Version`] type.
-    pub struct VersionEncoder(encoding::ArrayEncoder<4>);
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 impl Encodable for Version {
-    type Encoder<'e> = VersionEncoder;
+    type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder(encoding::ArrayEncoder::without_length_prefix(
+        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus().to_le_bytes(),
         ))
     }
