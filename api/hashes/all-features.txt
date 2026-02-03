@@ -659,7 +659,7 @@ pub fn bitcoin_hashes::HashEngine::finalize(self) -> Self::Hash
 pub fn bitcoin_hashes::HashEngine::input(&mut self, data: &[u8])
 pub fn bitcoin_hashes::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::cmp::fixed_time_eq(a: &[u8], b: &[u8]) -> bool
-pub fn bitcoin_hashes::debug_hex(bytes: &[u8], f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_hashes::debug_hex<'a>(bytes: impl core::iter::traits::collect::IntoIterator<Item = &'a u8>, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::encode_to_engine<T, H>(object: &T, engine: H) -> H where T: bitcoin_consensus_encoding::encode::Encodable + ?core::marker::Sized, H: bitcoin_hashes::HashEngine
 pub fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8; 20]

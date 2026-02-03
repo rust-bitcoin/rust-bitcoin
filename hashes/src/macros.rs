@@ -291,7 +291,11 @@ macro_rules! impl_debug_only {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                $crate::debug_hex(self.as_byte_array(), f)
+                if $reverse {
+                    $crate::debug_hex(self.as_byte_array().iter().rev(), f)
+                } else {
+                    $crate::debug_hex(self.as_byte_array(), f)
+                }
             }
         }
     }
@@ -577,7 +581,15 @@ mod test {
 
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:?}", TestHash::all_zeros());
-        assert_eq!(got, want)
+        assert_eq!(got, want);
+
+        // Check that reversing works
+        let mut bytes = [0u8; 32];
+        bytes[31] = 0xff;
+        let hash = TestHash::from_byte_array(bytes);
+        let want = "ff00000000000000000000000000000000000000000000000000000000000000";
+        let got = format!("{:?}", hash);
+        assert_eq!(got, want);
     }
 
     #[test]
