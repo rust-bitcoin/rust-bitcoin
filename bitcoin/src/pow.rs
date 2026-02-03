@@ -157,7 +157,7 @@ pub trait WorkExt {
 }
 impl WorkExt for Work {
     #[cfg(feature = "std")]
-    fn log2(self) -> f64 { self.0.to_f64().log2() }
+    fn log2(self) -> f64 { self.to_inner().to_f64().log2() }
 
     fn to_hex(&self) -> String { format!("{self:x}") }
 }
@@ -290,7 +290,7 @@ internal_macros::define_extension_trait! {
         /// to the target.
         fn is_met_by(&self, hash: BlockHash) -> bool {
             let hash = U256::from_le_bytes(hash.to_byte_array());
-            hash <= self.0
+            hash <= self.to_inner()
         }
 
         /// Computes the popular "difficulty" measure for mining.
@@ -321,9 +321,11 @@ internal_macros::define_extension_trait! {
         /// [max]: Target::max
         fn difficulty_with_max(&self, max_target: &Self) -> u128 {
             // Panic here may be easier to debug than during the actual division.
-            assert_ne!(self.0, U256::ZERO, "divide by zero");
+            let self_inner = self.to_inner();
+            assert_ne!(self_inner, U256::ZERO, "divide by zero");
 
-            let d = max_target.0 / self.0;
+            let max_inner = max_target.to_inner();
+            let d = max_inner / self_inner;
             d.saturating_to_u128()
         }
 
@@ -340,8 +342,11 @@ internal_macros::define_extension_trait! {
             // We want to explicitly panic to be uniform with `difficulty()`
             // (float division by zero does not panic).
             // Note, target 0 is basically impossible to obtain by any "normal" means.
-            assert_ne!(self.0, U256::ZERO, "divide by zero");
-            max_target.0.to_f64() / self.0.to_f64()
+            let self_inner = self.to_inner();
+            assert_ne!(self_inner, U256::ZERO, "divide by zero");
+
+            let max_inner = max_target.to_inner();
+            max_inner.to_f64() / self_inner.to_f64()
         }
 
         /// Computes the popular "difficulty" measure for mining.
@@ -395,7 +400,9 @@ internal_macros::define_extension_trait! {
         /// # Returns
         ///
         /// In line with Bitcoin Core this function may return a target value of zero.
-        fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
+        fn min_transition_threshold(&self) -> Self {
+            Self::from_inner(self.to_inner() >> 2)
+        }
 
         /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
         /// adjustment occurs.
@@ -422,7 +429,9 @@ internal_macros::define_extension_trait! {
         ///
         /// The return value should be checked against [`Params::max_attainable_target`] or use one of
         /// the `Target::MAX_ATTAINABLE_FOO` constants.
-        fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
+        fn max_transition_threshold_unchecked(&self) -> Self {
+            Self::from_inner(self.to_inner() << 2)
+        }
 
         /// Gets the hex representation of the [`Target`] value as a [`String`].
         #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
@@ -547,10 +556,10 @@ internal_macros::define_extension_trait! {
             let actual_timespan = timespan.clamp(min_timespan.into(), max_timespan.into());
             let prev_target: Target = last.into();
             let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
-            let retarget = prev_target.0; // bnNew
+            let retarget = prev_target.to_inner(); // bnNew
             let (retarget, _) = retarget.mul_u64(u64::try_from(actual_timespan).expect("clamped value won't be negative"));
             let retarget = retarget.div(params.pow_target_timespan.into());
-            let retarget = Target(retarget);
+            let retarget = Target::from_inner(retarget);
             if retarget.ge(&maximum_retarget) {
                 return maximum_retarget.to_compact_lossy();
             }
@@ -621,6 +630,27 @@ impl Decodable for CompactTarget {
     }
 }
 
+/// A trait for types that can convert to and from a [`U256`]
+///
+/// This just provides short-hand functions for the conversions going via byte arrays.
+trait U256Wrapper {
+    /// Convert [`Self`] into a [`U256`].
+    fn to_inner(self) -> U256;
+
+    /// Create a [`Self`] instance from an inner [`U256`].
+    fn from_inner(inner: U256) -> Self;
+}
+
+impl U256Wrapper for Target {
+    fn to_inner(self) -> U256 { U256::from_le_bytes(self.to_le_bytes()) }
+    fn from_inner(inner: U256) -> Self { Self::from_le_bytes(inner.to_le_bytes()) }
+}
+
+impl U256Wrapper for Work {
+    fn to_inner(self) -> U256 { U256::from_le_bytes(self.to_le_bytes()) }
+    fn from_inner(inner: U256) -> Self { Self::from_le_bytes(inner.to_le_bytes()) }
+}
+
 include!("../../include/u256.rs");
 
 macro_rules! impl_hex {
@@ -647,19 +677,19 @@ impl kani::Arbitrary for U256 {
 /// In test code, U256s are a pain to work with, so we just convert Rust primitives in many places
 #[cfg(test)]
 pub mod test_utils {
-    use crate::pow::{Target, Work, U256};
+    use crate::pow::{Target, Work, U256, U256Wrapper as _};
 
     /// Converts a `u64` to a [`Work`]
-    pub fn u64_to_work(u: u64) -> Work { Work(U256::from(u)) }
+    pub fn u64_to_work(u: u64) -> Work { Work::from_inner(U256::from(u)) }
 
     /// Converts a `u128` to a [`Work`]
-    pub fn u128_to_work(u: u128) -> Work { Work(U256::from(u)) }
+    pub fn u128_to_work(u: u128) -> Work { Work::from_inner(U256::from(u)) }
 
     /// Converts a `u32` to a [`Target`]
-    pub fn u32_to_target(u: u32) -> Target { Target(U256::from(u)) }
+    pub fn u32_to_target(u: u32) -> Target { Target::from_inner(U256::from(u)) }
 
     /// Converts a `u64` to a [`Target`]
-    pub fn u64_to_target(u: u64) -> Target { Target(U256::from(u)) }
+    pub fn u64_to_target(u: u64) -> Target { Target::from_inner(U256::from(u)) }
 }
 
 #[cfg(test)]
@@ -1600,7 +1630,7 @@ mod tests {
         let hash = "ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c"
             .parse::<BlockHash>()
             .expect("failed to parse block hash");
-        let target = Target(U256::from_le_bytes(hash.to_byte_array()));
+        let target = Target::from_inner(U256::from_le_bytes(hash.to_byte_array()));
         assert!(target.is_met_by(hash));
     }
 
@@ -1617,29 +1647,29 @@ mod tests {
     fn target_attainable_constants_from_original() {
         // The plain target values for the various nets from Bitcoin Core with no conversions.
         // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L88
-        const MAX_MAINNET: Target = Target(U256(u128::MAX >> 32, u128::MAX));
+        let max_mainnet: Target = Target::from_inner(U256(u128::MAX >> 32, u128::MAX));
         // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
-        const MAX_TESTNET: Target = Target(U256(u128::MAX >> 32, u128::MAX));
+        let max_testnet: Target = Target::from_inner(U256(u128::MAX >> 32, u128::MAX));
         // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
-        const MAX_REGTEST: Target = Target(U256(u128::MAX >> 1, u128::MAX));
+        let max_regtest: Target = Target::from_inner(U256(u128::MAX >> 1, u128::MAX));
         // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
-        const MAX_SIGNET: Target = Target(U256(0x3_77aeu128 << 88, 0));
+        let max_signet: Target = Target::from_inner(U256(0x3_77aeu128 << 88, 0));
 
         assert_eq!(
             Target::MAX_ATTAINABLE_MAINNET,
-            Target::from_compact(MAX_MAINNET.to_compact_lossy())
+            Target::from_compact(max_mainnet.to_compact_lossy())
         );
         assert_eq!(
             Target::MAX_ATTAINABLE_TESTNET,
-            Target::from_compact(MAX_TESTNET.to_compact_lossy())
+            Target::from_compact(max_testnet.to_compact_lossy())
         );
         assert_eq!(
             Target::MAX_ATTAINABLE_REGTEST,
-            Target::from_compact(MAX_REGTEST.to_compact_lossy())
+            Target::from_compact(max_regtest.to_compact_lossy())
         );
         assert_eq!(
             Target::MAX_ATTAINABLE_SIGNET,
-            Target::from_compact(MAX_SIGNET.to_compact_lossy())
+            Target::from_compact(max_signet.to_compact_lossy())
         );
     }
 
@@ -1726,8 +1756,8 @@ mod tests {
             assert_eq!(log2, core_log2)
         }
 
-        assert_eq!(Work(U256::ONE).log2(), 0.0);
-        assert_eq!(Work(U256::MAX).log2(), 256.0);
+        assert_eq!(Work::from_inner(U256::ONE).log2(), 0.0);
+        assert_eq!(Work::from_inner(U256::MAX).log2(), 256.0);
     }
 
     #[test]
@@ -1743,11 +1773,11 @@ mod tests {
 
         for min in [U256::ZERO, U256::ONE].iter() {
             // lower target means more work required.
-            assert_eq!(Target(max).to_work(), Work(U256::ONE));
-            assert_eq!(Target(*min).to_work(), Work(max));
+            assert_eq!(Target::from_inner(max).to_work(), Work::from_inner(U256::ONE));
+            assert_eq!(Target::from_inner(*min).to_work(), Work::from_inner(max));
 
-            assert_eq!(Work(max).to_target(), Target(U256::ONE));
-            assert_eq!(Work(*min).to_target(), Target(max));
+            assert_eq!(Work::from_inner(max).to_target(), Target::from_inner(U256::ONE));
+            assert_eq!(Work::from_inner(*min).to_target(), Target::from_inner(max));
         }
     }
 
@@ -1787,12 +1817,12 @@ mod tests {
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn work_overflowing_addition_panics() { let _ = Work(U256::MAX) + Work(U256::ONE); }
+    fn work_overflowing_addition_panics() { let _ = Work::from_inner(U256::MAX) + Work::from_inner(U256::ONE); }
 
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
+    fn work_overflowing_subtraction_panics() { let _ = Work::from_inner(U256::ZERO) - Work::from_inner(U256::ONE); }
 
     #[test]
     fn u256_to_f64() {
