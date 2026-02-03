@@ -79,16 +79,12 @@ pub struct ArrayRefEncoder<'e, const N: usize> {
 
 impl<'e, const N: usize> ArrayRefEncoder<'e, N> {
     /// Constructs an encoder which encodes the array reference with no length prefix.
-    pub const fn without_length_prefix(arr: &'e [u8; N]) -> Self {
-        Self { arr: Some(arr) }
-    }
+    pub const fn without_length_prefix(arr: &'e [u8; N]) -> Self { Self { arr: Some(arr) } }
 }
 
 impl<const N: usize> Encoder for ArrayRefEncoder<'_, N> {
     #[inline]
-    fn current_chunk(&self) -> &[u8] {
-        self.arr.map(|x| &x[..]).unwrap_or_default()
-    }
+    fn current_chunk(&self) -> &[u8] { self.arr.map(|x| &x[..]).unwrap_or_default() }
 
     #[inline]
     fn advance(&mut self) -> bool {
@@ -99,9 +95,7 @@ impl<const N: usize> Encoder for ArrayRefEncoder<'_, N> {
 
 impl<const N: usize> ExactSizeEncoder for ArrayRefEncoder<'_, N> {
     #[inline]
-    fn len(&self) -> usize {
-        self.arr.map_or(0, |a| a.len())
-    }
+    fn len(&self) -> usize { self.arr.map_or(0, |a| a.len()) }
 }
 
 /// An encoder for a list of encodable types.

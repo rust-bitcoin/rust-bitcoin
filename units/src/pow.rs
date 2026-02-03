@@ -56,7 +56,7 @@ impl CompactTarget {
     /// - If the input string is not a valid hex encoding of a `u32`.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let target = parse_int::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(target))
@@ -70,7 +70,7 @@ impl CompactTarget {
     /// - If the input string is not a valid hex encoding of a `u32`.
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let target = parse_int::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(target))
