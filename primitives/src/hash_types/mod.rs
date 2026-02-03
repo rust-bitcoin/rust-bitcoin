@@ -214,7 +214,7 @@ mod tests {
         let mut a = [0xab; 32];
         a[0] = 0xff;           // Just so we can see which way the array is printing.
         let tc = Txid::from_byte_array(a);
-        let want = "Txid(abababababababababababababababababababababababababababababababff)";
+        let want = "Txid(bitcoin_hashes::sha256d::Hash(abababababababababababababababababababababababababababababababff))";
 
         (tc, want)
     }
