@@ -66,14 +66,15 @@ macro_rules! transparent_newtype {
             )*
         }
     ) => {
-        $crate::_check_tts_eq!($newtype2, $newtype, "the type name in the impl block doesn't match the struct name");
+        include!(concat!(env!("WORKSPACE_DIR"),"internals/src/check_tts_eq.rs"));
+        _check_tts_eq!($newtype2, $newtype, "the type name in the impl block doesn't match the struct name");
         $(
             // WARNING: renaming has to be disabled for soundness!
             // If it weren't it'd be possible to make the type inside struct not match the one passed
             // to functions. In principle we could also omit the generics but that'd be confusing for
             // readers.
-            $crate::_check_tts_eq!($gen2, $gen, "the name of the left generic parameter in impl block doesn't match the one on struct");
-            $crate::_check_tts_eq!($gen3, $gen, "the name of the right generic parameter in impl block doesn't match the one on struct");
+            _check_tts_eq!($gen2, $gen, "the name of the left generic parameter in impl block doesn't match the one on struct");
+            _check_tts_eq!($gen3, $gen, "the name of the right generic parameter in impl block doesn't match the one on struct");
         )?
         $(#[$($struct_attr)*])*
         #[repr(transparent)]
@@ -201,6 +202,7 @@ macro_rules! _transparent_ref_conversion {
 }
 
 #[doc(hidden)]
+#[deprecated(since="TBD",note="Temporary deprecation.")]
 #[macro_export]
 macro_rules! _check_tts_eq {
     ($left:tt, $right:tt, $message:literal) => {
