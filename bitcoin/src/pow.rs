@@ -119,12 +119,18 @@ pub trait WorkExt {
     /// `log2_work` output in its logs.
     #[cfg(feature = "std")]
     fn log2(self) -> f64;
+
+    /// Gets the hex representation of the [`Work`] value as a [`String`].
+    #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
+    fn to_hex(&self) -> alloc::string::String;
 }
 impl WorkExt for Work {
     fn to_target(self) -> Target { Target(self.0.inverse()) }
 
     #[cfg(feature = "std")]
     fn log2(self) -> f64 { self.0.to_f64().log2() }
+
+    fn to_hex(&self) -> alloc::string::String { format!("{self:x}") }
 }
 impl_to_hex_from_lower_hex!(Work, |_| 64);
 
@@ -384,6 +390,10 @@ internal_macros::define_extension_trait! {
         /// The return value should be checked against [`Params::max_attainable_target`] or use one of
         /// the `Target::MAX_ATTAINABLE_FOO` constants.
         fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
+
+        /// Gets the hex representation of the [`Target`] value as a [`String`].
+        #[deprecated(since = "0.33.0", note = "use `format!(\"{var:x}\")` instead")]
+        fn to_hex(&self) -> alloc::string::String { format!("{self:x}") }
     }
 }
 impl_to_hex_from_lower_hex!(Target, |_| 64);
