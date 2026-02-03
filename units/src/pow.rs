@@ -4,7 +4,8 @@
 
 #[cfg(feature = "encoding")]
 use core::convert::Infallible;
-use core::fmt;
+use core::fmt::{self, Write as _};
+use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -13,7 +14,199 @@ use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
+use crate::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
+
+/// Implement traits and methods shared by `Target` and `Work`.
+macro_rules! do_impl {
+    ($ty:ident) => {
+        impl $ty {
+            #[doc = "Constructs a new `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a prefixed hex string.\n"]
+            #[doc = "\n# Errors\n"]
+            #[doc = "\n - If the input string does not contain a `0x` (or `0X`) prefix."]
+            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
+            #[doc = stringify!($ty)]
+            #[doc = "`."]
+            pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+                Ok($ty(U256::from_hex(s)?))
+            }
+
+            #[doc = "Constructs a new `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from an unprefixed hex string.\n"]
+            #[doc = "\n# Errors\n"]
+            #[doc = "\n - If the input string contains a `0x` (or `0X`) prefix."]
+            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
+            #[doc = stringify!($ty)]
+            #[doc = "`."]
+            pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+                Ok($ty(U256::from_unprefixed_hex(s)?))
+            }
+
+            #[doc = "Constructs `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a big-endian byte array."]
+            #[inline]
+            pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
+
+            #[doc = "Constructs `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a little-endian byte array."]
+            #[inline]
+            pub fn from_le_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_le_bytes(bytes)) }
+
+            #[doc = "Converts `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` to a big-endian byte array."]
+            #[inline]
+            pub fn to_be_bytes(self) -> [u8; 32] { self.0.to_be_bytes() }
+
+            #[doc = "Converts `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` to a little-endian byte array."]
+            #[inline]
+            pub fn to_le_bytes(self) -> [u8; 32] { self.0.to_le_bytes() }
+        }
+
+        impl fmt::Display for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
+                fmt::Display::fmt(&self.0, f)
+            }
+        }
+
+        impl fmt::LowerHex for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
+                fmt::LowerHex::fmt(&self.0, f)
+            }
+        }
+
+        impl fmt::UpperHex for $ty {
+            #[inline]
+            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
+                fmt::UpperHex::fmt(&self.0, f)
+            }
+        }
+    };
+}
+
+/// A 256 bit integer representing work.
+///
+/// Work is a measure of how difficult it is to find a hash below a given [`Target`].
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Work(U256);
+
+do_impl!(Work);
+
+impl Add for Work {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self { Self(self.0 + rhs.0) }
+}
+
+impl Sub for Work {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self { Self(self.0 - rhs.0) }
+}
+
+/// A 256 bit integer representing target.
+///
+/// The SHA-256 hash of a block's header must be lower than or equal to the current target for the
+/// block to be accepted by the network. The lower the target, the more difficult it is to generate
+/// a block. (See also [`Work`].)
+///
+/// ref: <https://en.bitcoin.it/wiki/Target>
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Target(U256);
+
+impl Target {
+    /// When parsing nBits, Bitcoin Core converts a negative target threshold into a target of zero.
+    pub const ZERO: Self = Self(U256::ZERO);
+    /// The maximum possible target.
+    ///
+    /// This value is used to calculate difficulty, which is defined as how difficult the current
+    /// target makes it to find a block relative to how difficult it would be at the highest
+    /// possible target. Remember highest target == lowest difficulty.
+    ///
+    /// ref: <https://en.bitcoin.it/wiki/Target>
+    // In Bitcoind this is ~(u256)0 >> 32 stored as a floating-point type so it gets truncated, hence
+    // the low 208 bits are all zero.
+    pub const MAX: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
+
+    /// The maximum **attainable** target value on mainnet.
+    ///
+    /// Not all target values are attainable because consensus code uses the compact format to
+    /// represent targets (see [`CompactTarget`]).
+    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
+    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L88
+    pub const MAX_ATTAINABLE_MAINNET: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
+
+    /// The maximum **attainable** target value on testnet.
+    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
+    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
+    pub const MAX_ATTAINABLE_TESTNET: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
+
+    /// The maximum **attainable** target value on regtest.
+    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
+    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
+    pub const MAX_ATTAINABLE_REGTEST: Self = Self(U256(0x7FFF_FF00u128 << 96, 0));
+
+    /// The maximum **attainable** target value on signet.
+    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
+    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
+    pub const MAX_ATTAINABLE_SIGNET: Self = Self(U256(0x0377_ae00 << 80, 0));
+
+    /// Computes the [`Target`] value from a compact representation.
+    ///
+    /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
+    pub fn from_compact(c: CompactTarget) -> Self {
+        let bits = c.to_consensus();
+        // This is a floating-point "compact" encoding originally used by
+        // OpenSSL, which satoshi put into consensus code, so we're stuck
+        // with it. The exponent needs to have 3 subtracted from it, hence
+        // this goofy decoding code. 3 is due to 3 bytes in the mantissa.
+        let (mant, expt) = {
+            let unshifted_expt = bits >> 24;
+            if unshifted_expt <= 3 {
+                ((bits & 0xFF_FFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
+            } else {
+                (bits & 0xFF_FFFF, 8 * ((bits >> 24) - 3))
+            }
+        };
+
+        // The mantissa is signed but may not be negative.
+        if mant > 0x7F_FFFF {
+            Self::ZERO
+        } else {
+            Self(U256::from(mant) << expt)
+        }
+    }
+
+    /// Computes the compact value from a [`Target`] representation.
+    ///
+    /// The compact form is by definition lossy, this means that
+    /// `t == Target::from_compact(t.to_compact_lossy())` does not always hold.
+    pub fn to_compact_lossy(self) -> CompactTarget {
+        let mut size = self.0.bits().div_ceil(8);
+        let mut compact = if size <= 3 {
+            (self.0.low_u64() << (8 * (3 - size))) as u32
+        } else {
+            let bn = self.0 >> (8 * (size - 3));
+            bn.low_u32()
+        };
+
+        if (compact & 0x0080_0000) != 0 {
+            compact >>= 8;
+            size += 1;
+        }
+
+        CompactTarget::from_consensus(compact | (size << 24))
+    }
+}
+do_impl!(Target);
 
 /// Encoding of 256-bit target as 32-bit float.
 ///
@@ -85,6 +278,10 @@ impl fmt::LowerHex for CompactTarget {
 impl fmt::UpperHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+impl From<CompactTarget> for Target {
+    fn from(c: CompactTarget) -> Self { Self::from_compact(c) }
 }
 
 #[cfg(feature = "encoding")]
@@ -179,6 +376,124 @@ impl<'a> Arbitrary<'a> for CompactTarget {
     }
 }
 
+include!("../../includes/u256.rs");
+
+macro_rules! impl_hex {
+    ($hex:path, $lookup:expr) => {
+        impl $hex for U256 {
+            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
+                if f.alternate() {
+                    f.write_str("0x")?;
+                }
+
+                #[allow(clippy::indexing_slicing)]
+                for byte in self.to_be_bytes() {
+                    let upper_idx = ((byte & 0xf0) >> 4) as usize;
+                    let lower_idx = (byte & 0xf) as usize;
+                    f.write_char($lookup[upper_idx])?;
+                    f.write_char($lookup[lower_idx])?;
+                }
+                Ok(())
+            }
+        }
+    };
+}
+impl_hex!(fmt::LowerHex, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']);
+impl_hex!(fmt::UpperHex, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']);
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for U256 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        struct DisplayHex(U256);
+
+        impl fmt::Display for DisplayHex {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:x}", self.0) }
+        }
+
+        if serializer.is_human_readable() {
+            serializer.collect_str(&DisplayHex(*self))
+        } else {
+            let bytes = self.to_be_bytes();
+            serializer.serialize_bytes(&bytes)
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for U256 {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        use serde::de;
+
+        if d.is_human_readable() {
+            struct HexVisitor;
+
+            impl de::Visitor<'_> for HexVisitor {
+                type Value = U256;
+
+                fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    f.write_str("a 32 byte ASCII hex string")
+                }
+
+                fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+                where
+                    E: de::Error,
+                {
+                    if s.len() != 64 {
+                        return Err(de::Error::invalid_length(s.len(), &self));
+                    }
+
+                    let upper = parse_int::hex_u128_unprefixed(&s[..32])
+                        .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
+                    let lower = parse_int::hex_u128_unprefixed(&s[32..])
+                        .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
+
+                    Ok(U256(upper, lower))
+                }
+
+                fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+                where
+                    E: de::Error,
+                {
+                    if let Ok(hex) = core::str::from_utf8(v) {
+                        let upper = parse_int::hex_u128_unprefixed(&hex[..32])
+                            .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(hex), &self))?;
+                        let lower = parse_int::hex_u128_unprefixed(&hex[32..])
+                            .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(hex), &self))?;
+
+                        Ok(U256(upper, lower))
+                    } else {
+                        Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
+                    }
+                }
+            }
+            d.deserialize_str(HexVisitor)
+        } else {
+            struct BytesVisitor;
+
+            impl serde::de::Visitor<'_> for BytesVisitor {
+                type Value = U256;
+
+                fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    f.write_str("a sequence of bytes")
+                }
+
+                fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+                where
+                    E: serde::de::Error,
+                {
+                    let b = v.try_into().map_err(|_| de::Error::invalid_length(v.len(), &self))?;
+                    Ok(U256::from_be_bytes(b))
+                }
+            }
+
+            d.deserialize_bytes(BytesVisitor)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
@@ -192,6 +507,149 @@ mod tests {
     use encoding::Decoder as _;
 
     use super::*;
+
+    #[cfg(all(feature = "alloc", feature = "serde"))]
+    impl U256 {
+        /// Constructs a new U256 from a big-endian array of u64's
+        fn from_array(a: [u64; 4]) -> Self {
+            let mut ret = Self::ZERO;
+            ret.0 = (u128::from(a[0]) << 64) ^ u128::from(a[1]);
+            ret.1 = (u128::from(a[2]) << 64) ^ u128::from(a[3]);
+            ret
+        }
+    }
+
+    #[test]
+    #[cfg(all(feature = "alloc", feature = "serde"))]
+    fn u256_serde() {
+        let check = |uint, hex| {
+            let json = format!("\"{}\"", hex);
+            assert_eq!(::serde_json::to_string(&uint).unwrap(), json);
+            assert_eq!(::serde_json::from_str::<U256>(&json).unwrap(), uint);
+
+            let bin_encoded = bincode::serialize(&uint).unwrap();
+            let bin_decoded: U256 = bincode::deserialize(&bin_encoded).unwrap();
+            assert_eq!(bin_decoded, uint);
+        };
+
+        check(U256::ZERO, "0000000000000000000000000000000000000000000000000000000000000000");
+        check(
+            U256::from(0xDEAD_BEEF_u32),
+            "00000000000000000000000000000000000000000000000000000000deadbeef",
+        );
+        check(
+            U256::from_array([0xdd44, 0xcc33, 0xbb22, 0xaa11]),
+            "000000000000dd44000000000000cc33000000000000bb22000000000000aa11",
+        );
+        check(U256::MAX, "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        check(
+            U256(
+                0xDEAD_BEEA_A69B_455C_D41B_B662_A69B_4550,
+                0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF,
+            ),
+            "deadbeeaa69b455cd41bb662a69b4550a69b455cd41bb662a69b4555deadbeef",
+        );
+
+        assert!(::serde_json::from_str::<U256>(
+            "\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\""
+        )
+        .is_err()); // invalid char
+        assert!(::serde_json::from_str::<U256>(
+            "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
+        )
+        .is_err()); // invalid length
+        assert!(::serde_json::from_str::<U256>(
+            "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
+        )
+        .is_err()); // invalid length
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "overflowed")]
+    fn work_overflowing_addition_panics() { let _ = Work(U256::MAX) + Work(U256::ONE); }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "overflowed")]
+    fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
+
+    #[test]
+    fn target_from_compact() {
+        // (nBits, target)
+        let tests = [
+            (0x0100_3456_u32, 0x00_u64), // High bit set.
+            (0x0112_3456_u32, 0x12_u64),
+            (0x0200_8000_u32, 0x80_u64),
+            (0x0500_9234_u32, 0x9234_0000_u64),
+            (0x0492_3456_u32, 0x00_u64), // High bit set (0x80 in 0x92).
+            (0x0412_3456_u32, 0x1234_5600_u64), // Inverse of above; no high bit.
+            (0x047f_ffff_u32, 0x7fff_ff00_u64), // Edge case of mantissa = 0x7f_ffff
+        ];
+
+        for (n_bits, target) in tests {
+            let want = Target(U256::from(target));
+            let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    fn target_to_compact_lossy() {
+        // (nBits, target)
+        let tests = [
+            (0x0_u32, 0x00_u64),
+            (0x0112_0000_u32, 0x12_u64),
+            (0x0200_8000_u32, 0x80_u64),
+            (0x0500_9234_u32, 0x9234_0000_u64),
+            (0x0412_3456_u32, 0x1234_5600_u64),
+        ];
+
+        for (n_bits, target) in tests {
+            let want = CompactTarget::from_consensus(n_bits);
+            let got = Target(U256::from(target)).to_compact_lossy();
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    fn max_target_from_compact() {
+        // The highest possible target is defined as 0x1d00ffff
+        let bits = 0x1d00_ffff_u32;
+        let want = Target::MAX;
+        let got = Target::from_compact(CompactTarget::from_consensus(bits));
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn target_attainable_constants_from_original() {
+        // The plain target values for the various nets from Bitcoin Core with no conversions.
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L88
+        let max_mainnet: Target = Target(U256(u128::MAX >> 32, u128::MAX));
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
+        let max_testnet: Target = Target(U256(u128::MAX >> 32, u128::MAX));
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
+        let max_regtest: Target = Target(U256(u128::MAX >> 1, u128::MAX));
+        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
+        let max_signet: Target = Target(U256(0x3_77aeu128 << 88, 0));
+
+        assert_eq!(
+            Target::MAX_ATTAINABLE_MAINNET,
+            Target::from_compact(max_mainnet.to_compact_lossy())
+        );
+        assert_eq!(
+            Target::MAX_ATTAINABLE_TESTNET,
+            Target::from_compact(max_testnet.to_compact_lossy())
+        );
+        assert_eq!(
+            Target::MAX_ATTAINABLE_REGTEST,
+            Target::from_compact(max_regtest.to_compact_lossy())
+        );
+        assert_eq!(
+            Target::MAX_ATTAINABLE_SIGNET,
+            Target::from_compact(max_signet.to_compact_lossy())
+        );
+    }
 
     #[test]
     #[cfg(feature = "encoding")]
