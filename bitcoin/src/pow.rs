@@ -9,7 +9,6 @@ use alloc::string::String;
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
 
-use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
 use units::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
@@ -20,125 +19,7 @@ use crate::network::Params;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::CompactTarget;
-
-/// Implement traits and methods shared by `Target` and `Work`.
-macro_rules! do_impl {
-    ($ty:ident, $err_ty:ident) => {
-        impl $ty {
-            #[doc = "Constructs a new `"]
-            #[doc = stringify!($ty)]
-            #[doc = "` from a prefixed hex string.\n"]
-            #[doc = "\n# Errors\n"]
-            #[doc = "\n - If the input string does not contain a `0x` (or `0X`) prefix."]
-            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
-            #[doc = stringify!($ty)]
-            #[doc = "`."]
-            pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-                Ok($ty(U256::from_hex(s)?))
-            }
-
-            #[doc = "Constructs a new `"]
-            #[doc = stringify!($ty)]
-            #[doc = "` from an unprefixed hex string.\n"]
-            #[doc = "\n# Errors\n"]
-            #[doc = "\n - If the input string contains a `0x` (or `0X`) prefix."]
-            #[doc = "\n - If the input string is not a valid hex encoding of a `"]
-            #[doc = stringify!($ty)]
-            #[doc = "`."]
-            pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-                Ok($ty(U256::from_unprefixed_hex(s)?))
-            }
-
-            #[doc = "Constructs `"]
-            #[doc = stringify!($ty)]
-            #[doc = "` from a big-endian byte array."]
-            #[inline]
-            pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
-
-            #[doc = "Constructs `"]
-            #[doc = stringify!($ty)]
-            #[doc = "` from a little-endian byte array."]
-            #[inline]
-            pub fn from_le_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_le_bytes(bytes)) }
-
-            #[doc = "Converts `"]
-            #[doc = stringify!($ty)]
-            #[doc = "` to a big-endian byte array."]
-            #[inline]
-            pub fn to_be_bytes(self) -> [u8; 32] { self.0.to_be_bytes() }
-
-            #[doc = "Converts `"]
-            #[doc = stringify!($ty)]
-            #[doc = "` to a little-endian byte array."]
-            #[inline]
-            pub fn to_le_bytes(self) -> [u8; 32] { self.0.to_le_bytes() }
-        }
-
-        impl fmt::Display for $ty {
-            #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                fmt::Display::fmt(&self.0, f)
-            }
-        }
-
-        impl fmt::LowerHex for $ty {
-            #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                fmt::LowerHex::fmt(&self.0, f)
-            }
-        }
-
-        impl fmt::UpperHex for $ty {
-            #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                fmt::UpperHex::fmt(&self.0, f)
-            }
-        }
-
-        impl core::str::FromStr for $ty {
-            type Err = $err_ty;
-
-            #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                U256::from_str(s).map($ty).map_err($err_ty)
-            }
-        }
-
-        #[doc = "Error returned when parsing a [`"]
-        #[doc = stringify!($ty)]
-        #[doc = "`] from a string."]
-        #[derive(Debug, Clone, PartialEq, Eq)]
-        pub struct $err_ty(ParseU256Error);
-
-        impl From<core::convert::Infallible> for $err_ty {
-            fn from(never: core::convert::Infallible) -> Self { match never {} }
-        }
-
-        impl fmt::Display for $err_ty {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt(f) }
-        }
-
-        #[cfg(feature = "std")]
-        impl std::error::Error for $err_ty {
-            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-        }
-    };
-}
-
-/// A 256 bit integer representing work.
-///
-/// Work is a measure of how difficult it is to find a hash below a given [`Target`].
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Work(U256);
-
-impl Work {
-    /// Converts this [`Work`] to [`Target`].
-    pub fn to_target(self) -> Target { Target(self.0.inverse()) }
-}
-
-do_impl!(Work, ParseWorkError);
+pub use primitives::{CompactTarget, Target, Work};
 
 /// Extension functionality for the [`Work`] type.
 // This can't be defined with the extension trait macro because it ignores the feature gate.
@@ -161,125 +42,6 @@ impl WorkExt for Work {
 
     fn to_hex(&self) -> String { format!("{self:x}") }
 }
-impl_to_hex_from_lower_hex!(Work, |_| 64);
-
-impl Add for Work {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self { Self(self.0 + rhs.0) }
-}
-
-impl Sub for Work {
-    type Output = Self;
-    fn sub(self, rhs: Self) -> Self { Self(self.0 - rhs.0) }
-}
-
-/// A 256 bit integer representing target.
-///
-/// The SHA-256 hash of a block's header must be lower than or equal to the current target for the
-/// block to be accepted by the network. The lower the target, the more difficult it is to generate
-/// a block. (See also [`Work`].)
-///
-/// [`Target`] does not limit its value to the maximum attainable value for any network when it
-/// is constructed. If you need to enforce that invariant, you should compare the constructed value
-/// against the required network's `MAX_ATTAINABLE_*` target constant.
-///
-/// ref: <https://en.bitcoin.it/wiki/Target>
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Target(U256);
-
-impl Target {
-    /// When parsing nBits, Bitcoin Core converts a negative target threshold into a target of zero.
-    pub const ZERO: Self = Self(U256::ZERO);
-    /// The maximum possible target.
-    ///
-    /// This value is used to calculate difficulty, which is defined as how difficult the current
-    /// target makes it to find a block relative to how difficult it would be at the highest
-    /// possible target. Remember highest target == lowest difficulty.
-    ///
-    /// ref: <https://en.bitcoin.it/wiki/Target>
-    // In Bitcoind this is ~(u256)0 >> 32 stored as a floating-point type so it gets truncated, hence
-    // the low 208 bits are all zero.
-    pub const MAX: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
-
-    /// The maximum **attainable** target value on mainnet.
-    ///
-    /// Not all target values are attainable because consensus code uses the compact format to
-    /// represent targets (see [`CompactTarget`]).
-    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
-    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L88
-    pub const MAX_ATTAINABLE_MAINNET: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
-
-    /// The maximum **attainable** target value on testnet.
-    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
-    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
-    pub const MAX_ATTAINABLE_TESTNET: Self = Self(U256(0xFFFF_u128 << (208 - 128), 0));
-
-    /// The maximum **attainable** target value on regtest.
-    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
-    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
-    pub const MAX_ATTAINABLE_REGTEST: Self = Self(U256(0x7FFF_FF00u128 << 96, 0));
-
-    /// The maximum **attainable** target value on signet.
-    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
-    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
-    pub const MAX_ATTAINABLE_SIGNET: Self = Self(U256(0x0377_ae00 << 80, 0));
-
-    /// Computes the [`Target`] value from a compact representation.
-    ///
-    /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
-    pub fn from_compact(c: CompactTarget) -> Self {
-        let bits = c.to_consensus();
-        // This is a floating-point "compact" encoding originally used by
-        // OpenSSL, which satoshi put into consensus code, so we're stuck
-        // with it. The exponent needs to have 3 subtracted from it, hence
-        // this goofy decoding code. 3 is due to 3 bytes in the mantissa.
-        let (mant, expt) = {
-            let unshifted_expt = bits >> 24;
-            if unshifted_expt <= 3 {
-                ((bits & 0xFFFFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
-            } else {
-                (bits & 0xFFFFFF, 8 * ((bits >> 24) - 3))
-            }
-        };
-
-        // The mantissa is signed but may not be negative.
-        if mant > 0x7F_FFFF {
-            Self::ZERO
-        } else {
-            Self(U256::from(mant) << expt)
-        }
-    }
-
-    /// Computes the compact value from a [`Target`] representation.
-    ///
-    /// The compact form is by definition lossy, this means that
-    /// `t == Target::from_compact(t.to_compact_lossy())` does not always hold.
-    pub fn to_compact_lossy(self) -> CompactTarget {
-        let mut size = self.0.bits().div_ceil(8);
-        let mut compact = if size <= 3 {
-            (self.0.low_u64() << (8 * (3 - size))) as u32
-        } else {
-            let bn = self.0 >> (8 * (size - 3));
-            bn.low_u32()
-        };
-
-        if (compact & 0x0080_0000) != 0 {
-            compact >>= 8;
-            size += 1;
-        }
-
-        CompactTarget::from_consensus(compact | (size << 24))
-    }
-
-    /// Converts this [`Target`] to [`Work`].
-    ///
-    /// "Work" is defined as the work done to mine a block with this target value (recorded in the
-    /// block header in compact form as nBits). This is not the same as the difficulty to mine a
-    /// block with this target (see `Self::difficulty`).
-    pub fn to_work(self) -> Work { Work(self.0.inverse()) }
-}
-do_impl!(Target, ParseTargetError);
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Target`] type.
@@ -438,7 +200,6 @@ internal_macros::define_extension_trait! {
         fn to_hex(&self) -> String { format!("{self:x}") }
     }
 }
-impl_to_hex_from_lower_hex!(Target, |_| 64);
 
 /// Gets the target for the block after `current_header`.
 ///
@@ -612,10 +373,6 @@ mod sealed {
     impl Sealed for super::Work {}
 }
 
-impl From<CompactTarget> for Target {
-    fn from(c: CompactTarget) -> Self { Self::from_compact(c) }
-}
-
 impl Encodable for CompactTarget {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -699,7 +456,7 @@ mod tests {
     use super::*;
     #[cfg(feature = "std")]
     use crate::pow::test_utils::u128_to_work;
-    use crate::pow::test_utils::{u32_to_target, u64_to_target};
+    use crate::pow::test_utils::u32_to_target;
     use crate::BlockTime;
 
     impl U256 {
@@ -1297,51 +1054,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
-    fn u256_serde() {
-        let check = |uint, hex| {
-            let json = format!("\"{}\"", hex);
-            assert_eq!(::serde_json::to_string(&uint).unwrap(), json);
-            assert_eq!(::serde_json::from_str::<U256>(&json).unwrap(), uint);
-
-            let bin_encoded = bincode::serialize(&uint).unwrap();
-            let bin_decoded: U256 = bincode::deserialize(&bin_encoded).unwrap();
-            assert_eq!(bin_decoded, uint);
-        };
-
-        check(U256::ZERO, "0000000000000000000000000000000000000000000000000000000000000000");
-        check(
-            U256::from(0xDEADBEEF_u32),
-            "00000000000000000000000000000000000000000000000000000000deadbeef",
-        );
-        check(
-            U256::from_array([0xdd44, 0xcc33, 0xbb22, 0xaa11]),
-            "000000000000dd44000000000000cc33000000000000bb22000000000000aa11",
-        );
-        check(U256::MAX, "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        check(
-            U256(
-                0xDEAD_BEEA_A69B_455C_D41B_B662_A69B_4550,
-                0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF,
-            ),
-            "deadbeeaa69b455cd41bb662a69b4550a69b455cd41bb662a69b4555deadbeef",
-        );
-
-        assert!(::serde_json::from_str::<U256>(
-            "\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\""
-        )
-        .is_err()); // invalid char
-        assert!(::serde_json::from_str::<U256>(
-            "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
-        )
-        .is_err()); // invalid length
-        assert!(::serde_json::from_str::<U256>(
-            "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
-        )
-        .is_err()); // invalid length
-    }
-
-    #[test]
     fn u256_is_max_correct_negative() {
         let tc = [U256::ZERO, U256::ONE, U256::from(u128::MAX)];
         for t in tc {
@@ -1525,173 +1237,12 @@ mod tests {
     }
 
     #[test]
-    fn target_from_compact() {
-        // (nBits, target)
-        let tests = [
-            (0x0100_3456_u32, 0x00_u64), // High bit set.
-            (0x0112_3456_u32, 0x12_u64),
-            (0x0200_8000_u32, 0x80_u64),
-            (0x0500_9234_u32, 0x9234_0000_u64),
-            (0x0492_3456_u32, 0x00_u64), // High bit set (0x80 in 0x92).
-            (0x0412_3456_u32, 0x1234_5600_u64), // Inverse of above; no high bit.
-        ];
-
-        for (n_bits, target) in tests {
-            let want = u64_to_target(target);
-            let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
-            assert_eq!(got, want);
-        }
-    }
-
-    macro_rules! check_from_str {
-        ($ty:ident, $err_ty:ident, $mod_name:ident) => {
-            mod $mod_name {
-                use alloc::string::ToString;
-                use core::str::FromStr;
-
-                use super::{$err_ty, $ty, ParseU256Error, U256};
-
-                #[test]
-                fn target_from_str_decimal() {
-                    assert_eq!($ty::from_str("0").unwrap(), $ty(U256::ZERO));
-                    assert_eq!("1".parse::<$ty>().unwrap(), $ty(U256(0, 1)));
-                    assert_eq!("123456789".parse::<$ty>().unwrap(), $ty(U256(0, 123_456_789)));
-
-                    let str_tgt = "340282366920938463463374607431768211455";
-                    let got = str_tgt.parse::<$ty>().unwrap();
-                    assert_eq!(got, $ty(u128::MAX.into()));
-
-                    // 2^128
-                    let str_tgt = "340282366920938463463374607431768211456";
-                    let got = str_tgt.parse::<$ty>().unwrap();
-                    assert_eq!(got, $ty(U256(1, 0)));
-
-                    // 2^256 - 1
-                    let str_tgt = concat!(
-                        "115792089237316195423570985008687907853",
-                        "269984665640564039457584007913129639935"
-                    );
-                    let got = str_tgt.parse::<$ty>().unwrap();
-                    assert_eq!(got, $ty(U256::MAX));
-
-                    // Padding
-                    let got = "00000000000042".parse::<$ty>().unwrap();
-                    assert_eq!(got, $ty(U256(0, 42)));
-
-                    // roundtrip
-                    let want = $ty(u128::MAX.into());
-                    let got = want.to_string().parse::<$ty>().unwrap();
-                    assert_eq!(got, want);
-                }
-
-                #[test]
-                fn target_from_str_error() {
-                    assert!(matches!(
-                        "".parse::<$ty>().unwrap_err(),
-                        $err_ty(ParseU256Error::Empty),
-                    ));
-                    assert!(matches!(
-                        "12a34".parse::<$ty>().unwrap_err(),
-                        $err_ty(ParseU256Error::InvalidDigit(_)),
-                    ));
-                    assert!(matches!(
-                        " 42".parse::<$ty>().unwrap_err(),
-                        $err_ty(ParseU256Error::InvalidDigit(_)),
-                    ));
-                    assert!(matches!(
-                        "-1".parse::<$ty>().unwrap_err(),
-                        $err_ty(ParseU256Error::InvalidDigit(_)),
-                    ));
-
-                    assert!(matches!(
-                        "1157ééééé92089237316195423570985008687907853".parse::<$ty>().unwrap_err(),
-                        $err_ty(ParseU256Error::InvalidEncoding(_)),
-                    ));
-
-                    // 2^256
-                    let tgt_str = concat!(
-                        "115792089237316195423570985008687907853",
-                        "269984665640564039457584007913129639936"
-                    );
-                    assert!(matches!(
-                        tgt_str.parse::<$ty>().unwrap_err(),
-                        $err_ty(ParseU256Error::Overflow),
-                    ));
-                }
-            }
-        };
-    }
-
-    check_from_str!(Target, ParseTargetError, target_from_str);
-    check_from_str!(Work, ParseWorkError, work_from_str);
-
-    #[test]
     fn target_is_met_by_for_target_equals_hash() {
         let hash = "ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c"
             .parse::<BlockHash>()
             .expect("failed to parse block hash");
         let target = Target::from_inner(U256::from_le_bytes(hash.to_byte_array()));
         assert!(target.is_met_by(hash));
-    }
-
-    #[test]
-    fn max_target_from_compact() {
-        // The highest possible target is defined as 0x1d00ffff
-        let bits = 0x1d00ffff_u32;
-        let want = Target::MAX;
-        let got = Target::from_compact(CompactTarget::from_consensus(bits));
-        assert_eq!(got, want)
-    }
-
-    #[test]
-    fn target_attainable_constants_from_original() {
-        // The plain target values for the various nets from Bitcoin Core with no conversions.
-        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L88
-        let max_mainnet: Target = Target::from_inner(U256(u128::MAX >> 32, u128::MAX));
-        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
-        let max_testnet: Target = Target::from_inner(U256(u128::MAX >> 32, u128::MAX));
-        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
-        let max_regtest: Target = Target::from_inner(U256(u128::MAX >> 1, u128::MAX));
-        // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
-        let max_signet: Target = Target::from_inner(U256(0x3_77aeu128 << 88, 0));
-
-        assert_eq!(
-            Target::MAX_ATTAINABLE_MAINNET,
-            Target::from_compact(max_mainnet.to_compact_lossy())
-        );
-        assert_eq!(
-            Target::MAX_ATTAINABLE_TESTNET,
-            Target::from_compact(max_testnet.to_compact_lossy())
-        );
-        assert_eq!(
-            Target::MAX_ATTAINABLE_REGTEST,
-            Target::from_compact(max_regtest.to_compact_lossy())
-        );
-        assert_eq!(
-            Target::MAX_ATTAINABLE_SIGNET,
-            Target::from_compact(max_signet.to_compact_lossy())
-        );
-    }
-
-    #[test]
-    fn target_max_attainable_hex() {
-        // Also check explicit hex representations for regression testing.
-        assert_eq!(
-            format!("{:x}", Target::MAX_ATTAINABLE_MAINNET),
-            "00000000ffff0000000000000000000000000000000000000000000000000000"
-        );
-        assert_eq!(
-            format!("{:x}", Target::MAX_ATTAINABLE_TESTNET),
-            "00000000ffff0000000000000000000000000000000000000000000000000000"
-        );
-        assert_eq!(
-            format!("{:x}", Target::MAX_ATTAINABLE_REGTEST),
-            "7fffff0000000000000000000000000000000000000000000000000000000000"
-        );
-        assert_eq!(
-            format!("{:x}", Target::MAX_ATTAINABLE_SIGNET),
-            "00000377ae000000000000000000000000000000000000000000000000000000"
-        );
     }
 
     #[test]
@@ -1813,16 +1364,6 @@ mod tests {
     #[cfg(debug_assertions)]
     #[should_panic]
     fn u256_multiplication_by_max_panics() { let _ = U256::MAX * U256::MAX; }
-
-    #[test]
-    #[cfg(debug_assertions)]
-    #[should_panic]
-    fn work_overflowing_addition_panics() { let _ = Work::from_inner(U256::MAX) + Work::from_inner(U256::ONE); }
-
-    #[test]
-    #[cfg(debug_assertions)]
-    #[should_panic]
-    fn work_overflowing_subtraction_panics() { let _ = Work::from_inner(U256::ZERO) - Work::from_inner(U256::ONE); }
 
     #[test]
     fn u256_to_f64() {
