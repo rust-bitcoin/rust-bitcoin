@@ -19,6 +19,8 @@ use crate::Txid;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TxMerkleNode(sha256d::Hash);
 
+super::impl_debug!(TxMerkleNode);
+
 // The new hash wrapper type.
 type HashType = TxMerkleNode;
 // The inner hash type from `hashes`.

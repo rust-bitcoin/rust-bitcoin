@@ -110,6 +110,18 @@ macro_rules! impl_serde(
 #[cfg(feature = "serde")]
 pub(in crate::hash_types) use impl_serde;
 
+macro_rules! impl_debug {
+    ($ty:ident) => {
+        impl core::fmt::Debug for HashType {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                f.debug_tuple(stringify!($ty)).field(&self.0).finish()
+            }
+        }
+    };
+}
+pub(in crate::hash_types) use impl_debug;
+
 /// Functions used by serde impls of all hashes.
 #[cfg(feature = "serde")]
 pub mod serde_details {
@@ -202,7 +214,7 @@ mod tests {
         let mut a = [0xab; 32];
         a[0] = 0xff;           // Just so we can see which way the array is printing.
         let tc = Txid::from_byte_array(a);
-        let want = "abababababababababababababababababababababababababababababababff";
+        let want = "Txid(abababababababababababababababababababababababababababababababff)";
 
         (tc, want)
     }

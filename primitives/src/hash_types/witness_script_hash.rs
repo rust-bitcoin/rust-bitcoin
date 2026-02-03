@@ -21,6 +21,8 @@ use crate::script::{WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WScriptHash(sha256::Hash);
 
+super::impl_debug!(WScriptHash);
+
 impl WScriptHash {
     /// Constructs a new `WScriptHash` after first checking the script size.
     ///

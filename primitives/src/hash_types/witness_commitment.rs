@@ -2,9 +2,8 @@
 
 //! The `WitnessCommitment` type.
 
-use core::fmt;
 #[cfg(feature = "hex")]
-use core::str;
+use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -13,6 +12,8 @@ use hashes::sha256d;
 /// A hash corresponding to the witness structure commitment in the coinbase transaction.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WitnessCommitment(sha256d::Hash);
+
+super::impl_debug!(WitnessCommitment);
 
 impl WitnessCommitment {
     /// Dummy hash used as the previous blockhash of the genesis block.
