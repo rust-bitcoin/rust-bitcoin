@@ -59,7 +59,7 @@ pub use units::{
     fee_rate::{self, FeeRate},
     locktime::{self, absolute, relative},
     parse_int,
-    pow::{self, CompactTarget},
+    pow::{self, CompactTarget, Target, Work},
     result::{self, NumOpResult},
     sequence::{self, Sequence},
     time::{self, BlockTime},
