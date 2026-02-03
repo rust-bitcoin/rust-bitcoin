@@ -14,17 +14,15 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{Encodable, Decodable, Decoder, Decoder6};
 #[cfg(feature = "alloc")]
-use encoding::{
-    CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder,
-};
+use encoding::{CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{Decodable, Decoder, Decoder6, Encodable};
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
 
-use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
 #[cfg(feature = "hex")]
 use crate::hex_codec::{HexPrimitive, ParsePrimitiveError};
+use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
@@ -516,17 +514,23 @@ impl core::str::FromStr for Header {
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&HexPrimitive(self), f)
+    }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
+    }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
+    }
 }
 
 impl fmt::Debug for Header {
