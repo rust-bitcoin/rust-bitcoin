@@ -274,10 +274,51 @@ macro_rules! impl_hex_string_traits {
             }
         }
 
-        $crate::hex::impl_fmt_traits! {
-            #[display_backward($reverse)]
-            impl<$($gen: $gent),*> fmt_traits for $ty<$($gen),*> {
-                const LENGTH: usize = ($len); // parens required due to rustc parser weirdness
+        /// Helper to prevent duplicating code for Upper/LowerHex.
+        macro_rules! impl_case_hex {
+            ($case:expr) => {
+                #[inline]
+                fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                    if $reverse {
+                        let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
+                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
+                    } else {
+                        let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter();
+                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
+                    }
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
+            impl_case_hex!($crate::hex::Case::Lower);
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
+            impl_case_hex!($crate::hex::Case::Upper);
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                $crate::_export::_core::fmt::LowerHex::fmt(self, f)
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                struct HexWrap<'a, T: $crate::_export::_core::fmt::LowerHex>(&'a T);
+
+                impl<T: $crate::_export::_core::fmt::LowerHex> $crate::_export::_core::fmt::Debug for HexWrap<'_, T> {
+                    fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                        $crate::_export::_core::fmt::LowerHex::fmt(&self.0, f)
+                    }
+                }
+
+                f.debug_tuple(core::any::type_name::<$ty<$($gen),*>>())
+                    .field(&HexWrap(self))
+                    .finish()
             }
         }
     }
@@ -291,11 +332,21 @@ macro_rules! impl_debug_only {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                if $reverse {
-                    $crate::debug_hex(self.as_byte_array().iter().rev(), f)
-                } else {
-                    $crate::debug_hex(self.as_byte_array(), f)
+                struct HexWrap<'a, T: $crate::Hash>(&'a T);
+
+                impl<T: $crate::Hash> $crate::_export::_core::fmt::Debug for HexWrap<'_, T> {
+                    fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                        if $reverse {
+                            $crate::debug_hex(self.0.as_ref().iter().rev(), f)
+                        } else {
+                            $crate::debug_hex(self.0.as_ref(), f)
+                        }
+                    }
                 }
+
+                f.debug_tuple(core::any::type_name::<$ty<$($gen),*>>())
+                    .field(&HexWrap(self))
+                    .finish()
             }
         }
     }
@@ -579,7 +630,7 @@ mod test {
     fn debug() {
         use alloc::format;
 
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
+        let want = "bitcoin_hashes::macros::test::TestHash(0000000000000000000000000000000000000000000000000000000000000000)";
         let got = format!("{:?}", TestHash::all_zeros());
         assert_eq!(got, want);
 
@@ -587,7 +638,7 @@ mod test {
         let mut bytes = [0u8; 32];
         bytes[31] = 0xff;
         let hash = TestHash::from_byte_array(bytes);
-        let want = "ff00000000000000000000000000000000000000000000000000000000000000";
+        let want = "bitcoin_hashes::macros::test::TestHash(ff00000000000000000000000000000000000000000000000000000000000000)";
         let got = format!("{:?}", hash);
         assert_eq!(got, want);
     }

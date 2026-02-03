@@ -2105,16 +2105,23 @@ mod tests {
     fn outpoint_format() {
         let outpoint = OutPoint::COINBASE_PREVOUT;
 
-        let debug = "OutPoint { txid: Txid(0000000000000000000000000000000000000000000000000000000000000000), vout: 4294967295 }";
+        let debug = "OutPoint { txid: Txid(bitcoin_hashes::sha256d::Hash(0000000000000000000000000000000000000000000000000000000000000000)), vout: 4294967295 }";
         assert_eq!(debug, format!("{:?}", &outpoint));
 
         let display = "0000000000000000000000000000000000000000000000000000000000000000:4294967295";
         assert_eq!(display, format!("{}", &outpoint));
 
-        let pretty_debug = "OutPoint {\n    txid: Txid(\n        0x0000000000000000000000000000000000000000000000000000000000000000,\n    ),\n    vout: 4294967295,\n}";
+        let pretty_debug = "OutPoint {
+    txid: Txid(
+        bitcoin_hashes::sha256d::Hash(
+            0x0000000000000000000000000000000000000000000000000000000000000000,
+        ),
+    ),
+    vout: 4294967295,
+}";
         assert_eq!(pretty_debug, format!("{:#?}", &outpoint));
 
-        let debug_txid = "Txid(0000000000000000000000000000000000000000000000000000000000000000)";
+        let debug_txid = "Txid(bitcoin_hashes::sha256d::Hash(0000000000000000000000000000000000000000000000000000000000000000))";
         assert_eq!(debug_txid, format!("{:?}", &outpoint.txid));
 
         let display_txid = "0000000000000000000000000000000000000000000000000000000000000000";
