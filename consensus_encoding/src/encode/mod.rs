@@ -56,7 +56,7 @@ macro_rules! encoder_newtype {
 
         impl<$lt> $name<$lt> {
             /// Construct a new instance of the newtype encoder
-            pub fn new(encoder: $encoder) -> $name<$lt> {
+            pub const fn new(encoder: $encoder) -> $name<$lt> {
                 $name(encoder, core::marker::PhantomData)
             }
         }
