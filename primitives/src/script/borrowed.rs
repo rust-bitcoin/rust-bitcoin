@@ -12,7 +12,8 @@ use encoding::{BytesEncoder, CompactSizeEncoder, Encodable, Encoder2};
 use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
 
-internals::transparent_newtype! {
+// Defined in `REPO_DIR/include/newtype.rs`.
+crate::transparent_newtype! {
     /// Bitcoin script slice.
     ///
     /// *[See also the `bitcoin::script` module](super).*
@@ -58,6 +59,8 @@ internals::transparent_newtype! {
     /// the prefix is excluded. To support parsing and formatting scripts as hex we provide a bunch
     /// of different APIs and trait implementations. Please see [`examples/script.rs`] for a
     /// thorough example of all the APIs.
+    ///
+    /// [`examples/script.rs`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/script.rs>
     ///
     /// # Bitcoin Core References
     ///
