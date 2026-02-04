@@ -43,7 +43,9 @@ pub trait Tag {
     const MIDSTATE: sha256::Midstate;
 }
 
-internals::transparent_newtype! {
+include!("../../../includes/newtype.rs");
+
+transparent_newtype! {
     /// Output of the SHA256t hash function.
     pub struct Hash<T>(PhantomData<T>, [u8; 32]);
 

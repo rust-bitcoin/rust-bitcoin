@@ -12,7 +12,9 @@ use encoding::{BytesEncoder, CompactSizeEncoder, Encodable, Encoder2};
 use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
 
-internals::transparent_newtype! {
+include!("../../../includes/newtype.rs");
+
+transparent_newtype! {
     /// Bitcoin script slice.
     ///
     /// *[See also the `bitcoin::script` module](super).*
