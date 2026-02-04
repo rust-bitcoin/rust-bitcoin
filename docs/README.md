@@ -11,3 +11,10 @@ hold and a PR made to the `docs/` tree or in the Discussions section to debate i
 ## Dependency tree
 
 The `./dep-tree` file was generated using `just gen-dep-tree`.
+
+## include! usage
+
+In this repository, the `include` directory holds shared source code that can be used in any of the
+crates through the `include!` macro. Generally, files in the `include` directory should be written
+such that their content can be included once at the top level of a crate (e.g. in `lib.rs`), and
+then used throughout, rather than calling `include!` at each usage site.

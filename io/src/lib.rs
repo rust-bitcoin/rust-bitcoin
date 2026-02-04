@@ -602,6 +602,9 @@ impl<D> From<Error> for ReadError<D> {
     fn from(e: Error) -> Self { Self::Io(e) }
 }
 
+#[cfg(feature = "std")]
+include!("../../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+
 #[cfg(test)]
 mod tests {
     #[cfg(all(not(feature = "std"), feature = "alloc"))]

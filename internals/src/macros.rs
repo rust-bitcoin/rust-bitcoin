@@ -54,6 +54,7 @@ macro_rules! impl_to_hex_from_lower_hex {
 ///
 /// The `alloc` types MUST NOT have import paths and don't need imports.
 #[macro_export]
+#[deprecated(since = "TBD", note = "use include!(\"../../include/newtype.rs\") instead")]
 macro_rules! transparent_newtype {
     (
         $(#[$($struct_attr:tt)*])*
