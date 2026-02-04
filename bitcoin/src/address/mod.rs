@@ -761,7 +761,7 @@ impl Address {
     pub fn is_related_to_pubkey(&self, pubkey: PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
         let payload = self.payload_as_bytes();
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey);
 
         (*pubkey_hash.as_byte_array() == *payload)
             || (xonly_pubkey.serialize().0 == *payload)
@@ -1451,7 +1451,7 @@ mod tests {
     fn is_related_to_pubkey_p2tr() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = pubkey_string.parse::<PublicKey>().expect("pubkey");
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
         let address = Address::p2tr_tweaked(tweaked_pubkey, KnownHrp::Mainnet);
 
@@ -1477,7 +1477,7 @@ mod tests {
     fn is_related_to_xonly_pubkey() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = pubkey_string.parse::<PublicKey>().expect("pubkey");
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
         let address = Address::p2tr_tweaked(tweaked_pubkey, KnownHrp::Mainnet);
 
