@@ -356,7 +356,7 @@ impl Psbt {
         for (pk, key_source) in input.bip32_derivation.iter() {
             let sk = if let Ok(Some(sk)) = k.get_key(&KeyRequest::Bip32(key_source.clone())) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::new(*pk))) {
+            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::from_secp(*pk))) {
                 sk
             } else {
                 continue;
@@ -2349,7 +2349,7 @@ mod tests {
         use secp256k1::rand;
 
         let sk = SecretKey::new(&mut rand::rng());
-        let priv_key = PrivateKey::new(sk, NetworkKind::Test);
+        let priv_key = PrivateKey::from_secp(sk, NetworkKind::Test);
         let pk = PublicKey::from_private_key(priv_key);
 
         (priv_key, pk)
@@ -2378,11 +2378,7 @@ mod tests {
         let mut pubkey_map: HashMap<PublicKey, PrivateKey> = HashMap::new();
 
         if parity == secp256k1::Parity::Even {
-            priv_key = PrivateKey {
-                compressed: priv_key.compressed,
-                network: priv_key.network,
-                inner: priv_key.inner.negate(),
-            };
+            priv_key = priv_key.negate();
             pk = priv_key.public_key();
         }
 
