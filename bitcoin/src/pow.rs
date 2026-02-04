@@ -135,6 +135,10 @@ impl Sub for Work {
 /// block to be accepted by the network. The lower the target, the more difficult it is to generate
 /// a block. (See also [`Work`].)
 ///
+/// [`Target`] does not limit its value to the maximum attainable value for any network when it
+/// is constructed. If you need to enforce that invariant, you should compare the constructed value
+/// against the required network's `MAX_ATTAINABLE_*` target constant.
+///
 /// ref: <https://en.bitcoin.it/wiki/Target>
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
