@@ -5,14 +5,13 @@
 #![cfg(feature = "alloc")]
 #![cfg(feature = "encoding")]
 
-use encoding::{encode_to_vec, Decodable as _, Decoder as _};
-
 use bitcoin_units::absolute::{LockTime, LockTimeDecoder};
 use bitcoin_units::amount::AmountDecoder;
 use bitcoin_units::block::BlockHeightDecoder;
 use bitcoin_units::sequence::SequenceDecoder;
 use bitcoin_units::time::BlockTimeDecoder;
 use bitcoin_units::{Amount, BlockHeight, BlockTime, Sequence};
+use encoding::{encode_to_vec, Decodable as _, Decoder as _};
 
 /// Tests round-trip encoding/decoding for a list of values.
 ///
@@ -111,6 +110,7 @@ fn amount_hardcoded_encoding() {
     assert_eq!(encoded, [0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00]);
 }
 
+#[rustfmt::skip]
 test_hardcoded_decoding!(
     amount_hardcoded_decoding,
     AmountDecoder,
@@ -135,6 +135,7 @@ test_round_trip!(
     Amount::from_sat(21_000_000 * 100_000_000).unwrap(), // 21 million BTC
 );
 
+#[rustfmt::skip]
 test_incremental_decoding!(
     amount_incremental_decoding,
     AmountDecoder,

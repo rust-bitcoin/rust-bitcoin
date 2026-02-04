@@ -168,10 +168,10 @@ impl<'a> Arbitrary<'a> for BlockTime {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
     use encoding::Decoder as _;
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    use encoding::UnexpectedEofError;
 
     use super::*;
 
