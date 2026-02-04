@@ -133,7 +133,10 @@ mod message_signing {
         ) -> Result<PublicKey, MessageSignatureError> {
             let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
             let pubkey = self.signature.recover_ecdsa(msg)?;
-            Ok(PublicKey { inner: pubkey, compressed: self.compressed })
+            Ok(match self.compressed {
+                true => PublicKey::from_secp(pubkey),
+                false => PublicKey::from_secp_uncompressed(pubkey),
+            })
         }
 
         /// Verifies that the signature signs the message and was signed by the given address.
