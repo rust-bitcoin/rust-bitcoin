@@ -734,7 +734,7 @@ impl Xpriv {
 
     /// Constructs a new ECDSA compressed private key matching internal secret key representation.
     pub fn to_private_key(self) -> PrivateKey {
-        PrivateKey { compressed: true, network: self.network, inner: self.private_key }
+        PrivateKey::from_secp(self.private_key, self.network)
     }
 
     /// Constructs a new extended public key from this extended private key.

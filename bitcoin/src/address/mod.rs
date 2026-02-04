@@ -15,7 +15,7 @@
 //!
 //! // Generate random key pair.
 //! let (_sk, pk) = secp256k1::generate_keypair(&mut rand::rng());
-//! let public_key = PublicKey::new(pk); // Or `PublicKey::from(pk)`.
+//! let public_key = PublicKey::from_secp(pk); // Or `PublicKey::from(pk)`.
 //!
 //! // Generate a mainnet pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
