@@ -404,7 +404,7 @@ impl From<Keypair> for secp256k1::PublicKey {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PublicKey {
     /// Whether this public key should be serialized as compressed.
-    pub compressed: bool,
+    compressed: bool,
     /// The actual ECDSA key.
     inner: secp256k1::PublicKey,
 }
@@ -438,8 +438,12 @@ impl PublicKey {
     #[inline]
     pub fn to_inner(self) -> secp256k1::PublicKey { self.inner }
 
+    /// Returns whether this public key should be serialized as compressed.
+    #[inline]
+    pub fn compressed(&self) -> bool { self.compressed }
+
     fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
-        if self.compressed {
+        if self.compressed() {
             f(&self.to_inner().serialize())
         } else {
             f(&self.to_inner().serialize_uncompressed())
@@ -453,7 +457,7 @@ impl PublicKey {
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> Result<WPubkeyHash, UncompressedPublicKeyError> {
-        if self.compressed {
+        if self.compressed() {
             Ok(WPubkeyHash::from_byte_array(
                 hash160::Hash::hash(&self.to_inner().serialize()).to_byte_array(),
             ))
@@ -761,7 +765,7 @@ impl TryFrom<PublicKey> for CompressedPublicKey {
     type Error = UncompressedPublicKeyError;
 
     fn try_from(value: PublicKey) -> Result<Self, Self::Error> {
-        if value.compressed {
+        if value.compressed() {
             Ok(Self::from_secp(value.to_inner()))
         } else {
             Err(UncompressedPublicKeyError)
@@ -797,9 +801,9 @@ impl From<&CompressedPublicKey> for WPubkeyHash {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed.
-    pub compressed: bool,
+    compressed: bool,
     /// The network kind on which this key should be used.
-    pub network: NetworkKind,
+    network: NetworkKind,
     /// The actual ECDSA key.
     inner: secp256k1::SecretKey,
 }
@@ -829,9 +833,17 @@ impl PrivateKey {
     #[inline]
     pub fn as_inner(&self) -> &secp256k1::SecretKey { &self.inner }
 
+    /// Returns whether this private key should be serialized as compressed.
+    #[inline]
+    pub fn compressed(&self) -> bool { self.compressed }
+
+    /// Returns the [`NetworkKind`] of this key.
+    #[inline]
+    pub fn network(&self) -> NetworkKind { self.network }
+
     /// Constructs a new public key from this private key.
     pub fn public_key(&self) -> PublicKey {
-        match self.compressed {
+        match self.compressed() {
             true => PublicKey::from_secp(secp256k1::PublicKey::from_secret_key(self.as_inner())),
             false => PublicKey::from_secp_uncompressed(secp256k1::PublicKey::from_secret_key(self.as_inner())),
         }
@@ -866,10 +878,10 @@ impl PrivateKey {
     #[rustfmt::skip]
     pub fn fmt_wif(&self, fmt: &mut dyn fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
-        ret[0] = if self.network.is_mainnet() { 128 } else { 239 };
+        ret[0] = if self.network().is_mainnet() { 128 } else { 239 };
 
         ret[1..33].copy_from_slice(&self.as_inner()[..]);
-        let privkey = if self.compressed {
+        let privkey = if self.compressed() {
             ret[33] = 1;
             base58::encode_check(&ret[..])
         } else {
@@ -924,9 +936,9 @@ impl PrivateKey {
     /// with specific public key formats and BIP-0340 requirements.
     #[inline]
     pub fn negate(&self) -> Self {
-        match self.compressed {
-            true => Self::from_secp(self.as_inner().negate(), self.network),
-            false => Self::from_secp_uncompressed(self.as_inner().negate(), self.network),
+        match self.compressed() {
+            true => Self::from_secp(self.as_inner().negate(), self.network()),
+            false => Self::from_secp_uncompressed(self.as_inner().negate(), self.network()),
         }
     }
 }
@@ -1638,11 +1650,11 @@ mod tests {
         // testnet compressed
         let sk =
             PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, NetworkKind::Test);
-        assert!(sk.compressed);
+        assert_eq!(sk.network(), NetworkKind::Test);
+        assert!(sk.compressed());
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
-        let pk = Address::p2pkh(sk.public_key(), sk.network);
+        let pk = Address::p2pkh(sk.public_key(), sk.network());
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
@@ -1654,18 +1666,18 @@ mod tests {
         // mainnet uncompressed
         let sk =
             PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, NetworkKind::Main);
-        assert!(!sk.compressed);
+        assert_eq!(sk.network(), NetworkKind::Main);
+        assert!(!sk.compressed());
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let mut pk = sk.public_key();
-        assert!(!pk.compressed);
+        assert!(!pk.compressed());
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
         assert_eq!(pk, "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
         .parse::<PublicKey>().unwrap());
-        let addr = Address::p2pkh(pk, sk.network);
+        let addr = Address::p2pkh(pk, sk.network());
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
-        pk.compressed = true;
+        pk = PublicKey::from_secp(pk.to_inner());
         assert_eq!(
             &pk.to_string(),
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
