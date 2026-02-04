@@ -108,6 +108,13 @@ impl Psbt {
                 if let Some(ref tx) = input.non_witness_utxo {
                     let input_outpoint = global.unsigned_tx.inputs[i].previous_output;
                     let txid = tx.compute_txid();
+                    if input_outpoint.vout >= tx.outputs.len() as u32 {
+                        return Err(Error::NonWitnessUtxoOutOfBounds {
+                            index: i,
+                            vout: input_outpoint.vout,
+                            non_witness_utxo_output_count: tx.outputs.len(),
+                        });
+                    }
                     if txid != input_outpoint.txid {
                         return Err(Error::IncorrectNonWitnessUtxo {
                             index: i,
