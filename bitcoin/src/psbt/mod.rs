@@ -356,7 +356,7 @@ impl Psbt {
         for (pk, key_source) in input.bip32_derivation.iter() {
             let sk = if let Ok(Some(sk)) = k.get_key(&KeyRequest::Bip32(key_source.clone())) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::from_secp(*pk))) {
+            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(*pk)) {
                 sk
             } else {
                 continue;
@@ -1455,7 +1455,7 @@ mod tests {
     fn serialize_then_deserialize_output() {
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
-        let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
+        let mut hd_keypaths: BTreeMap<PublicKey, KeySource> = Default::default();
 
         let mut sk: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed);
 
@@ -1476,7 +1476,7 @@ mod tests {
 
         let pk = Xpub::from_xpriv(&sk);
 
-        hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
+        hd_keypaths.insert(pk.public_key.into(), (fprint, dpath.into()));
 
         let expected: Output = Output {
             redeem_script: Some(
@@ -1606,7 +1606,7 @@ mod tests {
                 .into_iter()
                 .collect();
         let key_source = ("deadbeef".parse().unwrap(), "0'/1".parse().unwrap());
-        let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
+        let keypaths: BTreeMap<PublicKey, KeySource> = vec![(
             "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
             key_source.clone(),
         )]
@@ -2645,7 +2645,7 @@ mod tests {
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
         let mut map = BTreeMap::new();
-        map.insert(*pk.as_inner(), (Fingerprint::default(), DerivationPath::default()));
+        map.insert(pk, (Fingerprint::default(), DerivationPath::default()));
         psbt.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.
