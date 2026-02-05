@@ -133,7 +133,10 @@ mod message_signing {
         ) -> Result<PublicKey, MessageSignatureError> {
             let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
             let pubkey = self.signature.recover_ecdsa(msg)?;
-            Ok(PublicKey { inner: pubkey, compressed: self.compressed })
+            Ok(match self.compressed {
+                true => PublicKey::from_secp(pubkey),
+                false => PublicKey::from_secp_uncompressed(pubkey),
+            })
         }
 
         /// Verifies that the signature signs the message and was signed by the given address.
@@ -267,7 +270,7 @@ mod tests {
         let p2pkh = Address::p2pkh(pubkey, Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&p2pkh, msg_hash), Ok(true));
 
-        assert_eq!(pubkey.0, secp256k1::PublicKey::from_secret_key(&privkey));
+        assert_eq!(pubkey.as_inner(), &secp256k1::PublicKey::from_secret_key(&privkey));
         let signature_base64 = signature.to_base64();
         let signature_round_trip =
             super::MessageSignature::from_base64(&signature_base64).expect("message signature");
