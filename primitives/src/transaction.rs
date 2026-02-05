@@ -1498,6 +1498,26 @@ impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
+impl fmt::LowerHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+}
+
+impl fmt::UpperHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+impl fmt::Octal for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Octal::fmt(&self.0, f) }
+}
+
+impl fmt::Binary for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.0, f) }
+}
+
 impl From<Version> for u32 {
     #[inline]
     fn from(version: Version) -> Self { version.0 }
@@ -1871,6 +1891,14 @@ mod tests {
     fn version_display() {
         let version = Version(123);
         assert_eq!(format!("{}", version), "123");
+        assert_eq!(format!("{:x}", version), "7b");
+        assert_eq!(format!("{:#x}", version), "0x7b");
+        assert_eq!(format!("{:X}", version), "7B");
+        assert_eq!(format!("{:#X}", version), "0x7B");
+        assert_eq!(format!("{:o}", version), "173");
+        assert_eq!(format!("{:#o}", version), "0o173");
+        assert_eq!(format!("{:b}", version), "1111011");
+        assert_eq!(format!("{:#b}", version), "0b1111011");
     }
 
     // Creates an arbitrary dummy outpoint.
