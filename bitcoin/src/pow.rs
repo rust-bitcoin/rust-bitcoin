@@ -2015,6 +2015,27 @@ mod tests {
     }
 
     #[test]
+    fn target_max_attainable_hex() {
+        // Also check explicit hex representations for regression testing.
+        assert_eq!(
+            format!("{:x}", Target::MAX_ATTAINABLE_MAINNET),
+            "00000000ffff0000000000000000000000000000000000000000000000000000"
+        );
+        assert_eq!(
+            format!("{:x}", Target::MAX_ATTAINABLE_TESTNET),
+            "00000000ffff0000000000000000000000000000000000000000000000000000"
+        );
+        assert_eq!(
+            format!("{:x}", Target::MAX_ATTAINABLE_REGTEST),
+            "7fffff0000000000000000000000000000000000000000000000000000000000"
+        );
+        assert_eq!(
+            format!("{:x}", Target::MAX_ATTAINABLE_SIGNET),
+            "00000377ae000000000000000000000000000000000000000000000000000000"
+        );
+    }
+
+    #[test]
     fn target_difficulty_float() {
         let params = Params::new(crate::Network::Bitcoin);
 
