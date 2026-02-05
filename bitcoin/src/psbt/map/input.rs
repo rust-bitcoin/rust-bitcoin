@@ -88,7 +88,7 @@ pub struct Input {
     pub witness_script: Option<WitnessScriptBuf>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
-    pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
+    pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
     pub final_script_sig: Option<ScriptSigBuf>,
@@ -289,7 +289,7 @@ impl Input {
             }
             PSBT_IN_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
             PSBT_IN_FINAL_SCRIPTSIG => {
