@@ -508,6 +508,8 @@ impl Amount {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(Amount, to_sat);
+
 impl default::Default for Amount {
     fn default() -> Self { Self::ZERO }
 }
