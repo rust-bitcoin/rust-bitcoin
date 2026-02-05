@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::many_single_char_names)]
+
 use internals::slice::SliceExt;
 
 use super::{HashEngine, BLOCK_SIZE};
@@ -12,7 +15,7 @@ impl HashEngine {
         for block in blocks.chunks_exact(BLOCK_SIZE) {
             let mut w = [0u32; 80];
             for (w_val, buff_bytes) in w.iter_mut().zip(block.bitcoin_as_chunks().0) {
-                *w_val = u32::from_be_bytes(*buff_bytes)
+                *w_val = u32::from_be_bytes(*buff_bytes);
             }
             for i in 16..80 {
                 w[i] = (w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]).rotate_left(1);
