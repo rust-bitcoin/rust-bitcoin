@@ -269,7 +269,7 @@ fn bip32_derivation(
     fingerprint: Fingerprint,
     pk_path: &[(&str, &str)],
     indices: Vec<usize>,
-) -> BTreeMap<secp256k1::PublicKey, KeySource> {
+) -> BTreeMap<PublicKey, KeySource> {
     let mut tree = BTreeMap::new();
     for i in indices {
         let pk = pk_path[i].0;
@@ -278,7 +278,7 @@ fn bip32_derivation(
         let pk = pk.parse::<PublicKey>().unwrap();
         let path = path.into_derivation_path().unwrap();
 
-        tree.insert(*pk.as_inner(), (fingerprint, path));
+        tree.insert(pk, (fingerprint, path));
     }
     tree
 }

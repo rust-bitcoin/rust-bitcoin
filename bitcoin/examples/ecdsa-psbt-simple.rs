@@ -186,7 +186,7 @@ fn main() {
     for (idx, pk) in pk_inputs.iter().enumerate() {
         let mut map = BTreeMap::new();
         let fingerprint = MASTER_FINGERPRINT.parse::<Fingerprint>().expect("valid fingerprint");
-        map.insert(*pk.as_inner(), (fingerprint, derivation_paths[idx].clone()));
+        map.insert((*pk).into(), (fingerprint, derivation_paths[idx].clone()));
         bip32_derivations.push(map);
     }
     psbt.inputs = vec![
