@@ -53,7 +53,11 @@ mod encapsulate {
         /// Returns the inner secp256k1 x-only public key.
         #[inline]
         #[deprecated(since = "TBD", note = "use `as_inner()` instead")]
-        pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { *self.as_inner() }
+        pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.0 }
+    }
+
+    impl From<PublicKey> for XOnlyPublicKey {
+        fn from(pk: PublicKey) -> Self { Self::new(pk.inner) }
     }
 
     /// A Bitcoin secret and public key pair.
@@ -101,6 +105,10 @@ mod encapsulate {
         pub fn compressed(&self) -> bool { self.compressed }
     }
 
+    impl From<CompressedPublicKey> for PublicKey {
+        fn from(value: CompressedPublicKey) -> Self { Self::from_secp(value.0) }
+    }
+
     /// An always-compressed Bitcoin ECDSA public key.
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct CompressedPublicKey(secp256k1::PublicKey);
@@ -113,6 +121,18 @@ mod encapsulate {
         /// Returns the inner [`secp256k1::PublicKey`].
         #[inline]
         pub fn as_inner(&self) -> &secp256k1::PublicKey { &self.0 }
+    }
+
+    impl TryFrom<PublicKey> for CompressedPublicKey {
+        type Error = super::UncompressedPublicKeyError;
+
+        fn try_from(value: PublicKey) -> Result<Self, Self::Error> {
+            if value.compressed() {
+                Ok(Self::from_secp(value.inner))
+            } else {
+                Err(super::UncompressedPublicKeyError)
+            }
+        }
     }
 
     /// A Bitcoin ECDSA private key.
@@ -585,10 +605,6 @@ impl From<secp256k1::PublicKey> for PublicKey {
     fn from(pk: secp256k1::PublicKey) -> Self { Self::from_secp(pk) }
 }
 
-impl From<PublicKey> for XOnlyPublicKey {
-    fn from(pk: PublicKey) -> Self { Self::new(*pk.as_inner()) }
-}
-
 /// An opaque return type for PublicKey::to_sort_key.
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct SortKey(ArrayVec<u8, 65>);
@@ -731,22 +747,6 @@ impl FromStr for CompressedPublicKey {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::from_slice(&<[u8; 33]>::from_hex(s)?).map_err(Into::into)
     }
-}
-
-impl TryFrom<PublicKey> for CompressedPublicKey {
-    type Error = UncompressedPublicKeyError;
-
-    fn try_from(value: PublicKey) -> Result<Self, Self::Error> {
-        if value.compressed() {
-            Ok(Self::from_secp(*value.as_inner()))
-        } else {
-            Err(UncompressedPublicKeyError)
-        }
-    }
-}
-
-impl From<CompressedPublicKey> for PublicKey {
-    fn from(value: CompressedPublicKey) -> Self { Self::from_secp(*value.as_inner()) }
 }
 
 impl From<CompressedPublicKey> for XOnlyPublicKey {
