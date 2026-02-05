@@ -36,7 +36,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(hashes_fuzz)', 'cfg(rust_v_1_64)' ] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(hashes_fuzz)'] }
 
 [lints.clippy]
 redundant_clone = "warn"
