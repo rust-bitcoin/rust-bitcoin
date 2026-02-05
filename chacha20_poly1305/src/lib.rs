@@ -58,6 +58,7 @@ impl std::error::Error for Error {
 }
 
 /// Encrypt and decrypt content along with an authentication tag.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChaCha20Poly1305 {
     key: Key,
     nonce: Nonce,
