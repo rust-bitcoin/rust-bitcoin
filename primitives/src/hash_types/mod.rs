@@ -110,6 +110,18 @@ macro_rules! impl_serde(
 #[cfg(feature = "serde")]
 pub(in crate::hash_types) use impl_serde;
 
+macro_rules! impl_debug {
+    ($ty:ident) => {
+        impl core::fmt::Debug for HashType {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                f.debug_tuple(stringify!($ty)).field(&self.0).finish()
+            }
+        }
+    };
+}
+pub(in crate::hash_types) use impl_debug;
+
 /// Functions used by serde impls of all hashes.
 #[cfg(feature = "serde")]
 pub mod serde_details {
@@ -197,6 +209,16 @@ mod tests {
     #[cfg(feature = "serde")]
     fn dummy_test_case() -> Txid { DUMMY_TXID_HEX_STR.parse::<Txid>().unwrap() }
 
+    #[cfg(feature = "alloc")]
+    fn ab_test_case() -> (Txid, &'static str) {
+        let mut a = [0xab; 32];
+        a[0] = 0xff;           // Just so we can see which way the array is printing.
+        let tc = Txid::from_byte_array(a);
+        let want = "Txid(bitcoin_hashes::sha256d::Hash(abababababababababababababababababababababababababababababababff))";
+
+        (tc, want)
+    }
+
     #[test]
     #[cfg(feature = "serde")] // Implies alloc and hex
     fn serde_human_readable_roundtrips() {
@@ -216,13 +238,11 @@ mod tests {
     }
 
     #[test]
-    // This is solely to test that we can debug print WITH "hex" so its ok to require "alloc".
+    // This is solely to test that we can debug print WITH and WITHOUT "hex" so its ok to require "alloc".
     #[cfg(feature = "alloc")]
-    #[cfg(feature = "hex")]
     fn debug() {
-        let tc = Txid::from_byte_array([0xab; 32]);
+        let (tc, want) = ab_test_case();
         let got = alloc::format!("{:?}", tc);
-        let want = "abababababababababababababababababababababababababababababababab";
         assert_eq!(got, want);
     }
 
@@ -237,16 +257,5 @@ mod tests {
         assert_eq!(as_array, tc.as_byte_array());
         assert_eq!(borrowed, tc.as_byte_array());
         assert_eq!(as_slice, tc.as_byte_array());
-    }
-
-    #[test]
-    // This is solely to test that we can debug print WITHOUT "hex" so its ok to require "alloc".
-    #[cfg(feature = "alloc")]
-    #[cfg(not(feature = "hex"))]
-    fn debug() {
-        let tc = Txid::from_byte_array([0xab; 32]);
-        let got = alloc::format!("{:?}", tc);
-        let want = "abababababababababababababababababababababababababababababababab";
-        assert_eq!(got, want);
     }
 }
