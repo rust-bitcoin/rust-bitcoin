@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::inline_always)]
+#![allow(clippy::too_many_lines)]
+#![allow(clippy::many_single_char_names)]
+#![allow(clippy::cast_ptr_alignment)]
+
 //! SHA3-256 from the family of hashes based on the Keccak permutation function.
 
 // The Keccak permutation function is defined by five functions and a state array of N-bits,

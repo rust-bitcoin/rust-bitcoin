@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SHA512_256 implementation.
+//! `SHA512_256` implementation.
 //!
 //! SHA512/256 is a hash function that uses the sha512 algorithm but it truncates
 //! the output to 256 bits. It has different initial constants than sha512 so it
