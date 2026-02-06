@@ -495,6 +495,48 @@ impl fmt::Debug for U256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#x}", self) }
 }
 
+impl fmt::Binary for U256 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use fmt::Write as _;
+
+        if f.alternate() {
+            f.write_str("0b")?;
+        }
+
+        let mut write_buf: Self = *self;
+
+        #[allow(clippy::indexing_slicing)]
+        while write_buf > Self::ZERO {
+            let bit = write_buf.low_u64() & 0x1;
+            f.write_char(if bit > 0 { '1' } else { '0' })?;
+            write_buf = write_buf >> 1;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Octal for U256 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use fmt::Write as _;
+
+        const CHARS: [char; 8] = ['0', '1', '2', '3', '4', '5', '6', '7'];
+
+        if f.alternate() {
+            f.write_str("0o")?;
+        }
+
+        let mut write_buf: Self = *self;
+
+        #[allow(clippy::indexing_slicing)]
+        while write_buf > Self::ZERO {
+            let chunk = write_buf.low_u64() & 0x7;
+            f.write_char(CHARS[chunk as usize])?;
+            write_buf = write_buf >> 1;
+        }
+        Ok(())
+    }
+}
+
 /// Splits a 32 byte array into two 16 byte arrays.
 fn split_in_half(a: [u8; 32]) -> ([u8; 16], [u8; 16]) {
     let mut high = [0_u8; 16];

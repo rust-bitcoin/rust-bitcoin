@@ -15,6 +15,7 @@ use internals::write_err;
 use serde::{Deserialize, Serialize};
 
 use crate::parse_int::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
+use crate::internal_macros::impl_fmt_traits_for_u32_wrapper;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -75,20 +76,6 @@ macro_rules! do_impl {
                 fmt::Display::fmt(&self.0, f)
             }
         }
-
-        impl fmt::LowerHex for $ty {
-            #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                fmt::LowerHex::fmt(&self.0, f)
-            }
-        }
-
-        impl fmt::UpperHex for $ty {
-            #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                fmt::UpperHex::fmt(&self.0, f)
-            }
-        }
     };
 }
 
@@ -100,6 +87,7 @@ macro_rules! do_impl {
 pub struct Work(U256);
 
 do_impl!(Work);
+impl_fmt_traits_for_u32_wrapper!(Work);
 
 impl Add for Work {
     type Output = Self;
@@ -207,6 +195,7 @@ impl Target {
     }
 }
 do_impl!(Target);
+impl_fmt_traits_for_u32_wrapper!(Target);
 
 /// Encoding of 256-bit target as 32-bit float.
 ///

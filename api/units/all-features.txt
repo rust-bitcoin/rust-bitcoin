@@ -436,6 +436,8 @@ impl core::fmt::Binary for bitcoin_units::locktime::absolute::Height
 impl core::fmt::Binary for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::fmt::Binary for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::fmt::Binary for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::fmt::Binary for bitcoin_units::pow::Target
+impl core::fmt::Binary for bitcoin_units::pow::Work
 impl core::fmt::Binary for bitcoin_units::sequence::Sequence
 impl core::fmt::Debug for bitcoin_units::Amount
 impl core::fmt::Debug for bitcoin_units::BlockTime
@@ -578,6 +580,8 @@ impl core::fmt::Octal for bitcoin_units::locktime::absolute::Height
 impl core::fmt::Octal for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::fmt::Octal for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::fmt::Octal for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::fmt::Octal for bitcoin_units::pow::Target
+impl core::fmt::Octal for bitcoin_units::pow::Work
 impl core::fmt::Octal for bitcoin_units::sequence::Sequence
 impl core::fmt::UpperHex for bitcoin_units::Amount
 impl core::fmt::UpperHex for bitcoin_units::BlockTime
@@ -2571,6 +2575,7 @@ pub fn bitcoin_units::pow::Target::cmp(&self, other: &bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::pow::Target::eq(&self, other: &bitcoin_units::pow::Target) -> bool
 pub fn bitcoin_units::pow::Target::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::pow::Target::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::pow::Target::from(c: bitcoin_units::pow::CompactTarget) -> Self
 pub fn bitcoin_units::pow::Target::from_be_bytes(bytes: [u8; 32]) -> bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::from_compact(c: bitcoin_units::pow::CompactTarget) -> Self
@@ -2589,6 +2594,7 @@ pub fn bitcoin_units::pow::Work::cmp(&self, other: &bitcoin_units::pow::Work) ->
 pub fn bitcoin_units::pow::Work::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
 pub fn bitcoin_units::pow::Work::eq(&self, other: &bitcoin_units::pow::Work) -> bool
 pub fn bitcoin_units::pow::Work::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::pow::Work::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::pow::Work::from_be_bytes(bytes: [u8; 32]) -> bitcoin_units::pow::Work
 pub fn bitcoin_units::pow::Work::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::pow::Work::from_le_bytes(bytes: [u8; 32]) -> bitcoin_units::pow::Work
