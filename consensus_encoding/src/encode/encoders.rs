@@ -69,6 +69,41 @@ impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
     fn len(&self) -> usize { self.arr.map_or(0, |a| a.len()) }
 }
 
+/// An encoder for a reference to an array.
+///
+/// This encoder borrows the array instead of taking ownership, avoiding a copy
+/// when the array is already available by reference (e.g., as a struct field).
+pub struct ArrayRefEncoder<'e, const N: usize> {
+    arr: Option<&'e [u8; N]>,
+}
+
+impl<'e, const N: usize> ArrayRefEncoder<'e, N> {
+    /// Constructs an encoder which encodes the array reference with no length prefix.
+    pub const fn without_length_prefix(arr: &'e [u8; N]) -> Self {
+        Self { arr: Some(arr) }
+    }
+}
+
+impl<const N: usize> Encoder for ArrayRefEncoder<'_, N> {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] {
+        self.arr.map(|x| &x[..]).unwrap_or_default()
+    }
+
+    #[inline]
+    fn advance(&mut self) -> bool {
+        self.arr = None;
+        false
+    }
+}
+
+impl<const N: usize> ExactSizeEncoder for ArrayRefEncoder<'_, N> {
+    #[inline]
+    fn len(&self) -> usize {
+        self.arr.map_or(0, |a| a.len())
+    }
+}
+
 /// An encoder for a list of encodable types.
 pub struct SliceEncoder<'e, T: Encodable> {
     /// The list of references to the objects we are encoding.
@@ -391,6 +426,31 @@ mod tests {
         // Empty array should have one empty chunk, then exhausted.
         let test_array = TestArray([]);
         let mut encoder = test_array.encoder();
+        assert_eq!(encoder.len(), 0);
+        assert!(encoder.is_empty());
+        assert!(encoder.current_chunk().is_empty());
+        assert!(!encoder.advance());
+        assert!(encoder.current_chunk().is_empty());
+    }
+
+    #[test]
+    fn encode_array_ref_with_data() {
+        // Should have one chunk with the array data, then exhausted.
+        let data = [1u8, 2, 3, 4];
+        let mut encoder = ArrayRefEncoder::without_length_prefix(&data);
+        assert_eq!(encoder.len(), 4);
+        assert!(!encoder.is_empty());
+        assert_eq!(encoder.current_chunk(), &[1u8, 2, 3, 4][..]);
+        assert!(!encoder.advance());
+        assert!(encoder.current_chunk().is_empty());
+        assert_eq!(encoder.len(), 0);
+    }
+
+    #[test]
+    fn encode_empty_array_ref() {
+        // Empty array should have one empty chunk, then exhausted.
+        let data = [];
+        let mut encoder = ArrayRefEncoder::without_length_prefix(&data);
         assert_eq!(encoder.len(), 0);
         assert!(encoder.is_empty());
         assert!(encoder.current_chunk().is_empty());
