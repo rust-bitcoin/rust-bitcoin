@@ -429,7 +429,7 @@ impl Psbt {
                     let (sighash, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
                     let key_pair = Keypair::from_secret_key(sk.as_inner())
                         .tap_tweak(input.tap_merkle_root)
-                        .to_keypair();
+                        .into_keypair();
 
                     #[cfg(all(feature = "rand", feature = "std"))]
                     let signature =
