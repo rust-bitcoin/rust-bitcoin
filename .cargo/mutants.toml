@@ -23,6 +23,7 @@ exclude_re = [
     "units/.* dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
     # src/locktime/relative.rs
     "units/.* LockTime::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* CompactTarget::to_hex", # Deprecated
     "units/.* FeeRate::fee_vb", # Deprecated
     "units/.* FeeRate::fee_wu", # Deprecated
     "units/.* SignedAmount::checked_abs", # Deprecated
@@ -34,6 +35,7 @@ exclude_re = [
     "units/.* Height::to_consensus_u32", # Deprecated
     "units/.* Sequence::to_hex", # Deprecated
     "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* \\| with \\^ in Target::to_compact_lossy", # compact | (size << 24). compact and size are bitwise independent, so impossible to tell ^ from |.
 
     # primitives
     "primitives/.* Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
@@ -43,7 +45,6 @@ exclude_re = [
     "primitives/.* decode_cursor", # Mutating operations in decode_cursor can result in an infinite loop
     "primitives/.* fmt_debug", # Mutants from formatting/display changes
     "primitives/.* fmt_debug_pretty", # Mutants from formatting/display changes
-    "primitives/.* CompactTarget::to_hex", # Deprecated
     "primitives/.* Script::to_hex", # Deprecated
     "primitives/.* Script<T>::to_hex", # Deprecated
     "primitives/.* ScriptBuf::to_hex", # Deprecated

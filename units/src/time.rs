@@ -9,7 +9,6 @@
 
 #[cfg(feature = "encoding")]
 use core::convert::Infallible;
-#[cfg(feature = "encoding")]
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -47,6 +46,12 @@ mod encapsulate {
 }
 #[doc(inline)]
 pub use encapsulate::BlockTime;
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockTime, to_u32);
+
+impl fmt::Display for BlockTime {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.to_u32(), f) }
+}
 
 impl From<u32> for BlockTime {
     #[inline]
@@ -168,6 +173,9 @@ impl<'a> Arbitrary<'a> for BlockTime {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+
     #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
@@ -203,5 +211,24 @@ mod tests {
 
         let error = decoder.end().unwrap_err();
         assert!(matches!(error, BlockTimeDecoderError(UnexpectedEofError { .. })));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn time_module_display() {
+        assert_eq!(BlockTime::from(1_765_364_400).to_string(), "1765364400");
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "encoding")]
+    fn time_module_error_display() {
+        // BlockTimeDecoderError
+        let bytes = [0xb0, 0x52, 0x39]; // 3 bytes is an EOF error
+
+        let mut decoder = BlockTimeDecoder::default();
+        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+
+        assert_ne!(decoder.end().unwrap_err().to_string(), "");
     }
 }

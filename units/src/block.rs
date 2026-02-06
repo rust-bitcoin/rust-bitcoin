@@ -125,6 +125,8 @@ impl BlockHeight {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockHeight);
+
 impl From<absolute::Height> for BlockHeight {
     /// Converts a [`locktime::absolute::Height`] to a [`BlockHeight`].
     ///
@@ -262,6 +264,8 @@ impl BlockHeightInterval {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockHeightInterval);
+
 impl From<relative::NumberOfBlocks> for BlockHeightInterval {
     /// Converts a [`locktime::relative::NumberOfBlocks`] to a [`BlockHeightInterval`].
     ///
@@ -336,6 +340,8 @@ impl BlockMtp {
         self.to_u32().checked_add(other.to_u32()).map(Self)
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockMtp);
 
 impl From<absolute::MedianTimePast> for BlockMtp {
     /// Converts a [`locktime::absolute::MedianTimePast`] to a [`BlockMtp`].
@@ -426,6 +432,8 @@ impl BlockMtpInterval {
         self.to_u32().checked_add(other.to_u32()).map(Self)
     }
 }
+
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockMtpInterval);
 
 impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
     /// Converts a [`locktime::relative::NumberOf512Seconds`] to a [`BlockMtpInterval `].

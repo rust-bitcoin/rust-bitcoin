@@ -50,6 +50,7 @@ pub mod block;
 pub mod fee_rate;
 pub mod locktime;
 pub mod parse_int;
+pub mod pow;
 pub mod result;
 pub mod sequence;
 pub mod time;
@@ -62,6 +63,7 @@ pub use self::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     locktime::{absolute, relative},
+    pow::{CompactTarget, Target, Work},
     result::NumOpResult,
     sequence::Sequence,
     time::BlockTime,

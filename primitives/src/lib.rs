@@ -46,7 +46,6 @@ mod opcodes;
 
 pub mod block;
 pub mod merkle_tree;
-pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
 pub mod transaction;
@@ -60,6 +59,7 @@ pub use units::{
     fee_rate::{self, FeeRate},
     locktime::{self, absolute, relative},
     parse_int,
+    pow::{self, CompactTarget, Target, Work},
     result::{self, NumOpResult},
     sequence::{self, Sequence},
     time::{self, BlockTime},
@@ -87,7 +87,6 @@ pub use self::{
 pub use self::{
     block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
-    pow::CompactTarget,
     transaction::{Ntxid, OutPoint, Txid, Version as TransactionVersion, Wtxid},
 };
 
