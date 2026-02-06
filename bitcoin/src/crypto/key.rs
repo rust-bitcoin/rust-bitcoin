@@ -136,7 +136,7 @@ mod encapsulate {
     }
 
     /// A Bitcoin ECDSA private key.
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct PrivateKey {
         /// Whether this private key should be serialized as compressed.
         compressed: bool,
@@ -584,7 +584,7 @@ impl PublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key(sk: PrivateKey) -> Self { sk.public_key() }
+    pub fn from_private_key(sk: &PrivateKey) -> Self { sk.public_key() }
 
     /// Extracts the public key from a Keypair
     pub fn from_keypair(pair: &Keypair) -> Self {
@@ -788,10 +788,10 @@ impl PrivateKey {
 
     /// Serializes the private key to bytes.
     #[deprecated(since = "TBD", note = "use to_vec instead")]
-    pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
+    pub fn to_bytes(&self) -> Vec<u8> { self.to_vec() }
 
     /// Serializes the private key to bytes.
-    pub fn to_vec(self) -> Vec<u8> { self.as_inner()[..].to_vec() }
+    pub fn to_vec(&self) -> Vec<u8> { self.as_inner()[..].to_vec() }
 
     /// Deserializes a private key from a byte array.
     pub fn from_byte_array(
@@ -828,7 +828,7 @@ impl PrivateKey {
     }
 
     /// Gets the WIF encoding of this private key.
-    pub fn to_wif(self) -> String {
+    pub fn to_wif(&self) -> String {
         let mut buf = String::new();
         buf.write_fmt(format_args!("{}", self)).unwrap();
         buf.shrink_to_fit();
@@ -1675,7 +1675,7 @@ mod tests {
         ];
 
         let sk = KEY_WIF.parse::<PrivateKey>().unwrap();
-        let pk = PublicKey::from_private_key(sk);
+        let pk = PublicKey::from_private_key(&sk);
         let pk_u = PublicKey::from_secp_uncompressed(*pk.as_inner());
 
         assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);

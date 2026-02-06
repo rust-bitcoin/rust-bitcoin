@@ -29,7 +29,7 @@ fn psbt_sign_taproot() {
             match key_request {
                 KeyRequest::Bip32((mfp, _)) =>
                     if *mfp == self.mfp {
-                        Ok(Some(self.sk))
+                        Ok(Some(self.sk.clone()))
                     } else {
                         Err(SignError::KeyNotFound)
                     },

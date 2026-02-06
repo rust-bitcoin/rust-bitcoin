@@ -886,7 +886,7 @@ impl GetKey for $map<PublicKey, PrivateKey> {
                 }
 
                 let pubkey_odd = xonly.public_key(secp256k1::Parity::Odd);
-                if let Some(priv_key) = self.get(&pubkey_odd).copied() {
+                if let Some(priv_key) = self.get(&pubkey_odd) {
                     let negated_priv_key  = priv_key.negate();
                     return Ok(Some(negated_priv_key));
                 }
@@ -2333,7 +2333,7 @@ mod tests {
 
         let sk = SecretKey::new(&mut rand::rng());
         let priv_key = PrivateKey::from_secp(sk, NetworkKind::Test);
-        let pk = PublicKey::from_private_key(priv_key);
+        let pk = PublicKey::from_private_key(&priv_key);
 
         (priv_key, pk)
     }
@@ -2344,7 +2344,7 @@ mod tests {
         let (priv_key, pk) = gen_keys();
 
         let mut key_map = BTreeMap::new();
-        key_map.insert(pk, priv_key);
+        key_map.insert(pk, priv_key.clone());
 
         let got = key_map.get_key(&KeyRequest::Pubkey(pk)).expect("failed to get key");
         assert_eq!(got.unwrap(), priv_key)
