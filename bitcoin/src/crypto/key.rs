@@ -795,13 +795,13 @@ impl PrivateKey {
 
     /// Serializes the private key to bytes.
     #[deprecated(since = "TBD", note = "use to_vec instead")]
-    pub fn to_bytes(&self) -> Vec<u8> { self.to_vec() }
+    pub fn to_bytes(&self) -> Vec<u8> { self.to_secret_vec() }
 
     /// Serializes the private key to bytes.
-    pub fn to_vec(&self) -> Vec<u8> { self.as_inner()[..].to_vec() }
+    pub fn to_secret_vec(&self) -> Vec<u8> { self.as_inner()[..].to_vec() }
 
     /// Deserializes a private key from a byte array.
-    pub fn from_byte_array(
+    pub fn from_secret_byte_array(
         data: [u8; 32],
         network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
@@ -815,7 +815,7 @@ impl PrivateKey {
         network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
         let array = data.try_into().map_err(|_| secp256k1::Error::InvalidSecretKey)?;
-        Self::from_byte_array(array, network)
+        Self::from_secret_byte_array(array, network)
     }
 
     /// Formats the private key to WIF format.
@@ -1993,7 +1993,7 @@ mod tests {
                 "1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9",
             )
             .unwrap();
-            let sk = PrivateKey::from_byte_array(bytes, NetworkKind::Test).unwrap();
+            let sk = PrivateKey::from_secret_byte_array(bytes, NetworkKind::Test).unwrap();
             Keypair::from_secret_key(sk.as_inner())
         };
 
