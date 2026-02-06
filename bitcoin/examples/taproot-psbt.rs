@@ -752,7 +752,7 @@ fn sign_psbt_taproot(
 ) {
     let keypair = Keypair::from_secret_key(secret_key);
     let keypair = match leaf_hash {
-        None => keypair.tap_tweak(psbt_input.tap_merkle_root).to_keypair(),
+        None => keypair.tap_tweak(psbt_input.tap_merkle_root).into_keypair(),
         Some(_) => keypair, // no tweak for script spend
     };
 
