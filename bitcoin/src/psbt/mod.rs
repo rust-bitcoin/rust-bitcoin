@@ -880,14 +880,14 @@ impl GetKey for $map<PublicKey, PrivateKey> {
         match key_request {
             KeyRequest::Pubkey(pk) => Ok(self.get(&pk).cloned()),
             KeyRequest::XOnlyPubkey(xonly) => {
-                let pubkey_even = xonly.public_key(secp256k1::Parity::Even);
+                let pubkey_even = xonly.with_parity(secp256k1::Parity::Even).to_public_key();
                 let key = self.get(&pubkey_even).cloned();
 
                 if key.is_some() {
                     return Ok(key);
                 }
 
-                let pubkey_odd = xonly.public_key(secp256k1::Parity::Odd);
+                let pubkey_odd = xonly.with_parity(secp256k1::Parity::Odd).to_public_key();
                 if let Some(priv_key) = self.get(&pubkey_odd).copied() {
                     let negated_priv_key  = priv_key.negate();
                     return Ok(Some(negated_priv_key));
