@@ -1,3 +1,6 @@
+# TBD
+- Remove `From<UnexpectedEof>` for primitive decoder error types [#5606](https://github.com/rust-bitcoin/rust-bitcoin/pull/5606)
+
 # 1.0.0 - 2025-10-18
 
 This changelog is a rolling description of everything that will eventually end up in `v1.0`.

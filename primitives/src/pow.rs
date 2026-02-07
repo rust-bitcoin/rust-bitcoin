@@ -83,12 +83,12 @@ impl encoding::Decoder for CompactTargetDecoder {
 
     #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        Ok(self.0.push_bytes(bytes)?)
+        self.0.push_bytes(bytes).map_err(CompactTargetDecoderError)
     }
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end()?);
+        let n = u32::from_le_bytes(self.0.end().map_err(CompactTargetDecoderError)?);
         Ok(CompactTarget::from_consensus(n))
     }
 
@@ -107,10 +107,6 @@ pub struct CompactTargetDecoderError(encoding::UnexpectedEofError);
 
 impl From<Infallible> for CompactTargetDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<encoding::UnexpectedEofError> for CompactTargetDecoderError {
-    fn from(e: encoding::UnexpectedEofError) -> Self { Self(e) }
 }
 
 impl fmt::Display for CompactTargetDecoderError {
