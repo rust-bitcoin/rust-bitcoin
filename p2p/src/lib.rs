@@ -678,46 +678,46 @@ impl<'a> Arbitrary<'a> for Magic {
 mod tests {
     use alloc::string::ToString;
 
-    use bitcoin::consensus::encode::{deserialize, serialize};
+    use encoding::{decode_from_slice, encode_to_vec};
 
     use super::*;
 
     #[test]
     fn serialize_deserialize() {
-        assert_eq!(serialize(&Magic::BITCOIN), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(encode_to_vec(&Magic::BITCOIN), &[0xf9, 0xbe, 0xb4, 0xd9]);
         let magic: Magic = Network::Bitcoin.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0xf9, 0xbe, 0xb4, 0xd9]);
-        assert_eq!(serialize(&Magic::TESTNET3), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(encode_to_vec(&magic), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(encode_to_vec(&Magic::TESTNET3), &[0x0b, 0x11, 0x09, 0x07]);
         let magic: Magic = Network::Testnet(TestnetVersion::V3).try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x0b, 0x11, 0x09, 0x07]);
-        assert_eq!(serialize(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
+        assert_eq!(encode_to_vec(&magic), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(encode_to_vec(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
         let magic: Magic = Network::Testnet(TestnetVersion::V4).try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
-        assert_eq!(serialize(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(encode_to_vec(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
+        assert_eq!(encode_to_vec(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
         let magic: Magic = Network::Signet.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x0a, 0x03, 0xcf, 0x40]);
-        assert_eq!(serialize(&Magic::REGTEST), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(encode_to_vec(&magic), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(encode_to_vec(&Magic::REGTEST), &[0xfa, 0xbf, 0xb5, 0xda]);
         let magic: Magic = Network::Regtest.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(encode_to_vec(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
 
         assert_eq!(
-            deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
+            decode_from_slice::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
             Network::Bitcoin.try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
+            decode_from_slice::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
             Network::Testnet(TestnetVersion::V3).try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
+            decode_from_slice::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
             Network::Testnet(TestnetVersion::V4).try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
+            decode_from_slice::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
             Network::Signet.try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
+            decode_from_slice::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
             Network::Regtest.try_into().ok()
         );
     }
