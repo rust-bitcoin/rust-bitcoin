@@ -2,6 +2,8 @@
 
 //! SHA256 implementation.
 
+#![allow(clippy::unreadable_literal)]
+
 mod crypto;
 #[cfg(test)]
 mod tests;
@@ -67,6 +69,10 @@ impl HashEngine {
     /// Outputs the midstate of the hash engine.
     ///
     /// Please see docs on [`Midstate`] before using this function.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MidstateError`] if the number of bytes hashed is not a multiple of 64.
     pub fn midstate(&self) -> Result<Midstate, MidstateError> {
         if !self.can_extract_midstate() {
             return Err(MidstateError { invalid_n_bytes_hashed: self.bytes_hashed });
@@ -184,9 +190,7 @@ impl Midstate {
     /// Panics if `bytes_hashed` is not a multiple of 64.
     #[track_caller]
     pub const fn new(state: [u8; 32], bytes_hashed: u64) -> Self {
-        if bytes_hashed % 64 != 0 {
-            panic!("bytes hashed is not a multiple of 64");
-        }
+        assert!(bytes_hashed % 64 == 0, "bytes hashed is not a multiple of 64");
 
         Self { bytes: state, bytes_hashed }
     }

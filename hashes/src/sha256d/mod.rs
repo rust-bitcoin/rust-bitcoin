@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SHA256d implementation (double SHA256).
+//! `SHA256d` implementation (double SHA256).
 
 use crate::sha256;
 
@@ -22,12 +22,12 @@ impl Hash {
     }
 }
 
-/// Engine to compute SHA256d hash function.
+/// Engine to compute `SHA256d` hash function.
 #[derive(Debug, Clone)]
 pub struct HashEngine(sha256::HashEngine);
 
 impl HashEngine {
-    /// Constructs a new SHA256d hash engine.
+    /// Constructs a new `SHA256d` hash engine.
     pub const fn new() -> Self { Self(sha256::HashEngine::new()) }
 }
 
@@ -113,7 +113,7 @@ mod tests {
         let hash = sha256d::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
         let roundtrip = hex.parse::<sha256d::Hash>().expect("failed to parse hex");
-        assert_eq!(roundtrip, hash)
+        assert_eq!(roundtrip, hash);
     }
 
     #[test]
