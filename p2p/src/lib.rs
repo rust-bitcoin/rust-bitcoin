@@ -37,6 +37,7 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
+use encoding::{ArrayEncoder, ArrayDecoder};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
@@ -504,6 +505,90 @@ impl Encodable for Magic {
 impl Decodable for Magic {
     fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
         Ok(Self(Decodable::consensus_decode(reader)?))
+    }
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder type for network [`Magic`].
+    pub struct MagicEncoder<'e>(ArrayEncoder<4>);
+}
+
+impl encoding::Encodable for Magic {
+    type Encoder<'e> = MagicEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        MagicEncoder::new(ArrayEncoder::without_length_prefix(self.0))
+    }
+}
+
+type MagicInnerDecoder = ArrayDecoder<4>;
+
+/// The decoder type for a network [`Magic`].
+pub struct MagicDecoder(MagicInnerDecoder);
+
+impl encoding::Decoder for MagicDecoder {
+    type Output = Magic;
+    type Error = MagicDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(MagicDecoderError::Decoder)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(MagicDecoderError::Decoder)?;
+        match Magic::from_bytes(bytes) {
+            Magic::BITCOIN => Ok(Magic::BITCOIN),
+            Magic::SIGNET => Ok(Magic::SIGNET),
+            Magic::REGTEST => Ok(Magic::REGTEST),
+            Magic::TESTNET3 => Ok(Magic::TESTNET3),
+            Magic::TESTNET4 => Ok(Magic::TESTNET4),
+            other => Err(MagicDecoderError::UnknownMagic(other)),
+        }
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Magic {
+    type Decoder = MagicDecoder;
+
+    fn decoder() -> Self::Decoder {
+        MagicDecoder(ArrayDecoder::new())
+    }
+}
+
+/// Errors occuring when decoding a network [`Magic`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MagicDecoderError {
+    /// Inner decoder failure.
+    Decoder(<MagicInnerDecoder as encoding::Decoder>::Error),
+    /// Unknown network [`Magic`].
+    UnknownMagic(Magic),
+}
+
+impl From<Infallible> for MagicDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for MagicDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Decoder(e) => write_err!(f, "magic error"; e),
+            Self::UnknownMagic(magic) => write!(f, "unknown magic: {magic}"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MagicDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Decoder(e) =>  Some(e),
+            Self::UnknownMagic(_) => None,
+        }
     }
 }
 
