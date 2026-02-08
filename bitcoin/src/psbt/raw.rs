@@ -9,7 +9,6 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use super::serialize::{Deserialize, Serialize};
@@ -68,25 +67,28 @@ impl fmt::Display for Key {
 
 impl Key {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let byte_size = r.read_compact_size()?;
+        let byte_size = r.read_compact_size()? as usize;
 
         if byte_size == 0 {
             return Err(Error::NoMorePairs);
         }
 
-        let key_byte_size: u64 = byte_size - 1;
+        // byte_size is the length of key_data + the length of type_value encoding
+        let type_value = r.read_compact_size()?;
+        let type_size = encoding::CompactSizeEncoder::encoded_size(
+            type_value.try_into().unwrap_or(usize::MAX)
+        );
+        let key_byte_size = byte_size - type_size;
 
-        if key_byte_size > MAX_VEC_SIZE.to_u64() {
+        if key_byte_size > MAX_VEC_SIZE {
             return Err(encode::Error::Parse(encode::ParseError::OversizedVectorAllocation {
-                requested: key_byte_size as usize,
+                requested: key_byte_size,
                 max: MAX_VEC_SIZE,
             })
             .into());
         }
 
-        let type_value = r.read_compact_size()?;
-
-        let mut key_data = Vec::with_capacity(key_byte_size as usize);
+        let mut key_data = Vec::with_capacity(key_byte_size);
         for _ in 0..key_byte_size {
             key_data.push(Decodable::consensus_decode(r)?);
         }
@@ -98,7 +100,11 @@ impl Key {
 impl Serialize for Key {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
-        buf.emit_compact_size(self.key_data.len() + 1).expect("in-memory writers don't error");
+
+        // First size value is the length of key_data and the length of the encoded type_value
+        let type_value = self.type_value.try_into().unwrap_or(usize::MAX);
+        let type_size = encoding::CompactSizeEncoder::encoded_size(type_value);
+        buf.emit_compact_size(self.key_data.len() + type_size).expect("in-memory writers don't error");
 
         buf.emit_compact_size(self.type_value).expect("in-memory writers don't error");
 
