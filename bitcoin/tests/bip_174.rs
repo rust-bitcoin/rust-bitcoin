@@ -120,7 +120,7 @@ fn build_extended_private_key() -> Xpriv {
     let xpriv = extended_private_key.parse::<Xpriv>().unwrap();
 
     let sk = PrivateKey::from_wif(seed).unwrap();
-    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.inner.to_secret_bytes());
+    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.as_inner().to_secret_bytes());
     assert_eq!(xpriv, seeded);
 
     xpriv
@@ -278,7 +278,7 @@ fn bip32_derivation(
         let pk = pk.parse::<PublicKey>().unwrap();
         let path = path.into_derivation_path().unwrap();
 
-        tree.insert(pk.inner, (fingerprint, path));
+        tree.insert(pk.to_inner(), (fingerprint, path));
     }
     tree
 }
