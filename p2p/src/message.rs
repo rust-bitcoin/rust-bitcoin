@@ -1148,7 +1148,9 @@ impl encoding::Decoder for RawNetworkMessageDecoder {
 
                     let (magic_bytes, command, payload_len_bytes, checksum) =
                         header_decoder.end().map_err(|_| {
-                            RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Header)
+                            RawNetworkMessageDecoderError(
+                                RawNetworkMessageDecoderErrorInner::Header,
+                            )
                         })?;
 
                     let payload_len = u32::from_le_bytes(payload_len_bytes) as usize;

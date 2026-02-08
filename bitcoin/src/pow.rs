@@ -99,7 +99,9 @@ macro_rules! do_impl {
             type Err = $err_ty;
 
             #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> { U256::from_str(s).map($ty).map_err($err_ty) }
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                U256::from_str(s).map($ty).map_err($err_ty)
+            }
         }
 
         #[doc = "Error returned when parsing a [`"]
@@ -1022,12 +1024,9 @@ impl core::str::FromStr for U256 {
         }
 
         for chunk in s.as_bytes().rchunks(38).rev() {
-            let chunk_str = core::str::from_utf8(chunk)
-                .map_err(ParseU256Error::InvalidEncoding)?;
+            let chunk_str = core::str::from_utf8(chunk).map_err(ParseU256Error::InvalidEncoding)?;
 
-            let val: u128 = chunk_str
-                .parse()
-                .map_err(ParseU256Error::InvalidDigit)?;
+            let val: u128 = chunk_str.parse().map_err(ParseU256Error::InvalidDigit)?;
 
             // Shift decimals and add chunk
             let (res, carry1) = result.overflowing_mul(POW10_38.into());
@@ -1182,7 +1181,8 @@ impl fmt::Display for ParseU256Error {
         match self {
             Self::Overflow => write!(f, "parsed value exceeded unsigned 256-bit range"),
             Self::Empty => write!(f, "parsed string is empty"),
-            Self::InvalidEncoding(ref e) => write_err!(f, "parsed number contained non-ascii chars"; e),
+            Self::InvalidEncoding(ref e) =>
+                write_err!(f, "parsed number contained non-ascii chars"; e),
             Self::InvalidDigit(ref e) => write_err!(f, "parsed number contained invalid digit"; e),
         }
     }
@@ -2071,10 +2071,9 @@ mod tests {
     macro_rules! check_from_str {
         ($ty:ident, $err_ty:ident, $mod_name:ident) => {
             mod $mod_name {
-                use super::{ParseU256Error, U256};
-                use super::{$ty, $err_ty};
-
                 use core::str::FromStr;
+
+                use super::{$err_ty, $ty, ParseU256Error, U256};
 
                 #[test]
                 fn target_from_str_decimal() {
