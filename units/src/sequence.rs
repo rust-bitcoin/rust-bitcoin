@@ -392,10 +392,10 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
 
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
     use encoding::Decoder as _;
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    use encoding::UnexpectedEofError;
 
     use super::*;
 

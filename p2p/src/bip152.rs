@@ -425,15 +425,13 @@ impl encoding::Encodable for BlockTransactionsRequest {
     type Encoder<'e> = BlockTransactionsRequestEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTransactionsRequestEncoder::new(
+        BlockTransactionsRequestEncoder::new(Encoder2::new(
+            self.block_hash.encoder(),
             Encoder2::new(
-                self.block_hash.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.offsets.len()),
-                    SliceEncoder::without_length_prefix(&self.offsets),
-                ),
-            )
-        )
+                CompactSizeEncoder::new(self.offsets.len()),
+                SliceEncoder::without_length_prefix(&self.offsets),
+            ),
+        ))
     }
 }
 

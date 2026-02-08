@@ -261,7 +261,10 @@ fn incomplete_block_len<H: HashEngine>(eng: &H) -> usize {
 ///
 /// For when we cannot rely on having the `hex` feature enabled. Ignores formatter options and just
 /// writes with plain old `f.write_char()`.
-pub fn debug_hex<'a>(bytes: impl IntoIterator<Item = &'a u8>, f: &mut fmt::Formatter) -> fmt::Result {
+pub fn debug_hex<'a>(
+    bytes: impl IntoIterator<Item = &'a u8>,
+    f: &mut fmt::Formatter,
+) -> fmt::Result {
     const HEX_TABLE: [u8; 16] = *b"0123456789abcdef";
 
     for &b in bytes {

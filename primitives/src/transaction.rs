@@ -324,13 +324,13 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 
 #[cfg(feature = "alloc")]
 type TransactionEncoderInner<'e> = Encoder6<
-        VersionEncoder<'e>,
-        Option<ArrayEncoder<2>>,
-        Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
-        Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
-        Option<WitnessesEncoder<'e>>,
-        LockTimeEncoder<'e>,
-    >;
+    VersionEncoder<'e>,
+    Option<ArrayEncoder<2>>,
+    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
+    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
+    Option<WitnessesEncoder<'e>>,
+    LockTimeEncoder<'e>,
+>;
 
 #[cfg(feature = "alloc")]
 encoding::encoder_newtype! {
@@ -1511,7 +1511,9 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for Version {
     type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
+        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_u32().to_le_bytes(),
+        ))
     }
 }
 

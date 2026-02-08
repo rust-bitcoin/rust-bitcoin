@@ -5,14 +5,13 @@
 #![cfg(feature = "alloc")]
 #![cfg(feature = "encoding")]
 
-use encoding::{encode_to_vec, Decodable as _, Decoder as _};
-
 use bitcoin_units::absolute::{LockTime, LockTimeDecoder};
 use bitcoin_units::amount::AmountDecoder;
 use bitcoin_units::block::BlockHeightDecoder;
 use bitcoin_units::sequence::SequenceDecoder;
 use bitcoin_units::time::BlockTimeDecoder;
 use bitcoin_units::{Amount, BlockHeight, BlockTime, Sequence};
+use encoding::{encode_to_vec, Decodable as _, Decoder as _};
 
 /// Tests round-trip encoding/decoding for a list of values.
 ///
@@ -119,7 +118,10 @@ test_hardcoded_decoding!(
     ([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], Amount::ONE_SAT),
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::ONE_BTC), // 100_000_000 sats
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::from_sat(100_000_000).unwrap()), // 1 BTC
-    ([0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00], Amount::from_sat(21_000_000 * 100_000_000).unwrap()), // 21M BTC
+    (
+        [0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00],
+        Amount::from_sat(21_000_000 * 100_000_000).unwrap()
+    ), // 21M BTC
 );
 
 test_decoder_default!(amount_decoder_default, Amount, AmountDecoder, 8);
@@ -143,7 +145,10 @@ test_incremental_decoding!(
     ([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], Amount::ONE_SAT),
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::ONE_BTC), // 100_000_000 sats
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::from_sat(100_000_000).unwrap()), // 1 BTC
-    ([0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00], Amount::from_sat(21_000_000 * 100_000_000).unwrap()), // 21M BTC
+    (
+        [0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00],
+        Amount::from_sat(21_000_000 * 100_000_000).unwrap()
+    ), // 21M BTC
 );
 
 // BlockHeight encodes as 4-byte little-endian u32.

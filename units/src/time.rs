@@ -90,7 +90,9 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for BlockTime {
     type Encoder<'e> = BlockTimeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()))
+        BlockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_u32().to_le_bytes(),
+        ))
     }
 }
 
@@ -168,10 +170,10 @@ impl<'a> Arbitrary<'a> for BlockTime {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(all(feature = "encoding", feature = "alloc"))]
-    use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
     use encoding::Decoder as _;
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
+    use encoding::UnexpectedEofError;
 
     use super::*;
 
