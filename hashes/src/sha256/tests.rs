@@ -218,6 +218,19 @@ fn sha256_serde() {
     );
 }
 
+#[test]
+fn midstate_error_resume_hashing() {
+    let mut engine1 = sha256::Hash::engine();
+    let data = [1; 100];
+    engine1.input(&data);
+    let err = engine1.midstate().expect_err("100 bytes not block-aligned");
+    assert_eq!(err.unprocessed_bytes().len(), 36);
+    // we can resume hashing from err data
+    let mut engine2 = sha256::HashEngine::from_midstate(*err.midstate());
+    engine2.input(err.unprocessed_bytes());
+    assert_eq!(sha256::Hash::from_engine(engine1), sha256::Hash::from_engine(engine2));
+}
+
 #[cfg(target_arch = "wasm32")]
 mod wasm_tests {
     use super::*;
