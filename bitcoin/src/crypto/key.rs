@@ -1406,7 +1406,7 @@ impl fmt::Display for InvalidWifCompressionFlagError {
 impl std::error::Error for InvalidWifCompressionFlagError {}
 
 mod serialized_x_only {
-    internals::transparent_newtype! {
+    transparent_newtype! {
         /// An array of bytes that's semantically an x-only public but was **not** validated.
         ///
         /// This can be useful when validation is not desired but semantics of the bytes should be

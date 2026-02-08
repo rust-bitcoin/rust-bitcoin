@@ -37,7 +37,7 @@ mod primitive {
         }
     }
 
-    internals::transparent_newtype! {
+    transparent_newtype! {
         /// Byte slices that can be in Bitcoin script.
         ///
         /// The encoding of Bitcoin script restricts data pushes to be less than 2^32 bytes long.

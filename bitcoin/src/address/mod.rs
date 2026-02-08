@@ -308,7 +308,7 @@ pub enum AddressData {
     },
 }
 
-internals::transparent_newtype! {
+transparent_newtype! {
     /// A Bitcoin address.
     ///
     /// # Parsing addresses
