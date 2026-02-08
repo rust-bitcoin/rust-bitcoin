@@ -169,9 +169,14 @@ impl<'a> Arbitrary<'a> for BlockTime {
 #[cfg(test)]
 mod tests {
     #[cfg(all(feature = "encoding", feature = "alloc"))]
+    use alloc::string::ToString;
+    #[cfg(all(feature = "encoding", feature = "std"))]
+    use std::error::Error;
+
+    #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
     #[cfg(feature = "encoding")]
-    use encoding::Decoder as _;
+    use encoding::{Decodable as _, Decoder as _};
 
     use super::*;
 
@@ -203,5 +208,20 @@ mod tests {
 
         let error = decoder.end().unwrap_err();
         assert!(matches!(error, BlockTimeDecoderError(UnexpectedEofError { .. })));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder_error_display_is_non_empty() {
+        #[cfg(feature = "encoding")]
+        {
+            // BlockTimeDecoderError
+            let mut decoder = BlockTime::decoder();
+            let _ = decoder.push_bytes(&mut [0u8; 3].as_slice());
+            let e = decoder.end().unwrap_err();
+            assert!(!e.to_string().is_empty());
+            #[cfg(feature = "std")]
+            assert!(e.source().is_some());
+        }
     }
 }
