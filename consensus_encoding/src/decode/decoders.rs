@@ -604,6 +604,130 @@ where
     fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
+/// A decoder which decodes nine objects, one after the other.
+#[allow(clippy::type_complexity)] // Nested composition is easier than flattened alternatives.
+pub struct Decoder9<A, B, C, D, E, F, G, H, I>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+    E: Decoder,
+    F: Decoder,
+    G: Decoder,
+    H: Decoder,
+    I: Decoder,
+{
+    inner: Decoder2<Decoder3<A, B, C>, Decoder6<D, E, F, G, H, I>>,
+}
+
+#[allow(clippy::too_many_arguments)]
+impl<A, B, C, D, E, F, G, H, I> Decoder9<A, B, C, D, E, F, G, H, I>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+    E: Decoder,
+    F: Decoder,
+    G: Decoder,
+    H: Decoder,
+    I: Decoder,
+{
+    /// Constructs a new composite decoder.
+    pub const fn new(
+        dec_1: A,
+        dec_2: B,
+        dec_3: C,
+        dec_4: D,
+        dec_5: E,
+        dec_6: F,
+        dec_7: G,
+        dec_8: H,
+        dec_9: I,
+    ) -> Self {
+        Self {
+            inner: Decoder2::new(
+                Decoder3::new(dec_1, dec_2, dec_3),
+                Decoder6::new(dec_4, dec_5, dec_6, dec_7, dec_8, dec_9),
+            ),
+        }
+    }
+}
+
+impl<A, B, C, D, E, F, G, H, I> Decoder for Decoder9<A, B, C, D, E, F, G, H, I>
+where
+    A: Decoder,
+    B: Decoder,
+    C: Decoder,
+    D: Decoder,
+    E: Decoder,
+    F: Decoder,
+    G: Decoder,
+    H: Decoder,
+    I: Decoder,
+{
+    type Output = (
+        A::Output,
+        B::Output,
+        C::Output,
+        D::Output,
+        E::Output,
+        F::Output,
+        G::Output,
+        H::Output,
+        I::Output,
+    );
+    type Error = Decoder9Error<
+        A::Error,
+        B::Error,
+        C::Error,
+        D::Error,
+        E::Error,
+        F::Error,
+        G::Error,
+        H::Error,
+        I::Error,
+    >;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.inner.push_bytes(bytes).map_err(|error| match error {
+            Decoder2Error::First(Decoder3Error::First(a)) => Decoder9Error::First(a),
+            Decoder2Error::First(Decoder3Error::Second(b)) => Decoder9Error::Second(b),
+            Decoder2Error::First(Decoder3Error::Third(c)) => Decoder9Error::Third(c),
+            Decoder2Error::Second(Decoder6Error::First(d)) => Decoder9Error::Fourth(d),
+            Decoder2Error::Second(Decoder6Error::Second(e)) => Decoder9Error::Fifth(e),
+            Decoder2Error::Second(Decoder6Error::Third(f)) => Decoder9Error::Sixth(f),
+            Decoder2Error::Second(Decoder6Error::Fourth(d)) => Decoder9Error::Seventh(d),
+            Decoder2Error::Second(Decoder6Error::Fifth(e)) => Decoder9Error::Eigth(e),
+            Decoder2Error::Second(Decoder6Error::Sixth(f)) => Decoder9Error::Ninth(f),
+        })
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let result = self.inner.end().map_err(|error| match error {
+            Decoder2Error::First(Decoder3Error::First(a)) => Decoder9Error::First(a),
+            Decoder2Error::First(Decoder3Error::Second(b)) => Decoder9Error::Second(b),
+            Decoder2Error::First(Decoder3Error::Third(c)) => Decoder9Error::Third(c),
+
+            Decoder2Error::Second(Decoder6Error::First(d)) => Decoder9Error::Fourth(d),
+            Decoder2Error::Second(Decoder6Error::Second(e)) => Decoder9Error::Fifth(e),
+            Decoder2Error::Second(Decoder6Error::Third(f)) => Decoder9Error::Sixth(f),
+            Decoder2Error::Second(Decoder6Error::Fourth(d)) => Decoder9Error::Seventh(d),
+            Decoder2Error::Second(Decoder6Error::Fifth(e)) => Decoder9Error::Eigth(e),
+            Decoder2Error::Second(Decoder6Error::Sixth(f)) => Decoder9Error::Ninth(f),
+        })?;
+
+        let ((first, second, third), (fourth, fifth, sixth, seventh, eigth, ninth)) = result;
+        Ok((first, second, third, fourth, fifth, sixth, seventh, eigth, ninth))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
+}
+
 /// Decodes a compact size encoded integer.
 ///
 /// For more information about decoder see the documentation of the [`Decoder`] trait.
@@ -1105,6 +1229,84 @@ where
             Self::Fourth(ref e) => Some(e),
             Self::Fifth(ref e) => Some(e),
             Self::Sixth(ref e) => Some(e),
+        }
+    }
+}
+
+/// Error type for [`Decoder9`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Decoder9Error<A, B, C, D, E, F, G, H, I> {
+    /// Error from the first decoder.
+    First(A),
+    /// Error from the second decoder.
+    Second(B),
+    /// Error from the third decoder.
+    Third(C),
+    /// Error from the fourth decoder.
+    Fourth(D),
+    /// Error from the fifth decoder.
+    Fifth(E),
+    /// Error from the sixth decoder.
+    Sixth(F),
+    /// Error from the seventh decoder.
+    Seventh(G),
+    /// Error from the eigth decoder.
+    Eigth(H),
+    /// Error from the ninth decoder.
+    Ninth(I),
+}
+
+impl<A, B, C, D, E, F, G, H, I> fmt::Display for Decoder9Error<A, B, C, D, E, F, G, H, I>
+where
+    A: fmt::Display,
+    B: fmt::Display,
+    C: fmt::Display,
+    D: fmt::Display,
+    E: fmt::Display,
+    F: fmt::Display,
+    G: fmt::Display,
+    H: fmt::Display,
+    I: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::First(ref e) => write_err!(f, "first decoder error"; e),
+            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
+            Self::Third(ref e) => write_err!(f, "third decoder error"; e),
+            Self::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
+            Self::Fifth(ref e) => write_err!(f, "fifth decoder error"; e),
+            Self::Sixth(ref e) => write_err!(f, "sixth decoder error"; e),
+            Self::Seventh(ref e) => write_err!(f, "seventh decoder error"; e),
+            Self::Eigth(ref e) => write_err!(f, "eigth decoder error"; e),
+            Self::Ninth(ref e) => write_err!(f, "ninth decoder error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<A, B, C, D, E, F, G, H, I> std::error::Error for Decoder9Error<A, B, C, D, E, F, G, H, I>
+where
+    A: std::error::Error + 'static,
+    B: std::error::Error + 'static,
+    C: std::error::Error + 'static,
+    D: std::error::Error + 'static,
+    E: std::error::Error + 'static,
+    F: std::error::Error + 'static,
+    G: std::error::Error + 'static,
+    H: std::error::Error + 'static,
+    I: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::First(ref e) => Some(e),
+            Self::Second(ref e) => Some(e),
+            Self::Third(ref e) => Some(e),
+            Self::Fourth(ref e) => Some(e),
+            Self::Fifth(ref e) => Some(e),
+            Self::Sixth(ref e) => Some(e),
+            Self::Seventh(ref e) => Some(e),
+            Self::Eigth(ref e) => Some(e),
+            Self::Ninth(ref e) => Some(e),
         }
     }
 }
