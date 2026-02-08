@@ -272,6 +272,69 @@ where
     fn len(&self) -> usize { self.inner.len() }
 }
 
+/// An encoder which encodes nine objects, one after the other.
+#[allow(clippy::type_complexity)]
+pub struct Encoder9<A, B, C, D, E, F, G, H, I> {
+    inner: Encoder2<Encoder3<A, B, C>, Encoder6<D, E, F, G, H, I>>,
+}
+
+impl<A, B, C, D, E, F, G, H, I> Encoder9<A, B, C, D, E, F, G, H, I> {
+    /// Constructs a new composite encoder.
+    #[allow(clippy::too_many_arguments)]
+    pub const fn new(
+        enc_1: A,
+        enc_2: B,
+        enc_3: C,
+        enc_4: D,
+        enc_5: E,
+        enc_6: F,
+        enc_7: G,
+        enc_8: H,
+        enc_9: I,
+    ) -> Self {
+        Self {
+            inner: Encoder2::new(
+                Encoder3::new(enc_1, enc_2, enc_3),
+                Encoder6::new(enc_4, enc_5, enc_6, enc_7, enc_8, enc_9),
+            ),
+        }
+    }
+}
+
+impl<
+        A: Encoder,
+        B: Encoder,
+        C: Encoder,
+        D: Encoder,
+        E: Encoder,
+        F: Encoder,
+        G: Encoder,
+        H: Encoder,
+        I: Encoder,
+    > Encoder for Encoder9<A, B, C, D, E, F, G, H, I>
+{
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
+    #[inline]
+    fn advance(&mut self) -> bool { self.inner.advance() }
+}
+
+impl<A, B, C, D, E, F, G, H, I> ExactSizeEncoder for Encoder9<A, B, C, D, E, F, G, H, I>
+where
+    A: Encoder + ExactSizeEncoder,
+    B: Encoder + ExactSizeEncoder,
+    C: Encoder + ExactSizeEncoder,
+    D: Encoder + ExactSizeEncoder,
+    E: Encoder + ExactSizeEncoder,
+    F: Encoder + ExactSizeEncoder,
+    G: Encoder + ExactSizeEncoder,
+    H: Encoder + ExactSizeEncoder,
+    I: Encoder + ExactSizeEncoder,
+{
+    #[inline]
+    fn len(&self) -> usize { self.inner.len() }
+}
+
 /// Encoder for a compact size encoded integer.
 pub struct CompactSizeEncoder {
     buf: Option<ArrayVec<u8, SIZE>>,
@@ -565,6 +628,45 @@ mod tests {
         assert_eq!(encoder.current_chunk(), &[0x05][..]);
         assert!(encoder.advance());
         assert_eq!(encoder.current_chunk(), &[0x06][..]);
+        assert!(!encoder.advance());
+        assert!(encoder.current_chunk().is_empty());
+    }
+
+    #[test]
+    fn encode_nine_arrays() {
+        // Should encode nine arrays in sequence, then exhausted.
+        let enc1 = TestArray([0x01]).encoder();
+        let enc2 = TestArray([0x02]).encoder();
+        let enc3 = TestArray([0x03]).encoder();
+        let enc4 = TestArray([0x04]).encoder();
+        let enc5 = TestArray([0x05]).encoder();
+        let enc6 = TestArray([0x06]).encoder();
+        let enc7 = TestArray([0x07]).encoder();
+        let enc8 = TestArray([0x08]).encoder();
+        let enc9 = TestArray([0x09]).encoder();
+
+        let mut encoder = Encoder9::new(enc1, enc2, enc3, enc4, enc5, enc6, enc7, enc8, enc9);
+
+        assert_eq!(encoder.len(), 9);
+        assert!(!encoder.is_empty());
+
+        assert_eq!(encoder.current_chunk(), &[0x01][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x02][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x03][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x04][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x05][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x06][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x07][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x08][..]);
+        assert!(encoder.advance());
+        assert_eq!(encoder.current_chunk(), &[0x09][..]);
         assert!(!encoder.advance());
         assert!(encoder.current_chunk().is_empty());
     }

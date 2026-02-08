@@ -35,7 +35,7 @@ pub use self::decode::{
 pub use self::decode::{decode_from_slice, Decodable, Decoder};
 pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
-    SliceEncoder,
+    Encoder9, SliceEncoder,
 };
 #[cfg(feature = "alloc")]
 pub use self::encode::{encode_to_vec, flush_to_vec};
