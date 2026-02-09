@@ -125,151 +125,92 @@ impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
     }
 }
 
-/// An encoder which encodes two objects, one after the other.
-pub struct Encoder2<A, B> {
-    enc_idx: usize,
-    enc_1: A,
-    enc_2: B,
-}
-
-impl<A, B> Encoder2<A, B> {
-    /// Constructs a new composite encoder.
-    pub const fn new(enc_1: A, enc_2: B) -> Self { Self { enc_idx: 0, enc_1, enc_2 } }
-}
-
-impl<A: Encoder, B: Encoder> Encoder for Encoder2<A, B> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] {
-        if self.enc_idx == 0 {
-            self.enc_1.current_chunk()
-        } else {
-            self.enc_2.current_chunk()
+/// Helper macro to define an unrolled `EncoderN` composite encoder.
+macro_rules! define_encoder_n {
+    (
+        $(#[$attr:meta])*
+        $name:ident, $idx_limit:literal;
+        $(($enc_idx:literal, $enc_ty:ident, $enc_field:ident),)*
+    ) => {
+        $(#[$attr])*
+        pub struct $name<$($enc_ty,)*> {
+            cur_idx: usize,
+            $($enc_field: $enc_ty,)*
         }
-    }
 
-    #[inline]
-    fn advance(&mut self) -> bool {
-        if self.enc_idx == 0 {
-            if !self.enc_1.advance() {
-                self.enc_idx += 1;
+        impl<$($enc_ty,)*> $name<$($enc_ty,)*> {
+            /// Constructs a new composite encoder.
+            pub const fn new($($enc_field: $enc_ty,)*) -> Self {
+                Self { cur_idx: 0, $($enc_field,)* }
             }
-            true
-        } else {
-            self.enc_2.advance()
         }
-    }
-}
 
-impl<A, B> ExactSizeEncoder for Encoder2<A, B>
-where
-    A: Encoder + ExactSizeEncoder,
-    B: Encoder + ExactSizeEncoder,
-{
-    #[inline]
-    fn len(&self) -> usize { self.enc_1.len() + self.enc_2.len() }
-}
+        impl<$($enc_ty: Encoder,)*> Encoder for $name<$($enc_ty,)*> {
+            #[inline]
+            fn current_chunk(&self) -> &[u8] {
+                match self.cur_idx {
+                    $($enc_idx => self.$enc_field.current_chunk(),)*
+                    _ => &[],
+                }
+            }
 
-// For now we implement every higher encoder by composing Encoder2s, because
-// I'm lazy and this is trivial both to write and to review. For efficiency, we
-// should eventually unroll all of these. There are only a couple of them. The
-// unrolled versions should be macro-izable, if we want to do that.
-
-/// An encoder which encodes three objects, one after the other.
-pub struct Encoder3<A, B, C> {
-    inner: Encoder2<Encoder2<A, B>, C>,
-}
-
-impl<A, B, C> Encoder3<A, B, C> {
-    /// Constructs a new composite encoder.
-    pub const fn new(enc_1: A, enc_2: B, enc_3: C) -> Self {
-        Self { inner: Encoder2::new(Encoder2::new(enc_1, enc_2), enc_3) }
-    }
-}
-
-impl<A: Encoder, B: Encoder, C: Encoder> Encoder for Encoder3<A, B, C> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
-    #[inline]
-    fn advance(&mut self) -> bool { self.inner.advance() }
-}
-
-impl<A, B, C> ExactSizeEncoder for Encoder3<A, B, C>
-where
-    A: Encoder + ExactSizeEncoder,
-    B: Encoder + ExactSizeEncoder,
-    C: Encoder + ExactSizeEncoder,
-{
-    #[inline]
-    fn len(&self) -> usize { self.inner.len() }
-}
-
-/// An encoder which encodes four objects, one after the other.
-pub struct Encoder4<A, B, C, D> {
-    inner: Encoder2<Encoder2<A, B>, Encoder2<C, D>>,
-}
-
-impl<A, B, C, D> Encoder4<A, B, C, D> {
-    /// Constructs a new composite encoder.
-    pub const fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D) -> Self {
-        Self { inner: Encoder2::new(Encoder2::new(enc_1, enc_2), Encoder2::new(enc_3, enc_4)) }
-    }
-}
-
-impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder> Encoder for Encoder4<A, B, C, D> {
-    #[inline]
-    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
-    #[inline]
-    fn advance(&mut self) -> bool { self.inner.advance() }
-}
-
-impl<A, B, C, D> ExactSizeEncoder for Encoder4<A, B, C, D>
-where
-    A: Encoder + ExactSizeEncoder,
-    B: Encoder + ExactSizeEncoder,
-    C: Encoder + ExactSizeEncoder,
-    D: Encoder + ExactSizeEncoder,
-{
-    #[inline]
-    fn len(&self) -> usize { self.inner.len() }
-}
-
-/// An encoder which encodes six objects, one after the other.
-pub struct Encoder6<A, B, C, D, E, F> {
-    inner: Encoder2<Encoder3<A, B, C>, Encoder3<D, E, F>>,
-}
-
-impl<A, B, C, D, E, F> Encoder6<A, B, C, D, E, F> {
-    /// Constructs a new composite encoder.
-    pub const fn new(enc_1: A, enc_2: B, enc_3: C, enc_4: D, enc_5: E, enc_6: F) -> Self {
-        Self {
-            inner: Encoder2::new(
-                Encoder3::new(enc_1, enc_2, enc_3),
-                Encoder3::new(enc_4, enc_5, enc_6),
-            ),
+            #[inline]
+            fn advance(&mut self) -> bool {
+                match self.cur_idx {
+                    $(
+                        $enc_idx => {
+                            // For the last encoder, just pass through
+                            if $enc_idx == $idx_limit - 1 {
+                                return self.$enc_field.advance()
+                            }
+                            // For all others, return true, or increment to next encoder
+                            if !self.$enc_field.advance() {
+                                self.cur_idx += 1;
+                            }
+                            true
+                        }
+                    )*
+                    _ => false,
+                }
+            }
         }
-    }
+
+        impl<$($enc_ty,)*> ExactSizeEncoder for $name<$($enc_ty,)*>
+        where
+            $($enc_ty: Encoder + ExactSizeEncoder,)*
+        {
+            #[inline]
+            fn len(&self) -> usize {
+                0 $(+ self.$enc_field.len())*
+            }
+        }
+    };
 }
 
-impl<A: Encoder, B: Encoder, C: Encoder, D: Encoder, E: Encoder, F: Encoder> Encoder
-    for Encoder6<A, B, C, D, E, F>
-{
-    #[inline]
-    fn current_chunk(&self) -> &[u8] { self.inner.current_chunk() }
-    #[inline]
-    fn advance(&mut self) -> bool { self.inner.advance() }
+define_encoder_n! {
+    /// An encoder which encodes two objects, one after the other.
+    Encoder2, 2;
+    (0, A, enc_1), (1, B, enc_2),
 }
 
-impl<A, B, C, D, E, F> ExactSizeEncoder for Encoder6<A, B, C, D, E, F>
-where
-    A: Encoder + ExactSizeEncoder,
-    B: Encoder + ExactSizeEncoder,
-    C: Encoder + ExactSizeEncoder,
-    D: Encoder + ExactSizeEncoder,
-    E: Encoder + ExactSizeEncoder,
-    F: Encoder + ExactSizeEncoder,
-{
-    #[inline]
-    fn len(&self) -> usize { self.inner.len() }
+define_encoder_n! {
+    /// An encoder which encodes three objects, one after the other.
+    Encoder3, 3;
+    (0, A, enc_1), (1, B, enc_2), (2, C, enc_3),
+}
+
+define_encoder_n! {
+    /// An encoder which encodes four objects, one after the other.
+    Encoder4, 4;
+    (0, A, enc_1), (1, B, enc_2),
+    (2, C, enc_3), (3, D, enc_4),
+}
+
+define_encoder_n! {
+    /// An encoder which encodes six objects, one after the other.
+    Encoder6, 6;
+    (0, A, enc_1), (1, B, enc_2), (2, C, enc_3),
+    (3, D, enc_4), (4, E, enc_5), (5, F, enc_6),
 }
 
 /// Encoder for a compact size encoded integer.
