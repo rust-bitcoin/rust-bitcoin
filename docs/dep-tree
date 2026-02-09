@@ -3,6 +3,10 @@ base58ck
 │   └── hex_conservative
 │       └── arrayvec
 └── bitcoin_hashes
+    ├── bitcoin_consensus_encoding
+    │   └── bitcoin_internals
+    │       └── hex_conservative
+    │           └── arrayvec
     ├── bitcoin_internals
     │   └── hex_conservative
     │       └── arrayvec
@@ -16,6 +20,10 @@ bitcoin
 │   │   └── hex_conservative
 │   │       └── arrayvec
 │   └── bitcoin_hashes
+│       ├── bitcoin_consensus_encoding
+│       │   └── bitcoin_internals
+│       │       └── hex_conservative
+│       │           └── arrayvec
 │       ├── bitcoin_internals
 │       │   └── hex_conservative
 │       │       └── arrayvec
@@ -23,30 +31,39 @@ bitcoin
 │           └── arrayvec
 ├── base64
 ├── bech32
+├── bitcoin_consensus_encoding
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
 ├── bitcoin_internals
 │   └── hex_conservative
 │       └── arrayvec
 ├── bitcoin_io
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
 │   ├── bitcoin_internals
 │   │   └── hex_conservative
 │   │       └── arrayvec
 │   └── bitcoin_hashes
+│       ├── bitcoin_consensus_encoding
+│       │   └── bitcoin_internals
+│       │       └── hex_conservative
+│       │           └── arrayvec
 │       ├── bitcoin_internals
 │       │   └── hex_conservative
 │       │       └── arrayvec
 │       └── hex_conservative
 │           └── arrayvec
+├── bitcoin_network_kind
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
 ├── bitcoin_primitives
 │   ├── arbitrary
-│   ├── arrayvec
 │   ├── bitcoin_consensus_encoding
-│   │   ├── bitcoin_internals
-│   │   │   └── hex_conservative
-│   │   │       └── arrayvec
-│   │   └── bitcoin_hashes
-│   │       ├── bitcoin_internals
-│   │       │   └── hex_conservative
-│   │       │       └── arrayvec
+│   │   └── bitcoin_internals
 │   │       └── hex_conservative
 │   │           └── arrayvec
 │   ├── bitcoin_internals
@@ -55,42 +72,39 @@ bitcoin
 │   ├── bitcoin_units
 │   │   ├── arbitrary
 │   │   ├── bitcoin_consensus_encoding
-│   │   │   ├── bitcoin_internals
-│   │   │   │   └── hex_conservative
-│   │   │   │       └── arrayvec
-│   │   │   └── bitcoin_hashes
-│   │   │       ├── bitcoin_internals
-│   │   │       │   └── hex_conservative
-│   │   │       │       └── arrayvec
+│   │   │   └── bitcoin_internals
 │   │   │       └── hex_conservative
 │   │   │           └── arrayvec
 │   │   └── bitcoin_internals
 │   │       └── hex_conservative
 │   │           └── arrayvec
 │   ├── bitcoin_hashes
+│   │   ├── bitcoin_consensus_encoding
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
 │   │   ├── bitcoin_internals
 │   │   │   └── hex_conservative
 │   │   │       └── arrayvec
 │   │   └── hex_conservative
 │   │       └── arrayvec
+│   ├── hex_conservative
+│   │   └── arrayvec
 │   └── hex_conservative
-│       └── arrayvec
 ├── bitcoin_units
 │   ├── arbitrary
 │   ├── bitcoin_consensus_encoding
-│   │   ├── bitcoin_internals
-│   │   │   └── hex_conservative
-│   │   │       └── arrayvec
-│   │   └── bitcoin_hashes
-│   │       ├── bitcoin_internals
-│   │       │   └── hex_conservative
-│   │       │       └── arrayvec
+│   │   └── bitcoin_internals
 │   │       └── hex_conservative
 │   │           └── arrayvec
 │   └── bitcoin_internals
 │       └── hex_conservative
 │           └── arrayvec
 ├── bitcoin_hashes
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
 │   ├── bitcoin_internals
 │   │   └── hex_conservative
 │   │       └── arrayvec
@@ -100,51 +114,237 @@ bitcoin
 ├── hex_conservative
 │   └── arrayvec
 └── secp256k1
-    ├── bitcoin_hashes
-    │   ├── bitcoin_io
-    │   └── hex_conservative
-    │       └── arrayvec
     └── secp256k1_sys
 
 bitcoin_addresses
 
+bitcoin_bip158
+
 bitcoin_consensus_encoding
-├── bitcoin_internals
-│   └── hex_conservative
-│       └── arrayvec
-└── bitcoin_hashes
-    ├── bitcoin_internals
-    │   └── hex_conservative
-    │       └── arrayvec
+└── bitcoin_internals
     └── hex_conservative
         └── arrayvec
+
+bitcoin_crypto
 
 bitcoin_internals
 └── hex_conservative
     └── arrayvec
 
 bitcoin_io
+├── bitcoin_consensus_encoding
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
 ├── bitcoin_internals
 │   └── hex_conservative
 │       └── arrayvec
 └── bitcoin_hashes
+    ├── bitcoin_consensus_encoding
+    │   └── bitcoin_internals
+    │       └── hex_conservative
+    │           └── arrayvec
     ├── bitcoin_internals
     │   └── hex_conservative
     │       └── arrayvec
     └── hex_conservative
         └── arrayvec
 
-bitcoin_primitives
+bitcoin_network_kind
+└── bitcoin_internals
+    └── hex_conservative
+        └── arrayvec
+
+bitcoin_p2p_messages
 ├── arbitrary
-├── arrayvec
+├── bitcoin
+│   ├── arbitrary
+│   ├── base58ck
+│   │   ├── bitcoin_internals
+│   │   │   └── hex_conservative
+│   │   │       └── arrayvec
+│   │   └── bitcoin_hashes
+│   │       ├── bitcoin_consensus_encoding
+│   │       │   └── bitcoin_internals
+│   │       │       └── hex_conservative
+│   │       │           └── arrayvec
+│   │       ├── bitcoin_internals
+│   │       │   └── hex_conservative
+│   │       │       └── arrayvec
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── base64
+│   ├── bech32
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_internals
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── bitcoin_io
+│   │   ├── bitcoin_consensus_encoding
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   ├── bitcoin_internals
+│   │   │   └── hex_conservative
+│   │   │       └── arrayvec
+│   │   └── bitcoin_hashes
+│   │       ├── bitcoin_consensus_encoding
+│   │       │   └── bitcoin_internals
+│   │       │       └── hex_conservative
+│   │       │           └── arrayvec
+│   │       ├── bitcoin_internals
+│   │       │   └── hex_conservative
+│   │       │       └── arrayvec
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_network_kind
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_primitives
+│   │   ├── arbitrary
+│   │   ├── bitcoin_consensus_encoding
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   ├── bitcoin_internals
+│   │   │   └── hex_conservative
+│   │   │       └── arrayvec
+│   │   ├── bitcoin_units
+│   │   │   ├── arbitrary
+│   │   │   ├── bitcoin_consensus_encoding
+│   │   │   │   └── bitcoin_internals
+│   │   │   │       └── hex_conservative
+│   │   │   │           └── arrayvec
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   ├── bitcoin_hashes
+│   │   │   ├── bitcoin_consensus_encoding
+│   │   │   │   └── bitcoin_internals
+│   │   │   │       └── hex_conservative
+│   │   │   │           └── arrayvec
+│   │   │   ├── bitcoin_internals
+│   │   │   │   └── hex_conservative
+│   │   │   │       └── arrayvec
+│   │   │   └── hex_conservative
+│   │   │       └── arrayvec
+│   │   ├── hex_conservative
+│   │   │   └── arrayvec
+│   │   └── hex_conservative
+│   ├── bitcoin_units
+│   │   ├── arbitrary
+│   │   ├── bitcoin_consensus_encoding
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_hashes
+│   │   ├── bitcoin_consensus_encoding
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   ├── bitcoin_internals
+│   │   │   └── hex_conservative
+│   │   │       └── arrayvec
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── bitcoinconsensus
+│   ├── hex_conservative
+│   │   └── arrayvec
+│   └── secp256k1
+│       └── secp256k1_sys
 ├── bitcoin_consensus_encoding
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
+├── bitcoin_internals
+│   └── hex_conservative
+│       └── arrayvec
+├── bitcoin_io
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
 │   ├── bitcoin_internals
 │   │   └── hex_conservative
 │   │       └── arrayvec
 │   └── bitcoin_hashes
+│       ├── bitcoin_consensus_encoding
+│       │   └── bitcoin_internals
+│       │       └── hex_conservative
+│       │           └── arrayvec
 │       ├── bitcoin_internals
 │       │   └── hex_conservative
 │       │       └── arrayvec
+│       └── hex_conservative
+│           └── arrayvec
+├── bitcoin_network_kind
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
+├── bitcoin_primitives
+│   ├── arbitrary
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_internals
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── bitcoin_units
+│   │   ├── arbitrary
+│   │   ├── bitcoin_consensus_encoding
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_hashes
+│   │   ├── bitcoin_consensus_encoding
+│   │   │   └── bitcoin_internals
+│   │   │       └── hex_conservative
+│   │   │           └── arrayvec
+│   │   ├── bitcoin_internals
+│   │   │   └── hex_conservative
+│   │   │       └── arrayvec
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   ├── hex_conservative
+│   │   └── arrayvec
+│   └── hex_conservative
+├── bitcoin_units
+│   ├── arbitrary
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
+├── bitcoin_hashes
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
+│   ├── bitcoin_internals
+│   │   └── hex_conservative
+│   │       └── arrayvec
+│   └── hex_conservative
+│       └── arrayvec
+└── hex_conservative
+    └── arrayvec
+
+bitcoin_primitives
+├── arbitrary
+├── bitcoin_consensus_encoding
+│   └── bitcoin_internals
 │       └── hex_conservative
 │           └── arrayvec
 ├── bitcoin_internals
@@ -153,37 +353,30 @@ bitcoin_primitives
 ├── bitcoin_units
 │   ├── arbitrary
 │   ├── bitcoin_consensus_encoding
-│   │   ├── bitcoin_internals
-│   │   │   └── hex_conservative
-│   │   │       └── arrayvec
-│   │   └── bitcoin_hashes
-│   │       ├── bitcoin_internals
-│   │       │   └── hex_conservative
-│   │       │       └── arrayvec
+│   │   └── bitcoin_internals
 │   │       └── hex_conservative
 │   │           └── arrayvec
 │   └── bitcoin_internals
 │       └── hex_conservative
 │           └── arrayvec
 ├── bitcoin_hashes
+│   ├── bitcoin_consensus_encoding
+│   │   └── bitcoin_internals
+│   │       └── hex_conservative
+│   │           └── arrayvec
 │   ├── bitcoin_internals
 │   │   └── hex_conservative
 │   │       └── arrayvec
 │   └── hex_conservative
 │       └── arrayvec
+├── hex_conservative
+│   └── arrayvec
 └── hex_conservative
-    └── arrayvec
 
 bitcoin_units
 ├── arbitrary
 ├── bitcoin_consensus_encoding
-│   ├── bitcoin_internals
-│   │   └── hex_conservative
-│   │       └── arrayvec
-│   └── bitcoin_hashes
-│       ├── bitcoin_internals
-│       │   └── hex_conservative
-│       │       └── arrayvec
+│   └── bitcoin_internals
 │       └── hex_conservative
 │           └── arrayvec
 └── bitcoin_internals
@@ -191,6 +384,10 @@ bitcoin_units
         └── arrayvec
 
 bitcoin_hashes
+├── bitcoin_consensus_encoding
+│   └── bitcoin_internals
+│       └── hex_conservative
+│           └── arrayvec
 ├── bitcoin_internals
 │   └── hex_conservative
 │       └── arrayvec
