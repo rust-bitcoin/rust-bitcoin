@@ -7,7 +7,6 @@
 
 use core::convert::Infallible;
 use core::fmt::{self, Write as _};
-use core::ops;
 use core::str::FromStr;
 
 use hashes::hash160;
@@ -895,11 +894,6 @@ impl fmt::Display for PrivateKey {
 impl FromStr for PrivateKey {
     type Err = FromWifError;
     fn from_str(s: &str) -> Result<Self, FromWifError> { Self::from_wif(s) }
-}
-
-impl ops::Index<ops::RangeFull> for PrivateKey {
-    type Output = [u8];
-    fn index(&self, _: ops::RangeFull) -> &[u8] { &self.as_inner()[..] }
 }
 
 #[cfg(feature = "serde")]
