@@ -6,7 +6,7 @@
 //! (de)serialized.
 
 use core::convert::Infallible;
-use core::fmt::{self, Write as _};
+use core::fmt;
 use core::str::FromStr;
 
 use hashes::hash160;
@@ -837,7 +837,7 @@ impl PrivateKey {
     /// Gets the WIF encoding of this private key.
     pub fn to_wif(&self) -> String {
         let mut buf = String::new();
-        buf.write_fmt(format_args!("{}", self)).unwrap();
+        let _ = self.fmt_wif(&mut buf);
         buf.shrink_to_fit();
         buf
     }
@@ -887,10 +887,6 @@ impl PrivateKey {
     }
 }
 
-impl fmt::Display for PrivateKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_wif(f) }
-}
-
 impl FromStr for PrivateKey {
     type Err = FromWifError;
     fn from_str(s: &str) -> Result<Self, FromWifError> { Self::from_wif(s) }
@@ -899,7 +895,7 @@ impl FromStr for PrivateKey {
 #[cfg(feature = "serde")]
 impl serde::Serialize for PrivateKey {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        s.collect_str(self)
+        s.serialize_str(&self.to_wif())
     }
 }
 
@@ -1587,7 +1583,7 @@ mod tests {
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
-        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
+        assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
         let sk_str =
             "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
