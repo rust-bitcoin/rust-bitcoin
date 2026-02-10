@@ -30,7 +30,7 @@ bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.20.0", default-features = false, features = ["alloc", "hex"] }
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "0.1.0", default-features = false, features = ["alloc"] }
 hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, features = ["alloc"] }
-hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+hex-unstable = { package = "hex-conservative", version = "0.3.2", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["alloc", "hex"] }
 io = { package = "bitcoin-io", path = "../io", version = "0.5.0", default-features = false, features = ["alloc", "hashes"] }
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false, features = ["alloc"]}
