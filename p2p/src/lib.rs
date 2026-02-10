@@ -44,7 +44,10 @@ use network::{Network, TestnetVersion};
 
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::network_ext::NetworkExt;
+pub use self::{
+    message_filter::{FilterHash, FilterHeader},
+    network_ext::NetworkExt,
+};
 
 #[cfg(feature = "std")]
 #[rustfmt::skip]
