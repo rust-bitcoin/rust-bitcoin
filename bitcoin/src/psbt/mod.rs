@@ -1298,7 +1298,7 @@ mod tests {
     use std::str::FromStr;
 
     use hashes::{hash160, ripemd160, sha256};
-    use hex::FromHex;
+    use hex_unstable::FromHex;
     use hex_lit::hex;
     #[cfg(all(feature = "rand", feature = "std"))]
     use {

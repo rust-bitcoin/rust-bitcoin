@@ -3,7 +3,7 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hex::FromHex as _;
+use hex_unstable::FromHex as _;
 use internals::ToU64 as _;
 
 use super::{
@@ -156,7 +156,7 @@ internal_macros::define_extension_trait! {
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_no_length_prefix()` instead")]
-        fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError>
+        fn from_hex(s: &str) -> Result<Self, hex_unstable::HexToBytesError>
             where Self: Sized
         {
             Self::from_hex_no_length_prefix(s)
@@ -166,7 +166,7 @@ internal_macros::define_extension_trait! {
         ///
         /// This is **not** consensus encoding. If your hex string is a consensus encoded script
         /// then use `ScriptBuf::from_hex_prefixed`.
-        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::HexToBytesError>
+        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex_unstable::HexToBytesError>
             where Self: Sized
         {
             let v = Vec::from_hex(s)?;

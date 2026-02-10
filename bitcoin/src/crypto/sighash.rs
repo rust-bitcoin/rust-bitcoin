@@ -1517,7 +1517,7 @@ impl<'a> Arbitrary<'a> for TapSighashType {
 #[cfg(test)]
 mod tests {
     use hashes::HashEngine;
-    use hex::FromHex;
+    use hex_unstable::FromHex;
     use hex_lit::hex;
 
     use super::*;
@@ -1848,7 +1848,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
-        use hex::DisplayHex;
+        use hex_unstable::DisplayHex;
 
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
         where

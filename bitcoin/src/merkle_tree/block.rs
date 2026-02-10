@@ -45,8 +45,8 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hex::FromHex;
     /// use bitcoin::{Block, MerkleBlock, Txid};
+    /// use hex_unstable::FromHex;
     ///
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
@@ -533,7 +533,7 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 mod tests {
     use core::cmp;
 
-    use hex::{DisplayHex, FromHex};
+    use hex_unstable::{DisplayHex, FromHex};
     use hex_lit::hex;
 
     use super::*;
