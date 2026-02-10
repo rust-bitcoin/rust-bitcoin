@@ -12,7 +12,7 @@ chacha20-poly1305 = { path = "../chacha20_poly1305" }
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding" }
 
 criterion = "0.7"
-hex_lit = "0.1.1"
+hex = { package = "hex-conservative", version = "0.3.2" }
 
 [lints.clippy]
 use_self = "warn"

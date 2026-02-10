@@ -1299,7 +1299,7 @@ mod tests {
 
     use hashes::{hash160, ripemd160, sha256};
     use hex_unstable::FromHex;
-    use hex_lit::hex;
+    use hex_unstable::hex;
     #[cfg(all(feature = "rand", feature = "std"))]
     use {
         crate::bip32::Fingerprint, crate::locktime, crate::script::ScriptPubKeyBufExt as _,

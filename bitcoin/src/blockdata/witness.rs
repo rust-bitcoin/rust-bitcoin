@@ -237,7 +237,7 @@ mod sealed {
 
 #[cfg(test)]
 mod test {
-    use hex_lit::hex;
+    use hex_unstable::hex;
     use hex_unstable::DisplayHex;
 
     use super::*;

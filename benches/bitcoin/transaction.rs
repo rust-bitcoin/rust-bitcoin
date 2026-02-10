@@ -39,7 +39,7 @@ fn bench_tx(c: &mut Criterion) {
     });
 
     g.bench_function(BenchmarkId::new("deserialize", "raw_bytes"), |b| {
-        let raw_tx = hex_lit::hex!(SOME_TX);
+        let raw_tx = hex::hex!(SOME_TX);
         b.iter(|| {
             let tx: Transaction = encode::deserialize(&raw_tx).unwrap();
             black_box(tx);
