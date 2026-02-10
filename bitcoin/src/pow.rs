@@ -431,8 +431,7 @@ pub fn next_target_after<F, E>(
 where
     F: FnMut(BlockHeight) -> Result<Header, E>,
 {
-    // explicitly dropping the high bits because they make no sense since block height is only u32
-    let adjustment_interval = params.difficulty_adjustment_interval() as u32;
+    let adjustment_interval = params.difficulty_adjustment_interval();
 
     // if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
     if !is_retarget_height(current_height.saturating_add(1.into()), adjustment_interval) {
@@ -444,11 +443,9 @@ where
             // Special difficulty rule for testnet: If the new block's timestamp is more
             // than 2*10 minutes then allow mining of a min-difficulty block.
             let pow_limit = params.max_attainable_target.to_compact_lossy();
-            let pow_target_spacing =
-                u32::try_from(params.pow_target_spacing & u64::from(u32::MAX)).unwrap();
 
             // if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + params.nPowTargetSpacing*2)
-            if new_block_timestamp > current_header.time.to_u32() + pow_target_spacing * 2 {
+            if new_block_timestamp > current_header.time.to_u32() + params.pow_target_spacing * 2 {
                 Ok(pow_limit)
             } else {
                 let mut header = current_header;
@@ -2605,7 +2602,7 @@ mod tests {
         let want = CompactTarget::from_consensus(0x1d00_ffff);
 
         // Current header is at a retarget boundary (height divisible by 2016) with pow_limit bits
-        let adjustment_interval = u32::try_from(params.difficulty_adjustment_interval()).unwrap();
+        let adjustment_interval = params.difficulty_adjustment_interval();
         let current_height = BlockHeight::from_u32(adjustment_interval * 5);
 
         let current_header = Header {
