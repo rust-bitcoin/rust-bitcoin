@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use hex_lit::hex;
+use hex_unstable::hex;
 
 use super::*;
 use crate::consensus::encode::{deserialize, serialize};
