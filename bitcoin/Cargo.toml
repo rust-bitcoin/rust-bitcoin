@@ -16,7 +16,7 @@ exclude = ["tests", "contrib"]
 # If you change features or optional dependencies in any way please update the "# Cargo features" section in lib.rs as well.
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["base58/std", "bech32/std", "encoding/std", "hashes/std", "hex/std", "internals/std", "io/std", "network/std", "primitives/std", "secp256k1/std", "units/std", "base64?/std", "bitcoinconsensus?/std"]
+std = ["base58/std", "bech32/std", "encoding/std", "hashes/std", "hex-stable/std", "hex-unstable/std", "internals/std", "io/std", "network/std", "primitives/std", "secp256k1/std", "units/std", "base64?/std", "bitcoinconsensus?/std"]
 rand = ["secp256k1/rand"]
 serde = ["base64", "dep:serde", "hashes/serde", "internals/serde", "network/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
 secp-global-context = ["secp256k1/global-context"]
@@ -29,7 +29,8 @@ base58 = { package = "base58ck", path = "../base58", version = "0.3.0", default-
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.19.0", default-features = false, features = ["alloc", "hex"] }
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "=1.0.0-rc.3", default-features = false, features = ["alloc"] }
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, features = ["alloc"] }
+hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["alloc", "hex"] }
 io = { package = "bitcoin-io", path = "../io", version = "=0.4.0-rc.0", default-features = false, features = ["alloc", "hashes"] }
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false, features = ["alloc"]}

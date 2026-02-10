@@ -12,7 +12,7 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
-use hex::{FromHex, HexToBytesError};
+use hex_unstable::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
@@ -1654,7 +1654,7 @@ impl std::error::Error for InvalidControlBlockSizeError {}
 #[cfg(test)]
 mod test {
     use hashes::sha256;
-    use hex::DisplayHex;
+    use hex_unstable::DisplayHex;
 
     use super::*;
     use crate::script::ScriptBufExt as _;
