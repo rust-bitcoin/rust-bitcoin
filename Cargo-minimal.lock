@@ -62,7 +62,7 @@ dependencies = [
  "bitcoin-units",
  "bitcoin_hashes",
  "bitcoinconsensus",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "hex-conservative 1.0.0",
  "hex_lit",
  "secp256k1",
@@ -84,7 +84,7 @@ name = "bitcoin-consensus-encoding"
 version = "0.1.0"
 dependencies = [
  "bitcoin-internals",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
 ]
 
 [[package]]
@@ -110,7 +110,7 @@ name = "bitcoin-internals"
 version = "0.5.0"
 dependencies = [
  "bincode",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "serde",
  "serde_json",
 ]
@@ -147,7 +147,7 @@ dependencies = [
  "bitcoin-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "hex_lit",
 ]
 
@@ -161,7 +161,7 @@ dependencies = [
  "bitcoin-internals",
  "bitcoin-units",
  "bitcoin_hashes",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "hex-conservative 1.0.0",
  "hex_lit",
  "serde",
@@ -188,7 +188,7 @@ dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "cpufeatures",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "serde",
  "serde_test",
 ]
@@ -230,7 +230,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chacha20-poly1305"
 version = "0.1.2"
 dependencies = [
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
 ]
 
 [[package]]
@@ -256,9 +256,9 @@ dependencies = [
 
 [[package]]
 name = "hex-conservative"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4afe881d0527571892c4034822e59bb10c6c991cce6abe8199b6f5cf10766f55"
+checksum = "830e599c2904b08f0834ee6337d8fe8f0ed4a63b5d9e7a7f49c0ffa06d08d360"
 dependencies = [
  "arrayvec",
 ]
