@@ -386,7 +386,7 @@ impl std::error::Error for ValidationError {
 mod tests {
     use alloc::string::ToString;
 
-    use hex_lit::hex;
+    use hex_unstable::hex;
     use internals::ToU64 as _;
     use primitives::Wtxid;
 

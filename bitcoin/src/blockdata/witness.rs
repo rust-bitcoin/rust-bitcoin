@@ -239,7 +239,7 @@ mod sealed {
 mod test {
     use alloc::vec::Vec;
 
-    use hex_lit::hex;
+    use hex_unstable::hex;
     use hex_unstable::DisplayHex;
 
     use super::*;
