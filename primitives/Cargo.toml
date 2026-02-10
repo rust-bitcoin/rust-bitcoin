@@ -28,7 +28,7 @@ units = { package = "bitcoin-units", path = "../units", version = "=1.0.0-rc.4",
 
 arbitrary = { version = "1.4.1", optional = true }
 hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, optional = true }
-hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex-unstable = { package = "hex-conservative", version = "0.3.2", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, features = ["derive", "alloc"], optional = true }
 
 [dev-dependencies]

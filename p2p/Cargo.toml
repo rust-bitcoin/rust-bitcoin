@@ -23,7 +23,7 @@ encoding = { package = "bitcoin-consensus-encoding", version = "=1.0.0-rc.3", pa
 hashes = { package = "bitcoin_hashes", version = "0.19.0", path = "../hashes", default-features = false }
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false }
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "=1.0.0-rc.2", default-features = false }
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
+hex = { package = "hex-conservative", version = "0.3.2", default-features = false }
 internals = { package = "bitcoin-internals", path = "../internals", default-features = false }
 io = { package = "bitcoin-io", version = "=0.4.0-rc.0", path = "../io", default-features = false }
 units = { package = "bitcoin-units", path = "../units", version = "=1.0.0-rc.4", default-features = false }
