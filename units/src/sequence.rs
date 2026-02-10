@@ -114,13 +114,13 @@ impl Sequence {
     /// Returns `true` if the sequence number encodes a block based relative lock-time.
     #[inline]
     pub fn is_height_locked(self) -> bool {
-        self.is_relative_lock_time() & (self.0 & Self::LOCK_TYPE_MASK == 0)
+        self.is_relative_lock_time() && (self.0 & Self::LOCK_TYPE_MASK == 0)
     }
 
     /// Returns `true` if the sequence number encodes a time interval based relative lock-time.
     #[inline]
     pub fn is_time_locked(self) -> bool {
-        self.is_relative_lock_time() & (self.0 & Self::LOCK_TYPE_MASK > 0)
+        self.is_relative_lock_time() && (self.0 & Self::LOCK_TYPE_MASK > 0)
     }
 
     /// Constructs a new `Sequence` from a prefixed hex string.
