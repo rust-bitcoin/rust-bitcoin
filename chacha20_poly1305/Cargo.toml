@@ -18,7 +18,7 @@ std = ["alloc"]
 alloc = []
 
 [dev-dependencies]
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+hex = { package = "hex-conservative", version = "0.3.2", default-features = false, features = ["alloc"] }
 
 [package.metadata.docs.rs]
 all-features = true
