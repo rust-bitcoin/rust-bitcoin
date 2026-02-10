@@ -20,7 +20,7 @@ version = "0.4.0"
 dependencies = [
  "bitcoin-internals",
  "bitcoin_hashes",
- "hex_lit",
+ "hex-conservative 0.3.2",
 ]
 
 [[package]]
@@ -64,7 +64,6 @@ dependencies = [
  "bitcoinconsensus",
  "hex-conservative 0.3.2",
  "hex-conservative 1.0.0",
- "hex_lit",
  "secp256k1",
  "serde",
  "serde_json",
@@ -148,7 +147,6 @@ dependencies = [
  "bitcoin-units",
  "bitcoin_hashes",
  "hex-conservative 0.3.2",
- "hex_lit",
 ]
 
 [[package]]
@@ -163,7 +161,6 @@ dependencies = [
  "bitcoin_hashes",
  "hex-conservative 0.3.2",
  "hex-conservative 1.0.0",
- "hex_lit",
  "serde",
  "serde_json",
 ]
@@ -268,12 +265,6 @@ name = "hex-conservative"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ee770c000993d17c185713463d5ebfbd1af9afae4c17cc295640104383bfbf0"
-
-[[package]]
-name = "hex_lit"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
 
 [[package]]
 name = "honggfuzz"
