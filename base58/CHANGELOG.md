@@ -1,3 +1,7 @@
+# 0.4.0 - 2025-01-08
+
+- Update to latest `hashes 0.20.0`
+
 # 0.3.0 - 2025-12-15
 
 - Bump MSRV from 1.63.0 to 1.74.0 for all crates in the repo [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
