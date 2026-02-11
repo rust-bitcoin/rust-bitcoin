@@ -120,7 +120,7 @@ fn build_extended_private_key() -> Xpriv {
     let xpriv = extended_private_key.parse::<Xpriv>().unwrap();
 
     let sk = PrivateKey::from_wif(seed).unwrap();
-    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.inner.to_secret_bytes());
+    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.as_inner().to_secret_bytes());
     assert_eq!(xpriv, seeded);
 
     xpriv
@@ -269,7 +269,7 @@ fn bip32_derivation(
     fingerprint: Fingerprint,
     pk_path: &[(&str, &str)],
     indices: Vec<usize>,
-) -> BTreeMap<secp256k1::PublicKey, KeySource> {
+) -> BTreeMap<PublicKey, KeySource> {
     let mut tree = BTreeMap::new();
     for i in indices {
         let pk = pk_path[i].0;
@@ -278,7 +278,7 @@ fn bip32_derivation(
         let pk = pk.parse::<PublicKey>().unwrap();
         let path = path.into_derivation_path().unwrap();
 
-        tree.insert(pk.inner, (fingerprint, path));
+        tree.insert(pk, (fingerprint, path));
     }
     tree
 }

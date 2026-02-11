@@ -2011,9 +2011,10 @@ mod tests {
                 .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
                 .unwrap();
 
+            let tweaked_keypair = tweaked_keypair.into_keypair();
             let key_spend_sig = secp256k1::schnorr::sign_with_aux_rand(
                 &sighash.to_byte_array(),
-                &tweaked_keypair.to_keypair().to_inner(),
+                tweaked_keypair.as_inner(),
                 &[0u8; 32],
             );
 
@@ -2024,7 +2025,7 @@ mod tests {
             assert_eq!(expected_key_spend_sig, key_spend_sig);
 
             let tweaked_priv_key =
-                SecretKey::from_keypair(&tweaked_keypair.to_keypair().to_inner());
+                SecretKey::from_keypair(tweaked_keypair.as_inner());
             assert_eq!(expected.tweaked_privkey, tweaked_priv_key);
         }
     }

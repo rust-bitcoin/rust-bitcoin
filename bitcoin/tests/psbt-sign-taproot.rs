@@ -29,7 +29,7 @@ fn psbt_sign_taproot() {
             match key_request {
                 KeyRequest::Bip32((mfp, _)) =>
                     if *mfp == self.mfp {
-                        Ok(Some(self.sk))
+                        Ok(Some(self.sk.clone()))
                     } else {
                         Err(SignError::KeyNotFound)
                     },
@@ -84,7 +84,7 @@ fn psbt_sign_taproot() {
         //
         let keystore = Keystore {
             mfp: mfp.parse::<Fingerprint>().unwrap(),
-            sk: PrivateKey::new(kp.to_secret_key(), Network::Testnet(bitcoin::TestnetVersion::V3)),
+            sk: PrivateKey::from_secp(kp.to_secret_key(), Network::Testnet(bitcoin::TestnetVersion::V3)),
         };
         let _ = psbt_key_path_spend.sign(&keystore);
 
@@ -114,7 +114,7 @@ fn psbt_sign_taproot() {
 
         let keystore = Keystore {
             mfp: mfp.parse::<Fingerprint>().unwrap(),
-            sk: PrivateKey::new(kp.to_secret_key(), Network::Testnet(bitcoin::TestnetVersion::V3)),
+            sk: PrivateKey::from_secp(kp.to_secret_key(), Network::Testnet(bitcoin::TestnetVersion::V3)),
         };
 
         //
