@@ -840,7 +840,7 @@ mod tests {
 
             // Build the partial Merkle tree
             let pmt1 = PartialMerkleTree::from_txids(&tx_ids, &matches);
-            let serialized = encode::serialize(&pmt1);
+            let serialized = encoding::encode_to_vec(&pmt1);
 
             // Verify PartialMerkleTree's size guarantees
             let n = cmp::min(tx_count, 1 + match_txid1.len() * height);
@@ -848,7 +848,7 @@ mod tests {
 
             // Deserialize into a tester copy
             let pmt2: PartialMerkleTree =
-                encode::deserialize(&serialized).expect("could not deserialize own data");
+                encoding::decode_from_slice(&serialized).expect("could not deserialize own data");
 
             // Extract Merkle root and matched txids from copy
             let mut match_txid2: Vec<Txid> = vec![];
@@ -866,7 +866,7 @@ mod tests {
 
             // check that random bit flips break the authentication
             for _ in 0..4 {
-                let mut pmt3: PartialMerkleTree = encode::deserialize(&serialized).unwrap();
+                let mut pmt3: PartialMerkleTree = encoding::decode_from_slice(&serialized).unwrap();
                 pmt3.damage(&mut rng);
                 let mut match_txid3 = vec![];
                 let merkle_root_3 = pmt3.extract_matches(&mut match_txid3, &mut indexes).unwrap();
@@ -899,14 +899,14 @@ mod tests {
         let mb_hex = include_str!("../tests/data/merkle_block.hex");
 
         let bytes = Vec::from_hex(mb_hex).unwrap();
-        let mb: MerkleBlock = encode::deserialize(&bytes).unwrap();
+        let mb: MerkleBlock = encoding::decode_from_slice(&bytes).unwrap();
         assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
         );
         // Serialize again and check that it matches the original bytes
-        assert_eq!(mb_hex, encode::serialize(&mb).to_lower_hex_string().as_str());
+        assert_eq!(mb_hex, encoding::encode_to_vec(&mb).to_lower_hex_string().as_str());
     }
 
     /// Constructs a new [`MerkleBlock`] using a list of txids which will be found in the
@@ -989,7 +989,7 @@ mod tests {
     fn get_block_13b8a() -> Block<Checked> {
         let block_hex = include_str!("../tests/data/block_13b8a.hex");
         let block: Block<Unchecked> =
-            encode::deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap();
+            encoding::decode_from_slice(&Vec::from_hex(block_hex).unwrap()).unwrap();
         block.validate().expect("block should be valid")
     }
 
@@ -1055,7 +1055,7 @@ mod tests {
              00000004bfaac251681b1b25\
          "
         );
-        let deser = encode::deserialize::<MerkleBlock>(&bytes);
+        let deser = encoding::decode_from_slice::<MerkleBlock>(&bytes);
 
         // The attempt to deserialize should result in an error.
         assert!(deser.is_err());
@@ -1070,7 +1070,7 @@ mod tests {
             0000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33a5914ce6ed5b\
             1b01e32f570200000002252bf9d75c4f481ebb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d3\
             2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105").unwrap();
-        let mb: MerkleBlock = encode::deserialize(&mb_bytes).unwrap();
+        let mb: MerkleBlock = encoding::decode_from_slice(&mb_bytes).unwrap();
 
         // Authenticate and extract matched transaction ids
         let mut matches: Vec<Txid> = vec![];
