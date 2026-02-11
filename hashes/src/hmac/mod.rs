@@ -276,6 +276,14 @@ mod tests {
             let hash = engine.finalize();
             assert_eq!(hash.as_ref(), test.output);
             assert_eq!(hash.to_byte_array(), test.output);
+
+            // Hash through engine, checking that we can input byte by byte
+            let mut engine = HmacEngine::<sha256::HashEngine>::new(test.key);
+            for ch in test.input {
+                engine.input(&[*ch]);
+            }
+            let hash = engine.finalize();
+            assert_eq!(hash.to_byte_array(), test.output);
         }
     }
 
