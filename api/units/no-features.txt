@@ -1294,6 +1294,8 @@ pub const fn bitcoin_units::Weight::to_wu(self) -> u64
 pub const fn bitcoin_units::absolute::is_block_height(n: u32) -> bool
 pub const fn bitcoin_units::absolute::is_block_time(n: u32) -> bool
 pub const fn bitcoin_units::block::BlockHeight::from_u32(inner: u32) -> Self
+pub const fn bitcoin_units::block::BlockHeight::saturating_add(self, rhs: bitcoin_units::block::BlockHeightInterval) -> Self
+pub const fn bitcoin_units::block::BlockHeight::saturating_sub(self, rhs: bitcoin_units::block::BlockHeightInterval) -> Self
 pub const fn bitcoin_units::block::BlockHeight::to_u32(self) -> u32
 pub const fn bitcoin_units::block::BlockHeightInterval::from_u32(inner: u32) -> Self
 pub const fn bitcoin_units::block::BlockHeightInterval::to_u32(self) -> u32
