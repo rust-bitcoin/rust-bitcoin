@@ -32,7 +32,7 @@ pub use self::decode::decoders::{
 pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with, ReadError,
 };
-pub use self::decode::{decode_from_slice, Decodable, Decoder};
+pub use self::decode::{decode_from_slice, decode_from_slice_unbounded, Decodable, Decoder, DecodeError};
 pub use self::encode::encoders::{
     ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
     SliceEncoder,
