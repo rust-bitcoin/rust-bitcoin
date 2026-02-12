@@ -621,7 +621,7 @@ impl Psbt {
             witness_utxo
         } else if let Some(non_witness_utxo) = &input.non_witness_utxo {
             let vout = self.unsigned_tx.inputs[input_index].previous_output.vout;
-            &non_witness_utxo.outputs[vout as usize]
+            non_witness_utxo.outputs.get(vout as usize).ok_or(SignError::MissingSpendUtxo)?
         } else {
             return Err(SignError::MissingSpendUtxo);
         };
@@ -2556,6 +2556,52 @@ mod tests {
             psbt.internal_extract_tx_with_fee_rate_limit(FeeRate::MAX),
             Err(ExtractTxError::MissingInputAmount { tx: _ })
         ))
+    }
+    
+    #[test]
+    fn spending_psbt_with_missing_txout() {
+        let psbt = Psbt {
+            unsigned_tx: Transaction {
+                version: transaction::Version::TWO,
+                lock_time: absolute::LockTime::from_consensus(1257139),
+                inputs: vec![TxIn {
+                    previous_output: OutPoint {
+                        txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126"
+                            .parse()
+                            .unwrap(),
+                        vout: 0,
+                    },
+                    script_sig: ScriptSigBuf::new(),
+                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                    witness: Witness::default(),
+                }],
+                outputs: vec![
+                    TxOut {
+                        amount: Amount::from_sat_u32(99_999_699),
+                        script_pubkey: ScriptPubKeyBuf::from_hex_no_length_prefix(
+                            "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
+                        )
+                        .unwrap(),
+                    },
+                ],
+            },
+            xpub: Default::default(),
+            version: 0,
+            proprietary: Default::default(),
+            unknown: Default::default(),
+            inputs: vec![Input {
+                non_witness_utxo: Some(Transaction {
+                    version: transaction::Version::TWO,
+                    lock_time: absolute::LockTime::ZERO,
+                    inputs: vec![],
+                    outputs: vec![], // No outputs here  
+                }),
+                ..Default::default()
+            }],
+            outputs: vec![Output::default()],
+        };
+
+        assert!(matches!(psbt.spend_utxo(0), Err(SignError::MissingSpendUtxo)))
     }
 
     #[test]
