@@ -476,6 +476,7 @@ fn script_buf_to_hex() {
     let script = ScriptBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
     let hex = format!("{script:x}");
     assert_eq!(hex, "a1b2c3");
+
 }
 
 #[test]
