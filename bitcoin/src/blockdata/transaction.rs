@@ -1275,7 +1275,7 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 #[cfg(test)]
 mod tests {
     use hex::FromHex;
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};

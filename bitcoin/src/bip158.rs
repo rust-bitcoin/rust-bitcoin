@@ -535,7 +535,7 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 mod test {
     use std::collections::HashMap;
 
-    use hex_lit::hex;
+    use hex::hex;
     use serde_json::Value;
 
     use super::*;
@@ -667,7 +667,8 @@ mod test {
             for p in &patterns {
                 query.push(p);
             }
-            query.push(&hex!("abcdef"));
+            let extra = hex!("abcdef");
+            query.push(&extra);
             assert!(!reader
                 .match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
                 .unwrap());

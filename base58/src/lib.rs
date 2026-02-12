@@ -252,7 +252,7 @@ where
 mod tests {
     use alloc::vec;
 
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
 

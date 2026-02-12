@@ -1106,7 +1106,7 @@ impl Common {
 
 #[cfg(test)]
 mod tests {
-    use hex_lit::hex;
+    use hex::hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
 

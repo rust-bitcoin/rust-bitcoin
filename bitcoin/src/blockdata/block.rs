@@ -382,7 +382,7 @@ impl std::error::Error for ValidationError {
 
 #[cfg(test)]
 mod tests {
-    use hex_lit::hex;
+    use hex::hex;
     use internals::ToU64 as _;
     use primitives::Wtxid;
 

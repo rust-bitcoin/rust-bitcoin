@@ -764,7 +764,7 @@ mod tests {
     use alloc::string::ToString;
 
     use bitcoin::consensus::encode::{deserialize, serialize};
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
 

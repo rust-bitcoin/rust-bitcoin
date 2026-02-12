@@ -1023,7 +1023,7 @@ fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
 
 #[cfg(test)]
 mod tests {
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};

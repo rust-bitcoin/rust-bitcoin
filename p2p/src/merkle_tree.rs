@@ -543,7 +543,7 @@ mod tests {
     use core::cmp;
 
     use hex::{DisplayHex, FromHex};
-    use hex_lit::hex;
+    use hex::hex;
     use primitives::block::Unchecked;
 
     use super::*;

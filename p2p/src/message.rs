@@ -1788,7 +1788,7 @@ mod test {
     use std::net::Ipv4Addr;
 
     use bitcoin::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use hex_lit::hex;
+    use hex::hex;
     use primitives::transaction::{Transaction, Txid};
     use primitives::{Block, BlockHash};
     use units::BlockHeight;

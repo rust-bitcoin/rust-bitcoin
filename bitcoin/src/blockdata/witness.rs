@@ -237,7 +237,7 @@ mod sealed {
 
 #[cfg(test)]
 mod test {
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
     use crate::consensus::{deserialize, encode, serialize};

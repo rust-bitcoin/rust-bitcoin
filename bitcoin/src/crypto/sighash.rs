@@ -1518,7 +1518,7 @@ impl<'a> Arbitrary<'a> for TapSighashType {
 mod tests {
     use hashes::HashEngine;
     use hex::FromHex;
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
     use crate::consensus::deserialize;
