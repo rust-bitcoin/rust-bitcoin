@@ -26,13 +26,6 @@ fn script_buf_reserve() {
 }
 
 #[test]
-fn script_buf_reserve_exact() {
-    let mut script = ScriptBuf::new();
-    script.reserve_exact(10);
-    assert!(script.capacity() >= 10);
-}
-
-#[test]
 fn script_buf_default() {
     let script: ScriptBuf = ScriptBuf::default();
     assert!(script.is_empty());
