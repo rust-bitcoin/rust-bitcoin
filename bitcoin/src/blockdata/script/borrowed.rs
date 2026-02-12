@@ -2,7 +2,6 @@
 
 use core::fmt;
 
-use hex_unstable::DisplayHex as _;
 use internals::array::ArrayExt; // For `split_first`.
 use internals::ToU64 as _;
 
@@ -12,7 +11,7 @@ use super::{
     RedeemScriptSizeError, Script, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptSig,
     TapScript, WScriptHash, WitnessScript, WitnessScriptSizeError,
 };
-use crate::consensus::{self, Encodable};
+use crate::consensus::Encodable;
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
@@ -133,20 +132,6 @@ internal_macros::define_extension_trait! {
         /// Returns the human-readable assembly representation of the script.
         #[deprecated(since = "TBD", note = "use `to_string()` instead")]
         fn to_asm_string(&self) -> String { self.to_string() }
-
-        /// Consensus encodes the script as lower-case hex.
-        ///
-        /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
-        /// `to_hex_string_no_length_prefix`.
-        fn to_hex_string_prefixed(&self) -> String { consensus::encode::serialize_hex(self) }
-
-        /// Encodes the script as lower-case hex.
-        ///
-        /// This is **not** consensus encoding. The returned hex string will not include the length
-        /// prefix. See `to_hex_string_prefixed`.
-        fn to_hex_string_no_length_prefix(&self) -> String {
-            self.as_bytes().to_lower_hex_string()
-        }
 
         /// Returns the first opcode of the script (if there is any).
         fn first_opcode(&self) -> Option<Opcode> {

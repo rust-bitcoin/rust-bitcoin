@@ -204,7 +204,7 @@ pub(crate) mod hex_codec {
     /// Provides default implementations for `Display`, `Debug`, `LowerHex`, and `UpperHex`.
     /// Also provides [`Self::from_str`] for parsing a string to a `T`.
     /// This can be used to implement hex display traits for any encodable types.
-    pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub &'a T);
+    pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub &'a T) where T: ?Sized;
 
     impl<'a, T: Encodable + Decodable> IntoIterator for &HexPrimitive<'a, T> {
         type Item = u8;
