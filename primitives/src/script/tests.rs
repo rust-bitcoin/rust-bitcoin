@@ -339,7 +339,7 @@ fn legacy_opcode() {
 #[cfg(feature = "hex")]
 fn script_to_hex() {
     let script = Script::from_bytes(&[0xa1, 0xb2, 0xc3]);
-    let hex = alloc::format!("{script:x}");
+    let hex = format!("{script:x}");
     assert_eq!(hex, "a1b2c3");
 }
 
@@ -347,6 +347,6 @@ fn script_to_hex() {
 #[cfg(feature = "hex")]
 fn script_buf_to_hex() {
     let script = ScriptBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
-    let hex = alloc::format!("{script:x}");
+    let hex = format!("{script:x}");
     assert_eq!(hex, "a1b2c3");
 }
