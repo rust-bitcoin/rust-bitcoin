@@ -2,6 +2,11 @@
 
 //! Consensus Decoding Traits
 
+use core::convert::Infallible;
+use core::fmt;
+
+use internals::write_err;
+
 pub mod decoders;
 
 /// A Bitcoin object which can be consensus-decoded using a push decoder.
@@ -74,16 +79,40 @@ pub trait Decoder: Sized {
 /// # Errors
 ///
 /// Returns an error if the decoder encounters an error while
+/// parsing the data, including insufficient data. This function
+/// also errors if the provided slice is not completely consumed
+/// during decode.
+pub fn decode_from_slice<T: Decodable>(bytes: &[u8]) -> Result<T, DecodeError<<T::Decoder as Decoder>::Error>> {
+    let mut remaining = bytes;
+    let data = decode_from_slice_unbounded::<T>(&mut remaining)
+        .map_err(DecodeError::Parse)?;
+
+    if remaining.is_empty() {
+        Ok(data)
+    } else {
+        Err(DecodeError::Unconsumed)
+    }
+}
+
+/// Decodes an object from an unbounded byte slice.
+///
+/// Unlike [`decode_from_slice`], this function will not error if the slice
+/// contains additional bytes that are not required to decode.
+/// Furthermore, the byte slice reference provided to this function will be
+/// updated based on the consumed data, returning the unconsumed bytes.
+///
+/// # Errors
+///
+/// Returns an error if the decoder encounters an error while
 /// parsing the data, including insufficient data.
-pub fn decode_from_slice<T>(bytes: &[u8]) -> Result<T, <T::Decoder as Decoder>::Error>
+pub fn decode_from_slice_unbounded<T>(bytes: &mut &[u8]) -> Result<T, <T::Decoder as Decoder>::Error>
 where
     T: Decodable,
 {
     let mut decoder = T::decoder();
-    let mut remaining = bytes;
 
-    while !remaining.is_empty() {
-        if !decoder.push_bytes(&mut remaining)? {
+    while !bytes.is_empty() {
+        if !decoder.push_bytes(bytes)? {
             break;
         }
     }
@@ -257,6 +286,44 @@ impl<D> From<std::io::Error> for ReadError<D> {
     fn from(e: std::io::Error) -> Self { Self::Io(e) }
 }
 
+/// An error that can occur when decoding from a byte slice.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum DecodeError<Err> {
+    /// Provided slice failed to correctly decode as a type.
+    Parse(Err),
+    /// Bytes remained unconsumed after completing decoding.
+    #[non_exhaustive] Unconsumed,
+}
+
+impl<Err> From<Infallible> for DecodeError<Err> {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl<Err> fmt::Display for DecodeError<Err>
+where
+    Err: fmt::Display
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+            Self::Unconsumed => write!(f, "data not consumed entirely when decoding"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<Err> std::error::Error for DecodeError<Err>
+where
+    Err: std::error::Error + 'static
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Parse(ref e) => Some(e),
+            Self::Unconsumed => None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "std")]
@@ -312,9 +379,20 @@ mod tests {
     fn decode_from_slice_extra_data() {
         let data = [1, 2, 3, 4, 5];
         let result: Result<TestArray, _> = decode_from_slice(&data);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, DecodeError::Unconsumed));
+    }
+
+    #[test]
+    fn decode_from_slice_unbounded_extra_data() {
+        let data = [1, 2, 3, 4, 5];
+        let bytes = &mut data.as_slice();
+        let result: Result<TestArray, _> = decode_from_slice_unbounded(bytes);
         assert!(result.is_ok());
         let decoded = result.unwrap();
         assert_eq!(decoded.0, [1, 2, 3, 4]);
+        assert_eq!(bytes.len(), 1);
     }
 
     #[test]
