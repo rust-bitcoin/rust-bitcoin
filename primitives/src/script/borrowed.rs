@@ -215,8 +215,9 @@ mod tests {
 
     #[test]
     fn script_from_bytes() {
-        let script = Script::from_bytes(&[1, 2, 3]);
-        assert_eq!(script.as_bytes(), [1, 2, 3]);
+        let bytes = [1, 2, 3];
+        let script = Script::from_bytes(&bytes);
+        assert_eq!(script.as_bytes(), bytes);
     }
 
     #[test]
