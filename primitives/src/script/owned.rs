@@ -126,7 +126,6 @@ impl<T> ScriptBuf<T> {
     ///
     /// Just the script bytes in hexadecimal **not** consensus encoding of the script i.e., the
     /// string will not include a length prefix.
-    #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     #[inline]
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
@@ -218,7 +217,6 @@ mod tests {
     // All tests should compile and pass no matter which script type you put here.
     type ScriptBuf = super::super::ScriptSigBuf;
 
-    #[cfg(feature = "alloc")]
     use alloc::vec;
 
     use super::*;

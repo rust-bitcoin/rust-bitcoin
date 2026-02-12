@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(feature = "alloc")]
 use alloc::{format, vec};
 
 use hashes::{hash160, sha256};
@@ -337,7 +336,6 @@ fn legacy_opcode() {
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 fn script_to_hex() {
     let script = Script::from_bytes(&[0xa1, 0xb2, 0xc3]);
@@ -346,7 +344,6 @@ fn script_to_hex() {
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 fn script_buf_to_hex() {
     let script = ScriptBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
