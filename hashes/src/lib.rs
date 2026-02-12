@@ -273,6 +273,8 @@ pub fn debug_hex<'a>(bytes: impl IntoIterator<Item = &'a u8>, f: &mut fmt::Forma
     Ok(())
 }
 
+include!("../../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+
 #[cfg(test)]
 mod tests {
     use crate::sha256d;
