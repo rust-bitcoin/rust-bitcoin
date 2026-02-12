@@ -52,6 +52,7 @@ impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
                 // Flush buffer to decoder
                 decoder
                     .push_bytes(&mut (buffer.as_slice()))
+                    .map_err(encoding::DecodeError::Parse)
                     .map_err(ParsePrimitiveError::Decode)?;
                 index = 0;
             }
@@ -62,9 +63,13 @@ impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
         // Flush remaining buffer to decoder
         decoder
             .push_bytes(&mut (&buffer[..index]))
+                    .map_err(encoding::DecodeError::Parse)
             .map_err(ParsePrimitiveError::Decode)?;
 
-        decoder.end().map_err(ParsePrimitiveError::Decode)
+        decoder
+            .end()
+            .map_err(encoding::DecodeError::Parse)
+            .map_err(ParsePrimitiveError::Decode)
     }
 
     /// Writes an Encodable object to the given formatter in the requested case.
@@ -157,7 +162,7 @@ pub(crate) enum ParsePrimitiveError<T: Decodable> {
     /// Encountered an invalid hex character
     InvalidChar(hex_unstable::InvalidCharError),
     /// A decode error from `consensus_encoding`
-    Decode(<T::Decoder as Decoder>::Error),
+    Decode(encoding::DecodeError<<T::Decoder as encoding::Decoder>::Error>),
 }
 
 impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
