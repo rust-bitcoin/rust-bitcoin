@@ -135,10 +135,6 @@ internal_macros::define_extension_trait! {
         fn to_asm_string(&self) -> String { self.to_string() }
 
         /// Consensus encodes the script as lower-case hex.
-        #[deprecated(since = "TBD", note = "use `to_hex_string_no_length_prefix` instead")]
-        fn to_hex_string(&self) -> String { self.to_hex_string_no_length_prefix() }
-
-        /// Consensus encodes the script as lower-case hex.
         ///
         /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
         /// `to_hex_string_no_length_prefix`.
