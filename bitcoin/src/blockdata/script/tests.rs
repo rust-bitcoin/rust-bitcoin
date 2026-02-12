@@ -1082,8 +1082,6 @@ fn hex() {
     // touching the `bitcoin::consensus::encode` functions.
     use alloc::format;
 
-    use crate::blockdata::script::borrowed::ScriptExt as _;
-
     let consensus = "04deadbeef";
     let raw = "deadbeef";
 

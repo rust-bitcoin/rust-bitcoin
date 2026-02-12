@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#[cfg(all(feature = "hex", feature = "alloc"))]
+use alloc::string::String;
 use core::marker::PhantomData;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
@@ -118,6 +120,30 @@ impl<T> Script<T> {
     #[inline]
     #[deprecated(since = "0.101.0", note = "use to_vec instead")]
     pub fn to_bytes(&self) -> Vec<u8> { self.to_vec() }
+
+    /// Consensus encodes the script as lower-case hex.
+    ///
+    /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
+    /// `to_hex_string_no_length_prefix`.
+    #[cfg(all(feature = "hex", feature = "alloc"))]
+    pub fn to_hex_string_prefixed(&self) -> String {
+        use hex_unstable::{BytesToHexIter, Case};
+
+        // TODO: Can we remove allocation and use an iterator (like in `hex_codec`)?
+        let v = encoding::encode_to_vec(self);
+        BytesToHexIter::new(v.iter(), Case::Lower).collect()
+    }
+
+    /// Encodes the script as lower-case hex.
+    ///
+    /// This is **not** consensus encoding. The returned hex string will not include the length
+    /// prefix. See `to_hex_string_prefixed`.
+    #[cfg(all(feature = "hex", feature = "alloc"))]
+    pub fn to_hex_string_no_length_prefix(&self) -> String {
+        use hex_unstable::DisplayHex as _;
+
+        self.as_bytes().to_lower_hex_string()
+    }
 
     /// Returns the length in bytes of the script.
     #[inline]
