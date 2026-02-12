@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use core::convert::Infallible;
 #[cfg(doc)]
 use core::ops::Deref;
-use core::fmt;
 
-use internals::{write_err, ToU64 as _};
+use internals::ToU64 as _;
 
 use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
@@ -19,7 +17,7 @@ use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
 use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
-use crate::script::{self, ScriptBufDecoderError, ScriptHash, WScriptHash};
+use crate::script::{self, ScriptHash, WScriptHash};
 use crate::taproot::TapNodeHash;
 use crate::internal_macros;
 
@@ -145,34 +143,13 @@ internal_macros::define_extension_trait! {
         /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
         /// multiple times.
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        fn from_hex_prefixed(s: &str) -> Result<Self, FromHexError>
-            where Self: Sized
-        {
-            let v = hex::decode_to_vec(s)?;
-            Ok(encoding::decode_from_slice(&v)?)
-        }
-
+        
         /// Constructs a new [`ScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_no_length_prefix()` instead")]
         fn from_hex(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
             where Self: Sized
         {
             Self::from_hex_no_length_prefix(s)
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-        /// then use `ScriptBuf::from_hex_prefixed`.
-        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
-            where Self: Sized
-        {
-            let v = hex::decode_to_vec(s)?;
-            Ok(Self::from_bytes(v))
         }
 
         // This belongs only on RedeemScript and ScriptPubKey
@@ -408,45 +385,4 @@ impl<T> Drop for ScriptBufAsVec<'_, T> {
         let vec = core::mem::take(&mut self.1);
         *(self.0) = ScriptBuf::from_bytes(vec);
     }
-}
-
-/// An error parsing a script from hex.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum FromHexError {
-    /// Error parsing the hex input string.
-    Hex(hex::DecodeVariableLengthBytesError),
-    /// Error when decoding the script.
-    Decoder(ScriptBufDecoderError),
-}
-
-impl From<Infallible> for FromHexError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl fmt::Display for FromHexError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::Hex(ref e) => write_err!(f, "script hex"; e),
-            Self::Decoder(ref e) => write_err!(f, "script decoder"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for FromHexError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            Self::Hex(ref e) => Some(e),
-            Self::Decoder(ref e) => Some(e),
-        }
-    }
-}
-
-impl From<hex::DecodeVariableLengthBytesError> for FromHexError {
-    fn from(e: hex::DecodeVariableLengthBytesError) -> Self { Self::Hex(e) }
-}
-
-impl From<ScriptBufDecoderError> for FromHexError {
-    fn from(e: ScriptBufDecoderError) -> Self { Self::Decoder(e) }
 }

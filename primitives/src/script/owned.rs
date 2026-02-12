@@ -51,6 +51,38 @@ impl<T> ScriptBuf<T> {
     #[inline]
     pub const fn from_bytes(bytes: Vec<u8>) -> Self { Self(PhantomData, bytes) }
 
+    /// Constructs a new [`ScriptBuf`] from a hex string.
+    ///
+    /// The input string is expected to be consensus encoded i.e., includes the length prefix.
+    ///
+    /// # Errors
+    ///
+    /// * If `s` cannot be parsed into a vector.
+    /// * If the parsed bytes cannot be decoded as a valid script (incl.the length prefix).
+    #[cfg(feature = "hex")]
+    pub fn from_hex_prefixed(s: &str) -> Result<Self, FromHexError> {
+        let v = hex::decode_to_vec(s)?;
+        Ok(encoding::decode_from_slice(&v)?)
+    }
+
+    /// Constructs a new [`ScriptBuf`] from a hex string.
+    ///
+    /// This is **not** consensus encoding. If your hex string is a consensus encoded script
+    /// then use `ScriptBuf::from_hex_prefixed`.
+    ///
+    /// There is no script decoding error path because what ever is in the hex input string is
+    /// assumed to be the script. This means if you pass a consensus encoded hex string into this
+    /// function there will be no error and the script will not be what you expect.
+    ///
+    /// # Errors
+    ///
+    /// Errors if `s` cannot be parsed into a vector.
+    #[cfg(feature = "hex")]
+    pub fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError> {
+        let v = hex::decode_to_vec(s)?;
+        Ok(Self::from_bytes(v))
+    }
+
     /// Returns a reference to unsized script.
     #[inline]
     pub fn as_script(&self) -> &Script<T> { Script::from_bytes(&self.1) }
@@ -201,6 +233,52 @@ impl fmt::Display for ScriptBufDecoderError {
 #[cfg(feature = "std")]
 impl std::error::Error for ScriptBufDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+/// An error parsing a script from hex.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+#[cfg(feature = "hex")]
+pub enum FromHexError {
+    /// Error parsing the hex input string.
+    Hex(hex::DecodeVariableLengthBytesError),
+    /// Error when decoding the script.
+    Decoder(ScriptBufDecoderError),
+}
+
+#[cfg(feature = "hex")]
+impl From<Infallible> for FromHexError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::Display for FromHexError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::Hex(ref e) => write_err!(f, "script hex"; e),
+            Self::Decoder(ref e) => write_err!(f, "script decoder"; e),
+        }
+    }
+}
+
+#[cfg(all(feature = "std", feature = "hex"))]
+impl std::error::Error for FromHexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            Self::Hex(ref e) => Some(e),
+            Self::Decoder(ref e) => Some(e),
+        }
+    }
+}
+
+#[cfg(feature = "hex")]
+impl From<hex::DecodeVariableLengthBytesError> for FromHexError {
+    fn from(e: hex::DecodeVariableLengthBytesError) -> Self { Self::Hex(e) }
+}
+
+#[cfg(feature = "hex")]
+impl From<ScriptBufDecoderError> for FromHexError {
+    fn from(e: ScriptBufDecoderError) -> Self { Self::Decoder(e) }
 }
 
 #[cfg(feature = "arbitrary")]
