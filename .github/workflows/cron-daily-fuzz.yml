@@ -32,6 +32,7 @@ jobs:
           bitcoin_deserialize_script,
           bitcoin_deserialize_transaction,
           bitcoin_deserialize_witness,
+          bitcoin_encoding_roundtrip,
           bitcoin_parse_address,
           bitcoin_parse_outpoint,
           bitcoin_script_bytes_to_asm_fmt,
