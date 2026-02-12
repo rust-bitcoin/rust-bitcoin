@@ -480,6 +480,39 @@ fn script_buf_to_hex() {
 }
 
 #[test]
+#[cfg(feature = "hex")]
+fn hex() {
+    // This test is similar to code in `bitcoin/examples/script.rs` but without
+    // touching the `bitcoin::consensus::encode` functions.
+    use alloc::format;
+
+    let consensus = "04deadbeef";
+    let raw = "deadbeef";
+
+    // Sanity check - positive case.
+    let a = ScriptBuf::from_hex_prefixed(consensus).unwrap();
+    let b = ScriptBuf::from_hex_no_length_prefix(raw).unwrap();
+    assert_eq!(a, b);
+
+    // Sanity check - negative case.
+    assert!(ScriptBuf::from_hex_prefixed(raw).is_err()); // Nice API, this misuse fails.
+    // But this just puts the length prefix in the script, ouch.
+    assert!(ScriptBuf::from_hex_no_length_prefix(consensus).is_ok()); 
+
+    let script = ScriptBuf::from_hex_prefixed(consensus).unwrap();
+
+    let got = script.to_hex_string_prefixed();
+    assert_eq!(got, consensus);
+
+    let got = script.to_hex_string_no_length_prefix();
+    assert_eq!(got, raw);
+
+    // `LowerHex` is not consensus encoding, this may be surprising?
+    let got = format!("{:x}", script);
+    assert_eq!(got, raw);
+}
+
+#[test]
 fn script_consensus_decode_empty() {
     let bytes = vec![0_u8];
     let mut push = bytes.as_slice();
