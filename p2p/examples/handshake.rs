@@ -31,7 +31,7 @@ fn main() {
 
     let version_message = build_version_message(address);
 
-    let first_message = message::RawNetworkMessage::new(Magic::BITCOIN, version_message);
+    let first_message = message::V1NetworkMessage::new(Magic::BITCOIN, version_message);
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
@@ -44,13 +44,13 @@ fn main() {
         loop {
             // Loop and retrieve new messages
             let reply =
-                encoding::decode_from_read::<message::RawNetworkMessage, _>(&mut stream_reader)
+                encoding::decode_from_read::<message::V1NetworkMessage, _>(&mut stream_reader)
                     .unwrap();
             match reply.payload() {
                 message::NetworkMessage::Version(_) => {
                     println!("Received version message: {:?}", reply.payload());
 
-                    let second_message = message::RawNetworkMessage::new(
+                    let second_message = message::V1NetworkMessage::new(
                         Magic::BITCOIN,
                         message::NetworkMessage::Verack,
                     );
