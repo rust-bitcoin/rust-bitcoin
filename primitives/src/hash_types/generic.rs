@@ -29,11 +29,18 @@ super::impl_serde!(HashType, LEN);
 super::impl_bytelike_traits!(HashType, LEN);
 
 #[cfg(feature = "hex")]
-hex_unstable::impl_fmt_traits! {
-    #[display_backward(REVERSE)]
-    impl fmt_traits for HashType {
-        const LENGTH: usize = LEN;
-    }
+impl fmt::LowerHex for HashType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::UpperHex for HashType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::Display for HashType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 #[cfg(feature = "hex")]
@@ -50,14 +57,8 @@ impl str::FromStr for HashType {
     }
 }
 
-#[cfg(not(feature = "hex"))]
 impl fmt::Debug for HashType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for byte in self.as_byte_array() {
-            write!(f, "{:02x}", byte)?;
-        }
-        Ok(())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
 
 #[cfg(feature = "arbitrary")]
