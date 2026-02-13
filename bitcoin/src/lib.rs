@@ -22,7 +22,7 @@
 //! * `secp-recovery` - enables calculating public key from a signature and message.
 //! * `std` - the usual dependency on `std`.
 
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_notable_trait))]
 // Coding conventions.
@@ -54,6 +54,9 @@ internals::const_assert!(
 
 #[macro_use]
 extern crate alloc;
+
+#[cfg(any(feature = "std", test))]
+extern crate std;
 
 /// Encodes and decodes base64 as bytes or utf8.
 #[cfg(feature = "base64")]

@@ -1023,6 +1023,8 @@ fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use hex_lit::hex;
 
     use super::*;

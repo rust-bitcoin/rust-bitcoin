@@ -2199,6 +2199,7 @@ mod tests {
                 use super::{ParseU256Error, U256};
                 use super::{$ty, $err_ty};
 
+                use alloc::string::ToString;
                 use core::str::FromStr;
 
                 #[test]
