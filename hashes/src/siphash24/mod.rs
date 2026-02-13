@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SipHash 2-4 implementation.
+//! `SipHash` 2-4 implementation.
+
+#![allow(clippy::unreadable_literal)]
 
 use core::{cmp, mem};
 
@@ -63,7 +65,7 @@ pub struct State {
     v3: u64,
 }
 
-/// Engine to compute the SipHash24 hash function.
+/// Engine to compute the `SipHash24` hash function.
 #[derive(Debug, Clone)]
 pub struct HashEngine {
     k0: u64,
@@ -75,7 +77,7 @@ pub struct HashEngine {
 }
 
 impl HashEngine {
-    /// Constructs a new SipHash24 engine with keys.
+    /// Constructs a new `SipHash24` engine with keys.
     #[inline]
     pub const fn with_keys(k0: u64, k1: u64) -> Self {
         Self {
@@ -130,12 +132,11 @@ impl crate::HashEngine for HashEngine {
             if bytes_hashed < needed {
                 self.ntail += bytes_hashed;
                 return;
-            } else {
-                self.state.v3 ^= self.tail;
-                Self::c_rounds(&mut self.state);
-                self.state.v0 ^= self.tail;
-                self.ntail = 0;
             }
+            self.state.v3 ^= self.tail;
+            Self::c_rounds(&mut self.state);
+            self.state.v0 ^= self.tail;
+            self.ntail = 0;
         }
 
         // Buffered tail is now flushed, process new input.
@@ -163,7 +164,7 @@ impl crate::HashEngine for HashEngine {
 }
 
 impl Hash {
-    /// Constructs a new SipHash24 engine with keys.
+    /// Constructs a new `SipHash24` engine with keys.
     pub fn engine(k0: u64, k1: u64) -> HashEngine { HashEngine::with_keys(k0, k1) }
 
     /// Produces a hash from the current state of a given engine.
@@ -228,7 +229,7 @@ unsafe fn u8to64_le(buf: &[u8], start: usize, len: usize) -> u64 {
     }
     if i + 1 < len {
         out |= u64::from(load_int_le!(buf, start + i, u16)) << (i * 8);
-        i += 2
+        i += 2;
     }
     if i < len {
         out |= u64::from(*buf.get_unchecked(start + i)) << (i * 8);

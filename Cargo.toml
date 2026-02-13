@@ -4,7 +4,7 @@ exclude = ["benches"]
 resolver = "2"
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(kani)'] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(hashes_fuzz)', 'cfg(kani)'] }
 
 [workspace.lints.clippy]
 # Exclude lints we don't think are valuable.
