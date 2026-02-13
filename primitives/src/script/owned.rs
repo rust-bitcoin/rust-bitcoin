@@ -220,6 +220,10 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     use alloc::vec;
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error as _;
 
     use super::*;
 
@@ -283,6 +287,12 @@ mod tests {
     }
 
     #[test]
+    fn script_buf_default() {
+        let script: ScriptBuf = ScriptBuf::default();
+        assert!(script.is_empty());
+    }
+
+    #[test]
     fn script_consensus_decode_empty() {
         let bytes = vec![0_u8];
         let mut push = bytes.as_slice();
@@ -307,5 +317,37 @@ mod tests {
         let want = ScriptBuf::new();
 
         assert_eq!(got, want);
+    }
+
+    #[test]
+    fn decoder_full_read_limit() {
+        let mut decoder = ScriptBuf::decoder();
+        // ByteVecDecoder length prefix is CompactSize: needs 1 byte.
+        assert_eq!(decoder.read_limit(), 1);
+
+        // Script length prefix = 32.
+        let mut push = [32_u8].as_slice();
+        decoder.push_bytes(&mut push).unwrap();
+        // Limit is 32 for the script data.
+        assert_eq!(decoder.read_limit(), 32);
+
+        // Provide 1 byte of script data decreasing the read limit by 1.
+        let mut push = [0xAA_u8].as_slice();
+        decoder.push_bytes(&mut push).unwrap();
+        assert_eq!(decoder.read_limit(), 31);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder_error_display() {
+        let bytes = vec![0x01_u8];
+        let mut push = bytes.as_slice();
+        let mut decoder = <ScriptBuf as Decodable>::Decoder::default();
+        decoder.push_bytes(&mut push).unwrap();
+
+        let err = decoder.end().unwrap_err();
+        assert!(!err.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(err.source().is_some());
     }
 }
