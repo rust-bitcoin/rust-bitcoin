@@ -2,6 +2,8 @@
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::boxed::Box;
+#[cfg(feature = "std")]
+use std::boxed::Box;
 use core::fmt;
 
 /// The `io` crate error type.
