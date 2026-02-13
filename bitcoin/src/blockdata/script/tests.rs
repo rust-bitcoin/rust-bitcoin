@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#[cfg(feature = "serde")]
+use alloc::borrow::ToOwned;
+use alloc::string::ToString;
+
 use hex_lit::hex;
 
 use super::*;

@@ -695,6 +695,7 @@ impl Decodable for TapLeafHash {
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
     use core::fmt;
     use core::mem::discriminant;
 

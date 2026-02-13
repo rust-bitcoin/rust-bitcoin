@@ -284,6 +284,8 @@ impl ChainHash {
 
 #[cfg(test)]
 mod test {
+    use alloc::string::ToString;
+
     use hex_lit::hex;
 
     use super::*;

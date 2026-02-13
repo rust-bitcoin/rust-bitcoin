@@ -1653,6 +1653,8 @@ impl std::error::Error for InvalidControlBlockSizeError {}
 
 #[cfg(test)]
 mod test {
+    use alloc::string::ToString;
+
     use hashes::sha256;
     use hex_unstable::DisplayHex;
 
