@@ -90,6 +90,16 @@ pub enum Error {
         /// The [`Txid`] of the non-witness UTXO.
         non_witness_utxo_txid: Txid,
     },
+    /// Non-witness UTXO does not have enough outputs for the `vout` specified
+    /// in the transaction input.
+    NonWitnessUtxoOutOfBounds {
+        /// The index of the input in question.
+        index: usize,
+        /// The vout of the input, as it appears in the unsigned transaction.
+        vout: u32,
+        /// The number of outputs in the non-witness UTXO.
+        non_witness_utxo_output_count: usize,
+    },
     /// Parsing error indicating invalid public keys
     InvalidPublicKey(key::FromSliceError),
     /// Parsing error indicating invalid secp256k1 public keys
@@ -171,6 +181,13 @@ impl fmt::Display for Error {
                     non_witness_utxo_txid, index, input_outpoint
                 )
             }
+            Self::NonWitnessUtxoOutOfBounds { index, vout, non_witness_utxo_output_count } => {
+                write!(
+                    f,
+                    "input {} references vout {}, but non-witness UTXO only has {} outputs",
+                    index, vout, non_witness_utxo_output_count
+                )
+            }
             Self::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
             Self::InvalidSecp256k1PublicKey(ref e) =>
                 write_err!(f, "invalid secp256k1 public key"; e),
@@ -217,6 +234,7 @@ impl std::error::Error for Error {
             | Self::NegativeFee
             | Self::FeeOverflow
             | Self::IncorrectNonWitnessUtxo { .. }
+            | Self::NonWitnessUtxoOutOfBounds { .. }
             | Self::InvalidPublicKey(_)
             | Self::InvalidSecp256k1PublicKey(_)
             | Self::InvalidXOnlyPublicKey
