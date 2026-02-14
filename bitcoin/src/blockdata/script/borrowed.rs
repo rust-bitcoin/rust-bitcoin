@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use hex::DisplayHex as _;
+use hex_unstable::DisplayHex as _;
 use internals::array::ArrayExt; // For `split_first`.
 use internals::ToU64 as _;
 

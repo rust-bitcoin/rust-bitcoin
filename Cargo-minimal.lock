@@ -63,6 +63,7 @@ dependencies = [
  "bitcoin_hashes",
  "bitcoinconsensus",
  "hex-conservative 0.3.0",
+ "hex-conservative 1.0.0",
  "hex_lit",
  "secp256k1",
  "serde",

@@ -24,7 +24,6 @@ use std::collections::BTreeMap;
 use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
-use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::{raw, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
@@ -36,6 +35,7 @@ use bitcoin::{
     ScriptPubKeyBuf, ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid,
     Work,
 };
+use hex_unstable::FromHex;
 
 #[test]
 fn serde_regression_absolute_lock_time_height() {

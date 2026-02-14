@@ -45,7 +45,7 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hex::FromHex;
+    /// use hex::FromHex;
     /// use bitcoin_p2p_messages::merkle_tree::MerkleBlock;
     /// use primitives::{Block, Txid};
     ///
