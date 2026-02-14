@@ -2,9 +2,8 @@
 
 //! The `Txid` type.
 
-use core::fmt;
 #[cfg(feature = "hex")]
-use core::str;
+use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -23,6 +22,8 @@ use hashes::sha256d;
 /// having the same inputs and outputs.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Ntxid(sha256d::Hash);
+
+super::impl_debug!(Ntxid);
 
 // The new hash wrapper type.
 type HashType = Ntxid;
