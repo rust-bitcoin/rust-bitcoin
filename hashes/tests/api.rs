@@ -18,8 +18,8 @@ use bitcoin_hashes::{
 };
 // Import using type alias style e.g., `Sha256`.
 use bitcoin_hashes::{
-    Hash160, Hkdf, Hmac, HmacEngine, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha3_256,
-    Sha512, Sha512_256, Siphash24,
+    Hash160, Hkdf, Hmac, HmacEngine, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384,
+    Sha3_256, Sha512, Sha512_256, Siphash24,
 };
 
 // Arbitrary midstate value; taken from as sha256t unit tests.
@@ -172,16 +172,16 @@ struct Errors {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_hashes::{
-        hash160, hkdf, hmac, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256,
-        siphash24,
+        hash160, hkdf, hmac, muhash, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512,
+        sha512_256, siphash24,
     };
 }
 
 #[test]
 fn api_can_use_alias_from_crate_root() {
     use bitcoin_hashes::{
-        Hash160, Hkdf, Hmac, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha512, Sha512_256,
-        Siphash24,
+        Hash160, Hkdf, Hmac, MuHash, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha512,
+        Sha512_256, Siphash24,
     };
 }
 
