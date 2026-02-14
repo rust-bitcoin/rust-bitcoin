@@ -1,29 +1,30 @@
-use bitcoin_fuzz::fuzz_utils::consume_random_bytes;
+use arbitrary::{Arbitrary, Unstructured};
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let mut new_data = data;
-    let bytes = consume_random_bytes(&mut new_data);
-    let psbt: Result<bitcoin::psbt::Psbt, _> = bitcoin::psbt::Psbt::deserialize(bytes);
-    match psbt {
-        Err(_) => {}
-        Ok(mut psbt) => {
-            let ser = bitcoin::psbt::Psbt::serialize(&psbt);
-            let deser = bitcoin::psbt::Psbt::deserialize(&ser).unwrap();
-            // Since the fuzz data could order psbt fields differently, we compare to our deser/ser instead of data
-            assert_eq!(ser, bitcoin::psbt::Psbt::serialize(&deser));
+    let mut unstructured = Unstructured::new(data);
 
-            let new_bytes = consume_random_bytes(&mut new_data);
-            let psbt_b: Result<bitcoin::psbt::Psbt, _> =
-                bitcoin::psbt::Psbt::deserialize(new_bytes);
-            match psbt_b {
-                Err(_) => {}
-                Ok(mut psbt_b) => {
-                    assert_eq!(psbt_b.combine(psbt.clone()).is_ok(), psbt.combine(psbt_b).is_ok());
-                }
-            }
-        }
-    }
+    let Ok(bytes_a) = <&[u8]>::arbitrary(&mut unstructured) else {
+        return;
+    };
+    let Ok(bytes_b) = <&[u8]>::arbitrary(&mut unstructured) else {
+        return;
+    };
+
+    let Ok(psbt_a) = bitcoin::psbt::Psbt::deserialize(bytes_a) else {
+        return;
+    };
+
+    let ser = bitcoin::psbt::Psbt::serialize(&psbt_a);
+    let deser = bitcoin::psbt::Psbt::deserialize(&ser).unwrap();
+    assert_eq!(ser, bitcoin::psbt::Psbt::serialize(&deser));
+
+    let Ok(mut psbt_b) = bitcoin::psbt::Psbt::deserialize(bytes_b) else {
+        return;
+    };
+
+    let mut psbt_a_clone = psbt_a.clone();
+    assert_eq!(psbt_b.combine(psbt_a).is_ok(), psbt_a_clone.combine(psbt_b).is_ok());
 }
 
 fn main() {
