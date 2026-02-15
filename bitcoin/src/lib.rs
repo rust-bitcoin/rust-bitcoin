@@ -146,7 +146,6 @@ pub use primitives::{
         Validation as BlockValidation, Version as BlockVersion, WitnessCommitment,
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
-    pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{
         RedeemScript, RedeemScriptBuf, RedeemScriptTag, ScriptHashableTag, ScriptPubKey,
         ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, TapScript,
@@ -163,6 +162,7 @@ pub use units::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     parse_int,
+    pow::CompactTarget,
     result::{self, NumOpResult},
     sequence::{self, Sequence},
     time::{self, BlockTime, BlockTimeDecoder, BlockTimeDecoderError},

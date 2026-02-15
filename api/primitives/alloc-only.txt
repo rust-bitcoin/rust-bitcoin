@@ -7,7 +7,6 @@ impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::Witne
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Block
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Header
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Version
-impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::pow::CompactTarget
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::transaction::OutPoint
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::transaction::Transaction
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::transaction::TxIn
@@ -18,7 +17,6 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::BlockHashDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::HeaderDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::VersionDecoder
-impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::pow::CompactTargetDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::OutPointDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::TransactionDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::TxInDecoder
@@ -32,7 +30,6 @@ impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::Witne
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Block
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Header
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Version
-impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::pow::CompactTarget
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::transaction::OutPoint
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::transaction::Transaction
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::transaction::TxIn
@@ -56,8 +53,6 @@ impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Checke
 impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Unchecked
 impl bitcoin_primitives::block::Version
 impl bitcoin_primitives::block::VersionDecoder
-impl bitcoin_primitives::pow::CompactTarget
-impl bitcoin_primitives::pow::CompactTargetDecoder
 impl bitcoin_primitives::script::RedeemScriptSizeError
 impl bitcoin_primitives::script::ScriptHash
 impl bitcoin_primitives::script::ScriptHashableTag for bitcoin_primitives::script::RedeemScriptTag
@@ -113,8 +108,6 @@ impl core::clone::Clone for bitcoin_primitives::block::InvalidBlockError
 impl core::clone::Clone for bitcoin_primitives::block::Unchecked
 impl core::clone::Clone for bitcoin_primitives::block::Version
 impl core::clone::Clone for bitcoin_primitives::block::VersionDecoderError
-impl core::clone::Clone for bitcoin_primitives::pow::CompactTarget
-impl core::clone::Clone for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::clone::Clone for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::clone::Clone for bitcoin_primitives::script::RedeemScriptTag
 impl core::clone::Clone for bitcoin_primitives::script::ScriptBufDecoderError
@@ -155,8 +148,6 @@ impl core::cmp::Eq for bitcoin_primitives::block::InvalidBlockError
 impl core::cmp::Eq for bitcoin_primitives::block::Unchecked
 impl core::cmp::Eq for bitcoin_primitives::block::Version
 impl core::cmp::Eq for bitcoin_primitives::block::VersionDecoderError
-impl core::cmp::Eq for bitcoin_primitives::pow::CompactTarget
-impl core::cmp::Eq for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::cmp::Eq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::cmp::Eq for bitcoin_primitives::script::RedeemScriptTag
 impl core::cmp::Eq for bitcoin_primitives::script::ScriptBufDecoderError
@@ -192,7 +183,6 @@ impl core::cmp::Ord for bitcoin_primitives::block::Checked
 impl core::cmp::Ord for bitcoin_primitives::block::Header
 impl core::cmp::Ord for bitcoin_primitives::block::Unchecked
 impl core::cmp::Ord for bitcoin_primitives::block::Version
-impl core::cmp::Ord for bitcoin_primitives::pow::CompactTarget
 impl core::cmp::Ord for bitcoin_primitives::script::RedeemScriptTag
 impl core::cmp::Ord for bitcoin_primitives::script::ScriptHash
 impl core::cmp::Ord for bitcoin_primitives::script::ScriptPubKeyTag
@@ -222,8 +212,6 @@ impl core::cmp::PartialEq for bitcoin_primitives::block::InvalidBlockError
 impl core::cmp::PartialEq for bitcoin_primitives::block::Unchecked
 impl core::cmp::PartialEq for bitcoin_primitives::block::Version
 impl core::cmp::PartialEq for bitcoin_primitives::block::VersionDecoderError
-impl core::cmp::PartialEq for bitcoin_primitives::pow::CompactTarget
-impl core::cmp::PartialEq for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::cmp::PartialEq for bitcoin_primitives::script::RedeemScriptTag
 impl core::cmp::PartialEq for bitcoin_primitives::script::ScriptBufDecoderError
@@ -259,7 +247,6 @@ impl core::cmp::PartialOrd for bitcoin_primitives::block::Checked
 impl core::cmp::PartialOrd for bitcoin_primitives::block::Header
 impl core::cmp::PartialOrd for bitcoin_primitives::block::Unchecked
 impl core::cmp::PartialOrd for bitcoin_primitives::block::Version
-impl core::cmp::PartialOrd for bitcoin_primitives::pow::CompactTarget
 impl core::cmp::PartialOrd for bitcoin_primitives::script::RedeemScriptTag
 impl core::cmp::PartialOrd for bitcoin_primitives::script::ScriptHash
 impl core::cmp::PartialOrd for bitcoin_primitives::script::ScriptPubKeyTag
@@ -315,7 +302,6 @@ impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::bloc
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::HeaderDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::InvalidBlockError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::VersionDecoderError
-impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::WitnessScriptSizeError
@@ -331,7 +317,6 @@ impl core::convert::TryFrom<bitcoin_primitives::script::ScriptBuf<bitcoin_primit
 impl core::default::Default for bitcoin_primitives::block::BlockHashDecoder
 impl core::default::Default for bitcoin_primitives::block::Version
 impl core::default::Default for bitcoin_primitives::block::VersionDecoder
-impl core::default::Default for bitcoin_primitives::pow::CompactTargetDecoder
 impl core::default::Default for bitcoin_primitives::transaction::OutPointDecoder
 impl core::default::Default for bitcoin_primitives::transaction::TransactionDecoder
 impl core::default::Default for bitcoin_primitives::transaction::TxMerkleNodeDecoder
@@ -339,7 +324,6 @@ impl core::default::Default for bitcoin_primitives::transaction::VersionDecoder
 impl core::default::Default for bitcoin_primitives::witness::Witness
 impl core::default::Default for bitcoin_primitives::witness::WitnessDecoder
 impl core::fmt::Binary for bitcoin_primitives::block::Version
-impl core::fmt::Binary for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::Binary for bitcoin_primitives::transaction::Version
 impl core::fmt::Debug for bitcoin_primitives::BlockHash
 impl core::fmt::Debug for bitcoin_primitives::Ntxid
@@ -357,8 +341,6 @@ impl core::fmt::Debug for bitcoin_primitives::block::InvalidBlockError
 impl core::fmt::Debug for bitcoin_primitives::block::Unchecked
 impl core::fmt::Debug for bitcoin_primitives::block::Version
 impl core::fmt::Debug for bitcoin_primitives::block::VersionDecoderError
-impl core::fmt::Debug for bitcoin_primitives::pow::CompactTarget
-impl core::fmt::Debug for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::fmt::Debug for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptHash
@@ -384,8 +366,6 @@ impl core::fmt::Display for bitcoin_primitives::block::HeaderDecoderError
 impl core::fmt::Display for bitcoin_primitives::block::InvalidBlockError
 impl core::fmt::Display for bitcoin_primitives::block::Version
 impl core::fmt::Display for bitcoin_primitives::block::VersionDecoderError
-impl core::fmt::Display for bitcoin_primitives::pow::CompactTarget
-impl core::fmt::Display for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::fmt::Display for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::fmt::Display for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::fmt::Display for bitcoin_primitives::script::WitnessScriptSizeError
@@ -399,13 +379,10 @@ impl core::fmt::Display for bitcoin_primitives::transaction::VersionDecoderError
 impl core::fmt::Display for bitcoin_primitives::witness::UnexpectedEofError
 impl core::fmt::Display for bitcoin_primitives::witness::WitnessDecoderError
 impl core::fmt::LowerHex for bitcoin_primitives::block::Version
-impl core::fmt::LowerHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::LowerHex for bitcoin_primitives::transaction::Version
 impl core::fmt::Octal for bitcoin_primitives::block::Version
-impl core::fmt::Octal for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::Octal for bitcoin_primitives::transaction::Version
 impl core::fmt::UpperHex for bitcoin_primitives::block::Version
-impl core::fmt::UpperHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::UpperHex for bitcoin_primitives::transaction::Version
 impl core::hash::Hash for bitcoin_primitives::BlockHash
 impl core::hash::Hash for bitcoin_primitives::Ntxid
@@ -418,7 +395,6 @@ impl core::hash::Hash for bitcoin_primitives::block::Checked
 impl core::hash::Hash for bitcoin_primitives::block::Header
 impl core::hash::Hash for bitcoin_primitives::block::Unchecked
 impl core::hash::Hash for bitcoin_primitives::block::Version
-impl core::hash::Hash for bitcoin_primitives::pow::CompactTarget
 impl core::hash::Hash for bitcoin_primitives::script::RedeemScriptTag
 impl core::hash::Hash for bitcoin_primitives::script::ScriptHash
 impl core::hash::Hash for bitcoin_primitives::script::ScriptPubKeyTag
@@ -442,7 +418,6 @@ impl core::marker::Copy for bitcoin_primitives::WitnessMerkleNode
 impl core::marker::Copy for bitcoin_primitives::Wtxid
 impl core::marker::Copy for bitcoin_primitives::block::Header
 impl core::marker::Copy for bitcoin_primitives::block::Version
-impl core::marker::Copy for bitcoin_primitives::pow::CompactTarget
 impl core::marker::Copy for bitcoin_primitives::script::ScriptHash
 impl core::marker::Copy for bitcoin_primitives::script::WScriptHash
 impl core::marker::Copy for bitcoin_primitives::transaction::OutPoint
@@ -467,9 +442,6 @@ impl core::marker::Freeze for bitcoin_primitives::block::Unchecked
 impl core::marker::Freeze for bitcoin_primitives::block::Version
 impl core::marker::Freeze for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Freeze for bitcoin_primitives::block::VersionDecoderError
-impl core::marker::Freeze for bitcoin_primitives::pow::CompactTarget
-impl core::marker::Freeze for bitcoin_primitives::pow::CompactTargetDecoder
-impl core::marker::Freeze for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::marker::Freeze for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Freeze for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Freeze for bitcoin_primitives::script::ScriptBufDecoderError
@@ -521,9 +493,6 @@ impl core::marker::Send for bitcoin_primitives::block::Unchecked
 impl core::marker::Send for bitcoin_primitives::block::Version
 impl core::marker::Send for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Send for bitcoin_primitives::block::VersionDecoderError
-impl core::marker::Send for bitcoin_primitives::pow::CompactTarget
-impl core::marker::Send for bitcoin_primitives::pow::CompactTargetDecoder
-impl core::marker::Send for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::marker::Send for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Send for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Send for bitcoin_primitives::script::ScriptBufDecoderError
@@ -571,8 +540,6 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::block::InvalidBlo
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Unchecked
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Version
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::VersionDecoderError
-impl core::marker::StructuralPartialEq for bitcoin_primitives::pow::CompactTarget
-impl core::marker::StructuralPartialEq for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::ScriptBufDecoderError
@@ -617,9 +584,6 @@ impl core::marker::Sync for bitcoin_primitives::block::Unchecked
 impl core::marker::Sync for bitcoin_primitives::block::Version
 impl core::marker::Sync for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Sync for bitcoin_primitives::block::VersionDecoderError
-impl core::marker::Sync for bitcoin_primitives::pow::CompactTarget
-impl core::marker::Sync for bitcoin_primitives::pow::CompactTargetDecoder
-impl core::marker::Sync for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::marker::Sync for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Sync for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Sync for bitcoin_primitives::script::ScriptBufDecoderError
@@ -671,9 +635,6 @@ impl core::marker::Unpin for bitcoin_primitives::block::Unchecked
 impl core::marker::Unpin for bitcoin_primitives::block::Version
 impl core::marker::Unpin for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Unpin for bitcoin_primitives::block::VersionDecoderError
-impl core::marker::Unpin for bitcoin_primitives::pow::CompactTarget
-impl core::marker::Unpin for bitcoin_primitives::pow::CompactTargetDecoder
-impl core::marker::Unpin for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::marker::Unpin for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Unpin for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Unpin for bitcoin_primitives::script::ScriptBufDecoderError
@@ -726,9 +687,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Unch
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::VersionDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::VersionDecoderError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::pow::CompactTarget
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::pow::CompactTargetDecoder
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::RedeemScriptTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::ScriptBufDecoderError
@@ -780,9 +738,6 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Uncheck
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::VersionDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::VersionDecoderError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::pow::CompactTarget
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::pow::CompactTargetDecoder
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::pow::CompactTargetDecoderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::RedeemScriptTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptBufDecoderError
@@ -835,7 +790,6 @@ impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::blo
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -846,7 +800,6 @@ impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primit
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::VersionEncoder<'e>
@@ -855,7 +808,6 @@ impl<'e> bitcoin_primitives::block::BlockHashEncoder<'e>
 impl<'e> bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -868,7 +820,6 @@ impl<'e> core::marker::Freeze for bitcoin_primitives::block::BlockHashEncoder<'e
 impl<'e> core::marker::Freeze for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> core::marker::Freeze for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -882,7 +833,6 @@ impl<'e> core::marker::Send for bitcoin_primitives::block::BlockHashEncoder<'e>
 impl<'e> core::marker::Send for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> core::marker::Send for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> core::marker::Send for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> core::marker::Send for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> core::marker::Send for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> core::marker::Send for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> core::marker::Send for bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -896,7 +846,6 @@ impl<'e> core::marker::Sync for bitcoin_primitives::block::BlockHashEncoder<'e>
 impl<'e> core::marker::Sync for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> core::marker::Sync for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> core::marker::Sync for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> core::marker::Sync for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> core::marker::Sync for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> core::marker::Sync for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> core::marker::Sync for bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -910,7 +859,6 @@ impl<'e> core::marker::Unpin for bitcoin_primitives::block::BlockHashEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> core::marker::Unpin for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -924,7 +872,6 @@ impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -938,7 +885,6 @@ impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Blo
 impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::HeaderEncoder<'e>
 impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::VersionEncoder<'e>
 impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::pow::CompactTargetEncoder<'e>
 impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::OutPointEncoder<'e>
 impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TransactionEncoder<'e>
@@ -1060,7 +1006,7 @@ impl<const N: usize> core::convert::From<&[&[u8; N]]> for bitcoin_primitives::wi
 impl<const N: usize> core::convert::From<&[&[u8]; N]> for bitcoin_primitives::witness::Witness
 impl<const N: usize> core::convert::From<&[[u8; N]]> for bitcoin_primitives::witness::Witness
 impl<const N: usize> core::convert::From<[&[u8]; N]> for bitcoin_primitives::witness::Witness
-pub bitcoin_primitives::BlockHeader::bits: bitcoin_primitives::pow::CompactTarget
+pub bitcoin_primitives::BlockHeader::bits: bitcoin_units::pow::CompactTarget
 pub bitcoin_primitives::BlockHeader::merkle_root: bitcoin_primitives::TxMerkleNode
 pub bitcoin_primitives::BlockHeader::nonce: u32
 pub bitcoin_primitives::BlockHeader::prev_blockhash: bitcoin_primitives::BlockHash
@@ -1078,13 +1024,13 @@ pub bitcoin_primitives::TxIn::sequence: bitcoin_units::sequence::Sequence
 pub bitcoin_primitives::TxIn::witness: bitcoin_primitives::witness::Witness
 pub bitcoin_primitives::TxOut::amount: bitcoin_units::amount::unsigned::encapsulate::Amount
 pub bitcoin_primitives::TxOut::script_pubkey: bitcoin_primitives::script::ScriptPubKeyBuf
-pub bitcoin_primitives::block::Header::bits: bitcoin_primitives::pow::CompactTarget
+pub bitcoin_primitives::block::Header::bits: bitcoin_units::pow::CompactTarget
 pub bitcoin_primitives::block::Header::merkle_root: bitcoin_primitives::TxMerkleNode
 pub bitcoin_primitives::block::Header::nonce: u32
 pub bitcoin_primitives::block::Header::prev_blockhash: bitcoin_primitives::BlockHash
 pub bitcoin_primitives::block::Header::time: bitcoin_units::time::encapsulate::BlockTime
 pub bitcoin_primitives::block::Header::version: bitcoin_primitives::block::Version
-pub bitcoin_primitives::block::HeaderDecoderError::Bits(bitcoin_primitives::pow::CompactTargetDecoderError)
+pub bitcoin_primitives::block::HeaderDecoderError::Bits(bitcoin_units::pow::CompactTargetDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::MerkleRoot(bitcoin_primitives::transaction::TxMerkleNodeDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::Nonce(bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError)
 pub bitcoin_primitives::block::HeaderDecoderError::PrevBlockhash(bitcoin_primitives::block::BlockHashDecoderError)
@@ -1152,8 +1098,6 @@ pub const fn bitcoin_primitives::block::BlockHashDecoder::new() -> Self
 pub const fn bitcoin_primitives::block::Version::from_consensus(v: i32) -> Self
 pub const fn bitcoin_primitives::block::Version::to_consensus(self) -> i32
 pub const fn bitcoin_primitives::block::VersionDecoder::new() -> Self
-pub const fn bitcoin_primitives::pow::CompactTarget::to_consensus(self) -> u32
-pub const fn bitcoin_primitives::pow::CompactTargetDecoder::new() -> Self
 pub const fn bitcoin_primitives::script::Script<T>::as_bytes(&self) -> &[u8]
 pub const fn bitcoin_primitives::script::Script<T>::from_bytes(bytes: &[u8]) -> &Self
 pub const fn bitcoin_primitives::script::Script<T>::is_empty(&self) -> bool
@@ -1359,7 +1303,7 @@ pub fn bitcoin_primitives::block::HeaderDecoderError::from(never: core::convert:
 pub fn bitcoin_primitives::block::HeaderEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::HeaderEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::block::HeaderEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::block::HeaderEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::Encoder6<bitcoin_primitives::block::VersionEncoder<'e>, bitcoin_primitives::block::BlockHashEncoder<'e>, bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>, bitcoin_units::time::BlockTimeEncoder<'e>, bitcoin_primitives::pow::CompactTargetEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>>) -> bitcoin_primitives::block::HeaderEncoder<'e>
+pub fn bitcoin_primitives::block::HeaderEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::Encoder6<bitcoin_primitives::block::VersionEncoder<'e>, bitcoin_primitives::block::BlockHashEncoder<'e>, bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>, bitcoin_units::time::BlockTimeEncoder<'e>, bitcoin_units::pow::CompactTargetEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>>) -> bitcoin_primitives::block::HeaderEncoder<'e>
 pub fn bitcoin_primitives::block::InvalidBlockError::clone(&self) -> bitcoin_primitives::block::InvalidBlockError
 pub fn bitcoin_primitives::block::InvalidBlockError::eq(&self, other: &bitcoin_primitives::block::InvalidBlockError) -> bool
 pub fn bitcoin_primitives::block::InvalidBlockError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1398,28 +1342,6 @@ pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::advance(&mut se
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::len(&self) -> usize
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<32>) -> bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
-pub fn bitcoin_primitives::pow::CompactTarget::clone(&self) -> bitcoin_primitives::pow::CompactTarget
-pub fn bitcoin_primitives::pow::CompactTarget::cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::cmp::Ordering
-pub fn bitcoin_primitives::pow::CompactTarget::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::pow::CompactTarget::encoder(&self) -> Self::Encoder
-pub fn bitcoin_primitives::pow::CompactTarget::eq(&self, other: &bitcoin_primitives::pow::CompactTarget) -> bool
-pub fn bitcoin_primitives::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_primitives::pow::CompactTarget::from_consensus(bits: u32) -> Self
-pub fn bitcoin_primitives::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin_primitives::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::pow::CompactTarget::to_hex(self) -> alloc::string::String
-pub fn bitcoin_primitives::pow::CompactTargetDecoder::default() -> Self
-pub fn bitcoin_primitives::pow::CompactTargetDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::pow::CompactTargetDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
-pub fn bitcoin_primitives::pow::CompactTargetDecoder::read_limit(&self) -> usize
-pub fn bitcoin_primitives::pow::CompactTargetDecoderError::clone(&self) -> bitcoin_primitives::pow::CompactTargetDecoderError
-pub fn bitcoin_primitives::pow::CompactTargetDecoderError::eq(&self, other: &bitcoin_primitives::pow::CompactTargetDecoderError) -> bool
-pub fn bitcoin_primitives::pow::CompactTargetDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_primitives::pow::CompactTargetDecoderError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_primitives::pow::CompactTargetEncoder<'e>::advance(&mut self) -> bool
-pub fn bitcoin_primitives::pow::CompactTargetEncoder<'e>::current_chunk(&self) -> &[u8]
-pub fn bitcoin_primitives::pow::CompactTargetEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::pow::CompactTargetEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_primitives::pow::CompactTargetEncoder<'e>
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::clone(&self) -> bitcoin_primitives::script::RedeemScriptSizeError
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::eq(&self, other: &bitcoin_primitives::script::RedeemScriptSizeError) -> bool
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1727,7 +1649,6 @@ pub fn u32::from(version: bitcoin_primitives::transaction::Version) -> Self
 pub mod bitcoin_primitives
 pub mod bitcoin_primitives::block
 pub mod bitcoin_primitives::merkle_tree
-pub mod bitcoin_primitives::pow
 pub mod bitcoin_primitives::script
 pub mod bitcoin_primitives::transaction
 pub mod bitcoin_primitives::witness
@@ -1735,7 +1656,6 @@ pub struct bitcoin_primitives::Block<V> where V: bitcoin_primitives::block::Vali
 pub struct bitcoin_primitives::BlockHash(_)
 pub struct bitcoin_primitives::BlockHeader
 pub struct bitcoin_primitives::BlockVersion(_)
-pub struct bitcoin_primitives::CompactTarget(_)
 pub struct bitcoin_primitives::Ntxid(_)
 pub struct bitcoin_primitives::OutPoint
 pub struct bitcoin_primitives::Transaction
@@ -1767,10 +1687,6 @@ pub struct bitcoin_primitives::block::WitnessCommitment(_)
 pub struct bitcoin_primitives::merkle_tree::TxMerkleNode(_)
 pub struct bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>(_, _)
 pub struct bitcoin_primitives::merkle_tree::WitnessMerkleNode(_)
-pub struct bitcoin_primitives::pow::CompactTarget(_)
-pub struct bitcoin_primitives::pow::CompactTargetDecoder(_)
-pub struct bitcoin_primitives::pow::CompactTargetDecoderError(_)
-pub struct bitcoin_primitives::pow::CompactTargetEncoder<'e>(_, _)
 pub struct bitcoin_primitives::script::RedeemScriptSizeError
 pub struct bitcoin_primitives::script::ScriptBuf<T>(_, _)
 pub struct bitcoin_primitives::script::ScriptBufDecoder<T>(_, _)
@@ -1849,10 +1765,6 @@ pub type bitcoin_primitives::block::Version::Decoder = bitcoin_primitives::block
 pub type bitcoin_primitives::block::Version::Encoder<'e> = bitcoin_primitives::block::VersionEncoder<'e>
 pub type bitcoin_primitives::block::VersionDecoder::Error = bitcoin_primitives::block::VersionDecoderError
 pub type bitcoin_primitives::block::VersionDecoder::Output = bitcoin_primitives::block::Version
-pub type bitcoin_primitives::pow::CompactTarget::Decoder = bitcoin_primitives::pow::CompactTargetDecoder
-pub type bitcoin_primitives::pow::CompactTarget::Encoder<'e> = bitcoin_primitives::pow::CompactTargetEncoder<'e>
-pub type bitcoin_primitives::pow::CompactTargetDecoder::Error = bitcoin_primitives::pow::CompactTargetDecoderError
-pub type bitcoin_primitives::pow::CompactTargetDecoder::Output = bitcoin_primitives::pow::CompactTarget
 pub type bitcoin_primitives::script::RedeemScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::script::RedeemScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::script::Script<T>::Encoder<'e> where Self: 'e = bitcoin_primitives::script::ScriptEncoder<'e>
@@ -1908,6 +1820,7 @@ pub use bitcoin_primitives::BlockHeightInterval
 pub use bitcoin_primitives::BlockMtp
 pub use bitcoin_primitives::BlockMtpInterval
 pub use bitcoin_primitives::BlockTime
+pub use bitcoin_primitives::CompactTarget
 pub use bitcoin_primitives::FeeRate
 pub use bitcoin_primitives::NumOpResult
 pub use bitcoin_primitives::Sequence
@@ -1926,6 +1839,7 @@ pub use bitcoin_primitives::block::TooBigForRelativeHeightError
 pub use bitcoin_primitives::fee_rate
 pub use bitcoin_primitives::locktime
 pub use bitcoin_primitives::parse_int
+pub use bitcoin_primitives::pow
 pub use bitcoin_primitives::relative
 pub use bitcoin_primitives::result
 pub use bitcoin_primitives::sequence
