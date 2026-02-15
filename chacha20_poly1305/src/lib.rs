@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! ChaCha20 - Poly1305
+//! `ChaCha20` - `Poly1305`
 //!
-//! Combine the ChaCha20 stream cipher with the Poly1305 message authentication code
+//! Combine the `ChaCha20` stream cipher with the `Poly1305` message authentication code
 //! to form an authenticated encryption with additional data (AEAD) algorithm.
 
 #![no_std]
@@ -11,9 +11,7 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 // Exclude lints we don't think are valuable.
-#![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
-#![allow(clippy::manual_range_contains)] // More readable than clippy's format.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
+#![allow(clippy::inline_always)] // Not sure yet if we should give up the inline always, possible that the LLVM knows better.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -33,7 +31,7 @@ pub use self::chacha20::{Key, Nonce};
 /// Zero array for padding slices.
 const ZEROES: [u8; 16] = [0u8; 16];
 
-/// Errors encrypting and decrypting messages with ChaCha20 and Poly1305 authentication tags.
+/// Errors encrypting and decrypting messages with `ChaCha20` and `Poly1305` authentication tags.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Error {
     /// Additional data showing up when it is not expected.
@@ -64,10 +62,12 @@ pub struct ChaCha20Poly1305 {
 }
 
 impl ChaCha20Poly1305 {
-    /// Make a new instance of a ChaCha20Poly1305 AEAD.
-    pub const fn new(key: Key, nonce: Nonce) -> Self { Self { key, nonce } }
+    /// Make a new instance of a `ChaCha20Poly1305` AEAD.
+    pub const fn new(key: Key, nonce: Nonce) -> Self {
+        Self { key, nonce }
+    }
 
-    /// Encrypt content in place and return the Poly1305 16-byte authentication tag.
+    /// Encrypt content in place and return the `Poly1305` 16-byte authentication tag.
     ///
     /// # Parameters
     ///
@@ -81,8 +81,9 @@ impl ChaCha20Poly1305 {
         let mut chacha = ChaCha20::new_from_block(self.key, self.nonce, 1);
         chacha.apply_keystream(content);
         let keystream = chacha.get_keystream(0);
-        let mut poly =
-            Poly1305::new(keystream[..32].try_into().expect("slicing produces 32-byte slice"));
+        let mut poly_key = [0u8; 32];
+        poly_key.copy_from_slice(&keystream[..32]);
+        let mut poly = Poly1305::new(poly_key);
         let aad = aad.unwrap_or(&[]);
         // AAD and ciphertext are padded if not 16-byte aligned.
         poly.input(aad);
@@ -109,6 +110,11 @@ impl ChaCha20Poly1305 {
     /// - `content` - Ciphertext to be decrypted in place.
     /// - `tag`     - 16-byte authentication tag.
     /// - `aad`     - Optional metadata covered by the authentication tag.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::UnauthenticatedAdditionalData`] if the computed authentication tag does
+    /// not match the provided tag.
     pub fn decrypt(
         self,
         content: &mut [u8],
@@ -117,8 +123,9 @@ impl ChaCha20Poly1305 {
     ) -> Result<(), Error> {
         let chacha = ChaCha20::new_from_block(self.key, self.nonce, 0);
         let keystream = chacha.get_keystream(0);
-        let mut poly =
-            Poly1305::new(keystream[..32].try_into().expect("slicing produces 32-byte slice"));
+        let mut poly_key = [0u8; 32];
+        poly_key.copy_from_slice(&keystream[..32]);
+        let mut poly = Poly1305::new(poly_key);
         let aad = aad.unwrap_or(&[]);
         poly.input(aad);
         // AAD and ciphertext are padded if not 16-byte aligned.
