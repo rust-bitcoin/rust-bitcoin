@@ -18,8 +18,8 @@ use bitcoin_hashes::{
 };
 // Import using type alias style e.g., `Sha256`.
 use bitcoin_hashes::{
-    Hash160, Hkdf, Hmac, HmacEngine, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384,
-    Sha3_256, Sha512, Sha512_256, Siphash24,
+    Hash160, Hkdf, Hmac, HmacEngine, Ripemd160, Sha1, Sha256, Sha256d, Sha256t, Sha384, Sha3_256,
+    Sha512, Sha512_256, Siphash24,
 };
 
 // Arbitrary midstate value; taken from as sha256t unit tests.

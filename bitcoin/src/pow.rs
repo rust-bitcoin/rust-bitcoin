@@ -99,7 +99,9 @@ macro_rules! do_impl {
             type Err = $err_ty;
 
             #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> { U256::from_str(s).map($ty).map_err($err_ty) }
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                U256::from_str(s).map($ty).map_err($err_ty)
+            }
         }
 
         #[doc = "Error returned when parsing a [`"]
@@ -427,21 +429,23 @@ pub fn next_target_after<F, E>(
     mut get_block_header_by_height: F,
 ) -> Result<CompactTarget, E>
 where
-    F: FnMut(BlockHeight) -> Result<Header, E>
+    F: FnMut(BlockHeight) -> Result<Header, E>,
 {
     // explicitly dropping the high bits because they make no sense since block height is only u32
     let adjustment_interval = params.difficulty_adjustment_interval() as u32;
 
     // if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
     if !is_retarget_height(current_height.saturating_add(1.into()), adjustment_interval) {
-        if params.allow_min_difficulty_blocks { // Only true for testnet and regtest.
+        if params.allow_min_difficulty_blocks {
+            // Only true for testnet and regtest.
             let new_block_timestamp = new_block_timestamp
                 .expect("new_block_timestamp must contain a value when on testnet/regtest");
 
             // Special difficulty rule for testnet: If the new block's timestamp is more
             // than 2*10 minutes then allow mining of a min-difficulty block.
             let pow_limit = params.max_attainable_target.to_compact_lossy();
-            let pow_target_spacing = u32::try_from(params.pow_target_spacing & u64::from(u32::MAX)).unwrap();
+            let pow_target_spacing =
+                u32::try_from(params.pow_target_spacing & u64::from(u32::MAX)).unwrap();
 
             // if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + params.nPowTargetSpacing*2)
             if new_block_timestamp > current_header.time.to_u32() + pow_target_spacing * 2 {
@@ -1109,12 +1113,9 @@ impl core::str::FromStr for U256 {
         }
 
         for chunk in s.as_bytes().rchunks(38).rev() {
-            let chunk_str = core::str::from_utf8(chunk)
-                .map_err(ParseU256Error::InvalidEncoding)?;
+            let chunk_str = core::str::from_utf8(chunk).map_err(ParseU256Error::InvalidEncoding)?;
 
-            let val: u128 = chunk_str
-                .parse()
-                .map_err(ParseU256Error::InvalidDigit)?;
+            let val: u128 = chunk_str.parse().map_err(ParseU256Error::InvalidDigit)?;
 
             // Shift decimals and add chunk
             let (res, carry1) = result.overflowing_mul(POW10_38.into());
@@ -1269,7 +1270,8 @@ impl fmt::Display for ParseU256Error {
         match self {
             Self::Overflow => write!(f, "parsed value exceeded unsigned 256-bit range"),
             Self::Empty => write!(f, "parsed string is empty"),
-            Self::InvalidEncoding(ref e) => write_err!(f, "parsed number contained non-ascii chars"; e),
+            Self::InvalidEncoding(ref e) =>
+                write_err!(f, "parsed number contained non-ascii chars"; e),
             Self::InvalidDigit(ref e) => write_err!(f, "parsed number contained invalid digit"; e),
         }
     }
@@ -1316,10 +1318,9 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use core::str::FromStr;
 
+    use super::*;
     #[cfg(feature = "std")]
     use crate::pow::test_utils::u128_to_work;
     use crate::pow::test_utils::{u32_to_target, u64_to_target};
@@ -2168,13 +2169,19 @@ mod tests {
         };
 
         // Test mainnet (enforce_bip94 = false): should use current.bits
-        let mainnet_result =
-            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, &Params::MAINNET);
+        let mainnet_result = CompactTarget::from_header_difficulty_adjustment(
+            epoch_start,
+            current,
+            &Params::MAINNET,
+        );
         assert_eq!(mainnet_result, bits_end);
 
         // Test testnet4 (enforce_bip94 = true): should use epoch_start.bits
-        let testnet_result =
-            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, &Params::TESTNET4);
+        let testnet_result = CompactTarget::from_header_difficulty_adjustment(
+            epoch_start,
+            current,
+            &Params::TESTNET4,
+        );
         assert_eq!(testnet_result, bits_start);
     }
 
@@ -2200,10 +2207,9 @@ mod tests {
     macro_rules! check_from_str {
         ($ty:ident, $err_ty:ident, $mod_name:ident) => {
             mod $mod_name {
-                use super::{ParseU256Error, U256};
-                use super::{$ty, $err_ty};
-
                 use core::str::FromStr;
+
+                use super::{$err_ty, $ty, ParseU256Error, U256};
 
                 #[test]
                 fn target_from_str_decimal() {
@@ -2629,8 +2635,14 @@ mod tests {
             })
         };
 
-        let got = next_target_after(current_header, current_height, &params, new_block_timestamp, fetch_header)
-            .expect("failed to calculate next target");
+        let got = next_target_after(
+            current_header,
+            current_height,
+            &params,
+            new_block_timestamp,
+            fetch_header,
+        )
+        .expect("failed to calculate next target");
 
         // Should return the real_target from the walked-back header
         assert_eq!(got, want);

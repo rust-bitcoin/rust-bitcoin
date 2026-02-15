@@ -120,12 +120,10 @@ impl encoding::Encodable for UserAgent {
     type Encoder<'e> = UserAgentEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        UserAgentEncoder::new(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.user_agent.len()),
-                BytesEncoder::without_length_prefix(self.user_agent.as_bytes())
-            )
-        )
+        UserAgentEncoder::new(Encoder2::new(
+            CompactSizeEncoder::new(self.user_agent.len()),
+            BytesEncoder::without_length_prefix(self.user_agent.as_bytes()),
+        ))
     }
 }
 
@@ -495,20 +493,18 @@ impl encoding::Encodable for Reject {
     type Encoder<'e> = RejectEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        RejectEncoder::new(
-            Encoder4::new(
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.message.len()),
-                    BytesEncoder::without_length_prefix(self.message.as_bytes())
-                ),
-                self.ccode.encoder(),
-                Encoder2::new(
-                    CompactSizeEncoder::new(self.reason.len()),
-                    BytesEncoder::without_length_prefix(self.reason.as_bytes())
-                ),
-                ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
-            )
-        )
+        RejectEncoder::new(Encoder4::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.message.len()),
+                BytesEncoder::without_length_prefix(self.message.as_bytes()),
+            ),
+            self.ccode.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.reason.len()),
+                BytesEncoder::without_length_prefix(self.reason.as_bytes()),
+            ),
+            ArrayEncoder::without_length_prefix(self.hash.to_byte_array()),
+        ))
     }
 }
 

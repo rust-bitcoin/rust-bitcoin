@@ -56,7 +56,9 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for TxMerkleNode {
     type Encoder<'e> = TxMerkleNodeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        TxMerkleNodeEncoder::new(encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        TxMerkleNodeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_byte_array(),
+        ))
     }
 }
 

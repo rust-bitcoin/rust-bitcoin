@@ -149,13 +149,11 @@ impl encoding::Encodable for BloomFlags {
     type Encoder<'e> = BloomFlagsEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BloomFlagsEncoder::new(ArrayEncoder::without_length_prefix(
-         [match self {
-                Self::None => 0,
-                Self::All => 1,
-                Self::PubkeyOnly => 2,
-            }]
-        ))
+        BloomFlagsEncoder::new(ArrayEncoder::without_length_prefix([match self {
+            Self::None => 0,
+            Self::All => 1,
+            Self::PubkeyOnly => 2,
+        }]))
     }
 }
 
@@ -273,12 +271,10 @@ impl encoding::Encodable for FilterAdd {
     type Encoder<'e> = FilterAddEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterAddEncoder::new(
-            Encoder2::new(
-                CompactSizeEncoder::new(self.data.len()),
-                BytesEncoder::without_length_prefix(&self.data)
-            )
-        )
+        FilterAddEncoder::new(Encoder2::new(
+            CompactSizeEncoder::new(self.data.len()),
+            BytesEncoder::without_length_prefix(&self.data),
+        ))
     }
 }
 
