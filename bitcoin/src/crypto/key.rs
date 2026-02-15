@@ -26,12 +26,12 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity, Verification};
+pub use encapsulate::{
+    CompressedPublicKey, Keypair, SerializedXOnlyPublicKey, TweakedKeypair, TweakedPublicKey,
+    XOnlyPublicKey,
+};
 #[cfg(all(feature = "rand", feature = "std"))]
 pub use secp256k1::rand;
-pub use encapsulate::{
-    CompressedPublicKey, Keypair, SerializedXOnlyPublicKey, TweakedKeypair,
-    TweakedPublicKey, XOnlyPublicKey,
-};
 
 /// Encapsulation module to provide a clear barrier for construction/destruction of types.
 mod encapsulate {
@@ -203,11 +203,15 @@ impl XOnlyPublicKey {
 
     /// Serializes the x-only public key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
-    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.to_inner().serialize() }
+    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] {
+        self.to_inner().serialize()
+    }
 
     /// Converts this x-only public key to a full public key given the parity.
     #[inline]
-    pub fn public_key(&self, parity: Parity) -> PublicKey { self.to_inner().public_key(parity).into() }
+    pub fn public_key(&self, parity: Parity) -> PublicKey {
+        self.to_inner().public_key(parity).into()
+    }
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
     ///
@@ -1041,13 +1045,17 @@ impl<'de> serde::Deserialize<'de> for CompressedPublicKey {
 pub type UntweakedPublicKey = XOnlyPublicKey;
 
 impl fmt::LowerHex for TweakedPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_x_only_public_key(), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(self.as_x_only_public_key(), f)
+    }
 }
 // Allocate for serialized size
 impl_to_hex_from_lower_hex!(TweakedPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SIZE * 2);
 
 impl fmt::Display for TweakedPublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_x_only_public_key(), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self.as_x_only_public_key(), f)
+    }
 }
 
 /// Untweaked BIP-0340 key pair.
@@ -1107,7 +1115,9 @@ impl TapTweak for UntweakedPublicKey {
         (TweakedPublicKey::dangerous_assume_tweaked(output_key), parity)
     }
 
-    fn dangerous_assume_tweaked(self) -> TweakedPublicKey { TweakedPublicKey::dangerous_assume_tweaked(self) }
+    fn dangerous_assume_tweaked(self) -> TweakedPublicKey {
+        TweakedPublicKey::dangerous_assume_tweaked(self)
+    }
 }
 
 impl TapTweak for UntweakedKeypair {
@@ -1131,7 +1141,9 @@ impl TapTweak for UntweakedKeypair {
         TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
     }
 
-    fn dangerous_assume_tweaked(self) -> TweakedKeypair { TweakedKeypair::dangerous_assume_tweaked(self) }
+    fn dangerous_assume_tweaked(self) -> TweakedKeypair {
+        TweakedKeypair::dangerous_assume_tweaked(self)
+    }
 }
 
 impl TweakedPublicKey {
@@ -1143,7 +1155,9 @@ impl TweakedPublicKey {
 
     /// Serializes the key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
-    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.as_x_only_public_key().serialize() }
+    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] {
+        self.as_x_only_public_key().serialize()
+    }
 }
 
 impl TweakedKeypair {

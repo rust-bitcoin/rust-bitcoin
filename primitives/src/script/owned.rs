@@ -219,9 +219,9 @@ mod tests {
     type ScriptBuf = super::super::ScriptSigBuf;
 
     #[cfg(feature = "alloc")]
-    use alloc::vec;
-    #[cfg(feature = "alloc")]
     use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
+    use alloc::vec;
     #[cfg(feature = "std")]
     use std::error::Error as _;
 

@@ -200,7 +200,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn ab_test_case() -> (Txid, &'static str) {
         let mut a = [0xab; 32];
-        a[0] = 0xff;           // Just so we can see which way the array is printing.
+        a[0] = 0xff; // Just so we can see which way the array is printing.
         let tc = Txid::from_byte_array(a);
         let want = "abababababababababababababababababababababababababababababababff";
 
