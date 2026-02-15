@@ -1274,6 +1274,8 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use hex::FromHex;
     use hex_lit::hex;
 

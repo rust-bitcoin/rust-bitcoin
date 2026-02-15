@@ -1295,6 +1295,7 @@ pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
     use std::str::FromStr;
 
     use hashes::{hash160, ripemd160, sha256};
