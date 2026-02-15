@@ -14,7 +14,9 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{ArrayDecoder, ArrayEncoder, BytesEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2};
+use encoding::{
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2,
+};
 use internals::write_err;
 use io::{BufRead, Read, Write};
 
@@ -228,7 +230,14 @@ pub struct AddrV2Encoder<'e> {
 }
 
 impl<'e> AddrV2Encoder<'e> {
-    const EMPTY: Self = Self { network: None, size: None, bytes4: None, bytes16: None, bytes32: None, nbytes: None };
+    const EMPTY: Self = Self {
+        network: None,
+        size: None,
+        bytes4: None,
+        bytes16: None,
+        bytes32: None,
+        nbytes: None,
+    };
     /// Construct a new [`AddrV2`] encoder.
     pub fn new(addr_v2: &'e AddrV2) -> Self {
         // Each address is prefixed with the network type and length of the byte array.
@@ -251,22 +260,18 @@ impl<'e> AddrV2Encoder<'e> {
                     ..Self::EMPTY
                 }
             }
-            AddrV2::TorV3(onion) => {
-                Self {
-                    network: Some(ArrayEncoder::without_length_prefix([4])),
-                    size: Some(CompactSizeEncoder::new(32)),
-                    bytes32: Some(ArrayEncoder::without_length_prefix(*onion)),
-                    ..Self::EMPTY
-                }
-            }
-            AddrV2::I2p(i2p) => {
-                Self {
-                    network: Some(ArrayEncoder::without_length_prefix([5])),
-                    size: Some(CompactSizeEncoder::new(32)),
-                    bytes32: Some(ArrayEncoder::without_length_prefix(*i2p)),
-                    ..Self::EMPTY
-                }
-            }
+            AddrV2::TorV3(onion) => Self {
+                network: Some(ArrayEncoder::without_length_prefix([4])),
+                size: Some(CompactSizeEncoder::new(32)),
+                bytes32: Some(ArrayEncoder::without_length_prefix(*onion)),
+                ..Self::EMPTY
+            },
+            AddrV2::I2p(i2p) => Self {
+                network: Some(ArrayEncoder::without_length_prefix([5])),
+                size: Some(CompactSizeEncoder::new(32)),
+                bytes32: Some(ArrayEncoder::without_length_prefix(*i2p)),
+                ..Self::EMPTY
+            },
             AddrV2::Cjdns(ipv6) => {
                 let octets = ipv6.octets();
                 Self {
@@ -276,14 +281,12 @@ impl<'e> AddrV2Encoder<'e> {
                     ..Self::EMPTY
                 }
             }
-            AddrV2::Unknown(network, bytes) => {
-                Self {
-                    network: Some(ArrayEncoder::without_length_prefix([*network])),
-                    size: Some(CompactSizeEncoder::new(bytes.len())),
-                    nbytes: Some(BytesEncoder::<'e>::without_length_prefix(bytes.as_slice())),
-                    ..Self::EMPTY
-                }
-            }
+            AddrV2::Unknown(network, bytes) => Self {
+                network: Some(ArrayEncoder::without_length_prefix([*network])),
+                size: Some(CompactSizeEncoder::new(bytes.len())),
+                nbytes: Some(BytesEncoder::<'e>::without_length_prefix(bytes.as_slice())),
+                ..Self::EMPTY
+            },
         }
     }
 }
@@ -343,9 +346,7 @@ impl<'e> encoding::Encoder for AddrV2Encoder<'e> {
 impl encoding::Encodable for AddrV2 {
     type Encoder<'e> = AddrV2Encoder<'e>;
 
-    fn encoder(&self) -> Self::Encoder<'_> {
-        AddrV2Encoder::new(self)
-    }
+    fn encoder(&self) -> Self::Encoder<'_> { AddrV2Encoder::new(self) }
 }
 
 type AddrV2InnerDecoder = Decoder2<ArrayDecoder<1>, ByteVecDecoder>;
@@ -378,16 +379,17 @@ impl AddrV2Decoder {
             segments[4],
             segments[5],
             segments[6],
-            segments[7]
+            segments[7],
         )
     }
 
     #[inline]
-    fn to_fixed_size_slice<const N: usize>(addr_bytes: Vec<u8>) -> Result<[u8; N], AddrV2DecoderError> {
-        Ok(addr_bytes
-            .try_into()
-            .map_err(|e: Vec<u8>| AddrV2DecoderError::InvalidAddressLength { expected: N, got: e.len() })?
-        )
+    fn to_fixed_size_slice<const N: usize>(
+        addr_bytes: Vec<u8>,
+    ) -> Result<[u8; N], AddrV2DecoderError> {
+        Ok(addr_bytes.try_into().map_err(|e: Vec<u8>| {
+            AddrV2DecoderError::InvalidAddressLength { expected: N, got: e.len() }
+        })?)
     }
 }
 
@@ -430,7 +432,7 @@ impl encoding::Decoder for AddrV2Decoder {
             6 => {
                 let octets = Self::to_fixed_size_slice::<16>(addr_bytes)?;
                 if octets[0] != 0xFC {
-                    return Err(AddrV2DecoderError::NotCjdns)
+                    return Err(AddrV2DecoderError::NotCjdns);
                 }
                 Ok(AddrV2::Cjdns(Self::ipv6_from_segments(Self::be_bytes_to_segments(octets))))
             }
@@ -446,12 +448,7 @@ impl encoding::Decodable for AddrV2 {
     type Decoder = AddrV2Decoder;
 
     fn decoder() -> Self::Decoder {
-        AddrV2Decoder(
-            Decoder2::new(
-                ArrayDecoder::new(),
-                ByteVecDecoder::new(),
-            )
-        )
+        AddrV2Decoder(Decoder2::new(ArrayDecoder::new(), ByteVecDecoder::new()))
     }
 }
 
@@ -483,7 +480,8 @@ impl fmt::Display for AddrV2DecoderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Decoder(d) => write_err!(f, "addrv2 error"; d),
-            Self::InvalidAddressLength { expected, got } => write!(f, "invalid length. expected {}, got {}", expected, got),
+            Self::InvalidAddressLength { expected, got } =>
+                write!(f, "invalid length. expected {}, got {}", expected, got),
             Self::NotCjdns => write!(f, "CJDNS address must start with a reserved byte."),
             Self::WrappedOnionCat => write!(f, "OnionCat address sent as IPv6 is invalid."),
             Self::WrappedIpv4 => write!(f, "wrapped IPv4 sent as IPv6 is invalid."),
@@ -969,7 +967,8 @@ mod test {
         assert_eq!(serialize(&ip), ip_bytes);
         assert_eq!(encoding::encode_to_vec(&ip).as_slice(), ip_bytes);
 
-        let tor_bytes = hex!("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88");
+        let tor_bytes =
+            hex!("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88");
         let ip = AddrV2::TorV3(
             FromHex::from_hex("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
                 .unwrap(),
@@ -977,7 +976,8 @@ mod test {
         assert_eq!(serialize(&ip), tor_bytes);
         assert_eq!(encoding::encode_to_vec(&ip), tor_bytes);
 
-        let i2p_bytes = hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87");
+        let i2p_bytes =
+            hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87");
         let ip = AddrV2::I2p(
             FromHex::from_hex("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
                 .unwrap(),
@@ -1047,8 +1047,10 @@ mod test {
         assert!(encoding::decode_from_slice::<AddrV2>(&torish).is_err());
 
         // Valid TORv3.
-        let tor_bytes = hex!("042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f");
-        let want = AddrV2::TorV3(hex!("79bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f"));
+        let tor_bytes =
+            hex!("042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f");
+        let want =
+            AddrV2::TorV3(hex!("79bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f"));
         let ip: AddrV2 = deserialize(&tor_bytes).unwrap();
         assert_eq!(ip, want);
         let ip: AddrV2 = encoding::decode_from_slice(&tor_bytes).unwrap();
@@ -1060,8 +1062,10 @@ mod test {
         assert!(encoding::decode_from_slice::<AddrV2>(&invalid).is_err());
 
         // Valid I2P.
-        let i2p_bytes = hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87");
-        let want = AddrV2::I2p(hex!("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87"));
+        let i2p_bytes =
+            hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87");
+        let want =
+            AddrV2::I2p(hex!("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87"));
         let i2p: AddrV2 = deserialize(&i2p_bytes).unwrap();
         assert_eq!(i2p, want);
         let ip: AddrV2 = encoding::decode_from_slice(&i2p_bytes).unwrap();

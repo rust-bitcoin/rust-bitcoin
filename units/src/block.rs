@@ -834,66 +834,33 @@ mod tests {
     #[test]
     fn block_height_saturating_add() {
         // Normal addition
-        assert_eq!(
-            BlockHeight(100).saturating_add(BlockHeightInterval(50)),
-            BlockHeight(150),
-        );
-        assert_eq!(
-            BlockHeight::ZERO.saturating_add(BlockHeightInterval(1)),
-            BlockHeight(1),
-        );
+        assert_eq!(BlockHeight(100).saturating_add(BlockHeightInterval(50)), BlockHeight(150),);
+        assert_eq!(BlockHeight::ZERO.saturating_add(BlockHeightInterval(1)), BlockHeight(1),);
 
         // Saturates at MAX instead of overflowing
-        assert_eq!(
-            BlockHeight::MAX.saturating_add(BlockHeightInterval(1)),
-            BlockHeight::MAX,
-        );
-        assert_eq!(
-            BlockHeight::MAX.saturating_add(BlockHeightInterval(100)),
-            BlockHeight::MAX,
-        );
+        assert_eq!(BlockHeight::MAX.saturating_add(BlockHeightInterval(1)), BlockHeight::MAX,);
+        assert_eq!(BlockHeight::MAX.saturating_add(BlockHeightInterval(100)), BlockHeight::MAX,);
         assert_eq!(
             BlockHeight(u32::MAX - 10).saturating_add(BlockHeightInterval(20)),
             BlockHeight::MAX,
         );
 
         // Adding zero
-        assert_eq!(
-            BlockHeight(500).saturating_add(BlockHeightInterval::ZERO),
-            BlockHeight(500),
-        );
+        assert_eq!(BlockHeight(500).saturating_add(BlockHeightInterval::ZERO), BlockHeight(500),);
     }
 
     #[test]
     fn block_height_saturating_sub() {
         // Normal subtraction
-        assert_eq!(
-            BlockHeight(100).saturating_sub(BlockHeightInterval(50)),
-            BlockHeight(50),
-        );
-        assert_eq!(
-            BlockHeight(100).saturating_sub(BlockHeightInterval(100)),
-            BlockHeight(0),
-        );
+        assert_eq!(BlockHeight(100).saturating_sub(BlockHeightInterval(50)), BlockHeight(50),);
+        assert_eq!(BlockHeight(100).saturating_sub(BlockHeightInterval(100)), BlockHeight(0),);
 
         // Saturates at MIN instead of underflowing
-        assert_eq!(
-            BlockHeight::MIN.saturating_sub(BlockHeightInterval(1)),
-            BlockHeight::MIN,
-        );
-        assert_eq!(
-            BlockHeight::ZERO.saturating_sub(BlockHeightInterval(100)),
-            BlockHeight::ZERO,
-        );
-        assert_eq!(
-            BlockHeight(10).saturating_sub(BlockHeightInterval(20)),
-            BlockHeight::ZERO,
-        );
+        assert_eq!(BlockHeight::MIN.saturating_sub(BlockHeightInterval(1)), BlockHeight::MIN,);
+        assert_eq!(BlockHeight::ZERO.saturating_sub(BlockHeightInterval(100)), BlockHeight::ZERO,);
+        assert_eq!(BlockHeight(10).saturating_sub(BlockHeightInterval(20)), BlockHeight::ZERO,);
 
         // Subtracting zero
-        assert_eq!(
-            BlockHeight(500).saturating_sub(BlockHeightInterval::ZERO),
-            BlockHeight(500),
-        );
+        assert_eq!(BlockHeight(500).saturating_sub(BlockHeightInterval::ZERO), BlockHeight(500),);
     }
 }

@@ -2557,7 +2557,7 @@ mod tests {
             Err(ExtractTxError::MissingInputAmount { tx: _ })
         ))
     }
-    
+
     #[test]
     fn spending_psbt_with_missing_txout() {
         let psbt = Psbt {
@@ -2575,15 +2575,13 @@ mod tests {
                     sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
-                outputs: vec![
-                    TxOut {
-                        amount: Amount::from_sat_u32(99_999_699),
-                        script_pubkey: ScriptPubKeyBuf::from_hex_no_length_prefix(
-                            "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
-                        )
-                        .unwrap(),
-                    },
-                ],
+                outputs: vec![TxOut {
+                    amount: Amount::from_sat_u32(99_999_699),
+                    script_pubkey: ScriptPubKeyBuf::from_hex_no_length_prefix(
+                        "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
+                    )
+                    .unwrap(),
+                }],
             },
             xpub: Default::default(),
             version: 0,
@@ -2594,7 +2592,7 @@ mod tests {
                     version: transaction::Version::TWO,
                     lock_time: absolute::LockTime::ZERO,
                     inputs: vec![],
-                    outputs: vec![], // No outputs here  
+                    outputs: vec![], // No outputs here
                 }),
                 ..Default::default()
             }],

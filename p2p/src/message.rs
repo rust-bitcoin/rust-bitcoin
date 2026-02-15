@@ -18,8 +18,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use encoding::{self, CompactSizeEncoder, Encoder2, SliceEncoder, VecDecoder};
 use hashes::sha256d;
-use internals::ToU64 as _;
-use internals::write_err;
+use internals::{write_err, ToU64 as _};
 use io::{self, BufRead, Read, Write};
 use primitives::{block, transaction};
 use units::FeeRate;
@@ -340,7 +339,7 @@ impl encoding::Encodable for InventoryPayload {
     fn encoder(&self) -> Self::Encoder<'_> {
         Encoder2::new(
             CompactSizeEncoder::new(self.0.len()),
-            SliceEncoder::without_length_prefix(&self.0)
+            SliceEncoder::without_length_prefix(&self.0),
         )
     }
 }
@@ -361,7 +360,7 @@ impl encoding::Decoder for InventoryPayloadDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-       Ok(InventoryPayload(self.0.end().map_err(InventoryPayloadDecoderError)?))
+        Ok(InventoryPayload(self.0.end().map_err(InventoryPayloadDecoderError)?))
     }
 
     #[inline]
@@ -1218,7 +1217,9 @@ impl encoding::Decoder for RawNetworkMessageDecoder {
 
                     let (magic_bytes, command, payload_len_bytes, checksum) =
                         header_decoder.end().map_err(|_| {
-                            RawNetworkMessageDecoderError(RawNetworkMessageDecoderErrorInner::Header)
+                            RawNetworkMessageDecoderError(
+                                RawNetworkMessageDecoderErrorInner::Header,
+                            )
                         })?;
 
                     let payload_len = u32::from_le_bytes(payload_len_bytes) as usize;
