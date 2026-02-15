@@ -13,6 +13,7 @@ const CARRY: u32 = 26;
 /// Poly1305 authenticator takes a 32-byte one-time key and a message and produces a 16-byte tag.
 ///
 /// 64-bit constant time multiplication and addition implementation.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Poly1305 {
     /// r part of the secret key.
     r: [u32; 5],
