@@ -19,6 +19,8 @@ use crate::Wtxid;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WitnessMerkleNode(sha256d::Hash);
 
+super::impl_debug!(WitnessMerkleNode);
+
 // The new hash wrapper type.
 type HashType = WitnessMerkleNode;
 // The inner hash type from `hashes`.

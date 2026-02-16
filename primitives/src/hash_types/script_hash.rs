@@ -21,6 +21,8 @@ use crate::script::{Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ScriptHash(hash160::Hash);
 
+super::impl_debug!(ScriptHash);
+
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.
     ///

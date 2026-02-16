@@ -4,9 +4,8 @@
 //!
 //! In order to print and parse txids enable the "hex" feature.
 
-use core::fmt;
 #[cfg(feature = "hex")]
-use core::str;
+use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -15,6 +14,8 @@ use hashes::sha256d;
 /// A bitcoin witness transaction ID.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Wtxid(sha256d::Hash);
+
+super::impl_debug!(Wtxid);
 
 impl Wtxid {
     /// The `Wtxid` of a coinbase transaction.

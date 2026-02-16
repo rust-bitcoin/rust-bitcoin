@@ -17,6 +17,8 @@ use internals::write_err;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BlockHash(sha256d::Hash);
 
+super::impl_debug!(BlockHash);
+
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.
     pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);

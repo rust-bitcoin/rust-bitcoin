@@ -57,10 +57,6 @@ impl str::FromStr for HashType {
     }
 }
 
-impl fmt::Debug for HashType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
-}
-
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HashType {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
