@@ -425,12 +425,31 @@ pub const fn from_std<T>(std_io: T) -> FromStd<T> { FromStd::new(std_io) }
 pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std_io) }
 
 /// Encodes a consensus_encoding object to an I/O writer.
+///
+/// # Errors
+///
+/// Returns any I/O error encountered while writing to the writer.
 pub fn encode_to_writer<T, W>(object: &T, writer: &mut W) -> Result<()>
 where
     T: encoding::Encodable + ?Sized,
     W: Write + ?Sized,
 {
     let mut encoder = object.encoder();
+    flush_to_writer(&mut encoder, writer)
+}
+
+/// Flushes the output of an [`Encoder`] to an I/O writer.
+///
+/// See [`encode_to_writer`] for more information.
+///
+/// # Errors
+///
+/// Returns any I/O error encountered while writing to the writer.
+pub fn flush_to_writer<T, W>(encoder: &mut T, writer: &mut W) -> Result<()>
+where
+    T: Encoder + ?Sized,
+    W: Write + ?Sized,
+{
     loop {
         writer.write_all(encoder.current_chunk())?;
         if !encoder.advance() {
