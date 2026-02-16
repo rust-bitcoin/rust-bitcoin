@@ -133,6 +133,10 @@ impl_write!(
 );
 
 /// Hashes data from a reader.
+///
+/// # Errors
+///
+/// If an I/O error occurs while reading from the underlying reader.
 pub fn hash_reader<T>(reader: &mut impl BufRead) -> Result<T::Hash, crate::Error>
 where
     T: hashes::HashEngine + Default,
@@ -157,6 +161,7 @@ where
 #[cfg(feature = "alloc")]
 mod tests {
     use alloc::format;
+    use alloc::vec;
 
     use hashes::hmac;
 
@@ -176,7 +181,8 @@ mod tests {
                 assert_eq!(format!("{}", $mod::Hash::from_engine(engine)), $exp_256);
 
                 let mut engine = $mod::Hash::engine();
-                engine.write_all(&[99; 64000]).unwrap();
+                let large_buffer = vec![99u8; 64000];
+                engine.write_all(&large_buffer).unwrap();
                 assert_eq!(format!("{}", $mod::Hash::from_engine(engine)), $exp_64k);
             }
         };
@@ -258,7 +264,8 @@ mod tests {
         );
 
         let mut engine = hmac::HmacEngine::<sha256::HashEngine>::new(&[0xde, 0xad, 0xbe, 0xef]);
-        engine.write_all(&[99; 64000]).unwrap();
+        let large_buffer = vec![99u8; 64000];
+        engine.write_all(&large_buffer).unwrap();
         assert_eq!(
             format!("{}", engine.finalize()),
             "30df499717415a395379a1eaabe50038036e4abb5afc94aa55c952f4aa57be08"
@@ -276,7 +283,8 @@ mod tests {
         assert_eq!(format!("{}", siphash24::Hash::from_engine(engine)), "3a3ccefde9b5b1e3");
 
         let mut engine = siphash24::HashEngine::with_keys(0, 0);
-        engine.write_all(&[99; 64000]).unwrap();
+        let large_buffer = vec![99u8; 64000];
+        engine.write_all(&large_buffer).unwrap();
         assert_eq!(format!("{}", siphash24::Hash::from_engine(engine)), "ce456e4e4ecbc5bf");
     }
 
