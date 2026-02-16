@@ -425,10 +425,10 @@ pub const fn from_std<T>(std_io: T) -> FromStd<T> { FromStd::new(std_io) }
 pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std_io) }
 
 /// Encodes a consensus_encoding object to an I/O writer.
-pub fn encode_to_writer<T, W>(object: &T, mut writer: W) -> Result<()>
+pub fn encode_to_writer<T, W>(object: &T, writer: &mut W) -> Result<()>
 where
     T: encoding::Encodable + ?Sized,
-    W: Write,
+    W: Write + ?Sized,
 {
     let mut encoder = object.encoder();
     loop {
@@ -778,7 +778,7 @@ mod tests {
         let data = TestData(0x1234_5678);
 
         let mut buf = [0_u8; 4];
-        encode_to_writer(&data, buf.as_mut_slice()).unwrap();
+        encode_to_writer(&data, &mut buf.as_mut_slice()).unwrap();
 
         assert_eq!(buf, [0x78, 0x56, 0x34, 0x12]);
     }
