@@ -12,7 +12,7 @@ use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex::FromHex;
+use hex_unstable::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
@@ -282,7 +282,7 @@ impl From<NonStandardSighashTypeError> for DecodeError {
 #[non_exhaustive]
 pub enum ParseSignatureError {
     /// Hex string decoding error.
-    Hex(hex::HexToBytesError),
+    Hex(hex_unstable::HexToBytesError),
     /// Signature byte slice decoding error.
     Decode(DecodeError),
 }
@@ -310,8 +310,8 @@ impl std::error::Error for ParseSignatureError {
     }
 }
 
-impl From<hex::HexToBytesError> for ParseSignatureError {
-    fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
+impl From<hex_unstable::HexToBytesError> for ParseSignatureError {
+    fn from(e: hex_unstable::HexToBytesError) -> Self { Self::Hex(e) }
 }
 
 impl From<DecodeError> for ParseSignatureError {

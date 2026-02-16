@@ -1274,7 +1274,7 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 
 #[cfg(test)]
 mod tests {
-    use hex::FromHex;
+    use hex_unstable::FromHex;
     use hex_lit::hex;
 
     use super::*;

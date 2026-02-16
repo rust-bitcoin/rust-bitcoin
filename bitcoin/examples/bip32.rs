@@ -2,8 +2,8 @@ use std::env;
 
 use bitcoin::address::{Address, KnownHrp};
 use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
-use bitcoin::hex::FromHex;
 use bitcoin::{CompressedPublicKey, NetworkKind};
+use hex_unstable::FromHex;
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,
