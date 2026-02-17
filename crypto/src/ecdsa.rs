@@ -4,6 +4,7 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::convert::Infallible;
 use core::ops::Deref;
@@ -12,13 +13,12 @@ use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex_unstable::FromHex;
+use hex_unstable::{FromHex, DisplayHex};
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
+#[cfg(feature = "serde")]
+use serde::{Serialize, Deserialize};
 
-use crate::prelude::{DisplayHex, Vec};
-#[cfg(doc)]
-use crate::script::ScriptPubKeyBufExt as _;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;
@@ -103,7 +103,7 @@ impl FromStr for Signature {
 /// expect and has familiar methods.
 ///
 /// However, the usual use case is to push it into a script. This can be done directly passing it
-/// into [`push_slice`](crate::script::ScriptBufExt::push_slice).
+/// into a `ScriptBuf` with `push_slice`.
 #[derive(Copy, Clone)]
 pub struct SerializedSignature {
     data: [u8; MAX_SIG_LEN],
@@ -355,6 +355,8 @@ impl<'a> Arbitrary<'a> for Signature {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use super::*;
 
     const TEST_SIGNATURE_HEX: &str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";

@@ -93,6 +93,9 @@ version = "0.0.0"
 dependencies = [
  "arbitrary",
  "bitcoin-internals",
+ "bitcoin-io",
+ "hex-conservative 0.3.0",
+ "secp256k1",
  "serde",
 ]
 
