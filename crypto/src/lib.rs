@@ -20,4 +20,5 @@ extern crate std;
 pub extern crate hex_stable as hex;
 
 pub mod ecdsa;
+pub mod key;
 pub mod sighash;
