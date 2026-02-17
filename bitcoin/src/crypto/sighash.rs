@@ -1516,6 +1516,8 @@ impl<'a> Arbitrary<'a> for TapSighashType {
 
 #[cfg(test)]
 mod tests {
+    use alloc::{string::ToString, vec::Vec};
+
     use hashes::HashEngine;
     use hex_unstable::FromHex;
     use hex_lit::hex;

@@ -1274,6 +1274,8 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use hex_unstable::FromHex;
     use hex_lit::hex;
 
@@ -1642,7 +1644,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg(all(feature = "std", feature = "bitcoinconsensus"))]
     fn transaction_verify() {
         use std::collections::HashMap;
 

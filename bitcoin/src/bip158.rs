@@ -533,16 +533,21 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "std")]
     use std::collections::HashMap;
 
     use hex_lit::hex;
+    #[cfg(feature = "std")]
     use serde_json::Value;
 
     use super::*;
+    #[cfg(feature = "std")]
     use crate::consensus::encode::deserialize;
+    #[cfg(feature = "std")]
     use crate::ScriptPubKeyBuf;
 
     #[test]
+    #[cfg(feature = "std")]
     fn blockfilters() {
         let hex = |b| <Vec<u8> as hex_unstable::FromHex>::from_hex(b).unwrap();
 
