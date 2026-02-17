@@ -14,13 +14,16 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std", "serde/std"]
-alloc = ["internals/alloc", "serde/alloc"]
-serde = ["dep:serde", "internals/serde"]
+std = ["alloc", "hex-unstable/std", "internals/std", "io/std", "secp256k1/std", "serde/std"]
+alloc = ["hex-unstable/alloc", "internals/alloc", "io/alloc", "secp256k1/alloc", "serde/alloc"]
+serde = ["dep:serde", "internals/serde", "secp256k1/serde"]
 
 [dependencies]
 arbitrary = { version = "1.4.1", optional = true }
+hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
+io = { package = "bitcoin-io", path = "../io", version = "=0.4.0-rc.0", default-features = false, features = ["hashes"] }
+secp256k1 = { version = "0.32.0-beta.2", default-features = false }
 serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
