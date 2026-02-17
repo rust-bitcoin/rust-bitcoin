@@ -582,6 +582,13 @@ pub struct SighashTypeParseError {
     pub unrecognized: String,
 }
 
+impl SighashTypeParseError {
+    /// Construct a new error with the given unrecognized error string.
+    pub fn from_unrecognized_sighash_string(unrecognized: String) -> Self {
+        Self { unrecognized }
+    }
+}
+
 impl fmt::Display for SighashTypeParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unrecognized SIGHASH string '{}'", self.unrecognized)
