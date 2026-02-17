@@ -414,20 +414,6 @@ impl str::FromStr for EcdsaSighashType {
 }
 
 impl EcdsaSighashType {
-    /// Splits the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean.
-    pub(crate) fn split_anyonecanpay_flag(self) -> (Self, bool) {
-        use EcdsaSighashType::*;
-
-        match self {
-            All => (All, false),
-            None => (None, false),
-            Single => (Single, false),
-            AllPlusAnyoneCanPay => (All, true),
-            NonePlusAnyoneCanPay => (None, true),
-            SinglePlusAnyoneCanPay => (Single, true),
-        }
-    }
-
     /// Checks if the sighash type is [`Self::Single`] or [`Self::SinglePlusAnyoneCanPay`].
     ///
     /// This matches Bitcoin Core's behavior where SIGHASH_SINGLE bug check is based on the base
@@ -509,21 +495,6 @@ impl From<EcdsaSighashType> for TapSighashType {
 }
 
 impl TapSighashType {
-    /// Breaks the sighash flag into the "real" sighash flag and the `SIGHASH_ANYONECANPAY` boolean.
-    pub(crate) fn split_anyonecanpay_flag(self) -> (Self, bool) {
-        use TapSighashType::*;
-
-        match self {
-            Default => (Default, false),
-            All => (All, false),
-            None => (None, false),
-            Single => (Single, false),
-            AllPlusAnyoneCanPay => (All, true),
-            NonePlusAnyoneCanPay => (None, true),
-            SinglePlusAnyoneCanPay => (Single, true),
-        }
-    }
-
     /// Constructs a new [`TapSighashType`] from a raw `u8`.
     pub fn from_consensus_u8(sighash_type: u8) -> Result<Self, InvalidSighashTypeError> {
         use TapSighashType::*;
@@ -538,6 +509,44 @@ impl TapSighashType {
             0x83 => SinglePlusAnyoneCanPay,
             x => return Err(InvalidSighashTypeError(x.into())),
         })
+    }
+}
+
+/// A trait for representing sighash types which can be split into a flag and an
+/// 'SIGHASH_ANYONECANPAY' boolean.
+pub(crate) trait SplitAnyoneCanPay where Self: Sized {
+    /// Breaks the sighash flag into the "real" sighash flag and the `SIGHASH_ANYONECANPAY` boolean.
+    fn split_anyonecanpay_flag(self) -> (Self, bool);
+}
+
+impl SplitAnyoneCanPay for EcdsaSighashType {
+    fn split_anyonecanpay_flag(self) -> (Self, bool) {
+        use EcdsaSighashType::*;
+
+        match self {
+            All => (All, false),
+            None => (None, false),
+            Single => (Single, false),
+            AllPlusAnyoneCanPay => (All, true),
+            NonePlusAnyoneCanPay => (None, true),
+            SinglePlusAnyoneCanPay => (Single, true),
+        }
+    }
+}
+
+impl SplitAnyoneCanPay for TapSighashType {
+    fn split_anyonecanpay_flag(self) -> (Self, bool) {
+        use TapSighashType::*;
+
+        match self {
+            Default => (Default, false),
+            All => (All, false),
+            None => (None, false),
+            Single => (Single, false),
+            AllPlusAnyoneCanPay => (All, true),
+            NonePlusAnyoneCanPay => (None, true),
+            SinglePlusAnyoneCanPay => (Single, true),
+        }
     }
 }
 
