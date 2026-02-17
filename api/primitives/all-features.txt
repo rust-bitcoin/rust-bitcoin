@@ -1465,7 +1465,7 @@ pub fn bitcoin_primitives::block::BlockHashDecoderError::source(&self) -> core::
 pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<32>) -> bitcoin_primitives::block::BlockHashEncoder<'e>
+pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayRefEncoder<'e, 32>) -> bitcoin_primitives::block::BlockHashEncoder<'e>
 pub fn bitcoin_primitives::block::Checked::clone(&self) -> bitcoin_primitives::block::Checked
 pub fn bitcoin_primitives::block::Checked::cmp(&self, other: &bitcoin_primitives::block::Checked) -> core::cmp::Ordering
 pub fn bitcoin_primitives::block::Checked::eq(&self, other: &bitcoin_primitives::block::Checked) -> bool
