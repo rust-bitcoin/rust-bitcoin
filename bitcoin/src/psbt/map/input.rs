@@ -172,7 +172,7 @@ impl FromStr for PsbtSighashType {
             return Ok(Self { inner });
         }
 
-        Err(SighashTypeParseError { unrecognized: s.to_owned() })
+        Err(SighashTypeParseError::from_unrecognized_sighash_string(s.to_owned()))
     }
 }
 impl From<EcdsaSighashType> for PsbtSighashType {
