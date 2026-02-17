@@ -5,6 +5,8 @@
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -338,3 +340,11 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
 }
 
 crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Weight {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let w = u64::arbitrary(u)?;
+        Ok(Weight(w))
+    }
+}

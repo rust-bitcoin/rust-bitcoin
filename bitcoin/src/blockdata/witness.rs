@@ -8,6 +8,8 @@
 use core::fmt;
 use core::ops::Index;
 
+#[cfg(feature = "arbitrary")]
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use io::{Read, Write};
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
@@ -689,6 +691,14 @@ impl From<Vec<&[u8]>> for Witness {
 
 impl Default for Witness {
     fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Witness {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let arbitrary_bytes = Vec::<Vec<u8>>::arbitrary(u)?;
+        Ok(Witness::from_slice(&arbitrary_bytes))
+    }
 }
 
 #[cfg(test)]
