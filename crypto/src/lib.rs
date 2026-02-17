@@ -17,4 +17,5 @@ extern crate alloc;
 extern crate std;
 
 pub mod ecdsa;
+pub mod key;
 pub mod sighash;

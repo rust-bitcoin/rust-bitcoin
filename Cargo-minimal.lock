@@ -93,11 +93,15 @@ name = "bitcoin-crypto"
 version = "0.0.0"
 dependencies = [
  "arbitrary",
+ "base58ck",
  "bitcoin-internals",
  "bitcoin-io",
+ "bitcoin-network-kind",
+ "bitcoin_hashes",
  "hex-conservative 0.3.0",
  "secp256k1",
  "serde",
+ "serde_test",
 ]
 
 [[package]]
