@@ -18,7 +18,7 @@ use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
 
 use crate::crypto::ecdsa;
-use crate::internal_macros::impl_asref_push_bytes;
+use crate::internal_macros::{define_extension_trait, impl_asref_push_bytes};
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
 use crate::script::{self, WitnessScriptBuf};
@@ -399,20 +399,6 @@ impl PublicKey {
         }
     }
 
-    /// Returns the script code used to spend a P2WPKH input.
-    ///
-    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-    /// should not be used as one. It is a special template defined in BIP 143 which is used
-    /// in place of a witness script for purposes of sighash computation.
-    ///
-    /// # Errors
-    ///
-    /// Errors if this key is not compressed.
-    pub fn p2wpkh_script_code(&self) -> Result<WitnessScriptBuf, UncompressedPublicKeyError> {
-        let key = CompressedPublicKey::try_from(*self)?;
-        Ok(key.p2wpkh_script_code())
-    }
-
     /// Writes the public key into a writer.
     ///
     /// # Errors
@@ -571,6 +557,25 @@ impl PublicKey {
     }
 }
 
+define_extension_trait! {
+    /// Extension functionality for the [`PublicKey`] type.
+    pub trait PublicKeyExt impl for PublicKey {
+        /// Returns the script code used to spend a P2WPKH input.
+        ///
+        /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+        /// should not be used as one. It is a special template defined in BIP 143 which is used
+        /// in place of a witness script for purposes of sighash computation.
+        ///
+        /// # Errors
+        ///
+        /// Errors if this key is not compressed.
+        fn p2wpkh_script_code(&self) -> Result<WitnessScriptBuf, UncompressedPublicKeyError> {
+            let key = CompressedPublicKey::try_from(*self)?;
+            Ok(key.p2wpkh_script_code())
+        }
+    }
+}
+
 impl From<secp256k1::PublicKey> for PublicKey {
     fn from(pk: secp256k1::PublicKey) -> Self { Self::new(pk) }
 }
@@ -640,15 +645,6 @@ impl CompressedPublicKey {
     /// Returns bitcoin 160-bit hash of the public key for witness program.
     pub fn wpubkey_hash(&self) -> WPubkeyHash {
         WPubkeyHash::from_byte_array(hash160::Hash::hash(&self.to_bytes()).to_byte_array())
-    }
-
-    /// Returns the script code used to spend a P2WPKH input.
-    ///
-    /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
-    /// should not be used as one. It is a special template defined in BIP 143 which is used
-    /// in place of a witness script for purposes of sighash computation.
-    pub fn p2wpkh_script_code(&self) -> WitnessScriptBuf {
-        script::p2wpkh_script_code(self.wpubkey_hash())
     }
 
     /// Writes the public key into a writer.
@@ -723,6 +719,20 @@ impl CompressedPublicKey {
     }
 }
 
+define_extension_trait! {
+    /// Extension functionality for the [`CompressedPublicKey`] type.
+    pub trait CompressedPublicKeyExt impl for CompressedPublicKey {
+        /// Returns the script code used to spend a P2WPKH input.
+        ///
+        /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
+        /// should not be used as one. It is a special template defined in BIP 143 which is used
+        /// in place of a witness script for purposes of sighash computation.
+        fn p2wpkh_script_code(&self) -> WitnessScriptBuf {
+            script::p2wpkh_script_code(self.wpubkey_hash())
+        }
+    }
+}
+
 impl fmt::Display for CompressedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.to_bytes().as_hex(), f)
@@ -777,6 +787,12 @@ impl From<CompressedPublicKey> for WPubkeyHash {
 
 impl From<&CompressedPublicKey> for WPubkeyHash {
     fn from(key: &CompressedPublicKey) -> Self { key.wpubkey_hash() }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::CompressedPublicKey {}
+    impl Sealed for super::PublicKey {}
 }
 
 /// A Bitcoin ECDSA private key.
