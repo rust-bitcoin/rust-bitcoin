@@ -284,7 +284,9 @@ impl XOnlyPublicKey {
 
     /// Constructs an x-only public key from a 32-byte x-coordinate.
     ///
-    /// Returns an error if the provided bytes don't represent a valid secp256k1 point x-coordinate.
+    /// # Errors
+    ///
+    /// Errors if the provided bytes don't represent a valid secp256k1 point x-coordinate.
     #[inline]
     pub fn from_byte_array(
         data: &[u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
@@ -496,6 +498,10 @@ impl PublicKey {
     }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
+    ///
+    /// # Errors
+    ///
+    /// Errors if this key is not compressed.
     pub fn wpubkey_hash(&self) -> Result<WPubkeyHash, UncompressedPublicKeyError> {
         if self.compressed() {
             Ok(WPubkeyHash::from_byte_array(
@@ -511,12 +517,20 @@ impl PublicKey {
     /// While the type returned is [`WitnessScriptBuf`], this is **not** a witness script and
     /// should not be used as one. It is a special template defined in BIP 143 which is used
     /// in place of a witness script for purposes of sighash computation.
+    ///
+    /// # Errors
+    ///
+    /// Errors if this key is not compressed.
     pub fn p2wpkh_script_code(&self) -> Result<WitnessScriptBuf, UncompressedPublicKeyError> {
         let key = CompressedPublicKey::try_from(*self)?;
         Ok(key.p2wpkh_script_code())
     }
 
     /// Writes the public key into a writer.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the bytes fail to write to the provided writer.
     pub fn write_into<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         self.with_serialized(|bytes| writer.write_all(bytes))
     }
@@ -525,6 +539,10 @@ impl PublicKey {
     ///
     /// This internally reads the first byte before reading the rest, so
     /// use of a `BufReader` is recommended.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the reader fails to read, or the read bytes are not a valid public key.
     pub fn read_from<R: Read + ?Sized>(reader: &mut R) -> Result<Self, io::Error> {
         let mut bytes = [0; 65];
 
@@ -551,6 +569,7 @@ impl PublicKey {
     pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
 
     /// Serializes the public key to bytes.
+    #[allow(clippy::missing_panics_doc)]
     pub fn to_vec(self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf).expect("vecs don't error");
@@ -612,6 +631,12 @@ impl PublicKey {
     }
 
     /// Deserializes a public key from a slice.
+    ///
+    /// # Errors
+    ///
+    /// * [`FromSliceError::InvalidLength`] if the slice has an invalid number of bytes.
+    /// * [`FromSliceError::InvalidKeyPrefix`] if the key prefix is invalid.
+    /// * [`FromSliceError::Secp256k1`] if the provided bytes do not form a valid public key.
     pub fn from_slice(data: &[u8]) -> Result<Self, FromSliceError> {
         let compressed = match data.len() {
             33 => true,
@@ -644,6 +669,13 @@ impl PublicKey {
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
+    ///
+    /// # Errors
+    ///
+    /// [`secp256k1::Error::InvalidSignature`] if the signature is not valid for the given
+    /// [`Message`].
+    ///
+    /// [`Message`]: secp256k1::Message
     pub fn verify(
         &self,
         msg: secp256k1::Message,
@@ -661,7 +693,7 @@ impl From<PublicKey> for XOnlyPublicKey {
     fn from(pk: PublicKey) -> Self { Self::from_secp(pk.to_inner()) }
 }
 
-/// An opaque return type for PublicKey::to_sort_key.
+/// An opaque return type for [`PublicKey::to_sort_key`].
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct SortKey(ArrayVec<u8, 65>);
 
@@ -734,6 +766,10 @@ impl CompressedPublicKey {
     }
 
     /// Writes the public key into a writer.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the bytes fail to write to the provided writer.
     pub fn write_into<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         writer.write_all(&self.to_bytes())
     }
@@ -742,6 +778,10 @@ impl CompressedPublicKey {
     ///
     /// This internally reads the first byte before reading the rest, so
     /// use of a `BufReader` is recommended.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the reader fails to read, or the read bytes are not a valid public key.
     pub fn read_from<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, io::Error> {
         let mut bytes = [0; 33];
 
@@ -766,16 +806,28 @@ impl CompressedPublicKey {
     pub fn to_bytes(self) -> [u8; 33] { self.to_inner().serialize() }
 
     /// Deserializes a public key from a slice.
+    ///
+    /// # Errors
+    ///
+    /// See [`secp256k1::PublicKey::from_slice`].
     pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {
         secp256k1::PublicKey::from_slice(data).map(Self::from_secp)
     }
 
     /// Computes the public key as supposed to be used with this secret.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the private key is not compressed.
     pub fn from_private_key(sk: PrivateKey) -> Result<Self, UncompressedPublicKeyError> {
         sk.public_key().try_into()
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
+    ///
+    /// # Errors
+    ///
+    /// See [`PublicKey::verify`].
     pub fn verify(
         &self,
         msg: secp256k1::Message,
@@ -866,6 +918,11 @@ impl PrivateKey {
     pub fn to_vec(self) -> Vec<u8> { self.as_inner()[..].to_vec() }
 
     /// Deserializes a private key from a byte array.
+    ///
+    /// # Errors
+    ///
+    /// Errors when the secret key is invalid: when it is all-zeros or would exceed
+    /// the curve order when interpreted as a big-endian unsigned integer.
     pub fn from_byte_array(
         data: [u8; 32],
         network: impl Into<NetworkKind>,
@@ -874,6 +931,13 @@ impl PrivateKey {
     }
 
     /// Deserializes a private key from a slice.
+    ///
+    /// # Errors
+    ///
+    /// [`secp256k1::Error::InvalidSecretKey`] if the slice is not 32 bytes long.
+    /// See [`from_byte_array`] for other errors.
+    ///
+    /// [`from_byte_array`]: PrivateKey::from_byte_array
     #[deprecated(since = "TBD", note = "use from_byte_array instead")]
     pub fn from_slice(
         data: &[u8],
@@ -884,6 +948,10 @@ impl PrivateKey {
     }
 
     /// Formats the private key to WIF format.
+    ///
+    /// # Errors
+    ///
+    /// Errors if `fmt` cannot be written to.
     #[rustfmt::skip]
     pub fn fmt_wif(&self, fmt: &mut dyn fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
@@ -900,6 +968,7 @@ impl PrivateKey {
     }
 
     /// Gets the WIF encoding of this private key.
+    #[allow(clippy::missing_panics_doc)]
     pub fn to_wif(self) -> String {
         let mut buf = String::new();
         buf.write_fmt(format_args!("{}", self)).unwrap();
@@ -908,6 +977,16 @@ impl PrivateKey {
     }
 
     /// Parses the WIF encoded private key.
+    ///
+    /// # Errors
+    ///
+    /// * [`FromWifError::Base58`] if the string is not a valid base58 encoded string.
+    /// * [`FromWifError::InvalidBase58PayloadLength`] if the decoded base58 data is not 33 or 34
+    ///   bytes long.
+    /// * [`FromWifError::InvalidWifCompressionFlag`] if the compression flag is not 1 for a 34 byte
+    ///   data string.
+    /// * [`FromWifError::InvalidAddressVersion`] if the network version byte is not main or testnet.
+    /// * [`FromWifError::Secp256k1`] if the bytes are not representative of a valid private key.
     pub fn from_wif(wif: &str) -> Result<Self, FromWifError> {
         let data = base58::decode_check(wif)?;
 
@@ -1579,6 +1658,11 @@ impl std::error::Error for InvalidWifCompressionFlagError {}
 
 impl SerializedXOnlyPublicKey {
     /// Returns `XOnlyPublicKey` if the bytes are valid.
+    ///
+    /// # Errors
+    ///
+    /// [`ParseXOnlyPublicKeyError::InvalidXCoordinate`] if the provided bytes don't represent
+    /// a valid secp256k1 point x-coordinate.
     pub fn to_validated(self) -> Result<XOnlyPublicKey, ParseXOnlyPublicKeyError> {
         XOnlyPublicKey::from_byte_array(self.as_byte_array())
     }
