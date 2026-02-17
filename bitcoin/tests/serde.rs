@@ -202,7 +202,7 @@ fn serde_regression_psbt() {
                 txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389"
                     .parse::<Txid>()
                     .unwrap(),
-                vout: 1,
+                vout: 0,
             },
             script_sig: ScriptSigBuf::from_hex_no_length_prefix(
                 "160014be18d152a9b012039daf3da7de4f53349eecb985",
@@ -298,6 +298,7 @@ fn serde_regression_psbt() {
     Psbt::deserialize(&serialized).unwrap();
 
     let got = serialize(&psbt).unwrap();
+
     let want = include_bytes!("data/serde/psbt_bincode") as &[_];
     assert_eq!(got, want);
 
