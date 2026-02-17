@@ -12,6 +12,8 @@
 //! [`encoder_newtype_exact`] macros.
 //!
 
+use core::fmt;
+
 use internals::array_vec::ArrayVec;
 
 use super::{Encodable, Encoder, ExactSizeEncoder};
@@ -20,6 +22,7 @@ use super::{Encodable, Encoder, ExactSizeEncoder};
 const SIZE: usize = 9;
 
 /// An encoder for a single byte slice.
+#[derive(Debug, Clone)]
 pub struct BytesEncoder<'sl> {
     sl: Option<&'sl [u8]>,
 }
@@ -44,6 +47,7 @@ impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
 }
 
 /// An encoder for a single array.
+#[derive(Debug, Clone)]
 pub struct ArrayEncoder<const N: usize> {
     arr: Option<[u8; N]>,
 }
@@ -73,6 +77,7 @@ impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
 ///
 /// This encoder borrows the array instead of taking ownership, avoiding a copy
 /// when the array is already available by reference (e.g., as a struct field).
+#[derive(Debug, Clone)]
 pub struct ArrayRefEncoder<'e, const N: usize> {
     arr: Option<&'e [u8; N]>,
 }
@@ -126,6 +131,27 @@ impl<'e, T: Encodable> SliceEncoder<'e, T> {
     }
 }
 
+impl<'e, T: Encodable> fmt::Debug for SliceEncoder<'e, T>
+where
+    T::Encoder<'e>: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SliceEncoder")
+            .field("sl", &self.sl.len())
+            .field("cur_enc", &self.cur_enc)
+            .finish()
+    }
+}
+
+// Manual impl rather than #[derive(Clone)] because derive would constrain `where T: Clone`,
+// but `T` itself is never cloned, only the associated type `T::Encoder<'e>`.
+impl<'e, T: Encodable> Clone for SliceEncoder<'e, T>
+where
+    T::Encoder<'e>: Clone,
+{
+    fn clone(&self) -> Self { Self { sl: self.sl, cur_enc: self.cur_enc.clone() } }
+}
+
 impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
     fn current_chunk(&self) -> &[u8] {
         // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
@@ -168,6 +194,7 @@ macro_rules! define_encoder_n {
         $(($enc_idx:literal, $enc_ty:ident, $enc_field:ident),)*
     ) => {
         $(#[$attr])*
+        #[derive(Debug, Clone)]
         pub struct $name<$($enc_ty,)*> {
             cur_idx: usize,
             $($enc_field: $enc_ty,)*
@@ -249,6 +276,7 @@ define_encoder_n! {
 }
 
 /// Encoder for a compact size encoded integer.
+#[derive(Debug, Clone)]
 pub struct CompactSizeEncoder {
     buf: Option<ArrayVec<u8, SIZE>>,
 }
