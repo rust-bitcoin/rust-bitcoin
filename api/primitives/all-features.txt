@@ -1573,7 +1573,8 @@ pub fn bitcoin_primitives::script::Script<T>::partial_cmp(&self, other: &bitcoin
 pub fn bitcoin_primitives::script::Script<T>::partial_cmp(&self, other: &bitcoin_primitives::script::ScriptBuf<T>) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::script::Script<T>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin_primitives::script::Script<T>::to_bytes(&self) -> alloc::vec::Vec<u8>
-pub fn bitcoin_primitives::script::Script<T>::to_hex(&self) -> alloc::string::String
+pub fn bitcoin_primitives::script::Script<T>::to_hex_string_no_length_prefix(&self) -> alloc::string::String
+pub fn bitcoin_primitives::script::Script<T>::to_hex_string_prefixed(&self) -> alloc::string::String
 pub fn bitcoin_primitives::script::Script<T>::to_owned(&self) -> Self::Owned
 pub fn bitcoin_primitives::script::Script<T>::to_vec(&self) -> alloc::vec::Vec<u8>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
@@ -1599,6 +1600,8 @@ pub fn bitcoin_primitives::script::ScriptBuf<T>::fmt(&self, f: &mut core::fmt::F
 pub fn bitcoin_primitives::script::ScriptBuf<T>::from(v: alloc::vec::Vec<u8>) -> Self
 pub fn bitcoin_primitives::script::ScriptBuf<T>::from(value: &'a bitcoin_primitives::script::Script<T>) -> Self
 pub fn bitcoin_primitives::script::ScriptBuf<T>::from(value: alloc::borrow::Cow<'a, bitcoin_primitives::script::Script<T>>) -> Self
+pub fn bitcoin_primitives::script::ScriptBuf<T>::from_hex_no_length_prefix(s: &str) -> core::result::Result<Self, hex_conservative::error::DecodeVariableLengthBytesError>
+pub fn bitcoin_primitives::script::ScriptBuf<T>::from_hex_prefixed(s: &str) -> core::result::Result<Self, bitcoin_primitives::script::owned::FromHexError>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::into_boxed_script(self) -> alloc::boxed::Box<bitcoin_primitives::script::Script<T>>
 pub fn bitcoin_primitives::script::ScriptBuf<T>::into_bytes(self) -> alloc::vec::Vec<u8>
@@ -1607,7 +1610,6 @@ pub fn bitcoin_primitives::script::ScriptBuf<T>::partial_cmp(&self, other: &bitc
 pub fn bitcoin_primitives::script::ScriptBuf<T>::reserve(&mut self, additional_len: usize)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::reserve_exact(&mut self, additional_len: usize)
 pub fn bitcoin_primitives::script::ScriptBuf<T>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
-pub fn bitcoin_primitives::script::ScriptBuf<T>::to_hex(&self) -> alloc::string::String
 pub fn bitcoin_primitives::script::ScriptBuf<T>::with_capacity(capacity: usize) -> Self
 pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::default() -> Self
 pub fn bitcoin_primitives::script::ScriptBufDecoder<T>::end(self) -> core::result::Result<Self::Output, Self::Error>
