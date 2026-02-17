@@ -42,16 +42,14 @@ internals::serde_string_impl!(TapSighashType, "a TapSighashType data");
 
 impl fmt::Display for TapSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use TapSighashType::*;
-
         let s = match self {
-            Default => "SIGHASH_DEFAULT",
-            All => "SIGHASH_ALL",
-            None => "SIGHASH_NONE",
-            Single => "SIGHASH_SINGLE",
-            AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
-            NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
-            SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
+            Self::Default => "SIGHASH_DEFAULT",
+            Self::All => "SIGHASH_ALL",
+            Self::None => "SIGHASH_NONE",
+            Self::Single => "SIGHASH_SINGLE",
+            Self::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
+            Self::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
+            Self::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
         };
         f.write_str(s)
     }
@@ -61,16 +59,14 @@ impl str::FromStr for TapSighashType {
     type Err = SighashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use TapSighashType::*;
-
         match s {
-            "SIGHASH_DEFAULT" => Ok(Default),
-            "SIGHASH_ALL" => Ok(All),
-            "SIGHASH_NONE" => Ok(None),
-            "SIGHASH_SINGLE" => Ok(Single),
-            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(AllPlusAnyoneCanPay),
-            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(NonePlusAnyoneCanPay),
-            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SinglePlusAnyoneCanPay),
+            "SIGHASH_DEFAULT" => Ok(Self::Default),
+            "SIGHASH_ALL" => Ok(Self::All),
+            "SIGHASH_NONE" => Ok(Self::None),
+            "SIGHASH_SINGLE" => Ok(Self::Single),
+            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(Self::AllPlusAnyoneCanPay),
+            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(Self::NonePlusAnyoneCanPay),
+            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(Self::SinglePlusAnyoneCanPay),
             _ => Err(SighashTypeParseError { unrecognized: s.to_owned() }),
         }
     }
@@ -78,17 +74,19 @@ impl str::FromStr for TapSighashType {
 
 impl TapSighashType {
     /// Constructs a new [`TapSighashType`] from a raw `u8`.
+    ///
+    /// # Errors
+    ///
+    /// This method fails if the provided sighash type is not valid.
     pub fn from_consensus_u8(sighash_type: u8) -> Result<Self, InvalidSighashTypeError> {
-        use TapSighashType::*;
-
         Ok(match sighash_type {
-            0x00 => Default,
-            0x01 => All,
-            0x02 => None,
-            0x03 => Single,
-            0x81 => AllPlusAnyoneCanPay,
-            0x82 => NonePlusAnyoneCanPay,
-            0x83 => SinglePlusAnyoneCanPay,
+            0x00 => Self::Default,
+            0x01 => Self::All,
+            0x02 => Self::None,
+            0x03 => Self::Single,
+            0x81 => Self::AllPlusAnyoneCanPay,
+            0x82 => Self::NonePlusAnyoneCanPay,
+            0x83 => Self::SinglePlusAnyoneCanPay,
             x => return Err(InvalidSighashTypeError(x.into())),
         })
     }
@@ -121,15 +119,13 @@ internals::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
 
 impl fmt::Display for EcdsaSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use EcdsaSighashType::*;
-
         let s = match self {
-            All => "SIGHASH_ALL",
-            None => "SIGHASH_NONE",
-            Single => "SIGHASH_SINGLE",
-            AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
-            NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
-            SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
+            Self::All => "SIGHASH_ALL",
+            Self::None => "SIGHASH_NONE",
+            Self::Single => "SIGHASH_SINGLE",
+            Self::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
+            Self::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
+            Self::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
         };
         f.write_str(s)
     }
@@ -139,15 +135,13 @@ impl str::FromStr for EcdsaSighashType {
     type Err = SighashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use EcdsaSighashType::*;
-
         match s {
-            "SIGHASH_ALL" => Ok(All),
-            "SIGHASH_NONE" => Ok(None),
-            "SIGHASH_SINGLE" => Ok(Single),
-            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(AllPlusAnyoneCanPay),
-            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(NonePlusAnyoneCanPay),
-            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SinglePlusAnyoneCanPay),
+            "SIGHASH_ALL" => Ok(Self::All),
+            "SIGHASH_NONE" => Ok(Self::None),
+            "SIGHASH_SINGLE" => Ok(Self::Single),
+            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(Self::AllPlusAnyoneCanPay),
+            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(Self::NonePlusAnyoneCanPay),
+            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(Self::SinglePlusAnyoneCanPay),
             _ => Err(SighashTypeParseError { unrecognized: s.to_owned() }),
         }
     }
@@ -156,7 +150,7 @@ impl str::FromStr for EcdsaSighashType {
 impl EcdsaSighashType {
     /// Checks if the sighash type is [`Self::Single`] or [`Self::SinglePlusAnyoneCanPay`].
     ///
-    /// This matches Bitcoin Core's behavior where SIGHASH_SINGLE bug check is based on the base
+    /// This matches Bitcoin Core's behavior where `SIGHASH_SINGLE` bug check is based on the base
     /// type (after masking with 0x1f), regardless of the ANYONECANPAY flag.
     ///
     /// See: <https://github.com/bitcoin/bitcoin/blob/e486597/src/script/interpreter.cpp#L1618-L1619>
@@ -172,8 +166,6 @@ impl EcdsaSighashType {
     /// verifying signatures, the user should retain the `n` and use it to compute the signature hash
     /// message.
     pub fn from_consensus(n: u32) -> Self {
-        use EcdsaSighashType::*;
-
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
         // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
@@ -181,15 +173,15 @@ impl EcdsaSighashType {
         let mask = 0x1f | 0x80;
         match n & mask {
             // "real" sighashes
-            0x01 => All,
-            0x02 => None,
-            0x03 => Single,
-            0x81 => AllPlusAnyoneCanPay,
-            0x82 => NonePlusAnyoneCanPay,
-            0x83 => SinglePlusAnyoneCanPay,
+            0x01 => Self::All,
+            0x02 => Self::None,
+            0x03 => Self::Single,
+            0x81 => Self::AllPlusAnyoneCanPay,
+            0x82 => Self::NonePlusAnyoneCanPay,
+            0x83 => Self::SinglePlusAnyoneCanPay,
             // catchalls
-            x if x & 0x80 == 0x80 => AllPlusAnyoneCanPay,
-            _ => All,
+            x if x & 0x80 == 0x80 => Self::AllPlusAnyoneCanPay,
+            _ => Self::All,
         }
     }
 
@@ -199,16 +191,14 @@ impl EcdsaSighashType {
     ///
     /// If `n` is a non-standard sighash value.
     pub fn from_standard(n: u32) -> Result<Self, NonStandardSighashTypeError> {
-        use EcdsaSighashType::*;
-
         match n {
             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
-            0x01 => Ok(All),
-            0x02 => Ok(None),
-            0x03 => Ok(Single),
-            0x81 => Ok(AllPlusAnyoneCanPay),
-            0x82 => Ok(NonePlusAnyoneCanPay),
-            0x83 => Ok(SinglePlusAnyoneCanPay),
+            0x01 => Ok(Self::All),
+            0x02 => Ok(Self::None),
+            0x03 => Ok(Self::Single),
+            0x81 => Ok(Self::AllPlusAnyoneCanPay),
+            0x82 => Ok(Self::NonePlusAnyoneCanPay),
+            0x83 => Ok(Self::SinglePlusAnyoneCanPay),
             non_standard => Err(NonStandardSighashTypeError(non_standard)),
         }
     }
@@ -221,15 +211,13 @@ impl EcdsaSighashType {
 
 impl From<EcdsaSighashType> for TapSighashType {
     fn from(s: EcdsaSighashType) -> Self {
-        use TapSighashType::*;
-
         match s {
-            EcdsaSighashType::All => All,
-            EcdsaSighashType::None => None,
-            EcdsaSighashType::Single => Single,
-            EcdsaSighashType::AllPlusAnyoneCanPay => AllPlusAnyoneCanPay,
-            EcdsaSighashType::NonePlusAnyoneCanPay => NonePlusAnyoneCanPay,
-            EcdsaSighashType::SinglePlusAnyoneCanPay => SinglePlusAnyoneCanPay,
+            EcdsaSighashType::All => Self::All,
+            EcdsaSighashType::None => Self::None,
+            EcdsaSighashType::Single => Self::Single,
+            EcdsaSighashType::AllPlusAnyoneCanPay => Self::AllPlusAnyoneCanPay,
+            EcdsaSighashType::NonePlusAnyoneCanPay => Self::NonePlusAnyoneCanPay,
+            EcdsaSighashType::SinglePlusAnyoneCanPay => Self::SinglePlusAnyoneCanPay,
         }
     }
 }
