@@ -14,10 +14,14 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "internals/std", "serde/std"]
+alloc = ["internals/alloc", "serde/alloc"]
+serde = ["dep:serde", "internals/serde"]
 
 [dependencies]
+arbitrary = { version = "1.4.1", optional = true }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
+serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
 
