@@ -12,6 +12,8 @@
 //! [`encoder_newtype_exact`] macros.
 //!
 
+use core::fmt;
+
 use internals::array_vec::ArrayVec;
 
 use super::{Encodable, Encoder, ExactSizeEncoder};
@@ -20,6 +22,7 @@ use super::{Encodable, Encoder, ExactSizeEncoder};
 const SIZE: usize = 9;
 
 /// An encoder for a single byte slice.
+#[derive(Debug, Clone)]
 pub struct BytesEncoder<'sl> {
     sl: Option<&'sl [u8]>,
 }
@@ -44,6 +47,7 @@ impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
 }
 
 /// An encoder for a single array.
+#[derive(Debug, Clone)]
 pub struct ArrayEncoder<const N: usize> {
     arr: Option<[u8; N]>,
 }
@@ -126,6 +130,27 @@ impl<'e, T: Encodable> SliceEncoder<'e, T> {
     }
 }
 
+impl<'e, T: Encodable> fmt::Debug for SliceEncoder<'e, T>
+where
+    T::Encoder<'e>: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SliceEncoder")
+            .field("sl", &self.sl.len())
+            .field("cur_enc", &self.cur_enc)
+            .finish()
+    }
+}
+
+// Manual impl rather than #[derive(Clone)] because derive would constrain `where T: Clone`,
+// but `T` itself is never cloned, only the associated type `T::Encoder<'e>`.
+impl<'e, T: Encodable> Clone for SliceEncoder<'e, T>
+where
+    T::Encoder<'e>: Clone,
+{
+    fn clone(&self) -> Self { Self { sl: self.sl, cur_enc: self.cur_enc.clone() } }
+}
+
 impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
     fn current_chunk(&self) -> &[u8] {
         // `advance` sets `cur_enc` to `None` once the slice encoder is completely exhausted.
@@ -161,6 +186,7 @@ impl<T: Encodable> Encoder for SliceEncoder<'_, T> {
 }
 
 /// An encoder which encodes two objects, one after the other.
+#[derive(Debug, Clone)]
 pub struct Encoder2<A, B> {
     enc_idx: usize,
     enc_1: A,
@@ -210,6 +236,7 @@ where
 // unrolled versions should be macro-izable, if we want to do that.
 
 /// An encoder which encodes three objects, one after the other.
+#[derive(Debug, Clone)]
 pub struct Encoder3<A, B, C> {
     inner: Encoder2<Encoder2<A, B>, C>,
 }
@@ -239,6 +266,7 @@ where
 }
 
 /// An encoder which encodes four objects, one after the other.
+#[derive(Debug, Clone)]
 pub struct Encoder4<A, B, C, D> {
     inner: Encoder2<Encoder2<A, B>, Encoder2<C, D>>,
 }
@@ -269,6 +297,7 @@ where
 }
 
 /// An encoder which encodes six objects, one after the other.
+#[derive(Debug, Clone)]
 pub struct Encoder6<A, B, C, D, E, F> {
     inner: Encoder2<Encoder3<A, B, C>, Encoder3<D, E, F>>,
 }
@@ -308,6 +337,7 @@ where
 }
 
 /// Encoder for a compact size encoded integer.
+#[derive(Debug, Clone)]
 pub struct CompactSizeEncoder {
     buf: Option<ArrayVec<u8, SIZE>>,
 }
