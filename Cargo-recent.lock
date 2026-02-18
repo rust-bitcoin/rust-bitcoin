@@ -181,6 +181,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-taproot-primitives"
+version = "0.1.0"
+
+[[package]]
 name = "bitcoin-units"
 version = "1.0.0-rc.4"
 dependencies = [
