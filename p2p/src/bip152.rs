@@ -754,8 +754,7 @@ mod test {
                 // test that we return Err() if deserialization fails (and don't panic)
                 let mut raw: Vec<u8> = [0u8; 32].to_vec();
                 raw.extend(errorcase);
-                let get_block_txn = deserialize::<BlockTransactionsRequest>(&raw.clone()).unwrap();
-                assert!(get_block_txn.indices().is_err());
+                assert!(deserialize::<BlockTransactionsRequest>(&raw).is_err());
             }
         }
     }
