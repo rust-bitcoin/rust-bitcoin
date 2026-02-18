@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::cast_ptr_alignment)]
+#![allow(clippy::too_many_lines)]
+#![allow(clippy::many_single_char_names)]
+
 #[cfg(all(feature = "std", target_arch = "aarch64"))]
 use core::arch::aarch64::*;
 #[cfg(all(feature = "std", target_arch = "x86"))]
 use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
-use core::arch::x86_64::*;
+use core::arch::x86_64::{__m128i, _mm_set_epi64x, _mm_loadu_si128, _mm_shuffle_epi32, _mm_alignr_epi8, _mm_blend_epi16, _mm_shuffle_epi8, _mm_add_epi32, _mm_sha256rnds2_epu32, _mm_sha256msg1_epu32, _mm_sha256msg2_epu32, _mm_storeu_si128};
 
 use internals::slice::SliceExt;
 
@@ -25,7 +30,7 @@ const fn sigma1(x: u32) -> u32 { x.rotate_left(15) ^ x.rotate_left(13) ^ (x >> 1
 #[cfg(feature = "small-hash")]
 #[macro_use]
 mod small_hash {
-    use super::*;
+    use super::{Sigma1, Ch, Sigma0, Maj, sigma1, sigma0};
 
     #[rustfmt::skip]
     #[allow(clippy::too_many_arguments)]
@@ -272,7 +277,7 @@ impl HashEngine {
         }
 
         // fallback implementation without using any intrinsics
-        self.software_process_block()
+        self.software_process_block();
     }
 
     #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
