@@ -448,17 +448,17 @@ impl Psbt {
             }
 
             // script path spend
-            if let Some((leaf_hashes, _)) = input.tap_key_origins.get(&xonly) {
-                let leaf_hashes = leaf_hashes
+            {
+                let pending_leaf_hashes = leaf_hashes
                     .iter()
                     .filter(|lh| !input.tap_script_sigs.contains_key(&(xonly, **lh)))
-                    .cloned()
+                    .copied()
                     .collect::<Vec<_>>();
 
-                if !leaf_hashes.is_empty() {
+                if !pending_leaf_hashes.is_empty() {
                     let key_pair = Keypair::from_secret_key(&sk.inner);
 
-                    for lh in leaf_hashes {
+                    for lh in pending_leaf_hashes {
                         let (sighash, sighash_type) =
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
