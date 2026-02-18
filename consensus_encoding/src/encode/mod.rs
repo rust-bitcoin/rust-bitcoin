@@ -54,6 +54,7 @@ macro_rules! encoder_newtype{
         $(#[$($struct_attr)*])*
         pub struct $name<$lt>($encoder, core::marker::PhantomData<&$lt $encoder>);
 
+        #[allow(clippy::type_complexity)]
         impl<$lt> $name<$lt> {
             /// Construct a new instance of the newtype encoder
             pub fn new(encoder: $encoder) -> $name<$lt> {
