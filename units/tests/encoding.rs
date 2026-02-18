@@ -110,6 +110,7 @@ fn amount_hardcoded_encoding() {
     assert_eq!(encoded, [0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00]);
 }
 
+#[rustfmt::skip]
 test_hardcoded_decoding!(
     amount_hardcoded_decoding,
     AmountDecoder,
@@ -137,6 +138,7 @@ test_round_trip!(
     Amount::from_sat(21_000_000 * 100_000_000).unwrap(), // 21 million BTC
 );
 
+#[rustfmt::skip]
 test_incremental_decoding!(
     amount_incremental_decoding,
     AmountDecoder,
