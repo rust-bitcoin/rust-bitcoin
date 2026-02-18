@@ -447,3 +447,6 @@ mod tests {
         assert_eq!(got, 1_234_567);
     }
 }
+
+#[cfg(kani)]
+mod verification;

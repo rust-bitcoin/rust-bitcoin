@@ -1,10 +1,12 @@
 additional_cargo_args = ["--all-features"]
 examine_globs = ["consensus_encoding/src/**/*.rs", "units/src/**/*.rs", "primitives/src/**/*.rs"]
 exclude_globs = [
-    "units/src/amount/verification.rs" # kani tests
+    "units/src/amount/verification.rs", # kani tests
+    "units/src/fee_rate/verification.rs", # kani tests
 ]
 exclude_re = [
     "impl Arbitrary",
+    "units/.* verification::check_weight_", # kani proofs
     "impl Debug",
     "impl fmt::Debug",
     ".*Error",

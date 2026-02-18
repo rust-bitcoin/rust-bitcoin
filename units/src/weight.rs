@@ -613,3 +613,99 @@ mod tests {
         assert_eq!(got, want);
     }
 }
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    /// Verify that `from_vb` / `to_vbytes_floor` is a lossless roundtrip when
+    /// the multiplication by 4 does not overflow.
+    #[kani::proof]
+    fn check_weight_from_vb_roundtrip() {
+        let vb = kani::any::<u64>();
+        kani::assume(Weight::from_vb(vb).is_some());
+
+        let weight = Weight::from_vb(vb).unwrap();
+        assert_eq!(weight.to_vbytes_floor(), vb);
+    }
+
+    /// Verify that `from_kwu` / `to_kwu_floor` is a lossless roundtrip when
+    /// the multiplication by 1000 does not overflow.
+    #[kani::proof]
+    fn check_weight_from_kwu_roundtrip() {
+        let kwu = kani::any::<u64>();
+        kani::assume(Weight::from_kwu(kwu).is_some());
+
+        let weight = Weight::from_kwu(kwu).unwrap();
+        assert_eq!(weight.to_kwu_floor(), kwu);
+    }
+
+    /// Verify that `checked_add` returns `None` exactly when u64 addition
+    /// overflows, and the correct value otherwise.
+    #[kani::proof]
+    fn check_weight_checked_add() {
+        let a = kani::any::<u64>();
+        let b = kani::any::<u64>();
+
+        let wa = Weight::from_wu(a);
+        let wb = Weight::from_wu(b);
+        let result = wa.checked_add(wb);
+
+        match a.checked_add(b) {
+            Some(sum) => {
+                assert!(result.is_some());
+                assert_eq!(result.unwrap().to_wu(), sum);
+            }
+            None => assert!(result.is_none()),
+        }
+    }
+
+    /// Verify that `checked_sub` returns `None` exactly when a < b, and
+    /// `Some(a - b)` otherwise.
+    #[kani::proof]
+    fn check_weight_checked_sub() {
+        let a = kani::any::<u64>();
+        let b = kani::any::<u64>();
+
+        let wa = Weight::from_wu(a);
+        let wb = Weight::from_wu(b);
+        let result = wa.checked_sub(wb);
+
+        if a >= b {
+            assert!(result.is_some());
+            assert_eq!(result.unwrap().to_wu(), a - b);
+        } else {
+            assert!(result.is_none());
+        }
+    }
+
+    /// Verify that `from_vb` returns `None` exactly when `vb * 4` overflows u64.
+    #[kani::proof]
+    fn check_weight_from_vb_overflow() {
+        let vb = kani::any::<u64>();
+        let result = Weight::from_vb(vb);
+
+        match vb.checked_mul(4) {
+            Some(wu) => {
+                assert!(result.is_some());
+                assert_eq!(result.unwrap().to_wu(), wu);
+            }
+            None => assert!(result.is_none()),
+        }
+    }
+
+    /// Verify that `from_kwu` returns `None` exactly when `kwu * 1000` overflows u64.
+    #[kani::proof]
+    fn check_weight_from_kwu_overflow() {
+        let kwu = kani::any::<u64>();
+        let result = Weight::from_kwu(kwu);
+
+        match kwu.checked_mul(1000) {
+            Some(wu) => {
+                assert!(result.is_some());
+                assert_eq!(result.unwrap().to_wu(), wu);
+            }
+            None => assert!(result.is_none()),
+        }
+    }
+}
