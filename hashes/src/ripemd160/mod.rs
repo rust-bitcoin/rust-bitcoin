@@ -98,3 +98,4 @@ impl crate::HashEngine for HashEngine {
     crate::internal_macros::engine_input_impl!();
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
+

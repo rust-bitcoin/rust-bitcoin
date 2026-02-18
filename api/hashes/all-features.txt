@@ -482,6 +482,15 @@ impl std::io::Write for bitcoin_hashes::sha3_256::HashEngine
 impl std::io::Write for bitcoin_hashes::sha512::HashEngine
 impl std::io::Write for bitcoin_hashes::sha512_256::HashEngine
 impl std::io::Write for bitcoin_hashes::siphash24::HashEngine
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::hash160::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::ripemd160::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha1::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha256::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha256d::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha384::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha3_256::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha512::Hash
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha512_256::Hash
 impl<'de, T: bitcoin_hashes::Hash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
 impl<'de, T: bitcoin_hashes::sha256t::Tag> serde::de::Deserialize<'de> for bitcoin_hashes::sha256t::Hash<T>
 impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::hash160::Hash
@@ -697,6 +706,7 @@ pub fn bitcoin_hashes::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::cmp::fixed_time_eq(a: &[u8], b: &[u8]) -> bool
 pub fn bitcoin_hashes::debug_hex<'a>(bytes: impl core::iter::traits::collect::IntoIterator<Item = &'a u8>, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::encode_to_engine<T, H>(object: &T, engine: H) -> H where T: bitcoin_consensus_encoding::encode::Encodable + ?core::marker::Sized, H: bitcoin_hashes::HashEngine
+pub fn bitcoin_hashes::hash160::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8]
@@ -782,6 +792,7 @@ pub fn bitcoin_hashes::muhash::Hash::hash<__H: core::hash::Hasher>(&self, state:
 pub fn bitcoin_hashes::muhash::Hash::partial_cmp(&self, other: &bitcoin_hashes::muhash::Hash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_hashes::muhash::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_hashes::muhash::Hash::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_hashes::ripemd160::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::ripemd160::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8]
@@ -813,6 +824,7 @@ pub fn bitcoin_hashes::ripemd160::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::ripemd160::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::ripemd160::hash(data: &[u8]) -> bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::ripemd160::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
+pub fn bitcoin_hashes::sha1::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::sha1::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8]
@@ -844,6 +856,7 @@ pub fn bitcoin_hashes::sha1::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::sha1::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::sha1::hash(data: &[u8]) -> bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::sha1::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
+pub fn bitcoin_hashes::sha256::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8]
@@ -890,6 +903,7 @@ pub fn bitcoin_hashes::sha256::MidstateError::fmt(&self, f: &mut core::fmt::Form
 pub fn bitcoin_hashes::sha256::MidstateError::unprocessed_bytes(&self) -> &[u8]
 pub fn bitcoin_hashes::sha256::hash(data: &[u8]) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::sha256::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
+pub fn bitcoin_hashes::sha256d::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8]
@@ -952,6 +966,7 @@ pub fn bitcoin_hashes::sha256t::HashEngine<T>::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::sha256t::HashEngine<T>::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::sha256t::hash<T>(data: &[u8]) -> bitcoin_hashes::sha256t::Hash<T> where T: bitcoin_hashes::sha256t::Tag
 pub fn bitcoin_hashes::sha256t::hash_byte_chunks<B, I, T>(byte_slices: I) -> bitcoin_hashes::sha256t::Hash<T> where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>, T: bitcoin_hashes::sha256t::Tag
+pub fn bitcoin_hashes::sha384::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8; 48]
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8]
@@ -983,6 +998,7 @@ pub fn bitcoin_hashes::sha384::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::sha384::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::sha384::hash(data: &[u8]) -> bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::sha384::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
+pub fn bitcoin_hashes::sha3_256::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::sha3_256::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8]
@@ -1013,6 +1029,7 @@ pub fn bitcoin_hashes::sha3_256::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::sha3_256::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::sha3_256::hash(data: &[u8]) -> bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::sha3_256::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
+pub fn bitcoin_hashes::sha512::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::sha512::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8; 64]
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8]
@@ -1044,6 +1061,7 @@ pub fn bitcoin_hashes::sha512::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::sha512::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::sha512::hash(data: &[u8]) -> bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::sha512::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
+pub fn bitcoin_hashes::sha512_256::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_hashes::sha512_256::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8]

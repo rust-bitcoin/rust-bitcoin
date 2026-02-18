@@ -127,6 +127,7 @@ dependencies = [
 name = "bitcoin-network-kind"
 version = "0.1.0"
 dependencies = [
+ "arbitrary",
  "bitcoin-internals",
  "serde",
  "serde_json",
@@ -184,6 +185,7 @@ dependencies = [
 name = "bitcoin_hashes"
 version = "0.19.0"
 dependencies = [
+ "arbitrary",
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "hex-conservative 0.3.0",
@@ -389,6 +391,7 @@ version = "0.32.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5fdc7d6e800869d3fd60ff857c479bf0a83ea7bf44b389e64461e844204994"
 dependencies = [
+ "arbitrary",
  "rand",
  "secp256k1-sys",
  "serde",
