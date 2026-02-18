@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use core::fmt;
 use core::str::FromStr;
 
@@ -506,6 +508,43 @@ impl Map for Input {
 }
 
 impl_psbtmap_ser_de_serialize!(Input);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PsbtSighashType {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_u32(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Input {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            non_witness_utxo: u.arbitrary()?,
+            witness_utxo: u.arbitrary()?,
+            partial_sigs: u.arbitrary()?,
+            sighash_type: u.arbitrary()?,
+            redeem_script: u.arbitrary()?,
+            witness_script: u.arbitrary()?,
+            bip32_derivation: u.arbitrary()?,
+            final_script_sig: u.arbitrary()?,
+            final_script_witness: u.arbitrary()?,
+            ripemd160_preimages: u.arbitrary()?,
+            sha256_preimages: u.arbitrary()?,
+            hash160_preimages: u.arbitrary()?,
+            hash256_preimages: u.arbitrary()?,
+            tap_key_sig: u.arbitrary()?,
+            tap_script_sigs: u.arbitrary()?,
+            tap_scripts: u.arbitrary()?,
+            tap_key_origins: u.arbitrary()?,
+            tap_internal_key: u.arbitrary()?,
+            tap_merkle_root: u.arbitrary()?,
+            musig2_participant_pubkeys: u.arbitrary()?,
+            proprietary: u.arbitrary()?,
+            unknown: u.arbitrary()?,
+        })
+    }
+}
 
 #[cfg(test)]
 mod test {
