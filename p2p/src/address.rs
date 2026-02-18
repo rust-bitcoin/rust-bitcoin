@@ -866,7 +866,7 @@ mod test {
 
     use bitcoin::consensus::encode::{deserialize, serialize};
     use hex::FromHex;
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
     use crate::message::AddrV2Payload;

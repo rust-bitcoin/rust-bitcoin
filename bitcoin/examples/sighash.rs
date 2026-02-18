@@ -3,7 +3,7 @@ use bitcoin::{
     consensus, ecdsa, sighash, Amount, CompressedPublicKey, ScriptPubKey, ScriptPubKeyBuf,
     Transaction, WitnessScript,
 };
-use hex_lit::hex;
+use hex_unstable::hex;
 
 //These are real blockchain transactions examples of computing sighash for:
 // - P2WPKH
