@@ -308,7 +308,8 @@ pub enum AddressData {
     },
 }
 
-internals::transparent_newtype! {
+// Defined in `REPO_DIR/include/newtype.rs`.
+transparent_newtype! {
     /// A Bitcoin address.
     ///
     /// # Parsing addresses

@@ -154,7 +154,7 @@ mod encapsulate {
         pub fn as_keypair(&self) -> &Keypair { &self.0 }
     }
 
-    internals::transparent_newtype! {
+    transparent_newtype! {
         /// An array of bytes that's semantically an x-only public but was **not** validated.
         ///
         /// This can be useful when validation is not desired but semantics of the bytes should be
