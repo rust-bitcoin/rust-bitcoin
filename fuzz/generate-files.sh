@@ -24,6 +24,7 @@ cargo-fuzz = true
 [dependencies]
 honggfuzz = { version = "0.5.58", default-features = false }
 bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary" ] }
+old_bitcoin = { version = "0.32.8", package = "bitcoin" }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
 arbitrary = { version = "1.4.1" }
