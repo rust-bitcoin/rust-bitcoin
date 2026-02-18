@@ -116,7 +116,6 @@ pub mod ext {
 }
 pub mod address;
 pub mod bip158;
-pub mod bip32;
 pub mod blockdata;
 pub mod consensus;
 #[cfg(feature = "bitcoinconsensus")]
@@ -204,6 +203,10 @@ pub use crate::{
     // These modules also re-export all the respective `primitives` types.
     blockdata::{block, constants, fee_rate, locktime, script, transaction, weight, witness},
 };
+
+// Re-export modules directly from lower level crates
+#[doc(inline)]
+pub use key_expression::bip32;
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

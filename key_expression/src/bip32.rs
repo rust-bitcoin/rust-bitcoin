@@ -5,19 +5,19 @@
 //! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
+use alloc::string::String;
+use alloc::vec::Vec;
+use alloc::vec;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use crypto::key::{FullPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
-
-use crate::crypto::key::{FullPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
-use crate::internal_macros;
-use crate::network::NetworkKind;
-use crate::prelude::{String, Vec};
+use network::NetworkKind;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -47,7 +47,7 @@ pub type ExtendedPrivKey = Xpriv;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
 internals::impl_array_newtype!(ChainCode, u8, 32);
-internal_macros::impl_array_newtype_stringify!(ChainCode, 32);
+crate::impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
@@ -64,7 +64,7 @@ impl ChainCode {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
 internals::impl_array_newtype!(Fingerprint, u8, 4);
-internal_macros::impl_array_newtype_stringify!(Fingerprint, 4);
+crate::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {
     /// Extended key identifier as defined in BIP-0032.
@@ -484,7 +484,7 @@ impl DerivationPath {
     /// Concatenate `self` with `path` and return the resulting new path.
     ///
     /// ```
-    /// use bitcoin::bip32::{DerivationPath, ChildNumber};
+    /// use bitcoin_key_expression::bip32::{DerivationPath, ChildNumber};
     ///
     /// let base = "m/42".parse::<DerivationPath>().unwrap();
     ///
@@ -507,7 +507,7 @@ impl DerivationPath {
     /// 0x80000000 is added to the hardened elements.
     ///
     /// ```
-    /// use bitcoin::bip32::DerivationPath;
+    /// use bitcoin_key_expression::bip32::DerivationPath;
     ///
     /// let path = "m/84'/0'/0'/0/1".parse::<DerivationPath>().unwrap();
     /// const HARDENED: u32 = 0x80000000;
@@ -517,7 +517,7 @@ impl DerivationPath {
 
     /// Constructs a new derivation path from a slice of u32s.
     /// ```
-    /// use bitcoin::bip32::DerivationPath;
+    /// use bitcoin_key_expression::bip32::DerivationPath;
     ///
     /// const HARDENED: u32 = 0x80000000;
     /// let expected = vec![84 + HARDENED, HARDENED, HARDENED, 0, 1];
@@ -1199,7 +1199,7 @@ impl<'a> Arbitrary<'a> for Xpriv {
 
 #[cfg(test)]
 mod tests {
-    use alloc::string::ToString;
+    use alloc::{string::ToString, format};
 
     use hex_unstable::hex;
     #[cfg(feature = "serde")]

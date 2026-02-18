@@ -85,6 +85,7 @@ dependencies = [
  "bitcoin-crypto",
  "bitcoin-internals 0.5.0",
  "bitcoin-io 0.5.0",
+ "bitcoin-key-expression",
  "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin-taproot-primitives",
@@ -180,6 +181,19 @@ dependencies = [
 [[package]]
 name = "bitcoin-key-expression"
 version = "0.0.0"
+dependencies = [
+ "arbitrary",
+ "base58ck 0.4.0",
+ "bitcoin-crypto",
+ "bitcoin-internals 0.5.0",
+ "bitcoin-network-kind",
+ "bitcoin_hashes 0.20.0",
+ "hex-conservative 0.3.2",
+ "hex-conservative 1.0.0",
+ "secp256k1 0.32.0-beta.2",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "bitcoin-network-kind"
