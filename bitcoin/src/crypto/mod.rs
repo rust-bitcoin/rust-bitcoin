@@ -4,7 +4,7 @@
 //!
 //! Cryptography related functionality: keys and signatures.
 
-pub mod ecdsa;
+pub use crypto::ecdsa;
 pub mod key;
 pub mod sighash;
 // Contents re-exported in `bitcoin::taproot`.

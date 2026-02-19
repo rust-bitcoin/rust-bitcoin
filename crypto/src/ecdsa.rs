@@ -4,6 +4,7 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::convert::Infallible;
 use core::ops::Deref;
@@ -12,13 +13,12 @@ use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex_unstable::FromHex;
+use hex_unstable::{FromHex, DisplayHex};
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
+#[cfg(feature = "serde")]
+use serde::{Serialize, Deserialize};
 
-use crate::prelude::{DisplayHex, Vec};
-#[cfg(doc)]
-use crate::script::ScriptPubKeyBufExt as _;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;
@@ -40,9 +40,14 @@ impl Signature {
     }
 
     /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
+    ///
+    /// # Errors
+    ///
+    /// [`DecodeError::EmptySignature`] if the slice is empty.
+    /// [`DecodeError::Secp256k1`] if the slice cannot be decoded to an ECDSA signature.
     pub fn from_slice(sl: &[u8]) -> Result<Self, DecodeError> {
         let (sighash_type, sig) = sl.split_last().ok_or(DecodeError::EmptySignature)?;
-        let sighash_type = EcdsaSighashType::from_standard(*sighash_type as u32)?;
+        let sighash_type = EcdsaSighashType::from_standard(u32::from(*sighash_type))?;
         let signature =
             secp256k1::ecdsa::Signature::from_der(sig).map_err(DecodeError::Secp256k1)?;
         Ok(Self { signature, sighash_type })
@@ -73,6 +78,10 @@ impl Signature {
     }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format) to a `writer`.
+    ///
+    /// # Errors
+    ///
+    /// If the signature bytes cannot be written to the provided `writer`.
     #[inline]
     pub fn serialize_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         let sig = self.serialize();
@@ -103,7 +112,7 @@ impl FromStr for Signature {
 /// expect and has familiar methods.
 ///
 /// However, the usual use case is to push it into a script. This can be done directly passing it
-/// into [`push_slice`](crate::script::ScriptBufExt::push_slice).
+/// into a `ScriptBuf` with `push_slice`.
 #[derive(Copy, Clone)]
 pub struct SerializedSignature {
     data: [u8; MAX_SIG_LEN],
@@ -111,7 +120,7 @@ pub struct SerializedSignature {
 }
 
 impl SerializedSignature {
-    /// Constructs a new SerializedSignature from a Signature.
+    /// Constructs a new `SerializedSignature` from a Signature.
     ///
     /// In other words this serializes a `Signature` into a `SerializedSignature`.
     #[inline]
@@ -120,6 +129,12 @@ impl SerializedSignature {
     /// Converts the serialized signature into the [`Signature`] struct.
     ///
     /// In other words this deserializes the `SerializedSignature`.
+    ///
+    /// # Errors
+    ///
+    /// See [`from_slice`]
+    ///
+    /// [`from_slice`]: Signature::from_slice
     #[inline]
     pub fn to_signature(self) -> Result<Signature, DecodeError> { Signature::from_slice(&self) }
 
@@ -134,6 +149,10 @@ impl SerializedSignature {
     pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
 
     /// Writes this serialized signature to a `writer`.
+    ///
+    /// # Errors
+    ///
+    /// If the signature bytes cannot be written to the provided `writer`.
     #[inline]
     pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         writer.write_all(self)
@@ -324,9 +343,9 @@ impl<'a> Arbitrary<'a> for Signature {
         // The valid range of r and s should be between 0 and n-1 where
         // n = 0xFFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
         let high_min = 0x0u128;
-        let high_max = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEu128;
+        let high_max = 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFEu128;
         let low_min = 0x0u128;
-        let low_max = 0xBAAEDCE6AF48A03BBFD25E8CD0364140u128;
+        let low_max = 0xBAAE_DCE6_AF48_A03B_BFD2_5E8C_D036_4140u128;
 
         // Equally weight the chances of getting a minimum value for a signature, maximum value for
         // a signature, and an arbitrary valid signature
@@ -355,6 +374,8 @@ impl<'a> Arbitrary<'a> for Signature {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use super::*;
 
     const TEST_SIGNATURE_HEX: &str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
@@ -369,7 +390,7 @@ mod tests {
         let mut buf = vec![];
         sig.serialize_to_writer(&mut buf).expect("write failed");
 
-        assert_eq!(sig.to_vec(), buf)
+        assert_eq!(sig.to_vec(), buf);
     }
 
     #[test]
