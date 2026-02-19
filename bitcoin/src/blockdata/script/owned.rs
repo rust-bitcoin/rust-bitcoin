@@ -229,7 +229,7 @@ crate::internal_macros::define_extension_trait! {
             merkle_root: Option<TapNodeHash>,
         ) -> Self {
             let internal_key = internal_key.into();
-            let (output_key, _) = internal_key.tap_tweak(merkle_root);
+            let output_key = internal_key.tap_tweak(merkle_root);
             // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
             script::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
         }

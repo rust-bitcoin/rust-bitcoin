@@ -295,7 +295,7 @@ impl Deserialize for PsbtSighashType {
 
 // Taproot related ser/deser
 impl Serialize for XOnlyPublicKey {
-    fn serialize(&self) -> Vec<u8> { Self::serialize(self).to_vec() }
+    fn serialize(&self) -> Vec<u8> { Self::serialize(self).0.to_vec() }
 }
 
 impl Deserialize for XOnlyPublicKey {
@@ -322,7 +322,7 @@ impl Deserialize for taproot::Signature {
 
 impl Serialize for (XOnlyPublicKey, TapLeafHash) {
     fn serialize(&self) -> Vec<u8> {
-        let ser_pk = self.0.serialize();
+        let (ser_pk, _) = self.0.serialize();
         let mut buf = Vec::with_capacity(ser_pk.len() + self.1.as_byte_array().len());
         buf.extend(&ser_pk);
         buf.extend(self.1.as_byte_array());
