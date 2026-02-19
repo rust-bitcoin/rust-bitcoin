@@ -45,6 +45,8 @@ mod hash_types;
 mod opcodes;
 
 pub mod block;
+#[cfg(all(feature = "serde", feature = "hex", feature = "alloc"))]
+pub mod hex_serde;
 pub mod merkle_tree;
 #[cfg(feature = "alloc")]
 pub mod script;
