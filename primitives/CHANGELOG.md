@@ -1,9 +1,23 @@
-# TBD
-- Remove `From<UnexpectedEof>` for primitive decoder error types [#5606](https://github.com/rust-bitcoin/rust-bitcoin/pull/5606)
+# 0.102.0 - 2026-02-17
 
-# 1.0.0 - 2025-10-18
+It was found that the `1.0.0-rc.x` releases were troublesome because
+of how `cargo` resolves version numbers that include a suffix. For
+this reason we elected to go back to pre-1.0 version numbers but this
+release is still explicitly a 1.0 release candidate.
+
+- Remove `From<UnexpectedEof>` for primitive decoder error types [#5606](https://github.com/rust-bitcoin/rust-bitcoin/pull/5606)
+- Use `hashes` format implementations and fix reverse hashes [#5603](https://github.com/rust-bitcoin/rust-bitcoin/pull/5603)
+- Add fmt traits for simple wrapper types [#5597](https://github.com/rust-bitcoin/rust-bitcoin/pull/5597)
+- Use saturating add in `WitnessDecoder` [#5569](https://github.com/rust-bitcoin/rust-bitcoin/pull/5569)
+- Reject transactions with 0 outputs [#5470](https://github.com/rust-bitcoin/rust-bitcoin/pull/5470)
+- Prevent null prevout in non-coinbase transactions [#5450](https://github.com/rust-bitcoin/rust-bitcoin/pull/5450)
+- Reject txs with output sum > MAX_MONEY [#5443](https://github.com/rust-bitcoin/rust-bitcoin/pull/5443)
+- Reject transactions with invalid coinbase `scriptSig` length [#5430](https://github.com/rust-bitcoin/rust-bitcoin/pull/5430)
+
+# 1.0.0 Release Candidates - 2025-10-18
 
 This changelog is a rolling description of everything that will eventually end up in `v1.0`.
+EDIT: This changelog is for `1.0.0-rc.0` through `1.0.0-rc.2` and may well be missing stuff.
 
 There are a bunch of changes in this stable release, of note script
 tagging and the consensus encoding re-write.
