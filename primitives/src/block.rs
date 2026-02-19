@@ -1319,10 +1319,8 @@ mod tests {
         assert_eq!(header, parsed_upper);
     }
 
-    #[test]
     #[cfg(feature = "alloc")]
-    fn block_decode() {
-        // Make a simple block, encode then decode. Verify equivalence.
+    fn dummy_block() -> Block {
         let header = Header {
             version: Version::ONE,
             #[rustfmt::skip]
@@ -1360,13 +1358,18 @@ mod tests {
                 script_pubkey: crate::script::ScriptPubKeyBuf::new(),
             }],
         }];
-        let original_block = Block::new_unchecked(header, transactions);
+        Block::new_unchecked(header, transactions)
+    }
 
-        // Encode + decode the block
-        let encoded = encoding::encode_to_vec(&original_block);
-        let decoded_block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decode() {
+        let original = dummy_block();
 
-        assert_eq!(original_block, decoded_block);
+        let encoded = encoding::encode_to_vec(&original);
+        let decoded: Block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+
+        assert_eq!(decoded, original);
     }
 
     // Test vector provided by tm0 in issue #5023
