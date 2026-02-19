@@ -1,0 +1,29 @@
+[package]
+name = "bitcoin-hd-derivation"
+version = "0.0.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+description = "Bitcoin hierarchichical deterministic key derivation"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "peer-to-peer", "cryptography"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.74.0"
+exclude = ["tests", "contrib"]
+
+[features]
+default = ["std"]
+std = ["alloc"]
+alloc = []
+
+[dependencies]
+
+[dev-dependencies]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

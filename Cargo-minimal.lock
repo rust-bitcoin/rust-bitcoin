@@ -106,6 +106,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-hd-derivation"
+version = "0.0.0"
+
+[[package]]
 name = "bitcoin-internals"
 version = "0.5.0"
 dependencies = [
