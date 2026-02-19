@@ -28,6 +28,7 @@ extern crate serde;
 // Pull in shared impl_array_newtype_stringify macro from include
 // The impl_array_newtype_stringify requires crate::serde, $crate::hex and
 // crate::hashes to exist.
+#[cfg(feature = "alloc")]
 include!("../include/array_newtype.rs");
 
 #[cfg(feature = "alloc")]

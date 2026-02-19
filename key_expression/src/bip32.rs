@@ -155,10 +155,13 @@ impl ChildNumber {
     /// Hardened child number with index 1.
     pub const ONE_HARDENED: Self = Self::Hardened { index: 1 };
 
-    /// Constructs a new [`Normal`] from an index, returns an error if the index is not within
-    /// [0, 2^31 - 1].
+    /// Constructs a new [`Normal`] from an index.
     ///
     /// [`Normal`]: #variant.Normal
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the index is not within [0, 2^31 - 1].
     pub fn from_normal_idx(index: u32) -> Result<Self, IndexOutOfRangeError> {
         if index & (1 << 31) == 0 {
             Ok(Self::Normal { index })
@@ -167,10 +170,13 @@ impl ChildNumber {
         }
     }
 
-    /// Constructs a new [`Hardened`] from an index, returns an error if the index is not within
-    /// [0, 2^31 - 1].
+    /// Constructs a new [`Hardened`] from an index.
     ///
     /// [`Hardened`]: #variant.Hardened
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the index is not within [0, 2^31 - 1].
     pub fn from_hardened_idx(index: u32) -> Result<Self, IndexOutOfRangeError> {
         if index & (1 << 31) == 0 {
             Ok(Self::Hardened { index })
@@ -195,6 +201,10 @@ impl ChildNumber {
     }
 
     /// Returns the child number that is a single increment from this one.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the index after incrementing will be outside the range [0, 2^31 - 1].
     pub fn increment(self) -> Result<Self, IndexOutOfRangeError> {
         // Bare addition in this function is okay, because we have an invariant that
         // `index` is always within [0, 2^31 - 1]. FIXME this is not actually an
@@ -209,6 +219,10 @@ impl ChildNumber {
     ///
     /// For hardened child numbers appends a `'` or `hardened_alt_suffix`
     /// depending on the formatter.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if writing to the formatter fails.
     fn format_with<F>(
         &self,
         f: &mut fmt::Formatter,
@@ -323,6 +337,10 @@ impl serde::Serialize for ChildNumber {
 /// derivation path
 pub trait IntoDerivationPath {
     /// Converts a given type into a [`DerivationPath`] with possible error
+    ///
+    /// # Errors
+    ///
+    /// Errors if the child numbers in the derivation path cannot be parsed to a complete path.
     fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError>;
 }
 
@@ -385,6 +403,7 @@ impl core::iter::FromIterator<ChildNumber> for DerivationPath {
     }
 }
 
+#[allow(clippy::into_iter_without_iter)]
 impl<'a> core::iter::IntoIterator for &'a DerivationPath {
     type Item = &'a ChildNumber;
     type IntoIter = slice::Iter<'a, ChildNumber>;
@@ -411,17 +430,17 @@ impl FromStr for DerivationPath {
     }
 }
 
-/// An iterator over children of a [DerivationPath].
+/// An iterator over children of a [`DerivationPath`].
 ///
-/// It is returned by the methods [DerivationPath::children_from],
-/// [DerivationPath::normal_children] and [DerivationPath::hardened_children].
+/// It is returned by the methods [`DerivationPath::children_from`],
+/// [`DerivationPath::normal_children`] and [`DerivationPath::hardened_children`].
 pub struct DerivationPathIterator<'a> {
     base: &'a DerivationPath,
     next_child: Option<ChildNumber>,
 }
 
 impl<'a> DerivationPathIterator<'a> {
-    /// Starts a new [DerivationPathIterator] at the given child.
+    /// Starts a new [`DerivationPathIterator`] at the given child.
     pub fn start_from(path: &'a DerivationPath, start: ChildNumber) -> Self {
         DerivationPathIterator { base: path, next_child: Some(start) }
     }
@@ -451,32 +470,34 @@ impl DerivationPath {
     /// is empty). True for `m` path.
     pub fn is_master(&self) -> bool { self.0.is_empty() }
 
-    /// Constructs a new [DerivationPath] that is a child of this one.
+    /// Constructs a new [`DerivationPath`] that is a child of this one.
+    #[must_use]
     pub fn child(&self, cn: ChildNumber) -> Self {
         let mut path = self.0.clone();
         path.push(cn);
         Self(path)
     }
 
-    /// Converts into a [DerivationPath] that is a child of this one.
+    /// Converts into a [`DerivationPath`] that is a child of this one.
+    #[must_use]
     pub fn into_child(self, cn: ChildNumber) -> Self {
         let mut path = self.0;
         path.push(cn);
         Self(path)
     }
 
-    /// Gets an [Iterator] over the children of this [DerivationPath]
-    /// starting with the given [ChildNumber].
+    /// Gets an [Iterator] over the children of this [`DerivationPath`]
+    /// starting with the given [`ChildNumber`].
     pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, cn)
     }
 
-    /// Gets an [Iterator] over the unhardened children of this [DerivationPath].
+    /// Gets an [Iterator] over the unhardened children of this [`DerivationPath`].
     pub fn normal_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, ChildNumber::Normal { index: 0 })
     }
 
-    /// Gets an [Iterator] over the hardened children of this [DerivationPath].
+    /// Gets an [Iterator] over the hardened children of this [`DerivationPath`].
     pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(self, ChildNumber::Hardened { index: 0 })
     }
@@ -496,6 +517,7 @@ impl DerivationPath {
     ///
     /// assert_eq!(deriv_1, deriv_2);
     /// ```
+    #[must_use]
     pub fn extend<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self {
         let mut new_path = self.clone();
         new_path.0.extend_from_slice(path.as_ref());
@@ -561,6 +583,7 @@ pub type KeySource = (Fingerprint, DerivationPath);
 
 impl Xpriv {
     /// Constructs a new master key from a seed value
+    #[allow(clippy::missing_panics_doc)]
     pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Self {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
         engine.input(seed);
@@ -569,7 +592,7 @@ impl Xpriv {
         Self {
             network: network.into(),
             depth: 0,
-            parent_fingerprint: Default::default(),
+            parent_fingerprint: Fingerprint::default(),
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_secret_bytes(
                 *hmac.as_byte_array().split_array::<32, 32>().0,
@@ -596,6 +619,12 @@ impl Xpriv {
     /// Derives an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    ///
+    /// # Errors
+    ///
+    /// See [`derive_xpriv`].
+    ///
+    /// [`derive_xpriv`]: Xpriv::derive_xpriv
     #[deprecated(since = "TBD", note = "use `derive_xpriv()` instead")]
     pub fn derive_priv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         self.derive_xpriv(path)
@@ -604,6 +633,10 @@ impl Xpriv {
     /// Derives an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the derived key exceeds the maximum key depth.
     pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         let mut sk: Self = *self;
         for cnum in path.as_ref() {
@@ -649,6 +682,17 @@ impl Xpriv {
     }
 
     /// Decoding extended private key from binary data according to BIP-0032
+    ///
+    /// # Errors
+    ///
+    /// * [`ParseError::UnknownVersion`] if the decoded network value is not main or testnet.
+    /// * [`ParseError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
+    /// * [`ParseError::Secp256k1`] if the private key bytes are not a valid secp secret key.
+    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
+    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
+    ///   fingerprint is non-zero.
+    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
+    ///   non-zero.
     pub fn decode(data: &[u8]) -> Result<Self, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
@@ -735,6 +779,12 @@ impl Xpub {
     /// Attempts to derive an extended public key from a path.
     ///
     /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
+    ///
+    /// # Errors
+    ///
+    /// See [`derive_xpub`].
+    ///
+    /// [`derive_xpub`]: Xpub::derive_xpub
     #[deprecated(since = "TBD", note = "use `derive_xpub()` instead")]
     pub fn derive_pub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         self.derive_xpub(path)
@@ -742,16 +792,26 @@ impl Xpub {
 
     /// Attempts to derive an extended public key from a path.
     ///
-    /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
+    /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as
+    /// `DerivationPath`, for instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any of the [`ChildNumber`]s are hardened.
     pub fn derive_xpub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
         let mut pk: Self = *self;
         for cnum in path.as_ref() {
-            pk = pk.ckd_pub(*cnum)?
+            pk = pk.ckd_pub(*cnum)?;
         }
         Ok(pk)
     }
 
     /// Computes the scalar tweak added to this key to get a child key
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the given [`ChildNumber`] is hardened.
+    #[allow(clippy::missing_panics_doc)]
     pub fn ckd_pub_tweak(
         &self,
         i: ChildNumber,
@@ -775,6 +835,12 @@ impl Xpub {
     }
 
     /// Public->Public child key derivation
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the given [`ChildNumber`] is hardened, or if next key exceeds
+    /// the maximum derivation depth.
+    #[allow(clippy::missing_panics_doc)]
     pub fn ckd_pub(&self, i: ChildNumber) -> Result<Self, DerivationError> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let tweaked =
@@ -791,6 +857,16 @@ impl Xpub {
     }
 
     /// Decoding extended public key from binary data according to BIP-0032
+    ///
+    /// # Errors
+    ///
+    /// * [`ParseError::UnknownVersion`] if the decoded network value is not main or testnet.
+    /// * [`ParseError::Secp256k1`] if the public key bytes are not a valid secp public key.
+    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
+    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
+    ///   fingerprint is non-zero.
+    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
+    ///   non-zero.
     pub fn decode(data: &[u8]) -> Result<Self, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
@@ -897,6 +973,15 @@ struct Common {
 }
 
 impl Common {
+    /// Decodes common fields for [`Xpriv`] and [`Xpub`].
+    ///
+    /// # Errors
+    ///
+    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
+    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
+    ///   fingerprint is non-zero.
+    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
+    ///   non-zero.
     fn decode(data: &[u8]) -> Result<Self, ParseError> {
         let data: &[u8; 78] =
             data.try_into().map_err(|_| ParseError::WrongExtendedKeyLength(data.len()))?;
@@ -1279,7 +1364,7 @@ mod tests {
         let invalid_path = "2147483648";
         assert_eq!(
             invalid_path.parse::<DerivationPath>(),
-            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2147483648 })),
+            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2_147_483_648 })),
         );
     }
 
@@ -1325,7 +1410,7 @@ mod tests {
                     ChildNumber::ONE_NORMAL,
                     ChildNumber::from_hardened_idx(2).unwrap(),
                     ChildNumber::from_normal_idx(2).unwrap(),
-                    ChildNumber::from_normal_idx(1000000000).unwrap(),
+                    ChildNumber::from_normal_idx(1_000_000_000).unwrap(),
                 ],
             ),
         ];
@@ -1364,7 +1449,7 @@ mod tests {
     fn test_path(
         network: NetworkKind,
         seed: &[u8],
-        path: DerivationPath,
+        path: &DerivationPath,
         expected_sk: &str,
         expected_pk: &str,
     ) {
@@ -1372,18 +1457,18 @@ mod tests {
         let mut pk = Xpub::from_xpriv(&sk);
 
         // Check derivation convenience method for Xpriv
-        assert_eq!(&sk.derive_xpriv(&path).unwrap().to_string()[..], expected_sk);
+        assert_eq!(&sk.derive_xpriv(path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
-        if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(pk.derive_xpub(&path), Err(DerivationError::CannotDeriveHardenedChild));
+        if path.0.iter().any(super::ChildNumber::is_hardened) {
+            assert_eq!(pk.derive_xpub(path), Err(DerivationError::CannotDeriveHardenedChild));
         } else {
-            assert_eq!(&pk.derive_xpub(&path).unwrap().to_string()[..], expected_pk);
+            assert_eq!(&pk.derive_xpub(path).unwrap().to_string()[..], expected_pk);
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
-        for &num in path.0.iter() {
+        for &num in &path.0 {
             sk = sk.ckd_priv(num).unwrap();
             match num {
                 Normal { .. } => {
@@ -1410,7 +1495,7 @@ mod tests {
 
     #[test]
     fn increment() {
-        let idx = 9345497; // randomly generated, I promise
+        let idx = 9_345_497; // randomly generated, I promise
         let cn = ChildNumber::from_normal_idx(idx).unwrap();
         assert_eq!(cn.increment().ok(), Some(ChildNumber::from_normal_idx(idx + 1).unwrap()));
         let cn = ChildNumber::from_hardened_idx(idx).unwrap();
@@ -1456,32 +1541,32 @@ mod tests {
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
         // m
-        test_path(NetworkKind::Main, &seed, "m".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m".parse().unwrap(),
                   "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
                   "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8");
 
         // m/0h
-        test_path(NetworkKind::Main, &seed, "m/0h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0h".parse().unwrap(),
                   "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
                   "xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw");
 
         // m/0h/1
-        test_path(NetworkKind::Main, &seed, "m/0h/1".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0h/1".parse().unwrap(),
                    "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
                    "xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ");
 
         // m/0h/1/2h
-        test_path(NetworkKind::Main, &seed, "m/0h/1/2h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0h/1/2h".parse().unwrap(),
                   "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
                   "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5");
 
         // m/0h/1/2h/2
-        test_path(NetworkKind::Main, &seed, "m/0h/1/2h/2".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0h/1/2h/2".parse().unwrap(),
                   "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
                   "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV");
 
         // m/0h/1/2h/2/1000000000
-        test_path(NetworkKind::Main, &seed, "m/0h/1/2h/2/1000000000".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0h/1/2h/2/1000000000".parse().unwrap(),
                   "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
                   "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy");
     }
@@ -1491,32 +1576,32 @@ mod tests {
         let seed = hex!("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542");
 
         // m
-        test_path(NetworkKind::Main, &seed, "m".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m".parse().unwrap(),
                   "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
                   "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB");
 
         // m/0
-        test_path(NetworkKind::Main, &seed, "m/0".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0".parse().unwrap(),
                   "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
                   "xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH");
 
         // m/0/2147483647h
-        test_path(NetworkKind::Main, &seed, "m/0/2147483647h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0/2147483647h".parse().unwrap(),
                   "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
                   "xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a");
 
         // m/0/2147483647h/1
-        test_path(NetworkKind::Main, &seed, "m/0/2147483647h/1".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0/2147483647h/1".parse().unwrap(),
                   "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
                   "xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon");
 
         // m/0/2147483647h/1/2147483646h
-        test_path(NetworkKind::Main, &seed, "m/0/2147483647h/1/2147483646h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0/2147483647h/1/2147483646h".parse().unwrap(),
                   "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
                   "xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL");
 
         // m/0/2147483647h/1/2147483646h/2
-        test_path(NetworkKind::Main, &seed, "m/0/2147483647h/1/2147483646h/2".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0/2147483647h/1/2147483646h/2".parse().unwrap(),
                   "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
                   "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
     }
@@ -1526,12 +1611,12 @@ mod tests {
         let seed = hex!("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be");
 
         // m
-        test_path(NetworkKind::Main, &seed, "m".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m".parse().unwrap(),
                   "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
                   "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13");
 
         // m/0h
-        test_path(NetworkKind::Main, &seed, "m/0h".parse().unwrap(),
+        test_path(NetworkKind::Main, &seed, &"m/0h".parse().unwrap(),
                   "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
                   "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y");
     }
