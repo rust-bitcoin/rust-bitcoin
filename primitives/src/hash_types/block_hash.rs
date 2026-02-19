@@ -89,7 +89,7 @@ impl From<Infallible> for BlockHashDecoderError {
 
 impl fmt::Display for BlockHashDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "sequence decoder error"; self.0)
+        write_err!(f, "block hash decoder error"; self.0)
     }
 }
 
