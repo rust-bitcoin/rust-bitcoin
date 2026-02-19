@@ -130,8 +130,6 @@ impl<T: HashEngine> fmt::Debug for Hkdf<T> {
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 mod tests {
-    use hex_unstable::DisplayHex;
-
     use super::*;
     use crate::hex;
     use crate::sha256;
@@ -146,10 +144,12 @@ mod tests {
         let mut okm = [0u8; 42];
         hkdf.expand(&info, &mut okm).unwrap();
 
-        assert_eq!(
-            okm.to_lower_hex_string(),
-            "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"
-        );
+        let expected_okm = hex::decode_to_vec(
+            "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865",
+        )
+        .unwrap();
+
+        assert_eq!(okm.as_slice(), expected_okm.as_slice());
     }
 
     #[test]
@@ -168,10 +168,11 @@ mod tests {
         let mut okm = [0u8; 82];
         hkdf.expand(&info, &mut okm).unwrap();
 
-        assert_eq!(
-            okm.to_lower_hex_string(),
+        let expected_okm = hex::decode_to_vec(
             "b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87"
-        );
+        ).unwrap();
+
+        assert_eq!(okm.as_slice(), expected_okm.as_slice());
     }
 
     #[test]
@@ -197,7 +198,9 @@ mod tests {
         let mut okm = [0u8; 1];
         hkdf.expand(&info, &mut okm).unwrap();
 
-        assert_eq!(okm.to_lower_hex_string(), "3c");
+        let expected_okm = hex::decode_to_vec("3c").unwrap();
+
+        assert_eq!(okm.as_slice(), expected_okm.as_slice());
     }
 
     #[test]
@@ -209,10 +212,12 @@ mod tests {
         let hkdf = Hkdf::<sha256::HashEngine>::new(&salt, &ikm);
         let okm = hkdf.expand_to_len(&info, 42).unwrap();
 
-        assert_eq!(
-            okm.to_lower_hex_string(),
-            "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"
-        );
+        let expected_okm = hex::decode_to_vec(
+            "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865",
+        )
+        .unwrap();
+
+        assert_eq!(okm.as_slice(), expected_okm.as_slice());
     }
 
     #[test]
