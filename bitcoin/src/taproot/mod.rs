@@ -1657,7 +1657,6 @@ mod test {
     use hex_unstable::DisplayHex;
 
     use super::*;
-    use crate::script::ScriptBufExt as _;
     use crate::sighash::TapSighashTag;
     use crate::{Address, KnownHrp, ScriptPubKeyBuf};
     extern crate serde_json;

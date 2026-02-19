@@ -1028,7 +1028,7 @@ mod tests {
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::network::{params, TestnetVersion};
-    use crate::script::{RedeemScriptBuf, ScriptBufExt as _, WitnessScriptBuf};
+    use crate::script::{RedeemScriptBuf, WitnessScriptBuf};
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(
