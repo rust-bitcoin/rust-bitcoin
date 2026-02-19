@@ -559,9 +559,7 @@ impl fmt::Display for ParseHeaderError {
 
 #[cfg(all(feature = "hex", feature = "std"))]
 impl std::error::Error for ParseHeaderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        std::error::Error::source(&self.0)
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 encoding::encoder_newtype_exact! {
