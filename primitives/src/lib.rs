@@ -46,6 +46,8 @@ mod opcodes;
 
 pub mod block;
 pub mod merkle_tree;
+#[cfg(all(feature = "serde", feature = "hex", feature = "alloc"))]
+mod serde_consensus;
 #[cfg(feature = "alloc")]
 pub mod script;
 pub mod transaction;
@@ -65,6 +67,12 @@ pub use units::{
     time::{self, BlockTime},
     weight::{self, Weight},
 };
+// These re-exports are a bit different. They exist so that `serde` that
+// the modules can be used ergonomically in `serde` attributes e.g.,
+// `#[serde(with = "bitcoin_primitives::as_consensus")]`.
+#[doc(inline)]
+#[cfg(all(feature = "serde", feature = "hex", feature = "alloc"))]
+pub use self::serde_consensus::as_consensus;
 
 #[deprecated(since = "1.0.0-rc.0", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]

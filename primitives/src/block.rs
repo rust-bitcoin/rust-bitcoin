@@ -1008,6 +1008,8 @@ mod tests {
     use core::str::FromStr as _;
 
     use encoding::{Decoder, Encoder};
+    #[cfg(all(feature = "serde", feature = "hex", feature = "alloc"))]
+    use serde::{Deserialize, Serialize};
 
     use super::*;
 
@@ -1779,4 +1781,41 @@ mod tests {
         #[cfg(feature = "std")]
         assert!(std::error::Error::source(&err).is_some());
     }
+
+    /// A type that has a `Block` field and a `Header` field.
+    #[cfg(all(feature = "serde", feature = "hex", feature = "alloc"))]
+    #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+    struct Adt {
+        #[serde(with = "crate::as_consensus")]
+        header: Header,
+        #[serde(with = "crate::as_consensus")]
+        block: Block,
+    }
+
+    #[test]
+    #[cfg(all(feature = "serde", feature = "hex", feature = "alloc"))]
+    fn can_serde_as_consenus_json() {
+        let orig = Adt { header: dummy_header(), block: dummy_block() };
+
+        let json = serde_json::to_string(&orig).expect("failed to serialize");
+
+        let want = "{\"header\":\"0100000099999999999999999999999999999999999999999999999999999999999999997777777777777777777777777777777777777777777777777777777777777777020000000300000004000000\",\"block\":\"01000000dcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbadcbaabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd10c2e3674e61bc00000400000101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff025151ffffffff0101000000000000000091500b00\"}";
+        assert_eq!(json, want);
+
+        let roundtrip: Adt = serde_json::from_str(&json).expect("failed to deserialize");
+        assert_eq!(roundtrip, orig);
+    }
+
+    #[test]
+    #[cfg(all(feature = "serde", feature = "hex", feature = "alloc"))]
+    fn can_serde_as_consenus_bincode() {
+        let orig = Adt { header: dummy_header(), block: dummy_block() };
+
+        // Bincode is non-human-readable, so it should use bytes
+        let bytes = bincode::serialize(&orig).expect("failed to serialize");
+
+        let roundtrip: Adt = bincode::deserialize(&bytes).expect("failed to deserialize");
+        assert_eq!(roundtrip, orig);
+    }
 }
+
