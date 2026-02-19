@@ -120,17 +120,6 @@ impl TapTweakHash {
     }
 }
 
-impl TapLeafHash {
-    /// Computes the leaf hash from components.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
-        let mut eng = sha256t::Hash::<TapLeafTag>::engine();
-        ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
-        script.consensus_encode(&mut eng).expect("engines don't error");
-        let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
-        Self::from_byte_array(inner.to_byte_array())
-    }
-}
-
 impl From<LeafNode> for TapNodeHash {
     fn from(leaf: LeafNode) -> Self { leaf.node_hash() }
 }
@@ -139,21 +128,46 @@ impl From<&LeafNode> for TapNodeHash {
     fn from(leaf: &LeafNode) -> Self { leaf.node_hash() }
 }
 
-impl TapNodeHash {
-    /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: Self, b: Self) -> Self { combine_node_hashes(a, b).0 }
-
-    /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
-    ///
-    /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
-    /// hash is constructed from a hidden node. This also has better ergonomics
-    /// because it does not require the caller to import the Hash trait.
-    pub fn assume_hidden(hash: [u8; 32]) -> Self { Self::from_byte_array(hash) }
-
-    /// Computes the [`TapNodeHash`] from a script and a leaf version.
-    pub fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
-        Self::from(TapLeafHash::from_script(script, ver))
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapLeafHash`] type.
+    pub trait TapLeafHashExt impl for TapLeafHash {
+        /// Computes the leaf hash from components.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
+            let mut eng = sha256t::Hash::<TapLeafTag>::engine();
+            ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
+            script.consensus_encode(&mut eng).expect("engines don't error");
+            let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
+            Self::from_byte_array(inner.to_byte_array())
+        }
     }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapNodeHash`] type.
+    pub trait TapNodeHashExt impl for TapNodeHash {
+        /// Computes branch hash given two hashes of the nodes underneath it.
+        fn from_node_hashes(a: Self, b: Self) -> Self {
+            combine_node_hashes(a, b).0
+        }
+
+        /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
+        ///
+        /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
+        /// hash is constructed from a hidden node. This also has better ergonomics
+        /// because it does not require the caller to import the Hash trait.
+        fn assume_hidden(hash: [u8; 32]) -> Self { Self::from_byte_array(hash) }
+
+        /// Computes the [`TapNodeHash`] from a script and a leaf version.
+        fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
+            Self::from(TapLeafHash::from_script(script, ver))
+        }
+    }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::TapLeafHash {}
+    impl Sealed for super::TapNodeHash {}
 }
 
 /// Computes branch hash given two hashes of the nodes underneath it and returns
