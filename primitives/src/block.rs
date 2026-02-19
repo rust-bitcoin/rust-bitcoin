@@ -15,8 +15,6 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::Encodable;
-#[cfg(feature = "hex")]
-use encoding::EncodableByteIter;
 #[cfg(feature = "alloc")]
 use encoding::{
     CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
@@ -521,9 +519,7 @@ impl core::str::FromStr for Header {
 impl fmt::Display for Header {
     #[allow(clippy::use_self)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use hex_unstable::{fmt_hex_exact, Case};
-
-        fmt_hex_exact!(f, Header::SIZE, EncodableByteIter::new(self), Case::Lower)
+        fmt::Display::fmt(&crate::hex_codec::HexPrimitive(self), f)
     }
 }
 
