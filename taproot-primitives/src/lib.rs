@@ -121,6 +121,7 @@ impl TapTweakHash {
     }
 
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
+    #[allow(clippy::missing_panics_doc)]
     pub fn to_scalar(self) -> Scalar {
         // This is statistically extremely unlikely to panic.
         Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
@@ -223,7 +224,7 @@ impl<'de> serde::Deserialize<'de> for LeafVersion {
                 })?;
                 LeafVersion::from_consensus(value).map_err(|_| {
                     E::invalid_value(
-                        ::serde::de::Unexpected::Unsigned(value as u64),
+                        ::serde::de::Unexpected::Unsigned(u64::from(value)),
                         &"consensus-encoded leaf version as u8",
                     )
                 })
