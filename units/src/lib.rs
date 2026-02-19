@@ -63,7 +63,7 @@ pub use self::{
     block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     locktime::{absolute, relative},
-    pow::CompactTarget,
+    pow::{CompactTarget, Target, Work},
     result::NumOpResult,
     sequence::Sequence,
     time::BlockTime,
