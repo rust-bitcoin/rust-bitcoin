@@ -29,7 +29,7 @@ pub use primitives::block::{
     WitnessCommitment, compute_merkle_root, compute_witness_root,
 };
 #[doc(no_inline)]
-pub use primitives::block::{InvalidBlockError, ParseHeaderError};
+pub use primitives::block::{InvalidBlockError, ParseBlockError, ParseHeaderError};
 #[doc(inline)]
 pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval};
 #[doc(no_inline)]
