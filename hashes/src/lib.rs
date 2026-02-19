@@ -255,7 +255,7 @@ mod sealed {
 }
 
 fn incomplete_block_len<H: HashEngine>(eng: &H) -> usize {
-    let block_size = <H as HashEngine>::BLOCK_SIZE as u64; // Cast usize to u64 is ok.
+    let block_size = H::BLOCK_SIZE as u64; // Cast usize to u64 is ok.
 
     // After modulo operation we know cast u64 to usize as ok.
     (eng.n_bytes_hashed() % block_size) as usize
