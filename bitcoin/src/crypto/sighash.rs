@@ -2015,7 +2015,7 @@ mod tests {
 
             let key_spend_sig = secp256k1::schnorr::sign_with_aux_rand(
                 &sighash.to_byte_array(),
-                &tweaked_keypair.to_keypair().to_inner(),
+                tweaked_keypair.to_keypair().as_inner(),
                 &[0u8; 32],
             );
 
@@ -2026,8 +2026,7 @@ mod tests {
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
 
-            let tweaked_priv_key =
-                SecretKey::from_keypair(&tweaked_keypair.to_keypair().to_inner());
+            let tweaked_priv_key = tweaked_keypair.to_keypair().to_secret_key();
             assert_eq!(expected.tweaked_privkey, tweaked_priv_key);
         }
     }
