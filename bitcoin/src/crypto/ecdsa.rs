@@ -12,10 +12,10 @@ use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex_unstable::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
+use crate::hex;
 use crate::prelude::{DisplayHex, Vec};
 #[cfg(doc)]
 use crate::script::ScriptPubKeyBufExt as _;
@@ -91,7 +91,7 @@ impl FromStr for Signature {
     type Err = ParseSignatureError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes = Vec::from_hex(s)?;
+        let bytes = hex::decode_to_vec(s)?;
         Ok(Self::from_slice(&bytes)?)
     }
 }
@@ -282,7 +282,7 @@ impl From<NonStandardSighashTypeError> for DecodeError {
 #[non_exhaustive]
 pub enum ParseSignatureError {
     /// Hex string decoding error.
-    Hex(hex_unstable::HexToBytesError),
+    Hex(hex::DecodeVariableLengthBytesError),
     /// Signature byte slice decoding error.
     Decode(DecodeError),
 }
@@ -310,8 +310,8 @@ impl std::error::Error for ParseSignatureError {
     }
 }
 
-impl From<hex_unstable::HexToBytesError> for ParseSignatureError {
-    fn from(e: hex_unstable::HexToBytesError) -> Self { Self::Hex(e) }
+impl From<hex::DecodeVariableLengthBytesError> for ParseSignatureError {
+    fn from(e: hex::DecodeVariableLengthBytesError) -> Self { Self::Hex(e) }
 }
 
 impl From<DecodeError> for ParseSignatureError {
