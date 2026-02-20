@@ -47,12 +47,12 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use hex::FromHex;
+    /// use bitcoin_p2p_messages::hex;
     /// use bitcoin_p2p_messages::merkle_tree::MerkleBlock;
     /// use primitives::{Block, Txid};
     ///
     /// // Block 80000
-    /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
+    /// let block_bytes = hex::decode_to_vec("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
     ///     7b9137190000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33\
     ///     a5914ce6ed5b1b01e32f5702010000000100000000000000000000000000000000000000000000000000\
     ///     00000000000000ffffffff0704e6ed5b1b014effffffff0100f2052a01000000434104b68a50eaa0287e\
@@ -741,11 +741,12 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 mod tests {
     use core::cmp;
 
-    use hex::{DisplayHex, FromHex};
+    use hex_unstable::DisplayHex;
     use hex_lit::hex;
     use primitives::block::Unchecked;
 
     use super::*;
+    use crate::hex;
 
     // `bloc` in hex.
     const PRNG_SEED: usize = 0x626C_6F63;
@@ -898,7 +899,7 @@ mod tests {
         // `gettxoutproof '["220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"]'`
         let mb_hex = include_str!("../tests/data/merkle_block.hex");
 
-        let bytes = Vec::from_hex(mb_hex).unwrap();
+        let bytes = hex::decode_to_vec(mb_hex).unwrap();
         let mb: MerkleBlock = encoding::decode_from_slice(&bytes).unwrap();
         assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
@@ -989,7 +990,7 @@ mod tests {
     fn get_block_13b8a() -> Block<Checked> {
         let block_hex = include_str!("../tests/data/block_13b8a.hex");
         let block: Block<Unchecked> =
-            encoding::decode_from_slice(&Vec::from_hex(block_hex).unwrap()).unwrap();
+            encoding::decode_from_slice(&hex::decode_to_vec(block_hex).unwrap()).unwrap();
         block.validate().expect("block should be valid")
     }
 
@@ -1066,7 +1067,7 @@ mod tests {
         // Get the proof from a bitcoind by running in the terminal:
         // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
         // $ bitcoin-cli gettxoutproof [\"$TXID\"]
-        let mb_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad27b913719\
+        let mb_bytes = hex::decode_to_vec("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad27b913719\
             0000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33a5914ce6ed5b\
             1b01e32f570200000002252bf9d75c4f481ebb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d3\
             2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105").unwrap();
