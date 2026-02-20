@@ -277,6 +277,66 @@ mod sealed {
     impl Validation for super::Unchecked {}
 }
 
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl core::str::FromStr for Block<Unchecked> {
+    type Err = ParseBlockError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseBlockError)
+    }
+}
+
+// `Block` requires `alloc` so this impl is more terse than `Header`.
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl<V: Validation> fmt::Display for Block<V>
+where
+    Self: Encodable + Decodable,
+{
+    #[allow(clippy::use_self)]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl<V: Validation> fmt::LowerHex for Block<V>
+where
+    Self: Encodable + Decodable,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl<V: Validation> fmt::UpperHex for Block<V>
+where
+    Self: Encodable + Decodable,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
+    }
+}
+
+/// An error that occurs during parsing of a [`Block`] from a hex string.
+#[cfg(all(feature = "hex", feature = "alloc"))]
+pub struct ParseBlockError(crate::ParsePrimitiveError<Block>);
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Debug for ParseBlockError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Display for ParseBlockError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
+impl std::error::Error for ParseBlockError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 #[cfg(feature = "alloc")]
 encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
@@ -517,6 +577,7 @@ impl core::str::FromStr for Header {
     }
 }
 
+// This does not require `aloc` so we don't use `hex_codec`.
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
     #[allow(clippy::use_self)]
@@ -1319,10 +1380,8 @@ mod tests {
         assert_eq!(header, parsed_upper);
     }
 
-    #[test]
     #[cfg(feature = "alloc")]
-    fn block_decode() {
-        // Make a simple block, encode then decode. Verify equivalence.
+    fn dummy_block() -> Block {
         let header = Header {
             version: Version::ONE,
             #[rustfmt::skip]
@@ -1360,13 +1419,60 @@ mod tests {
                 script_pubkey: crate::script::ScriptPubKeyBuf::new(),
             }],
         }];
-        let original_block = Block::new_unchecked(header, transactions);
+        Block::new_unchecked(header, transactions)
+    }
 
-        // Encode + decode the block
-        let encoded = encoding::encode_to_vec(&original_block);
-        let decoded_block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn block_hex() {
+        let header = dummy_header();
+        let transactions = vec![Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::locktime::absolute::LockTime::ZERO,
+            inputs: vec![],
+            outputs: vec![],
+        }];
+        let block = Block::new_unchecked(header, transactions);
 
-        assert_eq!(original_block, decoded_block);
+        // Transaction with no inputs uses segwit serialization:
+        // version (4) + marker (1) + flag (1) + input_count (1) + output_count (1) + lock_time (4)
+        let want = "010000009999999999999999999999999999999999999999999999999999999999999999777777777777777777777777777777777777777777777777777777777777777702000000030000000400000001010000000001000000000000";
+
+        assert_eq!(format!("{}", block), want);
+        assert_eq!(format!("{:x}", block), want);
+
+        // Note this is pointless because the hex does not have letters in it, only numbers.
+        let want =
+            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
+        assert_eq!(want, format!("{:X}", block));
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn block_from_hex_str_round_trip() {
+        let block = dummy_block();
+
+        let lower_hex_block = format!("{:x}", block);
+        let upper_hex_block = format!("{:X}", block);
+
+        let parsed_lower = Block::from_str(&lower_hex_block).unwrap();
+        let parsed_upper = Block::from_str(&upper_hex_block).unwrap();
+
+        assert_eq!(parsed_lower, block);
+        assert_eq!(parsed_upper, block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decode() {
+        let original = dummy_block();
+
+        let encoded = encoding::encode_to_vec(&original);
+        let decoded: Block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+
+        assert_eq!(decoded, original);
     }
 
     // Test vector provided by tm0 in issue #5023
