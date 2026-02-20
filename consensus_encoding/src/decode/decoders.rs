@@ -345,6 +345,7 @@ where
     type Output = (A::Output, B::Output);
     type Error = Decoder2Error<A::Error, B::Error>;
 
+    #[track_caller]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         loop {
             match &mut self.state {
@@ -379,6 +380,7 @@ where
     }
 
     #[inline]
+    #[track_caller]
     fn end(self) -> Result<Self::Output, Self::Error> {
         match self.state {
             Decoder2State::First(first_decoder, second_decoder) => {
