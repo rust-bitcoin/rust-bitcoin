@@ -227,4 +227,3 @@ impl crate::HashEngine for HashEngine {
         Hash(out)
     }
 }
-
