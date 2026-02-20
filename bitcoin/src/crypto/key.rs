@@ -91,9 +91,9 @@ mod encapsulate {
         #[inline]
         pub fn from_secp(keypair: impl Into<secp256k1::Keypair>) -> Self { Self(keypair.into()) }
 
-        /// Returns the inner [`secp256k1::Keypair`].
+        /// Returns a reference to the inner [`secp256k1::Keypair`].
         #[inline]
-        pub fn to_inner(self) -> secp256k1::Keypair { self.0 }
+        pub fn as_inner(&self) -> &secp256k1::Keypair { &self.0 }
     }
 
     /// A Bitcoin ECDSA public key.
@@ -282,7 +282,7 @@ impl XOnlyPublicKey {
     /// Returns the x-only public key, with the relevant parity set from the full public key.
     #[inline]
     pub fn from_keypair(keypair: &Keypair) -> Self {
-        let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(&keypair.to_inner());
+        let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(keypair.as_inner());
         Self::from_secp(xonly).with_parity(parity)
     }
 
@@ -428,13 +428,13 @@ impl Keypair {
     /// This is equivalent to using [`secp256k1::SecretKey::from_keypair`] on the inner value.
     #[inline]
     pub fn to_secret_key(self) -> secp256k1::SecretKey {
-        secp256k1::SecretKey::from_keypair(&self.to_inner())
+        secp256k1::SecretKey::from_keypair(self.as_inner())
     }
 
     /// Returns the secret bytes for this [`Keypair`].
     #[inline]
     pub fn to_secret_bytes(self) -> [u8; constants::SECRET_KEY_SIZE] {
-        self.to_inner().to_secret_bytes()
+        self.as_inner().to_secret_bytes()
     }
 
     /// Returns the [`PublicKey`] for this [`Keypair`].
@@ -658,7 +658,7 @@ impl PublicKey {
 
     /// Extracts the public key from a Keypair
     pub fn from_keypair(pair: &Keypair) -> Self {
-        Self::from_secp(secp256k1::PublicKey::from_keypair(&pair.to_inner()))
+        Self::from_secp(secp256k1::PublicKey::from_keypair(pair.as_inner()))
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
@@ -1316,7 +1316,7 @@ impl TapTweak for UntweakedKeypair {
     fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
         let pubkey = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
-        let tweaked = self.to_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
+        let tweaked = self.as_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
     }
 
@@ -2169,7 +2169,7 @@ mod tests {
         };
 
         // Use secp256k1::DisplaySecret, since no key type implements Display
-        let encoded = format!("{}", keypair.to_inner().display_secret());
+        let encoded = format!("{}", keypair.as_inner().display_secret());
         let decoded = encoded.parse::<Keypair>().unwrap();
         assert_eq!(decoded, keypair);
     }
