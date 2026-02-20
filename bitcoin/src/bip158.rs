@@ -544,7 +544,7 @@ mod test {
 
     #[test]
     fn blockfilters() {
-        let hex = |b| <Vec<u8> as hex_unstable::FromHex>::from_hex(b).unwrap();
+        let hex = |b| crate::hex::decode_to_vec(b).unwrap();
 
         // test vectors from: https://github.com/jimpo/bitcoin/blob/c7efb652f3543b001b4dd22186a354605b14f47e/src/test/data/blockfilters.json
         let data = include_str!("../tests/data/blockfilters.json");
