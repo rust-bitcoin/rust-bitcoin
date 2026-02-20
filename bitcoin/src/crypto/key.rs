@@ -297,7 +297,10 @@ impl From<secp256k1::XOnlyPublicKey> for XOnlyPublicKey {
 }
 
 impl From<secp256k1::PublicKey> for XOnlyPublicKey {
-    fn from(pk: secp256k1::PublicKey) -> Self { Self::from_secp(pk) }
+    fn from(pk: secp256k1::PublicKey) -> Self {
+        let (xonly, parity) = pk.x_only_public_key();
+        Self::from_secp(xonly).with_parity(parity)
+    }
 }
 
 impl fmt::LowerHex for XOnlyPublicKey {
@@ -595,7 +598,10 @@ impl From<secp256k1::PublicKey> for PublicKey {
 }
 
 impl From<PublicKey> for XOnlyPublicKey {
-    fn from(pk: PublicKey) -> Self { Self::from_secp(pk.inner) }
+    fn from(pk: PublicKey) -> Self {
+        let (xonly, parity) = pk.inner.x_only_public_key();
+        Self::from_secp(xonly).with_parity(parity)
+    }
 }
 
 /// An opaque return type for PublicKey::to_sort_key.
