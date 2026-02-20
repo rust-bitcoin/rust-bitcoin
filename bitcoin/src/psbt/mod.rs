@@ -433,11 +433,11 @@ impl Psbt {
 
                     #[cfg(all(feature = "rand", feature = "std"))]
                     let signature =
-                        secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair.to_inner());
+                        secp256k1::schnorr::sign(&sighash.to_byte_array(), key_pair.as_inner());
                     #[cfg(not(all(feature = "rand", feature = "std")))]
                     let signature = secp256k1::schnorr::sign_no_aux_rand(
                         &sighash.to_byte_array(),
-                        &key_pair.to_inner(),
+                        key_pair.as_inner(),
                     );
 
                     let signature = taproot::Signature { signature, sighash_type };
@@ -465,12 +465,12 @@ impl Psbt {
                         #[cfg(all(feature = "rand", feature = "std"))]
                         let signature = secp256k1::schnorr::sign(
                             &sighash.to_byte_array(),
-                            &key_pair.to_inner(),
+                            key_pair.as_inner(),
                         );
                         #[cfg(not(all(feature = "rand", feature = "std")))]
                         let signature = secp256k1::schnorr::sign_no_aux_rand(
                             &sighash.to_byte_array(),
-                            &key_pair.to_inner(),
+                            key_pair.as_inner(),
                         );
 
                         let signature = taproot::Signature { signature, sighash_type };
