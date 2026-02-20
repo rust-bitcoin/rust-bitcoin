@@ -227,11 +227,9 @@ impl crate::HashEngine for HashEngine {
 #[cfg(feature = "hex")]
 mod tests {
     use alloc::string::ToString;
-    use alloc::vec::Vec;
-
-    use hex::prelude::*;
 
     use crate::HashEngine;
+    use crate::hex;
 
     struct TestCase {
         input: &'static str,
@@ -245,7 +243,7 @@ mod tests {
         for tc in tcs {
             for test in tc {
                 let mut sha3 = super::HashEngine::new();
-                let input_bytes = Vec::from_hex(test.input).unwrap();
+                let input_bytes = hex::decode_to_vec(test.input).unwrap();
                 sha3.input(&input_bytes);
                 let hash = sha3.finalize();
                 assert_eq!(hash.to_string(), test.output);
