@@ -190,6 +190,7 @@ dependencies = [
  "bitcoin-internals",
  "cpufeatures",
  "hex-conservative 0.3.0",
+ "hex-conservative 1.0.0",
  "serde",
  "serde_test",
 ]
