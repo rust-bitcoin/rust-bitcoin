@@ -443,15 +443,21 @@ pub const fn bitcoin_primitives::Wtxid::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_primitives::Wtxid::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_primitives::Wtxid::to_byte_array(self) -> [u8; 32]
 pub const fn bitcoin_primitives::block::BlockHashDecoder::new() -> Self
+pub const fn bitcoin_primitives::block::BlockHashEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayRefEncoder<'e, 32>) -> bitcoin_primitives::block::BlockHashEncoder<'e>
+pub const fn bitcoin_primitives::block::HeaderEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::Encoder6<bitcoin_primitives::block::VersionEncoder<'e>, bitcoin_primitives::block::BlockHashEncoder<'e>, bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>, bitcoin_units::time::BlockTimeEncoder<'e>, bitcoin_units::pow::CompactTargetEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>>) -> bitcoin_primitives::block::HeaderEncoder<'e>
 pub const fn bitcoin_primitives::block::Version::from_consensus(v: i32) -> Self
 pub const fn bitcoin_primitives::block::Version::to_consensus(self) -> i32
 pub const fn bitcoin_primitives::block::VersionDecoder::new() -> Self
+pub const fn bitcoin_primitives::block::VersionEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_primitives::block::VersionEncoder<'e>
+pub const fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<32>) -> bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
 pub const fn bitcoin_primitives::transaction::OutPointDecoder::new() -> Self
+pub const fn bitcoin_primitives::transaction::OutPointEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_consensus_encoding::encode::encoders::BytesEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>>) -> bitcoin_primitives::transaction::OutPointEncoder<'e>
 pub const fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::new() -> Self
 pub const fn bitcoin_primitives::transaction::Version::is_standard(self) -> bool
 pub const fn bitcoin_primitives::transaction::Version::maybe_non_standard(version: u32) -> Self
 pub const fn bitcoin_primitives::transaction::Version::to_u32(self) -> u32
 pub const fn bitcoin_primitives::transaction::VersionDecoder::new() -> Self
+pub const fn bitcoin_primitives::transaction::VersionEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_primitives::transaction::VersionEncoder<'e>
 pub fn bitcoin_primitives::BlockHash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::BlockHash::as_ref(&self) -> &[u8]
 pub fn bitcoin_primitives::BlockHash::borrow(&self) -> &[u8; 32]
@@ -547,7 +553,6 @@ pub fn bitcoin_primitives::block::BlockHashDecoderError::from(never: core::conve
 pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::block::BlockHashEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayRefEncoder<'e, 32>) -> bitcoin_primitives::block::BlockHashEncoder<'e>
 pub fn bitcoin_primitives::block::Header::block_hash(&self) -> bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::block::Header::clone(&self) -> bitcoin_primitives::block::Header
 pub fn bitcoin_primitives::block::Header::cmp(&self, other: &bitcoin_primitives::block::Header) -> core::cmp::Ordering
@@ -559,7 +564,6 @@ pub fn bitcoin_primitives::block::Header::partial_cmp(&self, other: &bitcoin_pri
 pub fn bitcoin_primitives::block::HeaderEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::HeaderEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::block::HeaderEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::block::HeaderEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::Encoder6<bitcoin_primitives::block::VersionEncoder<'e>, bitcoin_primitives::block::BlockHashEncoder<'e>, bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>, bitcoin_units::time::BlockTimeEncoder<'e>, bitcoin_units::pow::CompactTargetEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>>) -> bitcoin_primitives::block::HeaderEncoder<'e>
 pub fn bitcoin_primitives::block::Version::clone(&self) -> bitcoin_primitives::block::Version
 pub fn bitcoin_primitives::block::Version::cmp(&self, other: &bitcoin_primitives::block::Version) -> core::cmp::Ordering
 pub fn bitcoin_primitives::block::Version::decoder() -> Self::Decoder
@@ -581,11 +585,9 @@ pub fn bitcoin_primitives::block::VersionDecoderError::from(never: core::convert
 pub fn bitcoin_primitives::block::VersionEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::block::VersionEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::block::VersionEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::block::VersionEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_primitives::block::VersionEncoder<'e>
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<32>) -> bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
 pub fn bitcoin_primitives::transaction::OutPoint::clone(&self) -> bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::cmp::Ordering
 pub fn bitcoin_primitives::transaction::OutPoint::decoder() -> Self::Decoder
@@ -604,7 +606,6 @@ pub fn bitcoin_primitives::transaction::OutPointDecoderError::fmt(&self, f: &mut
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_consensus_encoding::encode::encoders::BytesEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>>) -> bitcoin_primitives::transaction::OutPointEncoder<'e>
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
@@ -632,7 +633,6 @@ pub fn bitcoin_primitives::transaction::VersionDecoderError::from(never: core::c
 pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::transaction::VersionEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_primitives::transaction::VersionEncoder<'e>
 pub fn u32::from(version: bitcoin_primitives::transaction::Version) -> Self
 pub mod bitcoin_primitives
 pub mod bitcoin_primitives::block
