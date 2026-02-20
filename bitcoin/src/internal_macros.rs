@@ -55,8 +55,8 @@ macro_rules! impl_array_newtype_stringify {
     ($t:ident, $len:literal) => {
         impl $t {
             /// Constructs a new `Self` from a hex string.
-            pub fn from_hex(s: &str) -> Result<Self, hex_unstable::HexToArrayError> {
-                Ok($t(hex_unstable::FromHex::from_hex(s)?))
+            pub fn from_hex(s: &str) -> Result<Self, hex_stable::DecodeFixedLengthBytesError> {
+                Ok($t(hex_stable::decode_to_array(s)?))
             }
         }
 
@@ -87,7 +87,7 @@ macro_rules! impl_array_newtype_stringify {
         }
 
         impl core::str::FromStr for $t {
-            type Err = hex_unstable::HexToArrayError;
+            type Err = hex_stable::DecodeFixedLengthBytesError;
             fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { Self::from_hex(s) }
         }
 
