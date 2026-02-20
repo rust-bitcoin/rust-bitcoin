@@ -383,6 +383,22 @@ impl Keypair {
     pub fn to_x_only_public_key(self) -> XOnlyPublicKey {
         XOnlyPublicKey::from_keypair(&self)
     }
+
+    /// Sign a message slice with this keypair, optionally using auxiliary random data.
+    #[inline]
+    pub fn raw_sign(&self, msg: &[u8], aux_rand: Option<&[u8; 32]>) -> secp256k1::schnorr::Signature {
+        match aux_rand {
+            None => secp256k1::schnorr::sign_no_aux_rand(msg, self.as_inner()),
+            Some(aux) => secp256k1::schnorr::sign_with_aux_rand(msg, self.as_inner(), aux),
+        }
+    }
+
+    /// Sign a message slice with this keypair, randomly seeding the auxiliary random data.
+    #[inline]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    pub fn raw_sign_with_rng(&self, msg: &[u8]) -> secp256k1::schnorr::Signature {
+        secp256k1::schnorr::sign(msg, self.as_inner())
+    }
 }
 
 impl FromStr for Keypair {
