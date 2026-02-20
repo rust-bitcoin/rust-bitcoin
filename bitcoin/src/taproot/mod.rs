@@ -12,7 +12,6 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
-use hex_unstable::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
@@ -24,6 +23,7 @@ use crate::consensus::Encodable;
 use crate::crypto::key::{
     SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
 };
+use crate::hex::{self, DecodeVariableLengthBytesError};
 use crate::key::ParseXOnlyPublicKeyError;
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
 use crate::{TapScript, TapScriptBuf};
@@ -1185,7 +1185,7 @@ impl ControlBlock {
 
     /// Constructs a new [`ControlBlock`] from a hex string.
     pub fn from_hex(hex: &str) -> Result<Self, TaprootError> {
-        let vec = Vec::from_hex(hex).map_err(TaprootError::InvalidControlBlockHex)?;
+        let vec = hex::decode_to_vec(hex).map_err(TaprootError::InvalidControlBlockHex)?;
         Self::decode(vec.as_slice())
     }
 }
@@ -1501,7 +1501,7 @@ pub enum TaprootError {
     /// Invalid Taproot internal key.
     InvalidInternalKey(ParseXOnlyPublicKeyError),
     /// Invalid control block hex
-    InvalidControlBlockHex(HexToBytesError),
+    InvalidControlBlockHex(DecodeVariableLengthBytesError),
 }
 
 impl From<Infallible> for TaprootError {
