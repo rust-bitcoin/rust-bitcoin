@@ -78,11 +78,27 @@ impl<T: HashEngine> HmacEngine<T> {
 
         ret.iengine.input(&ipad[..T::BLOCK_SIZE]);
         ret.oengine.input(&opad[..T::BLOCK_SIZE]);
+
+        crate::non_secure_erase(&mut ipad);
+        crate::non_secure_erase(&mut opad);
+
         ret
     }
 
     /// A special constructor giving direct access to the underlying "inner" and "outer" engines.
     pub fn from_inner_engines(iengine: T, oengine: T) -> Self { Self { iengine, oengine } }
+
+    /// Attempts to erase the contents of the underlying hash engines
+    ///
+    /// Note, however, that the compiler is allowed to freely copy or move the
+    /// contents of this type to other places in memory. Preventing this behavior
+    /// is very subtle. For more discussion on this, please see the documentation
+    /// of the [`zeroize`](https://docs.rs/zeroize) crate.
+    #[inline]
+    pub fn non_secure_erase(&mut self) {
+        crate::non_secure_erase(&mut self.iengine);
+        crate::non_secure_erase(&mut self.oengine);
+    }
 }
 
 impl<T: HashEngine> HashEngine for HmacEngine<T> {

@@ -32,10 +32,25 @@ impl fmt::Display for MaxLengthError {
 impl std::error::Error for MaxLengthError {}
 
 /// HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Hkdf<T: HashEngine> {
     /// Pseudorandom key based on the extract step.
     prk: Hmac<T::Hash>,
+}
+
+impl<T: HashEngine> Drop for Hkdf<T> {
+    fn drop(&mut self) { self.non_secure_erase(); }
+}
+
+impl<T: HashEngine> Hkdf<T> {
+    /// Attempts to erase the contents of the pseudorandom key.
+    ///
+    /// Note, however, that the compiler is allowed to freely copy or move the
+    /// contents of this type to other places in memory. Preventing this behavior
+    /// is very subtle. For more discussion on this, please see the documentation
+    /// of the [`zeroize`](https://docs.rs/zeroize) crate.
+    #[inline]
+    pub fn non_secure_erase(&mut self) { crate::non_secure_erase(&mut self.prk); }
 }
 
 impl<T: HashEngine> Hkdf<T>
