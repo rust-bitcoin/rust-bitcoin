@@ -237,7 +237,7 @@ impl<D: core::fmt::Display> core::fmt::Display for bitcoin_consensus_encoding::R
 impl<D> !core::panic::unwind_safe::RefUnwindSafe for bitcoin_consensus_encoding::ReadError<D>
 impl<D> !core::panic::unwind_safe::UnwindSafe for bitcoin_consensus_encoding::ReadError<D>
 impl<D> core::convert::From<std::io::error::Error> for bitcoin_consensus_encoding::ReadError<D>
-impl<D> core::error::Error for bitcoin_consensus_encoding::ReadError<D> where D: core::fmt::Debug + core::fmt::Display + core::error::Error + 'static
+impl<D> core::error::Error for bitcoin_consensus_encoding::ReadError<D> where D: core::error::Error + 'static
 impl<D> core::marker::Freeze for bitcoin_consensus_encoding::ReadError<D> where D: core::marker::Freeze
 impl<D> core::marker::Send for bitcoin_consensus_encoding::ReadError<D> where D: core::marker::Send
 impl<D> core::marker::Sync for bitcoin_consensus_encoding::ReadError<D> where D: core::marker::Sync
