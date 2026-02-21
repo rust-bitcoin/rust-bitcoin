@@ -25,6 +25,7 @@ jobs:
           bitcoin_arbitrary_script,
           bitcoin_arbitrary_transaction,
           bitcoin_arbitrary_witness,
+          bitcoin_compare_consensus_encoding,
           bitcoin_deserialize_block,
           bitcoin_deserialize_prefilled_transaction,
           bitcoin_deserialize_psbt,
