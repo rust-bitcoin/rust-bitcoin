@@ -89,6 +89,8 @@ impl Psbt {
                                 // there can only be one unsigned transaction
                                 if tx.is_none() {
                                     let vlen: usize = pair.value.len();
+                                    let has_segwit_marker = pair.value.get(4..6) == Some(&[0x00, 0x01]);
+
                                     let mut decoder = Cursor::new(pair.value);
 
                                     // Manually deserialized to ensure 0-input
@@ -97,7 +99,19 @@ impl Psbt {
                                     tx = Some(Transaction {
                                         version: Decodable::consensus_decode(&mut decoder)?,
                                         inputs: Decodable::consensus_decode(&mut decoder)?,
-                                        outputs: Decodable::consensus_decode(&mut decoder)?,
+                                        outputs: Decodable::consensus_decode(&mut decoder)
+                                            .map_err(|err| {
+                                                // If outputs fail to decode check if the data uses segwit
+                                                // serialization (0x0001 after the version). Bytes there
+                                                // could mean 0 inputs + 1 output or segwit. Since we already
+                                                // decoded 0 inputs successfully we can assume a failure to
+                                                // decode outputs is actually segwit serialisation.
+                                                if has_segwit_marker {
+                                                    Error::UnsignedTxHasWitnessSerialization
+                                                } else {
+                                                    err.into()
+                                                }
+                                            })?,
                                         lock_time: Decodable::consensus_decode(&mut decoder)?,
                                     });
 
