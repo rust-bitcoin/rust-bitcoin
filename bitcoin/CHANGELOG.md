@@ -141,6 +141,11 @@ The `serde` serialization for `Psbt` has changed.
 - Change `to_raw_hash()` to `to_byte_array()`.
 - `bitcoin::error::UnprefixedHexError` moved to `bitcoin::parse::UnprefixedHexError`.
 
+# 0.32.8 - 2025-11-24
+
+- Backport - bip158: Return no match for empty query [#4972](https://github.com/rust-bitcoin/rust-bitcoin/pull/4972)
+- Remove `doc_auto_cfg`
+
 # 0.32.7 - 2025-07-30
 
 - Backport - Use `_u32` in `FeeRate` constructor instead of `_unchecked` [#4552](https://github.com/rust-bitcoin/rust-bitcoin/pull/4552)
