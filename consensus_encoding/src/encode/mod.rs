@@ -49,14 +49,14 @@ pub trait Encoder {
 macro_rules! encoder_newtype{
     (
         $(#[$($struct_attr:tt)*])*
-        pub struct $name:ident<$lt:lifetime>($encoder:ty);
+        $vis:vis struct $name:ident<$lt:lifetime>($encoder:ty);
     ) => {
         $(#[$($struct_attr)*])*
-        pub struct $name<$lt>($encoder, core::marker::PhantomData<&$lt $encoder>);
+        $vis struct $name<$lt>($encoder, core::marker::PhantomData<&$lt $encoder>);
 
         impl<$lt> $name<$lt> {
             /// Construct a new instance of the newtype encoder
-            pub fn new(encoder: $encoder) -> $name<$lt> {
+            $vis fn new(encoder: $encoder) -> $name<$lt> {
                 $name(encoder, core::marker::PhantomData)
             }
         }
@@ -78,11 +78,11 @@ macro_rules! encoder_newtype{
 macro_rules! encoder_newtype_exact{
     (
         $(#[$($struct_attr:tt)*])*
-        pub struct $name:ident<$lt:lifetime>($encoder:ty);
+        $vis:vis struct $name:ident<$lt:lifetime>($encoder:ty);
     ) => {
         $crate::encoder_newtype! {
             $(#[$($struct_attr)*])*
-            pub struct $name<$lt>($encoder);
+            $vis struct $name<$lt>($encoder);
         }
 
         impl<$lt> $crate::ExactSizeEncoder for $name<$lt> {
