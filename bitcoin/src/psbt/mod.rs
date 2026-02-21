@@ -356,7 +356,7 @@ impl Psbt {
         for (pk, key_source) in input.bip32_derivation.iter() {
             let sk = if let Ok(Some(sk)) = k.get_key(&KeyRequest::Bip32(key_source.clone())) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::new(*pk))) {
+            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::from_secp(*pk))) {
                 sk
             } else {
                 continue;
@@ -369,7 +369,7 @@ impl Psbt {
             };
 
             let sig = ecdsa::Signature {
-                signature: secp256k1::ecdsa::sign(msg, &sk.inner),
+                signature: secp256k1::ecdsa::sign(msg, sk.as_inner()),
                 sighash_type: sighash_ty,
             };
 
@@ -427,7 +427,7 @@ impl Psbt {
                 // According to BIP-0371, we also need to consider the condition leaf_hashes.is_empty() for a more accurate determination.
                 if internal_key == xonly && leaf_hashes.is_empty() && input.tap_key_sig.is_none() {
                     let (sighash, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
-                    let key_pair = Keypair::from_secret_key(&sk.inner)
+                    let key_pair = Keypair::from_secret_key(sk.as_inner())
                         .tap_tweak(input.tap_merkle_root)
                         .to_keypair();
 
@@ -456,7 +456,7 @@ impl Psbt {
                     .collect::<Vec<_>>();
 
                 if !leaf_hashes.is_empty() {
-                    let key_pair = Keypair::from_secret_key(&sk.inner);
+                    let key_pair = Keypair::from_secret_key(sk.as_inner());
 
                     for lh in leaf_hashes {
                         let (sighash, sighash_type) =
@@ -917,11 +917,11 @@ impl GetKey for $map<XOnlyPublicKey, PrivateKey> {
         match key_request {
             KeyRequest::XOnlyPubkey(xonly) => Ok(self.get(xonly).cloned()),
             KeyRequest::Pubkey(pk) => {
-                let (xonly, parity) = pk.inner.x_only_public_key();
+                let (xonly, parity) = pk.to_inner().x_only_public_key();
 
                 if let Some(mut priv_key) = self.get(&XOnlyPublicKey::from(xonly)).cloned() {
                     let computed_pk = priv_key.public_key();
-                    let (_, computed_parity) = computed_pk.inner.x_only_public_key();
+                    let (_, computed_parity) = computed_pk.to_inner().x_only_public_key();
 
                     if computed_parity != parity {
                         priv_key = priv_key.negate();
@@ -1396,7 +1396,7 @@ mod tests {
         let psbt = hex_psbt("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
         assert!(psbt.inputs[0].partial_sigs.len() == 1);
         let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
-        assert!(!pk.compressed);
+        assert!(!pk.compressed());
     }
 
     #[test]
@@ -2349,7 +2349,7 @@ mod tests {
         use secp256k1::rand;
 
         let sk = SecretKey::new(&mut rand::rng());
-        let priv_key = PrivateKey::new(sk, NetworkKind::Test);
+        let priv_key = PrivateKey::from_secp(sk, NetworkKind::Test);
         let pk = PublicKey::from_private_key(priv_key);
 
         (priv_key, pk)
@@ -2373,16 +2373,12 @@ mod tests {
         use crate::psbt::{GetKey, KeyRequest};
 
         let (mut priv_key, mut pk) = gen_keys();
-        let (xonly, parity) = pk.inner.x_only_public_key();
+        let (xonly, parity) = pk.to_inner().x_only_public_key();
 
         let mut pubkey_map: HashMap<PublicKey, PrivateKey> = HashMap::new();
 
         if parity == secp256k1::Parity::Even {
-            priv_key = PrivateKey {
-                compressed: priv_key.compressed,
-                network: priv_key.network,
-                inner: priv_key.inner.negate(),
-            };
+            priv_key = priv_key.negate();
             pk = priv_key.public_key();
         }
 
@@ -2393,7 +2389,7 @@ mod tests {
         let retrieved_key = req_result.unwrap();
 
         let retrieved_pub_key = retrieved_key.public_key();
-        let (retrieved_xonly, retrieved_parity) = retrieved_pub_key.inner.x_only_public_key();
+        let (retrieved_xonly, retrieved_parity) = retrieved_pub_key.to_inner().x_only_public_key();
 
         assert_eq!(xonly, retrieved_xonly);
         assert_eq!(
@@ -2621,7 +2617,7 @@ mod tests {
     #[cfg(all(feature = "rand", feature = "std"))]
     fn hashmap_can_sign_taproot() {
         let (priv_key, pk) = gen_keys();
-        let internal_key: XOnlyPublicKey = pk.inner.into();
+        let internal_key: XOnlyPublicKey = pk.into();
 
         let tx = Transaction {
             version: transaction::Version::TWO,
@@ -2654,7 +2650,7 @@ mod tests {
     #[cfg(all(feature = "rand", feature = "std"))]
     fn xonly_hashmap_can_sign_taproot() {
         let (priv_key, pk) = gen_keys();
-        let internal_key: XOnlyPublicKey = pk.inner.into();
+        let internal_key: XOnlyPublicKey = pk.into();
 
         let tx = Transaction {
             version: transaction::Version::TWO,
@@ -2710,7 +2706,7 @@ mod tests {
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
         let mut map = BTreeMap::new();
-        map.insert(pk.inner, (Fingerprint::default(), DerivationPath::default()));
+        map.insert(pk.to_inner(), (Fingerprint::default(), DerivationPath::default()));
         psbt.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.
