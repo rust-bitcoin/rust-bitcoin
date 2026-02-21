@@ -1,15 +1,32 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(all(feature = "std", target_arch = "aarch64"))]
-use core::arch::aarch64::*;
-#[cfg(all(feature = "std", target_arch = "x86"))]
+#[cfg(all(target_arch = "x86", any(feature = "std", feature = "cpufeatures")))]
 use core::arch::x86::*;
-#[cfg(all(feature = "std", target_arch = "x86_64"))]
+#[cfg(all(target_arch = "x86_64", any(feature = "std", feature = "cpufeatures")))]
 use core::arch::x86_64::*;
+#[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
+use core::arch::aarch64::*;
 
 use internals::slice::SliceExt;
 
 use super::{HashEngine, Midstate, BLOCK_SIZE};
+
+#[cfg(all(feature = "cpufeatures", target_arch = "aarch64"))]
+// cpufeatures crate internally uses `u8::max_value()` which will be deprecated.
+// See: https://docs.rs/cpufeatures/0.2.17/src/cpufeatures/lib.rs.html#161
+#[allow(deprecated_in_future)]
+mod cpuid_sha256_aarch64 {
+    cpufeatures::new!(inner, "sha2");
+    pub fn get() -> bool { inner::get() }
+}
+#[cfg(all(feature = "cpufeatures", any(target_arch = "x86", target_arch = "x86_64")))]
+// cpufeatures crate internally uses `u8::max_value()` which will be deprecated.
+// See: https://docs.rs/cpufeatures/0.2.17/src/cpufeatures/lib.rs.html#161
+#[allow(deprecated_in_future)]
+mod cpuid_sha256_x86 {
+    cpufeatures::new!(inner, "sha", "sse2", "ssse3", "sse4.1");
+    pub fn get() -> bool { inner::get() }
+}
 
 #[allow(non_snake_case)]
 const fn Ch(x: u32, y: u32, z: u32) -> u32 { z ^ (x & (y ^ z)) }
@@ -264,9 +281,24 @@ impl HashEngine {
             }
         }
 
+        #[cfg(all(feature = "cpufeatures", any(target_arch = "x86", target_arch = "x86_64")))]
+        {
+            if cpuid_sha256_x86::get() {
+                return unsafe { self.process_block_simd_x86_intrinsics() };
+            }
+        }
+
+
         #[cfg(all(feature = "std", target_arch = "aarch64"))]
         {
             if std::arch::is_aarch64_feature_detected!("sha2") {
+                return unsafe { self.process_block_simd_arm_intrinsics() };
+            }
+        }
+
+        #[cfg(all(feature = "cpufeatures", target_arch = "aarch64"))]
+        {
+            if cpuid_sha256_aarch64::get() {
                 return unsafe { self.process_block_simd_arm_intrinsics() };
             }
         }
@@ -275,7 +307,7 @@ impl HashEngine {
         self.software_process_block()
     }
 
-    #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
+    #[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), any(feature = "std", feature = "cpufeatures")))]
     #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
     unsafe fn process_block_simd_x86_intrinsics(&mut self) {
         // Code translated and based on from
@@ -534,7 +566,7 @@ impl HashEngine {
         _mm_storeu_si128(self.h.as_mut_ptr().add(4).cast::<__m128i>(), state1);
     }
 
-    #[cfg(all(feature = "std", target_arch = "aarch64"))]
+    #[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
     #[target_feature(enable = "sha2")]
     unsafe fn process_block_simd_arm_intrinsics(&mut self) {
         // Code translated and based on from

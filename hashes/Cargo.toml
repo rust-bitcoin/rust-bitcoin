@@ -27,6 +27,7 @@ encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encodi
 
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, optional = true }
+cpufeatures = { version = "0.2", optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.19"
