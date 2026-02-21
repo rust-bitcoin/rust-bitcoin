@@ -865,10 +865,10 @@ mod test {
     use std::net::IpAddr;
 
     use bitcoin::consensus::encode::{deserialize, serialize};
-    use hex::FromHex;
     use hex_lit::hex;
 
     use super::*;
+    use crate::hex;
     use crate::message::AddrV2Payload;
 
     #[test]
@@ -970,7 +970,7 @@ mod test {
         let tor_bytes =
             hex!("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88");
         let ip = AddrV2::TorV3(
-            FromHex::from_hex("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
+            hex::decode_to_array::<32>("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
                 .unwrap(),
         );
         assert_eq!(serialize(&ip), tor_bytes);
@@ -979,7 +979,7 @@ mod test {
         let i2p_bytes =
             hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87");
         let ip = AddrV2::I2p(
-            FromHex::from_hex("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
+            hex::decode_to_array::<32>("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
                 .unwrap(),
         );
         assert_eq!(serialize(&ip), i2p_bytes);

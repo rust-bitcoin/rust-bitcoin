@@ -3,13 +3,13 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hex_unstable::FromHex as _;
 use internals::ToU64 as _;
 
 use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
     ScriptExtPriv as _, ScriptPubKeyBuf,
 };
+use crate::hex;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
@@ -156,7 +156,7 @@ internal_macros::define_extension_trait! {
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_no_length_prefix()` instead")]
-        fn from_hex(s: &str) -> Result<Self, hex_unstable::HexToBytesError>
+        fn from_hex(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
             where Self: Sized
         {
             Self::from_hex_no_length_prefix(s)
@@ -166,10 +166,10 @@ internal_macros::define_extension_trait! {
         ///
         /// This is **not** consensus encoding. If your hex string is a consensus encoded script
         /// then use `ScriptBuf::from_hex_prefixed`.
-        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex_unstable::HexToBytesError>
+        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
             where Self: Sized
         {
-            let v = Vec::from_hex(s)?;
+            let v = hex_stable::decode_to_vec(s)?;
             Ok(Self::from_bytes(v))
         }
 
