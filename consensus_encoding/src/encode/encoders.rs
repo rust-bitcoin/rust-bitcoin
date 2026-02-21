@@ -115,7 +115,7 @@ pub struct SliceEncoder<'e, T: Encodable> {
 impl<'e, T: Encodable> SliceEncoder<'e, T> {
     /// Constructs an encoder which encodes the slice _without_ adding the length prefix.
     ///
-    /// To encode with a length prefix consider using the `Encoder2`.
+    /// To encode with a length prefix consider using [`Encoder2`].
     ///
     /// E.g, `Encoder2<CompactSizeEncoder, SliceEncoder<'e, Foo>>`.
     pub fn without_length_prefix(sl: &'e [T]) -> Self {
