@@ -217,40 +217,52 @@ impl<R: Read + ?Sized> ReadExt for R {
     #[inline]
     fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> { Ok(self.read_exact(slice)?) }
     #[inline]
-    #[rustfmt::skip] // Formatter munges code comments below.
-    fn read_compact_size(&mut self) -> Result<u64, Error> {
-        match self.read_u8()? {
+    fn read_compact_size(&mut self) -> Result<u64, Error> { read_compact_size_internal(self, true) }
+}
+
+#[rustfmt::skip] // Formatter munges code comments below.
+fn read_compact_size_internal<R: Read + ?Sized>(r: &mut R, range_check: bool)-> Result<u64, Error> {
+        let x = match r.read_u8()? {
             0xFF => {
-                let x = self.read_u64()?;
+                let x = r.read_u64()?;
                 if x < 0x1_0000_0000 { // I.e., would have fit in a `u32`.
-                    Err(ParseError::NonMinimalCompactSize.into())
+                    return Err(ParseError::NonMinimalCompactSize.into());
                 } else {
-                    Ok(x)
+                    x
                 }
             }
             0xFE => {
-                let x = self.read_u32()?;
+                let x = r.read_u32()?;
                 if x < 0x1_0000 { // I.e., would have fit in a `u16`.
-                    Err(ParseError::NonMinimalCompactSize.into())
+                    return Err(ParseError::NonMinimalCompactSize.into());
                 } else {
-                    Ok(x as u64)
+                    x as u64
                 }
             }
             0xFD => {
-                let x = self.read_u16()?;
-                if x < 0xFD {   // Could have been encoded as a `u8`.
-                    Err(ParseError::NonMinimalCompactSize.into())
+                let x = r.read_u16()?;
+                if x < 0xFD { // Could have been encoded as a `u8`.
+                    return Err(ParseError::NonMinimalCompactSize.into());
                 } else {
-                    Ok(x as u64)
+                    x as u64
                 }
             }
-            n => Ok(n as u64),
+            n => n as u64,
+        };
+        if range_check && x > MAX_COMPACT_SIZE as u64 {
+            Err(ParseError::OversizedCompactSize.into())
+        } else {
+            Ok(x)
         }
     }
-}
 
 /// Maximum size, in bytes, of a vector we are allowed to decode.
 pub const MAX_VEC_SIZE: usize = 4_000_000;
+
+/// The maximum size of a serialized object in bytes or number of elements
+/// (for eg vectors) when the size is encoded as CompactSize.
+/// <https://github.com/bitcoin/bitcoin/blob/a7c29df0e5ace05b6186612671d6103c112ec922/src/serialize.h#L32>
+pub const MAX_COMPACT_SIZE: usize = 0x02000000;
 
 /// Data which can be encoded in a consensus-consistent way.
 pub trait Encodable {
@@ -757,7 +769,7 @@ mod tests {
         let mut input = [0u8; 9];
         input[0] = n;
         input[1..x.len() + 1].copy_from_slice(x);
-        (&input[..]).read_compact_size()
+        read_compact_size_internal(&mut &input[..], false)
     }
 
     #[test]
@@ -847,6 +859,22 @@ mod tests {
             test_varint_len(0xFFFFFFFF + 1, 9);
             test_varint_len(u64::MAX as usize, 9);
         }
+    }
+
+    #[test]
+    fn deserialize_compact_size_too_large() {
+        // MAX_COMPACT_SIZE (0x02000000) should succeed
+        assert_eq!(test_varint_encode(0xFE, &(0x02000000_u64).to_le_bytes()).unwrap(), 0x02000000);
+        // MAX_COMPACT_SIZE + 1 should fail with range check enabled
+        let mut input = [0u8; 9];
+        input[0] = 0xFE;
+        input[1..5].copy_from_slice(&(0x02000001_u32).to_le_bytes());
+        assert_eq!(
+            discriminant(&(&mut &input[..]).read_compact_size().unwrap_err()),
+            discriminant(&ParseError::OversizedCompactSize.into())
+        );
+        // Same value without range check should succeed
+        assert_eq!(read_compact_size_internal(&mut &input[..], false).unwrap(), 0x02000001);
     }
 
     #[test]
