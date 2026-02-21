@@ -12,6 +12,31 @@ pub mod encoders;
 /// To encode something, use the [`Self::encoder`] method to obtain a
 /// [`Self::Encoder`], which will behave like an iterator yielding
 /// byte slices.
+///
+/// # Examples
+///
+/// ```
+/// # #[cfg(feature = "alloc")] {
+/// use bitcoin_consensus_encoding::{encoder_newtype, encode_to_vec, Encodable, ArrayEncoder};
+///
+/// struct Foo([u8; 4]);
+///
+/// encoder_newtype! {
+///     pub struct FooEncoder<'e>(ArrayEncoder<4>);
+/// }
+///
+/// impl Encodable for Foo {
+///     type Encoder<'e> = FooEncoder<'e> where Self: 'e;
+///
+///     fn encoder(&self) -> Self::Encoder<'_> {
+///         FooEncoder::new(ArrayEncoder::without_length_prefix(self.0))
+///     }
+/// }
+///
+/// let foo = Foo([0xde, 0xad, 0xbe, 0xef]);
+/// assert_eq!(encode_to_vec(&foo), vec![0xde, 0xad, 0xbe, 0xef]);
+/// # }
+/// ```
 pub trait Encodable {
     /// The encoder associated with this type. Conceptually, the encoder is like
     /// an iterator which yields byte slices.

@@ -8,6 +8,35 @@ pub mod decoders;
 ///
 /// To decode something, create a [`Self::Decoder`] and push byte slices
 /// into it with [`Decoder::push_bytes`], then call [`Decoder::end`] to get the result.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_consensus_encoding::{decode_from_slice, Decodable, Decoder, ArrayDecoder, UnexpectedEofError};
+///
+/// struct Foo([u8; 4]);
+///
+/// struct FooDecoder(ArrayDecoder<4>);
+///
+/// impl Decoder for FooDecoder {
+///     type Output = Foo;
+///     type Error = UnexpectedEofError;
+///
+///     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+///         self.0.push_bytes(bytes)
+///     }
+///     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(Foo) }
+///     fn read_limit(&self) -> usize { self.0.read_limit() }
+/// }
+///
+/// impl Decodable for Foo {
+///     type Decoder = FooDecoder;
+///     fn decoder() -> Self::Decoder { FooDecoder(ArrayDecoder::new()) }
+/// }
+///
+/// let foo: Foo = decode_from_slice(&[0xde, 0xad, 0xbe, 0xef]).unwrap();
+/// assert_eq!(foo.0, [0xde, 0xad, 0xbe, 0xef]);
+/// ```
 pub trait Decodable {
     /// Associated decoder for the type.
     type Decoder: Decoder<Output = Self>;
