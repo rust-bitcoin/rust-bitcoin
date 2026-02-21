@@ -796,7 +796,8 @@ impl Encodable for NetworkMessage {
             | Self::WtxidRelay
             | Self::FilterClear
             | Self::SendAddrV2 => Ok(0),
-            Self::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
+            // Don't use consensus_encode so as not to add a length suffix.
+            Self::Unknown { payload: ref data, .. } => writer.write(data),
         }
     }
 }
@@ -2247,5 +2248,22 @@ mod test {
         ).unwrap();
         let headers_message = HeadersMessage(vec![block_900_000, block_900_001, block_900_002]);
         assert!(headers_message.is_connected());
+    }
+
+    #[test]
+    fn network_message_decode() {
+        use encoding::Decoder;
+
+        let data = hex!("010101010101");
+
+        let mut decoder = NetworkMessageDecoder::new(
+            CommandString::try_from_static("unknown").unwrap(),
+            6,
+        );
+        let _ = decoder.push_bytes(&mut data.as_slice());
+        let decoded = decoder.end().unwrap();
+
+        let enc = serialize(&decoded);
+        assert_eq!(data.as_slice(), enc.as_slice());
     }
 }
