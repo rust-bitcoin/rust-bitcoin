@@ -17,6 +17,7 @@ use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use encoding::{BytesEncoder, CompactSizeEncoder, Encoder2};
 use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use internals::write_err;
 use io::Write;
@@ -1194,6 +1195,22 @@ impl Encodable for Annex<'_> {
     }
 }
 
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Annex`] type.
+    pub struct AnnexEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
+}
+
+impl<'a> encoding::Encodable for Annex<'a> {
+    type Encoder<'e> = AnnexEncoder<'e> where Self: 'e + 'a;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AnnexEncoder::new(Encoder2::new(
+            CompactSizeEncoder::new(self.0.len()),
+            BytesEncoder::without_length_prefix(self.0),
+        ))
+    }
+}
+
 /// Error computing a Taproot sighash.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -1791,6 +1808,20 @@ mod tests {
         assert_eq!(Annex::new(&[]), Err(AnnexError::Empty));
         assert_eq!(Annex::new(&[0x51]), Err(AnnexError::IncorrectPrefix(0x51)));
         assert_eq!(Annex::new(&[0x51, 0x50]), Err(AnnexError::IncorrectPrefix(0x51)));
+    }
+
+    #[test]
+    fn annex_encoding() {
+        let test_cases = [
+            (Annex::new(&[0x50, 0xDE, 0xAD, 0xBE, 0xEF]).unwrap(), vec![0x05, 0x50, 0xDE, 0xAD, 0xBE, 0xEF]),
+            (Annex::new(&[0x50, 0xEF, 0xBE]).unwrap(), vec![0x03, 0x50, 0xEF, 0xBE]),
+            (Annex::new(&[0x50]).unwrap(), vec![0x01, 0x50]),
+        ];
+        for (annex, want) in test_cases {
+            let got = encoding::encode_to_vec(&annex);
+            assert_eq!(got, crate::consensus::serialize(&annex));
+            assert_eq!(got, want);
+        }
     }
 
     #[allow(clippy::too_many_arguments)]
