@@ -251,4 +251,66 @@ mod verification {
             assert_eq!(v[i], val);
         }
     }
+
+    /// Verify that `pop` returns the pushed values in LIFO order and that
+    /// `assume_init()` is only called on initialized elements.
+    #[kani::unwind(16)] // One greater than 15 (max number of elements).
+    #[kani::proof]
+    fn pop_returns_pushed_values() {
+        const CAP: usize = 15;
+        let n = kani::any::<u32>();
+        let elements = (n & 0x0F) as usize; // 0..15
+
+        let val = kani::any::<u32>();
+
+        let mut v = ArrayVec::<u32, CAP>::new();
+        for _ in 0..elements {
+            v.push(val);
+        }
+
+        for _ in 0..elements {
+            let popped = v.pop();
+            assert_eq!(popped, Some(val));
+        }
+
+        assert_eq!(v.pop(), None);
+    }
+
+    /// Verify that `extend_from_slice` correctly copies elements through
+    /// the raw pointer cast from `&[T]` to `&[MaybeUninit<T>]`.
+    #[kani::unwind(5)]
+    #[kani::proof]
+    fn extend_from_slice_preserves_elements() {
+        let a = kani::any::<u32>();
+        let b = kani::any::<u32>();
+        let c = kani::any::<u32>();
+        let slice = [a, b, c];
+
+        let mut v = ArrayVec::<u32, 8>::new();
+        v.push(kani::any::<u32>());
+        v.extend_from_slice(&slice);
+
+        assert_eq!(v.len(), 4);
+        assert_eq!(v[1], a);
+        assert_eq!(v[2], b);
+        assert_eq!(v[3], c);
+    }
+
+    /// Verify that `from_slice` correctly initializes elements, exercising
+    /// the `as_slice` raw pointer path on the resulting `ArrayVec`.
+    #[kani::unwind(5)]
+    #[kani::proof]
+    fn from_slice_initializes_correctly() {
+        let a = kani::any::<u32>();
+        let b = kani::any::<u32>();
+        let c = kani::any::<u32>();
+        let slice = [a, b, c];
+
+        let v = ArrayVec::<u32, 8>::from_slice(&slice);
+
+        assert_eq!(v.len(), 3);
+        assert_eq!(v[0], a);
+        assert_eq!(v[1], b);
+        assert_eq!(v[2], c);
+    }
 }
