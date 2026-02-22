@@ -39,7 +39,9 @@ encoding::encoder_newtype_exact! {
 impl Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(self.as_byte_array()))
+        BlockHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
+            self.as_byte_array(),
+        ))
     }
 }
 

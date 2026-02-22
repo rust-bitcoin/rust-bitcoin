@@ -63,9 +63,7 @@ pub struct ChaCha20Poly1305 {
 
 impl ChaCha20Poly1305 {
     /// Make a new instance of a `ChaCha20Poly1305` AEAD.
-    pub const fn new(key: Key, nonce: Nonce) -> Self {
-        Self { key, nonce }
-    }
+    pub const fn new(key: Key, nonce: Nonce) -> Self { Self { key, nonce } }
 
     /// Encrypt content in place and return the `Poly1305` 16-byte authentication tag.
     ///
