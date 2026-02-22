@@ -9,7 +9,6 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use super::serialize::{Deserialize, Serialize};
@@ -68,25 +67,39 @@ impl fmt::Display for Key {
 
 impl Key {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let byte_size = r.read_compact_size()?;
+        // Convert compact size to usize, saturating at max.
+        // If this value exceeds MAX_VEC_SIZE (a usize), we'll error down below, so it's fine
+        // to discard any higher value.
+        let byte_size: usize = r.read_compact_size()?
+            .try_into()
+            .unwrap_or(usize::MAX);
 
         if byte_size == 0 {
             return Err(Error::NoMorePairs);
         }
 
-        let key_byte_size: u64 = byte_size - 1;
+        // byte_size is the length of key_data + the length of type_value encoding
+        let type_value = r.read_compact_size()?;
+        // The protocol abuses a compact size here to encode a value that is never used in
+        // relation to memory so conversion to a usize cannot be done (and thus
+        // CompactSizeEncoder::encoded_size can't be used)
+        let type_size = match type_value {
+            0..=0xFC => 1,
+            0xFD..=0xFFFF => 3,
+            0x10000..=0xFFFF_FFFF => 5,
+            _ => 9,
+        };
+        let key_byte_size = byte_size - type_size;
 
-        if key_byte_size > MAX_VEC_SIZE.to_u64() {
+        if key_byte_size > MAX_VEC_SIZE {
             return Err(encode::Error::Parse(encode::ParseError::OversizedVectorAllocation {
-                requested: key_byte_size as usize,
+                requested: key_byte_size,
                 max: MAX_VEC_SIZE,
             })
             .into());
         }
 
-        let type_value = r.read_compact_size()?;
-
-        let mut key_data = Vec::with_capacity(key_byte_size as usize);
+        let mut key_data = Vec::with_capacity(key_byte_size);
         for _ in 0..key_byte_size {
             key_data.push(Decodable::consensus_decode(r)?);
         }
@@ -98,7 +111,15 @@ impl Key {
 impl Serialize for Key {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
-        buf.emit_compact_size(self.key_data.len() + 1).expect("in-memory writers don't error");
+
+        // First compact size value is the length of key_data + the length of the encoded type_value
+        let type_size = match self.type_value {
+            0..=0xFC => 1,
+            0xFD..=0xFFFF => 3,
+            0x10000..=0xFFFF_FFFF => 5,
+            _ => 9,
+        };
+        buf.emit_compact_size(self.key_data.len() + type_size).expect("in-memory writers don't error");
 
         buf.emit_compact_size(self.type_value).expect("in-memory writers don't error");
 
