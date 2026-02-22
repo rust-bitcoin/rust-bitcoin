@@ -2052,7 +2052,10 @@ mod test {
             let spk = addr.script_pubkey();
 
             // Compare just the key bytes, not the parity
-            assert_eq!(expected_output_key.serialize().0, output_key.to_x_only_public_key().serialize().0);
+            assert_eq!(
+                expected_output_key.serialize().0,
+                output_key.to_x_only_public_key().serialize().0
+            );
             assert_eq!(expected_tweak, tweak);
             assert_eq!(expected_addr, addr);
             assert_eq!(expected_spk, spk);

@@ -21,16 +21,16 @@ use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
-#[cfg(feature = "serde")]
-use crate::serde::{Serialize, Serializer, Deserialize, Deserializer};
 use crate::script::{self, WitnessScriptBuf};
+#[cfg(feature = "serde")]
+use crate::serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity, Verification};
 pub use encapsulate::{
-    CompressedPublicKey, Keypair, PublicKey, PrivateKey, SerializedXOnlyPublicKey,
-    TweakedKeypair, TweakedPublicKey, XOnlyPublicKey,
+    CompressedPublicKey, Keypair, PrivateKey, PublicKey, SerializedXOnlyPublicKey, TweakedKeypair,
+    TweakedPublicKey, XOnlyPublicKey,
 };
 #[cfg(all(feature = "rand", feature = "std"))]
 pub use secp256k1::rand;
@@ -38,6 +38,7 @@ pub use secp256k1::rand;
 /// Encapsulation module to provide a clear barrier for construction/destruction of types.
 mod encapsulate {
     use secp256k1::Parity;
+
     use crate::network::NetworkKind;
 
     /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
@@ -159,7 +160,10 @@ mod encapsulate {
 
         /// Constructs a new uncompressed (legacy) ECDSA private key from the provided secp256k1
         /// private key and the specified network.
-        pub fn from_secp_uncompressed(key: secp256k1::SecretKey, network: impl Into<NetworkKind>) -> Self {
+        pub fn from_secp_uncompressed(
+            key: secp256k1::SecretKey,
+            network: impl Into<NetworkKind>,
+        ) -> Self {
             Self { compressed: false, network: network.into(), inner: key }
         }
 
@@ -308,20 +312,14 @@ impl XOnlyPublicKey {
     // since XOnlyPublicKey is Copy but we intentionally use &self to remove a copy and
     // to_* to indicate the cost of the operation.
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_public_key(&self) -> PublicKey {
-        self.as_inner().public_key(self.parity()).into()
-    }
+    pub fn to_public_key(&self) -> PublicKey { self.as_inner().public_key(self.parity()).into() }
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
     ///
     /// Should be called on the original untweaked key. Takes the tweaked key with its output parity from
     /// [`XOnlyPublicKey::add_tweak`] as input.
     #[inline]
-    pub fn tweak_add_check(
-        &self,
-        tweaked_key: &Self,
-        tweak: secp256k1::Scalar,
-    ) -> bool {
+    pub fn tweak_add_check(&self, tweaked_key: &Self, tweak: secp256k1::Scalar) -> bool {
         self.as_inner().tweak_add_check(tweaked_key.as_inner(), tweaked_key.parity(), tweak)
     }
 
@@ -337,10 +335,7 @@ impl XOnlyPublicKey {
     ///
     /// If the resulting key would be invalid.
     #[inline]
-    pub fn add_tweak(
-        &self,
-        tweak: &secp256k1::Scalar,
-    ) -> Result<Self, TweakXOnlyPublicKeyError> {
+    pub fn add_tweak(&self, tweak: &secp256k1::Scalar) -> Result<Self, TweakXOnlyPublicKeyError> {
         match self.as_inner().add_tweak(tweak) {
             Ok((xonly, parity)) => Ok(Self::from_secp(xonly).with_parity(parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
@@ -399,7 +394,6 @@ impl<'de> Deserialize<'de> for XOnlyPublicKey {
     }
 }
 
-
 impl Keypair {
     /// Generates a new random key pair.
     ///
@@ -448,9 +442,7 @@ impl Keypair {
     ///
     /// This is equivalent to using [`XOnlyPublicKey::from_keypair`].
     #[inline]
-    pub fn to_x_only_public_key(self) -> XOnlyPublicKey {
-        XOnlyPublicKey::from_keypair(&self)
-    }
+    pub fn to_x_only_public_key(self) -> XOnlyPublicKey { XOnlyPublicKey::from_keypair(&self) }
 }
 
 impl FromStr for Keypair {
@@ -471,9 +463,7 @@ impl From<Keypair> for secp256k1::PublicKey {
 impl PublicKey {
     /// Constructs a new compressed ECDSA public key from the provided generic secp256k1 public key.
     #[deprecated(since = "TBD", note = "use `from_secp` instead")]
-    pub fn new(key: impl Into<secp256k1::PublicKey>) -> Self {
-        Self::from_secp(key)
-    }
+    pub fn new(key: impl Into<secp256k1::PublicKey>) -> Self { Self::from_secp(key) }
 
     /// Constructs a new uncompressed (legacy) ECDSA public key from the provided generic secp256k1
     /// public key.
@@ -850,7 +840,9 @@ impl PrivateKey {
     pub fn public_key(&self) -> PublicKey {
         match self.compressed() {
             true => PublicKey::from_secp(secp256k1::PublicKey::from_secret_key(self.as_inner())),
-            false => PublicKey::from_secp_uncompressed(secp256k1::PublicKey::from_secret_key(self.as_inner())),
+            false => PublicKey::from_secp_uncompressed(secp256k1::PublicKey::from_secret_key(
+                self.as_inner(),
+            )),
         }
     }
 
@@ -930,7 +922,10 @@ impl PrivateKey {
 
         Ok(match compressed {
             true => Self::from_secp(secp256k1::SecretKey::from_secret_bytes(*key)?, network),
-            false => Self::from_secp_uncompressed(secp256k1::SecretKey::from_secret_bytes(*key)?, network),
+            false => Self::from_secp_uncompressed(
+                secp256k1::SecretKey::from_secret_bytes(*key)?,
+                network,
+            ),
         })
     }
 

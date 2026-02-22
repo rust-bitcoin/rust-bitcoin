@@ -649,8 +649,7 @@ impl BeneficiaryWallet {
         for (x_only_pubkey, (leaf_hashes, (_, derivation_path))) in
             &psbt.inputs[0].tap_key_origins.clone()
         {
-            let secret_key =
-                self.master_xpriv.derive_xpriv(derivation_path)?.to_private_key();
+            let secret_key = self.master_xpriv.derive_xpriv(derivation_path)?.to_private_key();
             for lh in leaf_hashes {
                 let sighash_type = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(

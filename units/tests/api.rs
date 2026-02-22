@@ -271,7 +271,9 @@ fn api_can_use_all_types_from_module_parse() {
 fn api_can_use_all_types_from_module_pow() {
     use bitcoin_units::pow::CompactTarget;
     #[cfg(feature = "encoding")]
-    use bitcoin_units::pow::{CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder};
+    use bitcoin_units::pow::{
+        CompactTargetDecoder, CompactTargetDecoderError, CompactTargetEncoder,
+    };
 }
 
 #[test]
@@ -366,8 +368,14 @@ fn api_all_wrapper_types_fmt_as_inner() {
         assert_format_matches!(BlockMtp::from(rand_num), rand_num);
         assert_format_matches!(BlockMtpInterval::from(rand_num), rand_num);
         assert_format_matches!(BlockTime::from(rand_num), rand_num);
-        assert_format_matches!(relative::NumberOfBlocks::from_height(rand_num as u16), rand_num as u16);
-        assert_format_matches!(relative::NumberOf512Seconds::from_512_second_intervals(rand_num as u16), rand_num as u16);
+        assert_format_matches!(
+            relative::NumberOfBlocks::from_height(rand_num as u16),
+            rand_num as u16
+        );
+        assert_format_matches!(
+            relative::NumberOf512Seconds::from_512_second_intervals(rand_num as u16),
+            rand_num as u16
+        );
         assert_format_matches!(Sequence::from_consensus(rand_num), rand_num);
         assert_format_matches!(Weight::from_wu(rand_num.into()), u64::from(rand_num));
 
