@@ -40,6 +40,9 @@ impl core::marker::Sync for bitcoin_internals::script::PushDataLenLen
 impl core::marker::Unpin for bitcoin_internals::error::input_string::InputString
 impl core::marker::Unpin for bitcoin_internals::script::EarlyEndOfScriptError
 impl core::marker::Unpin for bitcoin_internals::script::PushDataLenLen
+impl core::marker::UnsafeUnpin for bitcoin_internals::error::input_string::InputString
+impl core::marker::UnsafeUnpin for bitcoin_internals::script::EarlyEndOfScriptError
+impl core::marker::UnsafeUnpin for bitcoin_internals::script::PushDataLenLen
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::error::input_string::InputString
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::script::EarlyEndOfScriptError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::script::PushDataLenLen
@@ -51,12 +54,14 @@ impl<'a, T> core::marker::Freeze for bitcoin_internals::error::input_string::Can
 impl<'a, T> core::marker::Send for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::marker::Sync + ?core::marker::Sized
 impl<'a, T> core::marker::Sync for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::marker::Sync + ?core::marker::Sized
 impl<'a, T> core::marker::Unpin for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: ?core::marker::Sized
+impl<'a, T> core::marker::UnsafeUnpin for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: ?core::marker::Sized
 impl<'a, T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::panic::unwind_safe::RefUnwindSafe + ?core::marker::Sized
 impl<'a, T> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::panic::unwind_safe::RefUnwindSafe + ?core::marker::Sized
 impl<'a> core::marker::Freeze for bitcoin_internals::serde::SerializeBytesAsHex<'a>
 impl<'a> core::marker::Send for bitcoin_internals::serde::SerializeBytesAsHex<'a>
 impl<'a> core::marker::Sync for bitcoin_internals::serde::SerializeBytesAsHex<'a>
 impl<'a> core::marker::Unpin for bitcoin_internals::serde::SerializeBytesAsHex<'a>
+impl<'a> core::marker::UnsafeUnpin for bitcoin_internals::serde::SerializeBytesAsHex<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::serde::SerializeBytesAsHex<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::serde::SerializeBytesAsHex<'a>
 impl<F: core::ops::function::Fn(&mut core::fmt::Formatter<'_>) -> core::fmt::Result> core::fmt::Debug for bitcoin_internals::wrap_debug::WrapDebug<F>
@@ -64,12 +69,14 @@ impl<F> core::marker::Freeze for bitcoin_internals::wrap_debug::WrapDebug<F> whe
 impl<F> core::marker::Send for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Send
 impl<F> core::marker::Sync for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Sync
 impl<F> core::marker::Unpin for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Unpin
+impl<F> core::marker::UnsafeUnpin for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::UnsafeUnpin
 impl<F> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::panic::unwind_safe::RefUnwindSafe
 impl<F> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::panic::unwind_safe::UnwindSafe
 impl<T, const CAP: usize> core::marker::Freeze for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::Freeze
 impl<T, const CAP: usize> core::marker::Send for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::Send
 impl<T, const CAP: usize> core::marker::Sync for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::Sync
 impl<T, const CAP: usize> core::marker::Unpin for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::Unpin
+impl<T, const CAP: usize> core::marker::UnsafeUnpin for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::marker::UnsafeUnpin
 impl<T, const CAP: usize> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, const CAP: usize> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::array_vec::ArrayVec<T, CAP> where T: core::panic::unwind_safe::UnwindSafe
 impl<T: core::fmt::Display + ?core::marker::Sized> core::fmt::Display for bitcoin_internals::error::input_string::CannotParse<'_, T>

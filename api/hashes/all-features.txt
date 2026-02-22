@@ -400,6 +400,31 @@ impl core::marker::Unpin for bitcoin_hashes::sha512_256::HashEngine
 impl core::marker::Unpin for bitcoin_hashes::siphash24::Hash
 impl core::marker::Unpin for bitcoin_hashes::siphash24::HashEngine
 impl core::marker::Unpin for bitcoin_hashes::siphash24::State
+impl core::marker::UnsafeUnpin for bitcoin_hashes::hash160::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::hash160::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::hkdf::MaxLengthError
+impl core::marker::UnsafeUnpin for bitcoin_hashes::muhash::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::ripemd160::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::ripemd160::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha1::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha1::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256::Midstate
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256::MidstateError
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256d::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256d::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha384::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha384::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha3_256::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha3_256::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha512::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha512::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha512_256::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::sha512_256::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::siphash24::Hash
+impl core::marker::UnsafeUnpin for bitcoin_hashes::siphash24::HashEngine
+impl core::marker::UnsafeUnpin for bitcoin_hashes::siphash24::State
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hash160::Hash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hash160::HashEngine
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hkdf::MaxLengthError
@@ -563,6 +588,11 @@ impl<T> core::marker::Unpin for bitcoin_hashes::hmac::Hmac<T> where T: core::mar
 impl<T> core::marker::Unpin for bitcoin_hashes::hmac::HmacEngine<T> where T: core::marker::Unpin
 impl<T> core::marker::Unpin for bitcoin_hashes::sha256t::Hash<T> where T: core::marker::Unpin
 impl<T> core::marker::Unpin for bitcoin_hashes::sha256t::HashEngine<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::marker::UnsafeUnpin
+impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::UnsafeUnpin
+impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::hmac::HmacEngine<T> where T: core::marker::UnsafeUnpin
+impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::sha256t::Hash<T>
+impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::sha256t::HashEngine<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::Hmac<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::HmacEngine<T> where T: core::panic::unwind_safe::RefUnwindSafe
@@ -578,6 +608,7 @@ impl<ValueT, const N: usize> core::marker::Freeze for bitcoin_hashes::macros::se
 impl<ValueT, const N: usize> core::marker::Send for bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N> where ValueT: core::marker::Send
 impl<ValueT, const N: usize> core::marker::Sync for bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N> where ValueT: core::marker::Sync
 impl<ValueT, const N: usize> core::marker::Unpin for bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N> where ValueT: core::marker::Unpin
+impl<ValueT, const N: usize> core::marker::UnsafeUnpin for bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N>
 impl<ValueT, const N: usize> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N> where ValueT: core::panic::unwind_safe::RefUnwindSafe
 impl<ValueT, const N: usize> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N> where ValueT: core::panic::unwind_safe::UnwindSafe
 impl<ValueT, const N: usize> serde::de::Visitor<'_> for bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N> where ValueT: bitcoin_hashes::Hash + bitcoin_hashes::Hash<Bytes = [u8; N]>
@@ -586,6 +617,7 @@ impl<ValueT> core::marker::Freeze for bitcoin_hashes::macros::serde_details::Hex
 impl<ValueT> core::marker::Send for bitcoin_hashes::macros::serde_details::HexVisitor<ValueT> where ValueT: core::marker::Send
 impl<ValueT> core::marker::Sync for bitcoin_hashes::macros::serde_details::HexVisitor<ValueT> where ValueT: core::marker::Sync
 impl<ValueT> core::marker::Unpin for bitcoin_hashes::macros::serde_details::HexVisitor<ValueT> where ValueT: core::marker::Unpin
+impl<ValueT> core::marker::UnsafeUnpin for bitcoin_hashes::macros::serde_details::HexVisitor<ValueT>
 impl<ValueT> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::macros::serde_details::HexVisitor<ValueT> where ValueT: core::panic::unwind_safe::RefUnwindSafe
 impl<ValueT> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::macros::serde_details::HexVisitor<ValueT> where ValueT: core::panic::unwind_safe::UnwindSafe
 impl<ValueT> serde::de::Visitor<'_> for bitcoin_hashes::macros::serde_details::HexVisitor<ValueT> where ValueT: core::str::traits::FromStr, <ValueT as core::str::traits::FromStr>::Err: core::fmt::Display

@@ -924,6 +924,68 @@ impl core::marker::Unpin for bitcoin_units::sequence::SequenceDecoder
 impl core::marker::Unpin for bitcoin_units::sequence::SequenceDecoderError
 impl core::marker::Unpin for bitcoin_units::time::BlockTimeDecoder
 impl core::marker::Unpin for bitcoin_units::time::BlockTimeDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_units::Amount
+impl core::marker::UnsafeUnpin for bitcoin_units::BlockTime
+impl core::marker::UnsafeUnpin for bitcoin_units::FeeRate
+impl core::marker::UnsafeUnpin for bitcoin_units::SignedAmount
+impl core::marker::UnsafeUnpin for bitcoin_units::Weight
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::AmountDecoder
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::Denomination
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::Display
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::AmountDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::BadPositionError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::InputTooLargeError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::InvalidCharacterError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::MissingDenominationError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::MissingDigitsError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::OutOfRangeError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::ParseAmountError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::ParseDenominationError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::ParseError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::PossiblyConfusingDenominationError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::TooPreciseError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::error::UnknownDenominationError
+impl core::marker::UnsafeUnpin for bitcoin_units::block::BlockHeight
+impl core::marker::UnsafeUnpin for bitcoin_units::block::BlockHeightDecoder
+impl core::marker::UnsafeUnpin for bitcoin_units::block::BlockHeightDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_units::block::BlockHeightInterval
+impl core::marker::UnsafeUnpin for bitcoin_units::block::BlockMtp
+impl core::marker::UnsafeUnpin for bitcoin_units::block::BlockMtpInterval
+impl core::marker::UnsafeUnpin for bitcoin_units::block::TooBigForRelativeHeightError
+impl core::marker::UnsafeUnpin for bitcoin_units::fee_rate::serde::OverflowError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::Height
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::LockTime
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::LockTimeDecoder
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::MedianTimePast
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::error::ConversionError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::error::IncompatibleHeightError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::error::IncompatibleTimeError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::error::LockTimeDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::error::ParseHeightError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::error::ParseTimeError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::LockTime
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::NumberOf512Seconds
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::error::DisabledLockTimeError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::error::InvalidHeightError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::error::InvalidTimeError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::error::IsSatisfiedByError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::error::IsSatisfiedByHeightError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::error::IsSatisfiedByTimeError
+impl core::marker::UnsafeUnpin for bitcoin_units::locktime::relative::error::TimeOverflowError
+impl core::marker::UnsafeUnpin for bitcoin_units::parse_int::ParseIntError
+impl core::marker::UnsafeUnpin for bitcoin_units::parse_int::PrefixedHexError
+impl core::marker::UnsafeUnpin for bitcoin_units::parse_int::UnprefixedHexError
+impl core::marker::UnsafeUnpin for bitcoin_units::pow::CompactTarget
+impl core::marker::UnsafeUnpin for bitcoin_units::pow::CompactTargetDecoder
+impl core::marker::UnsafeUnpin for bitcoin_units::pow::CompactTargetDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_units::result::MathOp
+impl core::marker::UnsafeUnpin for bitcoin_units::result::NumOpError
+impl core::marker::UnsafeUnpin for bitcoin_units::sequence::Sequence
+impl core::marker::UnsafeUnpin for bitcoin_units::sequence::SequenceDecoder
+impl core::marker::UnsafeUnpin for bitcoin_units::sequence::SequenceDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_units::time::BlockTimeDecoder
+impl core::marker::UnsafeUnpin for bitcoin_units::time::BlockTimeDecoderError
 impl core::ops::arith::Add for bitcoin_units::Amount
 impl core::ops::arith::Add for bitcoin_units::FeeRate
 impl core::ops::arith::Add for bitcoin_units::SignedAmount
@@ -1454,6 +1516,12 @@ impl<'e> core::marker::Unpin for bitcoin_units::locktime::absolute::LockTimeEnco
 impl<'e> core::marker::Unpin for bitcoin_units::pow::CompactTargetEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_units::sequence::SequenceEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_units::time::BlockTimeEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_units::block::BlockHeightEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_units::pow::CompactTargetEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_units::sequence::SequenceEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_units::time::BlockTimeEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::AmountEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeightEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
@@ -1482,6 +1550,7 @@ impl<T> core::marker::Send for bitcoin_units::result::NumOpResult<T> where T: co
 impl<T> core::marker::StructuralPartialEq for bitcoin_units::result::NumOpResult<T>
 impl<T> core::marker::Sync for bitcoin_units::result::NumOpResult<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for bitcoin_units::result::NumOpResult<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for bitcoin_units::result::NumOpResult<T> where T: core::marker::UnsafeUnpin
 impl<T> core::ops::arith::Add for bitcoin_units::result::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<Output = bitcoin_units::result::NumOpResult<T>>
 impl<T> core::ops::arith::Add<&T> for bitcoin_units::result::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<bitcoin_units::result::NumOpResult<T>, Output = bitcoin_units::result::NumOpResult<T>>
 impl<T> core::ops::arith::Add<&bitcoin_units::result::NumOpResult<T>> for bitcoin_units::result::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<Output = bitcoin_units::result::NumOpResult<T>>

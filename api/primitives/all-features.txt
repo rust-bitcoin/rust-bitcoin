@@ -743,6 +743,60 @@ impl core::marker::Unpin for bitcoin_primitives::witness::UnexpectedEofError
 impl core::marker::Unpin for bitcoin_primitives::witness::Witness
 impl core::marker::Unpin for bitcoin_primitives::witness::WitnessDecoder
 impl core::marker::Unpin for bitcoin_primitives::witness::WitnessDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::BlockHash
+impl core::marker::UnsafeUnpin for bitcoin_primitives::Ntxid
+impl core::marker::UnsafeUnpin for bitcoin_primitives::TxMerkleNode
+impl core::marker::UnsafeUnpin for bitcoin_primitives::Txid
+impl core::marker::UnsafeUnpin for bitcoin_primitives::WitnessCommitment
+impl core::marker::UnsafeUnpin for bitcoin_primitives::WitnessMerkleNode
+impl core::marker::UnsafeUnpin for bitcoin_primitives::Wtxid
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::BlockDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::BlockDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::BlockHashDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::BlockHashDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::Checked
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::Header
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::HeaderDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::HeaderDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::InvalidBlockError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::ParseHeaderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::Unchecked
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::Version
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::VersionDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::block::VersionDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::RedeemScriptSizeError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::RedeemScriptTag
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::ScriptBufDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::ScriptHash
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::ScriptPubKeyTag
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::ScriptSigTag
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::TapScriptTag
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::WScriptHash
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::WitnessScriptSizeError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::WitnessScriptTag
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::OutPoint
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::OutPointDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::OutPointDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::ParseOutPointError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::ParseTransactionError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::Transaction
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TransactionDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TransactionDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxIn
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxInDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxInDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxMerkleNodeDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxOut
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxOutDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxOutDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::Version
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::VersionDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::transaction::VersionDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness::UnexpectedEofError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness::Witness
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness::WitnessDecoder
+impl core::marker::UnsafeUnpin for bitcoin_primitives::witness::WitnessDecoderError
 impl core::ops::index::Index<usize> for bitcoin_primitives::witness::Witness
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::BlockHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::Ntxid
@@ -911,6 +965,7 @@ impl<'a> core::marker::Freeze for bitcoin_primitives::witness::Iter<'a>
 impl<'a> core::marker::Send for bitcoin_primitives::witness::Iter<'a>
 impl<'a> core::marker::Sync for bitcoin_primitives::witness::Iter<'a>
 impl<'a> core::marker::Unpin for bitcoin_primitives::witness::Iter<'a>
+impl<'a> core::marker::UnsafeUnpin for bitcoin_primitives::witness::Iter<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::witness::Iter<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::witness::Iter<'a>
 impl<'de, T> serde::de::Deserialize<'de> for &'de bitcoin_primitives::script::Script<T>
@@ -1010,6 +1065,19 @@ impl<'e> core::marker::Unpin for bitcoin_primitives::transaction::TxOutEncoder<'
 impl<'e> core::marker::Unpin for bitcoin_primitives::transaction::VersionEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::transaction::WitnessesEncoder<'e>
 impl<'e> core::marker::Unpin for bitcoin_primitives::witness::WitnessEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::block::BlockEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::block::BlockHashEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::block::HeaderEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::block::VersionEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::script::ScriptEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::transaction::OutPointEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TransactionEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxInEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::transaction::TxOutEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::transaction::VersionEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::transaction::WitnessesEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_primitives::witness::WitnessEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::BlockEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::BlockHashEncoder<'e>
 impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::HeaderEncoder<'e>
@@ -1114,6 +1182,9 @@ impl<T> core::marker::Sync for bitcoin_primitives::script::ScriptBufDecoder<T> w
 impl<T> core::marker::Unpin for bitcoin_primitives::script::Script<T> where T: core::marker::Unpin
 impl<T> core::marker::Unpin for bitcoin_primitives::script::ScriptBuf<T> where T: core::marker::Unpin
 impl<T> core::marker::Unpin for bitcoin_primitives::script::ScriptBufDecoder<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for bitcoin_primitives::script::Script<T>
+impl<T> core::marker::UnsafeUnpin for bitcoin_primitives::script::ScriptBuf<T>
+impl<T> core::marker::UnsafeUnpin for bitcoin_primitives::script::ScriptBufDecoder<T>
 impl<T> core::ops::deref::Deref for bitcoin_primitives::script::ScriptBuf<T>
 impl<T> core::ops::deref::DerefMut for bitcoin_primitives::script::ScriptBuf<T>
 impl<T> core::ops::index::Index<(core::ops::range::Bound<usize>, core::ops::range::Bound<usize>)> for bitcoin_primitives::script::Script<T>
@@ -1141,6 +1212,7 @@ impl<V> core::marker::Send for bitcoin_primitives::block::Block<V>
 impl<V> core::marker::StructuralPartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation
 impl<V> core::marker::Sync for bitcoin_primitives::block::Block<V>
 impl<V> core::marker::Unpin for bitcoin_primitives::block::Block<V>
+impl<V> core::marker::UnsafeUnpin for bitcoin_primitives::block::Block<V>
 impl<V> core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Block<V> where V: core::panic::unwind_safe::RefUnwindSafe
 impl<V> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Block<V> where V: core::panic::unwind_safe::UnwindSafe
 impl<const N: usize, T: core::borrow::Borrow<[u8]>> core::cmp::PartialEq<&[T; N]> for bitcoin_primitives::witness::Witness
