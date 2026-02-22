@@ -1,4 +1,13 @@
 [lint]
 allowed_duplicates = [
     "hex-conservative",
+    "bitcoin_hashes",
+    "bitcoin-io",
+    "hex-conservative",
+    "base58ck",
+    "bitcoin",
+    "bitcoin-internals",
+    "bitcoin-units",
+    "secp256k1",
+    "secp256k1-sys",
 ]
