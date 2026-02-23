@@ -1298,7 +1298,6 @@ mod tests {
     use std::str::FromStr;
 
     use hashes::{hash160, ripemd160, sha256};
-    use hex_unstable::FromHex;
     use hex_lit::hex;
     #[cfg(all(feature = "rand", feature = "std"))]
     use {
@@ -1308,6 +1307,7 @@ mod tests {
 
     use super::*;
     use crate::bip32::{ChildNumber, DerivationPath};
+    use crate::hex;
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
@@ -1320,7 +1320,7 @@ mod tests {
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
-        let r = Vec::from_hex(s);
+        let r = hex::decode_to_vec(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
             Ok(v) => Psbt::deserialize(&v),

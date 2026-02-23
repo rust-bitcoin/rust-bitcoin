@@ -261,12 +261,10 @@ macro_rules! impl_bytelike_traits {
 macro_rules! impl_hex_string_traits {
     ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
-            type Err = $crate::hex::HexToArrayError;
+            type Err = $crate::hex::DecodeFixedLengthBytesError;
 
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::hex::FromHex;
-
-                let mut bytes = <[u8; { $len }]>::from_hex(s)?;
+                let mut bytes = $crate::hex::decode_to_array::<$len>(s)?;
                 if $reverse {
                     bytes.reverse();
                 }
@@ -276,26 +274,46 @@ macro_rules! impl_hex_string_traits {
 
         /// Helper to prevent duplicating code for Upper/LowerHex.
         macro_rules! impl_case_hex {
-            ($case:expr) => {
+            ($upper:expr) => {
                 #[inline]
                 fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                    let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self);
+                    let table = if $upper { b"0123456789ABCDEF" } else { b"0123456789abcdef" };
+                    let mut encoded = [0u8; $len * 2];
+                    let mut n = 0;
+
                     if $reverse {
-                        let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
-                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
+                        for &byte in bytes.iter().rev() {
+                            encoded[n] = table[(byte >> 4) as usize];
+                            encoded[n + 1] = table[(byte & 0x0f) as usize];
+                            n += 2;
+                        }
                     } else {
-                        let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter();
-                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
+                        for &byte in bytes {
+                            encoded[n] = table[(byte >> 4) as usize];
+                            encoded[n + 1] = table[(byte & 0x0f) as usize];
+                            n += 2;
+                        }
                     }
+
+                    let encoded = match f.precision() {
+                        Some(p) => &encoded[..$crate::_export::_core::cmp::min(p, n)],
+                        None => &encoded[..n],
+                    };
+                    let encoded = $crate::_export::_core::str::from_utf8(encoded)
+                        .expect("hex-encoded bytes are valid UTF-8");
+
+                    f.pad_integral(true, "0x", encoded)
                 }
             }
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex::Case::Lower);
+            impl_case_hex!(false);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex::Case::Upper);
+            impl_case_hex!(true);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
@@ -595,14 +613,35 @@ mod test {
     hash_newtype! {
         /// Test hash.
         struct TestHash(crate::sha256d::Hash);
+
+        /// Test hash with forced forward display.
+        #[hash_newtype(forward)]
+        struct ForwardTestHash(crate::sha256d::Hash);
     }
+
     #[cfg(feature = "hex")]
-    crate::impl_hex_for_newtype!(TestHash);
+    crate::impl_hex_for_newtype!(TestHash, ForwardTestHash);
     #[cfg(not(feature = "hex"))]
     crate::impl_debug_only_for_newtype!(TestHash);
 
     impl TestHash {
         fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+
+        #[cfg(feature = "hex")]
+        fn hex_char_set() -> Self {
+            let mut bytes = [0u8; 32];
+            bytes[24..].copy_from_slice(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
+            Self::from_byte_array(bytes)
+        }
+    }
+
+    #[cfg(feature = "hex")]
+    impl ForwardTestHash {
+        fn hex_char_set() -> Self {
+            let mut bytes = [0u8; 32];
+            bytes[24..].copy_from_slice(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
+            Self::from_byte_array(bytes)
+        }
     }
 
     #[test]
@@ -649,8 +688,8 @@ mod test {
     fn display() {
         use alloc::format;
 
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{}", TestHash::all_zeros());
+        let want = "efcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{}", TestHash::hex_char_set());
         assert_eq!(got, want)
     }
 
@@ -660,8 +699,8 @@ mod test {
     fn display_alternate() {
         use alloc::format;
 
-        let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#}", TestHash::all_zeros());
+        let want = "0xefcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:#}", TestHash::hex_char_set());
         assert_eq!(got, want)
     }
 
@@ -671,9 +710,20 @@ mod test {
     fn lower_hex() {
         use alloc::format;
 
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:x}", TestHash::all_zeros());
+        let want = "efcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:x}", TestHash::hex_char_set());
         assert_eq!(got, want)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn upper_hex() {
+        use alloc::format;
+
+        let want = "EFCDAB8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:X}", TestHash::hex_char_set());
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -682,9 +732,42 @@ mod test {
     fn lower_hex_alternate() {
         use alloc::format;
 
-        let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#x}", TestHash::all_zeros());
+        let want = "0xefcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:#x}", TestHash::hex_char_set());
         assert_eq!(got, want)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn lower_hex_even_precision() {
+        use alloc::format;
+
+        let want = "efcd";
+        let got = format!("{:.4x}", TestHash::hex_char_set());
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn lower_hex_odd_precision() {
+        use alloc::format;
+
+        let want = "efcda";
+        let got = format!("{:.5x}", TestHash::hex_char_set());
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn lower_hex_forward() {
+        use alloc::format;
+
+        let want = "0000000000000000000000000000000000000000000000000123456789abcdef";
+        let got = format!("{:x}", ForwardTestHash::hex_char_set());
+        assert_eq!(got, want);
     }
 
     #[test]

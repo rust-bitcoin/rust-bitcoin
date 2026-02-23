@@ -11,13 +11,13 @@ use core::ops;
 use core::str::FromStr;
 
 use hashes::hash160;
-use hex_unstable::{FromHex, HexToArrayError};
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
 
 use crate::crypto::ecdsa;
+use crate::hex::{self, DecodeFixedLengthBytesError};
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
@@ -672,16 +672,16 @@ impl FromStr for PublicKey {
     fn from_str(s: &str) -> Result<Self, ParsePublicKeyError> {
         match s.len() {
             66 => {
-                let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
-                    HexToArrayError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    HexToArrayError::InvalidLength(_) => unreachable!("length checked already"),
+                let bytes = hex::decode_to_array::<33>(s).map_err(|e| match e {
+                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
             130 => {
-                let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
-                    HexToArrayError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    HexToArrayError::InvalidLength(_) => unreachable!("length checked already"),
+                let bytes = hex::decode_to_array::<65>(s).map_err(|e| match e {
+                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
@@ -797,7 +797,7 @@ impl FromStr for CompressedPublicKey {
     type Err = ParseCompressedPublicKeyError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::from_slice(&<[u8; 33]>::from_hex(s)?).map_err(Into::into)
+        Self::from_slice(&hex::decode_to_array::<33>(s)?).map_err(Into::into)
     }
 }
 
@@ -1419,7 +1419,7 @@ pub enum ParsePublicKeyError {
     /// Error originated while parsing string.
     Encoding(FromSliceError),
     /// Hex decoding error.
-    InvalidChar(hex_unstable::InvalidCharError),
+    InvalidChar(hex_stable::error::InvalidCharError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
@@ -1460,7 +1460,7 @@ pub enum ParseCompressedPublicKeyError {
     /// secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    Hex(hex_unstable::HexToArrayError),
+    Hex(hex_stable::DecodeFixedLengthBytesError),
 }
 
 impl From<Infallible> for ParseCompressedPublicKeyError {
@@ -1490,8 +1490,8 @@ impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<hex_unstable::HexToArrayError> for ParseCompressedPublicKeyError {
-    fn from(e: hex_unstable::HexToArrayError) -> Self { Self::Hex(e) }
+impl From<hex_stable::DecodeFixedLengthBytesError> for ParseCompressedPublicKeyError {
+    fn from(e: hex_stable::DecodeFixedLengthBytesError) -> Self { Self::Hex(e) }
 }
 
 /// SegWit public keys must always be compressed.
@@ -1819,13 +1819,13 @@ mod tests {
             .unwrap();
         let key2 = PublicKey::from_secp_uncompressed(key1.to_inner());
         let arrayvec1 = ArrayVec::from_slice(
-            &<[u8; 33]>::from_hex(
+            &hex::decode_to_array::<33>(
                 "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
             )
             .unwrap(),
         );
         let expected1 = SortKey(arrayvec1);
-        let arrayvec2 = ArrayVec::from_slice(&<[u8; 65]>::from_hex(
+        let arrayvec2 = ArrayVec::from_slice(&hex::decode_to_array::<65>(
             "04ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f81794e7f3d5e420641a3bc690067df5541470c966cbca8c694bf39aa16d836918",
         ).unwrap());
         let expected2 = SortKey(arrayvec2);
@@ -2011,7 +2011,6 @@ mod tests {
         let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         if let Err(ParsePublicKeyError::InvalidChar(err)) = res {
-            assert_eq!(err.invalid_char(), b'g');
             assert_eq!(err.pos(), 129);
         } else {
             panic!("expected ParsePublicKeyError::InvalidChar");
@@ -2022,7 +2021,6 @@ mod tests {
         let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         if let Err(ParsePublicKeyError::InvalidChar(err)) = res {
-            assert_eq!(err.invalid_char(), b'g');
             assert_eq!(err.pos(), 65);
         } else {
             panic!("expected ParsePublicKeyError::InvalidChar");
@@ -2040,7 +2038,7 @@ mod tests {
 
     #[test]
     fn xonly_pubkey_from_bytes() {
-        let key_bytes = &<[u8; 32]>::from_hex(
+        let key_bytes = &hex::decode_to_array::<32>(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
         )
         .expect("Failed to convert hex string to byte array");
@@ -2052,7 +2050,7 @@ mod tests {
 
     #[test]
     fn xonly_pubkey_to_inner() {
-        let key_bytes = &<[u8; 32]>::from_hex(
+        let key_bytes = &hex::decode_to_array::<32>(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
         )
         .expect("Failed to convert hex string to byte array");
@@ -2069,7 +2067,7 @@ mod tests {
         let keypair = Keypair::generate(&mut rand::rng());
         #[cfg(not(all(feature = "rand", feature = "std")))]
         let keypair = {
-            let bytes = <[u8; 32]>::from_hex(
+            let bytes = hex::decode_to_array::<32>(
                 "1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9",
             )
             .unwrap();
