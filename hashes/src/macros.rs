@@ -613,9 +613,14 @@ mod test {
     hash_newtype! {
         /// Test hash.
         struct TestHash(crate::sha256d::Hash);
+
+        /// Test hash with forced forward display.
+        #[hash_newtype(forward)]
+        struct ForwardTestHash(crate::sha256d::Hash);
     }
+
     #[cfg(feature = "hex")]
-    crate::impl_hex_for_newtype!(TestHash);
+    crate::impl_hex_for_newtype!(TestHash, ForwardTestHash);
     #[cfg(not(feature = "hex"))]
     crate::impl_debug_only_for_newtype!(TestHash);
 
@@ -623,6 +628,15 @@ mod test {
         fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
 
         #[cfg(feature = "hex")]
+        fn hex_char_set() -> Self {
+            let mut bytes = [0u8; 32];
+            bytes[24..].copy_from_slice(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
+            Self::from_byte_array(bytes)
+        }
+    }
+
+    #[cfg(feature = "hex")]
+    impl ForwardTestHash {
         fn hex_char_set() -> Self {
             let mut bytes = [0u8; 32];
             bytes[24..].copy_from_slice(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
@@ -704,12 +718,56 @@ mod test {
     #[test]
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
+    fn upper_hex() {
+        use alloc::format;
+
+        let want = "EFCDAB8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:X}", TestHash::hex_char_set());
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn lower_hex_alternate() {
         use alloc::format;
 
         let want = "0xefcdab8967452301000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::hex_char_set());
         assert_eq!(got, want)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn lower_hex_even_precision() {
+        use alloc::format;
+
+        let want = "efcd";
+        let got = format!("{:.4x}", TestHash::hex_char_set());
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn lower_hex_odd_precision() {
+        use alloc::format;
+
+        let want = "efcda";
+        let got = format!("{:.5x}", TestHash::hex_char_set());
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn lower_hex_forward() {
+        use alloc::format;
+
+        let want = "0000000000000000000000000000000000000000000000000123456789abcdef";
+        let got = format!("{:x}", ForwardTestHash::hex_char_set());
+        assert_eq!(got, want);
     }
 
     #[test]
