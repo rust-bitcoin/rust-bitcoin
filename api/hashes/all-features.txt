@@ -1004,11 +1004,11 @@ pub fn bitcoin_hashes::sha3_256::Hash::partial_cmp(&self, other: &bitcoin_hashes
 pub fn bitcoin_hashes::sha3_256::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_hashes::sha3_256::Hash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_hashes::sha3_256::HashEngine::clone(&self) -> bitcoin_hashes::sha3_256::HashEngine
-pub fn bitcoin_hashes::sha3_256::HashEngine::default() -> bitcoin_hashes::sha3_256::HashEngine
+pub fn bitcoin_hashes::sha3_256::HashEngine::default() -> Self
 pub fn bitcoin_hashes::sha3_256::HashEngine::finalize(self) -> Self::Hash
 pub fn bitcoin_hashes::sha3_256::HashEngine::flush(&mut self) -> std::io::error::Result<()>
 pub fn bitcoin_hashes::sha3_256::HashEngine::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_hashes::sha3_256::HashEngine::input(&mut self, data: &[u8])
+pub fn bitcoin_hashes::sha3_256::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::sha3_256::HashEngine::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::sha3_256::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::sha3_256::hash(data: &[u8]) -> bitcoin_hashes::sha3_256::Hash
