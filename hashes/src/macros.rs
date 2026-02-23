@@ -621,6 +621,13 @@ mod test {
 
     impl TestHash {
         fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+
+        #[cfg(feature = "hex")]
+        fn hex_char_set() -> Self {
+            let mut bytes = [0u8; 32];
+            bytes[24..].copy_from_slice(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
+            Self::from_byte_array(bytes)
+        }
     }
 
     #[test]
@@ -667,8 +674,8 @@ mod test {
     fn display() {
         use alloc::format;
 
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{}", TestHash::all_zeros());
+        let want = "efcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{}", TestHash::hex_char_set());
         assert_eq!(got, want)
     }
 
@@ -678,8 +685,8 @@ mod test {
     fn display_alternate() {
         use alloc::format;
 
-        let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#}", TestHash::all_zeros());
+        let want = "0xefcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:#}", TestHash::hex_char_set());
         assert_eq!(got, want)
     }
 
@@ -689,8 +696,8 @@ mod test {
     fn lower_hex() {
         use alloc::format;
 
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:x}", TestHash::all_zeros());
+        let want = "efcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:x}", TestHash::hex_char_set());
         assert_eq!(got, want)
     }
 
@@ -700,8 +707,8 @@ mod test {
     fn lower_hex_alternate() {
         use alloc::format;
 
-        let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#x}", TestHash::all_zeros());
+        let want = "0xefcdab8967452301000000000000000000000000000000000000000000000000";
+        let got = format!("{:#x}", TestHash::hex_char_set());
         assert_eq!(got, want)
     }
 
