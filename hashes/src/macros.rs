@@ -274,26 +274,46 @@ macro_rules! impl_hex_string_traits {
 
         /// Helper to prevent duplicating code for Upper/LowerHex.
         macro_rules! impl_case_hex {
-            ($case:expr) => {
+            ($upper:expr) => {
                 #[inline]
                 fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                    let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self);
+                    let table = if $upper { b"0123456789ABCDEF" } else { b"0123456789abcdef" };
+                    let mut encoded = [0u8; $len * 2];
+                    let mut n = 0;
+
                     if $reverse {
-                        let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
-                        $crate::hex_unstable::fmt_hex_exact!(f, ($len), bytes, $case)
+                        for &byte in bytes.iter().rev() {
+                            encoded[n] = table[(byte >> 4) as usize];
+                            encoded[n + 1] = table[(byte & 0x0f) as usize];
+                            n += 2;
+                        }
                     } else {
-                        let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter();
-                        $crate::hex_unstable::fmt_hex_exact!(f, ($len), bytes, $case)
+                        for &byte in bytes {
+                            encoded[n] = table[(byte >> 4) as usize];
+                            encoded[n + 1] = table[(byte & 0x0f) as usize];
+                            n += 2;
+                        }
                     }
+
+                    let encoded = match f.precision() {
+                        Some(p) => &encoded[..$crate::_export::_core::cmp::min(p, n)],
+                        None => &encoded[..n],
+                    };
+                    let encoded = $crate::_export::_core::str::from_utf8(encoded)
+                        .expect("hex-encoded bytes are valid UTF-8");
+
+                    f.pad_integral(true, "0x", encoded)
                 }
             }
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex_unstable::Case::Lower);
+            impl_case_hex!(false);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex_unstable::Case::Upper);
+            impl_case_hex!(true);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
