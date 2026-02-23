@@ -482,6 +482,9 @@ impl PublicKey {
     /// This will call the provided function with the key as a byte slice in either
     /// compressed or uncompressed form.
     ///
+    /// See [`PublicKey::serialize_compressed`] and [`PublicKey::serialize_uncompressed`]
+    /// for more information on the byte formats for the key.
+    ///
     /// # Examples
     ///
     /// ```
@@ -500,10 +503,33 @@ impl PublicKey {
     /// ```
     pub fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
         if self.compressed() {
-            f(&self.to_inner().serialize())
+            f(&self.serialize_compressed())
         } else {
-            f(&self.to_inner().serialize_uncompressed())
+            f(&self.serialize_uncompressed())
         }
+    }
+
+    /// Serializes the key as a byte-encoded pair of values.
+    ///
+    /// This function serializes the key in compressed form, where the y-coordinate is
+    /// represented by only a single bit, as x determines it up to one bit.
+    ///
+    /// If you want to serialize while considering the compressedness of this key,
+    /// use [`with_serialized`] instead.
+    ///
+    /// [`with_serialized`]: PublicKey::with_serialized
+    pub fn serialize_compressed(&self) -> [u8; 33] {
+        self.to_inner().serialize()
+    }
+
+    /// Serializes the key as a byte-encoded pair of values, in uncompressed form.
+    ///
+    /// If you want to serialize while considering the compressedness of this key,
+    /// use [`with_serialized`] instead.
+    ///
+    /// [`with_serialized`]: PublicKey::with_serialized
+    pub fn serialize_uncompressed(&self) -> [u8; 65] {
+        self.to_inner().serialize_uncompressed()
     }
 
     /// Returns bitcoin 160-bit hash of the public key.
