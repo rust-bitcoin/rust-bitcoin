@@ -1124,10 +1124,10 @@ impl_hex!(fmt::LowerHex, hex_unstable::Case::Lower);
 impl_hex!(fmt::UpperHex, hex_unstable::Case::Upper);
 
 #[cfg(feature = "serde")]
-impl crate::serde::Serialize for U256 {
+impl serde::Serialize for U256 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: crate::serde::Serializer,
+        S: serde::Serializer,
     {
         struct DisplayHex(U256);
 
@@ -1145,11 +1145,9 @@ impl crate::serde::Serialize for U256 {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> crate::serde::Deserialize<'de> for U256 {
-    fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        use hex_unstable::FromHex;
-
-        use crate::serde::de;
+impl<'de> serde::Deserialize<'de> for U256 {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        use serde::de;
 
         if d.is_human_readable() {
             struct HexVisitor;
@@ -1169,10 +1167,12 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
                         return Err(de::Error::invalid_length(s.len(), &self));
                     }
 
-                    let b = <[u8; 32]>::from_hex(s)
+                    let upper = parse_int::hex_u128_unprefixed(&s[..32])
+                        .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
+                    let lower = parse_int::hex_u128_unprefixed(&s[32..])
                         .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
 
-                    Ok(U256::from_be_bytes(b))
+                    Ok(U256(upper, lower))
                 }
 
                 fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
@@ -1180,11 +1180,12 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
                     E: de::Error,
                 {
                     if let Ok(hex) = core::str::from_utf8(v) {
-                        let b = <[u8; 32]>::from_hex(hex).map_err(|_| {
-                            de::Error::invalid_value(de::Unexpected::Str(hex), &self)
-                        })?;
+                        let upper = parse_int::hex_u128_unprefixed(&hex[..32])
+                            .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(hex), &self))?;
+                        let lower = parse_int::hex_u128_unprefixed(&hex[32..])
+                            .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(hex), &self))?;
 
-                        Ok(U256::from_be_bytes(b))
+                        Ok(U256(upper, lower))
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                     }
