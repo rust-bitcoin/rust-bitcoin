@@ -23,7 +23,7 @@ use secp256k1::Message;
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
-use crate::crypto::{ecdsa, taproot};
+use crate::crypto::taproot;
 use crate::key::{Keypair, TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
 use crate::script::{ScriptExt as _, ScriptPubKeyExt as _};
@@ -368,10 +368,7 @@ impl Psbt {
                 Ok((msg, sighash_ty)) => (msg, sighash_ty),
             };
 
-            let sig = ecdsa::Signature {
-                signature: secp256k1::ecdsa::sign(msg, sk.as_inner()),
-                sighash_type: sighash_ty,
-            };
+            let sig = sk.sign(msg, sighash_ty);
 
             let pk = sk.public_key();
 
