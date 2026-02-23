@@ -30,10 +30,10 @@ pub use primitives::block::{
 };
 #[doc(no_inline)]
 pub use primitives::block::{InvalidBlockError, ParseHeaderError};
-#[doc(no_inline)]
-pub use units::block::TooBigForRelativeHeightError;
 #[doc(inline)]
 pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval};
+#[doc(no_inline)]
+pub use units::block::TooBigForRelativeHeightError;
 
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]
