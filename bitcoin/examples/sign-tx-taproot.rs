@@ -3,9 +3,8 @@
 //! Demonstrate creating a transaction that spends to and from p2tr outputs.
 
 use bitcoin::ext::*;
-use bitcoin::key::{Keypair, TapTweak, TweakedKeypair, UntweakedPublicKey};
+use bitcoin::key::{Keypair, PrivateKey, TapTweak, TweakedKeypair, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
-use bitcoin::secp256k1::{rand, SecretKey};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::{
     transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf, ScriptSigBuf, Sequence,
@@ -85,8 +84,8 @@ fn main() {
 ///
 /// In a real application these would be actual secrets.
 fn senders_keys() -> Keypair {
-    let sk = SecretKey::new(&mut rand::rng());
-    Keypair::from_secret_key(&sk)
+    let sk = PrivateKey::generate(network::NetworkKind::Test);
+    Keypair::from_private_key(sk)
 }
 
 /// A dummy address for the receiver.

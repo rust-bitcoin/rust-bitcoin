@@ -420,8 +420,15 @@ impl Keypair {
 
     /// Creates a [`Keypair`] directly from a secp256k1 secret key.
     #[inline]
+    #[deprecated(since = "TBD", note = "use `from_private_key()` instead")]
     pub fn from_secret_key(sk: &secp256k1::SecretKey) -> Self {
         Self::from(secp256k1::Keypair::from_secret_key(sk))
+    }
+
+    /// Creates a [`Keypair`] from a [`PrivateKey`].
+    #[inline]
+    pub fn from_private_key(pk: PrivateKey) -> Self {
+        Self::from(secp256k1::Keypair::from_secret_key(pk.as_inner()))
     }
 
     /// Returns the [`PrivateKey`] for this [`Keypair`].
@@ -466,6 +473,12 @@ impl From<secp256k1::Keypair> for Keypair {
 
 impl From<Keypair> for secp256k1::PublicKey {
     fn from(kp: Keypair) -> Self { kp.to_public_key().to_inner() }
+}
+
+impl From<PrivateKey> for Keypair {
+    fn from(pk: PrivateKey) -> Self {
+        Self::from_private_key(pk)
+    }
 }
 
 impl PublicKey {
@@ -2074,7 +2087,7 @@ mod tests {
             )
             .unwrap();
             let sk = PrivateKey::from_byte_array(bytes, NetworkKind::Test).unwrap();
-            Keypair::from_secret_key(sk.as_inner())
+            Keypair::from_private_key(sk)
         };
 
         // Use secp256k1::DisplaySecret, since no key type implements Display
