@@ -49,7 +49,7 @@ use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, W
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use crate::hash_types::{Ntxid, Txid, Wtxid, BlockHashDecoder, TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
+pub use crate::hash_types::{Ntxid, Txid, Wtxid, BlockHashDecoder};
 #[doc(no_inline)]
 pub use crate::hash_types::BlockHashDecoderError;
 
