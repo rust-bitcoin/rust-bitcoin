@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Rust Bitcoin - unit types
+//! # Rust Bitcoin Unit Types
 //!
 //! This library provides basic types used by the Rust Bitcoin ecosystem.
 //!

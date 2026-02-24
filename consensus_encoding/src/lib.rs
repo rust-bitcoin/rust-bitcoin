@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! # Rust Bitcoin - consensus encoding and decoding
+//! # Rust Bitcoin Consensus Encoding
 //!
 //! Traits and utilities for encoding and decoding Bitcoin data types in a
 //! consensus-consistent way, using a *sans-I/O* architecture.
