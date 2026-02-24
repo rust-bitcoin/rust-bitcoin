@@ -923,190 +923,98 @@ impl fmt::Display for UnexpectedEofError {
 #[cfg(feature = "std")]
 impl std::error::Error for UnexpectedEofError {}
 
-/// Error type for [`Decoder2`].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Decoder2Error<A, B> {
-    /// Error from the first decoder.
-    First(A),
-    /// Error from the second decoder.
-    Second(B),
-}
-
-impl<A, B> fmt::Display for Decoder2Error<A, B>
-where
-    A: fmt::Display,
-    B: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::First(ref e) => write_err!(f, "first decoder error"; e),
-            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
+/// Helper macro to define an error type for a `DecoderN`.
+macro_rules! define_decoder_n_error {
+    (
+        $(#[$attr:meta])*
+        $name:ident;
+        $(
+            $(#[$err_attr:meta])*
+            ($err_wrap:ident, $err_type:ident, $err_msg:literal),
+        )*
+    ) => {
+        $(#[$attr])*
+        #[derive(Debug, Clone, PartialEq, Eq)]
+        pub enum $name<$($err_type,)*> {
+            $(
+                $(#[$err_attr])*
+                $err_wrap($err_type),
+            )*
         }
-    }
-}
 
-#[cfg(feature = "std")]
-impl<A, B> std::error::Error for Decoder2Error<A, B>
-where
-    A: std::error::Error + 'static,
-    B: std::error::Error + 'static,
-{
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::First(ref e) => Some(e),
-            Self::Second(ref e) => Some(e),
+        impl<$($err_type,)*> fmt::Display for $name<$($err_type,)*>
+        where
+            $($err_type: fmt::Display,)*
+        {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                match self {
+                    $(Self::$err_wrap(ref e) => write_err!(f, $err_msg; e),)*
+                }
+            }
         }
-    }
+
+        #[cfg(feature = "std")]
+        impl<$($err_type,)*> std::error::Error for $name<$($err_type,)*>
+        where
+            $($err_type: std::error::Error + 'static,)*
+        {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+                match self {
+                    $(Self::$err_wrap(ref e) => Some(e),)*
+                }
+            }
+        }
+    };
 }
 
-/// Error type for [`Decoder3`].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Decoder3Error<A, B, C> {
+define_decoder_n_error! {
+    /// Error type for [`Decoder2`].
+    Decoder2Error;
     /// Error from the first decoder.
-    First(A),
+    (First, A, "first decoder error."),
     /// Error from the second decoder.
-    Second(B),
+    (Second, B, "second decoder error."),
+}
+
+define_decoder_n_error! {
+    /// Error type for [`Decoder3`].
+    Decoder3Error;
+    /// Error from the first decoder.
+    (First, A, "first decoder error."),
+    /// Error from the second decoder.
+    (Second, B, "second decoder error."),
     /// Error from the third decoder.
-    Third(C),
+    (Third, C, "third decoder error."),
 }
 
-impl<A, B, C> fmt::Display for Decoder3Error<A, B, C>
-where
-    A: fmt::Display,
-    B: fmt::Display,
-    C: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::First(ref e) => write_err!(f, "first decoder error"; e),
-            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
-            Self::Third(ref e) => write_err!(f, "third decoder error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl<A, B, C> std::error::Error for Decoder3Error<A, B, C>
-where
-    A: std::error::Error + 'static,
-    B: std::error::Error + 'static,
-    C: std::error::Error + 'static,
-{
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::First(ref e) => Some(e),
-            Self::Second(ref e) => Some(e),
-            Self::Third(ref e) => Some(e),
-        }
-    }
-}
-
-/// Error type for [`Decoder4`].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Decoder4Error<A, B, C, D> {
+define_decoder_n_error! {
+    /// Error type for [`Decoder4`].
+    Decoder4Error;
     /// Error from the first decoder.
-    First(A),
+    (First, A, "first decoder error."),
     /// Error from the second decoder.
-    Second(B),
+    (Second, B, "second decoder error."),
     /// Error from the third decoder.
-    Third(C),
+    (Third, C, "third decoder error."),
     /// Error from the fourth decoder.
-    Fourth(D),
+    (Fourth, D, "fourth decoder error."),
 }
 
-impl<A, B, C, D> fmt::Display for Decoder4Error<A, B, C, D>
-where
-    A: fmt::Display,
-    B: fmt::Display,
-    C: fmt::Display,
-    D: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::First(ref e) => write_err!(f, "first decoder error"; e),
-            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
-            Self::Third(ref e) => write_err!(f, "third decoder error"; e),
-            Self::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl<A, B, C, D> std::error::Error for Decoder4Error<A, B, C, D>
-where
-    A: std::error::Error + 'static,
-    B: std::error::Error + 'static,
-    C: std::error::Error + 'static,
-    D: std::error::Error + 'static,
-{
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::First(ref e) => Some(e),
-            Self::Second(ref e) => Some(e),
-            Self::Third(ref e) => Some(e),
-            Self::Fourth(ref e) => Some(e),
-        }
-    }
-}
-
-/// Error type for [`Decoder6`].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Decoder6Error<A, B, C, D, E, F> {
+define_decoder_n_error! {
+    /// Error type for [`Decoder6`].
+    Decoder6Error;
     /// Error from the first decoder.
-    First(A),
+    (First, A, "first decoder error."),
     /// Error from the second decoder.
-    Second(B),
+    (Second, B, "second decoder error."),
     /// Error from the third decoder.
-    Third(C),
+    (Third, C, "third decoder error."),
     /// Error from the fourth decoder.
-    Fourth(D),
+    (Fourth, D, "fourth decoder error."),
     /// Error from the fifth decoder.
-    Fifth(E),
+    (Fifth, E, "fifth decoder error."),
     /// Error from the sixth decoder.
-    Sixth(F),
-}
-
-impl<A, B, C, D, E, F> fmt::Display for Decoder6Error<A, B, C, D, E, F>
-where
-    A: fmt::Display,
-    B: fmt::Display,
-    C: fmt::Display,
-    D: fmt::Display,
-    E: fmt::Display,
-    F: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::First(ref e) => write_err!(f, "first decoder error"; e),
-            Self::Second(ref e) => write_err!(f, "second decoder error"; e),
-            Self::Third(ref e) => write_err!(f, "third decoder error"; e),
-            Self::Fourth(ref e) => write_err!(f, "fourth decoder error"; e),
-            Self::Fifth(ref e) => write_err!(f, "fifth decoder error"; e),
-            Self::Sixth(ref e) => write_err!(f, "sixth decoder error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl<A, B, C, D, E, F> std::error::Error for Decoder6Error<A, B, C, D, E, F>
-where
-    A: std::error::Error + 'static,
-    B: std::error::Error + 'static,
-    C: std::error::Error + 'static,
-    D: std::error::Error + 'static,
-    E: std::error::Error + 'static,
-    F: std::error::Error + 'static,
-{
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::First(ref e) => Some(e),
-            Self::Second(ref e) => Some(e),
-            Self::Third(ref e) => Some(e),
-            Self::Fourth(ref e) => Some(e),
-            Self::Fifth(ref e) => Some(e),
-            Self::Sixth(ref e) => Some(e),
-        }
-    }
+    (Sixth, F, "sixth decoder error."),
 }
 
 #[cfg(test)]
