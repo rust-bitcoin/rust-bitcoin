@@ -17,9 +17,11 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
+use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
 use internals::ToU64 as _;
+use internals::write_err;
 use io::{BufRead, Write};
-use primitives::block::{self, Block, Checked};
+use primitives::block::{self, Block, Checked, HeaderDecoder, HeaderEncoder};
 use primitives::merkle_tree::TxMerkleNode;
 use primitives::transaction::{Transaction, Txid};
 use primitives::Weight;
@@ -121,6 +123,71 @@ impl MerkleBlock {
             Err(MerkleBlockError::MerkleRootMismatch)
         }
     }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder type for a [`MerkleBlock`].
+    pub struct MerkleBlockEncoder<'e>(Encoder2<HeaderEncoder<'e>, PartialMerkleTreeEncoder<'e>>);
+}
+
+impl encoding::Encodable for MerkleBlock {
+    type Encoder<'e> = MerkleBlockEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        MerkleBlockEncoder::new(
+            Encoder2::new(self.header.encoder(), self.txn.encoder())
+        )
+    }
+}
+
+type MerkleBlockInnerDecoder = Decoder2<HeaderDecoder, PartialMerkleTreeDecoder>;
+
+/// The decoder for a [`MerkleBlock`].
+pub struct MerkleBlockDecoder(MerkleBlockInnerDecoder);
+
+impl encoding::Decoder for MerkleBlockDecoder {
+    type Output = MerkleBlock;
+    type Error = MerkleBlockDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(MerkleBlockDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (header, txn) = self.0.end().map_err(MerkleBlockDecoderError)?;
+        Ok(MerkleBlock { header, txn })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for MerkleBlock {
+    type Decoder = MerkleBlockDecoder;
+    fn decoder() -> Self::Decoder {
+        MerkleBlockDecoder(Decoder2::new(block::Header::decoder(), PartialMerkleTree::decoder()))
+    }
+}
+
+/// An error occuring when decoding a [`MerkleBlock`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MerkleBlockDecoderError(<MerkleBlockInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for MerkleBlockDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for MerkleBlockDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "merkleblock error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MerkleBlockDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Encodable for MerkleBlock {
@@ -409,6 +476,138 @@ impl PartialMerkleTree {
     }
 }
 
+struct BitVecEncoder {
+    buffer: Vec<u8>,
+    exhausted: bool,
+}
+
+impl BitVecEncoder {
+    fn new(bits: &[bool]) -> Self {
+        let mut buffer = Vec::with_capacity(bits.len().div_ceil(8));
+        for chunk in bits.chunks(8) {
+            let mut byte = 0u8;
+            for (i, bit) in chunk.iter().enumerate() {
+                byte |= u8::from(*bit) << i;
+            }
+            buffer.push(byte);
+        }
+        Self {
+            buffer,
+            exhausted: false,
+        }
+    }
+}
+
+impl encoding::Encoder for BitVecEncoder {
+    fn current_chunk(&self) -> &[u8] {
+        if self.exhausted {
+            &[]
+        } else {
+            &self.buffer
+        }
+    }
+
+    fn advance(&mut self) -> bool {
+        self.exhausted = true;
+        false
+    }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for a [`PartialMerkleTree`].
+    pub struct PartialMerkleTreeEncoder<'e>(
+        Encoder3<
+            ArrayEncoder<4>,
+            Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxMerkleNode>>,
+            Encoder2<CompactSizeEncoder, BitVecEncoder>,
+        >
+    );
+}
+
+impl encoding::Encodable for PartialMerkleTree {
+    type Encoder<'e> = PartialMerkleTreeEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        PartialMerkleTreeEncoder::new(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.num_transactions.to_le_bytes()),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.hashes),
+                ),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.bits.len().div_ceil(8)),
+                    BitVecEncoder::new(&self.bits)
+                ),
+            )
+        )
+    }
+}
+
+type PartialMerkleTreeInnerDecoder = Decoder3<ArrayDecoder<4>, VecDecoder<TxMerkleNode>, ByteVecDecoder>;
+
+/// The decoder type for a [`PartialMerkleTree`].
+pub struct PartialMerkleTreeDecoder(PartialMerkleTreeInnerDecoder);
+
+impl encoding::Decoder for PartialMerkleTreeDecoder {
+    type Output = PartialMerkleTree;
+    type Error = PartialMerkleTreeDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(PartialMerkleTreeDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (num_transactions, hashes, compress_bit_vec) = self.0.end().map_err(PartialMerkleTreeDecoderError)?;
+        let num_transactions = u32::from_le_bytes(num_transactions);
+        let mut bits = Vec::with_capacity(compress_bit_vec.len());
+        for byte in compress_bit_vec {
+            for i in 0..8 {
+                bits.push((byte & (1 << i)) != 0);
+            }
+        }
+        Ok(PartialMerkleTree {
+            num_transactions,
+            bits,
+            hashes
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for PartialMerkleTree {
+    type Decoder = PartialMerkleTreeDecoder;
+
+    fn decoder() -> Self::Decoder {
+        PartialMerkleTreeDecoder(
+            Decoder3::new(ArrayDecoder::new(),VecDecoder::new(), ByteVecDecoder::new())
+        )
+    }
+}
+
+/// An error occuring when decoding a [`PartialMerkleTree`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PartialMerkleTreeDecoderError(<PartialMerkleTreeInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for PartialMerkleTreeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for PartialMerkleTreeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "partial merkletree error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for PartialMerkleTreeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl Encodable for PartialMerkleTree {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut ret = self.num_transactions.consensus_encode(w)?;
@@ -641,7 +840,7 @@ mod tests {
 
             // Build the partial Merkle tree
             let pmt1 = PartialMerkleTree::from_txids(&tx_ids, &matches);
-            let serialized = encode::serialize(&pmt1);
+            let serialized = encoding::encode_to_vec(&pmt1);
 
             // Verify PartialMerkleTree's size guarantees
             let n = cmp::min(tx_count, 1 + match_txid1.len() * height);
@@ -649,7 +848,7 @@ mod tests {
 
             // Deserialize into a tester copy
             let pmt2: PartialMerkleTree =
-                encode::deserialize(&serialized).expect("could not deserialize own data");
+                encoding::decode_from_slice(&serialized).expect("could not deserialize own data");
 
             // Extract Merkle root and matched txids from copy
             let mut match_txid2: Vec<Txid> = vec![];
@@ -667,7 +866,7 @@ mod tests {
 
             // check that random bit flips break the authentication
             for _ in 0..4 {
-                let mut pmt3: PartialMerkleTree = encode::deserialize(&serialized).unwrap();
+                let mut pmt3: PartialMerkleTree = encoding::decode_from_slice(&serialized).unwrap();
                 pmt3.damage(&mut rng);
                 let mut match_txid3 = vec![];
                 let merkle_root_3 = pmt3.extract_matches(&mut match_txid3, &mut indexes).unwrap();
@@ -700,14 +899,14 @@ mod tests {
         let mb_hex = include_str!("../tests/data/merkle_block.hex");
 
         let bytes = Vec::from_hex(mb_hex).unwrap();
-        let mb: MerkleBlock = encode::deserialize(&bytes).unwrap();
+        let mb: MerkleBlock = encoding::decode_from_slice(&bytes).unwrap();
         assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
         );
         // Serialize again and check that it matches the original bytes
-        assert_eq!(mb_hex, encode::serialize(&mb).to_lower_hex_string().as_str());
+        assert_eq!(mb_hex, encoding::encode_to_vec(&mb).to_lower_hex_string().as_str());
     }
 
     /// Constructs a new [`MerkleBlock`] using a list of txids which will be found in the
@@ -790,7 +989,7 @@ mod tests {
     fn get_block_13b8a() -> Block<Checked> {
         let block_hex = include_str!("../tests/data/block_13b8a.hex");
         let block: Block<Unchecked> =
-            encode::deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap();
+            encoding::decode_from_slice(&Vec::from_hex(block_hex).unwrap()).unwrap();
         block.validate().expect("block should be valid")
     }
 
@@ -856,7 +1055,7 @@ mod tests {
              00000004bfaac251681b1b25\
          "
         );
-        let deser = encode::deserialize::<MerkleBlock>(&bytes);
+        let deser = encoding::decode_from_slice::<MerkleBlock>(&bytes);
 
         // The attempt to deserialize should result in an error.
         assert!(deser.is_err());
@@ -871,7 +1070,7 @@ mod tests {
             0000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33a5914ce6ed5b\
             1b01e32f570200000002252bf9d75c4f481ebb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d3\
             2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105").unwrap();
-        let mb: MerkleBlock = encode::deserialize(&mb_bytes).unwrap();
+        let mb: MerkleBlock = encoding::decode_from_slice(&mb_bytes).unwrap();
 
         // Authenticate and extract matched transaction ids
         let mut matches: Vec<Txid> = vec![];
