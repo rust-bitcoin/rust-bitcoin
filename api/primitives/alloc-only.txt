@@ -1341,7 +1341,7 @@ pub fn bitcoin_primitives::block::compute_witness_root(transactions: &[bitcoin_p
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<32>) -> bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayRefEncoder<'e, 32>) -> bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::clone(&self) -> bitcoin_primitives::script::RedeemScriptSizeError
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::eq(&self, other: &bitcoin_primitives::script::RedeemScriptSizeError) -> bool
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
