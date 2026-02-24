@@ -54,8 +54,8 @@ mod encapsulate {
         ///
         /// This constructor sets an even parity. Use [`XOnlyPublicKey::with_parity`] if you need
         /// a different parity value.
-        pub fn from_secp(key: impl Into<secp256k1::XOnlyPublicKey>) -> Self {
-            Self { inner: key.into(), parity: Parity::Even }
+        pub fn from_secp(key: impl Into<secp256k1::XOnlyPublicKey>, parity: Parity) -> Self {
+            Self { inner: key.into(), parity }
         }
 
         /// Sets the parity of this [`XOnlyPublicKey`].
@@ -279,7 +279,7 @@ impl XOnlyPublicKey {
     #[inline]
     pub fn from_keypair(keypair: &Keypair) -> Self {
         let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(&keypair.to_inner());
-        Self::from_secp(xonly).with_parity(parity)
+        Self::from_secp(xonly, parity)
     }
 
     /// Constructs an x-only public key from a 32-byte x-coordinate.
@@ -290,7 +290,7 @@ impl XOnlyPublicKey {
         data: &[u8; constants::SCHNORR_PUBLIC_KEY_SIZE],
     ) -> Result<Self, ParseXOnlyPublicKeyError> {
         secp256k1::XOnlyPublicKey::from_byte_array(*data)
-            .map(Self::from_secp)
+            .map(|key| Self::from_secp(key, Parity::Even))
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
 
@@ -342,7 +342,7 @@ impl XOnlyPublicKey {
         tweak: &secp256k1::Scalar,
     ) -> Result<Self, TweakXOnlyPublicKeyError> {
         match self.as_inner().add_tweak(tweak) {
-            Ok((xonly, parity)) => Ok(Self::from_secp(xonly).with_parity(parity)),
+            Ok((xonly, parity)) => Ok(Self::from_secp(xonly, parity)),
             Err(secp256k1::Error::InvalidTweak) => Err(TweakXOnlyPublicKeyError::BadTweak),
             Err(secp256k1::Error::InvalidParityValue(_)) =>
                 Err(TweakXOnlyPublicKeyError::ParityError),
@@ -361,13 +361,13 @@ impl FromStr for XOnlyPublicKey {
 }
 
 impl From<secp256k1::XOnlyPublicKey> for XOnlyPublicKey {
-    fn from(pk: secp256k1::XOnlyPublicKey) -> Self { Self::from_secp(pk) }
+    fn from(pk: secp256k1::XOnlyPublicKey) -> Self { Self::from_secp(pk, Parity::Even) }
 }
 
 impl From<secp256k1::PublicKey> for XOnlyPublicKey {
     fn from(pk: secp256k1::PublicKey) -> Self {
         let (xonly, parity) = pk.x_only_public_key();
-        Self::from_secp(xonly).with_parity(parity)
+        Self::from_secp(xonly, parity)
     }
 }
 
@@ -398,7 +398,7 @@ impl<'de> Deserialize<'de> for XOnlyPublicKey {
     where
         D: Deserializer<'de>,
     {
-        Ok(Self::from_secp(secp256k1::XOnlyPublicKey::deserialize(deserializer)?))
+        Ok(Self::from_secp(secp256k1::XOnlyPublicKey::deserialize(deserializer)?, Parity::Even))
     }
 }
 
@@ -659,7 +659,7 @@ impl From<secp256k1::PublicKey> for PublicKey {
 impl From<PublicKey> for XOnlyPublicKey {
     fn from(pk: PublicKey) -> Self {
         let (xonly, parity) = pk.to_inner().x_only_public_key();
-        Self::from_secp(xonly).with_parity(parity)
+        Self::from_secp(xonly, parity)
     }
 }
 
@@ -2066,7 +2066,7 @@ mod tests {
         .expect("Failed to convert hex string to byte array");
         let inner_key = secp256k1::XOnlyPublicKey::from_byte_array(*key_bytes)
             .expect("Failed to create a secp256k1 x-only public key from a byte array");
-        let btc_pubkey = XOnlyPublicKey::from_secp(inner_key);
+        let btc_pubkey = XOnlyPublicKey::from(inner_key);
         // Confirm that the to_inner() returns the same data that was initially wrapped
         assert_eq!(inner_key, btc_pubkey.to_inner());
     }
