@@ -304,11 +304,7 @@ impl XOnlyPublicKey {
     ///
     /// The [`PublicKey`] is constructed using the parity in this x-only public key.
     #[inline]
-    // to_* functions are used for non-free conversions to owned types. Clippy complains
-    // since XOnlyPublicKey is Copy but we intentionally use &self to remove a copy and
-    // to_* to indicate the cost of the operation.
-    #[allow(clippy::wrong_self_convention)]
-    pub fn to_public_key(&self) -> PublicKey {
+    pub fn to_public_key(self) -> PublicKey {
         self.as_inner().public_key(self.parity()).into()
     }
 
