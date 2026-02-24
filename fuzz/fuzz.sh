@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# This script is used to briefly fuzz every target when no target is provided. Otherwise, it will briefly fuzz the
+# provided target
+
 set -euox pipefail
 
 REPO_DIR=$(git rev-parse --show-toplevel)
@@ -20,16 +23,11 @@ cargo --version
 rustc --version
 
 # Testing
-cargo install --force honggfuzz --no-default-features
+cargo install --force cargo-fuzz
 for targetFile in $targetFiles; do
   targetName=$(targetFileToName "$targetFile")
   echo "Fuzzing target $targetName ($targetFile)"
-  if [ -d "hfuzz_input/$targetName" ]; then
-    HFUZZ_INPUT_ARGS="-f hfuzz_input/$targetName/input"
-  else
-    HFUZZ_INPUT_ARGS=""
-  fi
-  HFUZZ_RUN_ARGS="--run_time 3600 --exit_upon_crash -v $HFUZZ_INPUT_ARGS" cargo hfuzz run "$targetName"
-
+  # cargo-fuzz will check for the corpus at fuzz/corpus/<target>
+  cargo +nightly fuzz run "$targetName" -- -runs=100000
   checkReport "$targetName"
 done

@@ -1,0 +1,5 @@
+[target.s390x-unknown-linux-gnu]
+dockerfile = ".github/docker/Dockerfile.cross"
+
+[target.aarch64-unknown-linux-gnu]
+dockerfile = ".github/docker/Dockerfile.cross"

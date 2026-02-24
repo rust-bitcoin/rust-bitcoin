@@ -173,8 +173,15 @@ jobs:
           persist-credentials: false
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
-      - name: "Add architecture i386"
-        run: sudo dpkg --add-architecture i386
+      - name: "Add architecture i386 and install dependencies"
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            gcc-multilib \
+            g++-multilib \
+            libc6-dev-i386 \
+            lib32stdc++-13-dev
       - name: "Install i686 gcc"
         run: sudo apt-get update -y && sudo apt-get install -y gcc-multilib
       - name: "Install target"
