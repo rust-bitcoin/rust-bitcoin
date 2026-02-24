@@ -356,7 +356,7 @@ impl Psbt {
         for (pk, key_source) in input.bip32_derivation.iter() {
             let sk = if let Ok(Some(sk)) = k.get_key(&KeyRequest::Bip32(key_source.clone())) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::from_secp(*pk))) {
+            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey((*pk).into())) {
                 sk
             } else {
                 continue;
@@ -1316,7 +1316,7 @@ mod tests {
     };
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
-    use crate::Sequence;
+    use crate::{CompressedPublicKey, Sequence};
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
@@ -1457,7 +1457,7 @@ mod tests {
     fn serialize_then_deserialize_output() {
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
-        let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
+        let mut hd_keypaths: BTreeMap<CompressedPublicKey, KeySource> = Default::default();
 
         let mut sk: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed);
 
@@ -1478,7 +1478,7 @@ mod tests {
 
         let pk = Xpub::from_xpriv(&sk);
 
-        hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
+        hd_keypaths.insert(CompressedPublicKey::from_secp(pk.public_key), (fprint, dpath.into()));
 
         let expected: Output = Output {
             redeem_script: Some(
@@ -1608,7 +1608,7 @@ mod tests {
                 .into_iter()
                 .collect();
         let key_source = ("deadbeef".parse().unwrap(), "0'/1".parse().unwrap());
-        let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
+        let keypaths: BTreeMap<CompressedPublicKey, KeySource> = vec![(
             "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
             key_source.clone(),
         )]
@@ -2345,12 +2345,12 @@ mod tests {
     }
 
     #[cfg(all(feature = "rand", feature = "std"))]
-    fn gen_keys() -> (PrivateKey, PublicKey) {
+    fn gen_keys() -> (PrivateKey, CompressedPublicKey) {
         use secp256k1::rand;
 
         let sk = SecretKey::new(&mut rand::rng());
         let priv_key = PrivateKey::from_secp(sk, NetworkKind::Test);
-        let pk = PublicKey::from_private_key(priv_key);
+        let pk = CompressedPublicKey::from_private_key(priv_key).unwrap();
 
         (priv_key, pk)
     }
@@ -2359,6 +2359,7 @@ mod tests {
     #[cfg(all(feature = "rand", feature = "std"))]
     fn get_key_btree_map() {
         let (priv_key, pk) = gen_keys();
+        let pk = PublicKey::from(pk);
 
         let mut key_map = BTreeMap::new();
         key_map.insert(pk, priv_key);
@@ -2379,10 +2380,10 @@ mod tests {
 
         if parity == secp256k1::Parity::Even {
             priv_key = priv_key.negate();
-            pk = priv_key.public_key();
+            pk = priv_key.public_key().try_into().expect("gen_keys generates compressed keys");
         }
 
-        pubkey_map.insert(pk, priv_key);
+        pubkey_map.insert(pk.into(), priv_key);
 
         let req_result = pubkey_map.get_key(&KeyRequest::XOnlyPubkey(xonly.into())).unwrap();
 
@@ -2634,7 +2635,7 @@ mod tests {
         });
 
         let mut key_map: HashMap<PublicKey, PrivateKey> = HashMap::new();
-        key_map.insert(pk, priv_key);
+        key_map.insert(pk.into(), priv_key);
 
         let key_source = (Fingerprint::default(), DerivationPath::default());
         let mut tap_key_origins = std::collections::BTreeMap::new();
@@ -2696,17 +2697,17 @@ mod tests {
         // key_map implements `GetKey` using KeyRequest::Pubkey. A pubkey key request does not use
         // keysource so we use default `KeySource` (fingerprint and derivation path) below.
         let mut key_map = BTreeMap::new();
-        key_map.insert(pk, priv_key);
+        key_map.insert(PublicKey::from(pk), priv_key);
 
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             amount: Amount::from_sat_u32(10),
-            script_pubkey: ScriptPubKeyBuf::new_p2wpkh(pk.wpubkey_hash().unwrap()),
+            script_pubkey: ScriptPubKeyBuf::new_p2wpkh(pk.wpubkey_hash()),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
         let mut map = BTreeMap::new();
-        map.insert(pk.to_inner(), (Fingerprint::default(), DerivationPath::default()));
+        map.insert(pk, (Fingerprint::default(), DerivationPath::default()));
         psbt.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.
@@ -2720,6 +2721,6 @@ mod tests {
         let (signing_keys, _) = psbt.sign(&key_map).unwrap_err();
 
         assert_eq!(signing_keys.len(), 1);
-        assert_eq!(signing_keys[&0], SigningKeys::Ecdsa(vec![pk]));
+        assert_eq!(signing_keys[&0], SigningKeys::Ecdsa(vec![pk.into()]));
     }
 }

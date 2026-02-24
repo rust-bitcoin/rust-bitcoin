@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use crate::bip32::KeySource;
-use crate::crypto::key::XOnlyPublicKey;
+use crate::crypto::key::{CompressedPublicKey, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
@@ -35,7 +35,12 @@ pub struct Output {
     pub witness_script: Option<WitnessScriptBuf>,
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
-    pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
+    ///
+    /// This map enforces compressed public keys here. This means PSBTs will serialize with
+    /// compressed keys and fail to deserialize those with uncompressed keys. For discussion on why
+    /// this approach was chosen, please see the following issue:
+    /// <https://github.com/rust-bitcoin/rust-bitcoin/issues/5738>
+    pub bip32_derivation: BTreeMap<CompressedPublicKey, KeySource>,
     /// The internal pubkey.
     pub tap_internal_key: Option<XOnlyPublicKey>,
     /// Taproot Output tree.
@@ -67,7 +72,7 @@ impl Output {
             }
             PSBT_OUT_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: CompressedPublicKey>|<raw_value: KeySource>
                 }
             }
             PSBT_OUT_PROPRIETARY => {
