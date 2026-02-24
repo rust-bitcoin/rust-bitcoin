@@ -40,6 +40,7 @@ pub trait Decoder: Sized {
     ///
     /// May panic if called after a previous call to [`Self::push_bytes`] errored.
     #[must_use = "must check result to avoid panics on subsequent calls"]
+    #[track_caller]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error>;
 
     /// Complete the decoding process and return the final result.
@@ -57,6 +58,7 @@ pub trait Decoder: Sized {
     ///
     /// May panic if called after a previous call to [`Self::push_bytes`] errored.
     #[must_use = "must check result to avoid panics on subsequent calls"]
+    #[track_caller]
     fn end(self) -> Result<Self::Output, Self::Error>;
 
     /// Returns the maximum number of bytes this decoder can consume without over-reading.
