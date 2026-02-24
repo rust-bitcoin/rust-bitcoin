@@ -15,12 +15,11 @@ use encoding::{Decodable, Decoder, Encodable, EncodableByteIter};
 use hex_unstable::{BytesToHexIter, Case};
 use internals::write_err;
 
-/// Hex encoding wrapper type for Encodable + Decodable types.
+/// Hex encoding wrapper type for `Encodable` + `Decodable` types.
 ///
-/// Provides default implementations for `Display`, `Debug`, `LowerHex`, and `UpperHex`.
-/// Also provides [`Self::from_str`] for parsing a string to a `T`.
-/// This can be used to implement hex display traits for any encodable types.
-pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub &'a T);
+/// Implements `Display`, `Debug`, `LowerHex`, and `UpperHex` as well as an inherent `from_str`
+/// method that returns `T`.
+pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub(crate) &'a T);
 
 impl<'a, T: Encodable + Decodable> IntoIterator for &HexPrimitive<'a, T> {
     type Item = u8;
@@ -32,15 +31,15 @@ impl<'a, T: Encodable + Decodable> IntoIterator for &HexPrimitive<'a, T> {
 impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
     /// Parses a given string into an instance of the type `T`.
     ///
-    /// Since `FromStr` would return an instance of Self and thus a &T, this function
+    /// Since `FromStr` would return an instance of `Self` and thus a &T, this function
     /// is implemented directly on the struct to return the owned instance of T.
     /// Other `FromStr` implementations can directly return the result of
     /// [`HexPrimitive::from_str`].
     ///
     /// # Errors
     ///
-    /// [`ParsePrimitiveError::OddLengthString`] if the input string is an odd length.
-    /// [`ParsePrimitiveError::Decode`] if an error occurs during decoding of the object.
+    /// * `OddLength` or `InvalidChar` if decode the hex string to bytes fails.
+    /// * `Decode` if consensus decoding the hex-decoded bytes fails.
     pub(crate) fn from_str(s: &str) -> Result<T, ParsePrimitiveError<T>> {
         let iter = hex_unstable::HexToBytesIter::new(s)?;
 
