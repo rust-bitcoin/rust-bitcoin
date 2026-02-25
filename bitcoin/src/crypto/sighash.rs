@@ -2024,8 +2024,7 @@ mod tests {
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
 
-            let tweaked_priv_key =
-                SecretKey::from_keypair(&tweaked_keypair.to_keypair().to_inner());
+            let tweaked_priv_key = tweaked_keypair.to_keypair().to_secret_key();
             assert_eq!(expected.tweaked_privkey, tweaked_priv_key);
         }
     }
