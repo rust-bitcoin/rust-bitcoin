@@ -2098,4 +2098,44 @@ mod tests {
         let decoded = encoded.parse::<Keypair>().unwrap();
         assert_eq!(decoded, keypair);
     }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn keypair_secp_roundtrip() {
+        let bitcoin_key = Keypair::generate(&mut secp256k1::rand::rng());
+        let secp_key = secp256k1::Keypair::from_seckey_byte_array(bitcoin_key.to_secret_bytes()).unwrap();
+        assert_eq!(Keypair::from_secp(secp_key), bitcoin_key);
+    }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn publickey_secp_roundtrip() {
+        let bitcoin_key = Keypair::generate(&mut secp256k1::rand::rng()).to_public_key();
+        let secp_key = secp256k1::PublicKey::from_byte_array_compressed(bitcoin_key.serialize()).unwrap();
+        assert_eq!(PublicKey::from_secp(secp_key), bitcoin_key);
+        // Also assert that generating a secp from compressed or uncompressed yields the same value
+        assert_eq!(
+            secp256k1::PublicKey::from_byte_array_uncompressed(bitcoin_key.serialize_uncompressed()).unwrap(),
+            secp_key,
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn xonlypubkey_secp_roundtrip() {
+        let bitcoin_key = Keypair::generate(&mut secp256k1::rand::rng()).to_x_only_public_key();
+        let secp_key = secp256k1::XOnlyPublicKey::from_byte_array(bitcoin_key.serialize().0).unwrap();
+        assert_eq!(
+            bitcoin_key,
+            XOnlyPublicKey::from_secp(secp_key).with_parity(bitcoin_key.parity()),
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn privatekey_secp_roundtrip() {
+        let bitcoin_key = PrivateKey::generate(NetworkKind::Main);
+        let secp_key = secp256k1::SecretKey::from_secret_bytes(bitcoin_key.to_secret_bytes()).unwrap();
+        assert_eq!(PrivateKey::from_secp(secp_key, NetworkKind::Main), bitcoin_key);
+    }
 }
