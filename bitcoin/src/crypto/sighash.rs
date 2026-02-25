@@ -2018,7 +2018,7 @@ mod tests {
             );
 
             // Only compare the inner key, not the parity
-            assert_eq!(expected.internal_pubkey.to_inner(), internal_key.to_inner());
+            assert_eq!(expected.internal_pubkey.with_parity(internal_key.parity()), internal_key);
             assert_eq!(expected.sig_msg, sig_msg.to_lower_hex_string());
             assert_eq!(expected.sig_hash, sighash);
             assert_eq!(expected_hash_ty, hash_ty);
