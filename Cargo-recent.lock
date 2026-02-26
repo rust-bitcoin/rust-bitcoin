@@ -186,6 +186,7 @@ version = "0.20.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
+ "cpufeatures",
  "hex-conservative 0.3.0",
  "serde",
  "serde_test",
@@ -226,6 +227,15 @@ name = "chacha20-poly1305"
 version = "0.1.2"
 dependencies = [
  "hex-conservative 0.3.0",
+]
+
+[[package]]
+name = "cpufeatures"
+version = "0.2.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
