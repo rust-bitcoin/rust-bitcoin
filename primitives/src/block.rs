@@ -14,23 +14,20 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::Encodable;
-#[cfg(feature = "hex")]
-use encoding::EncodableByteIter;
+use encoding::{Encodable, Decodable, Decoder, Decoder6};
 #[cfg(feature = "alloc")]
 use encoding::{
-    CompactSizeEncoder, Decodable, Decoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
+    CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder,
 };
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
 
-#[cfg(feature = "alloc")]
 use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
+#[cfg(feature = "hex")]
+use crate::hex_codec::{HexPrimitive, ParsePrimitiveError};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
-#[cfg(feature = "alloc")]
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
-#[cfg(feature = "alloc")]
 use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
@@ -508,37 +505,28 @@ impl Header {
     }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl core::str::FromStr for Header {
     type Err = ParseHeaderError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        crate::hex_codec::HexPrimitive::from_str(s).map_err(ParseHeaderError)
+        HexPrimitive::from_str(s).map_err(ParseHeaderError)
     }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
-    #[allow(clippy::use_self)]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use hex_unstable::{fmt_hex_exact, Case};
-
-        fmt_hex_exact!(f, Header::SIZE, EncodableByteIter::new(self), Case::Lower)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&HexPrimitive(self), f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&HexPrimitive(self), f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::UpperHex::fmt(&crate::hex_codec::HexPrimitive(self), f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&HexPrimitive(self), f) }
 }
 
 impl fmt::Debug for Header {
@@ -556,20 +544,20 @@ impl fmt::Debug for Header {
 }
 
 /// An error that occurs during parsing of a [`Header`] from a hex string.
-#[cfg(all(feature = "hex", feature = "alloc"))]
-pub struct ParseHeaderError(crate::ParsePrimitiveError<Header>);
+#[cfg(feature = "hex")]
+pub struct ParseHeaderError(ParsePrimitiveError<Header>);
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::Debug for ParseHeaderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc"))]
+#[cfg(feature = "hex")]
 impl fmt::Display for ParseHeaderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
 }
 
-#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
+#[cfg(all(feature = "hex", feature = "std"))]
 impl std::error::Error for ParseHeaderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         std::error::Error::source(&self.0)
@@ -605,7 +593,6 @@ impl Encodable for Header {
     }
 }
 
-#[cfg(feature = "alloc")]
 type HeaderInnerDecoder = Decoder6<
     VersionDecoder,
     BlockHashDecoder,
@@ -616,10 +603,8 @@ type HeaderInnerDecoder = Decoder6<
 >;
 
 /// The decoder for the [`Header`] type.
-#[cfg(feature = "alloc")]
 pub struct HeaderDecoder(HeaderInnerDecoder);
 
-#[cfg(feature = "alloc")]
 impl HeaderDecoder {
     fn from_inner(e: <HeaderInnerDecoder as Decoder>::Error) -> HeaderDecoderError {
         match e {
@@ -633,7 +618,6 @@ impl HeaderDecoder {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl Decoder for HeaderDecoder {
     type Output = Header;
     type Error = HeaderDecoderError;
@@ -655,7 +639,6 @@ impl Decoder for HeaderDecoder {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-#[cfg(feature = "alloc")]
 impl Decodable for Header {
     type Decoder = HeaderDecoder;
     fn decoder() -> Self::Decoder {
@@ -671,7 +654,6 @@ impl Decodable for Header {
 }
 
 /// An error consensus decoding a `Header`.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum HeaderDecoderError {
@@ -689,12 +671,10 @@ pub enum HeaderDecoderError {
     Nonce(encoding::UnexpectedEofError),
 }
 
-#[cfg(feature = "alloc")]
 impl From<Infallible> for HeaderDecoderError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for HeaderDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -709,7 +689,6 @@ impl fmt::Display for HeaderDecoderError {
 }
 
 #[cfg(feature = "std")]
-#[cfg(feature = "alloc")]
 impl std::error::Error for HeaderDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
@@ -1273,6 +1252,10 @@ mod tests {
         let want = format!("{:.20}", want);
         let got = format!("{:.20}", header);
         assert_eq!(got, want);
+
+        let want = format!("{:.0}", want);
+        let got = format!("{:.0}", header);
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -1281,7 +1264,7 @@ mod tests {
     fn header_hex() {
         let header = dummy_header();
 
-        let want = concat!(
+        let lower_hex = concat!(
             "01000000",                                                         // version
             "9999999999999999999999999999999999999999999999999999999999999999", // prev_blockhash
             "7777777777777777777777777777777777777777777777777777777777777777", // merkle_root
@@ -1291,13 +1274,33 @@ mod tests {
         );
 
         // All of these should yield a lowercase hex
-        assert_eq!(want, format!("{:x}", header));
-        assert_eq!(want, format!("{}", header));
+        assert_eq!(lower_hex, format!("{:x}", header));
+        assert_eq!(lower_hex, format!("{}", header));
 
         // And these should yield uppercase hex
-        let upper_encoded =
-            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
-        assert_eq!(upper_encoded, format!("{:X}", header));
+        let upper_hex = lower_hex.to_ascii_uppercase();
+        assert_eq!(upper_hex, format!("{:X}", header));
+
+        // Check padding (right, left, center, custom char)
+        assert_eq!(format!("{:>164}", lower_hex), format!("{:>164x}", header));
+        assert_eq!(format!("{:<164}", lower_hex), format!("{:<164x}", header));
+        assert_eq!(format!("{:^164}", lower_hex), format!("{:^164x}", header));
+        assert_eq!(format!("{:_>164}", lower_hex), format!("{:_>164x}", header));
+
+        // Alt forms
+        let lower_hex_alt = format!("0x{}", lower_hex);
+        assert_eq!(lower_hex_alt, format!("{:#x}", header));
+        assert_eq!(format!("0X{}", upper_hex), format!("{:#X}", header));
+
+        // Alternate + padding
+        assert_eq!(format!("{:>166}", lower_hex_alt), format!("{:>#166x}", header));
+        assert_eq!(format!("{:<166}", lower_hex_alt), format!("{:<#166x}", header));
+        assert_eq!(format!("{:^166}", lower_hex_alt), format!("{:^#166x}", header));
+
+        // Alt + truncate
+        assert_eq!(format!("{:>.20}", lower_hex_alt), format!("{:>#.20x}", header));
+        assert_eq!(format!("{:<.20}", lower_hex_alt), format!("{:<#.20x}", header));
+        assert_eq!(format!("{:^.20}", lower_hex_alt), format!("{:^#.20x}", header));
     }
 
     #[test]
