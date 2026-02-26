@@ -242,7 +242,7 @@ impl<D: core::fmt::Display> core::fmt::Display for ReadError<D> {
 #[cfg(feature = "std")]
 impl<D> std::error::Error for ReadError<D>
 where
-    D: core::fmt::Debug + core::fmt::Display + std::error::Error + 'static,
+    D: std::error::Error + 'static,
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
