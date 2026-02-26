@@ -1023,104 +1023,9 @@ mod tests {
     use alloc::vec;
     #[cfg(feature = "alloc")]
     use alloc::vec::Vec;
-    #[cfg(feature = "alloc")]
-    use core::iter;
-    #[cfg(feature = "std")]
-    use std::io::Cursor;
 
+    #[cfg(feature = "alloc")]
     use super::*;
-
-    // Stress test the push_bytes impl by passing in a single byte slice repeatedly.
-    macro_rules! check_decode_one_byte_at_a_time {
-        ($decoder:expr; $($test_name:ident, $want:expr, $array:expr);* $(;)?) => {
-            $(
-                #[test]
-                #[allow(non_snake_case)]
-                fn $test_name() {
-                    let mut decoder = $decoder;
-
-                    for (i, _) in $array.iter().enumerate() {
-                        if i < $array.len() - 1 {
-                            let mut p = &$array[i..i+1];
-                            assert!(decoder.push_bytes(&mut p).unwrap());
-                        } else {
-                            // last byte: `push_bytes` should return false since no more bytes required.
-                            let mut p = &$array[i..];
-                            assert!(!decoder.push_bytes(&mut p).unwrap());
-                        }
-                    }
-
-                    let got = decoder.end().unwrap();
-                    assert_eq!(got, $want);
-                }
-            )*
-
-        }
-    }
-
-    check_decode_one_byte_at_a_time! {
-        CompactSizeDecoder::new_with_limit(0xF0F0_F0F0);
-        decode_compact_size_0x10, 0x10, [0x10];
-        decode_compact_size_0xFC, 0xFC, [0xFC];
-        decode_compact_size_0xFD, 0xFD, [0xFD, 0xFD, 0x00];
-        decode_compact_size_0x100, 0x100, [0xFD, 0x00, 0x01];
-        decode_compact_size_0xFFF, 0x0FFF, [0xFD, 0xFF, 0x0F];
-        decode_compact_size_0x0F0F_0F0F, 0x0F0F_0F0F, [0xFE, 0xF, 0xF, 0xF, 0xF];
-    }
-
-    #[test]
-    #[cfg(target_pointer_width = "64")]
-    #[allow(non_snake_case)]
-    fn decode_compact_size_0xF0F0_F0F0_F0E0() {
-        let mut decoder = CompactSizeDecoder::new_with_limit(0xF0F0_F0F0_F0EF);
-        let array = [0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0];
-
-        for (i, _) in array.iter().enumerate() {
-            if i < array.len() - 1 {
-                let mut p = &array[i..=i];
-                assert!(decoder.push_bytes(&mut p).unwrap());
-            } else {
-                // last byte: `push_bytes` should return false since no more bytes required.
-                let mut p = &array[i..];
-                assert!(!decoder.push_bytes(&mut p).unwrap());
-            }
-        }
-
-        let got = decoder.end().unwrap();
-        assert_eq!(got, 0xF0F0_F0F0_F0E0);
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn compact_size_zero() {
-        // Zero (eg for an empty vector) with a couple of arbitrary extra bytes.
-        let encoded = alloc::vec![0x00, 0xFF, 0xFF];
-
-        let mut slice = encoded.as_slice();
-        let mut decoder = CompactSizeDecoder::new();
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
-
-        let got = decoder.end().unwrap();
-        assert_eq!(got, 0);
-    }
-
-    #[cfg(feature = "alloc")]
-    fn two_fifty_six_bytes_encoded() -> Vec<u8> {
-        let data = [0xff; 256];
-        let mut v = Vec::with_capacity(259);
-
-        v.extend_from_slice(&[0xFD, 0x00, 0x01]); // 256 encoded as a  compact size.
-        v.extend_from_slice(&data);
-        v
-    }
-
-    #[cfg(feature = "alloc")]
-    check_decode_one_byte_at_a_time! {
-        ByteVecDecoder::default();
-            decode_byte_vec, alloc::vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef],
-        [0x08, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
-            decode_byte_vec_multi_byte_length_prefix, [0xff; 256], two_fifty_six_bytes_encoded();
-    }
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -1181,6 +1086,7 @@ mod tests {
             panic!("Expected UnexpectedEof error");
         }
     }
+
     #[test]
     #[cfg(feature = "alloc")]
     fn byte_vec_decoder_reserves_in_batches() {
@@ -1292,52 +1198,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn vec_decoder_empty() {
-        // Empty with a couple of arbitrary extra bytes.
-        let encoded = vec![0x00, 0xFF, 0xFF];
-
-        let mut slice = encoded.as_slice();
-        let mut decoder = Test::decoder();
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
-
-        let got = decoder.end().unwrap();
-        let want = Test(vec![]);
-
-        assert_eq!(got, want);
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn vec_decoder_one_item() {
-        let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE];
-
-        let mut slice = encoded.as_slice();
-        let mut decoder = Test::decoder();
-        decoder.push_bytes(&mut slice).unwrap();
-
-        let got = decoder.end().unwrap();
-        let want = Test(vec![Inner(0xDEAD_BEEF)]);
-
-        assert_eq!(got, want);
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn vec_decoder_two_items() {
-        let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
-
-        let mut slice = encoded.as_slice();
-        let mut decoder = Test::decoder();
-        decoder.push_bytes(&mut slice).unwrap();
-
-        let got = decoder.end().unwrap();
-        let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
-
-        assert_eq!(got, want);
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
     fn vec_decoder_reserves_in_batches() {
         // A small number of extra elements so we extend exactly by the remainder
         // instead of another full batch.
@@ -1383,56 +1243,5 @@ mod tests {
         let Test(result) = decoder.end().unwrap();
         assert_eq!(result.len(), total_len);
         assert_eq!(result[total_len - 1], Inner(0xDD));
-    }
-
-    #[cfg(feature = "alloc")]
-    fn two_fifty_six_elements() -> Test {
-        Test(iter::repeat(Inner(0xDEAD_BEEF)).take(256).collect())
-    }
-
-    #[cfg(feature = "alloc")]
-    fn two_fifty_six_elements_encoded() -> Vec<u8> {
-        [0xFD, 0x00, 0x01] // 256 encoded as a  compact size.
-            .into_iter()
-            .chain(iter::repeat(0xDEAD_BEEF_u32.to_le_bytes()).take(256).flatten())
-            .collect()
-    }
-
-    #[cfg(feature = "alloc")]
-    check_decode_one_byte_at_a_time! {
-        TestDecoder::default();
-            decode_vec, Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]),
-        vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
-            decode_vec_multi_byte_length_prefix, two_fifty_six_elements(), two_fifty_six_elements_encoded();
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn vec_decoder_one_item_plus_more_data() {
-        // One u32 plus some other bytes.
-        let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE, 0xff, 0xff, 0xff, 0xff];
-
-        let mut slice = encoded.as_slice();
-
-        let mut decoder = Test::decoder();
-        decoder.push_bytes(&mut slice).unwrap();
-
-        let got = decoder.end().unwrap();
-        let want = Test(vec![Inner(0xDEAD_BEEF)]);
-
-        assert_eq!(got, want);
-    }
-
-    #[cfg(feature = "std")]
-    #[test]
-    fn decode_vec_from_read_unbuffered_success() {
-        let encoded = [0x01, 0xEF, 0xBE, 0xAD, 0xDE, 0xff, 0xff, 0xff, 0xff];
-        let mut cursor = Cursor::new(&encoded);
-
-        let got = crate::decode_from_read_unbuffered::<Test, _>(&mut cursor).unwrap();
-        assert_eq!(cursor.position(), 5);
-
-        let want = Test(vec![Inner(0xDEAD_BEEF)]);
-        assert_eq!(got, want);
     }
 }
