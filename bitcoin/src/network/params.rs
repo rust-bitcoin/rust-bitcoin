@@ -14,7 +14,7 @@
 //! use bitcoin::network::Params;
 //! use bitcoin::{WitnessScript, WitnessScriptBuf, Network, Target};
 //!
-//! const POW_TARGET_SPACING: u64 = 120; // Two minutes.
+//! const POW_TARGET_SPACING: u32 = 120; // Two minutes.
 //!
 //! pub struct CustomParams {
 //!     params: Params,
@@ -104,7 +104,7 @@ pub struct Params {
     /// compact-expressible values between Bitcoin Core's and the limit expressed here.
     pub max_attainable_target: Target,
     /// Expected amount of time to mine one block.
-    pub pow_target_spacing: u64,
+    pub pow_target_spacing: u32,
     /// Difficulty recalculation interval.
     pub pow_target_timespan: u32,
     /// Determines whether minimal difficulty may be used for blocks or not.
@@ -260,8 +260,8 @@ impl Params {
     }
 
     /// Calculates the number of blocks between difficulty adjustments.
-    pub fn difficulty_adjustment_interval(&self) -> u64 {
-        u64::from(self.pow_target_timespan) / self.pow_target_spacing
+    pub fn difficulty_adjustment_interval(&self) -> u32 {
+        self.pow_target_timespan / self.pow_target_spacing
     }
 }
 
