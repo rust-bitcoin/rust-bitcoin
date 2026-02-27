@@ -2,9 +2,17 @@
 
 //! Integration tests for decode module.
 
+#[cfg(feature = "std")]
+use std::io::{Cursor, Read};
+
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, CompactSizeDecoder, Decoder, Decoder2, UnexpectedEofError,
+    ArrayDecoder, CompactSizeDecoder, Decodable, Decoder, Decoder2, UnexpectedEofError,
 };
+#[cfg(feature = "alloc")]
+use bitcoin_consensus_encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
+#[cfg(feature = "std")]
+use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
+use bitcoin_consensus_encoding::decode_from_slice;
 
 const EMPTY: &[u8] = &[];
 
@@ -216,4 +224,403 @@ fn decode_byte_vec_decoder_does_not_overconsume_on_second_chunk() {
 
     let decoded_vec = decoder.end().unwrap();
     assert_eq!(decoded_vec, vec![0xAA, 0xBB, 0xCC, 0xDD]);
+}
+
+#[derive(Debug, PartialEq)]
+struct TestArray([u8; 4]);
+
+impl Decodable for TestArray {
+    type Decoder = TestArrayDecoder;
+    fn decoder() -> Self::Decoder { TestArrayDecoder { inner: ArrayDecoder::new() } }
+}
+
+struct TestArrayDecoder {
+    inner: ArrayDecoder<4>,
+}
+
+impl Decoder for TestArrayDecoder {
+    type Output = TestArray;
+    type Error = UnexpectedEofError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.inner.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> { self.inner.end().map(TestArray) }
+
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
+}
+
+#[test]
+fn decode_from_slice_success() {
+    let data = [1, 2, 3, 4];
+    let result: Result<TestArray, _> = decode_from_slice(&data);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+}
+
+#[test]
+fn decode_from_slice_unexpected_eof() {
+    let data = [1, 2, 3];
+    let result: Result<TestArray, _> = decode_from_slice(&data);
+    assert!(result.is_err());
+}
+
+#[test]
+fn decode_from_slice_extra_data() {
+    let data = [1, 2, 3, 4, 5];
+    let result: Result<TestArray, _> = decode_from_slice(&data);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_extra_data() {
+    let data = [1, 2, 3, 4, 5, 6];
+    let mut cursor = Cursor::new(&data);
+    let result: Result<TestArray, _> = decode_from_read(&mut cursor);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_success() {
+    let data = [1, 2, 3, 4];
+    let cursor = Cursor::new(&data);
+    let result: Result<TestArray, _> = decode_from_read(cursor);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_unexpected_eof() {
+    let data = [1, 2, 3];
+    let cursor = Cursor::new(&data);
+    let result: Result<TestArray, _> = decode_from_read(cursor);
+    assert!(matches!(result, Err(ReadError::Decode(_))));
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_trait_object() {
+    let data = [1, 2, 3, 4];
+    let mut cursor = Cursor::new(&data);
+    // Test that we can pass a trait object (&mut dyn BufRead implements BufRead).
+    let reader: &mut dyn std::io::BufRead = &mut cursor;
+    let result: Result<TestArray, _> = decode_from_read(reader);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_by_reference() {
+    let data = [1, 2, 3, 4];
+    let mut cursor = Cursor::new(&data);
+    // Test that we can pass by reference (&mut T implements BufRead when T: BufRead).
+    let result: Result<TestArray, _> = decode_from_read(&mut cursor);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+
+    let mut buf = Vec::new();
+    let _ = cursor.read_to_end(&mut buf);
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_unbuffered_success() {
+    let data = [1, 2, 3, 4];
+    let cursor = Cursor::new(&data);
+    let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_unbuffered_unexpected_eof() {
+    let data = [1, 2, 3];
+    let cursor = Cursor::new(&data);
+    let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+    assert!(matches!(result, Err(ReadError::Decode(_))));
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_unbuffered_empty() {
+    let data = [];
+    let cursor = Cursor::new(&data);
+    let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+    assert!(matches!(result, Err(ReadError::Decode(_))));
+}
+
+#[test]
+#[cfg(feature = "std")]
+fn decode_from_read_unbuffered_extra_data() {
+    let data = [1, 2, 3, 4, 5, 6];
+    let cursor = Cursor::new(&data);
+    let result: Result<TestArray, _> = decode_from_read_unbuffered(cursor);
+    assert!(result.is_ok());
+    let decoded = result.unwrap();
+    assert_eq!(decoded.0, [1, 2, 3, 4]);
+}
+
+#[cfg(feature = "alloc")]
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Inner(u32);
+
+#[cfg(feature = "alloc")]
+struct InnerDecoder(ArrayDecoder<4>);
+
+#[cfg(feature = "alloc")]
+impl Decoder for InnerDecoder {
+    type Output = Inner;
+    type Error = UnexpectedEofError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let n = u32::from_le_bytes(self.0.end()?);
+        Ok(Inner(n))
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for Inner {
+    type Decoder = InnerDecoder;
+    fn decoder() -> Self::Decoder { InnerDecoder(ArrayDecoder::<4>::new()) }
+}
+
+#[cfg(feature = "alloc")]
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Test(Vec<Inner>);
+
+#[cfg(feature = "alloc")]
+#[derive(Default)]
+struct TestDecoder(VecDecoder<Inner>);
+
+#[cfg(feature = "alloc")]
+impl Decoder for TestDecoder {
+    type Output = Test;
+    type Error = VecDecoderError<UnexpectedEofError>;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let v = self.0.end()?;
+        Ok(Test(v))
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for Test {
+    type Decoder = TestDecoder;
+    fn decoder() -> Self::Decoder { TestDecoder(VecDecoder::new()) }
+}
+
+// Stress test the push_bytes impl by passing in a single byte slice repeatedly.
+macro_rules! check_decode_one_byte_at_a_time {
+    ($decoder:expr; $($test_name:ident, $want:expr, $array:expr);* $(;)?) => {
+        $(
+            #[test]
+            #[allow(non_snake_case)]
+            fn $test_name() {
+                let mut decoder = $decoder;
+
+                for (i, _) in $array.iter().enumerate() {
+                    if i < $array.len() - 1 {
+                        let mut p = &$array[i..i+1];
+                        assert!(decoder.push_bytes(&mut p).unwrap());
+                    } else {
+                        // last byte: `push_bytes` should return false since no more bytes required.
+                        let mut p = &$array[i..];
+                        assert!(!decoder.push_bytes(&mut p).unwrap());
+                    }
+                }
+
+                let got = decoder.end().unwrap();
+                assert_eq!(got, $want);
+            }
+        )*
+
+    }
+}
+
+check_decode_one_byte_at_a_time! {
+    CompactSizeDecoder::new_with_limit(0xF0F0_F0F0);
+    decode_compact_size_0x10, 0x10, [0x10];
+    decode_compact_size_0xFC, 0xFC, [0xFC];
+    decode_compact_size_0xFD, 0xFD, [0xFD, 0xFD, 0x00];
+    decode_compact_size_0x100, 0x100, [0xFD, 0x00, 0x01];
+    decode_compact_size_0xFFF, 0x0FFF, [0xFD, 0xFF, 0x0F];
+    decode_compact_size_0x0F0F_0F0F, 0x0F0F_0F0F, [0xFE, 0xF, 0xF, 0xF, 0xF];
+}
+
+#[test]
+#[cfg(target_pointer_width = "64")]
+#[allow(non_snake_case)]
+fn decode_compact_size_0xF0F0_F0F0_F0E0() {
+    let mut decoder = CompactSizeDecoder::new_with_limit(0xF0F0_F0F0_F0EF);
+    let array = [0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0];
+
+    for (i, _) in array.iter().enumerate() {
+        if i < array.len() - 1 {
+            let mut p = &array[i..=i];
+            assert!(decoder.push_bytes(&mut p).unwrap());
+        } else {
+            // last byte: `push_bytes` should return false since no more bytes required.
+            let mut p = &array[i..];
+            assert!(!decoder.push_bytes(&mut p).unwrap());
+        }
+    }
+
+    let got = decoder.end().unwrap();
+    assert_eq!(got, 0xF0F0_F0F0_F0E0);
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn compact_size_zero() {
+    // Zero (eg for an empty vector) with a couple of arbitrary extra bytes.
+    let encoded = vec![0x00, 0xFF, 0xFF];
+
+    let mut slice = encoded.as_slice();
+    let mut decoder = CompactSizeDecoder::new();
+    assert!(!decoder.push_bytes(&mut slice).unwrap());
+
+    let got = decoder.end().unwrap();
+    assert_eq!(got, 0);
+}
+
+#[cfg(feature = "alloc")]
+fn two_fifty_six_bytes_encoded() -> Vec<u8> {
+    let data = [0xff; 256];
+    let mut v = Vec::with_capacity(259);
+
+    v.extend_from_slice(&[0xFD, 0x00, 0x01]); // 256 encoded as a  compact size.
+    v.extend_from_slice(&data);
+    v
+}
+
+#[cfg(feature = "alloc")]
+check_decode_one_byte_at_a_time! {
+    ByteVecDecoder::default();
+        decode_byte_vec, vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef],
+    [0x08, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
+        decode_byte_vec_multi_byte_length_prefix, [0xff; 256], two_fifty_six_bytes_encoded();
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn vec_decoder_empty() {
+    // Empty with a couple of arbitrary extra bytes.
+    let encoded = vec![0x00, 0xFF, 0xFF];
+
+    let mut slice = encoded.as_slice();
+    let mut decoder = Test::decoder();
+    assert!(!decoder.push_bytes(&mut slice).unwrap());
+
+    let got = decoder.end().unwrap();
+    let want = Test(vec![]);
+
+    assert_eq!(got, want);
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn vec_decoder_one_item() {
+    let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE];
+
+    let mut slice = encoded.as_slice();
+    let mut decoder = Test::decoder();
+    decoder.push_bytes(&mut slice).unwrap();
+
+    let got = decoder.end().unwrap();
+    let want = Test(vec![Inner(0xDEAD_BEEF)]);
+
+    assert_eq!(got, want);
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn vec_decoder_two_items() {
+    let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
+
+    let mut slice = encoded.as_slice();
+    let mut decoder = Test::decoder();
+    decoder.push_bytes(&mut slice).unwrap();
+
+    let got = decoder.end().unwrap();
+    let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
+
+    assert_eq!(got, want);
+}
+
+#[cfg(feature = "alloc")]
+fn two_fifty_six_elements() -> Test {
+    Test(core::iter::repeat(Inner(0xDEAD_BEEF)).take(256).collect())
+}
+
+#[cfg(feature = "alloc")]
+fn two_fifty_six_elements_encoded() -> Vec<u8> {
+    [0xFD, 0x00, 0x01] // 256 encoded as a  compact size.
+        .into_iter()
+        .chain(core::iter::repeat(0xDEAD_BEEF_u32.to_le_bytes()).take(256).flatten())
+        .collect()
+}
+
+#[cfg(feature = "alloc")]
+check_decode_one_byte_at_a_time! {
+    TestDecoder::default();
+        decode_vec, Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]),
+    vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
+        decode_vec_multi_byte_length_prefix, two_fifty_six_elements(), two_fifty_six_elements_encoded();
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn vec_decoder_one_item_plus_more_data() {
+    // One u32 plus some other bytes.
+    let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE, 0xff, 0xff, 0xff, 0xff];
+
+    let mut slice = encoded.as_slice();
+
+    let mut decoder = Test::decoder();
+    decoder.push_bytes(&mut slice).unwrap();
+
+    let got = decoder.end().unwrap();
+    let want = Test(vec![Inner(0xDEAD_BEEF)]);
+
+    assert_eq!(got, want);
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn decode_vec_from_read_unbuffered_success() {
+    let encoded = [0x01, 0xEF, 0xBE, 0xAD, 0xDE, 0xff, 0xff, 0xff, 0xff];
+    let mut cursor = Cursor::new(&encoded);
+
+    let got = bitcoin_consensus_encoding::decode_from_read_unbuffered::<Test, _>(&mut cursor).unwrap();
+    assert_eq!(cursor.position(), 5);
+
+    let want = Test(vec![Inner(0xDEAD_BEEF)]);
+    assert_eq!(got, want);
 }
