@@ -1437,6 +1437,10 @@ pub fn bitcoin_primitives::Wtxid::from_str(s: &str) -> core::result::Result<Self
 pub fn bitcoin_primitives::Wtxid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::Wtxid::partial_cmp(&self, other: &bitcoin_primitives::Wtxid) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::Wtxid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_primitives::as_consensus::deserialize<'d, T, D>(d: D) -> core::result::Result<T, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::encode::Encodable + bitcoin_consensus_encoding::decode::Decodable + core::str::traits::FromStr, <T as core::str::traits::FromStr>::Err: core::fmt::Display, D: serde::de::Deserializer<'d>
+pub fn bitcoin_primitives::as_consensus::opt::deserialize<'d, T, D>(d: D) -> core::result::Result<core::option::Option<T>, <D as serde::de::Deserializer>::Error> where T: bitcoin_consensus_encoding::encode::Encodable + bitcoin_consensus_encoding::decode::Decodable + core::str::traits::FromStr, <T as core::str::traits::FromStr>::Err: core::fmt::Display, D: serde::de::Deserializer<'d>
+pub fn bitcoin_primitives::as_consensus::opt::serialize<T, S>(t: &core::option::Option<T>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::encode::Encodable + bitcoin_consensus_encoding::decode::Decodable + core::str::traits::FromStr, <T as core::str::traits::FromStr>::Err: core::fmt::Display, S: serde::ser::Serializer
+pub fn bitcoin_primitives::as_consensus::serialize<T, S>(value: &T, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where T: bitcoin_consensus_encoding::encode::Encodable + bitcoin_consensus_encoding::decode::Decodable, S: serde::ser::Serializer
 pub fn bitcoin_primitives::block::Block::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::block::Block::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::block::Block::encoder(&self) -> Self::Encoder
@@ -1904,6 +1908,8 @@ pub fn bitcoin_primitives::witness::WitnessEncoder<'_>::advance(&mut self) -> bo
 pub fn bitcoin_primitives::witness::WitnessEncoder<'_>::current_chunk(&self) -> &[u8]
 pub fn u32::from(version: bitcoin_primitives::transaction::Version) -> Self
 pub mod bitcoin_primitives
+pub mod bitcoin_primitives::as_consensus
+pub mod bitcoin_primitives::as_consensus::opt
 pub mod bitcoin_primitives::block
 pub mod bitcoin_primitives::merkle_tree
 pub mod bitcoin_primitives::script
