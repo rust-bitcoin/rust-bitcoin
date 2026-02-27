@@ -621,8 +621,12 @@ impl PublicKey {
             }
         };
 
-        if !compressed && data[0] != 0x04 {
-            return Err(FromSliceError::InvalidKeyPrefix(data[0]));
+        // Compressed keys must have a prefix byte of 2 or 3. Uncompressed must be 4
+        match (compressed, data[0]) {
+            (true, 0x02) => (),
+            (true, 0x03) => (),
+            (false, 0x04) => (),
+            (_, byte) => return Err(FromSliceError::InvalidKeyPrefix(byte)),
         }
 
         Ok(match compressed {
