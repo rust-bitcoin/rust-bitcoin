@@ -611,10 +611,12 @@ impl Ordinary {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "std")]
     use std::collections::HashSet;
 
     use super::*;
 
+    #[cfg(feature = "std")]
     macro_rules! roundtrip {
         ($unique:expr, $op:ident) => {
             assert_eq!($op, Opcode::from($op.to_u8()));
@@ -707,6 +709,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn str_roundtrip() {
         let mut unique = HashSet::new();
         roundtrip!(unique, OP_PUSHBYTES_0);

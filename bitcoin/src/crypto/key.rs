@@ -1638,6 +1638,8 @@ impl std::error::Error for TweakXOnlyPublicKeyError {}
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use super::*;
     use crate::address::Address;
 

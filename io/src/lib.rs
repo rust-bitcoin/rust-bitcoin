@@ -13,7 +13,7 @@
 //! For examples of how to use and implement the types and traits in this crate see `io.rs` in the
 //! `github.com/rust-bitcoin/rust-bitcoin/bitcoin/examples/` directory.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 // Coding conventions.
 #![warn(missing_docs)]
 #![doc(test(attr(warn(unused))))]
@@ -22,6 +22,9 @@
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "hashes")]
 pub extern crate hashes;
@@ -35,6 +38,8 @@ mod hash;
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
+#[cfg(feature = "std")]
+use std::vec::Vec;
 use core::cmp;
 
 use encoding::{Decodable, Decoder, Encoder};
@@ -630,6 +635,8 @@ impl<D> From<Error> for ReadError<D> {
 mod tests {
     #[cfg(all(not(feature = "std"), feature = "alloc"))]
     use alloc::{string::ToString, vec};
+    #[cfg(feature = "std")]
+    use std::{string::ToString, vec};
 
     use encoding::{ArrayDecoder, ArrayEncoder, UnexpectedEofError};
 

@@ -9,6 +9,8 @@ pub use crate::{BlockHash, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleN
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use super::*;
     use crate::key::{PubkeyHash, WPubkeyHash};
     use crate::script::{ScriptHash, WScriptHash};

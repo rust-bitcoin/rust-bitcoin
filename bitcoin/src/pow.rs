@@ -2149,6 +2149,7 @@ mod tests {
     macro_rules! check_from_str {
         ($ty:ident, $err_ty:ident, $mod_name:ident) => {
             mod $mod_name {
+                use alloc::string::ToString;
                 use core::str::FromStr;
 
                 use super::{$err_ty, $ty, ParseU256Error, U256};

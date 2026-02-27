@@ -221,6 +221,8 @@ pub fn sign(msg: impl AsRef<[u8]>, privkey: SecretKey) -> MessageSignature {
 
 #[cfg(test)]
 mod tests {
+    use alloc::string::ToString;
+
     use super::*;
 
     #[test]

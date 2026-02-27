@@ -22,7 +22,7 @@
 //! * `secp-recovery` - enables calculating public key from a signature and message.
 //! * `std` - the usual dependency on `std`.
 
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_notable_trait))]
 // Coding conventions.
@@ -54,6 +54,9 @@ internals::const_assert!(
 
 #[macro_use]
 extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 /// Encodes and decodes base64 as bytes or utf8.
 #[cfg(feature = "base64")]
@@ -202,19 +205,19 @@ pub use crate::{
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {
-    #[cfg(all(not(feature = "std"), not(test)))]
+    #[cfg(not(feature = "std"))]
     pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, slice, rc};
 
-    #[cfg(all(not(feature = "std"), not(test), target_has_atomic = "ptr"))]
+    #[cfg(all(not(feature = "std"), target_has_atomic = "ptr"))]
     pub use alloc::sync;
 
-    #[cfg(any(feature = "std", test))]
+    #[cfg(feature = "std")]
     pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, rc, sync};
 
-    #[cfg(all(not(feature = "std"), not(test)))]
+    #[cfg(not(feature = "std"))]
     pub use alloc::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
 
-    #[cfg(any(feature = "std", test))]
+    #[cfg(feature = "std")]
     pub use std::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
 
     pub use crate::io::sink;
