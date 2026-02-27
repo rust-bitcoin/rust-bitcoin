@@ -38,6 +38,7 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
+use encoding::{ArrayEncoder, ArrayDecoder};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
@@ -511,6 +512,72 @@ impl Decodable for Magic {
     }
 }
 
+encoding::encoder_newtype_exact! {
+    /// The encoder type for network [`Magic`].
+    pub struct MagicEncoder<'e>(ArrayEncoder<4>);
+}
+
+impl encoding::Encodable for Magic {
+    type Encoder<'e> = MagicEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        MagicEncoder::new(ArrayEncoder::without_length_prefix(self.0))
+    }
+}
+
+type MagicInnerDecoder = ArrayDecoder<4>;
+
+/// The decoder type for a network [`Magic`].
+pub struct MagicDecoder(MagicInnerDecoder);
+
+impl encoding::Decoder for MagicDecoder {
+    type Output = Magic;
+    type Error = MagicDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(MagicDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(MagicDecoderError)?;
+        Ok(Magic::from_bytes(bytes))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Magic {
+    type Decoder = MagicDecoder;
+
+    fn decoder() -> Self::Decoder {
+        MagicDecoder(ArrayDecoder::new())
+    }
+}
+
+/// Errors occuring when decoding a network [`Magic`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MagicDecoderError(<MagicInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for MagicDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for MagicDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "magic error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MagicDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.0)
+    }
+}
+
 impl AsRef<[u8]> for Magic {
     fn as_ref(&self) -> &[u8] { &self.0 }
 }
@@ -615,46 +682,46 @@ impl<'a> Arbitrary<'a> for Magic {
 mod tests {
     use alloc::string::ToString;
 
-    use bitcoin::consensus::encode::{deserialize, serialize};
+    use encoding::{decode_from_slice, encode_to_vec};
 
     use super::*;
 
     #[test]
     fn serialize_deserialize() {
-        assert_eq!(serialize(&Magic::BITCOIN), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(encode_to_vec(&Magic::BITCOIN), &[0xf9, 0xbe, 0xb4, 0xd9]);
         let magic: Magic = Network::Bitcoin.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0xf9, 0xbe, 0xb4, 0xd9]);
-        assert_eq!(serialize(&Magic::TESTNET3), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(encode_to_vec(&magic), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(encode_to_vec(&Magic::TESTNET3), &[0x0b, 0x11, 0x09, 0x07]);
         let magic: Magic = Network::Testnet(TestnetVersion::V3).try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x0b, 0x11, 0x09, 0x07]);
-        assert_eq!(serialize(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
+        assert_eq!(encode_to_vec(&magic), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(encode_to_vec(&Magic::TESTNET4), &[0x1c, 0x16, 0x3f, 0x28]);
         let magic: Magic = Network::Testnet(TestnetVersion::V4).try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
-        assert_eq!(serialize(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(encode_to_vec(&magic), &[0x1c, 0x16, 0x3f, 0x28]);
+        assert_eq!(encode_to_vec(&Magic::SIGNET), &[0x0a, 0x03, 0xcf, 0x40]);
         let magic: Magic = Network::Signet.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0x0a, 0x03, 0xcf, 0x40]);
-        assert_eq!(serialize(&Magic::REGTEST), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(encode_to_vec(&magic), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(encode_to_vec(&Magic::REGTEST), &[0xfa, 0xbf, 0xb5, 0xda]);
         let magic: Magic = Network::Regtest.try_into().unwrap();
-        assert_eq!(serialize(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(encode_to_vec(&magic), &[0xfa, 0xbf, 0xb5, 0xda]);
 
         assert_eq!(
-            deserialize::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
+            decode_from_slice::<Magic>(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
             Network::Bitcoin.try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
+            decode_from_slice::<Magic>(&[0x0b, 0x11, 0x09, 0x07]).ok(),
             Network::Testnet(TestnetVersion::V3).try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
+            decode_from_slice::<Magic>(&[0x1c, 0x16, 0x3f, 0x28]).ok(),
             Network::Testnet(TestnetVersion::V4).try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
+            decode_from_slice::<Magic>(&[0x0a, 0x03, 0xcf, 0x40]).ok(),
             Network::Signet.try_into().ok()
         );
         assert_eq!(
-            deserialize::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
+            decode_from_slice::<Magic>(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
             Network::Regtest.try_into().ok()
         );
     }
