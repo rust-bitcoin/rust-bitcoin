@@ -432,7 +432,7 @@ impl<'a> Arbitrary<'a> for Inventory {
 #[cfg(test)]
 mod tests {
     use bitcoin::consensus::encode::{deserialize, serialize};
-    use hex_lit::hex;
+    use hex::hex;
 
     use super::*;
 

@@ -21,7 +21,7 @@ alloc = ["hex?/alloc"]
 test-serde = ["serde", "serde_json", "bincode"]
 
 [dependencies]
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex = { package = "hex-conservative", version = "0.3.2", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, optional = true }
 
 # Don't enable these directly, use `test-serde` feature instead.
