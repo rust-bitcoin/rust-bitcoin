@@ -946,6 +946,18 @@ impl PrivateKey {
             false => Self::from_secp_uncompressed(self.as_inner().negate(), self.network()),
         }
     }
+
+    /// Signs a message slice with this private key.
+    pub fn sign(
+        &self,
+        msg: impl Into<secp256k1::Message>,
+        sighash_ty: crate::EcdsaSighashType
+    ) -> ecdsa::Signature {
+        ecdsa::Signature {
+            signature: secp256k1::ecdsa::sign(msg, self.as_inner()),
+            sighash_type: sighash_ty,
+        }
+    }
 }
 
 impl fmt::Display for PrivateKey {
