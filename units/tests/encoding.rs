@@ -110,6 +110,7 @@ fn amount_hardcoded_encoding() {
     assert_eq!(encoded, [0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00]);
 }
 
+#[rustfmt::skip]
 test_hardcoded_decoding!(
     amount_hardcoded_decoding,
     AmountDecoder,
@@ -118,10 +119,7 @@ test_hardcoded_decoding!(
     ([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], Amount::ONE_SAT),
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::ONE_BTC), // 100_000_000 sats
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::from_sat(100_000_000).unwrap()), // 1 BTC
-    (
-        [0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00],
-        Amount::from_sat(21_000_000 * 100_000_000).unwrap()
-    ), // 21M BTC
+    ([0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00], Amount::from_sat(21_000_000 * 100_000_000).unwrap()), // 21M BTC
 );
 
 test_decoder_default!(amount_decoder_default, Amount, AmountDecoder, 8);
@@ -137,6 +135,7 @@ test_round_trip!(
     Amount::from_sat(21_000_000 * 100_000_000).unwrap(), // 21 million BTC
 );
 
+#[rustfmt::skip]
 test_incremental_decoding!(
     amount_incremental_decoding,
     AmountDecoder,
@@ -145,10 +144,7 @@ test_incremental_decoding!(
     ([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], Amount::ONE_SAT),
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::ONE_BTC), // 100_000_000 sats
     ([0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00], Amount::from_sat(100_000_000).unwrap()), // 1 BTC
-    (
-        [0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00],
-        Amount::from_sat(21_000_000 * 100_000_000).unwrap()
-    ), // 21M BTC
+    ([0x00, 0x40, 0x07, 0x5a, 0xf0, 0x75, 0x07, 0x00], Amount::from_sat(21_000_000 * 100_000_000).unwrap()), // 21M BTC
 );
 
 // BlockHeight encodes as 4-byte little-endian u32.
