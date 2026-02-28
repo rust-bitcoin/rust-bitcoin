@@ -2,18 +2,18 @@
 
 use std::hint::black_box;
 
-use bitcoin_hashes::{sha256, HashEngine};
+use bitcoin_hashes::{sha256d, HashEngine};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
-fn bench_sha256(c: &mut Criterion) {
-    let mut g = c.benchmark_group("sha256");
+fn bench_sha256d(c: &mut Criterion) {
+    let mut g = c.benchmark_group("sha256d");
 
-    for &size in &[10usize, 1024, 65536] {
+    for &size in &[10usize, 64, 1024, 65536] {
         let bytes = vec![1u8; size];
         g.throughput(Throughput::Bytes(size as u64));
         g.bench_function(BenchmarkId::new("engine_input", size), |b| {
             b.iter(|| {
-                let mut engine = sha256::Hash::engine();
+                let mut engine = sha256d::Hash::engine();
                 engine.input(black_box(&bytes));
                 black_box(engine.finalize());
             });
@@ -23,5 +23,5 @@ fn bench_sha256(c: &mut Criterion) {
     g.finish();
 }
 
-criterion_group!(benches, bench_sha256);
+criterion_group!(benches, bench_sha256d);
 criterion_main!(benches);

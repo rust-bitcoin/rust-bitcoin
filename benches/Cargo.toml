@@ -85,6 +85,11 @@ path = "hashes/sha256.rs"
 harness = false
 
 [[bench]]
+name = "sha256d"
+path = "hashes/sha256d.rs"
+harness = false
+
+[[bench]]
 name = "sha384"
 path = "hashes/sha384.rs"
 harness = false
