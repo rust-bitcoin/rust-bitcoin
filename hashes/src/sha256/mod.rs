@@ -6,7 +6,7 @@ mod crypto;
 #[cfg(test)]
 mod tests;
 
-use core::{cmp, convert, fmt};
+use core::{convert, fmt};
 
 use internals::slice::SliceExt;
 
