@@ -75,22 +75,22 @@ mod fast_hash {
 
 impl HashEngine {
     // Algorithm copied from libsecp256k1
-    pub(crate) fn process_block(&mut self) {
-        debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
+    pub(crate) fn process_block(state: &mut[u64; 8], block: &[u8; BLOCK_SIZE]) {
+        debug_assert_eq!(block.len(), BLOCK_SIZE);
 
         let mut w = [0u64; 16];
-        for (w_val, buff_bytes) in w.iter_mut().zip(self.buffer.bitcoin_as_chunks().0) {
+        for (w_val, buff_bytes) in w.iter_mut().zip(block.bitcoin_as_chunks().0) {
             *w_val = u64::from_be_bytes(*buff_bytes);
         }
 
-        let mut a = self.h[0];
-        let mut b = self.h[1];
-        let mut c = self.h[2];
-        let mut d = self.h[3];
-        let mut e = self.h[4];
-        let mut f = self.h[5];
-        let mut g = self.h[6];
-        let mut h = self.h[7];
+        let mut a = state[0];
+        let mut b = state[1];
+        let mut c = state[2];
+        let mut d = state[3];
+        let mut e = state[4];
+        let mut f = state[5];
+        let mut g = state[6];
+        let mut h = state[7];
 
         round!(a, b, c, d, e, f, g, h, 0x428a2f98d728ae22, w[0]);
         round!(h, a, b, c, d, e, f, g, 0x7137449123ef65cd, w[1]);
@@ -178,13 +178,13 @@ impl HashEngine {
         round!(b, c, d, e, f, g, h, a, 0x6c44198c4a475817, w[15], w[13], w[8], w[0]);
         let _ = w[15]; // silence "unnecessary assignment" lint in macro
 
-        self.h[0] = self.h[0].wrapping_add(a);
-        self.h[1] = self.h[1].wrapping_add(b);
-        self.h[2] = self.h[2].wrapping_add(c);
-        self.h[3] = self.h[3].wrapping_add(d);
-        self.h[4] = self.h[4].wrapping_add(e);
-        self.h[5] = self.h[5].wrapping_add(f);
-        self.h[6] = self.h[6].wrapping_add(g);
-        self.h[7] = self.h[7].wrapping_add(h);
+        state[0] = state[0].wrapping_add(a);
+        state[1] = state[1].wrapping_add(b);
+        state[2] = state[2].wrapping_add(c);
+        state[3] = state[3].wrapping_add(d);
+        state[4] = state[4].wrapping_add(e);
+        state[5] = state[5].wrapping_add(f);
+        state[6] = state[6].wrapping_add(g);
+        state[7] = state[7].wrapping_add(h);
     }
 }

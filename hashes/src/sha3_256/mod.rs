@@ -167,7 +167,7 @@ fn keccakf1600(state: &mut KeccakState) {
 /// Engine to compute the Sha3-256 hash function.
 #[derive(Debug, Clone)]
 pub struct HashEngine {
-    state: KeccakState,
+    h: KeccakState,
     bytes_hashed: u64,
     buffer: [u8; RATE],
 }
@@ -179,23 +179,23 @@ impl Default for HashEngine {
 impl HashEngine {
     /// Construct a new Sha3-256 hash engine.
     pub const fn new() -> Self {
-        Self { state: KeccakState::new(), bytes_hashed: 0, buffer: [0; RATE] }
+        Self { h: KeccakState::new(), bytes_hashed: 0, buffer: [0; RATE] }
     }
 
-    fn absorb(&mut self, block: [u8; RATE]) {
+    fn absorb(state: &mut KeccakState, block: &[u8; RATE]) {
         for lane in 0..RATE_LANES {
             let x = lane % 5;
             let y = lane / 5;
             let mut pad_block = [0u8; 8];
             pad_block.copy_from_slice(&block[8 * lane..8 * lane + 8]);
             let shuffle = u64::from_le_bytes(pad_block);
-            self.state.xor_assign(x, y, shuffle);
+            state.xor_assign(x, y, shuffle);
         }
     }
 
-    fn process_block(&mut self) {
-        self.absorb(self.buffer);
-        keccakf1600(&mut self.state);
+    fn process_block(state: &mut KeccakState, block: &[u8; RATE]) {
+        Self::absorb(state, block);
+        keccakf1600(state);
     }
 }
 
@@ -213,13 +213,13 @@ impl crate::HashEngine for HashEngine {
         self.buffer[incomplete_block_len + 1..].fill(0);
         self.buffer[incomplete_block_len] = 0x06;
         self.buffer[RATE - 1] ^= 0x80;
-        self.process_block();
+        Self::process_block(&mut self.h, &self.buffer);
 
         let mut out = [0u8; 32];
-        out[..8].copy_from_slice(&self.state.lane(0, 0).to_le_bytes());
-        out[8..16].copy_from_slice(&self.state.lane(1, 0).to_le_bytes());
-        out[16..24].copy_from_slice(&self.state.lane(2, 0).to_le_bytes());
-        out[24..].copy_from_slice(&self.state.lane(3, 0).to_le_bytes());
+        out[..8].copy_from_slice(&self.h.lane(0, 0).to_le_bytes());
+        out[8..16].copy_from_slice(&self.h.lane(1, 0).to_le_bytes());
+        out[16..24].copy_from_slice(&self.h.lane(2, 0).to_le_bytes());
+        out[24..].copy_from_slice(&self.h.lane(3, 0).to_le_bytes());
         Hash(out)
     }
 }

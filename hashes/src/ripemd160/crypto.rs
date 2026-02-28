@@ -131,15 +131,15 @@ macro_rules! process_block(
 );
 
 impl HashEngine {
-    pub(super) fn process_block(&mut self) {
-        debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
+    pub(super) fn process_block(state: &mut [u32; 5], block: &[u8; BLOCK_SIZE]) {
+        debug_assert_eq!(block.len(), BLOCK_SIZE);
 
         let mut w = [0u32; 16];
-        for (w_val, buff_bytes) in w.iter_mut().zip(self.buffer.bitcoin_as_chunks().0) {
+        for (w_val, buff_bytes) in w.iter_mut().zip(block.bitcoin_as_chunks().0) {
             *w_val = u32::from_le_bytes(*buff_bytes)
         }
 
-        process_block!(self.h, w,
+        process_block!(*state, w,
             // Round 1
             round1: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 11;
             round1: h_ordering 4, 0, 1, 2, 3; data_index  1; roll_shift 14;

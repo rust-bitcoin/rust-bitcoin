@@ -269,7 +269,7 @@ impl Midstate {
 }
 
 impl HashEngine {
-    pub(super) fn process_block(&mut self) {
+    pub(super) fn process_block(state: &mut[u32; 8], block: &[u8; BLOCK_SIZE]) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
             if std::is_x86_feature_detected!("sse4.1")
@@ -277,14 +277,14 @@ impl HashEngine {
                 && std::is_x86_feature_detected!("sse2")
                 && std::is_x86_feature_detected!("ssse3")
             {
-                return unsafe { self.process_block_simd_x86_intrinsics() };
+                return unsafe { Self::process_block_simd_x86_intrinsics(state, block) };
             }
         }
 
         #[cfg(all(feature = "cpufeatures", any(target_arch = "x86", target_arch = "x86_64")))]
         {
             if cpuid_sha256_x86::get() {
-                return unsafe { self.process_block_simd_x86_intrinsics() };
+                return unsafe { Self::process_block_simd_x86_intrinsics(state, block) };
             }
         }
 
@@ -292,24 +292,24 @@ impl HashEngine {
         #[cfg(all(feature = "std", target_arch = "aarch64"))]
         {
             if std::arch::is_aarch64_feature_detected!("sha2") {
-                return unsafe { self.process_block_simd_arm_intrinsics() };
+                return unsafe { Self::process_block_simd_arm_intrinsics(state, block) };
             }
         }
 
         #[cfg(all(feature = "cpufeatures", target_arch = "aarch64"))]
         {
             if cpuid_sha256_aarch64::get() {
-                return unsafe { self.process_block_simd_arm_intrinsics() };
+                return unsafe { Self::process_block_simd_arm_intrinsics(state, block) };
             }
         }
 
         // fallback implementation without using any intrinsics
-        self.software_process_block()
+        Self::software_process_block(state, block)
     }
 
     #[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), any(feature = "std", feature = "cpufeatures")))]
     #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
-    unsafe fn process_block_simd_x86_intrinsics(&mut self) {
+    unsafe fn process_block_simd_x86_intrinsics(state: &mut[u32; 8], block: &[u8; BLOCK_SIZE]) {
         // Code translated and based on from
         // https://github.com/noloader/SHA-Intrinsics/blob/4899efc81d1af159c1fd955936c673139f35aea9/sha256-x86.c
 
@@ -335,8 +335,8 @@ impl HashEngine {
         // Load initial values
         // CAST SAFETY: loadu_si128 documentation states that mem_addr does not
         // need to be aligned on any particular boundary.
-        tmp = _mm_loadu_si128(self.h.as_ptr().add(0).cast::<__m128i>());
-        state1 = _mm_loadu_si128(self.h.as_ptr().add(4).cast::<__m128i>());
+        tmp = _mm_loadu_si128(state.as_ptr().add(0).cast::<__m128i>());
+        state1 = _mm_loadu_si128(state.as_ptr().add(4).cast::<__m128i>());
 
         tmp = _mm_shuffle_epi32(tmp, 0xB1); // CDAB
         state1 = _mm_shuffle_epi32(state1, 0x1B); // EFGH
@@ -350,7 +350,7 @@ impl HashEngine {
             cdgh_save = state1;
 
             // Rounds 0-3
-            msg = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset).cast::<__m128i>());
+            msg = _mm_loadu_si128(block.as_ptr().add(block_offset).cast::<__m128i>());
             msg0 = _mm_shuffle_epi8(msg, MASK);
             msg = _mm_add_epi32(
                 msg0,
@@ -361,7 +361,7 @@ impl HashEngine {
             state0 = _mm_sha256rnds2_epu32(state0, state1, msg);
 
             // Rounds 4-7
-            msg1 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 16).cast::<__m128i>());
+            msg1 = _mm_loadu_si128(block.as_ptr().add(block_offset + 16).cast::<__m128i>());
             msg1 = _mm_shuffle_epi8(msg1, MASK);
             msg = _mm_add_epi32(
                 msg1,
@@ -373,7 +373,7 @@ impl HashEngine {
             msg0 = _mm_sha256msg1_epu32(msg0, msg1);
 
             // Rounds 8-11
-            msg2 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 32).cast::<__m128i>());
+            msg2 = _mm_loadu_si128(block.as_ptr().add(block_offset + 32).cast::<__m128i>());
             msg2 = _mm_shuffle_epi8(msg2, MASK);
             msg = _mm_add_epi32(
                 msg2,
@@ -385,7 +385,7 @@ impl HashEngine {
             msg1 = _mm_sha256msg1_epu32(msg1, msg2);
 
             // Rounds 12-15
-            msg3 = _mm_loadu_si128(self.buffer.as_ptr().add(block_offset + 48).cast::<__m128i>());
+            msg3 = _mm_loadu_si128(block.as_ptr().add(block_offset + 48).cast::<__m128i>());
             msg3 = _mm_shuffle_epi8(msg3, MASK);
             msg = _mm_add_epi32(
                 msg3,
@@ -562,13 +562,13 @@ impl HashEngine {
         // Save state
         // CAST SAFETY: storeu_si128 documentation states that mem_addr does not
         // need to be aligned on any particular boundary.
-        _mm_storeu_si128(self.h.as_mut_ptr().add(0).cast::<__m128i>(), state0);
-        _mm_storeu_si128(self.h.as_mut_ptr().add(4).cast::<__m128i>(), state1);
+        _mm_storeu_si128(state.as_mut_ptr().add(0).cast::<__m128i>(), state0);
+        _mm_storeu_si128(state.as_mut_ptr().add(4).cast::<__m128i>(), state1);
     }
 
     #[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
     #[target_feature(enable = "sha2")]
-    unsafe fn process_block_simd_arm_intrinsics(&mut self) {
+    unsafe fn process_block_simd_arm_intrinsics(state: &mut[u32; 8], block: &[u8; BLOCK_SIZE]) {
         // Code translated and based on from
         // https://github.com/noloader/SHA-Intrinsics/blob/4e754bec921a9f281b69bd681ca0065763aa911c/sha256-arm.c
 
@@ -605,18 +605,18 @@ impl HashEngine {
         let (mut tmp0, mut tmp1, mut tmp2);
 
         // Load state
-        state0 = vld1q_u32(self.h.as_ptr().add(0));
-        state1 = vld1q_u32(self.h.as_ptr().add(4));
+        state0 = vld1q_u32(state.as_ptr().add(0));
+        state1 = vld1q_u32(state.as_ptr().add(4));
 
         // Save state
         abcd_save = state0;
         efgh_save = state1;
 
         // Load message
-        msg0 = vld1q_u32(self.buffer.as_ptr().add(0).cast::<u32>());
-        msg1 = vld1q_u32(self.buffer.as_ptr().add(16).cast::<u32>());
-        msg2 = vld1q_u32(self.buffer.as_ptr().add(32).cast::<u32>());
-        msg3 = vld1q_u32(self.buffer.as_ptr().add(48).cast::<u32>());
+        msg0 = vld1q_u32(block.as_ptr().add(0).cast::<u32>());
+        msg1 = vld1q_u32(block.as_ptr().add(16).cast::<u32>());
+        msg2 = vld1q_u32(block.as_ptr().add(32).cast::<u32>());
+        msg3 = vld1q_u32(block.as_ptr().add(48).cast::<u32>());
 
         // Reverse for little endian
         msg0 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(msg0)));
@@ -750,27 +750,27 @@ impl HashEngine {
         state1 = vaddq_u32(state1, efgh_save);
 
         // Save state
-        vst1q_u32(self.h.as_mut_ptr().add(0), state0);
-        vst1q_u32(self.h.as_mut_ptr().add(4), state1);
+        vst1q_u32(state.as_mut_ptr().add(0), state0);
+        vst1q_u32(state.as_mut_ptr().add(4), state1);
     }
 
     // Algorithm copied from libsecp256k1
-    fn software_process_block(&mut self) {
-        debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
+    fn software_process_block(state: &mut[u32; 8], block: &[u8; BLOCK_SIZE]) {
+        debug_assert_eq!(block.len(), BLOCK_SIZE);
 
         let mut w = [0u32; 16];
-        for (w_val, buff_bytes) in w.iter_mut().zip(self.buffer.bitcoin_as_chunks().0) {
+        for (w_val, buff_bytes) in w.iter_mut().zip(block.bitcoin_as_chunks().0) {
             *w_val = u32::from_be_bytes(*buff_bytes);
         }
 
-        let mut a = self.h[0];
-        let mut b = self.h[1];
-        let mut c = self.h[2];
-        let mut d = self.h[3];
-        let mut e = self.h[4];
-        let mut f = self.h[5];
-        let mut g = self.h[6];
-        let mut h = self.h[7];
+        let mut a = state[0];
+        let mut b = state[1];
+        let mut c = state[2];
+        let mut d = state[3];
+        let mut e = state[4];
+        let mut f = state[5];
+        let mut g = state[6];
+        let mut h = state[7];
 
         round!(a, b, c, d, e, f, g, h, 0x428a2f98, w[0]);
         round!(h, a, b, c, d, e, f, g, 0x71374491, w[1]);
@@ -841,13 +841,13 @@ impl HashEngine {
         round!(b, c, d, e, f, g, h, a, 0xc67178f2, w[15], w[13], w[8], w[0]);
         let _ = w[15]; // silence "unnecessary assignment" lint in macro
 
-        self.h[0] = self.h[0].wrapping_add(a);
-        self.h[1] = self.h[1].wrapping_add(b);
-        self.h[2] = self.h[2].wrapping_add(c);
-        self.h[3] = self.h[3].wrapping_add(d);
-        self.h[4] = self.h[4].wrapping_add(e);
-        self.h[5] = self.h[5].wrapping_add(f);
-        self.h[6] = self.h[6].wrapping_add(g);
-        self.h[7] = self.h[7].wrapping_add(h);
+        state[0] = state[0].wrapping_add(a);
+        state[1] = state[1].wrapping_add(b);
+        state[2] = state[2].wrapping_add(c);
+        state[3] = state[3].wrapping_add(d);
+        state[4] = state[4].wrapping_add(e);
+        state[5] = state[5].wrapping_add(f);
+        state[6] = state[6].wrapping_add(g);
+        state[7] = state[7].wrapping_add(h);
     }
 }

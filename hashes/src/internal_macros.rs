@@ -181,7 +181,8 @@ macro_rules! engine_input_impl(
                     .copy_from_slice(&inp[..write_len]);
                 self.bytes_hashed += write_len as u64;
                 if $crate::incomplete_block_len(self) == 0 {
-                    self.process_block();
+                    // TODO change this to accept multiple blocks instead
+                    Self::process_block(&mut self.h, &self.buffer);
                 }
                 inp = &inp[write_len..];
             }
