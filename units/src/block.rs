@@ -372,7 +372,7 @@ impl From<absolute::MedianTimePast> for BlockMtp {
 impl TryFrom<BlockMtp> for absolute::MedianTimePast {
     type Error = absolute::ConversionError;
 
-    /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
+    /// Converts a [`BlockMtp`] to a [`locktime::absolute::MedianTimePast`].
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.

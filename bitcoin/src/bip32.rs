@@ -32,7 +32,7 @@ const VERSION_BYTES_TESTNETS_PRIVATE: [u8; 4] = [0x04, 0x35, 0x83, 0x94];
 #[deprecated(since = "0.31.0", note = "use `Xpub` instead")]
 pub type ExtendedPubKey = Xpub;
 
-/// The old name for xpriv, extended public key.
+/// The old name for xpriv, extended private key.
 #[deprecated(since = "0.31.0", note = "use `Xpriv` instead")]
 pub type ExtendedPrivKey = Xpriv;
 
