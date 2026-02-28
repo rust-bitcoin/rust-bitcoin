@@ -424,7 +424,7 @@ impl Keypair {
         Self::from(secp256k1::Keypair::from_secret_key(sk))
     }
 
-    /// Returns the [`PrivateKey`] for this [`Keypair`].
+    /// Returns the [`secp256k1::SecretKey`] for this [`Keypair`].
     ///
     /// This is equivalent to using [`secp256k1::SecretKey::from_keypair`] on the inner value.
     #[inline]
