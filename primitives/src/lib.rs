@@ -180,6 +180,9 @@ impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
     }
 }
 
+#[cfg(feature = "alloc")]
+include!("../../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+
 #[cfg(all(feature = "hex", feature = "alloc"))]
 pub(crate) mod hex_codec {
     use encoding::{Encodable, EncodableByteIter};
