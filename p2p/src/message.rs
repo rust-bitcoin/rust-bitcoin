@@ -16,11 +16,11 @@ use core::{cmp, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{self, CompactSizeEncoder, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{self, ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
 use hashes::sha256d;
 use internals::{write_err, ToU64 as _};
 use io::{self, BufRead, Read, Write};
-use primitives::{block, transaction};
+use primitives::{block::{self, HeaderDecoder, HeaderEncoder}, transaction};
 use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
@@ -744,19 +744,6 @@ impl V2NetworkMessage {
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
-impl Encodable for HeadersMessage {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += w.emit_compact_size(self.0.len())?;
-        for header in &self.0 {
-            len += header.consensus_encode(w)?;
-            len += 0u8.consensus_encode(w)?;
-        }
-        Ok(len)
-    }
-}
-
 impl Encodable for NetworkMessage {
     fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
         match self {
@@ -1383,9 +1370,117 @@ impl Encodable for V2NetworkMessage {
     }
 }
 
+/// Network encoded [`Header`](primitives::block::Header) with associated byte for the length of
+/// transactions that follow, which is currently always zero.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NetworkHeader {
+    /// Block header.
+    pub header: block::Header,
+    /// Length of transaction list.
+    pub length: u8,
+}
+
+impl NetworkHeader {
+    /// Create a new [`NetworkHeader`] from underlying block header.
+    pub const fn from_header(header: block::Header) -> Self {
+        Self { header, length: 0 }
+    }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder type for a [`NetworkHeader`].
+    pub struct NetworkHeaderEncoder<'e>(Encoder2<HeaderEncoder<'e>, ArrayEncoder<1>>);
+}
+
+impl encoding::Encodable for NetworkHeader {
+    type Encoder<'e> = NetworkHeaderEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        NetworkHeaderEncoder::new(Encoder2::new(
+            self.header.encoder(),
+            ArrayEncoder::without_length_prefix([self.length]),
+        ))
+    }
+}
+
+type NetworkHeaderInnerDecoder = Decoder2<HeaderDecoder, ArrayDecoder<1>>;
+
+/// The decoder type for a [`NetworkHeader`].
+pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
+
+impl encoding::Decoder for NetworkHeaderDecoder {
+    type Output = NetworkHeader;
+    type Error = NetworkHeaderDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(NetworkHeaderDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (header, length) = self.0.end().map_err(NetworkHeaderDecoderError)?;
+        Ok(NetworkHeader {
+            header,
+            length: u8::from_le_bytes(length),
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for NetworkHeader {
+    type Decoder = NetworkHeaderDecoder;
+
+    fn decoder() -> Self::Decoder {
+        NetworkHeaderDecoder(
+            Decoder2::new(block::Header::decoder(), ArrayDecoder::new()),
+        )
+    }
+}
+
+/// An error decoding a [`NetworkHeader`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NetworkHeaderDecoderError(<NetworkHeaderInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for NetworkHeaderDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for NetworkHeaderDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "network header error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for NetworkHeaderDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+impl Decodable for NetworkHeader {
+    fn consensus_decode<R: BufRead + ?Sized>(
+            reader: &mut R,
+        ) -> Result<Self, encode::Error> {
+        Ok(Self {
+            header: Decodable::consensus_decode(reader)?,
+            length: reader.read_u8()?,
+        })
+    }
+}
+
+impl Encodable for NetworkHeader {
+    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+        let mut size = self.header.consensus_encode(writer)?;
+        size += self.length.consensus_encode(writer)?;
+        Ok(size)
+    }
+}
+
 /// A list of bitcoin block headers.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct HeadersMessage(pub Vec<block::Header>);
+pub struct HeadersMessage(pub Vec<NetworkHeader>);
 
 impl HeadersMessage {
     /// Does each header point to the previous block hash in the list.
@@ -1393,34 +1488,84 @@ impl HeadersMessage {
         self.0
             .iter()
             .zip(self.0.iter().skip(1))
-            .all(|(first, second)| first.block_hash().eq(&second.prev_blockhash))
+            .all(|(first, second)| first.header.block_hash().eq(&second.header.prev_blockhash))
+    }
+
+    /// Take the message as an iterator of [`Header`](primitives::block::Header).
+    pub fn into_headers(self) -> impl Iterator<Item = block::Header> {
+        self.0.into_iter().map(|network| network.header)
     }
 }
 
-impl Decodable for HeadersMessage {
+impl_vec_wrapper!(HeadersMessage, NetworkHeader);
+
+encoding::encoder_newtype! {
+    /// The encoder type for a [`HeadersMessage`].
+    pub struct HeadersMessageEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, NetworkHeader>>);
+}
+
+impl encoding::Encodable for HeadersMessage {
+    type Encoder<'e> = HeadersMessageEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        HeadersMessageEncoder::new(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.0.len()),
+                SliceEncoder::without_length_prefix(&self.0)
+            )
+        )
+    }
+}
+
+type HeadersMessageInnerDecoder = VecDecoder<NetworkHeader>;
+
+/// The decoder type for a [`HeadersMessage`].
+pub struct HeadersMessageDecoder(HeadersMessageInnerDecoder);
+
+impl encoding::Decoder for HeadersMessageDecoder {
+    type Output = HeadersMessage;
+    type Error = HeadersMessageDecoderError;
+
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let len = r.read_compact_size()?;
-        // should be above usual number of items to avoid
-        // allocation
-        let mut ret = Vec::with_capacity(core::cmp::min(1024 * 16, len as usize));
-        for _ in 0..len {
-            ret.push(Decodable::consensus_decode(r)?);
-            if u8::consensus_decode(r)? != 0u8 {
-                return Err(crate::consensus::parse_failed_error(
-                    "Headers message should not contain transactions",
-                ));
-            }
-        }
-        Ok(Self(ret))
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(HeadersMessageDecoderError)
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let headers = self.0.end().map_err(HeadersMessageDecoderError)?;
+        Ok(HeadersMessage(headers))
     }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for HeadersMessage {
+    type Decoder = HeadersMessageDecoder;
+
+    fn decoder() -> Self::Decoder {
+        HeadersMessageDecoder(VecDecoder::new())
+    }
+}
+
+/// An error decoding a [`HeadersMessage`] message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeadersMessageDecoderError(<HeadersMessageInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for HeadersMessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for HeadersMessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "headersmessage error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for HeadersMessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Decodable for V1NetworkMessage {
@@ -1724,6 +1869,13 @@ impl<'a> Arbitrary<'a> for CommandString {
 }
 
 #[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for NetworkHeader {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self { header: u.arbitrary()?, length: u.arbitrary()? })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HeadersMessage {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
@@ -1852,7 +2004,7 @@ mod test {
             NetworkMessage::MemPool,
             NetworkMessage::Tx(tx),
             NetworkMessage::Block(block),
-            NetworkMessage::Headers(HeadersMessage(vec![header])),
+            NetworkMessage::Headers(HeadersMessage(vec![NetworkHeader { header, length: 0 }])),
             NetworkMessage::SendHeaders,
             NetworkMessage::GetAddr,
             NetworkMessage::Ping(15),
@@ -2243,7 +2395,10 @@ mod test {
         let block_900_002 = deserialize::<block::Header>(
             &hex!("0400ff3ffc834fac4e1eb2ae41f1f9776e0f8e24a6090603ffa8010000000000000000002efba7e7280aa60f0a650f29e30332d52e11af57bc58cc6e71f343851f016c676182426874370217e3615653")
         ).unwrap();
-        let headers_message = HeadersMessage(vec![block_900_000, block_900_001, block_900_002]);
+        let header_900_000 = NetworkHeader { header: block_900_000, length: 0 };
+        let header_900_001 = NetworkHeader { header: block_900_001, length: 0 };
+        let header_900_002 = NetworkHeader { header: block_900_002, length: 0 };
+        let headers_message = HeadersMessage(vec![header_900_000, header_900_001, header_900_002]);
         assert!(headers_message.is_connected());
     }
 }
