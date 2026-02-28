@@ -131,194 +131,196 @@ macro_rules! process_block(
 );
 
 impl HashEngine {
-    pub(super) fn process_block(state: &mut [u32; 5], block: &[u8; BLOCK_SIZE]) {
-        debug_assert_eq!(block.len(), BLOCK_SIZE);
+    pub(super) fn process_blocks(state: &mut [u32; 5], blocks: &[u8]) {
+        debug_assert!(!blocks.is_empty() && blocks.len() % BLOCK_SIZE == 0);
 
-        let mut w = [0u32; 16];
-        for (w_val, buff_bytes) in w.iter_mut().zip(block.bitcoin_as_chunks().0) {
-            *w_val = u32::from_le_bytes(*buff_bytes)
+        for block in blocks.chunks_exact(BLOCK_SIZE) {
+            let mut w = [0u32; 16];
+            for (w_val, buff_bytes) in w.iter_mut().zip(block.bitcoin_as_chunks().0) {
+                *w_val = u32::from_le_bytes(*buff_bytes)
+            }
+
+            process_block!(*state, w,
+                // Round 1
+                round1: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 11;
+                round1: h_ordering 4, 0, 1, 2, 3; data_index  1; roll_shift 14;
+                round1: h_ordering 3, 4, 0, 1, 2; data_index  2; roll_shift 15;
+                round1: h_ordering 2, 3, 4, 0, 1; data_index  3; roll_shift 12;
+                round1: h_ordering 1, 2, 3, 4, 0; data_index  4; roll_shift  5;
+                round1: h_ordering 0, 1, 2, 3, 4; data_index  5; roll_shift  8;
+                round1: h_ordering 4, 0, 1, 2, 3; data_index  6; roll_shift  7;
+                round1: h_ordering 3, 4, 0, 1, 2; data_index  7; roll_shift  9;
+                round1: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 11;
+                round1: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 13;
+                round1: h_ordering 0, 1, 2, 3, 4; data_index 10; roll_shift 14;
+                round1: h_ordering 4, 0, 1, 2, 3; data_index 11; roll_shift 15;
+                round1: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  6;
+                round1: h_ordering 2, 3, 4, 0, 1; data_index 13; roll_shift  7;
+                round1: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  9;
+                round1: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  8;
+
+                // Round 2
+                round2: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  7;
+                round2: h_ordering 3, 4, 0, 1, 2; data_index  4; roll_shift  6;
+                round2: h_ordering 2, 3, 4, 0, 1; data_index 13; roll_shift  8;
+                round2: h_ordering 1, 2, 3, 4, 0; data_index  1; roll_shift 13;
+                round2: h_ordering 0, 1, 2, 3, 4; data_index 10; roll_shift 11;
+                round2: h_ordering 4, 0, 1, 2, 3; data_index  6; roll_shift  9;
+                round2: h_ordering 3, 4, 0, 1, 2; data_index 15; roll_shift  7;
+                round2: h_ordering 2, 3, 4, 0, 1; data_index  3; roll_shift 15;
+                round2: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  7;
+                round2: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 12;
+                round2: h_ordering 4, 0, 1, 2, 3; data_index  9; roll_shift 15;
+                round2: h_ordering 3, 4, 0, 1, 2; data_index  5; roll_shift  9;
+                round2: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 11;
+                round2: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  7;
+                round2: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 13;
+                round2: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 12;
+
+                // Round 3
+                round3: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 11;
+                round3: h_ordering 2, 3, 4, 0, 1; data_index 10; roll_shift 13;
+                round3: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  6;
+                round3: h_ordering 0, 1, 2, 3, 4; data_index  4; roll_shift  7;
+                round3: h_ordering 4, 0, 1, 2, 3; data_index  9; roll_shift 14;
+                round3: h_ordering 3, 4, 0, 1, 2; data_index 15; roll_shift  9;
+                round3: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 13;
+                round3: h_ordering 1, 2, 3, 4, 0; data_index  1; roll_shift 15;
+                round3: h_ordering 0, 1, 2, 3, 4; data_index  2; roll_shift 14;
+                round3: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  8;
+                round3: h_ordering 3, 4, 0, 1, 2; data_index  0; roll_shift 13;
+                round3: h_ordering 2, 3, 4, 0, 1; data_index  6; roll_shift  6;
+                round3: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  5;
+                round3: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 12;
+                round3: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  7;
+                round3: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  5;
+
+                // Round 4
+                round4: h_ordering 2, 3, 4, 0, 1; data_index  1; roll_shift 11;
+                round4: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 12;
+                round4: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 14;
+                round4: h_ordering 4, 0, 1, 2, 3; data_index 10; roll_shift 15;
+                round4: h_ordering 3, 4, 0, 1, 2; data_index  0; roll_shift 14;
+                round4: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 15;
+                round4: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  9;
+                round4: h_ordering 0, 1, 2, 3, 4; data_index  4; roll_shift  8;
+                round4: h_ordering 4, 0, 1, 2, 3; data_index 13; roll_shift  9;
+                round4: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 14;
+                round4: h_ordering 2, 3, 4, 0, 1; data_index  7; roll_shift  5;
+                round4: h_ordering 1, 2, 3, 4, 0; data_index 15; roll_shift  6;
+                round4: h_ordering 0, 1, 2, 3, 4; data_index 14; roll_shift  8;
+                round4: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  6;
+                round4: h_ordering 3, 4, 0, 1, 2; data_index  6; roll_shift  5;
+                round4: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 12;
+
+                // Round 5
+                round5: h_ordering 1, 2, 3, 4, 0; data_index  4; roll_shift  9;
+                round5: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 15;
+                round5: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  5;
+                round5: h_ordering 3, 4, 0, 1, 2; data_index  9; roll_shift 11;
+                round5: h_ordering 2, 3, 4, 0, 1; data_index  7; roll_shift  6;
+                round5: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  8;
+                round5: h_ordering 0, 1, 2, 3, 4; data_index  2; roll_shift 13;
+                round5: h_ordering 4, 0, 1, 2, 3; data_index 10; roll_shift 12;
+                round5: h_ordering 3, 4, 0, 1, 2; data_index 14; roll_shift  5;
+                round5: h_ordering 2, 3, 4, 0, 1; data_index  1; roll_shift 12;
+                round5: h_ordering 1, 2, 3, 4, 0; data_index  3; roll_shift 13;
+                round5: h_ordering 0, 1, 2, 3, 4; data_index  8; roll_shift 14;
+                round5: h_ordering 4, 0, 1, 2, 3; data_index 11; roll_shift 11;
+                round5: h_ordering 3, 4, 0, 1, 2; data_index  6; roll_shift  8;
+                round5: h_ordering 2, 3, 4, 0, 1; data_index 15; roll_shift  5;
+                round5: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  6;
+
+                // Parallel Round 1;
+                par_round1: h_ordering 0, 1, 2, 3, 4; data_index  5; roll_shift  8;
+                par_round1: h_ordering 4, 0, 1, 2, 3; data_index 14; roll_shift  9;
+                par_round1: h_ordering 3, 4, 0, 1, 2; data_index  7; roll_shift  9;
+                par_round1: h_ordering 2, 3, 4, 0, 1; data_index  0; roll_shift 11;
+                par_round1: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 13;
+                par_round1: h_ordering 0, 1, 2, 3, 4; data_index  2; roll_shift 15;
+                par_round1: h_ordering 4, 0, 1, 2, 3; data_index 11; roll_shift 15;
+                par_round1: h_ordering 3, 4, 0, 1, 2; data_index  4; roll_shift  5;
+                par_round1: h_ordering 2, 3, 4, 0, 1; data_index 13; roll_shift  7;
+                par_round1: h_ordering 1, 2, 3, 4, 0; data_index  6; roll_shift  7;
+                par_round1: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  8;
+                par_round1: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 11;
+                par_round1: h_ordering 3, 4, 0, 1, 2; data_index  1; roll_shift 14;
+                par_round1: h_ordering 2, 3, 4, 0, 1; data_index 10; roll_shift 14;
+                par_round1: h_ordering 1, 2, 3, 4, 0; data_index  3; roll_shift 12;
+                par_round1: h_ordering 0, 1, 2, 3, 4; data_index 12; roll_shift  6;
+
+                // Parallel Round 2
+                par_round2: h_ordering 4, 0, 1, 2, 3; data_index  6; roll_shift  9;
+                par_round2: h_ordering 3, 4, 0, 1, 2; data_index 11; roll_shift 13;
+                par_round2: h_ordering 2, 3, 4, 0, 1; data_index  3; roll_shift 15;
+                par_round2: h_ordering 1, 2, 3, 4, 0; data_index  7; roll_shift  7;
+                par_round2: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 12;
+                par_round2: h_ordering 4, 0, 1, 2, 3; data_index 13; roll_shift  8;
+                par_round2: h_ordering 3, 4, 0, 1, 2; data_index  5; roll_shift  9;
+                par_round2: h_ordering 2, 3, 4, 0, 1; data_index 10; roll_shift 11;
+                par_round2: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  7;
+                par_round2: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  7;
+                par_round2: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 12;
+                par_round2: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  7;
+                par_round2: h_ordering 2, 3, 4, 0, 1; data_index  4; roll_shift  6;
+                par_round2: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 15;
+                par_round2: h_ordering 0, 1, 2, 3, 4; data_index  1; roll_shift 13;
+                par_round2: h_ordering 4, 0, 1, 2, 3; data_index  2; roll_shift 11;
+
+                // Parallel Round 3
+                par_round3: h_ordering 3, 4, 0, 1, 2; data_index 15; roll_shift  9;
+                par_round3: h_ordering 2, 3, 4, 0, 1; data_index  5; roll_shift  7;
+                par_round3: h_ordering 1, 2, 3, 4, 0; data_index  1; roll_shift 15;
+                par_round3: h_ordering 0, 1, 2, 3, 4; data_index  3; roll_shift 11;
+                par_round3: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  8;
+                par_round3: h_ordering 3, 4, 0, 1, 2; data_index 14; roll_shift  6;
+                par_round3: h_ordering 2, 3, 4, 0, 1; data_index  6; roll_shift  6;
+                par_round3: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 14;
+                par_round3: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 12;
+                par_round3: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 13;
+                par_round3: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  5;
+                par_round3: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 14;
+                par_round3: h_ordering 1, 2, 3, 4, 0; data_index 10; roll_shift 13;
+                par_round3: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 13;
+                par_round3: h_ordering 4, 0, 1, 2, 3; data_index  4; roll_shift  7;
+                par_round3: h_ordering 3, 4, 0, 1, 2; data_index 13; roll_shift  5;
+
+                // Parallel Round 4
+                par_round4: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 15;
+                par_round4: h_ordering 1, 2, 3, 4, 0; data_index  6; roll_shift  5;
+                par_round4: h_ordering 0, 1, 2, 3, 4; data_index  4; roll_shift  8;
+                par_round4: h_ordering 4, 0, 1, 2, 3; data_index  1; roll_shift 11;
+                par_round4: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 14;
+                par_round4: h_ordering 2, 3, 4, 0, 1; data_index 11; roll_shift 14;
+                par_round4: h_ordering 1, 2, 3, 4, 0; data_index 15; roll_shift  6;
+                par_round4: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 14;
+                par_round4: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  6;
+                par_round4: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  9;
+                par_round4: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 12;
+                par_round4: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  9;
+                par_round4: h_ordering 0, 1, 2, 3, 4; data_index  9; roll_shift 12;
+                par_round4: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  5;
+                par_round4: h_ordering 3, 4, 0, 1, 2; data_index 10; roll_shift 15;
+                par_round4: h_ordering 2, 3, 4, 0, 1; data_index 14; roll_shift  8;
+
+                // Parallel Round 5
+                par_round5: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  8;
+                par_round5: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  5;
+                par_round5: h_ordering 4, 0, 1, 2, 3; data_index 10; roll_shift 12;
+                par_round5: h_ordering 3, 4, 0, 1, 2; data_index  4; roll_shift  9;
+                par_round5: h_ordering 2, 3, 4, 0, 1; data_index  1; roll_shift 12;
+                par_round5: h_ordering 1, 2, 3, 4, 0; data_index  5; roll_shift  5;
+                par_round5: h_ordering 0, 1, 2, 3, 4; data_index  8; roll_shift 14;
+                par_round5: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  6;
+                par_round5: h_ordering 3, 4, 0, 1, 2; data_index  6; roll_shift  8;
+                par_round5: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 13;
+                par_round5: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  6;
+                par_round5: h_ordering 0, 1, 2, 3, 4; data_index 14; roll_shift  5;
+                par_round5: h_ordering 4, 0, 1, 2, 3; data_index  0; roll_shift 15;
+                par_round5: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 13;
+                par_round5: h_ordering 2, 3, 4, 0, 1; data_index  9; roll_shift 11;
+                par_round5: h_ordering 1, 2, 3, 4, 0; data_index 11; roll_shift 11;
+            );
         }
-
-        process_block!(*state, w,
-            // Round 1
-            round1: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 11;
-            round1: h_ordering 4, 0, 1, 2, 3; data_index  1; roll_shift 14;
-            round1: h_ordering 3, 4, 0, 1, 2; data_index  2; roll_shift 15;
-            round1: h_ordering 2, 3, 4, 0, 1; data_index  3; roll_shift 12;
-            round1: h_ordering 1, 2, 3, 4, 0; data_index  4; roll_shift  5;
-            round1: h_ordering 0, 1, 2, 3, 4; data_index  5; roll_shift  8;
-            round1: h_ordering 4, 0, 1, 2, 3; data_index  6; roll_shift  7;
-            round1: h_ordering 3, 4, 0, 1, 2; data_index  7; roll_shift  9;
-            round1: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 11;
-            round1: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 13;
-            round1: h_ordering 0, 1, 2, 3, 4; data_index 10; roll_shift 14;
-            round1: h_ordering 4, 0, 1, 2, 3; data_index 11; roll_shift 15;
-            round1: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  6;
-            round1: h_ordering 2, 3, 4, 0, 1; data_index 13; roll_shift  7;
-            round1: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  9;
-            round1: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  8;
-
-            // Round 2
-            round2: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  7;
-            round2: h_ordering 3, 4, 0, 1, 2; data_index  4; roll_shift  6;
-            round2: h_ordering 2, 3, 4, 0, 1; data_index 13; roll_shift  8;
-            round2: h_ordering 1, 2, 3, 4, 0; data_index  1; roll_shift 13;
-            round2: h_ordering 0, 1, 2, 3, 4; data_index 10; roll_shift 11;
-            round2: h_ordering 4, 0, 1, 2, 3; data_index  6; roll_shift  9;
-            round2: h_ordering 3, 4, 0, 1, 2; data_index 15; roll_shift  7;
-            round2: h_ordering 2, 3, 4, 0, 1; data_index  3; roll_shift 15;
-            round2: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  7;
-            round2: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 12;
-            round2: h_ordering 4, 0, 1, 2, 3; data_index  9; roll_shift 15;
-            round2: h_ordering 3, 4, 0, 1, 2; data_index  5; roll_shift  9;
-            round2: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 11;
-            round2: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  7;
-            round2: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 13;
-            round2: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 12;
-
-            // Round 3
-            round3: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 11;
-            round3: h_ordering 2, 3, 4, 0, 1; data_index 10; roll_shift 13;
-            round3: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  6;
-            round3: h_ordering 0, 1, 2, 3, 4; data_index  4; roll_shift  7;
-            round3: h_ordering 4, 0, 1, 2, 3; data_index  9; roll_shift 14;
-            round3: h_ordering 3, 4, 0, 1, 2; data_index 15; roll_shift  9;
-            round3: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 13;
-            round3: h_ordering 1, 2, 3, 4, 0; data_index  1; roll_shift 15;
-            round3: h_ordering 0, 1, 2, 3, 4; data_index  2; roll_shift 14;
-            round3: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  8;
-            round3: h_ordering 3, 4, 0, 1, 2; data_index  0; roll_shift 13;
-            round3: h_ordering 2, 3, 4, 0, 1; data_index  6; roll_shift  6;
-            round3: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  5;
-            round3: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 12;
-            round3: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  7;
-            round3: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  5;
-
-            // Round 4
-            round4: h_ordering 2, 3, 4, 0, 1; data_index  1; roll_shift 11;
-            round4: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 12;
-            round4: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 14;
-            round4: h_ordering 4, 0, 1, 2, 3; data_index 10; roll_shift 15;
-            round4: h_ordering 3, 4, 0, 1, 2; data_index  0; roll_shift 14;
-            round4: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 15;
-            round4: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  9;
-            round4: h_ordering 0, 1, 2, 3, 4; data_index  4; roll_shift  8;
-            round4: h_ordering 4, 0, 1, 2, 3; data_index 13; roll_shift  9;
-            round4: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 14;
-            round4: h_ordering 2, 3, 4, 0, 1; data_index  7; roll_shift  5;
-            round4: h_ordering 1, 2, 3, 4, 0; data_index 15; roll_shift  6;
-            round4: h_ordering 0, 1, 2, 3, 4; data_index 14; roll_shift  8;
-            round4: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  6;
-            round4: h_ordering 3, 4, 0, 1, 2; data_index  6; roll_shift  5;
-            round4: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 12;
-
-            // Round 5
-            round5: h_ordering 1, 2, 3, 4, 0; data_index  4; roll_shift  9;
-            round5: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 15;
-            round5: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  5;
-            round5: h_ordering 3, 4, 0, 1, 2; data_index  9; roll_shift 11;
-            round5: h_ordering 2, 3, 4, 0, 1; data_index  7; roll_shift  6;
-            round5: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  8;
-            round5: h_ordering 0, 1, 2, 3, 4; data_index  2; roll_shift 13;
-            round5: h_ordering 4, 0, 1, 2, 3; data_index 10; roll_shift 12;
-            round5: h_ordering 3, 4, 0, 1, 2; data_index 14; roll_shift  5;
-            round5: h_ordering 2, 3, 4, 0, 1; data_index  1; roll_shift 12;
-            round5: h_ordering 1, 2, 3, 4, 0; data_index  3; roll_shift 13;
-            round5: h_ordering 0, 1, 2, 3, 4; data_index  8; roll_shift 14;
-            round5: h_ordering 4, 0, 1, 2, 3; data_index 11; roll_shift 11;
-            round5: h_ordering 3, 4, 0, 1, 2; data_index  6; roll_shift  8;
-            round5: h_ordering 2, 3, 4, 0, 1; data_index 15; roll_shift  5;
-            round5: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  6;
-
-            // Parallel Round 1;
-            par_round1: h_ordering 0, 1, 2, 3, 4; data_index  5; roll_shift  8;
-            par_round1: h_ordering 4, 0, 1, 2, 3; data_index 14; roll_shift  9;
-            par_round1: h_ordering 3, 4, 0, 1, 2; data_index  7; roll_shift  9;
-            par_round1: h_ordering 2, 3, 4, 0, 1; data_index  0; roll_shift 11;
-            par_round1: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 13;
-            par_round1: h_ordering 0, 1, 2, 3, 4; data_index  2; roll_shift 15;
-            par_round1: h_ordering 4, 0, 1, 2, 3; data_index 11; roll_shift 15;
-            par_round1: h_ordering 3, 4, 0, 1, 2; data_index  4; roll_shift  5;
-            par_round1: h_ordering 2, 3, 4, 0, 1; data_index 13; roll_shift  7;
-            par_round1: h_ordering 1, 2, 3, 4, 0; data_index  6; roll_shift  7;
-            par_round1: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  8;
-            par_round1: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 11;
-            par_round1: h_ordering 3, 4, 0, 1, 2; data_index  1; roll_shift 14;
-            par_round1: h_ordering 2, 3, 4, 0, 1; data_index 10; roll_shift 14;
-            par_round1: h_ordering 1, 2, 3, 4, 0; data_index  3; roll_shift 12;
-            par_round1: h_ordering 0, 1, 2, 3, 4; data_index 12; roll_shift  6;
-
-            // Parallel Round 2
-            par_round2: h_ordering 4, 0, 1, 2, 3; data_index  6; roll_shift  9;
-            par_round2: h_ordering 3, 4, 0, 1, 2; data_index 11; roll_shift 13;
-            par_round2: h_ordering 2, 3, 4, 0, 1; data_index  3; roll_shift 15;
-            par_round2: h_ordering 1, 2, 3, 4, 0; data_index  7; roll_shift  7;
-            par_round2: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 12;
-            par_round2: h_ordering 4, 0, 1, 2, 3; data_index 13; roll_shift  8;
-            par_round2: h_ordering 3, 4, 0, 1, 2; data_index  5; roll_shift  9;
-            par_round2: h_ordering 2, 3, 4, 0, 1; data_index 10; roll_shift 11;
-            par_round2: h_ordering 1, 2, 3, 4, 0; data_index 14; roll_shift  7;
-            par_round2: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  7;
-            par_round2: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 12;
-            par_round2: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  7;
-            par_round2: h_ordering 2, 3, 4, 0, 1; data_index  4; roll_shift  6;
-            par_round2: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 15;
-            par_round2: h_ordering 0, 1, 2, 3, 4; data_index  1; roll_shift 13;
-            par_round2: h_ordering 4, 0, 1, 2, 3; data_index  2; roll_shift 11;
-
-            // Parallel Round 3
-            par_round3: h_ordering 3, 4, 0, 1, 2; data_index 15; roll_shift  9;
-            par_round3: h_ordering 2, 3, 4, 0, 1; data_index  5; roll_shift  7;
-            par_round3: h_ordering 1, 2, 3, 4, 0; data_index  1; roll_shift 15;
-            par_round3: h_ordering 0, 1, 2, 3, 4; data_index  3; roll_shift 11;
-            par_round3: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  8;
-            par_round3: h_ordering 3, 4, 0, 1, 2; data_index 14; roll_shift  6;
-            par_round3: h_ordering 2, 3, 4, 0, 1; data_index  6; roll_shift  6;
-            par_round3: h_ordering 1, 2, 3, 4, 0; data_index  9; roll_shift 14;
-            par_round3: h_ordering 0, 1, 2, 3, 4; data_index 11; roll_shift 12;
-            par_round3: h_ordering 4, 0, 1, 2, 3; data_index  8; roll_shift 13;
-            par_round3: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  5;
-            par_round3: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 14;
-            par_round3: h_ordering 1, 2, 3, 4, 0; data_index 10; roll_shift 13;
-            par_round3: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 13;
-            par_round3: h_ordering 4, 0, 1, 2, 3; data_index  4; roll_shift  7;
-            par_round3: h_ordering 3, 4, 0, 1, 2; data_index 13; roll_shift  5;
-
-            // Parallel Round 4
-            par_round4: h_ordering 2, 3, 4, 0, 1; data_index  8; roll_shift 15;
-            par_round4: h_ordering 1, 2, 3, 4, 0; data_index  6; roll_shift  5;
-            par_round4: h_ordering 0, 1, 2, 3, 4; data_index  4; roll_shift  8;
-            par_round4: h_ordering 4, 0, 1, 2, 3; data_index  1; roll_shift 11;
-            par_round4: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 14;
-            par_round4: h_ordering 2, 3, 4, 0, 1; data_index 11; roll_shift 14;
-            par_round4: h_ordering 1, 2, 3, 4, 0; data_index 15; roll_shift  6;
-            par_round4: h_ordering 0, 1, 2, 3, 4; data_index  0; roll_shift 14;
-            par_round4: h_ordering 4, 0, 1, 2, 3; data_index  5; roll_shift  6;
-            par_round4: h_ordering 3, 4, 0, 1, 2; data_index 12; roll_shift  9;
-            par_round4: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 12;
-            par_round4: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  9;
-            par_round4: h_ordering 0, 1, 2, 3, 4; data_index  9; roll_shift 12;
-            par_round4: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  5;
-            par_round4: h_ordering 3, 4, 0, 1, 2; data_index 10; roll_shift 15;
-            par_round4: h_ordering 2, 3, 4, 0, 1; data_index 14; roll_shift  8;
-
-            // Parallel Round 5
-            par_round5: h_ordering 1, 2, 3, 4, 0; data_index 12; roll_shift  8;
-            par_round5: h_ordering 0, 1, 2, 3, 4; data_index 15; roll_shift  5;
-            par_round5: h_ordering 4, 0, 1, 2, 3; data_index 10; roll_shift 12;
-            par_round5: h_ordering 3, 4, 0, 1, 2; data_index  4; roll_shift  9;
-            par_round5: h_ordering 2, 3, 4, 0, 1; data_index  1; roll_shift 12;
-            par_round5: h_ordering 1, 2, 3, 4, 0; data_index  5; roll_shift  5;
-            par_round5: h_ordering 0, 1, 2, 3, 4; data_index  8; roll_shift 14;
-            par_round5: h_ordering 4, 0, 1, 2, 3; data_index  7; roll_shift  6;
-            par_round5: h_ordering 3, 4, 0, 1, 2; data_index  6; roll_shift  8;
-            par_round5: h_ordering 2, 3, 4, 0, 1; data_index  2; roll_shift 13;
-            par_round5: h_ordering 1, 2, 3, 4, 0; data_index 13; roll_shift  6;
-            par_round5: h_ordering 0, 1, 2, 3, 4; data_index 14; roll_shift  5;
-            par_round5: h_ordering 4, 0, 1, 2, 3; data_index  0; roll_shift 15;
-            par_round5: h_ordering 3, 4, 0, 1, 2; data_index  3; roll_shift 13;
-            par_round5: h_ordering 2, 3, 4, 0, 1; data_index  9; roll_shift 11;
-            par_round5: h_ordering 1, 2, 3, 4, 0; data_index 11; roll_shift 11;
-        );
     }
 }

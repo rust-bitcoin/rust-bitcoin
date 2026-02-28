@@ -182,7 +182,7 @@ impl HashEngine {
         Self { h: KeccakState::new(), bytes_hashed: 0, buffer: [0; RATE] }
     }
 
-    fn absorb(state: &mut KeccakState, block: &[u8; RATE]) {
+    fn absorb(state: &mut KeccakState, block: &[u8]) {
         for lane in 0..RATE_LANES {
             let x = lane % 5;
             let y = lane / 5;
@@ -193,9 +193,13 @@ impl HashEngine {
         }
     }
 
-    fn process_block(state: &mut KeccakState, block: &[u8; RATE]) {
-        Self::absorb(state, block);
-        keccakf1600(state);
+    fn process_blocks(state: &mut KeccakState, blocks: &[u8]) {
+        debug_assert!(!blocks.is_empty() && blocks.len() % RATE == 0);
+
+        for block in blocks.chunks_exact(RATE) {
+            Self::absorb(state, block);
+            keccakf1600(state);
+        }
     }
 }
 
@@ -213,7 +217,7 @@ impl crate::HashEngine for HashEngine {
         self.buffer[incomplete_block_len + 1..].fill(0);
         self.buffer[incomplete_block_len] = 0x06;
         self.buffer[RATE - 1] ^= 0x80;
-        Self::process_block(&mut self.h, &self.buffer);
+        Self::process_blocks(&mut self.h, &self.buffer);
 
         let mut out = [0u8; 32];
         out[..8].copy_from_slice(&self.h.lane(0, 0).to_le_bytes());
