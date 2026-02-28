@@ -8,8 +8,6 @@ mod crypto;
 #[cfg(test)]
 mod tests;
 
-use core::cmp;
-
 use crate::{incomplete_block_len, HashEngine as _};
 
 crate::internal_macros::general_hash_type! {
