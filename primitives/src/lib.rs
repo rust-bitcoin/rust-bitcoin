@@ -204,7 +204,7 @@ pub(crate) mod hex_codec {
     /// Provides default implementations for `Display`, `Debug`, `LowerHex`, and `UpperHex`.
     /// Also provides [`Self::from_str`] for parsing a string to a `T`.
     /// This can be used to implement hex display traits for any encodable types.
-    pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub &'a T);
+    pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub &'a T) where T: ?Sized;
 
     impl<'a, T: Encodable + Decodable> IntoIterator for &HexPrimitive<'a, T> {
         type Item = u8;
@@ -258,15 +258,14 @@ pub(crate) mod hex_codec {
 }
 
 #[cfg(test)]
+#[cfg(all(feature = "alloc", feature = "hex"))]
 mod tests {
-    #[cfg(feature = "alloc")]
     use alloc::{format, string::ToString};
 
-    #[cfg(feature = "alloc")]
     use super::*;
+    use super::hex_codec::{self, HexPrimitive};
 
     #[test]
-    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn parse_primitive_error_display() {
         let odd: ParsePrimitiveError<block::Header> =
             hex_codec::HexPrimitive::from_str("0").unwrap_err();
@@ -281,24 +280,26 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "hex", feature = "std"))]
     fn parse_primitive_error_source() {
+        #[cfg(feature = "std")]
         use std::error::Error as _;
 
-        let odd: ParsePrimitiveError<block::Header> =
-            hex_codec::HexPrimitive::from_str("0").unwrap_err();
-        let invalid: ParsePrimitiveError<block::Header> =
-            hex_codec::HexPrimitive::from_str("zz").unwrap_err();
-        let decode: ParsePrimitiveError<block::Header> =
-            hex_codec::HexPrimitive::from_str("00").unwrap_err();
+        let odd: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("0").unwrap_err();
+        let invalid: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("zz").unwrap_err();
+        let decode: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("00").unwrap_err();
 
-        assert!(odd.source().is_some());
-        assert!(invalid.source().is_some());
-        assert!(decode.source().is_none());
+        assert!(!odd.to_string().is_empty());
+        assert!(!invalid.to_string().is_empty());
+        assert!(!decode.to_string().is_empty());
+
+        #[cfg(feature = "std")] {
+            assert!(odd.source().is_some());
+            assert!(invalid.source().is_some());
+            assert!(decode.source().is_none());
+        }
     }
 
     #[test]
-    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn hex_primitive_iter_and_debug() {
         let header: block::Header =
             encoding::decode_from_slice(&[0u8; block::Header::SIZE]).expect("valid header");

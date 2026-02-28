@@ -441,7 +441,6 @@ fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_r
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::script::ScriptBufExt as _;
     use crate::TapScriptBuf;
 
     // Composes tree matching a given depth map, filled with dumb script leaves,

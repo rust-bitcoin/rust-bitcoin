@@ -9,8 +9,7 @@
 
 use bitcoin::consensus::encode;
 use bitcoin::key::WPubkeyHash;
-use bitcoin::script::{self, ScriptBufExt as _, ScriptExt as _};
-use bitcoin::WitnessScriptBuf;
+use bitcoin::{script, WitnessScriptBuf};
 
 fn main() {
     let pk = "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".parse::<WPubkeyHash>().unwrap();
