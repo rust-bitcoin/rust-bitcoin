@@ -10,7 +10,7 @@ use core::{convert, fmt};
 
 use internals::slice::SliceExt;
 
-use crate::{incomplete_block_len, sha256d, HashEngine as _};
+use crate::{incomplete_block_len, sha256d};
 #[cfg(doc)]
 use crate::{sha256t, sha256t_tag};
 
@@ -131,17 +131,18 @@ impl Hash {
         // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
         let n_bytes_hashed = e.bytes_hashed;
 
-        let zeroes = [0; BLOCK_SIZE - 8];
-        e.input(&[0x80]);
-        if incomplete_block_len(&e) > zeroes.len() {
-            e.input(&zeroes);
-        }
-        let pad_length = zeroes.len() - incomplete_block_len(&e);
-        e.input(&zeroes[..pad_length]);
-        debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
+        let buf_idx = incomplete_block_len(&e);
 
-        e.input(&(8 * n_bytes_hashed).to_be_bytes());
-        debug_assert_eq!(incomplete_block_len(&e), 0);
+        e.buffer[buf_idx] = 0x80;
+        e.buffer[buf_idx+1..].fill(0);
+
+        if buf_idx >= BLOCK_SIZE - 8 {
+            HashEngine::process_blocks(&mut e.h, &e.buffer);
+            e.buffer[..BLOCK_SIZE - 8].fill(0);
+        }
+
+        e.buffer[BLOCK_SIZE - 8..].copy_from_slice(&(8 * n_bytes_hashed).to_be_bytes());
+        HashEngine::process_blocks(&mut e.h, &e.buffer);
 
         Self(e.midstate_unchecked().bytes)
     }
