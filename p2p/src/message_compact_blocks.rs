@@ -103,3 +103,17 @@ impl<'a> Arbitrary<'a> for SendCmpct {
         Ok(Self { send_compact: u.arbitrary()?, version: u.arbitrary()? })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn encode_decode_address_roundtrip() {
+        let send_cmpct = SendCmpct { send_compact: false, version: 2 };
+        let encoded_send_cmpct = encoding::encode_to_vec(&send_cmpct);
+        let decoded_send_cmpct =
+            encoding::decode_from_slice::<SendCmpct>(&encoded_send_cmpct).unwrap();
+        assert_eq!(decoded_send_cmpct, send_cmpct);
+    }
+}
