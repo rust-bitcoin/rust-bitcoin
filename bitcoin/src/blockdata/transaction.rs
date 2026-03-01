@@ -33,10 +33,17 @@ use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use primitives::transaction::{ParseTransactionError, ParseOutPointError};
+pub use primitives::transaction::{
+    BlockHashDecoderError, OutPointDecoderError, ParseTransactionError, ParseOutPointError,
+    TransactionDecoderError, TxInDecoderError, TxMerkleNodeDecoderError, TxOutDecoderError,
+    VersionDecoderError,
+};
 #[doc(inline)]
 pub use primitives::transaction::{
-    Ntxid, OutPoint, Transaction, TxIn, TxOut, Txid, Version, Wtxid,
+    BlockHashDecoder, Ntxid, OutPoint, OutPointDecoder, OutPointEncoder, Transaction,
+    TransactionDecoder, TransactionEncoder, TxIn, TxInDecoder, TxInEncoder,
+    TxMerkleNodeDecoder, TxOut, TxOutDecoder, TxOutEncoder, Txid, Version,
+    VersionDecoder, VersionEncoder, WitnessesEncoder, Wtxid,
 };
 
 impl Encodable for Txid {

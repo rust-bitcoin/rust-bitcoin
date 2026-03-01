@@ -95,15 +95,14 @@ EOF
         # Extract pub mod
         elif [[ "$line" =~ ^pub\ mod\ (bitcoin_primitives::[^[:space:]]+)$ ]]; then
             path="${BASH_REMATCH[1]}"
+        # Extract pub use (re-exports)
+        elif [[ "$line" =~ ^pub\ use\ (bitcoin_primitives::[^[:space:]]+)$ ]]; then
+            path="${BASH_REMATCH[1]}"
         fi
 
         if [[ -n "$path" ]]; then
             # Remove generic type parameters (e.g., <T>)
             path="${path%%<*}"
-
-            if [[ "$path" == *Encoder* ]] || [[ $path == *Decoder* ]]; then
-                continue
-            fi
 
             # Convert bitcoin_primitives:: to bitcoin::
             local bitcoin_path="${path//bitcoin_primitives::/bitcoin::}"

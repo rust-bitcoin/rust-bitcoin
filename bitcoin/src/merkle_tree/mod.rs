@@ -19,6 +19,8 @@ use io::{BufRead, Write};
 #[rustfmt::skip]
 #[doc(inline)]
 pub use primitives::{TxMerkleNode, WitnessMerkleNode};
+#[doc(inline)]
+pub use primitives::merkle_tree::TxMerkleNodeEncoder;
 
 use crate::consensus::{encode, Decodable, Encodable};
 
