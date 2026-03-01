@@ -172,19 +172,32 @@ macro_rules! engine_input_impl(
         #[cfg(not(hashes_fuzz))]
         fn input(&mut self, mut inp: &[u8]) {
 
-            while !inp.is_empty() {
-                let buf_idx = $crate::incomplete_block_len(self);
-                let rem_len = <Self as crate::HashEngine>::BLOCK_SIZE - buf_idx;
-                let write_len = cmp::min(rem_len, inp.len());
-
-                self.buffer[buf_idx..buf_idx + write_len]
-                    .copy_from_slice(&inp[..write_len]);
-                self.bytes_hashed += write_len as u64;
-                if $crate::incomplete_block_len(self) == 0 {
-                    self.process_block();
-                }
-                inp = &inp[write_len..];
+            let buf_idx = $crate::incomplete_block_len(self);
+            let block_size = <Self as crate::HashEngine>::BLOCK_SIZE;
+            self.bytes_hashed += inp.len() as u64;
+            
+            // we know we won't complete a block, so just copy into the buffer and return
+            if buf_idx + inp.len() < block_size {
+                return self.buffer[buf_idx..buf_idx + inp.len()].copy_from_slice(&inp)
             }
+
+            // we'll process at least one block.
+            // if there's a partial buffer, complete it and process it
+            if buf_idx > 0 {
+                let needed = block_size - buf_idx;
+                self.buffer[buf_idx..buf_idx+needed].copy_from_slice(&inp[..needed]);
+                Self::process_blocks(&mut self.h, &self.buffer);
+                inp = &inp[needed..]
+            }
+
+            // pass remaining full blocks directly to process_blocks from the input (zero copy)
+            let full_blocks = inp.len() / block_size * block_size;
+            if full_blocks > 0 {
+                Self::process_blocks(&mut self.h, &inp[..full_blocks])
+            } 
+
+            // buffer the remainder
+            self.buffer[..inp.len() - full_blocks].copy_from_slice(&inp[full_blocks..])
         }
 
         #[cfg(hashes_fuzz)]
