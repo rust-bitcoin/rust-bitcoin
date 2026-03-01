@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! MuHash3072 implementation.
+//! `MuHash3072` implementation.
 //!
 //! Unlike other hash algorithms in this crate, [`MuHash`] is a wrapper type that provides
 //! semantic meaning to a plain byte array. It cannot be computed by this crate.

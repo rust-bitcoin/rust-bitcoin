@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::too_many_lines)]
+#![allow(clippy::many_single_char_names)]
+
 use internals::slice::SliceExt;
 
 use super::{HashEngine, BLOCK_SIZE};
@@ -18,7 +22,7 @@ fn sigma1(x: u64) -> u64 { x.rotate_left(45) ^ x.rotate_left(3) ^ (x >> 6) }
 #[cfg(feature = "small-hash")]
 #[macro_use]
 mod small_hash {
-    use super::*;
+    use super::{Sigma1, Ch, Sigma0, Maj, sigma1, sigma0};
 
     #[rustfmt::skip]
     #[allow(clippy::too_many_arguments)]

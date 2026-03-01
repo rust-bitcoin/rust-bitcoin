@@ -155,6 +155,7 @@ crate::internal_macros::impl_write!(
 #[cfg(test)]
 mod tests {
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn test() {
         use crate::{sha256, Hash as _, HashEngine, HmacEngine};
 

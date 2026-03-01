@@ -53,6 +53,11 @@ where
     ///
     /// Expand may be called multiple times to derive multiple keys,
     /// but the info must be independent from the ikm for security.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MaxLengthError`] if the requested output length exceeds the maximum allowed
+    /// (255 * hash output length).
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), MaxLengthError> {
         // Length of output keying material in bytes must be less than 255 * hash length.
         if okm.len() > (MAX_OUTPUT_BLOCKS * T::Bytes::LEN) {
@@ -98,6 +103,11 @@ where
     ///
     /// Expand may be called multiple times to derive multiple keys,
     /// but the info must be independent from the ikm for security.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MaxLengthError`] if the requested output length exceeds the maximum allowed
+    /// (255 * hash output length).
     #[cfg(feature = "alloc")]
     pub fn expand_to_len(&self, info: &[u8], len: usize) -> Result<Vec<u8>, MaxLengthError> {
         let mut okm = vec![0u8; len];

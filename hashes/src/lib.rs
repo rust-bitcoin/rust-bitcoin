@@ -85,7 +85,7 @@ pub extern crate hex;
 
 #[doc(hidden)]
 pub mod _export {
-    /// A re-export of core::*
+    /// A re-export of `core::*`
     pub mod _core {
         pub use core::*;
     }
@@ -125,7 +125,7 @@ pub use self::{
 /// HASH-160: Alias for the [`hash160::Hash`] hash type.
 #[doc(inline)]
 pub use hash160::Hash as Hash160;
-/// MuHash3072: Alias for the [`muhash::Hash`] hash type.
+/// `MuHash3072`: Alias for the [`muhash::Hash`] hash type.
 #[doc(inline)]
 pub use muhash::Hash as MuHash;
 /// RIPEMD-160: Alias for the [`ripemd160::Hash`] hash type.
@@ -265,6 +265,10 @@ fn incomplete_block_len<H: HashEngine>(eng: &H) -> usize {
 ///
 /// For when we cannot rely on having the `hex` feature enabled. Ignores formatter options and just
 /// writes with plain old `f.write_char()`.
+///
+/// # Errors
+///
+/// Returns an error if writing to the formatter fails.
 pub fn debug_hex<'a>(
     bytes: impl IntoIterator<Item = &'a u8>,
     f: &mut fmt::Formatter,
@@ -273,7 +277,7 @@ pub fn debug_hex<'a>(
 
     for &b in bytes {
         let lower = HEX_TABLE[usize::from(b >> 4)];
-        let upper = HEX_TABLE[usize::from(b & 0b00001111)];
+        let upper = HEX_TABLE[usize::from(b & 0b0000_1111)];
         f.write_char(char::from(lower))?;
         f.write_char(char::from(upper))?;
     }
@@ -314,6 +318,6 @@ mod tests {
         let orig = DUMMY;
         let hex = format!("{}", orig);
         let roundtrip = hex.parse::<TestNewtype>().expect("failed to parse hex");
-        assert_eq!(roundtrip, orig)
+        assert_eq!(roundtrip, orig);
     }
 }
