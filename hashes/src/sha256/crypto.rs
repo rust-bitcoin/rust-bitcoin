@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
+use core::arch::aarch64::*;
 #[cfg(all(target_arch = "x86", any(feature = "std", feature = "cpufeatures")))]
 use core::arch::x86::*;
 #[cfg(all(target_arch = "x86_64", any(feature = "std", feature = "cpufeatures")))]
 use core::arch::x86_64::*;
-#[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
-use core::arch::aarch64::*;
 
 use internals::slice::SliceExt;
 
@@ -288,7 +288,6 @@ impl HashEngine {
             }
         }
 
-
         #[cfg(all(feature = "std", target_arch = "aarch64"))]
         {
             if std::arch::is_aarch64_feature_detected!("sha2") {
@@ -307,7 +306,10 @@ impl HashEngine {
         self.software_process_block()
     }
 
-    #[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), any(feature = "std", feature = "cpufeatures")))]
+    #[cfg(all(
+        any(target_arch = "x86", target_arch = "x86_64"),
+        any(feature = "std", feature = "cpufeatures")
+    ))]
     #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
     unsafe fn process_block_simd_x86_intrinsics(&mut self) {
         // Code translated and based on from
