@@ -439,8 +439,13 @@ impl<'a> Arbitrary<'a> for MathOp {
 
 #[cfg(test)]
 mod tests {
-    use super::{MathOp, NumOpError, NumOpResult};
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "std")]
+    use std::error::Error;
+
     use crate::{Amount, FeeRate, Weight};
+    use crate::result::{MathOp, NumOpError, NumOpResult};
 
     #[test]
     fn mathop_predicates() {
@@ -604,5 +609,15 @@ mod tests {
             panic!("and_then should not evaluate for wrapped error values");
         });
         assert_eq!(res_err, res);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn error_display_is_non_empty() {
+        // NumOpError - math operation error
+        let e = (Amount::MAX + Amount::MAX).unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_none());
     }
 }
