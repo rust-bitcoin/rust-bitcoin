@@ -433,11 +433,11 @@ impl Psbt {
 
                     #[cfg(all(feature = "rand", feature = "std"))]
                     let signature =
-                        secp256k1::schnorr::sign(&sighash.to_byte_array(), &key_pair.to_inner());
+                        secp256k1::schnorr::sign(&sighash.to_byte_array(), key_pair.as_inner());
                     #[cfg(not(all(feature = "rand", feature = "std")))]
                     let signature = secp256k1::schnorr::sign_no_aux_rand(
                         &sighash.to_byte_array(),
-                        &key_pair.to_inner(),
+                        key_pair.as_inner()
                     );
 
                     let signature = taproot::Signature { signature, sighash_type };
@@ -463,14 +463,12 @@ impl Psbt {
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(all(feature = "rand", feature = "std"))]
-                        let signature = secp256k1::schnorr::sign(
-                            &sighash.to_byte_array(),
-                            &key_pair.to_inner(),
-                        );
+                        let signature =
+                            secp256k1::schnorr::sign(&sighash.to_byte_array(), key_pair.as_inner());
                         #[cfg(not(all(feature = "rand", feature = "std")))]
                         let signature = secp256k1::schnorr::sign_no_aux_rand(
                             &sighash.to_byte_array(),
-                            &key_pair.to_inner(),
+                            key_pair.as_inner(),
                         );
 
                         let signature = taproot::Signature { signature, sighash_type };
@@ -917,11 +915,11 @@ impl GetKey for $map<XOnlyPublicKey, PrivateKey> {
         match key_request {
             KeyRequest::XOnlyPubkey(xonly) => Ok(self.get(xonly).cloned()),
             KeyRequest::Pubkey(pk) => {
-                let (xonly, parity) = pk.to_inner().x_only_public_key();
+                let (xonly, parity) = pk.as_inner().x_only_public_key();
 
                 if let Some(mut priv_key) = self.get(&XOnlyPublicKey::from(xonly)).cloned() {
                     let computed_pk = priv_key.public_key();
-                    let (_, computed_parity) = computed_pk.to_inner().x_only_public_key();
+                    let (_, computed_parity) = computed_pk.as_inner().x_only_public_key();
 
                     if computed_parity != parity {
                         priv_key = priv_key.negate();
@@ -2374,7 +2372,7 @@ mod tests {
         use crate::psbt::{GetKey, KeyRequest};
 
         let (mut priv_key, mut pk) = gen_keys();
-        let (xonly, parity) = pk.to_inner().x_only_public_key();
+        let (xonly, parity) = pk.as_inner().x_only_public_key();
 
         let mut pubkey_map: HashMap<PublicKey, PrivateKey> = HashMap::new();
 
@@ -2390,7 +2388,7 @@ mod tests {
         let retrieved_key = req_result.unwrap();
 
         let retrieved_pub_key = retrieved_key.public_key();
-        let (retrieved_xonly, retrieved_parity) = retrieved_pub_key.to_inner().x_only_public_key();
+        let (retrieved_xonly, retrieved_parity) = retrieved_pub_key.as_inner().x_only_public_key();
 
         assert_eq!(xonly, retrieved_xonly);
         assert_eq!(
@@ -2707,7 +2705,7 @@ mod tests {
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
         let mut map = BTreeMap::new();
-        map.insert(pk.to_inner(), (Fingerprint::default(), DerivationPath::default()));
+        map.insert(*pk.as_inner(), (Fingerprint::default(), DerivationPath::default()));
         psbt.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.
