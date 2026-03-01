@@ -97,7 +97,11 @@ pub const fn bitcoin_internals::const_casts::u16_to_u64(value: u16) -> u64
 pub const fn bitcoin_internals::const_casts::u32_to_u64(value: u32) -> u64
 pub enum bitcoin_internals::script::PushDataLenLen
 pub fn [T; LEN]::eq(&self, other: &bitcoin_internals::array_vec::ArrayVec<T, CAP>) -> bool
+pub fn [T; N]::first(&self) -> &Self::Item
+pub fn [T; N]::get_static<const INDEX: usize>(&self) -> &Self::Item
 pub fn [T; N]::split_array<const LEFT: usize, const RIGHT: usize>(&self) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT])
+pub fn [T; N]::split_first<const RIGHT: usize>(&self) -> (&Self::Item, &[Self::Item; RIGHT])
+pub fn [T; N]::split_last<const LEFT: usize>(&self) -> (&Self::Item, &[Self::Item; LEFT])
 pub fn [T; N]::sub_array<const OFFSET: usize, const LEN: usize>(&self) -> &[Self::Item; LEN]
 pub fn [T]::bitcoin_as_chunks<const N: usize>(&self) -> (&[[Self::Item; N]], &[Self::Item])
 pub fn [T]::bitcoin_as_chunks_mut<const N: usize>(&mut self) -> (&mut [[Self::Item; N]], &mut [Self::Item])
