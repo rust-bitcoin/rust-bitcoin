@@ -40,6 +40,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::Hash;
 use io::{Read, Write};
 
@@ -536,6 +538,31 @@ impl std::error::Error for MerkleBlockError {
             | NotEnoughBits | NotAllBitsConsumed | NotAllHashesConsumed | BitsArrayOverflow
             | HashesArrayOverflow | IdenticalHashesFound => None,
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for TxMerkleNode {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxMerkleNode::from_byte_array(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PartialMerkleTree {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(PartialMerkleTree {
+            num_transactions: u.arbitrary()?,
+            bits: Vec::<bool>::arbitrary(u)?,
+            hashes: Vec::<TxMerkleNode>::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for MerkleBlock {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(MerkleBlock { header: u.arbitrary()?, txn: u.arbitrary()? })
     }
 }
 
