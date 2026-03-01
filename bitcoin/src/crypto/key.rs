@@ -5,6 +5,8 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use core::convert::Infallible;
 use core::fmt::{self, Write as _};
 use core::ops;
@@ -1641,6 +1643,23 @@ impl fmt::Display for TweakXOnlyPublicKeyError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for TweakXOnlyPublicKeyError {}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PublicKey {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self{
+            compressed: u.arbitrary()?,
+            inner: u.arbitrary()?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for XOnlyPublicKey {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::new(secp256k1::XOnlyPublicKey::arbitrary(u)?))
+    }
+}
 
 #[cfg(test)]
 mod tests {

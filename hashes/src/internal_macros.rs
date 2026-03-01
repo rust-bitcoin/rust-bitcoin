@@ -101,6 +101,13 @@ macro_rules! general_hash_type {
                 hash_byte_chunks(byte_slices)
             }
         }
+
+        #[cfg(feature = "arbitrary")]
+        impl<'a> arbitrary::Arbitrary<'a> for Hash {
+            fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+                Ok(Self(u.arbitrary()?))
+            }
+        }
     };
 }
 pub(crate) use general_hash_type;

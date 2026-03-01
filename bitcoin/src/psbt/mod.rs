@@ -13,6 +13,8 @@ mod map;
 pub mod raw;
 pub mod serialize;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use core::convert::Infallible;
 use core::{cmp, fmt};
 #[cfg(feature = "std")]
@@ -1292,6 +1294,21 @@ mod display_from_str {
 }
 #[cfg(feature = "base64")]
 pub use self::display_from_str::PsbtParseError;
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Psbt {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            unsigned_tx: u.arbitrary()?,
+            version: u.arbitrary()?,
+            xpub: u.arbitrary()?,
+            proprietary: u.arbitrary()?,
+            unknown: u.arbitrary()?,
+            inputs: u.arbitrary()?,
+            outputs: u.arbitrary()?,
+        })
+    }
+}
 
 #[cfg(test)]
 mod tests {

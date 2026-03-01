@@ -18,6 +18,8 @@ extern crate std;
 #[cfg(feature = "serde")]
 extern crate serde;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use core::fmt;
 use core::str::FromStr;
 
@@ -272,6 +274,16 @@ impl FromStr for Network {
 
 impl AsRef<Self> for Network {
     fn as_ref(&self) -> &Self { self }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for NetworkKind {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match bool::arbitrary(u)? {
+            true => Ok(Self::Main),
+            false => Ok(Self::Test)
+        }
+    }
 }
 
 #[cfg(test)]

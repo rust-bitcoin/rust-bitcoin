@@ -22,7 +22,7 @@ serde = ["base64", "dep:serde", "hashes/serde", "internals/serde", "network/serd
 secp-global-context = ["secp256k1/global-context"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary"]
+arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary", "hashes/arbitrary", "secp256k1/arbitrary", "network/arbitrary"]
 
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-features = false, features = ["alloc"] }
