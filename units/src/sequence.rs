@@ -17,6 +17,8 @@
 #[cfg(feature = "encoding")]
 use core::convert::Infallible;
 use core::fmt;
+#[cfg(feature = "encoding")]
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -268,9 +270,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for Sequence {
     type Encoder<'e> = SequenceEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        SequenceEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus_u32().to_le_bytes(),
-        ))
+        SequenceEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_consensus_u32().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

@@ -13,6 +13,8 @@
 
 #[cfg(feature = "encoding")]
 use core::convert::Infallible;
+#[cfg(feature = "encoding")]
+use core::marker::PhantomData;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -173,9 +175,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for BlockHeight {
     type Encoder<'e> = BlockHeightEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHeightEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_u32().to_le_bytes(),
-        ))
+        BlockHeightEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

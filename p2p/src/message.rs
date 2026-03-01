@@ -11,6 +11,7 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::Infallible;
+use core::marker::PhantomData;
 use core::{cmp, fmt};
 
 #[cfg(feature = "arbitrary")]
@@ -487,7 +488,10 @@ impl encoding::Encodable for FeeFilter {
     fn encoder(&self) -> Self::Encoder<'_> {
         // Encode as sat/kvB in little-endian (BIP 133 wire format).
         let kvb = self.0.to_sat_per_kvb_ceil();
-        FeeFilterEncoder::new(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
+        FeeFilterEncoder(
+            encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 
@@ -853,15 +857,18 @@ impl encoding::Encodable for V1NetworkMessage {
     type Encoder<'e> = V1NetworkMessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        V1NetworkMessageEncoder::new(encoding::Encoder2::new(
-            encoding::Encoder4::new(
-                encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
-                self.command().encoder(),
-                encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
-                encoding::ArrayEncoder::without_length_prefix(self.checksum),
+        V1NetworkMessageEncoder(
+            encoding::Encoder2::new(
+                encoding::Encoder4::new(
+                    encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
+                    self.command().encoder(),
+                    encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
+                    encoding::ArrayEncoder::without_length_prefix(self.checksum),
+                ),
+                NetworkMessageEncoder::new(&self.payload),
             ),
-            NetworkMessageEncoder::new(&self.payload),
-        ))
+            PhantomData,
+        )
     }
 }
 
@@ -1398,10 +1405,13 @@ impl encoding::Encodable for NetworkHeader {
     type Encoder<'e> = NetworkHeaderEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        NetworkHeaderEncoder::new(Encoder2::new(
-            self.header.encoder(),
-            ArrayEncoder::without_length_prefix([self.length]),
-        ))
+        NetworkHeaderEncoder(
+            Encoder2::new(
+                self.header.encoder(),
+                ArrayEncoder::without_length_prefix([self.length]),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -1500,10 +1510,13 @@ impl encoding::Encodable for HeadersMessage {
     type Encoder<'e> = HeadersMessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        HeadersMessageEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()),
-            SliceEncoder::without_length_prefix(&self.0),
-        ))
+        HeadersMessageEncoder(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.0.len()),
+                SliceEncoder::without_length_prefix(&self.0),
+            ),
+            PhantomData,
+        )
     }
 }
 

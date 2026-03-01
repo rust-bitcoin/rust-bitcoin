@@ -2,6 +2,8 @@
 
 #![cfg(feature = "std")]
 
+use core::marker::PhantomData;
+
 use bitcoin_consensus_encoding as encoding;
 use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
 
@@ -23,7 +25,7 @@ fn array_encoder() {
     impl Encodable for Test {
         type Encoder<'e> = TestArrayEncoder<'e>;
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestArrayEncoder::new(ArrayEncoder::without_length_prefix(self.0.to_le_bytes()))
+            TestArrayEncoder(ArrayEncoder::without_length_prefix(self.0.to_le_bytes()), PhantomData)
         }
     }
 
@@ -47,7 +49,7 @@ fn bytes_encoder_without_length_prefix() {
             Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.0.as_ref()))
+            TestBytesEncoder(BytesEncoder::without_length_prefix(self.0.as_ref()), PhantomData)
         }
     }
 
@@ -71,8 +73,10 @@ fn two_encoder() {
         type Encoder<'e> = Encoder2<TestBytesEncoder<'e>, TestBytesEncoder<'e>>;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            let a = TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.a.as_ref()));
-            let b = TestBytesEncoder::new(BytesEncoder::without_length_prefix(self.b.as_ref()));
+            let a =
+                TestBytesEncoder(BytesEncoder::without_length_prefix(self.a.as_ref()), PhantomData);
+            let b =
+                TestBytesEncoder(BytesEncoder::without_length_prefix(self.b.as_ref()), PhantomData);
 
             Encoder2::new(a, b)
         }
@@ -103,10 +107,13 @@ fn slice_encoder() {
             Self: 'e;
 
         fn encoder(&self) -> Self::Encoder<'_> {
-            TestEncoder::new(Encoder2::new(
-                CompactSizeEncoder::new(self.0.len()),
-                SliceEncoder::without_length_prefix(&self.0),
-            ))
+            TestEncoder(
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.0.len()),
+                    SliceEncoder::without_length_prefix(&self.0),
+                ),
+                PhantomData,
+            )
         }
     }
 
@@ -122,7 +129,10 @@ fn slice_encoder() {
         type Encoder<'e> = InnerArrayEncoder<'e>;
         fn encoder(&self) -> Self::Encoder<'_> {
             // Big-endian to make reading the test assertion easier.
-            InnerArrayEncoder::new(ArrayEncoder::without_length_prefix(self.0.to_be_bytes()))
+            InnerArrayEncoder(
+                ArrayEncoder::without_length_prefix(self.0.to_be_bytes()),
+                PhantomData,
+            )
         }
     }
 

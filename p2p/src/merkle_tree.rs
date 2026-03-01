@@ -13,6 +13,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -136,7 +137,7 @@ impl encoding::Encodable for MerkleBlock {
     type Encoder<'e> = MerkleBlockEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        MerkleBlockEncoder::new(Encoder2::new(self.header.encoder(), self.txn.encoder()))
+        MerkleBlockEncoder(Encoder2::new(self.header.encoder(), self.txn.encoder()), PhantomData)
     }
 }
 
@@ -525,17 +526,20 @@ impl encoding::Encodable for PartialMerkleTree {
     type Encoder<'e> = PartialMerkleTreeEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        PartialMerkleTreeEncoder::new(Encoder3::new(
-            ArrayEncoder::without_length_prefix(self.num_transactions.to_le_bytes()),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.hashes.len()),
-                SliceEncoder::without_length_prefix(&self.hashes),
+        PartialMerkleTreeEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.num_transactions.to_le_bytes()),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.hashes),
+                ),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.bits.len().div_ceil(8)),
+                    BitVecEncoder::new(&self.bits),
+                ),
             ),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.bits.len().div_ceil(8)),
-                BitVecEncoder::new(&self.bits),
-            ),
-        ))
+            PhantomData,
+        )
     }
 }
 

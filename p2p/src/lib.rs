@@ -32,6 +32,7 @@ use alloc::borrow::ToOwned;
 use alloc::string::String;
 use core::borrow::{Borrow, BorrowMut};
 use core::convert::Infallible;
+use core::marker::PhantomData;
 use core::str::FromStr;
 use core::{fmt, ops};
 
@@ -124,9 +125,10 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for ProtocolVersion {
     type Encoder<'e> = ProtocolVersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ProtocolVersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.0.to_le_bytes(),
-        ))
+        ProtocolVersionEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 
@@ -349,9 +351,10 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for ServiceFlags {
     type Encoder<'e> = ServiceFlagsEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ServiceFlagsEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.0.to_le_bytes(),
-        ))
+        ServiceFlagsEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 
@@ -521,7 +524,7 @@ impl encoding::Encodable for Magic {
     type Encoder<'e> = MagicEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        MagicEncoder::new(ArrayEncoder::without_length_prefix(self.0))
+        MagicEncoder(ArrayEncoder::without_length_prefix(self.0), PhantomData)
     }
 }
 

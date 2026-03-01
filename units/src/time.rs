@@ -10,6 +10,8 @@
 #[cfg(feature = "encoding")]
 use core::convert::Infallible;
 use core::fmt;
+#[cfg(feature = "encoding")]
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -95,9 +97,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for BlockTime {
     type Encoder<'e> = BlockTimeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_u32().to_le_bytes(),
-        ))
+        BlockTimeEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

@@ -9,7 +9,6 @@
 
 use core::convert::Infallible;
 use core::fmt;
-#[cfg(feature = "alloc")]
 use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
@@ -594,14 +593,17 @@ impl Encodable for Header {
     type Encoder<'e> = HeaderEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        HeaderEncoder::new(encoding::Encoder6::new(
-            self.version.encoder(),
-            self.prev_blockhash.encoder(),
-            self.merkle_root.encoder(),
-            self.time.encoder(),
-            self.bits.encoder(),
-            encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
-        ))
+        HeaderEncoder(
+            encoding::Encoder6::new(
+                self.version.encoder(),
+                self.prev_blockhash.encoder(),
+                self.merkle_root.encoder(),
+                self.time.encoder(),
+                self.bits.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -838,9 +840,10 @@ encoding::encoder_newtype_exact! {
 impl Encodable for Version {
     type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus().to_le_bytes(),
-        ))
+        VersionEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

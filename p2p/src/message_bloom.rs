@@ -7,6 +7,7 @@
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -51,17 +52,20 @@ impl encoding::Encodable for FilterLoad {
     type Encoder<'e> = FilterLoadEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterLoadEncoder::new(Encoder2::new(
+        FilterLoadEncoder(
             Encoder2::new(
-                CompactSizeEncoder::new(self.filter.len()),
-                BytesEncoder::without_length_prefix(&self.filter),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.filter.len()),
+                    BytesEncoder::without_length_prefix(&self.filter),
+                ),
+                Encoder3::new(
+                    ArrayEncoder::without_length_prefix(self.hash_funcs.to_le_bytes()),
+                    ArrayEncoder::without_length_prefix(self.tweak.to_le_bytes()),
+                    self.flags.encoder(),
+                ),
             ),
-            Encoder3::new(
-                ArrayEncoder::without_length_prefix(self.hash_funcs.to_le_bytes()),
-                ArrayEncoder::without_length_prefix(self.tweak.to_le_bytes()),
-                self.flags.encoder(),
-            ),
-        ))
+            PhantomData,
+        )
     }
 }
 
@@ -149,11 +153,14 @@ impl encoding::Encodable for BloomFlags {
     type Encoder<'e> = BloomFlagsEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        BloomFlagsEncoder::new(ArrayEncoder::without_length_prefix([match self {
-            Self::None => 0,
-            Self::All => 1,
-            Self::PubkeyOnly => 2,
-        }]))
+        BloomFlagsEncoder(
+            ArrayEncoder::without_length_prefix([match self {
+                Self::None => 0,
+                Self::All => 1,
+                Self::PubkeyOnly => 2,
+            }]),
+            PhantomData,
+        )
     }
 }
 
@@ -271,10 +278,13 @@ impl encoding::Encodable for FilterAdd {
     type Encoder<'e> = FilterAddEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterAddEncoder::new(Encoder2::new(
-            CompactSizeEncoder::new(self.data.len()),
-            BytesEncoder::without_length_prefix(&self.data),
-        ))
+        FilterAddEncoder(
+            Encoder2::new(
+                CompactSizeEncoder::new(self.data.len()),
+                BytesEncoder::without_length_prefix(&self.data),
+            ),
+            PhantomData,
+        )
     }
 }
 

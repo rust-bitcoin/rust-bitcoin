@@ -4,6 +4,8 @@
 
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
+#[cfg(feature = "encoding")]
+use core::marker::PhantomData;
 use core::str::FromStr;
 use core::{default, fmt};
 
@@ -568,9 +570,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for Amount {
     type Encoder<'e> = AmountEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        AmountEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_sat().to_le_bytes(),
-        ))
+        AmountEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_sat().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

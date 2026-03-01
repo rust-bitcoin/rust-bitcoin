@@ -8,6 +8,7 @@
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -127,10 +128,13 @@ impl encoding::Encodable for Inventory {
             Self::WitnessBlock(b) => (0x4000_0002, b.to_byte_array()),
             Self::Unknown { inv_type: t, hash: d } => (t, d),
         };
-        InventoryEncoder::new(Encoder2::new(
-            ArrayEncoder::without_length_prefix(prefix.to_le_bytes()),
-            ArrayEncoder::without_length_prefix(bytes),
-        ))
+        InventoryEncoder(
+            Encoder2::new(
+                ArrayEncoder::without_length_prefix(prefix.to_le_bytes()),
+                ArrayEncoder::without_length_prefix(bytes),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -245,14 +249,17 @@ impl encoding::Encodable for GetHeadersMessage {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetHeadersEncoder::new(Encoder3::new(
-            self.version.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.locator_hashes.len()),
-                SliceEncoder::without_length_prefix(&self.locator_hashes),
+        GetHeadersEncoder(
+            Encoder3::new(
+                self.version.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.locator_hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.locator_hashes),
+                ),
+                self.stop_hash.encoder(),
             ),
-            self.stop_hash.encoder(),
-        ))
+            PhantomData,
+        )
     }
 }
 
@@ -263,14 +270,17 @@ impl encoding::Encodable for GetBlocksMessage {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetBlocksEncoder::new(Encoder3::new(
-            self.version.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.locator_hashes.len()),
-                SliceEncoder::without_length_prefix(&self.locator_hashes),
+        GetBlocksEncoder(
+            Encoder3::new(
+                self.version.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.locator_hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.locator_hashes),
+                ),
+                self.stop_hash.encoder(),
             ),
-            self.stop_hash.encoder(),
-        ))
+            PhantomData,
+        )
     }
 }
 

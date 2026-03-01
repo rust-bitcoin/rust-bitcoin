@@ -2,6 +2,7 @@
 
 //! Tests for encoder free functions.
 
+use core::marker::PhantomData;
 #[cfg(feature = "std")]
 use std::io::{Cursor, Write};
 
@@ -115,9 +116,9 @@ fn encode_newtype_lifetime_flexibility() {
     }
 
     let test_data = b"hello world";
-    let custom_encoder = CustomEncoder::new(BytesEncoder::without_length_prefix(test_data));
+    let custom_encoder = CustomEncoder(BytesEncoder::without_length_prefix(test_data), PhantomData);
     let no_lifetime_encoder =
-        NoLifetimeEncoder::new(ArrayEncoder::without_length_prefix([1, 2, 3, 4]));
+        NoLifetimeEncoder(ArrayEncoder::without_length_prefix([1, 2, 3, 4]), PhantomData);
 
     assert_eq!(custom_encoder.current_chunk(), test_data.as_slice());
     assert_eq!(no_lifetime_encoder.current_chunk(), &[1, 2, 3, 4][..]);
