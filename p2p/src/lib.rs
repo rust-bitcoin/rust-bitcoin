@@ -38,7 +38,7 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use encoding::{ArrayEncoder, ArrayDecoder};
+use encoding::{ArrayDecoder, ArrayEncoder};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
@@ -552,9 +552,7 @@ impl encoding::Decoder for MagicDecoder {
 impl encoding::Decodable for Magic {
     type Decoder = MagicDecoder;
 
-    fn decoder() -> Self::Decoder {
-        MagicDecoder(ArrayDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { MagicDecoder(ArrayDecoder::new()) }
 }
 
 /// Errors occuring when decoding a network [`Magic`].
@@ -573,9 +571,7 @@ impl fmt::Display for MagicDecoderError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for MagicDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.0)
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl AsRef<[u8]> for Magic {
