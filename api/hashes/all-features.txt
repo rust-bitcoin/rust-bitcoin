@@ -530,8 +530,10 @@ impl<T: bitcoin_hashes::Hash> core::cmp::Eq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::Hash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::Hash> core::convert::AsRef<[u8]> for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>
+impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::hkdf::Hkdf<T>
 impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::hmac::HmacEngine<T>
 impl<T: bitcoin_hashes::HashEngine> core::fmt::Debug for bitcoin_hashes::hkdf::Hkdf<T>
+impl<T: bitcoin_hashes::HashEngine> core::ops::drop::Drop for bitcoin_hashes::hkdf::Hkdf<T>
 impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>
 impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::Hash for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::HashEngine for bitcoin_hashes::sha256t::HashEngine<T>
@@ -564,7 +566,6 @@ impl<T: core::fmt::Debug + bitcoin_hashes::HashEngine> core::fmt::Debug for bitc
 impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_hashes::sha256t::HashEngine<T>
 impl<T: core::hash::Hash + bitcoin_hashes::Hash> core::hash::Hash for bitcoin_hashes::hmac::Hmac<T>
 impl<T: core::marker::Copy + bitcoin_hashes::Hash> core::marker::Copy for bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::marker::Copy + bitcoin_hashes::HashEngine> core::marker::Copy for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::marker::Copy
 impl<T> bitcoin_hashes::hkdf::Hkdf<T> where T: core::default::Default + bitcoin_hashes::HashEngine
 impl<T> bitcoin_hashes::sha256t::Hash<T>
 impl<T> bitcoin_hashes::sha256t::Hash<T> where T: bitcoin_hashes::sha256t::Tag
@@ -761,10 +762,12 @@ pub fn bitcoin_hashes::hash160::HashEngine::write(&mut self, buf: &[u8]) -> std:
 pub fn bitcoin_hashes::hash160::hash(data: &[u8]) -> bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::hash160::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin_hashes::hkdf::Hkdf<T>::clone(&self) -> bitcoin_hashes::hkdf::Hkdf<T>
+pub fn bitcoin_hashes::hkdf::Hkdf<T>::drop(&mut self)
 pub fn bitcoin_hashes::hkdf::Hkdf<T>::expand(&self, info: &[u8], okm: &mut [u8]) -> core::result::Result<(), bitcoin_hashes::hkdf::MaxLengthError>
 pub fn bitcoin_hashes::hkdf::Hkdf<T>::expand_to_len(&self, info: &[u8], len: usize) -> core::result::Result<alloc::vec::Vec<u8>, bitcoin_hashes::hkdf::MaxLengthError>
 pub fn bitcoin_hashes::hkdf::Hkdf<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::hkdf::Hkdf<T>::new(salt: &[u8], ikm: &[u8]) -> Self
+pub fn bitcoin_hashes::hkdf::Hkdf<T>::non_secure_erase(&mut self)
 pub fn bitcoin_hashes::hkdf::MaxLengthError::clone(&self) -> bitcoin_hashes::hkdf::MaxLengthError
 pub fn bitcoin_hashes::hkdf::MaxLengthError::eq(&self, other: &bitcoin_hashes::hkdf::MaxLengthError) -> bool
 pub fn bitcoin_hashes::hkdf::MaxLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -789,6 +792,7 @@ pub fn bitcoin_hashes::hmac::HmacEngine<T>::from_inner_engines(iengine: T, oengi
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::input(&mut self, buf: &[u8])
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::n_bytes_hashed(&self) -> u64
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::new(key: &[u8]) -> Self where T: core::default::Default
+pub fn bitcoin_hashes::hmac::HmacEngine<T>::non_secure_erase(&mut self)
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N>::default() -> Self
 pub fn bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N>::expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
