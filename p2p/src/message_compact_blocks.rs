@@ -21,6 +21,27 @@ pub struct SendCmpct {
 }
 impl_consensus_encoding!(SendCmpct, send_compact, version);
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`SendCmpct`] type.
+    pub struct SendCmpctEncoder<'e>(encoding::Encoder2<
+        encoding::ArrayEncoder<1>,
+        encoding::ArrayEncoder<8>
+    >);
+}
+
+impl encoding::Encodable for SendCmpct {
+    type Encoder<'e>
+        = SendCmpctEncoder<'e>
+    where
+        Self: 'e;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        SendCmpctEncoder::new(encoding::Encoder2::new(
+            encoding::ArrayEncoder::without_length_prefix([u8::from(self.send_compact)]),
+            encoding::ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
+        ))
+    }
+}
+
 type SendCmpctInnerDecoder =
     encoding::Decoder2<encoding::ArrayDecoder<1>, encoding::ArrayDecoder<8>>;
 
