@@ -375,6 +375,8 @@ fn consensus_error_into_serde<E: serde::de::Error>(error: ParseError) -> E {
         ),
         ParseError::NonMinimalCompactSize =>
             E::custom(format_args!("compact size was not encoded minimally")),
+        ParseError::OversizedCompactSize =>
+            E::custom(format_args!("compact size value exceeds the maximum allowed size")),
         ParseError::ParseFailed(msg) => E::custom(msg),
         ParseError::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),

@@ -157,6 +157,8 @@ pub enum ParseError {
     },
     /// CompactSize was encoded in a non-minimal way.
     NonMinimalCompactSize,
+    /// CompactSize value exceeds the maximum allowed size.
+    OversizedCompactSize,
     /// Parsing error.
     ParseFailed(&'static str),
     /// Unsupported SegWit flag.
@@ -181,6 +183,7 @@ impl fmt::Display for ParseError {
                 e[0], e[1], e[2], e[3], a[0], a[1], a[2], a[3],
             ),
             Self::NonMinimalCompactSize => write!(f, "non-minimal compact size"),
+            Self::OversizedCompactSize => write!(f, "value exceeds the maximum allowed compact size"),
             Self::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             Self::UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported SegWit version: {}", swflag),
@@ -198,6 +201,7 @@ impl std::error::Error for ParseError {
             | Self::OversizedVectorAllocation { .. }
             | Self::InvalidChecksum { .. }
             | Self::NonMinimalCompactSize
+            | Self::OversizedCompactSize
             | Self::ParseFailed(_)
             | Self::UnsupportedSegwitFlag(_) => None,
         }
