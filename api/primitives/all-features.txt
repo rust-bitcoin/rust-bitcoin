@@ -18,10 +18,10 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::BlockHashDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::HeaderDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::block::VersionDecoder
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::OutPointDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::TransactionDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::TxInDecoder
-impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::TxMerkleNodeDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::TxOutDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::transaction::VersionDecoder
 impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::witness::WitnessDecoder
@@ -54,6 +54,7 @@ impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Checke
 impl bitcoin_primitives::block::Validation for bitcoin_primitives::block::Unchecked
 impl bitcoin_primitives::block::Version
 impl bitcoin_primitives::block::VersionDecoder
+impl bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
 impl bitcoin_primitives::script::RedeemScriptSizeError
 impl bitcoin_primitives::script::ScriptHash
 impl bitcoin_primitives::script::ScriptHashableTag for bitcoin_primitives::script::RedeemScriptTag
@@ -70,7 +71,6 @@ impl bitcoin_primitives::transaction::OutPointDecoder
 impl bitcoin_primitives::transaction::Transaction
 impl bitcoin_primitives::transaction::TransactionDecoder
 impl bitcoin_primitives::transaction::TxIn
-impl bitcoin_primitives::transaction::TxMerkleNodeDecoder
 impl bitcoin_primitives::transaction::Version
 impl bitcoin_primitives::transaction::VersionDecoder
 impl bitcoin_primitives::witness::Witness
@@ -109,6 +109,7 @@ impl core::clone::Clone for bitcoin_primitives::block::InvalidBlockError
 impl core::clone::Clone for bitcoin_primitives::block::Unchecked
 impl core::clone::Clone for bitcoin_primitives::block::Version
 impl core::clone::Clone for bitcoin_primitives::block::VersionDecoderError
+impl core::clone::Clone for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::clone::Clone for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::clone::Clone for bitcoin_primitives::script::RedeemScriptTag
 impl core::clone::Clone for bitcoin_primitives::script::ScriptBufDecoderError
@@ -126,7 +127,6 @@ impl core::clone::Clone for bitcoin_primitives::transaction::Transaction
 impl core::clone::Clone for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::clone::Clone for bitcoin_primitives::transaction::TxIn
 impl core::clone::Clone for bitcoin_primitives::transaction::TxInDecoderError
-impl core::clone::Clone for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::clone::Clone for bitcoin_primitives::transaction::TxOut
 impl core::clone::Clone for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::clone::Clone for bitcoin_primitives::transaction::Version
@@ -150,6 +150,7 @@ impl core::cmp::Eq for bitcoin_primitives::block::InvalidBlockError
 impl core::cmp::Eq for bitcoin_primitives::block::Unchecked
 impl core::cmp::Eq for bitcoin_primitives::block::Version
 impl core::cmp::Eq for bitcoin_primitives::block::VersionDecoderError
+impl core::cmp::Eq for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::cmp::Eq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::cmp::Eq for bitcoin_primitives::script::RedeemScriptTag
 impl core::cmp::Eq for bitcoin_primitives::script::ScriptBufDecoderError
@@ -167,7 +168,6 @@ impl core::cmp::Eq for bitcoin_primitives::transaction::Transaction
 impl core::cmp::Eq for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::cmp::Eq for bitcoin_primitives::transaction::TxIn
 impl core::cmp::Eq for bitcoin_primitives::transaction::TxInDecoderError
-impl core::cmp::Eq for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::cmp::Eq for bitcoin_primitives::transaction::TxOut
 impl core::cmp::Eq for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::cmp::Eq for bitcoin_primitives::transaction::Version
@@ -215,6 +215,7 @@ impl core::cmp::PartialEq for bitcoin_primitives::block::InvalidBlockError
 impl core::cmp::PartialEq for bitcoin_primitives::block::Unchecked
 impl core::cmp::PartialEq for bitcoin_primitives::block::Version
 impl core::cmp::PartialEq for bitcoin_primitives::block::VersionDecoderError
+impl core::cmp::PartialEq for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::cmp::PartialEq for bitcoin_primitives::script::RedeemScriptTag
 impl core::cmp::PartialEq for bitcoin_primitives::script::ScriptBufDecoderError
@@ -232,7 +233,6 @@ impl core::cmp::PartialEq for bitcoin_primitives::transaction::Transaction
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::TxIn
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::TxInDecoderError
-impl core::cmp::PartialEq for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::TxOut
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::cmp::PartialEq for bitcoin_primitives::transaction::Version
@@ -306,13 +306,13 @@ impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::bloc
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::HeaderDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::InvalidBlockError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::VersionDecoderError
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::ParseOutPointError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxInDecoderError
-impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::VersionDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness::WitnessDecoderError
@@ -322,9 +322,9 @@ impl core::convert::TryFrom<bitcoin_primitives::script::ScriptBuf<bitcoin_primit
 impl core::default::Default for bitcoin_primitives::block::BlockHashDecoder
 impl core::default::Default for bitcoin_primitives::block::Version
 impl core::default::Default for bitcoin_primitives::block::VersionDecoder
+impl core::default::Default for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
 impl core::default::Default for bitcoin_primitives::transaction::OutPointDecoder
 impl core::default::Default for bitcoin_primitives::transaction::TransactionDecoder
-impl core::default::Default for bitcoin_primitives::transaction::TxMerkleNodeDecoder
 impl core::default::Default for bitcoin_primitives::transaction::VersionDecoder
 impl core::default::Default for bitcoin_primitives::witness::Witness
 impl core::default::Default for bitcoin_primitives::witness::WitnessDecoder
@@ -334,6 +334,7 @@ impl core::error::Error for bitcoin_primitives::block::HeaderDecoderError
 impl core::error::Error for bitcoin_primitives::block::InvalidBlockError
 impl core::error::Error for bitcoin_primitives::block::ParseHeaderError
 impl core::error::Error for bitcoin_primitives::block::VersionDecoderError
+impl core::error::Error for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::error::Error for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::error::Error for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::error::Error for bitcoin_primitives::script::WitnessScriptSizeError
@@ -342,7 +343,6 @@ impl core::error::Error for bitcoin_primitives::transaction::ParseOutPointError
 impl core::error::Error for bitcoin_primitives::transaction::ParseTransactionError
 impl core::error::Error for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::TxInDecoderError
-impl core::error::Error for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::error::Error for bitcoin_primitives::transaction::VersionDecoderError
 impl core::error::Error for bitcoin_primitives::witness::UnexpectedEofError
@@ -366,6 +366,7 @@ impl core::fmt::Debug for bitcoin_primitives::block::ParseHeaderError
 impl core::fmt::Debug for bitcoin_primitives::block::Unchecked
 impl core::fmt::Debug for bitcoin_primitives::block::Version
 impl core::fmt::Debug for bitcoin_primitives::block::VersionDecoderError
+impl core::fmt::Debug for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::fmt::Debug for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptHash
@@ -379,7 +380,6 @@ impl core::fmt::Debug for bitcoin_primitives::transaction::Transaction
 impl core::fmt::Debug for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::fmt::Debug for bitcoin_primitives::transaction::TxIn
 impl core::fmt::Debug for bitcoin_primitives::transaction::TxInDecoderError
-impl core::fmt::Debug for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::fmt::Debug for bitcoin_primitives::transaction::TxOut
 impl core::fmt::Debug for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::fmt::Debug for bitcoin_primitives::transaction::Version
@@ -402,6 +402,7 @@ impl core::fmt::Display for bitcoin_primitives::block::InvalidBlockError
 impl core::fmt::Display for bitcoin_primitives::block::ParseHeaderError
 impl core::fmt::Display for bitcoin_primitives::block::Version
 impl core::fmt::Display for bitcoin_primitives::block::VersionDecoderError
+impl core::fmt::Display for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::fmt::Display for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::fmt::Display for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::fmt::Display for bitcoin_primitives::script::ScriptHash
@@ -414,7 +415,6 @@ impl core::fmt::Display for bitcoin_primitives::transaction::ParseTransactionErr
 impl core::fmt::Display for bitcoin_primitives::transaction::Transaction
 impl core::fmt::Display for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::TxInDecoderError
-impl core::fmt::Display for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::fmt::Display for bitcoin_primitives::transaction::Version
 impl core::fmt::Display for bitcoin_primitives::transaction::VersionDecoderError
@@ -507,6 +507,8 @@ impl core::marker::Freeze for bitcoin_primitives::block::Unchecked
 impl core::marker::Freeze for bitcoin_primitives::block::Version
 impl core::marker::Freeze for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Freeze for bitcoin_primitives::block::VersionDecoderError
+impl core::marker::Freeze for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
+impl core::marker::Freeze for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::marker::Freeze for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Freeze for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Freeze for bitcoin_primitives::script::ScriptBufDecoderError
@@ -528,8 +530,6 @@ impl core::marker::Freeze for bitcoin_primitives::transaction::TransactionDecode
 impl core::marker::Freeze for bitcoin_primitives::transaction::TxIn
 impl core::marker::Freeze for bitcoin_primitives::transaction::TxInDecoder
 impl core::marker::Freeze for bitcoin_primitives::transaction::TxInDecoderError
-impl core::marker::Freeze for bitcoin_primitives::transaction::TxMerkleNodeDecoder
-impl core::marker::Freeze for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::marker::Freeze for bitcoin_primitives::transaction::TxOut
 impl core::marker::Freeze for bitcoin_primitives::transaction::TxOutDecoder
 impl core::marker::Freeze for bitcoin_primitives::transaction::TxOutDecoderError
@@ -561,6 +561,8 @@ impl core::marker::Send for bitcoin_primitives::block::Unchecked
 impl core::marker::Send for bitcoin_primitives::block::Version
 impl core::marker::Send for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Send for bitcoin_primitives::block::VersionDecoderError
+impl core::marker::Send for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
+impl core::marker::Send for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::marker::Send for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Send for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Send for bitcoin_primitives::script::ScriptBufDecoderError
@@ -582,8 +584,6 @@ impl core::marker::Send for bitcoin_primitives::transaction::TransactionDecoderE
 impl core::marker::Send for bitcoin_primitives::transaction::TxIn
 impl core::marker::Send for bitcoin_primitives::transaction::TxInDecoder
 impl core::marker::Send for bitcoin_primitives::transaction::TxInDecoderError
-impl core::marker::Send for bitcoin_primitives::transaction::TxMerkleNodeDecoder
-impl core::marker::Send for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::marker::Send for bitcoin_primitives::transaction::TxOut
 impl core::marker::Send for bitcoin_primitives::transaction::TxOutDecoder
 impl core::marker::Send for bitcoin_primitives::transaction::TxOutDecoderError
@@ -610,6 +610,7 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::block::InvalidBlo
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Unchecked
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Version
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::VersionDecoderError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::ScriptBufDecoderError
@@ -627,7 +628,6 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::Tran
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TxIn
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TxInDecoderError
-impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TxOut
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::transaction::Version
@@ -656,6 +656,8 @@ impl core::marker::Sync for bitcoin_primitives::block::Unchecked
 impl core::marker::Sync for bitcoin_primitives::block::Version
 impl core::marker::Sync for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Sync for bitcoin_primitives::block::VersionDecoderError
+impl core::marker::Sync for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
+impl core::marker::Sync for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::marker::Sync for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Sync for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Sync for bitcoin_primitives::script::ScriptBufDecoderError
@@ -677,8 +679,6 @@ impl core::marker::Sync for bitcoin_primitives::transaction::TransactionDecoderE
 impl core::marker::Sync for bitcoin_primitives::transaction::TxIn
 impl core::marker::Sync for bitcoin_primitives::transaction::TxInDecoder
 impl core::marker::Sync for bitcoin_primitives::transaction::TxInDecoderError
-impl core::marker::Sync for bitcoin_primitives::transaction::TxMerkleNodeDecoder
-impl core::marker::Sync for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::marker::Sync for bitcoin_primitives::transaction::TxOut
 impl core::marker::Sync for bitcoin_primitives::transaction::TxOutDecoder
 impl core::marker::Sync for bitcoin_primitives::transaction::TxOutDecoderError
@@ -710,6 +710,8 @@ impl core::marker::Unpin for bitcoin_primitives::block::Unchecked
 impl core::marker::Unpin for bitcoin_primitives::block::Version
 impl core::marker::Unpin for bitcoin_primitives::block::VersionDecoder
 impl core::marker::Unpin for bitcoin_primitives::block::VersionDecoderError
+impl core::marker::Unpin for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
+impl core::marker::Unpin for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::marker::Unpin for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Unpin for bitcoin_primitives::script::RedeemScriptTag
 impl core::marker::Unpin for bitcoin_primitives::script::ScriptBufDecoderError
@@ -731,8 +733,6 @@ impl core::marker::Unpin for bitcoin_primitives::transaction::TransactionDecoder
 impl core::marker::Unpin for bitcoin_primitives::transaction::TxIn
 impl core::marker::Unpin for bitcoin_primitives::transaction::TxInDecoder
 impl core::marker::Unpin for bitcoin_primitives::transaction::TxInDecoderError
-impl core::marker::Unpin for bitcoin_primitives::transaction::TxMerkleNodeDecoder
-impl core::marker::Unpin for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::marker::Unpin for bitcoin_primitives::transaction::TxOut
 impl core::marker::Unpin for bitcoin_primitives::transaction::TxOutDecoder
 impl core::marker::Unpin for bitcoin_primitives::transaction::TxOutDecoderError
@@ -819,6 +819,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Unch
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::VersionDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::VersionDecoderError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::RedeemScriptTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::ScriptBufDecoderError
@@ -840,8 +842,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxIn
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxInDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxInDecoderError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxMerkleNodeDecoder
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxOut
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxOutDecoder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::transaction::TxOutDecoderError
@@ -873,6 +873,8 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Uncheck
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::VersionDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::VersionDecoderError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::RedeemScriptTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptBufDecoderError
@@ -894,8 +896,6 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::T
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxIn
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxInDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxInDecoderError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxMerkleNodeDecoder
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxOut
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxOutDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::TxOutDecoderError
@@ -1252,7 +1252,7 @@ pub bitcoin_primitives::block::Header::prev_blockhash: bitcoin_primitives::Block
 pub bitcoin_primitives::block::Header::time: bitcoin_units::time::encapsulate::BlockTime
 pub bitcoin_primitives::block::Header::version: bitcoin_primitives::block::Version
 pub bitcoin_primitives::block::HeaderDecoderError::Bits(bitcoin_units::pow::CompactTargetDecoderError)
-pub bitcoin_primitives::block::HeaderDecoderError::MerkleRoot(bitcoin_primitives::transaction::TxMerkleNodeDecoderError)
+pub bitcoin_primitives::block::HeaderDecoderError::MerkleRoot(bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::Nonce(bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError)
 pub bitcoin_primitives::block::HeaderDecoderError::PrevBlockhash(bitcoin_primitives::block::BlockHashDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::Time(bitcoin_units::time::BlockTimeDecoderError)
@@ -1324,6 +1324,7 @@ pub const fn bitcoin_primitives::block::BlockHashDecoder::new() -> Self
 pub const fn bitcoin_primitives::block::Version::from_consensus(v: i32) -> Self
 pub const fn bitcoin_primitives::block::Version::to_consensus(self) -> i32
 pub const fn bitcoin_primitives::block::VersionDecoder::new() -> Self
+pub const fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder::new() -> Self
 pub const fn bitcoin_primitives::script::Script<T>::as_bytes(&self) -> &[u8]
 pub const fn bitcoin_primitives::script::Script<T>::from_bytes(bytes: &[u8]) -> &Self
 pub const fn bitcoin_primitives::script::Script<T>::is_empty(&self) -> bool
@@ -1340,7 +1341,6 @@ pub const fn bitcoin_primitives::script::WScriptHash::from_byte_array(bytes: [u8
 pub const fn bitcoin_primitives::script::WScriptHash::to_byte_array(self) -> [u8; 32]
 pub const fn bitcoin_primitives::transaction::OutPointDecoder::new() -> Self
 pub const fn bitcoin_primitives::transaction::TransactionDecoder::new() -> Self
-pub const fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::new() -> Self
 pub const fn bitcoin_primitives::transaction::Version::is_standard(self) -> bool
 pub const fn bitcoin_primitives::transaction::Version::maybe_non_standard(version: u32) -> Self
 pub const fn bitcoin_primitives::transaction::Version::to_u32(self) -> u32
@@ -1607,6 +1607,15 @@ pub fn bitcoin_primitives::block::VersionEncoder<'e>::len(&self) -> usize
 pub fn bitcoin_primitives::block::VersionEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_primitives::block::VersionEncoder<'e>
 pub fn bitcoin_primitives::block::compute_merkle_root(transactions: &[bitcoin_primitives::transaction::Transaction]) -> core::option::Option<bitcoin_primitives::TxMerkleNode>
 pub fn bitcoin_primitives::block::compute_witness_root(transactions: &[bitcoin_primitives::transaction::Transaction]) -> core::option::Option<bitcoin_primitives::WitnessMerkleNode>
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder::default() -> Self
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder::read_limit(&self) -> usize
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError::clone(&self) -> bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError::eq(&self, other: &bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError) -> bool
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>::len(&self) -> usize
@@ -1840,15 +1849,6 @@ pub fn bitcoin_primitives::transaction::TxInDecoderError::source(&self) -> core:
 pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::Encoder3<bitcoin_primitives::transaction::OutPointEncoder<'e>, bitcoin_primitives::script::ScriptEncoder<'e>, bitcoin_units::sequence::SequenceEncoder<'e>>) -> bitcoin_primitives::transaction::TxInEncoder<'e>
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::default() -> Self
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::read_limit(&self) -> usize
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoderError::clone(&self) -> bitcoin_primitives::transaction::TxMerkleNodeDecoderError
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoderError::eq(&self, other: &bitcoin_primitives::transaction::TxMerkleNodeDecoderError) -> bool
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoderError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::transaction::TxOut::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::transaction::TxOut::clone(&self) -> bitcoin_primitives::transaction::TxOut
 pub fn bitcoin_primitives::transaction::TxOut::cmp(&self, other: &bitcoin_primitives::transaction::TxOut) -> core::cmp::Ordering
@@ -1999,6 +1999,8 @@ pub struct bitcoin_primitives::block::VersionDecoderError(_)
 pub struct bitcoin_primitives::block::VersionEncoder<'e>(_, _)
 pub struct bitcoin_primitives::block::WitnessCommitment(_)
 pub struct bitcoin_primitives::merkle_tree::TxMerkleNode(_)
+pub struct bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder(_)
+pub struct bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError(_)
 pub struct bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>(_, _)
 pub struct bitcoin_primitives::merkle_tree::WitnessMerkleNode(_)
 pub struct bitcoin_primitives::script::RedeemScriptSizeError
@@ -2025,8 +2027,6 @@ pub struct bitcoin_primitives::transaction::TxIn
 pub struct bitcoin_primitives::transaction::TxInDecoder(_)
 pub struct bitcoin_primitives::transaction::TxInDecoderError(_)
 pub struct bitcoin_primitives::transaction::TxInEncoder<'e>(_, _)
-pub struct bitcoin_primitives::transaction::TxMerkleNodeDecoder(_)
-pub struct bitcoin_primitives::transaction::TxMerkleNodeDecoderError(_)
 pub struct bitcoin_primitives::transaction::TxOut
 pub struct bitcoin_primitives::transaction::TxOutDecoder(_)
 pub struct bitcoin_primitives::transaction::TxOutDecoderError(_)
@@ -2062,7 +2062,7 @@ pub type bitcoin_primitives::ScriptSig = bitcoin_primitives::script::Script<bitc
 pub type bitcoin_primitives::ScriptSigBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::ScriptSigTag>
 pub type bitcoin_primitives::TapScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::TapScriptTag>
 pub type bitcoin_primitives::TapScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::TapScriptTag>
-pub type bitcoin_primitives::TxMerkleNode::Decoder = bitcoin_primitives::transaction::TxMerkleNodeDecoder
+pub type bitcoin_primitives::TxMerkleNode::Decoder = bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder
 pub type bitcoin_primitives::TxMerkleNode::Encoder<'e> = bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
 pub type bitcoin_primitives::TxMerkleNode::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_primitives::Txid::Err = hex_conservative::error::DecodeFixedLengthBytesError
@@ -2088,6 +2088,8 @@ pub type bitcoin_primitives::block::Version::Decoder = bitcoin_primitives::block
 pub type bitcoin_primitives::block::Version::Encoder<'e> = bitcoin_primitives::block::VersionEncoder<'e>
 pub type bitcoin_primitives::block::VersionDecoder::Error = bitcoin_primitives::block::VersionDecoderError
 pub type bitcoin_primitives::block::VersionDecoder::Output = bitcoin_primitives::block::Version
+pub type bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder::Error = bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError
+pub type bitcoin_primitives::merkle_tree::TxMerkleNodeDecoder::Output = bitcoin_primitives::TxMerkleNode
 pub type bitcoin_primitives::script::RedeemScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::script::RedeemScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::RedeemScriptTag>
 pub type bitcoin_primitives::script::Script<T>::Encoder<'e> where Self: 'e = bitcoin_primitives::script::ScriptEncoder<'e>
@@ -2125,8 +2127,6 @@ pub type bitcoin_primitives::transaction::TxIn::Decoder = bitcoin_primitives::tr
 pub type bitcoin_primitives::transaction::TxIn::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder3<bitcoin_primitives::transaction::OutPointEncoder<'e>, bitcoin_primitives::script::ScriptEncoder<'e>, bitcoin_units::sequence::SequenceEncoder<'e>>
 pub type bitcoin_primitives::transaction::TxInDecoder::Error = bitcoin_primitives::transaction::TxInDecoderError
 pub type bitcoin_primitives::transaction::TxInDecoder::Output = bitcoin_primitives::transaction::TxIn
-pub type bitcoin_primitives::transaction::TxMerkleNodeDecoder::Error = bitcoin_primitives::transaction::TxMerkleNodeDecoderError
-pub type bitcoin_primitives::transaction::TxMerkleNodeDecoder::Output = bitcoin_primitives::TxMerkleNode
 pub type bitcoin_primitives::transaction::TxOut::Decoder = bitcoin_primitives::transaction::TxOutDecoder
 pub type bitcoin_primitives::transaction::TxOut::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_units::amount::unsigned::AmountEncoder<'e>, bitcoin_primitives::script::ScriptEncoder<'e>>
 pub type bitcoin_primitives::transaction::TxOutDecoder::Error = bitcoin_primitives::transaction::TxOutDecoderError

@@ -17,7 +17,9 @@ use hashes::{sha256d, HashEngine};
 use internals::array_vec::ArrayVec;
 
 #[doc(inline)]
-pub use crate::hash_types::{TxMerkleNode, TxMerkleNodeEncoder, WitnessMerkleNode};
+pub use crate::hash_types::{
+    TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeEncoder, TxMerkleNodeDecoderError, WitnessMerkleNode
+};
 use crate::hash_types::{Txid, Wtxid};
 use crate::transaction::TxIdentifier;
 

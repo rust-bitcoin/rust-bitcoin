@@ -31,7 +31,7 @@ use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
 #[cfg(feature = "alloc")]
-use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
+use crate::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
 use crate::{Transaction, WitnessMerkleNode};
