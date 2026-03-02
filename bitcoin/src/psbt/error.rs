@@ -42,6 +42,8 @@ pub enum Error {
     UnsignedTxHasScriptSigs,
     /// The scriptWitnesses for the unsigned transaction must be empty.
     UnsignedTxHasScriptWitnesses,
+    /// The unsigned transaction uses SegWit/BIP-141 encoding.
+    UnsignedTxHasWitnessSerialization,
     /// A PSBT must have an unsigned transaction.
     MustHaveUnsignedTx,
     /// Signals that there are no more key-value pairs in a key-value map.
@@ -148,6 +150,8 @@ impl fmt::Display for Error {
                 f.write_str("the unsigned transaction has script sigs"),
             Self::UnsignedTxHasScriptWitnesses =>
                 f.write_str("the unsigned transaction has script witnesses"),
+            Self::UnsignedTxHasWitnessSerialization =>
+                f.write_str("the unsigned transaction is in segwit serialization format"),
             Self::MustHaveUnsignedTx =>
                 f.write_str("partially signed transactions must have an unsigned transaction"),
             Self::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
@@ -225,6 +229,7 @@ impl std::error::Error for Error {
             | Self::DuplicateKey(_)
             | Self::UnsignedTxHasScriptSigs
             | Self::UnsignedTxHasScriptWitnesses
+            | Self::UnsignedTxHasWitnessSerialization
             | Self::MustHaveUnsignedTx
             | Self::NoMorePairs
             | Self::UnexpectedUnsignedTx { .. }
