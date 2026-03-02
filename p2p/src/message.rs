@@ -606,6 +606,72 @@ impl std::error::Error for PingDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
+/// Serializer for Pong
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Pong(pub u64);
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`Pong`] type.
+    pub struct PongEncoder<'e>(encoding::ArrayEncoder<8>);
+}
+
+impl encoding::Encodable for Pong {
+    type Encoder<'e>
+        = PongEncoder<'e>
+    where
+        Self: 'e;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let nonce = encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes());
+        PongEncoder::new(nonce)
+    }
+}
+
+/// The Decoder for [`Pong`]
+pub struct PongDecoder(encoding::ArrayDecoder<8>);
+
+impl encoding::Decoder for PongDecoder {
+    type Output = Pong;
+    type Error = PongDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(PongDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let nonce = self.0.end().map_err(PongDecoderError)?;
+        Ok(Pong(u64::from_le_bytes(nonce)))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for Pong {
+    type Decoder = PongDecoder;
+    fn decoder() -> Self::Decoder { PongDecoder(encoding::ArrayDecoder::<8>::new()) }
+}
+
+/// An error consensus decoding a [`PongDecoderError`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PongDecoderError(<encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
+
+impl From<Infallible> for PongDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for PongDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        internals::write_err!(f, "address decoder error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for PongDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// A Network message payload. Proper documentation is available at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -2227,6 +2293,14 @@ mod test {
         let encoded_ping = encoding::encode_to_vec(&ping);
         let decoded_ping = encoding::decode_from_slice::<Ping>(&encoded_ping).unwrap();
         assert_eq!(decoded_ping, ping);
+    }
+
+    #[test]
+    fn roundtrip_encode_decode_pong() {
+        let pong = Pong(314);
+        let encoded_pong = encoding::encode_to_vec(&pong);
+        let decoded_pong = encoding::decode_from_slice::<Pong>(&encoded_pong).unwrap();
+        assert_eq!(decoded_pong, pong);
     }
 
     #[test]
