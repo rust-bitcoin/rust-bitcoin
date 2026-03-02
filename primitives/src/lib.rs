@@ -119,7 +119,7 @@ pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
 use core::{convert, fmt};
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
-use encoding::{Decodable, Decoder};
+use encoding::{Decodable};
 #[cfg(all(feature = "hex", feature = "alloc"))]
 use internals::write_err;
 
@@ -131,7 +131,7 @@ enum ParsePrimitiveError<T: Decodable> {
     /// Encountered an invalid hex character
     InvalidChar(hex::error::InvalidCharError),
     /// A decode error from `consensus_encoding`
-    Decode(<T::Decoder as Decoder>::Error),
+    Decode(encoding::DecodeError<<T::Decoder as encoding::Decoder>::Error>),
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
