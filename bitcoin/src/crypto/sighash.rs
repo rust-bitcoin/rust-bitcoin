@@ -1871,7 +1871,7 @@ mod tests {
 
         use crate::consensus::serde as con_serde;
         use crate::crypto::key::XOnlyPublicKey;
-        use crate::key::{Keypair, TapTweak};
+        use crate::key::{Keypair, PrivateKey, TapTweak};
         use crate::taproot::TapNodeHash;
 
         #[derive(serde::Deserialize)]
@@ -1980,7 +1980,10 @@ mod tests {
 
         for mut inp in key_path.input_spending {
             let tx_ind = inp.given.txin_index;
-            let internal_priv_key = inp.given.internal_privkey;
+            let internal_priv_key = PrivateKey::from_secp(
+                inp.given.internal_privkey,
+                network::NetworkKind::Main,
+            );
             let merkle_root = inp.given.merkle_root;
             let hash_ty = inp.given.hash_type;
 
@@ -1995,7 +1998,7 @@ mod tests {
             };
 
             // tests
-            let keypair = Keypair::from_secret_key(&internal_priv_key);
+            let keypair = Keypair::from_private_key(internal_priv_key);
             let internal_key = XOnlyPublicKey::from_keypair(&keypair);
             let tweaked_keypair = keypair.tap_tweak(merkle_root);
             let mut sig_msg = Vec::new();
