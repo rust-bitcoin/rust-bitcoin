@@ -46,7 +46,7 @@ pub trait Encoder {
 /// Implements a newtype around an encoder which implements the
 /// [`Encoder`] trait by forwarding to the wrapped encoder.
 #[macro_export]
-macro_rules! encoder_newtype{
+macro_rules! encoder_newtype {
     (
         $(#[$($struct_attr:tt)*])*
         $vis:vis struct $name:ident<$lt:lifetime>($encoder:ty);
@@ -75,7 +75,7 @@ macro_rules! encoder_newtype{
 /// implements the [`Encoder`] and [`ExactSizeEncoder`] traits
 /// by forwarding to the wrapped encoder.
 #[macro_export]
-macro_rules! encoder_newtype_exact{
+macro_rules! encoder_newtype_exact {
     (
         $(#[$($struct_attr:tt)*])*
         $vis:vis struct $name:ident<$lt:lifetime>($encoder:ty);
