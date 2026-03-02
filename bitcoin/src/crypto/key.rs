@@ -90,9 +90,9 @@ mod encapsulate {
         #[inline]
         pub fn from_secp(keypair: impl Into<secp256k1::Keypair>) -> Self { Self(keypair.into()) }
 
-        /// Returns the inner [`secp256k1::Keypair`].
+        /// Returns a reference to the inner [`secp256k1::Keypair`].
         #[inline]
-        pub fn to_inner(self) -> secp256k1::Keypair { self.0 }
+        pub fn as_inner(&self) -> &secp256k1::Keypair { &self.0 }
     }
 
     /// A Bitcoin ECDSA public key.
@@ -186,8 +186,7 @@ mod encapsulate {
         /// Returns the [`TweakedPublicKey`] for `keypair`.
         #[inline]
         pub fn from_keypair(keypair: TweakedKeypair) -> Self {
-            let xonly = keypair.to_keypair().to_x_only_public_key();
-            Self(xonly)
+            Self(keypair.to_keypair().to_x_only_public_key())
         }
 
         /// Constructs a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
@@ -278,7 +277,7 @@ impl XOnlyPublicKey {
     /// Returns the x-only public key, with the relevant parity set from the full public key.
     #[inline]
     pub fn from_keypair(keypair: &Keypair) -> Self {
-        let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(&keypair.to_inner());
+        let (xonly, parity) = secp256k1::XOnlyPublicKey::from_keypair(keypair.as_inner());
         Self::from_secp(xonly).with_parity(parity)
     }
 
@@ -432,13 +431,13 @@ impl Keypair {
     /// This is equivalent to using [`secp256k1::SecretKey::from_keypair`] on the inner value.
     #[inline]
     pub fn to_secret_key(self) -> secp256k1::SecretKey {
-        secp256k1::SecretKey::from_keypair(&self.to_inner())
+        secp256k1::SecretKey::from_keypair(self.as_inner())
     }
 
     /// Returns the secret bytes for this [`Keypair`].
     #[inline]
     pub fn to_secret_bytes(self) -> [u8; constants::SECRET_KEY_SIZE] {
-        self.to_inner().to_secret_bytes()
+        self.as_inner().to_secret_bytes()
     }
 
     /// Returns the [`PublicKey`] for this [`Keypair`].
@@ -447,12 +446,29 @@ impl Keypair {
     #[inline]
     pub fn to_public_key(self) -> PublicKey { PublicKey::from_keypair(&self) }
 
-    /// Returns the [`XOnlyPublicKey`] (and its [`Parity`]) for this [`Keypair`].
+    /// Returns the [`XOnlyPublicKey`] for this [`Keypair`].
     ///
     /// This is equivalent to using [`XOnlyPublicKey::from_keypair`].
     #[inline]
     pub fn to_x_only_public_key(self) -> XOnlyPublicKey {
         XOnlyPublicKey::from_keypair(&self)
+    }
+
+    /// Sign a message slice with this keypair, optionally using auxiliary random data.
+    #[inline]
+    pub fn raw_sign(&self, msg: &[u8]) -> secp256k1::schnorr::Signature {
+        #[cfg(not(all(feature = "rand", feature = "std")))] {
+            secp256k1::schnorr::sign_no_aux_rand(msg, self.as_inner())
+        }
+        #[cfg(all(feature = "rand", feature = "std"))] {
+            secp256k1::schnorr::sign(msg, self.as_inner())
+        }
+    }
+
+    /// Sign a message slice with this keypair, using auxiliary random data.
+    #[inline]
+    pub fn raw_sign_with_aux_randomness(&self, msg: &[u8], aux_rand: &[u8; 32]) -> secp256k1::schnorr::Signature {
+        secp256k1::schnorr::sign_with_aux_rand(msg, self.as_inner(), aux_rand)
     }
 }
 
@@ -639,7 +655,7 @@ impl PublicKey {
 
     /// Extracts the public key from a Keypair
     pub fn from_keypair(pair: &Keypair) -> Self {
-        Self::from_secp(secp256k1::PublicKey::from_keypair(&pair.to_inner()))
+        Self::from_secp(secp256k1::PublicKey::from_keypair(pair.as_inner()))
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
@@ -1238,7 +1254,7 @@ impl TapTweak for UntweakedKeypair {
     fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
         let pubkey = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
-        let tweaked = self.to_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
+        let tweaked = self.as_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
     }
 
@@ -2086,7 +2102,7 @@ mod tests {
         };
 
         // Use secp256k1::DisplaySecret, since no key type implements Display
-        let encoded = format!("{}", keypair.to_inner().display_secret());
+        let encoded = format!("{}", keypair.as_inner().display_secret());
         let decoded = encoded.parse::<Keypair>().unwrap();
         assert_eq!(decoded, keypair);
     }
