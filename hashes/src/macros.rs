@@ -261,12 +261,10 @@ macro_rules! impl_bytelike_traits {
 macro_rules! impl_hex_string_traits {
     ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
-            type Err = $crate::hex::HexToArrayError;
+            type Err = $crate::hex::DecodeFixedLengthBytesError;
 
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::hex::FromHex;
-
-                let mut bytes = <[u8; { $len }]>::from_hex(s)?;
+                let mut bytes = $crate::hex::decode_to_array::<$len>(s)?;
                 if $reverse {
                     bytes.reverse();
                 }
@@ -281,21 +279,21 @@ macro_rules! impl_hex_string_traits {
                 fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                     if $reverse {
                         let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
-                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
+                        $crate::hex_unstable::fmt_hex_exact!(f, ($len), bytes, $case)
                     } else {
                         let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter();
-                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
+                        $crate::hex_unstable::fmt_hex_exact!(f, ($len), bytes, $case)
                     }
                 }
             }
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex::Case::Lower);
+            impl_case_hex!($crate::hex_unstable::Case::Lower);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex::Case::Upper);
+            impl_case_hex!($crate::hex_unstable::Case::Upper);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {

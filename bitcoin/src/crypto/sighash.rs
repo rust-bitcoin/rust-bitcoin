@@ -1386,15 +1386,16 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::hashes::{sha256d, hex::FromHex};
+    /// # use bitcoin::hashes::sha256d;
     /// # use bitcoin::sighash::SighashCache;
     /// # use bitcoin::Transaction;
+    /// # use bitcoin::hex;
     /// # let mut writer = sha256d::Hash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptPubKeyBuf::new();
     /// # let sighash_u32 = 0u32;
     /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
-    /// # let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+    /// # let raw_tx = hex::decode_to_vec(SOME_TX).unwrap();
     /// # let tx: Transaction = deserialize(&raw_tx).unwrap();
     /// let cache = SighashCache::new(&tx);
     /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
@@ -1519,11 +1520,11 @@ mod tests {
     use alloc::{string::ToString, vec::Vec};
 
     use hashes::HashEngine;
-    use hex_unstable::FromHex;
     use hex_lit::hex;
 
     use super::*;
     use crate::consensus::deserialize;
+    use crate::hex;
     use crate::locktime::absolute;
     use crate::script::{
         ScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
@@ -1572,9 +1573,9 @@ mod tests {
             hash_type: i64,
             expected_result: &str,
         ) {
-            let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
-            let script = ScriptPubKeyBuf::from(Vec::from_hex(script).unwrap());
-            let mut raw_expected = Vec::from_hex(expected_result).unwrap();
+            let tx: Transaction = deserialize(&hex::decode_to_vec(tx).unwrap()[..]).unwrap();
+            let script = ScriptPubKeyBuf::from(hex::decode_to_vec(script).unwrap());
+            let mut raw_expected = hex::decode_to_vec(expected_result).unwrap();
             raw_expected.reverse();
             let bytes = <[u8; 32]>::try_from(&raw_expected[..]).unwrap();
             let want = LegacySighash::from_byte_array(bytes);
@@ -1806,14 +1807,14 @@ mod tests {
         script_hex: Option<&str>,
         script_leaf_hash: Option<&str>,
     ) {
-        let tx_bytes = Vec::from_hex(tx_hex).unwrap();
+        let tx_bytes = hex::decode_to_vec(tx_hex).unwrap();
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
-        let prevout_bytes = Vec::from_hex(prevout_hex).unwrap();
+        let prevout_bytes = hex::decode_to_vec(prevout_hex).unwrap();
         let prevouts: Vec<TxOut> = deserialize(&prevout_bytes).unwrap();
         let annex_inner;
         let annex = match annex_hex {
             Some(annex_hex) => {
-                annex_inner = Vec::from_hex(annex_hex).unwrap();
+                annex_inner = hex::decode_to_vec(annex_hex).unwrap();
                 Some(Annex::new(&annex_inner).unwrap())
             }
             None => None,
@@ -1843,7 +1844,7 @@ mod tests {
         let hash = sighash_cache
             .taproot_signature_hash(input_index, &prevouts, annex, leaf_hash, sighash_type)
             .unwrap();
-        let expected = Vec::from_hex(expected_hash).unwrap();
+        let expected = hex::decode_to_vec(expected_hash).unwrap();
         assert_eq!(expected, hash.to_byte_array());
     }
 
@@ -2098,17 +2099,17 @@ mod tests {
         // Parse hex into Vec because BIP-0143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
             cache.prevouts.as_byte_array(),
-            &Vec::from_hex("96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37")
+            &hex::decode_to_vec("96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37")
                 .unwrap()[..],
         );
         assert_eq!(
             cache.sequences.as_byte_array(),
-            &Vec::from_hex("52b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3b")
+            &hex::decode_to_vec("52b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3b")
                 .unwrap()[..],
         );
         assert_eq!(
             cache.outputs.as_byte_array(),
-            &Vec::from_hex("863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5")
+            &hex::decode_to_vec("863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5")
                 .unwrap()[..],
         );
     }
@@ -2141,17 +2142,17 @@ mod tests {
         // Parse hex into Vec because BIP-0143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
             cache.prevouts.as_byte_array(),
-            &Vec::from_hex("b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a")
+            &hex::decode_to_vec("b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a")
                 .unwrap()[..],
         );
         assert_eq!(
             cache.sequences.as_byte_array(),
-            &Vec::from_hex("18606b350cd8bf565266bc352f0caddcf01e8fa789dd8a15386327cf8cabe198")
+            &hex::decode_to_vec("18606b350cd8bf565266bc352f0caddcf01e8fa789dd8a15386327cf8cabe198")
                 .unwrap()[..],
         );
         assert_eq!(
             cache.outputs.as_byte_array(),
-            &Vec::from_hex("de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83")
+            &hex::decode_to_vec("de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83")
                 .unwrap()[..],
         );
     }
@@ -2201,17 +2202,17 @@ mod tests {
         // Parse hex into Vec because BIP-0143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
             cache.prevouts.as_byte_array(),
-            &Vec::from_hex("74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0")
+            &hex::decode_to_vec("74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0")
                 .unwrap()[..],
         );
         assert_eq!(
             cache.sequences.as_byte_array(),
-            &Vec::from_hex("3bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044")
+            &hex::decode_to_vec("3bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044")
                 .unwrap()[..],
         );
         assert_eq!(
             cache.outputs.as_byte_array(),
-            &Vec::from_hex("bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc")
+            &hex::decode_to_vec("bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc")
                 .unwrap()[..],
         );
     }

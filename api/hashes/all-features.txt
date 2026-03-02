@@ -719,6 +719,7 @@ pub const fn bitcoin_hashes::siphash24::Hash::from_bytes_ref(bytes: &[u8; 8]) ->
 pub const fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> [u8; 8]
 pub const fn bitcoin_hashes::siphash24::HashEngine::with_keys(k0: u64, k1: u64) -> Self
 pub extern crate bitcoin_hashes::hex
+pub extern crate bitcoin_hashes::hex_unstable
 pub extern crate bitcoin_hashes::serde
 pub fn bitcoin_hashes::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::Hash::from_byte_array(bytes: Self::Bytes) -> Self
@@ -1198,7 +1199,7 @@ pub type bitcoin_hashes::HmacSha256 = bitcoin_hashes::hmac::Hmac<bitcoin_hashes:
 pub type bitcoin_hashes::HmacSha512 = bitcoin_hashes::hmac::Hmac<bitcoin_hashes::sha512::Hash>
 pub type bitcoin_hashes::Sha256t<T> = bitcoin_hashes::sha256t::Hash<T>
 pub type bitcoin_hashes::hash160::Hash::Bytes = [u8; 20]
-pub type bitcoin_hashes::hash160::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::hash160::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::hash160::HashEngine::Bytes = [u8; 20]
 pub type bitcoin_hashes::hash160::HashEngine::Hash = bitcoin_hashes::hash160::Hash
 pub type bitcoin_hashes::hmac::Hmac<T>::Bytes = <T as bitcoin_hashes::Hash>::Bytes
@@ -1208,44 +1209,44 @@ pub type bitcoin_hashes::hmac::HmacEngine<T>::Hash = bitcoin_hashes::hmac::Hmac<
 pub type bitcoin_hashes::macros::serde_details::BytesVisitor<ValueT, N>::Value = ValueT
 pub type bitcoin_hashes::macros::serde_details::HexVisitor<ValueT>::Value = ValueT
 pub type bitcoin_hashes::muhash::Hash::Bytes = [u8; 384]
-pub type bitcoin_hashes::muhash::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::muhash::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::ripemd160::Hash::Bytes = [u8; 20]
-pub type bitcoin_hashes::ripemd160::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::ripemd160::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::ripemd160::HashEngine::Bytes = [u8; 20]
 pub type bitcoin_hashes::ripemd160::HashEngine::Hash = bitcoin_hashes::ripemd160::Hash
 pub type bitcoin_hashes::sha1::Hash::Bytes = [u8; 20]
-pub type bitcoin_hashes::sha1::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha1::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha1::HashEngine::Bytes = [u8; 20]
 pub type bitcoin_hashes::sha1::HashEngine::Hash = bitcoin_hashes::sha1::Hash
 pub type bitcoin_hashes::sha256::Hash::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha256::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha256::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha256::HashEngine::Bytes = [u8; 32]
 pub type bitcoin_hashes::sha256::HashEngine::Hash = bitcoin_hashes::sha256::Hash
 pub type bitcoin_hashes::sha256d::Hash::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha256d::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha256d::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha256d::HashEngine::Bytes = [u8; 32]
 pub type bitcoin_hashes::sha256d::HashEngine::Hash = bitcoin_hashes::sha256d::Hash
 pub type bitcoin_hashes::sha256t::Hash<T>::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha256t::Hash<T>::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha256t::Hash<T>::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha256t::HashEngine<T>::Bytes = [u8; 32]
 pub type bitcoin_hashes::sha256t::HashEngine<T>::Hash = bitcoin_hashes::sha256t::Hash<T>
 pub type bitcoin_hashes::sha384::Hash::Bytes = [u8; 48]
-pub type bitcoin_hashes::sha384::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha384::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha384::HashEngine::Bytes = [u8; 48]
 pub type bitcoin_hashes::sha384::HashEngine::Hash = bitcoin_hashes::sha384::Hash
 pub type bitcoin_hashes::sha3_256::Hash::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha3_256::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha3_256::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha3_256::HashEngine::Bytes = [u8; 32]
 pub type bitcoin_hashes::sha3_256::HashEngine::Hash = bitcoin_hashes::sha3_256::Hash
 pub type bitcoin_hashes::sha512::Hash::Bytes = [u8; 64]
-pub type bitcoin_hashes::sha512::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha512::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha512::HashEngine::Bytes = [u8; 64]
 pub type bitcoin_hashes::sha512::HashEngine::Hash = bitcoin_hashes::sha512::Hash
 pub type bitcoin_hashes::sha512_256::Hash::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha512_256::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::sha512_256::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::sha512_256::HashEngine::Bytes = [u8; 64]
 pub type bitcoin_hashes::sha512_256::HashEngine::Hash = bitcoin_hashes::sha512_256::Hash
 pub type bitcoin_hashes::siphash24::Hash::Bytes = [u8; 8]
-pub type bitcoin_hashes::siphash24::Hash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_hashes::siphash24::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
 pub type bitcoin_hashes::siphash24::HashEngine::Bytes = [u8; 8]
 pub type bitcoin_hashes::siphash24::HashEngine::Hash = bitcoin_hashes::siphash24::Hash

@@ -28,6 +28,8 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+pub extern crate hex_stable as hex;
+
 use alloc::borrow::ToOwned;
 use alloc::string::String;
 use core::borrow::{Borrow, BorrowMut};
@@ -39,7 +41,6 @@ use core::{fmt, ops};
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
 use encoding::{ArrayEncoder, ArrayDecoder};
-use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
 use network::{Network, TestnetVersion};
@@ -437,7 +438,7 @@ impl FromStr for Magic {
     type Err = ParseMagicError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match <[u8; 4]>::from_hex(s) {
+        match hex::decode_to_array::<4>(s) {
             Ok(magic) => Ok(Self::from_bytes(magic)),
             Err(e) => Err(ParseMagicError { error: e, magic: s.to_owned() }),
         }
@@ -476,7 +477,7 @@ impl TryFrom<Magic> for Network {
 
 impl fmt::Display for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
+        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex_unstable::Case::Lower)?;
         Ok(())
     }
 }
@@ -487,7 +488,7 @@ impl fmt::Debug for Magic {
 
 impl fmt::LowerHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
+        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex_unstable::Case::Lower)?;
         Ok(())
     }
 }
@@ -495,7 +496,7 @@ impl_to_hex_from_lower_hex!(Magic, |_| 8);
 
 impl fmt::UpperHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
+        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex_unstable::Case::Upper)?;
         Ok(())
     }
 }
@@ -615,7 +616,7 @@ impl BorrowMut<[u8; 4]> for Magic {
 #[non_exhaustive]
 pub struct ParseMagicError {
     /// The error that occurred when parsing the string.
-    error: hex::HexToArrayError,
+    error: hex::DecodeFixedLengthBytesError,
     /// The byte string that failed to parse.
     magic: String,
 }

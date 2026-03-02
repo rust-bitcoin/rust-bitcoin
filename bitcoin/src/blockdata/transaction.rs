@@ -1276,12 +1276,12 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 mod tests {
     use alloc::string::ToString;
 
-    use hex_unstable::FromHex;
     use hex_lit::hex;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::constants::WITNESS_SCALE_FACTOR;
+    use crate::hex;
     use crate::parse_int;
     use crate::script::ScriptSigBuf;
     use crate::sighash::EcdsaSighashType;
@@ -1486,7 +1486,7 @@ mod tests {
         let tx =
             con_serde::With::<con_serde::Hex>::deserialize::<'_, Transaction, _>(&mut deserializer)
                 .unwrap();
-        let tx_bytes = Vec::from_hex(&json[1..(json.len() - 1)]).unwrap();
+        let tx_bytes = hex::decode_to_vec(&json[1..(json.len() - 1)]).unwrap();
         let expected = deserialize::<Transaction>(&tx_bytes).unwrap();
         assert_eq!(tx, expected);
         let mut bytes = Vec::new();
@@ -1639,7 +1639,7 @@ mod tests {
 
     #[test]
     fn huge_witness() {
-        let hex = Vec::from_hex(include_str!("../../tests/data/huge_witness.hex").trim()).unwrap();
+        let hex = hex::decode_to_vec(include_str!("../../tests/data/huge_witness.hex").trim()).unwrap();
         deserialize::<Transaction>(&hex).unwrap();
     }
 
@@ -1812,7 +1812,7 @@ mod tests {
 
         for (is_segwit, tx, expected_weight) in &txs {
             let txin_weight = if *is_segwit { TxIn::segwit_weight } else { TxIn::legacy_weight };
-            let tx: Transaction = deserialize(Vec::from_hex(tx).unwrap().as_slice()).unwrap();
+            let tx: Transaction = deserialize(hex::decode_to_vec(tx).unwrap().as_slice()).unwrap();
             assert_eq!(*is_segwit, tx.uses_segwit_serialization());
 
             let mut calculated_weight = empty_transaction_weight
@@ -1970,7 +1970,7 @@ mod tests {
         fn return_none(_outpoint: &OutPoint) -> Option<TxOut> { None }
 
         for (hx, expected, spent_fn, expected_none) in tx_hexes.iter() {
-            let tx_bytes = Vec::from_hex(hx).unwrap();
+            let tx_bytes = hex::decode_to_vec(hx).unwrap();
             let tx: Transaction = deserialize(&tx_bytes).unwrap();
             assert_eq!(tx.total_sigop_cost(spent_fn), *expected);
             assert_eq!(tx.total_sigop_cost(return_none), *expected_none);
