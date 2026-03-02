@@ -427,7 +427,7 @@ impl Psbt {
                 // According to BIP-0371, we also need to consider the condition leaf_hashes.is_empty() for a more accurate determination.
                 if internal_key == xonly && leaf_hashes.is_empty() && input.tap_key_sig.is_none() {
                     let (sighash, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
-                    let key_pair = Keypair::from_secret_key(sk.as_inner())
+                    let key_pair = Keypair::from_private_key(sk)
                         .tap_tweak(input.tap_merkle_root)
                         .to_keypair();
 
@@ -456,7 +456,7 @@ impl Psbt {
                     .collect::<Vec<_>>();
 
                 if !leaf_hashes.is_empty() {
-                    let key_pair = Keypair::from_secret_key(sk.as_inner());
+                    let key_pair = Keypair::from_private_key(sk);
 
                     for lh in leaf_hashes {
                         let (sighash, sighash_type) =
