@@ -420,9 +420,7 @@ impl fmt::Display for ParseTransactionError {
 
 #[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
 impl std::error::Error for ParseTransactionError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        std::error::Error::source(&self.0)
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// The decoder for the [`Transaction`] type.
