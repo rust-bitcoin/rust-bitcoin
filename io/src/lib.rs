@@ -38,9 +38,9 @@ mod hash;
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
+use core::cmp;
 #[cfg(feature = "std")]
 use std::vec::Vec;
-use core::cmp;
 
 use encoding::{Decodable, Decoder, Encoder};
 

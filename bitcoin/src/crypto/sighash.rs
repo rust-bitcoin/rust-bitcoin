@@ -1516,11 +1516,12 @@ impl<'a> Arbitrary<'a> for TapSighashType {
 
 #[cfg(test)]
 mod tests {
-    use alloc::{string::ToString, vec::Vec};
+    use alloc::string::ToString;
+    use alloc::vec::Vec;
 
     use hashes::HashEngine;
-    use hex_unstable::FromHex;
     use hex_lit::hex;
+    use hex_unstable::FromHex;
 
     use super::*;
     use crate::consensus::deserialize;

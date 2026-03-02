@@ -160,8 +160,7 @@ where
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use alloc::format;
-    use alloc::vec;
+    use alloc::{format, vec};
 
     use hashes::hmac;
 

@@ -70,9 +70,7 @@ impl Key {
         // Convert compact size to usize, saturating at max.
         // If this value exceeds MAX_VEC_SIZE (a usize), we'll error down below, so it's fine
         // to discard any higher value.
-        let byte_size: usize = r.read_compact_size()?
-            .try_into()
-            .unwrap_or(usize::MAX);
+        let byte_size: usize = r.read_compact_size()?.try_into().unwrap_or(usize::MAX);
 
         if byte_size == 0 {
             return Err(Error::NoMorePairs);
@@ -119,7 +117,8 @@ impl Serialize for Key {
             0x10000..=0xFFFF_FFFF => 5,
             _ => 9,
         };
-        buf.emit_compact_size(self.key_data.len() + type_size).expect("in-memory writers don't error");
+        buf.emit_compact_size(self.key_data.len() + type_size)
+            .expect("in-memory writers don't error");
 
         buf.emit_compact_size(self.type_value).expect("in-memory writers don't error");
 
