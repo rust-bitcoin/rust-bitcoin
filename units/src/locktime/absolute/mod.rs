@@ -9,6 +9,8 @@
 pub mod error;
 
 use core::fmt;
+#[cfg(feature = "encoding")]
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -407,9 +409,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for LockTime {
     type Encoder<'e> = LockTimeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        LockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus_u32().to_le_bytes(),
-        ))
+        LockTimeEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_consensus_u32().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

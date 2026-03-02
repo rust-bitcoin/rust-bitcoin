@@ -2,6 +2,8 @@
 
 //! Example of creating an encoder that encodes a slice of encodable objects.
 
+use core::marker::PhantomData;
+
 use bitcoin_consensus_encoding as encoding;
 use encoding::{ArrayEncoder, BytesEncoder, CompactSizeEncoder, Encodable, Encoder2, SliceEncoder};
 
@@ -45,7 +47,7 @@ impl Encodable for Adt {
         );
         let b = BytesEncoder::without_length_prefix(self.b.as_ref());
 
-        AdtEncoder::new(Encoder2::new(a, b))
+        AdtEncoder(Encoder2::new(a, b), PhantomData)
     }
 }
 
@@ -69,6 +71,6 @@ encoding::encoder_newtype_exact! {
 impl Encodable for Inner {
     type Encoder<'e> = InnerEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        InnerEncoder::new(ArrayEncoder::without_length_prefix(self.to_array()))
+        InnerEncoder(ArrayEncoder::without_length_prefix(self.to_array()), PhantomData)
     }
 }

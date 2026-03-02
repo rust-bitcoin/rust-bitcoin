@@ -11,16 +11,21 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::Infallible;
+use core::marker::PhantomData;
 use core::{cmp, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
-use encoding::{self, ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{
+    self, ArrayDecoder, ArrayEncoder, CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder,
+    VecDecoder,
+};
 use hashes::sha256d;
 use internals::{write_err, ToU64 as _};
 use io::{self, BufRead, Read, Write};
-use primitives::{block::{self, HeaderDecoder, HeaderEncoder}, transaction};
+use primitives::block::{self, HeaderDecoder, HeaderEncoder};
+use primitives::transaction;
 use units::FeeRate;
 
 use crate::address::{AddrV2Message, Address};
@@ -483,7 +488,10 @@ impl encoding::Encodable for FeeFilter {
     fn encoder(&self) -> Self::Encoder<'_> {
         // Encode as sat/kvB in little-endian (BIP 133 wire format).
         let kvb = self.0.to_sat_per_kvb_ceil();
-        FeeFilterEncoder::new(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
+        FeeFilterEncoder(
+            encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 
@@ -849,15 +857,18 @@ impl encoding::Encodable for V1NetworkMessage {
     type Encoder<'e> = V1NetworkMessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        V1NetworkMessageEncoder::new(encoding::Encoder2::new(
-            encoding::Encoder4::new(
-                encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
-                self.command().encoder(),
-                encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
-                encoding::ArrayEncoder::without_length_prefix(self.checksum),
+        V1NetworkMessageEncoder(
+            encoding::Encoder2::new(
+                encoding::Encoder4::new(
+                    encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
+                    self.command().encoder(),
+                    encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
+                    encoding::ArrayEncoder::without_length_prefix(self.checksum),
+                ),
+                NetworkMessageEncoder::new(&self.payload),
             ),
-            NetworkMessageEncoder::new(&self.payload),
-        ))
+            PhantomData,
+        )
     }
 }
 
@@ -1382,9 +1393,7 @@ pub struct NetworkHeader {
 
 impl NetworkHeader {
     /// Create a new [`NetworkHeader`] from underlying block header.
-    pub const fn from_header(header: block::Header) -> Self {
-        Self { header, length: 0 }
-    }
+    pub const fn from_header(header: block::Header) -> Self { Self { header, length: 0 } }
 }
 
 encoding::encoder_newtype! {
@@ -1396,10 +1405,13 @@ impl encoding::Encodable for NetworkHeader {
     type Encoder<'e> = NetworkHeaderEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        NetworkHeaderEncoder::new(Encoder2::new(
-            self.header.encoder(),
-            ArrayEncoder::without_length_prefix([self.length]),
-        ))
+        NetworkHeaderEncoder(
+            Encoder2::new(
+                self.header.encoder(),
+                ArrayEncoder::without_length_prefix([self.length]),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -1420,10 +1432,7 @@ impl encoding::Decoder for NetworkHeaderDecoder {
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
         let (header, length) = self.0.end().map_err(NetworkHeaderDecoderError)?;
-        Ok(NetworkHeader {
-            header,
-            length: u8::from_le_bytes(length),
-        })
+        Ok(NetworkHeader { header, length: u8::from_le_bytes(length) })
     }
 
     #[inline]
@@ -1434,9 +1443,7 @@ impl encoding::Decodable for NetworkHeader {
     type Decoder = NetworkHeaderDecoder;
 
     fn decoder() -> Self::Decoder {
-        NetworkHeaderDecoder(
-            Decoder2::new(block::Header::decoder(), ArrayDecoder::new()),
-        )
+        NetworkHeaderDecoder(Decoder2::new(block::Header::decoder(), ArrayDecoder::new()))
     }
 }
 
@@ -1460,13 +1467,8 @@ impl std::error::Error for NetworkHeaderDecoderError {
 }
 
 impl Decodable for NetworkHeader {
-    fn consensus_decode<R: BufRead + ?Sized>(
-            reader: &mut R,
-        ) -> Result<Self, encode::Error> {
-        Ok(Self {
-            header: Decodable::consensus_decode(reader)?,
-            length: reader.read_u8()?,
-        })
+    fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
+        Ok(Self { header: Decodable::consensus_decode(reader)?, length: reader.read_u8()? })
     }
 }
 
@@ -1508,11 +1510,12 @@ impl encoding::Encodable for HeadersMessage {
     type Encoder<'e> = HeadersMessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        HeadersMessageEncoder::new(
+        HeadersMessageEncoder(
             Encoder2::new(
                 CompactSizeEncoder::new(self.0.len()),
-                SliceEncoder::without_length_prefix(&self.0)
-            )
+                SliceEncoder::without_length_prefix(&self.0),
+            ),
+            PhantomData,
         )
     }
 }
@@ -1544,9 +1547,7 @@ impl encoding::Decoder for HeadersMessageDecoder {
 impl encoding::Decodable for HeadersMessage {
     type Decoder = HeadersMessageDecoder;
 
-    fn decoder() -> Self::Decoder {
-        HeadersMessageDecoder(VecDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { HeadersMessageDecoder(VecDecoder::new()) }
 }
 
 /// An error decoding a [`HeadersMessage`] message.

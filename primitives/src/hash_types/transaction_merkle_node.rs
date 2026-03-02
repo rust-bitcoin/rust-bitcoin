@@ -4,6 +4,7 @@
 
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 #[cfg(feature = "hex")]
 use core::str;
 
@@ -58,9 +59,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for TxMerkleNode {
     type Encoder<'e> = TxMerkleNodeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        TxMerkleNodeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_byte_array(),
-        ))
+        TxMerkleNodeEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_byte_array()),
+            PhantomData,
+        )
     }
 }
 

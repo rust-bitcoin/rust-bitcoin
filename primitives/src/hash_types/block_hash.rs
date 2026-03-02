@@ -4,6 +4,7 @@
 
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 #[cfg(feature = "hex")]
 use core::str;
 
@@ -39,7 +40,10 @@ encoding::encoder_newtype_exact! {
 impl Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        BlockHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(self.as_byte_array()))
+        BlockHashEncoder(
+            encoding::ArrayRefEncoder::without_length_prefix(self.as_byte_array()),
+            PhantomData,
+        )
     }
 }
 

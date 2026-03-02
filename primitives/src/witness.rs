@@ -683,9 +683,7 @@ impl<T: AsRef<[u8]>> FromIterator<T> for Witness {
 
         let _ = decoder.push_bytes(&mut buffer.as_slice());
 
-        decoder
-            .end()
-            .expect("witness_elements in decoder is equal to number of provided elements")
+        decoder.end().expect("witness_elements in decoder is equal to number of provided elements")
     }
 }
 

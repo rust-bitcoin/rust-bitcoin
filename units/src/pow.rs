@@ -5,6 +5,8 @@
 #[cfg(feature = "encoding")]
 use core::convert::Infallible;
 use core::fmt;
+#[cfg(feature = "encoding")]
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -56,7 +58,7 @@ impl CompactTarget {
     /// - If the input string is not a valid hex encoding of a `u32`.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let target = parse_int::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(target))
@@ -70,7 +72,7 @@ impl CompactTarget {
     /// - If the input string is not a valid hex encoding of a `u32`.
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let target = parse_int::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(target))
@@ -112,9 +114,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for CompactTarget {
     type Encoder<'e> = CompactTargetEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        CompactTargetEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_consensus().to_le_bytes(),
-        ))
+        CompactTargetEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_consensus().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

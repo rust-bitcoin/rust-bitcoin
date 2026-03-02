@@ -13,13 +13,16 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
-use encoding::{ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2, Encoder3, SliceEncoder, VecDecoder};
-use internals::ToU64 as _;
-use internals::write_err;
+use encoding::{
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2,
+    Encoder3, SliceEncoder, VecDecoder,
+};
+use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
 use primitives::block::{self, Block, Checked, HeaderDecoder, HeaderEncoder};
 use primitives::merkle_tree::TxMerkleNode;
@@ -134,9 +137,7 @@ impl encoding::Encodable for MerkleBlock {
     type Encoder<'e> = MerkleBlockEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        MerkleBlockEncoder::new(
-            Encoder2::new(self.header.encoder(), self.txn.encoder())
-        )
+        MerkleBlockEncoder(Encoder2::new(self.header.encoder(), self.txn.encoder()), PhantomData)
     }
 }
 
@@ -491,10 +492,7 @@ impl BitVecEncoder {
             }
             buffer.push(byte);
         }
-        Self {
-            buffer,
-            exhausted: false,
-        }
+        Self { buffer, exhausted: false }
     }
 }
 
@@ -528,7 +526,7 @@ impl encoding::Encodable for PartialMerkleTree {
     type Encoder<'e> = PartialMerkleTreeEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        PartialMerkleTreeEncoder::new(
+        PartialMerkleTreeEncoder(
             Encoder3::new(
                 ArrayEncoder::without_length_prefix(self.num_transactions.to_le_bytes()),
                 Encoder2::new(
@@ -537,14 +535,16 @@ impl encoding::Encodable for PartialMerkleTree {
                 ),
                 Encoder2::new(
                     CompactSizeEncoder::new(self.bits.len().div_ceil(8)),
-                    BitVecEncoder::new(&self.bits)
+                    BitVecEncoder::new(&self.bits),
                 ),
-            )
+            ),
+            PhantomData,
         )
     }
 }
 
-type PartialMerkleTreeInnerDecoder = Decoder3<ArrayDecoder<4>, VecDecoder<TxMerkleNode>, ByteVecDecoder>;
+type PartialMerkleTreeInnerDecoder =
+    Decoder3<ArrayDecoder<4>, VecDecoder<TxMerkleNode>, ByteVecDecoder>;
 
 /// The decoder type for a [`PartialMerkleTree`].
 pub struct PartialMerkleTreeDecoder(PartialMerkleTreeInnerDecoder);
@@ -560,7 +560,8 @@ impl encoding::Decoder for PartialMerkleTreeDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (num_transactions, hashes, compress_bit_vec) = self.0.end().map_err(PartialMerkleTreeDecoderError)?;
+        let (num_transactions, hashes, compress_bit_vec) =
+            self.0.end().map_err(PartialMerkleTreeDecoderError)?;
         let num_transactions = u32::from_le_bytes(num_transactions);
         let mut bits = Vec::with_capacity(compress_bit_vec.len());
         for byte in compress_bit_vec {
@@ -568,11 +569,7 @@ impl encoding::Decoder for PartialMerkleTreeDecoder {
                 bits.push((byte & (1 << i)) != 0);
             }
         }
-        Ok(PartialMerkleTree {
-            num_transactions,
-            bits,
-            hashes
-        })
+        Ok(PartialMerkleTree { num_transactions, bits, hashes })
     }
 
     #[inline]
@@ -583,15 +580,19 @@ impl encoding::Decodable for PartialMerkleTree {
     type Decoder = PartialMerkleTreeDecoder;
 
     fn decoder() -> Self::Decoder {
-        PartialMerkleTreeDecoder(
-            Decoder3::new(ArrayDecoder::new(),VecDecoder::new(), ByteVecDecoder::new())
-        )
+        PartialMerkleTreeDecoder(Decoder3::new(
+            ArrayDecoder::new(),
+            VecDecoder::new(),
+            ByteVecDecoder::new(),
+        ))
     }
 }
 
 /// An error occuring when decoding a [`PartialMerkleTree`].
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PartialMerkleTreeDecoderError(<PartialMerkleTreeInnerDecoder as encoding::Decoder>::Error);
+pub struct PartialMerkleTreeDecoderError(
+    <PartialMerkleTreeInnerDecoder as encoding::Decoder>::Error,
+);
 
 impl From<Infallible> for PartialMerkleTreeDecoderError {
     fn from(never: Infallible) -> Self { match never {} }

@@ -32,13 +32,14 @@ use alloc::borrow::ToOwned;
 use alloc::string::String;
 use core::borrow::{Borrow, BorrowMut};
 use core::convert::Infallible;
+use core::marker::PhantomData;
 use core::str::FromStr;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable};
-use encoding::{ArrayEncoder, ArrayDecoder};
+use encoding::{ArrayDecoder, ArrayEncoder};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
@@ -124,9 +125,10 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for ProtocolVersion {
     type Encoder<'e> = ProtocolVersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ProtocolVersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.0.to_le_bytes(),
-        ))
+        ProtocolVersionEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 
@@ -349,9 +351,10 @@ encoding::encoder_newtype! {
 impl encoding::Encodable for ServiceFlags {
     type Encoder<'e> = ServiceFlagsEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        ServiceFlagsEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.0.to_le_bytes(),
-        ))
+        ServiceFlagsEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 
@@ -521,7 +524,7 @@ impl encoding::Encodable for Magic {
     type Encoder<'e> = MagicEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        MagicEncoder::new(ArrayEncoder::without_length_prefix(self.0))
+        MagicEncoder(ArrayEncoder::without_length_prefix(self.0), PhantomData)
     }
 }
 
@@ -552,9 +555,7 @@ impl encoding::Decoder for MagicDecoder {
 impl encoding::Decodable for Magic {
     type Decoder = MagicDecoder;
 
-    fn decoder() -> Self::Decoder {
-        MagicDecoder(ArrayDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { MagicDecoder(ArrayDecoder::new()) }
 }
 
 /// Errors occuring when decoding a network [`Magic`].
@@ -573,9 +574,7 @@ impl fmt::Display for MagicDecoderError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for MagicDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.0)
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl AsRef<[u8]> for Magic {

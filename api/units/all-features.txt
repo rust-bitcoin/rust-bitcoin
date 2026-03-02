@@ -1486,12 +1486,6 @@ impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units:
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::pow::CompactTargetEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::sequence::SequenceEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::time::BlockTimeEncoder<'e>
-impl<'e> bitcoin_units::amount::AmountEncoder<'e>
-impl<'e> bitcoin_units::block::BlockHeightEncoder<'e>
-impl<'e> bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
-impl<'e> bitcoin_units::pow::CompactTargetEncoder<'e>
-impl<'e> bitcoin_units::sequence::SequenceEncoder<'e>
-impl<'e> bitcoin_units::time::BlockTimeEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_units::amount::AmountEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_units::block::BlockHeightEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
@@ -2135,7 +2129,6 @@ pub fn bitcoin_units::amount::AmountDecoder::read_limit(&self) -> usize
 pub fn bitcoin_units::amount::AmountEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_units::amount::AmountEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::amount::AmountEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_units::amount::AmountEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<8>) -> bitcoin_units::amount::AmountEncoder<'e>
 pub fn bitcoin_units::amount::Denomination::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
@@ -2261,7 +2254,6 @@ pub fn bitcoin_units::block::BlockHeightDecoderError::source(&self) -> core::opt
 pub fn bitcoin_units::block::BlockHeightEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_units::block::BlockHeightEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::block::BlockHeightEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_units::block::BlockHeightEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_units::block::BlockHeightEncoder<'e>
 pub fn bitcoin_units::block::BlockHeightInterval::add(self, rhs: &bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeightInterval::add(self, rhs: bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeightInterval::add_assign(&mut self, rhs: &bitcoin_units::block::BlockHeightInterval)
@@ -2411,7 +2403,6 @@ pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::read_limit(&self) -> 
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::clone(&self) -> bitcoin_units::locktime::absolute::MedianTimePast
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::cmp(&self, other: &bitcoin_units::locktime::absolute::MedianTimePast) -> core::cmp::Ordering
@@ -2586,7 +2577,6 @@ pub fn bitcoin_units::pow::CompactTargetDecoderError::source(&self) -> core::opt
 pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_units::pow::CompactTargetEncoder<'e>
 pub fn bitcoin_units::result::MathOp::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::result::MathOp::clone(&self) -> bitcoin_units::result::MathOp
 pub fn bitcoin_units::result::MathOp::eq(&self, other: &bitcoin_units::result::MathOp) -> bool
@@ -2727,7 +2717,6 @@ pub fn bitcoin_units::sequence::SequenceDecoderError::source(&self) -> core::opt
 pub fn bitcoin_units::sequence::SequenceEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_units::sequence::SequenceEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::sequence::SequenceEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_units::sequence::SequenceEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_units::sequence::SequenceEncoder<'e>
 pub fn bitcoin_units::time::BlockTimeDecoder::default() -> Self
 pub fn bitcoin_units::time::BlockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::time::BlockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
@@ -2740,7 +2729,6 @@ pub fn bitcoin_units::time::BlockTimeDecoderError::source(&self) -> core::option
 pub fn bitcoin_units::time::BlockTimeEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_units::time::BlockTimeEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_units::time::BlockTimeEncoder<'e>::len(&self) -> usize
-pub fn bitcoin_units::time::BlockTimeEncoder<'e>::new(encoder: bitcoin_consensus_encoding::encode::encoders::ArrayEncoder<4>) -> bitcoin_units::time::BlockTimeEncoder<'e>
 pub fn core::num::error::ParseIntError::from(value: bitcoin_units::parse_int::ParseIntError) -> Self
 pub fn i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
 pub fn i64::mul(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output

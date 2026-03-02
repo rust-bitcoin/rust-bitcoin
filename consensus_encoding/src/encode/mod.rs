@@ -54,13 +54,6 @@ macro_rules! encoder_newtype{
         $(#[$($struct_attr)*])*
         $vis struct $name<$lt>($encoder, core::marker::PhantomData<&$lt $encoder>);
 
-        impl<$lt> $name<$lt> {
-            /// Construct a new instance of the newtype encoder
-            $vis fn new(encoder: $encoder) -> $name<$lt> {
-                $name(encoder, core::marker::PhantomData)
-            }
-        }
-
         impl<$lt> $crate::Encoder for $name<$lt> {
             #[inline]
             fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }

@@ -12,6 +12,7 @@
 
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 #[cfg(feature = "alloc")]
 use core::{cmp, mem};
 
@@ -360,16 +361,15 @@ impl Encodable for Transaction {
         if self.uses_segwit_serialization() {
             let segwit = ArrayEncoder::without_length_prefix([0x00, 0x01]);
             let witnesses = WitnessesEncoder::new(self.inputs.as_slice());
-            TransactionEncoder::new(Encoder6::new(
-                version,
-                Some(segwit),
-                inputs,
-                outputs,
-                Some(witnesses),
-                lock_time,
-            ))
+            TransactionEncoder(
+                Encoder6::new(version, Some(segwit), inputs, outputs, Some(witnesses), lock_time),
+                PhantomData,
+            )
         } else {
-            TransactionEncoder::new(Encoder6::new(version, None, inputs, outputs, None, lock_time))
+            TransactionEncoder(
+                Encoder6::new(version, None, inputs, outputs, None, lock_time),
+                PhantomData,
+            )
         }
     }
 }
@@ -1170,10 +1170,13 @@ impl Encodable for OutPoint {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        OutPointEncoder::new(Encoder2::new(
-            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
-            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
-        ))
+        OutPointEncoder(
+            Encoder2::new(
+                BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+                ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -1531,9 +1534,10 @@ encoding::encoder_newtype_exact! {
 impl encoding::Encodable for Version {
     type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_u32().to_le_bytes(),
-        ))
+        VersionEncoder(
+            encoding::ArrayEncoder::without_length_prefix(self.to_u32().to_le_bytes()),
+            PhantomData,
+        )
     }
 }
 

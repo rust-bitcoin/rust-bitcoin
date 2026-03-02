@@ -7,6 +7,7 @@
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use core::fmt;
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -71,7 +72,7 @@ impl encoding::Encodable for FilterHash {
     type Encoder<'e> = FilterHashEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterHashEncoder::new(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        FilterHashEncoder(ArrayEncoder::without_length_prefix(self.to_byte_array()), PhantomData)
     }
 }
 
@@ -84,7 +85,7 @@ impl encoding::Encodable for FilterHeader {
     type Encoder<'e> = FilterHeaderEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        FilterHeaderEncoder::new(ArrayEncoder::without_length_prefix(self.to_byte_array()))
+        FilterHeaderEncoder(ArrayEncoder::without_length_prefix(self.to_byte_array()), PhantomData)
     }
 }
 
@@ -218,11 +219,14 @@ impl encoding::Encodable for GetCFilters {
     type Encoder<'e> = GetCFiltersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFiltersEncoder::new(Encoder3::new(
-            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-            self.start_height.encoder(),
-            self.stop_hash.encoder(),
-        ))
+        GetCFiltersEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.start_height.encoder(),
+                self.stop_hash.encoder(),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -312,14 +316,17 @@ impl encoding::Encodable for CFilter {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFilterEncoder::new(Encoder3::new(
-            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-            self.block_hash.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter.len()),
-                BytesEncoder::without_length_prefix(&self.filter),
+        CFilterEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.block_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.filter.len()),
+                    BytesEncoder::without_length_prefix(&self.filter),
+                ),
             ),
-        ))
+            PhantomData,
+        )
     }
 }
 
@@ -400,11 +407,14 @@ impl encoding::Encodable for GetCFHeaders {
     type Encoder<'e> = GetCFHeadersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFHeadersEncoder::new(Encoder3::new(
-            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-            self.start_height.encoder(),
-            self.stop_hash.encoder(),
-        ))
+        GetCFHeadersEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.start_height.encoder(),
+                self.stop_hash.encoder(),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -494,15 +504,18 @@ impl encoding::Encodable for CFHeaders {
     type Encoder<'e> = CFHeadersEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFHeadersEncoder::new(Encoder4::new(
-            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-            self.stop_hash.encoder(),
-            self.previous_filter_header.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter_hashes.len()),
-                SliceEncoder::without_length_prefix(&self.filter_hashes),
+        CFHeadersEncoder(
+            Encoder4::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.stop_hash.encoder(),
+                self.previous_filter_header.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.filter_hashes.len()),
+                    SliceEncoder::without_length_prefix(&self.filter_hashes),
+                ),
             ),
-        ))
+            PhantomData,
+        )
     }
 }
 
@@ -588,10 +601,13 @@ impl encoding::Encodable for GetCFCheckpt {
     type Encoder<'e> = GetCFCheckptEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        GetCFCheckptEncoder::new(Encoder2::new(
-            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-            self.stop_hash.encoder(),
-        ))
+        GetCFCheckptEncoder(
+            Encoder2::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.stop_hash.encoder(),
+            ),
+            PhantomData,
+        )
     }
 }
 
@@ -677,14 +693,17 @@ impl encoding::Encodable for CFCheckpt {
         Self: 'e;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        CFCheckptEncoder::new(Encoder3::new(
-            ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
-            self.stop_hash.encoder(),
-            Encoder2::new(
-                CompactSizeEncoder::new(self.filter_headers.len()),
-                SliceEncoder::without_length_prefix(&self.filter_headers),
+        CFCheckptEncoder(
+            Encoder3::new(
+                ArrayEncoder::without_length_prefix(self.filter_type.to_le_bytes()),
+                self.stop_hash.encoder(),
+                Encoder2::new(
+                    CompactSizeEncoder::new(self.filter_headers.len()),
+                    SliceEncoder::without_length_prefix(&self.filter_headers),
+                ),
             ),
-        ))
+            PhantomData,
+        )
     }
 }
 
