@@ -259,10 +259,10 @@ pub(crate) mod hex_codec {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     use alloc::{format, string::ToString};
 
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     use super::*;
 
     #[test]
