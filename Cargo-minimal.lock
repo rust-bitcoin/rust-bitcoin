@@ -20,7 +20,7 @@ version = "0.4.0"
 dependencies = [
  "bitcoin-internals",
  "bitcoin_hashes",
- "hex_lit",
+ "hex-conservative 0.3.2",
 ]
 
 [[package]]
@@ -62,9 +62,8 @@ dependencies = [
  "bitcoin-units",
  "bitcoin_hashes",
  "bitcoinconsensus",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "hex-conservative 1.0.0",
- "hex_lit",
  "secp256k1",
  "serde",
  "serde_json",
@@ -84,7 +83,7 @@ name = "bitcoin-consensus-encoding"
 version = "0.1.0"
 dependencies = [
  "bitcoin-internals",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
 ]
 
 [[package]]
@@ -110,7 +109,7 @@ name = "bitcoin-internals"
 version = "0.5.0"
 dependencies = [
  "bincode",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "serde",
  "serde_json",
 ]
@@ -147,8 +146,7 @@ dependencies = [
  "bitcoin-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
- "hex-conservative 0.3.0",
- "hex_lit",
+ "hex-conservative 0.3.2",
 ]
 
 [[package]]
@@ -161,9 +159,8 @@ dependencies = [
  "bitcoin-internals",
  "bitcoin-units",
  "bitcoin_hashes",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "hex-conservative 1.0.0",
- "hex_lit",
  "serde",
  "serde_json",
 ]
@@ -188,7 +185,7 @@ dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "cpufeatures",
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
  "serde",
  "serde_test",
 ]
@@ -230,14 +227,14 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chacha20-poly1305"
 version = "0.1.2"
 dependencies = [
- "hex-conservative 0.3.0",
+ "hex-conservative 0.3.2",
 ]
 
 [[package]]
 name = "cpufeatures"
-version = "0.2.17"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280"
+checksum = "28d997bd5e24a5928dd43e46dc529867e207907fe0b239c3477d924f7f2ca320"
 dependencies = [
  "libc",
 ]
@@ -256,9 +253,9 @@ dependencies = [
 
 [[package]]
 name = "hex-conservative"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4afe881d0527571892c4034822e59bb10c6c991cce6abe8199b6f5cf10766f55"
+checksum = "830e599c2904b08f0834ee6337d8fe8f0ed4a63b5d9e7a7f49c0ffa06d08d360"
 dependencies = [
  "arrayvec",
 ]
@@ -268,12 +265,6 @@ name = "hex-conservative"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ee770c000993d17c185713463d5ebfbd1af9afae4c17cc295640104383bfbf0"
-
-[[package]]
-name = "hex_lit"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
 
 [[package]]
 name = "honggfuzz"

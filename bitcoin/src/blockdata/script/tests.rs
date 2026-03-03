@@ -4,7 +4,7 @@
 use alloc::borrow::ToOwned;
 use alloc::string::ToString;
 
-use hex_lit::hex;
+use hex_unstable::hex;
 
 use super::*;
 use crate::consensus::encode::{deserialize, serialize};
