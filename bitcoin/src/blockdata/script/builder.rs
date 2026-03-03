@@ -138,9 +138,9 @@ impl<T> Builder<T> {
     /// Adds instructions to push a public key onto the stack.
     pub fn push_key(self, key: PublicKey) -> Self {
         if key.compressed() {
-            self.push_slice(key.to_inner().serialize())
+            self.push_slice(key.serialize())
         } else {
-            self.push_slice(key.to_inner().serialize_uncompressed())
+            self.push_slice(key.serialize_uncompressed())
         }
     }
 
