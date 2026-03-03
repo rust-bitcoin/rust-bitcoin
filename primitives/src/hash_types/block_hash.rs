@@ -9,7 +9,6 @@ use core::str;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::Encodable;
 use hashes::sha256d;
 use internals::write_err;
 
@@ -36,8 +35,9 @@ encoding::encoder_newtype_exact! {
     pub struct BlockHashEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
-impl Encodable for BlockHash {
+impl encoding::Encodable for BlockHash {
     type Encoder<'e> = BlockHashEncoder<'e>;
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
             self.as_byte_array(),
@@ -45,15 +45,23 @@ impl Encodable for BlockHash {
     }
 }
 
+impl encoding::Decodable for BlockHash {
+    type Decoder = BlockHashDecoder;
+    #[inline]
+    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
+}
+
 /// The decoder for the [`BlockHash`] type.
 pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
 
 impl BlockHashDecoder {
     /// Constructs a new [`BlockHash`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 impl Default for BlockHashDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
@@ -76,11 +84,6 @@ impl encoding::Decoder for BlockHashDecoder {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-impl encoding::Decodable for BlockHash {
-    type Decoder = BlockHashDecoder;
-    fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
-}
-
 /// An error consensus decoding an `BlockHash`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockHashDecoderError(encoding::UnexpectedEofError);
@@ -91,7 +94,7 @@ impl From<Infallible> for BlockHashDecoderError {
 
 impl fmt::Display for BlockHashDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "sequence decoder error"; self.0)
+        write_err!(f, "block hash decoder error"; self.0)
     }
 }
 
