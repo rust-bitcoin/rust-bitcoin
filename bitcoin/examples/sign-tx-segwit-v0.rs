@@ -5,11 +5,11 @@
 use bitcoin::ext::*;
 use bitcoin::key::WPubkeyHash;
 use bitcoin::locktime::absolute;
-use bitcoin::secp256k1::{rand, Message, SecretKey};
+use bitcoin::secp256k1::Message;
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, ScriptPubKeyBuf, ScriptSigBuf, Sequence,
-    Transaction, TxIn, TxOut, Txid, Witness,
+    transaction, Address, Amount, Network, NetworkKind, OutPoint, PrivateKey, ScriptPubKeyBuf,
+    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 const DUMMY_UTXO_AMOUNT: Amount = Amount::from_sat_u32(20_000_000);
@@ -66,14 +66,13 @@ fn main() {
         )
         .expect("failed to create sighash");
 
-    // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
+    // Sign the sighash using the private key.
     let msg = Message::from(sighash);
-    let signature = secp256k1::ecdsa::sign(msg, &sk);
+    let signature = sk.sign(msg, sighash_type);
 
     // Update the witness stack.
-    let signature = bitcoin::ecdsa::Signature { signature, sighash_type };
     let pk = sk.public_key();
-    *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(signature, pk);
+    *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(signature, pk.to_inner());
 
     // Get the signed transaction.
     let tx = sighasher.into_transaction();
@@ -85,9 +84,9 @@ fn main() {
 /// An example of keys controlled by the transaction sender.
 ///
 /// In a real application these would be actual secrets.
-fn senders_keys() -> (SecretKey, WPubkeyHash) {
-    let sk = SecretKey::new(&mut rand::rng());
-    let pk = bitcoin::PublicKey::from_secp(sk.public_key());
+fn senders_keys() -> (PrivateKey, WPubkeyHash) {
+    let sk = PrivateKey::generate(NetworkKind::Main);
+    let pk = sk.public_key();
     let wpkh = pk.wpubkey_hash().expect("key is compressed");
 
     (sk, wpkh)
