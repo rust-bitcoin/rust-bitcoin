@@ -1344,6 +1344,30 @@ mod test {
         );
 
         assert_eq!(serialize(&addresses), raw);
+
+        let addresses: AddrV2Payload = encoding::decode_from_slice(&raw).unwrap();
+
+        assert_eq!(
+            addresses.0,
+            vec![
+                AddrV2Message {
+                    services: ServiceFlags::NETWORK,
+                    time: 0x4966_bc61,
+                    port: 8333,
+                    addr: AddrV2::Unknown(153, hex!("abab").to_vec())
+                },
+                AddrV2Message {
+                    services: ServiceFlags::NETWORK_LIMITED
+                        | ServiceFlags::WITNESS
+                        | ServiceFlags::COMPACT_FILTERS,
+                    time: 0x8376_6279,
+                    port: 8333,
+                    addr: AddrV2::Ipv4(Ipv4Addr::new(9, 9, 9, 9))
+                },
+            ]
+        );
+
+        assert_eq!(encoding::encode_to_vec(&addresses), raw);
     }
 
     #[test]
