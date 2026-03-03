@@ -246,6 +246,17 @@ impl std::error::Error for AddressDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
+/// Data type received in an `addr` message.
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct AddrV1Message {
+    /// Time the peer was last seen.
+    pub time: u32,
+    /// Network address to research the peer.
+    pub address: Address,
+}
+
+crate::consensus::impl_consensus_encoding!(AddrV1Message, time, address);
+
 /// Supported networks for use in BIP-0155 addrv2 message
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum AddrV2 {
@@ -916,6 +927,17 @@ impl<'a> Arbitrary<'a> for Address {
         Ok(Self::new(&socket_addr, u.arbitrary()?))
     }
 }
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddrV1Message {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            time: u.arbitrary()?,
+            address: u.arbitrary()?,
+        })
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrV2 {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
