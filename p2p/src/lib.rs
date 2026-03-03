@@ -475,18 +475,18 @@ impl TryFrom<Magic> for Network {
 }
 
 impl fmt::Display for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
 }
 
 impl fmt::Debug for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
 }
 
 impl fmt::LowerHex for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
@@ -494,7 +494,7 @@ impl fmt::LowerHex for Magic {
 impl_to_hex_from_lower_hex!(Magic, |_| 8);
 
 impl fmt::UpperHex for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
         Ok(())
     }
@@ -617,7 +617,7 @@ pub struct ParseMagicError {
 }
 
 impl fmt::Display for ParseMagicError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "failed to parse {} as network magic", self.magic)
     }
 }
@@ -633,7 +633,7 @@ impl std::error::Error for ParseMagicError {
 pub struct UnknownMagicError(Magic);
 
 impl fmt::Display for UnknownMagicError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unknown network magic {}", self.0)
     }
 }
@@ -649,7 +649,7 @@ impl std::error::Error for UnknownMagicError {
 pub struct UnknownNetworkError(Network);
 
 impl fmt::Display for UnknownNetworkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unknown network {}", self.0)
     }
 }
