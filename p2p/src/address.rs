@@ -15,7 +15,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Encoder2,
 };
 use internals::array::ArrayExt;
 use internals::write_err;
@@ -253,6 +253,77 @@ pub struct AddrV1Message {
     pub time: u32,
     /// Network address to research the peer.
     pub address: Address,
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for an [`AddrV1Message`].
+    pub struct AddrV1MessageEncoder<'e>(Encoder2<ArrayEncoder<4>, AddressEncoder<'e>>);
+}
+
+impl encoding::Encodable for AddrV1Message {
+    type Encoder<'e> = AddrV1MessageEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AddrV1MessageEncoder::new(Encoder2::new(
+            ArrayEncoder::without_length_prefix(self.time.to_le_bytes()),
+            self.address.encoder()
+        ))
+    }
+}
+
+type AddrV1MessageInnerDecoder = Decoder2<ArrayDecoder<4>, AddressDecoder>;
+
+/// The decoder for an [`AddrV2Message`].
+pub struct AddrV1MessageDecoder(AddrV1MessageInnerDecoder);
+
+impl encoding::Decoder for AddrV1MessageDecoder {
+    type Output = AddrV1Message;
+    type Error = AddrV1MessageDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AddrV1MessageDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (time, address) = self.0.end().map_err(AddrV1MessageDecoderError)?;
+        let time = u32::from_le_bytes(time);
+        Ok(AddrV1Message { time, address })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for AddrV1Message {
+    type Decoder = AddrV1MessageDecoder;
+
+    fn decoder() -> Self::Decoder {
+        AddrV1MessageDecoder(AddrV1MessageInnerDecoder::new(
+            ArrayDecoder::new(),
+            Address::decoder())
+        )
+    }
+}
+
+/// An error occuring when decoding a [`AddrV1Message`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddrV1MessageDecoderError(<AddrV1MessageInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for AddrV1MessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for AddrV1MessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "addrv1 message error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AddrV1MessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 crate::consensus::impl_consensus_encoding!(AddrV1Message, time, address);
