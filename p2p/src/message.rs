@@ -405,6 +405,73 @@ pub struct AddrPayload(pub Vec<(u32, Address)>);
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct AddrV2Payload(pub Vec<AddrV2Message>);
 
+encoding::encoder_newtype! {
+    /// The encoder for an [`AddrV2Payload`].
+    pub struct AddrV2PayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV2Message>>);
+}
+
+impl encoding::Encodable for AddrV2Payload {
+    type Encoder<'e>
+        = Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV2Message>>
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(
+            CompactSizeEncoder::new(self.0.len()), SliceEncoder::without_length_prefix(&self.0)
+        )
+    }
+}
+
+type AddrV2PayloadInnerDecoder = VecDecoder<AddrV2Message>;
+
+/// Decoder type for [`AddrV2Payload`].
+pub struct AddrV2PayloadDecoder(AddrV2PayloadInnerDecoder);
+
+impl encoding::Decoder for AddrV2PayloadDecoder {
+    type Output = AddrV2Payload;
+    type Error = AddrV2PayloadDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AddrV2PayloadDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+       Ok(AddrV2Payload(self.0.end().map_err(AddrV2PayloadDecoderError)?))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for AddrV2Payload {
+    type Decoder = AddrV2PayloadDecoder;
+    fn decoder() -> Self::Decoder {
+        AddrV2PayloadDecoder(VecDecoder::new())
+    }
+}
+
+/// An error decoding a [`AddrV2Payload`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddrV2PayloadDecoderError(<AddrV2PayloadInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for AddrV2PayloadDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for AddrV2PayloadDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "addrv2 payload error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AddrV2PayloadDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 impl_vec_wrapper!(InventoryPayload, message_blockdata::Inventory);
 impl_vec_wrapper!(AddrPayload, (u32, Address));
 impl_vec_wrapper!(AddrV2Payload, AddrV2Message);
