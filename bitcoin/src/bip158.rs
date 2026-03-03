@@ -591,7 +591,7 @@ mod test {
             assert!(filter
                 .match_all(
                     *block_hash,
-                    &mut txmap.iter().filter_map(|(_, s)| if !s.is_empty() {
+                    &mut txmap.values().filter_map(|s| if !s.is_empty() {
                         Some(s.as_bytes())
                     } else {
                         None
