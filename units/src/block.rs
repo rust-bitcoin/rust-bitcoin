@@ -25,6 +25,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(doc)]
 use crate::locktime;
 use crate::locktime::{absolute, relative};
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 
 macro_rules! impl_u32_wrapper {
     {
@@ -33,6 +34,34 @@ macro_rules! impl_u32_wrapper {
     } => {
         $(#[$($type_attrs)*])*
         $type_vis struct $newtype($inner_vis u32);
+
+        impl $newtype {
+            #[doc = "Constructs a new `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` from an unprefixed hex string.\n\n"]
+            #[doc = "# Errors\n\n"]
+            #[doc = "If the input string is not a valid hex representation of a `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` or it does not include the `0x` prefix."]
+            #[inline]
+            pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+                let block_height = parse_int::hex_u32_prefixed(s)?;
+                Ok(Self(block_height))
+            }
+
+            #[doc = "Constructs a new `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` from a prefixed hex string.\n\n"]
+            #[doc = "# Errors\n\n"]
+            #[doc = "If the input string is not a valid hex representation of a `"]
+            #[doc = stringify!($newtype)]
+            #[doc = "` or if it includes the `0x` prefix."]
+            #[inline]
+            pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+                let block_height = parse_int::hex_u32_unprefixed(s)?;
+                Ok(Self(block_height))
+            }
+        }
 
         impl fmt::Display for $newtype {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
