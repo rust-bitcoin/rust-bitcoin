@@ -477,7 +477,28 @@ impl PublicKey {
         Self::from_secp_uncompressed(key)
     }
 
-    fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
+    /// Serializes the key as a byte-encoded pair of values.
+    ///
+    /// This will call the provided function with the key as a byte slice in either
+    /// compressed or uncompressed form.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bitcoin::PublicKey;
+    /// use bitcoin::hashes::hash160;
+    ///
+    /// let key = "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8"
+    ///     .parse::<PublicKey>()
+    ///     .unwrap();
+    /// assert!(key.compressed());
+    /// let vec_out = key.with_serialized(<[_]>::to_vec);
+    /// assert_eq!(vec_out.len(), 33);
+    ///
+    /// let hash = key.with_serialized(hash160::Hash::hash).to_string();
+    /// assert_eq!(hash, "dabedb4de2bd2bfec5d38475b9c64af13999a043");
+    /// ```
+    pub fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
         if self.compressed() {
             f(&self.to_inner().serialize())
         } else {
