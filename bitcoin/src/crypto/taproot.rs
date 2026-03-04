@@ -8,6 +8,7 @@ use core::borrow::Borrow;
 use core::convert::Infallible;
 use core::fmt;
 use core::ops::Deref;
+use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -16,6 +17,7 @@ use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
 pub use self::into_iter::IntoIter;
+use crate::hex;
 use crate::prelude::{DisplayHex, Vec};
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 
@@ -88,6 +90,17 @@ impl Signature {
     pub fn serialize_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         let sig = self.serialize();
         sig.write_to(writer)
+    }
+}
+
+impl FromStr for Signature {
+    type Err = ParseSignatureError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = hex::decode_to_vec(s)
+            .map_err(ParseSignatureError::Hex)?;
+        Self::from_slice(&bytes)
+            .map_err(ParseSignatureError::Decode)
     }
 }
 
@@ -404,6 +417,39 @@ impl From<secp256k1::Error> for SigFromSliceError {
 
 impl From<InvalidSighashTypeError> for SigFromSliceError {
     fn from(err: InvalidSighashTypeError) -> Self { Self::SighashType(err) }
+}
+
+/// Error encountered while parsing a Taproot signature from a string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ParseSignatureError {
+    /// Hex string decoding error.
+    Hex(hex::DecodeVariableLengthBytesError),
+    /// Signature byte slice decoding error.
+    Decode(SigFromSliceError),
+}
+
+impl From<Infallible> for ParseSignatureError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for ParseSignatureError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            Self::Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSignatureError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Hex(ref e) => Some(e),
+            Self::Decode(ref e) => Some(e),
+        }
+    }
 }
 
 #[cfg(feature = "arbitrary")]
