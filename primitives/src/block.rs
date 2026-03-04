@@ -392,7 +392,7 @@ impl Decoder for BlockDecoder {
 }
 
 #[cfg(feature = "alloc")]
-impl Decodable for Block {
+impl Decodable for Block<Unchecked> {
     type Decoder = BlockDecoder;
     fn decoder() -> Self::Decoder {
         BlockDecoder(Decoder2::new(Header::decoder(), VecDecoder::<Transaction>::new()))
