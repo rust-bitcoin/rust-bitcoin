@@ -7,11 +7,11 @@ examples = []
 
 # Features to test with the conventional `std` feature enabled.
 # Tests each feature alone with std, all pairs, and all together.
-features_with_std = ["arbitrary"]
+features_with_std = ["arbitrary", "serde"]
 
 # Features to test without the `std` feature.
 # Tests each feature alone, all pairs, and all together.
-features_without_std = ["arbitrary"]
+features_without_std = ["arbitrary", "serde"]
 
 [lint]
 allowed_duplicates = [

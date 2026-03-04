@@ -16,6 +16,7 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["encoding/std", "hashes/std", "network/std", "hex/std", "internals/std", "io/std", "units/std", "bitcoin/std", "primitives/std"]
 arbitrary = ["dep:arbitrary", "bitcoin/arbitrary"]
+serde = ["dep:serde", "hashes/serde"]
 
 [dependencies]
 bitcoin = { path = "../bitcoin/", default-features = false }
@@ -29,6 +30,7 @@ io = { package = "bitcoin-io", version = "0.5.0", path = "../io", default-featur
 units = { package = "bitcoin-units", path = "../units", version = "0.3.0", default-features = false }
 
 arbitrary = { version = "1.4.1", optional = true }
+serde = { version = "1.0.195", default-features = false, features = ["derive", "alloc"], optional = true }
 
 [dev-dependencies]
 hex_lit = "0.1.1"
