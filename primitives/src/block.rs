@@ -554,7 +554,9 @@ impl fmt::Debug for ParseHeaderError {
 
 #[cfg(feature = "hex")]
 impl fmt::Display for ParseHeaderError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "parse header error"; self.0)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "std"))]
