@@ -2,6 +2,8 @@
 
 //! SHA512 implementation.
 
+#![allow(clippy::unreadable_literal)]
+
 use internals::slice::SliceExt;
 
 mod crypto;
