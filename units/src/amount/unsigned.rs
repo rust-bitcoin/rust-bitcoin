@@ -19,6 +19,7 @@ use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
+use crate::parse_int;
 use crate::result::{MathOp, NumOpError as E, NumOpResult};
 use crate::{FeeRate, Weight};
 
@@ -257,6 +258,30 @@ impl Amount {
         // This is inefficient, but the safest way to deal with this. The parsing logic is safe.
         // Any performance-critical application should not be dealing with floats.
         Self::from_str_in(&value.to_string(), denom)
+    }
+
+    /// Constructs a new `Amount` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of an amount in sats or it does not
+    /// include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, ParseAmountError> {
+        let amount = parse_int::hex_u64_prefixed(s)?;
+        Ok(Self::from_sat(amount)?)
+    }
+
+    /// Constructs a new `Amount` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of an amount in sats or if it
+    /// includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, ParseAmountError> {
+        let amount = parse_int::hex_u64_unprefixed(s)?;
+        Ok(Self::from_sat(amount)?)
     }
 
     /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].

@@ -10,6 +10,7 @@ use core::{default, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use crate::parse_int;
 use super::error::ParseErrorInner;
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
@@ -122,6 +123,19 @@ impl SignedAmount {
         }
     }
 
+    /// Construct a [`SignedAmount`] value from a `u64` satoshi value.
+    ///
+    /// # Errors:
+    ///
+    /// Returns an [`OutOfRangeError`] if the satoshi value > [`Self::MAX_MONEY`].
+    #[allow(clippy::missing_panics_doc)]
+    fn from_sat_u64(satoshi: u64) -> Result<Self, ParseAmountError> {
+        // u64 -> i64 only fails if value is greater than i64::MAX, which is also > Self::MAX_MONEY.
+        let amount = i64::try_from(satoshi)
+            .map_err(|_| OutOfRangeError { is_signed: true, is_greater_than_max: true })?;
+        Ok(Self::from_sat(amount)?)
+    }
+
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
     ///
     /// # Errors
@@ -214,6 +228,34 @@ impl SignedAmount {
     #[allow(clippy::missing_panics_doc)]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
+    }
+
+    /// Constructs a new `SignedAmount` from a prefixed hex string.
+    ///
+    /// This can only parse an unsigned quantity.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of an amount in sats or it does not
+    /// include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, ParseAmountError> {
+        let amount = parse_int::hex_u64_prefixed(s)?;
+        Self::from_sat_u64(amount)
+    }
+
+    /// Constructs a new `SignedAmount` from an unprefixed hex string.
+    ///
+    /// This can only parse an unsigned quantity.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of an amount in sats or if it
+    /// includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, ParseAmountError> {
+        let amount = parse_int::hex_u64_unprefixed(s)?;
+        Self::from_sat_u64(amount)
     }
 
     /// Expresses this [`SignedAmount`] as a floating-point value in Bitcoin.

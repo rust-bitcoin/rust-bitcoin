@@ -8,6 +8,8 @@ use core::fmt;
 use internals::error::InputString;
 use internals::write_err;
 
+use crate::parse_int::{PrefixedHexError, UnprefixedHexError};
+
 use super::INPUT_STRING_LEN_LIMIT;
 
 /// Error returned when parsing an amount with denomination fails.
@@ -106,6 +108,10 @@ pub(crate) enum ParseAmountErrorInner {
     InvalidCharacter(InvalidCharacterError),
     /// A valid character is in an invalid position.
     BadPosition(BadPositionError),
+    /// An error parsing a prefixed hex amount.
+    PrefixedHex(PrefixedHexError),
+    /// An error parsing an unprefixed hex amount.
+    UnprefixedHex(UnprefixedHexError),
 }
 
 impl From<TooPreciseError> for ParseAmountError {
@@ -130,6 +136,14 @@ impl From<BadPositionError> for ParseAmountError {
     fn from(value: BadPositionError) -> Self { Self(ParseAmountErrorInner::BadPosition(value)) }
 }
 
+impl From<PrefixedHexError> for ParseAmountError {
+    fn from(value: PrefixedHexError) -> Self { Self(ParseAmountErrorInner::PrefixedHex(value)) }
+}
+
+impl From<UnprefixedHexError> for ParseAmountError {
+    fn from(value: UnprefixedHexError) -> Self { Self(ParseAmountErrorInner::UnprefixedHex(value)) }
+}
+
 impl From<Infallible> for ParseAmountError {
     fn from(never: Infallible) -> Self { match never {} }
 }
@@ -151,6 +165,8 @@ impl fmt::Display for ParseAmountError {
                 write_err!(f, "invalid character in the input"; error)
             }
             E::BadPosition(ref error) => write_err!(f, "valid character in bad position"; error),
+            E::PrefixedHex(ref error) => write_err!(f, "prefixed hex is invalid"; error),
+            E::UnprefixedHex(ref error) => write_err!(f, "unprefixed hex is invalid"; error),
         }
     }
 }
@@ -167,6 +183,8 @@ impl std::error::Error for ParseAmountError {
             E::MissingDigits(ref error) => Some(error),
             E::InvalidCharacter(ref error) => Some(error),
             E::BadPosition(ref error) => Some(error),
+            E::PrefixedHex(ref error) => Some(error),
+            E::UnprefixedHex(ref error) => Some(error),
         }
     }
 }
