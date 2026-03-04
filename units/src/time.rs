@@ -18,7 +18,7 @@ use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::parse_int;
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 
 mod encapsulate {
     /// A Bitcoin block timestamp.
@@ -48,6 +48,32 @@ mod encapsulate {
 }
 #[doc(inline)]
 pub use encapsulate::BlockTime;
+
+impl BlockTime {
+    /// Constructs a new `BlockTime` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a blocktime or it does not include
+    /// the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let block_time = parse_int::hex_u32_prefixed(s)?;
+        Ok(Self::from_u32(block_time))
+    }
+
+    /// Constructs a new `BlockTime` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a blocktime or if it includes the
+    /// `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        let block_time = parse_int::hex_u32_unprefixed(s)?;
+        Ok(Self::from_u32(block_time))
+    }
+}
 
 crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(BlockTime, to_u32);
 
