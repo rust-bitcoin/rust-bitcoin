@@ -2059,10 +2059,18 @@ pub fn bitcoin_units::parse_int::hex_u128(s: &str) -> core::result::Result<u128,
 pub fn bitcoin_units::parse_int::hex_u128_prefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::parse_int::hex_u128_unchecked(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::hex_u128_unprefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u16(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u16_prefixed(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u16_unchecked(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u16_unprefixed(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::parse_int::hex_u32(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::hex_u32_prefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::parse_int::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u64(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u64_prefixed(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u64_unchecked(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u64_unprefixed(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::parse_int::int_from_str<T: bitcoin_units::parse_int::Integer>(s: &str) -> core::result::Result<T, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::pow::CompactTarget::clone(&self) -> bitcoin_units::pow::CompactTarget
 pub fn bitcoin_units::pow::CompactTarget::cmp(&self, other: &bitcoin_units::pow::CompactTarget) -> core::cmp::Ordering
