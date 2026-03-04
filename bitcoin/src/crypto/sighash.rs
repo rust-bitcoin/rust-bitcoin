@@ -1540,7 +1540,7 @@ mod tests {
     use alloc::vec::Vec;
 
     use hashes::HashEngine;
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
     use crate::consensus::deserialize;
@@ -1868,7 +1868,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
-        use hex_unstable::DisplayHex;
+        use hex::DisplayHex as _;
 
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
         where

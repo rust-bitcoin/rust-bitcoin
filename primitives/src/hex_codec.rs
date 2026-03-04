@@ -13,7 +13,7 @@ use core::fmt;
 use core::fmt::Write as _;
 
 use encoding::{Decodable, Decoder, Encodable, EncodableByteIter};
-use hex_unstable::{BytesToHexIter, Case};
+use hex::{BytesToHexIter, Case};
 use internals::write_err;
 
 /// Hex encoding wrapper type for `Encodable` + `Decodable` types.
@@ -42,7 +42,7 @@ impl<T: Decodable> HexPrimitive<'_, T> {
     /// * `OddLength` or `InvalidChar` if decode the hex string to bytes fails.
     /// * `Decode` if consensus decoding the hex-decoded bytes fails.
     pub(crate) fn from_str(s: &str) -> Result<T, ParsePrimitiveError<T>> {
-        let iter = hex_unstable::HexToBytesIter::new(s)?;
+        let iter = hex::HexToBytesIter::new(s)?;
 
         let mut decoder = T::decoder();
         let mut buffer = [0u8; 4096]; // 4MB is bigger than most decodables, reducing push_bytes calls.
@@ -108,8 +108,8 @@ impl<T: Encodable> HexPrimitive<'_, T> {
         // Alt characters
         if f.alternate() {
             f.write_str(match case {
-                hex_unstable::Case::Lower => "0x",
-                hex_unstable::Case::Upper => "0X",
+                hex::Case::Lower => "0x",
+                hex::Case::Upper => "0X",
             })?;
         }
 
@@ -151,9 +151,9 @@ impl<T: Encodable> fmt::UpperHex for HexPrimitive<'_, T> {
 /// An error type for errors that can occur during parsing of a `Decodable` type from hex.
 pub(crate) enum ParsePrimitiveError<T: Decodable> {
     /// Tried to decode an odd length string
-    OddLengthString(hex_unstable::OddLengthStringError),
+    OddLengthString(hex::OddLengthStringError),
     /// Encountered an invalid hex character
-    InvalidChar(hex_unstable::InvalidCharError),
+    InvalidChar(hex::InvalidCharError),
     /// A decode error from `consensus_encoding`
     Decode(encoding::DecodeError<<T::Decoder as encoding::Decoder>::Error>),
 }
@@ -177,12 +177,12 @@ impl<T: Decodable> fmt::Display for ParsePrimitiveError<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
 }
 
-impl<T: Decodable> From<hex_unstable::OddLengthStringError> for ParsePrimitiveError<T> {
-    fn from(err: hex_unstable::OddLengthStringError) -> Self { Self::OddLengthString(err) }
+impl<T: Decodable> From<hex::OddLengthStringError> for ParsePrimitiveError<T> {
+    fn from(err: hex::OddLengthStringError) -> Self { Self::OddLengthString(err) }
 }
 
-impl<T: Decodable> From<hex_unstable::InvalidCharError> for ParsePrimitiveError<T> {
-    fn from(err: hex_unstable::InvalidCharError) -> Self { Self::InvalidChar(err) }
+impl<T: Decodable> From<hex::InvalidCharError> for ParsePrimitiveError<T> {
+    fn from(err: hex::InvalidCharError) -> Self { Self::InvalidChar(err) }
 }
 
 #[cfg(feature = "std")]

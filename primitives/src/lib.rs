@@ -35,7 +35,7 @@ pub extern crate arbitrary;
 pub extern crate encoding;
 
 #[cfg(feature = "hex")]
-pub extern crate hex_stable as hex;
+pub extern crate hex;
 
 #[doc(hidden)]
 pub mod _export {

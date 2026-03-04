@@ -1651,7 +1651,7 @@ mod tests {
 
     use encoding::Encoder as _;
     #[cfg(feature = "hex")]
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
     #[cfg(all(feature = "alloc", feature = "hex"))]

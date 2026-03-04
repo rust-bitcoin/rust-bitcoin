@@ -1157,7 +1157,7 @@ impl<'a> Arbitrary<'a> for Xpub {
 mod tests {
     use alloc::string::ToString;
 
-    use hex_unstable::hex;
+    use hex::hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
 

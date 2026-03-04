@@ -1025,7 +1025,7 @@ fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
 mod tests {
     use alloc::string::ToString;
 
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
     use crate::network::Network::{Bitcoin, Testnet};

@@ -1115,13 +1115,13 @@ macro_rules! impl_hex {
     ($hex:path, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                hex_unstable::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
+                hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
             }
         }
     };
 }
-impl_hex!(fmt::LowerHex, hex_unstable::Case::Lower);
-impl_hex!(fmt::UpperHex, hex_unstable::Case::Upper);
+impl_hex!(fmt::LowerHex, hex::Case::Lower);
+impl_hex!(fmt::UpperHex, hex::Case::Upper);
 
 #[cfg(feature = "serde")]
 impl crate::serde::Serialize for U256 {

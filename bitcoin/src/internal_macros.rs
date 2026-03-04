@@ -62,14 +62,14 @@ macro_rules! impl_array_newtype_stringify {
 
         impl core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use hex_unstable::{display, Case};
+                use hex::{display, Case};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Lower)
             }
         }
 
         impl core::fmt::UpperHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use hex_unstable::{display, Case};
+                use hex::{display, Case};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Upper)
             }
         }

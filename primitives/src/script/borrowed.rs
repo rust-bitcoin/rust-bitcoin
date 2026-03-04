@@ -127,7 +127,7 @@ impl<T> Script<T> {
     /// `to_hex_string_no_length_prefix`.
     #[cfg(all(feature = "hex", feature = "alloc"))]
     pub fn to_hex_string_prefixed(&self) -> String {
-        use hex_unstable::{BytesToHexIter, Case};
+        use hex::{BytesToHexIter, Case};
 
         let iter = encoding::EncodableByteIter::new(self);
         BytesToHexIter::new(iter, Case::Lower).collect()
@@ -139,7 +139,7 @@ impl<T> Script<T> {
     /// prefix. See `to_hex_string_prefixed`.
     #[cfg(all(feature = "hex", feature = "alloc"))]
     pub fn to_hex_string_no_length_prefix(&self) -> String {
-        use hex_unstable::DisplayHex as _;
+        use hex::DisplayHex as _;
 
         self.as_bytes().to_lower_hex_string()
     }

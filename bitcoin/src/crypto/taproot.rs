@@ -97,9 +97,9 @@ impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.sighash_type == TapSighashType::Default {
             // default sighash type, don't add extra sighash byte
-            hex_unstable::fmt_hex_exact!(f, 64, self.serialize(), hex_unstable::Case::Lower)
+            hex::fmt_hex_exact!(f, 64, self.serialize(), hex::Case::Lower)
         } else {
-            hex_unstable::fmt_hex_exact!(f, 65, self.serialize(), hex_unstable::Case::Lower)
+            hex::fmt_hex_exact!(f, 65, self.serialize(), hex::Case::Lower)
         }
     }
 }
@@ -177,7 +177,7 @@ impl fmt::Debug for SerializedSignature {
 
 impl fmt::Display for SerializedSignature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        hex_unstable::fmt_hex_exact!(f, MAX_LEN, self, hex_unstable::Case::Lower)
+        hex::fmt_hex_exact!(f, MAX_LEN, self, hex::Case::Lower)
     }
 }
 
