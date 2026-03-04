@@ -93,6 +93,17 @@ impl Signature {
     }
 }
 
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.sighash_type == TapSighashType::Default {
+            // default sighash type, don't add extra sighash byte
+            hex_unstable::fmt_hex_exact!(f, 64, self.serialize(), hex_unstable::Case::Lower)
+        } else {
+            hex_unstable::fmt_hex_exact!(f, 65, self.serialize(), hex_unstable::Case::Lower)
+        }
+    }
+}
+
 impl FromStr for Signature {
     type Err = ParseSignatureError;
 
@@ -472,7 +483,9 @@ impl<'a> Arbitrary<'a> for Signature {
 
 #[cfg(test)]
 mod tests {
-    use super::{SerializedSignature, MAX_LEN};
+    use alloc::string::ToString;
+
+    use super::*;
 
     #[test]
     fn iterator_ops_are_homomorphic() {
@@ -503,5 +516,33 @@ mod tests {
             assert_eq!(iter1.size_hint(), iter2.size_hint());
             assert_eq!(iter1.as_slice(), iter2.as_slice());
         }
+    }
+
+    #[test]
+    fn signature_hex_roundtrip() {
+        let sig_strings = [
+            // default sighash type
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
+            // various sighash types
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab01",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab02",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab03",
+            "7777777777777777abababababababababababababababababababababababababababababababababababababababababababababababababababababababab81",
+        ];
+        for want in sig_strings {
+            let sig = want.parse::<Signature>().unwrap();
+            let got = sig.to_string();
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    fn signature_hex_default_error() {
+        let sig_hex = "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab00";
+        let parse_err = sig_hex.parse::<Signature>().unwrap_err();
+        assert!(matches!(
+            parse_err,
+            ParseSignatureError::Decode(SigFromSliceError::SighashType(InvalidSighashTypeError(0))),
+        ));
     }
 }
