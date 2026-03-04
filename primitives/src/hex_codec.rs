@@ -19,7 +19,7 @@ use internals::write_err;
 ///
 /// Implements `Display`, `Debug`, `LowerHex`, and `UpperHex` as well as an inherent `from_str`
 /// method that returns `T`.
-pub(crate) struct HexPrimitive<'a, T: Encodable + Decodable>(pub(crate) &'a T);
+pub(crate) struct HexPrimitive<'a, T>(pub(crate) &'a T);
 
 impl<'a, T: Encodable + Decodable> IntoIterator for &HexPrimitive<'a, T> {
     type Item = u8;
@@ -28,7 +28,7 @@ impl<'a, T: Encodable + Decodable> IntoIterator for &HexPrimitive<'a, T> {
     fn into_iter(self) -> Self::IntoIter { EncodableByteIter::new(self.0) }
 }
 
-impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
+impl<T: Decodable> HexPrimitive<'_, T> {
     /// Parses a given string into an instance of the type `T`.
     ///
     /// Since `FromStr` would return an instance of `Self` and thus a &T, this function
@@ -66,6 +66,9 @@ impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
 
         decoder.end().map_err(ParsePrimitiveError::Decode)
     }
+}
+
+impl<T: Encodable> HexPrimitive<'_, T> {
 
     /// Writes an Encodable object to the given formatter in the requested case.
     #[inline]
@@ -130,22 +133,22 @@ impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
     }
 }
 
-impl<T: Encodable + Decodable> fmt::Display for HexPrimitive<'_, T> {
+impl<T: Encodable> fmt::Display for HexPrimitive<'_, T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
-impl<T: Encodable + Decodable> fmt::Debug for HexPrimitive<'_, T> {
+impl<T: Encodable> fmt::Debug for HexPrimitive<'_, T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
-impl<T: Encodable + Decodable> fmt::LowerHex for HexPrimitive<'_, T> {
+impl<T: Encodable> fmt::LowerHex for HexPrimitive<'_, T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Lower) }
 }
 
-impl<T: Encodable + Decodable> fmt::UpperHex for HexPrimitive<'_, T> {
+impl<T: Encodable> fmt::UpperHex for HexPrimitive<'_, T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Upper) }
 }
