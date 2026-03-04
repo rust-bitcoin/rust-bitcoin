@@ -169,7 +169,7 @@ internal_macros::define_extension_trait! {
         fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
             where Self: Sized
         {
-            let v = hex_stable::decode_to_vec(s)?;
+            let v = hex::decode_to_vec(s)?;
             Ok(Self::from_bytes(v))
         }
 

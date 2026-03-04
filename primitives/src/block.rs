@@ -521,7 +521,7 @@ impl core::str::FromStr for Header {
 impl fmt::Display for Header {
     #[allow(clippy::use_self)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use hex_unstable::{fmt_hex_exact, Case};
+        use hex::{fmt_hex_exact, Case};
 
         fmt_hex_exact!(f, Header::SIZE, EncodableByteIter::new(self), Case::Lower)
     }

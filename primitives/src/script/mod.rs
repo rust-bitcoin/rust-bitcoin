@@ -12,7 +12,7 @@ use core::fmt;
 use core::marker::PhantomData;
 
 #[cfg(feature = "hex")]
-use hex_unstable::DisplayHex;
+use hex::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
 use crate::prelude::rc::Rc;

@@ -38,7 +38,7 @@ pub mod hex {
     use core::fmt;
     use core::marker::PhantomData;
 
-    use hex_unstable::buf_encoder::BufEncoder;
+    use hex::buf_encoder::BufEncoder;
 
     /// Marker for upper/lower case type-level flags ("type-level enum").
     ///
@@ -54,15 +54,15 @@ pub mod hex {
     mod sealed {
         pub trait Case {
             /// Internal detail, don't depend on it!!!
-            const INTERNAL_CASE: hex_unstable::Case;
+            const INTERNAL_CASE: hex::Case;
         }
 
         impl Case for super::Lower {
-            const INTERNAL_CASE: hex_unstable::Case = hex_unstable::Case::Lower;
+            const INTERNAL_CASE: hex::Case = hex::Case::Lower;
         }
 
         impl Case for super::Upper {
-            const INTERNAL_CASE: hex_unstable::Case = hex_unstable::Case::Upper;
+            const INTERNAL_CASE: hex::Case = hex::Case::Upper;
         }
     }
 
@@ -101,18 +101,18 @@ pub mod hex {
 
     /// Error returned when a hex string decoder can't be created.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct DecodeInitError(hex_unstable::OddLengthStringError);
+    pub struct DecodeInitError(hex::OddLengthStringError);
 
     /// Error returned when a hex string contains invalid characters.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct DecodeError(hex_unstable::InvalidCharError);
+    pub struct DecodeError(hex::InvalidCharError);
 
     /// Hex decoder state.
-    pub struct Decoder<'a>(hex_unstable::HexSliceToBytesIter<'a>);
+    pub struct Decoder<'a>(hex::HexSliceToBytesIter<'a>);
 
     impl<'a> Decoder<'a> {
         fn new(s: &'a str) -> Result<Self, DecodeInitError> {
-            match hex_unstable::HexToBytesIter::new(s) {
+            match hex::HexToBytesIter::new(s) {
                 Ok(iter) => Ok(Decoder(iter)),
                 Err(error) => Err(DecodeInitError(error)),
             }

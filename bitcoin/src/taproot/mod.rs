@@ -1654,7 +1654,7 @@ impl std::error::Error for InvalidControlBlockSizeError {}
 #[cfg(test)]
 mod test {
     use hashes::sha256;
-    use hex_unstable::DisplayHex;
+    use hex::DisplayHex as _;
 
     use super::*;
     use crate::script::ScriptBufExt as _;

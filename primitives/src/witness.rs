@@ -599,7 +599,7 @@ impl fmt::Debug for Witness {
                     #[cfg(feature = "hex")]
                     {
                         f.debug_list()
-                            .entries(self.iter().map(hex_unstable::DisplayHex::as_hex))
+                            .entries(self.iter().map(hex::DisplayHex::as_hex))
                             .finish()
                     }
                     #[cfg(not(feature = "hex"))]

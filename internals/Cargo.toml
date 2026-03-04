@@ -21,7 +21,8 @@ alloc = ["hex?/alloc"]
 test-serde = ["serde", "serde_json", "bincode"]
 
 [dependencies]
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+# Release tracking PR: hex 0.4.0 - Release Candidate for v1.1.0 (https://github.com/rust-bitcoin/hex-conservative/pull/210)
+hex = { package = "hex-conservative", version = "0.4.0", git = "https://github.com/tcharding/hex-conservative", branch = "push-zymmlwoymnqz", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, optional = true }
 
 # Don't enable these directly, use `test-serde` feature instead.

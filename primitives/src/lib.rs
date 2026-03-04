@@ -30,7 +30,7 @@ extern crate std;
 extern crate serde;
 
 #[cfg(feature = "hex")]
-pub extern crate hex_stable as hex;
+pub extern crate hex;
 
 #[doc(hidden)]
 pub mod _export {
@@ -183,7 +183,7 @@ impl<T: Decodable> std::error::Error for ParsePrimitiveError<T> {
 #[cfg(all(feature = "hex", feature = "alloc"))]
 pub(crate) mod hex_codec {
     use encoding::{Encodable, EncodableByteIter};
-    use hex_unstable::{BytesToHexIter, Case};
+    use hex::{BytesToHexIter, Case};
 
     use super::{fmt, Decodable, ParsePrimitiveError};
 

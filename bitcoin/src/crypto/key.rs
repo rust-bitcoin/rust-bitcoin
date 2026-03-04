@@ -1419,7 +1419,7 @@ pub enum ParsePublicKeyError {
     /// Error originated while parsing string.
     Encoding(FromSliceError),
     /// Hex decoding error.
-    InvalidChar(hex_stable::error::InvalidCharError),
+    InvalidChar(hex::error::InvalidCharError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
@@ -1460,7 +1460,7 @@ pub enum ParseCompressedPublicKeyError {
     /// secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    Hex(hex_stable::DecodeFixedLengthBytesError),
+    Hex(hex::DecodeFixedLengthBytesError),
 }
 
 impl From<Infallible> for ParseCompressedPublicKeyError {
@@ -1490,8 +1490,8 @@ impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<hex_stable::DecodeFixedLengthBytesError> for ParseCompressedPublicKeyError {
-    fn from(e: hex_stable::DecodeFixedLengthBytesError) -> Self { Self::Hex(e) }
+impl From<hex::DecodeFixedLengthBytesError> for ParseCompressedPublicKeyError {
+    fn from(e: hex::DecodeFixedLengthBytesError) -> Self { Self::Hex(e) }
 }
 
 /// SegWit public keys must always be compressed.

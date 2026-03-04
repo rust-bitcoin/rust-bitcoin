@@ -55,21 +55,21 @@ macro_rules! impl_array_newtype_stringify {
     ($t:ident, $len:literal) => {
         impl $t {
             /// Constructs a new `Self` from a hex string.
-            pub fn from_hex(s: &str) -> Result<Self, hex_stable::DecodeFixedLengthBytesError> {
-                Ok($t(hex_stable::decode_to_array(s)?))
+            pub fn from_hex(s: &str) -> Result<Self, hex::DecodeFixedLengthBytesError> {
+                Ok($t(hex::decode_to_array(s)?))
             }
         }
 
         impl core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use hex_unstable::{display, Case};
+                use hex::{display, Case};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Lower)
             }
         }
 
         impl core::fmt::UpperHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use hex_unstable::{display, Case};
+                use hex::{display, Case};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Upper)
             }
         }
@@ -87,7 +87,7 @@ macro_rules! impl_array_newtype_stringify {
         }
 
         impl core::str::FromStr for $t {
-            type Err = hex_stable::DecodeFixedLengthBytesError;
+            type Err = hex::DecodeFixedLengthBytesError;
             fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { Self::from_hex(s) }
         }
 
