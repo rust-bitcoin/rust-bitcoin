@@ -254,6 +254,26 @@ mod sealed {
     impl<const N: usize> IsByteArray for [u8; N] {}
 }
 
+/// Does a best attempt at erasing the contents of `val` by writing zeros.
+///
+/// The implementation is based on the approach used by the
+/// [`zeroize`](https://docs.rs/zeroize) crate and the `non_secure_erase` functions in
+/// `rust-secp256k1`.
+///
+/// Note, however, that the compiler is allowed to freely copy or move the contents of `val` to
+/// other places in memory. Preventing this behavior is very subtle. For more discussion on this,
+/// please see the documentation of the [`zeroize`](https://docs.rs/zeroize) crate.
+pub(crate) fn non_secure_erase<T: ?Sized>(val: &mut T) {
+    use core::sync::atomic;
+
+    let ptr = val as *mut T as *mut u8;
+    let len = core::mem::size_of_val(val);
+    for i in 0..len {
+        unsafe { core::ptr::write_volatile(ptr.add(i), 0) };
+    }
+    atomic::compiler_fence(atomic::Ordering::SeqCst);
+}
+
 fn incomplete_block_len<H: HashEngine>(eng: &H) -> usize {
     let block_size = H::BLOCK_SIZE as u64; // Cast usize to u64 is ok.
 
