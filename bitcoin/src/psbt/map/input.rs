@@ -6,7 +6,7 @@ use core::str::FromStr;
 use hashes::{hash160, ripemd160, sha256, sha256d};
 
 use crate::bip32::KeySource;
-use crate::crypto::key::{PublicKey, XOnlyPublicKey};
+use crate::crypto::key::{CompressedPublicKey, PublicKey, XOnlyPublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
 use crate::psbt::map::Map;
@@ -88,7 +88,12 @@ pub struct Input {
     pub witness_script: Option<WitnessScriptBuf>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
-    pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
+    ///
+    /// This map enforces compressed public keys here. This means PSBTs will serialize with
+    /// compressed keys and fail to deserialize those with uncompressed keys. For discussion on why
+    /// this approach was chosen, please see the following issue:
+    /// <https://github.com/rust-bitcoin/rust-bitcoin/issues/5738>
+    pub bip32_derivation: BTreeMap<CompressedPublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
     pub final_script_sig: Option<ScriptSigBuf>,
@@ -289,7 +294,7 @@ impl Input {
             }
             PSBT_IN_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: CompressedPublicKey>|<raw_value: KeySource>
                 }
             }
             PSBT_IN_FINAL_SCRIPTSIG => {

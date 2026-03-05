@@ -10,8 +10,8 @@ use bitcoin::opcodes::all::OP_0;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::{PushBytes, ScriptBuf, ScriptBufExt as _};
 use bitcoin::{
-    absolute, script, transaction, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptPubKeyBuf,
-    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    absolute, script, transaction, CompressedPublicKey, NetworkKind, OutPoint, PrivateKey,
+    PublicKey, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use hex_unstable::FromHex;
 
@@ -269,16 +269,16 @@ fn bip32_derivation(
     fingerprint: Fingerprint,
     pk_path: &[(&str, &str)],
     indices: Vec<usize>,
-) -> BTreeMap<secp256k1::PublicKey, KeySource> {
+) -> BTreeMap<CompressedPublicKey, KeySource> {
     let mut tree = BTreeMap::new();
     for i in indices {
         let pk = pk_path[i].0;
         let path = pk_path[i].1;
 
-        let pk = pk.parse::<PublicKey>().unwrap();
+        let pk = pk.parse::<CompressedPublicKey>().unwrap();
         let path = path.into_derivation_path().unwrap();
 
-        tree.insert(pk.to_inner(), (fingerprint, path));
+        tree.insert(pk, (fingerprint, path));
     }
     tree
 }

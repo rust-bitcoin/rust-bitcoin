@@ -13,7 +13,7 @@ use internals::slice::SliceExt;
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
-use crate::crypto::key::{PublicKey, XOnlyPublicKey};
+use crate::crypto::key::{CompressedPublicKey, PublicKey, XOnlyPublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::io::Write;
 use crate::prelude::{DisplayHex, String, Vec};
@@ -178,6 +178,16 @@ impl Serialize for PublicKey {
 impl Deserialize for PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         Self::from_slice(bytes).map_err(Error::InvalidPublicKey)
+    }
+}
+
+impl Serialize for CompressedPublicKey {
+    fn serialize(&self) -> Vec<u8> { self.to_bytes().to_vec() }
+}
+
+impl Deserialize for CompressedPublicKey {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        Self::from_slice(bytes).map_err(Error::InvalidSecp256k1PublicKey)
     }
 }
 

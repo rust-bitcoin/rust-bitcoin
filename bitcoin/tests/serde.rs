@@ -31,9 +31,9 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey,
-    ScriptPubKeyBuf, ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid,
-    Work,
+    ecdsa, transaction, Address, Amount, CompressedPublicKey, NetworkKind, OutPoint,
+    PrivateKey, PublicKey, ScriptPubKeyBuf, ScriptSigBuf, Sequence, TapScriptBuf, Target,
+    Transaction, TxIn, TxOut, Txid, Work,
 };
 use hex_unstable::FromHex;
 
@@ -227,7 +227,7 @@ fn serde_regression_psbt() {
             .into_iter()
             .collect();
     let key_source = ("deadbeef".parse().unwrap(), "0'/1".parse().unwrap());
-    let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
+    let keypaths: BTreeMap<CompressedPublicKey, KeySource> = vec![(
         "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
         key_source.clone(),
     )]
