@@ -29,8 +29,6 @@ pub struct CompactSizeEncoder {
 impl CompactSizeEncoder {
     /// Constructs a new `CompactSizeEncoder` for a length prefix.
     ///
-    /// **This is the constructor you should use in almost all cases.**
-    ///
     /// The `usize` type is the natural Rust type for lengths and collection sizes,
     /// which is the dominant use case for compact size encoding in the Bitcoin
     /// protocol. Prefer this constructor whenever you are encoding the length of
@@ -49,7 +47,7 @@ impl CompactSizeEncoder {
 
     /// Constructs a new `CompactSizeEncoder` for an arbitrary `u64` integer.
     ///
-    /// **Prefer [`Self::new`] unless you are encoding a non-length integer.**
+    /// Prefer [`Self::new`] unless you are encoding a non-length integer.
     ///
     /// A small number of fields in the Bitcoin protocol are compact-size-encoded
     /// integers that are not collection lengths (e.g. service flags). Use this
@@ -118,9 +116,19 @@ impl ExactSizeEncoder for CompactSizeEncoder {
     fn len(&self) -> usize { self.buf.map_or(0, |buf| buf.len()) }
 }
 
-/// Decodes a compact size encoded integer.
+/// Decodes a compact size encoded integer as a length prefix.
 ///
-/// For more information about decoder see the documentation of the [`Decoder`] trait.
+/// The decoded value is returned as a `usize` and is bounded by a configurable
+/// limit (default: 4,000,000). This limit is a denial-of-service protection: a
+/// malicious peer can send a compact size value up to 2^64-1, and without a
+/// limit check the caller might attempt to allocate an enormous buffer based on
+/// that value. [`CompactSizeDecoder`] prevents this by rejecting values that
+/// exceed the limit before returning them to the caller.
+///
+/// If you are decoding an arbitrary `u64` integer that is genuinely not a length
+/// prefix, use [`CompactSizeU64Decoder`] instead.
+///
+/// For more information about decoders see the documentation of the [`Decoder`] trait.
 #[derive(Debug, Clone)]
 pub struct CompactSizeDecoder {
     buf: ArrayVec<u8, 9>,
@@ -128,21 +136,21 @@ pub struct CompactSizeDecoder {
 }
 
 impl CompactSizeDecoder {
-    /// Constructs a new compact size decoder.
+    /// Constructs a new compact size decoder with the default length limit.
     ///
-    /// Consensus encoded vectors can be up to 4,000,000 bytes long.
-    /// This is a theoretical max since block size is 4 meg wu and minimum vector element is one byte.
-    ///
-    /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
-    /// decoded value exceeds 4,000,000 or won't fit in a `usize`.
+    /// The decoded value must not exceed 4,000,000 and must fit in a `usize`,
+    /// otherwise [`end`](Self::end) will return an error. This default limit
+    /// reflects the maximum sensible vector length under the 4 MB block weight
+    /// limit.
     pub const fn new() -> Self {
         Self { buf: ArrayVec::new(), limit: MAX_VEC_SIZE }
     }
 
-    /// Constructs a new compact size decoder with encoded value limited to the provided usize.
+    /// Constructs a new compact size decoder with a custom length limit.
     ///
-    /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
-    /// decoded value exceeds `limit` or won't fit in a `usize`.
+    /// The decoded value must not exceed `limit`, otherwise [`end`](Self::end)
+    /// will return an error. Use this when you know the field you are decoding
+    /// has a tighter bound than the default limit of 4,000,000.
     pub const fn new_with_limit(limit: usize) -> Self {
         Self { buf: ArrayVec::new(), limit }
     }
@@ -157,68 +165,13 @@ impl Decoder for CompactSizeDecoder {
     type Error = CompactSizeDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        if bytes.is_empty() {
-            return Ok(true);
-        }
-
-        if self.buf.is_empty() {
-            self.buf.push(bytes[0]);
-            *bytes = &bytes[1..];
-        }
-        let len = match self.buf[0] {
-            0xFF => 9,
-            0xFE => 5,
-            0xFD => 3,
-            _ => 1,
-        };
-        let to_copy = bytes.len().min(len - self.buf.len());
-        self.buf.extend_from_slice(&bytes[..to_copy]);
-        *bytes = &bytes[to_copy..];
-
-        Ok(self.buf.len() != len)
+        Ok(compact_size_push_bytes(&mut self.buf, bytes))
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
         use CompactSizeDecoderErrorInner as E;
 
-        fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
-            slice.try_into().map_err(|_| {
-                CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
-            })
-        }
-
-        let (first, payload) = self
-            .buf
-            .split_first()
-            .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
-
-        let dec_value = match *first {
-            0xFF => {
-                let x = u64::from_le_bytes(arr(payload)?);
-                if x < 0x100_000_000 {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
-                } else {
-                    Ok(x)
-                }
-            }
-            0xFE => {
-                let x = u32::from_le_bytes(arr(payload)?);
-                if x < 0x10000 {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
-                } else {
-                    Ok(x.into())
-                }
-            }
-            0xFD => {
-                let x = u16::from_le_bytes(arr(payload)?);
-                if x < 0xFD {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
-                } else {
-                    Ok(x.into())
-                }
-            }
-            n => Ok(n.into()),
-        }?;
+        let dec_value = compact_size_decode_u64(&self.buf)?;
 
         // This error is returned if dec_value is outside of the usize range, or
         // if it is above the given limit.
@@ -238,16 +191,134 @@ impl Decoder for CompactSizeDecoder {
         })
     }
 
-    fn read_limit(&self) -> usize {
-        match self.buf.len() {
-            0 => 1,
-            already_read => match self.buf[0] {
-                0xFF => 9_usize.saturating_sub(already_read),
-                0xFE => 5_usize.saturating_sub(already_read),
-                0xFD => 3_usize.saturating_sub(already_read),
-                _ => 0,
-            },
+    fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
+}
+
+/// Decodes a compact size encoded integer as a raw `u64`.
+///
+/// If you are decoding a length prefix, you probably want [`CompactSizeDecoder`] instead.
+///
+/// This decoder performs no limit check and no conversion to `usize`. It exists
+/// for the small number of Bitcoin protocol fields that are compact-size-encoded
+/// integers but are not length prefixes (e.g. service flags in the `version`
+/// message). For those fields the full `u64` range is meaningful and there is no
+/// associated allocation whose size would be controlled by the decoded value.
+///
+/// # Denial-of-service warning
+///
+/// Do not use this decoder for length prefixes. If the decoded value is used
+/// to size an allocation, for example as the length of a `Vec`, a malicious
+/// peer can send a compact size value of up to 2^64-1 and cause an out-of-memory
+/// condition. [`CompactSizeDecoder`] prevents this by enforcing a configurable
+/// upper bound before returning the value.
+///
+/// For more information about decoders see the documentation of the [`Decoder`] trait.
+#[derive(Debug, Clone)]
+pub struct CompactSizeU64Decoder {
+    buf: ArrayVec<u8, 9>,
+}
+
+impl CompactSizeU64Decoder {
+    /// Constructs a new `CompactSizeU64Decoder`.
+    ///
+    /// See the [struct-level documentation](Self) for guidance on when to use
+    /// this decoder versus [`CompactSizeDecoder`].
+    pub const fn new() -> Self { Self { buf: ArrayVec::new() } }
+}
+
+impl Default for CompactSizeU64Decoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl Decoder for CompactSizeU64Decoder {
+    type Output = u64;
+    type Error = CompactSizeDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(compact_size_push_bytes(&mut self.buf, bytes))
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> { compact_size_decode_u64(&self.buf) }
+
+    fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
+}
+
+/// Pushes bytes into a compact size buffer, returning true if more bytes are needed.
+fn compact_size_push_bytes(buf: &mut ArrayVec<u8, 9>, bytes: &mut &[u8]) -> bool {
+    if bytes.is_empty() {
+        return true;
+    }
+
+    if buf.is_empty() {
+        buf.push(bytes[0]);
+        *bytes = &bytes[1..];
+    }
+    let len = match buf[0] {
+        0xFF => 9,
+        0xFE => 5,
+        0xFD => 3,
+        _ => 1,
+    };
+    let to_copy = bytes.len().min(len - buf.len());
+    buf.extend_from_slice(&bytes[..to_copy]);
+    *bytes = &bytes[to_copy..];
+
+    buf.len() != len
+}
+
+/// Returns the number of bytes the compact size decoder still needs to read.
+fn compact_size_read_limit(buf: &ArrayVec<u8, 9>) -> usize {
+    match buf.len() {
+        0 => 1,
+        already_read => match buf[0] {
+            0xFF => 9_usize.saturating_sub(already_read),
+            0xFE => 5_usize.saturating_sub(already_read),
+            0xFD => 3_usize.saturating_sub(already_read),
+            _ => 0,
+        },
+    }
+}
+
+/// Decodes a compact size buffer to a u64, checking for minimal encoding.
+fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDecoderError> {
+    use CompactSizeDecoderErrorInner as E;
+
+    fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
+        slice.try_into().map_err(|_| {
+            CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
+        })
+    }
+
+    let (first, payload) = buf
+        .split_first()
+        .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
+
+    match *first {
+        0xFF => {
+            let x = u64::from_le_bytes(arr(payload)?);
+            if x < 0x100_000_000 {
+                Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
+            } else {
+                Ok(x)
+            }
         }
+        0xFE => {
+            let x = u32::from_le_bytes(arr(payload)?);
+            if x < 0x10000 {
+                Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+            } else {
+                Ok(x.into())
+            }
+        }
+        0xFD => {
+            let x = u16::from_le_bytes(arr(payload)?);
+            if x < 0xFD {
+                Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+            } else {
+                Ok(x.into())
+            }
+        }
+        n => Ok(n.into()),
     }
 }
 

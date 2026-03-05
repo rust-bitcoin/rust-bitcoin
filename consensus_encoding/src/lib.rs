@@ -60,7 +60,9 @@ mod compact_size;
 mod decode;
 mod encode;
 
-pub use self::compact_size::{CompactSizeDecoder, CompactSizeDecoderError};
+pub use self::compact_size::{
+    CompactSizeDecoder, CompactSizeDecoderError, CompactSizeU64Decoder,
+};
 #[cfg(feature = "alloc")]
 pub use self::compact_size::LengthPrefixExceedsMaxError;
 pub use self::decode::decoders::{
