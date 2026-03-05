@@ -248,14 +248,23 @@ pub struct CompactSizeEncoder {
 }
 
 impl CompactSizeEncoder {
-    /// Constructs a new `CompactSizeEncoder`.
+    /// Constructs a new `CompactSizeEncoder` from a `usize` length prefix value.
     ///
     /// Encodings are defined only for the range of u64. On systems where usize is
     /// larger than u64, it will be possible to call this method with out-of-range
     /// values. In such cases we will ignore the passed value and encode [`u64::MAX`].
     /// But even on such exotic systems, we expect users to pass the length of an
     /// in-memory object, meaning that such large values are impossible to obtain.
-    pub fn new(value: usize) -> Self { Self { buf: Some(Self::encode(value)) } }
+    pub fn new(value: usize) -> Self {
+        Self { buf: Some(Self::encode(u64::try_from(value).unwrap_or(u64::MAX))) }
+    }
+
+    /// Constructs a new `CompactSizeEncoder` from a `u64` value.
+    ///
+    /// Use this when encoding an arbitrary integer (e.g. service flags) rather than
+    /// a length prefix. Unlike [`Self::new`], this constructor preserves all 64 bits
+    /// on every platform.
+    pub fn new_u64(value: u64) -> Self { Self { buf: Some(Self::encode(value)) } }
 
     /// Returns the number of bytes used to encode this `CompactSize` value.
     ///
@@ -277,7 +286,7 @@ impl CompactSizeEncoder {
 
     /// Encodes `CompactSize` without allocating.
     #[inline]
-    fn encode(value: usize) -> ArrayVec<u8, SIZE> {
+    fn encode(value: u64) -> ArrayVec<u8, SIZE> {
         let mut res = ArrayVec::<u8, SIZE>::new();
         match value {
             0..=0xFC => {
@@ -751,14 +760,23 @@ mod tests {
             assert!(!e.advance());
             assert!(e.current_chunk().is_empty());
         }
+
+        // new_u64 works on all platforms, no guard needed.
+        let mut e = CompactSizeEncoder::new_u64(0x0000_F0F0_F0F0_F0E0u64);
+        assert_eq!(
+            e.current_chunk(),
+            &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]
+        );
+        assert_eq!(e.len(), 9);
+        assert!(!e.advance());
+        assert!(e.current_chunk().is_empty());
     }
 
     #[test]
     fn encoded_value_1_byte() {
         // Check lower bound, upper bound (and implicitly endian-ness).
-        for v in [0x00, 0x01, 0x02, 0xFA, 0xFB, 0xFC] {
-            let v = v as usize;
-            assert_eq!(CompactSizeEncoder::encoded_size(v), 1);
+        for v in [0x00u64, 0x01, 0x02, 0xFA, 0xFB, 0xFC] {
+            assert_eq!(CompactSizeEncoder::encoded_size(v as usize), 1);
             // Should be encoded as the value as a u8.
             let want = [v as u8];
             let got = CompactSizeEncoder::encode(v);
@@ -772,8 +790,8 @@ mod tests {
             $(
                 #[test]
                 fn $test_name() {
-                    let value = $value as usize; // Because default integer type is i32.
-                    assert_eq!(CompactSizeEncoder::encoded_size(value), $size);
+                    let value = $value as u64; // Because default integer type is i32.
+                    assert_eq!(CompactSizeEncoder::encoded_size(value as usize), $size);
                     let got = CompactSizeEncoder::encode(value);
                     assert_eq!(got.as_slice().len(), $size); // sanity check
                     assert_eq!(got.as_slice(), &$want);
@@ -793,12 +811,11 @@ mod tests {
         encoded_value_5_byte_upper_bound, 5, 0xFFFF_FFFF, [0xFE, 0xFF, 0xFF, 0xFF, 0xFF];
     }
 
-    // Only test on platforms with a usize that is 64 bits
+    // 9-byte encoding requires values above u32::MAX which don't fit in usize on 32-bit platforms.
     #[cfg(target_pointer_width = "64")]
     check_encode! {
-        // 9 byte encoding.
-        encoded_value_9_byte_lower_bound, 9, 0x0000_0001_0000_0000, [0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00];
-        encoded_value_9_byte_endianness, 9, 0x0123_4567_89AB_CDEF, [0xFF, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01];
+        encoded_value_9_byte_lower_bound, 9, 0x0000_0001_0000_0000u64, [0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00];
+        encoded_value_9_byte_endianness, 9, 0x0123_4567_89AB_CDEFu64, [0xFF, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01];
         encoded_value_9_byte_upper_bound, 9, u64::MAX, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     }
 
