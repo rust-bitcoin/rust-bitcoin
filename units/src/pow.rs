@@ -102,6 +102,8 @@ impl fmt::Binary for CompactTarget {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.0, f) }
 }
 
+parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensus);
+
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`CompactTarget`] type.
