@@ -607,6 +607,90 @@ where
     fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
+/// Pushes bytes into a compact size buffer, returning true if more bytes are needed.
+fn compact_size_push_bytes(
+    buf: &mut internals::array_vec::ArrayVec<u8, 9>,
+    bytes: &mut &[u8],
+) -> bool {
+    if bytes.is_empty() {
+        return true;
+    }
+
+    if buf.is_empty() {
+        buf.push(bytes[0]);
+        *bytes = &bytes[1..];
+    }
+    let len = match buf[0] {
+        0xFF => 9,
+        0xFE => 5,
+        0xFD => 3,
+        _ => 1,
+    };
+    let to_copy = bytes.len().min(len - buf.len());
+    buf.extend_from_slice(&bytes[..to_copy]);
+    *bytes = &bytes[to_copy..];
+
+    buf.len() != len
+}
+
+/// Returns the number of bytes the compact size decoder still needs to read.
+fn compact_size_read_limit(buf: &internals::array_vec::ArrayVec<u8, 9>) -> usize {
+    match buf.len() {
+        0 => 1,
+        already_read => match buf[0] {
+            0xFF => 9_usize.saturating_sub(already_read),
+            0xFE => 5_usize.saturating_sub(already_read),
+            0xFD => 3_usize.saturating_sub(already_read),
+            _ => 0,
+        },
+    }
+}
+
+/// Decodes a compact size buffer to a u64, checking for minimal encoding.
+fn compact_size_decode_u64(
+    buf: &internals::array_vec::ArrayVec<u8, 9>,
+) -> Result<u64, CompactSizeDecoderError> {
+    use CompactSizeDecoderErrorInner as E;
+
+    fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
+        slice.try_into().map_err(|_| {
+            CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
+        })
+    }
+
+    let (first, payload) = buf
+        .split_first()
+        .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
+
+    match *first {
+        0xFF => {
+            let x = u64::from_le_bytes(arr(payload)?);
+            if x < 0x100_000_000 {
+                Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
+            } else {
+                Ok(x)
+            }
+        }
+        0xFE => {
+            let x = u32::from_le_bytes(arr(payload)?);
+            if x < 0x10000 {
+                Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+            } else {
+                Ok(x.into())
+            }
+        }
+        0xFD => {
+            let x = u16::from_le_bytes(arr(payload)?);
+            if x < 0xFD {
+                Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
+            } else {
+                Ok(x.into())
+            }
+        }
+        n => Ok(n.into()),
+    }
+}
+
 /// Decodes a compact size encoded integer.
 ///
 /// For more information about decoder see the documentation of the [`Decoder`] trait.
@@ -646,68 +730,13 @@ impl Decoder for CompactSizeDecoder {
     type Error = CompactSizeDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        if bytes.is_empty() {
-            return Ok(true);
-        }
-
-        if self.buf.is_empty() {
-            self.buf.push(bytes[0]);
-            *bytes = &bytes[1..];
-        }
-        let len = match self.buf[0] {
-            0xFF => 9,
-            0xFE => 5,
-            0xFD => 3,
-            _ => 1,
-        };
-        let to_copy = bytes.len().min(len - self.buf.len());
-        self.buf.extend_from_slice(&bytes[..to_copy]);
-        *bytes = &bytes[to_copy..];
-
-        Ok(self.buf.len() != len)
+        Ok(compact_size_push_bytes(&mut self.buf, bytes))
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
         use CompactSizeDecoderErrorInner as E;
 
-        fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
-            slice.try_into().map_err(|_| {
-                CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
-            })
-        }
-
-        let (first, payload) = self
-            .buf
-            .split_first()
-            .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
-
-        let dec_value = match *first {
-            0xFF => {
-                let x = u64::from_le_bytes(arr(payload)?);
-                if x < 0x100_000_000 {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
-                } else {
-                    Ok(x)
-                }
-            }
-            0xFE => {
-                let x = u32::from_le_bytes(arr(payload)?);
-                if x < 0x10000 {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
-                } else {
-                    Ok(x.into())
-                }
-            }
-            0xFD => {
-                let x = u16::from_le_bytes(arr(payload)?);
-                if x < 0xFD {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
-                } else {
-                    Ok(x.into())
-                }
-            }
-            n => Ok(n.into()),
-        }?;
+        let dec_value = compact_size_decode_u64(&self.buf)?;
 
         // This error is returned if dec_value is outside of the usize range, or
         // if it is above the given limit.
@@ -727,17 +756,41 @@ impl Decoder for CompactSizeDecoder {
         })
     }
 
-    fn read_limit(&self) -> usize {
-        match self.buf.len() {
-            0 => 1,
-            already_read => match self.buf[0] {
-                0xFF => 9_usize.saturating_sub(already_read),
-                0xFE => 5_usize.saturating_sub(already_read),
-                0xFD => 3_usize.saturating_sub(already_read),
-                _ => 0,
-            },
-        }
+    fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
+}
+
+/// Decodes a compact size encoded integer as a `u64`.
+///
+/// Unlike [`CompactSizeDecoder`], this decoder returns the full `u64` value without
+/// any limit check or conversion to `usize`. Use this when decoding an arbitrary
+/// integer (e.g. service flags) rather than a length prefix.
+///
+/// For more information about decoder see the documentation of the [`Decoder`] trait.
+#[derive(Debug, Clone)]
+pub struct CompactSizeU64Decoder {
+    buf: internals::array_vec::ArrayVec<u8, 9>,
+}
+
+impl CompactSizeU64Decoder {
+    /// Constructs a new `CompactSizeU64Decoder`.
+    pub const fn new() -> Self { Self { buf: internals::array_vec::ArrayVec::new() } }
+}
+
+impl Default for CompactSizeU64Decoder {
+    fn default() -> Self { Self::new() }
+}
+
+impl Decoder for CompactSizeU64Decoder {
+    type Output = u64;
+    type Error = CompactSizeDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        Ok(compact_size_push_bytes(&mut self.buf, bytes))
     }
+
+    fn end(self) -> Result<Self::Output, Self::Error> { compact_size_decode_u64(&self.buf) }
+
+    fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
 }
 
 /// An error consensus decoding a compact size encoded integer.
