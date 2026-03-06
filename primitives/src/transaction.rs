@@ -411,6 +411,11 @@ impl fmt::UpperHex for Transaction {
 pub struct ParseTransactionError(ParsePrimitiveError<Transaction>);
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
+impl From<Infallible> for ParseTransactionError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Debug for ParseTransactionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }

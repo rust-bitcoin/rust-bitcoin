@@ -8,6 +8,7 @@
 //! associated errors for encoding and decoding `Encodable` types
 //! within the primitives crate.
 
+use core::convert::Infallible;
 use core::fmt;
 use core::fmt::Write as _;
 
@@ -160,6 +161,10 @@ pub(crate) enum ParsePrimitiveError<T: Decodable> {
     Decode(<T::Decoder as Decoder>::Error),
 }
 
+impl<T: Decodable> From<Infallible> for ParsePrimitiveError<T> {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -180,10 +185,6 @@ impl<T: Decodable> From<hex_unstable::OddLengthStringError> for ParsePrimitiveEr
 
 impl<T: Decodable> From<hex_unstable::InvalidCharError> for ParsePrimitiveError<T> {
     fn from(err: hex_unstable::InvalidCharError) -> Self { Self::InvalidChar(err) }
-}
-
-impl<T: Decodable> From<core::convert::Infallible> for ParsePrimitiveError<T> {
-    fn from(never: core::convert::Infallible) -> Self { match never {} }
 }
 
 #[cfg(feature = "std")]
