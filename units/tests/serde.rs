@@ -332,6 +332,31 @@ fn serde_fee_rate_as_sat_per_vb_floor() {
 #[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
+fn serde_fee_rate_as_sat_per_vb_floor_vec() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::fee_rate::serde::as_sat_per_vb_floor::vec")]
+        pub fee_rates: Vec<FeeRate>,
+    }
+
+    serde_test::assert_tokens(
+        &T { fee_rates: vec![fee_rate_vb(123), fee_rate_vb(456), fee_rate_vb(789)] },
+        &[
+            serde_test::Token::Struct { name: "T", len: 1 },
+            serde_test::Token::Str("fee_rates"),
+            serde_test::Token::Seq { len: Some(3) },
+            serde_test::Token::U64(123),
+            serde_test::Token::U64(456),
+            serde_test::Token::U64(789),
+            serde_test::Token::SeqEnd,
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
 fn serde_fee_rate_as_sat_per_kwu_floor() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
