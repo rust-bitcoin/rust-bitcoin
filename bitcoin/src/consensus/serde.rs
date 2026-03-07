@@ -137,20 +137,13 @@ pub mod hex {
 
     impl super::IntoDeError for DecodeInitError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            E::invalid_length(self.0.length(), &"an even number of ASCII-encoded hex digits")
+            serde::de::Error::custom(self.0)
         }
     }
 
     impl super::IntoDeError for DecodeError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            use serde::de::Unexpected;
-
-            const EXPECTED_CHAR: &str = "an ASCII-encoded hex digit";
-
-            match self.0.invalid_char() {
-                c if c.is_ascii() => E::invalid_value(Unexpected::Char(c as _), &EXPECTED_CHAR),
-                c => E::invalid_value(Unexpected::Unsigned(c.into()), &EXPECTED_CHAR),
-            }
+            serde::de::Error::custom(self.0)
         }
     }
 }
