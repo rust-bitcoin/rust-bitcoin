@@ -23,7 +23,7 @@ use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
 
-use crate::address::Address;
+use crate::address::{Address, AddressDecoder};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::{ProtocolVersion, ServiceFlags};
 
@@ -86,6 +86,144 @@ impl VersionMessage {
             relay: false,
         }
     }
+}
+
+encoding::encoder_newtype! {
+    /// The encoder for the [`VersionMessage`] type.
+    pub struct VersionMessageEncoder<'e>(
+        encoding::Encoder2<
+            encoding::Encoder3<
+                crate::ProtocolVersionEncoder<'e>,
+                crate::ServiceFlagsEncoder<'e>,
+                encoding::ArrayEncoder<8>
+            >,
+            encoding::Encoder6<
+                crate::address::AddressEncoder<'e>,
+                crate::address::AddressEncoder<'e>,
+                encoding::ArrayEncoder<8>,
+                UserAgentEncoder<'e>,
+                encoding::ArrayEncoder<4>,
+                encoding::ArrayEncoder<1>
+            >
+        >
+    );
+}
+
+impl encoding::Encodable for VersionMessage {
+    type Encoder<'a>
+        = VersionMessageEncoder<'a>
+    where
+        Self: 'a;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionMessageEncoder::new(encoding::Encoder2::new(
+            encoding::Encoder3::new(
+                self.version.encoder(),
+                self.services.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.timestamp.to_le_bytes()),
+            ),
+            encoding::Encoder6::new(
+                self.receiver.encoder(),
+                self.sender.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+                self.user_agent.encoder(),
+                encoding::ArrayEncoder::without_length_prefix(self.start_height.to_le_bytes()),
+                encoding::ArrayEncoder::without_length_prefix([u8::from(self.relay)]),
+            ),
+        ))
+    }
+}
+
+impl encoding::Decoder for VersionMessageDecoder {
+    type Output = VersionMessage;
+    type Error = VersionMessageDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(VersionMessageDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (
+            (version, services, timestamp),
+            (receiver, sender, nonce, user_agent, start_height, relay),
+        ) = self.0.end().map_err(VersionMessageDecoderError)?;
+
+        Ok(VersionMessage {
+            version,
+            services,
+            timestamp: i64::from_le_bytes(timestamp),
+            receiver,
+            sender,
+            nonce: u64::from_le_bytes(nonce),
+            user_agent,
+            start_height: i32::from_le_bytes(start_height),
+            relay: relay[0] != 0,
+        })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for VersionMessage {
+    type Decoder = VersionMessageDecoder;
+    fn decoder() -> Self::Decoder {
+        VersionMessageDecoder(encoding::Decoder2::new(
+            encoding::Decoder3::new(
+                crate::ProtocolVersion::decoder(),
+                crate::ServiceFlags::decoder(),
+                encoding::ArrayDecoder::<8>::new(),
+            ),
+            encoding::Decoder6::new(
+                crate::address::Address::decoder(),
+                crate::address::Address::decoder(),
+                encoding::ArrayDecoder::<8>::new(),
+                UserAgent::decoder(),
+                encoding::ArrayDecoder::<4>::new(),
+                encoding::ArrayDecoder::<1>::new(),
+            ),
+        ))
+    }
+}
+
+type VersionMessageInnerDecoder = encoding::Decoder2<
+    encoding::Decoder3<
+        crate::ProtocolVersionDecoder,
+        crate::ServiceFlagsDecoder,
+        encoding::ArrayDecoder<8>,
+    >,
+    encoding::Decoder6<
+        AddressDecoder,
+        AddressDecoder,
+        encoding::ArrayDecoder<8>,
+        UserAgentDecoder,
+        encoding::ArrayDecoder<4>,
+        encoding::ArrayDecoder<1>,
+    >,
+>;
+
+/// The Decoder for [`VersionMessage`].
+pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+
+/// An error consensus decoding a [`VersionMessage`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VersionMessageDecoderError(<VersionMessageInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for VersionMessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for VersionMessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        internals::write_err!(f, "address decoder error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for VersionMessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl_consensus_encoding!(
@@ -769,7 +907,7 @@ mod tests {
         // This message is from my satoshi node, morning of May 27 2014
         let from_sat = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001");
 
-        let decode: Result<VersionMessage, _> = deserialize(&from_sat);
+        let decode: Result<VersionMessage, _> = encoding::decode_from_slice(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version.0, 70002);
@@ -791,7 +929,7 @@ mod tests {
         assert_eq!(real_decode.start_height, 302_892);
         assert!(real_decode.relay);
 
-        assert_eq!(serialize(&real_decode), from_sat);
+        assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
     }
 
     #[test]
