@@ -324,6 +324,7 @@ impl core::convert::From<u32> for bitcoin_units::block::BlockHeight
 impl core::convert::From<u32> for bitcoin_units::block::BlockHeightInterval
 impl core::convert::From<u32> for bitcoin_units::block::BlockMtp
 impl core::convert::From<u32> for bitcoin_units::block::BlockMtpInterval
+impl core::convert::TryFrom<&str> for bitcoin_units::BlockTime
 impl core::convert::TryFrom<&str> for bitcoin_units::Weight
 impl core::convert::TryFrom<&str> for bitcoin_units::block::BlockHeight
 impl core::convert::TryFrom<&str> for bitcoin_units::block::BlockHeightInterval
@@ -334,7 +335,9 @@ impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::LockTim
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::convert::TryFrom<&str> for bitcoin_units::pow::CompactTarget
 impl core::convert::TryFrom<&str> for bitcoin_units::sequence::Sequence
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::BlockTime
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::Weight
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockHeight
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockHeightInterval
@@ -345,7 +348,9 @@ impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime:
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::pow::CompactTarget
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::sequence::Sequence
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::BlockTime
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::Weight
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockHeight
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockHeightInterval
@@ -356,6 +361,7 @@ impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::pow::CompactTarget
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::sequence::Sequence
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
@@ -1345,6 +1351,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::sequence::SequenceD
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::time::BlockTimeDecoder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::time::BlockTimeDecoderError
 impl core::str::traits::FromStr for bitcoin_units::Amount
+impl core::str::traits::FromStr for bitcoin_units::BlockTime
 impl core::str::traits::FromStr for bitcoin_units::SignedAmount
 impl core::str::traits::FromStr for bitcoin_units::Weight
 impl core::str::traits::FromStr for bitcoin_units::amount::Denomination
@@ -1357,6 +1364,7 @@ impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::LockTime
 impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::MedianTimePast
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::str::traits::FromStr for bitcoin_units::locktime::relative::NumberOfBlocks
+impl core::str::traits::FromStr for bitcoin_units::pow::CompactTarget
 impl core::str::traits::FromStr for bitcoin_units::sequence::Sequence
 impl serde::ser::Serialize for bitcoin_units::BlockTime
 impl serde::ser::Serialize for bitcoin_units::Weight
@@ -2010,9 +2018,13 @@ pub fn bitcoin_units::BlockTime::eq(&self, other: &bitcoin_units::BlockTime) -> 
 pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::BlockTime::from(t: u32) -> Self
+pub fn bitcoin_units::BlockTime::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::BlockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::BlockTime::partial_cmp(&self, other: &bitcoin_units::BlockTime) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::BlockTime::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin_units::BlockTime::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::BlockTime::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::BlockTime::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::FeeRate::add(self, rhs: &bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::FeeRate::add(self, rhs: bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::FeeRate::add_assign(&mut self, rhs: &bitcoin_units::FeeRate)
@@ -2569,11 +2581,15 @@ pub fn bitcoin_units::pow::CompactTarget::eq(&self, other: &bitcoin_units::pow::
 pub fn bitcoin_units::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin_units::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError> where Self: core::marker::Sized
+pub fn bitcoin_units::pow::CompactTarget::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError> where Self: core::marker::Sized
 pub fn bitcoin_units::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_units::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::pow::CompactTarget::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin_units::pow::CompactTarget::to_hex(self) -> alloc::string::String
+pub fn bitcoin_units::pow::CompactTarget::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::pow::CompactTargetDecoder::default() -> Self
 pub fn bitcoin_units::pow::CompactTargetDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::pow::CompactTargetDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
@@ -2989,6 +3005,8 @@ pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<bitc
 pub type bitcoin_units::Amount::Output = bitcoin_units::result::NumOpResult<u64>
 pub type bitcoin_units::BlockTime::Decoder = bitcoin_units::time::BlockTimeDecoder
 pub type bitcoin_units::BlockTime::Encoder<'e> = bitcoin_units::time::BlockTimeEncoder<'e>
+pub type bitcoin_units::BlockTime::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::FeeRate::Output = <bitcoin_units::FeeRate as core::ops::arith::Add>::Output
 pub type bitcoin_units::FeeRate::Output = <bitcoin_units::FeeRate as core::ops::arith::Div<core::num::nonzero::NonZero<u64>>>::Output
 pub type bitcoin_units::FeeRate::Output = <bitcoin_units::FeeRate as core::ops::arith::Mul<bitcoin_units::Weight>>::Output
@@ -3075,6 +3093,8 @@ pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_unit
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::pow::CompactTarget::Decoder = bitcoin_units::pow::CompactTargetDecoder
 pub type bitcoin_units::pow::CompactTarget::Encoder<'e> = bitcoin_units::pow::CompactTargetEncoder<'e>
+pub type bitcoin_units::pow::CompactTarget::Err = bitcoin_units::parse_int::ParseIntError
+pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::ParseIntError
 pub type bitcoin_units::pow::CompactTargetDecoder::Error = bitcoin_units::pow::CompactTargetDecoderError
 pub type bitcoin_units::pow::CompactTargetDecoder::Output = bitcoin_units::pow::CompactTarget
 pub type bitcoin_units::result::NumOpResult<T>::Output = <bitcoin_units::result::NumOpResult<T> as core::ops::arith::Add<T>>::Output
