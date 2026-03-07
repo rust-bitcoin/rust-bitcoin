@@ -175,7 +175,7 @@ impl Psbt {
     fn internal_extract_tx(self) -> Transaction {
         let mut tx: Transaction = self.unsigned_tx;
 
-        for (vin, psbtin) in tx.inputs.iter_mut().zip(self.inputs.into_iter()) {
+        for (vin, psbtin) in tx.inputs.iter_mut().zip(self.inputs) {
             vin.script_sig = psbtin.final_script_sig.unwrap_or_default();
             vin.witness = psbtin.final_script_witness.unwrap_or_default();
         }
@@ -268,11 +268,11 @@ impl Psbt {
         self.proprietary.extend(other.proprietary);
         self.unknown.extend(other.unknown);
 
-        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
+        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs) {
             self_input.combine(other_input);
         }
 
-        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
+        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs) {
             self_output.combine(other_output);
         }
 
