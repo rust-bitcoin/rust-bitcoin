@@ -177,6 +177,8 @@ impl<'a> Arbitrary<'a> for BlockTime {
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::string::ToString;
+    #[cfg(all(feature = "encoding", feature = "std"))]
+    use std::error::Error;
 
     #[cfg(feature = "encoding")]
     use encoding::Decoder as _;
@@ -229,8 +231,11 @@ mod tests {
         let bytes = [0xb0, 0x52, 0x39]; // 3 bytes is an EOF error
 
         let mut decoder = BlockTimeDecoder::default();
-        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+        let _ = decoder.push_bytes(&mut bytes.as_slice());
 
-        assert_ne!(decoder.end().unwrap_err().to_string(), "");
+        let e = decoder.end().unwrap_err();
+        assert!(!e.to_string().is_empty());
+        #[cfg(feature = "std")]
+        assert!(e.source().is_some());
     }
 }
