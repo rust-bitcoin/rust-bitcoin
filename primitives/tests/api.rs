@@ -237,7 +237,8 @@ fn api_can_use_all_units_types_from_module_amount_error() {
 #[test]
 fn api_can_use_modules_from_crate_root() {
     use bitcoin_primitives::{
-        block, locktime, merkle_tree, pow, script, sequence, transaction, witness,
+        amount, block, fee_rate, locktime, merkle_tree, parse_int, pow, result, script, sequence,
+        time, transaction, weight, witness,
     };
 }
 
