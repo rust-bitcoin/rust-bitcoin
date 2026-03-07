@@ -242,7 +242,7 @@ pub mod as_core_arg {
 pub struct ParseNetworkError(InputString);
 
 impl fmt::Display for ParseNetworkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Outputs 'failed to parse <input string> as network'.
         write!(f, "{}", self.0.display_cannot_parse("network"))
     }

@@ -67,7 +67,7 @@ impl From<ErrorKind> for Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_fmt(format_args!("I/O Error: {}", self.kind.description()))?;
         #[cfg(any(feature = "alloc", feature = "std"))]
         if let Some(e) = &self.error {

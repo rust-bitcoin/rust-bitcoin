@@ -743,7 +743,7 @@ impl Address {
     /// # let address = ADDRESS.parse::<bitcoin::Address<_>>().unwrap().assume_checked();
     /// # let mut writer = String::new();
     /// # // magic trick to make error handling look better
-    /// # (|| -> Result<(), core::fmt::Error> {
+    /// # (|| -> core::fmt::Result {
     ///
     /// write!(writer, "{:#}", address)?;
     ///
