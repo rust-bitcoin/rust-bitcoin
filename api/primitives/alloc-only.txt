@@ -305,11 +305,13 @@ impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::bloc
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::ScriptBufDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::WitnessScriptSizeError
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TransactionDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxInDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxOutDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::VersionDecoderError
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness::UnexpectedEofError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::witness::WitnessDecoderError
 impl core::convert::TryFrom<&bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
 impl core::convert::TryFrom<&bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
@@ -1558,6 +1560,7 @@ pub fn bitcoin_primitives::transaction::OutPointDecoder::read_limit(&self) -> us
 pub fn bitcoin_primitives::transaction::OutPointDecoderError::clone(&self) -> bitcoin_primitives::transaction::OutPointDecoderError
 pub fn bitcoin_primitives::transaction::OutPointDecoderError::eq(&self, other: &bitcoin_primitives::transaction::OutPointDecoderError) -> bool
 pub fn bitcoin_primitives::transaction::OutPointDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::OutPointDecoderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::len(&self) -> usize
@@ -1663,6 +1666,7 @@ pub fn bitcoin_primitives::witness::Iter<'a>::size_hint(&self) -> (usize, core::
 pub fn bitcoin_primitives::witness::UnexpectedEofError::clone(&self) -> bitcoin_primitives::witness::UnexpectedEofError
 pub fn bitcoin_primitives::witness::UnexpectedEofError::eq(&self, other: &bitcoin_primitives::witness::UnexpectedEofError) -> bool
 pub fn bitcoin_primitives::witness::UnexpectedEofError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::witness::UnexpectedEofError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::witness::Witness::clear(&mut self)
 pub fn bitcoin_primitives::witness::Witness::clone(&self) -> bitcoin_primitives::witness::Witness
 pub fn bitcoin_primitives::witness::Witness::cmp(&self, other: &bitcoin_primitives::witness::Witness) -> core::cmp::Ordering
