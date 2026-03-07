@@ -167,6 +167,64 @@ pub mod as_sat_per_vb_floor {
             d.deserialize_option(VisitOpt)
         }
     }
+
+    #[cfg(feature = "alloc")]
+    pub mod vec {
+        //! Serialize and deserialize [`Vec<FeeRate>`] denominated in satoshis per virtual byte.
+        //!
+        //! When serializing use floor division to convert per kwu to per virtual byte.
+        //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_floor::vec")]`.
+
+        use core::fmt;
+
+        use alloc::vec::Vec;
+
+        use serde::de::{self, SeqAccess};
+        use serde::ser::SerializeSeq;
+        use serde::{Deserializer, Serializer};
+
+        use crate::{Amount, FeeRate};
+
+        pub fn serialize<S: Serializer>(f: &[FeeRate], s: S) -> Result<S::Ok, S::Error> {
+            let mut seq = s.serialize_seq(Some(f.len()))?;
+            for rate in f {
+                seq.serialize_element(&rate.to_sat_per_vb_floor())?;
+            }
+            seq.end()
+        }
+
+        // Errors on overflow.
+        pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Vec<FeeRate>, D::Error> {
+            struct VisitVec;
+
+            impl<'de> de::Visitor<'de> for VisitVec {
+                type Value = Vec<FeeRate>;
+
+                fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    write!(f, "a sequence of u64")
+                }
+
+                fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+                where
+                    A: SeqAccess<'de>,
+                {
+                    let mut out = Vec::with_capacity(seq.size_hint().unwrap_or(0));
+                    while let Some(sat) = seq.next_element::<u64>()? {
+                        let rate = FeeRate::from_per_vb(
+                            Amount::from_sat(sat)
+                                .map_err(|_| de::Error::custom("amount out of range"))?,
+                        )
+                        .into_result()
+                        .map_err(|_| de::Error::custom("fee rate too big for sats/vb"))?;
+                        out.push(rate);
+                    }
+                    Ok(out)
+                }
+            }
+
+            d.deserialize_seq(VisitVec)
+        }
+    }
 }
 
 pub mod as_sat_per_vb_ceil {

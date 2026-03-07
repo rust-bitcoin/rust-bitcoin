@@ -2364,6 +2364,8 @@ pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::deserialize<'d, D: s
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt::serialize<S: serde::ser::Serializer>(f: &core::option::Option<bitcoin_units::FeeRate>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::serialize<S: serde::ser::Serializer>(f: &bitcoin_units::FeeRate, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::vec::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<alloc::vec::Vec<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::vec::serialize<S: serde::ser::Serializer>(f: &[bitcoin_units::FeeRate], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::locktime::absolute::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::absolute::Height::clone(&self) -> bitcoin_units::locktime::absolute::Height
 pub fn bitcoin_units::locktime::absolute::Height::cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::cmp::Ordering
@@ -2780,6 +2782,7 @@ pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::vec
 pub mod bitcoin_units::locktime
 pub mod bitcoin_units::locktime::absolute
 pub mod bitcoin_units::locktime::absolute::error
