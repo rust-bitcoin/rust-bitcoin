@@ -125,6 +125,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-key-expression"
+version = "0.0.0"
+
+[[package]]
 name = "bitcoin-network-kind"
 version = "0.1.0"
 dependencies = [
