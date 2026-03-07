@@ -28,7 +28,7 @@ use crate::hex_codec::{HexPrimitive, ParsePrimitiveError};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
-use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
+use crate::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
 use crate::{Transaction, WitnessMerkleNode};
