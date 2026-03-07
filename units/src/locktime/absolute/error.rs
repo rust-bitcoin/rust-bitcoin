@@ -43,6 +43,10 @@ pub struct IncompatibleHeightError {
     pub(super) incompatible: Height,
 }
 
+impl From<Infallible> for IncompatibleHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl IncompatibleHeightError {
     /// Returns the value of the lock-by-time lock.
     pub fn lock(&self) -> MedianTimePast { self.lock }
@@ -72,6 +76,10 @@ pub struct IncompatibleTimeError {
     pub(super) lock: Height,
     /// Attempted to satisfy a lock-by-height lock with this MTP.
     pub(super) incompatible: MedianTimePast,
+}
+
+impl From<Infallible> for IncompatibleTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl IncompatibleTimeError {
@@ -146,6 +154,14 @@ pub(super) enum ParseError {
 }
 
 impl From<Infallible> for ParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for ParseHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for ParseTimeError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -239,6 +255,10 @@ pub struct ConversionError {
     unit: LockTimeUnit,
     /// The invalid input value.
     input: u32,
+}
+
+impl From<Infallible> for ConversionError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl ConversionError {
