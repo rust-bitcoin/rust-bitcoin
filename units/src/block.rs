@@ -11,7 +11,6 @@
 //! The difference between these types and the locktime types is that these types are thin wrappers
 //! whereas the locktime types contain more complex locktime specific abstractions.
 
-#[cfg(feature = "encoding")]
 use core::convert::Infallible;
 use core::{fmt, ops};
 
@@ -465,6 +464,10 @@ impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
 /// Error returned when the block interval is too big to be used as a relative lock time.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TooBigForRelativeHeightError(u32);
+
+impl From<Infallible> for TooBigForRelativeHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TooBigForRelativeHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

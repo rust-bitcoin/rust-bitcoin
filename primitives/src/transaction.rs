@@ -411,6 +411,11 @@ impl fmt::UpperHex for Transaction {
 pub struct ParseTransactionError(ParsePrimitiveError<Transaction>);
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
+impl From<Infallible> for ParseTransactionError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Debug for ParseTransactionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
@@ -1270,6 +1275,10 @@ impl encoding::Decodable for OutPoint {
 /// Error while decoding an `OutPoint`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OutPointDecoderError(UnexpectedEofError);
+
+impl From<Infallible> for OutPointDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl core::fmt::Display for OutPointDecoderError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {

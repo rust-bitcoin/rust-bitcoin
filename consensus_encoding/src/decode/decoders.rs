@@ -4,7 +4,6 @@
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
-#[cfg(feature = "alloc")]
 use core::convert::Infallible;
 use core::{fmt, mem};
 
@@ -762,6 +761,10 @@ enum CompactSizeDecoderErrorInner {
     ValueExceedsLimit(LengthPrefixExceedsMaxError),
 }
 
+impl From<Infallible> for CompactSizeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for CompactSizeDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use CompactSizeDecoderErrorInner as E;
@@ -901,6 +904,10 @@ pub struct LengthPrefixExceedsMaxError {
     limit: usize,
 }
 
+impl From<Infallible> for LengthPrefixExceedsMaxError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl core::fmt::Display for LengthPrefixExceedsMaxError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "length prefix {} exceeds max value {}", self.value, self.limit)
@@ -915,6 +922,10 @@ impl std::error::Error for LengthPrefixExceedsMaxError {}
 pub struct UnexpectedEofError {
     /// Number of bytes missing to complete decoder.
     missing: usize,
+}
+
+impl From<Infallible> for UnexpectedEofError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for UnexpectedEofError {
