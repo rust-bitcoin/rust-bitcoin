@@ -2152,7 +2152,9 @@ pub use bitcoin_primitives::FeeRate
 pub use bitcoin_primitives::NumOpResult
 pub use bitcoin_primitives::Sequence
 pub use bitcoin_primitives::SignedAmount
+pub use bitcoin_primitives::Target
 pub use bitcoin_primitives::Weight
+pub use bitcoin_primitives::Work
 pub use bitcoin_primitives::absolute
 pub use bitcoin_primitives::amount
 pub use bitcoin_primitives::block::BlockHeight
