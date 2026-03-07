@@ -260,6 +260,36 @@ pub struct V1MessageHeader {
     pub checksum: [u8; 4],
 }
 
+encoding::encoder_newtype! {
+    /// The encoder for the [`V1MessageHeader`] type.
+    pub struct V1MessageHeaderEncoder<'e>(
+        encoding::Encoder4<
+            crate::MagicEncoder<'e>,
+            encoding::ArrayEncoder<12>,
+            encoding::ArrayEncoder<4>,
+            encoding::ArrayEncoder<4>
+    >);
+}
+
+impl encoding::Encodable for V1MessageHeader {
+    type Encoder<'e>
+        = V1MessageHeaderEncoder<'e>
+    where
+        Self: 'e;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let enc = encoding::Encoder4::new(
+            self.magic.encoder(),
+            self.command.encoder(),
+            encoding::ArrayEncoder::without_length_prefix(self.length.to_le_bytes()),
+            encoding::ArrayEncoder::without_length_prefix(self.checksum),
+        );
+
+        V1MessageHeaderEncoder::new(enc)
+    }
+}
+
 type V1MessageHeaderInnerDecoder = encoding::Decoder4<
     encoding::ArrayDecoder<4>,
     CommandStringDecoder,
