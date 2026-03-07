@@ -209,5 +209,5 @@ impl<T> fmt::Display for Builder<T> {
 }
 
 impl<T> fmt::Debug for Builder<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
 }

@@ -186,50 +186,58 @@ pub(crate) use impl_div_assign;
 macro_rules! impl_fmt_traits_for_u32_wrapper {
     ($ty:ident) => {
         impl core::fmt::LowerHex for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::LowerHex::fmt(&self.0, f)
             }
         }
 
         impl core::fmt::UpperHex for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::UpperHex::fmt(&self.0, f)
             }
         }
 
         impl core::fmt::Octal for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::Octal::fmt(&self.0, f)
             }
         }
 
         impl core::fmt::Binary for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::Binary::fmt(&self.0, f)
             }
         }
     };
     ($ty:ident, $fn:ident) => {
         impl core::fmt::LowerHex for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::LowerHex::fmt(&self.$fn(), f)
             }
         }
 
         impl core::fmt::UpperHex for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::UpperHex::fmt(&self.$fn(), f)
             }
         }
 
         impl core::fmt::Octal for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::Octal::fmt(&self.$fn(), f)
             }
         }
 
         impl core::fmt::Binary for $ty {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 core::fmt::Binary::fmt(&self.$fn(), f)
             }
         }
