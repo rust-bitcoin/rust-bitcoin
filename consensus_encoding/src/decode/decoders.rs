@@ -1027,8 +1027,59 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::vec::Vec;
 
-    #[cfg(feature = "alloc")]
     use super::*;
+
+    #[test]
+    fn compact_size_new_values_too_large() {
+        use CompactSizeDecoderErrorInner as E;
+
+        const EXCESS_VEC_SIZE: u64 = (MAX_VEC_SIZE + 1) as u64; // can't use try_from for const
+
+        // MAX_VEC_SIZE should succeed for `new` constructor
+        let mut decoder = CompactSizeDecoder::new();
+        decoder.push_bytes(&mut [0xFE, 0x00, 0x09, 0x3D, 0x00].as_slice()).unwrap();
+        let got = decoder.end().unwrap();
+        assert_eq!(got, MAX_VEC_SIZE);
+
+        // MAX_VEC_SIZE + 1 should fail for `new` constructor
+        let mut decoder = CompactSizeDecoder::new();
+        decoder.push_bytes(&mut [0xFE, 0x01, 0x09, 0x3D, 0x00].as_slice()).unwrap();
+        let got = decoder.end().unwrap_err();
+        assert!(matches!(
+            got,
+            CompactSizeDecoderError(E::ValueExceedsLimit(
+                LengthPrefixExceedsMaxError {
+                    limit: MAX_VEC_SIZE,
+                    value: EXCESS_VEC_SIZE,
+                }
+            )),
+        ));
+    }
+
+    #[test]
+    fn compact_size_new_with_limit_values_too_large() {
+        use CompactSizeDecoderErrorInner as E;
+
+        // 240 should succeed for `new_with_limit` constructor
+        let mut decoder = CompactSizeDecoder::new_with_limit(240);
+        decoder.push_bytes(&mut [0xf0].as_slice()).unwrap();
+        let got = decoder.end().unwrap();
+        assert_eq!(got, 240);
+
+        // 241 should fail for `new_with_limit` constructor
+        let mut decoder = CompactSizeDecoder::new_with_limit(240);
+        decoder.push_bytes(&mut [0xf1].as_slice()).unwrap();
+        let got = decoder.end().unwrap_err();
+        assert!(matches!(
+            got,
+            CompactSizeDecoderError(E::ValueExceedsLimit(
+                LengthPrefixExceedsMaxError {
+                    limit: 240,
+                    value: 241,
+                }
+            )),
+        ));
+    }
 
     #[test]
     #[cfg(feature = "alloc")]
