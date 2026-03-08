@@ -2397,10 +2397,8 @@ mod test {
 
         let data = hex!("010101010101");
 
-        let mut decoder = NetworkMessageDecoder::new(
-            CommandString::try_from_static("unknown").unwrap(),
-            6,
-        );
+        let mut decoder =
+            NetworkMessageDecoder::new(CommandString::try_from_static("unknown").unwrap(), 6);
         let _ = decoder.push_bytes(&mut data.as_slice());
         let decoded = decoder.end().unwrap();
 

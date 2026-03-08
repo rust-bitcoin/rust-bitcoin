@@ -300,10 +300,9 @@ mod tests {
     use super::LockTimeUnit;
     #[cfg(feature = "alloc")]
     use crate::{
+        locktime::absolute::{Height, LockTime, MedianTimePast},
         BlockHeight,
-        locktime::absolute::{Height, LockTime, MedianTimePast}
     };
-
 
     #[test]
     #[cfg(feature = "alloc")]
