@@ -305,6 +305,8 @@ impl core::convert::From<bitcoin_units::locktime::relative::NumberOfBlocks> for 
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_units::parse_int::PrefixedHexError
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for bitcoin_units::parse_int::UnprefixedHexError
 impl core::convert::From<bitcoin_units::parse_int::ParseIntError> for core::num::error::ParseIntError
+impl core::convert::From<bitcoin_units::parse_int::PrefixedHexError> for bitcoin_units::amount::error::ParseAmountError
+impl core::convert::From<bitcoin_units::parse_int::UnprefixedHexError> for bitcoin_units::amount::error::ParseAmountError
 impl core::convert::From<bitcoin_units::sequence::Sequence> for u32
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::AmountDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::error::ParseAmountError
@@ -1979,10 +1981,12 @@ pub fn bitcoin_units::Amount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> co
 pub fn bitcoin_units::Amount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::Amount::from_btc(btc: f64) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
+pub fn bitcoin_units::Amount::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_int_btc<T: core::convert::Into<u16>>(whole_bitcoin: T) -> Self
 pub fn bitcoin_units::Amount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
+pub fn bitcoin_units::Amount::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::Amount::mul(self, rhs: &u64) -> Self::Output
 pub fn bitcoin_units::Amount::mul(self, rhs: u64) -> Self::Output
@@ -2010,6 +2014,8 @@ pub fn bitcoin_units::BlockTime::eq(&self, other: &bitcoin_units::BlockTime) -> 
 pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::BlockTime::from(t: u32) -> Self
+pub fn bitcoin_units::BlockTime::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::BlockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::BlockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::BlockTime::partial_cmp(&self, other: &bitcoin_units::BlockTime) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::BlockTime::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
@@ -2060,10 +2066,12 @@ pub fn bitcoin_units::SignedAmount::fmt(&self, f: &mut core::fmt::Formatter<'_>)
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 pub fn bitcoin_units::SignedAmount::from_btc(btc: f64) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::SignedAmount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
+pub fn bitcoin_units::SignedAmount::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::SignedAmount::from_int_btc<T: core::convert::Into<i16>>(whole_bitcoin: T) -> Self
 pub fn bitcoin_units::SignedAmount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::SignedAmount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::SignedAmount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
+pub fn bitcoin_units::SignedAmount::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::SignedAmount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::SignedAmount::is_negative(self) -> bool
 pub fn bitcoin_units::SignedAmount::is_positive(self) -> bool
@@ -2103,7 +2111,9 @@ pub fn bitcoin_units::Weight::div_assign(&mut self, rhs: u64)
 pub fn bitcoin_units::Weight::eq(&self, other: &bitcoin_units::Weight) -> bool
 pub fn bitcoin_units::Weight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::Weight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
+pub fn bitcoin_units::Weight::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::Weight::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::Weight::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::Weight::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::Weight::mul(self, rhs: &bitcoin_units::FeeRate) -> Self::Output
 pub fn bitcoin_units::Weight::mul(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::FeeRate>) -> Self::Output
@@ -2181,6 +2191,8 @@ pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units
 pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::MissingDigitsError) -> Self
 pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::OutOfRangeError) -> Self
 pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::amount::error::TooPreciseError) -> Self
+pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::parse_int::PrefixedHexError) -> Self
+pub fn bitcoin_units::amount::error::ParseAmountError::from(value: bitcoin_units::parse_int::UnprefixedHexError) -> Self
 pub fn bitcoin_units::amount::error::ParseAmountError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_units::amount::error::ParseDenominationError::clone(&self) -> bitcoin_units::amount::error::ParseDenominationError
 pub fn bitcoin_units::amount::error::ParseDenominationError::eq(&self, other: &bitcoin_units::amount::error::ParseDenominationError) -> bool
@@ -2238,7 +2250,9 @@ pub fn bitcoin_units::block::BlockHeight::fmt(&self, f: &mut core::fmt::Formatte
 pub fn bitcoin_units::block::BlockHeight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockHeight::from(h: bitcoin_units::locktime::absolute::Height) -> Self
 pub fn bitcoin_units::block::BlockHeight::from(inner: u32) -> Self
+pub fn bitcoin_units::block::BlockHeight::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::block::BlockHeight::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::block::BlockHeight::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::block::BlockHeight::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::block::BlockHeight::partial_cmp(&self, other: &bitcoin_units::block::BlockHeight) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::block::BlockHeight::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
@@ -2278,7 +2292,9 @@ pub fn bitcoin_units::block::BlockHeightInterval::fmt(&self, f: &mut core::fmt::
 pub fn bitcoin_units::block::BlockHeightInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockHeightInterval::from(h: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self
 pub fn bitcoin_units::block::BlockHeightInterval::from(inner: u32) -> Self
+pub fn bitcoin_units::block::BlockHeightInterval::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::block::BlockHeightInterval::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::block::BlockHeightInterval::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::block::BlockHeightInterval::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::block::BlockHeightInterval::partial_cmp(&self, other: &bitcoin_units::block::BlockHeightInterval) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::block::BlockHeightInterval::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
@@ -2304,7 +2320,9 @@ pub fn bitcoin_units::block::BlockMtp::fmt(&self, f: &mut core::fmt::Formatter<'
 pub fn bitcoin_units::block::BlockMtp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockMtp::from(h: bitcoin_units::locktime::absolute::MedianTimePast) -> Self
 pub fn bitcoin_units::block::BlockMtp::from(inner: u32) -> Self
+pub fn bitcoin_units::block::BlockMtp::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::block::BlockMtp::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::block::BlockMtp::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::block::BlockMtp::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::block::BlockMtp::new(timestamps: [bitcoin_units::BlockTime; 11]) -> Self
 pub fn bitcoin_units::block::BlockMtp::partial_cmp(&self, other: &bitcoin_units::block::BlockMtp) -> core::option::Option<core::cmp::Ordering>
@@ -2332,7 +2350,9 @@ pub fn bitcoin_units::block::BlockMtpInterval::fmt(&self, f: &mut core::fmt::For
 pub fn bitcoin_units::block::BlockMtpInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::block::BlockMtpInterval::from(h: bitcoin_units::locktime::relative::NumberOf512Seconds) -> Self
 pub fn bitcoin_units::block::BlockMtpInterval::from(inner: u32) -> Self
+pub fn bitcoin_units::block::BlockMtpInterval::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::block::BlockMtpInterval::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::block::BlockMtpInterval::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::block::BlockMtpInterval::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::block::BlockMtpInterval::partial_cmp(&self, other: &bitcoin_units::block::BlockMtpInterval) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::block::BlockMtpInterval::serialize<S>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
@@ -2372,6 +2392,7 @@ pub fn bitcoin_units::locktime::absolute::Height::fmt(&self, f: &mut core::fmt::
 pub fn bitcoin_units::locktime::absolute::Height::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::locktime::absolute::Height::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseHeightError>
 pub fn bitcoin_units::locktime::absolute::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::absolute::Height::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseHeightError>
 pub fn bitcoin_units::locktime::absolute::Height::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::absolute::Height::is_satisfied_by(self, height: Self) -> bool
 pub fn bitcoin_units::locktime::absolute::Height::partial_cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::option::Option<core::cmp::Ordering>
@@ -2420,6 +2441,7 @@ pub fn bitcoin_units::locktime::absolute::MedianTimePast::fmt(&self, f: &mut cor
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseTimeError>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ParseTimeError>
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::is_satisfied_by(self, time: Self) -> bool
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::new(timestamps: [bitcoin_units::BlockTime; 11]) -> core::result::Result<Self, bitcoin_units::locktime::absolute::error::ConversionError>
@@ -2481,7 +2503,9 @@ pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::default() -> bitco
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::eq(&self, other: &bitcoin_units::locktime::relative::NumberOf512Seconds) -> bool
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::partial_cmp(&self, other: &bitcoin_units::locktime::relative::NumberOf512Seconds) -> core::option::Option<core::cmp::Ordering>
@@ -2496,7 +2520,9 @@ pub fn bitcoin_units::locktime::relative::NumberOfBlocks::eq(&self, other: &bitc
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from(value: u16) -> Self
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::partial_cmp(&self, other: &bitcoin_units::locktime::relative::NumberOfBlocks) -> core::option::Option<core::cmp::Ordering>
@@ -2552,10 +2578,18 @@ pub fn bitcoin_units::parse_int::hex_u128(s: &str) -> core::result::Result<u128,
 pub fn bitcoin_units::parse_int::hex_u128_prefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::parse_int::hex_u128_unchecked(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::hex_u128_unprefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u16(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u16_prefixed(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u16_unchecked(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u16_unprefixed(s: &str) -> core::result::Result<u16, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::parse_int::hex_u32(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::hex_u32_prefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::PrefixedHexError>
 pub fn bitcoin_units::parse_int::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse_int::UnprefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u64(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u64_prefixed(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::PrefixedHexError>
+pub fn bitcoin_units::parse_int::hex_u64_unchecked(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::ParseIntError>
+pub fn bitcoin_units::parse_int::hex_u64_unprefixed(s: &str) -> core::result::Result<u64, bitcoin_units::parse_int::UnprefixedHexError>
 pub fn bitcoin_units::parse_int::int_from_box<T: bitcoin_units::parse_int::Integer>(s: alloc::boxed::Box<str>) -> core::result::Result<T, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::int_from_str<T: bitcoin_units::parse_int::Integer>(s: &str) -> core::result::Result<T, bitcoin_units::parse_int::ParseIntError>
 pub fn bitcoin_units::parse_int::int_from_string<T: bitcoin_units::parse_int::Integer>(s: alloc::string::String) -> core::result::Result<T, bitcoin_units::parse_int::ParseIntError>

@@ -10,6 +10,7 @@ use core::{default, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use crate::parse_int;
 use super::error::ParseErrorInner;
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
@@ -214,6 +215,48 @@ impl SignedAmount {
     #[allow(clippy::missing_panics_doc)]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
+    }
+
+    /// Constructs a new `SignedAmount` from a prefixed hex string.
+    ///
+    /// This can only parse an unsigned quantity.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of an amount in sats or it does not
+    /// include the `0x` prefix.
+    #[inline]
+    #[allow(clippy::missing_panics_doc)]
+    pub fn from_hex(s: &str) -> Result<Self, ParseAmountError> {
+        let amount = parse_int::hex_u64_prefixed(s)?;
+        if amount > Self::MAX_MONEY.to_sat().try_into().expect("Self::MAX_MONEY is >= 0 and < u64::MAX") {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })?
+        } else {
+            let amount = i64::try_from(amount)
+                .expect("Self::MAX_MONEY is less than i64::MAX and hex is >= 0");
+            Ok(Self::from_sat(amount)?)
+        }
+    }
+
+    /// Constructs a new `SignedAmount` from an unprefixed hex string.
+    ///
+    /// This can only parse an unsigned quantity.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of an amount in sats or if it
+    /// includes the `0x` prefix.
+    #[inline]
+    #[allow(clippy::missing_panics_doc)]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, ParseAmountError> {
+        let amount = parse_int::hex_u64_unprefixed(s)?;
+        if amount > Self::MAX_MONEY.to_sat().try_into().expect("Self::MAX_MONEY is >= 0 and < u64::MAX") {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })?
+        } else {
+            let amount = i64::try_from(amount)
+                .expect("Self::MAX_MONEY is < i64::MAX and hex can only parse as >= 0");
+            Ok(Self::from_sat(amount)?)
+        }
     }
 
     /// Expresses this [`SignedAmount`] as a floating-point value in Bitcoin.

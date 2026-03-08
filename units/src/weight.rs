@@ -10,7 +10,8 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{parse_int, Amount, FeeRate, NumOpResult};
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
+use crate::{Amount, FeeRate, NumOpResult};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -107,6 +108,30 @@ impl Weight {
     #[deprecated(since = "1.0.0-rc.1", note = "use `from_vb` or `from_vb_unchecked` instead")]
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
         Self::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
+    }
+
+    /// Constructs a new `Weight` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a weight in weight units or it
+    /// does not include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let weight = parse_int::hex_u64_prefixed(s)?;
+        Ok(Self::from_wu(weight))
+    }
+
+    /// Constructs a new `Weight` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a weight in weight units or if
+    /// it includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        let weight = parse_int::hex_u64_unprefixed(s)?;
+        Ok(Self::from_wu(weight))
     }
 
     /// Converts to kilo weight units rounding down.

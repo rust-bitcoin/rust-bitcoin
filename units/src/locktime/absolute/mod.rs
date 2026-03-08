@@ -524,14 +524,33 @@ impl Height {
     /// The maximum absolute block height.
     pub const MAX: Self = Self(LOCK_TIME_THRESHOLD - 1);
 
-    /// Constructs a new [`Height`] from a hex string.
-    ///
-    /// The input string may or may not contain a typical hex prefix e.g., `0x`.
+    /// Constructs a new [`Height`] from a prefixed hex string.
     ///
     /// # Errors
     ///
-    /// If the input string is not a valid hex representation of a block height.
-    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> { parse_hex(s, Self::from_u32) }
+    /// If the input string is not a valid hex representation of a block height or it does not
+    /// include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> {
+        let height = parse_int::hex_u32_prefixed(s)
+            .map_err(ParseError::PrefixedHex)?;
+        Ok(Self::from_u32(height)
+            .map_err(|_| ParseError::Conversion(height.into()))?)
+    }
+
+    /// Constructs a new [`Height`] from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a block height or if it
+    /// includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, ParseHeightError> {
+        let height = parse_int::hex_u32_unprefixed(s)
+            .map_err(ParseError::UnprefixedHex)?;
+        Ok(Self::from_u32(height)
+            .map_err(|_| ParseError::Conversion(height.into()))?)
+    }
 
     #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
     #[doc(hidden)]
@@ -638,14 +657,33 @@ impl MedianTimePast {
         crate::BlockMtp::new(timestamps).try_into()
     }
 
-    /// Constructs a new [`MedianTimePast`] from a big-endian hex-encoded `u32`.
-    ///
-    /// The input string may or may not contain a typical hex prefix e.g., `0x`.
+    /// Constructs a new [`MedianTimePast`] from a prefixed hex string.
     ///
     /// # Errors
     ///
-    /// If the input string is not a valid hex representation of a block time.
-    pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_u32) }
+    /// If the input string is not a valid hex representation of a block time or it does not
+    /// include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> {
+        let height = parse_int::hex_u32_prefixed(s)
+            .map_err(ParseError::PrefixedHex)?;
+        Ok(Self::from_u32(height)
+            .map_err(|_| ParseError::Conversion(height.into()))?)
+    }
+
+    /// Constructs a new [`MedianTimePast`] from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a block time or if it
+    /// includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, ParseTimeError> {
+        let height = parse_int::hex_u32_unprefixed(s)
+            .map_err(ParseError::UnprefixedHex)?;
+        Ok(Self::from_u32(height)
+            .map_err(|_| ParseError::Conversion(height.into()))?)
+    }
 
     #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
     #[doc(hidden)]
@@ -727,18 +765,6 @@ where
         let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
         f(n).map_err(ParseError::from).map_err(Into::into)
     }
-}
-
-fn parse_hex<T, E, S, F>(s: S, f: F) -> Result<T, E>
-where
-    E: From<ParseError>,
-    S: AsRef<str> + Into<InputString>,
-    F: FnOnce(u32) -> Result<T, ConversionError>,
-{
-    let n = i64::from_str_radix(parse_int::hex_remove_optional_prefix(s.as_ref()), 16)
-        .map_err(ParseError::invalid_int(s))?;
-    let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
-    f(n).map_err(ParseError::from).map_err(Into::into)
 }
 
 /// Returns true if `n` is a block height i.e., less than 500,000,000.
@@ -946,7 +972,7 @@ mod tests {
 
     #[test]
     fn time_from_str_hex_no_prefix_happy_path() {
-        let time = MedianTimePast::from_hex("6289C350").unwrap();
+        let time = MedianTimePast::from_unprefixed_hex("6289C350").unwrap();
         assert_eq!(time, MedianTimePast(0x6289_C350));
     }
 
@@ -966,7 +992,7 @@ mod tests {
 
     #[test]
     fn height_from_str_hex_no_prefix_happy_path() {
-        let height = Height::from_hex("BA70D").unwrap();
+        let height = Height::from_unprefixed_hex("BA70D").unwrap();
         assert_eq!(height, Height(0xBA70D));
     }
 

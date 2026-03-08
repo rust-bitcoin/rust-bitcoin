@@ -10,7 +10,7 @@ use internals::error::InputString;
 use internals::write_err;
 
 use super::{Height, MedianTimePast, LOCK_TIME_THRESHOLD};
-use crate::parse_int::ParseIntError;
+use crate::parse_int::{ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 /// An error consensus decoding an `LockTime`.
 #[cfg(feature = "encoding")]
@@ -139,6 +139,11 @@ impl From<ParseError> for ParseTimeError {
 /// Internal - common representation for height and time.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub(super) enum ParseError {
+    /// Error parsing prefixed hex
+    PrefixedHex(PrefixedHexError),
+    /// Error parsing unprefixed hex
+    UnprefixedHex(UnprefixedHexError),
+    // Error parsing decimal
     ParseInt(ParseIntError),
     // unit implied by outer type
     // we use i64 to have nicer messages for negative values
@@ -168,6 +173,12 @@ impl ParseError {
         use core::num::IntErrorKind;
 
         match self {
+            Self::PrefixedHex(ref err) => {
+                fmt::Display::fmt(err, f)
+            },
+            Self::UnprefixedHex(ref err) => {
+                fmt::Display::fmt(err, f)
+            },
             Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
             {
@@ -215,6 +226,8 @@ impl ParseError {
         use core::num::IntErrorKind;
 
         match self {
+            Self::PrefixedHex(ref err) => Some(err),
+            Self::UnprefixedHex(ref err) => Some(err),
             Self::ParseInt(ParseIntError { source, .. })
                 if *source.kind() == IntErrorKind::PosOverflow =>
                 None,
@@ -229,6 +242,14 @@ impl ParseError {
 
 impl From<ConversionError> for ParseError {
     fn from(value: ConversionError) -> Self { Self::Conversion(value.input.into()) }
+}
+
+impl From<PrefixedHexError> for ParseError {
+    fn from(value: PrefixedHexError) -> Self { Self::PrefixedHex(value) }
+}
+
+impl From<UnprefixedHexError> for ParseError {
+    fn from(value: UnprefixedHexError) -> Self { Self::UnprefixedHex(value) }
 }
 
 /// Error returned when converting a `u32` to a lock time variant fails.
