@@ -1930,6 +1930,13 @@ impl<'a> Arbitrary<'a> for XOnlyPublicKey {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for PubkeyHash {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_byte_array(u.arbitrary()?))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]

@@ -7,6 +7,8 @@
 //!
 //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::array_vec::ArrayVec;
 
 use super::witness_version::WitnessVersion;
@@ -179,6 +181,20 @@ pub mod error {
                 Self::InvalidLength(_) | Self::InvalidSegwitV0Length(_) => None,
             }
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for WitnessVersion {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Self::try_from(u.int_in_range(0..=16)? as u8).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for WitnessProgram {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+       Self::new(u.arbitrary()?, u.arbitrary()?).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
