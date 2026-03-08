@@ -497,11 +497,9 @@ mod tests {
     use encoding::{Decodable as _, Decoder as _};
 
     #[cfg(feature = "alloc")]
-    use crate::{
-        amount::{Amount, Denomination, ParseDenominationError, ParseError}
-    };
-    #[cfg(feature = "alloc")]
     use super::{ParseAmountError, ParseAmountErrorInner, ParseErrorInner};
+    #[cfg(feature = "alloc")]
+    use crate::amount::{Amount, Denomination, ParseDenominationError, ParseError};
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -510,14 +508,14 @@ mod tests {
         macro_rules! assert_amount_err {
             ($e:expr, $enum_arm:ident, $err_msg:expr) => {
                 assert!(!$e.to_string().is_empty());
-                let ParseError(ParseErrorInner::Amount(err)) = $e
-                    else { panic!($err_msg) };
+                let ParseError(ParseErrorInner::Amount(err)) = $e else { panic!($err_msg) };
                 assert!(!err.to_string().is_empty());
                 #[cfg(feature = "std")]
                 assert!(err.source().is_some());
 
-                let ParseAmountError(ParseAmountErrorInner::$enum_arm(err)) = err
-                    else { panic!($err_msg) };
+                let ParseAmountError(ParseAmountErrorInner::$enum_arm(err)) = err else {
+                    panic!($err_msg)
+                };
                 assert!(!err.to_string().is_empty());
                 // The inner-most types have no source
                 #[cfg(feature = "std")]
@@ -587,8 +585,9 @@ mod tests {
         let e = Denomination::from_str("XYZ").unwrap_err();
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
-        let ParseDenominationError::Unknown(e) = e
-            else { panic!("error should be UnknownDenominationError") };
+        let ParseDenominationError::Unknown(e) = e else {
+            panic!("error should be UnknownDenominationError")
+        };
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
@@ -597,8 +596,9 @@ mod tests {
         let e = Denomination::from_str("MBTC").unwrap_err();
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
-        let ParseDenominationError::PossiblyConfusing(e) = e
-            else { panic!("error should be PossiblyConfusingDenominationError") };
+        let ParseDenominationError::PossiblyConfusing(e) = e else {
+            panic!("error should be PossiblyConfusingDenominationError")
+        };
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
@@ -645,7 +645,8 @@ mod tests {
 
             // Out of range type
             let mut decoder = Amount::decoder();
-            let _ = decoder.push_bytes(&mut (21_000_001 * 100_000_000_u64).to_le_bytes().as_slice());
+            let _ =
+                decoder.push_bytes(&mut (21_000_001 * 100_000_000_u64).to_le_bytes().as_slice());
             let e = decoder.end().unwrap_err();
             assert!(!e.to_string().is_empty());
             #[cfg(feature = "std")]

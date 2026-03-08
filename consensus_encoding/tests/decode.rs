@@ -5,14 +5,14 @@
 #[cfg(feature = "std")]
 use std::io::{Cursor, Read};
 
+#[cfg(feature = "std")]
+use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, CompactSizeDecoder, Decodable, Decoder, Decoder2, UnexpectedEofError,
+    decode_from_slice, ArrayDecoder, CompactSizeDecoder, Decodable, Decoder, Decoder2,
+    UnexpectedEofError,
 };
 #[cfg(feature = "alloc")]
 use bitcoin_consensus_encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
-#[cfg(feature = "std")]
-use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
-use bitcoin_consensus_encoding::decode_from_slice;
 
 const EMPTY: &[u8] = &[];
 
@@ -618,7 +618,8 @@ fn decode_vec_from_read_unbuffered_success() {
     let encoded = [0x01, 0xEF, 0xBE, 0xAD, 0xDE, 0xff, 0xff, 0xff, 0xff];
     let mut cursor = Cursor::new(&encoded);
 
-    let got = bitcoin_consensus_encoding::decode_from_read_unbuffered::<Test, _>(&mut cursor).unwrap();
+    let got =
+        bitcoin_consensus_encoding::decode_from_read_unbuffered::<Test, _>(&mut cursor).unwrap();
     assert_eq!(cursor.position(), 5);
 
     let want = Test(vec![Inner(0xDEAD_BEEF)]);

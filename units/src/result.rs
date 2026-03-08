@@ -444,8 +444,8 @@ mod tests {
     #[cfg(feature = "std")]
     use std::error::Error;
 
-    use crate::{Amount, FeeRate, Weight};
     use crate::result::{MathOp, NumOpError, NumOpResult};
+    use crate::{Amount, FeeRate, Weight};
 
     #[test]
     fn mathop_predicates() {

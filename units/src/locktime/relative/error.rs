@@ -189,8 +189,8 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     use crate::{
+        locktime::relative::{LockTime, NumberOf512Seconds, NumberOfBlocks},
         BlockHeight, BlockMtp, BlockMtpInterval, Sequence,
-        locktime::relative::{LockTime, NumberOf512Seconds, NumberOfBlocks}
     };
 
     #[test]
@@ -212,7 +212,9 @@ mod tests {
 
         // InvalidHeightError - is_satisfied_by with invalid args
         let blocks = NumberOfBlocks::from(10u16);
-        let e = blocks.is_satisfied_by(BlockHeight::from_u32(5), BlockHeight::from_u32(10)).unwrap_err();
+        let e = blocks
+            .is_satisfied_by(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
@@ -257,36 +259,32 @@ mod tests {
 
         // IsSatisfiedByHeightError
         // Incompatible type
-        let e = time_lock.is_satisfied_by_height(
-            BlockHeight::from_u32(5),
-            BlockHeight::from_u32(10)
-        ).unwrap_err();
+        let e = time_lock
+            .is_satisfied_by_height(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
         // Satisfaction type
-        let e = height_lock.is_satisfied_by_height(
-            BlockHeight::from_u32(5),
-            BlockHeight::from_u32(10)
-        ).unwrap_err();
+        let e = height_lock
+            .is_satisfied_by_height(BlockHeight::from_u32(5), BlockHeight::from_u32(10))
+            .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
 
         // IsSatisfiedByTimeError
         // Incompatible type
-        let e = height_lock.is_satisfied_by_time(
-            BlockMtp::from_u32(5),
-            BlockMtp::from_u32(10)
-        ).unwrap_err();
+        let e = height_lock
+            .is_satisfied_by_time(BlockMtp::from_u32(5), BlockMtp::from_u32(10))
+            .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
         // Satisfaction type
-        let e = time_lock.is_satisfied_by_time(
-            BlockMtp::from_u32(5),
-            BlockMtp::from_u32(10)
-        ).unwrap_err();
+        let e = time_lock
+            .is_satisfied_by_time(BlockMtp::from_u32(5), BlockMtp::from_u32(10))
+            .unwrap_err();
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_some());

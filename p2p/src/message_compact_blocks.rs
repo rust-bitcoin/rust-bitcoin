@@ -8,10 +8,10 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-
-use crate::consensus::impl_consensus_encoding;
 use encoding::{ArrayDecoder, ArrayEncoder, Decoder2, Encoder2};
 use internals::write_err;
+
+use crate::consensus::impl_consensus_encoding;
 
 /// sendcmpct message
 #[derive(PartialEq, Eq, Clone, Debug, Copy, PartialOrd, Ord, Hash)]
@@ -31,12 +31,10 @@ impl encoding::Encodable for SendCmpct {
     type Encoder<'e> = SendCmpctEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        SendCmpctEncoder::new(
-            Encoder2::new(
-                ArrayEncoder::without_length_prefix([u8::from(self.send_compact)]),
-                ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
-            )
-        )
+        SendCmpctEncoder::new(Encoder2::new(
+            ArrayEncoder::without_length_prefix([u8::from(self.send_compact)]),
+            ArrayEncoder::without_length_prefix(self.version.to_le_bytes()),
+        ))
     }
 }
 
@@ -58,10 +56,7 @@ impl encoding::Decoder for SendCmpctDecoder {
     fn end(self) -> Result<Self::Output, Self::Error> {
         let (send_cmpct, version) = self.0.end().map_err(SendCmpctDecoderError)?;
         let send_compact = u8::from_le_bytes(send_cmpct) != 0;
-        Ok(SendCmpct {
-            send_compact,
-            version: u64::from_le_bytes(version),
-        })
+        Ok(SendCmpct { send_compact, version: u64::from_le_bytes(version) })
     }
 
     #[inline]
@@ -72,9 +67,7 @@ impl encoding::Decodable for SendCmpct {
     type Decoder = SendCmpctDecoder;
 
     fn decoder() -> Self::Decoder {
-        SendCmpctDecoder(
-            Decoder2::new(ArrayDecoder::new(), ArrayDecoder::new())
-        )
+        SendCmpctDecoder(Decoder2::new(ArrayDecoder::new(), ArrayDecoder::new()))
     }
 }
 
