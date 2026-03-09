@@ -82,8 +82,8 @@ macro_rules! encoder_newtype {
         $vis struct $name<$lt>($encoder, core::marker::PhantomData<&$lt $encoder>);
 
         impl<$lt> $name<$lt> {
-            /// Construct a new instance of the newtype encoder
-            $vis fn new(encoder: $encoder) -> $name<$lt> {
+            /// Construct a new instance of the newtype encoder.
+            pub(crate) const fn new(encoder: $encoder) -> $name<$lt> {
                 $name(encoder, core::marker::PhantomData)
             }
         }
