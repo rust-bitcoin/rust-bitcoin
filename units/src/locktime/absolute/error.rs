@@ -108,6 +108,10 @@ impl std::error::Error for IncompatibleTimeError {}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ParseHeightError(ParseError);
 
+impl From<Infallible> for ParseHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for ParseHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.display(f, "block height", 0, LOCK_TIME_THRESHOLD - 1)
@@ -127,6 +131,10 @@ impl From<ParseError> for ParseHeightError {
 /// Error returned when parsing block time fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ParseTimeError(ParseError);
+
+impl From<Infallible> for ParseTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -154,14 +162,6 @@ pub(super) enum ParseError {
 }
 
 impl From<Infallible> for ParseError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<Infallible> for ParseHeightError {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-impl From<Infallible> for ParseTimeError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
