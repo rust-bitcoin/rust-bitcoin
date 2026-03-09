@@ -255,7 +255,6 @@ impl fmt::Debug for Sequence {
     }
 }
 
-#[cfg(feature = "alloc")]
 parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "encoding")]

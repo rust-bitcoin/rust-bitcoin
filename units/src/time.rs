@@ -18,6 +18,8 @@ use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::parse_int;
+
 mod encapsulate {
     /// A Bitcoin block timestamp.
     ///
@@ -62,6 +64,8 @@ impl From<BlockTime> for u32 {
     #[inline]
     fn from(t: BlockTime) -> Self { t.to_u32() }
 }
+
+parse_int::impl_parse_str_from_int_infallible!(BlockTime, u32, from_u32);
 
 #[cfg(feature = "serde")]
 impl Serialize for BlockTime {
