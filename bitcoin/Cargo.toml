@@ -27,7 +27,7 @@ arbitrary = ["crypto/arbitrary", "dep:arbitrary", "units/arbitrary", "primitives
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-features = false, features = ["alloc"] }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
-crypto = { package = "bitcoin-crypto", path = "../crypto", default-features = false, features = ["alloc"] }
+crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.1.0", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.20.0", default-features = false, features = ["alloc", "hex"] }
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "0.1.0", default-features = false, features = ["alloc"] }
 hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, features = ["alloc"] }
