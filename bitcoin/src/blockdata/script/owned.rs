@@ -9,6 +9,7 @@ use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
     ScriptExtPriv as _, ScriptPubKeyBuf,
 };
+use crate::hex;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
@@ -143,13 +144,14 @@ internal_macros::define_extension_trait! {
         /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
         /// multiple times.
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
-        
+
         /// Constructs a new [`ScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_no_length_prefix()` instead")]
         fn from_hex(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
             where Self: Sized
         {
-            Self::from_hex_no_length_prefix(s)
+            let v = hex::decode_to_vec(s)?;
+            Ok(Self::from_bytes(v))
         }
 
         // This belongs only on RedeemScript and ScriptPubKey
