@@ -44,7 +44,7 @@ fi
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCSRS" = true ]; then
-    RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" cargo +nightly doc --all-features
+    RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" cargo +nightly doc --no-deps --all-features
 fi
 
 # Build the docs with a stable toolchain, in unison with the DO_DOCSRS command

@@ -49,7 +49,7 @@ jobs:
           key: cache-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: '1.65.0'
+          toolchain: '1.74.0'
       - name: fuzz
         run: |
           if [[ "${{ matrix.fuzz_target }}" =~ ^bitcoin ]]; then
