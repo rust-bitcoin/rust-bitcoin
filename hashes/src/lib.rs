@@ -144,6 +144,7 @@ pub use sha256d::Hash as Sha256d;
 #[doc(inline)]
 pub use sha384::Hash as Sha384;
 /// SHA3-256: Alias for the [`sha3_256::Hash`] hash type.
+#[doc(inline)]
 pub use sha3_256::Hash as Sha3_256;
 /// SHA-512: Alias for the [`sha512::Hash`] hash type.
 #[doc(inline)]
