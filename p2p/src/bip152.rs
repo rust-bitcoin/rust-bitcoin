@@ -1091,7 +1091,7 @@ mod test {
                 // test deserialization
                 let mut raw: Vec<u8> = vec![0u8; 32];
                 raw.extend(testcase.0.clone());
-                let btr: BlockTransactionsRequest = deserialize(&raw.clone()).unwrap();
+                let btr: BlockTransactionsRequest = deserialize(&raw).unwrap();
                 assert_eq!(testcase.1, btr.indices().unwrap());
             }
             {
@@ -1110,7 +1110,7 @@ mod test {
                 // test that we return Err() if deserialization fails (and don't panic)
                 let mut raw: Vec<u8> = [0u8; 32].to_vec();
                 raw.extend(errorcase);
-                let get_block_txn = deserialize::<BlockTransactionsRequest>(&raw.clone()).unwrap();
+                let get_block_txn = deserialize::<BlockTransactionsRequest>(&raw).unwrap();
                 assert!(get_block_txn.indices().is_err());
             }
         }
