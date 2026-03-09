@@ -56,17 +56,19 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod compact_size;
 mod decode;
 mod encode;
 
+pub use self::compact_size::{CompactSizeDecoder, CompactSizeDecoderError};
+#[cfg(feature = "alloc")]
+pub use self::compact_size::LengthPrefixExceedsMaxError;
 pub use self::decode::decoders::{
-    ArrayDecoder, CompactSizeDecoder, CompactSizeDecoderError, Decoder2, Decoder2Error, Decoder3,
-    Decoder3Error, Decoder4, Decoder4Error, Decoder6, Decoder6Error, UnexpectedEofError,
+    ArrayDecoder, Decoder2, Decoder2Error, Decoder3, Decoder3Error, Decoder4, Decoder4Error,
+    Decoder6, Decoder6Error, UnexpectedEofError,
 };
 #[cfg(feature = "alloc")]
-pub use self::decode::decoders::{
-    ByteVecDecoder, ByteVecDecoderError, LengthPrefixExceedsMaxError, VecDecoder, VecDecoderError,
-};
+pub use self::decode::decoders::{ByteVecDecoder, ByteVecDecoderError, VecDecoder, VecDecoderError};
 #[cfg(feature = "std")]
 pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with, ReadError,
