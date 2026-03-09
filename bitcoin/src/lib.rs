@@ -13,6 +13,7 @@
 //!
 //! # Cargo features
 //!
+//! * `arbitrary` (dependency) - arbitrary type implementations for testing.
 //! * `base64` (dependency) - enables encoding of PSBTs and message signatures.
 //! * `bitcoinconsensus` (dependency) - enables validating scripts and transactions.
 //! * `default` - enables `std` and `secp-recovery`.

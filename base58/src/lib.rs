@@ -222,7 +222,7 @@ impl<const N: usize> Buffer for ArrayVec<u8, N> {
     fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
 }
 
-fn format_iter<I, W>(writer: &mut W, data: I, buf: &mut impl Buffer) -> Result<(), fmt::Error>
+fn format_iter<I, W>(writer: &mut W, data: I, buf: &mut impl Buffer) -> fmt::Result
 where
     I: Iterator<Item = u8> + Clone,
     W: fmt::Write,

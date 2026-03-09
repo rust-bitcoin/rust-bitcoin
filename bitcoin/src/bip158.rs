@@ -71,7 +71,7 @@ impl From<Infallible> for Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
             Self::Io(ref e) => write_err!(f, "I/O error"; e),
@@ -591,7 +591,7 @@ mod test {
             assert!(filter
                 .match_all(
                     *block_hash,
-                    &mut txmap.iter().filter_map(|(_, s)| if !s.is_empty() {
+                    &mut txmap.values().filter_map(|s| if !s.is_empty() {
                         Some(s.as_bytes())
                     } else {
                         None
