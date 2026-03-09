@@ -31,6 +31,48 @@ impl<T: Hash> PartialEq for Hmac<T> {
 
 impl<T: Hash> Eq for Hmac<T> {}
 
+impl<T: Hash + fmt::Debug> fmt::Debug for Hmac<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
+}
+
+impl<T: Hash + fmt::Display> fmt::Display for Hmac<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+impl<T: Hash + fmt::LowerHex> fmt::LowerHex for Hmac<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+}
+
+impl<T: Hash> convert::AsRef<[u8]> for Hmac<T> {
+    // Calling as_byte_array is more reliable
+    fn as_ref(&self) -> &[u8] { self.0.as_byte_array().as_ref() }
+}
+
+impl<T: Hash> Hash for Hmac<T> {
+    type Bytes = T::Bytes;
+
+    fn from_byte_array(bytes: T::Bytes) -> Self { Self(T::from_byte_array(bytes)) }
+
+    fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
+
+    fn as_byte_array(&self) -> &Self::Bytes { self.0.as_byte_array() }
+}
+
+#[cfg(feature = "serde")]
+impl<T: Hash + Serialize> Serialize for Hmac<T> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        Serialize::serialize(&self.0, s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let bytes = Deserialize::deserialize(d)?;
+        Ok(Self(bytes))
+    }
+}
+
 /// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
 #[derive(Debug, Clone)]
 pub struct HmacEngine<T: HashEngine> {
@@ -112,48 +154,6 @@ impl<T: HashEngine> HashEngine for HmacEngine<T> {
         let ihash = self.iengine.finalize();
         self.oengine.input(ihash.as_ref());
         Hmac(self.oengine.finalize())
-    }
-}
-
-impl<T: Hash + fmt::Debug> fmt::Debug for Hmac<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
-}
-
-impl<T: Hash + fmt::Display> fmt::Display for Hmac<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl<T: Hash + fmt::LowerHex> fmt::LowerHex for Hmac<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl<T: Hash> convert::AsRef<[u8]> for Hmac<T> {
-    // Calling as_byte_array is more reliable
-    fn as_ref(&self) -> &[u8] { self.0.as_byte_array().as_ref() }
-}
-
-impl<T: Hash> Hash for Hmac<T> {
-    type Bytes = T::Bytes;
-
-    fn from_byte_array(bytes: T::Bytes) -> Self { Self(T::from_byte_array(bytes)) }
-
-    fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
-
-    fn as_byte_array(&self) -> &Self::Bytes { self.0.as_byte_array() }
-}
-
-#[cfg(feature = "serde")]
-impl<T: Hash + Serialize> Serialize for Hmac<T> {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        Serialize::serialize(&self.0, s)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
-    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let bytes = Deserialize::deserialize(d)?;
-        Ok(Self(bytes))
     }
 }
 
