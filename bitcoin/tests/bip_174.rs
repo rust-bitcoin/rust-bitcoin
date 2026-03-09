@@ -278,7 +278,7 @@ fn bip32_derivation(
         let pk = pk.parse::<PublicKey>().unwrap();
         let path = path.into_derivation_path().unwrap();
 
-        tree.insert(pk.to_inner(), (fingerprint, path));
+        tree.insert(*pk.as_inner(), (fingerprint, path));
     }
     tree
 }
