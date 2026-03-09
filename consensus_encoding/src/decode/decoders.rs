@@ -28,6 +28,7 @@ const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
 ///
 /// The encoding is expected to start with the number of encoded bytes (length prefix).
 #[cfg(feature = "alloc")]
+#[derive(Debug)]
 pub struct ByteVecDecoder {
     prefix_decoder: Option<CompactSizeDecoder>,
     buffer: Vec<u8>,
@@ -143,6 +144,22 @@ pub struct VecDecoder<T: Decodable> {
     length: usize,
     buffer: Vec<T>,
     decoder: Option<<T as Decodable>::Decoder>,
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Decodable> core::fmt::Debug for VecDecoder<T>
+where
+    T: core::fmt::Debug,
+    <T as Decodable>::Decoder: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("VecDecoder")
+            .field("prefix_decoder", &self.prefix_decoder)
+            .field("length", &self.length)
+            .field("buffer", &self.buffer)
+            .field("decoder", &self.decoder)
+            .finish()
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -264,6 +281,7 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
 }
 
 /// A decoder that expects exactly N bytes and returns them as an array.
+#[derive(Debug)]
 pub struct ArrayDecoder<const N: usize> {
     buffer: [u8; N],
     bytes_written: usize,
@@ -320,6 +338,17 @@ where
     state: Decoder2State<A, B>,
 }
 
+impl<A, B> core::fmt::Debug for Decoder2<A, B>
+where
+    A: Decoder + core::fmt::Debug,
+    B: Decoder + core::fmt::Debug,
+    A::Output: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("Decoder2").field("state", &self.state).finish()
+    }
+}
+
 enum Decoder2State<A: Decoder, B: Decoder> {
     /// Decoding the first decoder, with second decoder waiting.
     First(A, B),
@@ -327,6 +356,21 @@ enum Decoder2State<A: Decoder, B: Decoder> {
     Second(A::Output, B),
     /// Decoder has failed and cannot be used again.
     Errored,
+}
+
+impl<A, B> core::fmt::Debug for Decoder2State<A, B>
+where
+    A: Decoder + core::fmt::Debug,
+    B: Decoder + core::fmt::Debug,
+    A::Output: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Self::First(a, b) => f.debug_tuple("First").field(a).field(b).finish(),
+            Self::Second(out, b) => f.debug_tuple("Second").field(out).field(b).finish(),
+            Self::Errored => f.write_str("Errored"),
+        }
+    }
 }
 
 impl<A, B> Decoder2<A, B>
@@ -423,6 +467,19 @@ where
     inner: Decoder2<Decoder2<A, B>, C>,
 }
 
+impl<A, B, C> core::fmt::Debug for Decoder3<A, B, C>
+where
+    A: Decoder + core::fmt::Debug,
+    B: Decoder + core::fmt::Debug,
+    C: Decoder + core::fmt::Debug,
+    A::Output: core::fmt::Debug,
+    B::Output: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("Decoder3").field("inner", &self.inner).finish()
+    }
+}
+
 impl<A, B, C> Decoder3<A, B, C>
 where
     A: Decoder,
@@ -478,6 +535,21 @@ where
     D: Decoder,
 {
     inner: Decoder2<Decoder2<A, B>, Decoder2<C, D>>,
+}
+
+impl<A, B, C, D> core::fmt::Debug for Decoder4<A, B, C, D>
+where
+    A: Decoder + core::fmt::Debug,
+    B: Decoder + core::fmt::Debug,
+    C: Decoder + core::fmt::Debug,
+    D: Decoder + core::fmt::Debug,
+    A::Output: core::fmt::Debug,
+    B::Output: core::fmt::Debug,
+    C::Output: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("Decoder4").field("inner", &self.inner).finish()
+    }
 }
 
 impl<A, B, C, D> Decoder4<A, B, C, D>
@@ -542,6 +614,25 @@ where
     F: Decoder,
 {
     inner: Decoder2<Decoder3<A, B, C>, Decoder3<D, E, F>>,
+}
+
+impl<A, B, C, D, E, F> core::fmt::Debug for Decoder6<A, B, C, D, E, F>
+where
+    A: Decoder + core::fmt::Debug,
+    B: Decoder + core::fmt::Debug,
+    C: Decoder + core::fmt::Debug,
+    D: Decoder + core::fmt::Debug,
+    E: Decoder + core::fmt::Debug,
+    F: Decoder + core::fmt::Debug,
+    A::Output: core::fmt::Debug,
+    B::Output: core::fmt::Debug,
+    C::Output: core::fmt::Debug,
+    D::Output: core::fmt::Debug,
+    E::Output: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.debug_struct("Decoder6").field("inner", &self.inner).finish()
+    }
 }
 
 impl<A, B, C, D, E, F> Decoder6<A, B, C, D, E, F>
@@ -1023,9 +1114,7 @@ define_decoder_n_error! {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
-    use alloc::vec;
-    #[cfg(feature = "alloc")]
-    use alloc::vec::Vec;
+    use alloc::{format, vec, vec::Vec};
     #[cfg(feature = "alloc")]
     use core::iter;
     #[cfg(feature = "std")]
@@ -1236,6 +1325,7 @@ mod tests {
 
     /// The decoder for the [`Inner`] type.
     #[cfg(feature = "alloc")]
+    #[derive(Debug)]
     pub struct InnerDecoder(ArrayDecoder<4>);
 
     #[cfg(feature = "alloc")]
@@ -1438,4 +1528,53 @@ mod tests {
         let want = Test(vec![Inner(0xDEAD_BEEF)]);
         assert_eq!(got, want);
     }
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder2_debug_is_non_empty() {
+        let d = Decoder2::new(ArrayDecoder::<4>::new(), ArrayDecoder::<4>::new());
+        assert!(!format!("{:?}", d).is_empty());
+    }
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder3_debug_is_non_empty() {
+        let d = Decoder3::new(
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+        );
+        assert!(!format!("{:?}", d).is_empty());
+    }
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder4_debug_is_non_empty() {
+        let d = Decoder4::new(
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+        );
+        assert!(!format!("{:?}", d).is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn decoder6_debug_is_non_empty() {
+        let d = Decoder6::new(
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+            ArrayDecoder::<4>::new(),
+        );
+        assert!(!format!("{:?}", d).is_empty());
+    }
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_debug_is_non_empty() {
+        let d = VecDecoder::<Inner>::new();
+        assert!(!format!("{:?}", d).is_empty());
+    }
+
+
 }

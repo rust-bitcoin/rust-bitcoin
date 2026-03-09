@@ -36,7 +36,7 @@ pub struct CompactTarget(u32);
 impl CompactTarget {
     /// Constructs a new [`CompactTarget`] from a consensus encoded `u32`.
     #[inline]
-    pub fn from_consensus(bits: u32) -> Self { Self(bits) }
+    pub const fn from_consensus(bits: u32) -> Self { Self(bits) }
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
     #[inline]
@@ -105,6 +105,7 @@ impl fmt::Binary for CompactTarget {
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`CompactTarget`] type.
+    #[derive(Debug)]
     pub struct CompactTargetEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
@@ -120,6 +121,7 @@ impl encoding::Encodable for CompactTarget {
 
 /// The decoder for the [`CompactTarget`] type.
 #[cfg(feature = "encoding")]
+#[derive(Debug)]
 pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]

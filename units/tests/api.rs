@@ -18,7 +18,8 @@ use bitcoin_units::{
     BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult,
     Sequence, SignedAmount, Weight,
 };
-
+#[cfg(feature = "encoding")]
+pub use encoding::{Decodable, Encodable};
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
 struct Enums {
@@ -85,7 +86,14 @@ impl Structs {
             p: Weight::MAX,
         }
     }
+
 }
+static AMOUNT: Amount = Amount::ZERO;
+static HEIGHT: BlockHeight = BlockHeight::ZERO;
+static LOCKTIME: absolute::LockTime = absolute::LockTime::Blocks(absolute::Height::MIN);
+static TARGET: pow::CompactTarget = pow::CompactTarget::from_consensus(0);
+static SEQ: Sequence = Sequence::ZERO;
+static TIME: BlockTime = BlockTime::from_u32(0);
 
 /// A struct that includes all public non-error types.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
@@ -96,6 +104,55 @@ struct Types {
 
 impl Types {
     fn new() -> Self { Self { a: Enums::new(), b: Structs::max() } }
+}
+
+#[cfg(feature = "encoding")]
+#[derive(Debug)]
+struct Encoders <'a> {
+    a: amount::AmountEncoder<'a>,
+    b: block::BlockHeightEncoder<'a>,
+    c: locktime::absolute::LockTimeEncoder<'a>,
+    d: pow::CompactTargetEncoder<'a>,
+    e: sequence::SequenceEncoder<'a>,
+    f: time::BlockTimeEncoder<'a>,
+
+}
+
+#[cfg(feature = "encoding")]
+#[derive(Debug)]
+struct Decoders {
+    a: amount::AmountDecoder,
+    b: block::BlockHeightDecoder,
+    c: locktime::absolute::LockTimeDecoder,
+    d: pow::CompactTargetDecoder,
+    e: sequence::SequenceDecoder,
+    f: time::BlockTimeDecoder,
+}
+#[cfg(feature = "encoding")]
+impl<'a> Encoders<'a> {
+    fn new() -> Self {
+        Self {
+            a: AMOUNT.encoder(),
+            b: HEIGHT.encoder(),
+            c: LOCKTIME.encoder(),
+            d: TARGET.encoder(),
+            e: SEQ.encoder(),
+            f: TIME.encoder(),
+        }
+    }
+}
+#[cfg(feature = "encoding")]
+impl Decoders {
+    fn new() -> Self {
+        Self {
+            a: Amount::decoder(),
+            b: BlockHeight::decoder(),
+            c: absolute::LockTime::decoder(),
+            d: pow::CompactTarget::decoder(),
+            e: Sequence::decoder(),
+            f: BlockTime::decoder(),
+        }
+    }
 }
 
 /// A struct that includes all public non-error non-helper structs.
@@ -116,8 +173,9 @@ struct CommonTraits {
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
     m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
+    n: sequence::Sequence,
+    o: time::BlockTime,
+    p: weight::Weight,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -136,31 +194,37 @@ struct Default {
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 struct Errors {
-    a: amount::error::InputTooLargeError,
-    b: amount::error::InvalidCharacterError,
-    c: amount::error::MissingDenominationError,
-    d: amount::error::MissingDigitsError,
-    e: amount::error::OutOfRangeError,
-    f: amount::error::ParseAmountError,
-    g: amount::error::ParseDenominationError,
-    h: amount::error::ParseError,
-    i: amount::error::PossiblyConfusingDenominationError,
-    j: amount::error::TooPreciseError,
-    k: amount::error::UnknownDenominationError,
-    l: block::TooBigForRelativeHeightError,
+    a: amount::error::BadPositionError,
+    b: amount::error::InputTooLargeError,
+    c: amount::error::InvalidCharacterError,
+    d: amount::error::MissingDenominationError,
+    e: amount::error::MissingDigitsError,
+    f: amount::error::OutOfRangeError,
+    g: amount::error::ParseAmountError,
+    h: amount::error::ParseDenominationError,
+    i: amount::error::ParseError,
+    j: amount::error::PossiblyConfusingDenominationError,
+    k: amount::error::TooPreciseError,
+    l: amount::error::UnknownDenominationError,
+    m: block::TooBigForRelativeHeightError,
     #[cfg(feature = "serde")]
-    m: fee_rate::serde::OverflowError,
-    n: locktime::absolute::ConversionError,
-    o: locktime::absolute::ParseHeightError,
-    p: locktime::absolute::ParseTimeError,
-    q: locktime::relative::InvalidHeightError,
-    r: locktime::relative::InvalidTimeError,
-    s: locktime::relative::TimeOverflowError,
-    t: parse_int::ParseIntError,
-    u: parse_int::PrefixedHexError,
-    v: parse_int::UnprefixedHexError,
-    #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
+    n: fee_rate::serde::OverflowError,
+    o: locktime::absolute::ConversionError,
+    p: locktime::absolute::IncompatibleHeightError,
+    q: locktime::absolute::IncompatibleTimeError,
+    r: locktime::absolute::ParseHeightError,
+    s: locktime::absolute::ParseTimeError,
+    t: locktime::relative::DisabledLockTimeError,
+    u: locktime::relative::InvalidHeightError,
+    v: locktime::relative::InvalidTimeError,
+    w: locktime::relative::IsSatisfiedByError,
+    x: locktime::relative::IsSatisfiedByHeightError,
+    y: locktime::relative::IsSatisfiedByTimeError,
+    z: locktime::relative::TimeOverflowError,
+    aa: parse_int::ParseIntError,
+    ab: parse_int::PrefixedHexError,
+    ac: parse_int::UnprefixedHexError,
+    ad: result::NumOpError,
 }
 
 /// A struct that includes all public decoder error types.
@@ -171,8 +235,9 @@ struct DecoderErrors {
     a: amount::error::AmountDecoderError,
     b: block::BlockHeightDecoderError,
     c: locktime::absolute::LockTimeDecoderError,
-    d: sequence::SequenceDecoderError,
-    e: time::BlockTimeDecoderError,
+    d: pow::CompactTargetDecoderError,
+    e: sequence::SequenceDecoderError,
+    f: time::BlockTimeDecoderError,
 }
 
 #[test]
@@ -248,6 +313,22 @@ fn api_can_use_all_types_from_module_locktime_absolute() {
     use bitcoin_units::locktime::absolute::{
         LockTimeDecoder, LockTimeDecoderError, LockTimeEncoder,
     };
+    #[cfg(feature = "encoding")]
+    {
+        let t = Encoders::new();
+        //check fields
+        assert!(!format!("{:?}", t.a).is_empty());
+        assert!(!format!("{:?}", t.b).is_empty());
+
+        let t = Decoders::new();
+        assert!(!format!("{:?}", t.a).is_empty());
+        assert!(!format!("{:?}", t.b).is_empty());
+    }
+}
+
+#[test]
+fn api_can_use_all_types_from_module_result() {
+    use bitcoin_units::result::{MathOp, NumOpError, NumOpResult};
 }
 
 #[test]
@@ -406,6 +487,16 @@ fn all_types_implement_send_sync() {
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
     assert_sync::<Errors>();
+
+    #[cfg(feature = "encoding")]
+    {
+        assert_send::<Encoders>();
+        assert_sync::<Encoders>();
+        assert_send::<Decoders>();
+        assert_sync::<Decoders>();
+        assert_send::<DecoderErrors>();
+        assert_sync::<DecoderErrors>();
+    }
 }
 
 #[test]

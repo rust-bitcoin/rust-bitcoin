@@ -20,6 +20,7 @@ use super::{Encodable, Encoder, ExactSizeEncoder};
 const SIZE: usize = 9;
 
 /// An encoder for a single byte slice.
+#[derive(Debug)]
 pub struct BytesEncoder<'sl> {
     sl: Option<&'sl [u8]>,
 }
@@ -44,6 +45,7 @@ impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
 }
 
 /// An encoder for a single array.
+#[derive(Debug)]
 pub struct ArrayEncoder<const N: usize> {
     arr: Option<[u8; N]>,
 }
@@ -73,6 +75,7 @@ impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
 ///
 /// This encoder borrows the array instead of taking ownership, avoiding a copy
 /// when the array is already available by reference (e.g., as a struct field).
+#[derive(Debug)]
 pub struct ArrayRefEncoder<'e, const N: usize> {
     arr: Option<&'e [u8; N]>,
 }
@@ -99,6 +102,7 @@ impl<const N: usize> ExactSizeEncoder for ArrayRefEncoder<'_, N> {
 }
 
 /// An encoder for a list of encodable types.
+#[derive(Debug)]
 pub struct SliceEncoder<'e, T: Encodable> {
     /// The list of references to the objects we are encoding.
     sl: &'e [T],
@@ -162,6 +166,7 @@ macro_rules! define_encoder_n {
         $(($enc_idx:literal, $enc_ty:ident, $enc_field:ident),)*
     ) => {
         $(#[$attr])*
+        #[derive(Debug)]
         pub struct $name<$($enc_ty,)*> {
             cur_idx: usize,
             $($enc_field: $enc_ty,)*
@@ -243,6 +248,7 @@ define_encoder_n! {
 }
 
 /// Encoder for a compact size encoded integer.
+#[derive(Debug)]
 pub struct CompactSizeEncoder {
     buf: Option<ArrayVec<u8, SIZE>>,
 }

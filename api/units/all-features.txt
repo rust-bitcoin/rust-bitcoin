@@ -1785,6 +1785,7 @@ pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_seconds(s
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_height(blocks: u16) -> Self
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_height(self) -> u16
+pub const fn bitcoin_units::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub const fn bitcoin_units::pow::CompactTarget::to_consensus(self) -> u32
 pub const fn bitcoin_units::pow::CompactTargetDecoder::new() -> Self
 pub const fn bitcoin_units::sequence::Sequence::to_consensus_u32(self) -> u32
@@ -2567,7 +2568,6 @@ pub fn bitcoin_units::pow::CompactTarget::deserialize<__D>(__deserializer: __D) 
 pub fn bitcoin_units::pow::CompactTarget::encoder(&self) -> Self::Encoder
 pub fn bitcoin_units::pow::CompactTarget::eq(&self, other: &bitcoin_units::pow::CompactTarget) -> bool
 pub fn bitcoin_units::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin_units::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::PrefixedHexError> where Self: core::marker::Sized
 pub fn bitcoin_units::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::UnprefixedHexError> where Self: core::marker::Sized
 pub fn bitcoin_units::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
