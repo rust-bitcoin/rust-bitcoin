@@ -1,3 +1,15 @@
+# 0.2.0 - 2026-03-09 - WIP
+
+This release is breaking and causes our whole stack to have to be re-released ...
+
+- (YET TO MERGE) Improve macro defined constructor [#5759](https://github.com/rust-bitcoin/rust-bitcoin/pull/5759)
+-
+- Fill out the documentation [#5720](https://github.com/rust-bitcoin/rust-bitcoin/pull/5720)
+- Expose vis fragment on exposed macros [#5719](https://github.com/rust-bitcoin/rust-bitcoin/pull/5719)
+- Remove redundant trait bounds [#5716](https://github.com/rust-bitcoin/rust-bitcoin/pull/5716)
+- Add `track_caller` to panic-able sites [#5713](https://github.com/rust-bitcoin/rust-bitcoin/pull/5713)
+- Add macros to define `EncoderN` and `DecoderNError` [#5635](https://github.com/rust-bitcoin/rust-bitcoin/pull/5635)
+
 # 0.1.0 - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because

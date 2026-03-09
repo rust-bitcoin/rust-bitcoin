@@ -19,7 +19,7 @@ arbitrary = ["dep:arbitrary", "bitcoin/arbitrary"]
 
 [dependencies]
 bitcoin = { path = "../bitcoin/", default-features = false }
-encoding = { package = "bitcoin-consensus-encoding", version = "0.1.0", path = "../consensus_encoding", default-features = false }
+encoding = { package = "bitcoin-consensus-encoding", version = "0.2.0", path = "../consensus_encoding", default-features = false }
 hashes = { package = "bitcoin_hashes", version = "0.20.0", path = "../hashes", default-features = false }
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false }
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.102.0", default-features = false }
