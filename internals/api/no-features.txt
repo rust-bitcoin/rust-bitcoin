@@ -55,9 +55,11 @@ pub struct bitcoin_internals::array_vec::ArrayVec<T: core::marker::Copy, const C
 impl<T: core::marker::Copy, const CAP: usize> bitcoin_internals::array_vec::ArrayVec<T, CAP>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::as_mut_slice(&mut self) -> &mut [T]
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::as_slice(&self) -> &[T]
-pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::extend_from_slice(&mut self, slice: &[T])
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::from_slice(slice: &[T]) -> Self
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::new() -> Self
+pub unsafe fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::set_len(&mut self, new_len: usize)
+pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::spare_capacity_mut(&mut self) -> &mut [core::mem::maybe_uninit::MaybeUninit<T>]
+pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::extend_from_slice(&mut self, slice: &[T])
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::pop(&mut self) -> core::option::Option<T>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::push(&mut self, element: T)
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::try_push(&mut self, element: T) -> core::result::Result<(), bitcoin_internals::array_vec::error::Error>
