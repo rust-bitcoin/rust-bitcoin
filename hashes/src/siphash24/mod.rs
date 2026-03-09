@@ -50,6 +50,58 @@ macro_rules! load_int_le {
     }};
 }
 
+impl Hash {
+    /// Constructs a new SipHash24 engine with keys.
+    pub fn engine(k0: u64, k1: u64) -> HashEngine { HashEngine::with_keys(k0, k1) }
+
+    /// Produces a hash from the current state of a given engine.
+    #[cfg(not(hashes_fuzz))]
+    pub fn from_engine(e: HashEngine) -> Self { Self::from_u64(Self::from_engine_to_u64(e)) }
+
+    #[cfg(hashes_fuzz)]
+    pub fn from_engine(e: HashEngine) -> Self {
+        let state = e.state.clone();
+        Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
+    }
+
+    /// Hashes the given data with an engine with the provided keys.
+    pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Self {
+        let mut engine = HashEngine::with_keys(k0, k1);
+        engine.input(data);
+        Self::from_engine(engine)
+    }
+
+    /// Hashes the given data directly to u64 with an engine with the provided keys.
+    pub fn hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64 {
+        let mut engine = HashEngine::with_keys(k0, k1);
+        engine.input(data);
+        Self::from_engine_to_u64(engine)
+    }
+
+    /// Produces a hash as `u64` from the current state of a given engine.
+    #[inline]
+    pub fn from_engine_to_u64(e: HashEngine) -> u64 {
+        let mut state = e.state;
+
+        let b: u64 = ((e.bytes_hashed & 0xff) << 56) | e.tail;
+
+        state.v3 ^= b;
+        HashEngine::c_rounds(&mut state);
+        state.v0 ^= b;
+
+        state.v2 ^= 0xff;
+        HashEngine::d_rounds(&mut state);
+
+        state.v0 ^ state.v1 ^ state.v2 ^ state.v3
+    }
+
+    /// Returns the (little endian) 64-bit integer representation of the hash value.
+    pub fn to_u64(self) -> u64 { u64::from_le_bytes(self.0) }
+
+    /// Constructs a new hash from its (little endian) 64-bit integer representation.
+    pub fn from_u64(hash: u64) -> Self { Self(hash.to_le_bytes()) }
+}
+
 /// Internal state of the [`HashEngine`].
 #[derive(Debug, Clone)]
 pub struct State {
@@ -160,58 +212,6 @@ impl crate::HashEngine for HashEngine {
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
-}
-
-impl Hash {
-    /// Constructs a new SipHash24 engine with keys.
-    pub fn engine(k0: u64, k1: u64) -> HashEngine { HashEngine::with_keys(k0, k1) }
-
-    /// Produces a hash from the current state of a given engine.
-    #[cfg(not(hashes_fuzz))]
-    pub fn from_engine(e: HashEngine) -> Self { Self::from_u64(Self::from_engine_to_u64(e)) }
-
-    #[cfg(hashes_fuzz)]
-    pub fn from_engine(e: HashEngine) -> Self {
-        let state = e.state.clone();
-        Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
-    }
-
-    /// Hashes the given data with an engine with the provided keys.
-    pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Self {
-        let mut engine = HashEngine::with_keys(k0, k1);
-        engine.input(data);
-        Self::from_engine(engine)
-    }
-
-    /// Hashes the given data directly to u64 with an engine with the provided keys.
-    pub fn hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64 {
-        let mut engine = HashEngine::with_keys(k0, k1);
-        engine.input(data);
-        Self::from_engine_to_u64(engine)
-    }
-
-    /// Produces a hash as `u64` from the current state of a given engine.
-    #[inline]
-    pub fn from_engine_to_u64(e: HashEngine) -> u64 {
-        let mut state = e.state;
-
-        let b: u64 = ((e.bytes_hashed & 0xff) << 56) | e.tail;
-
-        state.v3 ^= b;
-        HashEngine::c_rounds(&mut state);
-        state.v0 ^= b;
-
-        state.v2 ^= 0xff;
-        HashEngine::d_rounds(&mut state);
-
-        state.v0 ^ state.v1 ^ state.v2 ^ state.v3
-    }
-
-    /// Returns the (little endian) 64-bit integer representation of the hash value.
-    pub fn to_u64(self) -> u64 { u64::from_le_bytes(self.0) }
-
-    /// Constructs a new hash from its (little endian) 64-bit integer representation.
-    pub fn from_u64(hash: u64) -> Self { Self(hash.to_le_bytes()) }
 }
 
 /// Loads a u64 using up to 7 bytes of a byte slice.
