@@ -2,6 +2,7 @@
 
 //! Error types for the relative locktime module.
 
+use core::convert::Infallible;
 use core::fmt;
 
 use internals::write_err;
@@ -12,6 +13,10 @@ use super::{NumberOf512Seconds, NumberOfBlocks};
 /// "disable" flag is set.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DisabledLockTimeError(pub(super) u32);
+
+impl From<Infallible> for DisabledLockTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl DisabledLockTimeError {
     /// Accessor for the `u32` whose "disable" flag was set, preventing
@@ -37,6 +42,10 @@ pub enum IsSatisfiedByError {
     Blocks(InvalidHeightError),
     /// Error when attempting to satisfy lock by time.
     Time(InvalidTimeError),
+}
+
+impl From<Infallible> for IsSatisfiedByError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for IsSatisfiedByError {
@@ -67,6 +76,10 @@ pub enum IsSatisfiedByHeightError {
     /// Tried to satisfy a lock-by-height locktime using seconds.
     // TODO: Hide inner value in a new struct error type.
     Incompatible(NumberOf512Seconds),
+}
+
+impl From<Infallible> for IsSatisfiedByHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for IsSatisfiedByHeightError {
@@ -100,6 +113,10 @@ pub enum IsSatisfiedByTimeError {
     Incompatible(NumberOfBlocks),
 }
 
+impl From<Infallible> for IsSatisfiedByTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for IsSatisfiedByTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -129,6 +146,10 @@ pub struct TimeOverflowError {
     pub(crate) seconds: u32,
 }
 
+impl From<Infallible> for TimeOverflowError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for TimeOverflowError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -151,6 +172,10 @@ pub struct InvalidHeightError {
     pub(crate) utxo_mined_at: crate::BlockHeight,
 }
 
+impl From<Infallible> for InvalidHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for InvalidHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "is_satisfied_by arguments invalid (probably the wrong way around) chain_tip: {} utxo_mined_at: {}", self.chain_tip, self.utxo_mined_at
@@ -168,6 +193,10 @@ pub struct InvalidTimeError {
     pub(crate) chain_tip: crate::BlockMtp,
     /// The `utxo_mined_at` argument.
     pub(crate) utxo_mined_at: crate::BlockMtp,
+}
+
+impl From<Infallible> for InvalidTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for InvalidTimeError {

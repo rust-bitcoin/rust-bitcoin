@@ -31,6 +31,10 @@ pub struct ParseIntError {
     pub(crate) source: core::num::ParseIntError,
 }
 
+impl From<Infallible> for ParseIntError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for ParseIntError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let signed = if self.is_signed { "signed" } else { "unsigned" };

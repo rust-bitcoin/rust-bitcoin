@@ -548,6 +548,11 @@ impl fmt::Debug for Header {
 pub struct ParseHeaderError(ParsePrimitiveError<Header>);
 
 #[cfg(feature = "hex")]
+impl From<Infallible> for ParseHeaderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "hex")]
 impl fmt::Debug for ParseHeaderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }

@@ -43,6 +43,10 @@ pub struct IncompatibleHeightError {
     pub(super) incompatible: Height,
 }
 
+impl From<Infallible> for IncompatibleHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl IncompatibleHeightError {
     /// Returns the value of the lock-by-time lock.
     pub fn lock(&self) -> MedianTimePast { self.lock }
@@ -74,6 +78,10 @@ pub struct IncompatibleTimeError {
     pub(super) incompatible: MedianTimePast,
 }
 
+impl From<Infallible> for IncompatibleTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl IncompatibleTimeError {
     /// Returns the value of the lock-by-height lock.
     pub fn lock(&self) -> Height { self.lock }
@@ -100,6 +108,10 @@ impl std::error::Error for IncompatibleTimeError {}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ParseHeightError(ParseError);
 
+impl From<Infallible> for ParseHeightError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 impl fmt::Display for ParseHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.display(f, "block height", 0, LOCK_TIME_THRESHOLD - 1)
@@ -119,6 +131,10 @@ impl From<ParseError> for ParseHeightError {
 /// Error returned when parsing block time fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ParseTimeError(ParseError);
+
+impl From<Infallible> for ParseTimeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -239,6 +255,10 @@ pub struct ConversionError {
     unit: LockTimeUnit,
     /// The invalid input value.
     input: u32,
+}
+
+impl From<Infallible> for ConversionError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl ConversionError {

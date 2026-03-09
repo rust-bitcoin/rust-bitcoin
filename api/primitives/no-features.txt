@@ -142,6 +142,7 @@ impl core::convert::From<bitcoin_primitives::transaction::Version> for u32
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::BlockHashDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::HeaderDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::block::VersionDecoderError
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::OutPointDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::TxMerkleNodeDecoderError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::VersionDecoderError
 impl core::default::Default for bitcoin_primitives::block::BlockHashDecoder
@@ -656,6 +657,7 @@ pub fn bitcoin_primitives::transaction::OutPointDecoder::read_limit(&self) -> us
 pub fn bitcoin_primitives::transaction::OutPointDecoderError::clone(&self) -> bitcoin_primitives::transaction::OutPointDecoderError
 pub fn bitcoin_primitives::transaction::OutPointDecoderError::eq(&self, other: &bitcoin_primitives::transaction::OutPointDecoderError) -> bool
 pub fn bitcoin_primitives::transaction::OutPointDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::transaction::OutPointDecoderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::current_chunk(&self) -> &[u8]
 pub fn bitcoin_primitives::transaction::OutPointEncoder<'e>::len(&self) -> usize
