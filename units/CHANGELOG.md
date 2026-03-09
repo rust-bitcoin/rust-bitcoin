@@ -1,3 +1,20 @@
+# 0.4.0 - 2026-04-18
+
+* Add format traits for `Target` and `Work` [#5626](https://github.com/rust-bitcoin/rust-bitcoin/pull/5626)
+* Move remaining `pow` types to units [#5608](https://github.com/rust-bitcoin/rust-bitcoin/pull/5608)
+* Extend `parse_int` and add hex string parsing to integer wrapper types [#5782](https://github.com/rust-bitcoin/rust-bitcoin/pull/5782)
+* Remove `From<SubError>` for error types [#5855](https://github.com/rust-bitcoin/rust-bitcoin/pull/5855)
+* Re-export `serde` and `arbitrary` when they appear in public API [#5862](https://github.com/rust-bitcoin/rust-bitcoin/pull/5862)
+* Unify `FromStr` impls for integer wrapper types [#5783](https://github.com/rust-bitcoin/rust-bitcoin/pull/5783)
+* Add `serde` support for `Vec<T>` [#5786](https://github.com/rust-bitcoin/rust-bitcoin/pull/5786)
+* Add next target calculation [#5544](https://github.com/rust-bitcoin/rust-bitcoin/pull/5544)
+* Move and improve `CompactTarget` [#5511](https://github.com/rust-bitcoin/rust-bitcoin/pull/5511)
+* Add `fmt` traits for simple wrapper types [#5510](https://github.com/rust-bitcoin/rust-bitcoin/pull/5510)
+* Upgrade to `consensus-encoding 0.2.0`
+
+Please note the breaking change in how we define encoders had the effect of breaking
+every type in the lib so there is no semver tricking done in this release - sorry.
+
 # 0.3.0 - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
