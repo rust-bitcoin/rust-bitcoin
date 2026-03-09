@@ -1538,7 +1538,7 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
     use crate::script::{
-        ScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
+        ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
     };
     use crate::TxIn;
 

@@ -1313,8 +1313,10 @@ mod tests {
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::{
-        RedeemScriptBuf, ScriptBufExt as _, ScriptPubKeyBuf, ScriptSigBuf, WitnessScriptBuf,
+        RedeemScriptBuf, ScriptPubKeyBuf, ScriptSigBuf, WitnessScriptBuf,
     };
+    #[cfg(all(feature = "rand", feature = "std"))]
+    use crate::script::ScriptBufExt as _;
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
     use crate::Sequence;
