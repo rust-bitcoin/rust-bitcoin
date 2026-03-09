@@ -30,7 +30,7 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 pub use secp256k1::{constants, Parity, Verification};
 pub use encapsulate::{
     CompressedPublicKey, Keypair, PrivateKey, PublicKey, SerializedXOnlyPublicKey, TweakedKeypair,
-    TweakedPublicKey, XOnlyPublicKey,
+    TweakedPublicKey, WifKey, XOnlyPublicKey,
 };
 #[cfg(all(feature = "rand", feature = "std"))]
 pub use secp256k1::rand;
@@ -145,26 +145,20 @@ mod encapsulate {
     pub struct PrivateKey {
         /// Whether this private key should be serialized as compressed.
         compressed: bool,
-        /// The network kind on which this key should be used.
-        network: NetworkKind,
         /// The actual ECDSA key.
         inner: secp256k1::SecretKey,
     }
 
     impl PrivateKey {
-        /// Constructs a new compressed ECDSA private key from the provided secp256k1 private
-        /// key and the specified network.
-        pub fn from_secp(key: secp256k1::SecretKey, network: impl Into<NetworkKind>) -> Self {
-            Self { compressed: true, network: network.into(), inner: key }
+        /// Constructs a new compressed ECDSA private key from the provided secp256k1 private key.
+        pub fn from_secp(key: secp256k1::SecretKey) -> Self {
+            Self { compressed: true, inner: key }
         }
 
         /// Constructs a new uncompressed (legacy) ECDSA private key from the provided secp256k1
-        /// private key and the specified network.
-        pub fn from_secp_uncompressed(
-            key: secp256k1::SecretKey,
-            network: impl Into<NetworkKind>,
-        ) -> Self {
-            Self { compressed: false, network: network.into(), inner: key }
+        /// private key.
+        pub fn from_secp_uncompressed(key: secp256k1::SecretKey) -> Self {
+            Self { compressed: false, inner: key }
         }
 
         /// Returns a reference to the inner secp256k1 secret key.
@@ -174,6 +168,37 @@ mod encapsulate {
         /// Returns whether this private key should be serialized as compressed.
         #[inline]
         pub fn compressed(&self) -> bool { self.compressed }
+    }
+
+    /// A Bitcoin ECDSA private key with known network for WIF.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct WifKey {
+        /// The actual key
+        inner: PrivateKey,
+        /// The network kind on which this key should be used.
+        network: NetworkKind,
+    }
+
+    impl WifKey {
+        /// Constructs a new WIF private key from the provided [`PrivateKey`] and the
+        /// specified network.
+        pub fn from_private_key(key: PrivateKey, network: impl Into<NetworkKind>) -> Self {
+            Self { network: network.into(), inner: key }
+        }
+
+        /// Constructs a new WIF private key from the provided secp256k1 private
+        /// key and the specified network.
+        ///
+        /// This constructs a compressed WIF key. If you need an uncompressed key, please
+        /// use [`Self::from_private_key`] and [`PrivateKey::from_secp_uncompressed`].
+        pub fn from_secp(key: secp256k1::SecretKey, network: impl Into<NetworkKind>) -> Self {
+            let network = network.into();
+            Self { network, inner: PrivateKey::from_secp(key) }
+        }
+
+        /// Returns a reference to the [`PrivateKey`].
+        #[inline]
+        pub fn as_inner(&self) -> &PrivateKey { &self.inner }
 
         /// Returns the [`NetworkKind`] of this key.
         #[inline]
@@ -893,9 +918,9 @@ impl PrivateKey {
     /// Constructs a new compressed ECDSA private key using the secp256k1 algorithm and
     /// a secure random number generator.
     #[cfg(all(feature = "rand", feature = "std"))]
-    pub fn generate(network: impl Into<NetworkKind>) -> Self {
+    pub fn generate() -> Self {
         let secret_key = secp256k1::SecretKey::new(&mut rand::rng());
-        Self::from_secp(secret_key, network.into())
+        Self::from_secp(secret_key)
     }
 
     /// Constructs a new public key from this private key.
@@ -921,11 +946,8 @@ impl PrivateKey {
     ///
     /// Errors when the secret key is invalid: when it is all-zeros or would exceed
     /// the curve order when interpreted as a big-endian unsigned integer.
-    pub fn from_byte_array(
-        data: [u8; 32],
-        network: impl Into<NetworkKind>,
-    ) -> Result<Self, secp256k1::Error> {
-        Ok(Self::from_secp(secp256k1::SecretKey::from_secret_bytes(data)?, network))
+    pub fn from_byte_array(data: [u8; 32]) -> Result<Self, secp256k1::Error> {
+        Ok(Self::from_secp(secp256k1::SecretKey::from_secret_bytes(data)?))
     }
 
     /// Deserializes a private key from a slice.
@@ -939,12 +961,32 @@ impl PrivateKey {
     #[deprecated(since = "TBD", note = "use from_byte_array instead")]
     pub fn from_slice(
         data: &[u8],
-        network: impl Into<NetworkKind>,
+        _network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
         let array = data.try_into().map_err(|_| secp256k1::Error::InvalidSecretKey)?;
-        Self::from_byte_array(array, network)
+        Self::from_byte_array(array)
     }
 
+    /// Returns a new private key with the negated secret value.
+    ///
+    /// The resulting key corresponds to the same x-only public key (identical x-coordinate)
+    /// but with the opposite y-coordinate parity. This is useful for ensuring compatibility
+    /// with specific public key formats and BIP-0340 requirements.
+    #[inline]
+    pub fn negate(&self) -> Self {
+        match self.compressed() {
+            true => Self::from_secp(self.as_inner().negate()),
+            false => Self::from_secp_uncompressed(self.as_inner().negate()),
+        }
+    }
+}
+
+impl ops::Index<ops::RangeFull> for PrivateKey {
+    type Output = [u8];
+    fn index(&self, _: ops::RangeFull) -> &[u8] { &self.as_inner()[..] }
+}
+
+impl WifKey {
     /// Formats the private key to WIF format.
     ///
     /// # Errors
@@ -956,7 +998,7 @@ impl PrivateKey {
         ret[0] = if self.network().is_mainnet() { 128 } else { 239 };
 
         ret[1..33].copy_from_slice(&self.as_inner()[..]);
-        let privkey = if self.compressed() {
+        let privkey = if self.as_inner().compressed() {
             ret[33] = 1;
             base58::encode_check(&ret[..])
         } else {
@@ -967,7 +1009,7 @@ impl PrivateKey {
 
     /// Gets the WIF encoding of this private key.
     #[allow(clippy::missing_panics_doc)]
-    pub fn to_wif(self) -> String {
+    pub fn to_wif(&self) -> String {
         let mut buf = String::new();
         buf.write_fmt(format_args!("{}", self)).unwrap();
         buf.shrink_to_fit();
@@ -1009,57 +1051,38 @@ impl PrivateKey {
             }
         };
 
-        Ok(match compressed {
-            true => Self::from_secp(secp256k1::SecretKey::from_secret_bytes(*key)?, network),
-            false => Self::from_secp_uncompressed(
-                secp256k1::SecretKey::from_secret_bytes(*key)?,
-                network,
-            ),
-        })
-    }
-
-    /// Returns a new private key with the negated secret value.
-    ///
-    /// The resulting key corresponds to the same x-only public key (identical x-coordinate)
-    /// but with the opposite y-coordinate parity. This is useful for ensuring compatibility
-    /// with specific public key formats and BIP-0340 requirements.
-    #[inline]
-    pub fn negate(&self) -> Self {
-        match self.compressed() {
-            true => Self::from_secp(self.as_inner().negate(), self.network()),
-            false => Self::from_secp_uncompressed(self.as_inner().negate(), self.network()),
-        }
+        let sec_key = secp256k1::SecretKey::from_secret_bytes(*key)?;
+        let priv_key = match compressed {
+            true => PrivateKey::from_secp(sec_key),
+            false => PrivateKey::from_secp_uncompressed(sec_key),
+        };
+        Ok(Self::from_private_key(priv_key, network))
     }
 }
 
-impl fmt::Display for PrivateKey {
+impl fmt::Display for WifKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_wif(f) }
 }
 
-impl FromStr for PrivateKey {
+impl FromStr for WifKey {
     type Err = FromWifError;
     fn from_str(s: &str) -> Result<Self, FromWifError> { Self::from_wif(s) }
 }
 
-impl ops::Index<ops::RangeFull> for PrivateKey {
-    type Output = [u8];
-    fn index(&self, _: ops::RangeFull) -> &[u8] { &self.as_inner()[..] }
-}
-
 #[cfg(feature = "serde")]
-impl serde::Serialize for PrivateKey {
+impl serde::Serialize for WifKey {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         s.collect_str(self)
     }
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for PrivateKey {
+impl<'de> serde::Deserialize<'de> for WifKey {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         struct WifVisitor;
 
         impl serde::de::Visitor<'_> for WifVisitor {
-            type Value = PrivateKey;
+            type Value = WifKey;
 
             fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                 formatter.write_str("an ASCII WIF string")
@@ -1070,7 +1093,7 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
                 E: serde::de::Error,
             {
                 if let Ok(s) = core::str::from_utf8(v) {
-                    s.parse::<PrivateKey>().map_err(E::custom)
+                    s.parse::<WifKey>().map_err(E::custom)
                 } else {
                     Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                 }
@@ -1080,7 +1103,7 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
             where
                 E: serde::de::Error,
             {
-                v.parse::<PrivateKey>().map_err(E::custom)
+                v.parse::<WifKey>().map_err(E::custom)
             }
         }
 
@@ -1735,7 +1758,7 @@ mod tests {
     #[test]
     fn key_derivation() {
         // mainnet compressed WIF with invalid compression flag.
-        let sk = PrivateKey::from_wif("L2x4uC2YgfFWZm9tF4pjDnVR6nJkheizFhEr2KvDNnTEmEqVzPJY");
+        let sk = WifKey::from_wif("L2x4uC2YgfFWZm9tF4pjDnVR6nJkheizFhEr2KvDNnTEmEqVzPJY");
         assert!(matches!(
             sk,
             Err(FromWifError::InvalidWifCompressionFlag(InvalidWifCompressionFlagError {
@@ -1745,28 +1768,28 @@ mod tests {
 
         // testnet compressed
         let sk =
-            PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+            WifKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         assert_eq!(sk.network(), NetworkKind::Test);
-        assert!(sk.compressed());
+        assert!(sk.as_inner().compressed());
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
-        let pk = Address::p2pkh(sk.public_key(), sk.network());
+        let pk = Address::p2pkh(sk.as_inner().public_key(), sk.network());
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
         assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
         let sk_str =
-            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
+            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<WifKey>().unwrap();
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
 
         // mainnet uncompressed
         let sk =
-            PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+            WifKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
         assert_eq!(sk.network(), NetworkKind::Main);
-        assert!(!sk.compressed());
+        assert!(!sk.as_inner().compressed());
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
-        let mut pk = sk.public_key();
+        let mut pk = sk.as_inner().public_key();
         assert!(!pk.compressed());
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
         assert_eq!(pk, "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
@@ -1843,8 +1866,8 @@ mod tests {
             0xe9, 0x71, 0xd8, 0x6b, 0x5e, 0x61, 0x87, 0x5d,
         ];
 
-        let sk = KEY_WIF.parse::<PrivateKey>().unwrap();
-        let pk = PublicKey::from_private_key(sk);
+        let sk = KEY_WIF.parse::<WifKey>().unwrap();
+        let pk = PublicKey::from_private_key(*sk.as_inner());
         let pk_u = PublicKey::from_secp_uncompressed(pk.to_inner());
 
         assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);
@@ -2164,7 +2187,7 @@ mod tests {
                 "1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9",
             )
             .unwrap();
-            let sk = PrivateKey::from_byte_array(bytes, NetworkKind::Test).unwrap();
+            let sk = PrivateKey::from_byte_array(bytes).unwrap();
             Keypair::from_secret_key(sk.as_inner())
         };
 

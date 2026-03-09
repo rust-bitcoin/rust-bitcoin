@@ -11,7 +11,7 @@ use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::{PushBytes, ScriptBuf, ScriptBufExt as _};
 use bitcoin::{
     absolute, script, transaction, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptPubKeyBuf,
-    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Witness, WifKey,
 };
 use hex_unstable::FromHex;
 
@@ -119,8 +119,8 @@ fn build_extended_private_key() -> Xpriv {
 
     let xpriv = extended_private_key.parse::<Xpriv>().unwrap();
 
-    let sk = PrivateKey::from_wif(seed).unwrap();
-    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.as_inner().to_secret_bytes());
+    let sk = WifKey::from_wif(seed).unwrap();
+    let seeded = Xpriv::new_master(NetworkKind::Test, &sk.as_inner().to_bytes());
     assert_eq!(xpriv, seeded);
 
     xpriv
@@ -309,13 +309,13 @@ fn parse_and_verify_keys(
 ) -> BTreeMap<PublicKey, PrivateKey> {
     let mut key_map = BTreeMap::new();
     for (secret_key, derivation_path) in sk_path.iter() {
-        let wif_priv = PrivateKey::from_wif(secret_key).expect("failed to parse key");
+        let wif_priv = WifKey::from_wif(secret_key).expect("failed to parse key");
 
         let path =
             derivation_path.into_derivation_path().expect("failed to convert derivation path");
         let derived_priv =
             ext_priv.derive_xpriv(&path).expect("derivation path too long").to_private_key();
-        assert_eq!(wif_priv, derived_priv);
+        assert_eq!(wif_priv.as_inner(), &derived_priv);
         let derived_pub = derived_priv.public_key();
         key_map.insert(derived_pub, derived_priv);
     }

@@ -31,9 +31,8 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PrivateKey, PublicKey,
-    ScriptPubKeyBuf, ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid,
-    Work,
+    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PublicKey, ScriptPubKeyBuf,
+    ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid, Work, WifKey,
 };
 use hex_unstable::FromHex;
 
@@ -175,7 +174,7 @@ fn serde_regression_child_number() {
 
 #[test]
 fn serde_regression_private_key() {
-    let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+    let sk = WifKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
 
     let got = serialize(&sk).unwrap();
     let want = include_bytes!("data/serde/private_key_bincode") as &[_];

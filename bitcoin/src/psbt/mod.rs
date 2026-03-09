@@ -2350,7 +2350,7 @@ mod tests {
         use secp256k1::rand;
 
         let sk = SecretKey::new(&mut rand::rng());
-        let priv_key = PrivateKey::from_secp(sk, NetworkKind::Test);
+        let priv_key = PrivateKey::from_secp(sk);
         let pk = PublicKey::from_private_key(priv_key);
 
         (priv_key, pk)
