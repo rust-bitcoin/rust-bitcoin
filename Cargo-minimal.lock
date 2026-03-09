@@ -80,7 +80,7 @@ version = "0.0.0"
 
 [[package]]
 name = "bitcoin-consensus-encoding"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bitcoin-internals",
  "hex-conservative 0.3.2",
