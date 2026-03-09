@@ -36,7 +36,8 @@ io = { package = "bitcoin-io", path = "../io", version = "0.6.0", default-featur
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false, features = ["alloc"]}
 primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.102.0", default-features = false, features = ["alloc", "hex"] }
 secp256k1 = { version = "0.32.0-beta.2", default-features = false, features = ["alloc"] }
-units = { package = "bitcoin-units", path = "../units", version = "0.3.0", default-features = false, features = ["alloc"] }
+
+units = { package = "bitcoin-units", path = "../units", version = "0.4.0", default-features = false, features = ["alloc"] }
 
 arbitrary = { version = "1.4.1", optional = true }
 base64 = { version = "0.22.0", optional = true, default-features = false, features = ["alloc"] }

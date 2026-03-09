@@ -1,3 +1,14 @@
+# 0.4.0 - 2026-03-09
+
+- Add next target calculation [#5544](https://github.com/rust-bitcoin/rust-bitcoin/pull/5544)
+- Move and improve `CompactTarget` [#5511](https://github.com/rust-bitcoin/rust-bitcoin/pull/5511)
+- Add `fmt` traits for simple wrapper types [#5510](https://github.com/rust-bitcoin/rust-bitcoin/pull/5510)
+- Upgrade to `consensus-encoding 0.2.0`
+
+Please note the breaking change in how we define encoders had the
+effect of breaking every type in the lib so there is no semver
+tricking done in this release - sorry.
+
 # 0.3.0 - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
