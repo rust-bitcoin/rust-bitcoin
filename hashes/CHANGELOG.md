@@ -1,3 +1,19 @@
+# 0.21.0 - 2026-03-09
+
+Props to jrakibi, absolutely killing it this release.
+
+* Wipe secret data in HMAC and HKDF [#5706](https://github.com/rust-bitcoin/rust-bitcoin/pull/5706)
+* Simplify trait bounds [#5682](https://github.com/rust-bitcoin/rust-bitcoin/pull/5682)
+* Add NIST test vectors and chunk-combination tests [#5660](https://github.com/rust-bitcoin/rust-bitcoin/pull/5660)
+* Test `hmac` incremental input [#5624](https://github.com/rust-bitcoin/rust-bitcoin/pull/5624)
+* Fix incremental hashing for `sha3-256` [#5604](https://github.com/rust-bitcoin/rust-bitcoin/pull/5604)
+* Fix reverse hashes for no-hex debug [#5602](https://github.com/rust-bitcoin/rust-bitcoin/pull/5602)
+* Add `cpufeatures` for `no_std` SIMD detection [#5598](https://github.com/rust-bitcoin/rust-bitcoin/pull/5598)
+* Introduce `MuHash` wrapper type [#5594](https://github.com/rust-bitcoin/rust-bitcoin/pull/5594)
+* Include midstate and buffer in `MidstateError` [#5567](https://github.com/rust-bitcoin/rust-bitcoin/pull/5567)
+* Add SHA256 ARM hardware acceleration [#5493](https://github.com/rust-bitcoin/rust-bitcoin/pull/5493)
+* Upgrade to `consensus-encoding 0.2.0`
+
 # 0.20.0 - 2026-01-08
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
