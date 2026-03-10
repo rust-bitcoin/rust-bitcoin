@@ -64,4 +64,7 @@ exclude_re = [
     "consensus_encoding/.* decode_from_slice", # Mutations cause an infinite loop
     "consensus_encoding/.* decode_from_read", # Mutations cause an infinite loop
     "consensus_encoding/.* <impl Decoder for .*>::push_bytes", # Mutations cause an infinite loop
+    "consensus_encoding/.* <impl Encoder for .*>::advance", # Replacing the return with true causes an infinite loop.
+    "consensus_encoding/.* delete ! in flush_to_vec", # Causes an infinite loop.
+    "consensus_encoding/.* delete ! in flush_to_writer", # Causes an infinite loop.
 ]
