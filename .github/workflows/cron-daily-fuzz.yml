@@ -67,7 +67,7 @@ jobs:
             fuzz/target
             target
           key: cache-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
-      - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+      - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
         with:
           toolchain: '1.74.0'
       - name: fuzz
