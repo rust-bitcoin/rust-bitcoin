@@ -245,7 +245,7 @@ pub enum FromHexError {
     /// Error parsing the hex input string.
     Hex(hex::DecodeVariableLengthBytesError),
     /// Error when decoding the script.
-    Decoder(ScriptBufDecoderError),
+    Decoder(encoding::DecodeError<ScriptBufDecoderError>),
 }
 
 #[cfg(feature = "hex")]
@@ -279,8 +279,8 @@ impl From<hex::DecodeVariableLengthBytesError> for FromHexError {
 }
 
 #[cfg(feature = "hex")]
-impl From<ScriptBufDecoderError> for FromHexError {
-    fn from(e: ScriptBufDecoderError) -> Self { Self::Decoder(e) }
+impl From<encoding::DecodeError<ScriptBufDecoderError>> for FromHexError {
+    fn from(e: encoding::DecodeError<ScriptBufDecoderError>) -> Self { Self::Decoder(e) }
 }
 
 #[cfg(feature = "arbitrary")]
