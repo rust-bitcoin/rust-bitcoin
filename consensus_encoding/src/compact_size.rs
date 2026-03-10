@@ -20,6 +20,13 @@ pub(crate) const MAX_VEC_SIZE: usize = 4_000_000;
 /// The maximum length of a compact size encoding.
 const SIZE: usize = 9;
 
+/// Compact size prefix byte indicating a 2-byte `u16` payload follows.
+const PREFIX_U16: u8 = 0xFD;
+/// Compact size prefix byte indicating a 4-byte `u32` payload follows.
+const PREFIX_U32: u8 = 0xFE;
+/// Compact size prefix byte indicating an 8-byte `u64` payload follows.
+const PREFIX_U64: u8 = 0xFF;
+
 /// Encoder for a compact size encoded integer.
 #[derive(Debug, Clone)]
 pub struct CompactSizeEncoder {
@@ -83,16 +90,16 @@ impl CompactSizeEncoder {
             }
             0xFD..=0xFFFF => {
                 let v = value as u16; // Cast ok because of match.
-                res.push(0xFD);
+                res.push(PREFIX_U16);
                 res.extend_from_slice(&v.to_le_bytes());
             }
             0x10000..=0xFFFF_FFFF => {
                 let v = value as u32; // Cast ok because of match.
-                res.push(0xFE);
+                res.push(PREFIX_U32);
                 res.extend_from_slice(&v.to_le_bytes());
             }
             _ => {
-                res.push(0xFF);
+                res.push(PREFIX_U64);
                 res.extend_from_slice(&value.to_le_bytes());
             }
         }
@@ -254,9 +261,9 @@ fn compact_size_push_bytes(buf: &mut ArrayVec<u8, 9>, bytes: &mut &[u8]) -> bool
         *bytes = &bytes[1..];
     }
     let len = match buf[0] {
-        0xFF => 9,
-        0xFE => 5,
-        0xFD => 3,
+        PREFIX_U64 => 9,
+        PREFIX_U32 => 5,
+        PREFIX_U16 => 3,
         _ => 1,
     };
     let to_copy = bytes.len().min(len - buf.len());
@@ -271,9 +278,9 @@ fn compact_size_read_limit(buf: &ArrayVec<u8, 9>) -> usize {
     match buf.len() {
         0 => 1,
         already_read => match buf[0] {
-            0xFF => 9_usize.saturating_sub(already_read),
-            0xFE => 5_usize.saturating_sub(already_read),
-            0xFD => 3_usize.saturating_sub(already_read),
+            PREFIX_U64 => 9_usize.saturating_sub(already_read),
+            PREFIX_U32 => 5_usize.saturating_sub(already_read),
+            PREFIX_U16 => 3_usize.saturating_sub(already_read),
             _ => 0,
         },
     }
@@ -294,7 +301,7 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
         .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
 
     match *first {
-        0xFF => {
+        PREFIX_U64 => {
             let x = u64::from_le_bytes(arr(payload)?);
             if x < 0x100_000_000 {
                 Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
@@ -302,7 +309,7 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
                 Ok(x)
             }
         }
-        0xFE => {
+        PREFIX_U32 => {
             let x = u32::from_le_bytes(arr(payload)?);
             if x < 0x10000 {
                 Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
@@ -310,7 +317,7 @@ fn compact_size_decode_u64(buf: &ArrayVec<u8, 9>) -> Result<u64, CompactSizeDeco
                 Ok(x.into())
             }
         }
-        0xFD => {
+        PREFIX_U16 => {
             let x = u16::from_le_bytes(arr(payload)?);
             if x < 0xFD {
                 Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
