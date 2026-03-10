@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   zizmor:
-    name: zizmor latest via PyPI
+    name: zizmor via PyPI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,4 +22,4 @@ jobs:
         uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v5
 
       - name: Run zizmor 🌈
-        run: uvx zizmor .
+        run: uvx zizmor@1.22.0 .
