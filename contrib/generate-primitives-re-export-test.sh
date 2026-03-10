@@ -99,6 +99,9 @@ EOF
         # Extract pub mod
         elif [[ "$line" =~ ^pub\ mod\ (bitcoin_units::[^[:space:]]+)$ ]]; then
             path="${BASH_REMATCH[1]}"
+        # Extract pub use (re-exports)
+        elif [[ "$line" =~ ^pub\ use\ (bitcoin_primitives::[^[:space:]]+)$ ]]; then
+            path="${BASH_REMATCH[1]}"
         fi
 
         if [[ -n "$path" ]]; then
