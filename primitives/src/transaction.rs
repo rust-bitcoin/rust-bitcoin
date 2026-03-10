@@ -884,7 +884,7 @@ impl TxIn {
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`TxIn`] type.
     pub struct TxInEncoder<'e>(
         Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
@@ -1052,7 +1052,7 @@ pub struct TxOut {
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`TxOut`] type.
     pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>);
 }
