@@ -52,14 +52,14 @@ impl TxMerkleNode {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`TxMerkleNode`] type.
-    pub struct TxMerkleNodeEncoder<'e>(encoding::ArrayEncoder<32>);
+    pub struct TxMerkleNodeEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
 }
 
 impl encoding::Encodable for TxMerkleNode {
     type Encoder<'e> = TxMerkleNodeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
-        TxMerkleNodeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
-            self.to_byte_array(),
+        TxMerkleNodeEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
+            self.as_byte_array(),
         ))
     }
 }
