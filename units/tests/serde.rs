@@ -136,6 +136,42 @@ fn serde_amount_as_sat() {
 #[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
+fn serde_amount_as_sat_vec() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::amount::serde::as_sat::vec")]
+        pub amt: Vec<Amount>,
+        #[serde(with = "crate::amount::serde::as_sat::vec")]
+        pub samt: Vec<SignedAmount>,
+    }
+
+    serde_test::assert_tokens(
+        &T {
+            amt: vec![sat(123), sat(456), sat(789)],
+            samt: vec![ssat(-123), ssat(-456), ssat(-789)],
+        },
+        &[
+            serde_test::Token::Struct { name: "T", len: 2 },
+            serde_test::Token::Str("amt"),
+            serde_test::Token::Seq { len: Some(3) },
+            serde_test::Token::I64(123),
+            serde_test::Token::I64(456),
+            serde_test::Token::I64(789),
+            serde_test::Token::SeqEnd,
+            serde_test::Token::Str("samt"),
+            serde_test::Token::Seq { len: Some(3) },
+            serde_test::Token::I64(-123),
+            serde_test::Token::I64(-456),
+            serde_test::Token::I64(-789),
+            serde_test::Token::SeqEnd,
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn serde_amount_as_btc() {
     use serde_json;
@@ -162,6 +198,42 @@ fn serde_amount_as_btc() {
 #[test]
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
+fn serde_amount_as_btc_vec() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::amount::serde::as_btc::vec")]
+        pub amt: Vec<Amount>,
+        #[serde(with = "crate::amount::serde::as_btc::vec")]
+        pub samt: Vec<SignedAmount>,
+    }
+
+    serde_test::assert_tokens(
+        &T {
+            amt: vec![sat(123), sat(456), sat(789)],
+            samt: vec![ssat(-123), ssat(-456), ssat(-789)],
+        },
+        &[
+            serde_test::Token::Struct { name: "T", len: 2 },
+            serde_test::Token::Str("amt"),
+            serde_test::Token::Seq { len: Some(3) },
+            serde_test::Token::F64(0.000_001_23),
+            serde_test::Token::F64(0.000_004_56),
+            serde_test::Token::F64(0.000_007_89),
+            serde_test::Token::SeqEnd,
+            serde_test::Token::Str("samt"),
+            serde_test::Token::Seq { len: Some(3) },
+            serde_test::Token::F64(-0.000_001_23),
+            serde_test::Token::F64(-0.000_004_56),
+            serde_test::Token::F64(-0.000_007_89),
+            serde_test::Token::SeqEnd,
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
 fn serde_amount_as_str() {
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct T {
@@ -179,6 +251,42 @@ fn serde_amount_as_str() {
             serde_test::Token::String("1.23456789"),
             serde_test::Token::String("samt"),
             serde_test::Token::String("-1.23456789"),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+fn serde_amount_as_str_vec() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::amount::serde::as_str::vec")]
+        pub amt: Vec<Amount>,
+        #[serde(with = "crate::amount::serde::as_str::vec")]
+        pub samt: Vec<SignedAmount>,
+    }
+
+    serde_test::assert_tokens(
+        &T {
+            amt: vec![sat(123), sat(456), sat(789)],
+            samt: vec![ssat(-123), ssat(-456), ssat(-789)],
+        },
+        &[
+            serde_test::Token::Struct { name: "T", len: 2 },
+            serde_test::Token::String("amt"),
+            serde_test::Token::Seq { len: Some(3) },
+            serde_test::Token::String("0.00000123"),
+            serde_test::Token::String("0.00000456"),
+            serde_test::Token::String("0.00000789"),
+            serde_test::Token::SeqEnd,
+            serde_test::Token::String("samt"),
+            serde_test::Token::Seq { len: Some(3) },
+            serde_test::Token::String("-0.00000123"),
+            serde_test::Token::String("-0.00000456"),
+            serde_test::Token::String("-0.00000789"),
+            serde_test::Token::SeqEnd,
             serde_test::Token::StructEnd,
         ],
     );
