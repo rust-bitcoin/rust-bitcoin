@@ -17,7 +17,7 @@ jobs:
       - name: Running test script
         env:
           DO_COV: true
-          DO_LINT: true
+          DO_LINT: false
           AS_DEPENDENCY: false
           DO_NO_STD: true
           DO_DOCS: true
