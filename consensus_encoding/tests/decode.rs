@@ -380,6 +380,7 @@ fn decode_from_read_unbuffered_extra_data() {
 struct Inner(u32);
 
 #[cfg(feature = "alloc")]
+#[derive(Clone)]
 struct InnerDecoder(ArrayDecoder<4>);
 
 #[cfg(feature = "alloc")]
@@ -410,7 +411,7 @@ impl Decodable for Inner {
 struct Test(Vec<Inner>);
 
 #[cfg(feature = "alloc")]
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct TestDecoder(VecDecoder<Inner>);
 
 #[cfg(feature = "alloc")]
@@ -572,6 +573,30 @@ fn vec_decoder_two_items() {
     let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
 
     assert_eq!(got, want);
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn vec_decoder_clone_mid_decode() {
+    // Feed the length prefix and first item, clone, then feed the second item to both.
+    let prefix = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE]; // length=2, first item
+    let second = vec![0xBE, 0xBA, 0xFE, 0xCA];       // second item
+
+    let mut slice = prefix.as_slice();
+    let mut decoder = Test::decoder();
+    decoder.push_bytes(&mut slice).unwrap();
+
+    let mut clone = decoder.clone();
+
+    let mut slice = second.as_slice();
+    decoder.push_bytes(&mut slice).unwrap();
+    let got = decoder.end().unwrap();
+    assert_eq!(got, Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]));
+
+    let mut slice = second.as_slice();
+    clone.push_bytes(&mut slice).unwrap();
+    let got = clone.end().unwrap();
+    assert_eq!(got, Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]));
 }
 
 #[cfg(feature = "alloc")]

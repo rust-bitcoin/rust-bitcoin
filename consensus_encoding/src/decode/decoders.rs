@@ -28,6 +28,7 @@ const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
 ///
 /// The encoding is expected to start with the number of encoded bytes (length prefix).
 #[cfg(feature = "alloc")]
+#[derive(Debug, Clone)]
 pub struct ByteVecDecoder {
     prefix_decoder: Option<CompactSizeDecoder>,
     buffer: Vec<u8>,
@@ -143,6 +144,38 @@ pub struct VecDecoder<T: Decodable> {
     length: usize,
     buffer: Vec<T>,
     decoder: Option<<T as Decodable>::Decoder>,
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Decodable> fmt::Debug for VecDecoder<T>
+where
+    T::Decoder: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("VecDecoder")
+            .field("prefix_decoder", &self.prefix_decoder)
+            .field("length", &self.length)
+            // Print the count rather than contents to avoid requiring `T: Debug`.
+            .field("buffer_len", &self.buffer.len())
+            .field("decoder", &self.decoder)
+            .finish()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Decodable> Clone for VecDecoder<T>
+where
+    T: Clone,
+    T::Decoder: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            prefix_decoder: self.prefix_decoder.clone(),
+            length: self.length,
+            buffer: self.buffer.clone(),
+            decoder: self.decoder.clone(),
+        }
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -264,6 +297,7 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
 }
 
 /// A decoder that expects exactly N bytes and returns them as an array.
+#[derive(Debug, Clone)]
 pub struct ArrayDecoder<const N: usize> {
     buffer: [u8; N],
     bytes_written: usize,
@@ -337,6 +371,23 @@ where
     /// Constructs a new composite decoder.
     pub const fn new(first: A, second: B) -> Self {
         Self { state: Decoder2State::First(first, second) }
+    }
+}
+
+impl<A, B> fmt::Debug for Decoder2<A, B>
+where
+    A: Decoder + fmt::Debug,
+    B: Decoder + fmt::Debug,
+    A::Output: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.state {
+            Decoder2State::First(a, b) =>
+                f.debug_tuple("First").field(a).field(b).finish(),
+            Decoder2State::Second(out, b) =>
+                f.debug_tuple("Second").field(out).field(b).finish(),
+            Decoder2State::Errored => write!(f, "Errored"),
+        }
     }
 }
 
@@ -435,6 +486,17 @@ where
     }
 }
 
+impl<A, B, C> fmt::Debug for Decoder3<A, B, C>
+where
+    A: Decoder + fmt::Debug,
+    B: Decoder + fmt::Debug,
+    C: Decoder + fmt::Debug,
+    A::Output: fmt::Debug,
+    B::Output: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.inner.fmt(f) }
+}
+
 impl<A, B, C> Decoder for Decoder3<A, B, C>
 where
     A: Decoder,
@@ -491,6 +553,19 @@ where
     pub const fn new(dec_1: A, dec_2: B, dec_3: C, dec_4: D) -> Self {
         Self { inner: Decoder2::new(Decoder2::new(dec_1, dec_2), Decoder2::new(dec_3, dec_4)) }
     }
+}
+
+impl<A, B, C, D> fmt::Debug for Decoder4<A, B, C, D>
+where
+    A: Decoder + fmt::Debug,
+    B: Decoder + fmt::Debug,
+    C: Decoder + fmt::Debug,
+    D: Decoder + fmt::Debug,
+    A::Output: fmt::Debug,
+    B::Output: fmt::Debug,
+    C::Output: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.inner.fmt(f) }
 }
 
 impl<A, B, C, D> Decoder for Decoder4<A, B, C, D>
@@ -1193,6 +1268,7 @@ mod tests {
 
     /// The decoder for the [`Inner`] type.
     #[cfg(feature = "alloc")]
+    #[derive(Clone)]
     pub struct InnerDecoder(ArrayDecoder<4>);
 
     #[cfg(feature = "alloc")]
@@ -1224,7 +1300,7 @@ mod tests {
 
     /// The decoder for the [`Test`] type.
     #[cfg(feature = "alloc")]
-    #[derive(Default)]
+    #[derive(Clone, Default)]
     pub struct TestDecoder(VecDecoder<Inner>);
 
     #[cfg(feature = "alloc")]
@@ -1252,6 +1328,52 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn vec_decoder_empty() {
+         // Empty with a couple of arbitrary extra bytes.
+         let encoded = vec![0x00, 0xFF, 0xFF];
+ 
+         let mut slice = encoded.as_slice();
+         let mut decoder = Test::decoder();
+         assert!(!decoder.push_bytes(&mut slice).unwrap());
+ 
+         let got = decoder.end().unwrap();
+         let want = Test(vec![]);
+ 
+         assert_eq!(got, want);
+     }
+ 
+     #[test]
+     #[cfg(feature = "alloc")]
+     fn vec_decoder_one_item() {
+         let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE];
+ 
+         let mut slice = encoded.as_slice();
+         let mut decoder = Test::decoder();
+         decoder.push_bytes(&mut slice).unwrap();
+ 
+         let got = decoder.end().unwrap();
+         let want = Test(vec![Inner(0xDEAD_BEEF)]);
+ 
+         assert_eq!(got, want);
+     }
+ 
+     #[test]
+     #[cfg(feature = "alloc")]
+     fn vec_decoder_two_items() {
+         let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
+ 
+         let mut slice = encoded.as_slice();
+         let mut decoder = Test::decoder();
+         decoder.push_bytes(&mut slice).unwrap();
+ 
+         let got = decoder.end().unwrap();
+         let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
+ 
+         assert_eq!(got, want);
+     }
+ 
+     #[test]
+     #[cfg(feature = "alloc")]
     fn vec_decoder_reserves_in_batches() {
         // A small number of extra elements so we extend exactly by the remainder
         // instead of another full batch.
