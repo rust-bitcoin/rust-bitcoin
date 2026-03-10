@@ -73,6 +73,21 @@ jobs:
       - name: "Run benches"
         run: cargo rbmt bench
 
+  Prerelease:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # History required for version bump detection.
+      - name: "Fetch master branch"
+        run: git fetch origin master:master
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
+      - name: "Run pre-release checks"
+        run: cargo rbmt prerelease
+
   # Non cargo-rbmt jobs manage their toolchain version directly.
   Prepare:
     runs-on: ubuntu-24.04

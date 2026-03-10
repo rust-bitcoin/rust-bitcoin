@@ -12,3 +12,6 @@ features_with_std = []
 # Features to test without the `std` feature.
 # Tests each feature alone, all pairs, and all together.
 features_without_std = ["alloc"]
+
+[prerelease]
+enabled = true

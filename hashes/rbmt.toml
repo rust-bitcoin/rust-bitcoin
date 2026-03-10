@@ -17,3 +17,6 @@ features_without_std = ["alloc", "serde", "small-hash"]
 allowed_duplicates = [
     "hex-conservative",
 ]
+
+[prerelease]
+enabled = true
