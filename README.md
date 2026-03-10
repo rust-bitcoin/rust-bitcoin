@@ -76,7 +76,7 @@ For more information please see `./CONTRIBUTING.md`.
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should always compile with any combination of features on **Rust 1.51.0**.
+This library should always compile with any combination of features on **Rust 1.56.1**.
 
 To build with the MSRV you may need to pin some dependencies, see
 `Cargo-recent.lock` for dependency versions that build.
