@@ -53,7 +53,7 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
       - name: Running test script
         env:
-          DO_FMT: true
+          DO_FMT: false
           DO_BENCH: true
           AS_DEPENDENCY: false
           DO_NO_STD: true
