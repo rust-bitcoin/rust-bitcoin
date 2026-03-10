@@ -2216,14 +2216,20 @@ pub fn bitcoin_units::amount::serde::as_btc::deserialize<'d, A, D: serde::de::De
 pub fn bitcoin_units::amount::serde::as_btc::opt::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<A>, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
 pub fn bitcoin_units::amount::serde::as_btc::opt::serialize<A, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
 pub fn bitcoin_units::amount::serde::as_btc::serialize<A, S: serde::ser::Serializer>(a: &A, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
+pub fn bitcoin_units::amount::serde::as_btc::vec::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<alloc::vec::Vec<A>, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
+pub fn bitcoin_units::amount::serde::as_btc::vec::serialize<A, S: serde::ser::Serializer>(a: &[A], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
 pub fn bitcoin_units::amount::serde::as_sat::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<A, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
 pub fn bitcoin_units::amount::serde::as_sat::opt::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<A>, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
 pub fn bitcoin_units::amount::serde::as_sat::opt::serialize<A, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
 pub fn bitcoin_units::amount::serde::as_sat::serialize<A, S: serde::ser::Serializer>(a: &A, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
+pub fn bitcoin_units::amount::serde::as_sat::vec::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<alloc::vec::Vec<A>, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
+pub fn bitcoin_units::amount::serde::as_sat::vec::serialize<A, S: serde::ser::Serializer>(a: &[A], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
 pub fn bitcoin_units::amount::serde::as_str::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<A, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
 pub fn bitcoin_units::amount::serde::as_str::opt::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<A>, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
 pub fn bitcoin_units::amount::serde::as_str::opt::serialize<A, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
 pub fn bitcoin_units::amount::serde::as_str::serialize<A, S: serde::ser::Serializer>(a: &A, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
+pub fn bitcoin_units::amount::serde::as_str::vec::deserialize<'d, A, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<alloc::vec::Vec<A>, <D as serde::de::Deserializer>::Error> where A: core::convert::TryFrom<bitcoin_units::SignedAmount>, <A as core::convert::TryFrom<bitcoin_units::SignedAmount>>::Error: core::fmt::Display
+pub fn bitcoin_units::amount::serde::as_str::vec::serialize<A, S: serde::ser::Serializer>(a: &[A], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where A: core::convert::Into<bitcoin_units::SignedAmount> + core::marker::Copy
 pub fn bitcoin_units::block::BlockHeight::add(self, rhs: &bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeight::add(self, rhs: bitcoin_units::block::BlockHeightInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockHeight::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
@@ -2352,14 +2358,20 @@ pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::deserialize<'d, D: 
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::opt::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::opt::serialize<S: serde::ser::Serializer>(f: &core::option::Option<bitcoin_units::FeeRate>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::serialize<S: serde::ser::Serializer>(f: &bitcoin_units::FeeRate, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::vec::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<alloc::vec::Vec<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::vec::serialize<S: serde::ser::Serializer>(f: &[bitcoin_units::FeeRate], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<bitcoin_units::FeeRate, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt::serialize<S: serde::ser::Serializer>(f: &core::option::Option<bitcoin_units::FeeRate>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::serialize<S: serde::ser::Serializer>(f: &bitcoin_units::FeeRate, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::vec::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<alloc::vec::Vec<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::vec::serialize<S: serde::ser::Serializer>(f: &[bitcoin_units::FeeRate], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<bitcoin_units::FeeRate, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt::serialize<S: serde::ser::Serializer>(f: &core::option::Option<bitcoin_units::FeeRate>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::serialize<S: serde::ser::Serializer>(f: &bitcoin_units::FeeRate, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::vec::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<alloc::vec::Vec<bitcoin_units::FeeRate>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::vec::serialize<S: serde::ser::Serializer>(f: &[bitcoin_units::FeeRate], s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::locktime::absolute::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::absolute::Height::clone(&self) -> bitcoin_units::locktime::absolute::Height
 pub fn bitcoin_units::locktime::absolute::Height::cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::cmp::Ordering
@@ -2758,19 +2770,25 @@ pub mod bitcoin_units::amount::error
 pub mod bitcoin_units::amount::serde
 pub mod bitcoin_units::amount::serde::as_btc
 pub mod bitcoin_units::amount::serde::as_btc::opt
+pub mod bitcoin_units::amount::serde::as_btc::vec
 pub mod bitcoin_units::amount::serde::as_sat
 pub mod bitcoin_units::amount::serde::as_sat::opt
+pub mod bitcoin_units::amount::serde::as_sat::vec
 pub mod bitcoin_units::amount::serde::as_str
 pub mod bitcoin_units::amount::serde::as_str::opt
+pub mod bitcoin_units::amount::serde::as_str::vec
 pub mod bitcoin_units::block
 pub mod bitcoin_units::fee_rate
 pub mod bitcoin_units::fee_rate::serde
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::opt
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu_floor::vec
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::vec
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor
 pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::vec
 pub mod bitcoin_units::locktime
 pub mod bitcoin_units::locktime::absolute
 pub mod bitcoin_units::locktime::absolute::error
