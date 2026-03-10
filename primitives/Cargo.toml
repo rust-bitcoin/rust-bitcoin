@@ -27,9 +27,10 @@ internals = { package = "bitcoin-internals", path = "../internals", version = "0
 units = { package = "bitcoin-units", path = "../units", version = "0.3.0", default-features = false, features = [ "encoding" ] }
 
 arbitrary = { version = "1.4.1", optional = true }
+serde = { version = "1.0.195", default-features = false, features = ["derive", "alloc"], optional = true }
+# You probably don't want to use these directly, consider using the `hex` feature.
 hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, optional = true }
 hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
-serde = { version = "1.0.195", default-features = false, features = ["derive", "alloc"], optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.68"

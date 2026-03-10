@@ -3,13 +3,13 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hex_unstable::FromHex as _;
 use internals::ToU64 as _;
 
 use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
     ScriptExtPriv as _, ScriptPubKeyBuf,
 };
+use crate::hex;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
@@ -20,7 +20,7 @@ use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{self, ScriptHash, WScriptHash};
 use crate::taproot::TapNodeHash;
-use crate::{consensus, internal_macros};
+use crate::internal_macros;
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
@@ -146,30 +146,11 @@ internal_macros::define_extension_trait! {
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        fn from_hex_prefixed(s: &str) -> Result<Self, consensus::FromHexError>
-            where Self: Sized
-        {
-            consensus::encode::deserialize_hex(s)
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
         #[deprecated(since = "TBD", note = "use `from_hex_no_length_prefix()` instead")]
-        fn from_hex(s: &str) -> Result<Self, hex_unstable::HexToBytesError>
+        fn from_hex(s: &str) -> Result<Self, hex::DecodeVariableLengthBytesError>
             where Self: Sized
         {
-            Self::from_hex_no_length_prefix(s)
-        }
-
-        /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// This is **not** consensus encoding. If your hex string is a consensus encoded script
-        /// then use `ScriptBuf::from_hex_prefixed`.
-        fn from_hex_no_length_prefix(s: &str) -> Result<Self, hex_unstable::HexToBytesError>
-            where Self: Sized
-        {
-            let v = Vec::from_hex(s)?;
+            let v = hex::decode_to_vec(s)?;
             Ok(Self::from_bytes(v))
         }
 

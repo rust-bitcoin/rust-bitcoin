@@ -12,9 +12,15 @@ use bitcoin_consensus_encoding::{
 use bitcoin_consensus_encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
 #[cfg(feature = "std")]
 use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
-use bitcoin_consensus_encoding::decode_from_slice;
+use bitcoin_consensus_encoding::{decode_from_slice, decode_from_slice_unbounded, DecodeError};
 
 const EMPTY: &[u8] = &[];
+
+
+#[cfg(test)]
+mod tests {
+
+}
 
 #[test]
 fn decode_array_excess_data_ignored() {
@@ -271,9 +277,22 @@ fn decode_from_slice_unexpected_eof() {
 fn decode_from_slice_extra_data() {
     let data = [1, 2, 3, 4, 5];
     let result: Result<TestArray, _> = decode_from_slice(&data);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    // Can't test against Unconsumed because it is non_exhaustive, which makes it private.
+    // Instead, we'll just test that it's not a parse error.
+    assert!(!matches!(err, DecodeError::Parse(_)));
+}
+
+#[test]
+fn decode_from_slice_unbounded_extra_data() {
+    let data = [1, 2, 3, 4, 5];
+    let bytes = &mut data.as_slice();
+    let result: Result<TestArray, _> = decode_from_slice_unbounded(bytes);
     assert!(result.is_ok());
     let decoded = result.unwrap();
     assert_eq!(decoded.0, [1, 2, 3, 4]);
+    assert_eq!(bytes.len(), 1);
 }
 
 #[test]

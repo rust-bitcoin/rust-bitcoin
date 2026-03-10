@@ -4,7 +4,7 @@
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::BlockHash
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::TxMerkleNode
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::WitnessMerkleNode
-impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Block
+impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Header
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::block::Version
 impl bitcoin_consensus_encoding::decode::Decodable for bitcoin_primitives::transaction::OutPoint
@@ -27,7 +27,6 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_primitives::witness
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::BlockHash
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::TxMerkleNode
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::WitnessMerkleNode
-impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Block
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Header
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Version
 impl bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::transaction::OutPoint
@@ -1040,6 +1039,7 @@ impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::Scr
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptBuf<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptBufDecoder<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<V: bitcoin_primitives::block::Validation> bitcoin_primitives::block::Block<V>
+impl<V> bitcoin_consensus_encoding::encode::Encodable for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation
 impl<V> core::clone::Clone for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::clone::Clone
 impl<V> core::cmp::Eq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::Eq
 impl<V> core::cmp::PartialEq for bitcoin_primitives::block::Block<V> where V: bitcoin_primitives::block::Validation + core::cmp::PartialEq
@@ -1297,10 +1297,9 @@ pub fn bitcoin_primitives::Wtxid::from(tx: &bitcoin_primitives::transaction::Tra
 pub fn bitcoin_primitives::Wtxid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
 pub fn bitcoin_primitives::Wtxid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::Wtxid::partial_cmp(&self, other: &bitcoin_primitives::Wtxid) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::block::Block::decoder() -> Self::Decoder
-pub fn bitcoin_primitives::block::Block::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::block::Block<V>::block_hash(&self) -> bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::block::Block<V>::clone(&self) -> bitcoin_primitives::block::Block<V>
+pub fn bitcoin_primitives::block::Block<V>::encoder(&self) -> Self::Encoder
 pub fn bitcoin_primitives::block::Block<V>::eq(&self, other: &bitcoin_primitives::block::Block<V>) -> bool
 pub fn bitcoin_primitives::block::Block<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>::cached_witness_root(&self) -> core::option::Option<bitcoin_primitives::WitnessMerkleNode>
@@ -1311,6 +1310,7 @@ pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::a
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::check_merkle_root(&self) -> bool
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::check_witness_commitment(&self) -> (bool, core::option::Option<bitcoin_primitives::WitnessMerkleNode>)
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::compute_witness_commitment(&self, witness_reserved_value: &[u8]) -> core::option::Option<(bitcoin_primitives::WitnessMerkleNode, bitcoin_primitives::WitnessCommitment)>
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::decoder() -> Self::Decoder
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::into_parts(self) -> (bitcoin_primitives::block::Header, alloc::vec::Vec<bitcoin_primitives::transaction::Transaction>)
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::new_unchecked(header: bitcoin_primitives::block::Header, transactions: alloc::vec::Vec<bitcoin_primitives::transaction::Transaction>) -> Self
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::validate(self) -> core::result::Result<bitcoin_primitives::block::Block<bitcoin_primitives::block::Checked>, bitcoin_primitives::block::InvalidBlockError>
@@ -1798,8 +1798,8 @@ pub type bitcoin_primitives::WitnessMerkleNode::Decoder = bitcoin_primitives::ha
 pub type bitcoin_primitives::WitnessMerkleNode::Encoder<'e> = bitcoin_primitives::hash_types::witness_merkle_node::WitnessMerkleNodeEncoder<'e>
 pub type bitcoin_primitives::WitnessScript = bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>
 pub type bitcoin_primitives::WitnessScriptBuf = bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>
-pub type bitcoin_primitives::block::Block::Decoder = bitcoin_primitives::block::BlockDecoder
-pub type bitcoin_primitives::block::Block::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_primitives::block::HeaderEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_consensus_encoding::encode::encoders::CompactSizeEncoder, bitcoin_consensus_encoding::encode::encoders::SliceEncoder<'e, bitcoin_primitives::transaction::Transaction>>>
+pub type bitcoin_primitives::block::Block<V>::Encoder<'e> where Self: 'e = bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_primitives::block::HeaderEncoder<'e>, bitcoin_consensus_encoding::encode::encoders::Encoder2<bitcoin_consensus_encoding::encode::encoders::CompactSizeEncoder, bitcoin_consensus_encoding::encode::encoders::SliceEncoder<'e, bitcoin_primitives::transaction::Transaction>>>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Decoder = bitcoin_primitives::block::BlockDecoder
 pub type bitcoin_primitives::block::BlockDecoder::Error = bitcoin_primitives::block::BlockDecoderError
 pub type bitcoin_primitives::block::BlockDecoder::Output = bitcoin_primitives::block::Block
 pub type bitcoin_primitives::block::BlockHashDecoder::Error = bitcoin_primitives::block::BlockHashDecoderError
