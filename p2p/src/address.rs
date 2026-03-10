@@ -154,7 +154,7 @@ impl ToSocketAddrs for Address {
     }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Address`] type.
     pub struct AddressEncoder<'e>(encoding::Encoder3<
         crate::ServiceFlagsEncoder<'e>,

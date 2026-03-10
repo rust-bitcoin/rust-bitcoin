@@ -22,7 +22,7 @@ pub struct SendCmpct {
     pub version: u64,
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// Encoder type for the [`SendCmpct`] message.
     pub struct SendCmpctEncoder<'e>(Encoder2<ArrayEncoder<1>, ArrayEncoder<8>>);
 }

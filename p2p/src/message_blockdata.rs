@@ -108,7 +108,7 @@ impl Decodable for Inventory {
     }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`Inventory`] type.
     pub struct InventoryEncoder<'e>(Encoder2<ArrayEncoder<4>, ArrayEncoder<32>>);
 }

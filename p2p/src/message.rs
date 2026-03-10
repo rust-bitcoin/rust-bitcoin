@@ -1390,7 +1390,7 @@ impl NetworkHeader {
     pub const fn from_header(header: block::Header) -> Self { Self { header, length: 0 } }
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder type for a [`NetworkHeader`].
     pub struct NetworkHeaderEncoder<'e>(Encoder2<HeaderEncoder<'e>, ArrayEncoder<1>>);
 }
