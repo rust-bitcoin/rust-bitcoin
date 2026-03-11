@@ -60,20 +60,14 @@ impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
         }
 
         // Flush remaining buffer to decoder
-        decoder
-            .push_bytes(&mut (&buffer[..index]))
-            .map_err(ParsePrimitiveError::Decode)?;
+        decoder.push_bytes(&mut (&buffer[..index])).map_err(ParsePrimitiveError::Decode)?;
 
         decoder.end().map_err(ParsePrimitiveError::Decode)
     }
 
     /// Writes an Encodable object to the given formatter in the requested case.
     #[inline]
-    fn fmt_hex(
-        &self,
-        f: &mut fmt::Formatter,
-        case: Case,
-    ) -> fmt::Result {
+    fn fmt_hex(&self, f: &mut fmt::Formatter, case: Case) -> fmt::Result {
         // Closure to write a given pad character out a given number of times.
         let write_pad = |f: &mut fmt::Formatter, pad_len: usize| -> fmt::Result {
             for _ in 0..pad_len {
@@ -84,21 +78,16 @@ impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
 
         // Count hex chars
         let len = EncodableByteIter::new(self.0).count() * 2;
-        let iter = BytesToHexIter::new(
-            EncodableByteIter::new(self.0),
-            case,
-        );
+        let iter = BytesToHexIter::new(EncodableByteIter::new(self.0), case);
 
         let extra_len = if f.alternate() { 2 } else { 0 };
         let total_len = len + extra_len;
 
         // We pad for width, and truncate for precision, but not vice-versa
         let pad_width = f.width().unwrap_or(total_len);
-        let trunc_width = f.precision()
-            .map_or(len, |v| v.saturating_sub(extra_len));
+        let trunc_width = f.precision().map_or(len, |v| v.saturating_sub(extra_len));
 
         let pad_diff = pad_width.saturating_sub(total_len);
-
 
         // Left padding
         let left_pad = match f.align() {
@@ -119,7 +108,9 @@ impl<T: Encodable + Decodable> HexPrimitive<'_, T> {
 
         // Hex data
         for (i, ch) in iter.enumerate() {
-            if i >= trunc_width { break; }
+            if i >= trunc_width {
+                break;
+            }
             f.write_char(ch)?;
         }
 
@@ -165,7 +156,8 @@ impl<T: Decodable> fmt::Debug for ParsePrimitiveError<T> {
         match self {
             Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
             Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
-            Self::Decode(_) => write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
+            Self::Decode(_) =>
+                write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
         }
     }
 }
@@ -202,20 +194,16 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::{format, string::ToString};
 
-    use crate::block;
-
     #[cfg(feature = "alloc")]
     use super::*;
+    use crate::block;
 
     #[test]
     #[cfg(feature = "alloc")]
     fn parse_primitive_error_display() {
-        let odd: ParsePrimitiveError<block::Header> =
-            HexPrimitive::from_str("0").unwrap_err();
-        let invalid: ParsePrimitiveError<block::Header> =
-            HexPrimitive::from_str("zz").unwrap_err();
-        let decode: ParsePrimitiveError<block::Header> =
-            HexPrimitive::from_str("00").unwrap_err();
+        let odd: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("0").unwrap_err();
+        let invalid: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("zz").unwrap_err();
+        let decode: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("00").unwrap_err();
 
         assert!(!odd.to_string().is_empty());
         assert!(!invalid.to_string().is_empty());
@@ -227,12 +215,9 @@ mod tests {
     fn parse_primitive_error_source() {
         use std::error::Error as _;
 
-        let odd: ParsePrimitiveError<block::Header> =
-            HexPrimitive::from_str("0").unwrap_err();
-        let invalid: ParsePrimitiveError<block::Header> =
-            HexPrimitive::from_str("zz").unwrap_err();
-        let decode: ParsePrimitiveError<block::Header> =
-            HexPrimitive::from_str("00").unwrap_err();
+        let odd: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("0").unwrap_err();
+        let invalid: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("zz").unwrap_err();
+        let decode: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("00").unwrap_err();
 
         assert!(odd.source().is_some());
         assert!(invalid.source().is_some());
