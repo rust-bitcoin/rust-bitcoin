@@ -11,6 +11,69 @@ name: Continuous integration
 permissions: {}
 
 jobs:
+  Test:
+    name: Test - ${{ matrix.toolchain }} toolchain, ${{ matrix.dep }} deps
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [stable, nightly, msrv]
+        dep: [minimal, recent]
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
+      - name: "Run tests"
+        run: cargo rbmt test --toolchain ${{ matrix.toolchain }} --lock-file ${{ matrix.dep }}
+
+  Lint:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
+      - name: "Run lint"
+        run: cargo rbmt lint
+
+  Docs:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
+      - name: "Build docs"
+        run: cargo rbmt docs
+      - name: "Build docs.rs docs"
+        run: cargo rbmt docsrs
+
+  Bench:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
+      - name: "Run benches"
+        run: cargo rbmt bench
+
+  # Non cargo-rbmt jobs manage their toolchain version directly.
   Prepare:
     runs-on: ubuntu-24.04
     permissions:
@@ -26,125 +89,6 @@ jobs:
         id: read_toolchain
         run: |
           echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
-
-  Stable:                       # 2 jobs, one per manifest.
-    name: Test - stable toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [minimal, recent]
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
-      - name: "Run tests"
-        run: cargo rbmt test --toolchain stable --lock-file ${{ matrix.dep }}
-
-  Nightly:                      # 2 jobs, one per manifest.
-    name: Test - nightly toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [minimal, recent]
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
-      - name: "Run tests"
-        run: cargo rbmt test --toolchain nightly --lock-file ${{ matrix.dep }}
-
-  MSRV:                         # 2 jobs, one per manifest.
-    name: Test - MSRV toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [minimal, recent]
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
-      - name: "Run tests"
-        run: cargo rbmt test --toolchain msrv --lock-file ${{ matrix.dep }}
-
-  Lint:
-    name: Lint - nightly toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
-      - name: "Run lint"
-        run: cargo rbmt lint
-
-  Docs:
-    name: Docs - stable toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
-      - name: "Build docs"
-        run: cargo rbmt docs
-
-  Docsrs:
-    name: Docs - nightly toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
-      - name: "Build docs.rs docs"
-        run: cargo rbmt docsrs
-
-  Bench:
-    name: Bench - nightly toolchain
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
-      - name: "Run benches"
-        run: cargo rbmt bench --lock-file ${{ matrix.dep }}
 
   Arch32bit:
     name: Test 32-bit version
