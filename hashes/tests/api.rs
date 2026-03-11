@@ -229,3 +229,13 @@ fn all_types_implement_send_sync() {
     assert_send::<Errors>();
     assert_sync::<Errors>();
 }
+
+// Error types should implement `std::error::Error` (C-GOOD-ERR).
+#[cfg(feature = "std")]
+#[test]
+fn all_error_types_implement_error() {
+    fn assert_error<T: std::error::Error>() {}
+
+    assert_error::<hkdf::MaxLengthError>();
+    assert_error::<sha256::MidstateError>();
+}
