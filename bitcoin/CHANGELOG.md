@@ -1,3 +1,23 @@
+# 0.34.0-beta - 2026-03-09
+
+- Reject 65 bytes signature with sighash 0x00 [#5718](https://github.com/rust-bitcoin/rust-bitcoin/pull/5718)
+- Preserve parity for `XOnlyPublicKey` [#5708](https://github.com/rust-bitcoin/rust-bitcoin/pull/5708)
+- Adjust `PublicKey::from_slice` and improve error documentation for key types [#5679](https://github.com/rust-bitcoin/rust-bitcoin/pull/5679)
+- Change `Params::pow_target_spacing` to `u32` [#5656](https://github.com/rust-bitcoin/rust-bitcoin/pull/5656)
+- Change `hex` re-export in bitcoin to stable `hex` [#5640](https://github.com/rust-bitcoin/rust-bitcoin/pull/5640)
+- Fix PSBT key deserialisation byte size [#5625](https://github.com/rust-bitcoin/rust-bitcoin/pull/5625)
+- Add bounds check for non-witness UTXO output index [#5617](https://github.com/rust-bitcoin/rust-bitcoin/pull/5617)
+- Encapsulate the PublicKey and PrivateKey types [#5614](https://github.com/rust-bitcoin/rust-bitcoin/pull/5614)
+- Add note about `Target` maximum values [#5609](https://github.com/rust-bitcoin/rust-bitcoin/pull/5609)
+- Add parity to `XOnlyPublicKey` and adjust API [#5593](https://github.com/rust-bitcoin/rust-bitcoin/pull/5593)
+- Depend on bitcoin-network-kind [#5528](https://github.com/rust-bitcoin/rust-bitcoin/pull/5528)
+- Add `FromStr` to `Target` and `Work` [#5539](https://github.com/rust-bitcoin/rust-bitcoin/pull/5539)
+- Fix `U256::overflowing_mul` [#5501](https://github.com/rust-bitcoin/rust-bitcoin/pull/5501)
+- Fix bug in `Psbt::spend_utxo` when missing output [#5500](https://github.com/rust-bitcoin/rust-bitcoin/pull/5500)
+- Fix unreachable error bug during iteration of funding utxos [#5492](https://github.com/rust-bitcoin/rust-bitcoin/pull/5492)
+
+New crate: https://crates.io/crates/bitcoin-network-kind
+
 # 0.33.0-beta - 2026-02-17
 
 This series of beta releases is meant for two things:

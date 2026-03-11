@@ -1,3 +1,12 @@
+# 0.103.0 - 2026-03-09
+
+- Remove excess allocations from `Witness::from_iter` [#5650](https://github.com/rust-bitcoin/rust-bitcoin/pull/5650)
+- Remove `BlockTime` decoder from root export [#5527](https://github.com/rust-bitcoin/rust-bitcoin/pull/5527)
+- Upgrade to `bitcoin-units 0.4.0`
+- Upgrade to `bitcoin_hashes 0.21.0`
+- Upgrade to `consensus-encoding 0.2.0`
+
+
 # 0.102.0 - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because

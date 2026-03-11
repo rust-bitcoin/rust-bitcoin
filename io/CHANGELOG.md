@@ -1,3 +1,9 @@
+# 0.6.0 - 2026-03-09
+
+* Replace gated `no_std` with blanket `no_std` [#5665](https://github.com/rust-bitcoin/rust-bitcoin/pull/5665)
+* Upgrade to `consensus-encoding 0.2.0`
+* Upgrade to `bitcoin_hashes 0.21.0`
+
 # 0.5.0 - 2026-01-08
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
