@@ -307,15 +307,12 @@ mod tests {
     hash_newtype! {
         /// A test newtype
         struct TestNewtype(sha256d::Hash);
-
-        /// A test newtype
-        struct TestNewtype2(sha256d::Hash);
     }
 
     #[cfg(feature = "hex")]
-    crate::impl_hex_for_newtype!(TestNewtype, TestNewtype2);
+    crate::impl_hex_for_newtype!(TestNewtype);
     #[cfg(not(feature = "hex"))]
-    crate::impl_debug_only_for_newtype!(TestNewtype, TestNewtype2);
+    crate::impl_debug_only_for_newtype!(TestNewtype);
 
     #[test]
     #[cfg(feature = "alloc")]
