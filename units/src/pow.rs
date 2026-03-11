@@ -77,29 +77,11 @@ impl CompactTarget {
     }
 }
 
+crate::internal_macros::impl_fmt_traits_for_u32_wrapper!(CompactTarget);
+
 impl fmt::Display for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl fmt::LowerHex for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl fmt::UpperHex for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
-}
-
-impl fmt::Octal for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Octal::fmt(&self.0, f) }
-}
-
-impl fmt::Binary for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Binary::fmt(&self.0, f) }
 }
 
 parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensus);
