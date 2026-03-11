@@ -22,7 +22,7 @@ jobs:
           # Extract the version of the compiler dtolnay/rust-toolchain gives us.
           STABLE_VERSION=$(rustc --version | sed -ne 's/^rustc //p' | cut -d ' ' -f1)
           # Update the stable version in the reference file.
-          echo "${STABLE_VERSION}" > ./.github/workflows/stable-version
+          echo "${STABLE_VERSION}" > ./stable-version
           echo "stable_version=${STABLE_VERSION}" >> $GITHUB_ENV
           # If somehow the stable version has not changed. In this case don't make an empty PR.
           if ! git diff --exit-code > /dev/null; then
