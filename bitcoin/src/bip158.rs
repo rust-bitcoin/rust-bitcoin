@@ -618,7 +618,7 @@ mod test {
                 .unwrap());
 
             for script in txmap.values() {
-                let query = vec![script];
+                let query = [script];
                 if !script.is_empty() {
                     assert!(filter
                         .match_any(block_hash, &mut query.iter().map(|s| s.as_bytes()))
@@ -663,14 +663,14 @@ mod test {
         let bytes = out;
 
         {
-            let query = vec![hex!("abcdef"), hex!("eeeeee")];
+            let query = [hex!("abcdef"), hex!("eeeeee")];
             let reader = GcsFilterReader::new(0, 0, M, P);
             assert!(reader
                 .match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
                 .unwrap());
         }
         {
-            let query = vec![hex!("abcdef"), hex!("123456")];
+            let query = [hex!("abcdef"), hex!("123456")];
             let reader = GcsFilterReader::new(0, 0, M, P);
             assert!(!reader
                 .match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))

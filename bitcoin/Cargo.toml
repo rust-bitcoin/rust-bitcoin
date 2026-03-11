@@ -53,9 +53,6 @@ serde_test = "1.0.19"
 serde_derive = "1.0.103"
 bincode = "1.3.1"
 
-[target.'cfg(mutate)'.dev-dependencies]
-mutagen = { git = "https://github.com/llogiq/mutagen" }
-
 [[example]]
 name = "bip32"
 
@@ -70,3 +67,16 @@ required-features = ["std", "bitcoinconsensus"]
 [[example]]
 name = "taproot-psbt"
 required-features = ["std", "rand-std", "bitcoinconsensus"]
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(rust_v_1_46)', 'cfg(rust_v_1_53)', 'cfg(rust_v_1_60)'] }
+
+# This version is in maintenance mode, just allow these lints so that we can keep CI green but make
+# minimal changes to the actual codebase.
+[lints.clippy]
+# Exclude lints we don't think are valuable.
+needless_question_mark = "allow" # https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
+manual_range_contains = "allow" # More readable than clippy's format.
+precedence = "allow"
+legacy_numeric_constants = "allow"
+match_like_matches_macro = "allow" # Just shoosh because we are about to EOL this version.

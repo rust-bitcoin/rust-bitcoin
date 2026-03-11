@@ -27,7 +27,7 @@ pub mod serde_details {
     struct HexVisitor<ValueT>(PhantomData<ValueT>);
     use serde::{de, Serializer, Deserializer};
 
-    impl<'de, ValueT> de::Visitor<'de> for HexVisitor<ValueT>
+    impl<ValueT> de::Visitor<'_> for HexVisitor<ValueT>
     where
         ValueT: FromStr,
         <ValueT as FromStr>::Err: fmt::Display,
@@ -45,10 +45,7 @@ pub mod serde_details {
             if let Ok(hex) = str::from_utf8(v) {
                 Self::Value::from_str(hex).map_err(E::custom)
             } else {
-                return Err(E::invalid_value(
-                    de::Unexpected::Bytes(v),
-                    &self,
-                ));
+                Err(E::invalid_value(de::Unexpected::Bytes(v), &self))
             }
         }
 
@@ -62,7 +59,7 @@ pub mod serde_details {
 
     struct BytesVisitor<ValueT>(PhantomData<ValueT>);
 
-    impl<'de, ValueT> de::Visitor<'de> for BytesVisitor<ValueT>
+    impl<ValueT> de::Visitor<'_> for BytesVisitor<ValueT>
     where
         ValueT: SerdeHash,
         <ValueT as FromStr>::Err: fmt::Display,

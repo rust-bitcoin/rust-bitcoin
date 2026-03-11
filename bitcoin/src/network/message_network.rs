@@ -15,8 +15,6 @@ use crate::network::address::Address;
 use crate::network::constants::{self, ServiceFlags};
 use crate::prelude::*;
 
-/// Some simple messages
-
 /// The `version` message
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct VersionMessage {
