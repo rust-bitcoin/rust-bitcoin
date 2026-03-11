@@ -40,11 +40,9 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/prepare
-        with:
-          toolchain: stable
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
       - name: "Run tests"
-        run: cargo rbmt test stable --lock-file ${{ matrix.dep }}
+        run: cargo rbmt test --toolchain stable --lock-file ${{ matrix.dep }}
 
   Nightly:                      # 2 jobs, one per manifest.
     name: Test - nightly toolchain
@@ -59,11 +57,9 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/prepare
-        with:
-          toolchain: nightly
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
       - name: "Run tests"
-        run: cargo rbmt test nightly --lock-file ${{ matrix.dep }}
+        run: cargo rbmt test --toolchain nightly --lock-file ${{ matrix.dep }}
 
   MSRV:                         # 2 jobs, one per manifest.
     name: Test - MSRV toolchain
@@ -78,11 +74,9 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/prepare
-        with:
-          toolchain: "1.74.0"
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
       - name: "Run tests"
-        run: cargo rbmt test msrv --lock-file ${{ matrix.dep }}
+        run: cargo rbmt test --toolchain msrv --lock-file ${{ matrix.dep }}
 
   Lint:
     name: Lint - nightly toolchain
@@ -97,10 +91,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/prepare
-        with:
-          toolchain: nightly
-          components: clippy
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
       - name: "Run lint"
         run: cargo rbmt lint
 
@@ -117,9 +108,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/prepare
-        with:
-          toolchain: stable
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
       - name: "Build docs"
         run: cargo rbmt docs
 
@@ -136,9 +125,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/prepare
-        with:
-          toolchain: nightly
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
       - name: "Build docs.rs docs"
         run: cargo rbmt docsrs
 
@@ -155,9 +142,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/prepare
-        with:
-          toolchain: nightly
+      - uses: rust-bitcoin/rust-bitcoin-maintainer-tools/.github/actions/setup-rbmt@9de0de1f36f65a2cb9c617358d88aecd319282d9
       - name: "Run benches"
         run: cargo rbmt bench --lock-file ${{ matrix.dep }}
 
