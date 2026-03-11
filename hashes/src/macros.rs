@@ -161,6 +161,14 @@ macro_rules! hash_newtype {
 
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
         }
+
+        impl From<$hash> for $newtype {
+            fn from(hash: $hash) -> Self { Self(hash) }
+        }
+
+        impl From<$newtype> for $hash {
+            fn from(hash: $newtype) -> Self { hash.0 }
+        }
         )+
     };
 }

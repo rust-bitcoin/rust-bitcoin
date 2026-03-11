@@ -20,6 +20,10 @@ use crate::{Hash, HashEngine};
 #[allow(clippy::derived_hash_with_manual_eq)]
 pub struct Hmac<T: Hash>(T);
 
+impl<T: Hash> From<T> for Hmac<T> {
+    fn from(hash: T) -> Self { Self(hash) }
+}
+
 impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
     type Err = <T as str::FromStr>::Err;
     fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Self(str::FromStr::from_str(s)?)) }

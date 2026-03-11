@@ -214,6 +214,14 @@ impl Hash {
     pub fn from_u64(hash: u64) -> Self { Self(hash.to_le_bytes()) }
 }
 
+impl From<u64> for Hash {
+    fn from(hash: u64) -> Self { Self::from_u64(hash) }
+}
+
+impl From<Hash> for u64 {
+    fn from(hash: Hash) -> Self { hash.to_u64() }
+}
+
 /// Loads a u64 using up to 7 bytes of a byte slice.
 ///
 /// Unsafe because: unchecked indexing at `start..start+len`.
