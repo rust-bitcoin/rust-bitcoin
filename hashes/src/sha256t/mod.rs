@@ -125,6 +125,14 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
     fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.as_byte_array().hash(h) }
 }
 
+impl<T: Tag> From<[u8; 32]> for Hash<T> {
+    fn from(bytes: [u8; 32]) -> Self { Self::from_byte_array(bytes) }
+}
+
+impl<T: Tag> From<Hash<T>> for [u8; 32] {
+    fn from(hash: Hash<T>) -> Self { hash.to_byte_array() }
+}
+
 crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
 
 /// Engine to compute SHA256t hash function.

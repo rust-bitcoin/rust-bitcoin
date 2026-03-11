@@ -38,4 +38,12 @@ impl Hash {
     pub const fn as_byte_array(&self) -> &[u8; BYTE_SIZE] { &self.0 }
 }
 
+impl From<[u8; BYTE_SIZE]> for Hash {
+    fn from(bytes: [u8; BYTE_SIZE]) -> Self { Self::from_byte_array(bytes) }
+}
+
+impl From<Hash> for [u8; BYTE_SIZE] {
+    fn from(hash: Hash) -> Self { hash.to_byte_array() }
+}
+
 crate::internal_macros::hash_trait_impls!(BYTE_SIZE * 8, false);

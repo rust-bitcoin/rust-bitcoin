@@ -302,7 +302,14 @@ pub fn debug_hex<'a>(
 
 #[cfg(test)]
 mod tests {
-    use crate::sha256d;
+    use crate::{hmac, muhash, sha256, sha256d, sha256t, siphash24, Hash as _};
+
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    struct TestTag;
+
+    impl sha256t::Tag for TestTag {
+        const MIDSTATE: sha256::Midstate = sha256::Midstate::new([0; 32], 0);
+    }
 
     hash_newtype! {
         /// A test newtype
@@ -313,6 +320,59 @@ mod tests {
     crate::impl_hex_for_newtype!(TestNewtype);
     #[cfg(not(feature = "hex"))]
     crate::impl_debug_only_for_newtype!(TestNewtype);
+
+    #[test]
+    fn sha256_byte_array_roundtrip() {
+        let bytes = [0xab; 32];
+        let hash = sha256::Hash::from(bytes);
+        let bytes: [u8; 32] = hash.into();
+
+        assert_eq!(bytes, [0xab; 32]);
+    }
+
+    #[test]
+    fn muhash_byte_array_roundtrip() {
+        let bytes = [0xab; 384];
+        let hash = muhash::Hash::from(bytes);
+        let bytes: [u8; 384] = hash.into();
+
+        assert_eq!(bytes, [0xab; 384]);
+    }
+
+    #[test]
+    fn sha256t_byte_array_roundtrip() {
+        let bytes = [0xab; 32];
+        let hash = sha256t::Hash::<TestTag>::from(bytes);
+        let bytes: [u8; 32] = hash.into();
+
+        assert_eq!(bytes, [0xab; 32]);
+    }
+
+    #[test]
+    fn hmac_from_inner_hash_preserves_bytes() {
+        let inner = sha256::Hash::hash(b"conversion test");
+        let hmac = hmac::Hmac::from(inner);
+
+        assert_eq!(hmac.as_byte_array(), inner.as_byte_array());
+    }
+
+    #[test]
+    fn hash_newtype_roundtrip_to_inner_hash() {
+        let inner = sha256d::Hash::hash(b"newtype conversion test");
+        let wrapped = TestNewtype::from(inner);
+        let roundtrip: sha256d::Hash = wrapped.into();
+
+        assert_eq!(roundtrip, inner);
+    }
+
+    #[test]
+    fn siphash_u64_roundtrip() {
+        // Arbitrary test value chosen to exercise multiple non-zero bytes.
+        let hash = siphash24::Hash::from(0x0123_4567_89ab_cdef_u64);
+        let value: u64 = hash.into();
+
+        assert_eq!(value, 0x0123_4567_89ab_cdef_u64);
+    }
 
     #[test]
     #[cfg(feature = "alloc")]

@@ -134,6 +134,14 @@ macro_rules! hash_type_no_default {
             pub const fn as_byte_array(&self) -> &[u8; $bits / 8] { &self.0 }
         }
 
+        impl From<[u8; $bits / 8]> for Hash {
+            fn from(bytes: [u8; $bits / 8]) -> Self { Self::from_byte_array(bytes) }
+        }
+
+        impl From<Hash> for [u8; $bits / 8] {
+            fn from(hash: Hash) -> Self { hash.to_byte_array() }
+        }
+
         $crate::internal_macros::hash_trait_impls!($bits, $reverse);
 
         $crate::internal_macros::impl_write!(
