@@ -303,30 +303,17 @@ impl Encodable for Block {
 #[cfg(feature = "alloc")]
 type BlockInnerDecoder = Decoder2<HeaderDecoder, VecDecoder<Transaction>>;
 
-/// The decoder for the [`Block`] type.
-///
-/// This decoder can only produce a `Block<Unchecked>`.
 #[cfg(feature = "alloc")]
-pub struct BlockDecoder(BlockInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`Block`] type.
+    ///
+    /// This decoder can only produce a `Block<Unchecked>`.
+    pub struct BlockDecoder(BlockInnerDecoder);
 
-#[cfg(feature = "alloc")]
-impl Decoder for BlockDecoder {
-    type Output = Block;
-    type Error = BlockDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (header, transactions) = self.0.end().map_err(BlockDecoderError)?;
+    fn end(value: (Header, Vec<Transaction>)) -> Result<Block, BlockDecoderError> {
+        let (header, transactions) = value;
         Ok(Self::Output::new_unchecked(header, transactions))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "alloc")]
@@ -602,8 +589,20 @@ type HeaderInnerDecoder = Decoder6<
     encoding::ArrayDecoder<4>, // Nonce
 >;
 
-/// The decoder for the [`Header`] type.
-pub struct HeaderDecoder(HeaderInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`Header`] type.
+    pub struct HeaderDecoder(HeaderInnerDecoder);
+
+    fn on_err(err: <HeaderInnerDecoder as Decoder>::Error) -> HeaderDecoderError {
+        Self::from_inner(err)
+    }
+
+    fn end(value: <HeaderInnerDecoder as Decoder>::Output) -> Result<Header, HeaderDecoderError> {
+        let (version, prev_blockhash, merkle_root, time, bits, nonce) = value;
+        let nonce = u32::from_le_bytes(nonce);
+        Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
+    }
+}
 
 impl HeaderDecoder {
     fn from_inner(e: <HeaderInnerDecoder as Decoder>::Error) -> HeaderDecoderError {
@@ -616,27 +615,6 @@ impl HeaderDecoder {
             encoding::Decoder6Error::Sixth(e) => HeaderDecoderError::Nonce(e),
         }
     }
-}
-
-impl Decoder for HeaderDecoder {
-    type Output = Header;
-    type Error = HeaderDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(Self::from_inner)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (version, prev_blockhash, merkle_root, time, bits, nonce) =
-            self.0.end().map_err(Self::from_inner)?;
-        let nonce = u32::from_le_bytes(nonce);
-        Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl Decodable for Header {
@@ -823,35 +801,17 @@ impl Encodable for Version {
     }
 }
 
-/// The decoder for the [`Version`] type.
-pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+crate::decoder_newtype! {
+    /// The decoder for the [`Version`] type.
+    pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
-impl VersionDecoder {
     /// Constructs a new [`Version`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for VersionDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for VersionDecoder {
-    type Output = Version;
-    type Error = VersionDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(VersionDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = i32::from_le_bytes(self.0.end().map_err(VersionDecoderError)?);
+    fn end(value: [u8; 4]) -> Result<Version, VersionDecoderError> {
+        let n = i32::from_le_bytes(value);
         Ok(Version::from_consensus(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decodable for Version {
