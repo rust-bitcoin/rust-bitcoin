@@ -574,39 +574,22 @@ impl encoding::Encodable for Amount {
     }
 }
 
-/// The decoder for the [`Amount`] type.
 #[cfg(feature = "encoding")]
-pub struct AmountDecoder(encoding::ArrayDecoder<8>);
+crate::decoder_newtype! {
+    /// The decoder for the [`Amount`] type.
+    pub struct AmountDecoder(encoding::ArrayDecoder<8>);
 
-#[cfg(feature = "encoding")]
-impl AmountDecoder {
     /// Constructs a new [`Amount`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-#[cfg(feature = "encoding")]
-impl Default for AmountDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decoder for AmountDecoder {
-    type Output = Amount;
-    type Error = AmountDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AmountDecoderError::eof)
+    fn on_err(e: encoding::UnexpectedEofError) -> AmountDecoderError {
+        AmountDecoderError::eof(e)
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let a = u64::from_le_bytes(self.0.end().map_err(AmountDecoderError::eof)?);
+    fn end(value: [u8; 8]) -> Result<Amount, AmountDecoderError> {
+        let a = u64::from_le_bytes(value);
         Amount::from_sat(a).map_err(AmountDecoderError::out_of_range)
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "encoding")]
