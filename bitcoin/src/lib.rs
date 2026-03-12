@@ -69,6 +69,9 @@ pub extern crate base58;
 /// Re-export the `bech32` crate.
 pub extern crate bech32;
 
+/// Re-export the `consensus-encoding` crate.
+pub extern crate encoding;
+
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 

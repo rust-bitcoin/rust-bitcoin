@@ -29,6 +29,9 @@ extern crate std;
 #[macro_use]
 extern crate serde;
 
+/// Re-export of the `encoding` crate.
+pub extern crate encoding;
+
 #[cfg(feature = "hex")]
 pub extern crate hex_stable as hex;
 

@@ -34,6 +34,10 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+/// Re-export of the `encoding` crate.
+#[cfg(feature = "encoding")]
+pub extern crate encoding;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`.
