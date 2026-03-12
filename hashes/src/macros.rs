@@ -161,6 +161,13 @@ macro_rules! hash_newtype {
 
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
         }
+
+        #[cfg(feature = "arbitrary")]
+        impl<'a> arbitrary::Arbitrary<'a> for $newtype {
+            fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+                Ok(Self::from_byte_array(u.arbitrary()?))
+            }
+        }
         )+
     };
 }

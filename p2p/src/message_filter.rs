@@ -131,20 +131,6 @@ impl encoding::Decode for FilterHeader {
     type Decoder = FilterHeaderDecoder;
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for FilterHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::from_byte_array(u.arbitrary()?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for FilterHeader {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::from_byte_array(u.arbitrary()?))
-    }
-}
-
 /// getcfilters message
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GetCFilters {
