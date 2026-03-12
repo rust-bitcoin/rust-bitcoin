@@ -20,6 +20,53 @@ crate::internal_macros::general_hash_type! {
     "Output of the SHA256 hash function."
 }
 
+impl Hash {
+    /// Finalize a hash engine to obtain a hash.
+    #[cfg(not(hashes_fuzz))]
+    pub fn from_engine(mut e: HashEngine) -> Self {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
+        let n_bytes_hashed = e.bytes_hashed;
+
+        let buf_idx = incomplete_block_len(&e);
+
+        e.buffer[buf_idx] = 0x80;
+        e.buffer[buf_idx+1..].fill(0);
+
+        if buf_idx >= BLOCK_SIZE - 8 {
+            HashEngine::process_blocks(&mut e.h, &e.buffer);
+            e.buffer[..BLOCK_SIZE - 8].fill(0);
+        }
+
+        e.buffer[BLOCK_SIZE - 8..].copy_from_slice(&(8 * n_bytes_hashed).to_be_bytes());
+        HashEngine::process_blocks(&mut e.h, &e.buffer);
+
+        Self(e.midstate_unchecked().bytes)
+    }
+
+    /// Finalize a hash engine to obtain a hash.
+    #[cfg(hashes_fuzz)]
+    pub fn from_engine(e: HashEngine) -> Self {
+        let mut hash = e.midstate_unchecked().bytes;
+        if hash == [0; 32] {
+            // Assume sha256 is secure and never generate 0-hashes (which represent invalid
+            // secp256k1 secret keys, causing downstream application breakage).
+            hash[0] = 1;
+        }
+        Hash(hash)
+    }
+
+    /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
+    #[must_use]
+    pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
+
+    /// Computes hash from `bytes` in `const` context.
+    ///
+    /// Warning: this function is inefficient. It should be only used in `const` context.
+    pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
+        Self(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
+    }
+}
+
 const BLOCK_SIZE: usize = 64;
 
 /// Engine to compute SHA256 hash function.
@@ -122,53 +169,6 @@ impl crate::HashEngine for HashEngine {
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
     crate::internal_macros::engine_input_impl!();
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
-}
-
-impl Hash {
-    /// Finalize a hash engine to obtain a hash.
-    #[cfg(not(hashes_fuzz))]
-    pub fn from_engine(mut e: HashEngine) -> Self {
-        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-        let n_bytes_hashed = e.bytes_hashed;
-
-        let buf_idx = incomplete_block_len(&e);
-
-        e.buffer[buf_idx] = 0x80;
-        e.buffer[buf_idx+1..].fill(0);
-
-        if buf_idx >= BLOCK_SIZE - 8 {
-            HashEngine::process_blocks(&mut e.h, &e.buffer);
-            e.buffer[..BLOCK_SIZE - 8].fill(0);
-        }
-
-        e.buffer[BLOCK_SIZE - 8..].copy_from_slice(&(8 * n_bytes_hashed).to_be_bytes());
-        HashEngine::process_blocks(&mut e.h, &e.buffer);
-
-        Self(e.midstate_unchecked().bytes)
-    }
-
-    /// Finalize a hash engine to obtain a hash.
-    #[cfg(hashes_fuzz)]
-    pub fn from_engine(e: HashEngine) -> Self {
-        let mut hash = e.midstate_unchecked().bytes;
-        if hash == [0; 32] {
-            // Assume sha256 is secure and never generate 0-hashes (which represent invalid
-            // secp256k1 secret keys, causing downstream application breakage).
-            hash[0] = 1;
-        }
-        Hash(hash)
-    }
-
-    /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
-    #[must_use]
-    pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
-
-    /// Computes hash from `bytes` in `const` context.
-    ///
-    /// Warning: this function is inefficient. It should be only used in `const` context.
-    pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
-        Self(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
-    }
 }
 
 /// Unfinalized output of the SHA256 hash function.
