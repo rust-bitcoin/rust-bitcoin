@@ -9,9 +9,9 @@
 //!
 //! ref: <https://sprovoost.nl/2022/11/10/what-is-a-bitcoin-address/>
 
+#![no_std]
 // NB: This crate is empty if `alloc` is not enabled.
 #![cfg(feature = "alloc")]
-#![no_std]
 // Experimental features we need.
 #![doc(test(attr(warn(unused))))]
 // Coding conventions.
