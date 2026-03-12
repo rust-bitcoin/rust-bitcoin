@@ -161,6 +161,7 @@ struct Errors {
     v: parse_int::UnprefixedHexError,
     #[cfg(feature = "encoding")]
     w: pow::CompactTargetDecoderError,
+    x: result::NumOpError,
 }
 
 /// A struct that includes all public decoder error types.
@@ -265,6 +266,11 @@ fn api_can_use_all_types_from_module_locktime_relative() {
 #[test]
 fn api_can_use_all_types_from_module_parse() {
     use bitcoin_units::parse_int::{ParseIntError, PrefixedHexError, UnprefixedHexError};
+}
+
+#[test]
+fn api_can_use_all_types_from_module_result() {
+    use bitcoin_units::result::{MathOp, NumOpError, NumOpResult};
 }
 
 #[test]
