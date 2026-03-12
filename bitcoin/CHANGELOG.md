@@ -1,3 +1,14 @@
+# 0.30.3 - 2025-12-09
+
+- Bump the MSRV to Rust 1.56.1
+
+Sorry, we accidentally raised it to 1.51.1 2 years ago in 0.30.2, since no-one
+complained we decided to keep it even though it is a semver violation.
+And now we cannot even get that toolchain to build so we are bumping
+to `Rust v1.56.1`.
+
+If you need to build with Rust 1.41 please pin to `v0.30.1`.
+
 # 0.30.2 - 2023-11-16
 
 - Expose valid (min, max) difficulty transition thresholds [#1820](Expose valid (min, max) difficulty transition thresholds)
