@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Rust Bitcoin Hashes Library
+//! # Rust Bitcoin Hashes Library
 //!
 //! This library implements the hash functions needed by Bitcoin. As an ancillary thing, it exposes
 //! hexadecimal serialization and deserialization, since these are needed to display hashes.
@@ -196,8 +196,8 @@ pub trait HashEngine: Clone {
 
 /// Encodes an object into a hash engine.
 ///
-/// Consumes and returns the hash engine to make it easier to call
-/// [`HashEngine::finalize`] directly on the result.
+/// Consumes and returns the hash engine to make it easier to call [`HashEngine::finalize`] directly
+/// on the result.
 pub fn encode_to_engine<T, H>(object: &T, mut engine: H) -> H
 where
     T: encoding::Encodable + ?Sized,
@@ -256,9 +256,8 @@ mod sealed {
 
 /// Does a best attempt at erasing the contents of `val` by writing zeros.
 ///
-/// The implementation is based on the approach used by the
-/// [`zeroize`](https://docs.rs/zeroize) crate and the `non_secure_erase` functions in
-/// `rust-secp256k1`.
+/// The implementation is based on the approach used by the [`zeroize`](https://docs.rs/zeroize)
+/// crate and the `non_secure_erase` functions in `rust-secp256k1`.
 ///
 /// Note, however, that the compiler is allowed to freely copy or move the contents of `val` to
 /// other places in memory. Preventing this behavior is very subtle. For more discussion on this,

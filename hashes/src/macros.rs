@@ -67,9 +67,9 @@ macro_rules! sha256t_tag {
 /// This will display the hash backwards regardless of what the inner type does. Use `forward`
 /// instead of `backward` to force displaying forward.
 ///
-/// You can add arbitrary doc comments or other attributes to the struct or its field. Note that
-/// the macro already derives [`Copy`], [`Clone`], [`Eq`], [`PartialEq`],
-/// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`].
+/// You can add arbitrary doc comments or other attributes to the struct or its field. Note that the
+/// macro already derives:
+/// [`Copy`], [`Clone`], [`Eq`], [`PartialEq`], [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`].
 ///
 /// You can also define multiple newtypes within one macro call:
 ///
@@ -527,8 +527,8 @@ macro_rules! impl_serde_for_newtype {
     }
 }
 
-/// Implements `Serialize` and `Deserialize` for a type `$t` which
-/// represents a newtype over a byte-slice over length `$len`.
+/// Implements `Serialize` and `Deserialize` for a type `$t` which represents a newtype over a
+/// byte-slice over length `$len`.
 #[doc(hidden)]
 #[macro_export]
 #[cfg(feature = "serde")]

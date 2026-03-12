@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Non-public macros
+//! Non-public macros.
 
 /// Adds trait impls to the type called `Hash` in the current scope.
 ///
