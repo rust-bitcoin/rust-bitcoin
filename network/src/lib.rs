@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin network.
+//! # Bitcoin network
 //!
 //! The term "network" is overloaded, here [`Network`] refers to the specific
 //! Bitcoin network we are operating on e.g., signet, regtest. The terms

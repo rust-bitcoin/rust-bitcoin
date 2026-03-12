@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Cryptography support for the rust-bitcoin ecosystem.
+//! # Rust Bitcoin Cryptography
 
 // NB: This crate is empty if `alloc` is not enabled.
 #![cfg(feature = "alloc")]

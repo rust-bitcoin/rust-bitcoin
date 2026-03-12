@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin base58 encoding and decoding.
+//! # Bitcoin Base58 Encoding and Decoding
 //!
 //! This crate can be used in a no-std environment but requires an allocator.
 
