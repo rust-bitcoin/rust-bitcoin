@@ -1810,6 +1810,7 @@ pub enum bitcoin_units::relative::error::IsSatisfiedByError
 pub enum bitcoin_units::relative::error::IsSatisfiedByHeightError
 pub enum bitcoin_units::relative::error::IsSatisfiedByTimeError
 pub enum bitcoin_units::result::NumOpResult<T>
+pub extern crate bitcoin_units::encoding
 pub fn &bitcoin_units::Amount::add(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn &bitcoin_units::Amount::add(self, rhs: &bitcoin_units::result::NumOpResult<bitcoin_units::Amount>) -> Self::Output
 pub fn &bitcoin_units::Amount::add(self, rhs: bitcoin_units::Amount) -> Self::Output
