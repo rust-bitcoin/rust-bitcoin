@@ -247,6 +247,7 @@ impl LockTime {
     ///
     /// Returns an error if this lock is not lock-by-time.
     #[inline]
+    #[track_caller]
     pub fn is_satisfied_by_time(
         self,
         chain_tip: BlockMtp,

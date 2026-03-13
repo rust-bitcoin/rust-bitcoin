@@ -114,6 +114,7 @@ impl SignedAmount {
     /// Accepts an `i32` which is guaranteed to be in range for the type, but which can only
     /// represent roughly -21.47 to 21.47 BTC.
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub const fn from_sat_i32(satoshi: i32) -> Self {
         let sats = satoshi as i64; // cannot use i64::from in a constfn
         match Self::from_sat(sats) {
@@ -152,6 +153,7 @@ impl SignedAmount {
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`]
     /// in const context.
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub const fn from_btc_i16(whole_bitcoin: i16) -> Self {
         let btc = const_casts::i16_to_i64(whole_bitcoin);
         let sats = btc * 100_000_000;
@@ -212,6 +214,7 @@ impl SignedAmount {
     /// ```
     #[cfg(feature = "alloc")]
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
     }
@@ -319,6 +322,7 @@ impl SignedAmount {
     /// This function never overflows or panics, unlike `i64::abs()`.
     #[must_use]
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub const fn abs(self) -> Self {
         // `i64::abs()` can never overflow because SignedAmount::MIN == -MAX_MONEY.
         match Self::from_sat(self.to_sat().abs()) {
@@ -330,6 +334,7 @@ impl SignedAmount {
     /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
     #[must_use]
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub fn unsigned_abs(self) -> Amount {
         self.abs().to_unsigned().expect("a positive signed amount is always valid")
     }
@@ -461,6 +466,7 @@ impl SignedAmount {
     ///
     /// If the amount is negative.
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub fn to_unsigned(self) -> Result<Amount, OutOfRangeError> {
         if self.is_negative() {
             Err(OutOfRangeError::negative())
