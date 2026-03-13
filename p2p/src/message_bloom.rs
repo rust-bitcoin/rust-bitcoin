@@ -33,7 +33,7 @@ pub struct FilterLoad {
     pub flags: BloomFlags,
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for the [`FilterLoad`] message.
     pub struct FilterLoadEncoder<'e>(
         Encoder2<
@@ -140,7 +140,7 @@ pub enum BloomFlags {
     PubkeyOnly,
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder for [`BloomFlags`].
     pub struct BloomFlagsEncoder<'e>(ArrayEncoder<1>);
 }
@@ -262,7 +262,7 @@ pub struct FilterAdd {
     pub data: Vec<u8>,
 }
 
-encoding::encoder_newtype! {
+encoding::encoder_newtype_exact! {
     /// The encoder of the [`FilterAdd`] message.
     pub struct FilterAddEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }

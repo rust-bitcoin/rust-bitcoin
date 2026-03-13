@@ -1013,6 +1013,8 @@ impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primit
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::merkle_tree::TxMerkleNodeEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::script::ScriptEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::OutPointEncoder<'e>
+impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::TxInEncoder<'e>
+impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::TxOutEncoder<'e>
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_primitives::transaction::VersionEncoder<'e>
 impl<'e> bitcoin_primitives::transaction::WitnessesEncoder<'e>
 impl<'e> core::marker::Freeze for bitcoin_primitives::block::BlockEncoder<'e>
@@ -1843,6 +1845,7 @@ pub fn bitcoin_primitives::transaction::TxInDecoderError::from(never: core::conv
 pub fn bitcoin_primitives::transaction::TxInDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::current_chunk(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::TxInEncoder<'e>::len(&self) -> usize
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::default() -> Self
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_primitives::transaction::TxMerkleNodeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
@@ -1871,6 +1874,7 @@ pub fn bitcoin_primitives::transaction::TxOutDecoderError::from(never: core::con
 pub fn bitcoin_primitives::transaction::TxOutDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::transaction::TxOutEncoder<'e>::advance(&mut self) -> bool
 pub fn bitcoin_primitives::transaction::TxOutEncoder<'e>::current_chunk(&self) -> &[u8]
+pub fn bitcoin_primitives::transaction::TxOutEncoder<'e>::len(&self) -> usize
 pub fn bitcoin_primitives::transaction::Version::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::transaction::Version::clone(&self) -> bitcoin_primitives::transaction::Version
 pub fn bitcoin_primitives::transaction::Version::cmp(&self, other: &bitcoin_primitives::transaction::Version) -> core::cmp::Ordering
