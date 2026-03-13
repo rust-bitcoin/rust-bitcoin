@@ -27,7 +27,7 @@ use crate::crypto::{ecdsa, taproot};
 use crate::key::{Keypair, TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
 use crate::script::{ScriptExt as _, ScriptPubKeyExt as _};
-use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
+use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache, SignableHash as _};
 use crate::transaction::{self, Transaction, TransactionExt as _, TxOut};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighash, TapSighashType};
 
@@ -363,15 +363,12 @@ impl Psbt {
             };
 
             // Only return the error if we have a secret key to sign this input.
-            let (msg, sighash_ty) = match msg_sighash_ty_res {
+            let (msg, sighash_type) = match msg_sighash_ty_res {
                 Err(e) => return Err(e),
                 Ok((msg, sighash_ty)) => (msg, sighash_ty),
             };
 
-            let sig = ecdsa::Signature {
-                signature: secp256k1::ecdsa::sign(msg, sk.as_inner()),
-                sighash_type: sighash_ty,
-            };
+            let sig = ecdsa::Signature { signature: msg.sign(&sk), sighash_type };
 
             let pk = sk.public_key();
 

@@ -28,7 +28,7 @@ use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX}
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
 use crate::{
-    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript,
+    transaction, Amount, PrivateKey, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript,
 };
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
@@ -39,6 +39,49 @@ pub(crate) const UINT256_ONE: [u8; 32] = [
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0
 ];
+
+/// A trait for signing sighashes to produce ECDSA signatures.
+pub trait SignableHash: sealed::Sealed {
+    /// Signs this hash slice with the provided private key.
+    ///
+    /// See [`secp256k1::ecdsa::sign`] for details.
+    fn sign(self, key: &PrivateKey) -> secp256k1::ecdsa::Signature;
+    /// Signs this hash slice with the provided private key.
+    ///
+    /// See [`secp256k1::ecdsa::sign_low_r`] for details.
+    fn sign_low_r(self, key: &PrivateKey) -> secp256k1::ecdsa::Signature;
+    /// Signs this hash slice with the provided private key.
+    ///
+    /// See [`secp256k1::ecdsa::sign_grind_r`] for details.
+    fn sign_grind_r(self, key: &PrivateKey, bytes_to_grind: usize) -> secp256k1::ecdsa::Signature;
+    /// Signs this hash slice with the provided private key.
+    ///
+    /// See [`secp256k1::ecdsa::sign_with_noncedata`] for details.
+    fn sign_with_noncedata(self, key: &PrivateKey, noncedata: &[u8; 32]) -> secp256k1::ecdsa::Signature;
+}
+
+macro_rules! impl_signable_hash {
+    ($ty:ty) => {
+        impl SignableHash for $ty {
+            fn sign(self, key: &PrivateKey) -> secp256k1::ecdsa::Signature {
+                secp256k1::ecdsa::sign(self, key.as_inner())
+            }
+
+            fn sign_low_r(self, key: &PrivateKey) -> secp256k1::ecdsa::Signature {
+                secp256k1::ecdsa::sign_low_r(self, key.as_inner())
+            }
+
+            fn sign_grind_r(self, key: &PrivateKey, bytes_to_grind: usize) -> secp256k1::ecdsa::Signature {
+                secp256k1::ecdsa::sign_grind_r(self, key.as_inner(), bytes_to_grind)
+            }
+
+            fn sign_with_noncedata(self, key: &PrivateKey, noncedata: &[u8; 32]) -> secp256k1::ecdsa::Signature {
+                secp256k1::ecdsa::sign_with_noncedata(self, key.as_inner(), noncedata)
+            }
+
+        }
+    };
+}
 
 macro_rules! impl_message_from_hash {
     ($ty:ident) => {
@@ -66,6 +109,20 @@ hashes::impl_serde_for_newtype!(LegacySighash, SegwitV0Sighash);
 
 impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
+
+impl_signable_hash!(LegacySighash);
+impl_signable_hash!(SegwitV0Sighash);
+
+// Plain messages are often constructed from the hashes as a generic type over both.
+// We should consider them as signable hashes too.
+impl_signable_hash!(secp256k1::Message);
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::LegacySighash {}
+    impl Sealed for super::SegwitV0Sighash {}
+    impl Sealed for secp256k1::Message {}
+}
 
 // Implement private engine/from_engine methods for use within this module;
 // but outside of it, it should not be possible to construct these hash
