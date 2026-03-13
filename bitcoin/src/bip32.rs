@@ -5,6 +5,8 @@
 //! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use core::convert::Infallible;
 use core::ops::Index;
 use core::str::FromStr;
@@ -1102,6 +1104,53 @@ impl Common {
             child_number: u32::from_be_bytes(child_number).into(),
             chain_code: chain_code.into(),
             key,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for DerivationPath {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let bytes = Vec::<u32>::arbitrary(u)?;
+        Ok(Self::from_u32_slice(bytes.as_slice()))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Fingerprint {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_byte_array(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ChainCode {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self::from_byte_array(u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ChildNumber {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let index = u.arbitrary()?;
+        match bool::arbitrary(u)? {
+            true => Ok(Self::Hardened { index }),
+            false => Ok(Self::Normal { index })
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Xpub {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            network: u.arbitrary()?,
+            depth: u.arbitrary()?,
+            parent_fingerprint: u.arbitrary()?,
+            child_number: u.arbitrary()?,
+            public_key: u.arbitrary()?,
+            chain_code: u.arbitrary()?,
         })
     }
 }
