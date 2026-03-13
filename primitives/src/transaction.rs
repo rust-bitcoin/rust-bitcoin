@@ -422,7 +422,7 @@ impl fmt::Debug for ParseTransactionError {
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Display for ParseTransactionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write_err!(f, "parse transaction error"; self.0) }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
@@ -1014,24 +1014,14 @@ impl From<Infallible> for TxInDecoderError {
 #[cfg(feature = "alloc")]
 impl fmt::Display for TxInDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self.0 {
-            encoding::Decoder3Error::First(ref e) => write_err!(f, "txin decoder error"; e),
-            encoding::Decoder3Error::Second(ref e) => write_err!(f, "txin decoder error"; e),
-            encoding::Decoder3Error::Third(ref e) => write_err!(f, "txin decoder error"; e),
-        }
+        write_err!(f, "txin decoder error"; self.0)
     }
 }
 
 #[cfg(feature = "alloc")]
 #[cfg(feature = "std")]
 impl std::error::Error for TxInDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match &self.0 {
-            encoding::Decoder3Error::First(ref e) => Some(e),
-            encoding::Decoder3Error::Second(ref e) => Some(e),
-            encoding::Decoder3Error::Third(ref e) => Some(e),
-        }
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// Bitcoin transaction output.
@@ -1120,21 +1110,13 @@ impl From<Infallible> for TxOutDecoderError {
 #[cfg(feature = "alloc")]
 impl fmt::Display for TxOutDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self.0 {
-            encoding::Decoder2Error::First(ref e) => write_err!(f, "txout decoder error"; e),
-            encoding::Decoder2Error::Second(ref e) => write_err!(f, "txout decoder error"; e),
-        }
+        write_err!(f, "txout decoder error"; self.0)
     }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for TxOutDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match &self.0 {
-            encoding::Decoder2Error::First(ref e) => Some(e),
-            encoding::Decoder2Error::Second(ref e) => Some(e),
-        }
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// A reference to a transaction output.

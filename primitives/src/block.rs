@@ -412,22 +412,14 @@ impl From<Infallible> for BlockDecoderError {
 #[cfg(feature = "alloc")]
 impl fmt::Display for BlockDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self.0 {
-            encoding::Decoder2Error::First(ref e) => write_err!(f, "block decoder error"; e),
-            encoding::Decoder2Error::Second(ref e) => write_err!(f, "block decoder error"; e),
-        }
+        write_err!(f, "block decoder error"; self.0)
     }
 }
 
 #[cfg(feature = "alloc")]
 #[cfg(feature = "std")]
 impl std::error::Error for BlockDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match &self.0 {
-            encoding::Decoder2Error::First(ref e) => Some(e),
-            encoding::Decoder2Error::Second(ref e) => Some(e),
-        }
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// Invalid block error.

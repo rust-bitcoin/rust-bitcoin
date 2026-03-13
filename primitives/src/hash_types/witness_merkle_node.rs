@@ -110,7 +110,7 @@ impl From<Infallible> for WitnessMerkleNodeDecoderError {
 
 impl fmt::Display for WitnessMerkleNodeDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "sequence decoder error"; self.0)
+        write_err!(f, "witness merkle node decoder error"; self.0)
     }
 }
 

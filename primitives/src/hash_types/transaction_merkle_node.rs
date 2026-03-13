@@ -110,7 +110,7 @@ impl From<Infallible> for TxMerkleNodeDecoderError {
 
 impl fmt::Display for TxMerkleNodeDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "sequence decoder error"; self.0)
+        write_err!(f, "tx merkle node decoder error"; self.0)
     }
 }
 

@@ -318,7 +318,7 @@ impl From<Infallible> for FilterAddDecoderError {
 
 impl fmt::Display for FilterAddDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_err!(f, "filteradd error"; self)
+        write_err!(f, "filteradd error"; self.0)
     }
 }
 
