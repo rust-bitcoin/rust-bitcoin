@@ -42,12 +42,12 @@
 
 pub mod error;
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
@@ -1049,9 +1049,23 @@ impl<'a> Arbitrary<'a> for KnownHrp {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a, V:NetworkValidation> Arbitrary<'a> for Address<V> {
+impl<'a, V: NetworkValidation> Arbitrary<'a> for Address<V> {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self(PhantomData, u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddressType {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=5)? {
+            0 => Ok(Self::P2pkh),
+            1 => Ok(Self::P2sh),
+            2 => Ok(Self::P2wpkh),
+            3 => Ok(Self::P2wsh),
+            4 => Ok(Self::P2tr),
+            _ => Ok(Self::P2a),
+        }
     }
 }
 
