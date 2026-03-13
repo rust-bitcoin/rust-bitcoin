@@ -8,6 +8,7 @@ use core::borrow::Borrow;
 use core::convert::Infallible;
 use core::fmt;
 use core::ops::Deref;
+use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -16,6 +17,7 @@ use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
 pub use self::into_iter::IntoIter;
+use crate::hex;
 use crate::prelude::{DisplayHex, Vec};
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 
@@ -88,6 +90,28 @@ impl Signature {
     pub fn serialize_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         let sig = self.serialize();
         sig.write_to(writer)
+    }
+}
+
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.sighash_type == TapSighashType::Default {
+            // default sighash type, don't add extra sighash byte
+            hex_unstable::fmt_hex_exact!(f, 64, self.serialize(), hex_unstable::Case::Lower)
+        } else {
+            hex_unstable::fmt_hex_exact!(f, 65, self.serialize(), hex_unstable::Case::Lower)
+        }
+    }
+}
+
+impl FromStr for Signature {
+    type Err = ParseSignatureError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = hex::decode_to_vec(s)
+            .map_err(ParseSignatureError::Hex)?;
+        Self::from_slice(&bytes)
+            .map_err(ParseSignatureError::Decode)
     }
 }
 
@@ -406,6 +430,39 @@ impl From<InvalidSighashTypeError> for SigFromSliceError {
     fn from(err: InvalidSighashTypeError) -> Self { Self::SighashType(err) }
 }
 
+/// Error encountered while parsing a Taproot signature from a string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ParseSignatureError {
+    /// Hex string decoding error.
+    Hex(hex::DecodeVariableLengthBytesError),
+    /// Signature byte slice decoding error.
+    Decode(SigFromSliceError),
+}
+
+impl From<Infallible> for ParseSignatureError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for ParseSignatureError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            Self::Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSignatureError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Hex(ref e) => Some(e),
+            Self::Decode(ref e) => Some(e),
+        }
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Signature {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -420,7 +477,9 @@ impl<'a> Arbitrary<'a> for Signature {
 
 #[cfg(test)]
 mod tests {
-    use super::{SerializedSignature, MAX_LEN};
+    use alloc::string::ToString;
+
+    use super::*;
 
     #[test]
     fn iterator_ops_are_homomorphic() {
@@ -451,5 +510,33 @@ mod tests {
             assert_eq!(iter1.size_hint(), iter2.size_hint());
             assert_eq!(iter1.as_slice(), iter2.as_slice());
         }
+    }
+
+    #[test]
+    fn signature_hex_roundtrip() {
+        let sig_strings = [
+            // default sighash type
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
+            // various sighash types
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab01",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab02",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab03",
+            "7777777777777777abababababababababababababababababababababababababababababababababababababababababababababababababababababababab81",
+        ];
+        for want in sig_strings {
+            let sig = want.parse::<Signature>().unwrap();
+            let got = sig.to_string();
+            assert_eq!(got, want);
+        }
+    }
+
+    #[test]
+    fn signature_hex_default_error() {
+        let sig_hex = "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab00";
+        let parse_err = sig_hex.parse::<Signature>().unwrap_err();
+        assert!(matches!(
+            parse_err,
+            ParseSignatureError::Decode(SigFromSliceError::SighashType(InvalidSighashTypeError(0))),
+        ));
     }
 }
