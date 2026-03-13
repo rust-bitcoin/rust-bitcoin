@@ -217,7 +217,7 @@ fn main() {
         .enumerate()
         .map(|(idx, input)| {
             let (_, sig) = input.partial_sigs.iter().next().expect("we have one sig");
-            Witness::p2wpkh(*sig, pk_inputs[idx].to_inner())
+            Witness::p2wpkh(*sig, pk_inputs[idx].into())
         })
         .collect();
     psbt.inputs.iter_mut().enumerate().for_each(|(idx, input)| {
