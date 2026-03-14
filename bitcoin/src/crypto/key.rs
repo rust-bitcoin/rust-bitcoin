@@ -477,12 +477,59 @@ impl PublicKey {
         Self::from_secp_uncompressed(key)
     }
 
-    fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
+    /// Serializes the key as a byte-encoded pair of values.
+    ///
+    /// This will call the provided function with the key as a byte slice in either
+    /// compressed or uncompressed form.
+    ///
+    /// See [`PublicKey::serialize_compressed`] and [`PublicKey::serialize_uncompressed`]
+    /// for more information on the byte formats for the key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bitcoin::PublicKey;
+    /// use bitcoin::hashes::hash160;
+    ///
+    /// let key = "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8"
+    ///     .parse::<PublicKey>()
+    ///     .unwrap();
+    /// assert!(key.compressed());
+    /// let vec_out = key.with_serialized(<[_]>::to_vec);
+    /// assert_eq!(vec_out.len(), 33);
+    ///
+    /// let hash = key.with_serialized(hash160::Hash::hash).to_string();
+    /// assert_eq!(hash, "dabedb4de2bd2bfec5d38475b9c64af13999a043");
+    /// ```
+    pub fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
         if self.compressed() {
-            f(&self.to_inner().serialize())
+            f(&self.serialize_compressed())
         } else {
-            f(&self.to_inner().serialize_uncompressed())
+            f(&self.serialize_uncompressed())
         }
+    }
+
+    /// Serializes the key as a byte-encoded pair of values.
+    ///
+    /// This function serializes the key in compressed form, where the y-coordinate is
+    /// represented by only a single bit, as x determines it up to one bit.
+    ///
+    /// If you want to serialize while considering the compressedness of this key,
+    /// use [`with_serialized`] instead.
+    ///
+    /// [`with_serialized`]: PublicKey::with_serialized
+    pub fn serialize_compressed(&self) -> [u8; 33] {
+        self.to_inner().serialize()
+    }
+
+    /// Serializes the key as a byte-encoded pair of values, in uncompressed form.
+    ///
+    /// If you want to serialize while considering the compressedness of this key,
+    /// use [`with_serialized`] instead.
+    ///
+    /// [`with_serialized`]: PublicKey::with_serialized
+    pub fn serialize_uncompressed(&self) -> [u8; 65] {
+        self.to_inner().serialize_uncompressed()
     }
 
     /// Returns bitcoin 160-bit hash of the public key.
@@ -913,7 +960,12 @@ impl PrivateKey {
     pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
 
     /// Serializes the private key to bytes.
-    pub fn to_vec(self) -> Vec<u8> { self.as_inner()[..].to_vec() }
+    pub fn to_vec(self) -> Vec<u8> { self.to_secret_bytes().to_vec() }
+
+    /// Serializes the private key to bytes.
+    pub fn to_secret_bytes(self) -> [u8; 32] {
+        self.as_inner().to_secret_bytes()
+    }
 
     /// Deserializes a private key from a byte array.
     ///
@@ -2170,5 +2222,45 @@ mod tests {
         let encoded = format!("{}", keypair.to_inner().display_secret());
         let decoded = encoded.parse::<Keypair>().unwrap();
         assert_eq!(decoded, keypair);
+    }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn keypair_secp_roundtrip() {
+        let bitcoin_key = Keypair::generate(&mut secp256k1::rand::rng());
+        let secp_key = secp256k1::Keypair::from_seckey_byte_array(bitcoin_key.to_secret_bytes()).unwrap();
+        assert_eq!(Keypair::from_secp(secp_key), bitcoin_key);
+    }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn public_key_secp_roundtrip() {
+        let bitcoin_key = Keypair::generate(&mut secp256k1::rand::rng()).to_public_key();
+        let secp_key = secp256k1::PublicKey::from_byte_array_compressed(bitcoin_key.serialize_compressed()).unwrap();
+        assert_eq!(PublicKey::from_secp(secp_key), bitcoin_key);
+        // Also assert that generating a secp from compressed or uncompressed yields the same value
+        assert_eq!(
+            secp256k1::PublicKey::from_byte_array_uncompressed(bitcoin_key.serialize_uncompressed()).unwrap(),
+            secp_key,
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn xonly_secp_roundtrip() {
+        let bitcoin_key = Keypair::generate(&mut secp256k1::rand::rng()).to_x_only_public_key();
+        let secp_key = secp256k1::XOnlyPublicKey::from_byte_array(bitcoin_key.serialize().0).unwrap();
+        assert_eq!(
+            bitcoin_key,
+            XOnlyPublicKey::from_secp(secp_key).with_parity(bitcoin_key.parity()),
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "rand", feature = "std"))]
+    fn private_key_secp_roundtrip() {
+        let bitcoin_key = PrivateKey::generate(NetworkKind::Main);
+        let secp_key = secp256k1::SecretKey::from_secret_bytes(bitcoin_key.to_secret_bytes()).unwrap();
+        assert_eq!(PrivateKey::from_secp(secp_key, NetworkKind::Main), bitcoin_key);
     }
 }
