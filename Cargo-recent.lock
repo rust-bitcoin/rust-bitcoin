@@ -153,6 +153,7 @@ dependencies = [
  "hex-conservative 0.3.0",
  "hex-conservative 1.0.0",
  "hex_lit",
+ "serde",
 ]
 
 [[package]]

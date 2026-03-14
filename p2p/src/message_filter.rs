@@ -31,6 +31,8 @@ hashes::hash_newtype! {
 }
 
 hashes::impl_hex_for_newtype!(FilterHash, FilterHeader);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(FilterHash, FilterHeader);
 
 impl FilterHash {
     /// Computes the filter header from a filter hash and previous filter header.
