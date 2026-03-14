@@ -12,6 +12,7 @@
 //!
 //! ```
 //! use bitcoin::network::Params;
+//! use bitcoin::pow::TargetExt as _;
 //! use bitcoin::{WitnessScript, WitnessScriptBuf, Network, Target};
 //!
 //! const POW_TARGET_SPACING: u32 = 120; // Two minutes.

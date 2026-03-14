@@ -35,6 +35,7 @@ exclude_re = [
     "units/.* Height::to_consensus_u32", # Deprecated
     "units/.* Sequence::to_hex", # Deprecated
     "units/.* Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "units/.* \\| with \\^ in Target::to_compact_lossy", # compact | (size << 24). compact and size are bitwise independent, so impossible to tell ^ from |.
 
     # primitives
     "primitives/.* Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
