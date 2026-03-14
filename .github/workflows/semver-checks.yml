@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0 # we need full history for cargo semver-checks
           persist-credentials: false
       - name: "Install Rustup"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Select stable-version"
         run: |
           rustup default $(cat ./.github/workflows/stable-version)
@@ -62,7 +62,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Install Rustup"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Select stable-version"
         run: |
           rustup default $(cat ./.github/workflows/stable-version)

@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+      - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: Update semver-checks.yml to use latest stable
         run: |
           set -x
@@ -36,7 +36,7 @@ jobs:
         if: env.changes_made == 'true'
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-          token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
+          token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }} # zizmor: ignore[secrets-outside-env]
           author: Update Stable Rustc Bot <bot@example.com>
           committer: Update Stable Rustc Bot <bot@example.com>
           title: Automated weekly update to rustc stable (to ${{ env.stable_version }})

@@ -172,7 +172,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Add architecture i386"
         run: sudo dpkg --add-architecture i386
       - name: "Install i686 gcc"
@@ -200,7 +200,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Install target"
         run: rustup target add ${{ matrix.target }}
       - name: "Install cross"
@@ -225,7 +225,7 @@ jobs:
       - name: "Set up QEMU"
         run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1 # zizmor: ignore[superfluous-actions]
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
           targets: thumbv7m-none-eabi
@@ -256,7 +256,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1 # zizmor: ignore[superfluous-actions]
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install rust-src"
@@ -280,7 +280,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Run wasm script"
         run: cd hashes && ./contrib/wasm.sh
 
@@ -315,7 +315,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1 # zizmor: ignore[superfluous-actions]
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install cargo-public-api"
@@ -338,7 +338,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Run policy script"
         run: ./contrib/check-for-policy-violations.sh
 
@@ -355,11 +355,26 @@ jobs:
         with:
           persist-credentials: false
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Run primitives API checker script"
         run: |
           contrib/generate-primitives-re-export-test.sh && (cd ./primitives && cargo test --all-features)
           contrib/generate-bitcoin-re-export-test.sh && (cd ./bitcoin && cargo test --all-features)
+
+  Encodable-coverage:
+    name: Check Encodable fuzz coverage - stable toolchain
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
+      - name: "Check Encodable coverage"
+        run: ./contrib/check-encodable-coverage.sh
 
   DiffMutants:
     name: Check cargo mutants in diff - stable toolchain
@@ -371,7 +386,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # required for full diff context
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: "Fetch base branch for diff"
         run: git fetch origin master
       - name: "Retrieve relative diff"

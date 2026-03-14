@@ -27,7 +27,7 @@ jobs:
         id: read_toolchain
         run: echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
       - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1 # zizmor: ignore[superfluous-actions]
         with:
           toolchain: ${{ steps.read_toolchain.outputs.nightly_version }}
           components: miri

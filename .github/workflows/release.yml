@@ -22,6 +22,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable # zizmor: ignore[superfluous-actions]
       - name: run cargo
         run: contrib/release.sh
