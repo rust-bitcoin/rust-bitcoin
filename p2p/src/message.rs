@@ -139,14 +139,14 @@ impl Decodable for CommandString {
 }
 
 impl encoding::Encodable for CommandString {
-    type Encoder<'e> = encoding::ArrayEncoder<12>;
+    type Encoder<'e> = CommandStringEncoder;
 
     fn encoder(&self) -> Self::Encoder<'_> {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         debug_assert!(strbytes.len() <= 12);
         rawbytes[..strbytes.len()].copy_from_slice(strbytes);
-        encoding::ArrayEncoder::without_length_prefix(rawbytes)
+        CommandStringEncoder::without_length_prefix(rawbytes)
     }
 }
 
@@ -154,6 +154,31 @@ impl encoding::Decodable for CommandString {
     type Decoder = CommandStringDecoder;
 
     fn decoder() -> Self::Decoder { CommandStringDecoder { inner: encoding::ArrayDecoder::new() } }
+}
+
+/// Encoder for the [`CommandString`] type
+// We can't use the [`encoder_newtype!`] macro due to the lifetime conflicting
+// when constructing the encoder in `V1NetworkMessage`.
+pub struct CommandStringEncoder(encoding::ArrayEncoder<12>);
+
+impl CommandStringEncoder {
+    /// Constructs an encoder which encodes the command string with no length prefix.
+    pub const fn without_length_prefix(arr: [u8; 12]) -> Self {
+        Self(encoding::ArrayEncoder::without_length_prefix(arr))
+    }
+}
+
+impl encoding::Encoder for CommandStringEncoder {
+    #[inline]
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    #[inline]
+    fn advance(&mut self) -> bool { self.0.advance() }
+}
+
+impl encoding::ExactSizeEncoder for CommandStringEncoder {
+    #[inline]
+    fn len(&self) -> usize { 12 }
 }
 
 /// Decoder for [`CommandString`].
@@ -841,7 +866,7 @@ encoding::encoder_newtype! {
         encoding::Encoder2<
             encoding::Encoder4<
                 encoding::ArrayEncoder<4>,
-                encoding::ArrayEncoder<12>,
+                CommandStringEncoder,
                 encoding::ArrayEncoder<4>,
                 encoding::ArrayEncoder<4>,
             >,
