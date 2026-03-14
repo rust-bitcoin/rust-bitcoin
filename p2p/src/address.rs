@@ -15,7 +15,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Decoder4, Encoder4
 };
 use internals::array::ArrayExt;
 use internals::write_err;
@@ -767,6 +767,92 @@ impl ToSocketAddrs for AddrV2Message {
     }
 }
 
+encoding::encoder_newtype! {
+    /// The encoder type for an [`AddrV2Message`].
+    pub struct AddrV2MessageEncoder<'e>(Encoder4<ArrayEncoder<4>, CompactSizeEncoder, AddrV2Encoder<'e>, ArrayEncoder<2>>);
+}
+
+impl encoding::Encodable for AddrV2Message {
+    type Encoder<'e> = AddrV2MessageEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        let service_bits = self.services.to_u64();
+        debug_assert!(u32::try_from(service_bits).is_ok(), "advertising service flags in this bit range is unsupported.");
+        AddrV2MessageEncoder::new(
+            Encoder4::new(
+                ArrayEncoder::without_length_prefix(self.time.to_le_bytes()),
+                // cast OK: experimental bits run from `1 << 24` to `1 << 31`, which can
+                // fit into 32 bits.
+                //
+                // ref: https://github.com/bitcoin/bitcoin/blob/4d7d5f6b79d4c11c47e7a828d81296918fd11d4d/src/protocol.h#L332
+                // ref: https://github.com/bitcoin/bitcoin/issues/34768
+                CompactSizeEncoder::new(service_bits as usize),
+                self.addr.encoder(),
+                ArrayEncoder::without_length_prefix(self.port.to_be_bytes())
+            )
+        )
+    }
+}
+
+type AddrV2MessageInnerDecoder = Decoder4<ArrayDecoder<4>, CompactSizeDecoder, AddrV2Decoder, ArrayDecoder<2>>;
+
+/// The decoder for an [`AddrV2Message`].
+pub struct AddrV2MessageDecoder(AddrV2MessageInnerDecoder);
+
+impl encoding::Decoder for AddrV2MessageDecoder {
+    type Output = AddrV2Message;
+    type Error = AddrV2MessageDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AddrV2MessageDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let (time, services, addr, port) = self.0.end().map_err(AddrV2MessageDecoderError)?;
+        let services = ServiceFlags(services as u64);
+        let time = u32::from_le_bytes(time);
+        let port = u16::from_be_bytes(port);
+        Ok(AddrV2Message { time, services, addr, port })
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for AddrV2Message {
+    type Decoder = AddrV2MessageDecoder;
+
+    fn decoder() -> Self::Decoder {
+        AddrV2MessageDecoder(AddrV2MessageInnerDecoder::new(
+            ArrayDecoder::new(),
+            CompactSizeDecoder::new(),
+            AddrV2::decoder(),
+            ArrayDecoder::new())
+        )
+    }
+}
+
+/// An error occuring when decoding a [`AddrV2Message`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddrV2MessageDecoderError(<AddrV2MessageInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for AddrV2MessageDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for AddrV2MessageDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "addrv2 message error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AddrV2MessageDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// Error returned when an address cannot be converted to an IP-based address.
 ///
 /// Addresses like Tor, I2P, and CJDNS use different routing mechanisms
@@ -1258,6 +1344,30 @@ mod test {
         );
 
         assert_eq!(serialize(&addresses), raw);
+
+        let addresses: AddrV2Payload = encoding::decode_from_slice(&raw).unwrap();
+
+        assert_eq!(
+            addresses.0,
+            vec![
+                AddrV2Message {
+                    services: ServiceFlags::NETWORK,
+                    time: 0x4966_bc61,
+                    port: 8333,
+                    addr: AddrV2::Unknown(153, hex!("abab").to_vec())
+                },
+                AddrV2Message {
+                    services: ServiceFlags::NETWORK_LIMITED
+                        | ServiceFlags::WITNESS
+                        | ServiceFlags::COMPACT_FILTERS,
+                    time: 0x8376_6279,
+                    port: 8333,
+                    addr: AddrV2::Ipv4(Ipv4Addr::new(9, 9, 9, 9))
+                },
+            ]
+        );
+
+        assert_eq!(encoding::encode_to_vec(&addresses), raw);
     }
 
     #[test]
