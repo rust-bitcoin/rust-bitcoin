@@ -6,8 +6,7 @@
 //! (de)serialized.
 
 use core::convert::Infallible;
-use core::fmt::{self, Write as _};
-use core::ops;
+use core::fmt;
 use core::str::FromStr;
 
 use hashes::hash160;
@@ -909,11 +908,11 @@ impl PrivateKey {
     }
 
     /// Serializes the private key to bytes.
-    #[deprecated(since = "TBD", note = "use to_vec instead")]
-    pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
+    #[deprecated(since = "TBD", note = "use to_secret_vec instead")]
+    pub fn to_bytes(self) -> Vec<u8> { self.to_secret_vec() }
 
     /// Serializes the private key to bytes.
-    pub fn to_vec(self) -> Vec<u8> { self.as_inner()[..].to_vec() }
+    pub fn to_secret_vec(self) -> Vec<u8> { self.as_inner()[..].to_vec() }
 
     /// Deserializes a private key from a byte array.
     ///
@@ -921,7 +920,7 @@ impl PrivateKey {
     ///
     /// Errors when the secret key is invalid: when it is all-zeros or would exceed
     /// the curve order when interpreted as a big-endian unsigned integer.
-    pub fn from_byte_array(
+    pub fn from_secret_byte_array(
         data: [u8; 32],
         network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
@@ -933,16 +932,16 @@ impl PrivateKey {
     /// # Errors
     ///
     /// [`secp256k1::Error::InvalidSecretKey`] if the slice is not 32 bytes long.
-    /// See [`from_byte_array`] for other errors.
+    /// See [`from_secret_byte_array`] for other errors.
     ///
-    /// [`from_byte_array`]: PrivateKey::from_byte_array
-    #[deprecated(since = "TBD", note = "use from_byte_array instead")]
+    /// [`from_secret_byte_array`]: PrivateKey::from_secret_byte_array
+    #[deprecated(since = "TBD", note = "use from_secret_byte_array instead")]
     pub fn from_slice(
         data: &[u8],
         network: impl Into<NetworkKind>,
     ) -> Result<Self, secp256k1::Error> {
         let array = data.try_into().map_err(|_| secp256k1::Error::InvalidSecretKey)?;
-        Self::from_byte_array(array, network)
+        Self::from_secret_byte_array(array, network)
     }
 
     /// Formats the private key to WIF format.
@@ -969,7 +968,7 @@ impl PrivateKey {
     #[allow(clippy::missing_panics_doc)]
     pub fn to_wif(self) -> String {
         let mut buf = String::new();
-        buf.write_fmt(format_args!("{}", self)).unwrap();
+        let _ = self.fmt_wif(&mut buf);
         buf.shrink_to_fit();
         buf
     }
@@ -1032,24 +1031,17 @@ impl PrivateKey {
     }
 }
 
-impl fmt::Display for PrivateKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_wif(f) }
-}
-
+// [`PrivateKey`] intentionally has a `FromStr` without a reciprocal `Display`.
+// Parsing from a WIF string should be convenient, printing secret data should not.
 impl FromStr for PrivateKey {
     type Err = FromWifError;
     fn from_str(s: &str) -> Result<Self, FromWifError> { Self::from_wif(s) }
 }
 
-impl ops::Index<ops::RangeFull> for PrivateKey {
-    type Output = [u8];
-    fn index(&self, _: ops::RangeFull) -> &[u8] { &self.as_inner()[..] }
-}
-
 #[cfg(feature = "serde")]
 impl serde::Serialize for PrivateKey {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        s.collect_str(self)
+        s.serialize_str(&self.to_wif())
     }
 }
 
@@ -1754,7 +1746,7 @@ mod tests {
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
-        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
+        assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
         let sk_str =
             "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
@@ -2162,7 +2154,7 @@ mod tests {
                 "1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9",
             )
             .unwrap();
-            let sk = PrivateKey::from_byte_array(bytes, NetworkKind::Test).unwrap();
+            let sk = PrivateKey::from_secret_byte_array(bytes, NetworkKind::Test).unwrap();
             Keypair::from_secret_key(sk.as_inner())
         };
 

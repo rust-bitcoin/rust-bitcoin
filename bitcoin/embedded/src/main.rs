@@ -30,7 +30,7 @@ fn main() -> ! {
     // Load a private key
     let raw = "L1HKVVLHXiUhecWnwFYF6L3shkf1E12HUmuZTESvBXUdx3yqVP1D";
     let pk = PrivateKey::from_wif(raw).unwrap();
-    hprintln!("Seed WIF: {}", pk).unwrap();
+    hprintln!("Seed WIF: {}", pk.to_wif()).unwrap();
 
     // Derive address
     let pubkey = pk.public_key().try_into().unwrap();
