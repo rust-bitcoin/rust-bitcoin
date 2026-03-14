@@ -31,7 +31,7 @@ cpufeatures = { version = "0.2", optional = true }
 
 # You likely don't want to enable these directly, use hex instead.
 hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, optional = true }
-hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex-unstable = { package = "hex-conservative", version = "0.3.2", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.19"

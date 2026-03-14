@@ -1532,7 +1532,7 @@ mod tests {
     use alloc::vec::Vec;
 
     use hashes::HashEngine;
-    use hex_lit::hex;
+    use hex_unstable::hex;
 
     use super::*;
     use crate::consensus::deserialize;
