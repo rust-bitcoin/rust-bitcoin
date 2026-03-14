@@ -26,3 +26,6 @@ features_without_std = ["rand", "serde", "secp-recovery", "bitcoinconsensus", "b
 allowed_duplicates = [
     "hex-conservative",
 ]
+
+[prerelease]
+enabled = true

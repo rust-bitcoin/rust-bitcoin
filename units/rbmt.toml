@@ -12,3 +12,6 @@ features_with_std = ["serde", "arbitrary", "encoding"]
 # Features to test without the `std` feature.
 # Tests each feature alone, all pairs, and all together.
 features_without_std = ["alloc", "serde", "arbitrary", "encoding"]
+
+[prerelease]
+enabled = true

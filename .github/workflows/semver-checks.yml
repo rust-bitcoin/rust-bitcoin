@@ -23,7 +23,7 @@ jobs:
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Select stable-version"
         run: |
-          rustup default $(cat ./.github/workflows/stable-version)
+          rustup default $(cat ./stable-version)
       - name: "Install cargo-binstall"
         uses: cargo-bins/cargo-binstall@b3f755e95653da9a2d25b99154edfdbd5b356d0a # v1.15.10
       - name: "Binstall pinned cargo-semver-checks"
@@ -65,7 +65,7 @@ jobs:
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
       - name: "Select stable-version"
         run: |
-          rustup default $(cat ./.github/workflows/stable-version)
+          rustup default $(cat ./stable-version)
       - name: "Install cargo-binstall"
         uses: cargo-bins/cargo-binstall@b3f755e95653da9a2d25b99154edfdbd5b356d0a # v1.15.10
       - name: "Binstall pinned cargo-semver-checks"

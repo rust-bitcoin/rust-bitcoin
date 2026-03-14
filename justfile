@@ -15,15 +15,15 @@ _install-tools:
 # Run the given CI task using maintainer tools.
 [group('ci')]
 @ci task toolchain="stable" lock="recent": _install-tools
-  RBMT_LOG_LEVEL=quiet cargo +{{toolchain}} rbmt {{task}} --lock-file {{lock}}
+  RBMT_LOG_LEVEL=quiet cargo rbmt {{task}} --lock-file {{lock}}
 
 # Test workspace with stable toolchain.
 [group('ci')]
-ci-stable: (ci "test stable")
+ci-stable: (ci "test")
 
 # Lint workspace.
 [group('ci')]
-ci-lint: (ci "lint" NIGHTLY_VERSION)
+ci-lint: (ci "lint")
 
 # Generate documentation.
 [group('ci')]
@@ -31,7 +31,7 @@ ci-docs: (ci "docs")
 
 # Generate documentation with nightly.
 [group('ci')]
-ci-docsrs: (ci "docsrs" NIGHTLY_VERSION)
+ci-docsrs: (ci "docsrs")
 
 # Run benchmarks.
 [group('ci')]
@@ -67,7 +67,7 @@ check-api:
 # Update the recent and minimal lock files.
 [group('scripts')]
 @update-lock-files: _install-tools
-  cargo +{{NIGHTLY_VERSION}} rbmt lock
+  cargo rbmt lock
 
 # Install githooks.
 [group('scripts')]
