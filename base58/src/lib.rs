@@ -4,9 +4,9 @@
 //!
 //! This crate can be used in a no-std environment but requires an allocator.
 
+#![no_std]
 // NB: This crate is empty if `alloc` is not enabled.
 #![cfg(feature = "alloc")]
-#![no_std]
 // Experimental features we need.
 #![cfg_attr(bench, feature(test))]
 // Coding conventions.
