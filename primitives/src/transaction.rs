@@ -51,7 +51,7 @@ use crate::{absolute, Amount, ScriptPubKeyBuf, ScriptSigBuf, Sequence, Weight, W
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use crate::hash_types::{Ntxid, Txid, Wtxid, BlockHashDecoder, TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
+pub use crate::hash_types::{Ntxid, Txid, Wtxid, BlockHashDecoder};
 #[doc(no_inline)]
 pub use crate::hash_types::BlockHashDecoderError;
 
@@ -411,6 +411,11 @@ impl fmt::UpperHex for Transaction {
 pub struct ParseTransactionError(ParsePrimitiveError<Transaction>);
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
+impl From<Infallible> for ParseTransactionError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Debug for ParseTransactionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
@@ -422,9 +427,7 @@ impl fmt::Display for ParseTransactionError {
 
 #[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
 impl std::error::Error for ParseTransactionError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        std::error::Error::source(&self.0)
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// The decoder for the [`Transaction`] type.

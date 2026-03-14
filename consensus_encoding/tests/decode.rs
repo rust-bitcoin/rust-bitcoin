@@ -12,7 +12,7 @@ use bitcoin_consensus_encoding::{
 use bitcoin_consensus_encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
 #[cfg(feature = "std")]
 use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
-use bitcoin_consensus_encoding::decode_from_slice;
+use bitcoin_consensus_encoding::{decode_from_slice, decode_from_slice_unbounded, DecodeError};
 
 const EMPTY: &[u8] = &[];
 
@@ -271,9 +271,20 @@ fn decode_from_slice_unexpected_eof() {
 fn decode_from_slice_extra_data() {
     let data = [1, 2, 3, 4, 5];
     let result: Result<TestArray, _> = decode_from_slice(&data);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(matches!(err, DecodeError::Unconsumed(_)));
+}
+
+#[test]
+fn decode_from_slice_unbounded_extra_data() {
+    let data = [1, 2, 3, 4, 5];
+    let bytes = &mut data.as_slice();
+    let result: Result<TestArray, _> = decode_from_slice_unbounded(bytes);
     assert!(result.is_ok());
     let decoded = result.unwrap();
     assert_eq!(decoded.0, [1, 2, 3, 4]);
+    assert_eq!(bytes.len(), 1);
 }
 
 #[test]
@@ -380,6 +391,7 @@ fn decode_from_read_unbuffered_extra_data() {
 struct Inner(u32);
 
 #[cfg(feature = "alloc")]
+#[derive(Clone)]
 struct InnerDecoder(ArrayDecoder<4>);
 
 #[cfg(feature = "alloc")]
@@ -410,7 +422,7 @@ impl Decodable for Inner {
 struct Test(Vec<Inner>);
 
 #[cfg(feature = "alloc")]
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct TestDecoder(VecDecoder<Inner>);
 
 #[cfg(feature = "alloc")]
@@ -572,6 +584,30 @@ fn vec_decoder_two_items() {
     let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
 
     assert_eq!(got, want);
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn vec_decoder_clone_mid_decode() {
+    // Feed the length prefix and first item, clone, then feed the second item to both.
+    let prefix = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE]; // length=2, first item
+    let second = vec![0xBE, 0xBA, 0xFE, 0xCA];       // second item
+
+    let mut slice = prefix.as_slice();
+    let mut decoder = Test::decoder();
+    decoder.push_bytes(&mut slice).unwrap();
+
+    let mut clone = decoder.clone();
+
+    let mut slice = second.as_slice();
+    decoder.push_bytes(&mut slice).unwrap();
+    let got = decoder.end().unwrap();
+    assert_eq!(got, Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]));
+
+    let mut slice = second.as_slice();
+    clone.push_bytes(&mut slice).unwrap();
+    let got = clone.end().unwrap();
+    assert_eq!(got, Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]));
 }
 
 #[cfg(feature = "alloc")]

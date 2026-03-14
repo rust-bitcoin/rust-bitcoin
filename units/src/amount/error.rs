@@ -505,6 +505,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[allow(clippy::too_many_lines)] // Test could be refactored ...
     fn error_display_is_non_empty() {
         // A helper macro to break out a ParseAmountErrorInner type and assert display down the chain.
         macro_rules! assert_amount_err {

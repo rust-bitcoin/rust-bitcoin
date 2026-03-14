@@ -125,6 +125,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-key-expression"
+version = "0.0.0"
+
+[[package]]
 name = "bitcoin-network-kind"
 version = "0.1.0"
 dependencies = [
@@ -148,6 +152,7 @@ dependencies = [
  "bitcoin-units",
  "bitcoin_hashes",
  "hex-conservative 0.3.0",
+ "hex-conservative 1.0.0",
  "hex_lit",
 ]
 
@@ -189,6 +194,7 @@ dependencies = [
  "bitcoin-internals",
  "cpufeatures",
  "hex-conservative 0.3.0",
+ "hex-conservative 1.0.0",
  "serde",
  "serde_test",
 ]

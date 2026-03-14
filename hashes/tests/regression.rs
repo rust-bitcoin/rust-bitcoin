@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Regression tests for each hash type.
 //!
 //! Note that if `bitcoin-io` is enabled then we get more regression-like testing from `./io.rs`.

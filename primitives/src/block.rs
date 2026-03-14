@@ -28,7 +28,7 @@ use crate::hex_codec::{HexPrimitive, ParsePrimitiveError};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
-use crate::transaction::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
+use crate::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
 use crate::{Transaction, WitnessMerkleNode};
@@ -274,6 +274,65 @@ mod sealed {
     impl Validation for super::Unchecked {}
 }
 
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl core::str::FromStr for Block<Unchecked>
+where
+    Self: Decodable
+{
+    type Err = ParseBlockError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        HexPrimitive::from_str(s).map_err(ParseBlockError)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl<V: Validation> fmt::Display for Block<V>
+where
+    Self: Encodable
+{
+    #[allow(clippy::use_self)]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl<V: Validation> fmt::LowerHex for Block<V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&HexPrimitive(self), f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl<V: Validation> fmt::UpperHex for Block<V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&HexPrimitive(self), f) }
+}
+
+/// An error that occurs during parsing of a [`Block`] from a hex string.
+#[cfg(all(feature = "hex", feature = "alloc"))]
+pub struct ParseBlockError(ParsePrimitiveError<Block>);
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl From<Infallible> for ParseBlockError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Debug for ParseBlockError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc"))]
+impl fmt::Display for ParseBlockError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "parse block error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]
+impl std::error::Error for ParseBlockError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 #[cfg(feature = "alloc")]
 encoding::encoder_newtype! {
     /// The encoder for the [`Block`] type.
@@ -283,7 +342,10 @@ encoding::encoder_newtype! {
 }
 
 #[cfg(feature = "alloc")]
-impl Encodable for Block {
+impl<V> Encodable for Block<V>
+where
+    V: Validation,
+{
     type Encoder<'e>
         = Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
     where
@@ -330,7 +392,7 @@ impl Decoder for BlockDecoder {
 }
 
 #[cfg(feature = "alloc")]
-impl Decodable for Block {
+impl Decodable for Block<Unchecked> {
     type Decoder = BlockDecoder;
     fn decoder() -> Self::Decoder {
         BlockDecoder(Decoder2::new(Header::decoder(), VecDecoder::<Transaction>::new()))
@@ -548,20 +610,25 @@ impl fmt::Debug for Header {
 pub struct ParseHeaderError(ParsePrimitiveError<Header>);
 
 #[cfg(feature = "hex")]
+impl From<Infallible> for ParseHeaderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "hex")]
 impl fmt::Debug for ParseHeaderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::Display for ParseHeaderError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "parse header error"; self.0)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "std"))]
 impl std::error::Error for ParseHeaderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        std::error::Error::source(&self.0)
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 encoding::encoder_newtype_exact! {
@@ -1322,10 +1389,8 @@ mod tests {
         assert_eq!(header, parsed_upper);
     }
 
-    #[test]
     #[cfg(feature = "alloc")]
-    fn block_decode() {
-        // Make a simple block, encode then decode. Verify equivalence.
+    fn dummy_block() -> Block {
         let header = Header {
             version: Version::ONE,
             #[rustfmt::skip]
@@ -1363,13 +1428,60 @@ mod tests {
                 script_pubkey: crate::script::ScriptPubKeyBuf::new(),
             }],
         }];
-        let original_block = Block::new_unchecked(header, transactions);
+        Block::new_unchecked(header, transactions)
+    }
 
-        // Encode + decode the block
-        let encoded = encoding::encode_to_vec(&original_block);
-        let decoded_block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn block_hex() {
+        let header = dummy_header();
+        let transactions = vec![Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::locktime::absolute::LockTime::ZERO,
+            inputs: vec![],
+            outputs: vec![],
+        }];
+        let block = Block::new_unchecked(header, transactions);
 
-        assert_eq!(original_block, decoded_block);
+        // Transaction with no inputs uses segwit serialization:
+        // version (4) + marker (1) + flag (1) + input_count (1) + output_count (1) + lock_time (4)
+        let want = "010000009999999999999999999999999999999999999999999999999999999999999999777777777777777777777777777777777777777777777777777777777777777702000000030000000400000001010000000001000000000000";
+
+        assert_eq!(format!("{}", block), want);
+        assert_eq!(format!("{:x}", block), want);
+
+        // Note this is pointless because the hex does not have letters in it, only numbers.
+        let want =
+            want.chars().map(|chr| chr.to_ascii_uppercase()).collect::<alloc::string::String>();
+        assert_eq!(want, format!("{:X}", block));
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    fn block_from_hex_str_round_trip() {
+        let block = dummy_block();
+
+        let lower_hex_block = format!("{:x}", block);
+        let upper_hex_block = format!("{:X}", block);
+
+        let parsed_lower = Block::from_str(&lower_hex_block).unwrap();
+        let parsed_upper = Block::from_str(&upper_hex_block).unwrap();
+
+        assert_eq!(parsed_lower, block);
+        assert_eq!(parsed_upper, block);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_decode() {
+        let original = dummy_block();
+
+        let encoded = encoding::encode_to_vec(&original);
+        let decoded: Block = encoding::decode_from_slice(encoded.as_slice()).unwrap();
+
+        assert_eq!(decoded, original);
     }
 
     // Test vector provided by tm0 in issue #5023
@@ -1379,7 +1491,7 @@ mod tests {
         // https://learnmeabitcoin.com/explorer/block/00000000000008a662b4a95a46e4c54cb04852525ac0ef67d1bcac85238416d4
         // this block has 7 transactions
         const BLOCK_128461_HEX: &str = "01000000166208c96de305f2a304130a1b53727abf8fb77e8a3cfe2a831e000000000000d4fd086755b4d46221362a09a4228bed60d729d22362b87803ff44b72c138ec04a8ce94d2194261af9551f720701000000010000000000000000000000000000000000000000000000000000000000000000ffffffff08042194261a026005ffffffff018076242a01000000434104390e51c3d66d5ee10327395872e33bc232e9e1660225c9f88fa594fdcdcd785d86b1152fb380a63cdf57d8cf2345a55878412a6864656b158704e0b734b3fd9dac000000000100000001f591edc180a889b21a45b6bd5b5e0017d4137dae9695703107ac1e6e878c9f02000000008b483045022100e066df28b29bf18bfcd8da11ea576a6f502f59e7b1d37e2e849ee4648008962b022023be840ec01ffa6860b5577bf0b8546541f40c287eb57b8b421a1396c7aea583014104add16286f51f68cee1b436d0c29a41a59fa8bd224eb6bec34b073512303c70fc3d630cb4952416ef02340c56bee2eef294659b4023ea8a3d90a297bdb54321f9ffffffff02508470b5000000001976a91472579bbeaeca0802fde07ce88f946b64da63989388ac40aeeb02000000001976a914d2a7410246b5ece345aa821af89bff0b6fa3bcaa88ac0000000001000000016197cb143d4cef51389076fdee3f62c294b65bc9aff217a6c71b9dd987e22754000000008c493046022100bf174e942e4619f4e470b5d8b1c0c8ded9e2f7a6616c073c5ab05cc9d699ede3022100a642fa9d0bcc89523635f9468e4813a120b233a249678de0ebf7ba398a4205f6014104122979c0ac1c3af2aa84b4c1d6a9b3b6fa491827f1a2ba37c4b58bdecd644438da715497a44b16aedbadbd18cf9765cdb36851284f643ed743c4365798dd314affffffff02c0404384000000001976a91443cd8fbad7421a53f9e899a2c9761259705d465b88acc0f4f50e000000001976a9142f6c963506b0a2c93a09a92171957e9e7e11a7a388ac00000000010000000228a11f953c26d558a8299ad9dc61279d7abc9a4059820b614bf403c05e471c481d0000008b48304502205baff189016e6fee8e0faa9eebdc8f150d2d3815007719ceccabd995607bb0b0022100f4cc49ef0b29561e976bf6f6f7ae135f665b8dd38a67634bb6bbe74c0da9c1f7014104dd5920aedc3f79ace9c8061f3724812f5b218ea81d175dd990071175874d6c79025f9db516ab23975e510645aabc4ee699cc5c24358a403d15a7736a504399f8ffffffff191b06773a7cec0bb30539f185edbf1d139f9756071c6ae395c1c29f3e2484f6010000008c493046022100c7123436476f923cd8dacbe132f5128b529baa194c9aedc570402d8d2d7902ac02210094e6974695265d96d5859ab493df00c90b62a84dcc33a05753aea23b38c249670141041d878bc5438ff439490e71d059e6b687e511336c0aa53e0d129663c91db71cfe20008891f1e4780bf1139ec9c9e81bfd2e3ea9009608a78d96a5a3a5bf7812baffffffff0200093d00000000001976a914fd0d4c3d0963db8358bd01ba6f386d4c5ef2e30288ac0084d717000000001976a914dcb1e8e699eb9f07a1ddfd5d764aa74359ddd93088ac00000000010000000118e2286c42643e6146669b0f5ee35454fe256aac2b1401dbeefd941f2e6d2074000000008b483045022100edec1c5078fed29d808282d62f167eb3f0ea6a6655f3869c12eca9c63d8463c2022031a3ae430be137932059b4a3e3fb7f1e1f2a05065dbc47c3142972de45c76daa01410423162e5ac10ec46c4a142fea3197cc66e614b9f28f014882ebc8271c4ab6022e474ccdc246445dd2479f9de217e8aaf4d770da15aff1078d329c02e0f4de8d77ffffffff02b00ac165000000001976a914f543a7f0dfcd621a05c646810ba94da791ed14c488ac80de8002000000001976a9144763f6309b3aca0bff49ed6365ffbd791b1afc5d88ac0000000001000000014e3632994e6cbcae4122bf9e8de242aa1d7c13bf6d045392fa69fa92353f13cf000000008c493046022100c6879938322e9945dae2404a2b104b534df7fdab5927a30a57a12418d619c3b8022100c53331f402010cbdc8297d7a827154e42263fc2f6cef6e56b85bbc061d5e30810141047e717e70b8c5e928bc2c482662dbe9007113f7a5fb0360da1d2f193add960fed97ab3163e85c02b127829d694ab4a796326918d4f639d0b19345f7558406667dffffffff0270c8b165000000001976a9146c908731300d5c0a4215ba3bb3041b4f313d14f688ac40420f00000000001976a91457b01e2a6bf178a10a0e36cd3e301a41ac58b68b88ac000000000100000001a2e94f26db15d7098104a3616b650cc7490eca961a23111c12c3d94f593ab3bc000000008c493046022100b355076f2c956d7565d44fdf589ebdbdff70abcd806c71845b47d31c3579cbc00221008352a03c5276ba481ae92a2327307ad1ce9b234be7386c105fb914ceb9c63341014104872ee8390f11c8ac309df772362614ff7c99f98e1fd68888c5e8765d630c93ae86fcd33922b17f5da490ea14a9f9002ef4e7fb11166ba399f9794296ca02e401ffffffff02f07d5460000000001976a914ff1da11fbd50b9906e78c694169c19902d2ee20388ac804a5d05000000001976a91444d5774b8277c59a07ed9dce1225e2d24a3faab188ac00000000";
-        let bytes: [u8; 1948] = hex_unstable::FromHex::from_hex(BLOCK_128461_HEX).unwrap();
+        let bytes = hex::decode_to_array::<1948>(BLOCK_128461_HEX).unwrap();
         let valid_block: Block<Unchecked> = encoding::decode_from_slice(&bytes).unwrap();
         let (header, mut transactions) = valid_block.clone().into_parts();
         transactions.push(transactions[6].clone());
@@ -1481,7 +1593,7 @@ mod tests {
         txin.witness.push(witness_bytes);
 
         // pubkey bytes must match the magic bytes followed by the hash of the witness bytes.
-        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
+        let script_pubkey_bytes = hex::decode_to_array::<38>(
             "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
         )
         .unwrap();
@@ -1508,7 +1620,7 @@ mod tests {
         let block = Block::new_unchecked(dummy_header(), vec![tx1, tx2]);
         let result = block.check_witness_commitment();
 
-        let exp_bytes: [u8; 32] = hex_unstable::FromHex::from_hex(
+        let exp_bytes = hex::decode_to_array::<32>(
             "fb848679079938b249a12f14b72d56aeb116df79254e17cdf72b46523bcb49db",
         )
         .unwrap();
@@ -1525,7 +1637,7 @@ mod tests {
         txin.witness.push(witness_bytes);
         txin.witness.push([12u8]);
 
-        let script_pubkey_bytes: [u8; 38] = hex_unstable::FromHex::from_hex(
+        let script_pubkey_bytes = hex::decode_to_array::<38>(
             "6a24aa21a9ed3cde9e0b9f4ad8f9d0fd66d6b9326cd68597c04fa22ab64b8e455f08d2e31ceb",
         )
         .unwrap();

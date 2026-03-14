@@ -26,12 +26,14 @@ use crate::{internal_macros, BlockTime, Target, Weight, Work};
 #[doc(inline)]
 pub use primitives::block::{
     Block, Checked, Unchecked, Validation, Version, BlockHash, Header,
-    WitnessCommitment, compute_merkle_root, compute_witness_root, InvalidBlockError, ParseHeaderError,
+    WitnessCommitment, compute_merkle_root, compute_witness_root,
 };
 #[doc(no_inline)]
-pub use units::block::TooBigForRelativeHeightError;
+pub use primitives::block::{InvalidBlockError, ParseBlockError, ParseHeaderError};
 #[doc(inline)]
 pub use units::block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval};
+#[doc(no_inline)]
+pub use units::block::TooBigForRelativeHeightError;
 
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
 #[doc(hidden)]

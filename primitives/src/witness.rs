@@ -733,30 +733,13 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                use hex_unstable::{FromHex, HexToBytesError as E};
-                use serde::de::{self, Unexpected};
-
                 let mut ret = match a.size_hint() {
                     Some(len) => Vec::with_capacity(len),
                     None => Vec::new(),
                 };
 
                 while let Some(elem) = a.next_element::<String>()? {
-                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
-                        E::InvalidChar(ref e) =>
-                            match core::char::from_u32(e.invalid_char().into()) {
-                                Some(c) => de::Error::invalid_value(
-                                    Unexpected::Char(c),
-                                    &"a valid hex character",
-                                ),
-                                None => de::Error::invalid_value(
-                                    Unexpected::Unsigned(e.invalid_char().into()),
-                                    &"a valid hex character",
-                                ),
-                            },
-                        E::OddLengthString(ref e) =>
-                            de::Error::invalid_length(e.length(), &"an even length string"),
-                    })?;
+                    let vec = hex::decode_to_vec(&elem).map_err(serde::de::Error::custom)?;
                     ret.push(vec);
                 }
                 Ok(Witness::from_slice(&ret))
