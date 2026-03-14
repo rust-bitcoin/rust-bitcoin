@@ -54,6 +54,7 @@ dependencies = [
  "bech32",
  "bincode",
  "bitcoin-consensus-encoding",
+ "bitcoin-crypto",
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-network-kind",
@@ -88,7 +89,20 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-crypto"
-version = "0.0.0"
+version = "0.1.0"
+dependencies = [
+ "arbitrary",
+ "base58ck",
+ "bitcoin-internals",
+ "bitcoin-io",
+ "bitcoin-network-kind",
+ "bitcoin_hashes",
+ "hex-conservative 0.3.0",
+ "hex-conservative 1.0.0",
+ "secp256k1",
+ "serde",
+ "serde_test",
+]
 
 [[package]]
 name = "bitcoin-fuzz"
