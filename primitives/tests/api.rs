@@ -63,9 +63,10 @@ struct Structs<'a> {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    // w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    // x: witness::Iter<'a>,
 }
 
 static REDEEM_SCRIPT: RedeemScriptBuf = RedeemScriptBuf::new();
@@ -103,9 +104,10 @@ struct CommonTraits {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    // w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    // x: witness::Iter<'a>,
 }
 
 /// A struct that includes all types that implement `Clone`.
@@ -135,9 +137,10 @@ struct Clone<'a> {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    x: witness::Iter<'a>,
 }
 
 /// Public structs that derive common traits.
@@ -168,9 +171,10 @@ struct Ord {
     r: OutPoint,
     s: Txid,
     t: Wtxid,
-    u: transaction::Version,
-    v: Witness,
-    // w: witness::Iter<'a>,
+    u: transaction::Ntxid,
+    v: transaction::Version,
+    w: Witness,
+    // x: witness::Iter<'a>,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -244,9 +248,11 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_primitives::{
-        Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, ScriptPubKey,
-        ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, Transaction, TransactionVersion, TxIn,
-        TxMerkleNode, TxOut, Txid, Witness, WitnessCommitment, WitnessMerkleNode, Wtxid,
+        Block, BlockChecked, BlockHash, BlockHeader, BlockUnchecked, BlockValidation, BlockVersion,
+        CompactTarget, Ntxid, OutPoint, RedeemScript, RedeemScriptBuf, ScriptPubKey,
+        ScriptPubKeyBuf, ScriptSig, ScriptSigBuf, Sequence, TapScript, TapScriptBuf, Transaction,
+        TransactionVersion, TxIn, TxMerkleNode, TxOut, Txid, Witness, WitnessCommitment,
+        WitnessMerkleNode, WitnessScript, WitnessScriptBuf, Wtxid,
     };
 }
 
@@ -320,6 +326,7 @@ fn api_all_non_error_types_have_non_empty_debug() {
         OutPoint::arbitrary(&mut u).unwrap();
         transaction.compute_txid();
         transaction.compute_wtxid();
+        transaction.compute_ntxid();
         transaction.version;
         Witness::arbitrary(&mut u).unwrap();
         // ad: witness::Iter<'a>,
