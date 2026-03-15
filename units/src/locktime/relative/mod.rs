@@ -16,7 +16,8 @@ use internals::const_casts;
 
 #[cfg(doc)]
 use crate::relative;
-use crate::{parse_int, BlockHeight, BlockMtp, Sequence};
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
+use crate::{BlockHeight, BlockMtp, Sequence};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -430,6 +431,30 @@ impl NumberOfBlocks {
         self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
     }
 
+    /// Constructs a new `NumberOfBlocks` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a block count or it does not
+    /// include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let block_count = parse_int::hex_u16_prefixed(s)?;
+        Ok(Self::from_height(block_count))
+    }
+
+    /// Constructs a new `NumberOfBlocks` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a block count or if it includes
+    /// the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        let block_count = parse_int::hex_u16_unprefixed(s)?;
+        Ok(Self::from_height(block_count))
+    }
+
     /// Returns true if an output locked by height can be spent in the next block.
     ///
     /// # Errors
@@ -552,6 +577,30 @@ impl NumberOf512Seconds {
     )]
     pub const fn to_consensus_u32(self) -> u32 {
         (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+    }
+
+    /// Constructs a new `NumberOf512Seconds` from a prefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a number of 512 second intervals
+    /// or it does not include the `0x` prefix.
+    #[inline]
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let block_count = parse_int::hex_u16_prefixed(s)?;
+        Ok(Self::from_512_second_intervals(block_count))
+    }
+
+    /// Constructs a new `NumberOf512Seconds` from an unprefixed hex string.
+    ///
+    /// # Errors
+    ///
+    /// If the input string is not a valid hex representation of a number of 512 second intervals
+    /// or if it includes the `0x` prefix.
+    #[inline]
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        let block_count = parse_int::hex_u16_unprefixed(s)?;
+        Ok(Self::from_512_second_intervals(block_count))
     }
 
     /// Returns true if an output locked by time can be spent in the next block.

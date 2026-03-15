@@ -272,103 +272,101 @@ pub fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
     Ok(s)
 }
 
-/// Parses a `u32` from a hex string.
-///
-/// Input string may or may not contain a `0x` (or `0X`) prefix.
-///
-/// # Errors
-///
-/// If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32(s: &str) -> Result<u32, ParseIntError> {
-    let unchecked = hex_remove_optional_prefix(s);
-    hex_u32_unchecked(unchecked)
+/// Macro to generate parsing functions for a given unsigned type
+macro_rules! parse_hex_for {
+    (
+        $int_type:ty, $bits:literal;
+        fn $any_hex_fn:ident();
+        fn $prefix_hex_fn:ident();
+        fn $unprefix_hex_fn:ident();
+        fn $uncheck_hex_fn:ident();
+    ) => {
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from a hex string.\n\n"]
+        #[doc = "Input string may or may not contain a `0x` (or `0X`) prefix.\n\n"]
+        #[doc = "# Errors\n\nIf the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        pub fn $any_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
+            let unchecked = hex_remove_optional_prefix(s);
+            $uncheck_hex_fn(unchecked)
+        }
+
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from a prefixed hex string.\n\n"]
+        #[doc = "# Errors\n\n"]
+        #[doc = "- If the input string does not contain a `0x` (or `0X`) prefix.\n"]
+        #[doc = "- If the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        pub fn $prefix_hex_fn(s: &str) -> Result<$int_type, PrefixedHexError> {
+            let checked = hex_remove_prefix(s)?;
+            Ok($uncheck_hex_fn(checked)?)
+        }
+
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from an unprefixed hex string.\n\n"]
+        #[doc = "# Errors\n\n"]
+        #[doc = "- If the input string contains a `0x` (or `0X`) prefix.\n"]
+        #[doc = "- If the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        pub fn $unprefix_hex_fn(s: &str) -> Result<$int_type, UnprefixedHexError> {
+            let checked = hex_check_unprefixed(s)?;
+            Ok($uncheck_hex_fn(checked)?)
+        }
+
+        #[doc = "Parses a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "` from an unprefixed hex string without first checking for a prefix.\n\n"]
+        #[doc = "# Errors\n\n"]
+        #[doc = "- If the input string contains a `0x` (or `0X`) prefix,"]
+        #[doc = " returns `InvalidDigit` due to the `x`.\n"]
+        #[doc = "- If the input string is not a valid hex encoding of a `"]
+        #[doc = stringify!($int_type)]
+        #[doc = "`."]
+        pub fn $uncheck_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
+            <$int_type>::from_str_radix(s, 16).map_err(|error| ParseIntError {
+                input: s.into(),
+                bits: $bits,
+                is_signed: false,
+                source: error,
+            })
+        }
+    };
 }
 
-/// Parses a `u32` from a prefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string does not contain a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32_prefixed(s: &str) -> Result<u32, PrefixedHexError> {
-    let checked = hex_remove_prefix(s)?;
-    Ok(hex_u32_unchecked(checked)?)
-}
-
-/// Parses a `u32` from an unprefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32_unprefixed(s: &str) -> Result<u32, UnprefixedHexError> {
-    let checked = hex_check_unprefixed(s)?;
-    Ok(hex_u32_unchecked(checked)?)
-}
-
-/// Parses a `u32` from an unprefixed hex string without first checking for a prefix.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix, returns `InvalidDigit` due to the `x`.
-/// - If the input string is not a valid hex encoding of a `u32`.
-pub fn hex_u32_unchecked(s: &str) -> Result<u32, ParseIntError> {
-    u32::from_str_radix(s, 16).map_err(|error| ParseIntError {
-        input: s.into(),
-        bits: 32,
-        is_signed: false,
-        source: error,
-    })
-}
-
-/// Parses a `u128` from a hex string.
-///
-/// Input string may or may not contain a `0x` (or `0X`) prefix.
-///
-/// # Errors
-///
-/// If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128(s: &str) -> Result<u128, ParseIntError> {
-    let unchecked = hex_remove_optional_prefix(s);
-    hex_u128_unchecked(unchecked)
-}
-
-/// Parses a `u128` from a prefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string does not contain a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128_prefixed(s: &str) -> Result<u128, PrefixedHexError> {
-    let checked = hex_remove_prefix(s)?;
-    Ok(hex_u128_unchecked(checked)?)
-}
-
-/// Parses a `u128` from an unprefixed hex string.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix.
-/// - If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128_unprefixed(s: &str) -> Result<u128, UnprefixedHexError> {
-    let checked = hex_check_unprefixed(s)?;
-    Ok(hex_u128_unchecked(checked)?)
-}
-
-/// Parses a `u128` from an unprefixed hex string without first checking for a prefix.
-///
-/// # Errors
-///
-/// - If the input string contains a `0x` (or `0X`) prefix, returns `InvalidDigit` due to the `x`.
-/// - If the input string is not a valid hex encoding of a `u128`.
-pub fn hex_u128_unchecked(s: &str) -> Result<u128, ParseIntError> {
-    u128::from_str_radix(s, 16).map_err(|error| ParseIntError {
-        input: s.into(),
-        bits: 128,
-        is_signed: false,
-        source: error,
-    })
-}
+parse_hex_for!(
+    u16, 16;
+    fn hex_u16();
+    fn hex_u16_prefixed();
+    fn hex_u16_unprefixed();
+    fn hex_u16_unchecked();
+);
+parse_hex_for!(
+    u32, 32;
+    fn hex_u32();
+    fn hex_u32_prefixed();
+    fn hex_u32_unprefixed();
+    fn hex_u32_unchecked();
+);
+parse_hex_for!(
+    u64, 64;
+    fn hex_u64();
+    fn hex_u64_prefixed();
+    fn hex_u64_unprefixed();
+    fn hex_u64_unchecked();
+);
+parse_hex_for!(
+    u128, 128;
+    fn hex_u128();
+    fn hex_u128_prefixed();
+    fn hex_u128_unprefixed();
+    fn hex_u128_unchecked();
+);
 
 /// Strips the hex prefix off `s` if one is present.
 pub(crate) fn hex_remove_optional_prefix(s: &str) -> &str {
