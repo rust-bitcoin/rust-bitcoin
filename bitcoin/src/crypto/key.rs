@@ -705,15 +705,19 @@ impl FromStr for PublicKey {
         match s.len() {
             66 => {
                 let bytes = hex::decode_to_array::<33>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
+                    DecodeFixedLengthBytesError::InvalidChar(e) =>
+                        ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) =>
+                        unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
             130 => {
                 let bytes = hex::decode_to_array::<65>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
+                    DecodeFixedLengthBytesError::InvalidChar(e) =>
+                        ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) =>
+                        unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }

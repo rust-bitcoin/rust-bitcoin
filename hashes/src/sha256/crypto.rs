@@ -269,7 +269,7 @@ impl Midstate {
 }
 
 impl HashEngine {
-    pub(super) fn process_blocks(state: &mut[u32; 8], blocks: &[u8]) {
+    pub(super) fn process_blocks(state: &mut [u32; 8], blocks: &[u8]) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
             if std::is_x86_feature_detected!("sse4.1")
@@ -323,7 +323,7 @@ impl HashEngine {
         any(feature = "std", feature = "cpufeatures")
     ))]
     #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
-    unsafe fn process_block_simd_x86_intrinsics(state: &mut[u32; 8], block: &[u8]) {
+    unsafe fn process_block_simd_x86_intrinsics(state: &mut [u32; 8], block: &[u8]) {
         // Code translated and based on from
         // https://github.com/noloader/SHA-Intrinsics/blob/4899efc81d1af159c1fd955936c673139f35aea9/sha256-x86.c
 
@@ -582,7 +582,7 @@ impl HashEngine {
 
     #[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
     #[target_feature(enable = "sha2")]
-    unsafe fn process_block_simd_arm_intrinsics(state: &mut[u32; 8], block: &[u8]) {
+    unsafe fn process_block_simd_arm_intrinsics(state: &mut [u32; 8], block: &[u8]) {
         // Code translated and based on from
         // https://github.com/noloader/SHA-Intrinsics/blob/4e754bec921a9f281b69bd681ca0065763aa911c/sha256-arm.c
 
@@ -769,7 +769,7 @@ impl HashEngine {
     }
 
     // Algorithm copied from libsecp256k1
-    fn software_process_block(state: &mut[u32; 8], blocks: &[u8]) {
+    fn software_process_block(state: &mut [u32; 8], blocks: &[u8]) {
         debug_assert!(!blocks.is_empty() && blocks.len() % BLOCK_SIZE == 0);
 
         for block in blocks.chunks_exact(BLOCK_SIZE) {
