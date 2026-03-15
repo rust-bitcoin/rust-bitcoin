@@ -738,8 +738,8 @@ impl<'a> Arbitrary<'a> for MerkleBlock {
 mod tests {
     use core::cmp;
 
-    use hex_unstable::DisplayHex;
     use hex_lit::hex;
+    use hex_unstable::DisplayHex;
     use primitives::block::Unchecked;
 
     use super::*;

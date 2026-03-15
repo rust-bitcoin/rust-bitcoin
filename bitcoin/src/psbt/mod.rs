@@ -1308,7 +1308,6 @@ mod tests {
 
     use super::*;
     use crate::bip32::{ChildNumber, DerivationPath};
-    use crate::hex;
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
@@ -1317,7 +1316,7 @@ mod tests {
     };
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
-    use crate::Sequence;
+    use crate::{hex, Sequence};
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {

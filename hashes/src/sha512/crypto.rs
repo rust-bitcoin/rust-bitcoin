@@ -75,7 +75,7 @@ mod fast_hash {
 
 impl HashEngine {
     // Algorithm copied from libsecp256k1
-    pub(crate) fn process_blocks(state: &mut[u64; 8], blocks: &[u8]) {
+    pub(crate) fn process_blocks(state: &mut [u64; 8], blocks: &[u8]) {
         debug_assert!(!blocks.is_empty() && blocks.len() % BLOCK_SIZE == 0);
 
         for block in blocks.chunks_exact(BLOCK_SIZE) {

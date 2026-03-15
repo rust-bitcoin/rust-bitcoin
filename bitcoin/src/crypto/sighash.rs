@@ -339,8 +339,7 @@ impl<'s> ScriptPath<'s> {
     pub fn leaf_hash(&self) -> TapLeafHash {
         let mut enc = sha256t::Hash::<TapLeafTag>::engine();
 
-        enc
-            .write_all(&[self.leaf_version.to_consensus()])
+        enc.write_all(&[self.leaf_version.to_consensus()])
             .expect("writing to hash engine should never fail");
         enc = hashes::encode_to_engine(self.script, enc);
 
@@ -649,12 +648,16 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if !anyone_can_pay {
             writer.write_all(&self.common_cache().prevouts.to_byte_array())?;
             writer.write_all(
-                &self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?).amounts.to_byte_array()
+                &self
+                    .taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?)
+                    .amounts
+                    .to_byte_array(),
             )?;
             writer.write_all(
-                &self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?)
+                &self
+                    .taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?)
                     .script_pubkeys
-                    .to_byte_array()
+                    .to_byte_array(),
             )?;
             writer.write_all(&self.common_cache().sequences.to_byte_array())?;
         }
@@ -714,7 +717,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //      sha_single_output (32): the SHA256 of the corresponding output in CTxOut format.
         if sighash == TapSighashType::Single {
             let mut enc = sha256::Hash::engine();
-            let txout = self.tx
+            let txout = self
+                .tx
                 .borrow()
                 .outputs
                 .get(input_index)
@@ -863,7 +867,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             && input_index < self.tx.borrow().outputs.len()
         {
             let mut single_enc = LegacySighash::engine();
-            single_enc = hashes::encode_to_engine(&self.tx.borrow().outputs[input_index], single_enc);
+            single_enc =
+                hashes::encode_to_engine(&self.tx.borrow().outputs[input_index], single_enc);
             let hash = LegacySighash::from_engine(single_enc);
             writer.write_all(hash.as_byte_array())?;
         } else {
@@ -1136,7 +1141,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut enc_script_pubkeys = sha256::Hash::engine();
             for prevout in prevouts {
                 enc_amounts = hashes::encode_to_engine(&prevout.borrow().amount, enc_amounts);
-                enc_script_pubkeys = hashes::encode_to_engine(&(*prevout.borrow().script_pubkey), enc_script_pubkeys);
+                enc_script_pubkeys = hashes::encode_to_engine(
+                    &(*prevout.borrow().script_pubkey),
+                    enc_script_pubkeys,
+                );
             }
             TaprootCache {
                 amounts: sha256::Hash::from_engine(enc_amounts),
@@ -1536,12 +1544,11 @@ mod tests {
 
     use super::*;
     use crate::consensus::deserialize;
-    use crate::hex;
     use crate::locktime::absolute;
     use crate::script::{
         ScriptBufExt as _, ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf,
     };
-    use crate::TxIn;
+    use crate::{hex, TxIn};
 
     extern crate serde_json;
 

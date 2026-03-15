@@ -442,9 +442,7 @@ impl encoding::Decoder for AddrPayloadDecoder {
 
 impl encoding::Decodable for AddrPayload {
     type Decoder = AddrPayloadDecoder;
-    fn decoder() -> Self::Decoder {
-        AddrPayloadDecoder(VecDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { AddrPayloadDecoder(VecDecoder::new()) }
 }
 
 /// An error decoding a [`AddrPayload`].
@@ -462,7 +460,7 @@ impl fmt::Display for AddrPayloadDecoderError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for AddrPayloadDecoderError  {
+impl std::error::Error for AddrPayloadDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
@@ -1999,7 +1997,7 @@ mod test {
     use units::BlockHeight;
 
     use super::*;
-    use crate::address::{Address, AddrV2};
+    use crate::address::{AddrV2, Address};
     use crate::bip152::BlockTransactionsRequest;
     use crate::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
@@ -2462,10 +2460,8 @@ mod test {
 
         let data = hex!("010101010101");
 
-        let mut decoder = NetworkMessageDecoder::new(
-            CommandString::try_from_static("unknown").unwrap(),
-            6,
-        );
+        let mut decoder =
+            NetworkMessageDecoder::new(CommandString::try_from_static("unknown").unwrap(), 6);
         let _ = decoder.push_bytes(&mut data.as_slice());
         let decoded = decoder.end().unwrap();
 
