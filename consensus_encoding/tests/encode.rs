@@ -650,6 +650,16 @@ fn encode_compact_size() {
         assert!(!e.advance());
         assert!(e.current_chunk().is_empty());
     }
+
+    // new_u64 works on all platforms, no guard needed.
+    let mut e = CompactSizeEncoder::new_u64(0x0000_F0F0_F0F0_F0E0u64);
+    assert_eq!(
+        e.current_chunk(),
+        &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]
+    );
+    assert_eq!(e.len(), 9);
+    assert!(!e.advance());
+    assert!(e.current_chunk().is_empty());
 }
 
 #[test]

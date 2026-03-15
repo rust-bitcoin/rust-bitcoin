@@ -14,11 +14,8 @@ use internals::write_err;
 use super::Decodable;
 use super::Decoder;
 
-/// Maximum size, in bytes, of a vector we are allowed to decode.
-///
-/// This is also the default value limit that can be decoded with a decoder from
-/// [`CompactSizeDecoder::new`].
-const MAX_VEC_SIZE: usize = 4_000_000;
+#[cfg(feature = "alloc")]
+use crate::compact_size::{CompactSizeDecoder, CompactSizeDecoderError};
 
 /// Maximum amount of memory (in bytes) to allocate at once when deserializing vectors.
 #[cfg(feature = "alloc")]
@@ -682,195 +679,6 @@ where
     fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
-/// Decodes a compact size encoded integer.
-///
-/// For more information about decoder see the documentation of the [`Decoder`] trait.
-#[derive(Debug, Clone)]
-pub struct CompactSizeDecoder {
-    buf: internals::array_vec::ArrayVec<u8, 9>,
-    limit: usize,
-}
-
-impl CompactSizeDecoder {
-    /// Constructs a new compact size decoder.
-    ///
-    /// Consensus encoded vectors can be up to 4,000,000 bytes long.
-    /// This is a theoretical max since block size is 4 meg wu and minimum vector element is one byte.
-    ///
-    /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
-    /// decoded value exceeds 4,000,000 or won't fit in a `usize`.
-    pub const fn new() -> Self {
-        Self { buf: internals::array_vec::ArrayVec::new(), limit: MAX_VEC_SIZE }
-    }
-
-    /// Constructs a new compact size decoder with encoded value limited to the provided usize.
-    ///
-    /// The final call to [`CompactSizeDecoder::end`] on this decoder will fail if the
-    /// decoded value exceeds `limit` or won't fit in a `usize`.
-    pub const fn new_with_limit(limit: usize) -> Self {
-        Self { buf: internals::array_vec::ArrayVec::new(), limit }
-    }
-}
-
-impl Default for CompactSizeDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl Decoder for CompactSizeDecoder {
-    type Output = usize;
-    type Error = CompactSizeDecoderError;
-
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        if bytes.is_empty() {
-            return Ok(true);
-        }
-
-        if self.buf.is_empty() {
-            self.buf.push(bytes[0]);
-            *bytes = &bytes[1..];
-        }
-        let len = match self.buf[0] {
-            0xFF => 9,
-            0xFE => 5,
-            0xFD => 3,
-            _ => 1,
-        };
-        let to_copy = bytes.len().min(len - self.buf.len());
-        self.buf.extend_from_slice(&bytes[..to_copy]);
-        *bytes = &bytes[to_copy..];
-
-        Ok(self.buf.len() != len)
-    }
-
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        use CompactSizeDecoderErrorInner as E;
-
-        fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], CompactSizeDecoderError> {
-            slice.try_into().map_err(|_| {
-                CompactSizeDecoderError(E::UnexpectedEof { required: N, received: slice.len() })
-            })
-        }
-
-        let (first, payload) = self
-            .buf
-            .split_first()
-            .ok_or(CompactSizeDecoderError(E::UnexpectedEof { required: 1, received: 0 }))?;
-
-        let dec_value = match *first {
-            0xFF => {
-                let x = u64::from_le_bytes(arr(payload)?);
-                if x < 0x100_000_000 {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x }))
-                } else {
-                    Ok(x)
-                }
-            }
-            0xFE => {
-                let x = u32::from_le_bytes(arr(payload)?);
-                if x < 0x10000 {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
-                } else {
-                    Ok(x.into())
-                }
-            }
-            0xFD => {
-                let x = u16::from_le_bytes(arr(payload)?);
-                if x < 0xFD {
-                    Err(CompactSizeDecoderError(E::NonMinimal { value: x.into() }))
-                } else {
-                    Ok(x.into())
-                }
-            }
-            n => Ok(n.into()),
-        }?;
-
-        // This error is returned if dec_value is outside of the usize range, or
-        // if it is above the given limit.
-        let make_err = || {
-            CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
-                value: dec_value,
-                limit: self.limit,
-            }))
-        };
-
-        usize::try_from(dec_value).map_err(|_| make_err()).and_then(|nsize| {
-            if nsize > self.limit {
-                Err(make_err())
-            } else {
-                Ok(nsize)
-            }
-        })
-    }
-
-    fn read_limit(&self) -> usize {
-        match self.buf.len() {
-            0 => 1,
-            already_read => match self.buf[0] {
-                0xFF => 9_usize.saturating_sub(already_read),
-                0xFE => 5_usize.saturating_sub(already_read),
-                0xFD => 3_usize.saturating_sub(already_read),
-                _ => 0,
-            },
-        }
-    }
-}
-
-/// An error consensus decoding a compact size encoded integer.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CompactSizeDecoderError(CompactSizeDecoderErrorInner);
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum CompactSizeDecoderErrorInner {
-    /// Returned when the decoder reaches end of stream (EOF).
-    UnexpectedEof {
-        /// How many bytes were required.
-        required: usize,
-        /// How many bytes were received.
-        received: usize,
-    },
-    /// Returned when the encoding is not minimal
-    NonMinimal {
-        /// The encoded value.
-        value: u64,
-    },
-    /// Returned when the encoded value exceeds the decoder's limit.
-    ValueExceedsLimit(LengthPrefixExceedsMaxError),
-}
-
-impl fmt::Display for CompactSizeDecoderError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use CompactSizeDecoderErrorInner as E;
-
-        match self.0 {
-            E::UnexpectedEof { required: 1, received: 0 } => {
-                write!(f, "required at least one byte but the input is empty")
-            }
-            E::UnexpectedEof { required, received: 0 } => {
-                write!(f, "required at least {} bytes but the input is empty", required)
-            }
-            E::UnexpectedEof { required, received } => write!(
-                f,
-                "required at least {} bytes but only {} bytes were received",
-                required, received
-            ),
-            E::NonMinimal { value } => write!(f, "the value {} was not encoded minimally", value),
-            E::ValueExceedsLimit(ref e) => write_err!(f, "value exceeds limit"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for CompactSizeDecoderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use CompactSizeDecoderErrorInner as E;
-
-        match self {
-            Self(E::ValueExceedsLimit(ref e)) => Some(e),
-            _ => None,
-        }
-    }
-}
-
 /// The error returned by the [`ByteVecDecoder`].
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -966,24 +774,6 @@ where
         }
     }
 }
-
-/// Length prefix exceeds the configured limit.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LengthPrefixExceedsMaxError {
-    /// Decoded value of the compact encoded length prefix.
-    value: u64,
-    /// The value limit that the length prefix exceeds.
-    limit: usize,
-}
-
-impl core::fmt::Display for LengthPrefixExceedsMaxError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "length prefix {} exceeds max value {}", self.value, self.limit)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for LengthPrefixExceedsMaxError {}
 
 /// Not enough bytes given to decoder.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1102,59 +892,8 @@ mod tests {
     #[cfg(feature = "alloc")]
     use alloc::vec::Vec;
 
+    #[cfg(feature = "alloc")]
     use super::*;
-
-    #[test]
-    fn compact_size_new_values_too_large() {
-        use CompactSizeDecoderErrorInner as E;
-
-        const EXCESS_VEC_SIZE: u64 = (MAX_VEC_SIZE + 1) as u64; // can't use try_from for const
-
-        // MAX_VEC_SIZE should succeed for `new` constructor
-        let mut decoder = CompactSizeDecoder::new();
-        decoder.push_bytes(&mut [0xFE, 0x00, 0x09, 0x3D, 0x00].as_slice()).unwrap();
-        let got = decoder.end().unwrap();
-        assert_eq!(got, MAX_VEC_SIZE);
-
-        // MAX_VEC_SIZE + 1 should fail for `new` constructor
-        let mut decoder = CompactSizeDecoder::new();
-        decoder.push_bytes(&mut [0xFE, 0x01, 0x09, 0x3D, 0x00].as_slice()).unwrap();
-        let got = decoder.end().unwrap_err();
-        assert!(matches!(
-            got,
-            CompactSizeDecoderError(E::ValueExceedsLimit(
-                LengthPrefixExceedsMaxError {
-                    limit: MAX_VEC_SIZE,
-                    value: EXCESS_VEC_SIZE,
-                }
-            )),
-        ));
-    }
-
-    #[test]
-    fn compact_size_new_with_limit_values_too_large() {
-        use CompactSizeDecoderErrorInner as E;
-
-        // 240 should succeed for `new_with_limit` constructor
-        let mut decoder = CompactSizeDecoder::new_with_limit(240);
-        decoder.push_bytes(&mut [0xf0].as_slice()).unwrap();
-        let got = decoder.end().unwrap();
-        assert_eq!(got, 240);
-
-        // 241 should fail for `new_with_limit` constructor
-        let mut decoder = CompactSizeDecoder::new_with_limit(240);
-        decoder.push_bytes(&mut [0xf1].as_slice()).unwrap();
-        let got = decoder.end().unwrap_err();
-        assert!(matches!(
-            got,
-            CompactSizeDecoderError(E::ValueExceedsLimit(
-                LengthPrefixExceedsMaxError {
-                    limit: 240,
-                    value: 241,
-                }
-            )),
-        ));
-    }
 
     #[test]
     #[cfg(feature = "alloc")]
