@@ -26,6 +26,8 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+pub extern crate encoding;
+
 #[cfg(feature = "hashes")]
 pub extern crate hashes;
 

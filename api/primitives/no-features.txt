@@ -503,6 +503,7 @@ pub const fn bitcoin_primitives::transaction::Version::is_standard(self) -> bool
 pub const fn bitcoin_primitives::transaction::Version::maybe_non_standard(version: u32) -> Self
 pub const fn bitcoin_primitives::transaction::Version::to_u32(self) -> u32
 pub const fn bitcoin_primitives::transaction::VersionDecoder::new() -> Self
+pub extern crate bitcoin_primitives::encoding
 pub fn bitcoin_primitives::BlockHash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::BlockHash::as_ref(&self) -> &[u8]
 pub fn bitcoin_primitives::BlockHash::borrow(&self) -> &[u8; 32]

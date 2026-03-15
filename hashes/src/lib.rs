@@ -79,6 +79,9 @@ pub extern crate serde;
 #[cfg(all(test, feature = "serde"))]
 extern crate serde_test;
 
+/// Re-export the `consensus-encoding` crate.
+pub extern crate encoding;
+
 /// Re-export the `hex-conservative` crate.
 #[cfg(feature = "hex")]
 pub extern crate hex_stable as hex;
