@@ -1091,7 +1091,7 @@ mod test {
                 // test deserialization
                 let mut raw: Vec<u8> = vec![0u8; 32];
                 raw.extend(testcase.0.clone());
-                let btr: BlockTransactionsRequest = deserialize(&raw.clone()).unwrap();
+                let btr: BlockTransactionsRequest = deserialize(&raw).unwrap();
                 assert_eq!(testcase.1, btr.indices().unwrap());
             }
             {
