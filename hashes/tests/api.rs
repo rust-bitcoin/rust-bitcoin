@@ -236,6 +236,8 @@ fn all_types_implement_send_sync() {
     //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
     assert_send::<Hashes<Sha256>>();
     assert_sync::<Hashes<Sha256>>();
+    assert_send::<Hkdf<sha256::HashEngine>>();
+    assert_sync::<Hkdf<sha256::HashEngine>>();
     assert_send::<Engines>();
     assert_sync::<Engines>();
     assert_send::<OtherStructs>();
