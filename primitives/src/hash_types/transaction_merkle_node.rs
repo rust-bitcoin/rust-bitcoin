@@ -64,35 +64,16 @@ impl encoding::Encodable for TxMerkleNode {
     }
 }
 
-/// The decoder for the [`TxMerkleNode`] type.
-pub struct TxMerkleNodeDecoder(encoding::ArrayDecoder<32>);
+crate::decoder_newtype! {
+    /// The decoder for the [`TxMerkleNode`] type.
+    pub struct TxMerkleNodeDecoder(encoding::ArrayDecoder<32>);
 
-impl TxMerkleNodeDecoder {
     /// Constructs a new [`TxMerkleNode`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for TxMerkleNodeDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for TxMerkleNodeDecoder {
-    type Output = TxMerkleNode;
-    type Error = TxMerkleNodeDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(TxMerkleNodeDecoderError)
+    fn end(bytes: [u8; 32]) -> Result<TxMerkleNode, TxMerkleNodeDecoderError> {
+        Ok(TxMerkleNode::from_byte_array(bytes))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let a = self.0.end().map_err(TxMerkleNodeDecoderError)?;
-        Ok(TxMerkleNode::from_byte_array(a))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decodable for TxMerkleNode {

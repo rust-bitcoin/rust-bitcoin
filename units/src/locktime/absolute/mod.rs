@@ -413,39 +413,18 @@ impl encoding::Encodable for LockTime {
     }
 }
 
-/// The decoder for the [`LockTime`] type.
 #[cfg(feature = "encoding")]
-pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
+crate::decoder_newtype! {
+    /// The decoder for the [`LockTime`] type.
+    pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
 
-#[cfg(feature = "encoding")]
-impl LockTimeDecoder {
     /// Constructs a new [`LockTime`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-#[cfg(feature = "encoding")]
-impl Default for LockTimeDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decoder for LockTimeDecoder {
-    type Output = LockTime;
-    type Error = LockTimeDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        Ok(self.0.push_bytes(bytes).map_err(LockTimeDecoderError)?)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end().map_err(LockTimeDecoderError)?);
+    fn end(value: [u8; 4]) -> Result<LockTime, LockTimeDecoderError> {
+        let n = u32::from_le_bytes(value);
         Ok(LockTime::from_consensus(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "encoding")]

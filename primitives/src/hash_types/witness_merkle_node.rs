@@ -64,35 +64,16 @@ impl encoding::Encodable for WitnessMerkleNode {
     }
 }
 
-/// The decoder for the [`WitnessMerkleNode`] type.
-pub struct WitnessMerkleNodeDecoder(encoding::ArrayDecoder<32>);
+crate::decoder_newtype! {
+    /// The decoder for the [`WitnessMerkleNode`] type.
+    pub struct WitnessMerkleNodeDecoder(encoding::ArrayDecoder<32>);
 
-impl WitnessMerkleNodeDecoder {
     /// Constructs a new [`WitnessMerkleNode`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 
-impl Default for WitnessMerkleNodeDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for WitnessMerkleNodeDecoder {
-    type Output = WitnessMerkleNode;
-    type Error = WitnessMerkleNodeDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(WitnessMerkleNodeDecoderError)
+    fn end(bytes: [u8; 32]) -> Result<WitnessMerkleNode, WitnessMerkleNodeDecoderError> {
+        Ok(WitnessMerkleNode::from_byte_array(bytes))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let a = self.0.end().map_err(WitnessMerkleNodeDecoderError)?;
-        Ok(WitnessMerkleNode::from_byte_array(a))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decodable for WitnessMerkleNode {

@@ -965,28 +965,15 @@ impl Encoder for WitnessesEncoder<'_> {
 #[cfg(feature = "alloc")]
 type TxInInnerDecoder = Decoder3<OutPointDecoder, ScriptSigBufDecoder, SequenceDecoder>;
 
-/// The decoder for the [`TxIn`] type.
 #[cfg(feature = "alloc")]
-pub struct TxInDecoder(TxInInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`TxIn`] type.
+    pub struct TxInDecoder(TxInInnerDecoder);
 
-#[cfg(feature = "alloc")]
-impl Decoder for TxInDecoder {
-    type Output = TxIn;
-    type Error = TxInDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(TxInDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (previous_output, script_sig, sequence) = self.0.end().map_err(TxInDecoderError)?;
+    fn end(value: <TxInInnerDecoder as Decoder>::Output) -> Result<TxIn, TxInDecoderError> {
+        let (previous_output, script_sig, sequence) = value;
         Ok(TxIn { previous_output, script_sig, sequence, witness: Witness::default() })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "alloc")]
@@ -1075,28 +1062,15 @@ impl Encodable for TxOut {
 #[cfg(feature = "alloc")]
 type TxOutInnerDecoder = Decoder2<AmountDecoder, ScriptPubKeyBufDecoder>;
 
-/// The decoder for the [`TxOut`] type.
 #[cfg(feature = "alloc")]
-pub struct TxOutDecoder(TxOutInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`TxOut`] type.
+    pub struct TxOutDecoder(TxOutInnerDecoder);
 
-#[cfg(feature = "alloc")]
-impl Decoder for TxOutDecoder {
-    type Output = TxOut;
-    type Error = TxOutDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(TxOutDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (amount, script_pubkey) = self.0.end().map_err(TxOutDecoderError)?;
+    fn end(value: <TxOutInnerDecoder as Decoder>::Output) -> Result<TxOut, TxOutDecoderError> {
+        let (amount, script_pubkey) = value;
         Ok(TxOut { amount, script_pubkey })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "alloc")]
@@ -1228,31 +1202,15 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     parse_int::int_from_str(s).map_err(ParseOutPointError::Vout)
 }
 
-/// The decoder for the [`OutPoint`] type.
-// 32 for the txid + 4 for the vout
-pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
+crate::decoder_newtype! {
+    /// The decoder for the [`OutPoint`] type.
+    // 32 for the txid + 4 for the vout
+    pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
 
-impl OutPointDecoder {
     /// Constructs a new [`OutPoint`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for OutPointDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for OutPointDecoder {
-    type Output = OutPoint;
-    type Error = OutPointDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(OutPointDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let encoded = self.0.end().map_err(OutPointDecoderError)?;
+    fn end(encoded: [u8; 36]) -> Result<OutPoint, OutPointDecoderError> {
         let (txid_buf, vout_buf) = encoded.split_array::<32, 4>();
 
         let txid = Txid::from_byte_array(*txid_buf);
@@ -1260,9 +1218,6 @@ impl encoding::Decoder for OutPointDecoder {
 
         Ok(OutPoint { txid, vout })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decodable for OutPoint {
@@ -1540,36 +1495,17 @@ impl encoding::Encodable for Version {
     }
 }
 
-/// The decoder for the [`Version`] type.
-pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+crate::decoder_newtype! {
+    /// The decoder for the [`Version`] type.
+    pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
-impl VersionDecoder {
     /// Constructs a new [`Version`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for VersionDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for VersionDecoder {
-    type Output = Version;
-    type Error = VersionDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(VersionDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let bytes = self.0.end().map_err(VersionDecoderError)?;
+    fn end(bytes: [u8; 4]) -> Result<Version, VersionDecoderError> {
         let n = u32::from_le_bytes(bytes);
         Ok(Version::maybe_non_standard(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decodable for Version {

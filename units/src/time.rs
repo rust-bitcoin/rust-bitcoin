@@ -105,39 +105,18 @@ impl encoding::Encodable for BlockTime {
     }
 }
 
-/// The decoder for the [`BlockTime`] type.
 #[cfg(feature = "encoding")]
-pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);
+crate::decoder_newtype! {
+    /// The decoder for the [`BlockTime`] type.
+    pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);
 
-#[cfg(feature = "encoding")]
-impl Default for BlockTimeDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-#[cfg(feature = "encoding")]
-impl BlockTimeDecoder {
     /// Constructs a new [`BlockTime`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-#[cfg(feature = "encoding")]
-impl encoding::Decoder for BlockTimeDecoder {
-    type Output = BlockTime;
-    type Error = BlockTimeDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockTimeDecoderError)
+    fn end(value: [u8; 4]) -> Result<BlockTime, BlockTimeDecoderError> {
+        let n = u32::from_le_bytes(value);
+        Ok(BlockTime::from_u32(n))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let t = u32::from_le_bytes(self.0.end().map_err(BlockTimeDecoderError)?);
-        Ok(BlockTime::from_u32(t))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "encoding")]

@@ -51,37 +51,16 @@ impl encoding::Decodable for BlockHash {
     fn decoder() -> Self::Decoder { BlockHashDecoder(encoding::ArrayDecoder::<32>::new()) }
 }
 
-/// The decoder for the [`BlockHash`] type.
-pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
+crate::decoder_newtype! {
+    /// The decoder for the [`BlockHash`] type.
+    pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
 
-impl BlockHashDecoder {
     /// Constructs a new [`BlockHash`] decoder.
-    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for BlockHashDecoder {
-    #[inline]
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for BlockHashDecoder {
-    type Output = BlockHash;
-    type Error = BlockHashDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockHashDecoderError)
+    fn end(bytes: [u8; 32]) -> Result<BlockHash, BlockHashDecoderError> {
+        Ok(BlockHash::from_byte_array(bytes))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let a = self.0.end().map_err(BlockHashDecoderError)?;
-        Ok(BlockHash::from_byte_array(a))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 /// An error consensus decoding an `BlockHash`.

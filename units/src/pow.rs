@@ -102,39 +102,18 @@ impl encoding::Encodable for CompactTarget {
     }
 }
 
-/// The decoder for the [`CompactTarget`] type.
 #[cfg(feature = "encoding")]
-pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
+crate::decoder_newtype! {
+    /// The decoder for the [`CompactTarget`] type.
+    pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
 
-#[cfg(feature = "encoding")]
-impl CompactTargetDecoder {
     /// Constructs a new [`CompactTarget`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-#[cfg(feature = "encoding")]
-impl Default for CompactTargetDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decoder for CompactTargetDecoder {
-    type Output = CompactTarget;
-    type Error = CompactTargetDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(CompactTargetDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end().map_err(CompactTargetDecoderError)?);
+    fn end(value: [u8; 4]) -> Result<CompactTarget, CompactTargetDecoderError> {
+        let n = u32::from_le_bytes(value);
         Ok(CompactTarget::from_consensus(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 #[cfg(feature = "encoding")]
