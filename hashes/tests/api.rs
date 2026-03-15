@@ -212,6 +212,22 @@ fn api_all_non_error_types_have_non_empty_debug() {
     check_debug!(t; a);
 }
 
+// Public error `Debug` representation is never empty (C-DEBUG-NONEMPTY).
+#[test]
+fn api_all_public_error_types_have_non_empty_debug() {
+    // HKDF is capped at 255 output blocks, so one byte past that limit must error.
+    let mut okm = vec![0_u8; 255 * 32 + 1];
+    let err = Hkdf::<sha256::HashEngine>::new(&[], &[]).expand(&[], &mut okm).unwrap_err();
+    let debug = format!("{:?}", err);
+    assert!(!debug.is_empty());
+
+    let mut engine = sha256::HashEngine::new();
+    engine.input(&[0xab]);
+    let err = engine.midstate().unwrap_err();
+    let debug = format!("{:?}", err);
+    assert!(!debug.is_empty());
+}
+
 #[test]
 fn all_types_implement_send_sync() {
     fn assert_send<T: Send>() {}
@@ -228,4 +244,14 @@ fn all_types_implement_send_sync() {
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
     assert_sync::<Errors>();
+}
+
+// Error types should implement `std::error::Error` (C-GOOD-ERR).
+#[cfg(feature = "std")]
+#[test]
+fn all_error_types_implement_error() {
+    fn assert_error<T: std::error::Error>() {}
+
+    assert_error::<hkdf::MaxLengthError>();
+    assert_error::<sha256::MidstateError>();
 }

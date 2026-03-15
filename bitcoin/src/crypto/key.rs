@@ -220,8 +220,7 @@ mod encapsulate {
     /// ```
     /// # #[cfg(all(feature = "rand", feature = "std"))] {
     /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
-    /// # use bitcoin::secp256k1::rand;
-    /// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::generate(&mut rand::rng()));
+    /// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::generate());
     /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
     /// let (_pk, _parity) = keypair.public_parts();
     /// let _pk = TweakedPublicKey::from_keypair(keypair);
@@ -406,15 +405,16 @@ impl Keypair {
     ///
     /// ```
     /// # #[cfg(all(feature = "rand", feature = "std"))] {
-    /// use bitcoin::{secp256k1::rand, Keypair};
+    /// use bitcoin::Keypair;
     ///
-    /// let keypair = Keypair::generate(&mut rand::rng());
+    /// let keypair = Keypair::generate();
     /// # }
     /// ```
     #[inline]
-    #[cfg(feature = "rand")]
-    pub fn generate<R: secp256k1::rand::Rng + ?Sized>(rng: &mut R) -> Self {
-        Self::from(secp256k1::Keypair::new(rng))
+    #[cfg(all(feature = "rand", feature = "std"))]
+    pub fn generate() -> Self {
+        let kp = secp256k1::Keypair::new(&mut rand::rng());
+        Self::from_secp(kp)
     }
 
     /// Creates a [`Keypair`] directly from a secp256k1 secret key.
@@ -2037,9 +2037,7 @@ mod tests {
     #[test]
     #[cfg(all(feature = "rand", feature = "std"))]
     fn public_key_constructors() {
-        use secp256k1::rand;
-
-        let kp = Keypair::generate(&mut rand::rng());
+        let kp = Keypair::generate();
 
         let _ = PublicKey::from_secp(kp);
         let _ = PublicKey::from_secp_uncompressed(kp);
@@ -2155,7 +2153,7 @@ mod tests {
     #[test]
     fn keypair_from_str_roundtrip() {
         #[cfg(all(feature = "rand", feature = "std"))]
-        let keypair = Keypair::generate(&mut rand::rng());
+        let keypair = Keypair::generate();
         #[cfg(not(all(feature = "rand", feature = "std")))]
         let keypair = {
             let bytes = hex::decode_to_array::<32>(

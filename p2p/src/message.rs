@@ -27,7 +27,7 @@ use primitives::block::{self, HeaderDecoder, HeaderEncoder};
 use primitives::transaction;
 use units::FeeRate;
 
-use crate::address::{AddrV2Message, Address};
+use crate::address::{AddrV1Message, AddrV2Message};
 use crate::consensus::{impl_consensus_encoding, impl_vec_wrapper};
 use crate::merkle_tree::MerkleBlock;
 use crate::{
@@ -399,14 +399,79 @@ impl std::error::Error for InventoryPayloadDecoderError {
 
 /// A list of legacy p2p address messages.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct AddrPayload(pub Vec<(u32, Address)>);
+pub struct AddrPayload(pub Vec<AddrV1Message>);
+
+encoding::encoder_newtype! {
+    /// The encoder for an [`AddrPayload`].
+    pub struct AddrPayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV1Message>>);
+}
+
+impl encoding::Encodable for AddrPayload {
+    type Encoder<'e> = AddrPayloadEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AddrPayloadEncoder::new(Encoder2::new(
+            CompactSizeEncoder::new(self.0.len()),
+            SliceEncoder::without_length_prefix(&self.0),
+        ))
+    }
+}
+
+type AddrPayloadInnerDecoder = VecDecoder<AddrV1Message>;
+
+/// Decoder type for [`AddrPayload`].
+pub struct AddrPayloadDecoder(AddrPayloadInnerDecoder);
+
+impl encoding::Decoder for AddrPayloadDecoder {
+    type Output = AddrPayload;
+    type Error = AddrPayloadDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AddrPayloadDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        Ok(AddrPayload(self.0.end().map_err(AddrPayloadDecoderError)?))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+impl encoding::Decodable for AddrPayload {
+    type Decoder = AddrPayloadDecoder;
+    fn decoder() -> Self::Decoder {
+        AddrPayloadDecoder(VecDecoder::new())
+    }
+}
+
+/// An error decoding a [`AddrPayload`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddrPayloadDecoderError(<AddrPayloadInnerDecoder as encoding::Decoder>::Error);
+
+impl From<Infallible> for AddrPayloadDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for AddrPayloadDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "addrv1 payload error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AddrPayloadDecoderError  {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 /// A list of v2 address messages.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct AddrV2Payload(pub Vec<AddrV2Message>);
 
 impl_vec_wrapper!(InventoryPayload, message_blockdata::Inventory);
-impl_vec_wrapper!(AddrPayload, (u32, Address));
+impl_vec_wrapper!(AddrPayload, AddrV1Message);
 impl_vec_wrapper!(AddrV2Payload, AddrV2Message);
 
 /// The `feefilter` message, wrapper around [`FeeRate`] for P2P wire format encoding.
@@ -1832,7 +1897,7 @@ fn sha2_checksum(data: &[u8]) -> [u8; 4] {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrPayload {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(Vec::<(u32, Address)>::arbitrary(u)?))
+        Ok(Self(Vec::<AddrV1Message>::arbitrary(u)?))
     }
 }
 
@@ -1934,7 +1999,7 @@ mod test {
     use units::BlockHeight;
 
     use super::*;
-    use crate::address::AddrV2;
+    use crate::address::{Address, AddrV2};
     use crate::bip152::BlockTransactionsRequest;
     use crate::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
@@ -1963,10 +2028,10 @@ mod test {
         let msgs = [
             NetworkMessage::Version(version_msg),
             NetworkMessage::Verack,
-            NetworkMessage::Addr(AddrPayload(vec![(
-                45,
-                Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
-            )])),
+            NetworkMessage::Addr(AddrPayload(vec![AddrV1Message {
+                time: 45,
+                address: Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
+            }])),
             NetworkMessage::Inv(InventoryPayload(vec![Inventory::Block(
                 BlockHash::from_byte_array(hash([8u8; 32]).to_byte_array()),
             )])),
