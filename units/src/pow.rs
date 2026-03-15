@@ -156,7 +156,7 @@ impl From<Infallible> for CompactTargetDecoderError {
 #[cfg(feature = "encoding")]
 impl fmt::Display for CompactTargetDecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write_err!(f, "sequence decoder error"; self.0)
+        write_err!(f, "compact target decoder error"; self.0)
     }
 }
 
