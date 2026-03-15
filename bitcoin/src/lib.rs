@@ -182,7 +182,7 @@ pub use crate::{
     address::{Address, AddressType, KnownHrp},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
-    crypto::key::{self, CompressedPublicKey, Keypair, PrivateKey, PublicKey, XOnlyPublicKey},
+    crypto::key::{self, CompressedPublicKey, Keypair, PrivateKey, PublicKey, WifKey, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     network::params::{self, Params},
     network::{Network, NetworkKind, TestnetVersion},

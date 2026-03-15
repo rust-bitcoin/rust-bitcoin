@@ -84,10 +84,7 @@ fn psbt_sign_taproot() {
         //
         let keystore = Keystore {
             mfp: mfp.parse::<Fingerprint>().unwrap(),
-            sk: PrivateKey::from_secp(
-                kp.to_secret_key(),
-                Network::Testnet(bitcoin::TestnetVersion::V3),
-            ),
+            sk: PrivateKey::from_secp(kp.to_secret_key()),
         };
         let _ = psbt_key_path_spend.sign(&keystore);
 
@@ -117,10 +114,7 @@ fn psbt_sign_taproot() {
 
         let keystore = Keystore {
             mfp: mfp.parse::<Fingerprint>().unwrap(),
-            sk: PrivateKey::from_secp(
-                kp.to_secret_key(),
-                Network::Testnet(bitcoin::TestnetVersion::V3),
-            ),
+            sk: PrivateKey::from_secp(kp.to_secret_key()),
         };
 
         //
