@@ -417,7 +417,7 @@ impl Keypair {
         Self::from_secp(kp)
     }
 
-    /// Creates a [`Keypair`] directly from a secp256k1 secret key.
+    /// Constructs a [`Keypair`] directly from a secp256k1 secret key.
     #[inline]
     pub fn from_secret_key(sk: &secp256k1::SecretKey) -> Self {
         Self::from(secp256k1::Keypair::from_secret_key(sk))

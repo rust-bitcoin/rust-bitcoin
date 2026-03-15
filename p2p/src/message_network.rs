@@ -264,7 +264,7 @@ pub struct UserAgentVersion {
 }
 
 impl UserAgentVersion {
-    /// Creates a user agent client version associated with a name.
+    /// Constructs a user agent client version associated with a name.
     pub const fn new(software_version: ClientSoftwareVersion) -> Self {
         Self { version: software_version, comments: None }
     }
