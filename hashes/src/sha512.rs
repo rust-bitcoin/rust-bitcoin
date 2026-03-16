@@ -101,11 +101,7 @@ impl Hash {
 impl Copy for Hash {}
 
 impl Clone for Hash {
-    fn clone(&self) -> Hash {
-        let mut ret = [0; 64];
-        ret.copy_from_slice(&self.0);
-        Hash(ret)
-    }
+    fn clone(&self) -> Self { *self }
 }
 
 impl PartialEq for Hash {
@@ -124,7 +120,7 @@ impl Default for Hash {
 
 impl PartialOrd for Hash {
     fn partial_cmp(&self, other: &Hash) -> Option<cmp::Ordering> {
-        self.0.partial_cmp(&other.0)
+        Some(self.cmp(other))
     }
 }
 
