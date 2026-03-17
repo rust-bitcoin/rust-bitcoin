@@ -13,8 +13,8 @@ use crate::incomplete_block_len;
 
 crate::internal_macros::general_hash_type! {
     160,
-    false,
-    "Output of the SHA1 hash function."
+    reverse: false,
+    doc: "Output of the SHA1 hash function."
 }
 
 impl Hash {

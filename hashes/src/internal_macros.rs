@@ -57,7 +57,7 @@ pub(crate) use hash_trait_impls;
 ///
 /// * Requires a `HashEngine` type in this module implementing `Default` and `crate::HashEngine<Hash = Hash, Bytes = [u8; $bits / 8]>`.
 macro_rules! general_hash_type {
-    ($bits:expr, $reverse:expr, $doc:literal) => {
+    ($bits:expr, reverse: $reverse:expr, doc: $doc:literal) => {
         /// Hashes some bytes.
         pub fn hash(data: &[u8]) -> Hash {
             use crate::HashEngine as _;

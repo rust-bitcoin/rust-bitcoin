@@ -14,8 +14,8 @@ use crate::incomplete_block_len;
 
 crate::internal_macros::general_hash_type! {
     512,
-    false,
-    "Output of the SHA512 hash function."
+    reverse: false,
+    doc: "Output of the SHA512 hash function."
 }
 
 impl Hash {

@@ -18,8 +18,8 @@ use crate::{sha256t, sha256t_tag};
 
 crate::internal_macros::general_hash_type! {
     256,
-    false,
-    "Output of the SHA256 hash function."
+    reverse: false,
+    doc: "Output of the SHA256 hash function."
 }
 
 impl Hash {

@@ -6,8 +6,8 @@ use crate::sha512;
 
 crate::internal_macros::general_hash_type! {
     384,
-    false,
-    "Output of the SHA384 hash function."
+    reverse: false,
+    doc: "Output of the SHA384 hash function."
 }
 
 impl Hash {
