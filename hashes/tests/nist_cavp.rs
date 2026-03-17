@@ -10,8 +10,9 @@
 macro_rules! nist_shavs_tests {
     ($mod_name:ident, $hash_type:ty, $short_file:expr, $long_file:expr) => {
         mod $mod_name {
-            use super::*;
             use bitcoin_hashes::HashEngine as _;
+
+            use super::*;
 
             fn hash_oneshot(data: &[u8]) -> Vec<u8> {
                 <$hash_type>::hash(data).to_byte_array().to_vec()
@@ -43,12 +44,42 @@ macro_rules! nist_shavs_tests {
     };
 }
 
-nist_shavs_tests!(sha1, bitcoin_hashes::sha1::Hash, "data/nist/SHA1ShortMsg.rsp", "data/nist/SHA1LongMsg.rsp");
-nist_shavs_tests!(sha256, bitcoin_hashes::sha256::Hash, "data/nist/SHA256ShortMsg.rsp", "data/nist/SHA256LongMsg.rsp");
-nist_shavs_tests!(sha384, bitcoin_hashes::sha384::Hash, "data/nist/SHA384ShortMsg.rsp", "data/nist/SHA384LongMsg.rsp");
-nist_shavs_tests!(sha512, bitcoin_hashes::sha512::Hash, "data/nist/SHA512ShortMsg.rsp", "data/nist/SHA512LongMsg.rsp");
-nist_shavs_tests!(sha512_256, bitcoin_hashes::sha512_256::Hash, "data/nist/SHA512_256ShortMsg.rsp", "data/nist/SHA512_256LongMsg.rsp");
-nist_shavs_tests!(sha3_256, bitcoin_hashes::sha3_256::Hash, "data/nist/SHA3_256ShortMsg.rsp", "data/nist/SHA3_256LongMsg.rsp");
+nist_shavs_tests!(
+    sha1,
+    bitcoin_hashes::sha1::Hash,
+    "data/nist/SHA1ShortMsg.rsp",
+    "data/nist/SHA1LongMsg.rsp"
+);
+nist_shavs_tests!(
+    sha256,
+    bitcoin_hashes::sha256::Hash,
+    "data/nist/SHA256ShortMsg.rsp",
+    "data/nist/SHA256LongMsg.rsp"
+);
+nist_shavs_tests!(
+    sha384,
+    bitcoin_hashes::sha384::Hash,
+    "data/nist/SHA384ShortMsg.rsp",
+    "data/nist/SHA384LongMsg.rsp"
+);
+nist_shavs_tests!(
+    sha512,
+    bitcoin_hashes::sha512::Hash,
+    "data/nist/SHA512ShortMsg.rsp",
+    "data/nist/SHA512LongMsg.rsp"
+);
+nist_shavs_tests!(
+    sha512_256,
+    bitcoin_hashes::sha512_256::Hash,
+    "data/nist/SHA512_256ShortMsg.rsp",
+    "data/nist/SHA512_256LongMsg.rsp"
+);
+nist_shavs_tests!(
+    sha3_256,
+    bitcoin_hashes::sha3_256::Hash,
+    "data/nist/SHA3_256ShortMsg.rsp",
+    "data/nist/SHA3_256LongMsg.rsp"
+);
 
 /// Runs NIST SHAVS tests from .rsp files
 fn run_shavs_tests<F>(content: &str, hash_fn: F)
@@ -104,4 +135,3 @@ fn decode_hex(hex: &str) -> Vec<u8> {
         .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).expect("invalid hex"))
         .collect()
 }
-

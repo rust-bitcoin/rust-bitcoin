@@ -10,7 +10,6 @@ use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
     ScriptExtPriv as _, ScriptPubKeyBuf,
 };
-use crate::hex;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
@@ -21,7 +20,7 @@ use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{self, ScriptHash, WScriptHash};
 use crate::taproot::TapNodeHash;
-use crate::{consensus, internal_macros};
+use crate::{consensus, hex, internal_macros};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.

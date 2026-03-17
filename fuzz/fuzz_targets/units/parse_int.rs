@@ -1,10 +1,9 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use libfuzzer_sys::fuzz_target;
 use arbitrary::Unstructured;
-
 use bitcoin::parse_int;
+use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
 fn main() {}

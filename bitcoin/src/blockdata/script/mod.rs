@@ -78,16 +78,16 @@ pub use self::{
     owned::{ScriptBufExt, ScriptPubKeyBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport, ScriptIntError},
 };
+#[doc(no_inline)]
+pub use primitives::script::ScriptBufDecoderError;
 #[doc(inline)]
 pub use primitives::script::{
     RedeemScript, RedeemScriptBuf, RedeemScriptSizeError, RedeemScriptTag, Script, ScriptBuf,
-    ScriptBufDecoder, ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey,
-    ScriptPubKeyBuf, ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, TapScript,
-    TapScriptBuf, TapScriptTag, WScriptHash, WitnessScript, WitnessScriptBuf,
-    WitnessScriptSizeError, WitnessScriptTag,
+    ScriptBufDecoder, ScriptEncoder, ScriptHash, ScriptHashableTag, ScriptPubKey, ScriptPubKeyBuf,
+    ScriptPubKeyTag, ScriptSig, ScriptSigBuf, ScriptSigTag, Tag, TapScript, TapScriptBuf,
+    TapScriptTag, WScriptHash, WitnessScript, WitnessScriptBuf, WitnessScriptSizeError,
+    WitnessScriptTag,
 };
-#[doc(no_inline)]
-pub use primitives::script::ScriptBufDecoderError;
 
 pub(crate) use self::borrowed::ScriptExtPriv;
 pub(crate) use self::owned::ScriptBufExtPriv;

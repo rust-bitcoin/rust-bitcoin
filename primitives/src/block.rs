@@ -14,21 +14,19 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{Encodable, Decodable, Decoder, Decoder6};
 #[cfg(feature = "alloc")]
-use encoding::{
-    CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder,
-};
+use encoding::{CompactSizeEncoder, Decoder2, Encoder2, SliceEncoder, VecDecoder};
+use encoding::{Decodable, Decoder, Decoder6, Encodable};
 use hashes::{sha256d, HashEngine as _};
 use internals::write_err;
 
-use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
 #[cfg(feature = "hex")]
 use crate::hex_codec::{HexPrimitive, ParsePrimitiveError};
+use crate::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
+use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
 use crate::time::{BlockTimeDecoder, BlockTimeDecoderError};
-use crate::merkle_tree::{TxMerkleNodeDecoder, TxMerkleNodeDecoderError};
 use crate::{BlockTime, CompactTarget, TxMerkleNode};
 #[cfg(feature = "alloc")]
 use crate::{Transaction, WitnessMerkleNode};
@@ -277,7 +275,7 @@ mod sealed {
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl core::str::FromStr for Block<Unchecked>
 where
-    Self: Decodable
+    Self: Decodable,
 {
     type Err = ParseBlockError;
 
@@ -289,7 +287,7 @@ where
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl<V: Validation> fmt::Display for Block<V>
 where
-    Self: Encodable
+    Self: Encodable,
 {
     #[allow(clippy::use_self)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -299,12 +297,16 @@ where
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl<V: Validation> fmt::LowerHex for Block<V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl<V: Validation> fmt::UpperHex for Block<V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
+    }
 }
 
 /// An error that occurs during parsing of a [`Block`] from a hex string.
@@ -578,17 +580,23 @@ impl core::str::FromStr for Header {
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&HexPrimitive(self), f)
+    }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
+    }
 }
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&HexPrimitive(self), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
+    }
 }
 
 impl fmt::Debug for Header {

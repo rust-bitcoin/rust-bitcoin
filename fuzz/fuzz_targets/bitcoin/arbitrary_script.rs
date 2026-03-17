@@ -1,13 +1,12 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use libfuzzer_sys::fuzz_target;
 use arbitrary::{Arbitrary, Unstructured};
-
 use bitcoin::address::Address;
 use bitcoin::consensus::serialize;
 use bitcoin::script::{self, ScriptBuf, ScriptExt as _, ScriptPubKeyExt as _};
 use bitcoin::Network;
+use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
 fn main() {}

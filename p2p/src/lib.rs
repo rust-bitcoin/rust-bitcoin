@@ -650,9 +650,7 @@ impl std::error::Error for UnknownMagicError {
 pub struct UnknownNetworkError(Network);
 
 impl fmt::Display for UnknownNetworkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "unknown network {}", self.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "unknown network {}", self.0) }
 }
 
 #[cfg(feature = "std")]

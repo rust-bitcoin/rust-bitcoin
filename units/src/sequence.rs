@@ -387,10 +387,10 @@ mod tests {
     #[cfg(all(feature = "encoding", feature = "std"))]
     use std::error::Error;
 
-    #[cfg(feature = "encoding")]
-    use encoding::{Decodable as _, Decoder as _};
     #[cfg(all(feature = "encoding", feature = "alloc"))]
     use encoding::UnexpectedEofError;
+    #[cfg(feature = "encoding")]
+    use encoding::{Decodable as _, Decoder as _};
 
     use super::*;
 

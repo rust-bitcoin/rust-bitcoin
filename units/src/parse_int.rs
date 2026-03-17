@@ -709,8 +709,9 @@ mod tests {
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
-        let PrefixedHexError(PrefixedHexErrorInner::MissingPrefix(e)) = e
-            else { panic!("should be a MissingPrefixError") };
+        let PrefixedHexError(PrefixedHexErrorInner::MissingPrefix(e)) = e else {
+            panic!("should be a MissingPrefixError")
+        };
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());
@@ -726,8 +727,9 @@ mod tests {
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_some());
-        let UnprefixedHexError(UnprefixedHexErrorInner::ContainsPrefix(e)) = e
-            else { panic!("should be a ContainsPrefixError") };
+        let UnprefixedHexError(UnprefixedHexErrorInner::ContainsPrefix(e)) = e else {
+            panic!("should be a ContainsPrefixError")
+        };
         assert!(!e.to_string().is_empty());
         #[cfg(feature = "std")]
         assert!(e.source().is_none());

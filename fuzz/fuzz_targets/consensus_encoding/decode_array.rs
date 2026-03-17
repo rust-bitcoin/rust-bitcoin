@@ -1,9 +1,8 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use libfuzzer_sys::fuzz_target;
-
 use bitcoin_consensus_encoding::{ArrayDecoder, Decoder};
+use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
 fn main() {}

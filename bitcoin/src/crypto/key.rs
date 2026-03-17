@@ -309,9 +309,7 @@ impl XOnlyPublicKey {
     ///
     /// The [`PublicKey`] is constructed using the parity in this x-only public key.
     #[inline]
-    pub fn to_public_key(self) -> PublicKey {
-        self.as_inner().public_key(self.parity()).into()
-    }
+    pub fn to_public_key(self) -> PublicKey { self.as_inner().public_key(self.parity()).into() }
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
     ///
@@ -703,15 +701,19 @@ impl FromStr for PublicKey {
         match s.len() {
             66 => {
                 let bytes = hex::decode_to_array::<33>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
+                    DecodeFixedLengthBytesError::InvalidChar(e) =>
+                        ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) =>
+                        unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
             130 => {
                 let bytes = hex::decode_to_array::<65>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
+                    DecodeFixedLengthBytesError::InvalidChar(e) =>
+                        ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) =>
+                        unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }

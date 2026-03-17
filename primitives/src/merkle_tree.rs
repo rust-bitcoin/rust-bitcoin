@@ -18,7 +18,8 @@ use internals::array_vec::ArrayVec;
 
 #[doc(inline)]
 pub use crate::hash_types::{
-    TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeEncoder, TxMerkleNodeDecoderError, WitnessMerkleNode
+    TxMerkleNode, TxMerkleNodeDecoder, TxMerkleNodeDecoderError, TxMerkleNodeEncoder,
+    WitnessMerkleNode,
 };
 use crate::hash_types::{Txid, Wtxid};
 use crate::transaction::TxIdentifier;

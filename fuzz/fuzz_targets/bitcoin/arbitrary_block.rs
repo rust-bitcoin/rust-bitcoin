@@ -1,11 +1,10 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use libfuzzer_sys::fuzz_target;
 use arbitrary::{Arbitrary, Unstructured};
-
 use bitcoin::block::{self, Block, BlockCheckedExt as _};
 use bitcoin::consensus::{deserialize, serialize};
+use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
 fn main() {}

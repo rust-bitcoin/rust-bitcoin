@@ -7,8 +7,8 @@
 
 #[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
 use core::arch::aarch64::{
-    vaddq_u32, vld1q_u32, vreinterpretq_u32_u8, vreinterpretq_u8_u32, vrev32q_u8,
-    vsha256h2q_u32, vsha256hq_u32, vsha256su0q_u32, vsha256su1q_u32, vst1q_u32,
+    vaddq_u32, vld1q_u32, vreinterpretq_u32_u8, vreinterpretq_u8_u32, vrev32q_u8, vsha256h2q_u32,
+    vsha256hq_u32, vsha256su0q_u32, vsha256su1q_u32, vst1q_u32,
 };
 #[cfg(all(target_arch = "x86", any(feature = "std", feature = "cpufeatures")))]
 use core::arch::x86::{
@@ -17,7 +17,11 @@ use core::arch::x86::{
     _mm_shuffle_epi8, _mm_storeu_si128,
 };
 #[cfg(all(target_arch = "x86_64", any(feature = "std", feature = "cpufeatures")))]
-use core::arch::x86_64::{__m128i, _mm_set_epi64x, _mm_loadu_si128, _mm_shuffle_epi32, _mm_alignr_epi8, _mm_blend_epi16, _mm_shuffle_epi8, _mm_add_epi32, _mm_sha256rnds2_epu32, _mm_sha256msg1_epu32, _mm_sha256msg2_epu32, _mm_storeu_si128};
+use core::arch::x86_64::{
+    __m128i, _mm_add_epi32, _mm_alignr_epi8, _mm_blend_epi16, _mm_loadu_si128, _mm_set_epi64x,
+    _mm_sha256msg1_epu32, _mm_sha256msg2_epu32, _mm_sha256rnds2_epu32, _mm_shuffle_epi32,
+    _mm_shuffle_epi8, _mm_storeu_si128,
+};
 
 use internals::slice::SliceExt;
 
@@ -54,7 +58,7 @@ const fn sigma1(x: u32) -> u32 { x.rotate_left(15) ^ x.rotate_left(13) ^ (x >> 1
 #[cfg(feature = "small-hash")]
 #[macro_use]
 mod small_hash {
-    use super::{Sigma1, Ch, Sigma0, Maj, sigma1, sigma0};
+    use super::{sigma0, sigma1, Ch, Maj, Sigma0, Sigma1};
 
     #[rustfmt::skip]
     #[allow(clippy::too_many_arguments)]
@@ -281,7 +285,7 @@ impl Midstate {
 }
 
 impl HashEngine {
-    pub(super) fn process_blocks(state: &mut[u32; 8], blocks: &[u8]) {
+    pub(super) fn process_blocks(state: &mut [u32; 8], blocks: &[u8]) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
             if std::is_x86_feature_detected!("sse4.1")
@@ -335,7 +339,7 @@ impl HashEngine {
         any(feature = "std", feature = "cpufeatures")
     ))]
     #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
-    unsafe fn process_block_simd_x86_intrinsics(state: &mut[u32; 8], block: &[u8]) {
+    unsafe fn process_block_simd_x86_intrinsics(state: &mut [u32; 8], block: &[u8]) {
         // Code translated and based on from
         // https://github.com/noloader/SHA-Intrinsics/blob/4899efc81d1af159c1fd955936c673139f35aea9/sha256-x86.c
 
@@ -594,7 +598,7 @@ impl HashEngine {
 
     #[cfg(all(target_arch = "aarch64", any(feature = "std", feature = "cpufeatures")))]
     #[target_feature(enable = "sha2")]
-    unsafe fn process_block_simd_arm_intrinsics(state: &mut[u32; 8], block: &[u8]) {
+    unsafe fn process_block_simd_arm_intrinsics(state: &mut [u32; 8], block: &[u8]) {
         // Code translated and based on from
         // https://github.com/noloader/SHA-Intrinsics/blob/4e754bec921a9f281b69bd681ca0065763aa911c/sha256-arm.c
 
@@ -781,7 +785,7 @@ impl HashEngine {
     }
 
     // Algorithm copied from libsecp256k1
-    fn software_process_block(state: &mut[u32; 8], blocks: &[u8]) {
+    fn software_process_block(state: &mut [u32; 8], blocks: &[u8]) {
         debug_assert!(!blocks.is_empty() && blocks.len() % BLOCK_SIZE == 0);
 
         for block in blocks.chunks_exact(BLOCK_SIZE) {

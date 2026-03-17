@@ -1,8 +1,9 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
-use libfuzzer_sys::fuzz_target;
 use std::fmt::{self, Write as _};
+
+use libfuzzer_sys::fuzz_target;
 
 // faster than String, we don't need to actually produce the value, just check absence of panics
 struct NullWriter;

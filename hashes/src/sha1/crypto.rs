@@ -9,7 +9,7 @@ use super::{HashEngine, BLOCK_SIZE};
 
 impl HashEngine {
     // Basic unoptimized algorithm from Wikipedia
-    pub(super) fn process_blocks(state: &mut[u32; 5], blocks: &[u8]) {
+    pub(super) fn process_blocks(state: &mut [u32; 5], blocks: &[u8]) {
         debug_assert!(!blocks.is_empty() && blocks.len() % BLOCK_SIZE == 0);
 
         for block in blocks.chunks_exact(BLOCK_SIZE) {
@@ -36,8 +36,12 @@ impl HashEngine {
                     _ => unreachable!(),
                 };
 
-                let new_a =
-                    a.rotate_left(5).wrapping_add(f).wrapping_add(e).wrapping_add(k).wrapping_add(wi);
+                let new_a = a
+                    .rotate_left(5)
+                    .wrapping_add(f)
+                    .wrapping_add(e)
+                    .wrapping_add(k)
+                    .wrapping_add(wi);
                 e = d;
                 d = c;
                 c = b.rotate_left(30);

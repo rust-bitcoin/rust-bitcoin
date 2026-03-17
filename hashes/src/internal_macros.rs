@@ -175,7 +175,7 @@ macro_rules! engine_input_impl(
             let buf_idx = $crate::incomplete_block_len(self);
             let block_size = <Self as crate::HashEngine>::BLOCK_SIZE;
             self.bytes_hashed += inp.len() as u64;
-            
+
             // we know we won't complete a block, so just copy into the buffer and return
             if buf_idx + inp.len() < block_size {
                 return self.buffer[buf_idx..buf_idx + inp.len()].copy_from_slice(&inp)
@@ -194,7 +194,7 @@ macro_rules! engine_input_impl(
             let full_blocks = inp.len() / block_size * block_size;
             if full_blocks > 0 {
                 Self::process_blocks(&mut self.h, &inp[..full_blocks])
-            } 
+            }
 
             // buffer the remainder
             self.buffer[..inp.len() - full_blocks].copy_from_slice(&inp[full_blocks..])
