@@ -66,22 +66,18 @@ impl encoding::Encode for FilterLoad {
 type FilterLoadInnerDecoder =
     Decoder4<ByteVecDecoder, ArrayDecoder<4>, ArrayDecoder<4>, BloomFlagsDecoder>;
 
-/// The decoder for the [`FilterLoad`] message.
-#[derive(Debug, Default, Clone)]
-pub struct FilterLoadDecoder(FilterLoadInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`FilterLoad`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct FilterLoadDecoder(FilterLoadInnerDecoder);
 
-impl encoding::Decoder for FilterLoadDecoder {
-    type Output = FilterLoad;
-    type Error = FilterLoadDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        self.0.push_bytes(bytes).map_err(FilterLoadDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (filter, hash_funcs, tweak, flags) = self.0.end().map_err(FilterLoadDecoderError)?;
+    fn end(
+        result: Result<
+            <FilterLoadInnerDecoder as encoding::Decoder>::Output,
+            <FilterLoadInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<FilterLoad, FilterLoadDecoderError> {
+        let (filter, hash_funcs, tweak, flags) = result.map_err(FilterLoadDecoderError)?;
         Ok(FilterLoad {
             filter,
             hash_funcs: u32::from_le_bytes(hash_funcs),
@@ -89,9 +85,6 @@ impl encoding::Decoder for FilterLoadDecoder {
             flags,
         })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for FilterLoad {
@@ -129,30 +122,19 @@ impl encoding::Encode for BloomFlags {
 
 type BloomFlagsInnerDecoder = ArrayDecoder<1>;
 
-/// The decoder for [`BloomFlags`].
-#[derive(Debug, Default, Clone)]
-pub struct BloomFlagsDecoder(BloomFlagsInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for [`BloomFlags`].
+    #[derive(Debug, Default, Clone)]
+    pub struct BloomFlagsDecoder(BloomFlagsInnerDecoder);
 
-impl BloomFlagsDecoder {
-    fn err_from_inner(
-        inner: <ArrayDecoder<1> as encoding::Decoder>::Error,
-    ) -> BloomFlagsDecoderError {
-        BloomFlagsDecoderError::Decoder(inner)
-    }
-}
-
-impl encoding::Decoder for BloomFlagsDecoder {
-    type Output = BloomFlags;
-    type Error = BloomFlagsDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> BloomFlagsDecoderError {
+        BloomFlagsDecoderError::Decoder(err)
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let bloom_flag_arr = self.0.end().map_err(Self::err_from_inner)?;
+    fn end(
+        result: Result<[u8; 1], encoding::UnexpectedEofError>
+    ) -> Result<BloomFlags, BloomFlagsDecoderError> {
+        let bloom_flag_arr = result.map_err(BloomFlagsDecoderError::Decoder)?;
         let bloom_flag = u8::from_le_bytes(bloom_flag_arr);
         Ok(match bloom_flag {
             0 => BloomFlags::None,
@@ -161,9 +143,6 @@ impl encoding::Decoder for BloomFlagsDecoder {
             flag => return Err(BloomFlagsDecoderError::UnknownFlag(flag)),
         })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for BloomFlags {
@@ -196,27 +175,17 @@ impl encoding::Encode for FilterAdd {
 
 type FilterAddInnerDecoder = ByteVecDecoder;
 
-/// The decoder for the [`FilterAdd`] message.
-#[derive(Debug, Default, Clone)]
-pub struct FilterAddDecoder(FilterAddInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`FilterAdd`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct FilterAddDecoder(FilterAddInnerDecoder);
 
-impl encoding::Decoder for FilterAddDecoder {
-    type Output = FilterAdd;
-    type Error = FilterAddDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        self.0.push_bytes(bytes).map_err(FilterAddDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let data = self.0.end().map_err(FilterAddDecoderError)?;
+    fn end(
+        result: Result<Vec<u8>, encoding::ByteVecDecoderError>
+    ) -> Result<FilterAdd, FilterAddDecoderError> {
+        let data = result.map_err(FilterAddDecoderError)?;
         Ok(FilterAdd { data })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for FilterAdd {
