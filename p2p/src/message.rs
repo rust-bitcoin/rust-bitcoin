@@ -15,15 +15,15 @@ use core::{fmt, mem};
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     self, ArrayDecoder, ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Encoder2,
-    SliceEncoder, VecDecoder,
+    SliceEncoder, VecDecoder, VecDecoderError,
 };
 use hashes::{sha256d, HashEngine};
-use primitives::block::{self, HeaderDecoder, HeaderEncoder};
+use primitives::block::{self, Header, HeaderDecoder, HeaderEncoder};
 use primitives::transaction;
 use units::{Amount, FeeRate};
 
 use self::error::V1NetworkMessageDecoderErrorInner;
-use crate::address::{AddrV1Message, AddrV2Message};
+use crate::address::{AddrV1Message, AddrV2Message, AddrV2MessageDecoderError};
 use crate::merkle_tree::MerkleBlock;
 use crate::{
     bip152, message_blockdata, message_bloom, message_compact_blocks, message_filter,
@@ -268,23 +268,19 @@ type V1MessageHeaderInnerDecoder = encoding::Decoder4<
     encoding::ArrayDecoder<4>,
 >;
 
-/// The Decoder for `V1MessageHeader`
-#[derive(Debug, Default, Clone)]
-pub struct V1MessageHeaderDecoder(V1MessageHeaderInnerDecoder);
+crate::decoder_newtype! {
+    /// The Decoder for `V1MessageHeader`
+    #[derive(Debug, Default, Clone)]
+    pub struct V1MessageHeaderDecoder(V1MessageHeaderInnerDecoder);
 
-impl encoding::Decoder for V1MessageHeaderDecoder {
-    type Output = V1MessageHeader;
-    type Error = V1MessageHeaderDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(V1MessageHeaderDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
+    fn end(
+        result: Result<
+            <V1MessageHeaderInnerDecoder as encoding::Decoder>::Output,
+            <V1MessageHeaderInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<V1MessageHeader, V1MessageHeaderDecoderError> {
         let (magic, command, length, checksum) =
-            self.0.end().map_err(V1MessageHeaderDecoderError)?;
+            result.map_err(V1MessageHeaderDecoderError)?;
         Ok(V1MessageHeader {
             magic: Magic(magic),
             command,
@@ -292,9 +288,6 @@ impl encoding::Decoder for V1MessageHeaderDecoder {
             checksum,
         })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for V1MessageHeader {
@@ -333,26 +326,16 @@ impl encoding::Encode for InventoryPayload {
 
 type InventoryInnerDecoder = VecDecoder<message_blockdata::Inventory>;
 
-/// Decoder type for [`InventoryPayload`].
-#[derive(Debug, Default, Clone)]
-pub struct InventoryPayloadDecoder(InventoryInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for [`InventoryPayload`].
+    #[derive(Debug, Default, Clone)]
+    pub struct InventoryPayloadDecoder(InventoryInnerDecoder);
 
-impl encoding::Decoder for InventoryPayloadDecoder {
-    type Output = InventoryPayload;
-    type Error = InventoryPayloadDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(InventoryPayloadDecoderError)
+    fn end(
+        result: Result<Vec<message_blockdata::Inventory>, <InventoryInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<InventoryPayload, InventoryPayloadDecoderError> {
+        Ok(InventoryPayload(result.map_err(InventoryPayloadDecoderError)?))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        Ok(InventoryPayload(self.0.end().map_err(InventoryPayloadDecoderError)?))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for InventoryPayload {
@@ -382,26 +365,16 @@ impl encoding::Encode for AddrPayload {
 
 type AddrPayloadInnerDecoder = VecDecoder<AddrV1Message>;
 
-/// Decoder type for [`AddrPayload`].
-#[derive(Debug, Default, Clone)]
-pub struct AddrPayloadDecoder(AddrPayloadInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for [`AddrPayload`].
+    #[derive(Debug, Default, Clone)]
+    pub struct AddrPayloadDecoder(AddrPayloadInnerDecoder);
 
-impl encoding::Decoder for AddrPayloadDecoder {
-    type Output = AddrPayload;
-    type Error = AddrPayloadDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AddrPayloadDecoderError)
+    fn end(
+        result: Result<Vec<AddrV1Message>, <AddrPayloadInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<AddrPayload, AddrPayloadDecoderError> {
+        Ok(AddrPayload(result.map_err(AddrPayloadDecoderError)?))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        Ok(AddrPayload(self.0.end().map_err(AddrPayloadDecoderError)?))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for AddrPayload {
@@ -434,26 +407,16 @@ impl encoding::Encode for AddrV2Payload {
 
 type AddrV2PayloadInnerDecoder = VecDecoder<AddrV2Message>;
 
-/// Decoder type for [`AddrV2Payload`].
-#[derive(Debug, Default, Clone)]
-pub struct AddrV2PayloadDecoder(AddrV2PayloadInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for [`AddrV2Payload`].
+    #[derive(Debug, Default, Clone)]
+    pub struct AddrV2PayloadDecoder(AddrV2PayloadInnerDecoder);
 
-impl encoding::Decoder for AddrV2PayloadDecoder {
-    type Output = AddrV2Payload;
-    type Error = AddrV2PayloadDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AddrV2PayloadDecoderError)
+    fn end(
+        result: Result<Vec<AddrV2Message>, VecDecoderError<AddrV2MessageDecoderError>>
+    ) -> Result<AddrV2Payload, AddrV2PayloadDecoderError> {
+        Ok(AddrV2Payload(result.map_err(AddrV2PayloadDecoderError)?))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        Ok(AddrV2Payload(self.0.end().map_err(AddrV2PayloadDecoderError)?))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for AddrV2Payload {
@@ -501,29 +464,22 @@ impl encoding::Encode for FeeFilter {
     }
 }
 
-/// Decoder for [`FeeFilter`] type.
-#[derive(Debug, Clone)]
-pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
+crate::decoder_newtype! {
+    /// Decoder for [`FeeFilter`] type.
+    #[derive(Debug, Clone)]
+    pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
 
-impl FeeFilterDecoder {
     /// Constructs a new [`FeeFilter`] decoder.
     pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for FeeFilterDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for FeeFilterDecoder {
-    type Output = FeeFilter;
-    type Error = FeeFilterDecoderError;
-
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(FeeFilterDecoderError::UnexpectedEof)
+    fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> FeeFilterDecoderError {
+        FeeFilterDecoderError::UnexpectedEof(err)
     }
 
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let array = self.0.end().map_err(FeeFilterDecoderError::UnexpectedEof)?;
+    fn end(
+        result: Result<[u8; 8], encoding::UnexpectedEofError>
+    ) -> Result<FeeFilter, FeeFilterDecoderError> {
+        let array = result.map_err(FeeFilterDecoderError::UnexpectedEof)?;
         let kvb = u64::from_le_bytes(array);
 
         // BIP-0133 specifies feefilter as int64_t (signed), but negative values and values
@@ -542,8 +498,6 @@ impl encoding::Decoder for FeeFilterDecoder {
             Ok(FeeFilter(fee_rate))
         }
     }
-
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for FeeFilter {
@@ -589,27 +543,15 @@ impl encoding::Encode for Ping {
     }
 }
 
-/// The Decoder for [`Ping`]
-#[derive(Debug, Default, Clone)]
-pub struct PingDecoder(encoding::ArrayDecoder<8>);
+crate::decoder_newtype! {
+    /// The Decoder for [`Ping`]
+    #[derive(Debug, Default, Clone)]
+    pub struct PingDecoder(encoding::ArrayDecoder<8>);
 
-impl encoding::Decoder for PingDecoder {
-    type Output = Ping;
-    type Error = PingDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(PingDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let nonce = self.0.end().map_err(PingDecoderError)?;
+    fn end(result: Result<[u8; 8], encoding::UnexpectedEofError>) -> Result<Ping, PingDecoderError> {
+        let nonce = result.map_err(PingDecoderError)?;
         Ok(Ping(u64::from_le_bytes(nonce)))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for Ping {
@@ -645,27 +587,15 @@ impl encoding::Encode for Pong {
     }
 }
 
-/// The Decoder for [`Pong`]
-#[derive(Debug, Default, Clone)]
-pub struct PongDecoder(encoding::ArrayDecoder<8>);
+crate::decoder_newtype! {
+    /// The Decoder for [`Pong`]
+    #[derive(Debug, Default, Clone)]
+    pub struct PongDecoder(encoding::ArrayDecoder<8>);
 
-impl encoding::Decoder for PongDecoder {
-    type Output = Pong;
-    type Error = PongDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(PongDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let nonce = self.0.end().map_err(PongDecoderError)?;
+    fn end(result: Result<[u8; 8], encoding::UnexpectedEofError>) -> Result<Pong, PongDecoderError> {
+        let nonce = result.map_err(PongDecoderError)?;
         Ok(Pong(u64::from_le_bytes(nonce)))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for Pong {
@@ -1622,27 +1552,17 @@ impl encoding::Encode for NetworkHeader {
 
 type NetworkHeaderInnerDecoder = Decoder2<HeaderDecoder, ArrayDecoder<1>>;
 
-/// The decoder type for a [`NetworkHeader`].
-#[derive(Debug, Default, Clone)]
-pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder type for a [`NetworkHeader`].
+    #[derive(Debug, Default, Clone)]
+    pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
 
-impl encoding::Decoder for NetworkHeaderDecoder {
-    type Output = NetworkHeader;
-    type Error = NetworkHeaderDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(NetworkHeaderDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (header, length) = self.0.end().map_err(NetworkHeaderDecoderError)?;
+    fn end(
+        result: Result<(Header, [u8; 1]), <NetworkHeaderInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<NetworkHeader, NetworkHeaderDecoderError> {
+        let (header, length) = result.map_err(NetworkHeaderDecoderError)?;
         Ok(NetworkHeader { header, length: u8::from_le_bytes(length) })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for NetworkHeader {
@@ -1687,27 +1607,17 @@ impl encoding::Encode for HeadersMessage {
 
 type HeadersMessageInnerDecoder = VecDecoder<NetworkHeader>;
 
-/// The decoder type for a [`HeadersMessage`].
-#[derive(Debug, Default, Clone)]
-pub struct HeadersMessageDecoder(HeadersMessageInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder type for a [`HeadersMessage`].
+    #[derive(Debug, Default, Clone)]
+    pub struct HeadersMessageDecoder(HeadersMessageInnerDecoder);
 
-impl encoding::Decoder for HeadersMessageDecoder {
-    type Output = HeadersMessage;
-    type Error = HeadersMessageDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(HeadersMessageDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let headers = self.0.end().map_err(HeadersMessageDecoderError)?;
+    fn end(
+        result: Result<Vec<NetworkHeader>, <HeadersMessageInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<HeadersMessage, HeadersMessageDecoderError> {
+        let headers = result.map_err(HeadersMessageDecoderError)?;
         Ok(HeadersMessage(headers))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for HeadersMessage {

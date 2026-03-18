@@ -141,39 +141,6 @@ impl encoding::Decode for VersionMessage {
     type Decoder = VersionMessageDecoder;
 }
 
-impl encoding::Decoder for VersionMessageDecoder {
-    type Output = VersionMessage;
-    type Error = VersionMessageDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(VersionMessageDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (
-            (version, services, timestamp),
-            (receiver, sender, nonce, user_agent, start_height, relay),
-        ) = self.0.end().map_err(VersionMessageDecoderError)?;
-
-        Ok(VersionMessage {
-            version,
-            services,
-            timestamp: i64::from_le_bytes(timestamp),
-            receiver,
-            sender,
-            nonce: u64::from_le_bytes(nonce),
-            user_agent,
-            start_height: i32::from_le_bytes(start_height),
-            relay: relay[0] != 0,
-        })
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
 type VersionMessageInnerDecoder = encoding::Decoder2<
     encoding::Decoder3<
         crate::ProtocolVersionDecoder,
@@ -190,9 +157,34 @@ type VersionMessageInnerDecoder = encoding::Decoder2<
     >,
 >;
 
-/// The Decoder for [`VersionMessage`].
-#[derive(Debug, Default, Clone)]
-pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+crate::decoder_newtype! {
+    /// The Decoder for [`VersionMessage`].
+    #[derive(Debug, Default, Clone)]
+    pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+
+    fn end(
+        result: Result<
+            <VersionMessageInnerDecoder as encoding::Decoder>::Output,
+            <VersionMessageInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<VersionMessage, VersionMessageDecoderError> {
+        let (
+            (version, services, timestamp),
+            (receiver, sender, nonce, user_agent, start_height, relay),
+        ) = result.map_err(VersionMessageDecoderError)?;
+        Ok(VersionMessage {
+            version,
+            services,
+            timestamp: i64::from_le_bytes(timestamp),
+            receiver,
+            sender,
+            nonce: u64::from_le_bytes(nonce),
+            user_agent,
+            start_height: i32::from_le_bytes(start_height),
+            relay: relay[0] != 0,
+        })
+    }
+}
 
 /// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
 /// connection between two peers is established. It is intended to advertise client software in a
@@ -223,29 +215,23 @@ impl encoding::Encode for UserAgent {
 
 type UserAgentInnerDecoder = ByteVecDecoder;
 
-/// The decoder for the [`UserAgent`] message.
-#[derive(Debug, Default, Clone)]
-pub struct UserAgentDecoder(UserAgentInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`UserAgent`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct UserAgentDecoder(UserAgentInnerDecoder);
 
-impl encoding::Decoder for UserAgentDecoder {
-    type Output = UserAgent;
-    type Error = UserAgentDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(UserAgentDecoderError::Decoder)
+    fn map_push_bytes_err(err: encoding::ByteVecDecoderError) -> UserAgentDecoderError {
+        UserAgentDecoderError::Decoder(err)
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let bytes = self.0.end().map_err(UserAgentDecoderError::Decoder)?;
+    fn end(
+        result: Result<Vec<u8>, encoding::ByteVecDecoderError>
+    ) -> Result<UserAgent, UserAgentDecoderError> {
+        let bytes = result.map_err(UserAgentDecoderError::Decoder)?;
         let user_agent =
             String::from_utf8(bytes).map_err(|_| UserAgentDecoderError::InvalidUtf8)?;
         Ok(UserAgent { user_agent })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for UserAgent {
@@ -432,22 +418,19 @@ impl encoding::Encode for RejectReason {
     }
 }
 
-/// The decoder type for a [`RejectReason`].
-#[derive(Debug, Default, Clone)]
-pub struct RejectReasonDecoder(ArrayDecoder<1>);
+crate::decoder_newtype! {
+    /// The decoder type for a [`RejectReason`].
+    #[derive(Debug, Default, Clone)]
+    pub struct RejectReasonDecoder(ArrayDecoder<1>);
 
-impl encoding::Decoder for RejectReasonDecoder {
-    type Output = RejectReason;
-    type Error = RejectReasonDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(RejectReasonDecoderError::Decoder)
+    fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> RejectReasonDecoderError {
+        RejectReasonDecoderError::Decoder(err)
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let code_arr = self.0.end().map_err(RejectReasonDecoderError::Decoder)?;
+    fn end(
+        result: Result<[u8; 1], encoding::UnexpectedEofError>
+    ) -> Result<RejectReason, RejectReasonDecoderError> {
+        let code_arr = result.map_err(RejectReasonDecoderError::Decoder)?;
         let code = u8::from_le_bytes(code_arr);
         Ok(match code {
             0x01 => RejectReason::Malformed,
@@ -461,9 +444,6 @@ impl encoding::Decoder for RejectReasonDecoder {
             unknown => return Err(RejectReasonDecoderError::UnknownRejectCode(unknown)),
         })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for RejectReason {
@@ -520,22 +500,22 @@ impl encoding::Encode for Reject {
 type RejectInnerDecoder =
     Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
 
-/// The decoder type for a [`Reject`] message.
-#[derive(Debug, Default, Clone)]
-pub struct RejectDecoder(RejectInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder type for a [`Reject`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct RejectDecoder(RejectInnerDecoder);
 
-impl encoding::Decoder for RejectDecoder {
-    type Output = Reject;
-    type Error = RejectDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(RejectDecoderError::Decoder)
+    fn map_push_bytes_err(err: <RejectInnerDecoder as encoding::Decoder>::Error) -> RejectDecoderError {
+        RejectDecoderError::Decoder(err)
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (message, ccode, reason, hash) = self.0.end().map_err(RejectDecoderError::Decoder)?;
+    fn end(
+        result: Result<
+            <RejectInnerDecoder as encoding::Decoder>::Output,
+            <RejectInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<Reject, RejectDecoderError> {
+        let (message, ccode, reason, hash) = result.map_err(RejectDecoderError::Decoder)?;
         let message = String::from_utf8(message)
             .map_err(|_| RejectDecoderError::InvalidUtf8)
             .map(Cow::Owned)?;
@@ -545,9 +525,6 @@ impl encoding::Decoder for RejectDecoder {
         let hash = sha256d::Hash::from_byte_array(hash);
         Ok(Reject { message, ccode, reason, hash })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for Reject {
@@ -605,26 +582,16 @@ impl encoding::Encode for Alert {
 
 type AlertInnerDecoder = ByteVecDecoder;
 
-/// The decoder for the [`Alert`] message.
-#[derive(Debug, Default, Clone)]
-pub struct AlertDecoder(AlertInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`Alert`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct AlertDecoder(AlertInnerDecoder);
 
-impl encoding::Decoder for AlertDecoder {
-    type Output = Alert;
-    type Error = AlertDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AlertDecoderError)
+    fn end(
+        result: Result<Vec<u8>, encoding::ByteVecDecoderError>
+    ) -> Result<Alert, AlertDecoderError> {
+        Ok(Alert(result.map_err(AlertDecoderError)?))
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        Ok(Alert(self.0.end().map_err(AlertDecoderError)?))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for Alert {

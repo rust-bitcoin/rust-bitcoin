@@ -74,37 +74,23 @@ impl encoding::Encode for PrefilledTransaction {
 
 type PrefilledTransactionInnerDecoder = Decoder2<CompactSizeDecoder, TransactionDecoder>;
 
-/// The decoder for a [`PrefilledTransaction`] message.
-#[derive(Debug, Default, Clone)]
-pub struct PrefilledTransactionDecoder(PrefilledTransactionInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for a [`PrefilledTransaction`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct PrefilledTransactionDecoder(PrefilledTransactionInnerDecoder);
 
-impl PrefilledTransactionDecoder {
-    fn err_from_inner(
-        inner: <PrefilledTransactionInnerDecoder as encoding::Decoder>::Error,
-    ) -> PrefilledTransactionDecoderError {
-        PrefilledTransactionDecoderError::Decoder(inner)
-    }
-}
-
-impl encoding::Decoder for PrefilledTransactionDecoder {
-    type Output = PrefilledTransaction;
-    type Error = PrefilledTransactionDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    fn map_push_bytes_err(err: <PrefilledTransactionInnerDecoder as encoding::Decoder>::Error) -> PrefilledTransactionDecoderError {
+        PrefilledTransactionDecoderError::Decoder(err)
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (cs, tx) = self.0.end().map_err(Self::err_from_inner)?;
-        let idx =
-            u16::try_from(cs).map_err(|_| PrefilledTransactionDecoderError::InvalidIndex(cs))?;
+    fn end(
+        result: Result<(usize, Transaction), <PrefilledTransactionInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<PrefilledTransaction, PrefilledTransactionDecoderError> {
+        let (cs, tx) = result.map_err(PrefilledTransactionDecoderError::Decoder)?;
+        let idx = u16::try_from(cs)
+            .map_err(|_| PrefilledTransactionDecoderError::InvalidIndex(cs))?;
         Ok(PrefilledTransaction { idx, tx })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for PrefilledTransaction {
@@ -204,27 +190,17 @@ impl encoding::Encode for ShortId {
 
 type ShortIdInnerDecoder = ArrayDecoder<6>;
 
-/// Decoder type for a [`ShortId`].
-#[derive(Debug, Default, Clone)]
-pub struct ShortIdDecoder(ShortIdInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for a [`ShortId`].
+    #[derive(Debug, Default, Clone)]
+    pub struct ShortIdDecoder(ShortIdInnerDecoder);
 
-impl encoding::Decoder for ShortIdDecoder {
-    type Output = ShortId;
-    type Error = ShortIdDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(ShortIdDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let arr = self.0.end().map_err(ShortIdDecoderError)?;
+    fn end(
+        result: Result<[u8; 6], <ShortIdInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<ShortId, ShortIdDecoderError> {
+        let arr = result.map_err(ShortIdDecoderError)?;
         Ok(ShortId(arr))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for ShortId {
@@ -290,43 +266,28 @@ impl encoding::Encode for HeaderAndShortIds {
 type HeaderAndShortIdsInnerDecoder =
     Decoder4<HeaderDecoder, ArrayDecoder<8>, VecDecoder<ShortId>, VecDecoder<PrefilledTransaction>>;
 
-/// Decoder type for the [`HeaderAndShortIds`] message.
-#[derive(Debug, Default, Clone)]
-pub struct HeaderAndShortIdsDecoder(HeaderAndShortIdsInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for the [`HeaderAndShortIds`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct HeaderAndShortIdsDecoder(HeaderAndShortIdsInnerDecoder);
 
-impl HeaderAndShortIdsDecoder {
-    fn err_from_inner(
-        inner: <HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error,
-    ) -> HeaderAndShortIdsDecoderError {
-        HeaderAndShortIdsDecoderError::Decoder(inner)
-    }
-}
-
-impl encoding::Decoder for HeaderAndShortIdsDecoder {
-    type Output = HeaderAndShortIds;
-    type Error = HeaderAndShortIdsDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(Self::err_from_inner)
+    fn map_push_bytes_err(err: <HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error) -> HeaderAndShortIdsDecoderError {
+        HeaderAndShortIdsDecoderError::Decoder(err)
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (header, nonce, short_ids, prefilled_txs) =
-            self.0.end().map_err(Self::err_from_inner)?;
-        let overflow_check = short_ids
-            .len()
-            .checked_add(prefilled_txs.len())
-            .ok_or(HeaderAndShortIdsDecoderError::IndexOverflow)?;
+    fn end(
+        result: Result<
+            <HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Output,
+            <HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error
+        >
+    ) -> Result<HeaderAndShortIds, HeaderAndShortIdsDecoderError> {
+        let (header, nonce, short_ids, prefilled_txs) = result.map_err(HeaderAndShortIdsDecoderError::Decoder)?;
+        let overflow_check = short_ids.len().checked_add(prefilled_txs.len()).ok_or(HeaderAndShortIdsDecoderError::IndexOverflow)?;
         if overflow_check > u16::MAX.into() {
             return Err(HeaderAndShortIdsDecoderError::IndexOverflow);
         }
         Ok(HeaderAndShortIds { header, nonce: u64::from_le_bytes(nonce), short_ids, prefilled_txs })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for HeaderAndShortIds {
@@ -427,23 +388,21 @@ impl encoding::Encode for Offset {
     fn encoder(&self) -> Self::Encoder<'_> { CompactSizeEncoder::new(self.0) }
 }
 
-#[derive(Debug, Default, Clone)]
-struct OffsetDecoder(CompactSizeDecoder);
+type OffsetDecoderError = encoding::CompactSizeDecoderError;
 
-impl encoding::Decoder for OffsetDecoder {
-    type Output = Offset;
-    type Error = <CompactSizeDecoder as encoding::Decoder>::Error;
+crate::decoder_newtype! {
+    #[derive(Debug, Default, Clone)]
+    struct OffsetDecoder(CompactSizeDecoder);
 
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes)
+    fn map_push_bytes_err(err: encoding::CompactSizeDecoderError) -> OffsetDecoderError {
+        err
     }
 
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> { Ok(Offset(self.0.end()?)) }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
+    fn end(
+        result: Result<usize, encoding::CompactSizeDecoderError>
+    ) -> Result<Offset, OffsetDecoderError> {
+        result.map(Offset)
+    }
 }
 
 impl encoding::Decode for Offset {
@@ -537,27 +496,17 @@ impl encoding::Encode for BlockTransactionsRequest {
 
 type BlockTransactionsRequestInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Offset>>;
 
-/// The encoder type for a [`BlockTransactionsRequest`].
-#[derive(Debug, Default, Clone)]
-pub struct BlockTransactionsRequestDecoder(BlockTransactionsRequestInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder type for a [`BlockTransactionsRequest`].
+    #[derive(Debug, Default, Clone)]
+    pub struct BlockTransactionsRequestDecoder(BlockTransactionsRequestInnerDecoder);
 
-impl encoding::Decoder for BlockTransactionsRequestDecoder {
-    type Output = BlockTransactionsRequest;
-    type Error = BlockTransactionsRequestDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockTransactionsRequestDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (block_hash, offsets) = self.0.end().map_err(BlockTransactionsRequestDecoderError)?;
+    fn end(
+        result: Result<(BlockHash, Vec<Offset>), <BlockTransactionsRequestInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<BlockTransactionsRequest, BlockTransactionsRequestDecoderError> {
+        let (block_hash, offsets) = result.map_err(BlockTransactionsRequestDecoderError)?;
         Ok(BlockTransactionsRequest { block_hash, offsets })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for BlockTransactionsRequest {
@@ -604,27 +553,17 @@ impl encoding::Encode for BlockTransactions {
 
 type BlockTransactionsInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Transaction>>;
 
-/// Decoder type for a [`BlockTransactions`] message.
-#[derive(Debug, Default, Clone)]
-pub struct BlockTransactionsDecoder(BlockTransactionsInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for a [`BlockTransactions`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct BlockTransactionsDecoder(BlockTransactionsInnerDecoder);
 
-impl encoding::Decoder for BlockTransactionsDecoder {
-    type Output = BlockTransactions;
-    type Error = BlockTransactionsDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockTransactionsDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (block_hash, transactions) = self.0.end().map_err(BlockTransactionsDecoderError)?;
+    fn end(
+        result: Result<(BlockHash, Vec<Transaction>), <BlockTransactionsInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<BlockTransactions, BlockTransactionsDecoderError> {
+        let (block_hash, transactions) = result.map_err(BlockTransactionsDecoderError)?;
         Ok(BlockTransactions { block_hash, transactions })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for BlockTransactions {

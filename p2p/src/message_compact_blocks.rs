@@ -39,28 +39,18 @@ impl encoding::Encode for SendCmpct {
 
 type SendCmpctInnerDecoder = Decoder2<ArrayDecoder<1>, ArrayDecoder<8>>;
 
-/// Decoder type for the [`SendCmpct`] message.
-#[derive(Debug, Default, Clone)]
-pub struct SendCmpctDecoder(SendCmpctInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for the [`SendCmpct`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct SendCmpctDecoder(SendCmpctInnerDecoder);
 
-impl encoding::Decoder for SendCmpctDecoder {
-    type Output = SendCmpct;
-    type Error = SendCmpctDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(SendCmpctDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (send_cmpct, version) = self.0.end().map_err(SendCmpctDecoderError)?;
+    fn end(
+        result: Result<([u8; 1], [u8; 8]), <SendCmpctInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<SendCmpct, SendCmpctDecoderError> {
+        let (send_cmpct, version) = result.map_err(SendCmpctDecoderError)?;
         let send_compact = u8::from_le_bytes(send_cmpct) != 0;
         Ok(SendCmpct { send_compact, version: u64::from_le_bytes(version) })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for SendCmpct {

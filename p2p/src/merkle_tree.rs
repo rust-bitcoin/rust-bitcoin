@@ -19,7 +19,7 @@ use encoding::{
     Encoder3, SliceEncoder, VecDecoder,
 };
 use internals::ToU64 as _;
-use primitives::block::{self, Block, Checked, HeaderDecoder, HeaderEncoder};
+use primitives::block::{self, Block, Checked, Header, HeaderDecoder, HeaderEncoder};
 use primitives::merkle_tree::TxMerkleNode;
 use primitives::transaction::{Transaction, Txid};
 use primitives::Weight;
@@ -143,27 +143,17 @@ impl encoding::Encode for MerkleBlock {
 
 type MerkleBlockInnerDecoder = Decoder2<HeaderDecoder, PartialMerkleTreeDecoder>;
 
-/// The decoder for a [`MerkleBlock`].
-#[derive(Debug, Default, Clone)]
-pub struct MerkleBlockDecoder(MerkleBlockInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for a [`MerkleBlock`].
+    #[derive(Debug, Default, Clone)]
+    pub struct MerkleBlockDecoder(MerkleBlockInnerDecoder);
 
-impl encoding::Decoder for MerkleBlockDecoder {
-    type Output = MerkleBlock;
-    type Error = MerkleBlockDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(MerkleBlockDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (header, txn) = self.0.end().map_err(MerkleBlockDecoderError)?;
+    fn end(
+        result: Result<(Header, PartialMerkleTree), <MerkleBlockInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<MerkleBlock, MerkleBlockDecoderError> {
+        let (header, txn) = result.map_err(MerkleBlockDecoderError)?;
         Ok(MerkleBlock { header, txn })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for MerkleBlock {
@@ -511,23 +501,19 @@ impl encoding::Encode for PartialMerkleTree {
 type PartialMerkleTreeInnerDecoder =
     Decoder3<ArrayDecoder<4>, VecDecoder<TxMerkleNode>, ByteVecDecoder>;
 
-/// The decoder type for a [`PartialMerkleTree`].
-#[derive(Debug, Default, Clone)]
-pub struct PartialMerkleTreeDecoder(PartialMerkleTreeInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder type for a [`PartialMerkleTree`].
+    #[derive(Debug, Default, Clone)]
+    pub struct PartialMerkleTreeDecoder(PartialMerkleTreeInnerDecoder);
 
-impl encoding::Decoder for PartialMerkleTreeDecoder {
-    type Output = PartialMerkleTree;
-    type Error = PartialMerkleTreeDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(PartialMerkleTreeDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
+    fn end(
+        result: Result<
+            <PartialMerkleTreeInnerDecoder as encoding::Decoder>::Output,
+            <PartialMerkleTreeInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<PartialMerkleTree, PartialMerkleTreeDecoderError> {
         let (num_transactions, hashes, compress_bit_vec) =
-            self.0.end().map_err(PartialMerkleTreeDecoderError)?;
+            result.map_err(PartialMerkleTreeDecoderError)?;
         let num_transactions = u32::from_le_bytes(num_transactions);
         let mut bits = Vec::with_capacity(compress_bit_vec.len());
         for byte in compress_bit_vec {
@@ -537,9 +523,6 @@ impl encoding::Decoder for PartialMerkleTreeDecoder {
         }
         Ok(PartialMerkleTree { num_transactions, bits, hashes })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for PartialMerkleTree {
