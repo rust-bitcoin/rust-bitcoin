@@ -158,22 +158,19 @@ impl encoding::ExactSizeEncoder for CommandStringEncoder {
     fn len(&self) -> usize { self.0.len() }
 }
 
-/// Decoder for [`CommandString`].
-#[derive(Debug, Default, Clone)]
-pub struct CommandStringDecoder {
-    inner: encoding::ArrayDecoder<12>,
-}
+crate::decoder_newtype! {
+    /// Decoder for [`CommandString`].
+    #[derive(Debug, Default, Clone)]
+    pub struct CommandStringDecoder(encoding::ArrayDecoder<12>);
 
-impl encoding::Decoder for CommandStringDecoder {
-    type Output = CommandString;
-    type Error = CommandStringDecoderError;
-
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        self.inner.push_bytes(bytes).map_err(CommandStringDecoderError::UnexpectedEof)
+    fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> CommandStringDecoderError {
+        CommandStringDecoderError::UnexpectedEof(err)
     }
 
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let rawbytes = self.inner.end().map_err(CommandStringDecoderError::UnexpectedEof)?;
+    fn end(
+        result: Result<[u8; 12], encoding::UnexpectedEofError>
+    ) -> Result<CommandString, CommandStringDecoderError> {
+        let rawbytes = result.map_err(CommandStringDecoderError::UnexpectedEof)?;
         // Trim null padding from the end.
         let trimmed =
             rawbytes.iter().rposition(|&b| b != 0).map_or(&rawbytes[..0], |i| &rawbytes[..=i]);
@@ -184,8 +181,6 @@ impl encoding::Decoder for CommandStringDecoder {
 
         Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
     }
-
-    fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
 /// A Network message using the v1 p2p protocol.
@@ -1777,7 +1772,7 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                             if id == 0 {
                                 // Non-optimized: need to read 12-byte command string next.
                                 self.state = V2NetworkMessageDecoderState::CommandString(
-                                    CommandStringDecoder { inner: encoding::ArrayDecoder::new() },
+                                    CommandStringDecoder(encoding::ArrayDecoder::new()),
                                 );
                             } else {
                                 // Optimized short ID (1-28): skip command, go straight to payload.
