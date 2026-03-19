@@ -49,6 +49,25 @@
 //! let _hash = Sha256::from_engine(engine);
 //! # }
 //! ```
+//!
+//! If you write a generic helper that takes a writer by value, pass `&mut engine` to keep using
+//! the same engine afterward:
+//!
+//! ```
+//! # #[cfg(feature = "std")] {
+//! use std::io::Write;
+//! use bitcoin_hashes::Sha256;
+//!
+//! fn write_part<W: Write>(mut writer: W, bytes: &[u8]) {
+//!     writer.write_all(bytes).expect("engine writes don't error");
+//! }
+//!
+//! let mut engine = Sha256::engine();
+//! write_part(&mut engine, b"hello");
+//! write_part(&mut engine, b" world");
+//! let _hash = Sha256::from_engine(engine);
+//! # }
+//! ```
 
 #![no_std]
 // Coding conventions.
