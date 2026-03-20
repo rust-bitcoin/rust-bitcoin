@@ -201,11 +201,37 @@ impl_add_assign_for_results!(SignedAmount);
 impl_sub_assign_for_results!(Amount);
 impl_sub_assign_for_results!(SignedAmount);
 
+impl ops::Neg for Amount {
+    type Output = SignedAmount;
+
+    fn neg(self) -> Self::Output {
+        // Convert to signed amount and negate.
+        // This is safe because Amount::MAX == SignedAmount::MAX.
+        -self.to_signed()
+    }
+}
+
 impl ops::Neg for SignedAmount {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self::from_sat(self.to_sat().neg()).expect("all +ve and -ve values are valid")
+    }
+}
+
+impl ops::Neg for NumOpResult<Amount> {
+    type Output = NumOpResult<SignedAmount>;
+
+    fn neg(self) -> Self::Output {
+        self.map(|amount| -amount)
+    }
+}
+
+impl ops::Neg for NumOpResult<SignedAmount> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        self.map(|amount| -amount)
     }
 }
 
