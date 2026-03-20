@@ -3,6 +3,10 @@ members = ["addresses", "base58", "bip158", "bitcoin", "chacha20_poly1305", "con
 exclude = ["benches"]
 resolver = "2"
 
+[workspace.metadata.rbmt.toolchains]
+stable = "1.93.1"
+nightly = "nightly-2026-03-13"
+
 [workspace.lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(hashes_fuzz)', 'cfg(kani)'] }
 
