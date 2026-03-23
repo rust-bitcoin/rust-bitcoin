@@ -59,7 +59,9 @@ impl Hash {
 
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
     #[must_use]
-    pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
+    pub fn hash_again(&self) -> sha256d::Hash {
+        sha256d::Hash::from_byte_array(Self::hash(&self.0).to_byte_array())
+    }
 
     /// Computes hash from `bytes` in `const` context.
     ///

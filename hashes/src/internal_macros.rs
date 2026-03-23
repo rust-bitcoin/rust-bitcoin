@@ -58,28 +58,18 @@ pub(crate) use hash_trait_impls;
 /// * Requires a `HashEngine` type in this module implementing `Default` and `crate::HashEngine<Hash = Hash, Bytes = [u8; $bits / 8]>`.
 macro_rules! general_hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
-        /// Hashes some bytes.
-        pub fn hash(data: &[u8]) -> Hash {
-            use crate::HashEngine as _;
+        #[deprecated(since = "TBD", note = "use `Hash::hash` instead")]
+        #[doc(hidden)]
+        pub fn hash(data: &[u8]) -> Hash { Hash::hash(data) }
 
-            let mut engine = Hash::engine();
-            engine.input(data);
-            engine.finalize()
-        }
-
-        /// Hashes all the byte slices retrieved from the iterator together.
+        #[deprecated(since = "TBD", note = "use `Hash::hash_byte_chunks` instead")]
+        #[doc(hidden)]
         pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Hash
         where
             B: AsRef<[u8]>,
             I: IntoIterator<Item = B>,
         {
-            use crate::HashEngine as _;
-
-            let mut engine = Hash::engine();
-            for slice in byte_slices {
-                engine.input(slice.as_ref());
-            }
-            engine.finalize()
+            Hash::hash_byte_chunks(byte_slices)
         }
 
         $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
@@ -90,7 +80,13 @@ macro_rules! general_hash_type {
 
             /// Hashes some bytes.
             #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
-            pub fn hash(data: &[u8]) -> Self { hash(data) }
+            pub fn hash(data: &[u8]) -> Self {
+                use crate::HashEngine as _;
+
+                let mut engine = Self::engine();
+                engine.input(data);
+                engine.finalize()
+            }
 
             /// Hashes all the byte slices retrieved from the iterator together.
             pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
@@ -98,7 +94,13 @@ macro_rules! general_hash_type {
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,
             {
-                hash_byte_chunks(byte_slices)
+                use crate::HashEngine as _;
+
+                let mut engine = Self::engine();
+                for slice in byte_slices {
+                    engine.input(slice.as_ref());
+                }
+                engine.finalize()
             }
         }
 

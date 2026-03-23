@@ -9,32 +9,24 @@ use core::marker::PhantomData;
 use crate::sha256::Midstate;
 use crate::{sha256, HashEngine as _};
 
-/// Hashes some bytes.
+#[deprecated(since = "0.21.0", note = "use `Hash::<T>::hash` instead")]
+#[doc(hidden)]
 pub fn hash<T>(data: &[u8]) -> Hash<T>
 where
     T: Tag,
 {
-    use crate::HashEngine as _;
-
-    let mut engine = HashEngine::default();
-    engine.input(data);
-    engine.finalize()
+    Hash::<T>::hash(data)
 }
 
-/// Hashes all the byte slices retrieved from the iterator together.
+#[deprecated(since = "0.21.0", note = "use `Hash::<T>::hash_byte_chunks` instead")]
+#[doc(hidden)]
 pub fn hash_byte_chunks<B, I, T>(byte_slices: I) -> Hash<T>
 where
     B: AsRef<[u8]>,
     I: IntoIterator<Item = B>,
     T: Tag,
 {
-    use crate::HashEngine as _;
-
-    let mut engine = HashEngine::default();
-    for slice in byte_slices {
-        engine.input(slice.as_ref());
-    }
-    engine.finalize()
+    Hash::<T>::hash_byte_chunks(byte_slices)
 }
 
 /// Trait representing a tag that can be used as a context for `SHA256t` hashes.
@@ -76,7 +68,7 @@ where
     /// Hashes some bytes.
     #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
     pub fn hash(data: &[u8]) -> Self {
-        use crate::HashEngine;
+        use crate::HashEngine as _;
 
         let mut engine = Self::engine();
         engine.input(data);

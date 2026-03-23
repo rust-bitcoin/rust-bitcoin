@@ -2087,7 +2087,7 @@ fn read_bytes_from_finite_reader<D: Read + ?Sized>(
 
 /// Does a double-SHA256 on `data` and returns the first 4 bytes.
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = sha256d::hash(data);
+    let checksum = sha256d::Hash::hash(data);
     let checksum = checksum.to_byte_array();
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
