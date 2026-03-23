@@ -111,10 +111,11 @@ pub trait Decoder: Sized {
 /// parsing the data, including insufficient data. This function
 /// also errors if the provided slice is not completely consumed
 /// during decode.
-pub fn decode_from_slice<T: Decodable>(bytes: &[u8]) -> Result<T, DecodeError<<T::Decoder as Decoder>::Error>> {
+pub fn decode_from_slice<T: Decodable>(
+    bytes: &[u8],
+) -> Result<T, DecodeError<<T::Decoder as Decoder>::Error>> {
     let mut remaining = bytes;
-    let data = decode_from_slice_unbounded::<T>(&mut remaining)
-        .map_err(DecodeError::Parse)?;
+    let data = decode_from_slice_unbounded::<T>(&mut remaining).map_err(DecodeError::Parse)?;
 
     if remaining.is_empty() {
         Ok(data)
@@ -134,7 +135,9 @@ pub fn decode_from_slice<T: Decodable>(bytes: &[u8]) -> Result<T, DecodeError<<T
 ///
 /// Returns an error if the decoder encounters an error while
 /// parsing the data, including insufficient data.
-pub fn decode_from_slice_unbounded<T>(bytes: &mut &[u8]) -> Result<T, <T::Decoder as Decoder>::Error>
+pub fn decode_from_slice_unbounded<T>(
+    bytes: &mut &[u8],
+) -> Result<T, <T::Decoder as Decoder>::Error>
 where
     T: Decodable,
 {
@@ -330,12 +333,12 @@ impl<Err> From<Infallible> for DecodeError<Err> {
 
 impl<Err> fmt::Display for DecodeError<Err>
 where
-    Err: fmt::Display
+    Err: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
-            Self::Unconsumed(ref e) => write_err!(f, "unconsumed"; e)
+            Self::Unconsumed(ref e) => write_err!(f, "unconsumed"; e),
         }
     }
 }
@@ -343,7 +346,7 @@ where
 #[cfg(feature = "std")]
 impl<Err> std::error::Error for DecodeError<Err>
 where
-    Err: std::error::Error + 'static
+    Err: std::error::Error + 'static,
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {

@@ -108,10 +108,8 @@ impl FromStr for Signature {
     type Err = ParseSignatureError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes = hex::decode_to_vec(s)
-            .map_err(ParseSignatureError::Hex)?;
-        Self::from_slice(&bytes)
-            .map_err(ParseSignatureError::Decode)
+        let bytes = hex::decode_to_vec(s).map_err(ParseSignatureError::Hex)?;
+        Self::from_slice(&bytes).map_err(ParseSignatureError::Decode)
     }
 }
 

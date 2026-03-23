@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use alloc::{format, vec};
 use alloc::string::ToString;
+use alloc::{format, vec};
 
 use encoding::{Decodable, Decoder as _};
 use hashes::{hash160, sha256};
@@ -229,8 +229,7 @@ fn script_hash_from_script_unchecked() {
     let script = WitnessScript::from_bytes(&[0x51; 521]);
 
     let got = ScriptHash::from_script_unchecked(script);
-    let want =
-        ScriptHash::from_byte_array(hash160::Hash::hash(script.as_bytes()).to_byte_array());
+    let want = ScriptHash::from_byte_array(hash160::Hash::hash(script.as_bytes()).to_byte_array());
 
     assert_eq!(got, want);
 }
@@ -249,8 +248,7 @@ fn wscript_hash_from_script_unchecked() {
     let script = WitnessScript::from_bytes(&[0x51; 10_001]);
 
     let got = WScriptHash::from_script_unchecked(script);
-    let want =
-        WScriptHash::from_byte_array(sha256::Hash::hash(script.as_bytes()).to_byte_array());
+    let want = WScriptHash::from_byte_array(sha256::Hash::hash(script.as_bytes()).to_byte_array());
 
     assert_eq!(got, want);
 }
@@ -483,7 +481,6 @@ fn script_buf_to_hex() {
     let script = ScriptBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
     let hex = format!("{script:x}");
     assert_eq!(hex, "a1b2c3");
-
 }
 
 #[test]
@@ -503,7 +500,7 @@ fn hex() {
 
     // Sanity check - negative case.
     assert!(ScriptBuf::from_hex_prefixed(raw).is_err()); // Nice API, this misuse fails.
-    // But this just puts the length prefix in the script, ouch.
+                                                         // But this just puts the length prefix in the script, ouch.
     assert!(ScriptBuf::from_hex_no_length_prefix(consensus).is_ok());
 
     let script = ScriptBuf::from_hex_prefixed(consensus).unwrap();

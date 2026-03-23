@@ -157,8 +157,7 @@ mod tests {
     use hex_unstable::DisplayHex;
 
     use super::*;
-    use crate::hex;
-    use crate::sha256;
+    use crate::{hex, sha256};
 
     #[test]
     fn rfc5869_basic() {

@@ -32,7 +32,7 @@ impl Hash {
         let buf_idx = incomplete_block_len(&e);
 
         e.buffer[buf_idx] = 0x80;
-        e.buffer[buf_idx+1..].fill(0);
+        e.buffer[buf_idx + 1..].fill(0);
 
         if buf_idx >= BLOCK_SIZE - 8 {
             HashEngine::process_blocks(&mut e.h, &e.buffer);
@@ -290,4 +290,3 @@ impl fmt::Display for MidstateError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for MidstateError {}
-

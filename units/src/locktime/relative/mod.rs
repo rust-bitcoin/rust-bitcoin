@@ -14,9 +14,9 @@ use core::{convert, fmt};
 use arbitrary::{Arbitrary, Unstructured};
 use internals::const_casts;
 
+use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 #[cfg(doc)]
 use crate::relative;
-use crate::parse_int::{self, PrefixedHexError, UnprefixedHexError};
 use crate::{BlockHeight, BlockMtp, Sequence};
 
 #[rustfmt::skip]                // Keep public re-exports separate.

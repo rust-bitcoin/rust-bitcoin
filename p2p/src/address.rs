@@ -15,7 +15,8 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2, Encoder2,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder2,
+    Encoder2,
 };
 use internals::array::ArrayExt;
 use internals::write_err;
@@ -266,7 +267,7 @@ impl encoding::Encodable for AddrV1Message {
     fn encoder(&self) -> Self::Encoder<'_> {
         AddrV1MessageEncoder::new(Encoder2::new(
             ArrayEncoder::without_length_prefix(self.time.to_le_bytes()),
-            self.address.encoder()
+            self.address.encoder(),
         ))
     }
 }
@@ -302,8 +303,8 @@ impl encoding::Decodable for AddrV1Message {
     fn decoder() -> Self::Decoder {
         AddrV1MessageDecoder(AddrV1MessageInnerDecoder::new(
             ArrayDecoder::new(),
-            Address::decoder())
-        )
+            Address::decoder(),
+        ))
     }
 }
 
@@ -1002,10 +1003,7 @@ impl<'a> Arbitrary<'a> for Address {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for AddrV1Message {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            time: u.arbitrary()?,
-            address: u.arbitrary()?,
-        })
+        Ok(Self { time: u.arbitrary()?, address: u.arbitrary()? })
     }
 }
 
@@ -1179,8 +1177,10 @@ mod test {
         let tor_bytes =
             hex!("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88");
         let ip = AddrV2::TorV3(
-            hex::decode_to_array::<32>("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
-                .unwrap(),
+            hex::decode_to_array::<32>(
+                "53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88",
+            )
+            .unwrap(),
         );
         assert_eq!(serialize(&ip), tor_bytes);
         assert_eq!(encoding::encode_to_vec(&ip), tor_bytes);
@@ -1188,8 +1188,10 @@ mod test {
         let i2p_bytes =
             hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87");
         let ip = AddrV2::I2p(
-            hex::decode_to_array::<32>("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
-                .unwrap(),
+            hex::decode_to_array::<32>(
+                "a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87",
+            )
+            .unwrap(),
         );
         assert_eq!(serialize(&ip), i2p_bytes);
         assert_eq!(encoding::encode_to_vec(&ip).as_slice(), i2p_bytes);

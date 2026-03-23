@@ -13,13 +13,13 @@ mod map;
 pub mod raw;
 pub mod serialize;
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use core::convert::Infallible;
 use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::write_err;
 use secp256k1::Message;
 
@@ -1309,18 +1309,15 @@ mod tests {
 
     use super::*;
     use crate::bip32::{ChildNumber, DerivationPath};
-    use crate::hex;
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
-    use crate::script::{
-        RedeemScriptBuf, ScriptPubKeyBuf, ScriptSigBuf, WitnessScriptBuf,
-    };
     #[cfg(all(feature = "rand", feature = "std"))]
     use crate::script::ScriptBufExt as _;
+    use crate::script::{RedeemScriptBuf, ScriptPubKeyBuf, ScriptSigBuf, WitnessScriptBuf};
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
-    use crate::Sequence;
+    use crate::{hex, Sequence};
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {

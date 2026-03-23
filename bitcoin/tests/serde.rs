@@ -24,15 +24,14 @@ use std::collections::BTreeMap;
 use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
-use bitcoin::hex;
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::{raw, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, NetworkKind, OutPoint, PublicKey, ScriptPubKeyBuf,
-    ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid, Work, WifKey,
+    ecdsa, hex, transaction, Address, Amount, NetworkKind, OutPoint, PublicKey, ScriptPubKeyBuf,
+    ScriptSigBuf, Sequence, TapScriptBuf, Target, Transaction, TxIn, TxOut, Txid, WifKey, Work,
 };
 
 #[test]
@@ -97,8 +96,9 @@ fn serde_regression_out_point() {
 
 #[test]
 fn serde_regression_witness() {
-    let w0 = hex::decode_to_vec("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")
-        .unwrap();
+    let w0 =
+        hex::decode_to_vec("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")
+            .unwrap();
     let w1 = hex::decode_to_vec("000000").unwrap();
     let vec = [w0, w1];
     let witness = Witness::from_slice(&vec);

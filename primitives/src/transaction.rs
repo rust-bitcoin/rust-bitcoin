@@ -422,7 +422,9 @@ impl fmt::Debug for ParseTransactionError {
 
 #[cfg(all(feature = "hex", feature = "alloc"))]
 impl fmt::Display for ParseTransactionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write_err!(f, "parse transaction error"; self.0) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "parse transaction error"; self.0)
+    }
 }
 
 #[cfg(all(feature = "hex", feature = "alloc", feature = "std"))]

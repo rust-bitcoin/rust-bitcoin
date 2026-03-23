@@ -6,13 +6,13 @@
 
 pub mod merkle_branch;
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use core::cmp::{Ordering, Reverse};
 use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
@@ -1684,7 +1684,7 @@ impl<'a> Arbitrary<'a> for LeafVersion {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
             true => Ok(Self::TapScript),
-            false => Ok(Self::Future(u.arbitrary()?))
+            false => Ok(Self::Future(u.arbitrary()?)),
         }
     }
 }
@@ -1692,18 +1692,14 @@ impl<'a> Arbitrary<'a> for LeafVersion {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for LeafNode {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self{ leaf: u.arbitrary()?, merkle_branch: u.arbitrary()? })
+        Ok(Self { leaf: u.arbitrary()?, merkle_branch: u.arbitrary()? })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for NodeInfo {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            hash: u.arbitrary()?,
-            leaves: u.arbitrary()?,
-            has_hidden_nodes: u.arbitrary()?,
-        })
+        Ok(Self { hash: u.arbitrary()?, leaves: u.arbitrary()?, has_hidden_nodes: u.arbitrary()? })
     }
 }
 
@@ -1712,7 +1708,7 @@ impl<'a> Arbitrary<'a> for TapLeaf {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
             true => Ok(Self::Hidden(u.arbitrary()?)),
-            false => Ok(Self::Script(u.arbitrary()?, u.arbitrary()?))
+            false => Ok(Self::Script(u.arbitrary()?, u.arbitrary()?)),
         }
     }
 }

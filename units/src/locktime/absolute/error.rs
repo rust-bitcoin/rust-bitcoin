@@ -173,12 +173,8 @@ impl ParseError {
         use core::num::IntErrorKind;
 
         match self {
-            Self::PrefixedHex(ref err) => {
-                fmt::Display::fmt(err, f)
-            },
-            Self::UnprefixedHex(ref err) => {
-                fmt::Display::fmt(err, f)
-            },
+            Self::PrefixedHex(ref err) => fmt::Display::fmt(err, f),
+            Self::UnprefixedHex(ref err) => fmt::Display::fmt(err, f),
             Self::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
             {
@@ -321,10 +317,9 @@ mod tests {
     use super::LockTimeUnit;
     #[cfg(feature = "alloc")]
     use crate::{
+        locktime::absolute::{Height, LockTime, MedianTimePast},
         BlockHeight,
-        locktime::absolute::{Height, LockTime, MedianTimePast}
     };
-
 
     #[test]
     #[cfg(feature = "alloc")]

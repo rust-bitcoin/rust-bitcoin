@@ -5,13 +5,13 @@
 //! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use core::convert::Infallible;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
 use internals::write_err;
@@ -735,9 +735,7 @@ impl Xpriv {
     pub fn to_priv(self) -> PrivateKey { self.to_private_key() }
 
     /// Constructs a new ECDSA compressed private key matching internal secret key representation.
-    pub fn to_private_key(self) -> PrivateKey {
-        PrivateKey::from_secp(self.private_key)
-    }
+    pub fn to_private_key(self) -> PrivateKey { PrivateKey::from_secp(self.private_key) }
 
     /// Constructs a new extended public key from this extended private key.
     pub fn to_xpub(self) -> Xpub { Xpub::from_xpriv(&self) }
@@ -1136,7 +1134,7 @@ impl<'a> Arbitrary<'a> for ChildNumber {
         let index = u.arbitrary()?;
         match bool::arbitrary(u)? {
             true => Ok(Self::Hardened { index }),
-            false => Ok(Self::Normal { index })
+            false => Ok(Self::Normal { index }),
         }
     }
 }

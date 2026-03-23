@@ -8,11 +8,11 @@ use core::ops::{Deref, DerefMut};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ByteVecDecoder, ByteVecDecoderError, Decodable, Decoder};
-#[cfg(feature = "hex")]
-use crate::hex;
 use internals::write_err;
 
 use super::Script;
+#[cfg(feature = "hex")]
+use crate::hex;
 use crate::prelude::{Box, Vec};
 
 /// An owned, growable script.

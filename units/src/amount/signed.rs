@@ -10,12 +10,12 @@ use core::{default, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use crate::parse_int;
 use super::error::ParseErrorInner;
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
     DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
 };
+use crate::parse_int;
 
 mod encapsulate {
     use super::OutOfRangeError;

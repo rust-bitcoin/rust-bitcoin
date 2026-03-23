@@ -263,5 +263,3 @@ define_encoder_n! {
     (0, A, enc_1), (1, B, enc_2), (2, C, enc_3),
     (3, D, enc_4), (4, E, enc_5), (5, F, enc_6),
 }
-
-

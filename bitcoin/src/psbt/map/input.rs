@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use core::fmt;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::{hash160, ripemd160, sha256, sha256d};
 
 use crate::bip32::KeySource;

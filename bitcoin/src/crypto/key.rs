@@ -5,12 +5,12 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
@@ -294,9 +294,7 @@ impl XOnlyPublicKey {
     ///
     /// The [`PublicKey`] is constructed using the parity in this x-only public key.
     #[inline]
-    pub fn to_public_key(self) -> PublicKey {
-        self.as_inner().public_key(self.parity()).into()
-    }
+    pub fn to_public_key(self) -> PublicKey { self.as_inner().public_key(self.parity()).into() }
 
     /// Verifies that a tweak produced by [`XOnlyPublicKey::add_tweak`] was computed correctly.
     ///
@@ -438,17 +436,23 @@ impl Keypair {
     /// data. Otherwise, this will use no auxiliary data.
     #[inline]
     pub fn raw_bip340_sign(&self, msg: &[u8]) -> secp256k1::schnorr::Signature {
-        #[cfg(not(all(feature = "rand", feature = "std")))] {
+        #[cfg(not(all(feature = "rand", feature = "std")))]
+        {
             secp256k1::schnorr::sign_no_aux_rand(msg, self.as_inner())
         }
-        #[cfg(all(feature = "rand", feature = "std"))] {
+        #[cfg(all(feature = "rand", feature = "std"))]
+        {
             secp256k1::schnorr::sign(msg, self.as_inner())
         }
     }
 
     /// Schnorr sign a message slice with this keypair, using provided auxiliary random data.
     #[inline]
-    pub fn raw_bip340_sign_with_aux_randomness(&self, msg: &[u8], aux_rand: &[u8; 32]) -> secp256k1::schnorr::Signature {
+    pub fn raw_bip340_sign_with_aux_randomness(
+        &self,
+        msg: &[u8],
+        aux_rand: &[u8; 32],
+    ) -> secp256k1::schnorr::Signature {
         secp256k1::schnorr::sign_with_aux_rand(msg, self.as_inner(), aux_rand)
     }
 }
@@ -708,15 +712,19 @@ impl FromStr for PublicKey {
         match s.len() {
             66 => {
                 let bytes = hex::decode_to_array::<33>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
+                    DecodeFixedLengthBytesError::InvalidChar(e) =>
+                        ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) =>
+                        unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
             130 => {
                 let bytes = hex::decode_to_array::<65>(s).map_err(|e| match e {
-                    DecodeFixedLengthBytesError::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    DecodeFixedLengthBytesError::InvalidLength(_) => unreachable!("length checked already"),
+                    DecodeFixedLengthBytesError::InvalidChar(e) =>
+                        ParsePublicKeyError::InvalidChar(e),
+                    DecodeFixedLengthBytesError::InvalidLength(_) =>
+                        unreachable!("length checked already"),
                 })?;
                 Ok(Self::from_slice(&bytes)?)
             }
@@ -1767,8 +1775,7 @@ mod tests {
         ));
 
         // testnet compressed
-        let sk =
-            WifKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        let sk = WifKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         assert_eq!(sk.network_kind, NetworkKind::Test);
         assert!(sk.private_key.compressed());
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
@@ -1783,8 +1790,7 @@ mod tests {
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
 
         // mainnet uncompressed
-        let sk =
-            WifKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+        let sk = WifKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
         assert_eq!(sk.network_kind, NetworkKind::Main);
         assert!(!sk.private_key.compressed());
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");

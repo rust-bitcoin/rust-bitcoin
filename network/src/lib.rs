@@ -18,11 +18,11 @@ extern crate std;
 #[cfg(feature = "serde")]
 pub extern crate serde;
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use core::fmt;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::error::InputString;
 #[cfg(feature = "serde")]
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
@@ -281,7 +281,7 @@ impl<'a> Arbitrary<'a> for NetworkKind {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match bool::arbitrary(u)? {
             true => Ok(Self::Main),
-            false => Ok(Self::Test)
+            false => Ok(Self::Test),
         }
     }
 }

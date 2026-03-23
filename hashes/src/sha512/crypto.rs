@@ -22,7 +22,7 @@ fn sigma1(x: u64) -> u64 { x.rotate_left(45) ^ x.rotate_left(3) ^ (x >> 6) }
 #[cfg(feature = "small-hash")]
 #[macro_use]
 mod small_hash {
-    use super::{Sigma1, Ch, Sigma0, Maj, sigma1, sigma0};
+    use super::{sigma0, sigma1, Ch, Maj, Sigma0, Sigma1};
 
     #[rustfmt::skip]
     #[allow(clippy::too_many_arguments)]
@@ -79,7 +79,7 @@ mod fast_hash {
 
 impl HashEngine {
     // Algorithm copied from libsecp256k1
-    pub(crate) fn process_blocks(state: &mut[u64; 8], blocks: &[u8]) {
+    pub(crate) fn process_blocks(state: &mut [u64; 8], blocks: &[u8]) {
         debug_assert!(!blocks.is_empty() && blocks.len() % BLOCK_SIZE == 0);
 
         for block in blocks.chunks_exact(BLOCK_SIZE) {

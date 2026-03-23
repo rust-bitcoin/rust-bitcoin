@@ -149,18 +149,14 @@ impl CompactSizeDecoder {
     /// otherwise [`end`](Self::end) will return an error. This default limit
     /// reflects the maximum sensible vector length under the 4 MB block weight
     /// limit.
-    pub const fn new() -> Self {
-        Self { buf: ArrayVec::new(), limit: MAX_VEC_SIZE }
-    }
+    pub const fn new() -> Self { Self { buf: ArrayVec::new(), limit: MAX_VEC_SIZE } }
 
     /// Constructs a new compact size decoder with a custom length limit.
     ///
     /// The decoded value must not exceed `limit`, otherwise [`end`](Self::end)
     /// will return an error. Use this when you know the field you are decoding
     /// has a tighter bound than the default limit of 4,000,000.
-    pub const fn new_with_limit(limit: usize) -> Self {
-        Self { buf: ArrayVec::new(), limit }
-    }
+    pub const fn new_with_limit(limit: usize) -> Self { Self { buf: ArrayVec::new(), limit } }
 }
 
 impl Default for CompactSizeDecoder {
@@ -353,8 +349,8 @@ enum CompactSizeDecoderErrorInner {
 
 impl core::fmt::Display for CompactSizeDecoderError {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        use CompactSizeDecoderErrorInner as E;
         use internals::write_err;
+        use CompactSizeDecoderErrorInner as E;
 
         match self.0 {
             E::UnexpectedEof { required: 1, received: 0 } => {
@@ -473,12 +469,10 @@ mod tests {
         let got = decoder.end().unwrap_err();
         assert!(matches!(
             got,
-            CompactSizeDecoderError(E::ValueExceedsLimit(
-                LengthPrefixExceedsMaxError {
-                    limit: MAX_VEC_SIZE,
-                    value: EXCESS_VEC_SIZE,
-                }
-            )),
+            CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
+                limit: MAX_VEC_SIZE,
+                value: EXCESS_VEC_SIZE,
+            })),
         ));
     }
 
@@ -498,12 +492,10 @@ mod tests {
         let got = decoder.end().unwrap_err();
         assert!(matches!(
             got,
-            CompactSizeDecoderError(E::ValueExceedsLimit(
-                LengthPrefixExceedsMaxError {
-                    limit: 240,
-                    value: 241,
-                }
-            )),
+            CompactSizeDecoderError(E::ValueExceedsLimit(LengthPrefixExceedsMaxError {
+                limit: 240,
+                value: 241,
+            })),
         ));
     }
 }

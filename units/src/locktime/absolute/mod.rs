@@ -532,10 +532,8 @@ impl Height {
     /// include the `0x` prefix.
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> {
-        let height = parse_int::hex_u32_prefixed(s)
-            .map_err(ParseError::PrefixedHex)?;
-        Ok(Self::from_u32(height)
-            .map_err(|_| ParseError::Conversion(height.into()))?)
+        let height = parse_int::hex_u32_prefixed(s).map_err(ParseError::PrefixedHex)?;
+        Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
 
     /// Constructs a new [`Height`] from an unprefixed hex string.
@@ -546,10 +544,8 @@ impl Height {
     /// includes the `0x` prefix.
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, ParseHeightError> {
-        let height = parse_int::hex_u32_unprefixed(s)
-            .map_err(ParseError::UnprefixedHex)?;
-        Ok(Self::from_u32(height)
-            .map_err(|_| ParseError::Conversion(height.into()))?)
+        let height = parse_int::hex_u32_unprefixed(s).map_err(ParseError::UnprefixedHex)?;
+        Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
 
     #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
@@ -665,10 +661,8 @@ impl MedianTimePast {
     /// include the `0x` prefix.
     #[inline]
     pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> {
-        let height = parse_int::hex_u32_prefixed(s)
-            .map_err(ParseError::PrefixedHex)?;
-        Ok(Self::from_u32(height)
-            .map_err(|_| ParseError::Conversion(height.into()))?)
+        let height = parse_int::hex_u32_prefixed(s).map_err(ParseError::PrefixedHex)?;
+        Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
 
     /// Constructs a new [`MedianTimePast`] from an unprefixed hex string.
@@ -679,10 +673,8 @@ impl MedianTimePast {
     /// includes the `0x` prefix.
     #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, ParseTimeError> {
-        let height = parse_int::hex_u32_unprefixed(s)
-            .map_err(ParseError::UnprefixedHex)?;
-        Ok(Self::from_u32(height)
-            .map_err(|_| ParseError::Conversion(height.into()))?)
+        let height = parse_int::hex_u32_unprefixed(s).map_err(ParseError::UnprefixedHex)?;
+        Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
 
     #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]

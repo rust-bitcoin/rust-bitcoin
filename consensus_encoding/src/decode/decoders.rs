@@ -13,7 +13,6 @@ use internals::write_err;
 #[cfg(feature = "alloc")]
 use super::Decodable;
 use super::Decoder;
-
 #[cfg(feature = "alloc")]
 use crate::compact_size::{CompactSizeDecoder, CompactSizeDecoderError};
 
@@ -379,10 +378,8 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.state {
-            Decoder2State::First(a, b) =>
-                f.debug_tuple("First").field(a).field(b).finish(),
-            Decoder2State::Second(out, b) =>
-                f.debug_tuple("Second").field(out).field(b).finish(),
+            Decoder2State::First(a, b) => f.debug_tuple("First").field(a).field(b).finish(),
+            Decoder2State::Second(out, b) => f.debug_tuple("Second").field(out).field(b).finish(),
             Decoder2State::Errored => write!(f, "Errored"),
         }
     }
@@ -1068,51 +1065,51 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn vec_decoder_empty() {
-         // Empty with a couple of arbitrary extra bytes.
-         let encoded = vec![0x00, 0xFF, 0xFF];
- 
-         let mut slice = encoded.as_slice();
-         let mut decoder = Test::decoder();
-         assert!(!decoder.push_bytes(&mut slice).unwrap());
- 
-         let got = decoder.end().unwrap();
-         let want = Test(vec![]);
- 
-         assert_eq!(got, want);
-     }
- 
-     #[test]
-     #[cfg(feature = "alloc")]
-     fn vec_decoder_one_item() {
-         let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE];
- 
-         let mut slice = encoded.as_slice();
-         let mut decoder = Test::decoder();
-         decoder.push_bytes(&mut slice).unwrap();
- 
-         let got = decoder.end().unwrap();
-         let want = Test(vec![Inner(0xDEAD_BEEF)]);
- 
-         assert_eq!(got, want);
-     }
- 
-     #[test]
-     #[cfg(feature = "alloc")]
-     fn vec_decoder_two_items() {
-         let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
- 
-         let mut slice = encoded.as_slice();
-         let mut decoder = Test::decoder();
-         decoder.push_bytes(&mut slice).unwrap();
- 
-         let got = decoder.end().unwrap();
-         let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
- 
-         assert_eq!(got, want);
-     }
- 
-     #[test]
-     #[cfg(feature = "alloc")]
+        // Empty with a couple of arbitrary extra bytes.
+        let encoded = vec![0x00, 0xFF, 0xFF];
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = Test::decoder();
+        assert!(!decoder.push_bytes(&mut slice).unwrap());
+
+        let got = decoder.end().unwrap();
+        let want = Test(vec![]);
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_one_item() {
+        let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE];
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = Test::decoder();
+        decoder.push_bytes(&mut slice).unwrap();
+
+        let got = decoder.end().unwrap();
+        let want = Test(vec![Inner(0xDEAD_BEEF)]);
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn vec_decoder_two_items() {
+        let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
+
+        let mut slice = encoded.as_slice();
+        let mut decoder = Test::decoder();
+        decoder.push_bytes(&mut slice).unwrap();
+
+        let got = decoder.end().unwrap();
+        let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
+
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn vec_decoder_reserves_in_batches() {
         // A small number of extra elements so we extend exactly by the remainder
         // instead of another full batch.

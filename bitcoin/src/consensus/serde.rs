@@ -136,15 +136,11 @@ pub mod hex {
     }
 
     impl super::IntoDeError for DecodeInitError {
-        fn into_de_error<E: serde::de::Error>(self) -> E {
-            serde::de::Error::custom(self.0)
-        }
+        fn into_de_error<E: serde::de::Error>(self) -> E { serde::de::Error::custom(self.0) }
     }
 
     impl super::IntoDeError for DecodeError {
-        fn into_de_error<E: serde::de::Error>(self) -> E {
-            serde::de::Error::custom(self.0)
-        }
+        fn into_de_error<E: serde::de::Error>(self) -> E { serde::de::Error::custom(self.0) }
     }
 }
 

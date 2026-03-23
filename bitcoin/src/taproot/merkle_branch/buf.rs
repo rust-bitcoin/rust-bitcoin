@@ -4,7 +4,6 @@
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-
 use hashes::Hash;
 
 use super::{

@@ -1,10 +1,9 @@
 #![cfg_attr(fuzzing, no_main)]
 #![cfg_attr(not(fuzzing), allow(unused))]
 
+use bitcoin::hashes::{ripemd160, sha1, sha256d, sha512, Hmac};
 use libfuzzer_sys::fuzz_target;
 use serde::{Deserialize, Serialize};
-
-use bitcoin::hashes::{ripemd160, sha1, sha256d, sha512, Hmac};
 
 #[derive(Deserialize, Serialize)]
 struct Hmacs {
@@ -29,6 +28,4 @@ fn do_test(data: &[u8]) {
     }
 }
 
-fuzz_target!(|data| {
-    do_test(data)
-});
+fuzz_target!(|data| { do_test(data) });

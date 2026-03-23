@@ -88,7 +88,6 @@ pub extern crate hex_stable as hex;
 #[cfg(feature = "hex")]
 pub extern crate hex_unstable;
 
-
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of `core::*`
