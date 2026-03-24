@@ -41,9 +41,9 @@ impl Enums {
     }
 }
 
-/// A struct that includes all public non-error structs.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
-                 // Does not include encoders and decoders.
+/// A struct that includes all public non-error, non-encoder/decoder structs.
+// All public types implement Debug (C-DEBUG).
+#[derive(Debug)]
 struct Structs {
     // Full path to show alphabetic sort order.
     a: amount::Amount,
@@ -95,7 +95,9 @@ struct Types {
 }
 
 impl Types {
-    fn new() -> Self { Self { a: Enums::new(), b: Structs::max() } }
+    fn new() -> Self {
+        Self { a: Enums::new(), b: Structs::max() }
+    }
 }
 
 /// A struct that includes all public non-error non-helper structs.
