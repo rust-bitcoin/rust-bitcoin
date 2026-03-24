@@ -87,19 +87,6 @@ impl Structs {
     }
 }
 
-/// A struct that includes all public non-error types.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
-struct Types {
-    a: Enums,
-    b: Structs,
-}
-
-impl Types {
-    fn new() -> Self {
-        Self { a: Enums::new(), b: Structs::max() }
-    }
-}
-
 /// A struct that includes all public non-error non-helper structs.
 // C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -311,50 +298,52 @@ fn api_can_use_all_types_from_module_weight() {
 // `Debug` representation is never empty (C-DEBUG-NONEMPTY).
 #[test]
 fn api_all_non_error_types_have_non_empty_debug() {
-    let t = Types::new();
+    let t = Enums::new();
 
-    let debug = format!("{:?}", t.a.a);
+    let debug = format!("{:?}", t.a);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.b);
+    let debug = format!("{:?}", t.b);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.c);
+    let debug = format!("{:?}", t.c);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.d);
+    let debug = format!("{:?}", t.d);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.a.e);
+    let debug = format!("{:?}", t.e);
     assert!(!debug.is_empty());
 
-    let debug = format!("{:?}", t.b.a);
+    let t = Structs::max();
+
+    let debug = format!("{:?}", t.a);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.b);
+    let debug = format!("{:?}", t.b);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.c);
+    let debug = format!("{:?}", t.c);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.d);
+    let debug = format!("{:?}", t.d);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.e);
+    let debug = format!("{:?}", t.e);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.f);
+    let debug = format!("{:?}", t.f);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.g);
+    let debug = format!("{:?}", t.g);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.h);
+    let debug = format!("{:?}", t.h);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.i);
+    let debug = format!("{:?}", t.i);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.j);
+    let debug = format!("{:?}", t.j);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.k);
+    let debug = format!("{:?}", t.k);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.l);
+    let debug = format!("{:?}", t.l);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.m);
+    let debug = format!("{:?}", t.m);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.n);
+    let debug = format!("{:?}", t.n);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.o);
+    let debug = format!("{:?}", t.o);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.p);
+    let debug = format!("{:?}", t.p);
     assert!(!debug.is_empty());
 }
 
@@ -420,8 +409,10 @@ fn all_types_implement_send_sync() {
     fn assert_sync<T: Sync>() {}
 
     //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
-    assert_send::<Types>();
-    assert_sync::<Types>();
+    assert_send::<Structs>();
+    assert_sync::<Structs>();
+    assert_send::<Enums>();
+    assert_sync::<Enums>();
 
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
@@ -467,14 +458,6 @@ fn decoders_implement_new() {
     let _ = pow::CompactTargetDecoder::new();
     let _ = sequence::SequenceDecoder::new();
     let _ = time::BlockTimeDecoder::new();
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Types {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Self { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
-        Ok(a)
-    }
 }
 
 #[cfg(feature = "arbitrary")]
