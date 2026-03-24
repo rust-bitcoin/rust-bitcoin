@@ -13,6 +13,8 @@
 use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
+#[cfg(feature = "encoding")]
+use bitcoin_units::encoding::Encodable as _;
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse_int, pow, result, sequence, time, weight, Amount,
     BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate, NumOpResult,
@@ -85,6 +87,71 @@ impl Structs {
             p: Weight::MAX,
         }
     }
+}
+
+/// A struct that includes all public non-error, encoder/decoder structs.
+#[derive(Debug)] // All public types implement Debug (C-DEBUG).
+#[cfg(feature = "encoding")]
+struct Consensus<'e> {
+    a: amount::AmountDecoder,
+    b: amount::AmountEncoder<'e>,
+    c: block::BlockHeightDecoder,
+    d: block::BlockHeightEncoder<'e>,
+    e: locktime::absolute::LockTimeDecoder,
+    f: locktime::absolute::LockTimeEncoder<'e>,
+    g: pow::CompactTargetDecoder,
+    h: pow::CompactTargetEncoder<'e>,
+    i: sequence::SequenceDecoder,
+    j: sequence::SequenceEncoder<'e>,
+    k: time::BlockTimeDecoder,
+    l: time::BlockTimeEncoder<'e>,
+}
+
+// This is never called, it just verifies all the constructors.
+#[cfg(feature = "encoding")]
+fn consensus_constructors() {
+    use encoding::Encodable as _;
+
+    let absolute = absolute::LockTime::Blocks(absolute::Height::MAX);
+    let target = pow::CompactTarget::from_consensus(u32::MAX);
+    let block_time = BlockTime::from_u32(u32::MAX);
+
+    // Same order as `Consensus` struct - note encoders do not have a
+    // public `new` function. This is by design.
+    let _ = amount::AmountDecoder::new();
+    let _ = amount::Amount::encoder(&Amount::MAX);
+    let _ = block::BlockHeightDecoder::new();
+    let _ = block::BlockHeight::encoder(&BlockHeight::MAX);
+    let _ = locktime::absolute::LockTimeDecoder::new();
+    let _ = locktime::absolute::LockTime::encoder(&absolute);
+    let _ = pow::CompactTargetDecoder::new();
+    let _ = pow::CompactTarget::encoder(&target);
+    let _ = sequence::SequenceDecoder::new();
+    let _ = sequence::Sequence::encoder(&Sequence::MAX);
+    let _ = time::BlockTimeDecoder::new();
+    let _ = time::BlockTime::encoder(&block_time);
+}
+
+/// A struct that includes all public non-error non-helper structs.
+// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct CommonTraits {
+    // Full path to show alphabetic sort order.
+    a: amount::Amount,
+    // b: amount::Display,
+    c: amount::SignedAmount,
+    d: block::BlockHeight,
+    e: block::BlockHeightInterval,
+    f: block::BlockMtp,
+    g: block::BlockMtpInterval,
+    h: fee_rate::FeeRate,
+    i: locktime::absolute::Height,
+    j: locktime::absolute::MedianTimePast,
+    k: locktime::relative::NumberOf512Seconds,
+    l: locktime::relative::NumberOfBlocks,
+    m: pow::CompactTarget,
+    n: time::BlockTime,
+    o: weight::Weight,
 }
 
 /// A struct that includes all types that implement `Default`.
