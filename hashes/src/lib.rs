@@ -117,7 +117,7 @@ pub mod sha512_256;
 pub mod siphash24;
 
 use core::fmt::{self, Write as _};
-use core::{convert, hash};
+use core::{convert};
 
 use encoding::Encoder;
 
@@ -177,7 +177,7 @@ pub type HkdfSha256 = Hkdf<sha256::Hash>;
 pub type HkdfSha512 = Hkdf<sha512::Hash>;
 
 /// A hashing engine which bytes can be serialized into.
-pub trait HashEngine: Clone {
+pub trait HashEngine {
     /// The `Hash` type returned when finalizing this engine.
     type Hash: Hash;
 
@@ -197,7 +197,11 @@ pub trait HashEngine: Clone {
     fn n_bytes_hashed(&self) -> u64;
 
     /// Finalizes this engine.
-    fn finalize(self) -> Self::Hash;
+    ///
+    /// Gated on `Sized` because consuming `self` by value is not object-safe.
+    fn finalize(self) -> Self::Hash
+    where
+        Self: Sized;
 }
 
 /// Encodes an object into a hash engine.
@@ -220,9 +224,7 @@ where
 }
 
 /// Trait which applies to hashes of all types.
-pub trait Hash:
-    Copy + Clone + PartialEq + Eq + PartialOrd + Ord + hash::Hash + convert::AsRef<[u8]>
-{
+pub trait Hash: convert::AsRef<[u8]> {
     /// The byte array that represents the hash internally.
     type Bytes: Copy + IsByteArray;
 
@@ -235,10 +237,18 @@ pub trait Hash:
     const DISPLAY_BACKWARD: bool = false;
 
     /// Constructs a new hash from the underlying byte array.
-    fn from_byte_array(bytes: Self::Bytes) -> Self;
+    ///
+    /// Gated on `Sized` because it returns `Self` by value, which is not object-safe.
+    fn from_byte_array(bytes: Self::Bytes) -> Self
+    where
+        Self: Sized;
 
     /// Returns the underlying byte array.
-    fn to_byte_array(self) -> Self::Bytes;
+    ///
+    /// Gated on `Sized` because consuming `self` by value is not object-safe.
+    fn to_byte_array(self) -> Self::Bytes
+    where
+        Self: Sized;
 
     /// Returns a reference to the underlying byte array.
     fn as_byte_array(&self) -> &Self::Bytes;
