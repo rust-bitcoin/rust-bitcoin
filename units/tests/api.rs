@@ -270,7 +270,7 @@ fn api_can_use_all_types_from_module_time() {
 
 #[test]
 fn api_can_use_all_types_from_module_weight() {
-    use bitcoin_units::weight::Weight;
+    use bitcoin_units::weight::{Weight, WITNESS_SCALE_FACTOR};
 }
 
 // `Debug` representation is never empty (C-DEBUG-NONEMPTY).
