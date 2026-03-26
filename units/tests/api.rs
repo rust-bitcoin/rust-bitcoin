@@ -148,11 +148,12 @@ struct Decoders {
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
 #[cfg(feature = "encoding")]
 struct DecoderErrors {
-    a: amount::error::AmountDecoderError,
+    a: amount::AmountDecoderError,
     b: block::BlockHeightDecoderError,
     c: locktime::absolute::LockTimeDecoderError,
-    d: sequence::SequenceDecoderError,
-    e: time::BlockTimeDecoderError,
+    d: pow::CompactTargetDecoderError,
+    e: sequence::SequenceDecoderError,
+    f: time::BlockTimeDecoderError,
 }
 
 #[test]
