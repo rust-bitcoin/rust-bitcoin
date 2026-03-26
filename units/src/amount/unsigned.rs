@@ -589,13 +589,6 @@ impl TryFrom<SignedAmount> for Amount {
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Amount`] type.
-    #[derive(Debug, Clone)]
-    pub struct AmountEncoder<'e>(encoding::ArrayEncoder<8>);
-}
-
-#[cfg(feature = "encoding")]
 impl encoding::Encodable for Amount {
     type Encoder<'e> = AmountEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -603,6 +596,19 @@ impl encoding::Encodable for Amount {
             self.to_sat().to_le_bytes(),
         ))
     }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for Amount {
+    type Decoder = AmountDecoder;
+    fn decoder() -> Self::Decoder { AmountDecoder(encoding::ArrayDecoder::<8>::new()) }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Amount`] type.
+    #[derive(Debug, Clone)]
+    pub struct AmountEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
 /// The decoder for the [`Amount`] type.
@@ -639,12 +645,6 @@ impl encoding::Decoder for AmountDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decodable for Amount {
-    type Decoder = AmountDecoder;
-    fn decoder() -> Self::Decoder { AmountDecoder(encoding::ArrayDecoder::<8>::new()) }
 }
 
 #[cfg(feature = "arbitrary")]

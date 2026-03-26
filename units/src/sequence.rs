@@ -258,13 +258,6 @@ impl fmt::Debug for Sequence {
 parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Sequence`] type.
-    #[derive(Debug, Clone)]
-    pub struct SequenceEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
 impl encoding::Encodable for Sequence {
     type Encoder<'e> = SequenceEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -272,6 +265,19 @@ impl encoding::Encodable for Sequence {
             self.to_consensus_u32().to_le_bytes(),
         ))
     }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for Sequence {
+    type Decoder = SequenceDecoder;
+    fn decoder() -> Self::Decoder { SequenceDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Sequence`] type.
+    #[derive(Debug, Clone)]
+    pub struct SequenceEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 /// The decoder for the [`Sequence`] type.
@@ -308,12 +314,6 @@ impl encoding::Decoder for SequenceDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decodable for Sequence {
-    type Decoder = SequenceDecoder;
-    fn decoder() -> Self::Decoder { SequenceDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 /// An error consensus decoding an `Sequence`.

@@ -116,13 +116,6 @@ impl<'de> Deserialize<'de> for BlockTime {
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`BlockTime`] type.
-    #[derive(Debug, Clone)]
-    pub struct BlockTimeEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
 impl encoding::Encodable for BlockTime {
     type Encoder<'e> = BlockTimeEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -130,6 +123,19 @@ impl encoding::Encodable for BlockTime {
             self.to_u32().to_le_bytes(),
         ))
     }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for BlockTime {
+    type Decoder = BlockTimeDecoder;
+    fn decoder() -> Self::Decoder { BlockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`BlockTime`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockTimeEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 /// The decoder for the [`BlockTime`] type.
@@ -166,12 +172,6 @@ impl encoding::Decoder for BlockTimeDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decodable for BlockTime {
-    type Decoder = BlockTimeDecoder;
-    fn decoder() -> Self::Decoder { BlockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 /// An error consensus decoding an `BlockTime`.

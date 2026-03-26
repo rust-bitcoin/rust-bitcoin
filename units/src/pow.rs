@@ -87,13 +87,6 @@ impl fmt::Display for CompactTarget {
 parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensus);
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`CompactTarget`] type.
-    #[derive(Debug, Clone)]
-    pub struct CompactTargetEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
 impl encoding::Encodable for CompactTarget {
     type Encoder<'e> = CompactTargetEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -101,6 +94,19 @@ impl encoding::Encodable for CompactTarget {
             self.to_consensus().to_le_bytes(),
         ))
     }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for CompactTarget {
+    type Decoder = CompactTargetDecoder;
+    fn decoder() -> Self::Decoder { CompactTargetDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`CompactTarget`] type.
+    #[derive(Debug, Clone)]
+    pub struct CompactTargetEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 /// The decoder for the [`CompactTarget`] type.
@@ -137,12 +143,6 @@ impl encoding::Decoder for CompactTargetDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decodable for CompactTarget {
-    type Decoder = CompactTargetDecoder;
-    fn decoder() -> Self::Decoder { CompactTargetDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 /// An error consensus decoding an `CompactTarget`.

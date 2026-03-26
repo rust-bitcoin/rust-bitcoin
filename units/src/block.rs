@@ -192,13 +192,6 @@ impl TryFrom<BlockHeight> for absolute::Height {
 }
 
 #[cfg(feature = "encoding")]
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`BlockHeight`] type.
-    #[derive(Debug, Clone)]
-    pub struct BlockHeightEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
-#[cfg(feature = "encoding")]
 impl encoding::Encodable for BlockHeight {
     type Encoder<'e> = BlockHeightEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -206,6 +199,19 @@ impl encoding::Encodable for BlockHeight {
             self.to_u32().to_le_bytes(),
         ))
     }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for BlockHeight {
+    type Decoder = BlockHeightDecoder;
+    fn decoder() -> Self::Decoder { BlockHeightDecoder(encoding::ArrayDecoder::<4>::new()) }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`BlockHeight`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockHeightEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 /// The decoder for the [`BlockHeight`] type.
@@ -242,12 +248,6 @@ impl encoding::Decoder for BlockHeightDecoder {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-#[cfg(feature = "encoding")]
-impl encoding::Decodable for BlockHeight {
-    type Decoder = BlockHeightDecoder;
-    fn decoder() -> Self::Decoder { BlockHeightDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 /// An error consensus decoding an `BlockHeight`.
