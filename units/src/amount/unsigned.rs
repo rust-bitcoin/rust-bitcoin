@@ -591,6 +591,8 @@ impl TryFrom<SignedAmount> for Amount {
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for Amount {
     type Encoder<'e> = AmountEncoder<'e>;
+
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         AmountEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_sat().to_le_bytes(),
@@ -601,6 +603,8 @@ impl encoding::Encodable for Amount {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for Amount {
     type Decoder = AmountDecoder;
+
+    #[inline]
     fn decoder() -> Self::Decoder { AmountDecoder(encoding::ArrayDecoder::<8>::new()) }
 }
 
@@ -619,11 +623,13 @@ pub struct AmountDecoder(encoding::ArrayDecoder<8>);
 #[cfg(feature = "encoding")]
 impl AmountDecoder {
     /// Constructs a new [`Amount`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]
 impl Default for AmountDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 

@@ -89,6 +89,8 @@ parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensu
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for CompactTarget {
     type Encoder<'e> = CompactTargetEncoder<'e>;
+
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         CompactTargetEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus().to_le_bytes(),
@@ -99,6 +101,8 @@ impl encoding::Encodable for CompactTarget {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for CompactTarget {
     type Decoder = CompactTargetDecoder;
+
+    #[inline]
     fn decoder() -> Self::Decoder { CompactTargetDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
@@ -117,11 +121,13 @@ pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
 #[cfg(feature = "encoding")]
 impl CompactTargetDecoder {
     /// Constructs a new [`CompactTarget`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]
 impl Default for CompactTargetDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 

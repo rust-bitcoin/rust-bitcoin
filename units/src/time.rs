@@ -118,6 +118,8 @@ impl<'de> Deserialize<'de> for BlockTime {
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for BlockTime {
     type Encoder<'e> = BlockTimeEncoder<'e>;
+
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_u32().to_le_bytes(),
@@ -128,6 +130,8 @@ impl encoding::Encodable for BlockTime {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for BlockTime {
     type Decoder = BlockTimeDecoder;
+
+    #[inline]
     fn decoder() -> Self::Decoder { BlockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
@@ -145,12 +149,14 @@ pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
 impl Default for BlockTimeDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
 #[cfg(feature = "encoding")]
 impl BlockTimeDecoder {
     /// Constructs a new [`BlockTime`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 

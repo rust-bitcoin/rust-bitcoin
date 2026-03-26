@@ -260,6 +260,8 @@ parse_int::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for Sequence {
     type Encoder<'e> = SequenceEncoder<'e>;
+
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         SequenceEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus_u32().to_le_bytes(),
@@ -270,6 +272,8 @@ impl encoding::Encodable for Sequence {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for Sequence {
     type Decoder = SequenceDecoder;
+
+    #[inline]
     fn decoder() -> Self::Decoder { SequenceDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
@@ -287,12 +291,14 @@ pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
 impl Default for SequenceDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
 #[cfg(feature = "encoding")]
 impl SequenceDecoder {
     /// Constructs a new [`Sequence`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 

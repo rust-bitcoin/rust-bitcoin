@@ -400,6 +400,8 @@ parse_int::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for LockTime {
     type Encoder<'e> = LockTimeEncoder<'e>;
+
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         LockTimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_consensus_u32().to_le_bytes(),
@@ -410,6 +412,8 @@ impl encoding::Encodable for LockTime {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for LockTime {
     type Decoder = LockTimeDecoder;
+
+    #[inline]
     fn decoder() -> Self::Decoder { LockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
@@ -428,11 +432,13 @@ pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
 #[cfg(feature = "encoding")]
 impl LockTimeDecoder {
     /// Constructs a new [`LockTime`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "encoding")]
 impl Default for LockTimeDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 

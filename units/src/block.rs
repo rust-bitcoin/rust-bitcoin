@@ -194,6 +194,8 @@ impl TryFrom<BlockHeight> for absolute::Height {
 #[cfg(feature = "encoding")]
 impl encoding::Encodable for BlockHeight {
     type Encoder<'e> = BlockHeightEncoder<'e>;
+
+    #[inline]
     fn encoder(&self) -> Self::Encoder<'_> {
         BlockHeightEncoder::new(encoding::ArrayEncoder::without_length_prefix(
             self.to_u32().to_le_bytes(),
@@ -204,6 +206,8 @@ impl encoding::Encodable for BlockHeight {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for BlockHeight {
     type Decoder = BlockHeightDecoder;
+
+    #[inline]
     fn decoder() -> Self::Decoder { BlockHeightDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
@@ -221,12 +225,14 @@ pub struct BlockHeightDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
 impl Default for BlockHeightDecoder {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 
 #[cfg(feature = "encoding")]
 impl BlockHeightDecoder {
     /// Constructs a new [`BlockHeight`] decoder.
+    #[inline]
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
