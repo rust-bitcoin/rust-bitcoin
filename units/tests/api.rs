@@ -421,9 +421,7 @@ fn dyn_compatible() {
     // If this builds then traits are dyn compatible.
     struct Traits {
         // These traits are explicitly not dyn compatible.
-        // b: Box<dyn amount::serde::SerdeAmount>,
-        // c: Box<dyn amount::serde::SerdeAmountForOpt>,
-        // d: Box<dyn parse::Integer>, // Because of core::num::ParseIntError
+        // _: Box<dyn parse::Integer>, // Because of core::num::ParseIntError
     }
 }
 
