@@ -42,12 +42,12 @@ impl Enums {
 }
 
 /// A struct that includes all public non-error, non-encoder/decoder structs.
-// All public types implement Debug (C-DEBUG).
-#[derive(Debug)]
+// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Structs {
     // Full path to show alphabetic sort order.
     a: amount::Amount,
-    b: amount::Display,
+    // b: amount::Display,
     c: amount::SignedAmount,
     d: block::BlockHeight,
     e: block::BlockHeightInterval,
@@ -68,7 +68,7 @@ impl Structs {
     fn max() -> Self {
         Self {
             a: Amount::MAX,
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
+            // b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::MAX,
             d: BlockHeight::MAX,
             e: BlockHeightInterval::MAX,
@@ -85,28 +85,6 @@ impl Structs {
             p: Weight::MAX,
         }
     }
-}
-
-/// A struct that includes all public non-error non-helper structs.
-// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct CommonTraits {
-    // Full path to show alphabetic sort order.
-    a: amount::Amount,
-    // b: amount::Display,
-    c: amount::SignedAmount,
-    d: block::BlockHeight,
-    e: block::BlockHeightInterval,
-    f: block::BlockMtp,
-    g: block::BlockMtpInterval,
-    h: fee_rate::FeeRate,
-    i: locktime::absolute::Height,
-    j: locktime::absolute::MedianTimePast,
-    k: locktime::relative::NumberOf512Seconds,
-    l: locktime::relative::NumberOfBlocks,
-    m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -315,8 +293,8 @@ fn api_all_non_error_types_have_non_empty_debug() {
 
     let debug = format!("{:?}", t.a);
     assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b);
-    assert!(!debug.is_empty());
+    // let debug = format!("{:?}", t.b);
+    // assert!(!debug.is_empty());
     let debug = format!("{:?}", t.c);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.d);
@@ -344,6 +322,10 @@ fn api_all_non_error_types_have_non_empty_debug() {
     let debug = format!("{:?}", t.o);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.p);
+    assert!(!debug.is_empty());
+
+    let display = Amount::MAX.display_in(amount::Denomination::Bitcoin);
+    let debug = format!("{:?}", display);
     assert!(!debug.is_empty());
 }
 
@@ -465,8 +447,7 @@ impl<'a> Arbitrary<'a> for Structs {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = Self {
             a: Amount::arbitrary(u)?,
-            // Skip the `Display` type.
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
+            // b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::arbitrary(u)?,
             d: BlockHeight::arbitrary(u)?,
             e: BlockHeightInterval::arbitrary(u)?,
