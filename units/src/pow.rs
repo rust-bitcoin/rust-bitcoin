@@ -90,6 +90,7 @@ parse_int::impl_parse_str_from_int_infallible!(CompactTarget, u32, from_consensu
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`CompactTarget`] type.
+    #[derive(Debug, Clone)]
     pub struct CompactTargetEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
@@ -105,6 +106,7 @@ impl encoding::Encodable for CompactTarget {
 
 /// The decoder for the [`CompactTarget`] type.
 #[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
 pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
