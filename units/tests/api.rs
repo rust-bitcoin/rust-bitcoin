@@ -96,7 +96,7 @@ struct Default {
     d: BlockMtpInterval,
     e: relative::NumberOf512Seconds,
     f: relative::NumberOfBlocks,
-    g: Sequence,
+    g: sequence::Sequence,
 }
 
 /// A struct that includes all public error types (excl. decode errors).
