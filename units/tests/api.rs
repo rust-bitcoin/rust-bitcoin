@@ -118,8 +118,11 @@ struct Errors {
     #[cfg(feature = "serde")]
     m: fee_rate::serde::OverflowError,
     n: locktime::absolute::ConversionError,
+    na:locktime::absolute::IncompatibleHeightError,
+    nb:locktime::absolute::IncompatibleTimeError,
     o: locktime::absolute::ParseHeightError,
     p: locktime::absolute::ParseTimeError,
+    pa: locktime::relative::DisabledLockTimeError,
     q: locktime::relative::InvalidHeightError,
     r: locktime::relative::InvalidTimeError,
     s: locktime::relative::TimeOverflowError,
@@ -167,7 +170,7 @@ fn api_can_use_modules_from_crate_root() {
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
         Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime,
-        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Weight,
+        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Weight, 
     };
 }
 
