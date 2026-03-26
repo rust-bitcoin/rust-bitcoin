@@ -129,9 +129,7 @@ struct Errors {
     t: parse_int::ParseIntError,
     u: parse_int::PrefixedHexError,
     v: parse_int::UnprefixedHexError,
-    #[cfg(feature = "encoding")]
-    w: pow::CompactTargetDecoderError,
-    x: result::NumOpError,
+    w: result::NumOpError,
 }
 
 /// A struct that includes all public decoder types.
