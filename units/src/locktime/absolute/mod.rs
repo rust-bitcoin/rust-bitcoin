@@ -400,6 +400,7 @@ parse_int::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 #[cfg(feature = "encoding")]
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`LockTime`] type.
+    #[derive(Debug, Clone)]
     pub struct LockTimeEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
@@ -415,6 +416,7 @@ impl encoding::Encodable for LockTime {
 
 /// The decoder for the [`LockTime`] type.
 #[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
 pub struct LockTimeDecoder(encoding::ArrayDecoder<4>);
 
 #[cfg(feature = "encoding")]
