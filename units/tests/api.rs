@@ -118,8 +118,8 @@ struct Errors {
     #[cfg(feature = "serde")]
     m: fee_rate::serde::OverflowError,
     n: locktime::absolute::ConversionError,
-    na:locktime::absolute::IncompatibleHeightError,
-    nb:locktime::absolute::IncompatibleTimeError,
+    na: locktime::absolute::IncompatibleHeightError,
+    nb: locktime::absolute::IncompatibleTimeError,
     o: locktime::absolute::ParseHeightError,
     p: locktime::absolute::ParseTimeError,
     pa: locktime::relative::DisabledLockTimeError,
@@ -170,28 +170,24 @@ fn api_can_use_modules_from_crate_root() {
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
         Amount, BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval, BlockTime,
-        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Weight, 
+        CompactTarget, FeeRate, NumOpResult, Sequence, SignedAmount, Weight,
     };
 }
 
 #[test]
 fn api_can_use_all_types_from_module_amount() {
     use bitcoin_units::amount::{
-        Amount, Denomination, Display, OutOfRangeError, ParseAmountError, ParseDenominationError,
-        ParseError, SignedAmount,
+        Amount, BadPositionError, Denomination, Display, InputTooLargeError, InvalidCharacterError,
+        MissingDenominationError, MissingDigitsError, OutOfRangeError, ParseAmountError,
+        ParseDenominationError, ParseError, PossiblyConfusingDenominationError, SignedAmount,
+        TooPreciseError, UnknownDenominationError,
     };
     #[cfg(feature = "encoding")]
     use bitcoin_units::amount::{AmountDecoder, AmountDecoderError, AmountEncoder};
 }
 
 #[test]
-fn api_can_use_all_types_from_module_amount_error() {
-    use bitcoin_units::amount::error::{
-        BadPositionError, InputTooLargeError, InvalidCharacterError, MissingDenominationError,
-        MissingDigitsError, OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
-    };
-}
+fn api_can_use_all_types_from_module_amount_error() {}
 
 #[test]
 fn api_can_use_all_types_from_module_block() {
