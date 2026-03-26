@@ -15,7 +15,8 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 use arbitrary::{Arbitrary, Unstructured};
 use bitcoin::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, CompactSizeU64Decoder, Decoder2, Decoder4, Encoder2, Encoder4
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder,
+    CompactSizeU64Decoder, Decoder2, Decoder4, Encoder2, Encoder4,
 };
 use internals::array::ArrayExt;
 use internals::write_err;
@@ -858,18 +859,17 @@ impl encoding::Encodable for AddrV2Message {
     type Encoder<'e> = AddrV2MessageEncoder<'e>;
 
     fn encoder(&self) -> Self::Encoder<'_> {
-        AddrV2MessageEncoder::new(
-            Encoder4::new(
-                ArrayEncoder::without_length_prefix(self.time.to_le_bytes()),
-                CompactSizeEncoder::new_u64(self.services.to_u64()),
-                self.addr.encoder(),
-                ArrayEncoder::without_length_prefix(self.port.to_be_bytes())
-            )
-        )
+        AddrV2MessageEncoder::new(Encoder4::new(
+            ArrayEncoder::without_length_prefix(self.time.to_le_bytes()),
+            CompactSizeEncoder::new_u64(self.services.to_u64()),
+            self.addr.encoder(),
+            ArrayEncoder::without_length_prefix(self.port.to_be_bytes()),
+        ))
     }
 }
 
-type AddrV2MessageInnerDecoder = Decoder4<ArrayDecoder<4>, CompactSizeU64Decoder, AddrV2Decoder, ArrayDecoder<2>>;
+type AddrV2MessageInnerDecoder =
+    Decoder4<ArrayDecoder<4>, CompactSizeU64Decoder, AddrV2Decoder, ArrayDecoder<2>>;
 
 /// The decoder for an [`AddrV2Message`].
 pub struct AddrV2MessageDecoder(AddrV2MessageInnerDecoder);
@@ -904,8 +904,8 @@ impl encoding::Decodable for AddrV2Message {
             ArrayDecoder::new(),
             CompactSizeU64Decoder::new(),
             AddrV2::decoder(),
-            ArrayDecoder::new())
-        )
+            ArrayDecoder::new(),
+        ))
     }
 }
 

@@ -825,7 +825,10 @@ impl CompressedPublicKey {
     /// # Errors
     ///
     /// See [`secp256k1::PublicKey::from_slice`].
-    #[deprecated(since = "TBD", note = "use `from_bytes` instead; if you only have a slice, use `<&[u8; 33]>::try_from` first")]
+    #[deprecated(
+        since = "TBD",
+        note = "use `from_bytes` instead; if you only have a slice, use `<&[u8; 33]>::try_from` first"
+    )]
     pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {
         let bytes_arr = data.try_into().map_err(|_| secp256k1::Error::InvalidPublicKey)?;
         Self::from_bytes(bytes_arr)

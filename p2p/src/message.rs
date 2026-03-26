@@ -536,7 +536,8 @@ impl encoding::Encodable for AddrV2Payload {
 
     fn encoder(&self) -> Self::Encoder<'_> {
         Encoder2::new(
-            CompactSizeEncoder::new(self.0.len()), SliceEncoder::without_length_prefix(&self.0)
+            CompactSizeEncoder::new(self.0.len()),
+            SliceEncoder::without_length_prefix(&self.0),
         )
     }
 }
@@ -557,7 +558,7 @@ impl encoding::Decoder for AddrV2PayloadDecoder {
 
     #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-       Ok(AddrV2Payload(self.0.end().map_err(AddrV2PayloadDecoderError)?))
+        Ok(AddrV2Payload(self.0.end().map_err(AddrV2PayloadDecoderError)?))
     }
 
     #[inline]
@@ -566,9 +567,7 @@ impl encoding::Decoder for AddrV2PayloadDecoder {
 
 impl encoding::Decodable for AddrV2Payload {
     type Decoder = AddrV2PayloadDecoder;
-    fn decoder() -> Self::Decoder {
-        AddrV2PayloadDecoder(VecDecoder::new())
-    }
+    fn decoder() -> Self::Decoder { AddrV2PayloadDecoder(VecDecoder::new()) }
 }
 
 /// An error decoding a [`AddrV2Payload`].
