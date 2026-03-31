@@ -222,17 +222,13 @@ impl ops::Neg for SignedAmount {
 impl ops::Neg for NumOpResult<Amount> {
     type Output = NumOpResult<SignedAmount>;
 
-    fn neg(self) -> Self::Output {
-        self.map(|amount| -amount)
-    }
+    fn neg(self) -> Self::Output { self.map(|amount| -amount) }
 }
 
 impl ops::Neg for NumOpResult<SignedAmount> {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
-        self.map(|amount| -amount)
-    }
+    fn neg(self) -> Self::Output { self.map(|amount| -amount) }
 }
 
 impl core::iter::Sum<Self> for NumOpResult<Amount> {
