@@ -640,6 +640,24 @@ where
     }
 }
 
+impl<A, B, C, D, E, F> fmt::Debug for Decoder6<A, B, C, D, E, F>
+where
+    A: Decoder + fmt::Debug,
+    B: Decoder + fmt::Debug,
+    C: Decoder + fmt::Debug,
+    D: Decoder + fmt::Debug,
+    E: Decoder + fmt::Debug,
+    F: Decoder + fmt::Debug,
+    A::Output: fmt::Debug,
+    B::Output: fmt::Debug,
+    C::Output: fmt::Debug,
+    D::Output: fmt::Debug,
+    E::Output: fmt::Debug,
+    F::Output: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.inner.fmt(f) }
+}
+
 impl<A, B, C, D, E, F> Decoder for Decoder6<A, B, C, D, E, F>
 where
     A: Decoder,
