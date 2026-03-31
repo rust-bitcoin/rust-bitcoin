@@ -456,7 +456,7 @@ pub bitcoin_primitives::block::Header::time: bitcoin_units::time::encapsulate::B
 pub bitcoin_primitives::block::Header::version: bitcoin_primitives::block::Version
 pub bitcoin_primitives::block::HeaderDecoderError::Bits(bitcoin_units::pow::error::CompactTargetDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::MerkleRoot(bitcoin_primitives::merkle_tree::TxMerkleNodeDecoderError)
-pub bitcoin_primitives::block::HeaderDecoderError::Nonce(bitcoin_consensus_encoding::decode::decoders::UnexpectedEofError)
+pub bitcoin_primitives::block::HeaderDecoderError::Nonce(bitcoin_consensus_encoding::error::UnexpectedEofError)
 pub bitcoin_primitives::block::HeaderDecoderError::PrevBlockhash(bitcoin_primitives::block::BlockHashDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::Time(bitcoin_units::time::error::BlockTimeDecoderError)
 pub bitcoin_primitives::block::HeaderDecoderError::Version(bitcoin_primitives::block::VersionDecoderError)
