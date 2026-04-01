@@ -1391,15 +1391,40 @@ fn num_op_result_ops_integer() {
 // Verify we have implemented all `Neg` for the amount types.
 #[test]
 fn amount_op_result_neg() {
-    // TODO: Implement Neg all round.
-
-    // let sat = Amount::from_sat(1).unwrap();
+    let sat = Amount::from_sat(1).unwrap();
     let ssat = SignedAmount::from_sat(1).unwrap();
 
-    // let _ = -sat;
-    let _ = -ssat;
-    // let _ = -res;
-    // let _ = -sres;
+    // Test negation of Amount (returns SignedAmount)
+    let neg_sat = -sat;
+    assert_eq!(neg_sat, SignedAmount::from_sat(-1).unwrap());
+
+    // Test negation of SignedAmount
+    let neg_ssat = -ssat;
+    assert_eq!(neg_ssat, SignedAmount::from_sat(-1).unwrap());
+
+    // Test negation of NumOpResult<Amount>
+    let res = NumOpResult::from(sat);
+    let neg_res = -res;
+    assert_eq!(neg_res, NumOpResult::from(SignedAmount::from_sat(-1).unwrap()));
+
+    // Test negation of NumOpResult<SignedAmount>
+    let sres = NumOpResult::from(ssat);
+    let neg_sres = -sres;
+    assert_eq!(neg_sres, NumOpResult::from(SignedAmount::from_sat(-1).unwrap()));
+
+    // Test double negation
+    let double_neg = -(-sat);
+    assert_eq!(double_neg, ssat);
+
+    // Test negation of zero
+    let zero = Amount::ZERO;
+    let neg_zero = -zero;
+    assert_eq!(neg_zero, SignedAmount::ZERO);
+
+    // Test negation of MAX_MONEY
+    let max = Amount::MAX_MONEY;
+    let neg_max = -max;
+    assert_eq!(neg_max, SignedAmount::MIN);
 }
 
 // Verify we have implemented all `Sum` for the `NumOpResult` type.
