@@ -15,8 +15,8 @@ fi
 
 # Pin dependencies as required if we are using MSRV toolchain.
 if cargo --version | grep "1\.48"; then
-    # 1.0.157 uses syn 2.0 which requires edition 2021
-    cargo update -p serde_json --precise 1.0.99
+    # serde_json 1.0.73+ depends on itoa ^1.0 which requires edition 2021, breaking cargo 1.48.
+    cargo update -p serde_json --precise 1.0.72
     cargo update -p serde --precise 1.0.156
 fi
 
@@ -65,7 +65,7 @@ fi
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCSRS" = true ]; then
-    RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" cargo +nightly doc --all-features
+    RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" cargo +nightly doc --no-deps --all-features
 fi
 
 # Build the docs with a stable toolchain, in unison with the DO_DOCSRS command

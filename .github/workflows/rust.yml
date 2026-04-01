@@ -1,8 +1,7 @@
 on:
   push:
     branches:
-      - master
-      - 'test-ci/**'
+      - 0.31.x
   pull_request:
 
 name: Continuous integration

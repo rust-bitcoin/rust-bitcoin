@@ -11,7 +11,8 @@ if cargo --version | grep ${MSRV}; then
     # Without this pinning fails, no clue why and I don't really care.
     cp Cargo-minimal.lock Cargo.lock
 
-    cargo update -p serde_json --precise 1.0.99
+    # serde_json 1.0.73+ depends on itoa ^1.0 which requires edition 2021, breaking cargo 1.48.
+    cargo update -p serde_json --precise 1.0.72
     cargo update -p serde --precise 1.0.156
     cargo update -p quote --precise 1.0.30
     cargo update -p proc-macro2 --precise 1.0.63

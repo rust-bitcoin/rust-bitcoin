@@ -192,6 +192,7 @@ mod fast_hash {
 
 impl HashEngine {
     // Algorithm copied from libsecp256k1
+    #[allow(unused_assignments)]
     pub(crate) fn process_block(&mut self) {
         debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
 

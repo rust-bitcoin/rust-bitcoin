@@ -445,6 +445,7 @@ impl HashEngine {
         HashEngine { buffer: [0; BLOCK_SIZE], h: ret, length }
     }
 
+    #[allow(unused_assignments)]
     fn process_block(&mut self) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
@@ -721,6 +722,7 @@ impl HashEngine {
     }
 
     // Algorithm copied from libsecp256k1
+    #[allow(unused_assignments)]
     fn software_process_block(&mut self) {
         debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
 
