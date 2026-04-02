@@ -1,3 +1,8 @@
+# 0.31.3 - 2026-04-02
+
+* Remove `non_exhaustive` from `Network` [#4657](https://github.com/rust-bitcoin/rust-bitcoin/pull/4657)
+* Remove `doc_auto_cfg` [#5651](https://github.com/rust-bitcoin/rust-bitcoin/pull/5651)
+
 # 0.31.2 - 2024-04-01
 
 - Fix parsing bug in `merkle_block::deserialize` [#2614](https://github.com/rust-bitcoin/rust-bitcoin/pull/2614)
