@@ -227,8 +227,7 @@ pub trait Hash:
 }
 
 /// Attempted to create a hash from an invalid length slice.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct FromSliceError {
     expected: usize,
     got: usize,
