@@ -1,3 +1,7 @@
+# 0.13.1 - 2026-04-02
+
+* Remove `doc_auto_cfg` [#5651](https://github.com/rust-bitcoin/rust-bitcoin/pull/5651)
+
 # 0.13.0 - 2023-06-29
 
 The main improvement in this version is removal of the `hex` module in favour of the new
