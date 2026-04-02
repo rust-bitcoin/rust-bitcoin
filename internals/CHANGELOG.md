@@ -1,3 +1,7 @@
+# 0.2.1 - 2026-04-02
+
+* Remove `doc_auto_cfg` [#5651](https://github.com/rust-bitcoin/rust-bitcoin/pull/5651)
+
 # 0.2.0 - 2023-06-20
 
 - [Rename crate](https://github.com/rust-bitcoin/rust-bitcoin/pull/1885) to `bitcoin-internals`
