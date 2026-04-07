@@ -1,3 +1,19 @@
+# 0.103.0 - 2026-04-01
+
+- Add `SignetBlockScript`/`Buf` for signet challenge scripts [#5871](https://github.com/rust-bitcoin/rust-bitcoin/pull/5871)
+- Implement `serde_as_consensus` and friends [#5704](https://github.com/rust-bitcoin/rust-bitcoin/pull/5704)
+- Move script hex parsing functions to `primitives` [#5657](https://github.com/rust-bitcoin/rust-bitcoin/pull/5657)
+- Remove `From<SubError>` for error types [#5855](https://github.com/rust-bitcoin/rust-bitcoin/pull/5855)
+- Do not re-export non-essential hash types [#5891](https://github.com/rust-bitcoin/rust-bitcoin/pull/5891)
+- Re-export `serde` and `arbitrary` when they appear in public API [#5862](https://github.com/rust-bitcoin/rust-bitcoin/pull/5862)
+- Implement stringly traits for `Block` using hex [#5703](https://github.com/rust-bitcoin/rust-bitcoin/pull/5703)
+- Move `TxMerkleNodeDecoder`/`Error` to `merkle_tree` module [#5724](https://github.com/rust-bitcoin/rust-bitcoin/pull/5724)
+- Remove excess allocations from `Witness::from_iter` [#5650](https://github.com/rust-bitcoin/rust-bitcoin/pull/5650)
+- Remove `BlockTime` decoder from root export [#5527](https://github.com/rust-bitcoin/rust-bitcoin/pull/5527)
+- Upgrade to `bitcoin-units 0.4.0`
+- Upgrade to `bitcoin_hashes 0.21.0`
+- Upgrade to `consensus-encoding 0.2.0`
+
 # 0.102.0 - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
