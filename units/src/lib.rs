@@ -4,8 +4,6 @@
 //!
 //! This library provides basic types used by the Rust Bitcoin ecosystem.
 
-// Experimental features we need.
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 // Coding conventions.
 #![warn(missing_docs)]
 // Exclude lints we don't think are valuable.
