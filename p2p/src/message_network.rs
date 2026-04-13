@@ -145,21 +145,16 @@ impl encoding::Decodable for VersionMessage {
 
     #[inline]
     fn decoder() -> Self::Decoder {
-        VersionMessageDecoder(encoding::Decoder2::new(
-            encoding::Decoder3::new(
+        VersionMessageDecoder {
+            required: Decoder4::new(
                 crate::ProtocolVersion::decoder(),
                 crate::ServiceFlags::decoder(),
-                encoding::ArrayDecoder::<8>::new(),
-            ),
-            encoding::Decoder6::new(
+                ArrayDecoder::<8>::new(),
                 crate::address::Address::decoder(),
-                crate::address::Address::decoder(),
-                encoding::ArrayDecoder::<8>::new(),
-                UserAgent::decoder(),
-                encoding::ArrayDecoder::<4>::new(),
-                encoding::ArrayDecoder::<1>::new(),
             ),
-        ))
+            required_done: false,
+            optional_buf: Vec::new(),
+        }
     }
 }
 
@@ -167,17 +162,56 @@ impl encoding::Decoder for VersionMessageDecoder {
     type Output = VersionMessage;
     type Error = VersionMessageDecoderError;
 
-    #[inline]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(VersionMessageDecoderError)
+        if !self.required_done {
+            if self.required.push_bytes(bytes).map_err(VersionMessageDecoderError)? {
+                return Ok(true);
+            }
+            self.required_done = true;
+        }
+        self.optional_buf.extend_from_slice(core::mem::take(bytes));
+        Ok(false)
     }
 
-    #[inline]
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let (
-            (version, services, timestamp),
-            (receiver, sender, nonce, user_agent, start_height, relay),
-        ) = self.0.end().map_err(VersionMessageDecoderError)?;
+        let (version, services, timestamp, receiver) =
+            self.required.end().map_err(VersionMessageDecoderError)?;
+
+        let mut remaining = self.optional_buf.as_slice();
+
+        // Optional fields: initialize with Bitcoin Core defaults, overwrite if data available.
+        // Mirrors Bitcoin Core (net_processing.cpp).
+        let mut sender = Address::useless();
+        let mut nonce = 1u64;
+        let mut user_agent = UserAgent::from_nonstandard(&"");
+        let mut start_height = -1i32;
+        let mut relay = true;
+
+        // addr_from + nonce are read together in Core.
+        if !remaining.is_empty() {
+            if let Ok(addr) = encoding::decode_from_slice_unbounded::<Address>(&mut remaining) {
+                sender = addr;
+            }
+            if remaining.len() >= 8 {
+                nonce = u64::from_le_bytes(remaining[..8].try_into().unwrap());
+                remaining = &remaining[8..];
+            }
+        }
+
+        if !remaining.is_empty() {
+            if let Ok(ua) = encoding::decode_from_slice_unbounded::<UserAgent>(&mut remaining) {
+                user_agent = ua;
+            }
+        }
+
+        if !remaining.is_empty() && remaining.len() >= 4 {
+            start_height = i32::from_le_bytes(remaining[..4].try_into().unwrap());
+            remaining = &remaining[4..];
+        }
+
+        if !remaining.is_empty() {
+            relay = remaining[0] != 0;
+        }
 
         Ok(VersionMessage {
             version,
@@ -185,36 +219,39 @@ impl encoding::Decoder for VersionMessageDecoder {
             timestamp: i64::from_le_bytes(timestamp),
             receiver,
             sender,
-            nonce: u64::from_le_bytes(nonce),
+            nonce,
             user_agent,
-            start_height: i32::from_le_bytes(start_height),
-            relay: relay[0] != 0,
+            start_height,
+            relay,
         })
     }
 
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
+    fn read_limit(&self) -> usize {
+        // sender(26) + nonce(8) + user_agent(1) + start_height(4) + relay(1)
+        const MIN_OPTIONAL_SIZE: usize = 40;
+
+        if self.required_done {
+            MIN_OPTIONAL_SIZE.saturating_sub(self.optional_buf.len())
+        } else {
+            self.required.read_limit() + MIN_OPTIONAL_SIZE
+        }
+    }
 }
 
-type VersionMessageInnerDecoder = encoding::Decoder2<
-    encoding::Decoder3<
-        crate::ProtocolVersionDecoder,
-        crate::ServiceFlagsDecoder,
-        encoding::ArrayDecoder<8>,
-    >,
-    encoding::Decoder6<
-        AddressDecoder,
-        AddressDecoder,
-        encoding::ArrayDecoder<8>,
-        UserAgentDecoder,
-        encoding::ArrayDecoder<4>,
-        encoding::ArrayDecoder<1>,
-    >,
+type RequiredFieldsDecoder = Decoder4<
+    crate::ProtocolVersionDecoder,
+    crate::ServiceFlagsDecoder,
+    ArrayDecoder<8>,
+    AddressDecoder,
 >;
 
 /// The Decoder for [`VersionMessage`].
 #[derive(Debug, Clone)]
-pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+pub struct VersionMessageDecoder {
+    required: RequiredFieldsDecoder,
+    required_done: bool,
+    optional_buf: Vec<u8>,
+}
 
 impl_consensus_encoding!(
     VersionMessage,
@@ -709,7 +746,7 @@ pub mod error {
     /// [`VersionMessage`]: super::VersionMessage
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct VersionMessageDecoderError(
-        pub(super) <super::VersionMessageInnerDecoder as encoding::Decoder>::Error,
+        pub(super) <super::RequiredFieldsDecoder as encoding::Decoder>::Error,
     );
 
     impl From<Infallible> for VersionMessageDecoderError {
@@ -973,7 +1010,6 @@ mod tests {
     const MINIMAL_VERSION_PAYLOAD: [u8; 46] = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff000000000000");
 
     #[test]
-    #[should_panic(expected = "VersionMessageDecoderError")]
     fn version_message_minimum_length_decode_from_slice() {
         let msg: VersionMessage = encoding::decode_from_slice(&MINIMAL_VERSION_PAYLOAD).unwrap();
         assert_eq!(msg.version.0, 70002);
