@@ -253,18 +253,73 @@ pub struct VersionMessageDecoder {
     optional_buf: Vec<u8>,
 }
 
-impl_consensus_encoding!(
-    VersionMessage,
-    version,
-    services,
-    timestamp,
-    receiver,
-    sender,
-    nonce,
-    user_agent,
-    start_height,
-    relay
-);
+impl bitcoin::consensus::Encodable for VersionMessage {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(
+        &self,
+        w: &mut W,
+    ) -> core::result::Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.version.consensus_encode(w)?;
+        len += self.services.consensus_encode(w)?;
+        len += self.timestamp.consensus_encode(w)?;
+        len += self.receiver.consensus_encode(w)?;
+        len += self.sender.consensus_encode(w)?;
+        len += self.nonce.consensus_encode(w)?;
+        len += self.user_agent.consensus_encode(w)?;
+        len += self.start_height.consensus_encode(w)?;
+        len += self.relay.consensus_encode(w)?;
+        Ok(len)
+    }
+}
+
+impl bitcoin::consensus::Decodable for VersionMessage {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
+        r: &mut R,
+    ) -> core::result::Result<Self, bitcoin::consensus::encode::Error> {
+        let version = Decodable::consensus_decode_from_finite_reader(r)?;
+        let services = Decodable::consensus_decode_from_finite_reader(r)?;
+        let timestamp = Decodable::consensus_decode_from_finite_reader(r)?;
+        let receiver = Decodable::consensus_decode_from_finite_reader(r)?;
+
+        // Optional fields: initialize with Bitcoin Core defaults, overwrite if data available.
+        // Mirrors Bitcoin Core (net_processing.cpp).
+        let mut sender = Address::useless();
+        let mut nonce = 1u64;
+        let mut user_agent = UserAgent::from_nonstandard(&"");
+        let mut start_height = -1i32;
+        let mut relay = true;
+
+        if !r.fill_buf().map_or(true, <[u8]>::is_empty) {
+            sender = Decodable::consensus_decode_from_finite_reader(r)?;
+        }
+        if !r.fill_buf().map_or(true, <[u8]>::is_empty) {
+            nonce = Decodable::consensus_decode_from_finite_reader(r)?;
+        }
+        if !r.fill_buf().map_or(true, <[u8]>::is_empty) {
+            user_agent = Decodable::consensus_decode_from_finite_reader(r)?;
+        }
+        if !r.fill_buf().map_or(true, <[u8]>::is_empty) {
+            start_height = Decodable::consensus_decode_from_finite_reader(r)?;
+        }
+        if !r.fill_buf().map_or(true, <[u8]>::is_empty) {
+            relay = Decodable::consensus_decode_from_finite_reader(r)?;
+        }
+
+        Ok(Self {
+            version,
+            services,
+            timestamp,
+            receiver,
+            sender,
+            nonce,
+            user_agent,
+            start_height,
+            relay,
+        })
+    }
+}
 
 /// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
 /// connection between two peers is established. It is intended to advertise client software in a
@@ -1026,7 +1081,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "MissingData")]
     fn version_message_minimum_length_deserialize() {
         let msg: VersionMessage = deserialize(&MINIMAL_VERSION_PAYLOAD).unwrap();
         assert_eq!(msg.version.0, 70002);
@@ -1043,7 +1097,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "V1NetworkMessageDecoderError(Payload)")]
     fn version_message_minimum_length_via_v1_network_message() {
         use crate::message::{NetworkMessage, V1NetworkMessage};
 
