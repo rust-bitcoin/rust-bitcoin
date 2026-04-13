@@ -969,6 +969,63 @@ mod tests {
         assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
     }
 
+    // Minimum-length (46 bytes) version payload: version + services + timestamp + addr_recv.
+    const MINIMAL_VERSION_PAYLOAD: [u8; 46] = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff000000000000");
+
+    #[test]
+    #[should_panic(expected = "VersionMessageDecoderError")]
+    fn version_message_minimum_length_decode_from_slice() {
+        let msg: VersionMessage = encoding::decode_from_slice(&MINIMAL_VERSION_PAYLOAD).unwrap();
+        assert_eq!(msg.version.0, 70002);
+        assert_eq!(msg.services, ServiceFlags::NETWORK);
+        assert_eq!(msg.timestamp, 1_401_217_254);
+        // address decodes should be covered by Address tests
+
+        // fields from addr_from onwards are filled with Bitcoin Core defaults
+        assert_eq!(msg.sender, Address::useless());
+        assert_eq!(msg.nonce, 1);
+        assert_eq!(msg.user_agent, UserAgent::from_nonstandard(&""));
+        assert_eq!(msg.start_height, -1);
+        assert!(msg.relay);
+    }
+
+    #[test]
+    #[should_panic(expected = "MissingData")]
+    fn version_message_minimum_length_deserialize() {
+        let msg: VersionMessage = deserialize(&MINIMAL_VERSION_PAYLOAD).unwrap();
+        assert_eq!(msg.version.0, 70002);
+        assert_eq!(msg.services, ServiceFlags::NETWORK);
+        assert_eq!(msg.timestamp, 1_401_217_254);
+        // address decodes should be covered by Address tests
+
+        // fields from addr_from onwards are filled with Bitcoin Core defaults
+        assert_eq!(msg.sender, Address::useless());
+        assert_eq!(msg.nonce, 1);
+        assert_eq!(msg.user_agent, UserAgent::from_nonstandard(&""));
+        assert_eq!(msg.start_height, -1);
+        assert!(msg.relay);
+    }
+
+    #[test]
+    #[should_panic(expected = "V1NetworkMessageDecoderError(Payload)")]
+    fn version_message_minimum_length_via_v1_network_message() {
+        use crate::message::{NetworkMessage, V1NetworkMessage};
+
+        let frame: [u8; 70] = hex!("f9beb4d976657273696f6e00000000002e000000468a86c2721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff000000000000");
+        let msg: V1NetworkMessage = encoding::decode_from_slice(&frame).unwrap();
+
+        match msg.payload() {
+            NetworkMessage::Version(v) => {
+                assert_eq!(v.sender, Address::useless());
+                assert_eq!(v.nonce, 1);
+                assert_eq!(v.user_agent, UserAgent::from_nonstandard(&""));
+                assert_eq!(v.start_height, -1);
+                assert!(v.relay);
+            }
+            other => panic!("expected Version, got {:?}", other),
+        }
+    }
+
     #[test]
     fn reject_message_test() {
         let reject_tx_conflict = hex!("027478121474786e2d6d656d706f6f6c2d636f6e666c69637405df54d3860b3c41806a3546ab48279300affacf4b88591b229141dcf2f47004");
