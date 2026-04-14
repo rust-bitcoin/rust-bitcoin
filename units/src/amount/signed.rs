@@ -521,7 +521,8 @@ impl SignedAmount {
     ///
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`. Notably, overflow is impossible even when `rhs == -1`
+    /// because `self` is never `i64::MIN`.
     #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: i64) -> Option<Self> {
@@ -537,7 +538,7 @@ impl SignedAmount {
 
     /// Checked remainder.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`.
     #[inline]
     #[must_use]
     pub const fn checked_rem(self, rhs: i64) -> Option<Self> {

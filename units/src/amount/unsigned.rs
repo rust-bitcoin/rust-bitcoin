@@ -454,7 +454,7 @@ impl Amount {
     ///
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`.
     #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
@@ -470,7 +470,7 @@ impl Amount {
 
     /// Checked remainder.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`.
     #[inline]
     #[must_use]
     pub const fn checked_rem(self, rhs: u64) -> Option<Self> {
