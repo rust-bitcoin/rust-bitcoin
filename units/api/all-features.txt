@@ -1693,6 +1693,7 @@ pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::resul
 pub fn bitcoin_units::Amount::signed_sub(self, rhs: Self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::to_btc(self) -> f64
 pub fn bitcoin_units::Amount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
+pub const fn bitcoin_units::Amount::to_msat(self) -> u64
 pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::Amount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
@@ -2570,6 +2571,7 @@ pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: Self) -> core::optio
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_btc(self) -> f64
 pub fn bitcoin_units::SignedAmount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
+pub const fn bitcoin_units::SignedAmount::to_msat(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::SignedAmount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
@@ -10022,6 +10024,7 @@ pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::resul
 pub fn bitcoin_units::Amount::signed_sub(self, rhs: Self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::to_btc(self) -> f64
 pub fn bitcoin_units::Amount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
+pub const fn bitcoin_units::Amount::to_msat(self) -> u64
 pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::Amount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
@@ -11389,6 +11392,7 @@ pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: Self) -> core::optio
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_btc(self) -> f64
 pub fn bitcoin_units::SignedAmount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
+pub const fn bitcoin_units::SignedAmount::to_msat(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::SignedAmount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>

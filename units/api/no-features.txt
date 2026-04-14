@@ -1192,6 +1192,7 @@ pub fn bitcoin_units::Amount::from_sat_unprefixed_hex(s: &str) -> core::result::
 pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
 pub fn bitcoin_units::Amount::signed_sub(self, rhs: Self) -> bitcoin_units::SignedAmount
+pub const fn bitcoin_units::Amount::to_msat(self) -> u64
 pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 impl bitcoin_units::Amount
 pub const bitcoin_units::Amount::MAX: Self
@@ -1842,6 +1843,7 @@ pub fn bitcoin_units::SignedAmount::is_negative(self) -> bool
 pub fn bitcoin_units::SignedAmount::is_positive(self) -> bool
 pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
+pub const fn bitcoin_units::SignedAmount::to_msat(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
 impl bitcoin_units::SignedAmount
@@ -7472,6 +7474,7 @@ pub fn bitcoin_units::Amount::from_sat_unprefixed_hex(s: &str) -> core::result::
 pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
 pub fn bitcoin_units::Amount::signed_sub(self, rhs: Self) -> bitcoin_units::SignedAmount
+pub const fn bitcoin_units::Amount::to_msat(self) -> u64
 pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 impl bitcoin_units::Amount
 pub const bitcoin_units::Amount::MAX: Self
@@ -8654,6 +8657,7 @@ pub fn bitcoin_units::SignedAmount::is_negative(self) -> bool
 pub fn bitcoin_units::SignedAmount::is_positive(self) -> bool
 pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
+pub const fn bitcoin_units::SignedAmount::to_msat(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
 impl bitcoin_units::SignedAmount

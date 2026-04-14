@@ -137,6 +137,22 @@ impl SignedAmount {
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = Self::MAX;
 
+    /// Gets the number of millisatoshis in this [`SignedAmount`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::SignedAmount;
+    /// assert_eq!(SignedAmount::ONE_BTC.to_msat(), 100_000_000_000);
+    /// ```
+    #[inline]
+    pub const fn to_msat(self) -> i64 {
+        // Proof that overflow is impossible
+        const _: () = assert!(SignedAmount::MAX.to_sat().checked_mul(1000).is_some());
+        const _: () = assert!(SignedAmount::MIN.to_sat().checked_mul(1000).is_some());
+        self.to_sat() * 1000
+    }
+
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     ///
     /// Accepts an `i32` which is guaranteed to be in range for the type, but which can only
