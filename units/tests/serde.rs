@@ -96,7 +96,7 @@ impl Serde {
             rel_locktime: RelativeLockTime::Blocks(NumberOfBlocks::MAX),
 
             target: Target::MAX_ATTAINABLE_MAINNET,
-            work: Target::MAX_ATTAINABLE_MAINNET.to_work()
+            work: Target::MAX_ATTAINABLE_MAINNET.to_work(),
         }
     }
 }
