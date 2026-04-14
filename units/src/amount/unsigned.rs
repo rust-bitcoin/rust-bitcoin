@@ -118,6 +118,21 @@ impl Amount {
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
+    /// Gets the number of millisatoshis in this [`Amount`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::Amount;
+    /// assert_eq!(Amount::ONE_BTC.to_msat(), 100_000_000_000);
+    /// ```
+    #[inline]
+    pub const fn to_msat(self) -> u64 {
+        // Proof that overflow is impossible
+        const _: () = assert!(Amount::MAX.to_sat().checked_mul(1000).is_some());
+        self.to_sat() * 1000
+    }
+
     /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
     ///
     /// Accepts an `u32` which is guaranteed to be in range for the type, but which can only
@@ -468,15 +483,13 @@ impl Amount {
     pub const fn div_by_weight_floor(self, weight: Weight) -> NumOpResult<FeeRate> {
         let wu = weight.to_wu();
 
-        // Mul by 1,000 because we use per/kwu.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            match sats.checked_div(wu) {
-                Some(fee_rate) =>
-                    if let Ok(amount) = Self::from_sat(fee_rate) {
-                        return FeeRate::from_per_kwu(amount);
-                    },
-                None => return R::Error(E::while_doing(MathOp::Div)),
-            }
+        let msats = self.to_msat();
+        match msats.checked_div(wu) {
+            Some(fee_rate) =>
+                if let Ok(amount) = Self::from_sat(fee_rate) {
+                    return FeeRate::from_per_kwu(amount);
+                },
+            None => return R::Error(E::while_doing(MathOp::Div)),
         }
         // Use `MathOp::Mul` because `Div` implies div by zero.
         R::Error(E::while_doing(MathOp::Mul))
@@ -505,13 +518,11 @@ impl Amount {
             return R::Error(E::while_doing(MathOp::Div));
         }
 
-        // Mul by 1,000 because we use per/kwu.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            // No need to use checked arithmetic because wu is non-zero.
-            let fee_rate = sats.div_ceil(wu);
-            if let Ok(amount) = Self::from_sat(fee_rate) {
-                return FeeRate::from_per_kwu(amount);
-            }
+        let msats = self.to_msat();
+        // No need to use checked arithmetic because wu is non-zero.
+        let fee_rate = msats.div_ceil(wu);
+        if let Ok(amount) = Self::from_sat(fee_rate) {
+            return FeeRate::from_per_kwu(amount);
         }
         // Use `MathOp::Mul` because `Div` implies div by zero.
         R::Error(E::while_doing(MathOp::Mul))
@@ -522,10 +533,14 @@ impl Amount {
     /// Computes the maximum weight that would result in a fee less than or equal to this amount
     /// at the given `fee_rate`. Uses floor division to ensure the resulting weight doesn't cause
     /// the fee to exceed the amount.
+    ///
+    /// # Errors
+    ///
+    /// This can fail only if `fee_rate` is zero, therefore an error returned from this method can
+    /// be treated as infinity.
     #[inline]
     pub const fn div_by_fee_rate_floor(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
-        debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
-        let msats = self.to_sat() * 1_000;
+        let msats = self.to_msat();
         match msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
             Some(wu) => R::Valid(Weight::from_wu(wu)),
             None => R::Error(E::while_doing(MathOp::Div)),
@@ -536,6 +551,11 @@ impl Amount {
     ///
     /// Computes the minimum weight that would result in a fee greater than or equal to this amount
     /// at the given `fee_rate`. Uses ceiling division to ensure the resulting weight is sufficient.
+    ///
+    /// # Errors
+    ///
+    /// This can fail only if `fee_rate` is zero, therefore an error returned from this method can
+    /// be treated as infinity.
     #[inline]
     pub const fn div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
         // Use ceil because result is used as the divisor.
@@ -545,8 +565,7 @@ impl Amount {
             return R::Error(E::while_doing(MathOp::Div));
         }
 
-        debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
-        let msats = self.to_sat() * 1_000;
+        let msats = self.to_msat();
         NumOpResult::Valid(Weight::from_wu(msats.div_ceil(rate)))
     }
 }
