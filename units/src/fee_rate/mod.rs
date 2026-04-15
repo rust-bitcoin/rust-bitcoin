@@ -72,12 +72,8 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from amount per 1000 weight units.
     #[inline]
-    pub const fn from_per_kwu(rate: Amount) -> NumOpResult<Self> {
-        // No `map()` in const context.
-        match rate.checked_mul(4_000) {
-            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
-            None => R::Error(E::while_doing(MathOp::Mul)),
-        }
+    pub const fn from_per_kwu(rate: Amount) -> Self {
+        Self::from_sat_per_mvb(rate.to_sat() * 4_000)
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
@@ -91,8 +87,8 @@ impl FeeRate {
     #[inline]
     pub const fn from_per_vb(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
-        match rate.checked_mul(1_000_000) {
-            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
+        match rate.to_sat().checked_mul(1_000_000) {
+            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb)),
             None => R::Error(E::while_doing(MathOp::Mul)),
         }
     }
@@ -106,12 +102,8 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     #[inline]
-    pub const fn from_per_kvb(rate: Amount) -> NumOpResult<Self> {
-        // No `map()` in const context.
-        match rate.checked_mul(1_000) {
-            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
-            None => R::Error(E::while_doing(MathOp::Mul)),
-        }
+    pub const fn from_per_kvb(rate: Amount) -> Self {
+        Self::from_sat_per_mvb(rate.to_sat() * 1_000)
     }
 
     /// Converts to sat/kwu rounding down.
@@ -443,6 +435,18 @@ mod tests {
         assert_eq!(max.to_sat_per_kwu_ceil(), u64::MAX / 4_000 + 1);
         assert_eq!(max.to_sat_per_vb_ceil(), u64::MAX / 1_000_000 + 1);
         assert_eq!(max.to_sat_per_kvb_ceil(), u64::MAX / 1_000 + 1);
+    }
+
+    #[test]
+    fn fee_rate_from_per_x() {
+        let from_per_kwu = FeeRate::from_per_kwu(Amount::MAX);
+        assert_eq!(from_per_kwu, FeeRate::from_sat_per_mvb(8_400_000_000_000_000_000));
+        let from_per_kvb = FeeRate::from_per_kvb(Amount::MAX);
+        assert_eq!(from_per_kvb, FeeRate::from_sat_per_mvb(2_100_000_000_000_000_000));
+        assert!(FeeRate::from_per_vb(Amount::MAX).is_error());
+        let amount = Amount::from_sat(18_446_744_073_709).unwrap();
+        let from_per_vb = FeeRate::from_per_vb(amount).unwrap();
+        assert_eq!(from_per_vb, FeeRate::from_sat_per_mvb(18_446_744_073_709_000_000));
     }
 
     #[test]
