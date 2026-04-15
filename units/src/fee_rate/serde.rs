@@ -31,9 +31,9 @@ pub mod as_sat_per_kwu_floor {
     //!
     //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu_floor")]`.
 
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde::{Deserializer, Serialize, Serializer};
 
-    use crate::{Amount, FeeRate};
+    use crate::FeeRate;
 
     #[inline]
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
@@ -42,8 +42,9 @@ pub mod as_sat_per_kwu_floor {
 
     #[inline]
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        let sat = u64::deserialize(d)?;
-        let amt = Amount::from_sat(sat).map_err(|_| serde::de::Error::custom("amount out of range"))?;
+        // FIXME: this forbids some valid values that could've been represented
+        // e.g. 42_000_000 BTC/kwu
+        let amt = crate::amount::serde::as_sat::deserialize(d)?;
         Ok(FeeRate::from_per_kwu(amt))
     }
 
