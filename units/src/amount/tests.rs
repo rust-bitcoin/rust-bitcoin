@@ -296,9 +296,10 @@ fn amount_checked_div_by_weight_ceil() {
 
     let weight = Weight::from_wu(381);
     let fee_rate = sat(329).div_by_weight_ceil(weight).unwrap();
-    // 329 sats / 381 wu = 863.5 sats/kwu
-    // round up to 864
-    assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864));
+    // 329 sats / 381 wu = 863.517060367454 sats/kwu
+    // * 4M = 3454068.241469816
+    // round up to 3454069 because it's ceil
+    assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(3_454_069));
 
     let fee_rate = Amount::ONE_SAT.div_by_weight_ceil(Weight::ZERO);
     assert!(fee_rate.is_error());
@@ -314,9 +315,10 @@ fn amount_checked_div_by_weight_floor() {
 
     let weight = Weight::from_wu(381);
     let fee_rate = sat(329).div_by_weight_floor(weight).unwrap();
-    // 329 sats / 381 wu = 863.5 sats/kwu
-    // round down to 863
-    assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
+    // 329 sats / 381 wu = 863.517060367454 sats/kwu
+    // * 4M = 3454068.241469816
+    // round down to 3454069 because it's floor
+    assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(3_454_068));
 
     let fee_rate = Amount::ONE_SAT.div_by_weight_floor(Weight::ZERO);
     assert!(fee_rate.is_error());

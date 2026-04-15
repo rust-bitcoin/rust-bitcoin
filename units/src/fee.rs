@@ -190,7 +190,7 @@ mod tests {
     #[test]
     fn fee_rate_div_by_weight() {
         let fee_rate = (Amount::from_sat_u32(329) / Weight::from_wu(381)).unwrap();
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(3_454_068));
     }
 
     #[test]

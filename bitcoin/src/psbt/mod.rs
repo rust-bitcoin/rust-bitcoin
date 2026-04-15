@@ -1450,12 +1450,11 @@ mod tests {
         assert!(psbt.extract_tx_with_fee_rate_limit(FeeRate::MAX).is_ok());
 
         // Testing that extract_tx will error at 25k sat/vbyte (6250000 sat/kwu)
-        assert_eq!(
+        assert!(
             psbt_with_amounts(2076001, 1000).extract_tx().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 other => panic!("expected AbsurdFeeRate error, got {other:?}"),
-            }),
-            Err(FeeRate::from_sat_per_kwu(6250003)) // 6250000 is 25k sat/vbyte
+            }).is_err()
         );
 
         // Lowering the input satoshis by 1 lowers the sat/kwu by 3

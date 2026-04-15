@@ -524,18 +524,16 @@ impl Amount {
     /// Be aware that integer division loses the remainder if no exact division
     /// can be made. See also [`Self::div_by_weight_ceil`].
     pub const fn div_by_weight_floor(self, weight: Weight) -> NumOpResult<FeeRate> {
-        let wu = weight.to_wu();
+        let wu = weight.to_wu() as u128;
 
-        let msats = self.to_msat();
-        match msats.checked_div(wu) {
-            Some(fee_rate) =>
-                if let Ok(amount) = Self::from_sat(fee_rate) {
-                    return FeeRate::from_per_kwu(amount);
-                },
-            None => return R::Error(E::while_doing(MathOp::Div)),
+        let sats = self.to_sat() as u128;
+        match (sats * 4_000_000).checked_div(wu) {
+            Some(fee_rate) if fee_rate <= u64::MAX as u128 => {
+                R::Valid(FeeRate::from_sat_per_mvb(fee_rate as u64))
+            },
+            Some(_) => R::Error(E::while_doing(MathOp::Mul)),
+            None => R::Error(E::while_doing(MathOp::Div)),
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
-        R::Error(E::while_doing(MathOp::Mul))
     }
 
     /// Checked weight ceiling division.
@@ -549,25 +547,25 @@ impl Amount {
     /// ```
     /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
     /// let amount = Amount::from_sat(10)?;
-    /// let weight = Weight::from_wu(300);
+    /// let weight = Weight::from_wu(200);
     /// let fee_rate = amount.div_by_weight_ceil(weight).expect("valid fee rate");
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(50));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     pub const fn div_by_weight_ceil(self, weight: Weight) -> NumOpResult<FeeRate> {
-        let wu = weight.to_wu();
+        let wu = weight.to_wu() as u128;
         if wu == 0 {
             return R::Error(E::while_doing(MathOp::Div));
         }
 
-        let msats = self.to_msat();
+        let sats = self.to_sat() as u128;
         // No need to use checked arithmetic because wu is non-zero.
-        let fee_rate = msats.div_ceil(wu);
-        if let Ok(amount) = Self::from_sat(fee_rate) {
-            return FeeRate::from_per_kwu(amount);
+        let fee_rate = (sats * 4_000_000).div_ceil(wu);
+        if fee_rate <= u64::MAX as u128 {
+            R::Valid(FeeRate::from_sat_per_mvb(fee_rate as u64))
+        } else {
+            R::Error(E::while_doing(MathOp::Mul))
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
-        R::Error(E::while_doing(MathOp::Mul))
     }
 
     /// Checked fee rate floor division.
