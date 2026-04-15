@@ -76,12 +76,8 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from amount per 1,000 weight units.
     #[inline]
-    pub const fn from_per_kwu(rate: Amount) -> NumOpResult<Self> {
-        // No `map()` in const context.
-        match rate.checked_mul(4_000) {
-            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
-            None => R::Error(E::while_doing(MathOp::Mul)),
-        }
+    pub const fn from_per_kwu(rate: Amount) -> Self {
+        Self::from_sat_per_mvb(rate.to_sat() * 4_000)
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
@@ -110,12 +106,8 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from amount per kilo virtual bytes (1,000 vbytes).
     #[inline]
-    pub const fn from_per_kvb(rate: Amount) -> NumOpResult<Self> {
-        // No `map()` in const context.
-        match rate.checked_mul(1_000) {
-            Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb.to_sat())),
-            None => R::Error(E::while_doing(MathOp::Mul)),
-        }
+    pub const fn from_per_kvb(rate: Amount) -> Self {
+        Self::from_sat_per_mvb(rate.to_sat() * 1_000)
     }
 
     /// Converts to sat/kwu rounding down.
