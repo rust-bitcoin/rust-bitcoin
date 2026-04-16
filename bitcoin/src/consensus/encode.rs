@@ -57,6 +57,8 @@ pub enum Error {
     },
     /// VarInt was encoded in a non-minimal way.
     NonMinimalVarInt,
+    /// VarInt value exceeds the maximum allowed size.
+    OversizedVarInt,
     /// Parsing error.
     ParseFailed(&'static str),
     /// Unsupported Segwit flag.
@@ -76,6 +78,7 @@ impl fmt::Display for Error {
             InvalidChecksum { expected: ref e, actual: ref a } =>
                 write!(f, "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
             NonMinimalVarInt => write!(f, "non-minimal varint"),
+            Self::OversizedVarInt => write!(f, "value exceeds the maximum allowed varint"),
             ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported segwit version: {}", swflag),
@@ -93,6 +96,7 @@ impl std::error::Error for Error {
             OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalVarInt
+            | OversizedVarInt
             | ParseFailed(_)
             | UnsupportedSegwitFlag(_) => None,
         }
@@ -494,7 +498,7 @@ impl Decodable for VarInt {
     #[inline]
     fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let n = ReadExt::read_u8(r)?;
-        match n {
+        let varint = match n {
             0xFF => {
                 let x = ReadExt::read_u64(r)?;
                 if x < 0x100000000 {
@@ -520,9 +524,25 @@ impl Decodable for VarInt {
                 }
             }
             n => Ok(VarInt::from(n)),
+        };
+        match varint {
+            Ok(v) => {
+                if v.0 > MAX_COMPACT_SIZE as u64 {
+                    Err(Error::OversizedVarInt.into())
+                } else {
+                    Ok(v)
+                }
+            }
+            Err(e) => Err(e),
         }
     }
 }
+
+/// The maximum size of a serialized object in bytes or number of elements when
+/// the size is encoded as a CompactSize.
+///
+/// ref: <https://github.com/bitcoin/bitcoin/blob/a7c29df0e5ace05b6186612671d6103c112ec922/src/serialize.h#L32>
+pub const MAX_COMPACT_SIZE: usize = 0x0200_0000;
 
 impl Encodable for bool {
     #[inline]
@@ -962,10 +982,6 @@ mod tests {
             serialize(&VarInt(0xF0F0F0F0F0E0)),
             vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]
         );
-        assert_eq!(
-            test_varint_encode(0xFF, &0x100000000_u64.to_le_bytes()).unwrap(),
-            VarInt(0x100000000)
-        );
         assert_eq!(test_varint_encode(0xFE, &0x10000_u64.to_le_bytes()).unwrap(), VarInt(0x10000));
         assert_eq!(test_varint_encode(0xFD, &0xFD_u64.to_le_bytes()).unwrap(), VarInt(0xFD));
 
@@ -978,6 +994,20 @@ mod tests {
         test_varint_len(VarInt(0xFFFFFFFF), 5);
         test_varint_len(VarInt(0xFFFFFFFF + 1), 9);
         test_varint_len(VarInt(u64::MAX), 9);
+    }
+
+    #[test]
+    fn deserialize_varint_too_large() {
+        // MAX_COMPACT_SIZE (0x02000000) should succeed
+        assert_eq!(test_varint_encode(0xFE, &(0x02000000_u64).to_le_bytes()).unwrap(), VarInt(0x02000000));
+        // MAX_COMPACT_SIZE + 1 should fail with range check enabled
+        let mut input = [0u8; 9];
+        input[0] = 0xFE;
+        input[1..5].copy_from_slice(&(0x02000001_u32).to_le_bytes());
+        assert_eq!(
+            discriminant(&deserialize_partial::<VarInt>(&input).map(|t| t.0).unwrap_err()),
+            discriminant(&Error::OversizedVarInt)
+        );
     }
 
     fn test_varint_len(varint: VarInt, expected: usize) {

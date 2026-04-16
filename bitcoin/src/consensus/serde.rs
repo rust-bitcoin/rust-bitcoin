@@ -368,6 +368,8 @@ fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
         ),
         ConsensusError::NonMinimalVarInt =>
             E::custom(format_args!("compact size was not encoded minimally")),
+        ConsensusError::OversizedVarInt =>
+            E::custom(format_args!("compact size was too big")),
         ConsensusError::ParseFailed(msg) => E::custom(msg),
         ConsensusError::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
