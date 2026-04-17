@@ -222,11 +222,12 @@ where
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ProprietaryKey {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            prefix: Vec::<u8>::arbitrary(u)?,
-            subtype: u64::arbitrary(u)?,
-            key: Vec::<u8>::arbitrary(u)?,
-        })
+        use crate::consensus::encode::MAX_COMPACT_SIZE;
+        let subtype = u
+            .int_in_range(0..=MAX_COMPACT_SIZE)?
+            .try_into()
+            .expect("arch's `usize` is less than 4 bytes");
+        Ok(Self { prefix: Vec::<u8>::arbitrary(u)?, subtype, key: Vec::<u8>::arbitrary(u)? })
     }
 }
 
