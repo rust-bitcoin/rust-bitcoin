@@ -178,7 +178,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-key-expression"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "arbitrary",
  "base58ck 0.4.0",
