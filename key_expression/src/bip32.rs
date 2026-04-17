@@ -224,7 +224,7 @@ impl ChildNumber {
     ///
     /// Returns an error if writing to the formatter fails.
     fn format_with<F>(
-        &self,
+        self,
         f: &mut fmt::Formatter,
         format_fn: F,
         hardened_alt_suffix: &str,
@@ -232,7 +232,7 @@ impl ChildNumber {
     where
         F: Fn(&u32, &mut fmt::Formatter) -> fmt::Result,
     {
-        match *self {
+        match self {
             Self::Hardened { index } => {
                 format_fn(&index, f)?;
                 let alt = f.alternate();
