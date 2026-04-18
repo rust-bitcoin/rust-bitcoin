@@ -201,55 +201,6 @@ pub mod serde_details {
 mod tests {
     use super::*;
 
-    macro_rules! byte_array_roundtrip_test {
-        ($name:ident, $ty:ident, $len:expr, $byte:expr $(, $check:ident)?) => {
-            #[test]
-            fn $name() {
-                let bytes = [$byte; $len];
-                let value = $ty::from_byte_array(bytes);
-
-                assert_eq!(value.to_byte_array(), bytes);
-                $(
-                    let _ = stringify!($check);
-                    assert_eq!(value.as_byte_array(), &bytes);
-                )?
-            }
-        };
-    }
-
-    macro_rules! hex_roundtrip_test {
-        (display, $name:ident, $ty:ident, $len:expr, $byte:expr) => {
-            #[test]
-            #[cfg(feature = "hex")]
-            fn $name() {
-                let value = $ty::from_byte_array([$byte; $len]);
-                let parsed = alloc::format!("{value}").parse::<$ty>().unwrap();
-
-                assert_eq!(parsed, value);
-            }
-        };
-        (lower, $name:ident, $ty:ident, $len:expr, $byte:expr) => {
-            #[test]
-            #[cfg(feature = "hex")]
-            fn $name() {
-                let value = $ty::from_byte_array([$byte; $len]);
-                let parsed = alloc::format!("{value:x}").parse::<$ty>().unwrap();
-
-                assert_eq!(parsed, value);
-            }
-        };
-        (upper, $name:ident, $ty:ident, $len:expr, $byte:expr) => {
-            #[test]
-            #[cfg(feature = "hex")]
-            fn $name() {
-                let value = $ty::from_byte_array([$byte; $len]);
-                let parsed = alloc::format!("{:X}", value).parse::<$ty>().unwrap();
-
-                assert_eq!(parsed, value);
-            }
-        };
-    }
-
     #[cfg(feature = "serde")]
     const DUMMY_TXID_HEX_STR: &str =
         "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389";
@@ -310,39 +261,116 @@ mod tests {
         assert_eq!(borrowed_slice, tc.as_byte_array());
     }
 
-    byte_array_roundtrip_test!(txid_byte_array_roundtrip, Txid, 32, 0x12);
-    byte_array_roundtrip_test!(ntxid_byte_array_roundtrip, Ntxid, 32, 0x13, as_byte_array);
-    byte_array_roundtrip_test!(wtxid_byte_array_roundtrip, Wtxid, 32, 0x14, as_byte_array);
-    byte_array_roundtrip_test!(block_hash_byte_array_roundtrip, BlockHash, 32, 0x15);
-    byte_array_roundtrip_test!(tx_merkle_node_byte_array_roundtrip, TxMerkleNode, 32, 0x16);
-    byte_array_roundtrip_test!(witness_merkle_node_byte_array_roundtrip, WitnessMerkleNode, 32, 0x17);
-    byte_array_roundtrip_test!(witness_commitment_byte_array_roundtrip, WitnessCommitment, 32, 0x18, as_byte_array);
-    byte_array_roundtrip_test!(script_hash_byte_array_roundtrip, ScriptHash, 20, 0x19, as_byte_array);
-    byte_array_roundtrip_test!(wscript_hash_byte_array_roundtrip, WScriptHash, 32, 0x1a, as_byte_array);
+    macro_rules! byte_array_roundtrip_test {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr $(, $check:ident)?);* $(;)?) => {
+            $(
+                #[test]
+                fn $name() {
+                    let bytes = [$byte; $len];
+                    let value = $ty::from_byte_array(bytes);
 
-    hex_roundtrip_test!(display, txid_display_roundtrip, Txid, 32, 0x1b);
-    hex_roundtrip_test!(lower, ntxid_lower_hex_roundtrip, Ntxid, 32, 0x1c);
-    hex_roundtrip_test!(lower, block_hash_lower_hex_roundtrip, BlockHash, 32, 0x1d);
-    hex_roundtrip_test!(lower, tx_merkle_node_lower_hex_roundtrip, TxMerkleNode, 32, 0x1e);
-    hex_roundtrip_test!(lower, witness_merkle_node_lower_hex_roundtrip, WitnessMerkleNode, 32, 0x1f);
-    hex_roundtrip_test!(lower, witness_commitment_lower_hex_roundtrip, WitnessCommitment, 32, 0x20);
-    hex_roundtrip_test!(lower, script_hash_lower_hex_roundtrip, ScriptHash, 20, 0x21);
-    hex_roundtrip_test!(lower, wscript_hash_lower_hex_roundtrip, WScriptHash, 32, 0x22);
-    hex_roundtrip_test!(display, ntxid_display_roundtrip, Ntxid, 32, 0x23);
-    hex_roundtrip_test!(display, wtxid_display_roundtrip, Wtxid, 32, 0x24);
-    hex_roundtrip_test!(display, block_hash_display_roundtrip, BlockHash, 32, 0x25);
-    hex_roundtrip_test!(display, tx_merkle_node_display_roundtrip, TxMerkleNode, 32, 0x26);
-    hex_roundtrip_test!(display, witness_merkle_node_display_roundtrip, WitnessMerkleNode, 32, 0x27);
-    hex_roundtrip_test!(display, witness_commitment_display_roundtrip, WitnessCommitment, 32, 0x28);
-    hex_roundtrip_test!(display, script_hash_display_roundtrip, ScriptHash, 20, 0x29);
-    hex_roundtrip_test!(display, wscript_hash_display_roundtrip, WScriptHash, 32, 0x2a);
-    hex_roundtrip_test!(upper, txid_upper_hex_roundtrip, Txid, 32, 0x2b);
-    hex_roundtrip_test!(upper, ntxid_upper_hex_roundtrip, Ntxid, 32, 0x2c);
-    hex_roundtrip_test!(upper, wtxid_upper_hex_roundtrip, Wtxid, 32, 0x2d);
-    hex_roundtrip_test!(upper, block_hash_upper_hex_roundtrip, BlockHash, 32, 0x2e);
-    hex_roundtrip_test!(upper, tx_merkle_node_upper_hex_roundtrip, TxMerkleNode, 32, 0x2f);
-    hex_roundtrip_test!(upper, witness_merkle_node_upper_hex_roundtrip, WitnessMerkleNode, 32, 0x30);
-    hex_roundtrip_test!(upper, witness_commitment_upper_hex_roundtrip, WitnessCommitment, 32, 0x31);
-    hex_roundtrip_test!(upper, script_hash_upper_hex_roundtrip, ScriptHash, 20, 0x32);
-    hex_roundtrip_test!(upper, wscript_hash_upper_hex_roundtrip, WScriptHash, 32, 0x33);
+                    assert_eq!(value.to_byte_array(), bytes);
+                    $(
+                        let _ = stringify!($check);
+                        assert_eq!(value.as_byte_array(), &bytes);
+                    )?
+                }
+            )*
+        }
+    }
+
+    #[rustfmt::skip]
+    byte_array_roundtrip_test! {
+        txid_byte_array_roundtrip, Txid, 32, 0x12;
+        ntxid_byte_array_roundtrip, Ntxid, 32, 0x13, as_byte_array;
+        wtxid_byte_array_roundtrip, Wtxid, 32, 0x14, as_byte_array;
+        block_hash_byte_array_roundtrip, BlockHash, 32, 0x15;
+        tx_merkle_node_byte_array_roundtrip, TxMerkleNode, 32, 0x16;
+        witness_merkle_node_byte_array_roundtrip, WitnessMerkleNode, 32, 0x17;
+        witness_commitment_byte_array_roundtrip, WitnessCommitment, 32, 0x18, as_byte_array;
+        script_hash_byte_array_roundtrip, ScriptHash, 20, 0x19, as_byte_array;
+        wscript_hash_byte_array_roundtrip, WScriptHash, 32, 0x1a, as_byte_array;
+    }
+
+    macro_rules! hex_roundtrip_test_display {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr);* $(;)?) => {
+            $(
+                #[test]
+                #[cfg(feature = "hex")]
+                fn $name() {
+                    let value = $ty::from_byte_array([$byte; $len]);
+                    let parsed = alloc::format!("{value}").parse::<$ty>().unwrap();
+
+                    assert_eq!(parsed, value);
+                }
+            )*
+        };
+    }
+
+    macro_rules! hex_roundtrip_test_lower_hex {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr);* $(;)?) => {
+            $(
+                #[test]
+                #[cfg(feature = "hex")]
+                fn $name() {
+                    let value = $ty::from_byte_array([$byte; $len]);
+                    let parsed = alloc::format!("{value:x}").parse::<$ty>().unwrap();
+
+                    assert_eq!(parsed, value);
+                }
+            )*
+        };
+    }
+
+    macro_rules! hex_roundtrip_test_upper_hex {
+        ($($name:ident, $ty:ident, $len:expr, $byte:expr);* $(;)?) => {
+            $(
+                #[test]
+                #[cfg(feature = "hex")]
+                fn $name() {
+                    let value = $ty::from_byte_array([$byte; $len]);
+                    let parsed = alloc::format!("{:X}", value).parse::<$ty>().unwrap();
+
+                    assert_eq!(parsed, value);
+                }
+            )*
+        };
+    }
+
+    #[rustfmt::skip]
+    hex_roundtrip_test_display! {
+        txid_display_roundtrip, Txid, 32, 0x1b;
+        ntxid_display_roundtrip, Ntxid, 32, 0x23;
+        wtxid_display_roundtrip, Wtxid, 32, 0x24;
+        block_hash_display_roundtrip, BlockHash, 32, 0x25;
+        tx_merkle_node_display_roundtrip, TxMerkleNode, 32, 0x26;
+        witness_merkle_node_display_roundtrip, WitnessMerkleNode, 32, 0x27;
+        witness_commitment_display_roundtrip, WitnessCommitment, 32, 0x28;
+        script_hash_display_roundtrip, ScriptHash, 20, 0x29;
+        wscript_hash_display_roundtrip, WScriptHash, 32, 0x2a;
+    }
+
+    #[rustfmt::skip]
+    hex_roundtrip_test_lower_hex! {
+        ntxid_lower_hex_roundtrip, Ntxid, 32, 0x1c;
+        block_hash_lower_hex_roundtrip, BlockHash, 32, 0x1d;
+        tx_merkle_node_lower_hex_roundtrip, TxMerkleNode, 32, 0x1e;
+        witness_merkle_node_lower_hex_roundtrip, WitnessMerkleNode, 32, 0x1f;
+        witness_commitment_lower_hex_roundtrip, WitnessCommitment, 32, 0x20;
+        script_hash_lower_hex_roundtrip, ScriptHash, 20, 0x21;
+        wscript_hash_lower_hex_roundtrip, WScriptHash, 32, 0x22;
+    }
+
+    #[rustfmt::skip]
+    hex_roundtrip_test_upper_hex! {
+        txid_upper_hex_roundtrip, Txid, 32, 0x2b;
+        ntxid_upper_hex_roundtrip, Ntxid, 32, 0x2c;
+        wtxid_upper_hex_roundtrip, Wtxid, 32, 0x2d;
+        block_hash_upper_hex_roundtrip, BlockHash, 32, 0x2e;
+        tx_merkle_node_upper_hex_roundtrip, TxMerkleNode, 32, 0x2f;
+        witness_merkle_node_upper_hex_roundtrip, WitnessMerkleNode, 32, 0x30;
+        witness_commitment_upper_hex_roundtrip, WitnessCommitment, 32, 0x31;
+        script_hash_upper_hex_roundtrip, ScriptHash, 20, 0x32;
+        wscript_hash_upper_hex_roundtrip, WScriptHash, 32, 0x33;
+    }
 }
