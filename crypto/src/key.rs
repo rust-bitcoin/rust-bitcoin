@@ -634,9 +634,7 @@ impl LegacyPublicKey {
     pub fn force_compressed(self) -> FullPublicKey { FullPublicKey::from_secp(self.to_inner()) }
 
     /// Serializes the public key to bytes.
-    pub fn to_vec(self) -> Vec<u8> {
-        self.to_bytes().to_vec()
-    }
+    pub fn to_vec(self) -> Vec<u8> { self.to_bytes().to_vec() }
 
     /// Serializes the public key to bytes.
     pub fn to_bytes(self) -> SerializedLegacyPublicKey {
