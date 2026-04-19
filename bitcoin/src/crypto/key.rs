@@ -31,7 +31,6 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity, Verification};
-pub use serialized_legacy_public_key::SerializedLegacyPublicKey;
 pub use encapsulate::{
     FullPublicKey, Keypair, LegacyPublicKey, PrivateKey, SerializedXOnlyPublicKey, TweakedKeypair,
     TweakedPublicKey, XOnlyPublicKey,
@@ -39,6 +38,7 @@ pub use encapsulate::{
 #[cfg(feature = "rand")]
 #[cfg(feature = "std")]
 pub use secp256k1::rand;
+pub use serialized_legacy_public_key::SerializedLegacyPublicKey;
 
 #[doc(no_inline)]
 pub use self::error::{
@@ -284,6 +284,7 @@ mod encapsulate {
 
 mod serialized_legacy_public_key {
     use internals::array_vec::ArrayVec;
+
     use crate::script::PushBytes;
 
     /// A serialized form of `LegacyPublicKey`.
@@ -307,9 +308,7 @@ mod serialized_legacy_public_key {
 
     // Keep the proof close to the type definition
     impl core::borrow::Borrow<PushBytes> for SerializedLegacyPublicKey {
-        fn borrow(&self) -> &PushBytes {
-            <&PushBytes>::try_from(&*self.0).expect("65 <= u32::MAX")
-        }
+        fn borrow(&self) -> &PushBytes { <&PushBytes>::try_from(&*self.0).expect("65 <= u32::MAX") }
     }
 }
 
@@ -317,27 +316,19 @@ impl core::ops::Deref for SerializedLegacyPublicKey {
     type Target = [u8];
 
     #[inline]
-    fn deref(&self) -> &Self::Target {
-        <Self as Borrow<PushBytes>>::borrow(self).as_bytes()
-    }
+    fn deref(&self) -> &Self::Target { <Self as Borrow<PushBytes>>::borrow(self).as_bytes() }
 }
 
 impl AsRef<PushBytes> for SerializedLegacyPublicKey {
-    fn as_ref(&self) -> &PushBytes {
-        self.borrow()
-    }
+    fn as_ref(&self) -> &PushBytes { self.borrow() }
 }
 
 impl AsRef<[u8]> for SerializedLegacyPublicKey {
-    fn as_ref(&self) -> &[u8] {
-        self
-    }
+    fn as_ref(&self) -> &[u8] { self }
 }
 
 impl Borrow<[u8]> for SerializedLegacyPublicKey {
-    fn borrow(&self) -> &[u8] {
-        self
-    }
+    fn borrow(&self) -> &[u8] { self }
 }
 
 impl XOnlyPublicKey {

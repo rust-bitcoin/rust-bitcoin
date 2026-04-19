@@ -242,7 +242,9 @@ impl<'e, T: Encodable + ?Sized + 'e> Iterator for EncodableByteIter<'e, T> {
     fn nth(&mut self, mut n: usize) -> Option<Self::Item> {
         // This could be in a loop but we intentionally unroll one iteration so that addition is
         // only required at the beginning.
-        if let Some(b) = self.position.checked_add(n).and_then(|pos| self.enc.current_chunk().get(pos)) {
+        if let Some(b) =
+            self.position.checked_add(n).and_then(|pos| self.enc.current_chunk().get(pos))
+        {
             // length of slice is guaranteed to be at most `isize::MAX` thus is `n` so this cannot
             // overflow.
             self.position += n + 1;

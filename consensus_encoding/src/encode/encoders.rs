@@ -28,9 +28,7 @@ impl<'sl> BytesEncoder<'sl> {
 impl Encoder for BytesEncoder<'_> {
     fn current_chunk(&self) -> &[u8] { self.sl }
 
-    fn advance(&mut self) -> bool {
-        false
-    }
+    fn advance(&mut self) -> bool { false }
 }
 
 impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
@@ -54,9 +52,7 @@ impl<const N: usize> Encoder for ArrayEncoder<N> {
     fn current_chunk(&self) -> &[u8] { &self.arr }
 
     #[inline]
-    fn advance(&mut self) -> bool {
-        false
-    }
+    fn advance(&mut self) -> bool { false }
 }
 
 impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
@@ -83,9 +79,7 @@ impl<const N: usize> Encoder for ArrayRefEncoder<'_, N> {
     fn current_chunk(&self) -> &[u8] { self.arr }
 
     #[inline]
-    fn advance(&mut self) -> bool {
-        false
-    }
+    fn advance(&mut self) -> bool { false }
 }
 
 impl<const N: usize> ExactSizeEncoder for ArrayRefEncoder<'_, N> {
