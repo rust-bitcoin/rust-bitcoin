@@ -1,3 +1,8 @@
+# 0.1.3 - 2026-04-19
+
+* Backport `Arbitrary` to `0.32.x` [#5085](https://github.com/rust-bitcoin/rust-bitcoin/pull/5085)
+* Backport: Add CompactSize range check to deserialization [#5921](https://github.com/rust-bitcoin/rust-bitcoin/pull/5921)
+
 # 0.1.2 - 2024-07-01
 
 * Remove enable of `alloc` feature in the `internals` dependency.
