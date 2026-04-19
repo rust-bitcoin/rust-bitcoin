@@ -1,3 +1,14 @@
+# 0.1.2 - 2024-07-01
+
+* Remove enable of `alloc` feature in the `internals` dependency.
+
+Note, the bug fixed by this release was introduced in
+[#2655](https://github.com/rust-bitcoin/rust-bitcoin/pull/2655) and
+was incorrect because we have an `alloc` feature that enables
+`internals/alloc`.
+
+`v0.1.1` will be yanked for this reason.
+
 # 0.1.1 - 2024-04-04
 
 * Enable "alloc" feature for `internals` dependency - enables caching
