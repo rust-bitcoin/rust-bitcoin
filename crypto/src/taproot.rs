@@ -9,21 +9,27 @@ use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::fmt;
 use core::ops::Deref;
+#[cfg(feature = "hex")]
 use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::array::ArrayExt;
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 use internals::impl_to_hex_from_lower_hex;
 
 pub use self::into_iter::IntoIter;
+#[cfg(feature = "hex")]
 use crate::hex;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use self::error::{ParseSignatureError, SigFromSliceError};
+pub use self::error::SigFromSliceError;
+#[cfg(feature = "hex")]
+#[doc(no_inline)]
+pub use self::error::ParseSignatureError;
 
 const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
 
@@ -97,24 +103,28 @@ impl Signature {
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.serialize(), f)
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::LowerHex::fmt(&self.serialize(), f)
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::UpperHex::fmt(&self.serialize(), f)
     }
 }
 
+#[cfg(feature = "hex")]
 impl FromStr for Signature {
     type Err = ParseSignatureError;
 
@@ -176,9 +186,11 @@ impl SerializedSignature {
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
 
+    #[cfg(feature = "hex")]
     fn is_default(&self) -> bool { self.len() != MAX_LEN }
 
     #[inline]
+    #[cfg(feature = "hex")]
     fn fmt_internal(&self, f: &mut fmt::Formatter, case: hex::Case) -> fmt::Result {
         if self.is_default() {
             hex::fmt_hex_exact!(f, MAX_LEN - 1, self, case)
@@ -204,21 +216,37 @@ impl SerializedSignature {
 }
 
 impl fmt::Debug for SerializedSignature {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        #[cfg(feature = "hex")]
+        {
+            fmt::Display::fmt(self, f)
+        }
+        #[cfg(not(feature = "hex"))]
+        {
+            for b in self {
+                write!(f, "{:02x}", b)?;
+            }
+            Ok(())
+        }
+    }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for SerializedSignature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(f, hex::Case::Lower) }
 }
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
     * 2);
 
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(f, hex::Case::Upper) }
@@ -329,7 +357,7 @@ mod into_iter {
     /// Created by [`IntoIterator::into_iter`] method.
     // allowed because of https://github.com/rust-lang/rust/issues/98348
     #[allow(missing_copy_implementations)]
-    #[derive(Debug, Clone)]
+    #[derive(Clone, Debug)]
     pub struct IntoIter {
         signature: SerializedSignature,
         // invariant: pos <= signature.len()
@@ -468,6 +496,7 @@ pub mod error {
     /// Error encountered while parsing a Taproot signature from a string.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
+    #[cfg(feature = "hex")]
     pub enum ParseSignatureError {
         /// Hex string invalid length error.
         InvalidLength(usize),
@@ -477,10 +506,12 @@ pub mod error {
         Decode(SigFromSliceError),
     }
 
+    #[cfg(feature = "hex")]
     impl From<Infallible> for ParseSignatureError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
+    #[cfg(feature = "hex")]
     impl fmt::Display for ParseSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -495,6 +526,7 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "hex")]
     #[cfg(feature = "std")]
     impl std::error::Error for ParseSignatureError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -522,6 +554,7 @@ impl<'a> Arbitrary<'a> for Signature {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     use alloc::string::ToString;
 
     use super::*;
@@ -558,6 +591,7 @@ mod tests {
     }
 
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     const SIG_STRINGS: &[&str] = &[
         // default sighash type
         "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
@@ -570,6 +604,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn signature_hex_roundtrip() {
         for &want in SIG_STRINGS {
             let sig = want.parse::<Signature>().unwrap();
@@ -579,6 +614,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn signature_hex_default_error() {
         let sig_hex = "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab00";
         let parse_err = sig_hex.parse::<Signature>().unwrap_err();
@@ -590,11 +626,25 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn serialized_signature_hex() {
         for &want in SIG_STRINGS {
             let sig = want.parse::<Signature>().unwrap();
             let got = sig.serialize().to_string();
             assert_eq!(got, want);
         }
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn serialized_signature_debug() {
+        let bytes = [0xab; 64];
+        let sig = Signature::from_slice(&bytes).unwrap();
+        let ser_sig = SerializedSignature::from_signature(sig);
+        let sig_string = alloc::format!("{:?}", ser_sig);
+        assert_eq!(
+            sig_string,
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+        );
     }
 }

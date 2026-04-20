@@ -15,6 +15,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "hex")]
 pub extern crate hex;
 
 pub extern crate base58;
