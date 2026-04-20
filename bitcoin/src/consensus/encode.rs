@@ -528,7 +528,7 @@ impl Decodable for VarInt {
         match varint {
             Ok(v) => {
                 if v.0 > MAX_COMPACT_SIZE as u64 {
-                    Err(Error::OversizedVarInt.into())
+                    Err(Error::OversizedVarInt)
                 } else {
                     Ok(v)
                 }
