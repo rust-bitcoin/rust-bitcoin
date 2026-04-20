@@ -7,28 +7,36 @@
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 use core::borrow::Borrow;
+#[cfg(feature = "hex")]
 use core::fmt;
 #[cfg(feature = "alloc")]
 use core::iter;
 use core::ops::Deref;
+#[cfg(feature = "hex")]
 #[cfg(feature = "alloc")]
 use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "hex")]
 use hex_unstable::DisplayHex;
+#[cfg(feature = "hex")]
 #[cfg(feature = "alloc")]
 use internals::impl_to_hex_from_lower_hex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "hex")]
 #[cfg(feature = "alloc")]
 use crate::hex;
 use crate::sighash::EcdsaSighashType;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use self::error::{DecodeError, ParseSignatureError};
+pub use self::error::DecodeError;
+#[cfg(feature = "hex")]
+#[doc(no_inline)]
+pub use self::error::ParseSignatureError;
 
 const MAX_SIG_LEN: usize = 73;
 
@@ -89,6 +97,7 @@ impl Signature {
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::LowerHex::fmt(&self.signature.serialize_der().as_hex(), f)?;
@@ -96,6 +105,7 @@ impl fmt::Display for Signature {
     }
 }
 
+#[cfg(feature = "hex")]
 #[cfg(feature = "alloc")]
 impl FromStr for Signature {
     type Err = ParseSignatureError;
@@ -150,26 +160,31 @@ impl SerializedSignature {
     pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Debug for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&(**self).as_hex(), f)
     }
 }
+#[cfg(feature = "hex")]
 #[cfg(feature = "alloc")]
 impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
     * 2);
 
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -292,6 +307,7 @@ pub mod error {
     /// Error encountered while parsing an ECDSA signature from a string.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
+    #[cfg(feature = "hex")]
     pub enum ParseSignatureError {
         /// Hex string decoding error.
         Hex(hex::DecodeVariableLengthBytesError),
@@ -299,10 +315,12 @@ pub mod error {
         Decode(DecodeError),
     }
 
+    #[cfg(feature = "hex")]
     impl From<Infallible> for ParseSignatureError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
+    #[cfg(feature = "hex")]
     impl fmt::Display for ParseSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -312,6 +330,7 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "hex")]
     #[cfg(feature = "std")]
     impl std::error::Error for ParseSignatureError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -360,13 +379,16 @@ impl<'a> Arbitrary<'a> for Signature {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     use super::*;
 
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     const TEST_SIGNATURE_HEX: &str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
 
     #[test]
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn iterate_serialized_signature() {
         let sig = Signature {

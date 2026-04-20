@@ -16,6 +16,7 @@ use core::str::FromStr;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
+#[cfg(feature = "hex")]
 use hex_unstable::DisplayHex;
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
@@ -30,6 +31,7 @@ pub use secp256k1::rand;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::ecdsa;
+#[cfg(feature = "hex")]
 use crate::hex::{self, DecodeFixedLengthBytesError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -42,13 +44,15 @@ pub use serialized_legacy_public_key::SerializedLegacyPublicKey;
 
 #[doc(no_inline)]
 pub use self::error::{
-    FromSliceError, InvalidAddressVersionError, InvalidBase58PayloadLengthError,
-    ParseFullPublicKeyError, ParseKeypairError, ParsePublicKeyError, ParseXOnlyPublicKeyError,
-    TweakXOnlyPublicKeyError, UncompressedPublicKeyError,
+    FromSliceError, InvalidAddressVersionError, InvalidBase58PayloadLengthError, ParseKeypairError,
+    ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError, UncompressedPublicKeyError,
 };
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{FromWifError, InvalidWifCompressionFlagError};
+#[cfg(feature = "hex")]
+#[doc(no_inline)]
+pub use self::error::{ParseFullPublicKeyError, ParsePublicKeyError};
 
 /// Encapsulation module to provide a clear barrier for construction/destruction of types.
 mod encapsulate {
@@ -584,6 +588,7 @@ impl LegacyPublicKey {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "hex")] {
     /// use bitcoin_crypto::key::LegacyPublicKey;
     /// use hashes::hash160;
     ///
@@ -596,6 +601,7 @@ impl LegacyPublicKey {
     ///
     /// let hash = key.with_serialized(hash160::Hash::hash).to_string();
     /// assert_eq!(hash, "dabedb4de2bd2bfec5d38475b9c64af13999a043");
+    /// # }
     /// ```
     pub fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
         if self.compressed() {
@@ -681,6 +687,7 @@ impl LegacyPublicKey {
     /// # Example: Using with `sort_unstable_by_key`
     ///
     /// ```rust
+    /// # #[cfg(feature = "hex")] {
     /// use bitcoin_crypto::key::LegacyPublicKey;
     ///
     /// let pk = |s: &str| s.parse::<LegacyPublicKey>().unwrap();
@@ -711,6 +718,7 @@ impl LegacyPublicKey {
     /// unsorted.sort_unstable_by_key(|k| LegacyPublicKey::to_sort_key(*k));
     ///
     /// assert_eq!(unsorted, sorted);
+    /// # }
     /// ```
     pub fn to_sort_key(self) -> SortKey {
         let buf = self.with_serialized(ArrayVec::from_slice);
@@ -786,12 +794,14 @@ impl From<LegacyPublicKey> for XOnlyPublicKey {
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct SortKey(ArrayVec<u8, 65>);
 
+#[cfg(feature = "hex")]
 impl fmt::Display for LegacyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.with_serialized(|bytes| fmt::Display::fmt(&bytes.as_hex(), f))
     }
 }
 
+#[cfg(feature = "hex")]
 impl FromStr for LegacyPublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<Self, ParsePublicKeyError> {
@@ -826,7 +836,9 @@ hashes::hash_newtype! {
     pub struct WPubkeyHash(hash160::Hash);
 }
 
+#[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(PubkeyHash, WPubkeyHash);
+#[cfg(feature = "hex")]
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(PubkeyHash, WPubkeyHash);
 
@@ -900,18 +912,21 @@ impl FullPublicKey {
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for FullPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.to_bytes().as_hex(), f)
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Debug for FullPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_fmt(format_args!("FullPublicKey({})", self))
     }
 }
 
+#[cfg(feature = "hex")]
 impl FromStr for FullPublicKey {
     type Err = ParseFullPublicKeyError;
 
@@ -1219,6 +1234,7 @@ impl<'de> serde::Deserialize<'de> for WifKey {
     }
 }
 
+#[cfg(feature = "hex")]
 #[cfg(feature = "serde")]
 #[allow(clippy::collapsible_else_if)] // Aids readability.
 impl serde::Serialize for LegacyPublicKey {
@@ -1231,6 +1247,7 @@ impl serde::Serialize for LegacyPublicKey {
     }
 }
 
+#[cfg(feature = "hex")]
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for LegacyPublicKey {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
@@ -1286,6 +1303,7 @@ impl<'de> serde::Deserialize<'de> for LegacyPublicKey {
     }
 }
 
+#[cfg(feature = "hex")]
 #[cfg(feature = "serde")]
 impl serde::Serialize for FullPublicKey {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
@@ -1297,6 +1315,7 @@ impl serde::Serialize for FullPublicKey {
     }
 }
 
+#[cfg(feature = "hex")]
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for FullPublicKey {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
@@ -1447,6 +1466,7 @@ impl From<&Self> for SerializedXOnlyPublicKey {
     fn from(borrowed: &Self) -> Self { *borrowed }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Debug for SerializedXOnlyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(&self.as_byte_array().as_hex(), f)
@@ -1572,6 +1592,7 @@ pub mod error {
 
     /// Error returned while constructing public key from string.
     #[derive(Debug, Clone, PartialEq, Eq)]
+    #[cfg(feature = "hex")]
     pub enum ParsePublicKeyError {
         /// Error originated while parsing string.
         Encoding(FromSliceError),
@@ -1581,10 +1602,12 @@ pub mod error {
         InvalidHexLength(usize),
     }
 
+    #[cfg(feature = "hex")]
     impl From<Infallible> for ParsePublicKeyError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
+    #[cfg(feature = "hex")]
     impl fmt::Display for ParsePublicKeyError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -1596,6 +1619,7 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "hex")]
     #[cfg(feature = "std")]
     impl std::error::Error for ParsePublicKeyError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -1611,6 +1635,7 @@ pub mod error {
     ///
     /// [`FullPublicKey`]: super::FullPublicKey
     #[derive(Debug, Clone, PartialEq, Eq)]
+    #[cfg(feature = "hex")]
     pub enum ParseFullPublicKeyError {
         /// secp256k1 Error.
         Secp256k1(secp256k1::Error),
@@ -1618,10 +1643,12 @@ pub mod error {
         Hex(hex::DecodeFixedLengthBytesError),
     }
 
+    #[cfg(feature = "hex")]
     impl From<Infallible> for ParseFullPublicKeyError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
+    #[cfg(feature = "hex")]
     impl fmt::Display for ParseFullPublicKeyError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
@@ -1631,6 +1658,7 @@ pub mod error {
         }
     }
 
+    #[cfg(feature = "hex")]
     #[cfg(feature = "std")]
     impl std::error::Error for ParseFullPublicKeyError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -1811,14 +1839,20 @@ impl<'a> Arbitrary<'a> for XOnlyPublicKey {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     use alloc::string::ToString;
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
-    use alloc::{format, vec};
+    use alloc::format;
+    #[cfg(feature = "hex")]
+    #[cfg(feature = "alloc")]
+    use alloc::vec;
 
     use super::*;
 
     #[test]
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn pubkey_hash() {
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
@@ -1831,6 +1865,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn wpubkey_hash() {
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
@@ -1845,6 +1880,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     #[cfg(feature = "serde")]
     #[cfg(feature = "alloc")]
     fn skey_serde() {
@@ -1890,6 +1926,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn pubkey_to_sort_key() {
         let key1 = "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8"
             .parse::<LegacyPublicKey>()
@@ -1911,6 +1948,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn pubkey_sort() {
         struct Vector {
@@ -2032,6 +2070,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn public_key_from_str_wrong_length() {
         // Sanity checks, we accept string length 130 digits.
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
@@ -2050,6 +2089,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn public_key_from_str_invalid_str() {
         // Ensuring test cases fail when LegacyPublicKey::from_str is used on invalid keys
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b142";
@@ -2114,6 +2154,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn xonly_pubkey_from_bytes() {
         let key_bytes = &hex::decode_to_array::<32>(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
@@ -2126,6 +2167,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn xonly_pubkey_to_inner() {
         let key_bytes = &hex::decode_to_array::<32>(
             "5b1e57ec453cd33fdc7cfc901450a3931fd315422558f2fb7fefb064e6e7d60d",
@@ -2139,6 +2181,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     #[cfg(feature = "alloc")]
     fn keypair_from_str_roundtrip() {
         #[cfg(feature = "rand")]
