@@ -1545,7 +1545,7 @@ fn v2_command_byte(payload: &NetworkMessage) -> (u8, Option<CommandString>) {
     }
 }
 
-/// Network encoded [`Header`](primitives::block::Header) with associated byte for the length of
+/// Network encoded [`Header`] with associated byte for the length of
 /// transactions that follow, which is currently always zero.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NetworkHeader {
@@ -1609,7 +1609,7 @@ impl HeadersMessage {
             .all(|(first, second)| first.header.block_hash().eq(&second.header.prev_blockhash))
     }
 
-    /// Take the message as an iterator of [`Header`](primitives::block::Header).
+    /// Take the message as an iterator of [`Header`].
     pub fn into_headers(self) -> impl Iterator<Item = block::Header> {
         self.0.into_iter().map(|network| network.header)
     }
