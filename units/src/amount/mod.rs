@@ -649,3 +649,47 @@ impl<'a> Arbitrary<'a> for Denomination {
         }
     }
 }
+
+/// Creates an amount literal.
+///
+/// This macro creates an amount literal without annoying unwraps or risk of runtime panic.
+/// However, it is (obviously) only usable in `const` context with a `const` expression.
+/// It currently supports integer BTC and satoshis. The unit is mandatory and has to be written at
+/// the end - see examples.
+///
+/// ```
+/// # use bitcoin_units::{amt, Amount};
+/// assert_eq!(amt!(1 btc), amt!(100_000_000 sat));
+/// assert_eq!(amt!(3 * 7_000_000 btc), Amount::MAX);
+/// ```
+#[macro_export]
+macro_rules! amt {
+    // Internal accumulator arm: we have consumed all tokens except the unit keyword.
+    (@($($amount:tt)+), (btc)) => {
+        {
+            const AMOUNT: $crate::Amount = match $crate::Amount::from_sat(($($amount)+) as u64 * 100_000_000) {
+                Ok(amount) => amount,
+                Err(_) => panic!("amount out of range"),
+            };
+            AMOUNT
+        }
+    };
+    (@($($amount:tt)+), (sat)) => {
+        {
+            const AMOUNT: $crate::Amount = match $crate::Amount::from_sat(($($amount)+) as u64) {
+                Ok(amount) => amount,
+                Err(_) => panic!("amount out of range"),
+            };
+            AMOUNT
+        }
+    };
+    // Internal accumulator arm: move the next token from the remaining list into the accumulator.
+    (@($($amount:tt)*), ($x:tt $($remaining:tt)+)) => {
+        $crate::amt!(@($($amount)* $x), ($($remaining)+))
+    };
+    // Public entry arm.
+    // The leading `@` guard ensures this arm does not match internal recursive calls.
+    ($first:tt $($rest:tt)*) => {
+        $crate::amt!(@($first), ($($rest)*))
+    };
+}

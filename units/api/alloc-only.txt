@@ -7863,6 +7863,7 @@ pub unsafe fn bitcoin_units::Weight::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::Weight
 pub fn bitcoin_units::Weight::from(t: T) -> T
 pub const bitcoin_units::weight::WITNESS_SCALE_FACTOR: usize
+pub macro bitcoin_units::amt!
 pub enum bitcoin_units::NumOpResult<T>
 pub bitcoin_units::NumOpResult::Error(bitcoin_units::result::error::NumOpError)
 pub bitcoin_units::NumOpResult::Valid(T)

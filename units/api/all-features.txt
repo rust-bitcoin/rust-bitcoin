@@ -9545,6 +9545,7 @@ impl<T> core::convert::From<T> for bitcoin_units::Weight
 pub fn bitcoin_units::Weight::from(t: T) -> T
 impl<T> serde::de::DeserializeOwned for bitcoin_units::Weight where T: for<'de> serde::de::Deserialize<'de>
 pub const bitcoin_units::weight::WITNESS_SCALE_FACTOR: usize
+pub macro bitcoin_units::amt!
 pub enum bitcoin_units::NumOpResult<T>
 pub bitcoin_units::NumOpResult::Error(bitcoin_units::result::error::NumOpError)
 pub bitcoin_units::NumOpResult::Valid(T)
