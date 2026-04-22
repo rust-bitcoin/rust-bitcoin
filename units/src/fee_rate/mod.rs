@@ -65,6 +65,16 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
     #[inline]
+    pub const fn from_sat_per_kwu(sat_kwu: u64) -> NumOpResult<Self> {
+        // No `map()` in const context.
+        match sat_kwu.checked_mul(4_000) {
+            Some(fee_rate) => R::Valid(Self::from_sat_per_mvb(fee_rate)),
+            None => R::Error(E::while_doing(MathOp::Mul)),
+        }
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
+    #[inline]
     pub const fn from_sat_per_kwu_u32(sat_kwu: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_kwu)) * 4_000;
         Self::from_sat_per_mvb(fee_rate)
@@ -74,6 +84,16 @@ impl FeeRate {
     #[inline]
     pub const fn from_per_kwu(rate: Amount) -> Self {
         Self::from_sat_per_mvb(rate.to_sat() * 4_000)
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
+    #[inline]
+    pub const fn from_sat_per_vb(sat_vb: u64) -> NumOpResult<Self> {
+        // No `map()` in const context.
+        match sat_vb.checked_mul(1_000_000) {
+            Some(fee_rate) => R::Valid(Self::from_sat_per_mvb(fee_rate)),
+            None => R::Error(E::while_doing(MathOp::Mul)),
+        }
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
@@ -89,6 +109,16 @@ impl FeeRate {
         // No `map()` in const context.
         match rate.to_sat().checked_mul(1_000_000) {
             Some(per_mvb) => R::Valid(Self::from_sat_per_mvb(per_mvb)),
+            None => R::Error(E::while_doing(MathOp::Mul)),
+        }
+    }
+
+    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
+    #[inline]
+    pub const fn from_sat_per_kvb(sat_kvb: u64) -> NumOpResult<Self> {
+        // No `map()` in const context.
+        match sat_kvb.checked_mul(1_000) {
+            Some(fee_rate) => R::Valid(Self::from_sat_per_mvb(fee_rate)),
             None => R::Error(E::while_doing(MathOp::Mul)),
         }
     }
@@ -396,15 +426,37 @@ mod tests {
     }
 
     #[test]
+    fn fee_rate_from_sat_per_vb() {
+        let fee_rate = FeeRate::from_sat_per_vb(10).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu_u32(2500));
+    }
+
+    #[test]
     fn fee_rate_from_sat_per_vb_u32() {
         let fee_rate = FeeRate::from_sat_per_vb_u32(10);
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu_u32(2500));
     }
 
     #[test]
+    fn fee_rate_from_sat_per_kvb() {
+        let fee_rate = FeeRate::from_sat_per_kvb(11).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(11_000));
+        // More than 21M btc/kvB but still in range of u64
+        let fee_rate = FeeRate::from_sat_per_kvb(16_800_000_000_000_000).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(16_800_000_000_000_000_000));
+    }
+
+    #[test]
     fn fee_rate_from_sat_per_kvb_u32() {
         let fee_rate = FeeRate::from_sat_per_kvb_u32(11);
         assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(11_000));
+    }
+
+    #[test]
+    fn fee_rate_from_sat_per_kwu() {
+        // More than 21M btc/kwu but still in range of u64
+        let fee_rate = FeeRate::from_sat_per_kwu(4_200_000_000_000_000).unwrap();
+        assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(16_800_000_000_000_000_000));
     }
 
     #[test]

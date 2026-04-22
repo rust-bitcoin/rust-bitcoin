@@ -619,12 +619,14 @@ impl encoding::Decodable for FeeFilter {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeFilter {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        const MAX_SAT_PER_KVB: u64 = 18_446_744_073_709_551;
+
         let choice = u.int_in_range(0..=3)?;
         match choice {
             0 => Ok(Self(FeeRate::MIN)),
             1 => Ok(Self(FeeRate::BROADCAST_MIN)),
             2 => Ok(Self(FeeRate::DUST)),
-            _ => Ok(Self(FeeRate::from_sat_per_kvb_u32(u.int_in_range(0..=u32::MAX)?))),
+            _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=MAX_SAT_PER_KVB)?).unwrap())),
         }
     }
 }
