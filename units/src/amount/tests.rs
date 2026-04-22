@@ -287,7 +287,7 @@ fn positive_sub() {
 }
 
 #[cfg(feature = "alloc")]
-const ONE_SAT_PER_KWU: FeeRate = FeeRate::from_sat_per_kwu(1);
+const ONE_SAT_PER_KWU: FeeRate = FeeRate::from_sat_per_kwu_u32(1);
 
 #[test]
 #[cfg(feature = "alloc")]
@@ -331,7 +331,7 @@ fn amount_checked_div_by_weight_floor() {
 #[cfg(feature = "alloc")]
 fn amount_checked_div_by_fee_rate() {
     let amount = sat(1000);
-    let fee_rate = FeeRate::from_sat_per_kwu(2);
+    let fee_rate = FeeRate::from_sat_per_kwu_u32(2);
 
     // Test floor division
     let weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
@@ -344,7 +344,7 @@ fn amount_checked_div_by_fee_rate() {
 
     // Test truncation behavior
     let amount = sat(1000);
-    let fee_rate = FeeRate::from_sat_per_kwu(3);
+    let fee_rate = FeeRate::from_sat_per_kwu_u32(3);
     let floor_weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
     let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
     assert_eq!(floor_weight, Weight::from_wu(333_333));
@@ -366,7 +366,7 @@ fn amount_checked_div_by_fee_rate() {
 fn div_by_fee_rate_floor_preserves_mvb_precision() {
     // 1001 sat/kvb is 1001 sat per 4,000,000 wu, so a 1000 sat budget funds at most
     // floor(1000 * 4,000,000 / 1,001,000) = 3996 wu.
-    let weight = sat(1000).div_by_fee_rate_floor(FeeRate::from_sat_per_kvb(1001)).unwrap();
+    let weight = sat(1000).div_by_fee_rate_floor(FeeRate::from_sat_per_kvb_u32(1001)).unwrap();
     assert_eq!(weight, Weight::from_wu(3996));
 
     // A tiny fee rate over the maximum amount overflows Weight and must error.
