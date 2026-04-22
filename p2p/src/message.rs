@@ -474,8 +474,7 @@ crate::decoder_newtype! {
             // We can't directly construct using kvb with any public constructors on FeeRate
             // because the rate can be up to Amount::MAX_MONEY which overflows all of them.
             // Instead, we construct a 1 sat/kvb and multiply by our kvb.
-            let fee_rate = FeeRate::from_sat_per_kvb_u32(1)
-                .checked_mul(kvb)
+            let fee_rate = FeeRate::from_sat_per_kvb(kvb)
                 .expect("Amount::MAX_MONEY * 1000 < u64::MAX");
 
             Ok(FeeFilter(fee_rate))
@@ -490,12 +489,14 @@ impl encoding::Decode for FeeFilter {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeFilter {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        const MAX_SAT_PER_KVB: u64 = 18_446_744_073_709_551;
+
         let choice = u.int_in_range(0..=3)?;
         match choice {
             0 => Ok(Self(FeeRate::MIN)),
             1 => Ok(Self(FeeRate::BROADCAST_MIN)),
             2 => Ok(Self(FeeRate::DUST)),
-            _ => Ok(Self(FeeRate::from_sat_per_kvb_u32(u.int_in_range(0..=u32::MAX)?))),
+            _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=MAX_SAT_PER_KVB)?).unwrap())),
         }
     }
 }
@@ -2848,7 +2849,7 @@ mod test {
         );
         let bytes = max_money.to_le_bytes();
         let max_feerate = FeeFilter(
-            FeeRate::from_sat_per_kvb_u32(1).checked_mul(Amount::MAX_MONEY.to_sat()).unwrap(),
+            FeeRate::from_sat_per_kvb(Amount::MAX_MONEY.to_sat()).unwrap(),
         );
         assert_eq!(encoding::decode_from_slice::<FeeFilter>(&bytes).unwrap(), max_feerate);
 
