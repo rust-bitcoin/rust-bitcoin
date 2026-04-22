@@ -269,8 +269,7 @@ mod tests {
         assert_eq!(ceil_weight, Weight::from_wu(333_334));
 
         // Test that division by zero returns None
-        let zero_rate = FeeRate::from_sat_per_kwu(0);
-        assert!(amount.div_by_fee_rate_floor(zero_rate).is_error());
-        assert!(amount.div_by_fee_rate_ceil(zero_rate).is_error());
+        assert!(amount.div_by_fee_rate_floor(FeeRate::ZERO).is_error());
+        assert!(amount.div_by_fee_rate_ceil(FeeRate::ZERO).is_error());
     }
 }
