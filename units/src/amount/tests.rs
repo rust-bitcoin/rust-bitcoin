@@ -287,7 +287,7 @@ fn positive_sub() {
 }
 
 #[cfg(feature = "alloc")]
-const ONE_SAT_PER_KWU: FeeRate = FeeRate::from_sat_per_kwu(1);
+const ONE_SAT_PER_KWU: FeeRate = FeeRate::from_sat_per_kwu_u32(1);
 
 #[test]
 #[cfg(feature = "alloc")]
@@ -331,7 +331,7 @@ fn amount_checked_div_by_weight_floor() {
 #[cfg(feature = "alloc")]
 fn amount_checked_div_by_fee_rate() {
     let amount = sat(1000);
-    let fee_rate = FeeRate::from_sat_per_kwu(2);
+    let fee_rate = FeeRate::from_sat_per_kwu_u32(2);
 
     // Test floor division
     let weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
@@ -344,7 +344,7 @@ fn amount_checked_div_by_fee_rate() {
 
     // Test truncation behavior
     let amount = sat(1000);
-    let fee_rate = FeeRate::from_sat_per_kwu(3);
+    let fee_rate = FeeRate::from_sat_per_kwu_u32(3);
     let floor_weight = amount.div_by_fee_rate_floor(fee_rate).unwrap();
     let ceil_weight = amount.div_by_fee_rate_ceil(fee_rate).unwrap();
     assert_eq!(floor_weight, Weight::from_wu(333_333));
