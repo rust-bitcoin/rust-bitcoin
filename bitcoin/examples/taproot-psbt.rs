@@ -1,5 +1,9 @@
 //! Example of taproot PSBT workflow
 
+// The `bitcoin::psbt` module is deprecated. For a drop in replacement
+// consider https://git.rust-bitcoin.org/rust-bitcoin/rust-psbt
+#![allow(deprecated)]
+
 // We use the alias `alias bt='bitcoin-cli -regtest'` for brevity.
 
 // Step 0 - Wipe the `regtest` data directory to start from a clean slate.

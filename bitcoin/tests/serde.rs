@@ -32,7 +32,9 @@ use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use bitcoin::hex::FromHex;
+#[allow(deprecated)]           // psbt module is deprecated.
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
+#[allow(deprecated)]           // psbt module is deprecated.
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
@@ -218,6 +220,7 @@ fn serde_regression_public_key() {
 }
 
 #[test]
+#[allow(deprecated)]           // psbt module is deprecated.
 fn serde_regression_psbt() {
     let tx = Transaction {
         version: transaction::Version::ONE,
@@ -321,6 +324,7 @@ fn serde_regression_psbt() {
 }
 
 #[test]
+#[allow(deprecated)]           // psbt module is deprecated.
 fn serde_regression_raw_pair() {
     let pair = Pair {
         key: Key { type_value: 1u8, key: vec![0u8, 1u8, 2u8, 3u8] },
@@ -332,6 +336,7 @@ fn serde_regression_raw_pair() {
 }
 
 #[test]
+#[allow(deprecated)]           // psbt module is deprecated.
 fn serde_regression_proprietary_key() {
     let key = ProprietaryKey {
         prefix: vec![0u8, 1u8, 2u8, 3u8],

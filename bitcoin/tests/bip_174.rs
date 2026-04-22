@@ -1,6 +1,10 @@
 //! Tests PSBT integration vectors from BIP 174
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#test-vectors>
 
+// The `bitcoin::psbt` module is deprecated. For a drop in replacement
+// consider https://git.rust-bitcoin.org/rust-bitcoin/rust-psbt
+#![allow(deprecated)]
+
 use std::collections::BTreeMap;
 use std::str::FromStr;
 

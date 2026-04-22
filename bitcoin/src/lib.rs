@@ -109,6 +109,7 @@ pub mod merkle_tree;
 pub mod network;
 pub mod policy;
 pub mod pow;
+#[deprecated(since = "0.32.9", note = "Please see https://git.rust-bitcoin.org/rust-bitcoin/rust-psbt")]
 pub mod psbt;
 pub mod sign_message;
 pub mod taproot;

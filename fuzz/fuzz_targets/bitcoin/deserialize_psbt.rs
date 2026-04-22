@@ -1,5 +1,8 @@
 use honggfuzz::fuzz;
 
+// The `bitcoin::psbt` module is deprecated. For a drop in replacement
+// consider https://git.rust-bitcoin.org/rust-bitcoin/rust-psbt
+#[allow(deprecated)]
 fn do_test(data: &[u8]) {
     let psbt: Result<bitcoin::psbt::Psbt, _> = bitcoin::psbt::Psbt::deserialize(data);
     match psbt {
