@@ -58,14 +58,14 @@ impl FeeRate {
     /// The minimum fee rate required to broadcast a transaction.
     ///
     /// The value matches the default Bitcoin Core policy at the time of library release.
-    pub const BROADCAST_MIN: Self = Self::from_sat_per_vb(1);
+    pub const BROADCAST_MIN: Self = Self::from_sat_per_vb_u32(1);
 
     /// The fee rate used to compute dust amount.
-    pub const DUST: Self = Self::from_sat_per_vb(3);
+    pub const DUST: Self = Self::from_sat_per_vb_u32(3);
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
     #[inline]
-    pub const fn from_sat_per_kwu(sat_kwu: u32) -> Self {
+    pub const fn from_sat_per_kwu_u32(sat_kwu: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_kwu)) * 4_000;
         Self::from_sat_per_mvb(fee_rate)
     }
@@ -78,7 +78,7 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
     #[inline]
-    pub const fn from_sat_per_vb(sat_vb: u32) -> Self {
+    pub const fn from_sat_per_vb_u32(sat_vb: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_vb)) * 1_000_000;
         Self::from_sat_per_mvb(fee_rate)
     }
@@ -95,7 +95,7 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     #[inline]
-    pub const fn from_sat_per_kvb(sat_kvb: u32) -> Self {
+    pub const fn from_sat_per_kvb_u32(sat_kvb: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_kvb)) * 1_000;
         Self::from_sat_per_mvb(fee_rate)
     }
@@ -296,17 +296,17 @@ mod tests {
 
     use super::*;
 
-    const ONE: FeeRate = FeeRate::from_sat_per_kwu(1);
-    const TWO: FeeRate = FeeRate::from_sat_per_kwu(2);
-    const THREE: FeeRate = FeeRate::from_sat_per_kwu(3);
-    const TEN: FeeRate = FeeRate::from_sat_per_kwu(10);
-    const ONE_HUNDRED: FeeRate = FeeRate::from_sat_per_kwu(100);
+    const ONE: FeeRate = FeeRate::from_sat_per_kwu_u32(1);
+    const TWO: FeeRate = FeeRate::from_sat_per_kwu_u32(2);
+    const THREE: FeeRate = FeeRate::from_sat_per_kwu_u32(3);
+    const TEN: FeeRate = FeeRate::from_sat_per_kwu_u32(10);
+    const ONE_HUNDRED: FeeRate = FeeRate::from_sat_per_kwu_u32(100);
 
     #[test]
     #[allow(clippy::op_ref)]
     fn feerate_div_nonzero() {
 
-        let rate = FeeRate::from_sat_per_kwu(200);
+        let rate = FeeRate::from_sat_per_kwu_u32(200);
         let divisor = NonZeroU64::new(2).unwrap();
         assert_eq!(rate / divisor, ONE_HUNDRED);
         assert_eq!(&rate / &divisor, ONE_HUNDRED);
@@ -373,7 +373,7 @@ mod tests {
         assert_eq!(ONE.checked_add(TWO).unwrap(), THREE);
 
         // Sanity check - no overflow adding one to per kvb max.
-        let _ = FeeRate::from_sat_per_kvb(u32::MAX).checked_add(ONE).unwrap();
+        let _ = FeeRate::from_sat_per_kvb_u32(u32::MAX).checked_add(ONE).unwrap();
         let fee_rate = FeeRate::from_sat_per_mvb(u64::MAX).checked_add(ONE);
         assert!(fee_rate.is_none());
     }
@@ -396,14 +396,14 @@ mod tests {
     }
 
     #[test]
-    fn fee_rate_from_sat_per_vb() {
-        let fee_rate = FeeRate::from_sat_per_vb(10);
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(2500));
+    fn fee_rate_from_sat_per_vb_u32() {
+        let fee_rate = FeeRate::from_sat_per_vb_u32(10);
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu_u32(2500));
     }
 
     #[test]
-    fn fee_rate_from_sat_per_kvb() {
-        let fee_rate = FeeRate::from_sat_per_kvb(11);
+    fn fee_rate_from_sat_per_kvb_u32() {
+        let fee_rate = FeeRate::from_sat_per_kvb_u32(11);
         assert_eq!(fee_rate, FeeRate::from_sat_per_mvb(11_000));
     }
 

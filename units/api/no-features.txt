@@ -2719,9 +2719,9 @@ pub fn bitcoin_units::FeeRate::fee_wu(self, weight: bitcoin_units::Weight) -> co
 pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> Self
 pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> Self
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
-pub const fn bitcoin_units::FeeRate::from_sat_per_kvb(sat_kvb: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_kwu(sat_kwu: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_vb(sat_vb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kvb_u32(sat_kvb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kwu_u32(sat_kwu: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_vb_u32(sat_vb: u32) -> Self
 pub const fn bitcoin_units::FeeRate::mul_by_weight(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::FeeRate::to_fee(self, weight: bitcoin_units::Weight) -> bitcoin_units::Amount
 pub const fn bitcoin_units::FeeRate::to_sat_per_kvb_ceil(self) -> u64
@@ -8371,9 +8371,9 @@ pub fn bitcoin_units::FeeRate::fee_wu(self, weight: bitcoin_units::Weight) -> co
 pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> Self
 pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> Self
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
-pub const fn bitcoin_units::FeeRate::from_sat_per_kvb(sat_kvb: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_kwu(sat_kwu: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_vb(sat_vb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kvb_u32(sat_kvb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kwu_u32(sat_kwu: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_vb_u32(sat_vb: u32) -> Self
 pub const fn bitcoin_units::FeeRate::mul_by_weight(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::FeeRate::to_fee(self, weight: bitcoin_units::Weight) -> bitcoin_units::Amount
 pub const fn bitcoin_units::FeeRate::to_sat_per_kvb_ceil(self) -> u64

@@ -549,7 +549,7 @@ impl Amount {
     /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(200);
     /// let fee_rate = amount.div_by_weight_ceil(weight).expect("valid fee rate");
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(50));
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu_u32(50));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     pub const fn div_by_weight_ceil(self, weight: Weight) -> NumOpResult<FeeRate> {

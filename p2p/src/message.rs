@@ -602,7 +602,7 @@ impl encoding::Decoder for FeeFilterDecoder {
 
         // BIP-0133 specifies feefilter as int64_t (signed), but negative values and values
         // exceeding u32::MAX are invalid for fee rates. We saturate both cases to FeeRate::MAX.
-        let fee_rate = kvb.try_into().ok().map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb);
+        let fee_rate = kvb.try_into().ok().map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb_u32);
 
         Ok(FeeFilter(fee_rate))
     }
@@ -624,7 +624,7 @@ impl<'a> Arbitrary<'a> for FeeFilter {
             0 => Ok(Self(FeeRate::MIN)),
             1 => Ok(Self(FeeRate::BROADCAST_MIN)),
             2 => Ok(Self(FeeRate::DUST)),
-            _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=u32::MAX)?))),
+            _ => Ok(Self(FeeRate::from_sat_per_kvb_u32(u.int_in_range(0..=u32::MAX)?))),
         }
     }
 }
