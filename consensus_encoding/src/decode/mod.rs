@@ -20,6 +20,7 @@ use crate::{DecodeError, UnconsumedError};
 ///
 /// struct Foo([u8; 4]);
 ///
+/// #[derive(Default)]
 /// struct FooDecoder(ArrayDecoder<4>);
 ///
 /// impl Decoder for FooDecoder {
@@ -43,10 +44,12 @@ use crate::{DecodeError, UnconsumedError};
 /// ```
 pub trait Decodable {
     /// Associated decoder for the type.
-    type Decoder: Decoder<Output = Self>;
+    type Decoder: Decoder<Output = Self> + Default;
 
     /// Constructs a "default decoder" for the type.
-    fn decoder() -> Self::Decoder;
+    fn decoder() -> Self::Decoder {
+        Self::Decoder::default()
+    }
 }
 
 /// A push decoder for a consensus-decodable object.

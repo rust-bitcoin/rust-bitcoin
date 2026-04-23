@@ -192,7 +192,7 @@ impl encoding::ExactSizeEncoder for CommandStringEncoder {
 }
 
 /// Decoder for [`CommandString`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct CommandStringDecoder {
     inner: encoding::ArrayDecoder<12>,
 }
@@ -282,7 +282,7 @@ type V1MessageHeaderInnerDecoder = encoding::Decoder4<
 >;
 
 /// The Decoder for `V1MessageHeader`
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct V1MessageHeaderDecoder(V1MessageHeaderInnerDecoder);
 
 impl encoding::Decoder for V1MessageHeaderDecoder {
@@ -357,7 +357,7 @@ impl encoding::Encodable for InventoryPayload {
 type InventoryInnerDecoder = VecDecoder<message_blockdata::Inventory>;
 
 /// Decoder type for [`InventoryPayload`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct InventoryPayloadDecoder(InventoryInnerDecoder);
 
 impl encoding::Decoder for InventoryPayloadDecoder {
@@ -409,7 +409,7 @@ impl encoding::Encodable for AddrPayload {
 type AddrPayloadInnerDecoder = VecDecoder<AddrV1Message>;
 
 /// Decoder type for [`AddrPayload`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct AddrPayloadDecoder(AddrPayloadInnerDecoder);
 
 impl encoding::Decoder for AddrPayloadDecoder {
@@ -462,7 +462,7 @@ impl encoding::Encodable for AddrV2Payload {
 type AddrV2PayloadInnerDecoder = VecDecoder<AddrV2Message>;
 
 /// Decoder type for [`AddrV2Payload`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct AddrV2PayloadDecoder(AddrV2PayloadInnerDecoder);
 
 impl encoding::Decoder for AddrV2PayloadDecoder {
@@ -656,7 +656,7 @@ impl encoding::Encodable for Ping {
 }
 
 /// The Decoder for [`Ping`]
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct PingDecoder(encoding::ArrayDecoder<8>);
 
 impl encoding::Decoder for PingDecoder {
@@ -713,7 +713,7 @@ impl encoding::Encodable for Pong {
 }
 
 /// The Decoder for [`Pong`]
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct PongDecoder(encoding::ArrayDecoder<8>);
 
 impl encoding::Decoder for PongDecoder {
@@ -1466,12 +1466,18 @@ enum DecoderState {
     },
 }
 
+impl Default for DecoderState {
+    fn default() -> Self {
+        Self::ReadingHeader { header_decoder: Default::default() }
+    }
+}
+
 /// Decoder for [`V1NetworkMessage`].
 ///
 /// This decoder implements a two-phase decoding process for Bitcoin V1 P2P messages.
 /// It first decodes the fixed-sized header. It then uses the payload length information
 /// to decode the dynamically sized network message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct V1NetworkMessageDecoder {
     state: DecoderState,
 }
@@ -1730,7 +1736,7 @@ impl encoding::Encodable for NetworkHeader {
 type NetworkHeaderInnerDecoder = Decoder2<HeaderDecoder, ArrayDecoder<1>>;
 
 /// The decoder type for a [`NetworkHeader`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
 
 impl encoding::Decoder for NetworkHeaderDecoder {
@@ -1815,7 +1821,7 @@ impl encoding::Encodable for HeadersMessage {
 type HeadersMessageInnerDecoder = VecDecoder<NetworkHeader>;
 
 /// The decoder type for a [`HeadersMessage`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct HeadersMessageDecoder(HeadersMessageInnerDecoder);
 
 impl encoding::Decoder for HeadersMessageDecoder {
@@ -2038,12 +2044,19 @@ enum V2NetworkMessageDecoderState {
     Errored,
 }
 
+impl Default for V2NetworkMessageDecoderState {
+    fn default() -> Self {
+        Self::ShortId(Default::default())
+    }
+}
+
 /// Decoder for [`V2NetworkMessage`].
 ///
 /// This decoder implements a multi-phase decoding process for Bitcoin V2 P2P messages.
 /// It first decodes the 1-byte short ID. For optimized messages (IDs 1-28), it dispatches
 /// directly to the payload decoder. For non-optimized messages (ID 0), it first reads the
 /// 12-byte command string before dispatching.
+#[derive(Default)]
 pub struct V2NetworkMessageDecoder {
     state: V2NetworkMessageDecoderState,
 }

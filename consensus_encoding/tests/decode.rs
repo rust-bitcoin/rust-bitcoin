@@ -236,6 +236,7 @@ impl Decodable for TestArray {
     fn decoder() -> Self::Decoder { TestArrayDecoder { inner: ArrayDecoder::new() } }
 }
 
+#[derive(Default)]
 struct TestArrayDecoder {
     inner: ArrayDecoder<4>,
 }
@@ -393,7 +394,7 @@ fn decode_from_read_unbuffered_extra_data() {
 struct Inner(u32);
 
 #[cfg(feature = "alloc")]
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct InnerDecoder(ArrayDecoder<4>);
 
 #[cfg(feature = "alloc")]

@@ -46,6 +46,7 @@ impl core::fmt::Display for CompositeError {
 }
 
 /// A wrapper decoder that converts the tuple output to [`CompositeData`].
+#[derive(Default)]
 struct CompositeDataDecoder {
     inner: Decoder2<ArrayDecoder<4>, ArrayDecoder<2>>,
 }

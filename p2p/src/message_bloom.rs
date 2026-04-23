@@ -71,7 +71,7 @@ type FilterLoadInnerDecoder =
     Decoder4<ByteVecDecoder, ArrayDecoder<4>, ArrayDecoder<4>, BloomFlagsDecoder>;
 
 /// The decoder for the [`FilterLoad`] message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct FilterLoadDecoder(FilterLoadInnerDecoder);
 
 impl encoding::Decoder for FilterLoadDecoder {
@@ -145,7 +145,7 @@ impl encoding::Encodable for BloomFlags {
 type BloomFlagsInnerDecoder = ArrayDecoder<1>;
 
 /// The decoder for [`BloomFlags`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct BloomFlagsDecoder(BloomFlagsInnerDecoder);
 
 impl BloomFlagsDecoder {
@@ -236,7 +236,7 @@ impl encoding::Encodable for FilterAdd {
 type FilterAddInnerDecoder = ByteVecDecoder;
 
 /// The decoder for the [`FilterAdd`] message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct FilterAddDecoder(FilterAddInnerDecoder);
 
 impl encoding::Decoder for FilterAddDecoder {

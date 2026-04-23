@@ -363,6 +363,7 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
 }
 
 /// A decoder which wraps two inner decoders and returns the output of both.
+#[derive(Default)]
 pub struct Decoder2<A, B>
 where
     A: Decoder,
@@ -378,6 +379,13 @@ enum Decoder2State<A: Decoder, B: Decoder> {
     Second(A::Output, B),
     /// Decoder has failed and cannot be used again.
     Errored,
+}
+
+// the `#[default]` attribute may only be used on unit enum variants
+impl<A: Decoder + Default, B: Decoder + Default> Default for Decoder2State<A, B> {
+    fn default() -> Self {
+        Self::First(A::default(), B::default())
+    }
 }
 
 impl<A, B> Decoder2<A, B>
@@ -496,6 +504,7 @@ where
 }
 
 /// A decoder which decodes three objects, one after the other.
+#[derive(Default)]
 pub struct Decoder3<A, B, C>
 where
     A: Decoder,
@@ -574,6 +583,7 @@ where
 }
 
 /// A decoder which decodes four objects, one after the other.
+#[derive(Default)]
 pub struct Decoder4<A, B, C, D>
 where
     A: Decoder,
@@ -662,6 +672,7 @@ where
 
 /// A decoder which decodes six objects, one after the other.
 #[allow(clippy::type_complexity)] // Nested composition is easier than flattened alternatives.
+#[derive(Default)]
 pub struct Decoder6<A, B, C, D, E, F>
 where
     A: Decoder,
@@ -893,7 +904,7 @@ mod tests {
 
     /// The decoder for the [`Inner`] type.
     #[cfg(feature = "alloc")]
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     pub struct InnerDecoder(ArrayDecoder<4>);
 
     #[cfg(feature = "alloc")]

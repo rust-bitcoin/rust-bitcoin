@@ -18,7 +18,7 @@ use encoding::{
 use hashes::{sha256, siphash24};
 use internals::array::ArrayExt as _;
 use io::{BufRead, Write};
-use primitives::block::{BlockHashDecoder, BlockHashEncoder, Header, HeaderDecoder, HeaderEncoder};
+use primitives::block::{BlockHashDecoder, BlockHashEncoder, HeaderDecoder, HeaderEncoder};
 use primitives::transaction::{TransactionDecoder, TransactionEncoder};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -75,7 +75,7 @@ impl encoding::Encodable for PrefilledTransaction {
 type PrefilledTransactionInnerDecoder = Decoder2<CompactSizeDecoder, TransactionDecoder>;
 
 /// The decoder for a [`PrefilledTransaction`] message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct PrefilledTransactionDecoder(PrefilledTransactionInnerDecoder);
 
 impl PrefilledTransactionDecoder {
@@ -245,7 +245,7 @@ impl encoding::Encodable for ShortId {
 type ShortIdInnerDecoder = ArrayDecoder<6>;
 
 /// Decoder type for a [`ShortId`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct ShortIdDecoder(ShortIdInnerDecoder);
 
 impl encoding::Decoder for ShortIdDecoder {
@@ -333,7 +333,7 @@ type HeaderAndShortIdsInnerDecoder =
     Decoder4<HeaderDecoder, ArrayDecoder<8>, VecDecoder<ShortId>, VecDecoder<PrefilledTransaction>>;
 
 /// Decoder type for the [`HeaderAndShortIds`] message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct HeaderAndShortIdsDecoder(HeaderAndShortIdsInnerDecoder);
 
 impl HeaderAndShortIdsDecoder {
@@ -504,7 +504,7 @@ impl encoding::Encodable for Offset {
     fn encoder(&self) -> Self::Encoder<'_> { CompactSizeEncoder::new(self.0) }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 struct OffsetDecoder(CompactSizeDecoder);
 
 impl encoding::Decoder for OffsetDecoder {
@@ -617,7 +617,7 @@ impl encoding::Encodable for BlockTransactionsRequest {
 type BlockTransactionsRequestInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Offset>>;
 
 /// The encoder type for a [`BlockTransactionsRequest`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct BlockTransactionsRequestDecoder(BlockTransactionsRequestInnerDecoder);
 
 impl encoding::Decoder for BlockTransactionsRequestDecoder {
@@ -732,7 +732,7 @@ impl encoding::Encodable for BlockTransactions {
 type BlockTransactionsInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Transaction>>;
 
 /// Decoder type for a [`BlockTransactions`] message.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct BlockTransactionsDecoder(BlockTransactionsInnerDecoder);
 
 impl encoding::Decoder for BlockTransactionsDecoder {

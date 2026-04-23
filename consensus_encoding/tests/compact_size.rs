@@ -24,6 +24,7 @@ impl Encodable for CompactSizeUsize {
 
 /// Wraps `CompactSizeDecoder` to produce `CompactSizeUsize`.
 #[cfg(feature = "alloc")]
+#[derive(Default)]
 struct CompactSizeUsizeDecoderWrapper(CompactSizeDecoder);
 
 #[cfg(feature = "alloc")]
@@ -61,6 +62,7 @@ impl Encodable for CompactSizeU64 {
 
 /// Wraps `CompactSizeU64Decoder` to produce `CompactSizeU64`.
 #[cfg(feature = "alloc")]
+#[derive(Default)]
 struct CompactSizeU64DecoderWrapper(CompactSizeU64Decoder);
 
 #[cfg(feature = "alloc")]
