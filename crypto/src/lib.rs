@@ -15,15 +15,12 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub extern crate hex_stable as hex;
-
 pub extern crate base58;
-
-pub extern crate network;
-
+pub extern crate hex_stable as hex;
 pub extern crate io;
-
+pub extern crate network;
 pub extern crate secp256k1;
+pub extern crate taproot_primitives;
 
 #[cfg(feature = "alloc")]
 pub mod ecdsa;
