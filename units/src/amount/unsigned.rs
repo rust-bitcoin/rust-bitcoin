@@ -628,9 +628,6 @@ impl encoding::Encodable for Amount {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for Amount {
     type Decoder = AmountDecoder;
-
-    #[inline]
-    fn decoder() -> Self::Decoder { AmountDecoder(encoding::ArrayDecoder::<8>::new()) }
 }
 
 #[cfg(feature = "encoding")]

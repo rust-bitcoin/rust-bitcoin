@@ -233,7 +233,6 @@ struct TestArray([u8; 4]);
 
 impl Decodable for TestArray {
     type Decoder = TestArrayDecoder;
-    fn decoder() -> Self::Decoder { TestArrayDecoder { inner: ArrayDecoder::new() } }
 }
 
 #[derive(Default)]
@@ -417,7 +416,6 @@ impl Decoder for InnerDecoder {
 #[cfg(feature = "alloc")]
 impl Decodable for Inner {
     type Decoder = InnerDecoder;
-    fn decoder() -> Self::Decoder { InnerDecoder(ArrayDecoder::<4>::new()) }
 }
 
 #[cfg(feature = "alloc")]
@@ -448,7 +446,6 @@ impl Decoder for TestDecoder {
 #[cfg(feature = "alloc")]
 impl Decodable for Test {
     type Decoder = TestDecoder;
-    fn decoder() -> Self::Decoder { TestDecoder(VecDecoder::new()) }
 }
 
 // Stress test the push_bytes impl by passing in a single byte slice repeatedly.

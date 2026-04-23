@@ -272,9 +272,6 @@ impl encoding::Encodable for Sequence {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for Sequence {
     type Decoder = SequenceDecoder;
-
-    #[inline]
-    fn decoder() -> Self::Decoder { SequenceDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 #[cfg(feature = "encoding")]

@@ -124,8 +124,6 @@ impl encoding::Decoder for FilterHashDecoder {
 
 impl encoding::Decodable for FilterHash {
     type Decoder = FilterHashDecoder;
-
-    fn decoder() -> Self::Decoder { FilterHashDecoder(ArrayDecoder::new()) }
 }
 
 /// Decoder for the [`FilterHeader`] type.
@@ -153,8 +151,6 @@ impl encoding::Decoder for FilterHeaderDecoder {
 
 impl encoding::Decodable for FilterHeader {
     type Decoder = FilterHeaderDecoder;
-
-    fn decoder() -> Self::Decoder { FilterHeaderDecoder(ArrayDecoder::new()) }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -227,14 +223,6 @@ impl encoding::Decoder for GetCFiltersDecoder {
 
 impl encoding::Decodable for GetCFilters {
     type Decoder = GetCFiltersDecoder;
-
-    fn decoder() -> Self::Decoder {
-        GetCFiltersDecoder(Decoder3::new(
-            ArrayDecoder::new(),
-            BlockHeightDecoder::new(),
-            BlockHashDecoder::new(),
-        ))
-    }
 }
 
 impl_consensus_encoding!(GetCFilters, filter_type, start_height, stop_hash);
@@ -307,14 +295,6 @@ impl encoding::Decoder for CFilterDecoder {
 
 impl encoding::Decodable for CFilter {
     type Decoder = CFilterDecoder;
-
-    fn decoder() -> Self::Decoder {
-        CFilterDecoder(Decoder3::new(
-            ArrayDecoder::new(),
-            BlockHashDecoder::new(),
-            ByteVecDecoder::new(),
-        ))
-    }
 }
 
 impl_consensus_encoding!(CFilter, filter_type, block_hash, filter);
@@ -375,14 +355,6 @@ impl encoding::Decoder for GetCFHeadersDecoder {
 
 impl encoding::Decodable for GetCFHeaders {
     type Decoder = GetCFHeadersDecoder;
-
-    fn decoder() -> Self::Decoder {
-        GetCFHeadersDecoder(Decoder3::new(
-            ArrayDecoder::new(),
-            BlockHeightDecoder::new(),
-            BlockHashDecoder::new(),
-        ))
-    }
 }
 
 impl_consensus_encoding!(GetCFHeaders, filter_type, start_height, stop_hash);
@@ -463,15 +435,6 @@ impl encoding::Decoder for CFHeadersDecoder {
 
 impl encoding::Decodable for CFHeaders {
     type Decoder = CFHeadersDecoder;
-
-    fn decoder() -> Self::Decoder {
-        CFHeadersDecoder(Decoder4::new(
-            ArrayDecoder::new(),
-            BlockHashDecoder::new(),
-            FilterHeader::decoder(),
-            VecDecoder::new(),
-        ))
-    }
 }
 
 impl_consensus_encoding!(CFHeaders, filter_type, stop_hash, previous_filter_header, filter_hashes);
@@ -529,10 +492,6 @@ impl encoding::Decoder for GetCFCheckptDecoder {
 
 impl encoding::Decodable for GetCFCheckpt {
     type Decoder = GetCFCheckptDecoder;
-
-    fn decoder() -> Self::Decoder {
-        GetCFCheckptDecoder(Decoder2::new(ArrayDecoder::new(), BlockHashDecoder::new()))
-    }
 }
 
 impl_consensus_encoding!(GetCFCheckpt, filter_type, stop_hash);
@@ -605,14 +564,6 @@ impl encoding::Decoder for CFCheckptDecoder {
 
 impl encoding::Decodable for CFCheckpt {
     type Decoder = CFCheckptDecoder;
-
-    fn decoder() -> Self::Decoder {
-        CFCheckptDecoder(Decoder3::new(
-            ArrayDecoder::new(),
-            BlockHashDecoder::new(),
-            VecDecoder::new(),
-        ))
-    }
 }
 
 impl_consensus_encoding!(CFCheckpt, filter_type, stop_hash, filter_headers);

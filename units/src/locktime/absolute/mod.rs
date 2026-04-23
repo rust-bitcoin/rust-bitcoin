@@ -411,9 +411,6 @@ impl encoding::Encodable for LockTime {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for LockTime {
     type Decoder = LockTimeDecoder;
-
-    #[inline]
-    fn decoder() -> Self::Decoder { LockTimeDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 #[cfg(feature = "encoding")]

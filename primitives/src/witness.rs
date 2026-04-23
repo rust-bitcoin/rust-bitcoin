@@ -526,7 +526,6 @@ impl encoding::Decoder for WitnessDecoder {
 
 impl encoding::Decodable for Witness {
     type Decoder = WitnessDecoder;
-    fn decoder() -> Self::Decoder { WitnessDecoder::default() }
 }
 
 // Note: we use `Borrow` in the following `PartialEq` impls specifically because of its additional

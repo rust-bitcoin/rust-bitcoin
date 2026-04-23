@@ -227,13 +227,6 @@ impl encoding::Decoder for AddressDecoder {
 
 impl encoding::Decodable for Address {
     type Decoder = AddressDecoder;
-    fn decoder() -> Self::Decoder {
-        AddressDecoder(encoding::Decoder3::new(
-            ServiceFlags::decoder(),
-            encoding::ArrayDecoder::<16>::new(),
-            encoding::ArrayDecoder::<2>::new(),
-        ))
-    }
 }
 
 /// Data type received in an `addr` message.
@@ -290,13 +283,6 @@ impl encoding::Decoder for AddrV1MessageDecoder {
 
 impl encoding::Decodable for AddrV1Message {
     type Decoder = AddrV1MessageDecoder;
-
-    fn decoder() -> Self::Decoder {
-        AddrV1MessageDecoder(AddrV1MessageInnerDecoder::new(
-            ArrayDecoder::new(),
-            Address::decoder(),
-        ))
-    }
 }
 
 crate::consensus::impl_consensus_encoding!(AddrV1Message, time, address);
@@ -634,10 +620,6 @@ impl encoding::Decoder for AddrV2Decoder {
 
 impl encoding::Decodable for AddrV2 {
     type Decoder = AddrV2Decoder;
-
-    fn decoder() -> Self::Decoder {
-        AddrV2Decoder(Decoder2::new(ArrayDecoder::new(), ByteVecDecoder::new()))
-    }
 }
 
 impl Encodable for AddrV2 {
@@ -849,15 +831,6 @@ impl encoding::Decoder for AddrV2MessageDecoder {
 
 impl encoding::Decodable for AddrV2Message {
     type Decoder = AddrV2MessageDecoder;
-
-    fn decoder() -> Self::Decoder {
-        AddrV2MessageDecoder(AddrV2MessageInnerDecoder::new(
-            ArrayDecoder::new(),
-            CompactSizeU64Decoder::new(),
-            AddrV2::decoder(),
-            ArrayDecoder::new(),
-        ))
-    }
 }
 
 /// Error types for address messages.

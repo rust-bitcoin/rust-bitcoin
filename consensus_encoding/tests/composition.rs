@@ -79,8 +79,6 @@ impl Decoder for CompositeDataDecoder {
 
 impl Decodable for CompositeData {
     type Decoder = CompositeDataDecoder;
-
-    fn decoder() -> Self::Decoder { CompositeDataDecoder::new() }
 }
 
 #[test]

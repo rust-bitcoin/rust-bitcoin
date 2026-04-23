@@ -176,9 +176,6 @@ impl encoding::Decoder for InventoryDecoder {
 
 impl encoding::Decodable for Inventory {
     type Decoder = InventoryDecoder;
-    fn decoder() -> Self::Decoder {
-        InventoryDecoder(Decoder2::new(ArrayDecoder::<4>::new(), ArrayDecoder::<32>::new()))
-    }
 }
 
 /// A block locator.
@@ -301,7 +298,6 @@ impl encoding::Decoder for BlockLocatorDecoder {
 
 impl encoding::Decodable for BlockLocator {
     type Decoder = BlockLocatorDecoder;
-    fn decoder() -> Self::Decoder { BlockLocatorDecoder::new() }
 }
 
 // Some simple messages
@@ -426,24 +422,10 @@ impl encoding::Decoder for GetBlocksMessageDecoder {
 
 impl encoding::Decodable for GetBlocksMessage {
     type Decoder = GetBlocksMessageDecoder;
-    fn decoder() -> Self::Decoder {
-        GetBlocksMessageDecoder(Decoder3::new(
-            ProtocolVersionDecoder::new(),
-            BlockLocatorDecoder::new(),
-            BlockHashDecoder::new(),
-        ))
-    }
 }
 
 impl encoding::Decodable for GetHeadersMessage {
     type Decoder = GetHeadersMessageDecoder;
-    fn decoder() -> Self::Decoder {
-        GetHeadersMessageDecoder(Decoder3::new(
-            ProtocolVersionDecoder::new(),
-            BlockLocatorDecoder::new(),
-            BlockHashDecoder::new(),
-        ))
-    }
 }
 
 impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);

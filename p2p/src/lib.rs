@@ -178,7 +178,6 @@ impl encoding::Decoder for ProtocolVersionDecoder {
 
 impl encoding::Decodable for ProtocolVersion {
     type Decoder = ProtocolVersionDecoder;
-    fn decoder() -> Self::Decoder { ProtocolVersionDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 /// Flags to indicate which network services a node supports.
@@ -387,7 +386,6 @@ impl encoding::Decoder for ServiceFlagsDecoder {
 
 impl encoding::Decodable for ServiceFlags {
     type Decoder = ServiceFlagsDecoder;
-    fn decoder() -> Self::Decoder { ServiceFlagsDecoder(encoding::ArrayDecoder::<8>::new()) }
 }
 
 /// Network magic bytes to identify the cryptocurrency network the message was intended for.
@@ -533,8 +531,6 @@ impl encoding::Decoder for MagicDecoder {
 
 impl encoding::Decodable for Magic {
     type Decoder = MagicDecoder;
-
-    fn decoder() -> Self::Decoder { MagicDecoder(ArrayDecoder::new()) }
 }
 
 impl AsRef<[u8]> for Magic {

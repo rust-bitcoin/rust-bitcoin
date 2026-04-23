@@ -109,13 +109,6 @@ impl encoding::Decoder for PrefilledTransactionDecoder {
 
 impl encoding::Decodable for PrefilledTransaction {
     type Decoder = PrefilledTransactionDecoder;
-
-    fn decoder() -> Self::Decoder {
-        PrefilledTransactionDecoder(Decoder2::new(
-            CompactSizeDecoder::new(),
-            TransactionDecoder::new(),
-        ))
-    }
 }
 
 impl Encodable for PrefilledTransaction {
@@ -269,8 +262,6 @@ impl encoding::Decoder for ShortIdDecoder {
 
 impl encoding::Decodable for ShortId {
     type Decoder = ShortIdDecoder;
-
-    fn decoder() -> Self::Decoder { ShortIdDecoder(ShortIdInnerDecoder::new()) }
 }
 
 /// A structure to relay a block header, short IDs, and a select few transactions.
@@ -373,15 +364,6 @@ impl encoding::Decoder for HeaderAndShortIdsDecoder {
 
 impl encoding::Decodable for HeaderAndShortIds {
     type Decoder = HeaderAndShortIdsDecoder;
-
-    fn decoder() -> Self::Decoder {
-        HeaderAndShortIdsDecoder(Decoder4::new(
-            Header::decoder(),
-            ArrayDecoder::new(),
-            VecDecoder::<ShortId>::new(),
-            VecDecoder::<PrefilledTransaction>::new(),
-        ))
-    }
 }
 
 impl Decodable for HeaderAndShortIds {
@@ -525,8 +507,6 @@ impl encoding::Decoder for OffsetDecoder {
 
 impl encoding::Decodable for Offset {
     type Decoder = OffsetDecoder;
-
-    fn decoder() -> Self::Decoder { OffsetDecoder(CompactSizeDecoder::new()) }
 }
 
 /// A [`BlockTransactionsRequest`] structure is used to list transaction indexes
@@ -641,10 +621,6 @@ impl encoding::Decoder for BlockTransactionsRequestDecoder {
 
 impl encoding::Decodable for BlockTransactionsRequest {
     type Decoder = BlockTransactionsRequestDecoder;
-
-    fn decoder() -> Self::Decoder {
-        BlockTransactionsRequestDecoder(Decoder2::new(BlockHashDecoder::new(), VecDecoder::new()))
-    }
 }
 
 impl Encodable for BlockTransactionsRequest {
@@ -756,13 +732,6 @@ impl encoding::Decoder for BlockTransactionsDecoder {
 
 impl encoding::Decodable for BlockTransactions {
     type Decoder = BlockTransactionsDecoder;
-
-    fn decoder() -> Self::Decoder {
-        BlockTransactionsDecoder(Decoder2::new(
-            BlockHashDecoder::new(),
-            VecDecoder::<Transaction>::new(),
-        ))
-    }
 }
 
 crate::consensus::impl_consensus_encoding!(BlockTransactions, block_hash, transactions);

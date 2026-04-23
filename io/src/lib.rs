@@ -806,7 +806,6 @@ mod tests {
 
     impl Decodable for TestArray {
         type Decoder = TestArrayDecoder;
-        fn decoder() -> Self::Decoder { TestArrayDecoder { inner: ArrayDecoder::new() } }
     }
 
     #[derive(Default)]

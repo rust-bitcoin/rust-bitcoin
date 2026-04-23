@@ -170,9 +170,6 @@ impl encoding::Decoder for MerkleBlockDecoder {
 
 impl encoding::Decodable for MerkleBlock {
     type Decoder = MerkleBlockDecoder;
-    fn decoder() -> Self::Decoder {
-        MerkleBlockDecoder(Decoder2::new(block::Header::decoder(), PartialMerkleTree::decoder()))
-    }
 }
 
 impl Encodable for MerkleBlock {
@@ -562,14 +559,6 @@ impl encoding::Decoder for PartialMerkleTreeDecoder {
 
 impl encoding::Decodable for PartialMerkleTree {
     type Decoder = PartialMerkleTreeDecoder;
-
-    fn decoder() -> Self::Decoder {
-        PartialMerkleTreeDecoder(Decoder3::new(
-            ArrayDecoder::new(),
-            VecDecoder::new(),
-            ByteVecDecoder::new(),
-        ))
-    }
 }
 
 impl Encodable for PartialMerkleTree {

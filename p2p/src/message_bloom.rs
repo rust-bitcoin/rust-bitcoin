@@ -100,15 +100,6 @@ impl encoding::Decoder for FilterLoadDecoder {
 
 impl encoding::Decodable for FilterLoad {
     type Decoder = FilterLoadDecoder;
-
-    fn decoder() -> Self::Decoder {
-        FilterLoadDecoder(Decoder4::new(
-            ByteVecDecoder::new(),
-            ArrayDecoder::new(),
-            ArrayDecoder::new(),
-            BloomFlags::decoder(),
-        ))
-    }
 }
 
 impl_consensus_encoding!(FilterLoad, filter, hash_funcs, tweak, flags);
@@ -183,8 +174,6 @@ impl encoding::Decoder for BloomFlagsDecoder {
 
 impl encoding::Decodable for BloomFlags {
     type Decoder = BloomFlagsDecoder;
-
-    fn decoder() -> Self::Decoder { BloomFlagsDecoder(ArrayDecoder::new()) }
 }
 
 impl Encodable for BloomFlags {
@@ -260,8 +249,6 @@ impl encoding::Decoder for FilterAddDecoder {
 
 impl encoding::Decodable for FilterAdd {
     type Decoder = FilterAddDecoder;
-
-    fn decoder() -> Self::Decoder { FilterAddDecoder(FilterAddInnerDecoder::new()) }
 }
 
 impl_consensus_encoding!(FilterAdd, data);

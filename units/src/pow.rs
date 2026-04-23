@@ -316,9 +316,6 @@ impl encoding::Encodable for CompactTarget {
 #[cfg(feature = "encoding")]
 impl encoding::Decodable for CompactTarget {
     type Decoder = CompactTargetDecoder;
-
-    #[inline]
-    fn decoder() -> Self::Decoder { CompactTargetDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 #[cfg(feature = "encoding")]

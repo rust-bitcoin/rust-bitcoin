@@ -213,7 +213,6 @@ impl<T> encoding::Decoder for ScriptBufDecoder<T> {
 
 impl<T> encoding::Decodable for ScriptBuf<T> {
     type Decoder = ScriptBufDecoder<T>;
-    fn decoder() -> Self::Decoder { ScriptBufDecoder(ByteVecDecoder::new(), PhantomData) }
 }
 
 #[cfg(feature = "arbitrary")]

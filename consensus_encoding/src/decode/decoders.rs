@@ -927,7 +927,6 @@ mod tests {
     #[cfg(feature = "alloc")]
     impl Decodable for Inner {
         type Decoder = InnerDecoder;
-        fn decoder() -> Self::Decoder { InnerDecoder(ArrayDecoder::<4>::new()) }
     }
 
     #[cfg(feature = "alloc")]
@@ -959,7 +958,6 @@ mod tests {
     #[cfg(feature = "alloc")]
     impl Decodable for Test {
         type Decoder = TestDecoder;
-        fn decoder() -> Self::Decoder { TestDecoder(VecDecoder::new()) }
     }
 
     #[test]

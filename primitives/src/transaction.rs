@@ -654,7 +654,6 @@ impl encoding::Decoder for TransactionDecoder {
 #[cfg(feature = "alloc")]
 impl encoding::Decodable for Transaction {
     type Decoder = TransactionDecoder;
-    fn decoder() -> Self::Decoder { TransactionDecoder::new() }
 }
 
 /// The state of the transiting decoder.
@@ -857,13 +856,6 @@ crate::decoder_newtype! {
 #[cfg(feature = "alloc")]
 impl encoding::Decodable for TxIn {
     type Decoder = TxInDecoder;
-    fn decoder() -> Self::Decoder {
-        TxInDecoder(Decoder3::new(
-            OutPointDecoder::new(),
-            ScriptSigBufDecoder::new(),
-            SequenceDecoder::new(),
-        ))
-    }
 }
 
 /// Bitcoin transaction output.
@@ -930,9 +922,6 @@ crate::decoder_newtype! {
 #[cfg(feature = "alloc")]
 impl encoding::Decodable for TxOut {
     type Decoder = TxOutDecoder;
-    fn decoder() -> Self::Decoder {
-        TxOutDecoder(Decoder2::new(AmountDecoder::new(), ScriptPubKeyBufDecoder::new()))
-    }
 }
 
 /// A reference to a transaction output.
@@ -1049,7 +1038,6 @@ crate::decoder_newtype! {
 
 impl encoding::Decodable for OutPoint {
     type Decoder = OutPointDecoder;
-    fn decoder() -> Self::Decoder { OutPointDecoder::default() }
 }
 
 #[cfg(feature = "serde")]
@@ -1274,7 +1262,6 @@ crate::decoder_newtype! {
 
 impl encoding::Decodable for Version {
     type Decoder = VersionDecoder;
-    fn decoder() -> Self::Decoder { VersionDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 /// Error types for Bitcoin transactions.

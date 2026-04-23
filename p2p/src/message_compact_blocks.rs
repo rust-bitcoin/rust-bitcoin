@@ -67,10 +67,6 @@ impl encoding::Decoder for SendCmpctDecoder {
 
 impl encoding::Decodable for SendCmpct {
     type Decoder = SendCmpctDecoder;
-
-    fn decoder() -> Self::Decoder {
-        SendCmpctDecoder(Decoder2::new(ArrayDecoder::new(), ArrayDecoder::new()))
-    }
 }
 
 impl_consensus_encoding!(SendCmpct, send_compact, version);

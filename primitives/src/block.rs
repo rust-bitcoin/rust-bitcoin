@@ -376,9 +376,6 @@ crate::decoder_newtype! {
 #[cfg(feature = "alloc")]
 impl encoding::Decodable for Block<Unchecked> {
     type Decoder = BlockDecoder;
-    fn decoder() -> Self::Decoder {
-        BlockDecoder(Decoder2::new(Header::decoder(), VecDecoder::<Transaction>::new()))
-    }
 }
 
 /// Computes the Merkle root for a list of transactions.
@@ -609,16 +606,6 @@ impl HeaderDecoder {
 
 impl encoding::Decodable for Header {
     type Decoder = HeaderDecoder;
-    fn decoder() -> Self::Decoder {
-        HeaderDecoder(Decoder6::new(
-            VersionDecoder::new(),
-            BlockHashDecoder::new(),
-            TxMerkleNodeDecoder::new(),
-            BlockTimeDecoder::new(),
-            CompactTargetDecoder::new(),
-            encoding::ArrayDecoder::new(),
-        ))
-    }
 }
 
 impl From<Header> for BlockHash {
@@ -760,7 +747,6 @@ crate::decoder_newtype! {
 
 impl encoding::Decodable for Version {
     type Decoder = VersionDecoder;
-    fn decoder() -> Self::Decoder { VersionDecoder(encoding::ArrayDecoder::<4>::new()) }
 }
 
 /// Error types for Bitcoin blocks.

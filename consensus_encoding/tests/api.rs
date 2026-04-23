@@ -91,7 +91,6 @@ impl Decoder for FooDecoder {
 
 impl Decodable for Foo {
     type Decoder = FooDecoder;
-    fn decoder() -> Self::Decoder { FooDecoder(ArrayDecoder::new()) }
 }
 
 /// A struct that includes all types that implement `Clone`.
