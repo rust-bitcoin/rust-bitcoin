@@ -8,11 +8,13 @@
 use core::borrow::Borrow;
 use core::ops::Deref;
 
+use crypto::sighash::TapTweakHashExt as _;
+
 use crate::internal_macros::define_extension_trait;
 use crate::script::{self, PushBytes, WitnessScriptBuf};
 #[cfg(feature = "secp-recovery")]
 use crate::sign_message::MessageSignature;
-use crate::taproot::{TapNodeHash, TapTweakHash, TapTweakHashExt as _};
+use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity, Verification};
