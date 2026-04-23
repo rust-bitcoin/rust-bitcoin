@@ -36,10 +36,6 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(feature = "alloc")]
-use crypto::key::UntweakedPublicKey;
-#[cfg(feature = "alloc")]
-use hashes::HashEngine;
 use hashes::{hash_newtype, sha256t, sha256t_tag};
 use secp256k1::Scalar;
 
@@ -122,26 +118,6 @@ impl From<TapLeafHash> for TapNodeHash {
 }
 
 impl TapTweakHash {
-    /// Constructs a new BIP-0341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
-    /// `P` is the internal key and `R` is the Merkle root.
-    #[cfg(feature = "alloc")]
-    pub fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self {
-        let internal_key = internal_key.into();
-        let mut eng = sha256t::Hash::<TapTweakTag>::engine();
-        // always hash the key
-        eng.input(&internal_key.serialize().0);
-        if let Some(h) = merkle_root {
-            eng.input(h.as_ref());
-        } else {
-            // nothing to hash
-        }
-        let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
-        Self::from_byte_array(inner.to_byte_array())
-    }
-
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
     #[allow(clippy::missing_panics_doc)]
     pub fn to_scalar(self) -> Scalar {
