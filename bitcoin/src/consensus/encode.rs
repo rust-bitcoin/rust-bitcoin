@@ -189,6 +189,110 @@ pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Erro
     Ok((rv, consumed))
 }
 
+/// Bridge encoder for the sans-I/O encoding trait.
+///
+/// This type appears in public associated types and is therefore part of the crate's public API.
+#[cfg(rust_v_1_65)]
+#[derive(Debug, Clone)]
+pub struct ConsensusEncoderBridge {
+    bytes: Vec<u8>,
+    done: bool,
+}
+
+#[cfg(rust_v_1_65)]
+impl ConsensusEncoderBridge {
+    /// Creates a bridge encoder from already-serialized bytes.
+    pub fn new(bytes: Vec<u8>) -> Self { Self { bytes, done: false } }
+}
+
+#[cfg(rust_v_1_65)]
+impl crate::encoding::Encoder for ConsensusEncoderBridge {
+    fn current_chunk(&self) -> &[u8] {
+        if self.done {
+            &[]
+        } else {
+            &self.bytes
+        }
+    }
+
+    fn advance(&mut self) -> bool {
+        self.done = true;
+        false
+    }
+}
+
+/// Bridge decoder for the sans-I/O decoding trait.
+///
+/// This type appears in public associated types and is therefore part of the crate's public API.
+#[cfg(rust_v_1_65)]
+#[derive(Debug, Clone)]
+pub struct ConsensusDecoderBridge<T> {
+    bytes: Vec<u8>,
+    done: bool,
+    result: Option<T>,
+}
+
+#[cfg(rust_v_1_65)]
+impl<T> ConsensusDecoderBridge<T> {
+    /// Creates a new bridge decoder.
+    pub fn new() -> Self { Self { bytes: Vec::new(), done: false, result: None } }
+}
+
+#[cfg(rust_v_1_65)]
+impl<T> Default for ConsensusDecoderBridge<T> {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(rust_v_1_65)]
+impl<T: Decodable> crate::encoding::Decoder for ConsensusDecoderBridge<T> {
+    type Output = T;
+    type Error = Error;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        debug_assert!(!self.done, "use of completed decoder");
+
+        let incoming = *bytes;
+        self.bytes.extend_from_slice(incoming);
+        *bytes = &[];
+
+        match deserialize_partial::<T>(&self.bytes) {
+            Ok((value, consumed)) => {
+                let overread = self.bytes.len() - consumed;
+                if overread > 0 {
+                    // `deserialize_partial` only ever overreads from the newly appended tail.
+                    debug_assert!(
+                        overread <= incoming.len(),
+                        "consumed bytes regressed past prior buffer"
+                    );
+                    *bytes = &incoming[incoming.len() - overread..];
+                    self.bytes.truncate(consumed);
+                }
+                self.result = Some(value);
+                self.done = true;
+                Ok(false)
+            }
+            Err(Error::Io(ref e)) if e.kind() == io::ErrorKind::UnexpectedEof => Ok(true),
+            Err(e) => Err(e),
+        }
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        if let Some(value) = self.result {
+            Ok(value)
+        } else {
+            deserialize_partial::<T>(&self.bytes).map(|(value, _)| value)
+        }
+    }
+
+    fn read_limit(&self) -> usize {
+        if self.done {
+            0
+        } else {
+            usize::MAX
+        }
+    }
+}
+
 /// Extensions of `Write` to encode data as per Bitcoin consensus.
 pub trait WriteExt: Write {
     /// Outputs a 64-bit unsigned integer.
@@ -526,13 +630,12 @@ impl Decodable for VarInt {
             n => Ok(VarInt::from(n)),
         };
         match varint {
-            Ok(v) => {
+            Ok(v) =>
                 if v.0 > MAX_COMPACT_SIZE as u64 {
                     Err(Error::OversizedVarInt)
                 } else {
                     Ok(v)
-                }
-            }
+                },
             Err(e) => Err(e),
         }
     }
@@ -917,7 +1020,10 @@ impl Decodable for TapLeafHash {
 mod tests {
     use core::mem::discriminant;
 
+    use hex::test_hex_unwrap as hex;
+
     use super::*;
+    use crate::blockdata::transaction::Transaction;
 
     #[test]
     fn serialize_int_test() {
@@ -999,7 +1105,10 @@ mod tests {
     #[test]
     fn deserialize_varint_too_large() {
         // MAX_COMPACT_SIZE (0x02000000) should succeed
-        assert_eq!(test_varint_encode(0xFE, &(0x02000000_u64).to_le_bytes()).unwrap(), VarInt(0x02000000));
+        assert_eq!(
+            test_varint_encode(0xFE, &(0x02000000_u64).to_le_bytes()).unwrap(),
+            VarInt(0x02000000)
+        );
         // MAX_COMPACT_SIZE + 1 should fail with range check enabled
         let mut input = [0u8; 9];
         input[0] = 0xFE;
@@ -1093,6 +1202,48 @@ mod tests {
     fn serialize_checkeddata_test() {
         let cd = CheckedData::new(vec![1u8, 2, 3, 4, 5]);
         assert_eq!(serialize(&cd), vec![5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
+    }
+
+    #[cfg(rust_v_1_65)]
+    #[test]
+    fn consensus_decoder_bridge_roundtrips_transaction() {
+        let tx_bytes = hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000");
+
+        let tx = crate::encoding::decode_from_slice::<Transaction>(&tx_bytes).unwrap();
+        assert_eq!(crate::encoding::encode_to_vec(&tx), tx_bytes);
+    }
+
+    #[cfg(rust_v_1_65)]
+    #[test]
+    fn consensus_decoder_bridge_returns_unconsumed_bytes() {
+        let tx_bytes = hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000");
+        let mut bytes = tx_bytes.to_vec();
+        bytes.extend_from_slice(&[0xaa, 0xbb, 0xcc]);
+
+        let mut slice = bytes.as_slice();
+        let tx = crate::encoding::decode_from_slice_unbounded::<Transaction>(&mut slice).unwrap();
+
+        assert_eq!(serialize(&tx), tx_bytes);
+        assert_eq!(slice, &[0xaa, 0xbb, 0xcc]);
+    }
+
+    #[cfg(rust_v_1_65)]
+    #[test]
+    fn consensus_decoder_bridge_supports_incremental_input() {
+        let tx_bytes = hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000");
+        let mut decoder = ConsensusDecoderBridge::<Transaction>::new();
+
+        let split = 10;
+        let mut first = &tx_bytes[..split];
+        assert!(crate::encoding::Decoder::push_bytes(&mut decoder, &mut first).unwrap());
+        assert!(first.is_empty());
+
+        let mut second = &tx_bytes[split..];
+        assert!(!crate::encoding::Decoder::push_bytes(&mut decoder, &mut second).unwrap());
+        assert!(second.is_empty());
+
+        let tx = crate::encoding::Decoder::end(decoder).unwrap();
+        assert_eq!(serialize(&tx), tx_bytes);
     }
 
     #[test]

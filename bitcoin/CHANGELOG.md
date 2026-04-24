@@ -1,3 +1,7 @@
+# Unreleased
+
+- Backport - Add the `bitcoin-consensus-encoding` crate and re-export `bitcoin::encoding` plus new impls on Rust 1.65+
+
 # 0.32.8 - 2025-11-24
 
 - Backport - bip158: Return no match for empty query [#4972](https://github.com/rust-bitcoin/rust-bitcoin/pull/4972)
@@ -118,7 +122,7 @@ In particular consider having some type that implements `AsRef<Params>`, we have
    - Implement `ordered::ArbitraryOrd` for absolute and relative locktimes, introducing the "ordered" feature:
      - [#2581](https://github.com/rust-bitcoin/rust-bitcoin/pull/2581)
      - [#2248](https://github.com/rust-bitcoin/rust-bitcoin/pull/2248)
-- Add and use custom `ArrayVec` 
+- Add and use custom `ArrayVec`
    - [#2287](https://github.com/rust-bitcoin/rust-bitcoin/pull/2287)
    - [#2286](https://github.com/rust-bitcoin/rust-bitcoin/pull/2286)
    - [#2310](https://github.com/rust-bitcoin/rust-bitcoin/pull/2310)

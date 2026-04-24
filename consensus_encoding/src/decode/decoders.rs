@@ -308,7 +308,7 @@ impl<T: Decodable> Decoder for VecDecoder<T> {
             let decoder = T::decoder();
             // This could be inaccurate (eg 1 for a `ByteVecDecoder`) but its the best we can do.
             let limit_per_decoder = decoder.read_limit();
-            items_left_to_decode * limit_per_decoder
+            items_left_to_decode.saturating_mul(limit_per_decoder)
         }
     }
 }
@@ -360,6 +360,34 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
 
     #[inline]
     fn read_limit(&self) -> usize { N - self.bytes_written }
+}
+
+/// A decoder which wraps an inner decoder and maps its output into a new type.
+#[derive(Debug, Clone)]
+pub struct MapDecoder<D: Decoder, T> {
+    inner: D,
+    f: fn(D::Output) -> T,
+}
+
+impl<D: Decoder, T> MapDecoder<D, T> {
+    /// Constructs a new mapping decoder.
+    pub const fn new(inner: D, f: fn(D::Output) -> T) -> Self { Self { inner, f } }
+}
+
+impl<D: Decoder, T> Decoder for MapDecoder<D, T> {
+    type Output = T;
+    type Error = D::Error;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.inner.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> { self.inner.end().map(self.f) }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
 /// A decoder which wraps two inner decoders and returns the output of both.
@@ -488,7 +516,7 @@ where
     fn read_limit(&self) -> usize {
         match &self.state {
             Decoder2State::First(first_decoder, second_decoder) =>
-                first_decoder.read_limit() + second_decoder.read_limit(),
+                first_decoder.read_limit().saturating_add(second_decoder.read_limit()),
             Decoder2State::Second(_, second_decoder) => second_decoder.read_limit(),
             Decoder2State::Errored => 0,
         }

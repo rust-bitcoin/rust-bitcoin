@@ -1,5 +1,5 @@
 [workspace]
-members = ["bitcoin", "hashes", "internals", "fuzz", "io", "units", "base58"]
+members = ["bitcoin", "hashes", "internals", "fuzz", "io", "units", "base58", "consensus_encoding"]
 resolver = "2"
 
 [patch.crates-io.base58ck]
@@ -13,6 +13,9 @@ path = "hashes"
 
 [patch.crates-io.bitcoin-internals]
 path = "internals"
+
+[patch.crates-io.bitcoin-consensus-encoding]
+path = "consensus_encoding"
 
 [patch.crates-io.bitcoin-io]
 path = "io"

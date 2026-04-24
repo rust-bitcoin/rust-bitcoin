@@ -19,6 +19,8 @@ use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::{Transaction, Txid, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable, Params};
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
@@ -216,6 +218,13 @@ impl Decodable for Version {
         Decodable::consensus_decode(r).map(Version)
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Version);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Header);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Block);
 
 /// Bitcoin block.
 ///

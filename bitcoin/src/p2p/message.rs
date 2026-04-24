@@ -13,6 +13,8 @@ use io::{Read, Write};
 
 use crate::blockdata::{block, transaction};
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{
@@ -535,6 +537,11 @@ impl Decodable for RawNetworkMessage {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(CommandString);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(RawNetworkMessage);
 
 #[cfg(test)]
 mod test {

@@ -8,6 +8,8 @@
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::blockdata::block::BlockHash;
 use crate::internal_macros::impl_consensus_encoding;
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 
 /// getcfilters message
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -80,3 +82,16 @@ pub struct CFCheckpt {
     pub filter_headers: Vec<FilterHeader>,
 }
 impl_consensus_encoding!(CFCheckpt, filter_type, stop_hash, filter_headers);
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(GetCFilters);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(CFilter);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(GetCFHeaders);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(CFHeaders);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(GetCFCheckpt);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(CFCheckpt);

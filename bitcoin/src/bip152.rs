@@ -16,6 +16,8 @@ use internals::impl_array_newtype;
 use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
 use crate::{block, Block, BlockHash, Transaction};
@@ -144,6 +146,11 @@ impl Decodable for ShortId {
         Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(PrefilledTransaction);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(ShortId);
 
 /// A structure to relay a block header, short IDs, and a select few transactions.
 ///
@@ -317,6 +324,13 @@ impl Decodable for BlockTransactionsRequest {
         })
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(HeaderAndShortIds);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(BlockTransactionsRequest);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(BlockTransactions);
 
 /// A transaction index is requested that is out of range from the
 /// corresponding block.

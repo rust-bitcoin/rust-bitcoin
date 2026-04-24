@@ -15,6 +15,8 @@ use io::{Read, Write};
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::prelude::*;
 use crate::taproot::{
     self, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE,
@@ -235,6 +237,9 @@ impl Encodable for Witness {
         Ok(content_len + len.size())
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Witness);
 
 impl Witness {
     /// Creates a new empty [`Witness`].

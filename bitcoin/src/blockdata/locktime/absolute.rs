@@ -21,6 +21,8 @@ use units::parse::{self, ParseIntError};
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::prelude::{Box, String};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -382,6 +384,9 @@ impl Decodable for LockTime {
         u32::consensus_decode(r).map(LockTime::from_consensus)
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(LockTime);
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for LockTime {

@@ -64,48 +64,62 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(rust_v_1_65)]
 mod compact_size;
+#[cfg(rust_v_1_65)]
 mod decode;
+#[cfg(rust_v_1_65)]
 mod encode;
+#[cfg(rust_v_1_65)]
+mod impls;
 
+#[cfg(rust_v_1_65)]
 pub mod error;
 
+#[cfg(rust_v_1_65)]
 #[doc(inline)]
 pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};
+#[cfg(rust_v_1_65)]
 #[doc(inline)]
-pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
-#[cfg(feature = "alloc")]
+pub use self::decode::decoders::{
+    ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6, MapDecoder,
+};
+#[cfg(all(feature = "alloc", rust_v_1_65))]
 #[doc(inline)]
 pub use self::decode::decoders::{ByteVecDecoder, VecDecoder};
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", rust_v_1_65))]
 #[doc(inline)]
 pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with,
 };
+#[cfg(rust_v_1_65)]
 #[doc(inline)]
 pub use self::decode::{decode_from_slice, decode_from_slice_unbounded, Decodable, Decoder};
+#[cfg(rust_v_1_65)]
 #[doc(inline)]
 pub use self::encode::encoders::{
     ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
     SliceEncoder,
 };
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", rust_v_1_65))]
 #[doc(inline)]
 pub use self::encode::{encode_to_vec, flush_to_vec};
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", rust_v_1_65))]
 #[doc(inline)]
 pub use self::encode::{encode_to_writer, flush_to_writer};
+#[cfg(rust_v_1_65)]
 #[doc(inline)]
 pub use self::encode::{Encodable, Encoder, EncoderByteIter, ExactSizeEncoder};
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", rust_v_1_65))]
 #[doc(no_inline)]
 pub use self::error::LengthPrefixExceedsMaxError;
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", rust_v_1_65))]
 #[doc(no_inline)]
 pub use self::error::ReadError;
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", rust_v_1_65))]
 #[doc(no_inline)]
 pub use self::error::{ByteVecDecoderError, VecDecoderError};
+#[cfg(rust_v_1_65)]
 #[doc(no_inline)]
 pub use self::error::{
     CompactSizeDecoderError, DecodeError, Decoder2Error, Decoder3Error, Decoder4Error,
