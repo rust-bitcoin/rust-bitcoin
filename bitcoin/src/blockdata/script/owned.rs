@@ -189,9 +189,7 @@ crate::internal_macros::define_extension_trait! {
         /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
         fn new_p2sh(script_hash: ScriptHash) -> Self {
             Builder::new()
-                .push_opcode(OP_HASH160)
-                .push_slice(script_hash)
-                .push_opcode(OP_EQUAL)
+                .push_check_hash(script_hash)
                 .into_script()
         }
 

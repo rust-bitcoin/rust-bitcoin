@@ -8,7 +8,7 @@ use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
-use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag, WPubkeyHash};
+use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _, RedeemScriptTag, ScriptHash, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag, WPubkeyHash};
 use crate::{relative, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
@@ -175,6 +175,23 @@ impl<T> Builder<T> {
         self.push_int_unchecked(sequence.to_consensus_u32().into())
     }
 
+    /// Pushes instructions verifying that the top-most stack element hashes to `hash`.
+    ///
+    /// This is equivalent to `{HASH_OP} <hash> OP_EQUAL` with a few advantages:
+    ///
+    /// * Statically enforced correct instruction for the given type
+    /// * Easy changing of the type if needed
+    /// * More convenient to write
+    ///
+    /// Beware that this does NOT push `OP_DUP` - you need to push it yourself, if needed.
+    ///
+    /// This method works optimally with [`push_verify`](Self::push_verify).
+    pub fn push_check_hash<H: HashInScript<T>>(self, hash: H) -> Self {
+        self.push_opcode(H::OPCODE)
+            .push_slice(hash)
+            .push_opcode(OP_EQUAL)
+    }
+
     /// Converts the `Builder` into `ScriptBuf`.
     pub fn into_script(self) -> ScriptBuf<T> { self.0 }
 
@@ -207,6 +224,59 @@ impl<T> fmt::Display for Builder<T> {
 
 impl<T> fmt::Debug for Builder<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
+}
+
+/// Represents hashes that are natively supported by the bitcoin script.
+///
+/// This is intended for use with [`Builder::push_check_hash`] but you can bound on it in generic
+/// functions if you need to make scripts generic over hash type.
+pub trait HashInScript<Tag>: AsRef<PushBytes> {
+    /// The opcode that hashes the top-most element on the stack producing a `Self`-like hash type.
+    const OPCODE: Opcode;
+}
+
+impl<U, T: HashInScript<U>> HashInScript<U> for &'_ T {
+    const OPCODE: Opcode = T::OPCODE;
+}
+
+macro_rules! impl_hash_in_script_for_tags {
+    ($hash:ident, $opcode:ident $(, $tag:ident)*) => {
+        $(
+            impl HashInScript<primitives::script::$tag> for hashes::$hash::Hash {
+                const OPCODE: Opcode = $opcode;
+            }
+        )*
+    }
+}
+
+macro_rules! impl_each_hash_in_script {
+    ($($hash:ident => $opcode:ident,)*) => {
+        $(
+            impl_hash_in_script_for_tags!($hash, $opcode, RedeemScriptTag, ScriptPubKeyTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag);
+        )*
+    }
+}
+
+impl_each_hash_in_script! {
+    hash160 => OP_HASH160,
+    ripemd160 => OP_RIPEMD160,
+    sha1 => OP_SHA1,
+    sha256 => OP_SHA256,
+    sha256d => OP_HASH256,
+}
+
+impl HashInScript<ScriptPubKeyTag> for PubkeyHash {
+    const OPCODE: Opcode = OP_HASH160;
+}
+
+impl HashInScript<ScriptPubKeyTag> for ScriptHash {
+    const OPCODE: Opcode = OP_HASH160;
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl HashInScript<ScriptPubKeyTag> for WPubkeyHash {
+    const OPCODE: Opcode = OP_HASH160;
 }
 
 /// Represents public keys or their standard hashes that are natively supported by bitcoin script.
