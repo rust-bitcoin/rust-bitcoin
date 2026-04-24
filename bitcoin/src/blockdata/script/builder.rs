@@ -3,12 +3,12 @@
 use core::fmt;
 
 use super::{opcode_to_verify, Error, PushBytes, Script, ScriptBuf};
-use crate::key::{LegacyPublicKey, XOnlyPublicKey};
+use crate::key::{FullPublicKey, LegacyPublicKey, PubkeyHash, SerializedLegacyPublicKey, XOnlyPublicKey};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::prelude::Vec;
-use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _};
+use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, TapScriptTag, WitnessScriptTag, WPubkeyHash};
 use crate::{relative, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
@@ -136,15 +136,12 @@ impl<T> Builder<T> {
     }
 
     /// Adds instructions to push a public key onto the stack.
-    pub fn push_key(self, key: LegacyPublicKey) -> Self {
-        if key.compressed() {
-            self.push_slice(key.serialize_compressed())
-        } else {
-            self.push_slice(key.serialize_uncompressed())
-        }
+    pub fn push_key<K: PubkeyInScript<T>>(self, key: K) -> Self {
+        self.push_slice(key.serialize())
     }
 
     /// Adds instructions to push an XOnly public key onto the stack.
+    #[deprecated(since = "TBD", note = "Use push_key instead")]
     pub fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Self {
         self.push_slice(x_only_key.serialize().0)
     }
@@ -210,4 +207,123 @@ impl<T> fmt::Display for Builder<T> {
 
 impl<T> fmt::Debug for Builder<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
+}
+
+/// Represents public keys or their standard hashes that are natively supported by bitcoin script.
+pub trait PubkeyInScript<Tag> {
+    /// The container type holding the bytes of a serialized key.
+    type Serialized: AsRef<PushBytes>;
+
+    /// Serializes the key.
+    #[must_use]
+    fn serialize(&self) -> Self::Serialized;
+}
+
+impl<U, T: PubkeyInScript<U>> PubkeyInScript<U> for &'_ T {
+    type Serialized = T::Serialized;
+
+    fn serialize(&self) -> Self::Serialized {
+        (*self).serialize()
+    }
+}
+
+impl PubkeyInScript<ScriptPubKeyTag> for LegacyPublicKey {
+    type Serialized = SerializedLegacyPublicKey;
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+// Keys may appear in sript_sig in case of P2PKH.
+impl PubkeyInScript<ScriptSigTag> for LegacyPublicKey {
+    type Serialized = SerializedLegacyPublicKey;
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl PubkeyInScript<RedeemScriptTag> for LegacyPublicKey {
+    type Serialized = SerializedLegacyPublicKey;
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl PubkeyInScript<ScriptPubKeyTag> for FullPublicKey {
+    type Serialized = [u8; 33];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl PubkeyInScript<RedeemScriptTag> for FullPublicKey {
+    type Serialized = [u8; 33];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl PubkeyInScript<WitnessScriptTag> for FullPublicKey {
+    type Serialized = [u8; 33];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.to_bytes()
+    }
+}
+
+impl PubkeyInScript<TapScriptTag> for XOnlyPublicKey {
+    type Serialized = [u8; 32];
+
+    fn serialize(&self) -> Self::Serialized {
+        self.serialize().0
+    }
+}
+
+impl PubkeyInScript<ScriptPubKeyTag> for PubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+impl PubkeyInScript<RedeemScriptTag> for PubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl PubkeyInScript<ScriptPubKeyTag> for WPubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+/// While `W` suggests "witness", the type is technically correct in `script_pubkey` since it's
+/// just hashed compressed key.
+impl PubkeyInScript<RedeemScriptTag> for WPubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
+}
+
+impl PubkeyInScript<WitnessScriptTag> for WPubkeyHash {
+    type Serialized = Self;
+
+    fn serialize(&self) -> Self::Serialized {
+        *self
+    }
 }
