@@ -315,16 +315,45 @@ mod tests {
     byte_array_roundtrip_test!(wtxid_byte_array_roundtrip, Wtxid, 32, 0x14, as_byte_array);
     byte_array_roundtrip_test!(block_hash_byte_array_roundtrip, BlockHash, 32, 0x15);
     byte_array_roundtrip_test!(tx_merkle_node_byte_array_roundtrip, TxMerkleNode, 32, 0x16);
-    byte_array_roundtrip_test!(witness_merkle_node_byte_array_roundtrip, WitnessMerkleNode, 32, 0x17);
-    byte_array_roundtrip_test!(witness_commitment_byte_array_roundtrip, WitnessCommitment, 32, 0x18, as_byte_array);
-    byte_array_roundtrip_test!(script_hash_byte_array_roundtrip, ScriptHash, 20, 0x19, as_byte_array);
-    byte_array_roundtrip_test!(wscript_hash_byte_array_roundtrip, WScriptHash, 32, 0x1a, as_byte_array);
+    byte_array_roundtrip_test!(
+        witness_merkle_node_byte_array_roundtrip,
+        WitnessMerkleNode,
+        32,
+        0x17
+    );
+    byte_array_roundtrip_test!(
+        witness_commitment_byte_array_roundtrip,
+        WitnessCommitment,
+        32,
+        0x18,
+        as_byte_array
+    );
+    byte_array_roundtrip_test!(
+        script_hash_byte_array_roundtrip,
+        ScriptHash,
+        20,
+        0x19,
+        as_byte_array
+    );
+    byte_array_roundtrip_test!(
+        wscript_hash_byte_array_roundtrip,
+        WScriptHash,
+        32,
+        0x1a,
+        as_byte_array
+    );
 
     hex_roundtrip_test!(display, txid_display_roundtrip, Txid, 32, 0x1b);
     hex_roundtrip_test!(lower, ntxid_lower_hex_roundtrip, Ntxid, 32, 0x1c);
     hex_roundtrip_test!(lower, block_hash_lower_hex_roundtrip, BlockHash, 32, 0x1d);
     hex_roundtrip_test!(lower, tx_merkle_node_lower_hex_roundtrip, TxMerkleNode, 32, 0x1e);
-    hex_roundtrip_test!(lower, witness_merkle_node_lower_hex_roundtrip, WitnessMerkleNode, 32, 0x1f);
+    hex_roundtrip_test!(
+        lower,
+        witness_merkle_node_lower_hex_roundtrip,
+        WitnessMerkleNode,
+        32,
+        0x1f
+    );
     hex_roundtrip_test!(lower, witness_commitment_lower_hex_roundtrip, WitnessCommitment, 32, 0x20);
     hex_roundtrip_test!(lower, script_hash_lower_hex_roundtrip, ScriptHash, 20, 0x21);
     hex_roundtrip_test!(lower, wscript_hash_lower_hex_roundtrip, WScriptHash, 32, 0x22);
@@ -332,7 +361,13 @@ mod tests {
     hex_roundtrip_test!(display, wtxid_display_roundtrip, Wtxid, 32, 0x24);
     hex_roundtrip_test!(display, block_hash_display_roundtrip, BlockHash, 32, 0x25);
     hex_roundtrip_test!(display, tx_merkle_node_display_roundtrip, TxMerkleNode, 32, 0x26);
-    hex_roundtrip_test!(display, witness_merkle_node_display_roundtrip, WitnessMerkleNode, 32, 0x27);
+    hex_roundtrip_test!(
+        display,
+        witness_merkle_node_display_roundtrip,
+        WitnessMerkleNode,
+        32,
+        0x27
+    );
     hex_roundtrip_test!(display, witness_commitment_display_roundtrip, WitnessCommitment, 32, 0x28);
     hex_roundtrip_test!(display, script_hash_display_roundtrip, ScriptHash, 20, 0x29);
     hex_roundtrip_test!(display, wscript_hash_display_roundtrip, WScriptHash, 32, 0x2a);
@@ -341,7 +376,13 @@ mod tests {
     hex_roundtrip_test!(upper, wtxid_upper_hex_roundtrip, Wtxid, 32, 0x2d);
     hex_roundtrip_test!(upper, block_hash_upper_hex_roundtrip, BlockHash, 32, 0x2e);
     hex_roundtrip_test!(upper, tx_merkle_node_upper_hex_roundtrip, TxMerkleNode, 32, 0x2f);
-    hex_roundtrip_test!(upper, witness_merkle_node_upper_hex_roundtrip, WitnessMerkleNode, 32, 0x30);
+    hex_roundtrip_test!(
+        upper,
+        witness_merkle_node_upper_hex_roundtrip,
+        WitnessMerkleNode,
+        32,
+        0x30
+    );
     hex_roundtrip_test!(upper, witness_commitment_upper_hex_roundtrip, WitnessCommitment, 32, 0x31);
     hex_roundtrip_test!(upper, script_hash_upper_hex_roundtrip, ScriptHash, 20, 0x32);
     hex_roundtrip_test!(upper, wscript_hash_upper_hex_roundtrip, WScriptHash, 32, 0x33);

@@ -30,11 +30,28 @@ unsafe fn Add(x: __m128i, y: __m128i) -> __m128i { _mm_add_epi32(x, y) }
 unsafe fn Add3(x: __m128i, y: __m128i, z: __m128i) -> __m128i { Add(Add(x, y), z) }
 
 #[inline(always)]
-unsafe fn Add4(x: __m128i, y: __m128i, z: __m128i, w: __m128i) -> __m128i { Add(Add(x, y), Add(z, w)) }
+unsafe fn Add4(x: __m128i, y: __m128i, z: __m128i, w: __m128i) -> __m128i {
+    Add(Add(x, y), Add(z, w))
+}
 
-macro_rules! inc2 { ($w:ident, $a:expr) => {{ $w = Add($w, $a); $w }}; }
-macro_rules! inc3 { ($w:ident, $a:expr, $b:expr) => {{ $w = Add3($w, $a, $b); $w }}; }
-macro_rules! inc4 { ($w:ident, $a:expr, $b:expr, $c:expr) => {{ $w = Add4($w, $a, $b, $c); $w }}; }
+macro_rules! inc2 {
+    ($w:ident, $a:expr) => {{
+        $w = Add($w, $a);
+        $w
+    }};
+}
+macro_rules! inc3 {
+    ($w:ident, $a:expr, $b:expr) => {{
+        $w = Add3($w, $a, $b);
+        $w
+    }};
+}
+macro_rules! inc4 {
+    ($w:ident, $a:expr, $b:expr, $c:expr) => {{
+        $w = Add4($w, $a, $b, $c);
+        $w
+    }};
+}
 
 #[inline(always)]
 unsafe fn Xor(x: __m128i, y: __m128i) -> __m128i { _mm_xor_si128(x, y) }
@@ -62,12 +79,20 @@ unsafe fn Maj(x: __m128i, y: __m128i, z: __m128i) -> __m128i { Or(And(x, y), And
 
 #[inline(always)]
 unsafe fn Sigma0(x: __m128i) -> __m128i {
-    Xor3(Or(ShR::<2>(x), ShL::<30>(x)), Or(ShR::<13>(x), ShL::<19>(x)), Or(ShR::<22>(x), ShL::<10>(x)))
+    Xor3(
+        Or(ShR::<2>(x), ShL::<30>(x)),
+        Or(ShR::<13>(x), ShL::<19>(x)),
+        Or(ShR::<22>(x), ShL::<10>(x)),
+    )
 }
 
 #[inline(always)]
 unsafe fn Sigma1(x: __m128i) -> __m128i {
-    Xor3(Or(ShR::<6>(x), ShL::<26>(x)), Or(ShR::<11>(x), ShL::<21>(x)), Or(ShR::<25>(x), ShL::<7>(x)))
+    Xor3(
+        Or(ShR::<6>(x), ShL::<26>(x)),
+        Or(ShR::<11>(x), ShL::<21>(x)),
+        Or(ShR::<25>(x), ShL::<7>(x)),
+    )
 }
 
 #[inline(always)]
@@ -127,22 +152,230 @@ pub(super) unsafe fn sha256d_64_4way(output: &mut [[u8; 32]; 4], input: &[[u8; 6
     let (mut w8, mut w9, mut w10, mut w11, mut w12, mut w13, mut w14, mut w15);
 
     // Rounds 0-15: message schedule comes directly from the input
-    round!(a, b, c, d, e, f, g, h, Add(K(0x428a2f98), { w0 = Read4(input, 0); w0 }));
-    round!(h, a, b, c, d, e, f, g, Add(K(0x71374491), { w1 = Read4(input, 4); w1 }));
-    round!(g, h, a, b, c, d, e, f, Add(K(0xb5c0fbcf), { w2 = Read4(input, 8); w2 }));
-    round!(f, g, h, a, b, c, d, e, Add(K(0xe9b5dba5), { w3 = Read4(input, 12); w3 }));
-    round!(e, f, g, h, a, b, c, d, Add(K(0x3956c25b), { w4 = Read4(input, 16); w4 }));
-    round!(d, e, f, g, h, a, b, c, Add(K(0x59f111f1), { w5 = Read4(input, 20); w5 }));
-    round!(c, d, e, f, g, h, a, b, Add(K(0x923f82a4), { w6 = Read4(input, 24); w6 }));
-    round!(b, c, d, e, f, g, h, a, Add(K(0xab1c5ed5), { w7 = Read4(input, 28); w7 }));
-    round!(a, b, c, d, e, f, g, h, Add(K(0xd807aa98), { w8 = Read4(input, 32); w8 }));
-    round!(h, a, b, c, d, e, f, g, Add(K(0x12835b01), { w9 = Read4(input, 36); w9 }));
-    round!(g, h, a, b, c, d, e, f, Add(K(0x243185be), { w10 = Read4(input, 40); w10 }));
-    round!(f, g, h, a, b, c, d, e, Add(K(0x550c7dc3), { w11 = Read4(input, 44); w11 }));
-    round!(e, f, g, h, a, b, c, d, Add(K(0x72be5d74), { w12 = Read4(input, 48); w12 }));
-    round!(d, e, f, g, h, a, b, c, Add(K(0x80deb1fe), { w13 = Read4(input, 52); w13 }));
-    round!(c, d, e, f, g, h, a, b, Add(K(0x9bdc06a7), { w14 = Read4(input, 56); w14 }));
-    round!(b, c, d, e, f, g, h, a, Add(K(0xc19bf174), { w15 = Read4(input, 60); w15 }));
+    round!(
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        Add(K(0x428a2f98), {
+            w0 = Read4(input, 0);
+            w0
+        })
+    );
+    round!(
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        Add(K(0x71374491), {
+            w1 = Read4(input, 4);
+            w1
+        })
+    );
+    round!(
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        Add(K(0xb5c0fbcf), {
+            w2 = Read4(input, 8);
+            w2
+        })
+    );
+    round!(
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        Add(K(0xe9b5dba5), {
+            w3 = Read4(input, 12);
+            w3
+        })
+    );
+    round!(
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        Add(K(0x3956c25b), {
+            w4 = Read4(input, 16);
+            w4
+        })
+    );
+    round!(
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        Add(K(0x59f111f1), {
+            w5 = Read4(input, 20);
+            w5
+        })
+    );
+    round!(
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        Add(K(0x923f82a4), {
+            w6 = Read4(input, 24);
+            w6
+        })
+    );
+    round!(
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        Add(K(0xab1c5ed5), {
+            w7 = Read4(input, 28);
+            w7
+        })
+    );
+    round!(
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        Add(K(0xd807aa98), {
+            w8 = Read4(input, 32);
+            w8
+        })
+    );
+    round!(
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        Add(K(0x12835b01), {
+            w9 = Read4(input, 36);
+            w9
+        })
+    );
+    round!(
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        Add(K(0x243185be), {
+            w10 = Read4(input, 40);
+            w10
+        })
+    );
+    round!(
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        Add(K(0x550c7dc3), {
+            w11 = Read4(input, 44);
+            w11
+        })
+    );
+    round!(
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        Add(K(0x72be5d74), {
+            w12 = Read4(input, 48);
+            w12
+        })
+    );
+    round!(
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        Add(K(0x80deb1fe), {
+            w13 = Read4(input, 52);
+            w13
+        })
+    );
+    round!(
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        Add(K(0x9bdc06a7), {
+            w14 = Read4(input, 56);
+            w14
+        })
+    );
+    round!(
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        Add(K(0xc19bf174), {
+            w15 = Read4(input, 60);
+            w15
+        })
+    );
 
     // Rounds 16-63: expanded message schedule
     round!(a, b, c, d, e, f, g, h, Add(K(0xe49b69c1), inc4!(w0, sigma1(w14), w9, sigma0(w1))));
@@ -327,16 +560,130 @@ pub(super) unsafe fn sha256d_64_4way(output: &mut [[u8; 32]; 4], input: &[[u8; 6
     round!(f, g, h, a, b, c, d, e, Add(K(0x240ca1cc), inc3!(w3, sigma1(w1), sigma0(w4))));
     round!(e, f, g, h, a, b, c, d, Add(K(0x2de92c6f), inc3!(w4, sigma1(w2), sigma0(w5))));
     round!(d, e, f, g, h, a, b, c, Add(K(0x4a7484aa), inc3!(w5, sigma1(w3), sigma0(w6))));
-    round!(c, d, e, f, g, h, a, b, Add(K(0x5cb0a9dc), inc4!(w6, sigma1(w4), K(0x00000100), sigma0(w7))));
+    round!(
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        Add(K(0x5cb0a9dc), inc4!(w6, sigma1(w4), K(0x00000100), sigma0(w7)))
+    );
     round!(b, c, d, e, f, g, h, a, Add(K(0x76f988da), inc4!(w7, sigma1(w5), w0, K(0x11002000))));
-    round!(a, b, c, d, e, f, g, h, Add(K(0x983e5152), { w8 = Add3(K(0x80000000), sigma1(w6), w1); w8 }));
-    round!(h, a, b, c, d, e, f, g, Add(K(0xa831c66d), { w9 = Add(sigma1(w7), w2); w9 }));
-    round!(g, h, a, b, c, d, e, f, Add(K(0xb00327c8), { w10 = Add(sigma1(w8), w3); w10 }));
-    round!(f, g, h, a, b, c, d, e, Add(K(0xbf597fc7), { w11 = Add(sigma1(w9), w4); w11 }));
-    round!(e, f, g, h, a, b, c, d, Add(K(0xc6e00bf3), { w12 = Add(sigma1(w10), w5); w12 }));
-    round!(d, e, f, g, h, a, b, c, Add(K(0xd5a79147), { w13 = Add(sigma1(w11), w6); w13 }));
-    round!(c, d, e, f, g, h, a, b, Add(K(0x06ca6351), { w14 = Add3(sigma1(w12), w7, K(0x00400022)); w14 }));
-    round!(b, c, d, e, f, g, h, a, Add(K(0x14292967), { w15 = Add4(K(0x00000100), sigma1(w13), w8, sigma0(w0)); w15 }));
+    round!(
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        Add(K(0x983e5152), {
+            w8 = Add3(K(0x80000000), sigma1(w6), w1);
+            w8
+        })
+    );
+    round!(
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        Add(K(0xa831c66d), {
+            w9 = Add(sigma1(w7), w2);
+            w9
+        })
+    );
+    round!(
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        Add(K(0xb00327c8), {
+            w10 = Add(sigma1(w8), w3);
+            w10
+        })
+    );
+    round!(
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        e,
+        Add(K(0xbf597fc7), {
+            w11 = Add(sigma1(w9), w4);
+            w11
+        })
+    );
+    round!(
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        d,
+        Add(K(0xc6e00bf3), {
+            w12 = Add(sigma1(w10), w5);
+            w12
+        })
+    );
+    round!(
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        c,
+        Add(K(0xd5a79147), {
+            w13 = Add(sigma1(w11), w6);
+            w13
+        })
+    );
+    round!(
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        b,
+        Add(K(0x06ca6351), {
+            w14 = Add3(sigma1(w12), w7, K(0x00400022));
+            w14
+        })
+    );
+    round!(
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        a,
+        Add(K(0x14292967), {
+            w15 = Add4(K(0x00000100), sigma1(w13), w8, sigma0(w0));
+            w15
+        })
+    );
     round!(a, b, c, d, e, f, g, h, Add(K(0x27b70a85), inc4!(w0, sigma1(w14), w9, sigma0(w1))));
     round!(h, a, b, c, d, e, f, g, Add(K(0x2e1b2138), inc4!(w1, sigma1(w15), w10, sigma0(w2))));
     round!(g, h, a, b, c, d, e, f, Add(K(0x4d2c6dfc), inc4!(w2, sigma1(w0), w11, sigma0(w3))));
