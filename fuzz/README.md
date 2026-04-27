@@ -56,7 +56,9 @@ To run each of them for an hour, run
 
 To run a single fuzztest indefinitely, run
 
-    HFUZZ_BUILD_ARGS='--features honggfuzz_fuzz' cargo hfuzz run <target>
+    HFUZZ_BUILD_ARGS='--features honggfuzz' cargo hfuzz run <target>
+
+The in-repo `fuzz.sh` script sets the same build argument automatically.
 
 This script uses the `chrt` utility to try to reduce the priority of the
 jobs. If you would like to run for longer, the most straightforward way
@@ -112,4 +114,3 @@ hex output into the call to `extend_vec_from_hex`. Then run the test with
 
 Note that if you set your `RUSTFLAGS` while fuzzing (see above) you must make
 sure they are set the same way when running `cargo test`.
-
