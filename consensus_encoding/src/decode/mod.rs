@@ -1,0 +1,273 @@
+// SPDX-License-Identifier: CC0-1.0
+
+//! Consensus Decoding Traits
+
+pub mod decoders;
+
+#[cfg(feature = "std")]
+use crate::ReadError;
+use crate::{DecodeError, UnconsumedError};
+
+/// A Bitcoin object which can be consensus-decoded using a push decoder.
+///
+/// To decode something, create a [`Self::Decoder`] and push byte slices into it with
+/// [`Decoder::push_bytes`], then call [`Decoder::end`] to get the result.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_consensus_encoding::{decode_from_slice, Decodable, Decoder, ArrayDecoder, UnexpectedEofError};
+///
+/// struct Foo([u8; 4]);
+///
+/// struct FooDecoder(ArrayDecoder<4>);
+///
+/// impl Decoder for FooDecoder {
+///     type Output = Foo;
+///     type Error = UnexpectedEofError;
+///
+///     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+///         self.0.push_bytes(bytes)
+///     }
+///     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(Foo) }
+///     fn read_limit(&self) -> usize { self.0.read_limit() }
+/// }
+///
+/// impl Decodable for Foo {
+///     type Decoder = FooDecoder;
+///     fn decoder() -> Self::Decoder { FooDecoder(ArrayDecoder::new()) }
+/// }
+///
+/// let foo: Foo = decode_from_slice(&[0xde, 0xad, 0xbe, 0xef]).unwrap();
+/// assert_eq!(foo.0, [0xde, 0xad, 0xbe, 0xef]);
+/// ```
+pub trait Decodable {
+    /// Associated decoder for the type.
+    type Decoder: Decoder<Output = Self>;
+
+    /// Constructs a "default decoder" for the type.
+    fn decoder() -> Self::Decoder;
+}
+
+/// A push decoder for a consensus-decodable object.
+pub trait Decoder: Sized {
+    /// The type that this decoder produces when decoding is complete.
+    type Output;
+    /// The error type that this decoder can produce.
+    type Error;
+
+    /// Pushes bytes into the decoder, consuming as much as possible.
+    ///
+    /// The slice reference will be advanced to point to the unconsumed portion. Returns `Ok(true)`
+    /// if more bytes are needed to complete decoding, `Ok(false)` if the decoder is ready to
+    /// finalize with [`Self::end`], or `Err(error)` if parsing failed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provided bytes are invalid or malformed according to the decoder's
+    /// validation rules. Insufficient data (needing more bytes) is *not* an error for this method,
+    /// the decoder will simply consume what it can and return `true` to indicate more data is
+    /// needed.
+    ///
+    /// # Panics
+    ///
+    /// May panic if called after a previous call to [`Self::push_bytes`] errored.
+    #[must_use = "must check result to avoid panics on subsequent calls"]
+    #[track_caller]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error>;
+
+    /// Completes the decoding process and return the final result.
+    ///
+    /// This consumes the decoder and should be called when no more input data is available.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the decoder has not received sufficient data to complete decoding, or if
+    /// the accumulated data is invalid when considered as a complete object.
+    ///
+    /// # Panics
+    ///
+    /// May panic if called after a previous call to [`Self::push_bytes`] errored.
+    #[must_use = "must check result to avoid panics on subsequent calls"]
+    #[track_caller]
+    fn end(self) -> Result<Self::Output, Self::Error>;
+
+    /// Returns the maximum number of bytes this decoder can consume without over-reading.
+    ///
+    /// Returns 0 if the decoder is complete and ready to finalize with [`Self::end`]. This is used
+    /// by [`decode_from_read_unbuffered`] to optimize read sizes, avoiding both inefficient
+    /// under-reads and unnecessary over-reads.
+    fn read_limit(&self) -> usize;
+}
+
+/// Decodes an object from a byte slice.
+///
+/// # Errors
+///
+/// Returns an error if the decoder encounters an error while parsing the data, including
+/// insufficient data. This function also errors if the provided slice is not completely consumed
+/// during decode.
+pub fn decode_from_slice<T: Decodable>(
+    bytes: &[u8],
+) -> Result<T, DecodeError<<T::Decoder as Decoder>::Error>> {
+    let mut remaining = bytes;
+    let data = decode_from_slice_unbounded::<T>(&mut remaining).map_err(DecodeError::Parse)?;
+
+    if remaining.is_empty() {
+        Ok(data)
+    } else {
+        Err(DecodeError::Unconsumed(UnconsumedError()))
+    }
+}
+
+/// Decodes an object from an unbounded byte slice.
+///
+/// Unlike [`decode_from_slice`], this function will not error if the slice contains additional
+/// bytes that are not required to decode. Furthermore, the byte slice reference provided to this
+/// function will be updated based on the consumed data, returning the unconsumed bytes.
+///
+/// # Errors
+///
+/// Returns an error if the decoder encounters an error while parsing the data, including
+/// insufficient data.
+pub fn decode_from_slice_unbounded<T>(
+    bytes: &mut &[u8],
+) -> Result<T, <T::Decoder as Decoder>::Error>
+where
+    T: Decodable,
+{
+    let mut decoder = T::decoder();
+
+    while !bytes.is_empty() {
+        if !decoder.push_bytes(bytes)? {
+            break;
+        }
+    }
+
+    decoder.end()
+}
+
+/// Decodes an object from a buffered reader.
+///
+/// # Performance
+///
+/// For unbuffered readers (like [`std::fs::File`] or [`std::net::TcpStream`]), consider wrapping
+/// your reader with [`std::io::BufReader`] in order to use this function. This avoids frequent
+/// small reads, which can significantly impact performance.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing the data, or
+/// [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "std")]
+pub fn decode_from_read<T, R>(mut reader: R) -> Result<T, ReadError<<T::Decoder as Decoder>::Error>>
+where
+    T: Decodable,
+    R: std::io::BufRead,
+{
+    let mut decoder = T::decoder();
+
+    loop {
+        let mut buffer = match reader.fill_buf() {
+            Ok(buffer) => buffer,
+            // Auto retry read for non-fatal error.
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(ReadError::Io(error)),
+        };
+
+        if buffer.is_empty() {
+            // EOF, but still try to finalize the decoder.
+            return decoder.end().map_err(ReadError::Decode);
+        }
+
+        let original_len = buffer.len();
+        let need_more = decoder.push_bytes(&mut buffer).map_err(ReadError::Decode)?;
+        let consumed = original_len - buffer.len();
+        reader.consume(consumed);
+
+        if !need_more {
+            return decoder.end().map_err(ReadError::Decode);
+        }
+    }
+}
+
+/// Decodes an object from an unbuffered reader using a fixed-size buffer.
+///
+/// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`]. This function is
+/// only needed when you have an unbuffered reader which you cannot wrap. It will probably have
+/// worse performance.
+///
+/// # Buffer
+///
+/// Uses a fixed 4KB (4096 bytes) stack-allocated buffer that is reused across read operations. This
+/// size is a good balance between memory usage and system call efficiency for most use cases.
+///
+/// For different buffer sizes, use [`decode_from_read_unbuffered_with`].
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing the data, or
+/// [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "std")]
+pub fn decode_from_read_unbuffered<T, R>(
+    reader: R,
+) -> Result<T, ReadError<<T::Decoder as Decoder>::Error>>
+where
+    T: Decodable,
+    R: std::io::Read,
+{
+    decode_from_read_unbuffered_with::<T, R, 4096>(reader)
+}
+
+/// Decodes an object from an unbuffered reader using a custom-sized buffer.
+///
+/// For most use cases, prefer [`decode_from_read`] with a [`std::io::BufReader`]. This function is
+/// only needed when you have an unbuffered reader which you cannot wrap. It will probably have
+/// worse performance.
+///
+/// # Buffer
+///
+/// The `BUFFER_SIZE` parameter controls the intermediate buffer size used for reading. The buffer
+/// is allocated on the stack (not heap) and reused across read operations. Larger buffers reduce
+/// the number of system calls, but use more memory.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing the data, or
+/// [`ReadError::Io`] if an I/O error occurs while reading.
+#[cfg(feature = "std")]
+pub fn decode_from_read_unbuffered_with<T, R, const BUFFER_SIZE: usize>(
+    mut reader: R,
+) -> Result<T, ReadError<<T::Decoder as Decoder>::Error>>
+where
+    T: Decodable,
+    R: std::io::Read,
+{
+    let mut decoder = T::decoder();
+    let mut buffer = [0u8; BUFFER_SIZE];
+
+    while decoder.read_limit() > 0 {
+        // Only read what we need, up to buffer size.
+        let clamped_buffer = &mut buffer[..decoder.read_limit().min(BUFFER_SIZE)];
+        match reader.read(clamped_buffer) {
+            Ok(0) => {
+                // EOF, but still try to finalize the decoder.
+                return decoder.end().map_err(ReadError::Decode);
+            }
+            Ok(bytes_read) => {
+                if !decoder
+                    .push_bytes(&mut &clamped_buffer[..bytes_read])
+                    .map_err(ReadError::Decode)?
+                {
+                    return decoder.end().map_err(ReadError::Decode);
+                }
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::Interrupted => {
+                // Auto retry read for non-fatal error.
+            }
+            Err(e) => return Err(ReadError::Io(e)),
+        }
+    }
+
+    decoder.end().map_err(ReadError::Decode)
+}

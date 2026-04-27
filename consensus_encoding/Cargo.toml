@@ -1,0 +1,37 @@
+[package]
+name = "bitcoin-consensus-encoding"
+version = "0.2.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "Nick Johnson <nick@yonson.dev>", "Tobin C. Harding <me@tobin.cc>"]
+license = "CC0-1.0"
+homepage = "https://rust-bitcoin.org/"
+documentation = "https://docs.rs/bitcoin-consensus-encoding/"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+description = "Consensus encoding and decoding"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "no-std"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.56.1"
+exclude = ["api", "tests", "contrib"]
+
+[features]
+default = ["std"]
+std = ["alloc", "internals/std"]
+alloc = ["internals/alloc"]
+
+[dependencies]
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.3.0" }
+
+[dev-dependencies]
+hex = { package = "hex-conservative", version = "0.2.2" }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[[example]]
+name = "encoder"
+required-features = ["alloc"]
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_65)'] }

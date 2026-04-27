@@ -6,6 +6,8 @@
 
 use crate::bip152;
 use crate::internal_macros::impl_consensus_encoding;
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 
 /// sendcmpct message
 #[derive(PartialEq, Eq, Clone, Debug, Copy, PartialOrd, Ord, Hash)]
@@ -45,3 +47,12 @@ pub struct BlockTxn {
     pub transactions: bip152::BlockTransactions,
 }
 impl_consensus_encoding!(BlockTxn, transactions);
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(SendCmpct);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(CmpctBlock);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(GetBlockTxn);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(BlockTxn);

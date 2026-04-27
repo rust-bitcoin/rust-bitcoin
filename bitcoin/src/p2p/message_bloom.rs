@@ -9,6 +9,8 @@ use io::{Read, Write};
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 
 /// `filterload` message sets the current bloom filter
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -57,6 +59,13 @@ impl Decodable for BloomFlags {
         })
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(FilterLoad);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(BloomFlags);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(FilterAdd);
 
 /// `filteradd` message updates the current filter with new data
 #[derive(Clone, PartialEq, Eq, Debug)]

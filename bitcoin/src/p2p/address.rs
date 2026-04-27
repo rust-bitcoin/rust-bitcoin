@@ -12,6 +12,8 @@ use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSoc
 use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, VarInt, WriteExt};
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::p2p::ServiceFlags;
 
 /// A message which can be sent on the Bitcoin network
@@ -293,6 +295,13 @@ impl Decodable for AddrV2Message {
         })
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Address);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(AddrV2);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(AddrV2Message);
 
 impl ToSocketAddrs for AddrV2Message {
     type Iter = iter::Once<SocketAddr>;

@@ -21,8 +21,8 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-honggfuzz = { version = "0.5.55", default-features = false }
-bitcoin = { version = "0.31.0", features = [ "serde" ] }
+honggfuzz = { version = "=0.5.55", default-features = false, optional = true }
+bitcoin = { path = "../bitcoin", features = [ "serde" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
 serde_json = "1.0"
@@ -36,6 +36,7 @@ for targetFile in $(listTargetFiles); do
 [[bin]]
 name = "$targetName"
 path = "$targetFile"
+required-features = ["honggfuzz"]
 EOF
 done
 
@@ -101,4 +102,3 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
       - run: find executed_* -type f -exec cat {} + | sort > executed
       - run: source ./fuzz/fuzz-util.sh && listTargetNames | sort | diff - executed
 EOF
-

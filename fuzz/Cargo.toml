@@ -10,7 +10,7 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-honggfuzz = { version = "0.5.55", default-features = false }
+honggfuzz = { version = "=0.5.55", default-features = false, optional = true }
 bitcoin = { path = "../bitcoin", features = [ "serde" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
@@ -20,74 +20,97 @@ serde_cbor = "0.9"
 [[bin]]
 name = "bitcoin_deserialize_address"
 path = "fuzz_targets/bitcoin/deserialize_address.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_deserialize_block"
 path = "fuzz_targets/bitcoin/deserialize_block.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_deserialize_prefilled_transaction"
 path = "fuzz_targets/bitcoin/deserialize_prefilled_transaction.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_deserialize_psbt"
 path = "fuzz_targets/bitcoin/deserialize_psbt.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_deserialize_script"
 path = "fuzz_targets/bitcoin/deserialize_script.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_deserialize_transaction"
 path = "fuzz_targets/bitcoin/deserialize_transaction.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_deserialize_witness"
 path = "fuzz_targets/bitcoin/deserialize_witness.rs"
+required-features = ["honggfuzz"]
+
+[[bin]]
+name = "bitcoin_consensus_encoding_differential"
+path = "fuzz_targets/bitcoin/consensus_encoding_differential.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_deser_net_msg"
 path = "fuzz_targets/bitcoin/deser_net_msg.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_outpoint_string"
 path = "fuzz_targets/bitcoin/outpoint_string.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "hashes_cbor"
 path = "fuzz_targets/hashes/cbor.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "hashes_json"
 path = "fuzz_targets/hashes/json.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "hashes_ripemd160"
 path = "fuzz_targets/hashes/ripemd160.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "hashes_sha1"
 path = "fuzz_targets/hashes/sha1.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "hashes_sha256"
 path = "fuzz_targets/hashes/sha256.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "hashes_sha512_256"
 path = "fuzz_targets/hashes/sha512_256.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "hashes_sha512"
 path = "fuzz_targets/hashes/sha512.rs"
+required-features = ["honggfuzz"]
 
 [[bin]]
 name = "units_deserialize_amount"
 path = "fuzz_targets/units/deserialize_amount.rs"
+required-features = ["honggfuzz"]
 
 [lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)', 'cfg(rust_v_1_65)'] }

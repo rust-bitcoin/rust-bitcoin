@@ -89,8 +89,11 @@ mod safety_boundary {
             let new_len = self.len.checked_add(slice.len()).expect("integer/buffer overflow");
             assert!(new_len <= CAP, "buffer overflow");
             // SAFETY: MaybeUninit<T> has the same layout as T
-            let slice = unsafe { &*(slice as *const _ as *const [MaybeUninit<T>]) };
-            self.data[self.len..].copy_from_slice(slice);
+            let slice = unsafe {
+                let ptr = slice.as_ptr();
+                core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
+            };
+            self.data[self.len..new_len].copy_from_slice(slice);
             self.len = new_len;
         }
     }

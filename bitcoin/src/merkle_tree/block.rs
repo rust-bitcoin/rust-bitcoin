@@ -50,6 +50,8 @@ use crate::blockdata::block::{self, Block, TxMerkleNode};
 use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::prelude::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
@@ -479,6 +481,11 @@ impl Decodable for PartialMerkleTree {
         Ok(PartialMerkleTree { num_transactions, hashes, bits })
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(MerkleBlock);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(PartialMerkleTree);
 
 /// An error when verifying the merkle block.
 #[derive(Debug, Clone, PartialEq, Eq)]

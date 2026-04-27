@@ -203,9 +203,52 @@ macro_rules! impl_hashencode {
                 Ok(Self::from_byte_array(<<$hashtype as $crate::hashes::Hash>::Bytes>::consensus_decode(r)?))
             }
         }
+
+        #[cfg(rust_v_1_65)]
+        impl $crate::encoding::Encodable for $hashtype {
+            type Encoder<'e> = $crate::consensus::encode::ConsensusEncoderBridge;
+
+            fn encoder(&self) -> Self::Encoder<'_> {
+                $crate::consensus::encode::ConsensusEncoderBridge::new($crate::consensus::serialize(self))
+            }
+        }
+
+        #[cfg(rust_v_1_65)]
+        impl $crate::encoding::Decodable for $hashtype {
+            type Decoder = $crate::consensus::encode::ConsensusDecoderBridge<Self>;
+
+            fn decoder() -> Self::Decoder {
+                $crate::consensus::encode::ConsensusDecoderBridge::new()
+            }
+        }
     };
 }
 pub(crate) use impl_hashencode;
+
+#[cfg_attr(not(rust_v_1_65), allow(unused_macros))]
+macro_rules! impl_encoding_from_consensus {
+    ($thing:ty) => {
+        impl $crate::encoding::Encodable for $thing {
+            type Encoder<'e> = $crate::consensus::encode::ConsensusEncoderBridge;
+
+            fn encoder(&self) -> Self::Encoder<'_> {
+                $crate::consensus::encode::ConsensusEncoderBridge::new(
+                    $crate::consensus::serialize(self),
+                )
+            }
+        }
+
+        impl $crate::encoding::Decodable for $thing {
+            type Decoder = $crate::consensus::encode::ConsensusDecoderBridge<Self>;
+
+            fn decoder() -> Self::Decoder {
+                $crate::consensus::encode::ConsensusDecoderBridge::new()
+            }
+        }
+    };
+}
+#[cfg(rust_v_1_65)]
+pub(crate) use impl_encoding_from_consensus;
 
 #[rustfmt::skip]
 macro_rules! impl_asref_push_bytes {

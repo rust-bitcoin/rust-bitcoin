@@ -71,6 +71,8 @@ use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::impl_asref_push_bytes;
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::prelude::*;
 use crate::OutPoint;
 
@@ -597,6 +599,9 @@ impl Decodable for ScriptBuf {
         Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(ScriptBuf);
 
 /// Writes the assembly decoding of the script bytes to the formatter.
 pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {

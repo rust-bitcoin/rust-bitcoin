@@ -20,6 +20,8 @@ use arbitrary::{Arbitrary, Unstructured};
 use internals::error::InputString;
 use internals::write_err;
 
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+use crate::encoding;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
 
@@ -1592,6 +1594,69 @@ impl TryFrom<Amount> for SignedAmount {
     fn try_from(value: Amount) -> Result<Self, Self::Error> { value.to_signed() }
 }
 
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+encoding::encoder_newtype_exact! {
+    /// The encoder for [`Amount`].
+    #[derive(Debug, Clone)]
+    pub struct AmountEncoder<'e>(encoding::ArrayEncoder<8>);
+}
+
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+impl encoding::Encodable for Amount {
+    type Encoder<'e> = AmountEncoder<'e>;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AmountEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_sat().to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+/// The decoder for [`Amount`].
+#[derive(Debug, Clone)]
+pub struct AmountDecoder(encoding::ArrayDecoder<8>);
+
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+impl AmountDecoder {
+    /// Constructs a new decoder for [`Amount`].
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+impl Default for AmountDecoder {
+    #[inline]
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+impl encoding::Decoder for AmountDecoder {
+    type Output = Amount;
+    type Error = <encoding::ArrayDecoder<8> as encoding::Decoder>::Error;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        self.0.end().map(|bytes| Amount::from_sat(u64::from_le_bytes(bytes)))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(all(feature = "encoding", rust_v_1_65))]
+impl encoding::Decodable for Amount {
+    type Decoder = AmountDecoder;
+
+    #[inline]
+    fn decoder() -> Self::Decoder { AmountDecoder::new() }
+}
+
 impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
@@ -2077,6 +2142,26 @@ mod tests {
     use std::panic;
 
     use super::*;
+    #[cfg(all(feature = "encoding", rust_v_1_65))]
+    use crate::encoding::{Encodable, Encoder};
+
+    #[test]
+    #[cfg(all(feature = "encoding", rust_v_1_65))]
+    fn amount_encoding_roundtrip() {
+        let amount = Amount::from_sat(100_000_000);
+        let mut encoder = amount.encoder();
+        let mut encoded = alloc::vec::Vec::new();
+        loop {
+            encoded.extend_from_slice(encoder.current_chunk());
+            if !encoder.advance() {
+                break;
+            }
+        }
+        let decoded = encoding::decode_from_slice::<Amount>(&encoded).unwrap();
+
+        assert_eq!(encoded, [0x00, 0xe1, 0xf5, 0x05, 0x00, 0x00, 0x00, 0x00]);
+        assert_eq!(decoded, amount);
+    }
 
     #[test]
     #[cfg(feature = "alloc")]

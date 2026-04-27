@@ -27,6 +27,8 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::prelude::*;
 #[cfg(doc)]
@@ -1180,6 +1182,9 @@ impl Decodable for Version {
     }
 }
 
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Version);
+
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
@@ -1200,6 +1205,9 @@ impl Decodable for OutPoint {
         })
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(OutPoint);
 
 impl Encodable for TxIn {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -1224,6 +1232,9 @@ impl Decodable for TxIn {
     }
 }
 
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(TxIn);
+
 impl Encodable for Sequence {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
@@ -1235,6 +1246,9 @@ impl Decodable for Sequence {
         Decodable::consensus_decode(r).map(Sequence)
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Sequence);
 
 impl Encodable for Transaction {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -1302,6 +1316,11 @@ impl Decodable for Transaction {
         }
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(TxOut);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Transaction);
 
 impl From<Transaction> for Txid {
     fn from(tx: Transaction) -> Txid { tx.compute_txid() }

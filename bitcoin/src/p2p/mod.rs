@@ -29,6 +29,8 @@ use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::network::Network;
 use crate::prelude::*;
 
@@ -310,6 +312,11 @@ impl Decodable for Magic {
         Ok(Magic(Decodable::consensus_decode(reader)?))
     }
 }
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(ServiceFlags);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Magic);
 
 impl AsRef<[u8]> for Magic {
     fn as_ref(&self) -> &[u8] { &self.0 }

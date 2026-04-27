@@ -68,6 +68,10 @@ pub extern crate bech32;
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
+/// Bitcoin consensus encoding sans-I/O primitives.
+#[cfg(rust_v_1_65)]
+pub extern crate encoding;
+
 /// Re-export the `hex-conservative` crate.
 pub extern crate hex;
 

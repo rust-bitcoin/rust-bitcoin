@@ -11,6 +11,8 @@ use io::{Read, Write};
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
+#[cfg(rust_v_1_65)]
+use crate::internal_macros::impl_encoding_from_consensus;
 use crate::p2p;
 use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;
@@ -146,6 +148,13 @@ pub struct Reject {
 }
 
 impl_consensus_encoding!(Reject, message, ccode, reason, hash);
+
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(VersionMessage);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(RejectReason);
+#[cfg(rust_v_1_65)]
+impl_encoding_from_consensus!(Reject);
 
 #[cfg(test)]
 mod tests {
