@@ -1192,6 +1192,7 @@ pub fn bitcoin_units::Amount::from_sat_unprefixed_hex(s: &str) -> core::result::
 pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
 pub fn bitcoin_units::Amount::signed_sub(self, rhs: Self) -> bitcoin_units::SignedAmount
+pub const fn bitcoin_units::Amount::to_msat(self) -> u64
 pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 impl bitcoin_units::Amount
 pub const bitcoin_units::Amount::MAX: Self
@@ -1842,6 +1843,7 @@ pub fn bitcoin_units::SignedAmount::is_negative(self) -> bool
 pub fn bitcoin_units::SignedAmount::is_positive(self) -> bool
 pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
+pub const fn bitcoin_units::SignedAmount::to_msat(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
 impl bitcoin_units::SignedAmount
@@ -2714,12 +2716,15 @@ pub const fn bitcoin_units::FeeRate::checked_mul(self, rhs: u64) -> core::option
 pub const fn bitcoin_units::FeeRate::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::FeeRate::fee_vb(self, vb: u64) -> core::option::Option<bitcoin_units::Amount>
 pub fn bitcoin_units::FeeRate::fee_wu(self, weight: bitcoin_units::Weight) -> core::option::Option<bitcoin_units::Amount>
-pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
-pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
+pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> Self
+pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> Self
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
-pub const fn bitcoin_units::FeeRate::from_sat_per_kvb(sat_kvb: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_kwu(sat_kwu: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_vb(sat_vb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kvb(sat_kvb: u64) -> bitcoin_units::result::NumOpResult<Self>
+pub const fn bitcoin_units::FeeRate::from_sat_per_kvb_u32(sat_kvb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kwu(sat_kwu: u64) -> bitcoin_units::result::NumOpResult<Self>
+pub const fn bitcoin_units::FeeRate::from_sat_per_kwu_u32(sat_kwu: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_vb(sat_vb: u64) -> bitcoin_units::result::NumOpResult<Self>
+pub const fn bitcoin_units::FeeRate::from_sat_per_vb_u32(sat_vb: u32) -> Self
 pub const fn bitcoin_units::FeeRate::mul_by_weight(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::FeeRate::to_fee(self, weight: bitcoin_units::Weight) -> bitcoin_units::Amount
 pub const fn bitcoin_units::FeeRate::to_sat_per_kvb_ceil(self) -> u64
@@ -7003,6 +7008,7 @@ pub unsafe fn bitcoin_units::Weight::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::Weight
 pub fn bitcoin_units::Weight::from(t: T) -> T
 pub const bitcoin_units::weight::WITNESS_SCALE_FACTOR: usize
+pub macro bitcoin_units::amt!
 pub enum bitcoin_units::NumOpResult<T>
 pub bitcoin_units::NumOpResult::Error(bitcoin_units::result::error::NumOpError)
 pub bitcoin_units::NumOpResult::Valid(T)
@@ -7472,6 +7478,7 @@ pub fn bitcoin_units::Amount::from_sat_unprefixed_hex(s: &str) -> core::result::
 pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::error::ParseAmountError>
 pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::error::ParseError>
 pub fn bitcoin_units::Amount::signed_sub(self, rhs: Self) -> bitcoin_units::SignedAmount
+pub const fn bitcoin_units::Amount::to_msat(self) -> u64
 pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 impl bitcoin_units::Amount
 pub const bitcoin_units::Amount::MAX: Self
@@ -8364,12 +8371,12 @@ pub const fn bitcoin_units::FeeRate::checked_mul(self, rhs: u64) -> core::option
 pub const fn bitcoin_units::FeeRate::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::FeeRate::fee_vb(self, vb: u64) -> core::option::Option<bitcoin_units::Amount>
 pub fn bitcoin_units::FeeRate::fee_wu(self, weight: bitcoin_units::Weight) -> core::option::Option<bitcoin_units::Amount>
-pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
-pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
+pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> Self
+pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> Self
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
-pub const fn bitcoin_units::FeeRate::from_sat_per_kvb(sat_kvb: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_kwu(sat_kwu: u32) -> Self
-pub const fn bitcoin_units::FeeRate::from_sat_per_vb(sat_vb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kvb_u32(sat_kvb: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_kwu_u32(sat_kwu: u32) -> Self
+pub const fn bitcoin_units::FeeRate::from_sat_per_vb_u32(sat_vb: u32) -> Self
 pub const fn bitcoin_units::FeeRate::mul_by_weight(self, weight: bitcoin_units::Weight) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::FeeRate::to_fee(self, weight: bitcoin_units::Weight) -> bitcoin_units::Amount
 pub const fn bitcoin_units::FeeRate::to_sat_per_kvb_ceil(self) -> u64
@@ -8654,6 +8661,7 @@ pub fn bitcoin_units::SignedAmount::is_negative(self) -> bool
 pub fn bitcoin_units::SignedAmount::is_positive(self) -> bool
 pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
+pub const fn bitcoin_units::SignedAmount::to_msat(self) -> i64
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
 impl bitcoin_units::SignedAmount

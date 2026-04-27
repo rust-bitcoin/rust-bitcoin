@@ -417,10 +417,10 @@ fn serde_amount_as_str_opt() {
 }
 
 #[track_caller]
-fn fee_rate_vb(vb: u32) -> FeeRate { FeeRate::from_sat_per_vb(vb) }
+fn fee_rate_vb(vb: u32) -> FeeRate { FeeRate::from_sat_per_vb_u32(vb) }
 
 #[track_caller]
-fn fee_rate_kwu(vb: u32) -> FeeRate { FeeRate::from_sat_per_kwu(vb) }
+fn fee_rate_kwu(vb: u32) -> FeeRate { FeeRate::from_sat_per_kwu_u32(vb) }
 
 #[test]
 #[cfg(feature = "serde")]
@@ -578,7 +578,7 @@ fn serde_fee_rate_floor_vs_ceil() {
         fee_rate: FeeRate,
     }
 
-    let fee_rate = FeeRate::from_sat_per_kwu(251);
+    let fee_rate = FeeRate::from_sat_per_kwu_u32(251);
 
     let floor = Floor { fee_rate };
     let ceil = Ceil { fee_rate };

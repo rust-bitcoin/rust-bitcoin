@@ -579,8 +579,7 @@ fn fmt_satoshi_in(
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
 /// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
-/// padding, alignment... The formatting works like floats from `core` but note that precision will
-/// **never** be lossy - that means no rounding.
+/// padding, alignment... The formatting works like floats from `core`.
 ///
 /// Note: This implementation is currently **unstable**. The only thing that we can promise is that
 /// unless the precision is changed, this will display an accurate, human-readable number, and the
@@ -649,4 +648,48 @@ impl<'a> Arbitrary<'a> for Denomination {
             _ => Ok(Self::Satoshi),
         }
     }
+}
+
+/// Creates an amount literal.
+///
+/// This macro creates an amount literal without annoying unwraps or risk of runtime panic.
+/// However, it is (obviously) only usable in `const` context with a `const` expression.
+/// It currently supports integer BTC and satoshis. The unit is mandatory and has to be written at
+/// the end - see examples.
+///
+/// ```
+/// # use bitcoin_units::{amt, Amount};
+/// assert_eq!(amt!(1 btc), amt!(100_000_000 sat));
+/// assert_eq!(amt!(3 * 7_000_000 btc), Amount::MAX);
+/// ```
+#[macro_export]
+macro_rules! amt {
+    // Internal accumulator arm: we have consumed all tokens except the unit keyword.
+    (@($($amount:tt)+), (btc)) => {
+        {
+            const AMOUNT: $crate::Amount = match $crate::Amount::from_sat(($($amount)+) as u64 * 100_000_000) {
+                Ok(amount) => amount,
+                Err(_) => panic!("amount out of range"),
+            };
+            AMOUNT
+        }
+    };
+    (@($($amount:tt)+), (sat)) => {
+        {
+            const AMOUNT: $crate::Amount = match $crate::Amount::from_sat(($($amount)+) as u64) {
+                Ok(amount) => amount,
+                Err(_) => panic!("amount out of range"),
+            };
+            AMOUNT
+        }
+    };
+    // Internal accumulator arm: move the next token from the remaining list into the accumulator.
+    (@($($amount:tt)*), ($x:tt $($remaining:tt)+)) => {
+        $crate::amt!(@($($amount)* $x), ($($remaining)+))
+    };
+    // Public entry arm.
+    // The leading `@` guard ensures this arm does not match internal recursive calls.
+    ($first:tt $($rest:tt)*) => {
+        $crate::amt!(@($first), ($($rest)*))
+    };
 }

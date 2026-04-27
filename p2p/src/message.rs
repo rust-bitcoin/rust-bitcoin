@@ -39,7 +39,7 @@ use crate::{
 #[doc(no_inline)]
 pub use self::error::{
     AddrPayloadDecoderError, AddrV2PayloadDecoderError, CommandStringDecoderError,
-    CommandStringError, HeadersMessageDecoderError, InventoryPayloadDecoderError,
+    CommandStringError, FeeFilterDecoderError, HeadersMessageDecoderError, InventoryPayloadDecoderError,
     NetworkHeaderDecoderError, PingDecoderError, PongDecoderError,
     V1MessageHeaderDecoderError, V1NetworkMessageDecoderError, V2NetworkMessageDecoderError
 };
@@ -590,19 +590,26 @@ impl Default for FeeFilterDecoder {
 
 impl encoding::Decoder for FeeFilterDecoder {
     type Output = FeeFilter;
-    type Error = encoding::UnexpectedEofError;
+    type Error = FeeFilterDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
         self.0.push_bytes(bytes)
+            .map_err(|e| FeeFilterDecoderError(error::FeeFilterDecoderErrorInner::UnexpectedEof(e)))
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
-        let array = self.0.end()?;
-        let kvb = u64::from_le_bytes(array);
+        use error::FeeFilterDecoderErrorInner;
 
-        // BIP-0133 specifies feefilter as int64_t (signed), but negative values and values
-        // exceeding u32::MAX are invalid for fee rates. We saturate both cases to FeeRate::MAX.
-        let fee_rate = kvb.try_into().ok().map_or(FeeRate::MAX, FeeRate::from_sat_per_kvb);
+        let array = self.0.end()
+            .map_err(|e| FeeFilterDecoderError(FeeFilterDecoderErrorInner::UnexpectedEof(e)))?;
+        let kvb = i64::from_le_bytes(array);
+        let kvb = u64::try_from(kvb)
+            .map_err(|_| FeeFilterDecoderError(FeeFilterDecoderErrorInner::NegativeRate(kvb)))?;
+
+        // BIP-0133 specifies feefilter as int64_t (signed). Negative fee rates are invalid
+        // (handled above) but absurdly large fee rates indicate all transactions should be
+        // filtered-out, so we can just saturate.
+        let fee_rate = FeeRate::from_sat_per_kvb(kvb).unwrap_or(FeeRate::MAX);
 
         Ok(FeeFilter(fee_rate))
     }
@@ -619,12 +626,14 @@ impl encoding::Decodable for FeeFilter {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeFilter {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        const MAX_SAT_PER_KVB: u64 = 18_446_744_073_709_551;
+
         let choice = u.int_in_range(0..=3)?;
         match choice {
             0 => Ok(Self(FeeRate::MIN)),
             1 => Ok(Self(FeeRate::BROADCAST_MIN)),
             2 => Ok(Self(FeeRate::DUST)),
-            _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=u32::MAX)?))),
+            _ => Ok(Self(FeeRate::from_sat_per_kvb(u.int_in_range(0..=MAX_SAT_PER_KVB)?).unwrap())),
         }
     }
 }
@@ -2663,6 +2672,37 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for HeadersMessageDecoderError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
+
+    /// An error decoding a [`FeeFilter`] message.
+    ///
+    /// [`FeeFilter`]: super::FeeFilter
+    #[derive(Debug)]
+    pub struct FeeFilterDecoderError(pub(super) FeeFilterDecoderErrorInner);
+
+    impl fmt::Display for FeeFilterDecoderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match &self.0 {
+                FeeFilterDecoderErrorInner::UnexpectedEof(error) => fmt::Display::fmt(error, f),
+                FeeFilterDecoderErrorInner::NegativeRate(rate) => write!(f, "the fee rate {} is negative", rate),
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub(super) enum FeeFilterDecoderErrorInner {
+        UnexpectedEof(encoding::UnexpectedEofError),
+        NegativeRate(i64),
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for FeeFilterDecoderError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match &self.0 {
+                FeeFilterDecoderErrorInner::UnexpectedEof(error) => error.source(),
+                FeeFilterDecoderErrorInner::NegativeRate(_) => None,
+            }
+        }
     }
 }
 

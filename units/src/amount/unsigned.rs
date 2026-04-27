@@ -31,13 +31,36 @@ mod encapsulate {
     /// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
     /// but we do provide modules for serializing as satoshis or bitcoin.
     ///
-    /// **Warning!**
+    /// # The 21M limit
+    ///
+    /// Since Bitcoin itself is limited to 2 100 000 000 000 000 satoshis (a bit less in practice)
+    /// this type also implements the same restriction. While this may be surprising it actually
+    /// provides many benefits:
+    ///
+    /// * Conversions from unsigned to signed are infallible
+    /// * Negation is infallible
+    /// * Absolute value is infallible (though `unsigned_abs` is usually beter anyway)
+    /// * Conversion to float is lossless
+    /// * Division cannot overflow, so a division error has to be div-by-zero; thus division by
+    ///   `NonZeroU64` is completely infallible
+    /// * Infallible conversion to `i64` allows directly storing in SQL databases
+    /// * It's possible to more efficiently sum amounts using SIMD (currently unimplemented in the
+    ///   library)
+    /// * Subtraction of unsigned amounts producing a signed amount is infallible
+    /// * Conversion to msat is infallible
+    ///
+    /// While it might seem that comes at a cost of littering the code with range checks it is not
+    /// actually that bad because correct code already requires overflow anyway and this type
+    /// exposes range checks as if they were overflow checks. Additionally, whenever an amount
+    /// enters the program from outside it already needs to be parsed or decoded, so the only thing
+    /// this changes about it is the error type.
+    ///
+    /// # Numeric operations
     ///
     /// This type implements several arithmetic operations from [`core::ops`].
-    /// To prevent errors due to an overflow when using these operations,
-    /// it is advised to instead use the checked arithmetic methods whose names
-    /// start with `checked_`. The operations from [`core::ops`] that [`Amount`]
-    /// implements will panic when an overflow occurs.
+    /// To prevent errors due to an overflow when using these operations, it returns the
+    /// `NumOpResult` type which enforces checked arithmetic. The resulting type itself implements
+    /// the traits so you can write code like `a + b + c` and only check the result afterwards.
     ///
     /// # Examples
     ///
@@ -116,6 +139,21 @@ impl Amount {
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
+    /// Gets the number of millisatoshis in this [`Amount`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::Amount;
+    /// assert_eq!(Amount::ONE_BTC.to_msat(), 100_000_000_000);
+    /// ```
+    #[inline]
+    pub const fn to_msat(self) -> u64 {
+        // Proof that overflow is impossible
+        const _: () = assert!(Amount::MAX.to_sat().checked_mul(1000).is_some());
+        self.to_sat() * 1000
+    }
+
     /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
     ///
     /// Accepts an `u32` which is guaranteed to be in range for the type, but which can only
@@ -133,11 +171,13 @@ impl Amount {
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too precise, negative, or greater than 21,000,000.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     ///
     /// # Examples
     ///
@@ -219,7 +259,9 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -238,7 +280,9 @@ impl Amount {
 
     /// Expresses this [`Amount`] as a floating-point value in Bitcoin.
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -254,11 +298,13 @@ impl Amount {
 
     /// Converts this [`Amount`] in floating-point notation in the given [`Denomination`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. It an be avoided by using an integer number of satoshis or string-encoded btc
+    /// in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too big, too precise or negative.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     #[inline]
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
@@ -423,7 +469,7 @@ impl Amount {
     ///
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`.
     #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
@@ -439,7 +485,7 @@ impl Amount {
 
     /// Checked remainder.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`.
     #[inline]
     #[must_use]
     pub const fn checked_rem(self, rhs: u64) -> Option<Self> {
@@ -478,20 +524,16 @@ impl Amount {
     /// Be aware that integer division loses the remainder if no exact division
     /// can be made. See also [`Self::div_by_weight_ceil`].
     pub const fn div_by_weight_floor(self, weight: Weight) -> NumOpResult<FeeRate> {
-        let wu = weight.to_wu();
+        let wu = weight.to_wu() as u128;
 
-        // Mul by 1,000 because we use per/kwu.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            match sats.checked_div(wu) {
-                Some(fee_rate) =>
-                    if let Ok(amount) = Self::from_sat(fee_rate) {
-                        return FeeRate::from_per_kwu(amount);
-                    },
-                None => return R::Error(E::while_doing(MathOp::Div)),
-            }
+        let sats = self.to_sat() as u128;
+        match (sats * 4_000_000).checked_div(wu) {
+            Some(fee_rate) if fee_rate <= u64::MAX as u128 => {
+                R::Valid(FeeRate::from_sat_per_mvb(fee_rate as u64))
+            },
+            Some(_) => R::Error(E::while_doing(MathOp::Mul)),
+            None => R::Error(E::while_doing(MathOp::Div)),
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
-        R::Error(E::while_doing(MathOp::Mul))
     }
 
     /// Checked weight ceiling division.
@@ -505,27 +547,25 @@ impl Amount {
     /// ```
     /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
     /// let amount = Amount::from_sat(10)?;
-    /// let weight = Weight::from_wu(300);
+    /// let weight = Weight::from_wu(200);
     /// let fee_rate = amount.div_by_weight_ceil(weight).expect("valid fee rate");
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu_u32(50));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     pub const fn div_by_weight_ceil(self, weight: Weight) -> NumOpResult<FeeRate> {
-        let wu = weight.to_wu();
+        let wu = weight.to_wu() as u128;
         if wu == 0 {
             return R::Error(E::while_doing(MathOp::Div));
         }
 
-        // Mul by 1,000 because we use per/kwu.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            // No need to use checked arithmetic because wu is non-zero.
-            let fee_rate = sats.div_ceil(wu);
-            if let Ok(amount) = Self::from_sat(fee_rate) {
-                return FeeRate::from_per_kwu(amount);
-            }
+        let sats = self.to_sat() as u128;
+        // No need to use checked arithmetic because wu is non-zero.
+        let fee_rate = (sats * 4_000_000).div_ceil(wu);
+        if fee_rate <= u64::MAX as u128 {
+            R::Valid(FeeRate::from_sat_per_mvb(fee_rate as u64))
+        } else {
+            R::Error(E::while_doing(MathOp::Mul))
         }
-        // Use `MathOp::Mul` because `Div` implies div by zero.
-        R::Error(E::while_doing(MathOp::Mul))
     }
 
     /// Checked fee rate floor division.
@@ -533,9 +573,13 @@ impl Amount {
     /// Computes the maximum weight that would result in a fee less than or equal to this amount
     /// at the given `fee_rate`. Uses floor division to ensure the resulting weight doesn't cause
     /// the fee to exceed the amount.
+    ///
+    /// # Errors
+    ///
+    /// This can fail only if `fee_rate` is zero, therefore an error returned from this method can
+    /// be treated as infinity.
     pub const fn div_by_fee_rate_floor(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
-        debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
-        let msats = self.to_sat() * 1_000;
+        let msats = self.to_msat();
         match msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
             Some(wu) => R::Valid(Weight::from_wu(wu)),
             None => R::Error(E::while_doing(MathOp::Div)),
@@ -546,6 +590,11 @@ impl Amount {
     ///
     /// Computes the minimum weight that would result in a fee greater than or equal to this amount
     /// at the given `fee_rate`. Uses ceiling division to ensure the resulting weight is sufficient.
+    ///
+    /// # Errors
+    ///
+    /// This can fail only if `fee_rate` is zero, therefore an error returned from this method can
+    /// be treated as infinity.
     pub const fn div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> NumOpResult<Weight> {
         // Use ceil because result is used as the divisor.
         let rate = fee_rate.to_sat_per_kwu_ceil();
@@ -554,8 +603,7 @@ impl Amount {
             return R::Error(E::while_doing(MathOp::Div));
         }
 
-        debug_assert!(Self::MAX.to_sat().checked_mul(1_000).is_some());
-        let msats = self.to_sat() * 1_000;
+        let msats = self.to_msat();
         NumOpResult::Valid(Weight::from_wu(msats.div_ceil(rate)))
     }
 }

@@ -60,9 +60,21 @@ pub mod as_sat {
     //! [`Amount`]: crate::Amount
     //! [`SignedAmount`]: crate::SignedAmount
 
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use core::fmt;
+    use core::marker::PhantomData;
+    use serde::{Deserializer, Serialize, Serializer};
 
     use crate::SignedAmount;
+
+    fn is_signed<T: TryFrom<SignedAmount>>() -> bool {
+        T::try_from(-SignedAmount::from(crate::amt!(1 sat))).is_ok()
+    }
+
+    #[test]
+    fn is_signed_correct() {
+        assert!(!is_signed::<crate::Amount>());
+        assert!(is_signed::<crate::SignedAmount>());
+    }
 
     #[inline]
     pub fn serialize<A, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error>
@@ -79,10 +91,62 @@ pub mod as_sat {
         A: TryFrom<SignedAmount>,
         <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
     {
-        let sat = i64::deserialize(d)?;
-        let amount = SignedAmount::from_sat(sat).map_err(serde::de::Error::custom)?;
+        fn expecting<T: TryFrom<SignedAmount>>() -> &'static str {
+            if is_signed::<T>() {
+                "an integer between -2100000000000000 and 2100000000000000 inclusive"
+            } else {
+                "an integer between 0 and 2100000000000000 inclusive"
+            }
+        }
 
-        A::try_from(amount).map_err(serde::de::Error::custom)
+        // We use custom visitor to have better control over error messages
+        struct Visitor<T>(PhantomData<fn() -> T>);
+
+        impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where T: TryFrom<SignedAmount> {
+            type Value = T;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str(expecting::<T>())
+            }
+
+            fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<Self::Value, E> {
+                fn range_error<T, E1, E2: serde::de::Error>(value: i64) -> impl FnOnce(E1) -> E2
+                    where T: TryFrom<SignedAmount>
+                {
+                    move |_| {
+                        let unexpected = serde::de::Unexpected::Signed(value);
+                        E2::invalid_value(unexpected, &expecting::<T>())
+                    }
+                }
+
+                SignedAmount::from_sat(value)
+                    .map_err(range_error::<T, _, _>(value))?
+                    .try_into()
+                    .map_err(range_error::<T, _, _>(value))
+            }
+
+            fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<Self::Value, E> {
+                fn range_error<T, E1, E2: serde::de::Error>(value: u64) -> impl FnOnce(E1) -> E2
+                    where T: TryFrom<SignedAmount>
+                {
+                    move |_| {
+                        let unexpected = serde::de::Unexpected::Unsigned(value);
+                        E2::invalid_value(unexpected, &expecting::<T>())
+                    }
+                }
+
+                let signed = i64::try_from(value).map_err(range_error::<T, _, _>(value))?;
+                SignedAmount::from_sat(signed)
+                    .map_err(range_error::<T, _, _>(value))?
+                    .try_into()
+                    .map_err(range_error::<T, _, _>(value))
+            }
+        }
+        if is_signed::<A>() {
+            d.deserialize_i64(Visitor(PhantomData))
+        } else {
+            d.deserialize_u64(Visitor(PhantomData))
+        }
     }
 
     pub mod opt {
@@ -94,6 +158,7 @@ pub mod as_sat {
         use core::fmt;
         use core::marker::PhantomData;
 
+        use super::is_signed;
         use serde::{de, Deserializer, Serializer};
 
         use crate::SignedAmount;
@@ -118,6 +183,14 @@ pub mod as_sat {
             A: TryFrom<SignedAmount>,
             <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
         {
+            fn expecting<T: TryFrom<SignedAmount>>() -> &'static str {
+                if is_signed::<T>() {
+                    "an optional integer between -2100000000000000 and 2100000000000000 inclusive"
+                } else {
+                    "an optional integer between 0 and 2100000000000000 inclusive"
+                }
+            }
+
             struct VisitOptAmt<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitOptAmt<X>
@@ -128,7 +201,7 @@ pub mod as_sat {
                 type Value = Option<X>;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    write!(formatter, "an Option<i64>")
+                    formatter.write_str(expecting::<X>())
                 }
 
                 #[inline]
@@ -161,6 +234,7 @@ pub mod as_sat {
         use alloc::vec::Vec;
         use core::fmt;
         use core::marker::PhantomData;
+        use super::is_signed;
 
         use serde::de::{self, SeqAccess};
         use serde::ser::SerializeSeq;
@@ -185,6 +259,14 @@ pub mod as_sat {
             A: TryFrom<SignedAmount>,
             <A as TryFrom<SignedAmount>>::Error: core::fmt::Display,
         {
+            fn expecting<T: TryFrom<SignedAmount>>() -> &'static str {
+                if is_signed::<T>() {
+                    "an sequence of integers between -2100000000000000 and 2100000000000000 inclusive"
+                } else {
+                    "an sequence of integers between 0 and 2100000000000000 inclusive"
+                }
+            }
+
             struct VisitVec<X>(PhantomData<X>);
 
             impl<'de, X> de::Visitor<'de> for VisitVec<X>
@@ -195,7 +277,7 @@ pub mod as_sat {
                 type Value = Vec<X>;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "a sequence of i64")
+                    f.write_str(expecting::<X>())
                 }
 
                 fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
@@ -204,11 +286,11 @@ pub mod as_sat {
                 {
                     #[derive(Deserialize)]
                     #[serde(transparent)]
-                    struct Wrapper(#[serde(with = "super")] SignedAmount);
+                    struct Wrapper<T: TryFrom<SignedAmount>>(#[serde(with = "super")] T) where T::Error: core::fmt::Display;
 
                     let mut out = Vec::with_capacity(seq.size_hint().unwrap_or(0));
-                    while let Some(wrapped) = seq.next_element::<Wrapper>()? {
-                        out.push(X::try_from(wrapped.0).map_err(de::Error::custom)?);
+                    while let Some(wrapped) = seq.next_element::<Wrapper<X>>()? {
+                        out.push(wrapped.0);
                     }
                     Ok(out)
                 }

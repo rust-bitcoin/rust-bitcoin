@@ -64,7 +64,7 @@ pub use self::error::NumOpError;
 /// let a = Amount::from_sat(123).expect("valid amount");
 /// let b = Amount::from_sat(467).expect("valid amount");
 /// // Fee rate for transaction.
-/// let fee_rate = FeeRate::from_sat_per_vb(1);
+/// let fee_rate = FeeRate::from_sat_per_vb_u32(1);
 ///
 /// // Somewhat contrived example to show addition operator chained with division.
 /// let max_fee = a + b;
@@ -509,7 +509,7 @@ mod tests {
     fn mathop_map() {
         // op is evaluated for valid results
         let res = NumOpResult::Valid(Amount::from_sat_u32(100));
-        let new_value = res.map(|val| (val / FeeRate::from_sat_per_kwu(10)).unwrap());
+        let new_value = res.map(|val| (val / FeeRate::from_sat_per_kwu_u32(10)).unwrap());
         assert_eq!(new_value, NumOpResult::Valid(Weight::from_wu(10_000)));
 
         // op is not evaluated for error results

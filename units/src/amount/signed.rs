@@ -26,13 +26,38 @@ mod encapsulate {
     /// conversion to various denominations. The [`SignedAmount`] type does not implement [`serde`]
     /// traits but we do provide modules for serializing as satoshis or bitcoin.
     ///
-    /// **Warning!**
+    /// # The 21M limit
+    ///
+    /// Since Bitcoin itself is limited to 2 100 000 000 000 000 satoshis (a bit less in practice)
+    /// this type also implements the same restriction. While this may be surprising it actually
+    /// provides many benefits:
+    ///
+    /// * Conversions from unsigned to signed are infallible
+    /// * Negation is infallible
+    /// * Absolute value is infallible (though `unsigned_abs` is usually beter anyway)
+    /// * Conversion to float is lossless
+    /// * Division cannot overflow, so a division error has to be div-by-zero; thus division by
+    ///   `NonZeroU64` is completely infallible
+    /// * Infallible conversion to `i64` allows directly storing in SQL databases
+    /// * It's possible to more efficiently sum amounts using SIMD (currently unimplemented in the
+    ///   library)
+    /// * Subtraction of unsigned amounts producing a signed amount is infallible
+    /// * Conversion to msat is infallible
+    ///
+    /// Note that this signed type also restricts the minimum to -21M BTC.
+    ///
+    /// While it might seem that comes at a cost of littering the code with range checks it is not
+    /// actually that bad because correct code already requires overflow anyway and this type
+    /// exposes range checks as if they were overflow checks. Additionally, whenever an amount
+    /// enters the program from outside it already needs to be parsed or decoded, so the only thing
+    /// this changes about it is the error type.
+    ///
+    /// # Numeric operations
     ///
     /// This type implements several arithmetic operations from [`core::ops`].
-    /// To prevent errors due to an overflow when using these operations,
-    /// it is advised to instead use the checked arithmetic methods whose names
-    /// start with `checked_`. The operations from [`core::ops`] that [`SignedAmount`]
-    /// implements will panic when an overflow occurs.
+    /// To prevent errors due to an overflow when using these operations, it returns the
+    /// `NumOpResult` type which enforces checked arithmetic. The resulting type itself implements
+    /// the traits so you can write code like `a + b + c` and only check the result afterwards.
     ///
     /// # Examples
     ///
@@ -112,6 +137,22 @@ impl SignedAmount {
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = Self::MAX;
 
+    /// Gets the number of millisatoshis in this [`SignedAmount`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::SignedAmount;
+    /// assert_eq!(SignedAmount::ONE_BTC.to_msat(), 100_000_000_000);
+    /// ```
+    #[inline]
+    pub const fn to_msat(self) -> i64 {
+        // Proof that overflow is impossible
+        const _: () = assert!(SignedAmount::MAX.to_sat().checked_mul(1000).is_some());
+        const _: () = assert!(SignedAmount::MIN.to_sat().checked_mul(1000).is_some());
+        self.to_sat() * 1000
+    }
+
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     ///
     /// Accepts an `i32` which is guaranteed to be in range for the type, but which can only
@@ -151,7 +192,9 @@ impl SignedAmount {
     ///
     /// If the amount is too big (positive or negative) or too precise.
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -228,7 +271,9 @@ impl SignedAmount {
 
     /// Expresses this [`SignedAmount`] as a floating-point value in the given [`Denomination`].
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -277,7 +322,9 @@ impl SignedAmount {
 
     /// Expresses this [`SignedAmount`] as a floating-point value in Bitcoin.
     ///
-    /// Please be aware of the risk of using floating-point numbers.
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. Try to avoid it by always using integer number of satoshis or string-encoded
+    /// btc in APIs that require it.
     ///
     /// # Examples
     ///
@@ -293,11 +340,13 @@ impl SignedAmount {
 
     /// Converts this [`SignedAmount`] in floating-point notation in the given [`Denomination`].
     ///
+    /// **Warning:** due to precision loss, using floats for financial operations is generally not
+    /// recommended. It can be avoided by using an integer number of satoshis or string-encoded btc
+    /// in APIs that require it.
+    ///
     /// # Errors
     ///
     /// If the amount is too big (positive or negative) or too precise.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
     #[inline]
     #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
@@ -488,7 +537,8 @@ impl SignedAmount {
     ///
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`. Notably, overflow is impossible even when `rhs == -1`
+    /// because `self` is never `i64::MIN`.
     #[inline]
     #[must_use]
     pub const fn checked_div(self, rhs: i64) -> Option<Self> {
@@ -504,7 +554,7 @@ impl SignedAmount {
 
     /// Checked remainder.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if `rhs == 0`.
     #[inline]
     #[must_use]
     pub const fn checked_rem(self, rhs: i64) -> Option<Self> {
