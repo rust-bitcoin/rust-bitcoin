@@ -213,6 +213,66 @@ impl Deserialize for Vec<secp256k1::PublicKey> {
     }
 }
 
+// MuSig2 composite key: (participant_pubkey, aggregate_pubkey, optional tapleaf_hash)
+impl Serialize for (secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>) {
+    fn serialize(&self) -> Vec<u8> {
+        use secp256k1::constants::PUBLIC_KEY_SIZE;
+
+        let leaf_len = if self.2.is_some() { 32 } else { 0 };
+        let mut buf = Vec::with_capacity(2 * PUBLIC_KEY_SIZE + leaf_len);
+        buf.extend(Serialize::serialize(&self.0));
+        buf.extend(Serialize::serialize(&self.1));
+        if let Some(ref leaf_hash) = self.2 {
+            buf.extend(leaf_hash.as_byte_array());
+        }
+        buf
+    }
+}
+
+impl Deserialize for (secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>) {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        use secp256k1::constants::PUBLIC_KEY_SIZE;
+
+        if bytes.len() != 2 * PUBLIC_KEY_SIZE && bytes.len() != 2 * PUBLIC_KEY_SIZE + 32 {
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
+        }
+        let participant: secp256k1::PublicKey =
+            Deserialize::deserialize(&bytes[..PUBLIC_KEY_SIZE])?;
+        let aggregate: secp256k1::PublicKey =
+            Deserialize::deserialize(&bytes[PUBLIC_KEY_SIZE..2 * PUBLIC_KEY_SIZE])?;
+        let leaf_hash = if bytes.len() > 2 * PUBLIC_KEY_SIZE {
+            Some(Deserialize::deserialize(&bytes[2 * PUBLIC_KEY_SIZE..])?)
+        } else {
+            None
+        };
+        Ok((participant, aggregate, leaf_hash))
+    }
+}
+
+impl Serialize for secp256k1::musig::PublicNonce {
+    fn serialize(&self) -> Vec<u8> { self.serialize().to_vec() }
+}
+
+impl Deserialize for secp256k1::musig::PublicNonce {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        let arr: [u8; 66] = bytes.try_into().map_err(|_| Error::InvalidMusig2PubNonce)?;
+        Self::from_byte_array(&arr)
+            .map_err(|_| Error::InvalidMusig2PubNonce)
+    }
+}
+
+impl Serialize for secp256k1::musig::PartialSignature {
+    fn serialize(&self) -> Vec<u8> { self.serialize().to_vec() }
+}
+
+impl Deserialize for secp256k1::musig::PartialSignature {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        let arr: [u8; 32] = bytes.try_into().map_err(|_| Error::InvalidMusig2PartialSig)?;
+        Self::from_byte_array(&arr)
+            .map_err(|_| Error::InvalidMusig2PartialSig)
+    }
+}
+
 impl Serialize for ecdsa::Signature {
     fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }

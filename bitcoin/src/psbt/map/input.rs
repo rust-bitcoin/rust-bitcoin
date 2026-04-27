@@ -63,6 +63,10 @@ const PSBT_IN_TAP_INTERNAL_KEY: u64 = 0x17;
 const PSBT_IN_TAP_MERKLE_ROOT: u64 = 0x18;
 /// Type: MuSig2 Public Keys Participating in Aggregate Input PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS = 0x1a
 const PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS: u64 = 0x1a;
+/// Type: MuSig2 Public Nonce PSBT_IN_MUSIG2_PUB_NONCE = 0x1b
+const PSBT_IN_MUSIG2_PUB_NONCE: u64 = 0x1b;
+/// Type: MuSig2 Participant Partial Signature PSBT_IN_MUSIG2_PARTIAL_SIG = 0x1c
+const PSBT_IN_MUSIG2_PARTIAL_SIG: u64 = 0x1c;
 /// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
 const PSBT_IN_PROPRIETARY: u64 = 0xFC;
 
@@ -119,6 +123,16 @@ pub struct Input {
     pub tap_merkle_root: Option<TapNodeHash>,
     /// Mapping from MuSig2 aggregate keys to the participant keys from which they were aggregated.
     pub musig2_participant_pubkeys: BTreeMap<secp256k1::PublicKey, Vec<secp256k1::PublicKey>>,
+    /// Map of MuSig2 public nonces by (participant pubkey, aggregate pubkey, optional leaf hash).
+    pub musig2_pub_nonces: BTreeMap<
+        (secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>),
+        secp256k1::musig::PublicNonce,
+    >,
+    /// Map of MuSig2 partial signatures by (participant pubkey, aggregate pubkey, optional leaf hash).
+    pub musig2_partial_sigs: BTreeMap<
+        (secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>),
+        secp256k1::musig::PartialSignature,
+    >,
     /// Proprietary key-value pairs for this input.
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this input.
@@ -361,6 +375,16 @@ impl Input {
                     self.musig2_participant_pubkeys <= <raw_key: secp256k1::PublicKey>|< raw_value: Vec<secp256k1::PublicKey> >
                 }
             }
+            PSBT_IN_MUSIG2_PUB_NONCE => {
+                impl_psbt_insert_pair! {
+                    self.musig2_pub_nonces <= <raw_key: (secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>)>|< raw_value: secp256k1::musig::PublicNonce >
+                }
+            }
+            PSBT_IN_MUSIG2_PARTIAL_SIG => {
+                impl_psbt_insert_pair! {
+                    self.musig2_partial_sigs <= <raw_key: (secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>)>|< raw_value: secp256k1::musig::PartialSignature >
+                }
+            }
             PSBT_IN_PROPRIETARY => {
                 let key = raw::ProprietaryKey::try_from(raw_key.clone())?;
                 match self.proprietary.entry(key) {
@@ -400,6 +424,8 @@ impl Input {
         self.tap_scripts.extend(other.tap_scripts);
         self.tap_key_origins.extend(other.tap_key_origins);
         self.musig2_participant_pubkeys.extend(other.musig2_participant_pubkeys);
+        self.musig2_pub_nonces.extend(other.musig2_pub_nonces);
+        self.musig2_partial_sigs.extend(other.musig2_partial_sigs);
         self.proprietary.extend(other.proprietary);
         self.unknown.extend(other.unknown);
 
@@ -497,6 +523,14 @@ impl Map for Input {
             rv.push_map(self.musig2_participant_pubkeys, PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS)
         }
 
+        impl_psbt_get_pair! {
+            rv.push_map(self.musig2_pub_nonces, PSBT_IN_MUSIG2_PUB_NONCE)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push_map(self.musig2_partial_sigs, PSBT_IN_MUSIG2_PARTIAL_SIG)
+        }
+
         for (key, value) in self.proprietary.iter() {
             rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
         }
@@ -542,6 +576,32 @@ impl<'a> Arbitrary<'a> for Input {
             tap_internal_key: u.arbitrary()?,
             tap_merkle_root: u.arbitrary()?,
             musig2_participant_pubkeys: u.arbitrary()?,
+            musig2_pub_nonces: {
+                // secp256k1::musig::PublicNonce does not implement `arbitrary::Arbitrary`
+                let keys: Vec<(secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>)> =
+                    u.arbitrary()?;
+                let mut map = BTreeMap::new();
+                for key in keys {
+                    let bytes: [u8; 66] = u.arbitrary()?;
+                    if let Ok(nonce) = secp256k1::musig::PublicNonce::from_byte_array(&bytes) {
+                        map.insert(key, nonce);
+                    }
+                }
+                map
+            },
+            musig2_partial_sigs: {
+                // secp256k1::musig::PartialSignature does not implement `arbitrary::Arbitrary`
+                let keys: Vec<(secp256k1::PublicKey, secp256k1::PublicKey, Option<TapLeafHash>)> =
+                    u.arbitrary()?;
+                let mut map = BTreeMap::new();
+                for key in keys {
+                    let bytes: [u8; 32] = u.arbitrary()?;
+                    if let Ok(sig) = secp256k1::musig::PartialSignature::from_byte_array(&bytes) {
+                        map.insert(key, sig);
+                    }
+                }
+                map
+            },
             proprietary: u.arbitrary()?,
             unknown: u.arbitrary()?,
         })

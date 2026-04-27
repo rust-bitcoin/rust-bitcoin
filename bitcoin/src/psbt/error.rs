@@ -114,6 +114,10 @@ pub enum Error {
     InvalidControlBlock,
     /// Parsing error indicating invalid leaf version
     InvalidLeafVersion,
+    /// Parsing error indicating invalid MuSig2 public nonce
+    InvalidMusig2PubNonce,
+    /// Parsing error indicating invalid MuSig2 partial signature
+    InvalidMusig2PartialSig,
     /// Parsing error indicating a Taproot error
     Taproot(&'static str),
     /// Taproot tree deserialization error
@@ -196,6 +200,8 @@ impl fmt::Display for Error {
             Self::InvalidTaprootSignature(ref e) => write_err!(f, "invalid Taproot signature"; e),
             Self::InvalidControlBlock => f.write_str("invalid control block"),
             Self::InvalidLeafVersion => f.write_str("invalid leaf version"),
+            Self::InvalidMusig2PubNonce => f.write_str("invalid MuSig2 public nonce"),
+            Self::InvalidMusig2PartialSig => f.write_str("invalid MuSig2 partial signature"),
             Self::Taproot(s) => write!(f, "Taproot error -  {}", s),
             Self::TapTree(ref e) => write_err!(f, "Taproot tree error"; e),
             Self::XPubKey(s) => write!(f, "xpub key error -  {}", s),
@@ -242,6 +248,8 @@ impl std::error::Error for Error {
             | Self::InvalidTaprootSignature(_)
             | Self::InvalidControlBlock
             | Self::InvalidLeafVersion
+            | Self::InvalidMusig2PubNonce
+            | Self::InvalidMusig2PartialSig
             | Self::Taproot(_)
             | Self::TapTree(_)
             | Self::XPubKey(_)
