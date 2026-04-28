@@ -104,10 +104,16 @@ dependencies = [
 name = "bitcoin-addresses"
 version = "0.0.0"
 dependencies = [
+ "base58ck 0.4.0",
+ "bech32",
  "bitcoin-crypto",
  "bitcoin-internals 0.5.0",
+ "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin-units 0.3.0",
+ "bitcoin_hashes 0.20.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
