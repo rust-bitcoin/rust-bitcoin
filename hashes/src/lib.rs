@@ -303,7 +303,7 @@ pub fn debug_hex<'a>(
     Ok(())
 }
 
-include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+include!("../include/newtype.rs"); // Explained in `REPO_DIR/include/README.md`.
 
 #[cfg(test)]
 mod tests {
