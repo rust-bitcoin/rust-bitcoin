@@ -21,3 +21,6 @@ extern crate alloc;
 
 #[cfg(feature = "std")]
 extern crate std;
+
+#[cfg(feature = "alloc")]
+pub mod witness_program;

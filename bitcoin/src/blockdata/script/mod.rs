@@ -52,7 +52,6 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
-pub mod witness_program;
 pub mod witness_version;
 
 use io::{BufRead, Write};
@@ -73,6 +72,8 @@ pub use self::{
     owned::{ScriptBufExt, ScriptPubKeyBufExt, ScriptSigBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesExt, PushBytesErrorReport},
 };
+#[doc(inline)]
+pub use addresses::witness_program;
 #[doc(no_inline)]
 pub use primitives::script::ScriptBufDecoderError;
 #[doc(inline)]

@@ -7,13 +7,11 @@
 //!
 //! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+use crypto::key::{FullPublicKey, TweakedPublicKey, UntweakedPublicKey};
 use internals::array_vec::ArrayVec;
-
-use super::witness_version::WitnessVersion;
-use super::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
-use crate::crypto::key::{FullPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::script::WitnessScriptExt as _;
-use crate::taproot::TapNodeHash;
+use primitives::script::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
+use primitives::witness_version::WitnessVersion;
+use taproot_primitives::{TapNodeHash, TapTweak as _};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]
@@ -81,7 +79,7 @@ impl WitnessProgram {
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
     pub fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
-        script.wscript_hash().map(Self::p2wsh_from_hash)
+        WScriptHash::from_script(script).map(Self::p2wsh_from_hash)
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
