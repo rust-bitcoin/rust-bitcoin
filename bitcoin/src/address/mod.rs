@@ -40,8 +40,6 @@
 //! # }
 //! ```
 
-pub mod error;
-
 use addresses::witness_program::WitnessProgram;
 use addresses::witness_version::WitnessVersion;
 use crypto::key::{FullPublicKey, PubkeyHash, UntweakedPublicKey};
@@ -176,6 +174,16 @@ crate::internal_macros::define_extension_trait! {
 // impl From<Address> for ScriptPubKeyBuf {
 //     fn from(a: Address) -> Self { a.script_pubkey() }
 // }
+
+/// Error code for the address module.
+pub mod error {
+    #[doc(no_inline)]
+    pub use addresses::error::{
+            Base58Error, Bech32Error, FromScriptError, InvalidBase58PayloadLengthError,
+            InvalidLegacyPrefixError, LegacyAddressTooLongError, NetworkValidationError,
+            ParseError, UnknownAddressTypeError, UnknownHrpError, ParseBech32Error,
+    };
+}
 
 #[cfg(test)]
 mod tests {
