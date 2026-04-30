@@ -40,8 +40,6 @@
 //! # }
 //! ```
 
-pub mod error;
-
 use addresses::witness_program::WitnessProgram;
 use crypto::key::PubkeyHash;
 use primitives::script::{ScriptHash, ScriptPubKey};
@@ -96,6 +94,16 @@ crate::internal_macros::define_extension_trait! {
             }
         }
     }
+}
+
+/// Error code for the address module.
+pub mod error {
+    #[doc(inline)]
+    pub use addresses::error::{
+        Base58Error, Bech32Error, FromScriptError, InvalidBase58PayloadLengthError,
+        InvalidLegacyPrefixError, LegacyAddressTooLongError, NetworkValidationError,
+        ParseBech32Error, ParseError, UnknownAddressTypeError, UnknownHrpError,
+    };
 }
 
 #[cfg(test)]
