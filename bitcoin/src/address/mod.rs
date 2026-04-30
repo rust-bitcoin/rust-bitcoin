@@ -518,7 +518,7 @@ impl Address {
         redeem_script: &Script<T>,
         network: impl Into<NetworkKind>,
     ) -> Result<Self, RedeemScriptSizeError> {
-        let hash = redeem_script.script_hash()?;
+        let hash = ScriptHash::from_script(redeem_script)?;
         Ok(Self::p2sh_from_hash(hash, network))
     }
 
@@ -791,30 +791,30 @@ crate::internal_macros::define_extension_trait! {
 
         /// Generates a script pubkey spending to this address.
         fn script_pubkey(&self) -> ScriptPubKeyBuf {
-            use AddressInner::*;
-            match *self.inner() {
-                P2pkh { hash, network: _ } => ScriptPubKeyBuf::new_p2pkh(hash),
-                P2sh { hash, network: _ } => ScriptPubKeyBuf::new_p2sh(hash),
-                Segwit { ref program, hrp: _ } => {
-                    let prog = program.program();
-                    let version = program.version();
+            let addr_data = self.to_address_data();
+            match addr_data {
+                AddressData::P2pkh { pubkey_hash } => ScriptPubKeyBuf::new_p2pkh(pubkey_hash),
+                AddressData::P2sh { script_hash } => ScriptPubKeyBuf::new_p2sh(script_hash),
+                AddressData::Segwit { ref witness_program } => {
+                    let prog = witness_program.program();
+                    let version = witness_program.version();
                     script::new_witness_program_unchecked(version, prog)
-                }
+                },
             }
         }
 
         /// Returns true if the address creates a particular script
         /// This function doesn't make any allocations.
         fn matches_script_pubkey(&self, script: &ScriptPubKey) -> bool {
-            use AddressInner::*;
-            match *self.inner() {
-                P2pkh { ref hash, network: _ } if script.is_p2pkh() =>
-                    &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
-                P2sh { ref hash, network: _ } if script.is_p2sh() =>
-                    &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-                Segwit { ref program, hrp: _ } if script.is_witness_program() =>
-                    &script.as_bytes()[2..] == program.program().as_bytes(),
-                P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
+            let addr_data = self.to_address_data();
+            match addr_data {
+                AddressData::P2pkh { ref pubkey_hash } if script.is_p2pkh() =>
+                    &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(pubkey_hash),
+                AddressData::P2sh { ref script_hash } if script.is_p2sh() =>
+                    &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(script_hash),
+                AddressData::Segwit { ref witness_program } if script.is_witness_program() =>
+                    &script.as_bytes()[2..] == witness_program.program().as_bytes(),
+                _ => false,
             }
         }
     }
