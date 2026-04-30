@@ -41,6 +41,15 @@ pub struct WitnessProgram {
 
 impl WitnessProgram {
     /// Constructs a new witness program, copying the content from the given byte slice.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::InvalidLength`] if the given bytes are shorter than [`MIN_SIZE`], or
+    ///   longer than [`MAX_SIZE`].
+    /// - [`Error::InvalidSegwitV0Length`] if the given version is [`V0`] and bytes is not
+    ///   20 or 32 bytes long.
+    ///
+    /// [`V0`]: WitnessVersion::V0
     pub fn new(version: WitnessVersion, bytes: &[u8]) -> Result<Self, Error> {
         let program_len = bytes.len();
         if program_len < MIN_SIZE || program_len > MAX_SIZE {
@@ -78,6 +87,10 @@ impl WitnessProgram {
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 10,000 bytes.
     pub fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
         WScriptHash::from_script(script).map(Self::p2wsh_from_hash)
     }

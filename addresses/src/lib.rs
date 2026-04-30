@@ -211,9 +211,8 @@ enum AddressInner {
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
 impl fmt::Display for AddressInner {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        use AddressInner::*;
         match self {
-            P2pkh { hash, network } => {
+            &Self::P2pkh { hash, network } => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match network {
                     NetworkKind::Main => PUBKEY_ADDRESS_PREFIX_MAIN,
@@ -222,7 +221,7 @@ impl fmt::Display for AddressInner {
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
-            P2sh { hash, network } => {
+            Self::P2sh { hash, network } => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match network {
                     NetworkKind::Main => SCRIPT_ADDRESS_PREFIX_MAIN,
@@ -231,7 +230,7 @@ impl fmt::Display for AddressInner {
                 prefixed[1..].copy_from_slice(hash.as_byte_array());
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
-            Segwit { program, hrp } => {
+            Self::Segwit { program, hrp } => {
                 let hrp = hrp.to_hrp();
                 let version = Fe32::try_from(program.version().to_num())
                     .expect("version nums 0-16 are valid fe32 values");
@@ -265,12 +264,10 @@ pub enum KnownHrp {
 impl KnownHrp {
     /// Constructs a new [`KnownHrp`] from [`Network`].
     fn from_network(network: Network) -> Self {
-        use Network::*;
-
         match network {
-            Bitcoin => Self::Mainnet,
-            Testnet(_) | Signet => Self::Testnets,
-            Regtest => Self::Regtest,
+            Network::Bitcoin => Self::Mainnet,
+            Network::Testnet(_) | Network::Signet => Self::Testnets,
+            Network::Regtest => Self::Regtest,
         }
     }
 
@@ -511,11 +508,10 @@ impl<V: NetworkValidation> Address<V> {
 
     /// Returns the [`NetworkKind`] of this address.
     pub fn network_kind(&self) -> NetworkKind {
-        use AddressInner::*;
         match *self.inner() {
-            P2pkh { hash: _, ref network } => *network,
-            P2sh { hash: _, ref network } => *network,
-            Segwit { program: _, ref hrp } => NetworkKind::from(*hrp),
+            AddressInner::P2pkh { hash: _, ref network } => *network,
+            AddressInner::P2sh { hash: _, ref network } => *network,
+            AddressInner::Segwit { program: _, ref hrp } => NetworkKind::from(*hrp),
         }
     }
 }
@@ -535,6 +531,10 @@ impl Address {
     ///
     /// This address type was introduced with BIP-0016 and is the popular type to implement multi-sig
     /// these days.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 520 bytes.
     #[inline]
     pub fn p2sh<T: ScriptHashableTag>(
         redeem_script: &Script<T>,
@@ -563,6 +563,10 @@ impl Address {
     }
 
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the script exceeds 10,000 bytes.
     pub fn p2wsh(
         witness_script: &WitnessScript,
         hrp: impl Into<KnownHrp>,
@@ -624,41 +628,34 @@ impl Address {
 
     /// Gets the address data from this address.
     pub fn to_address_data(self) -> AddressData {
-        use AddressData::*;
-
         match *self.inner() {
-            AddressInner::P2pkh { hash, network: _ } => P2pkh { pubkey_hash: hash },
-            AddressInner::P2sh { hash, network: _ } => P2sh { script_hash: hash },
-            AddressInner::Segwit { program, hrp: _ } => Segwit { witness_program: program },
+            AddressInner::P2pkh { hash, network: _ } => AddressData::P2pkh { pubkey_hash: hash },
+            AddressInner::P2sh { hash, network: _ } => AddressData::P2sh { script_hash: hash },
+            AddressInner::Segwit { program, hrp: _ } =>
+                AddressData::Segwit { witness_program: program },
         }
     }
 
     /// Gets the pubkey hash for this address if this is a P2PKH address.
     pub fn pubkey_hash(&self) -> Option<PubkeyHash> {
-        use AddressInner::*;
-
         match *self.inner() {
-            P2pkh { ref hash, network: _ } => Some(*hash),
+            AddressInner::P2pkh { ref hash, network: _ } => Some(*hash),
             _ => None,
         }
     }
 
     /// Gets the script hash for this address if this is a P2SH address.
     pub fn script_hash(&self) -> Option<ScriptHash> {
-        use AddressInner::*;
-
         match *self.inner() {
-            P2sh { ref hash, network: _ } => Some(*hash),
+            AddressInner::P2sh { ref hash, network: _ } => Some(*hash),
             _ => None,
         }
     }
 
     /// Gets the witness program for this address if this is a SegWit address.
     pub fn witness_program(&self) -> Option<WitnessProgram> {
-        use AddressInner::*;
-
         match *self.inner() {
-            Segwit { ref program, hrp: _ } => Some(*program),
+            AddressInner::Segwit { ref program, hrp: _ } => Some(*program),
             _ => None,
         }
     }
@@ -739,11 +736,10 @@ impl Address {
     /// - For p2pkh, the payload is the pubkey hash.
     /// - For SegWit addresses, the payload is the witness program.
     fn payload_as_bytes(&self) -> &[u8] {
-        use AddressInner::*;
         match *self.inner() {
-            P2sh { ref hash, network: _ } => hash.as_ref(),
-            P2pkh { ref hash, network: _ } => hash.as_ref(),
-            Segwit { ref program, hrp: _ } => program.as_program_slice(),
+            AddressInner::P2sh { ref hash, network: _ } => hash.as_ref(),
+            AddressInner::P2pkh { ref hash, network: _ } => hash.as_ref(),
+            AddressInner::Segwit { ref program, hrp: _ } => program.as_program_slice(),
         }
     }
 }
@@ -777,11 +773,10 @@ impl Address<NetworkUnchecked> {
     /// assert_eq!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V4)), false);
     /// ```
     pub fn is_valid_for_network(&self, n: Network) -> bool {
-        use AddressInner::*;
         match *self.inner() {
-            P2pkh { hash: _, ref network } => *network == NetworkKind::from(n),
-            P2sh { hash: _, ref network } => *network == NetworkKind::from(n),
-            Segwit { program: _, ref hrp } => *hrp == KnownHrp::from_network(n),
+            AddressInner::P2pkh { hash: _, ref network } => *network == NetworkKind::from(n),
+            AddressInner::P2sh { hash: _, ref network } => *network == NetworkKind::from(n),
+            AddressInner::Segwit { program: _, ref hrp } => *hrp == KnownHrp::from_network(n),
         }
     }
 
@@ -846,6 +841,15 @@ impl Address<NetworkUnchecked> {
     pub fn assume_checked(self) -> Address { Address::from_inner(self.to_inner()) }
 
     /// Parses a bech32 Address string
+    ///
+    /// # Errors
+    ///
+    /// - [`Bech32Error::ParseBech32`] if the string is not valid bech32 or does not encode a valid
+    ///   SegWit address.
+    /// - [`Bech32Error::WitnessVersion`] if the witness version byte is not a valid witness version.
+    /// - [`Bech32Error::UnknownHrp`] if the human-readable part is not one of the known Bitcoin
+    ///   HRPs (`bc`, `tb`, or `bcrt`).
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_bech32_str(s: &str) -> Result<Self, Bech32Error> {
         let (hrp, witness_version, data) =
             bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
@@ -859,6 +863,19 @@ impl Address<NetworkUnchecked> {
     }
 
     /// Parses a base58 Address string
+    ///
+    /// # Errors
+    ///
+    /// - [`Base58Error::LegacyAddressTooLong`] if the input string is longer than 50 characters.
+    /// - [`Base58Error::ParseBase58`] if the input string is invalid base58, less than 4 bytes or
+    ///   the checksum does not match the expected value.
+    /// - [`Base58Error::InvalidBase58PayloadLength`] if the resulting decoded slice is not 21
+    ///   bytes.
+    /// - [`Base58Error::InvalidLegacyPrefix`] if the address prefix is not one of:
+    ///   - [`PUBKEY_ADDRESS_PREFIX_MAIN`]
+    ///   - [`PUBKEY_ADDRESS_PREFIX_TEST`]
+    ///   - [`SCRIPT_ADDRESS_PREFIX_MAIN`]
+    ///   - [`SCRIPT_ADDRESS_PREFIX_TEST`]
     pub fn from_base58_str(s: &str) -> Result<Self, Base58Error> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
@@ -1022,9 +1039,7 @@ mod tests {
 
     #[test]
     fn qr_string() {
-        for el in
-            ["132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM", "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"].iter()
-        {
+        for el in ["132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM", "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"] {
             let addr = el
                 .parse::<Address<_>>()
                 .unwrap()
@@ -1036,9 +1051,7 @@ mod tests {
         for el in [
             "bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl",
             "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej",
-        ]
-        .iter()
-        {
+        ] {
             let addr = el.parse::<Address<_>>().unwrap().assume_checked();
             assert_eq!(addr.to_qr_uri(), format!("bitcoin:{}", el.to_ascii_uppercase()));
         }
@@ -1062,7 +1075,7 @@ mod tests {
         let unused_pubkey = "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c"
             .parse::<LegacyPublicKey>()
             .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey));
     }
 
     #[test]
@@ -1083,7 +1096,7 @@ mod tests {
         let unused_pubkey = "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c"
             .parse::<LegacyPublicKey>()
             .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey));
     }
 
     #[test]
@@ -1104,7 +1117,7 @@ mod tests {
         let unused_pubkey = "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c"
             .parse::<LegacyPublicKey>()
             .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey));
     }
 
     #[test]
@@ -1125,7 +1138,7 @@ mod tests {
         let unused_pubkey = "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c"
             .parse::<LegacyPublicKey>()
             .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey));
     }
 
     #[test]
