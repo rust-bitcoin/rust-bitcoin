@@ -61,7 +61,7 @@ use crate::crypto::key::{
 };
 use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
-use crate::script::witness_program::WitnessProgram;
+use crate::script::witness_program::{WitnessProgram, WitnessProgramExt as _};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
     self, RedeemScriptSizeError, Script, ScriptExt as _, ScriptHash, ScriptHashableTag,

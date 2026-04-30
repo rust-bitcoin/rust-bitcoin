@@ -105,6 +105,7 @@ pub mod ext {
         network::NetworkExt as _,
         pow::{CompactTargetExt as _, TargetExt as _, WorkExt as _},
         script::{ScriptExt as _, ScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
+        script::witness_program::WitnessProgramExt as _,
         taproot::{TapLeafHashExt as _, TapNodeHashExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
         witness::WitnessExt as _,

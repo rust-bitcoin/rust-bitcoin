@@ -12,7 +12,6 @@ use internals::array_vec::ArrayVec;
 use super::witness_version::WitnessVersion;
 use super::{PushBytes, WScriptHash, WitnessScript, WitnessScriptSizeError};
 use crate::crypto::key::{FullPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::script::WitnessScriptExt as _;
 use crate::taproot::TapNodeHash;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
@@ -81,25 +80,11 @@ impl WitnessProgram {
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
     pub fn p2wsh(script: &WitnessScript) -> Result<Self, WitnessScriptSizeError> {
-        script.wscript_hash().map(Self::p2wsh_from_hash)
+        WScriptHash::from_script(script).map(Self::p2wsh_from_hash)
     }
 
     /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
     pub fn p2wsh_from_hash(hash: WScriptHash) -> Self { Self::new_p2wsh(hash.to_byte_array()) }
-
-    /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.
-    ///
-    /// This function applies BIP-0341 key-tweaking to the untweaked
-    /// key using the merkle root, if it's present.
-    pub fn p2tr<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self {
-        let internal_key = internal_key.into();
-        let output_key = internal_key.tap_tweak(merkle_root);
-        let (pubkey, _) = output_key.as_x_only_public_key().serialize();
-        Self::new_p2tr(pubkey)
-    }
 
     /// Constructs a new [`WitnessProgram`] from a tweaked key for a P2TR output.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
@@ -115,13 +100,8 @@ impl WitnessProgram {
     /// Returns the witness program version.
     pub fn version(&self) -> WitnessVersion { self.version }
 
-    /// Returns the witness program.
-    pub fn program(&self) -> &PushBytes {
-        self.program
-            .as_slice()
-            .try_into()
-            .expect("witness programs are always smaller than max size of PushBytes")
-    }
+    /// Returns the witness program as a byte slice.
+    pub fn as_program_slice(&self) -> &[u8] { self.program.as_slice() }
 
     /// Returns true if this witness program is for a P2WPKH output.
     pub fn is_p2wpkh(&self) -> bool {
@@ -140,6 +120,38 @@ impl WitnessProgram {
     pub fn is_p2a(&self) -> bool {
         self.version == WitnessVersion::V1 && self.program == P2A_PROGRAM
     }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`WitnessProgram`] type.
+    pub trait WitnessProgramExt impl for WitnessProgram {
+        /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.
+        ///
+        /// This function applies BIP-0341 key-tweaking to the untweaked
+        /// key using the merkle root, if it's present.
+        fn p2tr<K: Into<UntweakedPublicKey>>(
+            internal_key: K,
+            merkle_root: Option<TapNodeHash>,
+        ) -> Self {
+            let internal_key = internal_key.into();
+            let output_key = internal_key.tap_tweak(merkle_root);
+            let (pubkey, _) = output_key.as_x_only_public_key().serialize();
+            Self::new(WitnessVersion::V1, &pubkey)
+                .expect("pubkey is valid size range for witness program")
+        }
+
+        /// Returns the witness program.
+        fn program(&self) -> &PushBytes {
+            self.as_program_slice()
+                .try_into()
+                .expect("witness programs are always smaller than max size of PushBytes")
+        }
+    }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::WitnessProgram {}
 }
 
 /// Error types for witness programs.
