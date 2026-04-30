@@ -28,13 +28,13 @@ pub const WITNESS_SCALE_FACTOR: usize = units::weight::WITNESS_SCALE_FACTOR;
 /// The maximum allowed number of signature check operations in a block.
 pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
 /// Mainnet (bitcoin) pubkey address prefix.
-pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0; // 0x00
+pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = addresses::PUBKEY_ADDRESS_PREFIX_MAIN; // 0x00
 /// Mainnet (bitcoin) script address prefix.
-pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
+pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = addresses::SCRIPT_ADDRESS_PREFIX_MAIN; // 0x05
 /// Test (testnet, signet, regtest) pubkey address prefix.
-pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
+pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = addresses::PUBKEY_ADDRESS_PREFIX_TEST; // 0x6f
 /// Test (testnet, signet, regtest) script address prefix.
-pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
+pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = addresses::SCRIPT_ADDRESS_PREFIX_TEST; // 0xc4
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = primitives::script::MAX_REDEEM_SCRIPT_SIZE; // 520
 /// The maximum allowed redeem script size of the witness script.
