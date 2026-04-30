@@ -131,6 +131,9 @@ mod sealed {
 
     pub trait NetworkValidationUnchecked {}
     impl NetworkValidationUnchecked for super::NetworkUnchecked {}
+
+    pub trait Sealed {}
+    impl Sealed for super::Address {}
 }
 
 /// Marker of status of address's network validation. See section [*Parsing addresses*](Address#parsing-addresses)
@@ -688,31 +691,6 @@ impl Address {
     ///
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
-    /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
-    pub fn from_script(
-        script: &ScriptPubKey,
-        params: impl AsRef<Params>,
-    ) -> Result<Self, FromScriptError> {
-        let network = params.as_ref().network;
-        if script.is_p2pkh() {
-            let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
-            let hash = PubkeyHash::from_byte_array(bytes);
-            Ok(Self::p2pkh(hash, network))
-        } else if script.is_p2sh() {
-            let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
-            let hash = ScriptHash::from_byte_array(bytes);
-            Ok(Self::p2sh_from_hash(hash, network))
-        } else if script.is_witness_program() {
-            let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
-
-            let version = WitnessVersion::try_from(opcode)?;
-            let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
-            Ok(Self::from_witness_program(program, network))
-        } else {
-            Err(FromScriptError::UnrecognizedScript)
-        }
-    }
-
     /// Generates a script pubkey spending to this address.
     pub fn script_pubkey(&self) -> ScriptPubKeyBuf {
         use AddressInner::*;
@@ -808,6 +786,36 @@ impl Address {
             P2sh { ref hash, network: _ } => hash.as_ref(),
             P2pkh { ref hash, network: _ } => hash.as_ref(),
             Segwit { ref program, hrp: _ } => program.program().as_bytes(),
+        }
+    }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Address`] type
+    pub trait AddressExt impl for Address {
+        /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
+        fn from_script(
+            script: &ScriptPubKey,
+            params: impl AsRef<Params>,
+        ) -> Result<Address, FromScriptError> {
+            let network = params.as_ref().network;
+            if script.is_p2pkh() {
+                let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
+                let hash = PubkeyHash::from_byte_array(bytes);
+                Ok(Self::p2pkh(hash, network))
+            } else if script.is_p2sh() {
+                let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
+                let hash = ScriptHash::from_byte_array(bytes);
+                Ok(Self::p2sh_from_hash(hash, network))
+            } else if script.is_witness_program() {
+                let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
+
+                let version = WitnessVersion::try_from(opcode)?;
+                let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
+                Ok(Self::from_witness_program(program, network))
+            } else {
+                Err(FromScriptError::UnrecognizedScript)
+            }
         }
     }
 }
