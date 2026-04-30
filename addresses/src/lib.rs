@@ -63,7 +63,13 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+pub extern crate base58;
+pub extern crate bech32;
+pub extern crate crypto;
 pub extern crate network;
+pub extern crate primitives;
+#[cfg(feature = "serde")]
+pub extern crate serde;
 
 pub mod error;
 pub mod witness_program;
