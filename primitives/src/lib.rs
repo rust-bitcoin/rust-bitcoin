@@ -59,6 +59,7 @@ pub mod serde_as_consensus;
 pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
+pub mod witness_version;
 
 #[cfg(feature = "hex")]
 mod hex_codec;

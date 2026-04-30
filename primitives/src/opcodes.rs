@@ -163,6 +163,9 @@ pub(crate) const OP_PUSHDATA2: u8 = 0x4d;
 #[cfg(feature = "alloc")]
 pub(crate) const OP_PUSHDATA4: u8 = 0x4e;
 
+/// Push an empty array onto the stack.
+pub(crate) const OP_PUSHBYTES_0: Opcode = Opcode::from_u8(0x00);
+
 /// Format a byte as a script opcode.
 #[cfg(feature = "alloc")]
 pub(crate) fn fmt_opcode(op: u8, f: &mut fmt::Formatter) -> fmt::Result {

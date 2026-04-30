@@ -1,0 +1,220 @@
+// SPDX-License-Identifier: CC0-1.0
+
+//! The segregated witness version byte as defined by [BIP-0141].
+//!
+//! > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte push
+//! > opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new special
+//! > meaning. The value of the first push is called the "version byte". The following byte
+//! > vector pushed is called the "witness program".
+//!
+//! [BIP-0141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
+
+use core::fmt;
+use core::str::FromStr;
+
+use units::parse_int;
+
+use crate::opcodes::all::{OP_1, OP_16};
+use crate::opcodes::{Opcode, OP_PUSHBYTES_0};
+
+#[rustfmt::skip]            // Keep public re-exports separate.
+#[doc(no_inline)]
+pub use self::error::{FromStrError, TryFromError};
+
+/// Version of the segregated witness program.
+///
+/// Helps limit possible versions of the witness according to the specification. If a plain `u8`
+/// type was used instead it would mean that the version may be > 16, which would be incorrect.
+///
+/// First byte of `scriptPubkey` in transaction output for transactions starting with opcodes
+/// ranging from 0 to 16 (inclusive).
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(u8)]
+pub enum WitnessVersion {
+    /// Initial version of witness program. Used for P2WPKH and P2WSH outputs
+    V0 = 0,
+    /// Version of witness program used for Taproot P2TR outputs.
+    V1 = 1,
+    /// Future (unsupported) version of witness program.
+    V2 = 2,
+    /// Future (unsupported) version of witness program.
+    V3 = 3,
+    /// Future (unsupported) version of witness program.
+    V4 = 4,
+    /// Future (unsupported) version of witness program.
+    V5 = 5,
+    /// Future (unsupported) version of witness program.
+    V6 = 6,
+    /// Future (unsupported) version of witness program.
+    V7 = 7,
+    /// Future (unsupported) version of witness program.
+    V8 = 8,
+    /// Future (unsupported) version of witness program.
+    V9 = 9,
+    /// Future (unsupported) version of witness program.
+    V10 = 10,
+    /// Future (unsupported) version of witness program.
+    V11 = 11,
+    /// Future (unsupported) version of witness program.
+    V12 = 12,
+    /// Future (unsupported) version of witness program.
+    V13 = 13,
+    /// Future (unsupported) version of witness program.
+    V14 = 14,
+    /// Future (unsupported) version of witness program.
+    V15 = 15,
+    /// Future (unsupported) version of witness program.
+    V16 = 16,
+}
+
+impl WitnessVersion {
+    /// Returns integer version number representation for a given [`WitnessVersion`] value.
+    ///
+    /// NB: this is not the same as an integer representation of the opcode signifying witness
+    /// version in bitcoin script. Thus, there is no function to directly convert witness version
+    /// into a byte since the conversion requires context (bitcoin script or just a version number).
+    pub fn to_num(self) -> u8 { self as u8 }
+}
+
+/// Prints [`WitnessVersion`] number (from 0 to 16) as integer, without any prefix or suffix.
+impl fmt::Display for WitnessVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", *self as u8) }
+}
+
+impl FromStr for WitnessVersion {
+    type Err = FromStrError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let version: u8 = parse_int::int_from_str(s)?;
+        Ok(Self::try_from(version)?)
+    }
+}
+
+impl TryFrom<u8> for WitnessVersion {
+    type Error = TryFromError;
+
+    fn try_from(no: u8) -> Result<Self, Self::Error> {
+        Ok(match no {
+            0 => Self::V0,
+            1 => Self::V1,
+            2 => Self::V2,
+            3 => Self::V3,
+            4 => Self::V4,
+            5 => Self::V5,
+            6 => Self::V6,
+            7 => Self::V7,
+            8 => Self::V8,
+            9 => Self::V9,
+            10 => Self::V10,
+            11 => Self::V11,
+            12 => Self::V12,
+            13 => Self::V13,
+            14 => Self::V14,
+            15 => Self::V15,
+            16 => Self::V16,
+            invalid => return Err(TryFromError { invalid }),
+        })
+    }
+}
+
+impl TryFrom<Opcode> for WitnessVersion {
+    type Error = TryFromError;
+
+    fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
+        match opcode.to_u8() {
+            0 => Ok(Self::V0),
+            version if version >= OP_1.to_u8() && version <= OP_16.to_u8() =>
+                Self::try_from(version - OP_1.to_u8() + 1),
+            invalid => Err(TryFromError { invalid }),
+        }
+    }
+}
+
+impl From<WitnessVersion> for Opcode {
+    fn from(version: WitnessVersion) -> Self {
+        match version {
+            WitnessVersion::V0 => OP_PUSHBYTES_0,
+            no => Self::from(OP_1.to_u8() + no.to_num() - 1),
+        }
+    }
+}
+
+/// Error types for the segwit version number.
+pub mod error {
+    use core::convert::Infallible;
+    use core::fmt;
+
+    use internals::write_err;
+    use units::parse_int::ParseIntError;
+
+    /// Error parsing [`WitnessVersion`] from a string.
+    ///
+    /// [`WitnessVersion`]: super::WitnessVersion
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum FromStrError {
+        /// Unable to parse integer from string.
+        Unparsable(ParseIntError),
+        /// String contained an invalid witness version number.
+        Invalid(TryFromError),
+    }
+
+    impl From<Infallible> for FromStrError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for FromStrError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Unparsable(ref e) => write_err!(f, "integer parse error"; e),
+                Self::Invalid(ref e) => write_err!(f, "invalid version number"; e),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for FromStrError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Unparsable(ref e) => Some(e),
+                Self::Invalid(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl From<ParseIntError> for FromStrError {
+        fn from(e: ParseIntError) -> Self { Self::Unparsable(e) }
+    }
+
+    impl From<TryFromError> for FromStrError {
+        fn from(e: TryFromError) -> Self { Self::Invalid(e) }
+    }
+
+    /// Error attempting to create a [`WitnessVersion`] from an integer.
+    ///
+    /// [`WitnessVersion`]: super::WitnessVersion
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct TryFromError {
+        /// The invalid non-witness version integer.
+        pub(super) invalid: u8,
+    }
+
+    impl TryFromError {
+        /// Returns the invalid non-witness version integer.
+        pub fn invalid_version(&self) -> u8 { self.invalid }
+    }
+
+    impl fmt::Display for TryFromError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "invalid witness script version: {}", self.invalid)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for TryFromError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { invalid: _ } = self;
+            None
+        }
+    }
+}
