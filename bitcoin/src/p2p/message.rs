@@ -386,7 +386,8 @@ impl Encodable for NetworkMessage {
             | NetworkMessage::WtxidRelay
             | NetworkMessage::FilterClear
             | NetworkMessage::SendAddrV2 => Ok(0),
-            NetworkMessage::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
+            // Don't use consensus_encode so as not to add a length suffix.
+            NetworkMessage::Unknown { payload: ref data, .. } => writer.write(data),
         }
     }
 }
@@ -840,5 +841,19 @@ mod test {
         } else {
             panic!("Wrong message type");
         }
+    }
+
+    #[test]
+    fn network_message_decode() {
+        let data = hex!("010101010101");
+
+        let message = NetworkMessage::Unknown {
+            command: CommandString::try_from_static("unknown").unwrap(),
+            payload: data.clone(),
+        };
+
+        // Unknown message should encode directly as the payload data.
+        let enc = serialize(&message);
+        assert_eq!(data.as_slice(), enc.as_slice());
     }
 }
