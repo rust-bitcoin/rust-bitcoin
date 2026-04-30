@@ -131,6 +131,9 @@ mod sealed {
 
     pub trait NetworkValidationUnchecked {}
     impl NetworkValidationUnchecked for super::NetworkUnchecked {}
+
+    pub trait Sealed {}
+    impl Sealed for super::Address {}
 }
 
 /// Marker of status of address's network validation. See section [*Parsing addresses*](Address#parsing-addresses)
@@ -537,16 +540,6 @@ impl Address {
         Self::from_witness_program(program, hrp)
     }
 
-    /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
-    /// pay-to-witness-public-key-hash (P2WPKH).
-    ///
-    /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwpkh(pk: FullPublicKey, network: impl Into<NetworkKind>) -> Self {
-        let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
-        let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
-        Self::p2sh_from_hash(script_hash, network)
-    }
-
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script.
     pub fn p2wsh(
         witness_script: &WitnessScript,
@@ -559,31 +552,6 @@ impl Address {
     /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script hash.
     pub fn p2wsh_from_hash(hash: WScriptHash, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2wsh_from_hash(hash);
-        Self::from_witness_program(program, hrp)
-    }
-
-    /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
-    /// pay-to-witness-script-hash (P2WSH).
-    ///
-    /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwsh(
-        witness_script: &WitnessScript,
-        network: impl Into<NetworkKind>,
-    ) -> Result<Self, WitnessScriptSizeError> {
-        let hash = witness_script.wscript_hash()?;
-        let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(hash);
-        let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
-        Ok(Self::p2sh_from_hash(script_hash, network))
-    }
-
-    /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
-    pub fn p2tr<K: Into<UntweakedPublicKey>>(
-        internal_key: K,
-        merkle_root: Option<TapNodeHash>,
-        hrp: impl Into<KnownHrp>,
-    ) -> Self {
-        let internal_key = internal_key.into();
-        let program = WitnessProgram::p2tr(internal_key, merkle_root);
         Self::from_witness_program(program, hrp)
     }
 
@@ -688,45 +656,6 @@ impl Address {
     ///
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
-    /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
-    pub fn from_script(
-        script: &ScriptPubKey,
-        params: impl AsRef<Params>,
-    ) -> Result<Self, FromScriptError> {
-        let network = params.as_ref().network;
-        if script.is_p2pkh() {
-            let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
-            let hash = PubkeyHash::from_byte_array(bytes);
-            Ok(Self::p2pkh(hash, network))
-        } else if script.is_p2sh() {
-            let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
-            let hash = ScriptHash::from_byte_array(bytes);
-            Ok(Self::p2sh_from_hash(hash, network))
-        } else if script.is_witness_program() {
-            let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
-
-            let version = WitnessVersion::try_from(opcode)?;
-            let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
-            Ok(Self::from_witness_program(program, network))
-        } else {
-            Err(FromScriptError::UnrecognizedScript)
-        }
-    }
-
-    /// Generates a script pubkey spending to this address.
-    pub fn script_pubkey(&self) -> ScriptPubKeyBuf {
-        use AddressInner::*;
-        match *self.inner() {
-            P2pkh { hash, network: _ } => ScriptPubKeyBuf::new_p2pkh(hash),
-            P2sh { hash, network: _ } => ScriptPubKeyBuf::new_p2sh(hash),
-            Segwit { ref program, hrp: _ } => {
-                let prog = program.program();
-                let version = program.version();
-                script::new_witness_program_unchecked(version, prog)
-            }
-        }
-    }
-
     /// Constructs a new URI string *bitcoin:address* optimized to be encoded in QR codes.
     ///
     /// If the address is bech32, the address becomes uppercase.
@@ -779,21 +708,6 @@ impl Address {
         xonly_pubkey.serialize().0 == *self.payload_as_bytes()
     }
 
-    /// Returns true if the address creates a particular script
-    /// This function doesn't make any allocations.
-    pub fn matches_script_pubkey(&self, script: &ScriptPubKey) -> bool {
-        use AddressInner::*;
-        match *self.inner() {
-            P2pkh { ref hash, network: _ } if script.is_p2pkh() =>
-                &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
-            P2sh { ref hash, network: _ } if script.is_p2sh() =>
-                &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Segwit { ref program, hrp: _ } if script.is_witness_program() =>
-                &script.as_bytes()[2..] == program.program().as_bytes(),
-            P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
-        }
-    }
-
     /// Returns the "payload" for this address.
     ///
     /// The "payload" is the useful stuff excluding serialization prefix, the exact payload is
@@ -808,6 +722,100 @@ impl Address {
             P2sh { ref hash, network: _ } => hash.as_ref(),
             P2pkh { ref hash, network: _ } => hash.as_ref(),
             Segwit { ref program, hrp: _ } => program.program().as_bytes(),
+        }
+    }
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Address`] type
+    pub trait AddressExt impl for Address {
+        /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
+        /// pay-to-witness-public-key-hash (P2WPKH).
+        ///
+        /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
+        fn p2shwpkh(pk: FullPublicKey, network: impl Into<NetworkKind>) -> Self {
+            let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
+            let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
+            Self::p2sh_from_hash(script_hash, network)
+        }
+
+        /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
+        /// pay-to-witness-script-hash (P2WSH).
+        ///
+        /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
+        fn p2shwsh(
+            witness_script: &WitnessScript,
+            network: impl Into<NetworkKind>,
+        ) -> Result<Address, WitnessScriptSizeError> {
+            let hash = witness_script.wscript_hash()?;
+            let builder = ScriptPubKey::builder().push_int_unchecked(0).push_slice(hash);
+            let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
+            Ok(Self::p2sh_from_hash(script_hash, network))
+        }
+
+        /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
+        fn p2tr<K: Into<UntweakedPublicKey>>(
+            internal_key: K,
+            merkle_root: Option<TapNodeHash>,
+            hrp: impl Into<KnownHrp>,
+        ) -> Self {
+            let internal_key = internal_key.into();
+            let program = WitnessProgram::p2tr(internal_key, merkle_root);
+            Self::from_witness_program(program, hrp)
+        }
+
+        /// Constructs a new [`Address`] from an output script (`scriptPubkey`).
+        fn from_script(
+            script: &ScriptPubKey,
+            params: impl AsRef<Params>,
+        ) -> Result<Address, FromScriptError> {
+            let network = params.as_ref().network;
+            if script.is_p2pkh() {
+                let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
+                let hash = PubkeyHash::from_byte_array(bytes);
+                Ok(Self::p2pkh(hash, network))
+            } else if script.is_p2sh() {
+                let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
+                let hash = ScriptHash::from_byte_array(bytes);
+                Ok(Self::p2sh_from_hash(hash, network))
+            } else if script.is_witness_program() {
+                let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
+
+                let version = WitnessVersion::try_from(opcode)?;
+                let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
+                Ok(Self::from_witness_program(program, network))
+            } else {
+                Err(FromScriptError::UnrecognizedScript)
+            }
+        }
+
+        /// Generates a script pubkey spending to this address.
+        fn script_pubkey(&self) -> ScriptPubKeyBuf {
+            use AddressInner::*;
+            match *self.inner() {
+                P2pkh { hash, network: _ } => ScriptPubKeyBuf::new_p2pkh(hash),
+                P2sh { hash, network: _ } => ScriptPubKeyBuf::new_p2sh(hash),
+                Segwit { ref program, hrp: _ } => {
+                    let prog = program.program();
+                    let version = program.version();
+                    script::new_witness_program_unchecked(version, prog)
+                }
+            }
+        }
+
+        /// Returns true if the address creates a particular script
+        /// This function doesn't make any allocations.
+        fn matches_script_pubkey(&self, script: &ScriptPubKey) -> bool {
+            use AddressInner::*;
+            match *self.inner() {
+                P2pkh { ref hash, network: _ } if script.is_p2pkh() =>
+                    &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
+                P2sh { ref hash, network: _ } if script.is_p2sh() =>
+                    &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
+                Segwit { ref program, hrp: _ } if script.is_witness_program() =>
+                    &script.as_bytes()[2..] == program.program().as_bytes(),
+                P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
+            }
         }
     }
 }
