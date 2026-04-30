@@ -104,7 +104,9 @@ dependencies = [
 name = "bitcoin-addresses"
 version = "0.0.0"
 dependencies = [
+ "bitcoin-crypto",
  "bitcoin-internals 0.5.0",
+ "bitcoin-primitives",
  "bitcoin-units 0.3.0",
 ]
 

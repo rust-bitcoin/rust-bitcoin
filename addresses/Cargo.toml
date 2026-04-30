@@ -15,11 +15,13 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std", "units/std"]
-alloc = ["internals/alloc", "units/alloc"]
+std = ["alloc", "crypto/std", "internals/std", "primitives/std", "units/std"]
+alloc = ["crypto/alloc", "internals/alloc", "primitives/alloc", "units/alloc"]
 
 [dependencies]
+crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.1.0", default-features = false, features = [] }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
+primitives = { package = "bitcoin-primitives", path = "../primitives", version = "0.102.0", default-features = false, features = ["hex"] }
 units = { package = "bitcoin-units", path = "../units", version = "0.3.0", default-features = false, features = [] }
 
 [dev-dependencies]
@@ -30,3 +32,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true
+
+[package.metadata.rbmt.lint]
+allowed_duplicates = [
+    "hex-conservative",
+]
