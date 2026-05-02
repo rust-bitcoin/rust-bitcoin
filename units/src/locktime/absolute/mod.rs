@@ -171,6 +171,7 @@ impl LockTime {
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     #[inline]
     #[allow(clippy::missing_panics_doc)]
+    #[track_caller]
     pub fn from_consensus(n: u32) -> Self {
         if crate::locktime::absolute::is_block_height(n) {
             Self::Blocks(Height::from_u32(n).expect("n is valid"))
