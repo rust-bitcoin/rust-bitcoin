@@ -12,7 +12,7 @@ use core::convert::Infallible;
 use core::fmt;
 use core::fmt::Write as _;
 
-use encoding::{Decode, Decoder, EncoderByteIter, Encode};
+use encoding::{Decode, Decoder, Encode, EncoderByteIter};
 use hex_unstable::{BytesToHexIter, Case};
 use internals::write_err;
 

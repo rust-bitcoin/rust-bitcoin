@@ -2936,7 +2936,10 @@ mod test {
 
         // Test serializing.
         let cs = CommandString("Andrew".into());
-        assert_eq!(encoding::encode_to_vec(&cs), [0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(
+            encoding::encode_to_vec(&cs),
+            [0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]
+        );
 
         // Test deserializing
         let cs: Result<CommandString, _> =

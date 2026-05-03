@@ -973,8 +973,10 @@ mod tests {
         let reject_tx_conflict = hex!("027478121474786e2d6d656d706f6f6c2d636f6e666c69637405df54d3860b3c41806a3546ab48279300affacf4b88591b229141dcf2f47004");
         let reject_tx_nonfinal = hex!("02747840096e6f6e2d66696e616c259bbe6c83db8bbdfca7ca303b19413dc245d9f2371b344ede5f8b1339a5460b");
 
-        let decode_result_conflict: Result<Reject, _> = encoding::decode_from_slice(&reject_tx_conflict);
-        let decode_result_nonfinal: Result<Reject, _> = encoding::decode_from_slice(&reject_tx_nonfinal);
+        let decode_result_conflict: Result<Reject, _> =
+            encoding::decode_from_slice(&reject_tx_conflict);
+        let decode_result_nonfinal: Result<Reject, _> =
+            encoding::decode_from_slice(&reject_tx_nonfinal);
 
         assert!(decode_result_conflict.is_ok());
         assert!(decode_result_nonfinal.is_ok());

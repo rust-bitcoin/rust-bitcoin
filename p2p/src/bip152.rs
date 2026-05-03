@@ -1132,15 +1132,17 @@ mod test {
                 // test deserialization
                 let mut raw: Vec<u8> = vec![0u8; 32];
                 raw.extend(testcase.0.clone());
-                let btr: BlockTransactionsRequest = encoding::decode_from_slice(&raw.clone()).unwrap();
+                let btr: BlockTransactionsRequest =
+                    encoding::decode_from_slice(&raw.clone()).unwrap();
                 assert_eq!(testcase.1, btr.indices().unwrap());
             }
             {
                 // test serialization
-                let raw: Vec<u8> = encoding::encode_to_vec(&BlockTransactionsRequest::from_indices_unchecked(
-                    BlockHash::from_byte_array([0; 32]),
-                    testcase.1,
-                ));
+                let raw: Vec<u8> =
+                    encoding::encode_to_vec(&BlockTransactionsRequest::from_indices_unchecked(
+                        BlockHash::from_byte_array([0; 32]),
+                        testcase.1,
+                    ));
                 let mut expected_raw: Vec<u8> = [0u8; 32].to_vec();
                 expected_raw.extend(testcase.0);
                 assert_eq!(expected_raw, raw);

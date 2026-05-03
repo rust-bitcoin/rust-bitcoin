@@ -13,9 +13,9 @@ use core::fmt;
 
 use bitcoin_consensus_encoding::{
     self as encoding, encoder_newtype, ArrayDecoder, ArrayEncoder, ArrayRefEncoder, BytesEncoder,
-    CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, CompactSizeU64Decoder,
-    Decode, Decoder, Decoder2, Decoder3, Decoder4, Decoder6, Encode, EncoderByteIter,
-    SliceEncoder, UnexpectedEofError,
+    CompactSizeDecoder, CompactSizeDecoderError, CompactSizeEncoder, CompactSizeU64Decoder, Decode,
+    Decoder, Decoder2, Decoder3, Decoder4, Decoder6, Encode, EncoderByteIter, SliceEncoder,
+    UnexpectedEofError,
 };
 use encoding::error::{DecodeError, UnconsumedError};
 #[cfg(feature = "std")]

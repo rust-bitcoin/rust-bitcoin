@@ -6,9 +6,8 @@
 //! This fuzz target compares the consensus encoding produced by `bitcoin_consensus_encoding::encode_to_vec`
 //! in master branch with `bitcoin::consensus::encode::serialize` from bitcoin 0.32 for all shared types.
 
+use bitcoin_consensus_encoding::{decode_from_slice, encode_to_vec, Decoder};
 use libfuzzer_sys::fuzz_target;
-
-use bitcoin_consensus_encoding::{Decoder, decode_from_slice, encode_to_vec};
 
 #[cfg(not(fuzzing))]
 fn main() {}
@@ -31,8 +30,8 @@ fn main() {}
 /// - `TransactionDecoderError` with "no outputs": The new `TransactionDecoder` rejects
 ///   transactions with zero outputs; the old decoder accepted them.
 fn is_known_decoder_divergence(err: &(dyn std::error::Error + 'static)) -> bool {
-    use bitcoin_consensus_encoding::LengthPrefixExceedsMaxError;
     use bitcoin::blockdata::transaction::TransactionDecoderError;
+    use bitcoin_consensus_encoding::LengthPrefixExceedsMaxError;
     use p2p::message::error::CommandStringDecoderError;
 
     let mut current: Option<&(dyn std::error::Error + 'static)> = Some(err);
@@ -40,13 +39,18 @@ fn is_known_decoder_divergence(err: &(dyn std::error::Error + 'static)) -> bool 
         if e.downcast_ref::<bitcoin::amount::OutOfRangeError>().is_some() {
             return true;
         }
-        if matches!(e.downcast_ref::<CommandStringDecoderError>(), Some(CommandStringDecoderError::NotAscii)) {
+        if matches!(
+            e.downcast_ref::<CommandStringDecoderError>(),
+            Some(CommandStringDecoderError::NotAscii)
+        ) {
             return true;
         }
         if e.downcast_ref::<LengthPrefixExceedsMaxError>().is_some() {
             return true;
         }
-        if e.downcast_ref::<TransactionDecoderError>().is_some_and(|e| e.to_string() == "transaction has no outputs") {
+        if e.downcast_ref::<TransactionDecoderError>()
+            .is_some_and(|e| e.to_string() == "transaction has no outputs")
+        {
             return true;
         }
         current = e.source();
@@ -76,15 +80,14 @@ macro_rules! compare_encoding {
                 let old_encoded = old_bitcoin::consensus::encode::serialize(&old_obj);
                 let new_encoded = encode_to_vec(&new_obj);
                 assert_eq!(old_encoded, new_encoded);
-            },
-            (Ok(old_obj), Err(ref err)) => {
+            }
+            (Ok(old_obj), Err(ref err)) =>
                 if !is_known_decoder_divergence(err) {
                     panic!("Decoded with old decoder only: {:?}, {:?} {:?}", $data, old_obj, err);
-                }
-            },
+                },
             (Err(err), Ok(new_obj)) => {
                 panic!("Decoded with new decoder only: {:?}, {:?} {:?}", $data, new_obj, err);
-            },
+            }
             (_, _) => {}
         }
     }};
@@ -117,8 +120,8 @@ fn addrv2_payload_has_torv2(data: &[u8]) -> bool {
         let mut rest = data;
         let count = read_compact_size(&mut rest)?;
         for _ in 0..count {
-            let message: p2p::address::AddrV2Message
-                = bitcoin::encoding::decode_from_slice_unbounded(&mut rest).ok()?;
+            let message: p2p::address::AddrV2Message =
+                bitcoin::encoding::decode_from_slice_unbounded(&mut rest).ok()?;
             if let p2p::address::AddrV2::Unknown(addr_type, _) = message.addr {
                 if addr_type == 0x03 {
                     return Some(true);

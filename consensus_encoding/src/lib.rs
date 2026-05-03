@@ -91,10 +91,10 @@ pub use self::encode::encoders::{
 };
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::encode::{encode_to_vec, drain_to_vec};
+pub use self::encode::{drain_to_vec, encode_to_vec};
 #[cfg(feature = "std")]
 #[doc(inline)]
-pub use self::encode::{encode_to_writer, drain_to_writer};
+pub use self::encode::{drain_to_writer, encode_to_writer};
 #[doc(inline)]
 pub use self::encode::{Encode, Encoder, EncoderByteIter, ExactSizeEncoder};
 #[cfg(feature = "alloc")]
