@@ -16,13 +16,12 @@ exclude = ["api", "tests", "contrib"]
 
 [features]
 default = []
-std = ["alloc", "hex?/std"]
-alloc = ["hex?/alloc"]
+std = ["alloc"]
+alloc = []
 
 test-serde = ["serde", "dep:serde_json", "dep:bincode"]
 
 [dependencies]
-hex = { package = "hex-conservative", version = "0.3.2", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, optional = true }
 
 # Behind the test-serde feature.

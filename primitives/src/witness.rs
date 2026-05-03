@@ -717,13 +717,27 @@ impl serde::Serialize for Witness {
     {
         use serde::ser::SerializeSeq;
 
+        /// Serializes a byte slice using the `hex` crate.
+        struct SerializeBytesAsHex<'a>(&'a [u8]);
+
+        impl serde::Serialize for SerializeBytesAsHex<'_> {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                // Ok because serde feature enables hex.
+                use hex_unstable::DisplayHex as _;
+                serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
+            }
+        }
+
         let human_readable = serializer.is_human_readable();
         let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
 
         // Note that the `Iter` strips the varints out when iterating.
         for elem in self {
             if human_readable {
-                seq.serialize_element(&internals::serde::SerializeBytesAsHex(elem))?;
+                seq.serialize_element(&SerializeBytesAsHex(elem))?;
             } else {
                 seq.serialize_element(&elem)?;
             }
