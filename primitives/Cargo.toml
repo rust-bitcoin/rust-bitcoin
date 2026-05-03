@@ -19,7 +19,7 @@ std = ["alloc", "hashes/std", "hex-stable?/std", "hex-unstable?/std", "internals
 alloc = ["hashes/alloc", "hex-stable?/alloc", "hex-unstable?/alloc", "internals/alloc", "units/alloc"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc", "hex"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
-hex = ["dep:hex-stable", "dep:hex-unstable", "hashes/hex", "internals/hex"]
+hex = ["dep:hex-stable", "dep:hex-unstable", "hashes/hex"]
 
 [dependencies]
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "0.2.0", default-features = false }

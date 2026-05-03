@@ -26,7 +26,7 @@ base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.20.0", default-features = false, features = ["hex"] }
 hex-unstable = { package = "hex-conservative", version = "0.3.2", default-features = false }
 hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false }
-internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false }
 secp256k1 = { version = "0.32.0-beta.2", default-features = false }
 
