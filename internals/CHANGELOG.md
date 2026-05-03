@@ -1,3 +1,8 @@
+# 0.6.0 - 2026-05-04
+
+- Remove the hex dependency.
+- Delete `compact_size` module.
+
 # 0.5.0 - 2025-12-05
 
 - Remove `doc_auto_cfg` [#5162](https://github.com/rust-bitcoin/rust-bitcoin/pull/5162)
