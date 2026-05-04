@@ -1,3 +1,10 @@
+# 0.14.100 - 2026-05-26
+
+**Bump the MSRV to Rust 1.74.0**
+
+Note the version number jump. We jumped to `v0.14.100` when doing the MSRV bump
+so as to leave room for a bunch of secuity releases up to this number if needed.
+
 # 0.14.2 - 2026-05-23
 
 * Enable `alloc` feature from `schemars` feature and fix feature gating.
