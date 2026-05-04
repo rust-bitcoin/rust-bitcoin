@@ -282,6 +282,8 @@ impl<T> core::convert::From<T> for bitcoin_hashes::hkdf::error::MaxLengthError
 pub fn bitcoin_hashes::hkdf::error::MaxLengthError::from(t: T) -> T
 pub mod bitcoin_hashes::hmac
 #[repr(transparent)] pub struct bitcoin_hashes::hmac::Hmac<T: bitcoin_hashes::Hash>(_)
+impl<'a, T: bitcoin_hashes::Hash + arbitrary::Arbitrary<'a>> arbitrary::Arbitrary<'a> for bitcoin_hashes::hmac::Hmac<T>
+pub fn bitcoin_hashes::hmac::Hmac<T>::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 impl<'de, T: bitcoin_hashes::Hash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
 impl<T: bitcoin_hashes::Hash + core::fmt::Debug> core::fmt::Debug for bitcoin_hashes::hmac::Hmac<T>
@@ -2172,6 +2174,8 @@ pub unsafe fn bitcoin_hashes::hkdf::Hkdf<T>::clone_to_uninit(&self, dest: *mut u
 impl<T> core::convert::From<T> for bitcoin_hashes::hkdf::Hkdf<T>
 pub fn bitcoin_hashes::hkdf::Hkdf<T>::from(t: T) -> T
 #[repr(transparent)] pub struct bitcoin_hashes::Hmac<T: bitcoin_hashes::Hash>(_)
+impl<'a, T: bitcoin_hashes::Hash + arbitrary::Arbitrary<'a>> arbitrary::Arbitrary<'a> for bitcoin_hashes::hmac::Hmac<T>
+pub fn bitcoin_hashes::hmac::Hmac<T>::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 impl<'de, T: bitcoin_hashes::Hash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
 impl<T: bitcoin_hashes::Hash + core::fmt::Debug> core::fmt::Debug for bitcoin_hashes::hmac::Hmac<T>
