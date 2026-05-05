@@ -5,11 +5,8 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
-use core::borrow::Borrow;
-use core::ops::Deref;
-
 use crate::internal_macros::define_extension_trait;
-use crate::script::{self, PushBytes, WitnessScriptBuf};
+use crate::script::{self, WitnessScriptBuf};
 #[cfg(feature = "secp-recovery")]
 use crate::sign_message::MessageSignature;
 use crate::taproot::{TapNodeHash, TapTweakHash};
@@ -28,14 +25,6 @@ pub use crypto::key::{
     SerializedXOnlyPublicKey, TweakedKeypair, TweakedPublicKey, UntweakedKeypair,
     UntweakedPublicKey, WPubkeyHash, WifKey, XOnlyPublicKey,
 };
-
-impl AsRef<PushBytes> for SerializedLegacyPublicKey {
-    fn as_ref(&self) -> &PushBytes { self.borrow() }
-}
-
-impl Borrow<PushBytes> for SerializedLegacyPublicKey {
-    fn borrow(&self) -> &PushBytes { <&PushBytes>::try_from(self.deref()).expect("65 <= u32::MAX") }
-}
 
 #[deprecated(since = "TBD", note = "use `LegacyPublicKey` instead")]
 #[doc(hidden)]
@@ -193,8 +182,6 @@ impl TapTweak for UntweakedKeypair {
         TweakedKeypair::dangerous_assume_tweaked(self)
     }
 }
-
-crate::internal_macros::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 #[cfg(test)]
 mod tests {

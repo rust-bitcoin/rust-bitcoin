@@ -4,6 +4,7 @@
 
 mod borrowed;
 mod owned;
+mod push_bytes;
 mod tag;
 #[cfg(test)]
 mod tests;
@@ -29,13 +30,16 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 pub use self::{
     borrowed::{Script, ScriptEncoder},
     owned::{ScriptBuf, ScriptBufDecoder},
+    push_bytes::{PushBytes, PushBytesBuf, PushBytesErrorReport},
     tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag},
 };
 #[doc(no_inline)]
 #[cfg(feature = "hex")]
 pub use self::error::FromHexError;
 #[doc(no_inline)]
-pub use self::error::{RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError};
+pub use self::error::{
+    PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError,
+};
 #[doc(inline)]
 pub use crate::hash_types::{ScriptHash, WScriptHash};
 
