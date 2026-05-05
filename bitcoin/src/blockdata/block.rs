@@ -16,7 +16,7 @@ use crate::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::TargetExt as _;
 use crate::prelude::Vec;
-use crate::script::ScriptExt as _;
+use crate::script::{PushBytesExt as _, ScriptExt as _};
 use crate::transaction::{Coinbase, Transaction, TransactionExt as _};
 use crate::{internal_macros, BlockTime, Target, Weight, Work};
 

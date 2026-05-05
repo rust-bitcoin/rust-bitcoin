@@ -72,7 +72,7 @@ pub use self::{
     builder::Builder,
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt, ScriptSigBufExt},
-    push_bytes::{PushBytes, PushBytesBuf, PushBytesErrorReport},
+    push_bytes::{PushBytes, PushBytesBuf, PushBytesExt, PushBytesErrorReport},
 };
 #[doc(no_inline)]
 pub use primitives::script::ScriptBufDecoderError;
