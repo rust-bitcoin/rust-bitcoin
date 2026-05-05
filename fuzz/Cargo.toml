@@ -15,6 +15,7 @@ cargo-fuzz = true
 bitcoin = { path = "../bitcoin", version = "0.33.0-beta", features = [ "serde", "arbitrary" ] }
 old_bitcoin = { version = "0.32.8", package = "bitcoin" }
 bitcoin_consensus_encoding = { path = "../consensus_encoding", package = "bitcoin-consensus-encoding" }
+chacha20_poly1305 = { path = "../chacha20_poly1305", package = "chacha20-poly1305" }
 p2p = { path = "../p2p", package = "bitcoin-p2p-messages", features = ["arbitrary"] }
 
 arbitrary = { version = "1.4.1" }
@@ -618,6 +619,13 @@ bench = false
 [[bin]]
 name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "chacha20_poly1305_constant_time_eq"
+path = "fuzz_targets/chacha20_poly1305/constant_time_eq.rs"
 test = false
 doc = false
 bench = false

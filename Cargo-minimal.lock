@@ -140,6 +140,7 @@ dependencies = [
  "bitcoin 0.33.0-beta",
  "bitcoin-consensus-encoding",
  "bitcoin-p2p-messages",
+ "chacha20-poly1305",
  "libfuzzer-sys",
  "serde",
  "serde_json",

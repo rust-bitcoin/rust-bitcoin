@@ -101,6 +101,7 @@ jobs:
           bitcoin_parse_address,
           bitcoin_parse_outpoint,
           bitcoin_script_bytes_to_asm_fmt,
+          chacha20_poly1305_constant_time_eq,
           consensus_encoding_decode_array,
           consensus_encoding_decode_byte_vec,
           consensus_encoding_decode_compact_size,

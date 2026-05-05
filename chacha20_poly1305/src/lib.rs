@@ -141,10 +141,10 @@ impl ChaCha20Poly1305 {
     }
 }
 
-/// Performs a constant-time equality check between two 16-byte arrays.
+/// Performs a constant-time equality check between two 16-byte arrays
 /// ensuring that the comparison time does not leak information about the contents.
 #[inline]
-fn constant_time_eq(a: &[u8; 16], b: &[u8; 16]) -> bool {
+pub fn constant_time_eq(a: &[u8; 16], b: &[u8; 16]) -> bool {
     let mut res = 0u8;
     for (x, y) in a.iter().zip(b.iter()) {
         res |= x ^ y;
