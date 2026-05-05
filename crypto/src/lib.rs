@@ -40,7 +40,6 @@ include!("../include/asref_push_bytes.rs");
 #[cfg(feature = "alloc")]
 mod push_bytes {
     use core::borrow::Borrow;
-    use core::ops::Deref;
 
     use primitives::script::{PushBytes, PushBytesBuf};
 
@@ -69,8 +68,6 @@ mod push_bytes {
     }
 
     impl Borrow<PushBytes> for SerializedLegacyPublicKey {
-        fn borrow(&self) -> &PushBytes {
-            <&PushBytes>::try_from(self.deref()).expect("65 <= u32::MAX")
-        }
+        fn borrow(&self) -> &PushBytes { <&PushBytes>::try_from(&**self).expect("65 <= u32::MAX") }
     }
 }
