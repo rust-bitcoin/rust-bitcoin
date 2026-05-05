@@ -429,3 +429,185 @@ impl From<Infallible> for PushBytesError {
 impl std::error::Error for PushBytesError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloc::vec;
+
+    use super::*;
+
+    #[test]
+    fn push_bytes_empty_inits() {
+        let pb = PushBytes::empty();
+        assert!(pb.is_empty());
+        assert_eq!(pb.len(), 0);
+        assert_eq!(pb.as_bytes(), &[0u8; 0]);
+
+        let pb = PushBytesBuf::new();
+        assert!(pb.is_empty());
+        assert_eq!(pb.len(), 0);
+        assert_eq!(pb.as_bytes(), &[0u8; 0]);
+
+        let pb = PushBytesBuf::default();
+        assert!(pb.is_empty());
+        assert_eq!(pb.len(), 0);
+        assert_eq!(pb.as_bytes(), &[0u8; 0]);
+    }
+
+    #[test]
+    fn push_bytes_try_from_slice() {
+        let data = [0x01, 0x02, 0x03];
+        let pb = <&PushBytes>::try_from(data.as_slice()).unwrap();
+        assert_eq!(pb.as_bytes(), &data);
+        assert_eq!(pb.len(), 3);
+        assert!(!pb.is_empty());
+    }
+
+    #[test]
+    #[cfg(target_pointer_width = "64")]
+    #[cfg_attr(miri, ignore)]
+    fn push_bytes_check_limit_boundary() {
+        // The limit is len < 2^32; a slice of exactly 2^32 bytes must be rejected.
+        // It's insane to allocate that much memory for a test case, so we have to fake
+        // it with unsafe pointer antics.
+        // Safety: try_from only reads bytes.len(), it never accesses the pointed-to data.
+        let ptr = core::ptr::NonNull::<u8>::dangling().as_ptr();
+        let too_long: &[u8] = unsafe { core::slice::from_raw_parts(ptr, 0x1_0000_0000) };
+        assert!(<&PushBytes>::try_from(too_long).is_err());
+    }
+
+    #[test]
+    fn push_bytes_from_array() {
+        let data = [0xde, 0xad, 0xbe, 0xef];
+        let pb: &PushBytes = (&data).into();
+        assert_eq!(pb.as_bytes(), &data);
+    }
+
+    #[test]
+    fn push_bytes_asref_array() {
+        let data = [0x01, 0x02];
+        let pb: &PushBytes = data.as_ref();
+        assert_eq!(pb.as_bytes(), &data);
+    }
+
+    #[test]
+    fn push_bytes_index() {
+        let data = [0x01, 0x02, 0x03];
+        let pb: &PushBytes = (&data).into();
+        assert_eq!(pb[0], 0x01);
+        assert_eq!(pb[2], 0x03);
+        let slice = &pb[1..];
+        assert_eq!(slice.as_bytes(), &[0x02, 0x03]);
+    }
+
+    #[test]
+    fn push_bytes_as_mut_bytes() {
+        let mut data = [0x01, 0x02, 0x03];
+        let pb: &mut PushBytes = (&mut data).into();
+        pb.as_mut_bytes()[0] = 0xff;
+        assert_eq!(data, [0xff, 0x02, 0x03]);
+    }
+
+    #[test]
+    fn push_bytes_buf_with_capacity() {
+        let buf = PushBytesBuf::with_capacity(16);
+        assert!(buf.is_empty());
+        assert!(buf.capacity() >= 16);
+    }
+
+    #[test]
+    fn push_bytes_buf_push_and_pop() {
+        let mut buf = PushBytesBuf::new();
+        buf.push(0x01).unwrap();
+        buf.push(0x02).unwrap();
+        assert_eq!(buf.len(), 2);
+        assert!(!buf.is_empty());
+        assert_eq!(buf.pop(), Some(0x02));
+        assert_eq!(buf.pop(), Some(0x01));
+        assert_eq!(buf.pop(), None);
+        assert!(buf.is_empty());
+    }
+
+    #[test]
+    fn push_bytes_buf_reserve() {
+        let mut buf = PushBytesBuf::new();
+        assert_eq!(buf.capacity(), 0);
+        buf.reserve(32);
+        assert!(buf.capacity() >= 32);
+    }
+
+    #[test]
+    fn push_bytes_buf_extend_from_slice() {
+        let mut buf = PushBytesBuf::new();
+        buf.extend_from_slice(&[0x01, 0x02, 0x03]).unwrap();
+        assert_eq!(buf.as_bytes(), &[0x01, 0x02, 0x03]);
+    }
+
+    #[test]
+    fn push_bytes_buf_clear() {
+        let mut buf = PushBytesBuf::new();
+        buf.extend_from_slice(&[0x01, 0x02]).unwrap();
+        buf.clear();
+        assert!(buf.is_empty());
+    }
+
+    #[test]
+    fn push_bytes_buf_truncate() {
+        let mut buf = PushBytesBuf::new();
+        buf.extend_from_slice(&[0x01, 0x02, 0x03, 0x04]).unwrap();
+        buf.truncate(2);
+        assert_eq!(buf.as_bytes(), &[0x01, 0x02]);
+    }
+
+    #[test]
+    fn push_bytes_buf_remove() {
+        let mut buf = PushBytesBuf::new();
+        buf.extend_from_slice(&[0x01, 0x02, 0x03]).unwrap();
+        let removed = buf.remove(1);
+        assert_eq!(removed, 0x02);
+        assert_eq!(buf.as_bytes(), &[0x01, 0x03]);
+    }
+
+    #[test]
+    fn push_bytes_buf_from_array() {
+        let buf = PushBytesBuf::from([0x01, 0x02, 0x03]);
+        assert_eq!(buf.as_bytes(), &[0x01, 0x02, 0x03]);
+    }
+
+    #[test]
+    fn push_bytes_buf_try_from_vec() {
+        let vec = vec![0x01, 0x02, 0x03];
+        let buf = PushBytesBuf::try_from(vec.clone()).unwrap();
+        assert_eq!(buf.as_bytes(), &vec[..]);
+    }
+
+    #[test]
+    fn push_bytes_buf_into_vec() {
+        let buf = PushBytesBuf::from([0x01, 0x02]);
+        let vec: alloc::vec::Vec<u8> = buf.into();
+        assert_eq!(vec, [0x01, 0x02]);
+    }
+
+    #[test]
+    fn push_bytes_buf_as_push_bytes() {
+        let buf = PushBytesBuf::from([0xab, 0xcd]);
+        let pb: &PushBytes = buf.as_push_bytes();
+        assert_eq!(pb.as_bytes(), &[0xab, 0xcd]);
+    }
+
+    #[test]
+    fn push_bytes_buf_deref() {
+        let buf = PushBytesBuf::from([0x01, 0x02]);
+        let pb: &PushBytes = &buf;
+        assert_eq!(pb.as_bytes(), buf.as_bytes());
+    }
+
+    #[test]
+    fn push_bytes_buf_to_owned() {
+        use alloc::borrow::ToOwned;
+        let data = [0x01, 0x02, 0x03];
+        let pb: &PushBytes = (&data).into();
+        let owned: PushBytesBuf = pb.to_owned();
+        assert_eq!(owned.as_bytes(), pb.as_bytes());
+    }
+}
