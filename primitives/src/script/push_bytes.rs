@@ -32,7 +32,7 @@ mod primitive {
 
     #[cfg(not(any(target_pointer_width = "16", target_pointer_width = "32")))]
     fn check_limit(len: usize) -> Result<(), PushBytesError> {
-        if len < 0x100000000 {
+        if len < 0x1_0000_0000 {
             Ok(())
         } else {
             Err(PushBytesError { len })
@@ -207,7 +207,7 @@ mod primitive {
 
         /// Reserve capacity for `additional_capacity` bytes.
         pub fn reserve(&mut self, additional_capacity: usize) {
-            self.0.reserve(additional_capacity)
+            self.0.reserve(additional_capacity);
         }
 
         /// Try pushing a single byte.
@@ -381,7 +381,7 @@ impl AsRef<PushBytes> for SerializedLegacyPublicKey {
 }
 
 impl Borrow<PushBytes> for SerializedLegacyPublicKey {
-    fn borrow(&self) -> &PushBytes { <&PushBytes>::try_from(self.deref()).expect("65 <= u32::MAX") }
+    fn borrow(&self) -> &PushBytes { <&PushBytes>::try_from(&**self).expect("65 <= u32::MAX") }
 }
 
 /// Reports information about failed conversion into `PushBytes`.

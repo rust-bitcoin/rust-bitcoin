@@ -5,6 +5,7 @@
 //! Macros meant to be used inside the Rust Bitcoin primitives library.
 
 #[rustfmt::skip]
+#[cfg(feature = "alloc")]
 macro_rules! impl_asref_push_bytes {
     ($($hashtype:ty),* $(,)?) => {
         $(
@@ -22,4 +23,5 @@ macro_rules! impl_asref_push_bytes {
         )*
     };
 }
+#[cfg(feature = "alloc")]
 pub(crate) use impl_asref_push_bytes;
