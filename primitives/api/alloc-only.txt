@@ -1516,6 +1516,50 @@ impl<T> core::convert::From<T> for bitcoin_primitives::merkle_tree::WitnessMerkl
 pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::from(t: T) -> T
 pub mod bitcoin_primitives::script
 pub mod bitcoin_primitives::script::error
+pub struct bitcoin_primitives::script::error::PushBytesError
+impl bitcoin_primitives::script::PushBytesErrorReport for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::input_len(&self) -> usize
+impl core::clone::Clone for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::clone(&self) -> bitcoin_primitives::script::PushBytesError
+impl core::cmp::Eq for bitcoin_primitives::script::PushBytesError
+impl core::cmp::PartialEq for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::eq(&self, other: &bitcoin_primitives::script::PushBytesError) -> bool
+impl core::fmt::Debug for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::PushBytesError
+impl core::marker::Freeze for bitcoin_primitives::script::PushBytesError
+impl core::marker::Send for bitcoin_primitives::script::PushBytesError
+impl core::marker::Sync for bitcoin_primitives::script::PushBytesError
+impl core::marker::Unpin for bitcoin_primitives::script::PushBytesError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::PushBytesError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::PushBytesError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::PushBytesError
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::script::PushBytesError where U: core::convert::From<T>
+pub fn bitcoin_primitives::script::PushBytesError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::script::PushBytesError where U: core::convert::Into<T>
+pub type bitcoin_primitives::script::PushBytesError::Error = core::convert::Infallible
+pub fn bitcoin_primitives::script::PushBytesError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::script::PushBytesError where U: core::convert::TryFrom<T>
+pub type bitcoin_primitives::script::PushBytesError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_primitives::script::PushBytesError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::script::PushBytesError where T: core::clone::Clone
+pub type bitcoin_primitives::script::PushBytesError::Owned = T
+pub fn bitcoin_primitives::script::PushBytesError::clone_into(&self, target: &mut T)
+pub fn bitcoin_primitives::script::PushBytesError::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin_primitives::script::PushBytesError where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin_primitives::script::PushBytesError where T: 'static + ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::script::PushBytesError where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::script::PushBytesError where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::script::PushBytesError where T: core::clone::Clone
+pub unsafe fn bitcoin_primitives::script::PushBytesError::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::from(t: T) -> T
 pub struct bitcoin_primitives::script::error::RedeemScriptSizeError
 impl bitcoin_primitives::script::RedeemScriptSizeError
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::invalid_size(&self) -> usize
@@ -1924,6 +1968,1199 @@ impl<T> core::clone::CloneToUninit for bitcoin_primitives::script::WitnessScript
 pub unsafe fn bitcoin_primitives::script::WitnessScriptTag::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_primitives::script::WitnessScriptTag
 pub fn bitcoin_primitives::script::WitnessScriptTag::from(t: T) -> T
+#[repr(transparent)] pub struct bitcoin_primitives::script::PushBytes(_)
+impl bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::as_bytes(&self) -> &[u8]
+pub fn bitcoin_primitives::script::PushBytes::as_mut_bytes(&mut self) -> &mut [u8]
+pub fn bitcoin_primitives::script::PushBytes::empty() -> &'static Self
+impl bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::is_empty(&self) -> bool
+pub fn bitcoin_primitives::script::PushBytes::len(&self) -> usize
+impl alloc::borrow::ToOwned for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Owned = bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytes::to_owned(&self) -> Self::Owned
+impl core::borrow::Borrow<bitcoin_primitives::script::PushBytes> for bitcoin_crypto::key::serialized_legacy_public_key::SerializedLegacyPublicKey
+pub fn bitcoin_crypto::key::serialized_legacy_public_key::SerializedLegacyPublicKey::borrow(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::borrow::Borrow<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::borrow(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::borrow::BorrowMut<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::borrow_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::cmp::Eq for bitcoin_primitives::script::PushBytes
+impl core::cmp::Ord for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::cmp(&self, other: &bitcoin_primitives::script::PushBytes) -> core::cmp::Ordering
+impl core::cmp::PartialEq for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::eq(&self, other: &bitcoin_primitives::script::PushBytes) -> bool
+impl core::cmp::PartialOrd for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::partial_cmp(&self, other: &bitcoin_primitives::script::PushBytes) -> core::option::Option<core::cmp::Ordering>
+impl core::convert::AsMut<[u8]> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::as_mut(&mut self) -> &mut [u8]
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 0]
+pub fn [u8; 0]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 10]
+pub fn [u8; 10]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 11]
+pub fn [u8; 11]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 12]
+pub fn [u8; 12]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 13]
+pub fn [u8; 13]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 14]
+pub fn [u8; 14]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 15]
+pub fn [u8; 15]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 16]
+pub fn [u8; 16]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 17]
+pub fn [u8; 17]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 18]
+pub fn [u8; 18]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 19]
+pub fn [u8; 19]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 1]
+pub fn [u8; 1]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 20]
+pub fn [u8; 20]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 21]
+pub fn [u8; 21]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 22]
+pub fn [u8; 22]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 23]
+pub fn [u8; 23]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 24]
+pub fn [u8; 24]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 25]
+pub fn [u8; 25]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 26]
+pub fn [u8; 26]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 27]
+pub fn [u8; 27]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 28]
+pub fn [u8; 28]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 29]
+pub fn [u8; 29]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 2]
+pub fn [u8; 2]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 30]
+pub fn [u8; 30]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 31]
+pub fn [u8; 31]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 32]
+pub fn [u8; 32]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 33]
+pub fn [u8; 33]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 34]
+pub fn [u8; 34]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 35]
+pub fn [u8; 35]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 36]
+pub fn [u8; 36]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 37]
+pub fn [u8; 37]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 38]
+pub fn [u8; 38]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 39]
+pub fn [u8; 39]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 3]
+pub fn [u8; 3]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 40]
+pub fn [u8; 40]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 41]
+pub fn [u8; 41]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 42]
+pub fn [u8; 42]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 43]
+pub fn [u8; 43]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 44]
+pub fn [u8; 44]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 45]
+pub fn [u8; 45]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 46]
+pub fn [u8; 46]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 47]
+pub fn [u8; 47]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 48]
+pub fn [u8; 48]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 49]
+pub fn [u8; 49]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 4]
+pub fn [u8; 4]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 50]
+pub fn [u8; 50]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 51]
+pub fn [u8; 51]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 52]
+pub fn [u8; 52]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 53]
+pub fn [u8; 53]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 54]
+pub fn [u8; 54]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 55]
+pub fn [u8; 55]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 56]
+pub fn [u8; 56]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 57]
+pub fn [u8; 57]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 58]
+pub fn [u8; 58]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 59]
+pub fn [u8; 59]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 5]
+pub fn [u8; 5]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 60]
+pub fn [u8; 60]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 61]
+pub fn [u8; 61]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 62]
+pub fn [u8; 62]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 63]
+pub fn [u8; 63]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 64]
+pub fn [u8; 64]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 65]
+pub fn [u8; 65]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 66]
+pub fn [u8; 66]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 67]
+pub fn [u8; 67]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 68]
+pub fn [u8; 68]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 69]
+pub fn [u8; 69]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 6]
+pub fn [u8; 6]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 70]
+pub fn [u8; 70]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 71]
+pub fn [u8; 71]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 72]
+pub fn [u8; 72]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 73]
+pub fn [u8; 73]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 74]
+pub fn [u8; 74]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 75]
+pub fn [u8; 75]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 76]
+pub fn [u8; 76]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 7]
+pub fn [u8; 7]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 8]
+pub fn [u8; 8]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for [u8; 9]
+pub fn [u8; 9]::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::as_mut(&mut self) -> &mut Self
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::as_ref(&self) -> &[u8]
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 0]
+pub fn [u8; 0]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 10]
+pub fn [u8; 10]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 11]
+pub fn [u8; 11]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 12]
+pub fn [u8; 12]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 13]
+pub fn [u8; 13]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 14]
+pub fn [u8; 14]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 15]
+pub fn [u8; 15]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 16]
+pub fn [u8; 16]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 17]
+pub fn [u8; 17]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 18]
+pub fn [u8; 18]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 19]
+pub fn [u8; 19]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 1]
+pub fn [u8; 1]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 20]
+pub fn [u8; 20]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 21]
+pub fn [u8; 21]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 22]
+pub fn [u8; 22]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 23]
+pub fn [u8; 23]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 24]
+pub fn [u8; 24]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 25]
+pub fn [u8; 25]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 26]
+pub fn [u8; 26]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 27]
+pub fn [u8; 27]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 28]
+pub fn [u8; 28]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 29]
+pub fn [u8; 29]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 2]
+pub fn [u8; 2]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 30]
+pub fn [u8; 30]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 31]
+pub fn [u8; 31]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 32]
+pub fn [u8; 32]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 33]
+pub fn [u8; 33]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 34]
+pub fn [u8; 34]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 35]
+pub fn [u8; 35]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 36]
+pub fn [u8; 36]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 37]
+pub fn [u8; 37]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 38]
+pub fn [u8; 38]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 39]
+pub fn [u8; 39]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 3]
+pub fn [u8; 3]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 40]
+pub fn [u8; 40]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 41]
+pub fn [u8; 41]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 42]
+pub fn [u8; 42]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 43]
+pub fn [u8; 43]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 44]
+pub fn [u8; 44]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 45]
+pub fn [u8; 45]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 46]
+pub fn [u8; 46]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 47]
+pub fn [u8; 47]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 48]
+pub fn [u8; 48]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 49]
+pub fn [u8; 49]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 4]
+pub fn [u8; 4]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 50]
+pub fn [u8; 50]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 51]
+pub fn [u8; 51]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 52]
+pub fn [u8; 52]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 53]
+pub fn [u8; 53]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 54]
+pub fn [u8; 54]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 55]
+pub fn [u8; 55]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 56]
+pub fn [u8; 56]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 57]
+pub fn [u8; 57]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 58]
+pub fn [u8; 58]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 59]
+pub fn [u8; 59]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 5]
+pub fn [u8; 5]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 60]
+pub fn [u8; 60]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 61]
+pub fn [u8; 61]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 62]
+pub fn [u8; 62]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 63]
+pub fn [u8; 63]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 64]
+pub fn [u8; 64]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 65]
+pub fn [u8; 65]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 66]
+pub fn [u8; 66]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 67]
+pub fn [u8; 67]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 68]
+pub fn [u8; 68]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 69]
+pub fn [u8; 69]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 6]
+pub fn [u8; 6]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 70]
+pub fn [u8; 70]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 71]
+pub fn [u8; 71]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 72]
+pub fn [u8; 72]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 73]
+pub fn [u8; 73]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 74]
+pub fn [u8; 74]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 75]
+pub fn [u8; 75]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 76]
+pub fn [u8; 76]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 7]
+pub fn [u8; 7]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 8]
+pub fn [u8; 8]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for [u8; 9]
+pub fn [u8; 9]::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_crypto::ecdsa::SerializedSignature
+pub fn bitcoin_crypto::ecdsa::SerializedSignature::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_crypto::key::PubkeyHash
+pub fn bitcoin_crypto::key::PubkeyHash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_crypto::key::WPubkeyHash
+pub fn bitcoin_crypto::key::WPubkeyHash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_crypto::key::serialized_legacy_public_key::SerializedLegacyPublicKey
+pub fn bitcoin_crypto::key::serialized_legacy_public_key::SerializedLegacyPublicKey::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_crypto::taproot::SerializedSignature
+pub fn bitcoin_crypto::taproot::SerializedSignature::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_hashes::hash160::Hash
+pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_hashes::ripemd160::Hash
+pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_hashes::sha1::Hash
+pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_hashes::sha256::Hash
+pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_hashes::sha256d::Hash
+pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::as_ref(&self) -> &Self
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::ScriptHash
+pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::WScriptHash
+pub fn bitcoin_primitives::script::WScriptHash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::fmt::Debug for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::PushBytes
+impl core::ops::index::Index<(core::ops::range::Bound<usize>, core::ops::range::Bound<usize>)> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: (core::ops::range::Bound<usize>, core::ops::range::Bound<usize>)) -> &Self::Output
+impl core::ops::index::Index<core::ops::range::Range<usize>> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: core::ops::range::Range<usize>) -> &Self::Output
+impl core::ops::index::Index<core::ops::range::RangeFrom<usize>> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: core::ops::range::RangeFrom<usize>) -> &Self::Output
+impl core::ops::index::Index<core::ops::range::RangeFull> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: core::ops::range::RangeFull) -> &Self::Output
+impl core::ops::index::Index<core::ops::range::RangeInclusive<usize>> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: core::ops::range::RangeInclusive<usize>) -> &Self::Output
+impl core::ops::index::Index<core::ops::range::RangeTo<usize>> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: core::ops::range::RangeTo<usize>) -> &Self::Output
+impl core::ops::index::Index<core::ops::range::RangeToInclusive<usize>> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: core::ops::range::RangeToInclusive<usize>) -> &Self::Output
+impl core::ops::index::Index<usize> for bitcoin_primitives::script::PushBytes
+pub type bitcoin_primitives::script::PushBytes::Output = u8
+pub fn bitcoin_primitives::script::PushBytes::index(&self, index: usize) -> &Self::Output
+impl core::ops::index::IndexMut<(core::ops::range::Bound<usize>, core::ops::range::Bound<usize>)> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: (core::ops::range::Bound<usize>, core::ops::range::Bound<usize>)) -> &mut Self::Output
+impl core::ops::index::IndexMut<core::ops::range::Range<usize>> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: core::ops::range::Range<usize>) -> &mut Self::Output
+impl core::ops::index::IndexMut<core::ops::range::RangeFrom<usize>> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: core::ops::range::RangeFrom<usize>) -> &mut Self::Output
+impl core::ops::index::IndexMut<core::ops::range::RangeFull> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: core::ops::range::RangeFull) -> &mut Self::Output
+impl core::ops::index::IndexMut<core::ops::range::RangeInclusive<usize>> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: core::ops::range::RangeInclusive<usize>) -> &mut Self::Output
+impl core::ops::index::IndexMut<core::ops::range::RangeTo<usize>> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: core::ops::range::RangeTo<usize>) -> &mut Self::Output
+impl core::ops::index::IndexMut<core::ops::range::RangeToInclusive<usize>> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: core::ops::range::RangeToInclusive<usize>) -> &mut Self::Output
+impl core::ops::index::IndexMut<usize> for bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytes::index_mut(&mut self, index: usize) -> &mut Self::Output
+impl<'a> core::convert::From<&'a [u8; 0]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 0]) -> Self
+impl<'a> core::convert::From<&'a [u8; 10]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 10]) -> Self
+impl<'a> core::convert::From<&'a [u8; 11]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 11]) -> Self
+impl<'a> core::convert::From<&'a [u8; 12]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 12]) -> Self
+impl<'a> core::convert::From<&'a [u8; 13]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 13]) -> Self
+impl<'a> core::convert::From<&'a [u8; 14]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 14]) -> Self
+impl<'a> core::convert::From<&'a [u8; 15]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 15]) -> Self
+impl<'a> core::convert::From<&'a [u8; 16]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 16]) -> Self
+impl<'a> core::convert::From<&'a [u8; 17]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 17]) -> Self
+impl<'a> core::convert::From<&'a [u8; 18]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 18]) -> Self
+impl<'a> core::convert::From<&'a [u8; 19]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 19]) -> Self
+impl<'a> core::convert::From<&'a [u8; 1]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 1]) -> Self
+impl<'a> core::convert::From<&'a [u8; 20]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 20]) -> Self
+impl<'a> core::convert::From<&'a [u8; 21]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 21]) -> Self
+impl<'a> core::convert::From<&'a [u8; 22]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 22]) -> Self
+impl<'a> core::convert::From<&'a [u8; 23]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 23]) -> Self
+impl<'a> core::convert::From<&'a [u8; 24]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 24]) -> Self
+impl<'a> core::convert::From<&'a [u8; 25]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 25]) -> Self
+impl<'a> core::convert::From<&'a [u8; 26]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 26]) -> Self
+impl<'a> core::convert::From<&'a [u8; 27]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 27]) -> Self
+impl<'a> core::convert::From<&'a [u8; 28]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 28]) -> Self
+impl<'a> core::convert::From<&'a [u8; 29]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 29]) -> Self
+impl<'a> core::convert::From<&'a [u8; 2]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 2]) -> Self
+impl<'a> core::convert::From<&'a [u8; 30]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 30]) -> Self
+impl<'a> core::convert::From<&'a [u8; 31]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 31]) -> Self
+impl<'a> core::convert::From<&'a [u8; 32]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 32]) -> Self
+impl<'a> core::convert::From<&'a [u8; 33]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 33]) -> Self
+impl<'a> core::convert::From<&'a [u8; 34]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 34]) -> Self
+impl<'a> core::convert::From<&'a [u8; 35]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 35]) -> Self
+impl<'a> core::convert::From<&'a [u8; 36]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 36]) -> Self
+impl<'a> core::convert::From<&'a [u8; 37]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 37]) -> Self
+impl<'a> core::convert::From<&'a [u8; 38]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 38]) -> Self
+impl<'a> core::convert::From<&'a [u8; 39]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 39]) -> Self
+impl<'a> core::convert::From<&'a [u8; 3]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 3]) -> Self
+impl<'a> core::convert::From<&'a [u8; 40]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 40]) -> Self
+impl<'a> core::convert::From<&'a [u8; 41]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 41]) -> Self
+impl<'a> core::convert::From<&'a [u8; 42]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 42]) -> Self
+impl<'a> core::convert::From<&'a [u8; 43]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 43]) -> Self
+impl<'a> core::convert::From<&'a [u8; 44]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 44]) -> Self
+impl<'a> core::convert::From<&'a [u8; 45]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 45]) -> Self
+impl<'a> core::convert::From<&'a [u8; 46]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 46]) -> Self
+impl<'a> core::convert::From<&'a [u8; 47]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 47]) -> Self
+impl<'a> core::convert::From<&'a [u8; 48]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 48]) -> Self
+impl<'a> core::convert::From<&'a [u8; 49]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 49]) -> Self
+impl<'a> core::convert::From<&'a [u8; 4]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 4]) -> Self
+impl<'a> core::convert::From<&'a [u8; 50]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 50]) -> Self
+impl<'a> core::convert::From<&'a [u8; 51]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 51]) -> Self
+impl<'a> core::convert::From<&'a [u8; 52]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 52]) -> Self
+impl<'a> core::convert::From<&'a [u8; 53]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 53]) -> Self
+impl<'a> core::convert::From<&'a [u8; 54]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 54]) -> Self
+impl<'a> core::convert::From<&'a [u8; 55]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 55]) -> Self
+impl<'a> core::convert::From<&'a [u8; 56]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 56]) -> Self
+impl<'a> core::convert::From<&'a [u8; 57]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 57]) -> Self
+impl<'a> core::convert::From<&'a [u8; 58]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 58]) -> Self
+impl<'a> core::convert::From<&'a [u8; 59]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 59]) -> Self
+impl<'a> core::convert::From<&'a [u8; 5]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 5]) -> Self
+impl<'a> core::convert::From<&'a [u8; 60]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 60]) -> Self
+impl<'a> core::convert::From<&'a [u8; 61]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 61]) -> Self
+impl<'a> core::convert::From<&'a [u8; 62]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 62]) -> Self
+impl<'a> core::convert::From<&'a [u8; 63]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 63]) -> Self
+impl<'a> core::convert::From<&'a [u8; 64]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 64]) -> Self
+impl<'a> core::convert::From<&'a [u8; 65]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 65]) -> Self
+impl<'a> core::convert::From<&'a [u8; 66]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 66]) -> Self
+impl<'a> core::convert::From<&'a [u8; 67]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 67]) -> Self
+impl<'a> core::convert::From<&'a [u8; 68]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 68]) -> Self
+impl<'a> core::convert::From<&'a [u8; 69]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 69]) -> Self
+impl<'a> core::convert::From<&'a [u8; 6]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 6]) -> Self
+impl<'a> core::convert::From<&'a [u8; 70]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 70]) -> Self
+impl<'a> core::convert::From<&'a [u8; 71]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 71]) -> Self
+impl<'a> core::convert::From<&'a [u8; 72]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 72]) -> Self
+impl<'a> core::convert::From<&'a [u8; 73]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 73]) -> Self
+impl<'a> core::convert::From<&'a [u8; 74]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 74]) -> Self
+impl<'a> core::convert::From<&'a [u8; 75]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 75]) -> Self
+impl<'a> core::convert::From<&'a [u8; 76]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 76]) -> Self
+impl<'a> core::convert::From<&'a [u8; 7]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 7]) -> Self
+impl<'a> core::convert::From<&'a [u8; 8]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 8]) -> Self
+impl<'a> core::convert::From<&'a [u8; 9]> for &'a bitcoin_primitives::script::PushBytes
+pub fn &'a bitcoin_primitives::script::PushBytes::from(bytes: &'a [u8; 9]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 0]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 0]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 10]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 10]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 11]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 11]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 12]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 12]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 13]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 13]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 14]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 14]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 15]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 15]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 16]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 16]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 17]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 17]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 18]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 18]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 19]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 19]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 1]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 1]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 20]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 20]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 21]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 21]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 22]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 22]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 23]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 23]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 24]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 24]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 25]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 25]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 26]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 26]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 27]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 27]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 28]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 28]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 29]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 29]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 2]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 2]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 30]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 30]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 31]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 31]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 32]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 32]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 33]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 33]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 34]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 34]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 35]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 35]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 36]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 36]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 37]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 37]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 38]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 38]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 39]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 39]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 3]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 3]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 40]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 40]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 41]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 41]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 42]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 42]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 43]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 43]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 44]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 44]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 45]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 45]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 46]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 46]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 47]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 47]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 48]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 48]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 49]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 49]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 4]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 4]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 50]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 50]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 51]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 51]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 52]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 52]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 53]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 53]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 54]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 54]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 55]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 55]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 56]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 56]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 57]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 57]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 58]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 58]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 59]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 59]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 5]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 5]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 60]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 60]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 61]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 61]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 62]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 62]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 63]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 63]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 64]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 64]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 65]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 65]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 66]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 66]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 67]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 67]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 68]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 68]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 69]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 69]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 6]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 6]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 70]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 70]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 71]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 71]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 72]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 72]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 73]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 73]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 74]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 74]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 75]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 75]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 76]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 76]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 7]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 7]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 8]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 8]) -> Self
+impl<'a> core::convert::From<&'a mut [u8; 9]> for &'a mut bitcoin_primitives::script::PushBytes
+pub fn &'a mut bitcoin_primitives::script::PushBytes::from(bytes: &'a mut [u8; 9]) -> Self
+impl<'a> core::convert::TryFrom<&'a [u8]> for &'a bitcoin_primitives::script::PushBytes
+pub type &'a bitcoin_primitives::script::PushBytes::Error = bitcoin_primitives::script::PushBytesError
+pub fn &'a bitcoin_primitives::script::PushBytes::try_from(bytes: &'a [u8]) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut [u8]> for &'a mut bitcoin_primitives::script::PushBytes
+pub type &'a mut bitcoin_primitives::script::PushBytes::Error = bitcoin_primitives::script::PushBytesError
+pub fn &'a mut bitcoin_primitives::script::PushBytes::try_from(bytes: &'a mut [u8]) -> core::result::Result<Self, Self::Error>
+impl core::marker::Freeze for bitcoin_primitives::script::PushBytes
+impl core::marker::Send for bitcoin_primitives::script::PushBytes
+impl !core::marker::Sized for bitcoin_primitives::script::PushBytes
+impl core::marker::Sync for bitcoin_primitives::script::PushBytes
+impl core::marker::Unpin for bitcoin_primitives::script::PushBytes
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::PushBytes
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::PushBytes
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::PushBytes
+impl<T> core::any::Any for bitcoin_primitives::script::PushBytes where T: 'static + ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytes::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::script::PushBytes where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytes::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::script::PushBytes where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytes::borrow_mut(&mut self) -> &mut T
+pub struct bitcoin_primitives::script::PushBytesBuf(_)
+impl bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::as_mut_push_bytes(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytesBuf::as_push_bytes(&self) -> &bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytesBuf::clear(&mut self)
+pub fn bitcoin_primitives::script::PushBytesBuf::extend_from_slice(&mut self, bytes: &[u8]) -> core::result::Result<(), bitcoin_primitives::script::PushBytesError>
+pub const fn bitcoin_primitives::script::PushBytesBuf::new() -> Self
+pub fn bitcoin_primitives::script::PushBytesBuf::pop(&mut self) -> core::option::Option<u8>
+pub fn bitcoin_primitives::script::PushBytesBuf::push(&mut self, byte: u8) -> core::result::Result<(), bitcoin_primitives::script::PushBytesError>
+pub fn bitcoin_primitives::script::PushBytesBuf::remove(&mut self, index: usize) -> u8
+pub fn bitcoin_primitives::script::PushBytesBuf::reserve(&mut self, additional_capacity: usize)
+pub fn bitcoin_primitives::script::PushBytesBuf::truncate(&mut self, len: usize)
+pub fn bitcoin_primitives::script::PushBytesBuf::with_capacity(capacity: usize) -> Self
+impl bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::capacity(&self) -> usize
+pub fn bitcoin_primitives::script::PushBytesBuf::is_empty(&self) -> bool
+pub fn bitcoin_primitives::script::PushBytesBuf::len(&self) -> usize
+impl core::borrow::Borrow<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::borrow(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::borrow::BorrowMut<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::borrow_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::clone::Clone for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::clone(&self) -> bitcoin_primitives::script::PushBytesBuf
+impl core::cmp::Eq for bitcoin_primitives::script::PushBytesBuf
+impl core::cmp::Ord for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::cmp(&self, other: &bitcoin_primitives::script::PushBytesBuf) -> core::cmp::Ordering
+impl core::cmp::PartialEq for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::eq(&self, other: &bitcoin_primitives::script::PushBytesBuf) -> bool
+impl core::cmp::PartialOrd for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::partial_cmp(&self, other: &bitcoin_primitives::script::PushBytesBuf) -> core::option::Option<core::cmp::Ordering>
+impl core::convert::AsMut<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::as_mut(&mut self) -> &mut bitcoin_primitives::script::PushBytes
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::From<[u8; 0]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 0]) -> Self
+impl core::convert::From<[u8; 10]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 10]) -> Self
+impl core::convert::From<[u8; 11]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 11]) -> Self
+impl core::convert::From<[u8; 12]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 12]) -> Self
+impl core::convert::From<[u8; 13]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 13]) -> Self
+impl core::convert::From<[u8; 14]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 14]) -> Self
+impl core::convert::From<[u8; 15]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 15]) -> Self
+impl core::convert::From<[u8; 16]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 16]) -> Self
+impl core::convert::From<[u8; 17]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 17]) -> Self
+impl core::convert::From<[u8; 18]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 18]) -> Self
+impl core::convert::From<[u8; 19]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 19]) -> Self
+impl core::convert::From<[u8; 1]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 1]) -> Self
+impl core::convert::From<[u8; 20]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 20]) -> Self
+impl core::convert::From<[u8; 21]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 21]) -> Self
+impl core::convert::From<[u8; 22]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 22]) -> Self
+impl core::convert::From<[u8; 23]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 23]) -> Self
+impl core::convert::From<[u8; 24]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 24]) -> Self
+impl core::convert::From<[u8; 25]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 25]) -> Self
+impl core::convert::From<[u8; 26]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 26]) -> Self
+impl core::convert::From<[u8; 27]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 27]) -> Self
+impl core::convert::From<[u8; 28]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 28]) -> Self
+impl core::convert::From<[u8; 29]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 29]) -> Self
+impl core::convert::From<[u8; 2]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 2]) -> Self
+impl core::convert::From<[u8; 30]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 30]) -> Self
+impl core::convert::From<[u8; 31]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 31]) -> Self
+impl core::convert::From<[u8; 32]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 32]) -> Self
+impl core::convert::From<[u8; 33]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 33]) -> Self
+impl core::convert::From<[u8; 34]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 34]) -> Self
+impl core::convert::From<[u8; 35]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 35]) -> Self
+impl core::convert::From<[u8; 36]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 36]) -> Self
+impl core::convert::From<[u8; 37]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 37]) -> Self
+impl core::convert::From<[u8; 38]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 38]) -> Self
+impl core::convert::From<[u8; 39]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 39]) -> Self
+impl core::convert::From<[u8; 3]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 3]) -> Self
+impl core::convert::From<[u8; 40]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 40]) -> Self
+impl core::convert::From<[u8; 41]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 41]) -> Self
+impl core::convert::From<[u8; 42]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 42]) -> Self
+impl core::convert::From<[u8; 43]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 43]) -> Self
+impl core::convert::From<[u8; 44]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 44]) -> Self
+impl core::convert::From<[u8; 45]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 45]) -> Self
+impl core::convert::From<[u8; 46]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 46]) -> Self
+impl core::convert::From<[u8; 47]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 47]) -> Self
+impl core::convert::From<[u8; 48]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 48]) -> Self
+impl core::convert::From<[u8; 49]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 49]) -> Self
+impl core::convert::From<[u8; 4]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 4]) -> Self
+impl core::convert::From<[u8; 50]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 50]) -> Self
+impl core::convert::From<[u8; 51]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 51]) -> Self
+impl core::convert::From<[u8; 52]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 52]) -> Self
+impl core::convert::From<[u8; 53]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 53]) -> Self
+impl core::convert::From<[u8; 54]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 54]) -> Self
+impl core::convert::From<[u8; 55]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 55]) -> Self
+impl core::convert::From<[u8; 56]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 56]) -> Self
+impl core::convert::From<[u8; 57]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 57]) -> Self
+impl core::convert::From<[u8; 58]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 58]) -> Self
+impl core::convert::From<[u8; 59]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 59]) -> Self
+impl core::convert::From<[u8; 5]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 5]) -> Self
+impl core::convert::From<[u8; 60]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 60]) -> Self
+impl core::convert::From<[u8; 61]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 61]) -> Self
+impl core::convert::From<[u8; 62]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 62]) -> Self
+impl core::convert::From<[u8; 63]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 63]) -> Self
+impl core::convert::From<[u8; 64]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 64]) -> Self
+impl core::convert::From<[u8; 65]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 65]) -> Self
+impl core::convert::From<[u8; 66]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 66]) -> Self
+impl core::convert::From<[u8; 67]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 67]) -> Self
+impl core::convert::From<[u8; 68]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 68]) -> Self
+impl core::convert::From<[u8; 69]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 69]) -> Self
+impl core::convert::From<[u8; 6]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 6]) -> Self
+impl core::convert::From<[u8; 70]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 70]) -> Self
+impl core::convert::From<[u8; 71]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 71]) -> Self
+impl core::convert::From<[u8; 72]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 72]) -> Self
+impl core::convert::From<[u8; 73]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 73]) -> Self
+impl core::convert::From<[u8; 74]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 74]) -> Self
+impl core::convert::From<[u8; 75]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 75]) -> Self
+impl core::convert::From<[u8; 76]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 76]) -> Self
+impl core::convert::From<[u8; 7]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 7]) -> Self
+impl core::convert::From<[u8; 8]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 8]) -> Self
+impl core::convert::From<[u8; 9]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: [u8; 9]) -> Self
+impl core::convert::From<bitcoin_crypto::key::PubkeyHash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_crypto::key::PubkeyHash) -> Self
+impl core::convert::From<bitcoin_crypto::key::WPubkeyHash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_crypto::key::WPubkeyHash) -> Self
+impl core::convert::From<bitcoin_hashes::hash160::Hash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_hashes::hash160::Hash) -> Self
+impl core::convert::From<bitcoin_hashes::ripemd160::Hash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_hashes::ripemd160::Hash) -> Self
+impl core::convert::From<bitcoin_hashes::sha1::Hash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_hashes::sha1::Hash) -> Self
+impl core::convert::From<bitcoin_hashes::sha256::Hash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_hashes::sha256::Hash) -> Self
+impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_hashes::sha256d::Hash) -> Self
+impl core::convert::From<bitcoin_primitives::script::PushBytesBuf> for alloc::vec::Vec<u8>
+pub fn alloc::vec::Vec<u8>::from(value: bitcoin_primitives::script::PushBytesBuf) -> Self
+impl core::convert::From<bitcoin_primitives::script::ScriptHash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_primitives::script::ScriptHash) -> Self
+impl core::convert::From<bitcoin_primitives::script::WScriptHash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_primitives::script::WScriptHash) -> Self
+impl core::convert::TryFrom<alloc::vec::Vec<u8>> for bitcoin_primitives::script::PushBytesBuf
+pub type bitcoin_primitives::script::PushBytesBuf::Error = bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesBuf::try_from(vec: alloc::vec::Vec<u8>) -> core::result::Result<Self, Self::Error>
+impl core::default::Default for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::default() -> bitcoin_primitives::script::PushBytesBuf
+impl core::fmt::Debug for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::PushBytesBuf
+impl core::ops::deref::Deref for bitcoin_primitives::script::PushBytesBuf
+pub type bitcoin_primitives::script::PushBytesBuf::Target = bitcoin_primitives::script::PushBytes
+pub fn bitcoin_primitives::script::PushBytesBuf::deref(&self) -> &Self::Target
+impl core::ops::deref::DerefMut for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::deref_mut(&mut self) -> &mut Self::Target
+impl<'a> core::convert::From<&'a [u8; 0]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 0]) -> Self
+impl<'a> core::convert::From<&'a [u8; 10]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 10]) -> Self
+impl<'a> core::convert::From<&'a [u8; 11]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 11]) -> Self
+impl<'a> core::convert::From<&'a [u8; 12]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 12]) -> Self
+impl<'a> core::convert::From<&'a [u8; 13]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 13]) -> Self
+impl<'a> core::convert::From<&'a [u8; 14]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 14]) -> Self
+impl<'a> core::convert::From<&'a [u8; 15]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 15]) -> Self
+impl<'a> core::convert::From<&'a [u8; 16]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 16]) -> Self
+impl<'a> core::convert::From<&'a [u8; 17]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 17]) -> Self
+impl<'a> core::convert::From<&'a [u8; 18]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 18]) -> Self
+impl<'a> core::convert::From<&'a [u8; 19]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 19]) -> Self
+impl<'a> core::convert::From<&'a [u8; 1]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 1]) -> Self
+impl<'a> core::convert::From<&'a [u8; 20]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 20]) -> Self
+impl<'a> core::convert::From<&'a [u8; 21]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 21]) -> Self
+impl<'a> core::convert::From<&'a [u8; 22]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 22]) -> Self
+impl<'a> core::convert::From<&'a [u8; 23]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 23]) -> Self
+impl<'a> core::convert::From<&'a [u8; 24]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 24]) -> Self
+impl<'a> core::convert::From<&'a [u8; 25]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 25]) -> Self
+impl<'a> core::convert::From<&'a [u8; 26]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 26]) -> Self
+impl<'a> core::convert::From<&'a [u8; 27]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 27]) -> Self
+impl<'a> core::convert::From<&'a [u8; 28]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 28]) -> Self
+impl<'a> core::convert::From<&'a [u8; 29]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 29]) -> Self
+impl<'a> core::convert::From<&'a [u8; 2]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 2]) -> Self
+impl<'a> core::convert::From<&'a [u8; 30]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 30]) -> Self
+impl<'a> core::convert::From<&'a [u8; 31]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 31]) -> Self
+impl<'a> core::convert::From<&'a [u8; 32]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 32]) -> Self
+impl<'a> core::convert::From<&'a [u8; 33]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 33]) -> Self
+impl<'a> core::convert::From<&'a [u8; 34]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 34]) -> Self
+impl<'a> core::convert::From<&'a [u8; 35]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 35]) -> Self
+impl<'a> core::convert::From<&'a [u8; 36]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 36]) -> Self
+impl<'a> core::convert::From<&'a [u8; 37]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 37]) -> Self
+impl<'a> core::convert::From<&'a [u8; 38]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 38]) -> Self
+impl<'a> core::convert::From<&'a [u8; 39]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 39]) -> Self
+impl<'a> core::convert::From<&'a [u8; 3]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 3]) -> Self
+impl<'a> core::convert::From<&'a [u8; 40]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 40]) -> Self
+impl<'a> core::convert::From<&'a [u8; 41]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 41]) -> Self
+impl<'a> core::convert::From<&'a [u8; 42]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 42]) -> Self
+impl<'a> core::convert::From<&'a [u8; 43]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 43]) -> Self
+impl<'a> core::convert::From<&'a [u8; 44]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 44]) -> Self
+impl<'a> core::convert::From<&'a [u8; 45]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 45]) -> Self
+impl<'a> core::convert::From<&'a [u8; 46]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 46]) -> Self
+impl<'a> core::convert::From<&'a [u8; 47]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 47]) -> Self
+impl<'a> core::convert::From<&'a [u8; 48]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 48]) -> Self
+impl<'a> core::convert::From<&'a [u8; 49]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 49]) -> Self
+impl<'a> core::convert::From<&'a [u8; 4]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 4]) -> Self
+impl<'a> core::convert::From<&'a [u8; 50]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 50]) -> Self
+impl<'a> core::convert::From<&'a [u8; 51]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 51]) -> Self
+impl<'a> core::convert::From<&'a [u8; 52]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 52]) -> Self
+impl<'a> core::convert::From<&'a [u8; 53]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 53]) -> Self
+impl<'a> core::convert::From<&'a [u8; 54]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 54]) -> Self
+impl<'a> core::convert::From<&'a [u8; 55]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 55]) -> Self
+impl<'a> core::convert::From<&'a [u8; 56]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 56]) -> Self
+impl<'a> core::convert::From<&'a [u8; 57]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 57]) -> Self
+impl<'a> core::convert::From<&'a [u8; 58]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 58]) -> Self
+impl<'a> core::convert::From<&'a [u8; 59]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 59]) -> Self
+impl<'a> core::convert::From<&'a [u8; 5]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 5]) -> Self
+impl<'a> core::convert::From<&'a [u8; 60]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 60]) -> Self
+impl<'a> core::convert::From<&'a [u8; 61]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 61]) -> Self
+impl<'a> core::convert::From<&'a [u8; 62]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 62]) -> Self
+impl<'a> core::convert::From<&'a [u8; 63]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 63]) -> Self
+impl<'a> core::convert::From<&'a [u8; 64]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 64]) -> Self
+impl<'a> core::convert::From<&'a [u8; 65]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 65]) -> Self
+impl<'a> core::convert::From<&'a [u8; 66]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 66]) -> Self
+impl<'a> core::convert::From<&'a [u8; 67]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 67]) -> Self
+impl<'a> core::convert::From<&'a [u8; 68]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 68]) -> Self
+impl<'a> core::convert::From<&'a [u8; 69]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 69]) -> Self
+impl<'a> core::convert::From<&'a [u8; 6]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 6]) -> Self
+impl<'a> core::convert::From<&'a [u8; 70]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 70]) -> Self
+impl<'a> core::convert::From<&'a [u8; 71]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 71]) -> Self
+impl<'a> core::convert::From<&'a [u8; 72]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 72]) -> Self
+impl<'a> core::convert::From<&'a [u8; 73]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 73]) -> Self
+impl<'a> core::convert::From<&'a [u8; 74]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 74]) -> Self
+impl<'a> core::convert::From<&'a [u8; 75]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 75]) -> Self
+impl<'a> core::convert::From<&'a [u8; 76]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 76]) -> Self
+impl<'a> core::convert::From<&'a [u8; 7]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 7]) -> Self
+impl<'a> core::convert::From<&'a [u8; 8]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 8]) -> Self
+impl<'a> core::convert::From<&'a [u8; 9]> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(bytes: &'a [u8; 9]) -> Self
+impl core::marker::Freeze for bitcoin_primitives::script::PushBytesBuf
+impl core::marker::Send for bitcoin_primitives::script::PushBytesBuf
+impl core::marker::Sync for bitcoin_primitives::script::PushBytesBuf
+impl core::marker::Unpin for bitcoin_primitives::script::PushBytesBuf
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::PushBytesBuf
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::PushBytesBuf
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::PushBytesBuf
+impl<P, T> core::ops::deref::Receiver for bitcoin_primitives::script::PushBytesBuf where P: core::ops::deref::Deref<Target = T> + ?core::marker::Sized, T: ?core::marker::Sized
+pub type bitcoin_primitives::script::PushBytesBuf::Target = T
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::script::PushBytesBuf where U: core::convert::From<T>
+pub fn bitcoin_primitives::script::PushBytesBuf::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::script::PushBytesBuf where U: core::convert::Into<T>
+pub type bitcoin_primitives::script::PushBytesBuf::Error = core::convert::Infallible
+pub fn bitcoin_primitives::script::PushBytesBuf::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::script::PushBytesBuf where U: core::convert::TryFrom<T>
+pub type bitcoin_primitives::script::PushBytesBuf::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_primitives::script::PushBytesBuf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::script::PushBytesBuf where T: core::clone::Clone
+pub type bitcoin_primitives::script::PushBytesBuf::Owned = T
+pub fn bitcoin_primitives::script::PushBytesBuf::clone_into(&self, target: &mut T)
+pub fn bitcoin_primitives::script::PushBytesBuf::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin_primitives::script::PushBytesBuf where T: 'static + ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesBuf::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::script::PushBytesBuf where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesBuf::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::script::PushBytesBuf where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesBuf::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::script::PushBytesBuf where T: core::clone::Clone
+pub unsafe fn bitcoin_primitives::script::PushBytesBuf::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(t: T) -> T
+pub struct bitcoin_primitives::script::PushBytesError
+impl bitcoin_primitives::script::PushBytesErrorReport for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::input_len(&self) -> usize
+impl core::clone::Clone for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::clone(&self) -> bitcoin_primitives::script::PushBytesError
+impl core::cmp::Eq for bitcoin_primitives::script::PushBytesError
+impl core::cmp::PartialEq for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::eq(&self, other: &bitcoin_primitives::script::PushBytesError) -> bool
+impl core::fmt::Debug for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::PushBytesError
+impl core::marker::Freeze for bitcoin_primitives::script::PushBytesError
+impl core::marker::Send for bitcoin_primitives::script::PushBytesError
+impl core::marker::Sync for bitcoin_primitives::script::PushBytesError
+impl core::marker::Unpin for bitcoin_primitives::script::PushBytesError
+impl core::marker::UnsafeUnpin for bitcoin_primitives::script::PushBytesError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::PushBytesError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::PushBytesError
+impl<T, U> core::convert::Into<U> for bitcoin_primitives::script::PushBytesError where U: core::convert::From<T>
+pub fn bitcoin_primitives::script::PushBytesError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_primitives::script::PushBytesError where U: core::convert::Into<T>
+pub type bitcoin_primitives::script::PushBytesError::Error = core::convert::Infallible
+pub fn bitcoin_primitives::script::PushBytesError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_primitives::script::PushBytesError where U: core::convert::TryFrom<T>
+pub type bitcoin_primitives::script::PushBytesError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_primitives::script::PushBytesError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_primitives::script::PushBytesError where T: core::clone::Clone
+pub type bitcoin_primitives::script::PushBytesError::Owned = T
+pub fn bitcoin_primitives::script::PushBytesError::clone_into(&self, target: &mut T)
+pub fn bitcoin_primitives::script::PushBytesError::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin_primitives::script::PushBytesError where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin_primitives::script::PushBytesError where T: 'static + ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_primitives::script::PushBytesError where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_primitives::script::PushBytesError where T: ?core::marker::Sized
+pub fn bitcoin_primitives::script::PushBytesError::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_primitives::script::PushBytesError where T: core::clone::Clone
+pub unsafe fn bitcoin_primitives::script::PushBytesError::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::from(t: T) -> T
 pub struct bitcoin_primitives::script::RedeemScriptSizeError
 impl bitcoin_primitives::script::RedeemScriptSizeError
 pub fn bitcoin_primitives::script::RedeemScriptSizeError::invalid_size(&self) -> usize
@@ -2354,6 +3591,10 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_primitives::script::ScriptHash
 pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::ScriptHash
 pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &[u8]
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::ScriptHash
+pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::From<bitcoin_primitives::script::ScriptHash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_primitives::script::ScriptHash) -> Self
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptHash
 pub fn bitcoin_primitives::script::ScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_primitives::script::ScriptHash
@@ -2423,6 +3664,10 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::script::WScriptHash
 pub fn bitcoin_primitives::script::WScriptHash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::WScriptHash
 pub fn bitcoin_primitives::script::WScriptHash::as_ref(&self) -> &[u8]
+impl core::convert::AsRef<bitcoin_primitives::script::PushBytes> for bitcoin_primitives::script::WScriptHash
+pub fn bitcoin_primitives::script::WScriptHash::as_ref(&self) -> &bitcoin_primitives::script::PushBytes
+impl core::convert::From<bitcoin_primitives::script::WScriptHash> for bitcoin_primitives::script::PushBytesBuf
+pub fn bitcoin_primitives::script::PushBytesBuf::from(hash: bitcoin_primitives::script::WScriptHash) -> Self
 impl core::convert::TryFrom<&bitcoin_primitives::script::Script<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
 pub type bitcoin_primitives::script::WScriptHash::Error = bitcoin_primitives::script::WitnessScriptSizeError
 pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: &bitcoin_primitives::script::WitnessScript) -> core::result::Result<Self, Self::Error>
@@ -2515,6 +3760,12 @@ impl<T> core::convert::From<T> for bitcoin_primitives::script::WitnessScriptSize
 pub fn bitcoin_primitives::script::WitnessScriptSizeError::from(t: T) -> T
 pub const bitcoin_primitives::script::MAX_REDEEM_SCRIPT_SIZE: usize
 pub const bitcoin_primitives::script::MAX_WITNESS_SCRIPT_SIZE: usize
+pub trait bitcoin_primitives::script::PushBytesErrorReport
+pub fn bitcoin_primitives::script::PushBytesErrorReport::input_len(&self) -> usize
+impl bitcoin_primitives::script::PushBytesErrorReport for bitcoin_primitives::script::PushBytesError
+pub fn bitcoin_primitives::script::PushBytesError::input_len(&self) -> usize
+impl bitcoin_primitives::script::PushBytesErrorReport for core::convert::Infallible
+pub fn core::convert::Infallible::input_len(&self) -> usize
 pub trait bitcoin_primitives::script::ScriptHashableTag: bitcoin_primitives::script::sealed::Sealed
 impl bitcoin_primitives::script::ScriptHashableTag for bitcoin_primitives::script::RedeemScriptTag
 impl bitcoin_primitives::script::ScriptHashableTag for bitcoin_primitives::script::ScriptPubKeyTag
