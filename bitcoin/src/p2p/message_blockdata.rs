@@ -85,7 +85,10 @@ impl Decodable for Inventory {
     fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let inv_type: u32 = Decodable::consensus_decode(r)?;
         Ok(match inv_type {
-            0 => Inventory::Error,
+            0 => {
+                sha256d::Hash::consensus_decode(r)?;
+                Inventory::Error
+            },
             1 => Inventory::Transaction(Decodable::consensus_decode(r)?),
             2 => Inventory::Block(Decodable::consensus_decode(r)?),
             4 => Inventory::CompactBlock(Decodable::consensus_decode(r)?),
