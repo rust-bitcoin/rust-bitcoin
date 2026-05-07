@@ -84,6 +84,10 @@ name = "script"
 required-features = ["std"]
 
 [[example]]
+name = "push-bytes"
+required-features = ["std"]
+
+[[example]]
 name = "serde"
 required-features = ["std", "serde"]
 
