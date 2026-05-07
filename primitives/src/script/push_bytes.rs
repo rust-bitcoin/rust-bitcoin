@@ -5,8 +5,7 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::ops::{Deref, DerefMut};
 
-use crypto::key::{PubkeyHash, SerializedLegacyPublicKey, WPubkeyHash};
-use crypto::{ecdsa, taproot};
+use crypto::key::{PubkeyHash, WPubkeyHash};
 
 use crate::internal_macros::impl_asref_push_bytes;
 
@@ -350,22 +349,6 @@ impl BorrowMut<PushBytes> for PushBytesBuf {
     fn borrow_mut(&mut self) -> &mut PushBytes { self.as_mut_push_bytes() }
 }
 
-impl AsRef<PushBytes> for ecdsa::SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &PushBytes {
-        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self))
-            .expect("max length 73 bytes is valid")
-    }
-}
-
-impl AsRef<PushBytes> for taproot::SerializedSignature {
-    #[inline]
-    fn as_ref(&self) -> &PushBytes {
-        <&PushBytes>::try_from(<Self as AsRef<[u8]>>::as_ref(self))
-            .expect("max length 65 bytes is valid")
-    }
-}
-
 impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 impl_asref_push_bytes! {
@@ -374,14 +357,6 @@ impl_asref_push_bytes! {
     hashes::sha1::Hash,
     hashes::sha256::Hash,
     hashes::sha256d::Hash,
-}
-
-impl AsRef<PushBytes> for SerializedLegacyPublicKey {
-    fn as_ref(&self) -> &PushBytes { self.borrow() }
-}
-
-impl Borrow<PushBytes> for SerializedLegacyPublicKey {
-    fn borrow(&self) -> &PushBytes { <&PushBytes>::try_from(&**self).expect("65 <= u32::MAX") }
 }
 
 /// Reports information about failed conversion into `PushBytes`.

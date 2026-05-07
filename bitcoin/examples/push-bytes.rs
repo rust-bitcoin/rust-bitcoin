@@ -2,7 +2,7 @@
 
 use crypto::sighash::EcdsaSighashType;
 use bitcoin::ext::*;
-use bitcoin::script::{PushBytes, ScriptPubKeyBuf, ScriptSigBuf};
+use bitcoin::script::{self, ScriptPubKeyBuf, ScriptSigBuf};
 use bitcoin::{ecdsa, secp256k1, taproot, LegacyPublicKey};
 
 fn main() {
@@ -12,7 +12,7 @@ fn main() {
         .parse::<LegacyPublicKey>()
         .unwrap();
     let key = pk.to_bytes(); // SerializedLegacyPublicKey
-    script.push_slice::<&PushBytes>(key.as_ref());
+    script.push_slice(script::legacy_public_key_as_push_bytes(&key));
 
     // Use the `AsRef<PushBytes> for ecdsa::SerializedSignature` impl.
     let mut script = ScriptSigBuf::new();
@@ -22,12 +22,12 @@ fn main() {
         sighash_type: EcdsaSighashType::All,
     };
     let ecdsa = sig.serialize(); // ecdsa::SerializedSignature
-    script.push_slice::<&PushBytes>(ecdsa.as_ref());
+    script.push_slice(script::ecdsa_serialized_signature_as_push_bytes(&ecdsa));
 
     // Use the `AsRef<PushBytes> for taproot::SerializedSignature` impl.
     let mut script = ScriptSigBuf::new();
     const TAPROOT: &str = "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab";
     let sig = TAPROOT.parse::<taproot::Signature>().unwrap();
     let taproot = sig.serialize(); // taproot::SerilaizedSignature
-    script.push_slice::<&PushBytes>(taproot.as_ref());
+    script.push_slice(script::taproot_serialized_signature_as_push_bytes(&taproot));
 }

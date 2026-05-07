@@ -59,6 +59,8 @@ use io::{BufRead, Write};
 
 use self::witness_version::WitnessVersion;
 use crate::consensus::{encode, Decodable, Encodable};
+use crate::crypto::key::SerializedLegacyPublicKey;
+use crate::crypto::{ecdsa, taproot};
 use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
@@ -91,6 +93,21 @@ pub use self::error::{
     WitnessScriptSizeError,
 };
 pub(crate) use self::owned::ScriptBufExtPriv;
+
+/// TODO: Document including example usage.
+pub fn legacy_public_key_as_push_bytes(key: &SerializedLegacyPublicKey) -> &PushBytes {
+    <&PushBytes>::try_from(&**key).expect("65 <= u32::MAX")
+}
+
+/// TODO: Document including example usage.
+pub fn ecdsa_serialized_signature_as_push_bytes(sig: &ecdsa::SerializedSignature) -> &PushBytes {
+    <&PushBytes>::try_from(sig.as_ref()).expect("max length 73 bytes is valid")
+}
+
+/// TODO: Document including example usage.
+pub fn taproot_serialized_signature_as_push_bytes(sig: &taproot::SerializedSignature) -> &PushBytes {
+    <&PushBytes>::try_from(sig.as_ref()).expect("max length 65 bytes is valid")
+ }
 
 /// Constructs a new [`WitnessScriptBuf`] containing the script code used for spending a P2WPKH output.
 ///

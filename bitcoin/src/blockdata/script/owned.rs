@@ -84,6 +84,14 @@ internal_macros::define_extension_trait! {
         /// If your pushes should be interpreted as numbers, ensure your input does
         /// not have any leading zeros. In particular, the number 0 should be encoded
         /// as an empty string rather than as a single 0 byte.
+        ///
+        /// ## Caveat Emptor
+        ///
+        /// For this API to be ergonomic to use it depends on types implementing `AsRef<PushBytes>` however due to Rust language constraints and where we are up to in 1.0-ing our stack of crates we have no place to put these impls for `LegacyPublickey`, `ecdsa::SerializedSignature`, and `taproot::SerializedSignature`. For those types please see these three temporary standalone functions.
+        ///
+        /// * `legacy_public_key_as_push_bytes`
+        /// * `ecdsa_serialized_signature_as_push_bytes`
+        /// * `taproot_serialized_signature_as_push_bytes`
         fn push_slice<D: AsRef<PushBytes>>(&mut self, data: D) {
             let bytes = data.as_ref().as_bytes();
             if bytes.len() == 1 {
