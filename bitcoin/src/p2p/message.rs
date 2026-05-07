@@ -508,9 +508,18 @@ impl Decodable for RawNetworkMessage {
                 NetworkMessage::Reject(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "alert" =>
                 NetworkMessage::Alert(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
-            "feefilter" => NetworkMessage::FeeFilter(
-                Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
-            ),
+            "feefilter" => {
+                let fee: i64 = Decodable::consensus_decode_from_finite_reader(&mut mem_d)?;
+                // The upper limit is MAX_MONEY, which matches Core's use of MoneyRange:
+                // https://github.com/bitcoin/bitcoin/blob/8396b7f2a3be4be7bb2ffc152f87b4cab95dd84e/src/net_processing.cpp#L4984
+                let upper_limit = units::Amount::MAX_MONEY.to_sat()
+                    .try_into()
+                    .expect("Amount::MAX_MONEY < i64::MAX");
+                if fee < 0 || fee > upper_limit {
+                    return Err(encode::Error::ParseFailed("feefilter value out of range"));
+                }
+                NetworkMessage::FeeFilter(fee)
+            }
             "sendcmpct" => NetworkMessage::SendCmpct(
                 Decodable::consensus_decode_from_finite_reader(&mut mem_d)?,
             ),
@@ -851,6 +860,30 @@ mod test {
         } else {
             panic!("Wrong message type");
         }
+    }
+
+    #[test]
+    fn feefilter_edge_cases() {
+        let magic = Magic::from_bytes([57, 0, 0, 0]);
+
+        // Valid filters should round-trip
+        let msg = RawNetworkMessage::new(magic, NetworkMessage::FeeFilter(0));
+        assert_eq!(deserialize::<RawNetworkMessage>(&serialize(&msg)).unwrap(), msg);
+        let max_fee = units::Amount::MAX_MONEY.to_sat() as i64;
+        let msg = RawNetworkMessage::new(magic, NetworkMessage::FeeFilter(max_fee));
+        assert_eq!(deserialize::<RawNetworkMessage>(&serialize(&msg)).unwrap(), msg);
+
+        // Invalid filters that should error
+        let over_max = RawNetworkMessage::new(magic, NetworkMessage::FeeFilter(max_fee + 1));
+        assert!(matches!(
+            deserialize::<RawNetworkMessage>(&serialize(&over_max)).unwrap_err(),
+            crate::consensus::encode::Error::ParseFailed(_),
+        ));
+        let negative = RawNetworkMessage::new(magic, NetworkMessage::FeeFilter(-1));
+        assert!(matches!(
+            deserialize::<RawNetworkMessage>(&serialize(&negative)).unwrap_err(),
+            crate::consensus::encode::Error::ParseFailed(_),
+        ));
     }
 
     #[test]
