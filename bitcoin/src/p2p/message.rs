@@ -536,8 +536,17 @@ impl Decodable for RawNetworkMessage {
             "addrv2" =>
                 NetworkMessage::AddrV2(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "sendaddrv2" => NetworkMessage::SendAddrV2,
-            _ => NetworkMessage::Unknown { command: cmd, payload: raw_payload },
+            _ =>
+                return Ok(RawNetworkMessage {
+                    magic,
+                    payload: NetworkMessage::Unknown { command: cmd, payload: raw_payload },
+                    payload_len,
+                    checksum,
+                }),
         };
+        if !mem_d.is_empty() {
+            return Err(encode::Error::ParseFailed("extra bytes after network message payload"));
+        }
         Ok(RawNetworkMessage { magic, payload, payload_len, checksum })
     }
 
@@ -883,6 +892,31 @@ mod test {
         assert!(matches!(
             deserialize::<RawNetworkMessage>(&serialize(&negative)).unwrap_err(),
             crate::consensus::encode::Error::ParseFailed(_),
+        ));
+    }
+
+    #[test]
+    fn deserialize_mempool_with_extra_payload_rejected() {
+        // A MemPool message with 59 extra payload bytes must be rejected.
+        // Mempool has no payload, so any trailing bytes are malformed.
+        #[rustfmt::skip]
+        let data = [
+            0x0f, 0xbf, 0x3f, 0x00, 0x6d, 0x65, 0x6d, 0x70,
+            0x6f, 0x6f, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x3b, 0x00, 0x00, 0x00, 0xdf, 0x05, 0x8f, 0xe5,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x7a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0xd8, 0x02,
+            0x08, 0xfd, 0x08, 0x3f, 0xfd, 0x02, 0x01, 0x00,
+            0x00, 0x00, 0x00,
+        ];
+        let result = deserialize::<RawNetworkMessage>(&data).unwrap_err();
+        assert!(matches!(
+            result,
+            encode::Error::ParseFailed("extra bytes after network message payload")
         ));
     }
 
