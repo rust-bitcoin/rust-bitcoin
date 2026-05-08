@@ -15,17 +15,16 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "base58/std", "hashes/std", "hex-stable/std", "hex-unstable/std", "internals/std", "network/std", "secp256k1/std", "serde?/std"]
+std = ["alloc", "base58/std", "hashes/std", "hex/std", "internals/std", "network/std", "secp256k1/std", "serde?/std"]
 rand = ["secp256k1/rand"]
-alloc = ["base58/alloc", "hashes/alloc", "hex-stable/alloc", "hex-unstable/alloc", "internals/alloc", "network/alloc", "secp256k1/alloc", "serde?/alloc"]
+alloc = ["base58/alloc", "hashes/alloc", "hex/alloc", "internals/alloc", "network/alloc", "secp256k1/alloc", "serde?/alloc"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "secp256k1/serde"]
 arbitrary = ["dep:arbitrary", "secp256k1/arbitrary"]
 
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-features = false }
 hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.20.0", default-features = false, features = ["hex"] }
-hex-unstable = { package = "hex-conservative", version = "0.3.2", default-features = false }
-hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false }
+hex = { package = "hex-conservative", version = "1.1.0", default-features = false }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false }
 secp256k1 = { version = "0.32.0-beta.2", default-features = false }
@@ -42,8 +41,3 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true
-
-[package.metadata.rbmt.lint]
-allowed_duplicates = [
-    "hex-conservative",
-]

@@ -2400,7 +2400,7 @@ mod test {
     use alloc::vec;
     use std::net::Ipv4Addr;
 
-    use hex_unstable::hex;
+    use hex::hex;
     use primitives::transaction::{Transaction, Txid};
     use primitives::{Block, BlockHash};
     use units::BlockHeight;

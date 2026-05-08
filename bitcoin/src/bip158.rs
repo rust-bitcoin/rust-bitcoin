@@ -548,7 +548,7 @@ mod test {
     #[cfg(feature = "std")]
     use std::collections::HashMap;
 
-    use hex_unstable::hex;
+    use hex::hex;
     #[cfg(feature = "std")]
     use serde_json::Value;
 

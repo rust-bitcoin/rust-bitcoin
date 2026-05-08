@@ -166,11 +166,11 @@ impl SerializedSignature {
     }
 
     #[inline]
-    fn fmt_internal(&self, f: &mut fmt::Formatter, case: hex_unstable::Case) -> fmt::Result {
+    fn fmt_internal(&self, f: &mut fmt::Formatter, case: hex::Case) -> fmt::Result {
         if self.is_default() {
-            hex_unstable::fmt_hex_exact!(f, MAX_LEN - 1, self, case)
+            hex::fmt_hex_exact!(f, MAX_LEN - 1, self, case)
         } else {
-            hex_unstable::fmt_hex_exact!(f, MAX_LEN, self, case)
+            hex::fmt_hex_exact!(f, MAX_LEN, self, case)
         }
     }
 
@@ -203,7 +203,7 @@ impl fmt::Display for SerializedSignature {
 impl fmt::LowerHex for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_internal(f, hex_unstable::Case::Lower)
+        self.fmt_internal(f, hex::Case::Lower)
     }
 }
 impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
@@ -212,7 +212,7 @@ impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignatur
 impl fmt::UpperHex for SerializedSignature {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_internal(f, hex_unstable::Case::Upper)
+        self.fmt_internal(f, hex::Case::Upper)
     }
 }
 

@@ -169,7 +169,7 @@ pub mod error {
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 mod tests {
-    use hex_unstable::DisplayHex;
+    use hex::DisplayHex;
 
     use super::*;
     use crate::{hex, sha256};

@@ -16,10 +16,9 @@ exclude = ["api", "tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hex-stable/std", "hex-unstable/std"]
-alloc = ["hex-stable/alloc", "hex-unstable/alloc"]
+std = ["alloc", "hex?/std"]
+alloc = ["hex?/alloc"]
 serde = ["dep:serde", "hex"]
-hex = ["dep:hex-stable", "dep:hex-unstable"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
 
@@ -28,12 +27,9 @@ internals = { package = "bitcoin-internals", path = "../internals", version = "0
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "0.2.0", default-features = false }
 
 arbitrary = { version = "1.4.1", optional = true}
+hex = { package = "hex-conservative", version = "1.1.0", default-features = false, optional = true }
 serde = { version = "1.0.195", default-features = false, optional = true }
 cpufeatures = { version = "0.2", optional = true }
-
-# Both optional hex dependencies are behind the `hex` feature.
-hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, optional = true }
-hex-unstable = { package = "hex-conservative", version = "0.3.2", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.19"

@@ -14,7 +14,7 @@ use bitcoin_primitives::{
     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Witness,
 };
 use encoding::{Decode as _, Decoder as _, Encode as _, Encoder as _};
-use hex_unstable::hex;
+use hex::hex;
 
 const TC_TXID_BYTES: [u8; 32] = [
     32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9,

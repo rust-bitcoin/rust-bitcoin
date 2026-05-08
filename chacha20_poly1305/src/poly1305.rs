@@ -247,20 +247,14 @@ fn _print_acc(num: &[u32; 5]) {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use alloc::vec::Vec;
-
-    use hex::prelude::*;
+    use hex::{hex, DisplayHex as _};
 
     use super::*;
 
     #[cfg(not(chacha20_poly1305_fuzz))]
     #[test]
     fn rfc7539() {
-        let key = Vec::from_hex("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b")
-            .unwrap()
-            .as_slice()
-            .try_into()
-            .unwrap();
+        let key = hex!("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b");
         let mut poly = Poly1305::new(key);
         let message = b"Cryptographic Forum Research Group";
         poly.input(message);

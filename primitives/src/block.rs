@@ -1014,7 +1014,7 @@ mod tests {
     use encoding::Decode as _;
     use encoding::{Decoder as _, Encode as _, Encoder as _};
     #[cfg(feature = "hex")]
-    use hex_unstable::hex;
+    use hex::hex;
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     #[cfg(feature = "serde")]

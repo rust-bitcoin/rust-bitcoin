@@ -410,7 +410,7 @@ pub mod error {
 mod tests {
     use alloc::string::ToString;
 
-    use hex_unstable::hex;
+    use hex::hex;
     use internals::ToU64 as _;
 
     use super::*;

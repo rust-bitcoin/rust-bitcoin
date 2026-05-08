@@ -132,10 +132,10 @@ impl<T> Script<T> {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_prefixed(&self) -> String {
-        use hex_unstable::{BytesToHexIter, Case};
+        use hex::{BytesToHexIter, Case};
 
         let iter = encoding::EncoderByteIter::new(self.encoder());
-        BytesToHexIter::new(iter, Case::Lower).collect()
+        BytesToHexIter::new(iter, Case::Lower).flatten().map(char::from).collect()
     }
 
     /// Encodes the script as lower-case hex.
@@ -145,7 +145,7 @@ impl<T> Script<T> {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     pub fn to_hex_string_no_length_prefix(&self) -> String {
-        use hex_unstable::DisplayHex as _;
+        use hex::DisplayHex as _;
 
         self.as_bytes().to_lower_hex_string()
     }

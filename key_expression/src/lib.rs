@@ -20,7 +20,7 @@ extern crate std;
 
 extern crate hashes;
 
-extern crate hex_stable as hex;
+extern crate hex;
 
 #[cfg(feature = "serde")]
 extern crate serde;

@@ -279,21 +279,21 @@ macro_rules! impl_hex_string_traits {
                 fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                     if $reverse {
                         let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter().rev();
-                        $crate::hex_unstable::fmt_hex_exact!(f, ($len), bytes, $case)
+                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
                     } else {
                         let bytes = $crate::_export::_core::borrow::Borrow::<[u8]>::borrow(self).iter();
-                        $crate::hex_unstable::fmt_hex_exact!(f, ($len), bytes, $case)
+                        $crate::hex::fmt_hex_exact!(f, ($len), bytes, $case)
                     }
                 }
             }
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex_unstable::Case::Lower);
+            impl_case_hex!($crate::hex::Case::Lower);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
-            impl_case_hex!($crate::hex_unstable::Case::Upper);
+            impl_case_hex!($crate::hex::Case::Upper);
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {

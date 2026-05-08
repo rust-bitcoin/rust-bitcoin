@@ -1487,7 +1487,7 @@ mod test {
     use alloc::string::ToString;
 
     use hashes::sha256;
-    use hex_unstable::DisplayHex;
+    use hex::DisplayHex;
 
     use super::*;
     use crate::sighash::TapSighashTag;

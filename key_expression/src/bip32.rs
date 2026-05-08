@@ -1286,7 +1286,7 @@ impl<'a> Arbitrary<'a> for Xpriv {
 mod tests {
     use alloc::{string::ToString, format};
 
-    use hex_unstable::hex;
+    use hex::hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
 

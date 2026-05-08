@@ -1109,7 +1109,7 @@ mod test {
     use std::net::IpAddr;
 
     use encoding::{Encode as _, Encoder as _, ExactSizeEncoder as _};
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
     use crate::hex;

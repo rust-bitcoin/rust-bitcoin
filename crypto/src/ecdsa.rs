@@ -16,7 +16,7 @@ use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex_unstable::DisplayHex;
+use hex::DisplayHex;
 #[cfg(feature = "alloc")]
 use internals::impl_to_hex_from_lower_hex;
 #[cfg(feature = "serde")]

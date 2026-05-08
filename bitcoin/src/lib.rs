@@ -68,7 +68,7 @@ pub extern crate base64;
 pub extern crate bech32;
 pub extern crate encoding;
 pub extern crate hashes;
-pub extern crate hex_stable as hex;
+pub extern crate hex;
 pub extern crate io;
 pub extern crate primitives;
 pub extern crate secp256k1;
@@ -229,7 +229,7 @@ mod prelude {
 
     pub use crate::io::sink;
 
-    pub use hex_unstable::DisplayHex;
+    pub use hex::DisplayHex;
 }
 
 pub mod amount {
