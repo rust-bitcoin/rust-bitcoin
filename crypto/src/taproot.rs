@@ -4,6 +4,7 @@
 //!
 //! This module provides Taproot signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::fmt;
@@ -13,6 +14,7 @@ use core::str::FromStr;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::array::ArrayExt;
+#[cfg(feature = "alloc")]
 use internals::impl_to_hex_from_lower_hex;
 
 pub use self::into_iter::IntoIter;
@@ -84,6 +86,7 @@ impl Signature {
     /// Serializes the signature.
     ///
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
+    #[cfg(feature = "alloc")]
     pub fn to_vec(self) -> Vec<u8> {
         let mut ser_sig = self.signature.as_ref().to_vec();
         // If default sighash type, don't add extra sighash byte
@@ -218,6 +221,7 @@ impl fmt::LowerHex for SerializedSignature {
         self.fmt_internal(f, hex_unstable::Case::Lower)
     }
 }
+#[cfg(feature = "alloc")]
 impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
     * 2);
 
@@ -523,6 +527,7 @@ impl<'a> Arbitrary<'a> for Signature {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
     use alloc::string::ToString;
 
     use super::*;
@@ -558,6 +563,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "alloc")]
     const SIG_STRINGS: &[&str] = &[
         // default sighash type
         "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
@@ -569,6 +575,7 @@ mod tests {
     ];
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn signature_hex_roundtrip() {
         for &want in SIG_STRINGS {
             let sig = want.parse::<Signature>().unwrap();
@@ -588,6 +595,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn serialized_signature_hex() {
         for &want in SIG_STRINGS {
             let sig = want.parse::<Signature>().unwrap();
