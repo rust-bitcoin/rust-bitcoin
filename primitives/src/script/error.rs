@@ -11,6 +11,8 @@ use internals::write_err;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use crate::hash_types::{RedeemScriptSizeError, WitnessScriptSizeError};
+#[doc(inline)]
+pub use super::push_bytes::PushBytesError;
 
 /// An error consensus decoding a `ScriptBuf<T>`.
 #[derive(Debug, Clone, PartialEq, Eq)]

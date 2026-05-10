@@ -80,7 +80,6 @@ pub extern crate serde;
 mod internal_macros;
 
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
-include!("../include/asref_push_bytes.rs"); // impl_asref_push_bytes! macro
 
 pub mod ext {
     //! Re-export all the extension traits so downstream can use wildcard imports.

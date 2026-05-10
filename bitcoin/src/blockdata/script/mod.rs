@@ -92,8 +92,6 @@ pub use self::error::{
 };
 pub(crate) use self::owned::ScriptBufExtPriv;
 
-impl_asref_push_bytes!(ScriptHash, WScriptHash);
-
 /// Constructs a new [`WitnessScriptBuf`] containing the script code used for spending a P2WPKH output.
 ///
 /// The `scriptCode` is described in [BIP-0143].
@@ -250,10 +248,11 @@ pub mod error {
 
     #[rustfmt::skip]        // Keep public re-exports separate.
     #[doc(inline)]
-    pub use super::push_bytes::{PushBytesError, ScriptIntError};
+    pub use super::push_bytes::ScriptIntError;
     #[doc(no_inline)]
     pub use primitives::script::error::{
-        FromHexError, RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError,
+        FromHexError, PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError,
+        WitnessScriptSizeError,
     };
 
     /// Ways that a script might fail. Not everything is split up as

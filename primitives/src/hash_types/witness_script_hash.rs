@@ -11,7 +11,7 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256;
 
-use crate::script::{WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
+use crate::script::{PushBytes, PushBytesBuf, WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
 
 /// SegWit (256-bit) version of a Bitcoin Script bytecode hash.
 ///
@@ -22,6 +22,7 @@ use crate::script::{WitnessScript, MAX_WITNESS_SCRIPT_SIZE};
 pub struct WScriptHash(sha256::Hash);
 
 super::impl_debug!(WScriptHash);
+crate::impl_asref_push_bytes!(WScriptHash);
 
 impl WScriptHash {
     /// Constructs a new `WScriptHash` after first checking the script size.
