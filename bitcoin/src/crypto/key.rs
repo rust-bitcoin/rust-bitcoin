@@ -194,7 +194,7 @@ impl TapTweak for UntweakedKeypair {
     }
 }
 
-crate::internal_macros::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
+crate::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 #[cfg(test)]
 mod tests {

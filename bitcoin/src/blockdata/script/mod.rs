@@ -59,7 +59,6 @@ use io::{BufRead, Write};
 
 use self::witness_version::WitnessVersion;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros::impl_asref_push_bytes;
 use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
