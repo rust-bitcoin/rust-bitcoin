@@ -7,7 +7,6 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use crate::crypto::{ecdsa, taproot};
-use crate::internal_macros::impl_asref_push_bytes;
 use crate::prelude::{Borrow, BorrowMut};
 use crate::script;
 
@@ -448,7 +447,7 @@ impl AsRef<PushBytes> for taproot::SerializedSignature {
     }
 }
 
-impl_asref_push_bytes! {
+crate::impl_asref_push_bytes! {
     hashes::ripemd160::Hash,
     hashes::hash160::Hash,
     hashes::sha1::Hash,
