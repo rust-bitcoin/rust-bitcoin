@@ -754,7 +754,8 @@ mod tests {
         let mut rng = LcgPrng::new(PRNG_SEED ^ tx_count);
         // Create some fake tx ids
         let tx_ids = (1..=tx_count)
-            .map(|i| alloc::format!("{:064x}", i).parse::<Txid>().unwrap())
+            .map(|i| hex::decode_to_array::<32>(&alloc::format!("{:064x}", i)).unwrap())
+            .map(Txid::from_byte_array)
             .collect::<Vec<_>>();
 
         // Calculate the Merkle root and height
@@ -827,7 +828,8 @@ mod tests {
         // Create some fake tx ids with the last 2 hashes repeating
         let txids: Vec<Txid> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 10]
             .iter()
-            .map(|i| alloc::format!("{:064x}", i).parse::<Txid>().unwrap())
+            .map(|i| hex::decode_to_array::<32>(&alloc::format!("{:064x}", i)).unwrap())
+            .map(Txid::from_byte_array)
             .collect();
 
         let matches =
@@ -863,11 +865,12 @@ mod tests {
         let block = get_block_13b8a();
 
         let txids: Vec<Txid> = [
-            "74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20",
-            "f9fc751cb7dc372406a9f8d738d5e6f8f63bab71986a39cf36ee70ee17036d07",
+            "201f4587ec86b58297edc2dd32d6fcd998aa794308aac802a8af3be0e081d674",
+            "076d0317ee70ee36cf396a9871ab3bf6f8e6d538d7f8a9062437dcb71c75fcf9",
         ]
         .iter()
-        .map(|hex| hex.parse::<Txid>().unwrap())
+        .map(|hex| hex::decode_to_array::<32>(hex).unwrap())
+        .map(Txid::from_byte_array)
         .collect();
 
         let txid1 = txids[0];
@@ -899,9 +902,10 @@ mod tests {
     #[test]
     fn merkleblock_construct_from_txids_not_found() {
         let block = get_block_13b8a();
-        let txids: Vec<Txid> = ["c0ffee00003bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20"]
+        let txids: Vec<Txid> = ["201f4587ec86b58297edc2dd32d6fcd998aa794308aac802a8af3b0000eeffc0"]
             .iter()
-            .map(|hex| hex.parse::<Txid>().unwrap())
+            .map(|hex| hex::decode_to_array::<32>(hex).unwrap())
+            .map(Txid::from_byte_array)
             .collect();
 
         let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
@@ -1034,9 +1038,7 @@ mod tests {
         assert_eq!(index[0], 1);
 
         // And we know the txid we want.
-        let want = "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
-            .parse::<Txid>()
-            .expect("failed to parse txid");
+        let want = Txid::from_byte_array(hex!("e2d32adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a"));
         assert_eq!(matches[0], want);
     }
 }
