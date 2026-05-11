@@ -6,7 +6,7 @@
 use std::io::{Cursor, Write};
 
 use bitcoin_consensus_encoding::{
-    ArrayEncoder, ArrayRefEncoder, BytesEncoder, CompactSizeEncoder, Encode, Encoder, Encoder2,
+    ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encode, Encoder, Encoder2,
     Encoder3, Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder, SliceEncoder,
 };
 
@@ -173,26 +173,6 @@ fn encode_slice_encoder_mixed_empty_and_data() {
     assert_eq!(encoder.current_chunk(), &[1, 2]);
     assert!(encoder.advance());
     assert_eq!(encoder.current_chunk(), &[3]);
-    assert!(!encoder.advance());
-}
-
-#[test]
-fn encode_compact_size_boundary_values() {
-    // Test CompactSizeEncoder with boundary values.
-    let mut encoder = CompactSizeEncoder::new(252usize);
-    assert_eq!(encoder.current_chunk(), &[252]);
-    assert!(!encoder.advance());
-
-    let mut encoder = CompactSizeEncoder::new(253usize);
-    assert_eq!(encoder.current_chunk(), &[0xFD, 253, 0]);
-    assert!(!encoder.advance());
-
-    let mut encoder = CompactSizeEncoder::new(0x10000usize);
-    assert_eq!(encoder.current_chunk(), &[0xFE, 0, 0, 1, 0]);
-    assert!(!encoder.advance());
-
-    let mut encoder = CompactSizeEncoder::new(0usize);
-    assert_eq!(encoder.current_chunk(), &[0]);
     assert!(!encoder.advance());
 }
 
@@ -552,66 +532,6 @@ fn encode_complex_nested_structure() {
     assert!(encoder.advance());
     assert_eq!(encoder.current_chunk(), &[0xBE, 0xEF][..]);
     assert!(!encoder.advance());
-}
-
-#[test]
-fn encode_compact_size() {
-    // 1-byte
-    let mut e = CompactSizeEncoder::new(0x10usize);
-    assert_eq!(e.current_chunk(), &[0x10][..]);
-    assert_eq!(e.len(), 1);
-    assert!(!e.advance());
-
-    let mut e = CompactSizeEncoder::new(0xFCusize);
-    assert_eq!(e.current_chunk(), &[0xFC][..]);
-    assert_eq!(e.len(), 1);
-    assert!(!e.advance());
-
-    // 0xFD + u16
-    let mut e = CompactSizeEncoder::new(0x00FDusize);
-    assert_eq!(e.current_chunk(), &[0xFD, 0xFD, 0x00][..]);
-    assert_eq!(e.len(), 3);
-    assert!(!e.advance());
-
-    let mut e = CompactSizeEncoder::new(0x0FFFusize);
-    assert_eq!(e.current_chunk(), &[0xFD, 0xFF, 0x0F][..]);
-    assert_eq!(e.len(), 3);
-    assert!(!e.advance());
-
-    // 0xFE + u32
-    let mut e = CompactSizeEncoder::new(0x0001_0000usize);
-    assert_eq!(e.current_chunk(), &[0xFE, 0x00, 0x00, 0x01, 0x00][..]);
-    assert_eq!(e.len(), 5);
-    assert!(!e.advance());
-
-    let mut e = CompactSizeEncoder::new(0x0F0F_0F0Fusize);
-    assert_eq!(e.current_chunk(), &[0xFE, 0x0F, 0x0F, 0x0F, 0x0F][..]);
-    assert_eq!(e.len(), 5);
-    assert!(!e.advance());
-
-    // 0xFF + u64
-    // This test only runs on systems with >= 64 bit usize.
-    if core::mem::size_of::<usize>() >= 8 {
-        let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64 as usize);
-        assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
-        assert_eq!(e.len(), 9);
-        assert!(!e.advance());
-    }
-
-    // > u64::MAX encodes as u64::MAX.
-    // This test only runs on systems with > 64 bit usize.
-    if core::mem::size_of::<usize>() > 8 {
-        let mut e = CompactSizeEncoder::new((u128::from(u64::MAX) + 5) as usize);
-        assert_eq!(e.current_chunk(), &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF][..]);
-        assert_eq!(e.len(), 9);
-        assert!(!e.advance());
-    }
-
-    // new_u64 works on all platforms, no guard needed.
-    let mut e = CompactSizeEncoder::new_u64(0x0000_F0F0_F0F0_F0E0u64);
-    assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
-    assert_eq!(e.len(), 9);
-    assert!(!e.advance());
 }
 
 #[test]
