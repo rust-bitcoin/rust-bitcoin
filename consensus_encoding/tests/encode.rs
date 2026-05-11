@@ -6,8 +6,8 @@
 use std::io::{Cursor, Write};
 
 use bitcoin_consensus_encoding::{
-    ArrayEncoder, ArrayRefEncoder, BytesEncoder, check_encoder, Encode, Encoder, Encoder2,
-    Encoder3, Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder, SliceEncoder,
+    ArrayEncoder, ArrayRefEncoder, BytesEncoder, check_encoder, Encode, Encoder, Encoder2, Encoder3,
+    Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder, SliceEncoder,
 };
 
 struct TestBytes<'a>(&'a [u8]);

@@ -13,7 +13,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder,
-    CompactSizeU64Decoder, Decoder2, Decoder4, Encoder2, Encoder4,
+    CompactSizeU64Decoder, Decoder2, Decoder4, EncoderStatus, Encoder2, Encoder4,
 };
 use internals::array::ArrayExt;
 
@@ -417,32 +417,32 @@ impl<'e> encoding::Encoder for AddrV2Encoder<'e> {
         &[]
     }
 
-    fn advance(&mut self) -> bool {
-        if self.network.is_some() && !self.network.advance() {
+    fn advance(&mut self) -> EncoderStatus {
+        if self.network.is_some() && self.network.advance().has_finished() {
             self.network = None;
-            return true;
+            return EncoderStatus::HasMore;
         }
-        if self.size.is_some() && !self.size.advance() {
+        if self.size.is_some() && self.size.advance().has_finished() {
             self.size = None;
-            return true;
+            return EncoderStatus::HasMore;
         }
-        if self.bytes4.is_some() && !self.bytes4.advance() {
+        if self.bytes4.is_some() && self.bytes4.advance().has_finished() {
             self.bytes4 = None;
-            return false;
+            return EncoderStatus::Finished;
         }
-        if self.bytes16.is_some() && !self.bytes16.advance() {
+        if self.bytes16.is_some() && self.bytes16.advance().has_finished() {
             self.bytes16 = None;
-            return false;
+            return EncoderStatus::Finished;
         }
-        if self.bytes32.is_some() && !self.bytes32.advance() {
+        if self.bytes32.is_some() && self.bytes32.advance().has_finished() {
             self.bytes32 = None;
-            return false;
+            return EncoderStatus::Finished;
         }
-        if self.nbytes.is_some() && !self.nbytes.advance() {
+        if self.nbytes.is_some() && self.nbytes.advance().has_finished() {
             self.nbytes = None;
-            return false;
+            return EncoderStatus::Finished;
         }
-        true
+        EncoderStatus::HasMore
     }
 }
 
@@ -1556,7 +1556,7 @@ mod test {
                     assert_eq!(encoder.len(), total_len - bytes_consumed);
 
                     bytes_consumed += chunk_len;
-                    if !encoder.advance() {
+                    if encoder.advance().has_finished() {
                         break;
                     }
                 }

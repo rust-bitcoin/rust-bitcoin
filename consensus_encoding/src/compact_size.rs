@@ -9,7 +9,7 @@
 use internals::array_vec::ArrayVec;
 
 use crate::decode::Decoder;
-use crate::encode::{Encoder, ExactSizeEncoder};
+use crate::encode::{Encoder, EncoderStatus, ExactSizeEncoder};
 use crate::error::{
     CompactSizeDecoderError, CompactSizeDecoderErrorInner, LengthPrefixExceedsMaxError,
 };
@@ -115,8 +115,8 @@ impl Encoder for CompactSizeEncoder {
     fn current_chunk(&self) -> &[u8] { &self.buf }
 
     #[inline]
-    fn advance(&mut self) -> bool {
-        false
+    fn advance(&mut self) -> EncoderStatus {
+        EncoderStatus::Finished
     }
 }
 
