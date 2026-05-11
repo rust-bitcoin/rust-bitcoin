@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin-key-expression"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
@@ -15,12 +15,32 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "base58/std", "crypto/std", "hashes/std", "hex-unstable/std", "internals/std", "network/std", "secp256k1/std"]
+alloc = ["base58/alloc", "crypto/alloc", "hashes/alloc", "hex-unstable/alloc", "internals/alloc", "network/alloc", "secp256k1/alloc", "serde/alloc"]
+serde = ["dep:serde", "hashes/serde", "internals/serde", "secp256k1/serde"]
+arbitrary = ["crypto/arbitrary", "dep:arbitrary", "hashes/arbitrary", "secp256k1/arbitrary", "network/arbitrary"]
 
 [dependencies]
+base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-features = false }
+crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.2.0", default-features = false }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.20.0", default-features = false, features = ["hex"] }
+hex-stable = { package = "hex-conservative", version = "1.0.0", default-features = false, features = ["alloc"] }
+hex-unstable = { package = "hex-conservative", version = "0.3.2", default-features = false }
+internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
+network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false }
+secp256k1 = { version = "0.32.0-beta.2", default-features = false }
+
+arbitrary = { version = "1.4.1", optional = true }
+serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
+internals = { package = "bitcoin-internals", path = "../internals", features = ["test-serde"] }
+serde_json = "1.0.68"
+
+[package.metadata.rbmt.lint]
+allowed_duplicates = [
+    "hex-conservative",
+]
 
 [package.metadata.docs.rs]
 all-features = true
