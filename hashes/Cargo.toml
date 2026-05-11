@@ -33,11 +33,11 @@ hex = { package = "hex-conservative", version = "0.2.2", default-features = fals
 bitcoin-io = { version = "0.1.1", default-features = false, optional = true }
 # Do NOT use this as a feature! Use the `schemars` feature instead.
 actual-schemars = { package = "schemars", version = "0.8.3", default-features = false, optional = true }
-serde = { version = "1.0", default-features = false, optional = true }
+serde = { version = "1.0.130", default-features = false, optional = true }
 
 [dev-dependencies]
-serde_test = "1.0"
-serde_json = "1.0"
+serde_test = "1.0.19"
+serde_json = "1.0.68"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(hashes_fuzz)', 'cfg(rust_v_1_64)' ] }

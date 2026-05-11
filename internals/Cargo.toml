@@ -23,9 +23,18 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-serde = { version = "1.0.103", default-features = false, optional = true }
+serde = { version = "1.0.130", default-features = false, optional = true }
 
 [dev-dependencies]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_64)', 'cfg(rust_v_1_61)'] }
+
+[package.metadata.rbmt.test]
+exact_features = [
+    ["alloc", "serde"],
+    ["std", "serde"],
+]
+
+[package.metadata.rbmt.prerelease]
+enabled = true
