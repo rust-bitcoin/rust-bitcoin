@@ -86,3 +86,14 @@ name = "sighash"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)', 'cfg(rust_v_1_61)'] }
+
+[package.metadata.rbmt.test]
+examples = [
+    "sign-tx-segwit-v0:std rand-std",
+    "sign-tx-taproot:std rand-std",
+    "sighash:std",
+]
+exact_features = [
+    ["bitcoinconsensus", "secp-recovery", "base64", "serde"],
+    ["std", "bitcoinconsensus-std", "secp-recovery", "base64", "serde"],
+]

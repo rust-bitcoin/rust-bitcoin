@@ -11,24 +11,21 @@ The minimal/recent lock files are handled by CI (`rust.yml`).
 Run from rust.yml unless stated otherwise. Unfortunately we are now exceeding the 20 job target.
 (Prepare is quick and must be run first anyway.)
 
-0.  `Prepare`
-1.  `Stable - minimal`
-2.  `Stable - recent`
-3.  `Nightly - minimal`
-4.  `Nightly - recent`
-5.  `MSRV - minimal`
-6.  `MSRV - recent`
-7.  `Lint`
-8.  `Docs`
-9.  `Docsrs`
-10. `Bench`
-11. `ASAN`
-12. `WASM`
-13. `Arch32bit`
-14. `Cross`
-15. `Embedded`
-16. `Kani`
-17. `Coveralls` - run by `coveralls.yml`
-18. `release` - run by `release.yml`
-19. `labeler` - run by `manage-pr.yml`
-20. `Shellcheck` - run by `shellcheck.yml`
+0.  `Test - stable toolchain, minimal deps`
+1.  `Test - stable toolchain, recent deps`
+2.  `Test - msrv toolchain, minimal deps`
+3.  `Test - msrv toolchain, recent deps`
+4.  `Check (lint)`
+5.  `Check (docs)`
+6.  `Check (docsrs)`
+7.  `Check (bench)`
+8.  `Prepare`
+9.  `Test 32-bit version`
+10. `Cross test`
+11. `WASM`
+12. `Kani`
+13. `Embedded`
+14. `ASAN`
+15. `Coveralls` - run by `coveralls.yml`
+16. `release` - run by `gh-release.yml`
+17. `labeler` - run by `manage-pr.yml`
