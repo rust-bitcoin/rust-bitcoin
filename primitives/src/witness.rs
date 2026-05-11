@@ -1006,9 +1006,7 @@ mod test {
 
     #[cfg(feature = "alloc")]
     use encoding::Decode as _;
-    #[cfg(feature = "alloc")]
-    use encoding::Encode as _;
-    use encoding::Encoder as _;
+    use encoding::check_encode;
 
     use super::*;
 
@@ -1369,15 +1367,7 @@ mod test {
         // Use FromIterator directly
         let witness = Witness::from_iter(data);
 
-        // Should have length prefix chunk, then the content slice, then exhausted.
-        let mut encoder = witness.encoder();
-
-        assert_eq!(encoder.current_chunk(), &[2u8][..]);
-        assert!(encoder.advance());
-
-        // We don't encode one element at a time, rather we encode the whole content slice at once.
-        assert_eq!(encoder.current_chunk(), &[3u8, 1, 2, 3, 2, 4, 5][..]);
-        assert!(!encoder.advance());
+        check_encode(&witness, &[2u8, 3u8, 1, 2, 3, 2, 4, 5]);
     }
 
     #[test]
