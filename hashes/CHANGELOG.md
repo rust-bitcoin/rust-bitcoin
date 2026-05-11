@@ -1,3 +1,35 @@
+# 0.21.0 - 2026-05-12
+
+This is intended to be the last release prior to `bitcoin_hashes 1.0.0`.
+
+Props to jrakibi for all the SIMD work in this release.
+
+* Wipe secret data in HMAC and HKDF [#5706](https://github.com/rust-bitcoin/rust-bitcoin/pull/5706)
+* Simplify trait bounds [#5682](https://github.com/rust-bitcoin/rust-bitcoin/pull/5682)
+* Add NIST test vectors and chunk-combination tests [#5660](https://github.com/rust-bitcoin/rust-bitcoin/pull/5660)
+* Test `hmac` incremental input [#5624](https://github.com/rust-bitcoin/rust-bitcoin/pull/5624)
+* Fix incremental hashing for `sha3-256` [#5604](https://github.com/rust-bitcoin/rust-bitcoin/pull/5604)
+* Fix reverse hashes for no-hex debug [#5602](https://github.com/rust-bitcoin/rust-bitcoin/pull/5602)
+* Add `cpufeatures` for `no_std` SIMD detection [#5598](https://github.com/rust-bitcoin/rust-bitcoin/pull/5598)
+* Introduce `MuHash` wrapper type [#5594](https://github.com/rust-bitcoin/rust-bitcoin/pull/5594)
+* Include midstate and buffer in `MidstateError` [#5567](https://github.com/rust-bitcoin/rust-bitcoin/pull/5567)
+* Add SHA256 midstate conversion to `Midstate` [#5874](https://github.com/rust-bitcoin/rust-bitcoin/pull/5874)
+* Add `drain_to_engine` function [#6065](https://github.com/rust-bitcoin/rust-bitcoin/pull/6065)
+* Upgrade to `consensus-encoding 1.0.0` (includes re-name of encoding
+  traits [#6028](https://github.com/rust-bitcoin/rust-bitcoin/pull/6028)).
+* Change engine parameter to be a mutable reference [#6063](https://github.com/rust-bitcoin/rust-bitcoin/pull/6063)
+* Move errors to error submodules [#5928](https://github.com/rust-bitcoin/rust-bitcoin/pull/5928)
+* Use Rust-like syntax in hash type macros [#5853](https://github.com/rust-bitcoin/rust-bitcoin/pull/5853)
+
+SIMD optimizaions: 
+
+- https://github.com/rust-bitcoin/rust-bitcoin/pull/6060
+- https://github.com/rust-bitcoin/rust-bitcoin/pull/6069
+- https://github.com/rust-bitcoin/rust-bitcoin/pull/5493
+- https://github.com/rust-bitcoin/rust-bitcoin/pull/5992
+- https://github.com/rust-bitcoin/rust-bitcoin/pull/5888
+- https://github.com/rust-bitcoin/rust-bitcoin/pull/6129
+
 # 0.20.0 - 2026-01-08
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
