@@ -6,6 +6,8 @@ use bitcoin_consensus_encoding::{
     ArrayDecoder, ArrayEncoder, BytesEncoder, Decode, Decoder, Decoder2, Decoder2Error, Decoder6,
     Encode, Encoder, Encoder2, Encoder3, Encoder6, UnexpectedEofError,
 };
+#[cfg(feature = "alloc")]
+use bitcoin_consensus_encoding::{drain_to_vec, encode_to_vec};
 
 const EMPTY: &[u8] = &[];
 
@@ -75,18 +77,11 @@ impl Decode for CompositeData {
     type Decoder = CompositeDataDecoder;
 }
 
+#[cfg(feature = "alloc")]
 #[test]
 fn composition_chain() {
     let original = CompositeData { first: [0x01, 0x02, 0x03, 0x04], second: [0x05, 0x06] };
-    // Encode using the pull encoder.
-    let mut encoder = original.encoder();
-    let mut encoded_bytes = Vec::new();
-    loop {
-        encoded_bytes.extend_from_slice(encoder.current_chunk());
-        if !encoder.advance() {
-            break;
-        }
-    }
+    let encoded_bytes = encode_to_vec(&original);
     // Decode using the push decoder.
     let mut decoder = CompositeData::decoder();
     let mut bytes = &encoded_bytes[..];
@@ -97,6 +92,7 @@ fn composition_chain() {
     assert_eq!(original, decoded);
 }
 
+#[cfg(feature = "alloc")]
 #[test]
 fn composition_nested() {
     let data = b"abcdef";
@@ -109,13 +105,7 @@ fn composition_nested() {
         ArrayEncoder::without_length_prefix([data[5]]),
     );
 
-    let mut encoded_bytes = Vec::new();
-    loop {
-        encoded_bytes.extend_from_slice(encoder6.current_chunk());
-        if !encoder6.advance() {
-            break;
-        }
-    }
+    let encoded_bytes = drain_to_vec(&mut encoder6);
     assert_eq!(encoded_bytes, data);
 
     let mut decoder6: Decoder6<_, _, _, _, _, _> = Decoder6::new(
