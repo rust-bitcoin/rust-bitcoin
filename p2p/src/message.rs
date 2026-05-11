@@ -14,8 +14,8 @@ use core::{fmt, mem};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    self, ArrayDecoder, ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Encoder2,
-    SliceEncoder, VecDecoder,
+    self, ArrayDecoder, ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, EncoderStatus,
+    Encoder2, SliceEncoder, VecDecoder,
 };
 use hashes::{sha256d, HashEngine};
 use primitives::block::{self, HeaderDecoder, HeaderEncoder};
@@ -150,7 +150,7 @@ impl encoding::Encoder for CommandStringEncoder {
     fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
     #[inline]
-    fn advance(&mut self) -> bool { self.0.advance() }
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
 impl encoding::ExactSizeEncoder for CommandStringEncoder {
@@ -1036,7 +1036,7 @@ impl encoding::Encoder for NetworkMessageEncoder<'_> {
         }
     }
 
-    fn advance(&mut self) -> bool {
+    fn advance(&mut self) -> EncoderStatus {
         match self {
             Self::Version(e) => e.advance(),
             Self::Addr(e) => e.advance(),
@@ -1066,7 +1066,7 @@ impl encoding::Encoder for NetworkMessageEncoder<'_> {
             Self::FeeFilter(e) => e.advance(),
             Self::AddrV2(e) => e.advance(),
             Self::SendTxRcnCl(e) => e.advance(),
-            Self::Empty => false,
+            Self::Empty => EncoderStatus::Finished,
             Self::Unknown(e) => e.advance(),
         }
     }
@@ -1548,7 +1548,7 @@ impl encoding::Encoder for V2NetworkMessageEncoder<'_> {
         }
     }
 
-    fn advance(&mut self) -> bool {
+    fn advance(&mut self) -> EncoderStatus {
         match self {
             Self::ShortId(e) => e.advance(),
             Self::FullCommand(e) => e.advance(),

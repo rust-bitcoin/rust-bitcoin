@@ -12,7 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(doc)]
 use encoding::Decoder4;
 use encoding::{
-    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, Encoder2,
+    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, EncoderStatus, Encoder2,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
@@ -299,7 +299,7 @@ impl encoding::Encoder for WitnessEncoder<'_> {
     fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
     #[inline]
-    fn advance(&mut self) -> bool { self.0.advance() }
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
 /// The decoder for the [`Witness`] type.

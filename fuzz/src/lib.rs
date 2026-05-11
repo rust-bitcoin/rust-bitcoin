@@ -48,7 +48,7 @@ where
     loop {
         let mut chunk = encoder.current_chunk();
         while !chunk.is_empty() && decoder.push_bytes(&mut chunk).unwrap() {}
-        if !chunk.is_empty() || !encoder.advance() {
+        if !chunk.is_empty() || encoder.advance().has_finished() {
             break;
         }
     }
