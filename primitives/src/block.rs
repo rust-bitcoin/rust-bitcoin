@@ -1011,7 +1011,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     use encoding::Decode as _;
-    use encoding::{Decoder as _, Encode as _, Encoder as _};
+    use encoding::{check_encode, Decoder as _};
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     #[cfg(feature = "serde")]
@@ -1804,10 +1804,8 @@ mod tests {
     #[test]
     fn version_encoder_emits_consensus_bytes() {
         let version = Version::from_consensus(123_456_789);
-        let mut encoder = version.encoder();
 
-        assert_eq!(encoder.current_chunk(), &version.to_consensus().to_le_bytes());
-        assert!(!encoder.advance());
+        check_encode(&version, &version.to_consensus().to_le_bytes());
     }
 
     #[test]

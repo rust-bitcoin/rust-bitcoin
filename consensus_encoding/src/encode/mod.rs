@@ -68,6 +68,10 @@ pub trait Encode {
 /// `current_chunk`, write it somewhere and, once fully written, try to advance the encoder.
 /// Attempting to call any method after [`advance`](Self::advance) returned `false` or calling
 /// `advance` before fully processing the chunks will lead to unspecified buggy behavior.
+///
+/// The callers MUST NOT assume that the encoder returns any particular size of the chunks. The
+/// implementors are allowed to change the sizes of the chunks as long as the concatenation of all
+/// the bytes returned stays the same.
 pub trait Encoder {
     /// Yields the current encoded byteslice.
     ///

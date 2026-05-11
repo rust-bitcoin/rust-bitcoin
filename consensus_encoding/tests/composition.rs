@@ -3,8 +3,9 @@
 //! Test composition of encoders and decoders.
 
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, BytesEncoder, Decode, Decoder, Decoder2, Decoder2Error, Decoder6,
-    drain_to_vec, Encode, encode_to_vec, Encoder, Encoder2, Encoder3, Encoder6, UnexpectedEofError,
+    ArrayDecoder, ArrayEncoder, BytesEncoder, check_encoder, Decode, Decoder, Decoder2,
+    Decoder2Error, Decoder6, drain_to_vec, Encode, encode_to_vec, Encoder, Encoder2, Encoder3,
+    Encoder6, UnexpectedEofError,
 };
 
 const EMPTY: &[u8] = &[];
@@ -308,13 +309,5 @@ fn empty_encoders() {
         BytesEncoder::without_length_prefix(&bytes[2..]),
     );
 
-    assert_eq!(encoder.current_chunk(), &[1, 2][..]);
-    assert!(encoder.advance());
-
-    // Still have to advance over empty slice.
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-
-    assert_eq!(encoder.current_chunk(), &[3, 4][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &bytes);
 }
