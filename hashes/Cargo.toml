@@ -39,3 +39,14 @@ serde_json = "1.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(hashes_fuzz)', 'cfg(rust_v_1_64)' ] }
+
+[package.metadata.rbmt.test]
+exact_features = [
+    ["alloc", "serde"],
+    ["alloc", "small-hash"],
+    ["serde", "small-hash"],
+    ["std", "serde"],
+    ["std", "small-hash"],
+    ["alloc", "serde", "small-hash"],
+    ["std", "serde", "small-hash"],
+]
