@@ -3,9 +3,13 @@
 //! Test composition of encoders and decoders.
 
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, BytesEncoder, Decode, Decoder, Decoder2, Decoder2Error, Decoder6,
-    drain_to_vec, Encode, encode_to_vec, Encoder, Encoder2, Encoder3, Encoder6, UnexpectedEofError,
+    ArrayDecoder, ArrayEncoder, BytesEncoder, check_encoder, Decode, Decoder, Decoder2,
+    Decoder2Error, Decoder6, Encode, Encoder2, Encoder3,
+    Encoder6, UnexpectedEofError,
 };
+
+#[cfg(feature = "alloc")]
+use bitcoin_consensus_encoding::{drain_to_vec, encode_to_vec};
 
 const EMPTY: &[u8] = &[];
 
@@ -76,6 +80,7 @@ impl Decode for CompositeData {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn composition_chain() {
     let original = CompositeData { first: [0x01, 0x02, 0x03, 0x04], second: [0x05, 0x06] };
     let encoded_bytes = encode_to_vec(&original);
@@ -90,6 +95,7 @@ fn composition_chain() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn composition_nested() {
     let data = b"abcdef";
     let mut encoder6 = Encoder6::new(
@@ -308,13 +314,5 @@ fn empty_encoders() {
         BytesEncoder::without_length_prefix(&bytes[2..]),
     );
 
-    assert_eq!(encoder.current_chunk(), &[1, 2][..]);
-    assert!(encoder.advance());
-
-    // Still have to advance over empty slice.
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-
-    assert_eq!(encoder.current_chunk(), &[3, 4][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &bytes);
 }
