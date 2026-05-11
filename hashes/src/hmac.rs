@@ -8,6 +8,8 @@
 //! Hash-based Message Authentication Code (HMAC).
 //!
 
+#[cfg(feature = "schemars")]
+use alloc::string::String;
 use core::{borrow, fmt, ops, str};
 
 #[cfg(feature = "serde")]
@@ -24,7 +26,7 @@ pub struct Hmac<T: Hash>(T);
 impl<T: Hash + schemars::JsonSchema> schemars::JsonSchema for Hmac<T> {
     fn is_referenceable() -> bool { <T as schemars::JsonSchema>::is_referenceable() }
 
-    fn schema_name() -> std::string::String { <T as schemars::JsonSchema>::schema_name() }
+    fn schema_name() -> String { <T as schemars::JsonSchema>::schema_name() }
 
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         <T as schemars::JsonSchema>::json_schema(gen)

@@ -8,6 +8,9 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
+#[cfg(feature = "schemars")]
+use alloc::{borrow::ToOwned, boxed::Box, string::String};
+
 use crate::{sha256, FromSliceError};
 
 type HashEngine = sha256::HashEngine;
@@ -165,6 +168,9 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "schemars")]
+    use alloc::{borrow::ToOwned, boxed::Box, string::String};
+
     #[cfg(feature = "alloc")]
     use crate::Hash;
     #[cfg(feature = "alloc")]
@@ -188,7 +194,7 @@ mod tests {
         }
     }
 
-    #[cfg(all(feature = "alloc", feature = "schemars"))]
+    #[cfg(feature = "schemars")]
     impl schemars::JsonSchema for TestHashTag {
         fn schema_name() -> String { "Hash".to_owned() }
 
