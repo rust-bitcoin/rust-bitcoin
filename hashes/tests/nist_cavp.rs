@@ -6,7 +6,7 @@
 //! <https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program>
 //!
 
-/// Tests both one-shot and incremental hashing
+/// Tests both one-shot and incremental hashing.
 macro_rules! nist_shavs_tests {
     ($mod_name:ident, $hash_type:ty, $short_file:expr, $long_file:expr) => {
         mod $mod_name {
@@ -81,7 +81,7 @@ nist_shavs_tests!(
     "data/nist/SHA3_256LongMsg.rsp"
 );
 
-/// Runs NIST SHAVS tests from .rsp files
+/// Runs NIST SHAVS tests from `.rsp` files.
 fn run_shavs_tests<F>(content: &str, hash_fn: F)
 where
     F: Fn(&[u8]) -> Vec<u8>,

@@ -205,7 +205,7 @@ pub(super) unsafe fn process_blocks(state: &mut [u32; 8], blocks: &[u8]) {
     vst1q_u32(state.as_mut_ptr().add(4), state1);
 }
 
-/// computes `SHA256d` of two 64-byte inputs in parallel using ARM SHA2 intrinsics.
+/// Computes `SHA256d` of two 64-byte inputs in parallel using ARM SHA2 intrinsics.
 #[target_feature(enable = "sha2")]
 pub(super) unsafe fn sha256d_64_2way(output: &mut [[u8; 32]; 2], input: &[[u8; 64]; 2]) {
     // Based on Bitcoin Core's sha256d64_arm_shani::Transform_2way

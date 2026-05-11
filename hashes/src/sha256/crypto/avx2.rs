@@ -143,7 +143,7 @@ unsafe fn Write8(output: &mut [[u8; 32]; 8], offset: usize, v: __m256i) {
     output[7][offset..offset + 4].copy_from_slice(&_mm256_extract_epi32::<0>(v).to_le_bytes());
 }
 
-/// Computes `SHA256d` of eight 64-byte inputs in parallel using AVX2
+/// Computes `SHA256d` of eight 64-byte inputs in parallel using AVX2.
 #[target_feature(enable = "avx,avx2")]
 #[rustfmt::skip]
 pub(super) unsafe fn sha256d_64_8way(output: &mut [[u8; 32]; 8], input: &[[u8; 64]; 8]) {

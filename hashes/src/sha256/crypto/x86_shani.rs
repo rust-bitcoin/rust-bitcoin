@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! x86 SHA-NI intrinsics for sha256
+//! x86 SHA-NI intrinsics for SHA256.
 
 #![allow(clippy::cast_ptr_alignment)]
 

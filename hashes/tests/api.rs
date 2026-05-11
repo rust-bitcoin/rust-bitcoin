@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Test the API surface of `units`.
+//! Test the API surface of `hashes`.
 //!
 //! The point of these tests is to check the API surface as opposed to test the API functionality.
 //!

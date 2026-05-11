@@ -4,13 +4,13 @@
 //! verifies that feeding the same bytes via three `engine.input()` calls
 //! matches one-shot hashing.
 //!
-//! This catches bugs that byte-by-byte incremetal tests in `nist_cavp.rs` don't catch.
-//! especially block-boundary transitions, empty chunks or buffering bugs.
+//! This catches bugs that byte-by-byte incremental tests in `nist_cavp.rs` don't catch,
+//! especially block-boundary transitions, empty chunks, or buffering bugs.
 //!
 //! Inspired by `ring` `test_i_u_f` tests:
 //! <https://github.com/briansmith/ring/commit/5daff2c0e1bb8ef00e44e15b0531dda0b69d0ec5>
 //!
-//! These tests are slow, so they only run in release mode
+//! These tests are slow, so they only run in release mode.
 
 #[cfg(not(debug_assertions))]
 use bitcoin_hashes::HashEngine as _;
