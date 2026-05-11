@@ -1,21 +1,30 @@
-default:
+alias ulf := update-lock-files
+
+_default:
   @just --list
 
-# Cargo build everything.
-build:
-  cargo build --workspace --all-targets --all-features
+# Install necessary dev tools on system.
+[group('system')]
+tools:
+  @{{justfile_directory()}}/contrib/ensure-maintainer-tools.sh
 
-# Cargo check everything.
-check:
-  cargo check --workspace --all-targets --all-features
+# Install workspace toolchains.
+[group('system')]
+@toolchains: tools
+  RBMT_LOG_LEVEL=quiet cargo rbmt toolchains > /dev/null
+
+# Setup rbmt and run with given args.
+@rbmt *args: toolchains
+  RBMT_LOG_LEVEL=quiet cargo rbmt {{args}}
+
+# Format workspace.
+@fmt: (rbmt "fmt")
+
+# Check for API changes.
+check-api: (rbmt "api")
 
 # Lint everything.
-lint:
-  cargo +$(cat ./nightly-version) clippy --workspace --all-targets --all-features -- --deny warnings
-
-# Check the formatting
-format:
-  cargo +$(cat ./nightly-version) fmt --all --check
+lint: (rbmt "lint")
 
 # Quick and dirty CI useful for pre-push checks.
 sane: lint
@@ -30,5 +39,4 @@ sane: lint
   cargo test --manifest-path bitcoin/Cargo.toml --doc --no-default-features > /dev/null || exit 1
 
 # Update the recent and minimal lock files.
-update-lock-files:
-  contrib/update-lock-files.sh
+@update-lock-files: (rbmt "lock")
