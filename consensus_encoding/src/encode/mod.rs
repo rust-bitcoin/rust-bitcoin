@@ -347,6 +347,59 @@ where
     Ok(())
 }
 
+/// Checks that the given `value` encodes to `expected`, panicking if it doesn't.
+///
+/// Note that the function does not impose any requirements on chunking - whether the encoded bytes
+/// are returned as a few large chunks or they are many smaller chunks makes no difference (other
+/// than potentially performance difference), as long as the bytes yielded are what is expected, in
+/// the correct order.
+///
+/// This is intended for tests only.
+///
+/// # Panics
+///
+/// If the bytes yielded from the encoder of `value` don't match the bytes in `expected`.
+#[track_caller]
+pub fn check_encode<T: Encode + ?Sized>(value: &T, expected: &[u8]) {
+    check_encoder(&mut value.encoder(), expected)
+}
+
+/// Checks that the given `encoder` yields `expected`, panicking if it doesn't.
+///
+/// Note that the function does not impose any requirements on chunking - whether the encoded bytes
+/// are returned as a few large chunks or they are many smaller chunks makes no difference (other
+/// than potentially performance difference), as long as the bytes yielded are what is expected, in
+/// the correct order.
+///
+/// This is intended for tests only.
+///
+/// # Panics
+///
+/// If the bytes yielded from the encoder don't match the bytes in `expected`.
+#[track_caller]
+pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) {
+    let orig_expected_len = expected.len();
+    let mut chunk_number = 0usize;
+    let mut bytes_processed = 0usize;
+
+    loop {
+        let chunk = encoder.current_chunk();
+        if chunk.len() > expected.len() {
+            panic!("encoder yielded more bytes ({}) than expected ({})", bytes_processed + chunk.len(), orig_expected_len);
+        }
+        if let Some((i, _)) = chunk.iter().zip(&expected[..chunk.len()]).enumerate().find(|&(_, (a, b))| a != b) {
+            panic!("encoder did not yield expected bytes - difference in chunk #{}, after {} bytes", chunk_number, bytes_processed + i);
+        }
+        bytes_processed += chunk.len();
+        expected = &expected[chunk.len()..];
+        chunk_number += 1;
+        if !encoder.advance() {
+            break;
+        }
+    }
+    assert!(expected.is_empty(), "encoder did not yield enough bytes - {} more expected", expected.len());
+}
+
 impl<T: Encoder> Encoder for Option<T> {
     fn current_chunk(&self) -> &[u8] {
         match self {
