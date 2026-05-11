@@ -59,9 +59,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+pub extern crate addresses;
 #[cfg(feature = "arbitrary")]
 pub extern crate arbitrary;
-
 pub extern crate base58;
 #[cfg(feature = "base64")]
 pub extern crate base64;
@@ -100,11 +100,13 @@ pub mod ext {
     //! ```
     #[rustfmt::skip] // Use terse custom grouping.
     pub use crate::{
+        address::AddressExt as _,
         block::{BlockCheckedExt as _, HeaderExt as _},
         key::{FullPublicKeyExt as _, LegacyPublicKeyExt as _},
         network::NetworkExt as _,
         pow::{CompactTargetExt as _, TargetExt as _, WorkExt as _},
         script::{ScriptExt as _, ScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
+        script::witness_program::WitnessProgramExt as _,
         taproot::{TapLeafHashExt as _, TapNodeHashExt as _},
         transaction::{TxidExt as _, WtxidExt as _, OutPointExt as _, TxInExt as _, TxOutExt as _, TransactionExt as _},
         witness::WitnessExt as _,

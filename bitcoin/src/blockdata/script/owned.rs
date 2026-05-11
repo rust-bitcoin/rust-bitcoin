@@ -17,7 +17,7 @@ use crate::key::{
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
-use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
+use crate::script::witness_program::{WitnessProgram, WitnessProgramExt as _, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{self, ScriptHash, WScriptHash};
 use crate::taproot::TapNodeHash;

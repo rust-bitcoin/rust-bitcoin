@@ -1800,6 +1800,8 @@ mod test {
 
     #[test]
     fn bip_341_tests() {
+        use crate::address::AddressExt as _;
+
         fn process_script_trees(
             v: &serde_json::Value,
             mut builder: TaprootBuilder,

@@ -252,6 +252,7 @@ mod tests {
     #[cfg(feature = "secp-recovery")]
     #[cfg(feature = "std")]
     fn message_signature() {
+        use crate::address::AddressExt as _;
         use crate::{Address, AddressType, FullPublicKey, Network, NetworkKind, PrivateKey};
 
         let message = "rust-bitcoin MessageSignature test";
