@@ -8,6 +8,9 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
+#[cfg(feature = "schemars")]
+use alloc::{boxed::Box, string::String};
+
 use crate::{sha256, FromSliceError};
 
 type HashEngine = sha256::HashEngine;
@@ -24,14 +27,14 @@ pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
 
 #[cfg(feature = "schemars")]
 impl<T: Tag> schemars::JsonSchema for Hash<T> {
-    fn schema_name() -> String { "Hash".to_owned() }
+    fn schema_name() -> String { String::from("Hash") }
 
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
         schema.string = Some(Box::new(schemars::schema::StringValidation {
             max_length: Some(32 * 2),
             min_length: Some(32 * 2),
-            pattern: Some("[0-9a-fA-F]+".to_owned()),
+            pattern: Some(String::from("[0-9a-fA-F]+")),
         }));
         schema.into()
     }
@@ -165,6 +168,9 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "schemars")]
+    use alloc::{boxed::Box, string::String};
+
     #[cfg(feature = "alloc")]
     use crate::Hash;
     #[cfg(feature = "alloc")]
@@ -188,16 +194,16 @@ mod tests {
         }
     }
 
-    #[cfg(all(feature = "alloc", feature = "schemars"))]
+    #[cfg(feature = "schemars")]
     impl schemars::JsonSchema for TestHashTag {
-        fn schema_name() -> String { "Hash".to_owned() }
+        fn schema_name() -> String { String::from("Hash") }
 
         fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
             let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
             schema.string = Some(Box::new(schemars::schema::StringValidation {
                 max_length: Some(64 * 2),
                 min_length: Some(64 * 2),
-                pattern: Some("[0-9a-fA-F]+".to_owned()),
+                pattern: Some(String::from("[0-9a-fA-F]+")),
             }));
             schema.into()
         }
