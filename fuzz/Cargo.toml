@@ -651,6 +651,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "hashes_arbitrary_json"
+path = "fuzz_targets/hashes/arbitrary_json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "hashes_json"
 path = "fuzz_targets/hashes/json.rs"
 test = false
