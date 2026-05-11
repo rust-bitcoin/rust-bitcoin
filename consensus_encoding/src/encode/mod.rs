@@ -96,7 +96,39 @@ pub trait Encoder {
     /// in such state is a bug (but not UB) unless the specific encoder documents otherwise. While
     /// usually the encoder simply stays in the last possible state this MUST NOT be relied upon by
     /// the callers.
-    fn advance(&mut self) -> bool;
+    fn advance(&mut self) -> EncoderStatus;
+}
+
+/// Indicates whether the encoder still has bytes available or it is finished.
+///
+/// This is returned from the [`Encoder::advance`] method to indicate whether encoding should stop
+/// or continue.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[must_use = "encoding has to stop when Finished is returned"]
+pub enum EncoderStatus {
+    /// The encoder has more bytes available (not yet finished).
+    ///
+    /// The [`current_chunk`](Encoder::current_chunk) method should be called to obtain them and
+    /// write them out after which [`advance`](Encoder::advance) should be called again to obtain
+    /// the next chunk (if any).
+    HasMore,
+
+    /// The encoding has ended, no more bytes are available.
+    ///
+    /// No encoder methods (other than drop) may be called after this variant is returned.
+    Finished,
+}
+
+impl EncoderStatus {
+    /// Returns `true` if `self` is `HasMore`, `false` otherwise.
+    pub fn has_more(&self) -> bool {
+        matches!(self, EncoderStatus::HasMore)
+    }
+
+    /// Returns `true` if `self` is `Finished`, `false` otherwise.
+    pub fn has_finished(&self) -> bool {
+        matches!(self, EncoderStatus::Finished)
+    }
 }
 
 /// Implements a newtype around an encoder.
@@ -137,7 +169,7 @@ macro_rules! encoder_newtype {
             fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
             #[inline]
-            fn advance(&mut self) -> bool { self.0.advance() }
+            fn advance(&mut self) -> $crate::EncoderStatus { self.0.advance() }
         }
     }
 }
@@ -205,7 +237,7 @@ impl<T: Encoder> EncoderByteIter<T> {
             &self.enc.current_chunk()[self.position..]
         } else {
             loop {
-                if !self.enc.advance() {
+                if self.enc.advance().has_finished() {
                     return &[];
                 }
                 if !self.enc.current_chunk().is_empty() {
@@ -227,7 +259,7 @@ impl<T: Encoder> Iterator for EncoderByteIter<T> {
                 // overflow.
                 self.position += 1;
                 return Some(*b);
-            } else if !self.enc.advance() {
+            } else if self.enc.advance().has_finished() {
                 return None;
             }
             self.position = 0;
@@ -246,7 +278,7 @@ impl<T: Encoder> Iterator for EncoderByteIter<T> {
             return Some(*b);
         }
         n -= self.enc.current_chunk().len() - self.position;
-        if !self.enc.advance() {
+        if self.enc.advance().has_finished() {
             return None;
         }
         loop {
@@ -255,7 +287,7 @@ impl<T: Encoder> Iterator for EncoderByteIter<T> {
                 return Some(*b);
             }
             n -= self.enc.current_chunk().len();
-            if !self.enc.advance() {
+            if self.enc.advance().has_finished() {
                 return None;
             }
         }
@@ -301,7 +333,7 @@ where
     let mut vec = Vec::new();
     loop {
         vec.extend_from_slice(encoder.current_chunk());
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }
@@ -344,7 +376,7 @@ where
 {
     loop {
         writer.write_all(encoder.current_chunk())?;
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }
@@ -397,7 +429,7 @@ pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) 
         bytes_processed += chunk.len();
         expected = &expected[chunk.len()..];
         chunk_number += 1;
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }
@@ -412,10 +444,10 @@ impl<T: Encoder> Encoder for Option<T> {
         }
     }
 
-    fn advance(&mut self) -> bool {
+    fn advance(&mut self) -> EncoderStatus {
         match self {
             Some(encoder) => encoder.advance(),
-            None => false,
+            None => EncoderStatus::Finished,
         }
     }
 }
