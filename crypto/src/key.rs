@@ -85,7 +85,7 @@ mod encapsulate {
 
         /// Returns the inner secp256k1 x-only public key.
         #[inline]
-        pub fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.inner }
+        pub(super) fn to_inner(self) -> secp256k1::XOnlyPublicKey { self.inner }
 
         /// Returns the inner secp256k1 x-only public key.
         #[inline]
@@ -147,7 +147,7 @@ mod encapsulate {
 
         /// Returns the inner secp256k1 public key.
         #[inline]
-        pub fn to_inner(self) -> secp256k1::PublicKey { self.inner }
+        pub(super) fn to_inner(self) -> secp256k1::PublicKey { self.inner }
 
         /// Returns whether this public key should be serialized as compressed.
         #[inline]
@@ -165,7 +165,7 @@ mod encapsulate {
 
         /// Returns the inner [`secp256k1::PublicKey`].
         #[inline]
-        pub fn to_inner(self) -> secp256k1::PublicKey { self.0 }
+        pub(super) fn to_inner(self) -> secp256k1::PublicKey { self.0 }
     }
 
     /// A Bitcoin ECDSA private key.

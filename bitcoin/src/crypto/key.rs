@@ -238,7 +238,7 @@ mod tests {
         .parse::<LegacyPublicKey>().unwrap());
         let addr = Address::p2pkh(pk, sk.network_kind);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
-        pk = LegacyPublicKey::from_secp(pk.to_inner());
+        pk = pk.with_compressedness(true);
         assert_eq!(
             &pk.to_string(),
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
