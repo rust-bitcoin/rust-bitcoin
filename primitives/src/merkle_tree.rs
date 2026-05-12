@@ -465,4 +465,10 @@ mod tests {
         let (_, node2) = make_leaf_node(20);
         assert_ne!(node1.combine(&node2), node2.combine(&node1));
     }
+
+    #[test]
+    fn dummy_ci_fail() {
+        let x: u32 = "not a number";
+        let _ = x;
+    }
 }
