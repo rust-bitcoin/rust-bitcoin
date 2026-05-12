@@ -21,7 +21,6 @@ use io::Write;
 #[cfg(feature = "serde")]
 use serde::Deserialize;
 
-use crate::consensus::Encodable;
 use crate::crypto::key::{
     SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
 };
@@ -69,8 +68,8 @@ crate::internal_macros::define_extension_trait! {
         /// Computes the leaf hash from components.
         fn from_script(script: &TapScript, ver: LeafVersion) -> Self {
             let mut eng = sha256t::Hash::<TapLeafTag>::engine();
-            ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
-            script.consensus_encode(&mut eng).expect("engines don't error");
+            eng.input(&[ver.to_consensus()]);
+            hashes::encode_to_engine(script, &mut eng);
             let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
             Self::from_byte_array(inner.to_byte_array())
         }

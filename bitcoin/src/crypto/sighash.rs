@@ -18,6 +18,7 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use crypto::key::{TweakedKeypair, UntweakedKeypair};
 use crypto::{ecdsa, taproot, PrivateKey};
+use encoding::CompactSizeEncoder;
 use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use io::Write;
 
@@ -714,20 +715,18 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             script_pubkey: &crate::script::Script<T>,
             sighash_type: u32,
         ) -> Result<(), io::Error> {
-            use crate::consensus::encode::WriteExt;
-
             let (sighash, anyone_can_pay) =
                 EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
 
             io::encode_to_writer(&self_.version, &mut writer)?;
             // Add all inputs necessary..
             if anyone_can_pay {
-                writer.emit_compact_size(1u8)?;
+                io::drain_to_writer(&mut CompactSizeEncoder::new(1), &mut writer)?;
                 io::encode_to_writer(&self_.inputs[input_index].previous_output, &mut writer)?;
                 io::encode_to_writer(script_pubkey, &mut writer)?;
                 io::encode_to_writer(&self_.inputs[input_index].sequence, &mut writer)?;
             } else {
-                writer.emit_compact_size(self_.inputs.len())?;
+                io::drain_to_writer(&mut CompactSizeEncoder::new(self_.inputs.len()), &mut writer)?;
                 for (n, input) in self_.inputs.iter().enumerate() {
                     io::encode_to_writer(&input.previous_output, &mut writer)?;
                     if n == input_index {
@@ -758,7 +757,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     // sign all outputs up to and including this one, but erase
                     // all of them except for this one
                     let count = input_index.min(self_.outputs.len() - 1);
-                    writer.emit_compact_size(count + 1)?;
+                    io::drain_to_writer(&mut CompactSizeEncoder::new(count + 1), &mut writer)?;
                     for _ in 0..count {
                         // consensus encoding of the "NULL txout" - max amount, empty script_pubkey
                         writer
@@ -767,7 +766,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     io::encode_to_writer(&self_.outputs[count], &mut writer)?;
                 }
                 EcdsaSighashType::None => {
-                    writer.emit_compact_size(0u8)?;
+                    io::drain_to_writer(&mut CompactSizeEncoder::new(0), &mut writer)?;
                 }
                 _ => unreachable!(),
             };

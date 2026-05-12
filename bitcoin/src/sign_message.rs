@@ -5,9 +5,9 @@
 //! This module provides signature related functions including secp256k1 signature recovery when
 //! library is used with the `secp-recovery` feature.
 
+use encoding::CompactSizeEncoder;
 use hashes::{sha256d, HashEngine};
 
-use crate::consensus::encode::WriteExt;
 #[cfg(feature = "secp-recovery")]
 use crate::key::PrivateKeyExt as _;
 #[cfg(feature = "secp-recovery")]
@@ -169,7 +169,7 @@ pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
     let msg_bytes = msg.as_ref();
     let mut engine = sha256d::Hash::engine();
     engine.input(BITCOIN_SIGNED_MSG_PREFIX);
-    engine.emit_compact_size(msg_bytes.len()).expect("engines don't error");
+    hashes::drain_to_engine(&mut CompactSizeEncoder::new(msg_bytes.len()), &mut engine);
     engine.input(msg_bytes);
     sha256d::Hash::from_engine(engine)
 }

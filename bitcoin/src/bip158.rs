@@ -44,7 +44,7 @@ use internals::array::ArrayExt as _;
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
-use crate::consensus::{ReadExt, WriteExt};
+use crate::encoding::{CompactSizeEncoder, CompactSizeU64Decoder, ExactSizeEncoder as _};
 use crate::prelude::{BTreeSet, Borrow, Vec};
 use crate::script::{ScriptPubKey, ScriptPubKeyExt as _};
 use crate::transaction::OutPoint;
@@ -220,7 +220,8 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().map_err(Error::InvalidCompactSize)?;
+        let n_elements = io::decode_from_read_with::<CompactSizeU64Decoder, _>(&mut *reader)
+            .map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -263,7 +264,8 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().map_err(Error::InvalidCompactSize)?;
+        let n_elements = io::decode_from_read_with::<CompactSizeU64Decoder, _>(&mut *reader)
+            .map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -338,7 +340,9 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
         mapped.sort_unstable();
 
         // write number of elements as varint
-        let mut wrote = self.writer.emit_compact_size(mapped.len())?;
+        let mut encoder = CompactSizeEncoder::new(mapped.len());
+        let mut wrote = encoder.len();
+        io::drain_to_writer(&mut encoder, &mut self.writer)?;
 
         // write out deltas of sorted values into a Golomb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);
@@ -501,7 +505,6 @@ pub mod error {
 
     use internals::write_err;
 
-    use crate::consensus;
     use crate::transaction::OutPoint;
 
     /// Errors for blockfilter.
@@ -511,7 +514,7 @@ pub mod error {
         /// Missing UTXO, cannot calculate script filter.
         UtxoMissing(OutPoint),
         /// Invalid CompactSize encoded element count in the filter.
-        InvalidCompactSize(consensus::Error),
+        InvalidCompactSize(io::ReadError<encoding::CompactSizeDecoderError>),
         /// I/O error reading or writing binary serialization of the filter.
         Io(io::Error),
     }
@@ -697,33 +700,35 @@ mod test {
 
     #[test]
     fn malformed_filter_count_errors() {
-        use crate::consensus::Error::Parse as ConsensusParse;
-        use crate::consensus::ParseError::{MissingData, NonMinimalCompactSize};
+        // Check the inner private error type via text
+        fn assert_error_string(result: Result<bool, Error>, substring: &str) {
+            match result {
+                Err(Error::InvalidCompactSize(io::ReadError::Decode(c_err))) => {
+                    let err_msg = format!("{}", c_err);
+                    assert!(err_msg.contains(substring));
+                }
+                _ => panic!("Incorrect error type: {:?}", result),
+            }
+        }
 
         let query = [hex!("000000")];
         let reader = GcsFilterReader::new(0, 0, M, P);
 
         let mut bytes = &[0xfd][..];
         let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
-        assert!(matches!(result, Err(Error::InvalidCompactSize(ConsensusParse(MissingData)))));
+        assert_error_string(result, "required at least");
 
         let mut bytes = &[0xfd][..];
         let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
-        assert!(matches!(result, Err(Error::InvalidCompactSize(ConsensusParse(MissingData)))));
+        assert_error_string(result, "required at least");
 
         let mut bytes = &[0xfd, 0xfc, 0x00][..];
         let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
-        assert!(matches!(
-            result,
-            Err(Error::InvalidCompactSize(ConsensusParse(NonMinimalCompactSize)))
-        ));
+        assert_error_string(result, "not encoded minimally");
 
         let mut bytes = &[0xfd, 0xfc, 0x00][..];
         let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
-        assert!(matches!(
-            result,
-            Err(Error::InvalidCompactSize(ConsensusParse(NonMinimalCompactSize)))
-        ));
+        assert_error_string(result, "not encoded minimally");
     }
 
     #[test]
