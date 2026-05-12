@@ -3,8 +3,9 @@
 //! Test composition of encoders and decoders.
 
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, BytesEncoder, Decode, Decoder, Decoder2, Decoder2Error, Decoder6,
-    Encode, Encoder, Encoder2, Encoder3, Encoder6, UnexpectedEofError,
+    ArrayDecoder, ArrayEncoder, BytesEncoder, check_encoder, Decode, Decoder, Decoder2,
+    Decoder2Error, Decoder6, drain_to_vec, Encode, encode_to_vec, Encoder, Encoder2, Encoder3,
+    Encoder6, UnexpectedEofError,
 };
 
 const EMPTY: &[u8] = &[];
@@ -78,15 +79,7 @@ impl Decode for CompositeData {
 #[test]
 fn composition_chain() {
     let original = CompositeData { first: [0x01, 0x02, 0x03, 0x04], second: [0x05, 0x06] };
-    // Encode using the pull encoder.
-    let mut encoder = original.encoder();
-    let mut encoded_bytes = Vec::new();
-    loop {
-        encoded_bytes.extend_from_slice(encoder.current_chunk());
-        if !encoder.advance() {
-            break;
-        }
-    }
+    let encoded_bytes = encode_to_vec(&original);
     // Decode using the push decoder.
     let mut decoder = CompositeData::decoder();
     let mut bytes = &encoded_bytes[..];
@@ -109,13 +102,7 @@ fn composition_nested() {
         ArrayEncoder::without_length_prefix([data[5]]),
     );
 
-    let mut encoded_bytes = Vec::new();
-    loop {
-        encoded_bytes.extend_from_slice(encoder6.current_chunk());
-        if !encoder6.advance() {
-            break;
-        }
-    }
+    let encoded_bytes = drain_to_vec(&mut encoder6);
     assert_eq!(encoded_bytes, data);
 
     let mut decoder6: Decoder6<_, _, _, _, _, _> = Decoder6::new(
@@ -322,13 +309,5 @@ fn empty_encoders() {
         BytesEncoder::without_length_prefix(&bytes[2..]),
     );
 
-    assert_eq!(encoder.current_chunk(), &[1, 2][..]);
-    assert!(encoder.advance());
-
-    // Still have to advance over empty slice.
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-
-    assert_eq!(encoder.current_chunk(), &[3, 4][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &bytes);
 }

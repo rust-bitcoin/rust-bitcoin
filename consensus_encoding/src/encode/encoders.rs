@@ -12,7 +12,7 @@
 
 use core::fmt;
 
-use super::{Encode, Encoder, ExactSizeEncoder};
+use super::{Encode, Encoder, EncoderStatus, ExactSizeEncoder};
 
 /// An encoder for a single byte slice.
 #[derive(Debug, Clone)]
@@ -28,7 +28,7 @@ impl<'sl> BytesEncoder<'sl> {
 impl Encoder for BytesEncoder<'_> {
     fn current_chunk(&self) -> &[u8] { self.sl }
 
-    fn advance(&mut self) -> bool { false }
+    fn advance(&mut self) -> EncoderStatus { EncoderStatus::Finished }
 }
 
 impl<'sl> ExactSizeEncoder for BytesEncoder<'sl> {
@@ -52,7 +52,7 @@ impl<const N: usize> Encoder for ArrayEncoder<N> {
     fn current_chunk(&self) -> &[u8] { &self.arr }
 
     #[inline]
-    fn advance(&mut self) -> bool { false }
+    fn advance(&mut self) -> EncoderStatus { EncoderStatus::Finished }
 }
 
 impl<const N: usize> ExactSizeEncoder for ArrayEncoder<N> {
@@ -79,7 +79,7 @@ impl<const N: usize> Encoder for ArrayRefEncoder<'_, N> {
     fn current_chunk(&self) -> &[u8] { self.arr }
 
     #[inline]
-    fn advance(&mut self) -> bool { false }
+    fn advance(&mut self) -> EncoderStatus { EncoderStatus::Finished }
 }
 
 impl<const N: usize> ExactSizeEncoder for ArrayRefEncoder<'_, N> {
@@ -136,16 +136,16 @@ impl<T: Encode> Encoder for SliceEncoder<'_, T> {
         self.cur_enc.as_ref().map(T::Encoder::current_chunk).unwrap_or_default()
     }
 
-    fn advance(&mut self) -> bool {
+    fn advance(&mut self) -> EncoderStatus {
         let Some(cur) = self.cur_enc.as_mut() else {
-            return false;
+            return EncoderStatus::Finished;
         };
 
         loop {
             // On subsequent calls, attempt to advance the current encoder and return
             // success if this succeeds.
-            if cur.advance() {
-                return true;
+            if cur.advance().has_more() {
+                return EncoderStatus::HasMore;
             }
             // self.sl guaranteed to be non-empty if cur is non-None.
             self.sl = &self.sl[1..];
@@ -154,11 +154,11 @@ impl<T: Encode> Encoder for SliceEncoder<'_, T> {
             if let Some(x) = self.sl.first() {
                 *cur = x.encoder();
                 if !cur.current_chunk().is_empty() {
-                    return true;
+                    return EncoderStatus::HasMore;
                 }
             } else {
                 self.cur_enc = None; // shortcut the next call to advance()
-                return false;
+                return EncoderStatus::Finished;
             }
         }
     }
@@ -195,7 +195,7 @@ macro_rules! define_encoder_n {
             }
 
             #[inline]
-            fn advance(&mut self) -> bool {
+            fn advance(&mut self) -> EncoderStatus {
                 match self.cur_idx {
                     $(
                         $enc_idx => {
@@ -203,14 +203,14 @@ macro_rules! define_encoder_n {
                             if $enc_idx == $idx_limit - 1 {
                                 return self.$enc_field.advance()
                             }
-                            // For all others, return true, or increment to next encoder
-                            if !self.$enc_field.advance() {
+                            // For all others, return EncoderStatus::HasMore, or increment to next encoder
+                            if self.$enc_field.advance().has_finished() {
                                 self.cur_idx += 1;
                             }
-                            true
+                            EncoderStatus::HasMore
                         }
                     )*
-                    _ => false,
+                    _ => EncoderStatus::Finished,
                 }
             }
         }

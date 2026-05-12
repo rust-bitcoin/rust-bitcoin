@@ -2,18 +2,15 @@
 
 //! Round-trip integration tests for `CompactSize` codec.
 
-#[cfg(feature = "alloc")]
 use bitcoin_consensus_encoding::{
-    decode_from_slice, encode_to_vec, CompactSizeDecoderError, CompactSizeEncoder,
+    check_encode, decode_from_slice, CompactSizeDecoderError, CompactSizeEncoder,
     CompactSizeU64Decoder, Decode, Encode,
 };
 use bitcoin_consensus_encoding::{CompactSizeDecoder, Decoder};
 
 /// A `usize` value encoded and decoded as a compact size length prefix.
-#[cfg(feature = "alloc")]
 struct CompactSizeUsize(usize);
 
-#[cfg(feature = "alloc")]
 impl Encode for CompactSizeUsize {
     type Encoder<'e>
         = CompactSizeEncoder
@@ -23,11 +20,9 @@ impl Encode for CompactSizeUsize {
 }
 
 /// Wraps `CompactSizeDecoder` to produce `CompactSizeUsize`.
-#[cfg(feature = "alloc")]
 #[derive(Default)]
 struct CompactSizeUsizeDecoderWrapper(CompactSizeDecoder);
 
-#[cfg(feature = "alloc")]
 impl Decoder for CompactSizeUsizeDecoderWrapper {
     type Output = CompactSizeUsize;
     type Error = CompactSizeDecoderError;
@@ -41,16 +36,13 @@ impl Decoder for CompactSizeUsizeDecoderWrapper {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-#[cfg(feature = "alloc")]
 impl Decode for CompactSizeUsize {
     type Decoder = CompactSizeUsizeDecoderWrapper;
 }
 
 /// A `u64` value encoded and decoded as a compact size integer.
-#[cfg(feature = "alloc")]
 struct CompactSizeU64(u64);
 
-#[cfg(feature = "alloc")]
 impl Encode for CompactSizeU64 {
     type Encoder<'e>
         = CompactSizeEncoder
@@ -60,11 +52,9 @@ impl Encode for CompactSizeU64 {
 }
 
 /// Wraps `CompactSizeU64Decoder` to produce `CompactSizeU64`.
-#[cfg(feature = "alloc")]
 #[derive(Default)]
 struct CompactSizeU64DecoderWrapper(CompactSizeU64Decoder);
 
-#[cfg(feature = "alloc")]
 impl Decoder for CompactSizeU64DecoderWrapper {
     type Output = CompactSizeU64;
     type Error = CompactSizeDecoderError;
@@ -78,136 +68,107 @@ impl Decoder for CompactSizeU64DecoderWrapper {
     fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
-#[cfg(feature = "alloc")]
 impl Decode for CompactSizeU64 {
     type Decoder = CompactSizeU64DecoderWrapper;
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_usize_zero() {
-    let bytes = encode_to_vec(&CompactSizeUsize(0x00));
-    assert_eq!(bytes, [0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&bytes).unwrap().0, 0x00);
+    check_encode(&CompactSizeUsize(0x00), &[0x00]);
+    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0x00]).unwrap().0, 0x00);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_usize_one_byte_max() {
     // 0xFC is the largest value that fits in a single byte.
-    let bytes = encode_to_vec(&CompactSizeUsize(0xFC));
-    assert_eq!(bytes, [0xFC]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&bytes).unwrap().0, 0xFC);
+    check_encode(&CompactSizeUsize(0xFC), &[0xFC]);
+    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFC]).unwrap().0, 0xFC);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_usize_three_byte_min() {
     // 0xFD is the smallest value that requires the 0xFD prefix.
-    let bytes = encode_to_vec(&CompactSizeUsize(0xFD));
-    assert_eq!(bytes, [0xFD, 0xFD, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&bytes).unwrap().0, 0xFD);
+    check_encode(&CompactSizeUsize(0xFD), &[0xFD, 0xFD, 0x00]);
+    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFD, 0xFD, 0x00]).unwrap().0, 0xFD);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_usize_three_byte_max() {
-    let bytes = encode_to_vec(&CompactSizeUsize(0xFFFF));
-    assert_eq!(bytes, [0xFD, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&bytes).unwrap().0, 0xFFFF);
+    check_encode(&CompactSizeUsize(0xFFFF), &[0xFD, 0xFF, 0xFF]);
+    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFD, 0xFF, 0xFF]).unwrap().0, 0xFFFF);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_usize_five_byte_min() {
     // 0x10000 is the smallest value that requires the 0xFE prefix.
-    let bytes = encode_to_vec(&CompactSizeUsize(0x10000));
-    assert_eq!(bytes, [0xFE, 0x00, 0x00, 0x01, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&bytes).unwrap().0, 0x10000);
+    check_encode(&CompactSizeUsize(0x10000), &[0xFE, 0x00, 0x00, 0x01, 0x00]);
+    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0, 0x10000);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_zero() {
-    let bytes = encode_to_vec(&CompactSizeU64(0x00));
-    assert_eq!(bytes, [0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, 0x00);
+    check_encode(&CompactSizeU64(0x00), &[0x00]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0x00]).unwrap().0, 0x00);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_one_byte_max() {
-    let bytes = encode_to_vec(&CompactSizeU64(0xFC));
-    assert_eq!(bytes, [0xFC]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, 0xFC);
+    // 0xFC is the largest value that fits in a single byte.
+    check_encode(&CompactSizeU64(0xFC), &[0xFC]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFC]).unwrap().0, 0xFC);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_three_byte_min() {
-    let bytes = encode_to_vec(&CompactSizeU64(0xFD));
-    assert_eq!(bytes, [0xFD, 0xFD, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, 0xFD);
+    // 0xFD is the smallest value that requires the 0xFD prefix.
+    check_encode(&CompactSizeU64(0xFD), &[0xFD, 0xFD, 0x00]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFD, 0xFD, 0x00]).unwrap().0, 0xFD);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_three_byte_max() {
-    let bytes = encode_to_vec(&CompactSizeU64(0xFFFF));
-    assert_eq!(bytes, [0xFD, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, 0xFFFF);
+    check_encode(&CompactSizeU64(0xFFFF), &[0xFD, 0xFF, 0xFF]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFD, 0xFF, 0xFF]).unwrap().0, 0xFFFF);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_five_byte_min() {
-    // 0x1_0000 is the smallest value that requires the 0xFE prefix.
-    let bytes = encode_to_vec(&CompactSizeU64(0x1_0000));
-    assert_eq!(bytes, [0xFE, 0x00, 0x00, 0x01, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, 0x1_0000);
+    // 0x10000 is the smallest value that requires the 0xFE prefix.
+    check_encode(&CompactSizeU64(0x10000), &[0xFE, 0x00, 0x00, 0x01, 0x00]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0, 0x10000);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_five_byte_max() {
-    let bytes = encode_to_vec(&CompactSizeU64(0xFFFF_FFFF));
-    assert_eq!(bytes, [0xFE, 0xFF, 0xFF, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, 0xFFFF_FFFF);
+    check_encode(&CompactSizeU64(0xFFFF_FFFF), &[0xFE, 0xFF, 0xFF, 0xFF, 0xFF]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFE, 0xFF, 0xFF, 0xFF, 0xFF]).unwrap().0, 0xFFFF_FFFF);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_nine_byte_min() {
-    // 0x1_0000_0000 is the smallest value that requires the 0xFF prefix.
-    let bytes = encode_to_vec(&CompactSizeU64(0x1_0000_0000));
-    assert_eq!(bytes, [0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, 0x1_0000_0000);
+    check_encode(&CompactSizeU64(0x1_0000_0000), &[0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]).unwrap().0, 0x1_0000_0000);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn round_trip_u64_max() {
-    let bytes = encode_to_vec(&CompactSizeU64(u64::MAX));
-    assert_eq!(bytes, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&bytes).unwrap().0, u64::MAX);
+    check_encode(&CompactSizeU64(u64::MAX), &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
+    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]).unwrap().0, u64::MAX);
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn non_minimal_rejected_u64_using_fd_prefix_for_small_value() {
     // 0x42 fits in one byte but is encoded with the 0xFD (3-byte) prefix.
     assert!(decode_from_slice::<CompactSizeU64>(&[0xFD, 0x42, 0x00]).is_err());
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn non_minimal_rejected_u64_using_fe_prefix_for_small_value() {
     // 0x42 fits in one byte but is encoded with the 0xFE (5-byte) prefix.
     assert!(decode_from_slice::<CompactSizeU64>(&[0xFE, 0x42, 0x00, 0x00, 0x00]).is_err());
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn non_minimal_rejected_u64_using_ff_prefix_for_small_value() {
     // 0x42 fits in one byte but is encoded with the 0xFF (9-byte) prefix.
     assert!(decode_from_slice::<CompactSizeU64>(&[
@@ -217,7 +178,6 @@ fn non_minimal_rejected_u64_using_ff_prefix_for_small_value() {
 }
 
 #[test]
-#[cfg(feature = "alloc")]
 fn non_minimal_rejected_usize_using_fd_prefix_for_small_value() {
     assert!(decode_from_slice::<CompactSizeUsize>(&[0xFD, 0x10, 0x00]).is_err());
 }

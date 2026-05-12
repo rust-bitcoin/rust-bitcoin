@@ -9,7 +9,7 @@
 use internals::array_vec::ArrayVec;
 
 use crate::decode::Decoder;
-use crate::encode::{Encoder, ExactSizeEncoder};
+use crate::encode::{Encoder, EncoderStatus, ExactSizeEncoder};
 use crate::error::{
     CompactSizeDecoderError, CompactSizeDecoderErrorInner, LengthPrefixExceedsMaxError,
 };
@@ -36,7 +36,7 @@ const PREFIX_U64: u8 = 0xFF;
 /// Encoder for a compact size encoded integer.
 #[derive(Debug, Clone)]
 pub struct CompactSizeEncoder {
-    buf: Option<ArrayVec<u8, SIZE>>,
+    buf: ArrayVec<u8, SIZE>,
 }
 
 impl CompactSizeEncoder {
@@ -53,7 +53,7 @@ impl CompactSizeEncoder {
     /// If you need to encode an arbitrary `u64` integer that is not a length prefix, use
     /// [`Self::new_u64`] instead.
     pub fn new(value: usize) -> Self {
-        Self { buf: Some(Self::encode(u64::try_from(value).unwrap_or(u64::MAX))) }
+        Self { buf: Self::encode(u64::try_from(value).unwrap_or(u64::MAX)) }
     }
 
     /// Constructs a new `CompactSizeEncoder` for an arbitrary `u64` integer.
@@ -63,7 +63,7 @@ impl CompactSizeEncoder {
     /// A small number of fields in the Bitcoin protocol are compact-size-encoded integers that are
     /// not collection lengths (e.g. service flags). Use this constructor for those cases, where the
     /// natural type of the value is `u64` rather than `usize`.
-    pub fn new_u64(value: u64) -> Self { Self { buf: Some(Self::encode(value)) } }
+    pub fn new_u64(value: u64) -> Self { Self { buf: Self::encode(value) } }
 
     /// Returns the number of bytes used to encode this `CompactSize` value.
     ///
@@ -112,18 +112,17 @@ impl CompactSizeEncoder {
 
 impl Encoder for CompactSizeEncoder {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.buf.as_ref().map(|b| &b[..]).unwrap_or_default() }
+    fn current_chunk(&self) -> &[u8] { &self.buf }
 
     #[inline]
-    fn advance(&mut self) -> bool {
-        self.buf = None;
-        false
+    fn advance(&mut self) -> EncoderStatus {
+        EncoderStatus::Finished
     }
 }
 
 impl ExactSizeEncoder for CompactSizeEncoder {
     #[inline]
-    fn len(&self) -> usize { self.buf.map_or(0, |buf| buf.len()) }
+    fn len(&self) -> usize { self.buf.len() }
 }
 
 /// Decodes a compact size encoded integer as a length prefix.

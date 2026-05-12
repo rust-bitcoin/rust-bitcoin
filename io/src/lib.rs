@@ -481,7 +481,7 @@ where
 {
     loop {
         writer.write_all(encoder.current_chunk())?;
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }

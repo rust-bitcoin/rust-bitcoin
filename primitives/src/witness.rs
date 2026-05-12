@@ -12,7 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(doc)]
 use encoding::Decoder4;
 use encoding::{
-    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, Encoder2,
+    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, EncoderStatus, Encoder2,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
@@ -299,7 +299,7 @@ impl encoding::Encoder for WitnessEncoder<'_> {
     fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
     #[inline]
-    fn advance(&mut self) -> bool { self.0.advance() }
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
 /// The decoder for the [`Witness`] type.
@@ -1008,9 +1008,7 @@ mod test {
 
     #[cfg(feature = "alloc")]
     use encoding::Decode as _;
-    #[cfg(feature = "alloc")]
-    use encoding::Encode as _;
-    use encoding::Encoder as _;
+    use encoding::check_encode;
 
     use super::*;
 
@@ -1371,15 +1369,7 @@ mod test {
         // Use FromIterator directly
         let witness = Witness::from_iter(data);
 
-        // Should have length prefix chunk, then the content slice, then exhausted.
-        let mut encoder = witness.encoder();
-
-        assert_eq!(encoder.current_chunk(), &[2u8][..]);
-        assert!(encoder.advance());
-
-        // We don't encode one element at a time, rather we encode the whole content slice at once.
-        assert_eq!(encoder.current_chunk(), &[3u8, 1, 2, 3, 2, 4, 5][..]);
-        assert!(!encoder.advance());
+        check_encode(&witness, &[2u8, 3u8, 1, 2, 3, 2, 4, 5]);
     }
 
     #[test]

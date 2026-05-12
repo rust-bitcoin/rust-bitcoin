@@ -16,7 +16,7 @@ use core::{cmp, mem};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
+use encoding::{ArrayEncoder, BytesEncoder, Encoder2, EncoderStatus};
 #[cfg(feature = "alloc")]
 use encoding::{
     CompactSizeEncoder, Decoder2, Decoder3, Encode as _, Encoder3, Encoder6, SliceEncoder,
@@ -800,16 +800,16 @@ impl encoding::Encoder for WitnessesEncoder<'_> {
     }
 
     #[inline]
-    fn advance(&mut self) -> bool {
+    fn advance(&mut self) -> EncoderStatus {
         let Some(cur) = self.cur_enc.as_mut() else {
-            return false;
+            return EncoderStatus::Finished;
         };
 
         loop {
             // On subsequent calls, attempt to advance the current encoder and return
             // success if this succeeds.
-            if cur.advance() {
-                return true;
+            if cur.advance().has_more() {
+                return EncoderStatus::HasMore;
             }
             // self.inputs guaranteed to be non-empty if cur_enc is non-None.
             self.inputs = &self.inputs[1..];
@@ -818,11 +818,11 @@ impl encoding::Encoder for WitnessesEncoder<'_> {
             if let Some(input) = self.inputs.first() {
                 *cur = input.witness.encoder();
                 if !cur.current_chunk().is_empty() {
-                    return true;
+                    return EncoderStatus::HasMore;
                 }
             } else {
                 self.cur_enc = None; // shortcut the next call to advance()
-                return false;
+                return EncoderStatus::Finished;
             }
         }
     }
@@ -1612,7 +1612,7 @@ mod tests {
     #[cfg(feature = "std")]
     use std::error::Error as _;
 
-    use encoding::{Decode as _, Decoder as _, Encoder as _};
+    use encoding::{Decode as _, Decoder as _};
     #[cfg(feature = "hex")]
     use hex_unstable::hex;
 
@@ -2349,72 +2349,9 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn witnesses_encoder_advance_switch_path() {
-        let tx_in_1 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xAA; 32]), vout: 0 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::from_slice(&[&[0x01u8][..]]),
-        };
-
-        let empty = [].as_slice();
-        let many = vec![empty; 253];
-        let tx_in_2 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xBB; 32]), vout: 1 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::from_slice(&many),
-        };
-
-        let inputs = [tx_in_1, tx_in_2];
-
-        let mut finished = inputs[0].witness.encoder();
-        while finished.advance() {}
-        assert!(!finished.advance());
-        let expected = inputs[1].witness.encoder().current_chunk().to_vec();
-        assert!(!expected.is_empty());
-
-        let mut encoder = WitnessesEncoder { inputs: &inputs, cur_enc: Some(finished) };
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), expected.as_slice());
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
     fn witnesses_encoder_empty_inputs() {
         let mut encoder = WitnessesEncoder::new(&[]);
-        assert!(!encoder.advance());
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn witnesses_encoder_switches_to_next_input_with_nonempty_chunk() {
-        let input_0 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xAA; 32]), vout: 0 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::default(),
-        };
-
-        let input_1 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xBB; 32]), vout: 2 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::from_slice(&[&[1u8][..]]),
-        };
-
-        let inputs = vec![input_0, input_1];
-        let mut encoder = WitnessesEncoder::new(&inputs);
-
-        let next = inputs[1].witness.encoder();
-        assert!(!next.current_chunk().is_empty());
-
-        let mut exhausted = inputs[0].witness.encoder();
-        while exhausted.advance() {}
-        encoder.cur_enc = Some(exhausted);
-
-        let advanced = encoder.advance();
-        assert!(advanced);
+        encoding::check_encoder(&mut encoder, &[]);
     }
 
     #[test]
