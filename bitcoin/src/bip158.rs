@@ -45,7 +45,7 @@ use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
-use crate::consensus::{ReadExt, WriteExt};
+use crate::encoding::{CompactSizeEncoder, ExactSizeEncoder as _};
 use crate::prelude::{BTreeSet, Borrow, Vec};
 use crate::script::{ScriptPubKey, ScriptPubKeyExt as _};
 use crate::transaction::OutPoint;
@@ -203,6 +203,32 @@ impl BlockFilterReader {
     }
 }
 
+/// Helper function to read a compact size off the start of a reader.
+fn read_compact_size_u64<R: BufRead + ?Sized>(reader: &mut R) -> u64 {
+    use encoding::{CompactSizeU64Decoder, Decoder as _};
+    let mut dec = CompactSizeU64Decoder::new();
+    loop {
+        let mut buf = match reader.fill_buf() {
+            Ok(buf) => buf,
+            Err(_) => return 0,
+        };
+        if buf.is_empty() {
+            break;
+        }
+        let orig_len = buf.len();
+        let need_more = match dec.push_bytes(&mut buf) {
+            Ok(need_more) => need_more,
+            Err(_) => return 0,
+        };
+        let consumed = orig_len - buf.len();
+        reader.consume(consumed);
+        if !need_more {
+            break;
+        }
+    }
+    dec.end().unwrap_or(0)
+}
+
 /// Golomb-Rice encoded filter reader.
 pub struct GcsFilterReader {
     filter: GcsFilter,
@@ -222,7 +248,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = read_compact_size_u64(reader);
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -265,7 +291,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = read_compact_size_u64(reader);
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -340,7 +366,9 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
         mapped.sort_unstable();
 
         // write number of elements as varint
-        let mut wrote = self.writer.emit_compact_size(mapped.len())?;
+        let mut encoder = CompactSizeEncoder::new(mapped.len());
+        let mut wrote = encoder.len();
+        io::drain_to_writer(&mut encoder, &mut self.writer)?;
 
         // write out deltas of sorted values into a Golomb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);
