@@ -2,6 +2,7 @@
 
 //! Contains `PushBytes` & co
 
+use core::convert::Infallible;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
@@ -465,6 +466,10 @@ pub enum ScriptIntError {
     NonMinimal,
 }
 
+impl From<Infallible> for ScriptIntError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for ScriptIntError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -549,6 +554,10 @@ mod error {
             )
         }
     }
+}
+
+impl From<Infallible> for PushBytesError {
+    fn from(never: Infallible) -> Self { match never {} }
 }
 
 #[cfg(feature = "std")]
