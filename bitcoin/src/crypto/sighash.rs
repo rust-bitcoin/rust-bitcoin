@@ -925,7 +925,7 @@ impl<E> EncodeSigningDataResult<E> {
     /// the recommended pattern to handle this is:
     ///
     /// ```rust
-    /// # use bitcoin::consensus::deserialize;
+    /// # use bitcoin::encoding::decode_from_slice;
     /// # use bitcoin::hashes::sha256d;
     /// # use bitcoin::sighash::SighashCache;
     /// # use bitcoin::Transaction;
@@ -936,7 +936,7 @@ impl<E> EncodeSigningDataResult<E> {
     /// # let sighash_u32 = 0u32;
     /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
     /// # let raw_tx = hex::decode_to_vec(SOME_TX).unwrap();
-    /// # let tx: Transaction = deserialize(&raw_tx).unwrap();
+    /// # let tx: Transaction = decode_from_slice(&raw_tx).unwrap();
     /// let cache = SighashCache::new(&tx);
     /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
     ///         .is_sighash_single_bug()
@@ -1294,11 +1294,12 @@ mod tests {
     use alloc::string::String;
     use alloc::vec::Vec;
 
+    use encoding::Decoder;
     use hashes::HashEngine;
     use hex_unstable::hex;
 
     use super::*;
-    use crate::consensus::deserialize;
+    use crate::encoding::decode_from_slice;
     use crate::locktime::absolute;
     use crate::script::{ScriptPubKey, ScriptPubKeyBuf, TapScriptBuf, WitnessScriptBuf};
     use crate::{hex, TxIn};
@@ -1345,7 +1346,7 @@ mod tests {
             hash_type: i64,
             expected_result: &str,
         ) {
-            let tx: Transaction = deserialize(&hex::decode_to_vec(tx).unwrap()[..]).unwrap();
+            let tx: Transaction = decode_from_slice(&hex::decode_to_vec(tx).unwrap()[..]).unwrap();
             let script = ScriptPubKeyBuf::from(hex::decode_to_vec(script).unwrap());
             let mut raw_expected = hex::decode_to_vec(expected_result).unwrap();
             raw_expected.reverse();
@@ -1580,9 +1581,16 @@ mod tests {
         script_leaf_hash: Option<&str>,
     ) {
         let tx_bytes = hex::decode_to_vec(tx_hex).unwrap();
-        let tx: Transaction = deserialize(&tx_bytes).unwrap();
+        let tx: Transaction = decode_from_slice(&tx_bytes).unwrap();
         let prevout_bytes = hex::decode_to_vec(prevout_hex).unwrap();
-        let prevouts: Vec<TxOut> = deserialize(&prevout_bytes).unwrap();
+        let mut decoder = encoding::VecDecoder::<TxOut>::default();
+        let bytes = &mut prevout_bytes.as_slice();
+        while !bytes.is_empty() {
+            if !decoder.push_bytes(bytes).unwrap() {
+                break;
+            }
+        }
+        let prevouts: Vec<TxOut> = decoder.end().unwrap();
         let annex_inner;
         let annex = match annex_hex {
             Some(annex_hex) => {
@@ -1803,7 +1811,7 @@ mod tests {
 
     #[test]
     fn bip143_p2wpkh() {
-        let tx = deserialize::<Transaction>(
+        let tx = decode_from_slice::<Transaction>(
             &hex!(
                 "0100000002fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f000000\
                 0000eeffffffef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a01000000\
@@ -1847,7 +1855,7 @@ mod tests {
 
     #[test]
     fn bip143_p2wpkh_nested_in_p2sh() {
-        let tx = deserialize::<Transaction>(
+        let tx = decode_from_slice::<Transaction>(
             &hex!(
                 "0100000001db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477010000\
                 0000feffffff02b8b4eb0b000000001976a914a457b684d7f0d539a46a45bbc043f35b59d0d96388ac00\
@@ -1892,7 +1900,7 @@ mod tests {
     // prepended to all the script_code hex it is the length byte, it gets added when we consensus
     // encode a script.
     fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, WitnessScriptBuf, Amount) {
-        let tx = deserialize::<Transaction>(&hex!(
+        let tx = decode_from_slice::<Transaction>(&hex!(
             "010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000\
              ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f\
              05000000001976a9147480a33f950689af511e6e84c138dbbd3c3ee41588ac00000000"

@@ -582,7 +582,7 @@ mod test {
 
     use super::*;
     #[cfg(feature = "std")]
-    use crate::consensus::encode::deserialize;
+    use crate::encoding::decode_from_slice;
     #[cfg(feature = "std")]
     use crate::ScriptPubKeyBuf;
 
@@ -597,7 +597,8 @@ mod test {
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
             let block_hash = t.get(1).unwrap().as_str().unwrap().parse::<BlockHash>().unwrap();
-            let block: Block = deserialize(&hex(t.get(2).unwrap().as_str().unwrap())).unwrap();
+            let block: Block =
+                decode_from_slice(&hex(t.get(2).unwrap().as_str().unwrap())).unwrap();
             let block = block.assume_checked(None);
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
