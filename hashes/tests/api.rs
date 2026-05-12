@@ -22,7 +22,7 @@ use bitcoin_hashes::{
     Sha512, Sha512_256, Siphash24,
 };
 
-// Arbitrary midstate value; taken from as sha256t unit tests.
+// Arbitrary midstate value; taken from as SHA256t unit tests.
 const TEST_MIDSTATE: [u8; 32] = [
     156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147, 108,
     71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
@@ -34,7 +34,7 @@ sha256t_tag! {
     struct Tag = raw(TEST_MIDSTATE, 64);
 }
 hash_newtype! {
-    /// A concrete sha256t hash type so we don't have to use generics.
+    /// A concrete SHA256t hash type so we don't have to use generics.
     #[derive(Debug)]
     struct TaggedHash(sha256t::Hash<Tag>);
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! ARM sha2 intrinsics for sha256.
+//! ARM SHA2 intrinsics for SHA256.
 
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::cast_ptr_alignment)]
@@ -12,7 +12,7 @@ use core::arch::aarch64::{
     vsha256hq_u32, vsha256su0q_u32, vsha256su1q_u32, vst1q_u32,
 };
 
-/// Processes sha256 blocks using ARM SHA2 intrinsics.
+/// Processes SHA256 blocks using ARM SHA2 intrinsics.
 #[target_feature(enable = "sha2")]
 pub(super) unsafe fn process_blocks(state: &mut [u32; 8], blocks: &[u8]) {
     // Code translated and based on from

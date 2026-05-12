@@ -113,7 +113,7 @@ pub struct SighashCache<T: Borrow<Transaction>> {
     /// Common cache for Taproot and SegWit inputs, `None` for legacy inputs.
     common_cache: Option<CommonCache>,
 
-    /// Cache for SegWit v0 inputs (the result of another round of sha256 on `common_cache`).
+    /// Cache for SegWit v0 inputs (the result of another round of SHA256 on `common_cache`).
     segwit_cache: Option<SegwitCache>,
 
     /// Cache for Taproot v1 inputs.
@@ -131,7 +131,7 @@ struct CommonCache {
     outputs: sha256::Hash,
 }
 
-/// Values cached for SegWit inputs, equivalent to [`CommonCache`] plus another round of `sha256`.
+/// Values cached for SegWit inputs, equivalent to [`CommonCache`] plus another round of SHA256.
 #[derive(Debug, Clone)]
 struct SegwitCache {
     prevouts: sha256d::Hash,

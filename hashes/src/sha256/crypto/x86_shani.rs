@@ -17,7 +17,7 @@ use core::arch::x86_64::{
     _mm_shuffle_epi8, _mm_storeu_si128,
 };
 
-/// Processes sha256 blocks using x86 SHA-NI intrinsics.
+/// Processes SHA256 blocks using x86 SHA-NI intrinsics.
 #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
 pub(super) unsafe fn process_blocks(state: &mut [u32; 8], blocks: &[u8]) {
     // Code translated and based on from

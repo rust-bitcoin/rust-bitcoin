@@ -114,7 +114,7 @@ fn midstate() {
 #[test]
 fn engine_with_state() {
     // Test that a specific midstate results in a specific hash. Midstate was
-    // obtained by applying sha256 to sha256("MuSig coefficient")||sha256("MuSig
+    // obtained by applying SHA256 to SHA256("MuSig coefficient")||SHA256("MuSig
     // coefficient").
     #[rustfmt::skip]
     static MIDSTATE: [u8; 32] = [

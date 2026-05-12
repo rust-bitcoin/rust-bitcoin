@@ -62,7 +62,7 @@ mod tests {
 
         #[rustfmt::skip]
         let tests = [
-            // Examples from go sha384 tests.
+            // Examples from go SHA384 tests.
             Test {
                 input: "",
                 output: [

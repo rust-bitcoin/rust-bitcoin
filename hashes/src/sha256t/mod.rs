@@ -203,7 +203,7 @@ mod tests {
         108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
     ];
 
-    // The digest created by sha256 hashing `&[0]` starting with `TEST_MIDSTATE`.
+    // The digest created by SHA256 hashing `&[0]` starting with `TEST_MIDSTATE`.
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
     const HASH_ZERO_BACKWARD: &str =

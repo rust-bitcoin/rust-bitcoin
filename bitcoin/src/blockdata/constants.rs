@@ -390,9 +390,9 @@ mod test {
     fn chain_hash_and_genesis_block(network: Network) {
         use hashes::sha256;
 
-        // The genesis block hash is a double-sha256 and it is displayed backwards.
+        // The genesis block hash is a double-SHA256 and it is displayed backwards.
         let genesis_hash = genesis_block(network).block_hash();
-        // We abuse the sha256 hash here so we get a LowerHex impl that does not print the hex backwards.
+        // We abuse the SHA256 hash here so we get a LowerHex impl that does not print the hex backwards.
         let hash = sha256::Hash::from_byte_array(genesis_hash.to_byte_array());
         let want = format!("{:02x}", hash);
 

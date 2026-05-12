@@ -171,7 +171,7 @@ fn keccakf1600(state: &mut KeccakState) {
     }
 }
 
-/// Engine to compute the Sha3-256 hash function.
+/// Engine to compute the SHA3-256 hash function.
 #[derive(Debug, Clone)]
 pub struct HashEngine {
     h: KeccakState,
@@ -184,7 +184,7 @@ impl Default for HashEngine {
 }
 
 impl HashEngine {
-    /// Construct a new Sha3-256 hash engine.
+    /// Constructs a new SHA3-256 hash engine.
     pub const fn new() -> Self {
         Self { h: KeccakState::new(), bytes_hashed: 0, buffer: [0; RATE] }
     }

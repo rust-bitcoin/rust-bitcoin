@@ -173,7 +173,7 @@ pub fn encode(data: &[u8]) -> String {
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
-/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
+/// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
 #[allow(clippy::missing_panics_doc)] // fmt::Write returns Result but String is infallible.
 #[cfg(feature = "alloc")]
 pub fn encode_check(data: &[u8]) -> String {
@@ -184,7 +184,7 @@ pub fn encode_check(data: &[u8]) -> String {
 
 /// Encodes a slice as base58, including the checksum, into a formatter.
 ///
-/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
+/// The checksum is the first four bytes of the `SHA256d` of the data, concatenated onto the end.
 ///
 /// # Errors
 ///
