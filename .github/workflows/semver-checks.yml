@@ -7,7 +7,7 @@ permissions: {}
 jobs:
   PR:
     name: PR Semver - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
     permissions:
@@ -50,7 +50,7 @@ jobs:
 
   Feature:
     name: Non additive cargo features - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
     permissions:
