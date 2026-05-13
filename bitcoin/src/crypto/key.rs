@@ -129,7 +129,7 @@ pub trait TapTweak {
     /// # Returns
     ///
     /// The tweaked key, with the required parity.
-    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
+    fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
 
     /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`].
     ///
@@ -155,8 +155,8 @@ impl TapTweak for UntweakedPublicKey {
     /// # Returns
     ///
     /// The tweaked key and its parity.
-    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedPublicKey {
-        let tweak = TapTweakHash::from_key_and_merkle_root(self, merkle_root).to_scalar();
+    fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedPublicKey {
+        let tweak = TapTweakHash::from_key_and_merkle_root(*self, merkle_root).to_scalar();
         let output_key = self.add_tweak(&tweak).expect("Tap tweak failed");
 
         debug_assert!(self.tweak_add_check(&output_key, tweak));
@@ -182,8 +182,8 @@ impl TapTweak for UntweakedKeypair {
     /// # Returns
     ///
     /// The tweaked keypair.
-    fn tap_tweak(self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
-        let pubkey = XOnlyPublicKey::from_keypair(&self);
+    fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
+        let pubkey = XOnlyPublicKey::from_keypair(self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
         let tweaked = self.as_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
