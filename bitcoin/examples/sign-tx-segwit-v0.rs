@@ -7,8 +7,8 @@ use bitcoin::key::WPubkeyHash;
 use bitcoin::locktime::absolute;
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, Network, OutPoint, PrivateKey, ScriptPubKeyBuf,
-    ScriptSigBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+    transaction, Address, Amount, Network, OutPoint, PrivateKey, ScriptPubKeyBuf, ScriptSigBuf,
+    Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 const DUMMY_UTXO_AMOUNT: Amount = Amount::from_sat_u32(20_000_000);
@@ -66,7 +66,7 @@ fn main() {
         .expect("failed to create sighash");
 
     // Sign the sighash using the private key.
-    let signature = ecdsa::Signature { signature: sk.raw_ecdsa_sign(sighash), sighash_type };
+    let signature = sighash.sign(&sk, sighash_type);
 
     // Update the witness stack.
     let pk = sk.to_public_key();
