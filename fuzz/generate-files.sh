@@ -22,7 +22,7 @@ cargo-fuzz = true
 
 [dependencies]
 honggfuzz = { version = "0.5.55", default-features = false }
-bitcoin = { path = "../bitcoin", features = [ "serde" ] }
+bitcoin = { path = "../bitcoin", features = [ "serde", "encoding" ] }
 
 serde = { version = "1.0.130", features = [ "derive" ] }
 serde_json = "1.0.68"
