@@ -14,8 +14,8 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std"]
-alloc = ["internals/alloc"]
+std = ["alloc", "internals/std", "encoding?/std"]
+alloc = ["internals/alloc", "encoding?/alloc"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -23,6 +23,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.3.0" }
+encoding = { package = "bitcoin-consensus-encoding", version = "1.0.0-rc.3", default-features = false, optional = true }
 
 arbitrary = { version = "1.0.1", optional = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }

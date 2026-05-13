@@ -25,6 +25,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "encoding")]
+pub extern crate encoding;
+
 /// A generic serialization/deserialization framework.
 #[cfg(feature = "serde")]
 pub extern crate serde;
