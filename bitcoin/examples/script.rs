@@ -3,7 +3,7 @@
 //! Demonstrates the API for parsing and formatting Bitcoin scripts.
 //!
 //! Bitcoin script is conceptually a vector of bytes. As such it is consensus encoded with a compact
-//! size encoded length prefix. See [CompactSize].
+//! size encoded length prefix. See [`CompactSize`].
 //!
 //! [`CompactSize`]: <https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer>
 
