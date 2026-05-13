@@ -12,6 +12,7 @@ cargo-fuzz = true
 [dependencies]
 honggfuzz = { version = "0.5.55", default-features = false }
 bitcoin = { path = "../bitcoin", version = "0.32.100", features = [ "serde" ] }
+units = { package = "bitcoin-units", path = "../units", version = "0.1.3", features = ["encoding"] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
 serde_json = "1.0"
@@ -88,5 +89,10 @@ path = "fuzz_targets/hashes/sha512.rs"
 [[bin]]
 name = "units_deserialize_amount"
 path = "fuzz_targets/units/deserialize_amount.rs"
+
+[[bin]]
+name = "units_compare_consensus_encoding"
+path = "fuzz_targets/units/compare_consensus_encoding.rs"
+
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }

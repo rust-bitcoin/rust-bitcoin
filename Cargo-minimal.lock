@@ -89,6 +89,7 @@ name = "bitcoin-fuzz"
 version = "0.0.1"
 dependencies = [
  "bitcoin",
+ "bitcoin-units",
  "honggfuzz",
  "serde",
  "serde_cbor",
