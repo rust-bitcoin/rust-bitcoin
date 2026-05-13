@@ -183,15 +183,6 @@ crate::decoder_newtype! {
     }
 }
 
-/// A Network message using the v1 p2p protocol.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct V1NetworkMessage {
-    magic: Magic,
-    payload: NetworkMessage,
-    payload_len: u32,
-    checksum: [u8; 4],
-}
-
 /// A v1 message header used to describe the incoming payload.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct V1MessageHeader {
@@ -745,6 +736,15 @@ impl NetworkMessage {
             _ => CommandString::try_from_static(self.cmd()).expect("cmd returns valid commands"),
         }
     }
+}
+
+/// A Network message using the v1 p2p protocol.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct V1NetworkMessage {
+    magic: Magic,
+    payload: NetworkMessage,
+    payload_len: u32,
+    checksum: [u8; 4],
 }
 
 impl V1NetworkMessage {
