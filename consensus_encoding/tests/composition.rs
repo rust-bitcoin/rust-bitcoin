@@ -3,23 +3,28 @@
 //! Test composition of encoders and decoders.
 
 use bitcoin_consensus_encoding::{
-    ArrayDecoder, ArrayEncoder, BytesEncoder, check_encoder, Decode, Decoder, Decoder2,
-    Decoder2Error, Decoder6, Encode, Encoder2, Encoder3,
-    Encoder6, UnexpectedEofError,
+    ArrayDecoder, BytesEncoder, check_encoder, Decoder, Decoder2, Decoder2Error, Decoder6, Encoder3,
+    UnexpectedEofError,
 };
 
 #[cfg(feature = "alloc")]
-use bitcoin_consensus_encoding::{drain_to_vec, encode_to_vec};
+use bitcoin_consensus_encoding::{
+    ArrayEncoder, Decode, Encode, Encoder2,
+    drain_to_vec, encode_to_vec, Encoder6,
+};
 
+#[cfg(feature = "alloc")]
 const EMPTY: &[u8] = &[];
 
 // A simple composite type that encodes as [4 bytes] + [2 bytes].
+#[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Eq)]
 struct CompositeData {
     first: [u8; 4],
     second: [u8; 2],
 }
 
+#[cfg(feature = "alloc")]
 impl Encode for CompositeData {
     type Encoder<'e> = Encoder2<ArrayEncoder<4>, ArrayEncoder<2>>;
 
@@ -32,15 +37,18 @@ impl Encode for CompositeData {
 }
 
 /// A unified error type for [`CompositeDataDecoder`].
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum CompositeError {
     Eof(UnexpectedEofError),
 }
 
+#[cfg(feature = "alloc")]
 impl From<UnexpectedEofError> for CompositeError {
     fn from(eof: UnexpectedEofError) -> Self { Self::Eof(eof) }
 }
 
+#[cfg(feature = "alloc")]
 impl core::fmt::Display for CompositeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -50,11 +58,13 @@ impl core::fmt::Display for CompositeError {
 }
 
 /// A wrapper decoder that converts the tuple output to [`CompositeData`].
+#[cfg(feature = "alloc")]
 #[derive(Default)]
 struct CompositeDataDecoder {
     inner: Decoder2<ArrayDecoder<4>, ArrayDecoder<2>>,
 }
 
+#[cfg(feature = "alloc")]
 impl Decoder for CompositeDataDecoder {
     type Output = CompositeData;
     type Error = CompositeError;
@@ -75,6 +85,7 @@ impl Decoder for CompositeDataDecoder {
     fn read_limit(&self) -> usize { self.inner.read_limit() }
 }
 
+#[cfg(feature = "alloc")]
 impl Decode for CompositeData {
     type Decoder = CompositeDataDecoder;
 }
