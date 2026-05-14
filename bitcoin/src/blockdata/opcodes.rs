@@ -10,8 +10,6 @@
 
 use core::fmt;
 
-use internals::debug_from_display;
-
 #[cfg(feature = "serde")]
 use crate::prelude::*;
 
@@ -440,7 +438,9 @@ impl From<u8> for Opcode {
     fn from(b: u8) -> Opcode { Opcode { code: b } }
 }
 
-debug_from_display!(Opcode);
+impl fmt::Debug for Opcode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
+}
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for Opcode {

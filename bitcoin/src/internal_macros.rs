@@ -44,6 +44,116 @@ macro_rules! impl_consensus_encoding {
 }
 pub(crate) use impl_consensus_encoding;
 
+macro_rules! impl_array_newtype {
+    ($thing:ident, $len:literal) => {
+        impl $thing {
+            /// Constructs a new `Self` by wrapping `bytes`.
+            #[inline]
+            pub fn from_byte_array(bytes: [u8; $len]) -> Self { Self(bytes) }
+
+            /// Returns a reference the underlying byte array.
+            #[inline]
+            pub fn as_byte_array(&self) -> &[u8; $len] { &self.0 }
+
+            /// Returns the underlying byte array.
+            #[inline]
+            pub fn to_byte_array(self) -> [u8; $len] {
+                fn check_copy<T: Copy>() {}
+                check_copy::<$thing>();
+
+                self.0
+            }
+
+            /// Copies the underlying bytes into a new `Vec`.
+            #[inline]
+            pub fn to_vec(self) -> alloc::vec::Vec<u8> { self.0.to_vec() }
+
+            /// Converts the object to a raw pointer.
+            #[inline]
+            pub fn as_ptr(&self) -> *const u8 {
+                let &$thing(ref dat) = self;
+                dat.as_ptr()
+            }
+
+            /// Converts the object to a mutable raw pointer.
+            #[inline]
+            pub fn as_mut_ptr(&mut self) -> *mut u8 {
+                let &mut $thing(ref mut dat) = self;
+                dat.as_mut_ptr()
+            }
+
+            /// Returns the length of the object as an array.
+            #[inline]
+            pub fn len(&self) -> usize { $len }
+
+            /// Returns whether the object, as an array, is empty. Always false.
+            #[inline]
+            pub fn is_empty(&self) -> bool { false }
+        }
+
+        impl core::convert::From<[u8; $len]> for $thing {
+            fn from(data: [u8; $len]) -> Self { $thing(data) }
+        }
+
+        impl<'a> core::convert::From<&'a [u8; $len]> for $thing {
+            fn from(data: &'a [u8; $len]) -> Self { $thing(*data) }
+        }
+
+        impl<'a> core::convert::TryFrom<&'a [u8]> for $thing {
+            type Error = core::array::TryFromSliceError;
+
+            fn try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error> {
+                use core::convert::TryInto;
+
+                Ok($thing(data.try_into()?))
+            }
+        }
+
+        impl AsRef<[u8; $len]> for $thing {
+            fn as_ref(&self) -> &[u8; $len] { &self.0 }
+        }
+
+        impl AsMut<[u8; $len]> for $thing {
+            fn as_mut(&mut self) -> &mut [u8; $len] { &mut self.0 }
+        }
+
+        impl AsRef<[u8]> for $thing {
+            fn as_ref(&self) -> &[u8] { &self.0 }
+        }
+
+        impl AsMut<[u8]> for $thing {
+            fn as_mut(&mut self) -> &mut [u8] { &mut self.0 }
+        }
+
+        impl core::borrow::Borrow<[u8; $len]> for $thing {
+            fn borrow(&self) -> &[u8; $len] { &self.0 }
+        }
+
+        impl core::borrow::BorrowMut<[u8; $len]> for $thing {
+            fn borrow_mut(&mut self) -> &mut [u8; $len] { &mut self.0 }
+        }
+
+        impl core::borrow::Borrow<[u8]> for $thing {
+            fn borrow(&self) -> &[u8] { &self.0 }
+        }
+
+        impl core::borrow::BorrowMut<[u8]> for $thing {
+            fn borrow_mut(&mut self) -> &mut [u8] { &mut self.0 }
+        }
+
+        impl<I> core::ops::Index<I> for $thing
+        where
+            [u8]: core::ops::Index<I>,
+        {
+            type Output = <[u8] as core::ops::Index<I>>::Output;
+
+            #[inline]
+            fn index(&self, index: I) -> &Self::Output { &self.0[index] }
+        }
+    };
+}
+pub(crate) use impl_array_newtype;
+
 /// Implements several traits for byte-based newtypes.
 /// Implements:
 /// - core::fmt::LowerHex
@@ -65,12 +175,12 @@ macro_rules! impl_bytes_newtype {
                 fn check_copy<T: Copy>() {}
                 check_copy::<$t>();
 
-                self.0
+                self.to_byte_array()
             }
 
             /// Creates `Self` from a hex string.
             pub fn from_hex(s: &str) -> Result<Self, hex::HexToArrayError> {
-                Ok($t($crate::hex::FromHex::from_hex(s)?))
+                Ok(Self::from_byte_array($crate::hex::FromHex::from_hex(s)?))
             }
         }
 
@@ -114,7 +224,7 @@ macro_rules! impl_bytes_newtype {
                 if s.is_human_readable() {
                     s.collect_str(self)
                 } else {
-                    s.serialize_bytes(&self[..])
+                    s.serialize_bytes(self.as_bytes())
                 }
             }
         }
