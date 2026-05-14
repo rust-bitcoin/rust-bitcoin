@@ -18,7 +18,11 @@ use crate::p2p;
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
 pub enum Inventory {
-    /// Error --- these inventories can be ignored
+    /// Error --- these inventories can be ignored.
+    ///
+    /// Inventory items with type 0 (Error) are decoded as `Unknown { inv_type: 0, .. }`
+    /// to enable symmetric encoding/decoding while maintaining backwards compatibility.
+    /// Use [`is_error()`](Self::is_error) to check if an item is an error variant.
     Error,
     /// Transaction
     Transaction(Txid),
@@ -44,7 +48,7 @@ pub enum Inventory {
 impl Inventory {
     /// Return the item value represented as a SHA256-d hash.
     ///
-    /// Returns [None] only for [Inventory::Error].
+    /// Returns [None] only for [Inventory::Error] who's hash value is meaningless.
     pub fn network_hash(&self) -> Option<[u8; 32]> {
         match self {
             Inventory::Error => None,
@@ -56,6 +60,14 @@ impl Inventory {
             Inventory::WitnessBlock(b) => Some(b.to_byte_array()),
             Inventory::Unknown { hash, .. } => Some(*hash),
         }
+    }
+
+    /// Returns true if this is an Error inventory item (type 0).
+    ///
+    /// Error items are internally represented as `Unknown { inv_type: 0, .. }`
+    /// to enable symmetric encoding/decoding while maintaining backwards compatibility.
+    pub fn is_error(&self) -> bool {
+        matches!(self, Inventory::Error | Inventory::Unknown { inv_type: 0, .. })
     }
 }
 
@@ -85,10 +97,7 @@ impl Decodable for Inventory {
     fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let inv_type: u32 = Decodable::consensus_decode(r)?;
         Ok(match inv_type {
-            0 => {
-                sha256d::Hash::consensus_decode(r)?;
-                Inventory::Error
-            },
+            0 => Inventory::Unknown { inv_type: 0, hash: Decodable::consensus_decode(r)? },
             1 => Inventory::Transaction(Decodable::consensus_decode(r)?),
             2 => Inventory::Block(Decodable::consensus_decode(r)?),
             4 => Inventory::CompactBlock(Decodable::consensus_decode(r)?),
@@ -151,7 +160,7 @@ mod tests {
     use hashes::Hash;
     use hex::test_hex_unwrap as hex;
 
-    use super::{GetBlocksMessage, GetHeadersMessage};
+    use super::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
@@ -168,6 +177,13 @@ mod tests {
         assert_eq!(real_decode.stop_hash, Hash::all_zeros());
 
         assert_eq!(serialize(&real_decode), from_sat);
+    }
+
+    #[test]
+    fn inventory_error_is_error_test() {
+        assert!(Inventory::Error.is_error());
+        assert!(Inventory::Unknown { inv_type: 0, hash: [0u8; 32] }.is_error());
+        assert!(!Inventory::Unknown { inv_type: 1, hash: [0u8; 32] }.is_error());
     }
 
     #[test]

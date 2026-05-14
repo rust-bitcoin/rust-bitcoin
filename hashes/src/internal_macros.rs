@@ -192,15 +192,16 @@ macro_rules! hash_type {
 
         #[cfg(feature = "schemars")]
         impl schemars::JsonSchema for Hash {
-            fn schema_name() -> String { "Hash".to_owned() }
+            fn schema_name() -> alloc::string::String { alloc::string::String::from("Hash") }
 
             fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
                 let len = $bits / 8;
-                let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-                schema.string = Some(Box::new(schemars::schema::StringValidation {
+                let mut schema: schemars::schema::SchemaObject =
+                    <alloc::string::String>::json_schema(gen).into();
+                schema.string = Some(alloc::boxed::Box::new(schemars::schema::StringValidation {
                     max_length: Some(len * 2),
                     min_length: Some(len * 2),
-                    pattern: Some("[0-9a-fA-F]+".to_owned()),
+                    pattern: Some(alloc::string::String::from("[0-9a-fA-F]+")),
                 }));
                 schema.into()
             }

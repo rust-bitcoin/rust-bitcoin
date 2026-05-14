@@ -526,13 +526,12 @@ impl Decodable for VarInt {
             n => Ok(VarInt::from(n)),
         };
         match varint {
-            Ok(v) => {
+            Ok(v) =>
                 if v.0 > MAX_COMPACT_SIZE as u64 {
                     Err(Error::OversizedVarInt)
                 } else {
                     Ok(v)
-                }
-            }
+                },
             Err(e) => Err(e),
         }
     }
@@ -999,7 +998,10 @@ mod tests {
     #[test]
     fn deserialize_varint_too_large() {
         // MAX_COMPACT_SIZE (0x02000000) should succeed
-        assert_eq!(test_varint_encode(0xFE, &(0x02000000_u64).to_le_bytes()).unwrap(), VarInt(0x02000000));
+        assert_eq!(
+            test_varint_encode(0xFE, &(0x02000000_u64).to_le_bytes()).unwrap(),
+            VarInt(0x02000000)
+        );
         // MAX_COMPACT_SIZE + 1 should fail with range check enabled
         let mut input = [0u8; 9];
         input[0] = 0xFE;

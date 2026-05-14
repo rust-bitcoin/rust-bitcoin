@@ -4,7 +4,7 @@ tab_spaces = 4
 newline_style = "Auto"
 indent_style = "Block"
 
-max_width = 100 # This is number of characters.
+max_width = 100 # This is the number of characters.
 # `use_small_heuristics` is ignored if the granular width config values are explicitly set.
 use_small_heuristics = "Max"    # "Max" == All granular width settings same as `max_width`.
 # # Granular width configuration settings. These are percentages of `max_width`.
@@ -58,7 +58,7 @@ match_block_trailing_comma = false
 blank_lines_upper_bound = 1
 blank_lines_lower_bound = 0
 edition = "2021"
-version = "One"
+style_edition = "2021"
 inline_attribute_width = 0
 format_generated_files = true
 merge_derives = true
@@ -70,7 +70,7 @@ color = "Auto"
 unstable_features = false
 disable_all_formatting = false
 skip_children = false
-hide_parse_errors = false
+show_parse_errors = true
 error_on_line_overflow = false
 error_on_unformatted = false
 emit_mode = "Files"

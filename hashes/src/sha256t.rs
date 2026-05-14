@@ -3,6 +3,8 @@
 //! SHA256t implementation (tagged SHA256).
 //!
 
+#[cfg(feature = "schemars")]
+use alloc::{boxed::Box, string::String};
 use core::marker::PhantomData;
 use core::ops::Index;
 use core::slice::SliceIndex;
@@ -24,14 +26,14 @@ pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
 
 #[cfg(feature = "schemars")]
 impl<T: Tag> schemars::JsonSchema for Hash<T> {
-    fn schema_name() -> String { "Hash".to_owned() }
+    fn schema_name() -> String { String::from("Hash") }
 
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
         schema.string = Some(Box::new(schemars::schema::StringValidation {
             max_length: Some(32 * 2),
             min_length: Some(32 * 2),
-            pattern: Some("[0-9a-fA-F]+".to_owned()),
+            pattern: Some(String::from("[0-9a-fA-F]+")),
         }));
         schema.into()
     }
@@ -165,8 +167,12 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "schemars")]
+    use alloc::{boxed::Box, string::String};
+
     #[cfg(feature = "alloc")]
     use crate::Hash;
+    #[cfg(feature = "alloc")]
     use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [
@@ -174,9 +180,11 @@ mod tests {
         108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
     ];
 
+    #[cfg(feature = "alloc")]
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
     pub struct TestHashTag;
 
+    #[cfg(feature = "alloc")]
     impl sha256t::Tag for TestHashTag {
         fn engine() -> sha256::HashEngine {
             // The TapRoot TapLeaf midstate.
@@ -187,14 +195,14 @@ mod tests {
 
     #[cfg(feature = "schemars")]
     impl schemars::JsonSchema for TestHashTag {
-        fn schema_name() -> String { "Hash".to_owned() }
+        fn schema_name() -> String { String::from("Hash") }
 
         fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
             let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
             schema.string = Some(Box::new(schemars::schema::StringValidation {
                 max_length: Some(64 * 2),
                 min_length: Some(64 * 2),
-                pattern: Some("[0-9a-fA-F]+".to_owned()),
+                pattern: Some(String::from("[0-9a-fA-F]+")),
             }));
             schema.into()
         }

@@ -3,198 +3,65 @@ on:   # yamllint disable-line rule:truthy
   push:
     branches:
       - 0.32.x
+      - 'test-ci/**'
   pull_request:
 
 name: Continuous integration
 
+permissions: {}
+
 jobs:
+  Test:
+    name: Test - ${{ matrix.toolchain }} toolchain, ${{ matrix.dep }} deps
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [stable, msrv]
+        dep: [minimal, recent]
+    steps:
+      # Cleaning up github bloat so that test feature artifacts don't run out of disk.
+      - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run tests"
+        run: cargo rbmt test --toolchain ${{ matrix.toolchain }} --lock-file ${{ matrix.dep }}
+
+  Check:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [lint, docs, docsrs, bench]
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rbmt
+      - name: "Run ${{ matrix.task }}"
+        run: cargo rbmt ${{ matrix.task }}
+
+  # Non cargo-rbmt jobs manage their toolchain version directly.
   Prepare:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
     steps:
       - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Read nightly version"
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: "Read workspace versions"
         id: read_toolchain
-        run: echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
-
-  Stable:                       # 2 jobs, one per manifest.
-    name: Test - stable toolchain
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [minimal, recent]
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: 5c62710e87cd5390319f88e7a92942022df9c0f3
-          path: maintainer-tools
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh stable
-
-  Nightly:                      # 2 jobs, one per manifest.
-    name: Test - nightly toolchain
-    needs: Prepare
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [minimal, recent]
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: 5c62710e87cd5390319f88e7a92942022df9c0f3
-          path: maintainer-tools
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh nightly
-
-  MSRV:                         # 2 jobs, one per manifest.
-    name: Test - MSRV toolchain
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [minimal, recent]
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: 5c62710e87cd5390319f88e7a92942022df9c0f3
-          path: maintainer-tools
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: "1.56.1"
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh msrv
-
-  Lint:
-    name: Lint - nightly toolchain
-    needs: Prepare
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: 5c62710e87cd5390319f88e7a92942022df9c0f3
-          path: maintainer-tools
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Install clippy"
-        run: rustup component add clippy
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh lint
-
-  Docs:
-    name: Docs - stable toolchain
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: 5c62710e87cd5390319f88e7a92942022df9c0f3
-          path: maintainer-tools
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@stable
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh docs
-
-  Docsrs:
-    name: Docs - nightly toolchain
-    needs: Prepare
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: 5c62710e87cd5390319f88e7a92942022df9c0f3
-          path: maintainer-tools
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh docsrs
-
-  Bench:
-    name: Bench - nightly toolchain
-    needs: Prepare
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dep: [recent]
-    steps:
-      - name: "Checkout repo"
-        uses: actions/checkout@v4
-      - name: "Checkout maintainer tools"
-        uses: actions/checkout@v4
-        with:
-          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          ref: 5c62710e87cd5390319f88e7a92942022df9c0f3
-          path: maintainer-tools
-      - name: "Select toolchain"
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Set dependencies"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./maintainer-tools/ci/run_task.sh bench
+        run: echo "nightly_version=$(cargo metadata --format-version 1 | jq -r '.metadata.rbmt.toolchains.nightly')" >> $GITHUB_OUTPUT
 
   Arch32bit:
     name: Test 32-bit version

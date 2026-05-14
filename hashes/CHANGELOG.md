@@ -1,3 +1,7 @@
+# 0.14.2 - 2026-05-14
+
+- Enable `alloc` feature from `schemars` feature and fix feature gating.
+
 # 0.14.1 - 2025-12-03
 
 * remove `doc_auto_cfg`
