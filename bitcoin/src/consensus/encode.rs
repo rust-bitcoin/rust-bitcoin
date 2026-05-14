@@ -57,7 +57,9 @@ pub enum Error {
     },
     /// VarInt was encoded in a non-minimal way.
     NonMinimalVarInt,
-    /// VarInt value exceeds the maximum allowed size.
+    /// This field is unused.
+    ///
+    /// Variant was introduced in `0.32.9` but the change reverted in `0.32.10`.
     OversizedVarInt,
     /// Parsing error.
     ParseFailed(&'static str),
@@ -498,7 +500,7 @@ impl Decodable for VarInt {
     #[inline]
     fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let n = ReadExt::read_u8(r)?;
-        let varint = match n {
+        match n {
             0xFF => {
                 let x = ReadExt::read_u64(r)?;
                 if x < 0x100000000 {
@@ -524,22 +526,15 @@ impl Decodable for VarInt {
                 }
             }
             n => Ok(VarInt::from(n)),
-        };
-        match varint {
-            Ok(v) => {
-                if v.0 > MAX_COMPACT_SIZE as u64 {
-                    Err(Error::OversizedVarInt)
-                } else {
-                    Ok(v)
-                }
-            }
-            Err(e) => Err(e),
         }
     }
 }
 
 /// The maximum size of a serialized object in bytes or number of elements when
 /// the size is encoded as a CompactSize.
+///
+/// WARNING: This is never used. We introduced range checking in `0.32.9` breaking downstream. It
+/// was reverted in `0.32.10` but the public API has to stay.
 ///
 /// ref: <https://github.com/bitcoin/bitcoin/blob/a7c29df0e5ace05b6186612671d6103c112ec922/src/serialize.h#L32>
 pub const MAX_COMPACT_SIZE: usize = 0x0200_0000;
@@ -982,6 +977,11 @@ mod tests {
             serialize(&VarInt(0xF0F0F0F0F0E0)),
             vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]
         );
+        // This assertion verifies that we functionally reverted #5921
+        assert_eq!(
+            test_varint_encode(0xFF, &0x100000000_u64.to_le_bytes()).unwrap(),
+            VarInt(0x100000000)
+        );
         assert_eq!(test_varint_encode(0xFE, &0x10000_u64.to_le_bytes()).unwrap(), VarInt(0x10000));
         assert_eq!(test_varint_encode(0xFD, &0xFD_u64.to_le_bytes()).unwrap(), VarInt(0xFD));
 
@@ -994,20 +994,6 @@ mod tests {
         test_varint_len(VarInt(0xFFFFFFFF), 5);
         test_varint_len(VarInt(0xFFFFFFFF + 1), 9);
         test_varint_len(VarInt(u64::MAX), 9);
-    }
-
-    #[test]
-    fn deserialize_varint_too_large() {
-        // MAX_COMPACT_SIZE (0x02000000) should succeed
-        assert_eq!(test_varint_encode(0xFE, &(0x02000000_u64).to_le_bytes()).unwrap(), VarInt(0x02000000));
-        // MAX_COMPACT_SIZE + 1 should fail with range check enabled
-        let mut input = [0u8; 9];
-        input[0] = 0xFE;
-        input[1..5].copy_from_slice(&(0x02000001_u32).to_le_bytes());
-        assert_eq!(
-            discriminant(&deserialize_partial::<VarInt>(&input).map(|t| t.0).unwrap_err()),
-            discriminant(&Error::OversizedVarInt)
-        );
     }
 
     fn test_varint_len(varint: VarInt, expected: usize) {
