@@ -98,7 +98,7 @@ impl Time {
     #[inline]
     #[rustfmt::skip] // moves comments to unrelated code
     pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        let interval = (seconds + 511) / 512;
+        let interval = seconds.div_ceil(512);
         if interval <= u16::MAX as u32 { // infallible cast, needed by const code
             Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
         } else {
@@ -137,7 +137,7 @@ impl TimeOverflowError {
     ///
     /// If `seconds` would not actually overflow a `u16`.
     pub fn new(seconds: u32) -> Self {
-        assert!(u16::try_from((seconds + 511) / 512).is_err());
+        assert!(u16::try_from(seconds.div_ceil(512)).is_err());
         Self { seconds }
     }
 }
