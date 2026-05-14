@@ -36,8 +36,9 @@ use crate::hex::{self, DecodeFixedLengthBytesError};
 pub use secp256k1::{constants, Parity, Verification};
 #[doc(no_inline)]
 pub use self::error::{
-    FromSliceError, InvalidAddressVersionError, InvalidBase58PayloadLengthError, ParseKeypairError,
-    ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError, UncompressedPublicKeyError,
+    FromSecretBytesError, FromSliceError, InvalidAddressVersionError,
+    InvalidBase58PayloadLengthError, InvalidPublicKeyError, ParseKeypairError,
+    ParseXOnlyPublicKeyError, TweakXOnlyPublicKeyError, UncompressedPublicKeyError, VerifyError,
 };
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
@@ -1979,6 +1980,91 @@ pub mod error {
                 Self::ResultKeyInvalid => None,
                 Self::ParityError => None,
             }
+        }
+    }
+
+    /// The bytes do not represent a valid secp256k1 public key.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct InvalidPublicKeyError;
+
+    impl From<Infallible> for InvalidPublicKeyError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for InvalidPublicKeyError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "invalid public key") }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidPublicKeyError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
+    }
+
+    /// Error that can occur when parsing a [`PrivateKey`] from a byte array.
+    ///
+    /// [`PrivateKey`]: super::PrivateKey
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct FromSecretBytesError(pub(super) FromSecretBytesErrorInner);
+
+    impl From<Infallible> for FromSecretBytesError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for FromSecretBytesError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self.0 {
+                FromSecretBytesErrorInner::InvalidSecretKey => write!(f, "invalid secret key"),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for FromSecretBytesError {
+        #[inline]
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self.0 {
+                FromSecretBytesErrorInner::InvalidSecretKey => None,
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub(super) enum FromSecretBytesErrorInner {
+        /// The bytes represent an invalid secp256k1 secret key.
+        InvalidSecretKey,
+    }
+
+    /// Signature verification failed for the given message and key.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct VerifyError;
+
+    impl From<Infallible> for VerifyError {
+        #[inline]
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for VerifyError {
+        #[inline]
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "signature verification failed")
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for VerifyError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
         }
     }
 }

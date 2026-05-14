@@ -32,7 +32,7 @@ use crate::sighash::EcdsaSighashType;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use self::error::DecodeError;
+pub use self::error::{DecodeError, InvalidDerError};
 #[cfg(feature = "hex")]
 #[doc(no_inline)]
 pub use self::error::ParseSignatureError;
@@ -311,6 +311,27 @@ pub mod error {
                 Self::SighashType(ref e) => Some(e),
                 Self::EmptySignature => None,
             }
+        }
+    }
+
+    /// The DER encoding of an ECDSA signature is not valid.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct InvalidDerError;
+
+    impl From<Infallible> for InvalidDerError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for InvalidDerError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "invalid DER encoding") }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidDerError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
         }
     }
 
