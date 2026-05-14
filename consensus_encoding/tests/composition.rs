@@ -69,7 +69,7 @@ impl Decoder for CompositeDataDecoder {
     type Output = CompositeData;
     type Error = CompositeError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes).map_err(|error| match error {
             Decoder2Error::First(e) | Decoder2Error::Second(e) => CompositeError::Eof(e),
         })
@@ -98,8 +98,8 @@ fn composition_chain() {
     // Decode using the push decoder.
     let mut decoder = CompositeData::decoder();
     let mut bytes = &encoded_bytes[..];
-    let needs_more = decoder.push_bytes(&mut bytes).unwrap();
-    assert!(!needs_more, "CompositeData decoder should be ready to end");
+    let status = decoder.push_bytes(&mut bytes).unwrap();
+    assert!(status.is_ready(), "CompositeData decoder should be ready to end");
     assert_eq!(bytes, EMPTY);
     let decoded = decoder.end().unwrap();
     assert_eq!(original, decoded);
@@ -130,8 +130,8 @@ fn composition_nested() {
         ArrayDecoder::<1>::new(),
     );
     let mut bytes = &encoded_bytes[..];
-    let needs_more = decoder6.push_bytes(&mut bytes).unwrap();
-    assert!(!needs_more, "Decoder6 should be ready to end");
+    let status = decoder6.push_bytes(&mut bytes).unwrap();
+    assert!(status.is_ready(), "Decoder6 should be ready to end");
     assert_eq!(bytes, EMPTY);
     let (first, second, third, fourth, fifth, sixth) = decoder6.end().unwrap();
     assert_eq!(first, [data[0]]);
@@ -150,8 +150,8 @@ fn composition_extra_bytes() {
     let mut bytes = &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08][..];
     let original_len = bytes.len();
 
-    let needs_more = decoder2.push_bytes(&mut bytes).unwrap();
-    assert!(!needs_more, "Decoder2 should be ready to end after consuming all needed bytes");
+    let status = decoder2.push_bytes(&mut bytes).unwrap();
+    assert!(status.is_ready(), "Decoder2 should be ready to end after consuming all needed bytes");
 
     let consumed = original_len - bytes.len();
     assert_eq!(consumed, 5, "Decoder2 should consume exactly 5 bytes");
@@ -215,7 +215,7 @@ fn composition_error_unification() {
         type Output = ([u8; 1], [u8; 1]);
         type Error = NestedError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
             self.inner.push_bytes(bytes).map_err(|error| match error {
                 Decoder2Error::First(e) | Decoder2Error::Second(e) => NestedError::from(e),
             })
@@ -244,7 +244,7 @@ fn composition_error_unification() {
         type Output = [u8; 4];
         type Error = TopLevelError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
             Ok(self.inner.push_bytes(bytes)?)
         }
 
@@ -270,7 +270,7 @@ fn composition_error_unification() {
         type Output = [u8; 1];
         type Error = NestedError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
             self.inner.push_bytes(bytes).map_err(NestedError::from)
         }
 

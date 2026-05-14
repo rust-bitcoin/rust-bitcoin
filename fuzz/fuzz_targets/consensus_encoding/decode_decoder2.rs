@@ -17,8 +17,8 @@ fn do_test(data: &[u8]) {
         Err(_) => {
             // Expected for invalid data
         }
-        Ok(needs_more) => {
-            if needs_more {
+        Ok(status) => {
+            if status.needs_more() {
                 let end_result = decoder.end();
                 assert!(
                     end_result.is_err(),

@@ -20,8 +20,8 @@ const EMPTY: &[u8] = &[];
 fn decode_array_excess_data_ignored() {
     let mut decoder = ArrayDecoder::<4>::new();
     let mut data = &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(!needs_more, "ArrayDecoder should be complete after consuming all needed bytes");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.is_ready(), "ArrayDecoder should be complete after consuming all needed bytes");
     assert_eq!(data, &[0x05, 0x06]);
     let result = decoder.end().unwrap();
     assert_eq!(result, [0x01, 0x02, 0x03, 0x04]);
@@ -32,18 +32,18 @@ fn decode_array_streaming_behavior() {
     let mut decoder = ArrayDecoder::<4>::new();
 
     let mut data = &[0x01][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more, "ArrayDecoder should need more data after 1 byte");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more(), "ArrayDecoder should need more data after 1 byte");
     assert_eq!(data, EMPTY);
 
     let mut data = &[0x02, 0x03][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more, "ArrayDecoder should need more data after 3 bytes");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more(), "ArrayDecoder should need more data after 3 bytes");
     assert_eq!(data, EMPTY);
 
     let mut data = &[0x04, 0x05, 0x06][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(!needs_more, "ArrayDecoder should be complete after 4 bytes");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.is_ready(), "ArrayDecoder should be complete after 4 bytes");
     assert_eq!(data, &[0x05, 0x06]);
 
     let result = decoder.end().unwrap();
@@ -55,8 +55,8 @@ fn decode_array_insufficient_data_error() {
     let mut decoder = ArrayDecoder::<5>::new();
     let mut data = &[0xAA, 0xBB][..];
 
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more, "ArrayDecoder should need more data after 2 bytes for 5-byte array");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more(), "ArrayDecoder should need more data after 2 bytes for 5-byte array");
     assert_eq!(data, EMPTY);
 
     let err = decoder.end().unwrap_err();
@@ -69,8 +69,8 @@ fn decode_array_zero_size() {
     let mut decoder = ArrayDecoder::<0>::new();
     let mut data = &[0x01, 0x02, 0x03][..];
 
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(!needs_more, "zero-sized ArrayDecoder should not need data");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.is_ready(), "zero-sized ArrayDecoder should not need data");
     assert_eq!(data, &[0x01, 0x02, 0x03]);
     let result = decoder.end().unwrap();
     assert_eq!(result, [0u8; 0]);
@@ -86,8 +86,8 @@ fn decode_array_empty_slice_push() {
     let mut decoder = ArrayDecoder::<3>::new();
     let mut empty_data = &[][..];
 
-    let needs_more = decoder.push_bytes(&mut empty_data).unwrap();
-    assert!(needs_more, "decoder should still need data after empty push");
+    let status = decoder.push_bytes(&mut empty_data).unwrap();
+    assert!(status.needs_more(), "decoder should still need data after empty push");
     assert_eq!(empty_data, &[0u8; 0]);
     assert_eq!(decoder.read_limit(), 3);
 }
@@ -100,14 +100,14 @@ fn decode_decoder2_state_transitions() {
 
     assert_eq!(decoder.read_limit(), 5);
     let mut data = &[0x01, 0x02][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more, "should need more data for second decoder");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more(), "should need more data for second decoder");
     assert_eq!(data.len(), 0, "all data should be consumed");
 
     assert_eq!(decoder.read_limit(), 3);
     let mut more_data = &[0x03, 0x04, 0x05][..];
-    let needs_more = decoder.push_bytes(&mut more_data).unwrap();
-    assert!(!needs_more, "should not need more data after completing both decoders");
+    let status = decoder.push_bytes(&mut more_data).unwrap();
+    assert!(status.is_ready(), "should not need more data after completing both decoders");
     assert_eq!(more_data.len(), 0, "all data should be consumed");
 
     assert_eq!(decoder.read_limit(), 0);
@@ -126,8 +126,8 @@ fn decode_decoder2_read_limit_with_exhausted() {
     let mut decoder2: Decoder2<ArrayDecoder<2>, ArrayDecoder<3>> =
         Decoder2::new(ArrayDecoder::<2>::new(), ArrayDecoder::<3>::new());
     let mut data = &[0x01, 0x02][..];
-    let needs_more = decoder2.push_bytes(&mut data).unwrap();
-    assert!(needs_more, "should need more data for second decoder");
+    let status = decoder2.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more(), "should need more data for second decoder");
     assert_eq!(data.len(), 0, "all data should be consumed");
     assert_eq!(decoder2.read_limit(), 3);
 }
@@ -185,8 +185,8 @@ fn decode_byte_vec_decoder_empty() {
 
     let mut decoder = ByteVecDecoder::new();
     let mut data = &[0x00][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(!needs_more, "decoder should not need more data for empty vector");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.is_ready(), "decoder should not need more data for empty vector");
     assert_eq!(data.len(), 0, "all data should be consumed");
     assert_eq!(decoder.read_limit(), 0);
     let result = decoder.end().unwrap();
@@ -200,7 +200,7 @@ fn decode_byte_vec_decoder_does_not_overconsume() {
 
     let mut decoder = ByteVecDecoder::new();
     let mut data = &[0x02, 0xAA, 0xBB, 0xCC, 0xDD][..];
-    assert!(!decoder.push_bytes(&mut data).unwrap());
+    assert!(decoder.push_bytes(&mut data).unwrap().is_ready());
     assert_eq!(data, &[0xCC, 0xDD][..]);
     assert_eq!(decoder.end().unwrap(), vec![0xAA, 0xBB]);
 }
@@ -217,11 +217,11 @@ fn decode_byte_vec_decoder_does_not_overconsume_on_second_chunk() {
 
     let mut decoder = ByteVecDecoder::new();
 
-    assert!(decoder.push_bytes(&mut first_chunk).unwrap());
+    assert!(decoder.push_bytes(&mut first_chunk).unwrap().needs_more());
     assert!(first_chunk.is_empty());
 
-    let needs_more = decoder.push_bytes(&mut second_chunk).unwrap();
-    assert!(!needs_more);
+    let status = decoder.push_bytes(&mut second_chunk).unwrap();
+    assert!(status.is_ready());
     assert_eq!(second_chunk, &[0x11, 0x22][..]);
 
     let decoded_vec = decoder.end().unwrap();
@@ -244,7 +244,7 @@ impl Decoder for TestArrayDecoder {
     type Output = TestArray;
     type Error = UnexpectedEofError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes)
     }
 
@@ -401,7 +401,7 @@ impl Decoder for InnerDecoder {
     type Output = Inner;
     type Error = UnexpectedEofError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -431,7 +431,7 @@ impl Decoder for TestDecoder {
     type Output = Test;
     type Error = VecDecoderError<UnexpectedEofError>;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -460,11 +460,11 @@ macro_rules! check_decode_one_byte_at_a_time {
                 for (i, _) in $array.iter().enumerate() {
                     if i < $array.len() - 1 {
                         let mut p = &$array[i..i+1];
-                        assert!(decoder.push_bytes(&mut p).unwrap());
+                        assert!(decoder.push_bytes(&mut p).unwrap().needs_more());
                     } else {
-                        // last byte: `push_bytes` should return false since no more bytes required.
+                        // last byte: `push_bytes` should return Ready since no more bytes required.
                         let mut p = &$array[i..];
-                        assert!(!decoder.push_bytes(&mut p).unwrap());
+                        assert!(decoder.push_bytes(&mut p).unwrap().is_ready());
                     }
                 }
 
@@ -512,7 +512,7 @@ fn vec_decoder_empty() {
 
     let mut slice = encoded.as_slice();
     let mut decoder = Test::decoder();
-    assert!(!decoder.push_bytes(&mut slice).unwrap());
+    assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
 
     let got = decoder.end().unwrap();
     let want = Test(vec![]);
@@ -631,8 +631,8 @@ fn decode_vec_from_read_unbuffered_success() {
 fn decode_byte_vec_decoder_end_incomplete_length_prefix() {
     let mut decoder = ByteVecDecoder::new();
     let mut data = &[0xFD, 0x05][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more);
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::ByteVecDecoderError { .. }));
@@ -644,8 +644,8 @@ fn decode_byte_vec_decoder_end_incomplete_data() {
     // Length=5 but only 2 bytes of data.
     let mut decoder = ByteVecDecoder::new();
     let mut data = &[0x05, 0xAA, 0xBB][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more);
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::ByteVecDecoderError { .. }));
@@ -656,8 +656,8 @@ fn decode_byte_vec_decoder_end_incomplete_data() {
 fn decode_vec_decoder_end_incomplete_length_prefix() {
     let mut decoder = VecDecoder::<Inner>::new();
     let mut data = &[0xFD, 0x05][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more);
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::VecDecoderError { .. }));
@@ -669,8 +669,8 @@ fn decode_vec_decoder_end_incomplete_item() {
     // Length=3 but only 2 bytes of data.
     let mut decoder = VecDecoder::<Inner>::new();
     let mut data = &[0x03, 0xAA, 0xBB][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more);
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::VecDecoderError { .. }));

@@ -63,8 +63,8 @@ macro_rules! test_hardcoded_decoding {
                 let mut decoder = <$decoder>::new();
                 assert_eq!(decoder.read_limit(), $read_limit);
 
-                let needs_more = decoder.push_bytes(&mut bytes.as_slice()).unwrap();
-                assert!(!needs_more);
+                let status = decoder.push_bytes(&mut bytes.as_slice()).unwrap();
+                assert!(status.is_ready());
                 assert_eq!(decoder.read_limit(), 0);
 
                 let decoded = decoder.end().unwrap();
@@ -88,9 +88,9 @@ macro_rules! test_incremental_decoding {
                 // Feed bytes one at a time
                 for (i, byte) in bytes.iter().enumerate() {
                     let slice = &[*byte];
-                    let needs_more = decoder.push_bytes(&mut slice.as_slice()).unwrap();
+                    let status = decoder.push_bytes(&mut slice.as_slice()).unwrap();
                     assert_eq!(decoder.read_limit(), $read_limit - 1 - i);
-                    assert_eq!(needs_more, i < $read_limit - 1); // true until the last loop
+                    assert_eq!(status.needs_more(), i < $read_limit - 1); // true until the last loop
                 }
 
                 let decoded = decoder.end().unwrap();

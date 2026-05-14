@@ -27,7 +27,7 @@ impl Decoder for CompactSizeUsizeDecoderWrapper {
     type Output = CompactSizeUsize;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -59,7 +59,7 @@ impl Decoder for CompactSizeU64DecoderWrapper {
     type Output = CompactSizeU64;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -189,20 +189,20 @@ fn decoder_compact_size_read_limit_transitions() {
 
     assert_eq!(decoder.read_limit(), 1);
     let mut data = &[0xFD][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more, "should need more data after seeing 0xFD");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more(), "should need more data after seeing 0xFD");
     assert_eq!(data.len(), 0, "all data should be consumed");
 
     assert_eq!(decoder.read_limit(), 2);
     let mut data = &[0x00][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(needs_more, "should still need one more byte");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.needs_more(), "should still need one more byte");
     assert_eq!(data.len(), 0, "all data should be consumed");
     assert_eq!(decoder.read_limit(), 1);
 
     let mut data = &[0x01][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(!needs_more, "should not need more data");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.is_ready(), "should not need more data");
     assert_eq!(data.len(), 0, "all data should be consumed");
     assert_eq!(decoder.read_limit(), 0);
 
@@ -217,8 +217,8 @@ fn decoder_compact_size_single_byte_read_limit() {
 
     assert_eq!(decoder.read_limit(), 1);
     let mut data = &[0x42][..];
-    let needs_more = decoder.push_bytes(&mut data).unwrap();
-    assert!(!needs_more, "single-byte value should be complete");
+    let status = decoder.push_bytes(&mut data).unwrap();
+    assert!(status.is_ready(), "single-byte value should be complete");
     assert_eq!(data.len(), 0, "all data should be consumed");
     assert_eq!(decoder.read_limit(), 0);
     let result = decoder.end().unwrap();
@@ -235,11 +235,11 @@ fn decoder_compact_size_0xF0F0_F0F0_F0E0() {
     for (i, _) in array.iter().enumerate() {
         if i < array.len() - 1 {
             let mut p = &array[i..=i];
-            assert!(decoder.push_bytes(&mut p).unwrap());
+            assert!(decoder.push_bytes(&mut p).unwrap().needs_more());
         } else {
             // last byte: `push_bytes` should return false since no more bytes required.
             let mut p = &array[i..];
-            assert!(!decoder.push_bytes(&mut p).unwrap());
+            assert!(decoder.push_bytes(&mut p).unwrap().is_ready());
         }
     }
 
@@ -254,7 +254,7 @@ fn decoder_compact_size_zero() {
 
     let mut slice = &encoded[..];
     let mut decoder = CompactSizeDecoder::new();
-    assert!(!decoder.push_bytes(&mut slice).unwrap());
+    assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
 
     let got = decoder.end().unwrap();
     assert_eq!(got, 0);
@@ -266,7 +266,7 @@ fn decoder_compact_size_end_incomplete_one_byte() {
 
     let mut slice = &encoded[..];
     let mut decoder = CompactSizeDecoder::new();
-    assert!(decoder.push_bytes(&mut slice).unwrap());
+    assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
@@ -278,7 +278,7 @@ fn decoder_compact_size_end_incomplete_three_byte() {
 
     let mut slice = &encoded[..];
     let mut decoder = CompactSizeDecoder::new();
-    assert!(decoder.push_bytes(&mut slice).unwrap());
+    assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
@@ -290,7 +290,7 @@ fn decoder_compact_size_end_incomplete_five_byte() {
 
     let mut slice = &encoded[..];
     let mut decoder = CompactSizeDecoder::new();
-    assert!(decoder.push_bytes(&mut slice).unwrap());
+    assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
@@ -302,7 +302,7 @@ fn decoder_compact_size_end_incomplete_nine_byte() {
 
     let mut slice = &encoded[..];
     let mut decoder = CompactSizeDecoder::new();
-    assert!(decoder.push_bytes(&mut slice).unwrap());
+    assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));

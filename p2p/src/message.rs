@@ -167,7 +167,7 @@ impl encoding::Decoder for CommandStringDecoder {
     type Output = CommandString;
     type Error = CommandStringDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes).map_err(CommandStringDecoderError::UnexpectedEof)
     }
 
@@ -277,7 +277,7 @@ impl encoding::Decoder for V1MessageHeaderDecoder {
     type Error = V1MessageHeaderDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(V1MessageHeaderDecoderError)
     }
 
@@ -342,7 +342,7 @@ impl encoding::Decoder for InventoryPayloadDecoder {
     type Error = InventoryPayloadDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(InventoryPayloadDecoderError)
     }
 
@@ -391,7 +391,7 @@ impl encoding::Decoder for AddrPayloadDecoder {
     type Error = AddrPayloadDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(AddrPayloadDecoderError)
     }
 
@@ -443,7 +443,7 @@ impl encoding::Decoder for AddrV2PayloadDecoder {
     type Error = AddrV2PayloadDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(AddrV2PayloadDecoderError)
     }
 
@@ -518,7 +518,7 @@ impl encoding::Decoder for FeeFilterDecoder {
     type Output = FeeFilter;
     type Error = FeeFilterDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(FeeFilterDecoderError::UnexpectedEof)
     }
 
@@ -598,7 +598,7 @@ impl encoding::Decoder for PingDecoder {
     type Error = PingDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(PingDecoderError)
     }
 
@@ -654,7 +654,7 @@ impl encoding::Decoder for PongDecoder {
     type Error = PongDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(PongDecoderError)
     }
 
@@ -1187,7 +1187,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
     type Error = V1NetworkMessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         let err = V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload);
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|_| err),
@@ -1218,14 +1218,14 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::Reject(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::FeeFilter(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::AddrV2(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Empty(_) => Ok(false),
+            Self::Empty(_) => Ok(encoding::DecoderStatus::Ready),
             Self::Unknown { remaining, buffer, .. } => {
                 let copy_len = bytes.len().min(*remaining);
                 let (to_copy, rest) = bytes.split_at(copy_len);
                 buffer.extend_from_slice(to_copy);
                 *bytes = rest;
                 *remaining -= copy_len;
-                Ok(*remaining > 0)
+                Ok(if *remaining > 0 { encoding::DecoderStatus::NeedsMore } else { encoding::DecoderStatus::Ready })
             }
         }
     }
@@ -1344,7 +1344,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
     type Error = V1NetworkMessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         let before = bytes.len();
         let result = self.inner.push_bytes(bytes)?;
         self.bytes_consumed += before - bytes.len();
@@ -1409,14 +1409,14 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
     type Output = V1NetworkMessage;
     type Error = V1NetworkMessageDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         match &mut self.state {
             DecoderState::ReadingHeader { header_decoder } => {
-                let need_more = header_decoder.push_bytes(bytes).map_err(|e| {
+                let status = header_decoder.push_bytes(bytes).map_err(|e| {
                     V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Header(e))
                 })?;
 
-                if !need_more {
+                if status.is_ready() {
                     // Header complete, extract values and transition to payload state.
                     let old_state = core::mem::replace(
                         &mut self.state,
@@ -1452,7 +1452,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                     return self.push_bytes(bytes);
                 }
 
-                Ok(need_more)
+                Ok(status)
             }
             DecoderState::ReadingPayload { payload_decoder, .. } =>
                 payload_decoder.push_bytes(bytes),
@@ -1631,7 +1631,7 @@ impl encoding::Decoder for NetworkHeaderDecoder {
     type Error = NetworkHeaderDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(NetworkHeaderDecoderError)
     }
 
@@ -1696,7 +1696,7 @@ impl encoding::Decoder for HeadersMessageDecoder {
     type Error = HeadersMessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(HeadersMessageDecoderError)
     }
 
@@ -1813,15 +1813,16 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
     type Output = V2NetworkMessage;
     type Error = V2NetworkMessageDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         loop {
             match &mut self.state {
                 V2NetworkMessageDecoderState::ShortId(short_id_decoder) => {
-                    if short_id_decoder
+                    if !short_id_decoder
                         .push_bytes(bytes)
                         .map_err(|_| V2NetworkMessageDecoderError::ShortId)?
+                        .is_ready()
                     {
-                        return Ok(true);
+                        return Ok(encoding::DecoderStatus::NeedsMore);
                     }
 
                     match mem::replace(&mut self.state, V2NetworkMessageDecoderState::Errored) {
@@ -1845,11 +1846,12 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                     }
                 }
                 V2NetworkMessageDecoderState::CommandString(command_string_decoder) => {
-                    if command_string_decoder
+                    if !command_string_decoder
                         .push_bytes(bytes)
                         .map_err(V2NetworkMessageDecoderError::Command)?
+                        .is_ready()
                     {
-                        return Ok(true);
+                        return Ok(encoding::DecoderStatus::NeedsMore);
                     }
                     match mem::replace(&mut self.state, V2NetworkMessageDecoderState::Errored) {
                         V2NetworkMessageDecoderState::CommandString(command_string) => {

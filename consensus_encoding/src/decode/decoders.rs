@@ -8,7 +8,7 @@ use core::{fmt, mem};
 
 #[cfg(feature = "alloc")]
 use super::Decode;
-use super::Decoder;
+use super::{Decoder, DecoderStatus};
 #[cfg(feature = "alloc")]
 use crate::compact_size::CompactSizeDecoder;
 #[cfg(feature = "alloc")]
@@ -86,14 +86,14 @@ impl Decoder for ByteVecDecoder {
     type Output = Vec<u8>;
     type Error = ByteVecDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         use ByteVecDecoderError as E;
         use ByteVecDecoderErrorInner as Inner;
 
         if let Some(mut decoder) = self.prefix_decoder.take() {
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more() {
                 self.prefix_decoder = Some(decoder);
-                return Ok(true);
+                return Ok(DecoderStatus::NeedsMore);
             }
             self.bytes_expected = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
             self.prefix_decoder = None;
@@ -111,8 +111,11 @@ impl Decoder for ByteVecDecoder {
         self.bytes_written += copy_len;
         *bytes = &bytes[copy_len..];
 
-        // Return true if we still need more data.
-        Ok(self.bytes_written < self.bytes_expected)
+        if self.bytes_written < self.bytes_expected {
+            Ok(DecoderStatus::NeedsMore)
+        } else {
+            Ok(DecoderStatus::Ready)
+        }
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
@@ -232,18 +235,18 @@ impl<T: Decode> Decoder for VecDecoder<T> {
     type Output = Vec<T>;
     type Error = VecDecoderError<<<T as Decode>::Decoder as Decoder>::Error>;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         use VecDecoderError as E;
         use VecDecoderErrorInner as Inner;
 
         if let Some(mut decoder) = self.prefix_decoder.take() {
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))? {
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more() {
                 self.prefix_decoder = Some(decoder);
-                return Ok(true);
+                return Ok(DecoderStatus::NeedsMore);
             }
             self.length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
             if self.length == 0 {
-                return Ok(false);
+                return Ok(DecoderStatus::Ready);
             }
 
             self.prefix_decoder = None;
@@ -256,22 +259,22 @@ impl<T: Decode> Decoder for VecDecoder<T> {
 
             let mut decoder = self.decoder.take().unwrap_or_else(T::decoder);
 
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::Item(e)))? {
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::Item(e)))?.needs_more() {
                 self.decoder = Some(decoder);
-                return Ok(true);
+                return Ok(DecoderStatus::NeedsMore);
             }
             let item = decoder.end().map_err(|e| E(Inner::Item(e)))?;
             self.buffer.push(item);
 
             if self.buffer.len() == self.length {
-                return Ok(false);
+                return Ok(DecoderStatus::Ready);
             }
         }
 
         if self.buffer.len() == self.length {
-            Ok(false)
+            Ok(DecoderStatus::Ready)
         } else {
-            Ok(true)
+            Ok(DecoderStatus::NeedsMore)
         }
     }
 
@@ -328,7 +331,7 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
     type Output = [u8; N];
     type Error = UnexpectedEofError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         let remaining_space = N - self.bytes_written;
         let copy_len = bytes.len().min(remaining_space);
 
@@ -340,8 +343,11 @@ impl<const N: usize> Decoder for ArrayDecoder<N> {
             *bytes = &bytes[copy_len..];
         }
 
-        // Return true if we still need more data.
-        Ok(self.bytes_written < N)
+        if self.bytes_written < N {
+            Ok(DecoderStatus::NeedsMore)
+        } else {
+            Ok(DecoderStatus::Ready)
+        }
     }
 
     #[inline]
@@ -431,13 +437,13 @@ where
     type Output = (A::Output, B::Output);
     type Error = Decoder2Error<A::Error, B::Error>;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         loop {
             match &mut self.state {
                 Decoder2State::First(first_decoder, _) => {
-                    if first_decoder.push_bytes(bytes).map_err(Decoder2Error::First)? {
+                    if first_decoder.push_bytes(bytes).map_err(Decoder2Error::First)?.needs_more() {
                         // First decoder wants more data.
-                        return Ok(true);
+                        return Ok(DecoderStatus::NeedsMore);
                     }
 
                     // First decoder is complete, transition to second.
@@ -551,7 +557,7 @@ where
     type Error = Decoder3Error<A::Error, B::Error, C::Error>;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes).map_err(|error| match error {
             Decoder2Error::First(Decoder2Error::First(a)) => Decoder3Error::First(a),
             Decoder2Error::First(Decoder2Error::Second(b)) => Decoder3Error::Second(b),
@@ -637,7 +643,7 @@ where
     type Error = Decoder4Error<A::Error, B::Error, C::Error, D::Error>;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes).map_err(|error| match error {
             Decoder2Error::First(Decoder2Error::First(a)) => Decoder4Error::First(a),
             Decoder2Error::First(Decoder2Error::Second(b)) => Decoder4Error::Second(b),
@@ -745,7 +751,7 @@ where
     type Error = Decoder6Error<A::Error, B::Error, C::Error, D::Error, E::Error, F::Error>;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes).map_err(|error| match error {
             Decoder2Error::First(Decoder3Error::First(a)) => Decoder6Error::First(a),
             Decoder2Error::First(Decoder3Error::Second(b)) => Decoder6Error::Second(b),
@@ -905,7 +911,7 @@ mod tests {
         type Output = Inner;
         type Error = UnexpectedEofError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
             self.0.push_bytes(bytes)
         }
 
@@ -936,7 +942,7 @@ mod tests {
         type Output = Test;
         type Error = VecDecoderError<UnexpectedEofError>;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
             self.0.push_bytes(bytes)
         }
 
@@ -961,7 +967,7 @@ mod tests {
 
         let mut slice = encoded.as_slice();
         let mut decoder = Test::decoder();
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
 
         let got = decoder.end().unwrap();
         let want = Test(vec![]);
@@ -978,7 +984,7 @@ mod tests {
         let mut slice = encoded.as_slice();
         let mut decoder = Test::decoder();
         // Should want more bytes since we've provided nothing
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         assert!(matches!(
             decoder.end().unwrap_err(),
