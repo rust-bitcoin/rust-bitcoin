@@ -58,16 +58,20 @@ pub trait Decoder: Sized {
 
     /// Pushes bytes into the decoder, consuming as much as possible.
     ///
-    /// The slice reference will be advanced to point to the unconsumed portion. Returns `Ok(DecoderStatus::NeedsMore)`
-    /// if more bytes are needed to complete decoding, `Ok(DecoderStatus::Ready)` if the decoder is ready to
-    /// finalize with [`Self::end`], or `Err(error)` if parsing failed.
+    /// The slice reference will be advanced to point to the unconsumed portion. Returns
+    /// `Ok(DecoderStatus::NeedsMore)` if more bytes are needed to complete decoding,
+    /// `Ok(DecoderStatus::Ready)` if the decoder is ready to finalize with [`Self::end`], or
+    /// `Err(error)` if parsing failed.
+    ///
+    /// Once the decoder returns `Ok(DecoderStatus::Ready)`, subsequent calls to this method will
+    /// continue to return `Ok(DecoderStatus::Ready)` without consuming additional bytes.
     ///
     /// # Errors
     ///
     /// Returns an error if the provided bytes are invalid or malformed according to the decoder's
     /// validation rules. Insufficient data (needing more bytes) is *not* an error for this method,
-    /// the decoder will simply consume what it can and return `DecoderStatus::NeedsMore` to indicate more data is
-    /// needed.
+    /// the decoder will simply consume what it can and return `DecoderStatus::NeedsMore` to
+    /// indicate more data is needed.
     ///
     /// # Panics
     ///
@@ -108,7 +112,8 @@ pub trait Decoder: Sized {
 pub enum DecoderStatus {
     /// The decoder needs more data to complete decoding.
     ///
-    /// Continue pushing byte slices with [`Decoder::push_bytes`] until this status changes to [`Ready`](DecoderStatus::Ready).
+    /// Continue pushing byte slices with [`Decoder::push_bytes`] until this status changes to
+    /// [`Ready`](DecoderStatus::Ready).
     NeedsMore,
 
     /// The decoder has accumulated sufficient data and is ready to finalize.

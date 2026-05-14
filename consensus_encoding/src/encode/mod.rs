@@ -55,7 +55,7 @@ pub trait Encode {
 /// ```no-compile
 /// loop {
 ///     process_current_chunk(encoder.current_chunk());
-///     if !encoder.advance() {
+///     if encoder.advance().is_finished() {
 ///         break
 ///     }
 /// }
@@ -66,8 +66,9 @@ pub trait Encode {
 ///
 /// It is crucial that the callers use the methods in that order: obtain the slice via
 /// `current_chunk`, write it somewhere and, once fully written, try to advance the encoder.
-/// Attempting to call any method after [`advance`](Self::advance) returned `false` or calling
-/// `advance` before fully processing the chunks will lead to unspecified buggy behavior.
+/// Attempting to call any method after [`advance`](Self::advance) returned
+/// `EncoderStatus::Finished` or calling `advance` before fully processing the chunks will lead to
+/// unspecified buggy behavior.
 ///
 /// The callers MUST NOT assume that the encoder returns any particular size of the chunks. The
 /// implementors are allowed to change the sizes of the chunks as long as the concatenation of all
@@ -87,15 +88,15 @@ pub trait Encoder {
     ///
     /// # Returns
     ///
-    /// - `true` if the encoder has advanced to a new state and [`Self::current_chunk`] will return new data.
-    /// - `false` if the encoder is exhausted and has no more states.
+    /// - `EncoderStatus::HasMore` if the encoder has advanced to a new state and [`Self::current_chunk`] will return new data.
+    /// - `EncoderStatus::Finished` if the encoder is exhausted and has no more states.
     ///
     /// # Important
     ///
-    /// After `false` was returned the encoder is in unspecified state. Calling any of its methods
-    /// in such state is a bug (but not UB) unless the specific encoder documents otherwise. While
-    /// usually the encoder simply stays in the last possible state this MUST NOT be relied upon by
-    /// the callers.
+    /// After `EncoderStatus::Finished` was returned the encoder is in unspecified state. Calling
+    /// any of its methods in such state is a bug (but not UB) unless the specific encoder documents
+    /// otherwise. While usually the encoder simply stays in the last possible state this MUST NOT
+    /// be relied upon by the callers.
     fn advance(&mut self) -> EncoderStatus;
 }
 
@@ -305,12 +306,14 @@ where
 pub trait ExactSizeEncoder: Encoder {
     /// The number of bytes remaining that the encoder will yield.
     ///
-    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned `false`.
+    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned
+    /// `EncoderStatus::Finished`.
     fn len(&self) -> usize;
 
     /// Returns whether the encoder would yield an empty response.
     ///
-    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned `false`.
+    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned
+    /// `EncoderStatus::Finished`.
     fn is_empty(&self) -> bool { self.len() == 0 }
 }
 

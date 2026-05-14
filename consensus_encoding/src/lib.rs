@@ -19,13 +19,13 @@
 //!
 //! Types implement [`Encode`] to produce an [`Encoder`], which yields encoded bytes in chunks
 //! via [`Encoder::current_chunk`] and [`Encoder::advance`]. The caller drives the process by
-//! pulling chunks until `advance` returns `false`.
+//! pulling chunks until `advance` returns [`EncoderStatus::Finished`].
 //!
 //! # Decoding
 //!
 //! Types implement [`Decode`] to produce a [`Decoder`], which consumes bytes via
-//! [`Decoder::push_bytes`] until it signals completion by returning `Ok(false)`. The caller then
-//! calls [`Decoder::end`] to obtain the decoded value.
+//! [`Decoder::push_bytes`] until it signals completion by returning `Ok(DecoderStatus::Ready)`. The
+//! caller then calls [`Decoder::end`] to obtain the decoded value.
 //!
 //! Unlike encoding, decoding is fallible. Both `push_bytes` and `end` return `Result`. I/O errors
 //! are handled by the caller, keeping the codec logic I/O-agnostic.
