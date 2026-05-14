@@ -16,10 +16,10 @@ use core::{cmp, mem};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::{ArrayEncoder, BytesEncoder, Encoder2, EncoderStatus};
+use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
-    CompactSizeEncoder, Decoder2, Decoder3, Encode as _, Encoder3, Encoder6, SliceEncoder,
+    CompactSizeEncoder, Decoder2, Decoder3, Encode as _, Encoder3, Encoder6, EncoderStatus, SliceEncoder,
     VecDecoder,
 };
 #[cfg(feature = "alloc")]
