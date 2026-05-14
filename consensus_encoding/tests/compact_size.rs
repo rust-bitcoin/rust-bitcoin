@@ -4,7 +4,7 @@
 
 use bitcoin_consensus_encoding::{
     check_encode, decode_from_slice, CompactSizeDecoderError, CompactSizeEncoder,
-    CompactSizeU64Decoder, Decode, Encode,
+    CompactSizeU64Decoder, Decode, Encode, ExactSizeEncoder,
 };
 use bitcoin_consensus_encoding::{CompactSizeDecoder, Decoder};
 
@@ -306,4 +306,22 @@ fn decoder_compact_size_end_incomplete_nine_byte() {
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
+}
+
+#[test]
+fn encoder_compact_size_len_matches_encoded_bytes() {
+    // Test that CompactSizeEncoder::len() returns the correct length for various values
+    let test_cases = [
+        (0usize, 1),              // Single byte: 0x00
+        (252usize, 1),            // Single byte: 0xFC
+        (253usize, 3),            // Three bytes: 0xFD + 2 bytes
+        (0xFFFF_usize, 3),        // Three bytes: 0xFD + 2 bytes
+        (0x1_0000_usize, 5),      // Five bytes: 0xFE + 4 bytes
+        (0xFFFF_FFFF_usize, 5),   // Five bytes: 0xFE + 4 bytes
+    ];
+
+    for (value, expected_len) in test_cases {
+        let encoder = CompactSizeEncoder::new(value);
+        assert_eq!(encoder.len(), expected_len, "CompactSizeEncoder::len() mismatch for value {}", value);
+    }
 }
