@@ -6,7 +6,7 @@
 //! This fuzz target compares the consensus encoding produced by `bitcoin_consensus_encoding::encode_to_vec`
 //! in master branch with `bitcoin::consensus::encode::serialize` from bitcoin 0.32 for all shared types.
 
-use bitcoin_consensus_encoding::{decode_from_slice, encode_to_vec, Decoder};
+use bitcoin_consensus_encoding::{check_encode, decode_from_slice, Decoder};
 use libfuzzer_sys::fuzz_target;
 
 #[cfg(not(fuzzing))]
@@ -82,10 +82,13 @@ macro_rules! compare_encoding {
 
         match (old_result, new_result) {
             (Ok(old_obj), Ok(new_obj)) => {
-                // Encode with both the old and consensus_encoding implementations
+                // Encode with old bitcoin and then compare against new encoding
                 let old_encoded = old_bitcoin::consensus::encode::serialize(&old_obj);
-                let new_encoded = encode_to_vec(&new_obj);
-                assert_eq!(old_encoded, new_encoded);
+                // Uncomment the following two lines if you need to see the difference
+                // in serialisation.
+                // let new_encoded = bitcoin_consensus_encoding::encode_to_vec(&new_obj);
+                // assert_eq!(old_encoded, new_encoded);
+                check_encode(&new_obj, &old_encoded);
             }
             (Ok(old_obj), Err(ref err)) =>
                 if !is_known_decoder_divergence(err) {
