@@ -6,8 +6,9 @@
 use std::io::{Cursor, Write};
 
 use bitcoin_consensus_encoding::{
-    ArrayEncoder, ArrayRefEncoder, BytesEncoder, check_encoder, Encode, Encoder, Encoder2, Encoder3,
-    Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder, SliceEncoder,
+    check_encode, check_encoder, ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encode, Encoder,
+    Encoder2, Encoder3, Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder,
+    SliceEncoder,
 };
 
 struct TestBytes<'a>(&'a [u8]);
@@ -429,4 +430,49 @@ fn iter_encoder() {
     assert_eq!(iter.next().unwrap(), 4);
     assert_eq!(iter.len(), 0);
     assert!(iter.next().is_none());
+}
+
+#[test]
+#[should_panic(expected = "encoder did not yield expected bytes")]
+fn check_encode_detects_mismatched_bytes() {
+    let test_array = TestArray([0x01, 0x02, 0x03, 0x04]);
+    check_encode(&test_array, &[0xFF, 0xFF, 0xFF, 0xFF]);
+}
+
+#[test]
+#[should_panic(expected = "did not yield enough bytes")]
+fn check_encode_detects_too_few_bytes() {
+    let test_array = TestArray([0x01, 0x02, 0x03, 0x04]);
+    check_encode(&test_array, &[0x01, 0x02, 0x03, 0x04, 0x05]);
+}
+
+#[test]
+fn check_encoder_with_multiple_chunks() {
+    let mut encoder = Encoder3::new(
+        BytesEncoder::without_length_prefix(&[0x01]),
+        BytesEncoder::without_length_prefix(&[0x02, 0x03]),
+        BytesEncoder::without_length_prefix(&[0x04, 0x05, 0x06]),
+    );
+    check_encoder(&mut encoder, &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+}
+
+#[test]
+#[should_panic(expected = "difference in chunk #1")]
+fn check_encoder_detects_error_in_chunk() {
+    let mut encoder = Encoder3::new(
+        BytesEncoder::without_length_prefix(&[0x01]),
+        BytesEncoder::without_length_prefix(&[0xFF, 0xFF]),
+        BytesEncoder::without_length_prefix(&[0x04, 0x05, 0x06]),
+    );
+    check_encoder(&mut encoder, &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+}
+
+#[test]
+#[should_panic(expected = "after 1 bytes")]
+fn check_encoder_detects_error_byte_offset() {
+    let mut encoder = Encoder2::new(
+        BytesEncoder::without_length_prefix(&[0x01]),
+        BytesEncoder::without_length_prefix(&[0xFF, 0x03]),
+    );
+    check_encoder(&mut encoder, &[0x01, 0x02, 0x03]);
 }
