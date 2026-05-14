@@ -48,7 +48,7 @@ impl encoding::Decoder for SendCmpctDecoder {
     type Error = SendCmpctDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(SendCmpctDecoderError)
     }
 

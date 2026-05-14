@@ -152,7 +152,7 @@ impl encoding::Decoder for MerkleBlockDecoder {
     type Error = MerkleBlockDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(MerkleBlockDecoderError)
     }
 
@@ -520,7 +520,7 @@ impl encoding::Decoder for PartialMerkleTreeDecoder {
     type Error = PartialMerkleTreeDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(PartialMerkleTreeDecoderError)
     }
 

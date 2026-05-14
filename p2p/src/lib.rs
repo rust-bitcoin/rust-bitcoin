@@ -146,7 +146,7 @@ impl encoding::Decoder for ProtocolVersionDecoder {
     type Error = ProtocolVersionDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(ProtocolVersionDecoderError)
     }
 
@@ -340,7 +340,7 @@ impl encoding::Decoder for ServiceFlagsDecoder {
     type Error = ServiceFlagsDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(ServiceFlagsDecoderError)
     }
 
@@ -470,7 +470,7 @@ impl encoding::Decoder for MagicDecoder {
     type Error = MagicDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(MagicDecoderError)
     }
 

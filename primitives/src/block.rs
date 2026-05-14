@@ -1245,8 +1245,8 @@ mod tests {
 
         let mut decoder = Block::decoder();
         assert!(decoder.read_limit() > 0);
-        let needs_more = decoder.push_bytes(&mut view).unwrap();
-        assert!(!needs_more);
+        let status = decoder.push_bytes(&mut view).unwrap();
+        assert!(status.is_ready());
         assert_eq!(decoder.read_limit(), 0);
         assert_eq!(decoder.end().unwrap(), block);
     }
@@ -1274,8 +1274,8 @@ mod tests {
 
         let mut decoder = Header::decoder();
         assert!(decoder.read_limit() > 0);
-        let needs_more = decoder.push_bytes(&mut view).unwrap();
-        assert!(!needs_more);
+        let status = decoder.push_bytes(&mut view).unwrap();
+        assert!(status.is_ready());
         assert_eq!(decoder.read_limit(), 0);
         assert_eq!(decoder.end().unwrap(), header);
     }
@@ -1837,8 +1837,8 @@ mod tests {
 
         assert!(decoder.read_limit() > 0);
 
-        let needs_more = decoder.push_bytes(&mut bytes).unwrap();
-        assert!(!needs_more);
+        let status = decoder.push_bytes(&mut bytes).unwrap();
+        assert!(status.is_ready());
         assert!(bytes.is_empty());
 
         assert_eq!(decoder.read_limit(), 0);
@@ -1895,7 +1895,7 @@ mod tests {
         let mut view = bytes.as_slice();
 
         let mut decoder = Block::decoder();
-        assert!(decoder.push_bytes(&mut view).unwrap());
+        assert!(decoder.push_bytes(&mut view).unwrap().needs_more());
         assert!(view.is_empty());
 
         let err_second = decoder.end().unwrap_err();

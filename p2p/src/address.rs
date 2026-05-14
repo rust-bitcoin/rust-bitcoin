@@ -167,7 +167,7 @@ impl encoding::Decoder for AddressDecoder {
     type Error = AddressDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(AddressDecoderError)
     }
 
@@ -223,7 +223,7 @@ impl encoding::Decoder for AddrV1MessageDecoder {
     type Error = AddrV1MessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(AddrV1MessageDecoderError)
     }
 
@@ -528,7 +528,7 @@ impl encoding::Decoder for AddrV2Decoder {
     type Error = AddrV2DecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(AddrV2DecoderError::Decoder)
     }
 
@@ -656,7 +656,7 @@ impl encoding::Decoder for AddrV2MessageDecoder {
     type Error = AddrV2MessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(AddrV2MessageDecoderError)
     }
 

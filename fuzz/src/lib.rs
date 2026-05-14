@@ -47,7 +47,7 @@ where
     let mut decoder = D::decoder();
     loop {
         let mut chunk = encoder.current_chunk();
-        while !chunk.is_empty() && decoder.push_bytes(&mut chunk).unwrap() {}
+        while !chunk.is_empty() && decoder.push_bytes(&mut chunk).unwrap().needs_more() {}
         if !chunk.is_empty() || encoder.advance().has_finished() {
             break;
         }
