@@ -6,6 +6,7 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
+use core::convert::Infallible;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
@@ -510,7 +511,9 @@ pub enum Error {
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

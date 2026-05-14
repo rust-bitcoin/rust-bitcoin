@@ -38,6 +38,7 @@
 //! assert_eq!(1, index[0]);
 //! ```
 
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -507,7 +508,9 @@ pub enum MerkleBlockError {
     IdenticalHashesFound,
 }
 
-internals::impl_from_infallible!(MerkleBlockError);
+impl From<Infallible> for MerkleBlockError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for MerkleBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -4,6 +4,7 @@
 //!
 //! Relies on the `bitcoinconsensus` crate that uses Bitcoin Core libconsensus to perform validation.
 
+use core::convert::Infallible;
 use core::fmt;
 
 use internals::write_err;
@@ -209,7 +210,9 @@ pub enum TxVerifyError {
     UnknownSpentOutput(OutPoint),
 }
 
-internals::impl_from_infallible!(TxVerifyError);
+impl From<Infallible> for TxVerifyError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TxVerifyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

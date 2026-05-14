@@ -5,6 +5,7 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
+use core::convert::Infallible;
 use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
@@ -930,7 +931,9 @@ pub enum FromSliceError {
     InvalidLength(usize),
 }
 
-internals::impl_from_infallible!(FromSliceError);
+impl From<Infallible> for FromSliceError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -974,7 +977,9 @@ pub enum FromWifError {
     Secp256k1(secp256k1::Error),
 }
 
-internals::impl_from_infallible!(FromWifError);
+impl From<Infallible> for FromWifError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromWifError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1034,7 +1039,9 @@ pub enum ParsePublicKeyError {
     InvalidHexLength(usize),
 }
 
-internals::impl_from_infallible!(ParsePublicKeyError);
+impl From<Infallible> for ParsePublicKeyError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1073,7 +1080,9 @@ pub enum ParseCompressedPublicKeyError {
     Hex(hex::HexToArrayError),
 }
 
-internals::impl_from_infallible!(ParseCompressedPublicKeyError);
+impl From<Infallible> for ParseCompressedPublicKeyError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseCompressedPublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

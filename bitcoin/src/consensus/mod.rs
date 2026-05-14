@@ -13,6 +13,7 @@ pub mod serde;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod validation;
 
+use core::convert::Infallible;
 use core::fmt;
 
 use internals::write_err;
@@ -125,7 +126,9 @@ pub enum DecodeError<E> {
     Other(E),
 }
 
-internals::impl_from_infallible!(DecodeError<E>);
+impl<E> From<Infallible> for DecodeError<E> {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -16,6 +16,7 @@ mod map;
 pub mod raw;
 pub mod serialize;
 
+use core::convert::Infallible;
 use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
@@ -914,7 +915,9 @@ pub enum GetKeyError {
     NotSupported,
 }
 
-internals::impl_from_infallible!(GetKeyError);
+impl From<Infallible> for GetKeyError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for GetKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1027,7 +1030,9 @@ pub enum SignError {
     Unsupported,
 }
 
-internals::impl_from_infallible!(SignError);
+impl From<Infallible> for SignError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for SignError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1116,7 +1121,9 @@ pub enum ExtractTxError {
     },
 }
 
-internals::impl_from_infallible!(ExtractTxError);
+impl From<Infallible> for ExtractTxError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ExtractTxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1168,7 +1175,9 @@ pub enum IndexOutOfBoundsError {
     },
 }
 
-internals::impl_from_infallible!(IndexOutOfBoundsError);
+impl From<Infallible> for IndexOutOfBoundsError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for IndexOutOfBoundsError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1202,6 +1211,7 @@ impl std::error::Error for IndexOutOfBoundsError {
 
 #[cfg(feature = "base64")]
 mod display_from_str {
+    use core::convert::Infallible;
     use core::fmt::{self, Display, Formatter};
     use core::str::FromStr;
 
@@ -1221,7 +1231,9 @@ mod display_from_str {
         Base64Encoding(::base64::DecodeError),
     }
 
-    internals::impl_from_infallible!(PsbtParseError);
+    impl From<Infallible> for PsbtParseError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
     impl Display for PsbtParseError {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
