@@ -1,3 +1,13 @@
+# 1.0.0 - 2026-05-08
+
+- Re-name main traits [#6028](https://github.com/rust-bitcoin/rust-bitcoin/pull/60428)
+- Change `EncodableByteIter` to `EncoderByteIter` [#6044](https://github.com/rust-bitcoin/rust-bitcoin/pull/6044)
+- Encoder/decoder improvements [#6004](https://github.com/rust-bitcoin/rust-bitcoin/pull/6004)
+- Re-name `flush_to` functions to `drain_to` [#6064](https://github.com/rust-bitcoin/rust-bitcoin/pull/6064)
+
+Please note `Encodable` is now `Encode` and `Decodable` is now `Decode` but the old names are still
+used for the old consensus encoding code in `rust-bticoin`.
+
 # 0.2.0 - 2026-04-08
 
 This release is breaking and causes our whole stack to have to be re-released ...
