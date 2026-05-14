@@ -28,7 +28,7 @@ use crate::sighash::EcdsaSighashType;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
-pub use self::error::{DecodeError, ParseSignatureError};
+pub use self::error::{DecodeError, InvalidSignatureError, ParseSignatureError};
 
 const MAX_SIG_LEN: usize = 73;
 
@@ -287,6 +287,26 @@ pub mod error {
                 Self::EmptySignature => None,
             }
         }
+    }
+
+    /// An ECDSA signature is not valid.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct InvalidSignatureError;
+
+    impl From<Infallible> for InvalidSignatureError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for InvalidSignatureError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "invalid ECDSA signature")
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidSignatureError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
     }
 
     /// Error encountered while parsing an ECDSA signature from a string.
