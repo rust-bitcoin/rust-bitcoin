@@ -3,13 +3,12 @@
 //! SHA256t implementation (tagged SHA256).
 //!
 
+#[cfg(feature = "schemars")]
+use alloc::{boxed::Box, string::String};
 use core::marker::PhantomData;
 use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
-
-#[cfg(feature = "schemars")]
-use alloc::{boxed::Box, string::String};
 
 use crate::{sha256, FromSliceError};
 

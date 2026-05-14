@@ -512,7 +512,8 @@ impl Decodable for RawNetworkMessage {
                 let fee: i64 = Decodable::consensus_decode_from_finite_reader(&mut mem_d)?;
                 // The upper limit is MAX_MONEY, which matches Core's use of MoneyRange:
                 // https://github.com/bitcoin/bitcoin/blob/8396b7f2a3be4be7bb2ffc152f87b4cab95dd84e/src/net_processing.cpp#L4984
-                let upper_limit = units::Amount::MAX_MONEY.to_sat()
+                let upper_limit = units::Amount::MAX_MONEY
+                    .to_sat()
                     .try_into()
                     .expect("Amount::MAX_MONEY < i64::MAX");
                 if fee < 0 || fee > upper_limit {
@@ -738,10 +739,16 @@ mod test {
         assert_eq!(cs.unwrap(), CommandString::try_from_static("\0And\0rew").unwrap());
 
         // Invalid CommandString, must be ASCII
-        assert!(deserialize::<CommandString>(&[0, 0x41u8, 0x6e, 0xa4, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]).is_err());
+        assert!(deserialize::<CommandString>(&[
+            0, 0x41u8, 0x6e, 0xa4, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0
+        ])
+        .is_err());
 
         // Invalid CommandString, must be 12 bytes
-        assert!(deserialize::<CommandString>(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]).is_err());
+        assert!(deserialize::<CommandString>(&[
+            0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0
+        ])
+        .is_err());
     }
 
     #[test]
