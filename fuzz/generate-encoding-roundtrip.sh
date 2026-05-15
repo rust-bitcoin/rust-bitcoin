@@ -79,6 +79,7 @@ ROUNDTRIP_TYPES=(
     "p2p::message_network::RejectReason"
     "p2p::message_network::UserAgent"
     "p2p::message_network::VersionMessage"
+    "p2p::message_erlay::SendTxRcnCl"
 )
 
 # Types tested with check_script_roundtrip (Buf types that Deref to their Encodable target).
