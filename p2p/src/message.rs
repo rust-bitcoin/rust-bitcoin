@@ -1386,6 +1386,8 @@ enum DecoderState {
         length: u32,
         checksum: [u8; 4],
         payload_decoder: NetworkMessageDecoder,
+        // Hash engine to compute checksum over raw payload bytes as they arrive.
+        checksum_engine: sha256d::HashEngine,
     },
 }
 
@@ -1446,6 +1448,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                         length: header.length,
                         checksum: header.checksum,
                         payload_decoder,
+                        checksum_engine: sha256d::HashEngine::new(),
                     };
 
                     // Continue with any remaining bytes.
@@ -1454,8 +1457,13 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
                 Ok(need_more)
             }
-            DecoderState::ReadingPayload { payload_decoder, .. } =>
-                payload_decoder.push_bytes(bytes),
+            DecoderState::ReadingPayload { payload_decoder, checksum_engine, .. } => {
+                let original_bytes = *bytes;
+                let result = payload_decoder.push_bytes(bytes)?;
+                checksum_engine.input(&original_bytes[..original_bytes.len() - bytes.len()]);
+
+                Ok(result)
+            }
         }
     }
 
@@ -1466,9 +1474,19 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 .map_err(V1NetworkMessageDecoderErrorInner::Header)
                 .map_err(V1NetworkMessageDecoderError)
                 .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
-            DecoderState::ReadingPayload { magic, length, checksum, payload_decoder, .. } => {
+            DecoderState::ReadingPayload {
+                magic,
+                length,
+                checksum,
+                payload_decoder,
+                checksum_engine,
+            } => {
                 let payload = payload_decoder.end()?;
-                let (_, expected_checksum) = sha2_checksum(&payload);
+
+                let hash_bytes = checksum_engine.finalize().to_byte_array();
+                let expected_checksum =
+                    [hash_bytes[0], hash_bytes[1], hash_bytes[2], hash_bytes[3]];
+
                 if checksum != expected_checksum {
                     return Err(V1NetworkMessageDecoderError(
                         V1NetworkMessageDecoderErrorInner::InvalidChecksum {
