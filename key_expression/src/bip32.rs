@@ -6,8 +6,8 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
 use alloc::string::String;
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
@@ -128,77 +128,78 @@ pub struct Xpub {
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpub, "a BIP-0032 extended public key");
 
-/// A child number for a derived key
+/// Flag with the hardened bit turned on.
+const HARDENED_FLAG: u32 = 1 << 31;
+
+/// The highest valid child index.
+const MAX_CHILD_INDEX: u32 = HARDENED_FLAG - 1;
+
+/// A child number for a derived key.
+///
+/// The high bit marks whether the index is hardened and the remaining bits
+/// store the actual index.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
-pub enum ChildNumber {
-    /// Non-hardened key
-    Normal {
-        /// Key index, within [0, 2^31 - 1]
-        index: u32,
-    },
-    /// Hardened key
-    Hardened {
-        /// Key index, within [0, 2^31 - 1]
-        index: u32,
-    },
-}
+pub struct ChildNumber(u32);
+
 impl ChildNumber {
     /// Normal child number with index 0.
-    pub const ZERO_NORMAL: Self = Self::Normal { index: 0 };
+    pub const ZERO_NORMAL: Self = Self(0);
 
     /// Normal child number with index 1.
-    pub const ONE_NORMAL: Self = Self::Normal { index: 1 };
+    pub const ONE_NORMAL: Self = Self(1);
 
     /// Hardened child number with index 0.
-    pub const ZERO_HARDENED: Self = Self::Hardened { index: 0 };
+    pub const ZERO_HARDENED: Self = Self(HARDENED_FLAG);
 
     /// Hardened child number with index 1.
-    pub const ONE_HARDENED: Self = Self::Hardened { index: 1 };
+    pub const ONE_HARDENED: Self = Self(HARDENED_FLAG | 1);
 
-    /// Constructs a new [`Normal`] from an index.
-    ///
-    /// [`Normal`]: #variant.Normal
+    /// Constructs a new normal child number from an index.
     ///
     /// # Errors
     ///
     /// Returns an error if the index is not within [0, 2^31 - 1].
     pub fn from_normal_idx(index: u32) -> Result<Self, IndexOutOfRangeError> {
-        if index & (1 << 31) == 0 {
-            Ok(Self::Normal { index })
+        if index <= MAX_CHILD_INDEX {
+            Ok(Self(index))
         } else {
             Err(IndexOutOfRangeError { index })
         }
     }
 
-    /// Constructs a new [`Hardened`] from an index.
-    ///
-    /// [`Hardened`]: #variant.Hardened
+    /// Constructs a new hardened child number from an index.
     ///
     /// # Errors
     ///
     /// Returns an error if the index is not within [0, 2^31 - 1].
     pub fn from_hardened_idx(index: u32) -> Result<Self, IndexOutOfRangeError> {
-        if index & (1 << 31) == 0 {
-            Ok(Self::Hardened { index })
+        if index <= MAX_CHILD_INDEX {
+            Ok(Self(index | HARDENED_FLAG))
         } else {
             Err(IndexOutOfRangeError { index })
         }
     }
 
-    /// Returns `true` if the child number is a [`Normal`] value.
+    /// Constructs a child number from its raw BIP-0032 representation.
     ///
-    /// [`Normal`]: #variant.Normal
+    /// The raw representation includes the hardened bit. Use [`Self::from_normal_idx`] or
+    /// [`Self::from_hardened_idx`] to construct a child number from an index.
+    pub fn from_raw(raw: u32) -> Self { Self(raw) }
+
+    /// Returns the raw BIP-0032 representation.
+    ///
+    /// The raw representation includes the hardened bit. Use [`Self::index`] to get the child
+    /// index without the hardened bit.
+    pub fn to_raw(self) -> u32 { self.0 }
+
+    /// Returns the child index, without the hardened bit.
+    pub fn index(self) -> u32 { self.0 & MAX_CHILD_INDEX }
+
+    /// Returns `true` if the child number is not hardened.
     pub fn is_normal(&self) -> bool { !self.is_hardened() }
 
-    /// Returns `true` if the child number is a [`Hardened`] value.
-    ///
-    /// [`Hardened`]: #variant.Hardened
-    pub fn is_hardened(&self) -> bool {
-        match self {
-            Self::Hardened { .. } => true,
-            Self::Normal { .. } => false,
-        }
-    }
+    /// Returns `true` if the child number is hardened.
+    pub fn is_hardened(&self) -> bool { self.0 & HARDENED_FLAG != 0 }
 
     /// Returns the child number that is a single increment from this one.
     ///
@@ -206,12 +207,12 @@ impl ChildNumber {
     ///
     /// Returns an error if the index after incrementing will be outside the range [0, 2^31 - 1].
     pub fn increment(self) -> Result<Self, IndexOutOfRangeError> {
-        // Bare addition in this function is okay, because we have an invariant that
-        // `index` is always within [0, 2^31 - 1]. FIXME this is not actually an
-        // invariant because the fields are public.
-        match self {
-            Self::Normal { index: idx } => Self::from_normal_idx(idx + 1),
-            Self::Hardened { index: idx } => Self::from_hardened_idx(idx + 1),
+        let index = self.index();
+        let next = index.checked_add(1).ok_or(IndexOutOfRangeError { index })?;
+        if self.is_hardened() {
+            Self::from_hardened_idx(next)
+        } else {
+            Self::from_normal_idx(next)
         }
     }
 
@@ -232,34 +233,23 @@ impl ChildNumber {
     where
         F: Fn(&u32, &mut fmt::Formatter) -> fmt::Result,
     {
-        match self {
-            Self::Hardened { index } => {
-                format_fn(&index, f)?;
-                let alt = f.alternate();
-                f.write_str(if alt { hardened_alt_suffix } else { "'" })
-            }
-            Self::Normal { index } => format_fn(&index, f),
-        }
-    }
-}
-
-impl From<u32> for ChildNumber {
-    fn from(number: u32) -> Self {
-        if number & (1 << 31) != 0 {
-            Self::Hardened { index: number ^ (1 << 31) }
+        let index = self.index();
+        if self.is_hardened() {
+            format_fn(&index, f)?;
+            let alt = f.alternate();
+            f.write_str(if alt { hardened_alt_suffix } else { "'" })
         } else {
-            Self::Normal { index: number }
+            format_fn(&index, f)
         }
     }
 }
 
 impl From<ChildNumber> for u32 {
-    fn from(cnum: ChildNumber) -> Self {
-        match cnum {
-            ChildNumber::Normal { index } => index,
-            ChildNumber::Hardened { index } => index | (1 << 31),
-        }
-    }
+    fn from(number: ChildNumber) -> Self { number.to_raw() }
+}
+
+impl From<u32> for ChildNumber {
+    fn from(number: u32) -> Self { Self::from_raw(number) }
 }
 
 impl fmt::Display for ChildNumber {
@@ -494,12 +484,12 @@ impl DerivationPath {
 
     /// Gets an [Iterator] over the unhardened children of this [`DerivationPath`].
     pub fn normal_children(&self) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(self, ChildNumber::Normal { index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::ZERO_NORMAL)
     }
 
     /// Gets an [Iterator] over the hardened children of this [`DerivationPath`].
     pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(self, ChildNumber::Hardened { index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::ZERO_HARDENED)
     }
 
     /// Concatenate `self` with `path` and return the resulting new path.
@@ -524,7 +514,7 @@ impl DerivationPath {
         new_path
     }
 
-    /// Returns the derivation path as a vector of u32 integers.
+    /// Returns the derivation path as a vector of raw BIP-0032 u32 child numbers.
     /// Unhardened elements are copied as is.
     /// 0x80000000 is added to the hardened elements.
     ///
@@ -535,9 +525,9 @@ impl DerivationPath {
     /// const HARDENED: u32 = 0x80000000;
     /// assert_eq!(path.to_u32_vec(), vec![84 + HARDENED, HARDENED, HARDENED, 0, 1]);
     /// ```
-    pub fn to_u32_vec(&self) -> Vec<u32> { self.into_iter().map(|&el| el.into()).collect() }
+    pub fn to_u32_vec(&self) -> Vec<u32> { self.into_iter().map(|&el| el.to_raw()).collect() }
 
-    /// Constructs a new derivation path from a slice of u32s.
+    /// Constructs a new derivation path from a slice of raw BIP-0032 u32 child numbers.
     /// ```
     /// use bitcoin_key_expression::bip32::DerivationPath;
     ///
@@ -547,7 +537,7 @@ impl DerivationPath {
     /// assert_eq!(path.to_u32_vec(), expected);
     /// ```
     pub fn from_u32_slice(numbers: &[u32]) -> Self {
-        numbers.iter().map(|&n| ChildNumber::from(n)).collect()
+        numbers.iter().map(|&n| ChildNumber::from_raw(n)).collect()
     }
 }
 
@@ -648,18 +638,13 @@ impl Xpriv {
     /// Private->Private child key derivation
     fn ckd_priv(&self, i: ChildNumber) -> Result<Self, DerivationError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
-        match i {
-            ChildNumber::Normal { .. } => {
-                // Non-hardened key: compute public data and use that
-                engine.input(
-                    &secp256k1::PublicKey::from_secret_key(&self.private_key).serialize()[..],
-                );
-            }
-            ChildNumber::Hardened { .. } => {
-                // Hardened key: use only secret data to prevent public derivation
-                engine.input(&[0u8]);
-                engine.input(&self.private_key[..]);
-            }
+        if i.is_normal() {
+            // Non-hardened key: compute public data and use that.
+            engine.input(&secp256k1::PublicKey::from_secret_key(&self.private_key).serialize()[..]);
+        } else {
+            // Hardened key: use only secret data to prevent public derivation.
+            engine.input(&[0u8]);
+            engine.input(&self.private_key[..]);
         }
 
         engine.input(&u32::from(i).to_be_bytes());
@@ -816,22 +801,21 @@ impl Xpub {
         &self,
         i: ChildNumber,
     ) -> Result<(secp256k1::SecretKey, ChainCode), DerivationError> {
-        match i {
-            ChildNumber::Hardened { .. } => Err(DerivationError::CannotDeriveHardenedChild),
-            ChildNumber::Normal { index: n } => {
-                let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
-                engine.input(&self.public_key.serialize()[..]);
-                engine.input(&n.to_be_bytes());
-
-                let hmac = engine.finalize();
-                let private_key = secp256k1::SecretKey::from_secret_bytes(
-                    *hmac.as_byte_array().split_array::<32, 32>().0,
-                )
-                .expect("cryptographically unreachable");
-                let chain_code = ChainCode::from_hmac(hmac);
-                Ok((private_key, chain_code))
-            }
+        if i.is_hardened() {
+            return Err(DerivationError::CannotDeriveHardenedChild);
         }
+
+        let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
+        engine.input(&self.public_key.serialize()[..]);
+        engine.input(&i.index().to_be_bytes());
+
+        let hmac = engine.finalize();
+        let private_key = secp256k1::SecretKey::from_secret_bytes(
+            *hmac.as_byte_array().split_array::<32, 32>().0,
+        )
+        .expect("cryptographically unreachable");
+        let chain_code = ChainCode::from_hmac(hmac);
+        Ok((private_key, chain_code))
     }
 
     /// Public->Public child key derivation
@@ -1240,11 +1224,7 @@ impl<'a> Arbitrary<'a> for ChainCode {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ChildNumber {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let index = u.arbitrary()?;
-        match bool::arbitrary(u)? {
-            true => Ok(Self::Hardened { index }),
-            false => Ok(Self::Normal { index }),
-        }
+        Ok(Self::from_raw(u.arbitrary()?))
     }
 }
 
@@ -1284,13 +1264,13 @@ impl<'a> Arbitrary<'a> for Xpriv {
 
 #[cfg(test)]
 mod tests {
-    use alloc::{string::ToString, format};
+    use alloc::format;
+    use alloc::string::ToString;
 
     use hex_unstable::hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
 
-    use super::ChildNumber::{Hardened, Normal};
     use super::*;
 
     #[test]
@@ -1313,8 +1293,8 @@ mod tests {
 
     #[test]
     fn test_lowerhex_formatting() {
-        let normal = Normal { index: 42 };
-        let hardened = Hardened { index: 42 };
+        let normal = ChildNumber::from_normal_idx(42).unwrap();
+        let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
         assert_eq!(format!("{:x}", normal), "2a");
         assert_eq!(format!("{:#x}", normal), "0x2a");
@@ -1325,8 +1305,8 @@ mod tests {
 
     #[test]
     fn test_upperhex_formatting() {
-        let normal = Normal { index: 42 };
-        let hardened = Hardened { index: 42 };
+        let normal = ChildNumber::from_normal_idx(42).unwrap();
+        let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
         assert_eq!(format!("{:X}", normal), "2A");
         assert_eq!(format!("{:#X}", normal), "0x2A");
@@ -1337,8 +1317,8 @@ mod tests {
 
     #[test]
     fn test_octal_formatting() {
-        let normal = Normal { index: 42 };
-        let hardened = Hardened { index: 42 };
+        let normal = ChildNumber::from_normal_idx(42).unwrap();
+        let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
         assert_eq!(format!("{:o}", normal), "52");
         assert_eq!(format!("{:#o}", normal), "0o52");
@@ -1349,8 +1329,8 @@ mod tests {
 
     #[test]
     fn test_binary_formatting() {
-        let normal = Normal { index: 42 };
-        let hardened = Hardened { index: 42 };
+        let normal = ChildNumber::from_normal_idx(42).unwrap();
+        let hardened = ChildNumber::from_hardened_idx(42).unwrap();
 
         assert_eq!(format!("{:b}", normal), "101010");
         assert_eq!(format!("{:#b}", normal), "0b101010");
@@ -1364,7 +1344,9 @@ mod tests {
         let invalid_path = "2147483648";
         assert_eq!(
             invalid_path.parse::<DerivationPath>(),
-            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2_147_483_648 })),
+            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError {
+                index: 2_147_483_648
+            })),
         );
     }
 
@@ -1446,6 +1428,40 @@ mod tests {
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
     }
 
+    #[test]
+    fn child_number_raw_conversion() {
+        let normal = ChildNumber::from_normal_idx(42).unwrap();
+        assert_eq!(normal.to_raw(), 42);
+        assert_eq!(normal.index(), 42);
+        assert!(normal.is_normal());
+        assert!(!normal.is_hardened());
+        assert_eq!(ChildNumber::from_raw(42), normal);
+
+        let hardened = ChildNumber::from_hardened_idx(42).unwrap();
+        assert_eq!(hardened.to_raw(), HARDENED_FLAG | 42);
+        assert_eq!(hardened.index(), 42);
+        assert!(!hardened.is_normal());
+        assert!(hardened.is_hardened());
+        assert_eq!(ChildNumber::from_raw(HARDENED_FLAG | 42), hardened);
+    }
+
+    #[test]
+    fn child_number_index_boundaries() {
+        let max = HARDENED_FLAG - 1;
+
+        assert_eq!(ChildNumber::from_normal_idx(max).unwrap().index(), max);
+        assert_eq!(ChildNumber::from_hardened_idx(max).unwrap().index(), max);
+
+        assert_eq!(
+            ChildNumber::from_normal_idx(HARDENED_FLAG),
+            Err(IndexOutOfRangeError { index: HARDENED_FLAG })
+        );
+        assert_eq!(
+            ChildNumber::from_hardened_idx(HARDENED_FLAG),
+            Err(IndexOutOfRangeError { index: HARDENED_FLAG })
+        );
+    }
+
     fn test_path(
         network: NetworkKind,
         seed: &[u8],
@@ -1470,16 +1486,13 @@ mod tests {
         // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in &path.0 {
             sk = sk.ckd_priv(num).unwrap();
-            match num {
-                Normal { .. } => {
-                    let pk2 = pk.ckd_pub(num).unwrap();
-                    pk = Xpub::from_xpriv(&sk);
-                    assert_eq!(pk, pk2);
-                }
-                Hardened { .. } => {
-                    assert_eq!(pk.ckd_pub(num), Err(DerivationError::CannotDeriveHardenedChild));
-                    pk = Xpub::from_xpriv(&sk);
-                }
+            if num.is_normal() {
+                let pk2 = pk.ckd_pub(num).unwrap();
+                pk = Xpub::from_xpriv(&sk);
+                assert_eq!(pk, pk2);
+            } else {
+                assert_eq!(pk.ckd_pub(num), Err(DerivationError::CannotDeriveHardenedChild));
+                pk = Xpub::from_xpriv(&sk);
             }
         }
 
@@ -1720,7 +1733,7 @@ mod tests {
             network: NetworkKind::Main,
             depth: 0,
             parent_fingerprint: Default::default(),
-            child_number: ChildNumber::Normal { index: 0 },
+            child_number: ChildNumber::ZERO_NORMAL,
             private_key: sk,
             chain_code: ChainCode::from([0u8; 32])
         };
