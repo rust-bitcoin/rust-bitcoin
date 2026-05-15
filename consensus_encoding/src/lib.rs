@@ -83,7 +83,7 @@ pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with,
 };
 #[doc(inline)]
-pub use self::decode::{decode_from_slice, decode_from_slice_unbounded, Decode, Decoder, DecoderStatus};
+pub use self::decode::{check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded, Decode, Decoder, DecoderStatus};
 #[doc(inline)]
 pub use self::encode::encoders::{
     ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
