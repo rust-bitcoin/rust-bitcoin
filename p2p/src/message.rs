@@ -2951,4 +2951,23 @@ mod test {
         let encoded = encoding::drain_to_vec(&mut encoder);
         assert_eq!(encoded, expected_bytes);
     }
+
+    #[test]
+    #[rustfmt::skip] // Keep readable byte layout with comments.
+    fn v1_message_rejects_invalid_checksum_with_noncanonical_encoding() {
+        // Derived from a fuzzer crash case, a SendCmpct message with a non-canonical
+        // boolean encoding (`0x0c` instead of `0x01`) and an invalid checksum.
+        // The decoder should validate the checksum against the raw bytes,
+        // not against re-encoded bytes, so it must reject this message.
+        let malformed_v1_message = [
+            217, 173, 255, 0, // Network magic.
+            115, 101, 110, 100, 99, 109, 112, 99, 116, 0, 0, 0, // `sendcmpct\0\0\0`
+            9, 0, 0, 0, // Length is 9 bytes.
+            23, 43, 230, 232, // Invalid checksum against payload, but valid against re-encoded payload.
+            12, 12, 12, 218, 12, 14, 12, 226, 0, // Payload with non-canonical bool `0x0c`.
+        ];
+
+        encoding::decode_from_slice::<V1NetworkMessage>(&malformed_v1_message)
+            .expect_err("Message with invalid payload checksum should be rejected");
+    }
 }
