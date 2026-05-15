@@ -274,11 +274,7 @@ where
 
                 let mut out = ArrayVec::<T, CAP>::new();
                 while let Some(elem) = seq.next_element::<T>()? {
-                    // The `push()` call below panics if array is full but we want to error.
-                    if out.len() >= CAP {
-                        return Err(Error::invalid_length(out.len() + 1, &self));
-                    }
-                    out.push(elem);
+                    out.try_push(elem).map_err(|_| Error::invalid_length(out.len() + 1, &self))?;
                 }
                 Ok(out)
             }
