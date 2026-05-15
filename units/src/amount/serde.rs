@@ -163,7 +163,6 @@ pub mod as_sat {
         use core::marker::PhantomData;
 
         use serde::de::{self, SeqAccess};
-        use serde::ser::SerializeSeq;
         use serde::{Deserialize, Deserializer, Serializer};
 
         use crate::SignedAmount;
@@ -172,12 +171,10 @@ pub mod as_sat {
         where
             A: Into<SignedAmount> + Copy,
         {
-            let mut seq = s.serialize_seq(Some(a.len()))?;
-            for amount in a {
+            s.collect_seq(a.iter().map(|amount| {
                 let signed_amount: SignedAmount = (*amount).into();
-                seq.serialize_element(&signed_amount.to_sat())?;
-            }
-            seq.end()
+                signed_amount.to_sat()
+            }))
         }
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>
@@ -333,7 +330,6 @@ pub mod as_btc {
         use core::marker::PhantomData;
 
         use serde::de::{self, SeqAccess};
-        use serde::ser::SerializeSeq;
         use serde::{Deserialize, Deserializer, Serializer};
 
         use crate::amount::{Denomination, SignedAmount};
@@ -342,12 +338,10 @@ pub mod as_btc {
         where
             A: Into<SignedAmount> + Copy,
         {
-            let mut seq = s.serialize_seq(Some(a.len()))?;
-            for amount in a {
+            s.collect_seq(a.iter().map(|amount| {
                 let signed_amount: SignedAmount = (*amount).into();
-                seq.serialize_element(&signed_amount.to_float_in(Denomination::Bitcoin))?;
-            }
-            seq.end()
+                signed_amount.to_float_in(Denomination::Bitcoin)
+            }))
         }
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>
@@ -505,7 +499,6 @@ pub mod as_str {
         use core::marker::PhantomData;
 
         use serde::de::{self, SeqAccess};
-        use serde::ser::SerializeSeq;
         use serde::{Deserialize, Deserializer, Serializer};
 
         use crate::amount::{Denomination, SignedAmount};
@@ -514,12 +507,10 @@ pub mod as_str {
         where
             A: Into<SignedAmount> + Copy,
         {
-            let mut seq = s.serialize_seq(Some(a.len()))?;
-            for amount in a {
+            s.collect_seq(a.iter().map(|amount| {
                 let signed_amount: SignedAmount = (*amount).into();
-                seq.serialize_element(&signed_amount.to_string_in(Denomination::Bitcoin))?;
-            }
-            seq.end()
+                signed_amount.to_string_in(Denomination::Bitcoin)
+            }))
         }
 
         pub fn deserialize<'d, A, D: Deserializer<'d>>(d: D) -> Result<Vec<A>, D::Error>

@@ -110,17 +110,12 @@ pub mod as_sat_per_kwu_floor {
         use core::fmt;
 
         use serde::de::{self, SeqAccess};
-        use serde::ser::SerializeSeq;
         use serde::{Deserialize, Deserializer, Serializer};
 
         use crate::FeeRate;
 
         pub fn serialize<S: Serializer>(f: &[FeeRate], s: S) -> Result<S::Ok, S::Error> {
-            let mut seq = s.serialize_seq(Some(f.len()))?;
-            for rate in f {
-                seq.serialize_element(&rate.to_sat_per_kwu_floor())?;
-            }
-            seq.end()
+            s.collect_seq(f.iter().map(|rate| rate.to_sat_per_kwu_floor()))
         }
 
         // Errors on overflow.
@@ -243,17 +238,12 @@ pub mod as_sat_per_vb_floor {
         use core::fmt;
 
         use serde::de::{self, SeqAccess};
-        use serde::ser::SerializeSeq;
         use serde::{Deserialize, Deserializer, Serializer};
 
         use crate::FeeRate;
 
         pub fn serialize<S: Serializer>(f: &[FeeRate], s: S) -> Result<S::Ok, S::Error> {
-            let mut seq = s.serialize_seq(Some(f.len()))?;
-            for rate in f {
-                seq.serialize_element(&rate.to_sat_per_vb_floor())?;
-            }
-            seq.end()
+            s.collect_seq(f.iter().map(|rate| rate.to_sat_per_vb_floor()))
         }
 
         // Errors on overflow.
@@ -376,17 +366,12 @@ pub mod as_sat_per_vb_ceil {
         use core::fmt;
 
         use serde::de::{self, SeqAccess};
-        use serde::ser::SerializeSeq;
         use serde::{Deserialize, Deserializer, Serializer};
 
         use crate::FeeRate;
 
         pub fn serialize<S: Serializer>(f: &[FeeRate], s: S) -> Result<S::Ok, S::Error> {
-            let mut seq = s.serialize_seq(Some(f.len()))?;
-            for rate in f {
-                seq.serialize_element(&rate.to_sat_per_vb_ceil())?;
-            }
-            seq.end()
+            s.collect_seq(f.iter().map(|rate| rate.to_sat_per_vb_ceil()))
         }
 
         // Errors on overflow.

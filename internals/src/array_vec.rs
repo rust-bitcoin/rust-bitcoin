@@ -186,13 +186,7 @@ impl<T: Copy + crate::serde::Serialize, const CAP: usize> crate::serde::Serializ
     where
         S: crate::serde::Serializer,
     {
-        use crate::serde::ser::SerializeSeq;
-
-        let mut seq = serializer.serialize_seq(Some(self.len()))?;
-        for elem in self.as_slice() {
-            seq.serialize_element(elem)?;
-        }
-        seq.end()
+        serializer.collect_seq(self.iter())
     }
 }
 

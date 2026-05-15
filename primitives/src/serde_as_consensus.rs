@@ -209,8 +209,6 @@ pub mod vec {
         T: Encode + Decode,
         S: Serializer,
     {
-        use serde::ser::SerializeSeq;
-
         struct AsConsensus<'a, T>(&'a T);
 
         impl<T: Encode + Decode> serde::Serialize for AsConsensus<'_, T> {
@@ -219,11 +217,7 @@ pub mod vec {
             }
         }
 
-        let mut seq = s.serialize_seq(Some(v.len()))?;
-        for item in v {
-            seq.serialize_element(&AsConsensus(item))?;
-        }
-        seq.end()
+        s.collect_seq(v.iter().map(|item| AsConsensus(item)))
     }
 
     pub fn deserialize<'d, T, D>(d: D) -> Result<Vec<T>, D::Error>
