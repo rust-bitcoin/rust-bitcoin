@@ -1386,6 +1386,8 @@ enum DecoderState {
         length: u32,
         checksum: [u8; 4],
         payload_decoder: NetworkMessageDecoder,
+        // Hash engine to compute checksum over raw payload bytes as they arrive.
+        checksum_engine: sha256d::HashEngine,
     },
 }
 
@@ -1446,6 +1448,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                         length: header.length,
                         checksum: header.checksum,
                         payload_decoder,
+                        checksum_engine: sha256d::HashEngine::new(),
                     };
 
                     // Continue with any remaining bytes.
@@ -1454,8 +1457,13 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
 
                 Ok(need_more)
             }
-            DecoderState::ReadingPayload { payload_decoder, .. } =>
-                payload_decoder.push_bytes(bytes),
+            DecoderState::ReadingPayload { payload_decoder, checksum_engine, .. } => {
+                let original_bytes = *bytes;
+                let result = payload_decoder.push_bytes(bytes)?;
+                checksum_engine.input(&original_bytes[..original_bytes.len() - bytes.len()]);
+
+                Ok(result)
+            }
         }
     }
 
@@ -1466,9 +1474,19 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 .map_err(V1NetworkMessageDecoderErrorInner::Header)
                 .map_err(V1NetworkMessageDecoderError)
                 .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
-            DecoderState::ReadingPayload { magic, length, checksum, payload_decoder, .. } => {
+            DecoderState::ReadingPayload {
+                magic,
+                length,
+                checksum,
+                payload_decoder,
+                checksum_engine,
+            } => {
                 let payload = payload_decoder.end()?;
-                let (_, expected_checksum) = sha2_checksum(&payload);
+
+                let hash_bytes = checksum_engine.finalize().to_byte_array();
+                let expected_checksum =
+                    [hash_bytes[0], hash_bytes[1], hash_bytes[2], hash_bytes[3]];
+
                 if checksum != expected_checksum {
                     return Err(V1NetworkMessageDecoderError(
                         V1NetworkMessageDecoderErrorInner::InvalidChecksum {
@@ -2932,5 +2950,24 @@ mod test {
 
         let encoded = encoding::drain_to_vec(&mut encoder);
         assert_eq!(encoded, expected_bytes);
+    }
+
+    #[test]
+    #[rustfmt::skip] // Keep readable byte layout with comments.
+    fn v1_message_rejects_invalid_checksum_with_noncanonical_encoding() {
+        // Derived from a fuzzer crash case, a SendCmpct message with a non-canonical
+        // boolean encoding (`0x0c` instead of `0x01`) and an invalid checksum.
+        // The decoder should validate the checksum against the raw bytes,
+        // not against re-encoded bytes, so it must reject this message.
+        let malformed_v1_message = [
+            217, 173, 255, 0, // Network magic.
+            115, 101, 110, 100, 99, 109, 112, 99, 116, 0, 0, 0, // `sendcmpct\0\0\0`
+            9, 0, 0, 0, // Length is 9 bytes.
+            23, 43, 230, 232, // Invalid checksum against payload, but valid against re-encoded payload.
+            12, 12, 12, 218, 12, 14, 12, 226, 0, // Payload with non-canonical bool `0x0c`.
+        ];
+
+        encoding::decode_from_slice::<V1NetworkMessage>(&malformed_v1_message)
+            .expect_err("Message with invalid payload checksum should be rejected");
     }
 }
