@@ -15,6 +15,7 @@
 //! typically big-endian decimals, etc.)
 //!
 
+use core::convert::Infallible;
 use core::{fmt, mem};
 
 use hashes::{sha256, sha256d, Hash};
@@ -65,7 +66,9 @@ pub enum Error {
     UnsupportedSegwitFlag(u8),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

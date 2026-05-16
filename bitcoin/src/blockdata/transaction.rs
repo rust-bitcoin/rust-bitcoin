@@ -11,6 +11,7 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
+use core::convert::Infallible;
 use core::str::FromStr;
 use core::{cmp, fmt};
 
@@ -135,7 +136,9 @@ pub enum ParseOutPointError {
     VoutNotCanonical,
 }
 
-internals::impl_from_infallible!(ParseOutPointError);
+impl From<Infallible> for ParseOutPointError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

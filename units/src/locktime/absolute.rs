@@ -2,6 +2,7 @@
 
 //! Provides type `Height` and `Time` types used by the `rust-bitcoin` `absolute::LockTime` type.
 
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -305,7 +306,9 @@ enum ParseError {
     Conversion(i64),
 }
 
-internals::impl_from_infallible!(ParseError);
+impl From<Infallible> for ParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl ParseError {
     fn invalid_int<S: Into<String>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {

@@ -7,6 +7,7 @@
 //!
 //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+use core::convert::Infallible;
 use core::fmt;
 
 use hashes::Hash as _;
@@ -103,11 +104,16 @@ impl WitnessProgram {
         WitnessProgram::new_p2tr(pubkey)
     }
 
-    internals::const_tools::cond_const! {
-        /// Constructs a new pay to anchor address
-        pub const(in rust_v_1_61 = "1.61") fn p2a() -> Self {
-            WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM)}
-        }
+    /// Constructs a new pay to anchor address
+    #[cfg(rust_v_1_61)]
+    pub const fn p2a() -> Self {
+        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM) }
+    }
+
+    /// Constructs a new pay to anchor address
+    #[cfg(not(rust_v_1_61))]
+    pub fn p2a() -> Self {
+        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM) }
     }
 
     /// Returns the witness program version.
@@ -150,7 +156,9 @@ pub enum Error {
     InvalidSegwitV0Length(usize),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

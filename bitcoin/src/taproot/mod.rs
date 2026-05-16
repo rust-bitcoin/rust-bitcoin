@@ -9,6 +9,7 @@ pub mod merkle_branch;
 pub mod serialized_signature;
 
 use core::cmp::Reverse;
+use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
 
@@ -596,7 +597,9 @@ pub enum IncompleteBuilderError {
     HiddenParts(TaprootBuilder),
 }
 
-internals::impl_from_infallible!(IncompleteBuilderError);
+impl From<Infallible> for IncompleteBuilderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl IncompleteBuilderError {
     /// Converts error into the original incomplete [`TaprootBuilder`] instance.
@@ -642,7 +645,9 @@ pub enum HiddenNodesError {
     HiddenParts(NodeInfo),
 }
 
-internals::impl_from_infallible!(HiddenNodesError);
+impl From<Infallible> for HiddenNodesError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl HiddenNodesError {
     /// Converts error into the original incomplete [`NodeInfo`] instance.
@@ -1339,7 +1344,9 @@ pub enum TaprootBuilderError {
     EmptyTree,
 }
 
-internals::impl_from_infallible!(TaprootBuilderError);
+impl From<Infallible> for TaprootBuilderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1401,7 +1408,9 @@ pub enum TaprootError {
     EmptyTree,
 }
 
-internals::impl_from_infallible!(TaprootError);
+impl From<Infallible> for TaprootError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

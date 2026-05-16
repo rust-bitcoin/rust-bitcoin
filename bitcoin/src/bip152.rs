@@ -5,6 +5,7 @@
 //! Implementation of compact blocks data structure and algorithms.
 //!
 
+use core::convert::Infallible;
 use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
@@ -12,11 +13,10 @@ use std::error;
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{sha256, siphash24, Hash};
-use internals::impl_array_newtype;
 use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
-use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
+use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
 use crate::{block, Block, BlockHash, Transaction};
 
@@ -30,7 +30,9 @@ pub enum Error {
     InvalidPrefill,
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -96,7 +98,7 @@ impl Decodable for PrefilledTransaction {
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub struct ShortId([u8; 6]);
-impl_array_newtype!(ShortId, u8, 6);
+impl_array_newtype!(ShortId, 6);
 impl_bytes_newtype!(ShortId, 6);
 
 impl ShortId {

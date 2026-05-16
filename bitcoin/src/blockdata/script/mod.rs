@@ -61,6 +61,7 @@ use alloc::rc::Rc;
 #[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]
 use alloc::sync::Arc;
 use core::cmp::Ordering;
+use core::convert::Infallible;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
@@ -699,7 +700,9 @@ pub enum Error {
     Serialization,
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -739,7 +742,9 @@ enum UintError {
     NumericOverflow,
 }
 
-internals::impl_from_infallible!(UintError);
+impl From<Infallible> for UintError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl From<UintError> for Error {
     fn from(error: UintError) -> Self {

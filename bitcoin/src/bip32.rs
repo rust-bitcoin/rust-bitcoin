@@ -6,17 +6,18 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
+use core::convert::Infallible;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
-use internals::{impl_array_newtype, write_err};
+use internals::write_err;
 use io::Write;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
-use crate::internal_macros::impl_bytes_newtype;
+use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype};
 use crate::network::NetworkKind;
 use crate::prelude::*;
 
@@ -48,7 +49,7 @@ pub type ExtendendPrivKey = Xpriv;
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-impl_array_newtype!(ChainCode, u8, 32);
+impl_array_newtype!(ChainCode, 32);
 impl_bytes_newtype!(ChainCode, 32);
 
 impl ChainCode {
@@ -60,7 +61,7 @@ impl ChainCode {
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-impl_array_newtype!(Fingerprint, u8, 4);
+impl_array_newtype!(Fingerprint, 4);
 impl_bytes_newtype!(Fingerprint, 4);
 
 hash_newtype! {
@@ -510,7 +511,9 @@ pub enum Error {
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
