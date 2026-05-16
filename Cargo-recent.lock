@@ -242,7 +242,6 @@ name = "bitcoin-taproot-primitives"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
- "bitcoin-crypto",
  "bitcoin-internals 0.5.0",
  "bitcoin_hashes 0.20.0",
  "secp256k1 0.32.0-beta.2",
