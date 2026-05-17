@@ -6,8 +6,9 @@
 use std::io::{Cursor, Write};
 
 use bitcoin_consensus_encoding::{
-    ArrayEncoder, ArrayRefEncoder, BytesEncoder, CompactSizeEncoder, Encode, Encoder, Encoder2,
-    Encoder3, Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder, SliceEncoder,
+    check_encode, check_encoder, ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encode, Encoder,
+    Encoder2, Encoder3, Encoder4, Encoder6, EncoderByteIter, ExactSizeEncoder,
+    SliceEncoder,
 };
 
 struct TestBytes<'a>(&'a [u8]);
@@ -168,32 +169,7 @@ fn encode_slice_encoder_mixed_empty_and_data() {
 
     let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[1, 2]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3]);
-    assert!(!encoder.advance());
-}
-
-#[test]
-fn encode_compact_size_boundary_values() {
-    // Test CompactSizeEncoder with boundary values.
-    let mut encoder = CompactSizeEncoder::new(252usize);
-    assert_eq!(encoder.current_chunk(), &[252]);
-    assert!(!encoder.advance());
-
-    let mut encoder = CompactSizeEncoder::new(253usize);
-    assert_eq!(encoder.current_chunk(), &[0xFD, 253, 0]);
-    assert!(!encoder.advance());
-
-    let mut encoder = CompactSizeEncoder::new(0x10000usize);
-    assert_eq!(encoder.current_chunk(), &[0xFE, 0, 0, 1, 0]);
-    assert!(!encoder.advance());
-
-    let mut encoder = CompactSizeEncoder::new(0usize);
-    assert_eq!(encoder.current_chunk(), &[0]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1, 2, 3]);
 }
 
 #[test]
@@ -204,33 +180,19 @@ fn encode_encoder2_with_first_empty_encoder() {
 
     let mut encoder = Encoder2::new(enc1, enc2);
 
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[1, 2, 3]);
-    assert!(!encoder.advance());
-}
-
-#[test]
-fn encode_encoder_advance_multiple_times_when_exhausted() {
-    // Test that calling advance() multiple times on exhausted encoder is safe.
-    let mut encoder = ArrayEncoder::<2>::without_length_prefix([10, 20]);
-
-    assert_eq!(encoder.current_chunk(), &[10, 20]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1, 2, 3]);
 }
 
 #[test]
 fn encode_option_encoder_some() {
     let mut encoder = Some(ArrayEncoder::<3>::without_length_prefix([1, 2, 3]));
-    assert_eq!(encoder.current_chunk(), &[1, 2, 3]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1, 2, 3]);
 }
 
 #[test]
 fn encode_option_encoder_none() {
     let mut encoder: Option<ArrayEncoder<3>> = None;
-    assert!(encoder.current_chunk().is_empty());
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[]);
 }
 
 #[test]
@@ -239,20 +201,16 @@ fn encode_array_with_data() {
     let test_array = TestArray([1u8, 2, 3, 4]);
     let mut encoder = test_array.encoder();
     assert_eq!(encoder.len(), 4);
-    assert!(!encoder.is_empty());
-    assert_eq!(encoder.current_chunk(), &[1u8, 2, 3, 4][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1u8, 2, 3, 4]);
 }
 
 #[test]
 fn encode_empty_array() {
-    // Empty array should have one empty chunk, then exhausted.
+    // Empty array should have empty encoding
     let test_array = TestArray([]);
     let mut encoder = test_array.encoder();
     assert_eq!(encoder.len(), 0);
-    assert!(encoder.is_empty());
-    assert!(encoder.current_chunk().is_empty());
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[]);
 }
 
 #[test]
@@ -261,9 +219,7 @@ fn encode_array_ref_with_data() {
     let data = [1u8, 2, 3, 4];
     let mut encoder = ArrayRefEncoder::without_length_prefix(&data);
     assert_eq!(encoder.len(), 4);
-    assert!(!encoder.is_empty());
-    assert_eq!(encoder.current_chunk(), &[1u8, 2, 3, 4][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1u8, 2, 3, 4]);
 }
 
 #[test]
@@ -272,9 +228,7 @@ fn encode_empty_array_ref() {
     let data = [];
     let mut encoder = ArrayRefEncoder::without_length_prefix(&data);
     assert_eq!(encoder.len(), 0);
-    assert!(encoder.is_empty());
-    assert!(encoder.current_chunk().is_empty());
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[]);
 }
 
 #[test]
@@ -285,10 +239,7 @@ fn encode_byte_slice_without_prefix() {
     let mut encoder = test_bytes.encoder();
 
     assert_eq!(encoder.len(), 3);
-    assert!(!encoder.is_empty());
-
-    assert_eq!(encoder.current_chunk(), &[1u8, 2, 3][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1, 2, 3]);
 }
 
 #[test]
@@ -299,10 +250,7 @@ fn encode_empty_byte_slice_without_prefix() {
     let mut encoder = test_bytes.encoder();
 
     assert_eq!(encoder.len(), 0);
-    assert!(encoder.is_empty());
-
-    assert!(encoder.current_chunk().is_empty());
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[]);
 }
 
 #[test]
@@ -311,10 +259,7 @@ fn encode_slice_with_elements() {
     let slice = &[TestArray([0x34, 0x12, 0x00, 0x00]), TestArray([0x78, 0x56, 0x00, 0x00])];
     let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-    assert_eq!(encoder.current_chunk(), &[0x34, 0x12, 0x00, 0x00][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x78, 0x56, 0x00, 0x00][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0x34, 0x12, 0x00, 0x00, 0x78, 0x56, 0x00, 0x00]);
 }
 
 #[test]
@@ -323,7 +268,7 @@ fn encode_empty_slice() {
     let slice: &[TestArray<4>] = &[];
     let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[]);
 }
 
 #[test]
@@ -332,9 +277,7 @@ fn encode_slice_with_zero_sized_arrays() {
     let slice = &[TestArray([]), TestArray([])];
     let mut encoder = SliceEncoder::without_length_prefix(slice);
 
-    assert!(encoder.current_chunk().is_empty());
-    // The slice advanced is optimized to skip over empty chunks.
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[]);
 }
 
 #[test]
@@ -345,12 +288,8 @@ fn encode_two_arrays() {
     let mut encoder = Encoder2::new(enc1, enc2);
 
     assert_eq!(encoder.len(), 4);
-    assert!(!encoder.is_empty());
 
-    assert_eq!(encoder.current_chunk(), &[1u8, 2][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3u8, 4][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1, 2, 3, 4]);
 }
 
 #[test]
@@ -360,13 +299,7 @@ fn encode_two_empty_arrays() {
     let enc2 = TestArray([]).encoder();
     let mut encoder = Encoder2::new(enc1, enc2);
 
-    assert_eq!(encoder.len(), 0);
-    assert!(encoder.is_empty());
-
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-    assert!(encoder.current_chunk().is_empty());
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[]);
 }
 
 #[test]
@@ -378,14 +311,7 @@ fn encode_three_arrays() {
     let mut encoder = Encoder3::new(enc1, enc2, enc3);
 
     assert_eq!(encoder.len(), 6);
-    assert!(!encoder.is_empty());
-
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[2u8, 3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[4u8, 5u8, 6u8][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[1, 2, 3, 4, 5, 6]);
 }
 
 #[test]
@@ -398,16 +324,7 @@ fn encode_four_arrays() {
     let mut encoder = Encoder4::new(enc1, enc2, enc3, enc4);
 
     assert_eq!(encoder.len(), 4);
-    assert!(!encoder.is_empty());
-
-    assert_eq!(encoder.current_chunk(), &[0x10][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x20][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x30][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x40][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0x10, 0x20, 0x30, 0x40]);
 }
 
 #[test]
@@ -422,20 +339,7 @@ fn encode_six_arrays() {
     let mut encoder = Encoder6::new(enc1, enc2, enc3, enc4, enc5, enc6);
 
     assert_eq!(encoder.len(), 6);
-    assert!(!encoder.is_empty());
-
-    assert_eq!(encoder.current_chunk(), &[0x01][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x02][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x03][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x04][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x05][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x06][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
 }
 
 #[test]
@@ -446,12 +350,7 @@ fn encode_mixed_composition_with_byte_slices() {
     let mut encoder = Encoder2::new(enc1, enc2);
 
     assert_eq!(encoder.len(), 4);
-    assert!(!encoder.is_empty());
-
-    assert_eq!(encoder.current_chunk(), &[0xFF, 0xEE][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0xDD, 0xCC][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0xFF, 0xEE, 0xDD, 0xCC]);
 }
 
 #[test]
@@ -463,14 +362,7 @@ fn encode_nested_composition() {
     let mut encoder = Encoder3::new(enc1, enc2, enc3);
 
     assert_eq!(encoder.len(), 4);
-    assert!(!encoder.is_empty());
-
-    assert!(encoder.current_chunk().is_empty());
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x42][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x43, 0x44, 0x45][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0x42, 0x43, 0x44, 0x45]);
 }
 
 #[test]
@@ -481,12 +373,7 @@ fn encode_slice_with_array_composition() {
     let array_enc = TestArray([0x20, 0x21]).encoder();
     let mut encoder = Encoder2::new(slice_enc, array_enc);
 
-    assert_eq!(encoder.current_chunk(), &[0x10, 0x11][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x12, 0x13][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x20, 0x21][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0x10, 0x11, 0x12, 0x13, 0x20, 0x21]);
 }
 
 #[test]
@@ -497,14 +384,7 @@ fn encode_array_with_slice_composition() {
     let slice_enc = SliceEncoder::without_length_prefix(slice);
     let mut encoder = Encoder2::new(header, slice_enc);
 
-    assert_eq!(encoder.current_chunk(), &[0xFF, 0xFE][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x01][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x02][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x03][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0xFF, 0xFE, 0x01, 0x02, 0x03]);
 }
 
 #[test]
@@ -519,20 +399,7 @@ fn encode_multiple_slices_composition() {
     let enc3 = SliceEncoder::without_length_prefix(slice3);
     let mut encoder = Encoder3::new(enc1, enc2, enc3);
 
-    assert_eq!(encoder.current_chunk(), &[0xA1][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0xA2][..]);
-
-    // Skip the empty slice
-    assert!(encoder.advance());
-
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0xC1][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0xC2][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0xC3][..]);
-    assert!(!encoder.advance());
+    check_encoder(&mut encoder, &[0xA1, 0xA2, 0xC1, 0xC2, 0xC3]);
 }
 
 #[test]
@@ -544,74 +411,7 @@ fn encode_complex_nested_structure() {
     let footer = TestBytes(&[0xBE, 0xEF]).encoder();
     let mut encoder = Encoder3::new(header, slice_enc, footer);
 
-    assert_eq!(encoder.current_chunk(), &[0xDE, 0xAD][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x01, 0x02][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0x03, 0x04][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[0xBE, 0xEF][..]);
-    assert!(!encoder.advance());
-}
-
-#[test]
-fn encode_compact_size() {
-    // 1-byte
-    let mut e = CompactSizeEncoder::new(0x10usize);
-    assert_eq!(e.current_chunk(), &[0x10][..]);
-    assert_eq!(e.len(), 1);
-    assert!(!e.advance());
-
-    let mut e = CompactSizeEncoder::new(0xFCusize);
-    assert_eq!(e.current_chunk(), &[0xFC][..]);
-    assert_eq!(e.len(), 1);
-    assert!(!e.advance());
-
-    // 0xFD + u16
-    let mut e = CompactSizeEncoder::new(0x00FDusize);
-    assert_eq!(e.current_chunk(), &[0xFD, 0xFD, 0x00][..]);
-    assert_eq!(e.len(), 3);
-    assert!(!e.advance());
-
-    let mut e = CompactSizeEncoder::new(0x0FFFusize);
-    assert_eq!(e.current_chunk(), &[0xFD, 0xFF, 0x0F][..]);
-    assert_eq!(e.len(), 3);
-    assert!(!e.advance());
-
-    // 0xFE + u32
-    let mut e = CompactSizeEncoder::new(0x0001_0000usize);
-    assert_eq!(e.current_chunk(), &[0xFE, 0x00, 0x00, 0x01, 0x00][..]);
-    assert_eq!(e.len(), 5);
-    assert!(!e.advance());
-
-    let mut e = CompactSizeEncoder::new(0x0F0F_0F0Fusize);
-    assert_eq!(e.current_chunk(), &[0xFE, 0x0F, 0x0F, 0x0F, 0x0F][..]);
-    assert_eq!(e.len(), 5);
-    assert!(!e.advance());
-
-    // 0xFF + u64
-    // This test only runs on systems with >= 64 bit usize.
-    if core::mem::size_of::<usize>() >= 8 {
-        let mut e = CompactSizeEncoder::new(0x0000_F0F0_F0F0_F0E0u64 as usize);
-        assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
-        assert_eq!(e.len(), 9);
-        assert!(!e.advance());
-    }
-
-    // > u64::MAX encodes as u64::MAX.
-    // This test only runs on systems with > 64 bit usize.
-    if core::mem::size_of::<usize>() > 8 {
-        let mut e = CompactSizeEncoder::new((u128::from(u64::MAX) + 5) as usize);
-        assert_eq!(e.current_chunk(), &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF][..]);
-        assert_eq!(e.len(), 9);
-        assert!(!e.advance());
-    }
-
-    // new_u64 works on all platforms, no guard needed.
-    let mut e = CompactSizeEncoder::new_u64(0x0000_F0F0_F0F0_F0E0u64);
-    assert_eq!(e.current_chunk(), &[0xFF, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00][..]);
-    assert_eq!(e.len(), 9);
-    assert!(!e.advance());
+    check_encoder(&mut encoder, &[0xDE, 0xAD, 0x01, 0x02, 0x03, 0x04, 0xBE, 0xEF]);
 }
 
 #[test]
@@ -630,4 +430,49 @@ fn iter_encoder() {
     assert_eq!(iter.next().unwrap(), 4);
     assert_eq!(iter.len(), 0);
     assert!(iter.next().is_none());
+}
+
+#[test]
+#[should_panic(expected = "encoder did not yield expected bytes")]
+fn check_encode_detects_mismatched_bytes() {
+    let test_array = TestArray([0x01, 0x02, 0x03, 0x04]);
+    check_encode(&test_array, &[0xFF, 0xFF, 0xFF, 0xFF]);
+}
+
+#[test]
+#[should_panic(expected = "did not yield enough bytes")]
+fn check_encode_detects_too_few_bytes() {
+    let test_array = TestArray([0x01, 0x02, 0x03, 0x04]);
+    check_encode(&test_array, &[0x01, 0x02, 0x03, 0x04, 0x05]);
+}
+
+#[test]
+fn check_encoder_with_multiple_chunks() {
+    let mut encoder = Encoder3::new(
+        BytesEncoder::without_length_prefix(&[0x01]),
+        BytesEncoder::without_length_prefix(&[0x02, 0x03]),
+        BytesEncoder::without_length_prefix(&[0x04, 0x05, 0x06]),
+    );
+    check_encoder(&mut encoder, &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+}
+
+#[test]
+#[should_panic(expected = "difference in chunk #1")]
+fn check_encoder_detects_error_in_chunk() {
+    let mut encoder = Encoder3::new(
+        BytesEncoder::without_length_prefix(&[0x01]),
+        BytesEncoder::without_length_prefix(&[0xFF, 0xFF]),
+        BytesEncoder::without_length_prefix(&[0x04, 0x05, 0x06]),
+    );
+    check_encoder(&mut encoder, &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+}
+
+#[test]
+#[should_panic(expected = "after 1 bytes")]
+fn check_encoder_detects_error_byte_offset() {
+    let mut encoder = Encoder2::new(
+        BytesEncoder::without_length_prefix(&[0x01]),
+        BytesEncoder::without_length_prefix(&[0xFF, 0x03]),
+    );
+    check_encoder(&mut encoder, &[0x01, 0x02, 0x03]);
 }

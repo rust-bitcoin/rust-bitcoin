@@ -1550,7 +1550,7 @@ mod tests {
         let mut slice = [0u8; 3].as_slice();
         let mut decoder = CompactTargetDecoder::new();
 
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(!err.to_string().is_empty());

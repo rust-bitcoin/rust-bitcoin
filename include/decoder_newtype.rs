@@ -206,7 +206,7 @@ macro_rules! _decoder_newtype_internal {
             type Error = $err;
 
             #[inline]
-            fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+            fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
                 self.0.push_bytes(bytes).map_err(Self::push_bytes_map_err)
             }
 

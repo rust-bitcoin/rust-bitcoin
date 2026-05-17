@@ -16,8 +16,8 @@ fn do_test(data: &[u8]) {
         Err(_) => {
             // Expected for invalid compact size encodings.
         }
-        Ok(needs_more) => {
-            if needs_more {
+        Ok(status) => {
+            if status.needs_more() {
                 // Decoder needs more data, but we've given it all we have
                 // This should result in an error when we call end().
                 let end_result = decoder.end();

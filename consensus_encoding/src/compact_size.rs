@@ -9,10 +9,11 @@
 use internals::array_vec::ArrayVec;
 
 use crate::decode::Decoder;
-use crate::encode::{Encoder, ExactSizeEncoder};
+use crate::encode::{Encoder, EncoderStatus, ExactSizeEncoder};
 use crate::error::{
     CompactSizeDecoderError, CompactSizeDecoderErrorInner, LengthPrefixExceedsMaxError,
 };
+use crate::DecoderStatus;
 
 /// Default maximum size of a decoded object in bytes.
 ///
@@ -36,7 +37,7 @@ const PREFIX_U64: u8 = 0xFF;
 /// Encoder for a compact size encoded integer.
 #[derive(Debug, Clone)]
 pub struct CompactSizeEncoder {
-    buf: Option<ArrayVec<u8, SIZE>>,
+    buf: ArrayVec<u8, SIZE>,
 }
 
 impl CompactSizeEncoder {
@@ -53,7 +54,7 @@ impl CompactSizeEncoder {
     /// If you need to encode an arbitrary `u64` integer that is not a length prefix, use
     /// [`Self::new_u64`] instead.
     pub fn new(value: usize) -> Self {
-        Self { buf: Some(Self::encode(u64::try_from(value).unwrap_or(u64::MAX))) }
+        Self { buf: Self::encode(u64::try_from(value).unwrap_or(u64::MAX)) }
     }
 
     /// Constructs a new `CompactSizeEncoder` for an arbitrary `u64` integer.
@@ -63,7 +64,7 @@ impl CompactSizeEncoder {
     /// A small number of fields in the Bitcoin protocol are compact-size-encoded integers that are
     /// not collection lengths (e.g. service flags). Use this constructor for those cases, where the
     /// natural type of the value is `u64` rather than `usize`.
-    pub fn new_u64(value: u64) -> Self { Self { buf: Some(Self::encode(value)) } }
+    pub fn new_u64(value: u64) -> Self { Self { buf: Self::encode(value) } }
 
     /// Returns the number of bytes used to encode this `CompactSize` value.
     ///
@@ -112,18 +113,17 @@ impl CompactSizeEncoder {
 
 impl Encoder for CompactSizeEncoder {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.buf.as_ref().map(|b| &b[..]).unwrap_or_default() }
+    fn current_chunk(&self) -> &[u8] { &self.buf }
 
     #[inline]
-    fn advance(&mut self) -> bool {
-        self.buf = None;
-        false
+    fn advance(&mut self) -> EncoderStatus {
+        EncoderStatus::Finished
     }
 }
 
 impl ExactSizeEncoder for CompactSizeEncoder {
     #[inline]
-    fn len(&self) -> usize { self.buf.map_or(0, |buf| buf.len()) }
+    fn len(&self) -> usize { self.buf.len() }
 }
 
 /// Decodes a compact size encoded integer as a length prefix.
@@ -164,7 +164,7 @@ impl Decoder for CompactSizeDecoder {
     type Output = usize;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         Ok(compact_size_push_bytes(&mut self.buf, bytes))
     }
 
@@ -233,7 +233,7 @@ impl Decoder for CompactSizeU64Decoder {
     type Output = u64;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         Ok(compact_size_push_bytes(&mut self.buf, bytes))
     }
 
@@ -242,10 +242,10 @@ impl Decoder for CompactSizeU64Decoder {
     fn read_limit(&self) -> usize { compact_size_read_limit(&self.buf) }
 }
 
-/// Pushes bytes into a compact size buffer, returning true if more bytes are needed.
-fn compact_size_push_bytes(buf: &mut ArrayVec<u8, 9>, bytes: &mut &[u8]) -> bool {
+/// Pushes bytes into a compact size buffer, returning the decoder status.
+fn compact_size_push_bytes(buf: &mut ArrayVec<u8, 9>, bytes: &mut &[u8]) -> DecoderStatus {
     if bytes.is_empty() {
-        return true;
+        return DecoderStatus::NeedsMore;
     }
 
     if buf.is_empty() {
@@ -262,7 +262,7 @@ fn compact_size_push_bytes(buf: &mut ArrayVec<u8, 9>, bytes: &mut &[u8]) -> bool
     buf.extend_from_slice(&bytes[..to_copy]);
     *bytes = &bytes[to_copy..];
 
-    buf.len() != len
+    if buf.len() == len { DecoderStatus::Ready } else { DecoderStatus::NeedsMore }
 }
 
 /// Returns the number of bytes the compact size decoder still needs to read.
@@ -381,14 +381,14 @@ mod tests {
         // MAX_COMPACT_SIZE should succeed for `new` constructor
         // 0x0200_0000 as minimal 5-byte compact size: 0xFE + u32 little-endian
         let mut decoder = CompactSizeDecoder::new();
-        decoder.push_bytes(&mut [0xFE, 0x00, 0x00, 0x00, 0x02].as_slice()).unwrap();
+        let _ = decoder.push_bytes(&mut [0xFE, 0x00, 0x00, 0x00, 0x02].as_slice()).unwrap();
         let got = decoder.end().unwrap();
         assert_eq!(got, MAX_COMPACT_SIZE);
 
         // MAX_COMPACT_SIZE + 1 should fail for `new` constructor
         // 0x0200_0001 as minimal 5-byte compact size: 0xFE + u32 little-endian
         let mut decoder = CompactSizeDecoder::new();
-        decoder.push_bytes(&mut [0xFE, 0x01, 0x00, 0x00, 0x02].as_slice()).unwrap();
+        let _ = decoder.push_bytes(&mut [0xFE, 0x01, 0x00, 0x00, 0x02].as_slice()).unwrap();
         let got = decoder.end().unwrap_err();
         assert!(matches!(
             got,
@@ -405,13 +405,13 @@ mod tests {
 
         // 240 should succeed for `new_with_limit` constructor
         let mut decoder = CompactSizeDecoder::new_with_limit(240);
-        decoder.push_bytes(&mut [0xf0].as_slice()).unwrap();
+        let _ = decoder.push_bytes(&mut [0xf0].as_slice()).unwrap();
         let got = decoder.end().unwrap();
         assert_eq!(got, 240);
 
         // 241 should fail for `new_with_limit` constructor
         let mut decoder = CompactSizeDecoder::new_with_limit(240);
-        decoder.push_bytes(&mut [0xf1].as_slice()).unwrap();
+        let _ = decoder.push_bytes(&mut [0xf1].as_slice()).unwrap();
         let got = decoder.end().unwrap_err();
         assert!(matches!(
             got,

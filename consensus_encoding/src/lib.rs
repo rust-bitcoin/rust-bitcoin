@@ -19,12 +19,12 @@
 //!
 //! Types implement [`Encode`] to produce an [`Encoder`], which yields encoded bytes in chunks
 //! via [`Encoder::current_chunk`] and [`Encoder::advance`]. The caller drives the process by
-//! pulling chunks until `advance` returns `false`.
+//! pulling chunks until `advance` returns [`EncoderStatus::Finished`].
 //!
 //! # Decoding
 //!
 //! Types implement [`Decode`] to produce a [`Decoder`], which consumes bytes via
-//! [`Decoder::push_bytes`] until it signals completion by returning `Ok(false)`. The caller then
+//! [`Decoder::push_bytes`] until it signals completion by returning `Ok(DecoderStatus::Ready)`. The caller then
 //! calls [`Decoder::end`] to obtain the decoded value.
 //!
 //! Unlike encoding, decoding is fallible. Both `push_bytes` and `end` return `Result`. I/O errors
@@ -83,7 +83,7 @@ pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with,
 };
 #[doc(inline)]
-pub use self::decode::{decode_from_slice, decode_from_slice_unbounded, Decode, Decoder};
+pub use self::decode::{check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded, Decode, Decoder, DecoderStatus};
 #[doc(inline)]
 pub use self::encode::encoders::{
     ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
@@ -96,7 +96,7 @@ pub use self::encode::{drain_to_vec, encode_to_vec};
 #[doc(inline)]
 pub use self::encode::{drain_to_writer, encode_to_writer};
 #[doc(inline)]
-pub use self::encode::{Encode, Encoder, EncoderByteIter, ExactSizeEncoder};
+pub use self::encode::{check_encode, check_encoder, Encode, Encoder, EncoderStatus, EncoderByteIter, ExactSizeEncoder};
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::LengthPrefixExceedsMaxError;

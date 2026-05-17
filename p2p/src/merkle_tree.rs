@@ -15,8 +15,8 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2,
-    Encoder3, SliceEncoder, VecDecoder,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3,
+    EncoderStatus, Encoder2, Encoder3, SliceEncoder, VecDecoder,
 };
 use internals::ToU64 as _;
 use primitives::block::{self, Block, Checked, HeaderDecoder, HeaderEncoder};
@@ -152,7 +152,7 @@ impl encoding::Decoder for MerkleBlockDecoder {
     type Error = MerkleBlockDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(MerkleBlockDecoderError)
     }
 
@@ -472,9 +472,9 @@ impl encoding::Encoder for BitVecEncoder {
         }
     }
 
-    fn advance(&mut self) -> bool {
+    fn advance(&mut self) -> EncoderStatus {
         self.exhausted = true;
-        false
+        EncoderStatus::Finished
     }
 }
 
@@ -520,7 +520,7 @@ impl encoding::Decoder for PartialMerkleTreeDecoder {
     type Error = PartialMerkleTreeDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(PartialMerkleTreeDecoderError)
     }
 

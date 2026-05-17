@@ -554,7 +554,7 @@ mod tests {
         let bytes = [0xff, 0xff, 0xff]; // 3 bytes is an EOF error
 
         let mut decoder = SequenceDecoder::default();
-        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap().needs_more());
 
         let error = decoder.end().unwrap_err();
         assert!(matches!(error, SequenceDecoderError(UnexpectedEofError { .. })));

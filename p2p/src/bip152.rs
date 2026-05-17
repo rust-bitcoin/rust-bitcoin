@@ -11,7 +11,7 @@ use core::convert;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Decoder4,
-    Encoder2, Encoder4, SliceEncoder, VecDecoder,
+    Encoder2, Encoder4, SliceEncoder, VecDecoder, DecoderStatus,
 };
 use hashes::{sha256, siphash24, HashEngine};
 use internals::array::ArrayExt as _;
@@ -91,7 +91,7 @@ impl encoding::Decoder for PrefilledTransactionDecoder {
     type Error = PrefilledTransactionDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(Self::err_from_inner)
     }
 
@@ -213,7 +213,7 @@ impl encoding::Decoder for ShortIdDecoder {
     type Error = ShortIdDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(ShortIdDecoderError)
     }
 
@@ -307,7 +307,7 @@ impl encoding::Decoder for HeaderAndShortIdsDecoder {
     type Error = HeaderAndShortIdsDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(Self::err_from_inner)
     }
 
@@ -435,7 +435,7 @@ impl encoding::Decoder for OffsetDecoder {
     type Error = <CompactSizeDecoder as encoding::Decoder>::Error;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -546,7 +546,7 @@ impl encoding::Decoder for BlockTransactionsRequestDecoder {
     type Error = BlockTransactionsRequestDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(BlockTransactionsRequestDecoderError)
     }
 
@@ -613,7 +613,7 @@ impl encoding::Decoder for BlockTransactionsDecoder {
     type Error = BlockTransactionsDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(BlockTransactionsDecoderError)
     }
 

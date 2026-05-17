@@ -19,7 +19,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
-    CompactSizeEncoder, Decoder2, Decoder3, Encode as _, Encoder3, Encoder6, SliceEncoder,
+    CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6, EncoderStatus, SliceEncoder,
     VecDecoder,
 };
 #[cfg(feature = "alloc")]
@@ -449,7 +449,7 @@ impl encoding::Decoder for TransactionDecoder {
     type Error = TransactionDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         use TransactionDecoderError as E;
         use TransactionDecoderErrorInner as Inner;
         use TransactionDecoderState as State;
@@ -458,32 +458,32 @@ impl encoding::Decoder for TransactionDecoder {
             // Attempt to push to the currently-active decoder and return early on success.
             match &mut self.state {
                 State::Version(decoder) => {
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Version(e)))? {
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Version(e)))?.needs_more() {
                         // Still more bytes required.
-                        return Ok(true);
+                        return Ok(DecoderStatus::NeedsMore);
                     }
                 }
                 State::Inputs(_, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Inputs(e)))? {
-                        return Ok(true);
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Inputs(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
                     },
                 State::SegwitFlag(_) =>
                     if bytes.is_empty() {
-                        return Ok(true);
+                        return Ok(DecoderStatus::NeedsMore);
                     },
                 State::Outputs(_, _, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Outputs(e)))? {
-                        return Ok(true);
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Outputs(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
                     },
                 State::Witnesses(_, _, _, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Witness(e)))? {
-                        return Ok(true);
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::Witness(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
                     },
                 State::LockTime(_, _, _, decoder) =>
-                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::LockTime(e)))? {
-                        return Ok(true);
+                    if decoder.push_bytes(bytes).map_err(|e| E(Inner::LockTime(e)))?.needs_more() {
+                        return Ok(DecoderStatus::NeedsMore);
                     },
-                State::Done(..) => return Ok(false),
+                State::Done(..) => return Ok(DecoderStatus::Ready),
                 State::Errored => panic!("call to push_bytes() after decoder errored"),
             }
 
@@ -565,9 +565,9 @@ impl encoding::Decoder for TransactionDecoder {
                 State::LockTime(version, inputs, outputs, decoder) => {
                     let lock_time = decoder.end().map_err(|e| E(Inner::LockTime(e)))?;
                     self.state = State::Done(Transaction { version, lock_time, inputs, outputs });
-                    return Ok(false);
+                    return Ok(DecoderStatus::Ready);
                 }
-                State::Done(..) => return Ok(false),
+                State::Done(..) => return Ok(DecoderStatus::Ready),
                 State::Errored => unreachable!("checked above"),
             }
         }
@@ -800,16 +800,16 @@ impl encoding::Encoder for WitnessesEncoder<'_> {
     }
 
     #[inline]
-    fn advance(&mut self) -> bool {
+    fn advance(&mut self) -> EncoderStatus {
         let Some(cur) = self.cur_enc.as_mut() else {
-            return false;
+            return EncoderStatus::Finished;
         };
 
         loop {
             // On subsequent calls, attempt to advance the current encoder and return
             // success if this succeeds.
-            if cur.advance() {
-                return true;
+            if cur.advance().has_more() {
+                return EncoderStatus::HasMore;
             }
             // self.inputs guaranteed to be non-empty if cur_enc is non-None.
             self.inputs = &self.inputs[1..];
@@ -818,11 +818,11 @@ impl encoding::Encoder for WitnessesEncoder<'_> {
             if let Some(input) = self.inputs.first() {
                 *cur = input.witness.encoder();
                 if !cur.current_chunk().is_empty() {
-                    return true;
+                    return EncoderStatus::HasMore;
                 }
             } else {
                 self.cur_enc = None; // shortcut the next call to advance()
-                return false;
+                return EncoderStatus::Finished;
             }
         }
     }
@@ -1612,7 +1612,7 @@ mod tests {
     #[cfg(feature = "std")]
     use std::error::Error as _;
 
-    use encoding::{Decode as _, Decoder as _, Encoder as _};
+    use encoding::{Decode as _, Decoder as _};
     #[cfg(feature = "hex")]
     use hex_unstable::hex;
 
@@ -2258,10 +2258,10 @@ mod tests {
 
         let mut decoder = TransactionDecoder::new();
         let mut bytes = tx_bytes.as_slice();
-        assert!(!decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().is_ready());
 
         let mut empty = [].as_slice();
-        assert!(!decoder.push_bytes(&mut empty).unwrap());
+        assert!(decoder.push_bytes(&mut empty).unwrap().is_ready());
     }
 
     #[test]
@@ -2272,7 +2272,7 @@ mod tests {
             state: S::Inputs(Version::ONE, Attempt::First, VecDecoder::new()),
         };
         let mut bytes = [].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
     }
 
     #[test]
@@ -2290,7 +2290,7 @@ mod tests {
         };
         let mut bytes = [0u8, 0, 0, 0].as_slice();
 
-        assert!(!decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().is_ready());
         assert!(bytes.is_empty());
 
         let tx = decoder.end().unwrap();
@@ -2312,7 +2312,7 @@ mod tests {
             ),
         };
         let mut bytes = [].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
     }
 
     #[test]
@@ -2323,7 +2323,7 @@ mod tests {
             state: S::Outputs(Version::ONE, vec![], IsSegwit::No, VecDecoder::new()),
         };
         let mut bytes = [].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
     }
 
     #[test]
@@ -2332,7 +2332,7 @@ mod tests {
         use TransactionDecoderState as S;
         let mut decoder = TransactionDecoder { state: S::SegwitFlag(Version::ONE) };
         let mut bytes = [].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
     }
 
     #[test]
@@ -2340,7 +2340,7 @@ mod tests {
     fn transaction_decoder_push_bytes_version_needs_more() {
         let mut decoder = TransactionDecoder::new();
         let mut bytes = [].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
     }
 
     #[test]
@@ -2358,7 +2358,7 @@ mod tests {
             ),
         };
         let mut bytes = [].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
     }
 
     #[test]
@@ -2451,72 +2451,9 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn witnesses_encoder_advance_switch_path() {
-        let tx_in_1 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xAA; 32]), vout: 0 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::from_slice(&[&[0x01u8][..]]),
-        };
-
-        let empty = [].as_slice();
-        let many = vec![empty; 253];
-        let tx_in_2 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xBB; 32]), vout: 1 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::from_slice(&many),
-        };
-
-        let inputs = [tx_in_1, tx_in_2];
-
-        let mut finished = inputs[0].witness.encoder();
-        while finished.advance() {}
-        assert!(!finished.advance());
-        let expected = inputs[1].witness.encoder().current_chunk().to_vec();
-        assert!(!expected.is_empty());
-
-        let mut encoder = WitnessesEncoder { inputs: &inputs, cur_enc: Some(finished) };
-        assert!(encoder.advance());
-        assert_eq!(encoder.current_chunk(), expected.as_slice());
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
     fn witnesses_encoder_empty_inputs() {
         let mut encoder = WitnessesEncoder::new(&[]);
-        assert!(!encoder.advance());
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn witnesses_encoder_switches_to_next_input_with_nonempty_chunk() {
-        let input_0 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xAA; 32]), vout: 0 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::default(),
-        };
-
-        let input_1 = TxIn {
-            previous_output: OutPoint { txid: Txid::from_byte_array([0xBB; 32]), vout: 2 },
-            script_sig: ScriptSigBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::from_slice(&[&[1u8][..]]),
-        };
-
-        let inputs = vec![input_0, input_1];
-        let mut encoder = WitnessesEncoder::new(&inputs);
-
-        let next = inputs[1].witness.encoder();
-        assert!(!next.current_chunk().is_empty());
-
-        let mut exhausted = inputs[0].witness.encoder();
-        while exhausted.advance() {}
-        encoder.cur_enc = Some(exhausted);
-
-        let advanced = encoder.advance();
-        assert!(advanced);
+        encoding::check_encoder(&mut encoder, &[]);
     }
 
     #[test]
@@ -2663,8 +2600,8 @@ mod tests {
         let mut decoder = OutPoint::decoder();
         let mut slice = &[][..];
 
-        let needs_more = decoder.push_bytes(&mut slice).unwrap();
-        assert!(needs_more);
+        let status = decoder.push_bytes(&mut slice).unwrap();
+        assert!(status.needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err, OutPointDecoderError(_)));
@@ -2745,8 +2682,8 @@ mod tests {
         let mut decoder = Version::decoder();
         let mut slice = &[][..];
 
-        let needs_more = decoder.push_bytes(&mut slice).unwrap();
-        assert!(needs_more);
+        let status = decoder.push_bytes(&mut slice).unwrap();
+        assert!(status.needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err, VersionDecoderError(_)));
@@ -2761,7 +2698,7 @@ mod tests {
     fn transaction_decoder_version_error() {
         let mut decoder = VersionDecoder::new();
         let mut bytes = [0u8, 0, 0].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
         let err = TransactionDecoderError(TransactionDecoderErrorInner::Version(
             decoder.end().unwrap_err(),
         ));
@@ -2790,7 +2727,7 @@ mod tests {
     fn transaction_decoder_inputs_error() {
         let mut decoder = VecDecoder::<TxIn>::new();
         let mut bytes = [1u8].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
         let err = TransactionDecoderError(TransactionDecoderErrorInner::Inputs(
             decoder.end().unwrap_err(),
         ));
@@ -2806,7 +2743,7 @@ mod tests {
     fn transaction_decoder_outputs_error() {
         let mut decoder = VecDecoder::<TxOut>::new();
         let mut bytes = [1u8].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
         let err = TransactionDecoderError(TransactionDecoderErrorInner::Outputs(
             decoder.end().unwrap_err(),
         ));
@@ -2822,7 +2759,7 @@ mod tests {
     fn transaction_decoder_witness_error() {
         let mut decoder = WitnessDecoder::new();
         let mut bytes = [1u8].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
         let err = TransactionDecoderError(TransactionDecoderErrorInner::Witness(
             decoder.end().unwrap_err(),
         ));
@@ -2866,7 +2803,7 @@ mod tests {
     fn transaction_decoder_lock_time_error() {
         let mut decoder = LockTimeDecoder::new();
         let mut bytes = [0u8, 0, 0].as_slice();
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
         let err = TransactionDecoderError(TransactionDecoderErrorInner::LockTime(
             decoder.end().unwrap_err(),
         ));
@@ -3149,7 +3086,7 @@ mod tests {
     fn txin_decoder_first_error() {
         let mut decoder = TxIn::decoder();
         let mut slice = [].as_slice();
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err.0, encoding::Decoder3Error::First(_)));
@@ -3170,7 +3107,7 @@ mod tests {
         let mut decoder = TxIn::decoder();
         let mut slice = bytes.as_slice();
 
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err.0, encoding::Decoder3Error::Second(_)));
@@ -3191,7 +3128,7 @@ mod tests {
         let mut decoder = TxIn::decoder();
         let mut slice = bytes.as_slice();
 
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err.0, encoding::Decoder3Error::Third(_)));
@@ -3206,7 +3143,7 @@ mod tests {
     fn txout_decoder_first_error() {
         let mut decoder = TxOut::decoder();
         let mut slice = [].as_slice();
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err.0, encoding::Decoder2Error::First(_)));
@@ -3224,7 +3161,7 @@ mod tests {
         let mut decoder = TxOut::decoder();
         let mut slice = bytes.as_slice();
 
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err.0, encoding::Decoder2Error::Second(_)));

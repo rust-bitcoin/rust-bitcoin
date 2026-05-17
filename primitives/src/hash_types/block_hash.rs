@@ -104,7 +104,7 @@ mod tests {
         let mut decoder = BlockHashDecoder::new();
         let mut bytes = &[0u8; 31][..];
 
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
 

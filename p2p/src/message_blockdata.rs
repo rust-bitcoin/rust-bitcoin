@@ -109,7 +109,7 @@ impl encoding::Decoder for InventoryDecoder {
     type Error = InventoryDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(InventoryDecoderError)
     }
 
@@ -228,7 +228,7 @@ impl encoding::Decoder for BlockLocatorDecoder {
     type Error = BlockLocatorDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(BlockLocatorDecoderError)
     }
 
@@ -330,7 +330,7 @@ impl encoding::Decoder for GetHeadersMessageDecoder {
     type Error = GetHeadersMessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(GetHeadersMessageDecoderError)
     }
 
@@ -350,7 +350,7 @@ impl encoding::Decoder for GetBlocksMessageDecoder {
     type Error = GetBlocksMessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(GetBlocksMessageDecoderError)
     }
 

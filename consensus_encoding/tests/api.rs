@@ -82,7 +82,7 @@ impl Decoder for FooDecoder {
     type Output = Foo;
     type Error = UnexpectedEofError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(Foo) }
