@@ -91,7 +91,8 @@ impl Decoder for ByteVecDecoder {
         use ByteVecDecoderErrorInner as Inner;
 
         if let Some(mut decoder) = self.prefix_decoder.take() {
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more() {
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more()
+            {
                 self.prefix_decoder = Some(decoder);
                 return Ok(DecoderStatus::NeedsMore);
             }
@@ -240,7 +241,8 @@ impl<T: Decode> Decoder for VecDecoder<T> {
         use VecDecoderErrorInner as Inner;
 
         if let Some(mut decoder) = self.prefix_decoder.take() {
-            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more() {
+            if decoder.push_bytes(bytes).map_err(|e| E(Inner::LengthPrefixDecode(e)))?.needs_more()
+            {
                 self.prefix_decoder = Some(decoder);
                 return Ok(DecoderStatus::NeedsMore);
             }

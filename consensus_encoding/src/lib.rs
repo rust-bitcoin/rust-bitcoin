@@ -83,11 +83,17 @@ pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with,
 };
 #[doc(inline)]
-pub use self::decode::{decode_from_slice, decode_from_slice_unbounded, Decode, Decoder, DecoderStatus};
+pub use self::decode::{
+    decode_from_slice, decode_from_slice_unbounded, Decode, Decoder, DecoderStatus,
+};
 #[doc(inline)]
 pub use self::encode::encoders::{
     ArrayEncoder, ArrayRefEncoder, BytesEncoder, Encoder2, Encoder3, Encoder4, Encoder6,
     SliceEncoder,
+};
+#[doc(inline)]
+pub use self::encode::{
+    check_encode, check_encoder, Encode, Encoder, EncoderByteIter, EncoderStatus, ExactSizeEncoder,
 };
 #[cfg(feature = "alloc")]
 #[doc(inline)]
@@ -95,8 +101,6 @@ pub use self::encode::{drain_to_vec, encode_to_vec};
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use self::encode::{drain_to_writer, encode_to_writer};
-#[doc(inline)]
-pub use self::encode::{check_encode, check_encoder, Encode, Encoder, EncoderStatus, EncoderByteIter, ExactSizeEncoder};
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::LengthPrefixExceedsMaxError;

@@ -124,14 +124,10 @@ pub enum DecoderStatus {
 
 impl DecoderStatus {
     /// Returns `true` if the decoder needs more data to continue.
-    pub fn needs_more(&self) -> bool {
-        matches!(self, Self::NeedsMore)
-    }
+    pub fn needs_more(&self) -> bool { matches!(self, Self::NeedsMore) }
 
     /// Returns `true` if ready to produce decoded value with [`Decoder::end`].
-    pub fn is_ready(&self) -> bool {
-        matches!(self, Self::Ready)
-    }
+    pub fn is_ready(&self) -> bool { matches!(self, Self::Ready) }
 }
 
 /// Decodes an object from a byte slice.

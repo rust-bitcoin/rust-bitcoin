@@ -116,9 +116,7 @@ impl Encoder for CompactSizeEncoder {
     fn current_chunk(&self) -> &[u8] { &self.buf }
 
     #[inline]
-    fn advance(&mut self) -> EncoderStatus {
-        EncoderStatus::Finished
-    }
+    fn advance(&mut self) -> EncoderStatus { EncoderStatus::Finished }
 }
 
 impl ExactSizeEncoder for CompactSizeEncoder {
@@ -262,7 +260,11 @@ fn compact_size_push_bytes(buf: &mut ArrayVec<u8, 9>, bytes: &mut &[u8]) -> Deco
     buf.extend_from_slice(&bytes[..to_copy]);
     *bytes = &bytes[to_copy..];
 
-    if buf.len() == len { DecoderStatus::Ready } else { DecoderStatus::NeedsMore }
+    if buf.len() == len {
+        DecoderStatus::Ready
+    } else {
+        DecoderStatus::NeedsMore
+    }
 }
 
 /// Returns the number of bytes the compact size decoder still needs to read.

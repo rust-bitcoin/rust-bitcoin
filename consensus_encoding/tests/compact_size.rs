@@ -3,10 +3,9 @@
 //! Round-trip integration tests for `CompactSize` codec.
 
 use bitcoin_consensus_encoding::{
-    check_encode, decode_from_slice, CompactSizeDecoderError, CompactSizeEncoder,
-    CompactSizeU64Decoder, Decode, Encode, ExactSizeEncoder,
+    check_encode, decode_from_slice, CompactSizeDecoder, CompactSizeDecoderError,
+    CompactSizeEncoder, CompactSizeU64Decoder, Decode, Decoder, Encode, ExactSizeEncoder,
 };
-use bitcoin_consensus_encoding::{CompactSizeDecoder, Decoder};
 
 /// A `usize` value encoded and decoded as a compact size length prefix.
 struct CompactSizeUsize(usize);
@@ -27,7 +26,10 @@ impl Decoder for CompactSizeUsizeDecoderWrapper {
     type Output = CompactSizeUsize;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(
+        &mut self,
+        bytes: &mut &[u8],
+    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -59,7 +61,10 @@ impl Decoder for CompactSizeU64DecoderWrapper {
     type Output = CompactSizeU64;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(
+        &mut self,
+        bytes: &mut &[u8],
+    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -102,7 +107,10 @@ fn round_trip_usize_three_byte_max() {
 fn round_trip_usize_five_byte_min() {
     // 0x10000 is the smallest value that requires the 0xFE prefix.
     check_encode(&CompactSizeUsize(0x10000), &[0xFE, 0x00, 0x00, 0x01, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0, 0x10000);
+    assert_eq!(
+        decode_from_slice::<CompactSizeUsize>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0,
+        0x10000
+    );
 }
 
 #[test]
@@ -135,25 +143,51 @@ fn round_trip_u64_three_byte_max() {
 fn round_trip_u64_five_byte_min() {
     // 0x10000 is the smallest value that requires the 0xFE prefix.
     check_encode(&CompactSizeU64(0x10000), &[0xFE, 0x00, 0x00, 0x01, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0, 0x10000);
+    assert_eq!(
+        decode_from_slice::<CompactSizeU64>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0,
+        0x10000
+    );
 }
 
 #[test]
 fn round_trip_u64_five_byte_max() {
     check_encode(&CompactSizeU64(0xFFFF_FFFF), &[0xFE, 0xFF, 0xFF, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFE, 0xFF, 0xFF, 0xFF, 0xFF]).unwrap().0, 0xFFFF_FFFF);
+    assert_eq!(
+        decode_from_slice::<CompactSizeU64>(&[0xFE, 0xFF, 0xFF, 0xFF, 0xFF]).unwrap().0,
+        0xFFFF_FFFF
+    );
 }
 
 #[test]
 fn round_trip_u64_nine_byte_min() {
-    check_encode(&CompactSizeU64(0x1_0000_0000), &[0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]).unwrap().0, 0x1_0000_0000);
+    check_encode(
+        &CompactSizeU64(0x1_0000_0000),
+        &[0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00],
+    );
+    assert_eq!(
+        decode_from_slice::<CompactSizeU64>(&[
+            0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
+        ])
+        .unwrap()
+        .0,
+        0x1_0000_0000
+    );
 }
 
 #[test]
 fn round_trip_u64_max() {
-    check_encode(&CompactSizeU64(u64::MAX), &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]).unwrap().0, u64::MAX);
+    check_encode(
+        &CompactSizeU64(u64::MAX),
+        &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+    );
+    assert_eq!(
+        decode_from_slice::<CompactSizeU64>(&[
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+        ])
+        .unwrap()
+        .0,
+        u64::MAX
+    );
 }
 
 #[test]
@@ -312,16 +346,21 @@ fn decoder_compact_size_end_incomplete_nine_byte() {
 fn encoder_compact_size_len_matches_encoded_bytes() {
     // Test that CompactSizeEncoder::len() returns the correct length for various values
     let test_cases = [
-        (0usize, 1),              // Single byte: 0x00
-        (252usize, 1),            // Single byte: 0xFC
-        (253usize, 3),            // Three bytes: 0xFD + 2 bytes
-        (0xFFFF_usize, 3),        // Three bytes: 0xFD + 2 bytes
-        (0x1_0000_usize, 5),      // Five bytes: 0xFE + 4 bytes
-        (0xFFFF_FFFF_usize, 5),   // Five bytes: 0xFE + 4 bytes
+        (0usize, 1),            // Single byte: 0x00
+        (252usize, 1),          // Single byte: 0xFC
+        (253usize, 3),          // Three bytes: 0xFD + 2 bytes
+        (0xFFFF_usize, 3),      // Three bytes: 0xFD + 2 bytes
+        (0x1_0000_usize, 5),    // Five bytes: 0xFE + 4 bytes
+        (0xFFFF_FFFF_usize, 5), // Five bytes: 0xFE + 4 bytes
     ];
 
     for (value, expected_len) in test_cases {
         let encoder = CompactSizeEncoder::new(value);
-        assert_eq!(encoder.len(), expected_len, "CompactSizeEncoder::len() mismatch for value {}", value);
+        assert_eq!(
+            encoder.len(),
+            expected_len,
+            "CompactSizeEncoder::len() mismatch for value {}",
+            value
+        );
     }
 }

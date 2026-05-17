@@ -122,14 +122,10 @@ pub enum EncoderStatus {
 
 impl EncoderStatus {
     /// Returns `true` if `self` is `HasMore`, `false` otherwise.
-    pub fn has_more(&self) -> bool {
-        matches!(self, Self::HasMore)
-    }
+    pub fn has_more(&self) -> bool { matches!(self, Self::HasMore) }
 
     /// Returns `true` if `self` is `Finished`, `false` otherwise.
-    pub fn has_finished(&self) -> bool {
-        matches!(self, Self::Finished)
-    }
+    pub fn has_finished(&self) -> bool { matches!(self, Self::Finished) }
 }
 
 /// Implements a newtype around an encoder.
@@ -423,9 +419,20 @@ pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) 
 
     loop {
         let chunk = encoder.current_chunk();
-        assert!(chunk.len() <= expected.len(), "encoder yielded more bytes ({}) than expected ({})", bytes_processed + chunk.len(), orig_expected_len);
-        if let Some((i, _)) = chunk.iter().zip(&expected[..chunk.len()]).enumerate().find(|&(_, (a, b))| a != b) {
-            panic!("encoder did not yield expected bytes - difference in chunk #{}, after {} bytes", chunk_number, bytes_processed + i);
+        assert!(
+            chunk.len() <= expected.len(),
+            "encoder yielded more bytes ({}) than expected ({})",
+            bytes_processed + chunk.len(),
+            orig_expected_len
+        );
+        if let Some((i, _)) =
+            chunk.iter().zip(&expected[..chunk.len()]).enumerate().find(|&(_, (a, b))| a != b)
+        {
+            panic!(
+                "encoder did not yield expected bytes - difference in chunk #{}, after {} bytes",
+                chunk_number,
+                bytes_processed + i
+            );
         }
         bytes_processed += chunk.len();
         expected = &expected[chunk.len()..];
@@ -434,7 +441,11 @@ pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) 
             break;
         }
     }
-    assert!(expected.is_empty(), "encoder did not yield enough bytes - {} more expected", expected.len());
+    assert!(
+        expected.is_empty(),
+        "encoder did not yield enough bytes - {} more expected",
+        expected.len()
+    );
 }
 
 impl<T: Encoder> Encoder for Option<T> {

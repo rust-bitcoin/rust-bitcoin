@@ -56,7 +56,10 @@ fn decode_array_insufficient_data_error() {
     let mut data = &[0xAA, 0xBB][..];
 
     let status = decoder.push_bytes(&mut data).unwrap();
-    assert!(status.needs_more(), "ArrayDecoder should need more data after 2 bytes for 5-byte array");
+    assert!(
+        status.needs_more(),
+        "ArrayDecoder should need more data after 2 bytes for 5-byte array"
+    );
     assert_eq!(data, EMPTY);
 
     let err = decoder.end().unwrap_err();
@@ -244,7 +247,10 @@ impl Decoder for TestArrayDecoder {
     type Output = TestArray;
     type Error = UnexpectedEofError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(
+        &mut self,
+        bytes: &mut &[u8],
+    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes)
     }
 
@@ -401,7 +407,10 @@ impl Decoder for InnerDecoder {
     type Output = Inner;
     type Error = UnexpectedEofError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(
+        &mut self,
+        bytes: &mut &[u8],
+    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -431,7 +440,10 @@ impl Decoder for TestDecoder {
     type Output = Test;
     type Error = VecDecoderError<UnexpectedEofError>;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(
+        &mut self,
+        bytes: &mut &[u8],
+    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
