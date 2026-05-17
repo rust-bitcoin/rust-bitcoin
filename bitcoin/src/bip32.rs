@@ -11,12 +11,12 @@ use core::str::FromStr;
 use core::{fmt, slice};
 
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
-use internals::{impl_array_newtype, write_err};
+use internals::impl_array_newtype;
 use io::Write;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
-use crate::internal_macros::impl_bytes_newtype;
+use crate::internal_macros::{impl_bytes_newtype, write_err};
 use crate::network::NetworkKind;
 use crate::prelude::*;
 

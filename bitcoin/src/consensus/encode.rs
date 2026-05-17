@@ -19,7 +19,6 @@ use core::{fmt, mem};
 
 use hashes::{sha256, sha256d, Hash};
 use hex::error::{InvalidCharError, OddLengthStringError};
-use internals::write_err;
 use io::{Cursor, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
@@ -27,6 +26,7 @@ use crate::bip158::{FilterHash, FilterHeader};
 use crate::blockdata::block::{self, BlockHash, TxMerkleNode};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
 use crate::consensus::{DecodeError, IterReader};
+use crate::internal_macros::write_err;
 #[cfg(feature = "std")]
 use crate::p2p::{
     address::{AddrV2Message, Address},

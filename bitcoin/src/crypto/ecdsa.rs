@@ -10,9 +10,9 @@ use core::{fmt, iter};
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hex::FromHex;
-use internals::write_err;
 use io::Write;
 
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::script::PushBytes;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};

@@ -2,10 +2,9 @@
 
 use core::fmt;
 
-use internals::write_err;
-
 use crate::address::{Address, NetworkUnchecked};
 use crate::blockdata::script::{witness_program, witness_version};
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::Network;
 

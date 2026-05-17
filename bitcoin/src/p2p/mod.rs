@@ -24,11 +24,12 @@ use core::str::FromStr;
 use core::{fmt, ops};
 
 use hex::FromHex;
-use internals::{debug_from_display, write_err};
+use internals::debug_from_display;
 use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
+use crate::internal_macros::write_err;
 use crate::network::Network;
 use crate::prelude::*;
 

@@ -16,11 +16,11 @@ use core::{fmt, str};
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
-use internals::write_err;
 use io::Write;
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};

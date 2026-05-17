@@ -6,8 +6,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::write_err;
 
+use crate::internal_macros::write_err;
 use crate::parse::{self, ParseIntError};
 #[cfg(feature = "alloc")]
 use crate::prelude::*;

@@ -15,7 +15,6 @@ use core::str::FromStr;
 use core::{cmp, fmt};
 
 use hashes::{sha256d, Hash};
-use internals::write_err;
 use io::{Read, Write};
 use units::parse::{self, ParseIntError};
 
@@ -27,7 +26,7 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::internal_macros::{impl_consensus_encoding, impl_hashencode, write_err};
 use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};

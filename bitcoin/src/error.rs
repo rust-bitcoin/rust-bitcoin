@@ -4,8 +4,7 @@
 
 use core::fmt;
 
-use internals::write_err;
-
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 
 #[rustfmt::skip]                // Keep public re-exports separate.

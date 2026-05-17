@@ -13,12 +13,12 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{sha256t_hash_newtype, Hash, HashEngine};
-use internals::write_err;
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::{Script, ScriptBuf};
 
