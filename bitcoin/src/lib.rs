@@ -177,6 +177,10 @@ pub type CompressedPublicKey = FullPublicKey;
 #[doc(hidden)]
 pub type PublicKey = LegacyPublicKey;
 
+// Re-export modules directly from lower level crates
+#[doc(inline)]
+pub use key_expression::bip32;
+
 #[doc(inline)]
 pub use crate::{
     address::{Address, AddressType, KnownHrp},
@@ -203,10 +207,6 @@ pub use crate::{
     // These modules also re-export all the respective `primitives` types.
     blockdata::{block, constants, fee_rate, locktime, script, transaction, weight, witness},
 };
-
-// Re-export modules directly from lower level crates
-#[doc(inline)]
-pub use key_expression::bip32;
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

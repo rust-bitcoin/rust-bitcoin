@@ -6,8 +6,8 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
 use alloc::string::String;
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
@@ -1284,7 +1284,8 @@ impl<'a> Arbitrary<'a> for Xpriv {
 
 #[cfg(test)]
 mod tests {
-    use alloc::{string::ToString, format};
+    use alloc::format;
+    use alloc::string::ToString;
 
     use hex_unstable::hex;
     #[cfg(feature = "serde")]
@@ -1364,7 +1365,9 @@ mod tests {
         let invalid_path = "2147483648";
         assert_eq!(
             invalid_path.parse::<DerivationPath>(),
-            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2_147_483_648 })),
+            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError {
+                index: 2_147_483_648
+            })),
         );
     }
 
