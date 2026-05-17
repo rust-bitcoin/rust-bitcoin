@@ -87,7 +87,7 @@ jobs:
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: "1.56.1"
+          toolchain: "1.74.0"
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"

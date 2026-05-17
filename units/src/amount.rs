@@ -8,6 +8,8 @@
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::cmp::Ordering;
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
 #[cfg(feature = "alloc")]
 use core::fmt::Write as _;
 use core::str::FromStr;
@@ -802,7 +804,7 @@ fn fmt_satoshi_in(
         (true, false, fmt::Alignment::Left) => (0, width - num_width),
         // If the required padding is odd it needs to be skewed to the left
         (true, false, fmt::Alignment::Center) =>
-            ((width - num_width) / 2, (width - num_width + 1) / 2),
+            ((width - num_width) / 2, (width - num_width).div_ceil(2)),
     };
 
     if !options.sign_aware_zero_pad {
@@ -1189,6 +1191,100 @@ impl TryFrom<SignedAmount> for Amount {
     type Error = OutOfRangeError;
 
     fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for Amount {
+    type Encoder<'e>
+        = AmountEncoder
+    where
+        Self: 'e;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        AmountEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_sat().to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for Amount {
+    type Decoder = AmountDecoder;
+
+    fn decoder() -> Self::Decoder { AmountDecoder::new() }
+}
+
+#[cfg(feature = "encoding")]
+/// The encoder for the [`Amount`] type.
+#[cfg(feature = "encoding")]
+pub struct AmountEncoder(encoding::ArrayEncoder<8>);
+
+#[cfg(feature = "encoding")]
+impl AmountEncoder {
+    /// Constructs a new [`Amount`] encoder.
+    pub const fn new(encoder: encoding::ArrayEncoder<8>) -> Self { Self(encoder) }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encoder for AmountEncoder {
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    fn advance(&mut self) -> bool { self.0.advance() }
+}
+
+/// An error encountered while decoding an [`Amount`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AmountDecoderError(pub encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for AmountDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for AmountDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "error decoding amount"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for AmountDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+/// The decoder for the [`Amount`] type.
+#[cfg(feature = "encoding")]
+pub struct AmountDecoder(encoding::ArrayDecoder<8>);
+
+#[cfg(feature = "encoding")]
+impl AmountDecoder {
+    /// Constructs a new [`Amount`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for AmountDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for AmountDecoder {
+    type Output = Amount;
+    type Error = AmountDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(AmountDecoderError)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(AmountDecoderError)?;
+        Ok(Amount::from_sat(u64::from_le_bytes(bytes)))
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl core::iter::Sum for Amount {
@@ -1590,6 +1686,100 @@ impl TryFrom<Amount> for SignedAmount {
     type Error = OutOfRangeError;
 
     fn try_from(value: Amount) -> Result<Self, Self::Error> { value.to_signed() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for SignedAmount {
+    type Encoder<'e>
+        = SignedAmountEncoder
+    where
+        Self: 'e;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        SignedAmountEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_sat().to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for SignedAmount {
+    type Decoder = SignedAmountDecoder;
+
+    fn decoder() -> Self::Decoder { SignedAmountDecoder::new() }
+}
+
+#[cfg(feature = "encoding")]
+/// The encoder for the [`SignedAmount`] type.
+#[cfg(feature = "encoding")]
+pub struct SignedAmountEncoder(encoding::ArrayEncoder<8>);
+
+#[cfg(feature = "encoding")]
+impl SignedAmountEncoder {
+    /// Constructs a new [`SignedAmount`] encoder.
+    pub const fn new(encoder: encoding::ArrayEncoder<8>) -> Self { Self(encoder) }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encoder for SignedAmountEncoder {
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    fn advance(&mut self) -> bool { self.0.advance() }
+}
+
+/// An error encountered while decoding a [`SignedAmount`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SignedAmountDecoderError(pub encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for SignedAmountDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for SignedAmountDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "error decoding signed amount"; self.0)
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for SignedAmountDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+/// The decoder for the [`SignedAmount`] type.
+#[cfg(feature = "encoding")]
+pub struct SignedAmountDecoder(encoding::ArrayDecoder<8>);
+
+#[cfg(feature = "encoding")]
+impl SignedAmountDecoder {
+    /// Constructs a new [`SignedAmount`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for SignedAmountDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for SignedAmountDecoder {
+    type Output = SignedAmount;
+    type Error = SignedAmountDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(SignedAmountDecoderError)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(SignedAmountDecoderError)?;
+        Ok(SignedAmount::from_sat(i64::from_le_bytes(bytes)))
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl core::iter::Sum for SignedAmount {
@@ -2136,6 +2326,31 @@ mod tests {
         let sa_negative = SignedAmount(-123);
         let result = Amount::try_from(sa_negative);
         assert_eq!(result, Err(OutOfRangeError { is_signed: false, is_greater_than_max: false }));
+    }
+
+    #[cfg(feature = "encoding")]
+    #[test]
+    fn amount_encoding_round_trip() {
+        let values = [Amount::ZERO, Amount::ONE_SAT, Amount::ONE_BTC, Amount::MAX];
+
+        for value in values {
+            let encoded = encoding::encode_to_vec(&value);
+            let decoded = encoding::decode_from_slice::<Amount>(&encoded).unwrap();
+            assert_eq!(decoded, value);
+        }
+    }
+
+    #[cfg(feature = "encoding")]
+    #[test]
+    fn signed_amount_encoding_round_trip() {
+        let values =
+            [SignedAmount::MIN, SignedAmount::ZERO, SignedAmount::ONE_BTC, SignedAmount::MAX];
+
+        for value in values {
+            let encoded = encoding::encode_to_vec(&value);
+            let decoded = encoding::decode_from_slice::<SignedAmount>(&encoded).unwrap();
+            assert_eq!(decoded, value);
+        }
     }
 
     #[test]

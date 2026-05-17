@@ -2,6 +2,8 @@
 
 //! Provides type `Height` and `Time` types used by the `rust-bitcoin` `absolute::LockTime` type.
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -76,6 +78,115 @@ impl Height {
 
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+/// An error encountered while decoding an absolute locktime [`Height`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HeightDecoderError {
+    /// The encoded bytes ended before a full `u32` was read.
+    Eof(encoding::UnexpectedEofError),
+    /// The encoded value does not represent a valid absolute height.
+    Conversion(ConversionError),
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for HeightDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for HeightDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            HeightDecoderError::Eof(error) =>
+                write_err!(f, "error decoding absolute height"; error),
+            HeightDecoderError::Conversion(error) => {
+                write_err!(f, "invalid absolute height encoding"; error)
+            }
+        }
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for HeightDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            HeightDecoderError::Eof(error) => Some(error),
+            HeightDecoderError::Conversion(error) => Some(error),
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for Height {
+    type Encoder<'e>
+        = HeightEncoder
+    where
+        Self: 'e;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        HeightEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus_u32().to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for Height {
+    type Decoder = HeightDecoder;
+
+    fn decoder() -> Self::Decoder { HeightDecoder::new() }
+}
+
+/// The encoder for the absolute [`Height`] type.
+#[cfg(feature = "encoding")]
+pub struct HeightEncoder(encoding::ArrayEncoder<4>);
+
+#[cfg(feature = "encoding")]
+impl HeightEncoder {
+    /// Constructs a new absolute [`Height`] encoder.
+    pub const fn new(encoder: encoding::ArrayEncoder<4>) -> Self { Self(encoder) }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encoder for HeightEncoder {
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    fn advance(&mut self) -> bool { self.0.advance() }
+}
+
+/// The decoder for the absolute [`Height`] type.
+#[cfg(feature = "encoding")]
+pub struct HeightDecoder(encoding::ArrayDecoder<4>);
+
+#[cfg(feature = "encoding")]
+impl HeightDecoder {
+    /// Constructs a new absolute [`Height`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for HeightDecoder {
+    type Output = Height;
+    type Error = HeightDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(HeightDecoderError::Eof)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(HeightDecoderError::Eof)?;
+        Height::from_consensus(u32::from_le_bytes(bytes)).map_err(HeightDecoderError::Conversion)
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for HeightDecoder {
+    fn default() -> Self { Self::new() }
 }
 
 crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_consensus));
@@ -171,6 +282,114 @@ impl Time {
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+/// An error encountered while decoding an absolute locktime [`Time`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TimeDecoderError {
+    /// The encoded bytes ended before a full `u32` was read.
+    Eof(encoding::UnexpectedEofError),
+    /// The encoded value does not represent a valid absolute time.
+    Conversion(ConversionError),
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TimeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TimeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TimeDecoderError::Eof(error) => write_err!(f, "error decoding absolute time"; error),
+            TimeDecoderError::Conversion(error) => {
+                write_err!(f, "invalid absolute time encoding"; error)
+            }
+        }
+    }
+}
+
+#[cfg(all(feature = "std", feature = "encoding"))]
+impl std::error::Error for TimeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            TimeDecoderError::Eof(error) => Some(error),
+            TimeDecoderError::Conversion(error) => Some(error),
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encodable for Time {
+    type Encoder<'e>
+        = TimeEncoder
+    where
+        Self: 'e;
+
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        TimeEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus_u32().to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decodable for Time {
+    type Decoder = TimeDecoder;
+
+    fn decoder() -> Self::Decoder { TimeDecoder::new() }
+}
+
+/// The encoder for the absolute [`Time`] type.
+#[cfg(feature = "encoding")]
+pub struct TimeEncoder(encoding::ArrayEncoder<4>);
+
+#[cfg(feature = "encoding")]
+impl TimeEncoder {
+    /// Constructs a new absolute [`Time`] encoder.
+    pub const fn new(encoder: encoding::ArrayEncoder<4>) -> Self { Self(encoder) }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encoder for TimeEncoder {
+    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+
+    fn advance(&mut self) -> bool { self.0.advance() }
+}
+
+/// The decoder for the absolute [`Time`] type.
+#[cfg(feature = "encoding")]
+pub struct TimeDecoder(encoding::ArrayDecoder<4>);
+
+#[cfg(feature = "encoding")]
+impl TimeDecoder {
+    /// Constructs a new absolute [`Time`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for TimeDecoder {
+    type Output = Time;
+    type Error = TimeDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+        self.0.push_bytes(bytes).map_err(TimeDecoderError::Eof)
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        let bytes = self.0.end().map_err(TimeDecoderError::Eof)?;
+        Time::from_consensus(u32::from_le_bytes(bytes)).map_err(TimeDecoderError::Conversion)
+    }
+
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for TimeDecoder {
+    fn default() -> Self { Self::new() }
 }
 
 crate::impl_parse_str!(Time, ParseTimeError, parser(Time::from_consensus));
@@ -444,6 +663,30 @@ mod tests {
         let hex = "0xzb93";
         let result = Height::from_hex(hex);
         assert!(result.is_err());
+    }
+
+    #[cfg(feature = "encoding")]
+    #[test]
+    fn encode_decode_height_with_consensus_validation() {
+        let valid = Height::from_consensus(499_999_999).unwrap();
+        let encoded = encoding::encode_to_vec(&valid);
+        let decoded = encoding::decode_from_slice::<Height>(&encoded).unwrap();
+        assert_eq!(decoded, valid);
+
+        let err = encoding::decode_from_slice::<Height>(&500_000_000u32.to_le_bytes()).unwrap_err();
+        assert!(matches!(err, HeightDecoderError::Conversion(_)));
+    }
+
+    #[cfg(feature = "encoding")]
+    #[test]
+    fn encode_decode_time_with_consensus_validation() {
+        let valid = Time::from_consensus(500_000_000).unwrap();
+        let encoded = encoding::encode_to_vec(&valid);
+        let decoded = encoding::decode_from_slice::<Time>(&encoded).unwrap();
+        assert_eq!(decoded, valid);
+
+        let err = encoding::decode_from_slice::<Time>(&499_999_999u32.to_le_bytes()).unwrap_err();
+        assert!(matches!(err, TimeDecoderError::Conversion(_)));
     }
 
     #[test]
