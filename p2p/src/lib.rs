@@ -422,9 +422,7 @@ impl TryFrom<Magic> for Network {
 }
 
 impl fmt::Display for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(self, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
 impl fmt::Debug for Magic {

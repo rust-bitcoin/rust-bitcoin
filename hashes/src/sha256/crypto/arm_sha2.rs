@@ -199,7 +199,7 @@ pub(super) unsafe fn process_blocks(state: &mut [u32; 8], blocks: &[u8]) {
 
         block_offset += 64;
     }
-    
+
     // Save state
     vst1q_u32(state.as_mut_ptr().add(0), state0);
     vst1q_u32(state.as_mut_ptr().add(4), state1);

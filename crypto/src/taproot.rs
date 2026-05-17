@@ -161,9 +161,7 @@ impl SerializedSignature {
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
 
-    fn is_default(&self) -> bool {
-        self.len() != MAX_LEN
-    }
+    fn is_default(&self) -> bool { self.len() != MAX_LEN }
 
     #[inline]
     fn fmt_internal(&self, f: &mut fmt::Formatter, case: hex_unstable::Case) -> fmt::Result {
@@ -195,9 +193,7 @@ impl fmt::Debug for SerializedSignature {
 }
 
 impl fmt::Display for SerializedSignature {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(self, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
 impl fmt::LowerHex for SerializedSignature {
