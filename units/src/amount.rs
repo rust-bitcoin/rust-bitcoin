@@ -18,8 +18,8 @@ use core::{default, fmt, ops};
 use ::serde::{Deserialize, Serialize};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::error::InputString;
 
+use crate::input_string::InputString;
 use crate::internal_macros::write_err;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
