@@ -33,6 +33,10 @@ use self::error::WitnessDecoderErrorInner;
 #[cfg(feature = "alloc")]
 const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
 
+/// Minimum amount of memory (in bytes) to allocate at once when deserializing vectors.
+#[cfg(feature = "alloc")]
+const MIN_VECTOR_ALLOCATE: usize = 1_000;
+
 /// Maximum number of items in a witness stack.
 ///
 /// This is an anti-DoS limit based on Bitcoin's 4MB block weight limit.
@@ -350,7 +354,7 @@ impl WitnessDecoder {
         let available_capacity = self.content.capacity() - self.content.len();
 
         if available_capacity == 0 {
-            let batch_size = bytes_needed.min(MAX_VECTOR_ALLOCATE);
+            let batch_size = bytes_needed.min(MAX_VECTOR_ALLOCATE).max(MIN_VECTOR_ALLOCATE);
             self.content.reserve_exact(batch_size);
         }
 
