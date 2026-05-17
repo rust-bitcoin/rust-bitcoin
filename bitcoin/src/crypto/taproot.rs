@@ -9,9 +9,9 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
-use internals::write_err;
 use io::Write;
 
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 use crate::taproot::serialized_signature::{self, SerializedSignature};

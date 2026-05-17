@@ -22,12 +22,12 @@ use core::fmt;
 use core::fmt::Display;
 use core::str::FromStr;
 
-use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::consensus::Params;
 use crate::constants::ChainHash;
+use crate::internal_macros::write_err;
 use crate::p2p::Magic;
 use crate::prelude::*;
 

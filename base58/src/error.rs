@@ -4,7 +4,7 @@
 
 use core::fmt;
 
-use internals::write_err;
+use crate::internal_macros::write_err;
 
 /// An error occurred during base58 decoding (with checksum).
 #[derive(Debug, Clone, PartialEq, Eq)]

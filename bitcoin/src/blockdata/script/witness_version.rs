@@ -11,12 +11,12 @@ use core::fmt;
 use core::str::FromStr;
 
 use bech32::Fe32;
-use internals::write_err;
 use units::{parse, ParseIntError};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::Opcode;
 use crate::blockdata::script::Instruction;
+use crate::internal_macros::write_err;
 
 /// Version of the segregated witness program.
 ///
