@@ -2,6 +2,7 @@
 
 //! Error code for the `base58` crate.
 
+use core::convert::Infallible;
 use core::fmt;
 
 use crate::internal_macros::write_err;
@@ -18,7 +19,9 @@ pub enum Error {
     TooShort(TooShortError),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
