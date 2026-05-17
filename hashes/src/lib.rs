@@ -77,7 +77,7 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 
-#[cfg(all(feature = "alloc", not(feature = "std")))]
+#[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate core;
@@ -103,7 +103,7 @@ pub mod _export {
 }
 
 #[cfg(feature = "schemars")]
-extern crate schemars;
+extern crate actual_schemars as schemars;
 
 mod internal_macros;
 #[macro_use]

@@ -8,6 +8,9 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
+#[cfg(feature = "schemars")]
+use alloc::{borrow::ToOwned, boxed::Box, string::String};
+
 use crate::{sha256, FromSliceError};
 
 type HashEngine = sha256::HashEngine;
@@ -165,8 +168,12 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "schemars")]
+    use alloc::{borrow::ToOwned, boxed::Box, string::String};
+
     #[cfg(feature = "alloc")]
     use crate::Hash;
+    #[cfg(feature = "alloc")]
     use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [
@@ -174,9 +181,11 @@ mod tests {
         108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
     ];
 
+    #[cfg(feature = "alloc")]
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
     pub struct TestHashTag;
 
+    #[cfg(feature = "alloc")]
     impl sha256t::Tag for TestHashTag {
         fn engine() -> sha256::HashEngine {
             // The TapRoot TapLeaf midstate.
