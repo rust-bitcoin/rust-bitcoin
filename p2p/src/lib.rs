@@ -35,7 +35,7 @@ pub extern crate serde;
 #[cfg(feature = "arbitrary")]
 pub extern crate arbitrary;
 
-pub extern crate hex_stable as hex;
+pub extern crate hex;
 
 use alloc::borrow::ToOwned;
 use core::borrow::{Borrow, BorrowMut};
@@ -432,7 +432,7 @@ impl fmt::Debug for Magic {
 
 impl fmt::LowerHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex_unstable::Case::Lower)?;
+        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
 }
@@ -440,7 +440,7 @@ impl_to_hex_from_lower_hex!(Magic, |_| 8);
 
 impl fmt::UpperHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex_unstable::Case::Upper)?;
+        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
         Ok(())
     }
 }

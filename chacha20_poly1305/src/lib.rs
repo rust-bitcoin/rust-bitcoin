@@ -196,9 +196,7 @@ pub mod error {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use alloc::vec::Vec;
-
-    use hex::prelude::*;
+    use hex::{hex, DisplayHex as _};
 
     use super::*;
 
@@ -206,15 +204,10 @@ mod tests {
     #[test]
     fn rfc7539() {
         let mut message = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
-        let aad = Vec::from_hex("50515253c0c1c2c3c4c5c6c7").unwrap();
-        let key = Key::new(
-            Vec::from_hex("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
-                .unwrap()
-                .try_into()
-                .unwrap(),
-        );
-        let nonce =
-            Nonce::new(Vec::from_hex("070000004041424344454647").unwrap().try_into().unwrap());
+        let aad = hex!("50515253c0c1c2c3c4c5c6c7");
+        let key =
+            Key::new(hex!("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f"));
+        let nonce = Nonce::new(hex!("070000004041424344454647"));
         let cipher = ChaCha20Poly1305::new(key, nonce);
         let tag = cipher.encrypt(&mut message, Some(&aad));
 

@@ -13,7 +13,7 @@ use core::fmt;
 use core::fmt::Write as _;
 
 use encoding::{Decode, Decoder, Encode, EncoderByteIter};
-use hex_unstable::{BytesToHexIter, Case};
+use hex::{BytesToHexIter, Case};
 use internals::write_err;
 
 /// Hex encoding wrapper type for `Encode` + `Decode` types.
@@ -42,7 +42,7 @@ impl<T: Decode> HexPrimitive<'_, T> {
     /// * `OddLength` or `InvalidChar` if decode the hex string to bytes fails.
     /// * `Decode` if consensus decoding the hex-decoded bytes fails.
     pub(crate) fn from_str(s: &str) -> Result<T, ParsePrimitiveError<T>> {
-        let iter = hex_unstable::HexToBytesIter::new(s)?;
+        let iter = hex::HexSliceToBytesIter::new(s)?;
 
         let mut decoder = T::decoder();
         let mut buffer = [0u8; 4096]; // 4MB is bigger than most decodables, reducing push_bytes calls.
@@ -108,17 +108,25 @@ impl<T: Encode> HexPrimitive<'_, T> {
         // Alt characters
         if f.alternate() {
             f.write_str(match case {
-                hex_unstable::Case::Lower => "0x",
-                hex_unstable::Case::Upper => "0X",
+                hex::Case::Lower => "0x",
+                hex::Case::Upper => "0X",
             })?;
         }
 
         // Hex data
-        for (i, ch) in iter.enumerate() {
-            if i >= trunc_width {
+        let mut remaining = trunc_width;
+        for chars in iter {
+            if remaining == 0 {
                 break;
             }
-            f.write_char(ch)?;
+            f.write_char(chars[0].into())?;
+            remaining -= 1;
+
+            if remaining == 0 {
+                break;
+            }
+            f.write_char(chars[1].into())?;
+            remaining -= 1;
         }
 
         // Right padding
@@ -151,9 +159,9 @@ impl<T: Encode> fmt::UpperHex for HexPrimitive<'_, T> {
 /// An error type for errors that can occur during parsing of a `Decode` type from hex.
 pub(crate) enum ParsePrimitiveError<T: Decode> {
     /// Tried to decode an odd length string
-    OddLengthString(hex_unstable::OddLengthStringError),
+    OddLengthString(hex::OddLengthStringError),
     /// Encountered an invalid hex character
-    InvalidChar(hex_unstable::InvalidCharError),
+    InvalidChar(hex::InvalidCharError),
     /// A decode error from `consensus_encoding`
     Decode(encoding::DecodeError<<T::Decoder as encoding::Decoder>::Error>),
 }
@@ -211,12 +219,12 @@ impl<T: Decode> fmt::Display for ParsePrimitiveError<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
 }
 
-impl<T: Decode> From<hex_unstable::OddLengthStringError> for ParsePrimitiveError<T> {
-    fn from(err: hex_unstable::OddLengthStringError) -> Self { Self::OddLengthString(err) }
+impl<T: Decode> From<hex::OddLengthStringError> for ParsePrimitiveError<T> {
+    fn from(err: hex::OddLengthStringError) -> Self { Self::OddLengthString(err) }
 }
 
-impl<T: Decode> From<hex_unstable::InvalidCharError> for ParsePrimitiveError<T> {
-    fn from(err: hex_unstable::InvalidCharError) -> Self { Self::InvalidChar(err) }
+impl<T: Decode> From<hex::InvalidCharError> for ParsePrimitiveError<T> {
+    fn from(err: hex::InvalidCharError) -> Self { Self::InvalidChar(err) }
 }
 
 #[cfg(feature = "std")]
@@ -280,9 +288,11 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn hex_primitive_from_str_flushes_full_buffer() {
+        use hex::DisplayHex as _;
+
         // 300 headers force multiple full 4096-byte decoder flushes plus a final remainder flush.
         let bytes = vec![0u8; block::Header::SIZE * 300];
-        let encoded = hex_unstable::DisplayHex::as_hex(&bytes).to_string();
+        let encoded = bytes.as_hex().to_string();
 
         let parsed = HexPrimitive::<block::Header>::from_str(&encoded).unwrap();
 

@@ -1614,7 +1614,7 @@ mod tests {
 
     use encoding::{Decode as _, Decoder as _, Encoder as _};
     #[cfg(feature = "hex")]
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
     #[cfg(feature = "hex")]

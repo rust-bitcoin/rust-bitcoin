@@ -870,7 +870,7 @@ impl<'a> Arbitrary<'a> for Alert {
 mod tests {
     use alloc::string::ToString;
 
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
 

@@ -1302,7 +1302,7 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 mod tests {
     use alloc::string::ToString;
 
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
     use crate::consensus::encode::deserialize;

@@ -16,7 +16,7 @@ use core::str::FromStr;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
-use hex_unstable::DisplayHex;
+use hex::DisplayHex;
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;

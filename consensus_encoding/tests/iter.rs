@@ -52,9 +52,12 @@ fn hex_iter() {
     let mut iter = BytesToHexIter::new(byte_iter, hex::Case::Upper);
 
     let expect_str = "FFF00987";
-    for byte in expect_str.chars() {
-        let iter_byte = iter.next().unwrap();
-        assert_eq!(iter_byte, byte);
+    let mut chars = expect_str.chars();
+    while let Some(hi) = chars.next() {
+        let iter_chars = iter.next().unwrap();
+        assert_eq!(char::from(iter_chars[0]), hi);
+        let lo = chars.next().unwrap();
+        assert_eq!(char::from(iter_chars[1]), lo);
     }
     let none = iter.next();
     assert_eq!(none, None);
@@ -67,9 +70,13 @@ fn hex_iter_cat_encoder() {
     let mut iter = BytesToHexIter::new(byte_iter, hex::Case::Lower);
 
     let expect_str = "deadbeef";
-    for byte in expect_str.chars() {
-        let iter_byte = iter.next().unwrap();
-        assert_eq!(iter_byte, byte);
+    let mut chars = expect_str.chars();
+    while let Some(hi) = chars.next() {
+        let iter_chars = iter.next().unwrap();
+        assert_eq!(char::from(iter_chars[0]), hi);
+        let lo = chars.next().unwrap();
+        assert_eq!(char::from(iter_chars[1]), lo);
+
     }
     let none = iter.next();
     assert_eq!(none, None);

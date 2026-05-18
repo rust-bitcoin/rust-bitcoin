@@ -166,13 +166,13 @@ impl ShortId {
 
 impl core::fmt::LowerHex for ShortId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        hex_unstable::display::fmt_hex_exact!(f, 6, &self.0, hex_unstable::Case::Lower)
+        hex::display::fmt_hex_exact!(f, 6, &self.0, hex::Case::Lower)
     }
 }
 
 impl core::fmt::UpperHex for ShortId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        hex_unstable::display::fmt_hex_exact!(f, 6, &self.0, hex_unstable::Case::Upper)
+        hex::display::fmt_hex_exact!(f, 6, &self.0, hex::Case::Upper)
     }
 }
 

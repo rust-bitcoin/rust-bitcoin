@@ -520,7 +520,7 @@ impl<'a> Arbitrary<'a> for Inventory {
 
 #[cfg(test)]
 mod tests {
-    use hex_unstable::hex;
+    use hex::hex;
 
     use super::*;
 

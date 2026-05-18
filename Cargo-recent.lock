@@ -30,7 +30,7 @@ version = "0.4.0"
 dependencies = [
  "bitcoin-internals 0.5.0",
  "bitcoin_hashes 0.20.0",
- "hex-conservative 0.3.2",
+ "hex-conservative 1.1.0",
 ]
 
 [[package]]
@@ -91,8 +91,7 @@ dependencies = [
  "bitcoin-units 0.3.0",
  "bitcoin_hashes 0.20.0",
  "bitcoinconsensus",
- "hex-conservative 0.3.2",
- "hex-conservative 1.0.0",
+ "hex-conservative 1.1.0",
  "secp256k1 0.32.0-beta.2",
  "serde",
  "serde_json",
@@ -112,7 +111,7 @@ name = "bitcoin-consensus-encoding"
 version = "0.2.0"
 dependencies = [
  "bitcoin-internals 0.5.0",
- "hex-conservative 0.3.2",
+ "hex-conservative 1.1.0",
 ]
 
 [[package]]
@@ -124,8 +123,7 @@ dependencies = [
  "bitcoin-internals 0.5.0",
  "bitcoin-network-kind",
  "bitcoin_hashes 0.20.0",
- "hex-conservative 0.3.2",
- "hex-conservative 1.0.0",
+ "hex-conservative 1.1.0",
  "secp256k1 0.32.0-beta.2",
  "serde",
  "serde_test",
@@ -157,7 +155,7 @@ name = "bitcoin-internals"
 version = "0.5.0"
 dependencies = [
  "bincode",
- "hex-conservative 0.3.2",
+ "hex-conservative 1.1.0",
  "serde",
  "serde_json",
 ]
@@ -187,8 +185,7 @@ dependencies = [
  "bitcoin-internals 0.5.0",
  "bitcoin-network-kind",
  "bitcoin_hashes 0.20.0",
- "hex-conservative 0.3.2",
- "hex-conservative 1.0.0",
+ "hex-conservative 1.1.0",
  "secp256k1 0.32.0-beta.2",
  "serde",
  "serde_json",
@@ -216,8 +213,7 @@ dependencies = [
  "bitcoin-primitives",
  "bitcoin-units 0.3.0",
  "bitcoin_hashes 0.20.0",
- "hex-conservative 0.3.2",
- "hex-conservative 1.0.0",
+ "hex-conservative 1.1.0",
  "serde",
 ]
 
@@ -231,8 +227,7 @@ dependencies = [
  "bitcoin-internals 0.5.0",
  "bitcoin-units 0.3.0",
  "bitcoin_hashes 0.20.0",
- "hex-conservative 0.3.2",
- "hex-conservative 1.0.0",
+ "hex-conservative 1.1.0",
  "serde",
  "serde_json",
 ]
@@ -288,8 +283,7 @@ dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals 0.5.0",
  "cpufeatures",
- "hex-conservative 0.3.2",
- "hex-conservative 1.0.0",
+ "hex-conservative 1.1.0",
  "serde",
  "serde_test",
 ]
@@ -330,7 +324,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chacha20-poly1305"
 version = "0.2.0"
 dependencies = [
- "hex-conservative 0.3.2",
+ "hex-conservative 1.1.0",
 ]
 
 [[package]]
@@ -365,18 +359,12 @@ dependencies = [
 
 [[package]]
 name = "hex-conservative"
-version = "0.3.2"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "830e599c2904b08f0834ee6337d8fe8f0ed4a63b5d9e7a7f49c0ffa06d08d360"
+checksum = "a7289f6b628ce69fb1a371d0fdcf8ff38cd93ec00e3010eb055d1e044998c8d1"
 dependencies = [
  "arrayvec",
 ]
-
-[[package]]
-name = "hex-conservative"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ee770c000993d17c185713463d5ebfbd1af9afae4c17cc295640104383bfbf0"
 
 [[package]]
 name = "hex_lit"

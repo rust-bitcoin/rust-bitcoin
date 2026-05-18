@@ -254,7 +254,7 @@ mod sealed {
 mod test {
     use alloc::vec::Vec;
 
-    use hex_unstable::{hex, DisplayHex};
+    use hex::{hex, DisplayHex};
 
     use super::*;
     use crate::consensus::{deserialize, encode, serialize};
