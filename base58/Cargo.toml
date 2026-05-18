@@ -10,7 +10,7 @@ keywords = ["bitcoin", "base58", "encode", "decode", "checksum"]
 readme = "README.md"
 edition = "2021"
 rust-version = "1.56.1"
-exclude = ["tests", "contrib"]
+exclude = ["api", "tests", "contrib"]
 
 [features]
 default = ["std"]
@@ -29,3 +29,6 @@ hex = { package = "hex-conservative", version = "0.2.2", default-features = fals
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)' ] }
+
+[package.metadata.rbmt.api]
+enabled = true
