@@ -2,7 +2,6 @@
 
 # Lock files
 Cargo.lock
-internals/Cargo.lock
 bitcoin/Cargo.lock
 hashes/Cargo.lock
 

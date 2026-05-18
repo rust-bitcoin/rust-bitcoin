@@ -211,7 +211,6 @@ Release notes are done per crate, see:
 
 - [bitcoin CHANGELOG](bitcoin/CHANGELOG.md)
 - [hashes CHANGELOG](hashes/CHANGELOG.md)
-- [internals CHANGELOG](internals/CHANGELOG.md)
 
 
 ## Licensing

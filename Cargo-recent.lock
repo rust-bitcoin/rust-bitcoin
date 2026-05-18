@@ -58,7 +58,6 @@ dependencies = [
  "base64",
  "bech32",
  "bincode",
- "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-units",
  "bitcoin_hashes",
@@ -85,13 +84,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitcoin-internals"
-version = "0.3.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "bitcoin-io"
 version = "0.1.2"
 
@@ -100,7 +92,6 @@ name = "bitcoin-units"
 version = "0.1.3"
 dependencies = [
  "arbitrary",
- "bitcoin-internals",
  "serde",
  "serde_json",
  "serde_test",
