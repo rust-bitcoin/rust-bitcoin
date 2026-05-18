@@ -10,6 +10,9 @@ name: Continuous integration
 
 permissions: {}
 
+env:
+  RBMT_LOG_LEVEL: "progress"
+
 jobs:
   Test:
     name: Test - ${{ matrix.toolchain }} toolchain, ${{ matrix.dep }} deps
