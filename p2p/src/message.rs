@@ -25,6 +25,7 @@ use units::{Amount, FeeRate};
 use self::error::V1NetworkMessageDecoderErrorInner;
 use crate::address::{AddrV1Message, AddrV2Message};
 use crate::merkle_tree::MerkleBlock;
+use crate::message_erlay::{SendTxRcnCl, SendTxRcnClDecoder};
 use crate::{
     bip152, message_blockdata, message_bloom, message_compact_blocks, message_filter,
     message_network, Magic,
@@ -748,7 +749,8 @@ pub enum NetworkMessage {
     AddrV2(AddrV2Payload),
     /// `sendaddrv2`
     SendAddrV2,
-
+    /// `sendtxrcncl`
+    SendTxRcnCl(SendTxRcnCl),
     /// Any other message.
     Unknown {
         /// The command of this message.
@@ -802,6 +804,7 @@ impl NetworkMessage {
             Self::WtxidRelay => "wtxidrelay",
             Self::AddrV2(_) => "addrv2",
             Self::SendAddrV2 => "sendaddrv2",
+            Self::SendTxRcnCl(_) => "sendtxrcncl",
             Self::Unknown { .. } => "unknown",
         }
     }
@@ -940,6 +943,8 @@ pub enum NetworkMessageEncoder<'e> {
     FeeFilter(<FeeFilter as encoding::Encode>::Encoder<'e>),
     /// Encodes [`NetworkMessage::AddrV2`]
     AddrV2(<AddrV2Payload as encoding::Encode>::Encoder<'e>),
+    /// Encodes [`NetworkMessage::SendTxRcnCl`].
+    SendTxRcnCl(<SendTxRcnCl as encoding::Encode>::Encoder<'e>),
     /// Encodes zero-payload messages: verack, mempool, sendheaders, getaddr, wtxidrelay,
     /// filterclear, sendaddrv2.
     Empty,
@@ -980,6 +985,7 @@ impl<'e> NetworkMessageEncoder<'e> {
             NetworkMessage::Reject(dat) => Self::Reject(dat.encoder()),
             NetworkMessage::FeeFilter(dat) => Self::FeeFilter(dat.encoder()),
             NetworkMessage::AddrV2(dat) => Self::AddrV2(dat.encoder()),
+            NetworkMessage::SendTxRcnCl(dat) => Self::SendTxRcnCl(dat.encoder()),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
@@ -1024,6 +1030,7 @@ impl encoding::Encoder for NetworkMessageEncoder<'_> {
             Self::Reject(e) => e.current_chunk(),
             Self::FeeFilter(e) => e.current_chunk(),
             Self::AddrV2(e) => e.current_chunk(),
+            Self::SendTxRcnCl(e) => e.current_chunk(),
             Self::Empty => &[],
             Self::Unknown(e) => e.current_chunk(),
         }
@@ -1058,6 +1065,7 @@ impl encoding::Encoder for NetworkMessageEncoder<'_> {
             Self::Reject(e) => e.advance(),
             Self::FeeFilter(e) => e.advance(),
             Self::AddrV2(e) => e.advance(),
+            Self::SendTxRcnCl(e) => e.advance(),
             Self::Empty => false,
             Self::Unknown(e) => e.advance(),
         }
@@ -1127,6 +1135,7 @@ enum NetworkMessageDecoderInner {
     Reject(message_network::RejectDecoder),
     FeeFilter(FeeFilterDecoder),
     AddrV2(AddrV2PayloadDecoder),
+    SendTxRcnCl(SendTxRcnClDecoder),
     /// Zero-payload messages: verack, mempool, sendheaders, getaddr, wtxidrelay,
     /// filterclear, sendaddrv2.
     Empty(CommandString),
@@ -1172,6 +1181,7 @@ impl NetworkMessageDecoderInner {
             "alert" => Self::Alert(message_network::Alert::decoder()),
             "reject" => Self::Reject(message_network::Reject::decoder()),
             "feefilter" => Self::FeeFilter(FeeFilter::decoder()),
+            "sendtxrcncl" => Self::SendTxRcnCl(SendTxRcnCl::decoder()),
             "addrv2" => Self::AddrV2(AddrV2Payload::decoder()),
             _ => Self::Unknown {
                 command,
@@ -1218,6 +1228,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::Reject(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::FeeFilter(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::AddrV2(d) => d.push_bytes(bytes).map_err(|_| err),
+            Self::SendTxRcnCl(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Empty(_) => Ok(false),
             Self::Unknown { remaining, buffer, .. } => {
                 let copy_len = bytes.len().min(*remaining);
@@ -1263,6 +1274,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::Reject(d) => Ok(NetworkMessage::Reject(d.end().map_err(|_| err)?)),
             Self::FeeFilter(d) => Ok(NetworkMessage::FeeFilter(d.end().map_err(|_| err)?)),
             Self::AddrV2(d) => Ok(NetworkMessage::AddrV2(d.end().map_err(|_| err)?)),
+            Self::SendTxRcnCl(d) => Ok(NetworkMessage::SendTxRcnCl(d.end().map_err(|_| err)?)),
             Self::Empty(cmd) => match cmd.as_ref() {
                 "verack" => Ok(NetworkMessage::Verack),
                 "mempool" => Ok(NetworkMessage::MemPool),
@@ -1312,6 +1324,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
             Self::Reject(d) => d.read_limit(),
             Self::FeeFilter(d) => d.read_limit(),
             Self::AddrV2(d) => d.read_limit(),
+            Self::SendTxRcnCl(d) => d.read_limit(),
             Self::Empty(_) => 0,
             Self::Unknown { remaining, .. } => *remaining,
         }
@@ -1602,6 +1615,7 @@ fn v2_command_byte(payload: &NetworkMessage) -> (u8, Option<CommandString>) {
         | NetworkMessage::SendAddrV2
         | NetworkMessage::Alert(_)
         | NetworkMessage::Reject(_)
+        | NetworkMessage::SendTxRcnCl(_)
         | NetworkMessage::Unknown { .. } => (0u8, Some(payload.command())),
     }
 }
@@ -1818,6 +1832,7 @@ impl V2NetworkMessageDecoder {
             "verack" | "sendheaders" | "getaddr" | "wtxidrelay" | "sendaddrv2" => E::Empty(command),
             "alert" => E::Alert(message_network::Alert::decoder()),
             "reject" => E::Reject(message_network::Reject::decoder()),
+            "sendtxrcncl" => E::SendTxRcnCl(SendTxRcnCl::decoder()),
             _ => E::Unknown {
                 command,
                 remaining: 0, // no payload length, buffer all bytes until end().
@@ -2577,6 +2592,7 @@ mod test {
             )),
             NetworkMessage::BlockTxn(blocktxn),
             NetworkMessage::SendCmpct(SendCmpct { send_compact: true, version: 8333 }),
+            NetworkMessage::SendTxRcnCl(SendTxRcnCl::from_salt(224)),
         ];
 
         for msg in &msgs {
