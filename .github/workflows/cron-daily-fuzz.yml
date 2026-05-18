@@ -105,6 +105,7 @@ jobs:
           consensus_encoding_decode_byte_vec,
           consensus_encoding_decode_compact_size,
           consensus_encoding_decode_decoder2,
+          hashes_arbitrary_json,
           hashes_json,
           hashes_ripemd160,
           hashes_sha1,
