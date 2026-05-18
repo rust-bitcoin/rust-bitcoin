@@ -105,7 +105,7 @@ mod tests {
             let manual_hash = sha256d::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
 
-            // Hash by computing a sha256 then `hash_again`ing it
+            // Hash by computing a SHA256 then `hash_again`ing it
             let sha2_hash = sha256::Hash::hash(test.input.as_bytes());
             let sha2d_hash = sha2_hash.hash_again();
             assert_eq!(hash, sha2d_hash);

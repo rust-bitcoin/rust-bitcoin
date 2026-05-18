@@ -125,7 +125,7 @@ unsafe fn Write4(output: &mut [[u8; 32]; 4], offset: usize, v: __m128i) {
     output[3][offset..offset + 4].copy_from_slice(&_mm_extract_epi32::<0>(v).to_le_bytes());
 }
 
-/// Computes `SHA256d` of four 64-byte inputs in parallel using SSE4.1
+/// Computes `SHA256d` of four 64-byte inputs in parallel using SSE4.1.
 #[target_feature(enable = "sse2,ssse3,sse4.1")]
 #[rustfmt::skip]
 pub(super) unsafe fn sha256d_64_4way(output: &mut [[u8; 32]; 4], input: &[[u8; 64]; 4]) {

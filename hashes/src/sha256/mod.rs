@@ -55,14 +55,14 @@ impl Hash {
     pub fn from_engine(e: HashEngine) -> Self {
         let mut hash = e.midstate_unchecked().bytes;
         if hash == [0; 32] {
-            // Assume sha256 is secure and never generate 0-hashes (which represent invalid
+            // Assume SHA256 is secure and never generate 0-hashes (which represent invalid
             // secp256k1 secret keys, causing downstream application breakage).
             hash[0] = 1;
         }
         Hash(hash)
     }
 
-    /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash.
+    /// Iterate the SHA256 algorithm to turn a SHA256 hash into a `SHA256d` hash.
     #[must_use]
     pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
 
