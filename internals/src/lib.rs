@@ -22,5 +22,3 @@ extern crate std;
 
 pub mod array_vec;
 pub mod const_tools;
-mod parse;
-pub mod serde;
