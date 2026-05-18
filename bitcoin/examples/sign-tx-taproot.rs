@@ -3,7 +3,7 @@
 //! Demonstrate creating a transaction that spends to and from p2tr outputs.
 
 use bitcoin::ext::*;
-use bitcoin::key::{Keypair, PrivateKey, TapTweak, TweakedKeypair, UntweakedPublicKey};
+use bitcoin::key::{Keypair, PrivateKey, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::{
@@ -64,13 +64,9 @@ fn main() {
         .taproot_key_spend_signature_hash(input_index, &prevouts, sighash_type)
         .expect("failed to construct sighash");
 
-    // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
-    let tweaked: TweakedKeypair = keypair.tap_tweak(None);
-    let signature = tweaked.as_keypair().raw_bip340_sign(&sighash.to_byte_array());
-
-    // Update the witness stack.
-    let signature = bitcoin::taproot::Signature { signature, sighash_type };
-    *sighasher.witness_mut(input_index).unwrap() = Witness::p2tr_key_spend(&signature);
+    // Sign the sighash and update the witness stack.
+    let sig = sighash.sign_key_spend(&keypair, None, sighash_type);
+    *sighasher.witness_mut(input_index).unwrap() = Witness::p2tr_key_spend(&sig);
 
     // Get the signed transaction.
     let tx = sighasher.into_transaction();

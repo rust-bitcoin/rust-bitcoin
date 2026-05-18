@@ -16,17 +16,21 @@ use core::str;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use crypto::key::{TweakedKeypair, UntweakedKeypair};
+use crypto::{ecdsa, taproot, PrivateKey};
 use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use io::Write;
 
 use crate::consensus::{encode, Encodable};
+use crate::key::TapTweak as _;
 use crate::prelude::{Borrow, BorrowMut};
 use crate::script::{ScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
 use crate::{
-    transaction, Amount, ScriptPubKey, Sequence, TapScript, Transaction, TxOut, WitnessScript,
+    transaction, Amount, ScriptPubKey, Sequence, TapNodeHash, TapScript, Transaction, TxOut,
+    WitnessScript,
 };
 
 #[rustfmt::skip]            // Keep public re-exports separate.
@@ -81,10 +85,24 @@ impl_message_from_hash!(SegwitV0Sighash);
 impl LegacySighash {
     fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+
+    /// Signs this sighash using `pk`.
+    ///
+    /// `sighash_type` must be the same as that used to create the sighash.
+    pub fn sign(&self, pk: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
+        ecdsa::Signature { signature: pk.raw_ecdsa_sign(*self), sighash_type }
+    }
 }
 impl SegwitV0Sighash {
     fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+
+    /// Signs this sighash using `pk`.
+    ///
+    /// `sighash_type` must be the same as that used to create the sighash.
+    pub fn sign(&self, pk: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
+        ecdsa::Signature { signature: pk.raw_ecdsa_sign(*self), sighash_type }
+    }
 }
 
 sha256t_tag! {
@@ -101,6 +119,41 @@ hash_newtype! {
 hashes::impl_hex_for_newtype!(TapSighash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapSighash);
+
+impl TapSighash {
+    /// Signs the sighash for a P2TR key-path spending transaction by tweaking the
+    /// [`UntweakedKeypair`] with an optional script tree merkle root [`TapNodeHash`]
+    /// and creates a Taproot signature as defined in [BIP-340].
+    ///
+    /// For P2TR script-path spend use [`TapSighash::sign_script_spend`].
+    ///
+    /// [BIP-340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    pub fn sign_key_spend(
+        &self,
+        keypair: &UntweakedKeypair,
+        merkle_root: Option<TapNodeHash>,
+        sighash_type: TapSighashType,
+    ) -> taproot::Signature {
+        let tweaked: TweakedKeypair = keypair.tap_tweak(merkle_root);
+        let signature = tweaked.as_keypair().raw_bip340_sign(self.as_ref());
+        taproot::Signature { signature, sighash_type }
+    }
+
+    /// Signs the sighash with an [`UntweakedKeypair`] without applying a tweak and creates a
+    /// taproot signature as defined in [BIP-340].
+    ///
+    /// For P2TR key spend use [`TapSighash::sign_key_spend`].
+    ///
+    /// [BIP-340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    pub fn sign_script_spend(
+        &self,
+        keypair: &UntweakedKeypair,
+        sighash_type: TapSighashType,
+    ) -> taproot::Signature {
+        let signature = keypair.raw_bip340_sign(self.as_ref());
+        taproot::Signature { signature, sighash_type }
+    }
+}
 
 /// Efficiently calculates signature hash message for legacy, SegWit and Taproot inputs.
 #[derive(Debug, Clone)]
