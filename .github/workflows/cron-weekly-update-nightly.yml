@@ -20,8 +20,8 @@ jobs:
         run: cargo install --git https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git --rev $(cat rbmt-version) cargo-rbmt
       - name: Update nightly toolchain in Cargo.toml
         run: |
-          eval "$(cargo rbmt toolchains --update-nightly)"
-          echo "nightly_version=$RBMT_NIGHTLY" >> $GITHUB_ENV
+          cargo rbmt toolchains --update-nightly
+          echo "nightly_version=$(cargo rbmt toolchains --nightly)" >> $GITHUB_ENV
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
