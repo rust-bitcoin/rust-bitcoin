@@ -8,7 +8,6 @@
 //!
 
 use hashes::{sha256d, Hash};
-use internals::impl_array_newtype;
 
 use crate::blockdata::block::{self, Block};
 use crate::blockdata::locktime::absolute;
@@ -17,7 +16,7 @@ use crate::blockdata::script;
 use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::consensus::Params;
-use crate::internal_macros::impl_bytes_newtype;
+use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype};
 use crate::network::Network;
 use crate::pow::CompactTarget;
 use crate::Amount;

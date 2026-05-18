@@ -1,11 +1,11 @@
 //! Error code for the address module.
 
+use core::convert::Infallible;
 use core::fmt;
-
-use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
 use crate::blockdata::script::{witness_program, witness_version};
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::Network;
 
@@ -21,7 +21,9 @@ pub enum FromScriptError {
     WitnessVersion(witness_version::TryFromError),
 }
 
-internals::impl_from_infallible!(FromScriptError);
+impl From<Infallible> for FromScriptError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromScriptError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -64,7 +66,9 @@ pub enum P2shError {
     ExcessiveScriptSize,
 }
 
-internals::impl_from_infallible!(P2shError);
+impl From<Infallible> for P2shError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for P2shError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -127,7 +131,9 @@ pub enum ParseError {
     NetworkValidation(NetworkValidationError),
 }
 
-internals::impl_from_infallible!(ParseError);
+impl From<Infallible> for ParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

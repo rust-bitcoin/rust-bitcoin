@@ -5,13 +5,14 @@
 //! This module provides taproot keys used in Bitcoin (including reexporting secp256k1 keys).
 //!
 
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
-use internals::write_err;
 use io::Write;
 
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 use crate::taproot::serialized_signature::{self, SerializedSignature};
@@ -99,7 +100,9 @@ pub enum SigFromSliceError {
     InvalidSignatureSize(usize),
 }
 
-internals::impl_from_infallible!(SigFromSliceError);
+impl From<Infallible> for SigFromSliceError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for SigFromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

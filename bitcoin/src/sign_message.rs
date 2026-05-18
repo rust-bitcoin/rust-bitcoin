@@ -20,14 +20,15 @@ pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
 #[cfg(feature = "secp-recovery")]
 mod message_signing {
+    use core::convert::Infallible;
     use core::fmt;
 
     use hashes::{sha256d, Hash};
-    use internals::write_err;
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     use crate::address::{Address, AddressType};
     use crate::crypto::key::PublicKey;
+    use crate::internal_macros::write_err;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -43,7 +44,9 @@ mod message_signing {
         UnsupportedAddressType(AddressType),
     }
 
-    internals::impl_from_infallible!(MessageSignatureError);
+    impl From<Infallible> for MessageSignatureError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
     impl fmt::Display for MessageSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::convert::Infallible;
 use core::fmt;
-
-use internals::write_err;
 
 use crate::bip32::Xpub;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::psbt::raw;
 
@@ -103,7 +103,9 @@ pub enum Error {
     Io(io::Error),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

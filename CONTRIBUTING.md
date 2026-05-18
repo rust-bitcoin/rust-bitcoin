@@ -302,7 +302,7 @@ More specifically an error should
 - derive `Debug, Clone, PartialEq, Eq` (and `Copy` iff not `non_exhaustive`).
 - implement Display using `write_err!()` macro if a variant contains an inner error source.
 - have `Error` suffix
-- call `internals::impl_from_infallible!
+- implement `From<Infallible>`
 - implement `std::error::Error` if they are public (feature gated on "std").
 
 ```rust
@@ -316,7 +316,9 @@ pub enum Error {
     B,
 }
 
-internals::impl_from_infallible!(Error);
+impl From<core::convert::Infallible> for Error {
+    fn from(never: core::convert::Infallible) -> Self { match never {} }
+}
 
 ```
 

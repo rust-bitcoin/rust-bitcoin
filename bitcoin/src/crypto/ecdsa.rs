@@ -4,15 +4,16 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+use core::convert::Infallible;
 use core::str::FromStr;
 use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hex::FromHex;
-use internals::write_err;
 use io::Write;
 
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 use crate::script::PushBytes;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
@@ -215,7 +216,9 @@ pub enum Error {
     Secp256k1(secp256k1::Error),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

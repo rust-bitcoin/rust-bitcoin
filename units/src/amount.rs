@@ -8,6 +8,7 @@
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::cmp::Ordering;
+use core::convert::Infallible;
 #[cfg(feature = "alloc")]
 use core::fmt::Write as _;
 use core::str::FromStr;
@@ -17,9 +18,9 @@ use core::{default, fmt, ops};
 use ::serde::{Deserialize, Serialize};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::error::InputString;
-use internals::write_err;
 
+use crate::input_string::InputString;
+use crate::internal_macros::write_err;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
 
@@ -164,7 +165,9 @@ pub enum ParseError {
     MissingDenomination(MissingDenominationError),
 }
 
-internals::impl_from_infallible!(ParseError);
+impl From<Infallible> for ParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl From<ParseAmountError> for ParseError {
     fn from(e: ParseAmountError) -> Self { Self::Amount(e) }
@@ -252,7 +255,9 @@ impl From<InvalidCharacterError> for ParseAmountError {
     fn from(value: InvalidCharacterError) -> Self { Self::InvalidCharacter(value) }
 }
 
-internals::impl_from_infallible!(ParseAmountError);
+impl From<Infallible> for ParseAmountError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -452,7 +457,9 @@ pub enum ParseDenominationError {
     PossiblyConfusing(PossiblyConfusingDenominationError),
 }
 
-internals::impl_from_infallible!(ParseDenominationError);
+impl From<Infallible> for ParseDenominationError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseDenominationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -647,7 +654,9 @@ enum InnerParseError {
     InvalidCharacter(InvalidCharacterError),
 }
 
-internals::impl_from_infallible!(InnerParseError);
+impl From<Infallible> for InnerParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl InnerParseError {
     fn convert(self, is_signed: bool) -> ParseAmountError {

@@ -29,6 +29,8 @@ extern crate std;
 #[cfg(feature = "serde")]
 pub extern crate serde;
 
+mod input_string;
+mod internal_macros;
 #[cfg(test)]
 #[macro_use]
 mod test_macros;

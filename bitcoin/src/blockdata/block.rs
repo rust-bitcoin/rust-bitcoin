@@ -8,6 +8,7 @@
 //! these blocks and the blockchain.
 //!
 
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -424,7 +425,9 @@ pub enum Bip34Error {
     NegativeHeight,
 }
 
-internals::impl_from_infallible!(Bip34Error);
+impl From<Infallible> for Bip34Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Bip34Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -462,7 +465,9 @@ pub enum ValidationError {
     BadTarget,
 }
 
-internals::impl_from_infallible!(ValidationError);
+impl From<Infallible> for ValidationError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
