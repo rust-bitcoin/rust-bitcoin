@@ -7,8 +7,8 @@ use alloc::string::ToString;
 use hex_unstable::hex;
 
 use super::*;
-use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{FullPublicKey, LegacyPublicKey, XOnlyPublicKey};
+use crate::encoding::{decode_from_slice, encode_to_vec};
 use crate::script::borrowed::{ScriptPubKeyExt as _, ScriptPubKeyExtPriv as _, TapScriptExt as _};
 use crate::script::owned::ScriptSigBufExt as _;
 use crate::script::witness_program::WitnessProgram;
@@ -376,9 +376,9 @@ fn script_builder_verify() {
 #[test]
 fn script_serialize() {
     let hex_script = hex!("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52");
-    let script: Result<ScriptBuf, _> = deserialize(&hex_script);
+    let script: Result<ScriptBuf, _> = decode_from_slice(&hex_script);
     assert!(script.is_ok());
-    assert_eq!(serialize(&script.unwrap()), &hex_script as &[u8]);
+    assert_eq!(encode_to_vec(script.unwrap().as_script()), &hex_script as &[u8]);
 }
 
 #[test]

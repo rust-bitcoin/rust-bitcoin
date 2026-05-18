@@ -414,7 +414,7 @@ mod tests {
     use internals::ToU64 as _;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::encoding::{decode_from_slice, encode_to_vec};
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
     use crate::script::{ScriptPubKeyBuf, ScriptSigBuf};
     use crate::transaction::{OutPoint, Transaction, TxIn, TxOut, Txid};
@@ -424,7 +424,7 @@ mod tests {
     fn coinbase_and_bip34() {
         // testnet block 100,000
         const BLOCK_HEX: &str = "0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703a08601000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000";
-        let block: Block = deserialize(&hex!(BLOCK_HEX)).unwrap();
+        let block: Block = decode_from_slice(&hex!(BLOCK_HEX)).unwrap();
         let block = block.assume_checked(None);
 
         let cb_txid = "d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38";
@@ -434,28 +434,28 @@ mod tests {
 
         // block with 3-byte bip34 push for height 0x03010000 (non-minimal 1)
         const BAD_HEX: &str = "0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703010000000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000";
-        let bad: Block = deserialize(&hex!(BAD_HEX)).unwrap();
+        let bad: Block = decode_from_slice(&hex!(BAD_HEX)).unwrap();
         let bad = bad.assume_checked(None);
 
         assert_eq!(bad.bip34_block_height(), Err(super::Bip34Error::NonMinimalPush));
 
         // Block 15 on Testnet4 has height of 0x5f (15 PUSHNUM)
         const BLOCK_HEX_SMALL_HEIGHT_15: &str = "000000200fd8c4c1e88f313b561b2724542ff9be1bc54a7dab8db8ef6359d48a00000000705bf9145e6d3c413702cc61f32e4e7bfe3117b1eb928071a59adcf75694a3fb07d83866ffff001dcf4c5e8401010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff095f00062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
-        let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_15)).unwrap();
+        let block: Block = decode_from_slice(&hex!(BLOCK_HEX_SMALL_HEIGHT_15)).unwrap();
         let block = block.assume_checked(None);
 
         assert_eq!(block.bip34_block_height(), Ok(15));
 
         // Block 42 on Testnet4 has height of 0x012a (42)
         const BLOCK_HEX_SMALL_HEIGHT_42: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff09012a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
-        let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_42)).unwrap();
+        let block: Block = decode_from_slice(&hex!(BLOCK_HEX_SMALL_HEIGHT_42)).unwrap();
         let block = block.assume_checked(None);
 
         assert_eq!(block.bip34_block_height(), Ok(42));
 
         // Block 42 on Testnet4 using OP_PUSHDATA1 0x4c012a (42) instead of 0x012a (42)
         const BLOCK_HEX_SMALL_HEIGHT_42_WRONG: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0a4c012a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
-        let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_42_WRONG)).unwrap();
+        let block: Block = decode_from_slice(&hex!(BLOCK_HEX_SMALL_HEIGHT_42_WRONG)).unwrap();
         let block = block.assume_checked(None);
 
         assert_eq!(block.bip34_block_height(), Err(super::Bip34Error::NonMinimalPush));
@@ -463,7 +463,7 @@ mod tests {
         // Block with a 5 byte height properly minimally encoded
         // this is an overflow for ScriptNum (i32) parsing
         const BLOCK_HEX_5_BYTE_HEIGHT: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0d052a2a2a2a2a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
-        let block: Block = deserialize(&hex!(BLOCK_HEX_5_BYTE_HEIGHT)).unwrap();
+        let block: Block = decode_from_slice(&hex!(BLOCK_HEX_5_BYTE_HEIGHT)).unwrap();
         let block = block.assume_checked(None);
 
         assert_eq!(block.bip34_block_height(), Err(super::Bip34Error::NotPresent));
@@ -480,8 +480,8 @@ mod tests {
         let merkle = hex!("bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c");
         let work = u128_to_work(0x100010001_u128);
 
-        let decode: Result<Block, _> = deserialize(&some_block);
-        let bad_decode: Result<Block, _> = deserialize(&cutoff_block);
+        let decode: Result<Block, _> = decode_from_slice(&some_block);
+        let bad_decode: Result<Block, _> = decode_from_slice(&cutoff_block);
 
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
@@ -496,12 +496,12 @@ mod tests {
             Block::new_unchecked(header, transactions.clone()).assume_checked(witness_root);
 
         assert_eq!(real_decode.header().version, Version::from_consensus(1));
-        assert_eq!(serialize(&real_decode.header().prev_blockhash), prevhash);
+        assert_eq!(encode_to_vec(&real_decode.header().prev_blockhash), prevhash);
         assert_eq!(
             real_decode.header().merkle_root,
             block::compute_merkle_root(&transactions).unwrap()
         );
-        assert_eq!(serialize(&real_decode.header().merkle_root), merkle);
+        assert_eq!(encode_to_vec(&real_decode.header().merkle_root), merkle);
         assert_eq!(real_decode.header().time, BlockTime::from_u32(1231965655));
         assert_eq!(real_decode.header().bits, CompactTarget::from_consensus(486604799));
         assert_eq!(real_decode.header().nonce, 2067413810);
@@ -518,7 +518,7 @@ mod tests {
         assert_eq!(block_base_size(real_decode.transactions()), some_block.len());
         assert_eq!(real_decode.weight(), Weight::from_vb_unchecked(some_block.len().to_u64()));
 
-        assert_eq!(serialize(&real_decode), some_block);
+        assert_eq!(encode_to_vec(&real_decode), some_block);
     }
 
     // Check testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
@@ -527,7 +527,7 @@ mod tests {
         let params = Params::new(Network::Testnet(TestnetVersion::V3));
         let segwit_block = include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw").to_vec();
 
-        let decode: Result<Block, _> = deserialize(&segwit_block);
+        let decode: Result<Block, _> = decode_from_slice(&segwit_block);
 
         let prevhash = hex!("2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000");
         let merkle = hex!("10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e");
@@ -544,8 +544,8 @@ mod tests {
             Block::new_unchecked(header, transactions.clone()).assume_checked(witness_root);
 
         assert_eq!(real_decode.header().version, Version::from_consensus(0x2000_0000)); // VERSIONBITS but no bits set
-        assert_eq!(serialize(&real_decode.header().prev_blockhash), prevhash);
-        assert_eq!(serialize(&real_decode.header().merkle_root), merkle);
+        assert_eq!(encode_to_vec(&real_decode.header().prev_blockhash), prevhash);
+        assert_eq!(encode_to_vec(&real_decode.header().merkle_root), merkle);
         assert_eq!(
             real_decode.header().merkle_root,
             block::compute_merkle_root(&transactions).unwrap()
@@ -565,14 +565,14 @@ mod tests {
         assert_eq!(block_base_size(real_decode.transactions()), 4283);
         assert_eq!(real_decode.weight(), Weight::from_wu(17168));
 
-        assert_eq!(serialize(&real_decode), segwit_block);
+        assert_eq!(encode_to_vec(&real_decode), segwit_block);
     }
 
     #[test]
     fn validate_pow() {
         let some_header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
         let some_header: Header =
-            deserialize(&some_header).expect("can't deserialize correct block header");
+            decode_from_slice(&some_header).expect("can't deserialize correct block header");
         assert_eq!(
             some_header.validate_pow(some_header.target()).unwrap(),
             some_header.block_hash()
@@ -595,7 +595,7 @@ mod tests {
 
     fn header() -> Header {
         let header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
-        deserialize(&header).expect("can't deserialize correct block header")
+        decode_from_slice(&header).expect("can't deserialize correct block header")
     }
 
     #[test]
@@ -692,7 +692,7 @@ mod tests {
     fn coinbase_bip34_height_with_coinbase_type() {
         // testnet block 100,000
         const BLOCK_HEX: &str = "0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703a08601000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000";
-        let block: Block = deserialize(&hex!(BLOCK_HEX)).unwrap();
+        let block: Block = decode_from_slice(&hex!(BLOCK_HEX)).unwrap();
         let block = block.assume_checked(None);
 
         // Test that BIP-0034 height extraction works with the Coinbase type
