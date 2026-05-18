@@ -13,11 +13,10 @@ use std::error;
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{sha256, siphash24, Hash};
-use internals::impl_array_newtype;
 use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
-use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
+use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
 use crate::{block, Block, BlockHash, Transaction};
 

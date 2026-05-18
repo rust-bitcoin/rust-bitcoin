@@ -145,4 +145,4 @@ impl fmt::Display for Builder {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt_asm(f) }
 }
 
-internals::debug_from_display!(Builder);
+crate::internal_macros::debug_from_display!(Builder);
