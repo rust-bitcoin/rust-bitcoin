@@ -39,6 +39,7 @@
 //!
 
 use core::cmp::{self, Ordering};
+use core::convert::Infallible;
 use core::fmt::{self, Display, Formatter};
 
 #[cfg(feature = "arbitrary")]
@@ -78,7 +79,9 @@ pub enum Error {
     Io(io::Error),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
