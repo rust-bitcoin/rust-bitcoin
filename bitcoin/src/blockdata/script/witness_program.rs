@@ -11,9 +11,9 @@ use core::convert::Infallible;
 use core::fmt;
 
 use hashes::Hash as _;
-use internals::array_vec::ArrayVec;
 use secp256k1::{Secp256k1, Verification};
 
+use crate::array_vec::ArrayVec;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{PushBytes, Script};
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
@@ -104,7 +104,7 @@ impl WitnessProgram {
         WitnessProgram::new_p2tr(pubkey)
     }
 
-    internals::const_tools::cond_const! {
+    crate::const_tools::cond_const! {
         /// Constructs a new pay to anchor address
         pub const(in rust_v_1_61 = "1.61") fn p2a() -> Self {
             WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM)}
