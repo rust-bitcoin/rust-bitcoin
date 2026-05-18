@@ -5,6 +5,7 @@
 //! This module provides taproot keys used in Bitcoin (including reexporting secp256k1 keys).
 //!
 
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -99,7 +100,9 @@ pub enum SigFromSliceError {
     InvalidSignatureSize(usize),
 }
 
-internals::impl_from_infallible!(SigFromSliceError);
+impl From<Infallible> for SigFromSliceError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for SigFromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -7,6 +7,7 @@
 //!
 //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
 
@@ -175,7 +176,9 @@ pub enum FromStrError {
     Invalid(TryFromError),
 }
 
-internals::impl_from_infallible!(FromStrError);
+impl From<Infallible> for FromStrError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -218,7 +221,9 @@ pub enum TryFromInstructionError {
     DataPush,
 }
 
-internals::impl_from_infallible!(TryFromInstructionError);
+impl From<Infallible> for TryFromInstructionError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TryFromInstructionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
