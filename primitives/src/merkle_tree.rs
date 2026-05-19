@@ -112,6 +112,27 @@ pub(crate) trait MerkleNode: Copy + PartialEq {
             stack.pop().map(|(_, h)| h)
         }
     }
+
+    /// Given a leaf, its position and an iterator of nodes forming a proof, compute the Merkle root.
+    ///
+    /// TODO
+    fn calculate_root_from_proof<I: Iterator<Item = Self>>(
+        leaf: Self::Leaf,
+        pos: u64,
+        proof: I,
+    ) -> Self {
+        {
+            let mut node = Self::from_leaf(leaf);
+            let mut pos = pos;
+            for sibling in proof {
+                let (left, right) = if pos % 2 == 0 { (node, sibling) } else { (sibling, node) };
+                node = left.combine(&right);
+                pos /= 2;
+            }
+            debug_assert_eq!(pos, 0);
+            node
+        }
+    }
 }
 
 #[cfg(feature = "std")]
@@ -390,6 +411,96 @@ mod tests {
         let leaf = Wtxid::from_byte_array([2; 32]);
         let root = WitnessMerkleNode::calculate_root([leaf, leaf].into_iter());
         assert!(root.is_none(), "Duplicate witness leaves should return None");
+    }
+
+    #[test]
+    fn calculate_root_from_proof() {
+        let leaf1 = Wtxid::from_byte_array([1; 32]);
+        let leaf2 = Wtxid::from_byte_array([2; 32]);
+        let leaves = [leaf1, leaf2];
+        //tree of height 1
+        let root1 = WitnessMerkleNode::calculate_root(leaves.into_iter()).unwrap();
+        let root_from_proof_1 = WitnessMerkleNode::calculate_root_from_proof(
+            leaf1,
+            leaves.iter().position(|l| l == &leaf1).unwrap() as u64,
+            [WitnessMerkleNode::from_leaf(leaf2)].into_iter(),
+        );
+        assert_eq!(root1, root_from_proof_1);
+        let root_from_proof_2 = WitnessMerkleNode::calculate_root_from_proof(
+            leaf2,
+            leaves.iter().position(|l| l == &leaf2).unwrap() as u64,
+            [WitnessMerkleNode::from_leaf(leaf1)].into_iter(),
+        );
+        assert_eq!(root1, root_from_proof_2);
+        //tree of height 2
+        let leaf3 = Wtxid::from_byte_array([3; 32]);
+        let leaf4 = Wtxid::from_byte_array([4; 32]);
+        let leaves = [leaf1, leaf2, leaf3, leaf4];
+        let root2 = WitnessMerkleNode::calculate_root(leaves.into_iter()).unwrap();
+        let root_from_proof_3 = WitnessMerkleNode::calculate_root_from_proof(
+            leaf3,
+            leaves.iter().position(|l| l == &leaf3).unwrap() as u64,
+            [WitnessMerkleNode::from_leaf(leaf4), root1].into_iter(),
+        );
+        assert_eq!(root2, root_from_proof_3);
+        let root_from_proof_4 = WitnessMerkleNode::calculate_root_from_proof(
+            leaf4,
+            leaves.iter().position(|l| l == &leaf4).unwrap() as u64,
+            [WitnessMerkleNode::from_leaf(leaf3), root1].into_iter(),
+        );
+        assert_eq!(root2, root_from_proof_4);
+    }
+
+    #[cfg(feature = "hex")]
+    #[test]
+    fn calculate_root_from_proof_mainnet_tx() {
+        // Data retrieved from Esplora for tx at block 951404, position 19.
+        let txid: Txid =
+            "d3887ab7972fb890b995972399a14f4b68436ad8e18b8e49690ac16f1c714f07".parse().unwrap();
+        // curl 'https://blockstream.info/api/block/00000000000000000001a53ac26c662a3cb22109286cf7833adc1d27cd659334' | jq -r .merkle_root
+        let expected_root: TxMerkleNode =
+            "a7b4151d177c913b897c2d31f18707021cfeefbe61a46d016f7d66dee2752ee6".parse().unwrap();
+        // curl 'https://blockstream.info/api/tx/d3887ab7972fb890b995972399a14f4b68436ad8e18b8e49690ac16f1c714f07/merkle-proof'
+        let siblings: [TxMerkleNode; 12] = [
+            "9503de88d658c2b60206cf3e98a787088e5bcdc0d53616db50c5c71f3be58466".parse().unwrap(),
+            "641f3c169e308b90a5fe250a9243b529a6a833b09ffd225b10bc340d5a8eb2a0".parse().unwrap(),
+            "29c2ef1dea7e7218cd1cfc955d17f5ce09242e12e5dd6883eafe77fef33e48d8".parse().unwrap(),
+            "c91e6412281a7fc394511be31be7cff43a745bc885a9bb6acce9b7fb9f0c93ea".parse().unwrap(),
+            "54ee7685d3634682da1d35eea599514601416b5bf31ea3ac7c9dc1473427c2c5".parse().unwrap(),
+            "2cf35bb43956396015b69b94ff8937de359f320a4cb49a3fb24a79560bfd5a46".parse().unwrap(),
+            "b3f63ba740798f412167f96b479fb2b451e347a62abd7a40e307f385b3062b6a".parse().unwrap(),
+            "75f79362378d3cdf41b278c51cba2fbb048eb1495b8ceb884f67f8d6f7569199".parse().unwrap(),
+            "3e245b1795fb26513f818cd5ae9ab0144941cd0b1b005a2a7e8ba3e2e7ea0b4e".parse().unwrap(),
+            "baa02baaf437b99410919393f8d5c9ee73d620331a4a209c5ebe81b55b9185b9".parse().unwrap(),
+            "e00015e03c591e1da415ba7f081f238b20aac986df13fd7893a58e6664527744".parse().unwrap(),
+            "3545330459012524405f7eafd66af86940323c5badfd42ab2a858335e0f57a84".parse().unwrap(),
+        ];
+        let root = TxMerkleNode::calculate_root_from_proof(txid, 19, siblings.into_iter());
+        assert_eq!(root, expected_root);
+    }
+
+    #[test]
+    fn calculate_root_from_proof_truncated_tree() {
+        // Last (pos 8) transaction in block 13b8a
+        //
+        // esplora merkle proof for this transaction:
+        // curl 'https://blockstream.info/api/tx/74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20/merkle-proof'
+        let txid: Txid =
+            "74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20".parse().unwrap();
+        let expected_root: TxMerkleNode =
+            "2fda58e5959b0ee53c5253da9b9f3c0c739422ae04946966991cf55895287552".parse().unwrap();
+
+        let siblings: [TxMerkleNode; 4] = [
+            "74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20".parse().unwrap(),
+            "bb8db5f1d687839cc15a875e321ffb910d1c62d9280c1e4089122544c3528a13".parse().unwrap(),
+            "e7413bdf2c1215c3983536a62b1e210d9006a789cdc1427ccb4bb347745e52fc".parse().unwrap(),
+            "660af9921e9e17eba1106409c93aeec1b390bff99b0c25499da1b9c0e9aa56bc".parse().unwrap(),
+        ];
+        // last txid gets duplicated in odd-width merkle trees
+        assert_eq!(siblings[0], TxMerkleNode::from_leaf(txid));
+
+        let root = TxMerkleNode::calculate_root_from_proof(txid, 8, siblings.into_iter());
+        assert_eq!(root, expected_root);
     }
 
     // The tests below exercise the default trait `MerkleNode::calculate_root`
