@@ -142,6 +142,149 @@ impl WitnessProgram {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for WitnessProgram {
+    /// Serializes a [`WitnessProgram`].
+    ///
+    /// Depending on the data format, the underlying `program` bytes are serialized differently:
+    /// - **Human-readable formats** (e.g., JSON): The `program` bytes are serialized as a hex string.
+    /// - **Binary formats** (e.g., Bincode): The `program` bytes are serialized directly as raw bytes.
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use internals::serde::SerializeBytesAsHex;
+        use serde::ser::SerializeStruct;
+
+        let human_readable = serializer.is_human_readable();
+        let mut state = serializer.serialize_struct("WitnessProgram", 2)?;
+        state.serialize_field("version", &self.version)?;
+        if human_readable {
+            state.serialize_field("program", &SerializeBytesAsHex(self.program.as_slice()))?;
+        } else {
+            state.serialize_field("program", &self.program)?;
+        }
+        state.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for WitnessProgram {
+    /// Deserializes a [`WitnessProgram`].
+    ///
+    /// ### Errors
+    /// Returns a deserialization error if:
+    /// - Mandatory fields (`version` or `program`) are missing or duplicated.
+    /// - The hex string in a human-readable format is malformed or invalidly sized.
+    /// - The combination of `version` and `program` fails validation in `WitnessProgram::new`.
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use core::fmt;
+
+        use serde::de;
+
+        struct Program(ArrayVec<u8, MAX_SIZE>);
+
+        impl<'de> serde::Deserialize<'de> for Program {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                if deserializer.is_human_readable() {
+                    struct HexVisitor;
+
+                    impl de::Visitor<'_> for HexVisitor {
+                        type Value = Program;
+
+                        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                            write!(f, "a hex string encoding {} to {} bytes", MIN_SIZE, MAX_SIZE)
+                        }
+
+                        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                        where
+                            E: de::Error,
+                        {
+                            let bytes = hex::decode_to_vec(v).map_err(E::custom)?;
+                            if bytes.len() > MAX_SIZE {
+                                return Err(E::invalid_length(bytes.len(), &self));
+                            }
+                            Ok(Program(ArrayVec::from_slice(&bytes)))
+                        }
+                    }
+
+                    deserializer.deserialize_str(HexVisitor)
+                } else {
+                    let av = ArrayVec::<u8, MAX_SIZE>::deserialize(deserializer)?;
+                    Ok(Self(av))
+                }
+            }
+        }
+
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field {
+            Version,
+            Program,
+        }
+
+        struct Visitor;
+
+        impl<'de> de::Visitor<'de> for Visitor {
+            type Value = WitnessProgram;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a WitnessProgram struct with 'version' and 'program' fields")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let version: WitnessVersion =
+                    seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let program: Program =
+                    seq.next_element()?.ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                WitnessProgram::new(version, &program.0).map_err(de::Error::custom)
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                let mut version: Option<WitnessVersion> = None;
+                let mut program: Option<Program> = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Version => {
+                            if version.is_some() {
+                                return Err(de::Error::duplicate_field("version"));
+                            }
+                            version = Some(map.next_value()?);
+                        }
+                        Field::Program => {
+                            if program.is_some() {
+                                return Err(de::Error::duplicate_field("program"));
+                            }
+                            program = Some(map.next_value::<Program>()?);
+                        }
+                    }
+                }
+
+                let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
+                let program = program.ok_or_else(|| de::Error::missing_field("program"))?;
+
+                WitnessProgram::new(version, &program.0).map_err(de::Error::custom)
+            }
+        }
+
+        const FIELDS: &[&str] = &["version", "program"];
+        deserializer.deserialize_struct("WitnessProgram", FIELDS, Visitor)
+    }
+}
+
 /// Error types for witness programs.
 pub mod error {
     use core::convert::Infallible;
@@ -228,5 +371,103 @@ mod tests {
         assert!(WitnessProgram::new(WitnessVersion::V1, &p2a_bytes)
             .expect("valid witness program")
             .is_p2a());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn roundtrip_v0_p2wpkh() {
+        let want = WitnessProgram::new(WitnessVersion::V0, &[0xAB; 20]).unwrap();
+        let json = serde_json::to_string(&want).expect("serialize");
+        let got: WitnessProgram = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn roundtrip_v1_p2tr() {
+        let want = WitnessProgram::new(WitnessVersion::V1, &[0xCD; 32]).unwrap();
+        let json = serde_json::to_string(&want).expect("serialize");
+        let got: WitnessProgram = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(want, got);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_seq_format() {
+        let want = WitnessProgram::new(WitnessVersion::V0, &[0xAB; 20]).unwrap();
+        let encoded = bincode::serialize(&want).expect("serialize");
+        let got: WitnessProgram = bincode::deserialize(&encoded).expect("deserialize");
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_duplicate_version_field_is_err() {
+        let prog = "00".repeat(20);
+        let json = format!(r#"{{"version":0,"version":0,"program":"{prog}"}}"#);
+        assert!(serde_json::from_str::<WitnessProgram>(&json).is_err());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_duplicate_program_field_is_err() {
+        let prog = "00".repeat(20);
+        let json = format!(r#"{{"version":0,"program":"{prog}","program":"{prog}"}}"#);
+        assert!(serde_json::from_str::<WitnessProgram>(&json).is_err());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_missing_version_field_is_err() {
+        let prog = "00".repeat(20);
+        let json = format!(r#"{{"program":"{prog}"}}"#);
+        assert!(serde_json::from_str::<WitnessProgram>(&json).is_err());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_missing_program_field_is_err() {
+        let json = r#"{"version":0}"#;
+        assert!(serde_json::from_str::<WitnessProgram>(json).is_err());
+    }
+
+    // WitnessProgram::new validation is still enforced after deserialization.
+    // A V0 program of length 21 is structurally valid JSON but semantically invalid.
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_invalid_v0_program_length_is_err() {
+        let prog = "aa".repeat(21);
+        let json = format!(r#"{{"version":0,"program":"{prog}"}}"#);
+        assert!(serde_json::from_str::<WitnessProgram>(&json).is_err());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_human_readable_uses_hex_for_program() {
+        let original = WitnessProgram::new(WitnessVersion::V0, &[0xAB; 20]).unwrap();
+        let got = serde_json::to_string(&original).expect("serialize");
+        let want = format!(r#"{{"version":0,"program":"{}"}}"#, "ab".repeat(20));
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_human_readable_hex_program() {
+        let json = format!(r#"{{"version":1,"program":"{}"}}"#, "cd".repeat(32));
+        let got: WitnessProgram = serde_json::from_str(&json).expect("deserialize");
+        let want = WitnessProgram::new(WitnessVersion::V1, &[0xCD; 32]).unwrap();
+        assert_eq!(got, want);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_invalid_hex_program_is_err() {
+        // Odd-length hex string.
+        let json = r#"{"version":0,"program":"abc"}"#;
+        assert!(serde_json::from_str::<WitnessProgram>(json).is_err());
+
+        // Non-hex character.
+        let json = r#"{"version":0,"program":"zz"}"#;
+        assert!(serde_json::from_str::<WitnessProgram>(json).is_err());
     }
 }
