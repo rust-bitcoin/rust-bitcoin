@@ -391,6 +391,8 @@ impl FromStr for Magic {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(Magic);
+
 impl TryFrom<Network> for Magic {
     type Error = UnknownNetworkError;
 

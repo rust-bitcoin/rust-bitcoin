@@ -206,6 +206,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
 pub struct ChainHash([u8; 32]);
 internals::impl_array_newtype!(ChainHash, u8, 32);
 impl_array_newtype_stringify!(ChainHash, 32);
+internals::impl_try_from_string_for_from_str!(ChainHash);
 
 impl ChainHash {
     // Mainnet value can be verified at https://github.com/lightning/bolts/blob/master/00-introduction.md

@@ -106,6 +106,9 @@ impl FromStr for Signature {
     }
 }
 
+#[cfg(feature = "alloc")]
+internals::impl_try_from_string_for_from_str!(Signature);
+
 /// Holds signature serialized in-line (not in `Vec`).
 ///
 /// This avoids allocation and allows proving maximum size of the signature (73 bytes).

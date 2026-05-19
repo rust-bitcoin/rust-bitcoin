@@ -431,6 +431,8 @@ impl FromStr for XOnlyPublicKey {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(XOnlyPublicKey);
+
 impl From<secp256k1::XOnlyPublicKey> for XOnlyPublicKey {
     #[inline]
     fn from(pk: secp256k1::XOnlyPublicKey) -> Self { Self::from_secp(pk, Parity::Even) }
@@ -565,6 +567,8 @@ impl FromStr for Keypair {
         secp256k1::Keypair::from_str(s).map(Self::from).map_err(ParseKeypairError)
     }
 }
+
+internals::impl_try_from_string_for_from_str!(Keypair);
 
 impl From<secp256k1::Keypair> for Keypair {
     #[inline]
@@ -807,6 +811,8 @@ impl FromStr for LegacyPublicKey {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(LegacyPublicKey);
+
 impl From<secp256k1::PublicKey> for LegacyPublicKey {
     #[inline]
     fn from(pk: secp256k1::PublicKey) -> Self { Self::from_secp(pk) }
@@ -946,6 +952,8 @@ impl FromStr for FullPublicKey {
             .map_err(ParseFullPublicKeyError::Secp256k1)
     }
 }
+
+internals::impl_try_from_string_for_from_str!(FullPublicKey);
 
 impl TryFrom<LegacyPublicKey> for FullPublicKey {
     type Error = UncompressedPublicKeyError;
@@ -1203,6 +1211,9 @@ impl FromStr for WifKey {
     #[inline]
     fn from_str(s: &str) -> Result<Self, FromWifError> { Self::from_wif(s) }
 }
+
+#[cfg(feature = "alloc")]
+internals::impl_try_from_string_for_from_str!(WifKey);
 
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]

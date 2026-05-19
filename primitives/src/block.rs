@@ -298,6 +298,74 @@ where
 
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
+impl TryFrom<&str> for Block<Unchecked>
+where
+    Self: encoding::Decode,
+{
+    type Error = ParseBlockError;
+
+    #[inline]
+    fn try_from(s: &str) -> Result<Self, Self::Error> { core::str::FromStr::from_str(s) }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl TryFrom<alloc::string::String> for Block<Unchecked>
+where
+    Self: encoding::Decode,
+{
+    type Error = ParseBlockError;
+
+    #[inline]
+    fn try_from(s: alloc::string::String) -> Result<Self, Self::Error> {
+        core::str::FromStr::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl TryFrom<alloc::boxed::Box<str>> for Block<Unchecked>
+where
+    Self: encoding::Decode,
+{
+    type Error = ParseBlockError;
+
+    #[inline]
+    fn try_from(s: alloc::boxed::Box<str>) -> Result<Self, Self::Error> {
+        core::str::FromStr::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl TryFrom<alloc::rc::Rc<str>> for Block<Unchecked>
+where
+    Self: encoding::Decode,
+{
+    type Error = ParseBlockError;
+
+    #[inline]
+    fn try_from(s: alloc::rc::Rc<str>) -> Result<Self, Self::Error> {
+        core::str::FromStr::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl TryFrom<alloc::sync::Arc<str>> for Block<Unchecked>
+where
+    Self: encoding::Decode,
+{
+    type Error = ParseBlockError;
+
+    #[inline]
+    fn try_from(s: alloc::sync::Arc<str>) -> Result<Self, Self::Error> {
+        core::str::FromStr::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 impl<V: Validation> fmt::Display for Block<V>
 where
     Self: encoding::Encode,
@@ -487,6 +555,9 @@ impl core::str::FromStr for Header {
         HexPrimitive::from_str(s).map_err(ParseHeaderError)
     }
 }
+
+#[cfg(feature = "hex")]
+internals::impl_try_from_string_for_from_str!(Header);
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {

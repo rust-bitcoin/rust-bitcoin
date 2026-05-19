@@ -167,4 +167,16 @@ mod storage {
     }
 
     impl_from!(alloc::string::String, alloc::boxed::Box<str>, alloc::borrow::Cow<'_, str>);
+
+    impl From<alloc::rc::Rc<str>> for InputString {
+        fn from(input: alloc::rc::Rc<str>) -> Self {
+            InputString(alloc::string::String::from(input.as_ref()))
+        }
+    }
+
+    impl From<alloc::sync::Arc<str>> for InputString {
+        fn from(input: alloc::sync::Arc<str>) -> Self {
+            InputString(alloc::string::String::from(input.as_ref()))
+        }
+    }
 }

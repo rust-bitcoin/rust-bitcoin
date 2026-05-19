@@ -12,6 +12,9 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 #[cfg(feature = "std")]
 extern crate std;
 
@@ -258,6 +261,8 @@ impl FromStr for Network {
         }
     }
 }
+
+internals::impl_try_from_string_for_from_str!(Network);
 
 impl AsRef<Self> for Network {
     fn as_ref(&self) -> &Self { self }

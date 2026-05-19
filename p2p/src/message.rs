@@ -91,6 +91,22 @@ impl TryFrom<Box<str>> for CommandString {
     }
 }
 
+impl TryFrom<alloc::rc::Rc<str>> for CommandString {
+    type Error = CommandStringError;
+
+    fn try_from(value: alloc::rc::Rc<str>) -> Result<Self, Self::Error> {
+        Self::try_from_static_cow(String::from(value.as_ref()).into())
+    }
+}
+
+impl TryFrom<alloc::sync::Arc<str>> for CommandString {
+    type Error = CommandStringError;
+
+    fn try_from(value: alloc::sync::Arc<str>) -> Result<Self, Self::Error> {
+        Self::try_from_static_cow(String::from(value.as_ref()).into())
+    }
+}
+
 impl<'a> TryFrom<&'a str> for CommandString {
     type Error = CommandStringError;
 

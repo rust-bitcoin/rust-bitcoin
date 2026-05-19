@@ -155,6 +155,8 @@ mod message_signing {
             type Err = MessageSignatureError;
             fn from_str(s: &str) -> Result<Self, MessageSignatureError> { Self::from_base64(s) }
         }
+
+        internals::impl_try_from_string_for_from_str!(MessageSignature);
     }
 }
 

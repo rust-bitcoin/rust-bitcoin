@@ -246,6 +246,58 @@ macro_rules! _emit_alloc {
     ($($tokens:tt)*) => {};
 }
 
+/// Implements `TryFrom<&str>` and, when `alloc` is available, `TryFrom<String>`,
+/// `TryFrom<Box<str>>`, `TryFrom<Rc<str>>`, and `TryFrom<Arc<str>>` for a type
+/// that implements [`core::str::FromStr`].
+///
+/// The alloc impls are controlled by whether `bitcoin-internals` was compiled with
+/// the `alloc` feature (i.e., by the [`_emit_alloc`] mechanism), so there is no need
+/// to guard the call site with `#[cfg(feature = "alloc")]` for the alloc variants.
+/// If `TryFrom<&str>` itself must be alloc-gated (because the type's `FromStr` impl
+/// is alloc-gated), wrap the entire macro call in `#[cfg(feature = "alloc")]`.
+#[macro_export]
+macro_rules! impl_try_from_string_for_from_str {
+    ($t:ty) => {
+        impl core::convert::TryFrom<&str> for $t {
+            type Error = <$t as core::str::FromStr>::Err;
+            #[inline]
+            fn try_from(s: &str) -> core::result::Result<Self, Self::Error> {
+                core::str::FromStr::from_str(s)
+            }
+        }
+        $crate::_emit_alloc! {
+            impl core::convert::TryFrom<alloc::string::String> for $t {
+                type Error = <$t as core::str::FromStr>::Err;
+                #[inline]
+                fn try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error> {
+                    core::str::FromStr::from_str(&s)
+                }
+            }
+            impl core::convert::TryFrom<alloc::boxed::Box<str>> for $t {
+                type Error = <$t as core::str::FromStr>::Err;
+                #[inline]
+                fn try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error> {
+                    core::str::FromStr::from_str(&s)
+                }
+            }
+            impl core::convert::TryFrom<alloc::rc::Rc<str>> for $t {
+                type Error = <$t as core::str::FromStr>::Err;
+                #[inline]
+                fn try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error> {
+                    core::str::FromStr::from_str(&s)
+                }
+            }
+            impl core::convert::TryFrom<alloc::sync::Arc<str>> for $t {
+                type Error = <$t as core::str::FromStr>::Err;
+                #[inline]
+                fn try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error> {
+                    core::str::FromStr::from_str(&s)
+                }
+            }
+        }
+    };
+}
+
 /// Implements standard array methods for a given wrapper type.
 #[macro_export]
 macro_rules! impl_array_newtype {

@@ -75,6 +75,8 @@ impl str::FromStr for TapSighashType {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(TapSighashType);
+
 impl TapSighashType {
     /// Constructs a new [`TapSighashType`] from a raw `u8`.
     ///
@@ -149,6 +151,8 @@ impl str::FromStr for EcdsaSighashType {
         }
     }
 }
+
+internals::impl_try_from_string_for_from_str!(EcdsaSighashType);
 
 impl EcdsaSighashType {
     /// Checks if the sighash type is [`Self::Single`] or [`Self::SinglePlusAnyoneCanPay`].

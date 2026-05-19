@@ -88,6 +88,8 @@ impl FromStr for WitnessVersion {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(WitnessVersion);
+
 impl TryFrom<u8> for WitnessVersion {
     type Error = TryFromError;
 

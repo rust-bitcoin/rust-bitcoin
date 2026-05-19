@@ -124,6 +124,8 @@ impl FromStr for AddressType {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(AddressType);
+
 mod sealed {
     pub trait NetworkValidation {}
     impl NetworkValidation for super::NetworkChecked {}
@@ -1014,6 +1016,41 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
             Err(UnknownHrpError(hrp.to_owned()).into())
         }
     }
+}
+
+impl<U: NetworkValidationUnchecked> TryFrom<&str> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: &str) -> Result<Self, Self::Error> { Self::from_str(s) }
+}
+
+impl<U: NetworkValidationUnchecked> TryFrom<alloc::string::String> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::string::String) -> Result<Self, Self::Error> { Self::from_str(&s) }
+}
+
+impl<U: NetworkValidationUnchecked> TryFrom<alloc::boxed::Box<str>> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::boxed::Box<str>) -> Result<Self, Self::Error> { Self::from_str(&s) }
+}
+
+impl<U: NetworkValidationUnchecked> TryFrom<alloc::rc::Rc<str>> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::rc::Rc<str>) -> Result<Self, Self::Error> { Self::from_str(&s) }
+}
+
+impl<U: NetworkValidationUnchecked> TryFrom<alloc::sync::Arc<str>> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::sync::Arc<str>) -> Result<Self, Self::Error> { Self::from_str(&s) }
 }
 
 /// Convert a byte array of a pubkey hash into a SegWit redeem hash

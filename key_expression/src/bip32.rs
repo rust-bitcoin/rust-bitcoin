@@ -48,6 +48,7 @@ pub type ExtendedPrivKey = Xpriv;
 pub struct ChainCode([u8; 32]);
 internals::impl_array_newtype!(ChainCode, u8, 32);
 crate::impl_array_newtype_stringify!(ChainCode, 32);
+internals::impl_try_from_string_for_from_str!(ChainCode);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
@@ -65,6 +66,7 @@ impl ChainCode {
 pub struct Fingerprint([u8; 4]);
 internals::impl_array_newtype!(Fingerprint, u8, 4);
 crate::impl_array_newtype_stringify!(Fingerprint, 4);
+internals::impl_try_from_string_for_from_str!(Fingerprint);
 
 hash_newtype! {
     /// Extended key identifier as defined in BIP-0032.
@@ -309,6 +311,8 @@ impl FromStr for ChildNumber {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(ChildNumber);
+
 impl AsRef<[Self]> for ChildNumber {
     fn as_ref(&self) -> &[Self] { slice::from_ref(self) }
 }
@@ -429,6 +433,8 @@ impl FromStr for DerivationPath {
         Ok(Self(ret?))
     }
 }
+
+internals::impl_try_from_string_for_from_str!(DerivationPath);
 
 /// An iterator over children of a [`DerivationPath`].
 ///
@@ -933,6 +939,8 @@ impl FromStr for Xpriv {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(Xpriv);
+
 impl fmt::Display for Xpub {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         base58::encode_check_to_fmt(fmt, &self.encode()[..])
@@ -952,6 +960,8 @@ impl FromStr for Xpub {
         Self::decode(&data)
     }
 }
+
+internals::impl_try_from_string_for_from_str!(Xpub);
 
 impl From<Xpub> for XKeyIdentifier {
     fn from(key: Xpub) -> Self { key.identifier() }
