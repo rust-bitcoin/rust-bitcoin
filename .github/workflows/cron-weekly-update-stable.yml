@@ -19,8 +19,8 @@ jobs:
         run: cargo install --git https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git --rev $(cat rbmt-version) cargo-rbmt
       - name: Update stable toolchain in Cargo.toml
         run: |
-          eval "$(cargo rbmt toolchains --update-stable)"
-          echo "stable_version=$RBMT_STABLE" >> $GITHUB_ENV
+          cargo rbmt toolchains --update-stable
+          echo "stable_version=$(cargo rbmt toolchains --stable)" >> $GITHUB_ENV
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:

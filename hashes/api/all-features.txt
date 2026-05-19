@@ -10,14 +10,11 @@ impl bitcoin_hashes::hash160::Hash
 pub const fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &[u8; 20]
 pub const fn bitcoin_hashes::hash160::Hash::from_byte_array(bytes: [u8; 20]) -> Self
 pub const fn bitcoin_hashes::hash160::Hash::to_byte_array(self) -> [u8; 20]
-impl bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::engine() -> bitcoin_hashes::hash160::HashEngine
 pub fn bitcoin_hashes::hash160::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::hash160::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::from_bytes_mut(bytes: &mut [u8; 20]) -> &mut Self
 pub const fn bitcoin_hashes::hash160::Hash::from_bytes_ref(bytes: &[u8; 20]) -> &Self
-impl bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::from_engine(e: bitcoin_hashes::hash160::HashEngine) -> Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::hash160::Hash
 pub type bitcoin_hashes::hash160::Hash::Bytes = [u8; 20]
@@ -45,11 +42,8 @@ pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::hash160::Hash
@@ -158,7 +152,6 @@ pub fn bitcoin_hashes::hkdf::error::MaxLengthError::source(&self) -> core::optio
 impl core::fmt::Debug for bitcoin_hashes::hkdf::error::MaxLengthError
 pub fn bitcoin_hashes::hkdf::error::MaxLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::hkdf::error::MaxLengthError
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for bitcoin_hashes::hkdf::error::MaxLengthError
 impl core::marker::StructuralPartialEq for bitcoin_hashes::hkdf::error::MaxLengthError
 impl core::marker::Freeze for bitcoin_hashes::hkdf::error::MaxLengthError
@@ -235,50 +228,6 @@ pub unsafe fn bitcoin_hashes::hkdf::Hkdf<T>::clone_to_uninit(&self, dest: *mut u
 impl<T> core::convert::From<T> for bitcoin_hashes::hkdf::Hkdf<T>
 pub fn bitcoin_hashes::hkdf::Hkdf<T>::from(t: T) -> T
 pub struct bitcoin_hashes::hkdf::MaxLengthError
-impl core::clone::Clone for bitcoin_hashes::hkdf::error::MaxLengthError
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::clone(&self) -> bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::cmp::Eq for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::cmp::PartialEq for bitcoin_hashes::hkdf::error::MaxLengthError
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::eq(&self, other: &bitcoin_hashes::hkdf::error::MaxLengthError) -> bool
-impl core::error::Error for bitcoin_hashes::hkdf::error::MaxLengthError
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Debug for bitcoin_hashes::hkdf::error::MaxLengthError
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::hkdf::error::MaxLengthError
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::marker::StructuralPartialEq for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::marker::Freeze for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::marker::Send for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::marker::Sync for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::marker::Unpin for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::marker::UnsafeUnpin for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hkdf::error::MaxLengthError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hkdf::error::MaxLengthError
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::hkdf::error::MaxLengthError where U: core::convert::From<T>
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::hkdf::error::MaxLengthError where U: core::convert::Into<T>
-pub type bitcoin_hashes::hkdf::error::MaxLengthError::Error = core::convert::Infallible
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::hkdf::error::MaxLengthError where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::hkdf::error::MaxLengthError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::hkdf::error::MaxLengthError where T: core::clone::Clone
-pub type bitcoin_hashes::hkdf::error::MaxLengthError::Owned = T
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::hkdf::error::MaxLengthError where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::hkdf::error::MaxLengthError where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::hkdf::error::MaxLengthError where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::hkdf::error::MaxLengthError where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::hkdf::error::MaxLengthError where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::hkdf::error::MaxLengthError::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::hkdf::error::MaxLengthError
-pub fn bitcoin_hashes::hkdf::error::MaxLengthError::from(t: T) -> T
 pub mod bitcoin_hashes::hmac
 #[repr(transparent)] pub struct bitcoin_hashes::hmac::Hmac<T: bitcoin_hashes::Hash>(_)
 impl<'de, T: bitcoin_hashes::Hash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
@@ -286,9 +235,7 @@ pub fn bitcoin_hashes::hmac::Hmac<T>::deserialize<D: serde::de::Deserializer<'de
 impl<T: bitcoin_hashes::Hash + core::fmt::Debug> core::fmt::Debug for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -400,7 +347,6 @@ impl bitcoin_hashes::muhash::Hash
 pub const fn bitcoin_hashes::muhash::Hash::as_byte_array(&self) -> &[u8; 384]
 pub const fn bitcoin_hashes::muhash::Hash::from_byte_array(bytes: [u8; 384]) -> Self
 pub const fn bitcoin_hashes::muhash::Hash::to_byte_array(self) -> [u8; 384]
-impl bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::from_bytes_mut(bytes: &mut [u8; 384]) -> &mut Self
 pub const fn bitcoin_hashes::muhash::Hash::from_bytes_ref(bytes: &[u8; 384]) -> &Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::muhash::Hash
@@ -429,11 +375,8 @@ pub fn bitcoin_hashes::muhash::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::muhash::Hash
@@ -483,14 +426,11 @@ impl bitcoin_hashes::ripemd160::Hash
 pub const fn bitcoin_hashes::ripemd160::Hash::as_byte_array(&self) -> &[u8; 20]
 pub const fn bitcoin_hashes::ripemd160::Hash::from_byte_array(bytes: [u8; 20]) -> Self
 pub const fn bitcoin_hashes::ripemd160::Hash::to_byte_array(self) -> [u8; 20]
-impl bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::engine() -> bitcoin_hashes::ripemd160::HashEngine
 pub fn bitcoin_hashes::ripemd160::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::ripemd160::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::from_bytes_mut(bytes: &mut [u8; 20]) -> &mut Self
 pub const fn bitcoin_hashes::ripemd160::Hash::from_bytes_ref(bytes: &[u8; 20]) -> &Self
-impl bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::from_engine(e: bitcoin_hashes::ripemd160::HashEngine) -> Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::ripemd160::Hash
 pub type bitcoin_hashes::ripemd160::Hash::Bytes = [u8; 20]
@@ -518,11 +458,8 @@ pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::ripemd160::Hash
@@ -624,14 +561,11 @@ impl bitcoin_hashes::sha1::Hash
 pub const fn bitcoin_hashes::sha1::Hash::as_byte_array(&self) -> &[u8; 20]
 pub const fn bitcoin_hashes::sha1::Hash::from_byte_array(bytes: [u8; 20]) -> Self
 pub const fn bitcoin_hashes::sha1::Hash::to_byte_array(self) -> [u8; 20]
-impl bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::engine() -> bitcoin_hashes::sha1::HashEngine
 pub fn bitcoin_hashes::sha1::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::sha1::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::from_bytes_mut(bytes: &mut [u8; 20]) -> &mut Self
 pub const fn bitcoin_hashes::sha1::Hash::from_bytes_ref(bytes: &[u8; 20]) -> &Self
-impl bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::from_engine(e: bitcoin_hashes::sha1::HashEngine) -> Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::sha1::Hash
 pub type bitcoin_hashes::sha1::Hash::Bytes = [u8; 20]
@@ -659,11 +593,8 @@ pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::sha1::Hash
@@ -775,7 +706,6 @@ pub fn bitcoin_hashes::sha256::error::MidstateError::source(&self) -> core::opti
 impl core::fmt::Debug for bitcoin_hashes::sha256::error::MidstateError
 pub fn bitcoin_hashes::sha256::error::MidstateError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256::error::MidstateError
-pub fn bitcoin_hashes::sha256::error::MidstateError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for bitcoin_hashes::sha256::error::MidstateError
 impl core::marker::Freeze for bitcoin_hashes::sha256::error::MidstateError
 impl core::marker::Send for bitcoin_hashes::sha256::error::MidstateError
@@ -813,14 +743,11 @@ impl bitcoin_hashes::sha256::Hash
 pub const fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::engine() -> bitcoin_hashes::sha256::HashEngine
 pub fn bitcoin_hashes::sha256::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::sha256::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
 pub const fn bitcoin_hashes::sha256::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::from_engine(e: bitcoin_hashes::sha256::HashEngine) -> Self
 pub fn bitcoin_hashes::sha256::Hash::hash_again(&self) -> bitcoin_hashes::sha256d::Hash
 pub const fn bitcoin_hashes::sha256::Hash::hash_unoptimized(bytes: &[u8]) -> Self
@@ -850,11 +777,8 @@ pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::sha256::Hash
@@ -1007,52 +931,6 @@ pub unsafe fn bitcoin_hashes::sha256::Midstate::clone_to_uninit(&self, dest: *mu
 impl<T> core::convert::From<T> for bitcoin_hashes::sha256::Midstate
 pub fn bitcoin_hashes::sha256::Midstate::from(t: T) -> T
 pub struct bitcoin_hashes::sha256::MidstateError
-impl bitcoin_hashes::sha256::error::MidstateError
-pub const fn bitcoin_hashes::sha256::error::MidstateError::midstate(&self) -> &bitcoin_hashes::sha256::Midstate
-pub fn bitcoin_hashes::sha256::error::MidstateError::unprocessed_bytes(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha256::error::MidstateError
-pub fn bitcoin_hashes::sha256::error::MidstateError::clone(&self) -> bitcoin_hashes::sha256::error::MidstateError
-impl core::cmp::Eq for bitcoin_hashes::sha256::error::MidstateError
-impl core::cmp::PartialEq for bitcoin_hashes::sha256::error::MidstateError
-pub fn bitcoin_hashes::sha256::error::MidstateError::eq(&self, other: &bitcoin_hashes::sha256::error::MidstateError) -> bool
-impl core::error::Error for bitcoin_hashes::sha256::error::MidstateError
-pub fn bitcoin_hashes::sha256::error::MidstateError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-impl core::fmt::Debug for bitcoin_hashes::sha256::error::MidstateError
-pub fn bitcoin_hashes::sha256::error::MidstateError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha256::error::MidstateError
-pub fn bitcoin_hashes::sha256::error::MidstateError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha256::error::MidstateError
-impl core::marker::Freeze for bitcoin_hashes::sha256::error::MidstateError
-impl core::marker::Send for bitcoin_hashes::sha256::error::MidstateError
-impl core::marker::Sync for bitcoin_hashes::sha256::error::MidstateError
-impl core::marker::Unpin for bitcoin_hashes::sha256::error::MidstateError
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256::error::MidstateError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256::error::MidstateError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256::error::MidstateError
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha256::error::MidstateError where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha256::error::MidstateError::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha256::error::MidstateError where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha256::error::MidstateError::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha256::error::MidstateError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha256::error::MidstateError where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha256::error::MidstateError::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha256::error::MidstateError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha256::error::MidstateError where T: core::clone::Clone
-pub type bitcoin_hashes::sha256::error::MidstateError::Owned = T
-pub fn bitcoin_hashes::sha256::error::MidstateError::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha256::error::MidstateError::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha256::error::MidstateError where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::error::MidstateError::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha256::error::MidstateError where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::error::MidstateError::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha256::error::MidstateError where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::error::MidstateError::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha256::error::MidstateError where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::error::MidstateError::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha256::error::MidstateError where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha256::error::MidstateError::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha256::error::MidstateError
-pub fn bitcoin_hashes::sha256::error::MidstateError::from(t: T) -> T
 pub fn bitcoin_hashes::sha256::hash(data: &[u8]) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::hash_byte_chunks<B, I>(byte_slices: I) -> bitcoin_hashes::sha256::Hash where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub mod bitcoin_hashes::sha256d
@@ -1061,14 +939,11 @@ impl bitcoin_hashes::sha256d::Hash
 pub const fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256d::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::engine() -> bitcoin_hashes::sha256d::HashEngine
 pub fn bitcoin_hashes::sha256d::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::sha256d::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
 pub const fn bitcoin_hashes::sha256d::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from_engine(e: bitcoin_hashes::sha256d::HashEngine) -> Self
 pub fn bitcoin_hashes::sha256d::Hash::hash_64_many(outputs: &mut [[u8; 32]], inputs: &[[u8; 64]])
 impl bitcoin_hashes::Hash for bitcoin_hashes::sha256d::Hash
@@ -1097,11 +972,8 @@ pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::sha256d::Hash
@@ -1238,11 +1110,8 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::as_ref(&self) -> &[u8]
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::Debug for bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::Display for bitcoin_hashes::sha256t::Hash<T>
-pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::LowerHex for bitcoin_hashes::sha256t::Hash<T>
-pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::UpperHex for bitcoin_hashes::sha256t::Hash<T>
-pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::sha256t::Tag> core::hash::Hash for bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::hash<H: core::hash::Hasher>(&self, h: &mut H)
 impl<T: bitcoin_hashes::sha256t::Tag> core::marker::Copy for bitcoin_hashes::sha256t::Hash<T>
@@ -1339,14 +1208,11 @@ impl bitcoin_hashes::sha384::Hash
 pub const fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &[u8; 48]
 pub const fn bitcoin_hashes::sha384::Hash::from_byte_array(bytes: [u8; 48]) -> Self
 pub const fn bitcoin_hashes::sha384::Hash::to_byte_array(self) -> [u8; 48]
-impl bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::engine() -> bitcoin_hashes::sha384::HashEngine
 pub fn bitcoin_hashes::sha384::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::sha384::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::from_bytes_mut(bytes: &mut [u8; 48]) -> &mut Self
 pub const fn bitcoin_hashes::sha384::Hash::from_bytes_ref(bytes: &[u8; 48]) -> &Self
-impl bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::from_engine(e: bitcoin_hashes::sha384::HashEngine) -> Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::sha384::Hash
 pub type bitcoin_hashes::sha384::Hash::Bytes = [u8; 48]
@@ -1374,11 +1240,8 @@ pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::sha384::Hash
@@ -1480,11 +1343,9 @@ impl bitcoin_hashes::sha3_256::Hash
 pub const fn bitcoin_hashes::sha3_256::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha3_256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha3_256::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::engine() -> bitcoin_hashes::sha3_256::HashEngine
 pub fn bitcoin_hashes::sha3_256::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::sha3_256::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
 pub const fn bitcoin_hashes::sha3_256::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::sha3_256::Hash
@@ -1513,11 +1374,8 @@ pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::sha3_256::Hash
@@ -1619,14 +1477,11 @@ impl bitcoin_hashes::sha512::Hash
 pub const fn bitcoin_hashes::sha512::Hash::as_byte_array(&self) -> &[u8; 64]
 pub const fn bitcoin_hashes::sha512::Hash::from_byte_array(bytes: [u8; 64]) -> Self
 pub const fn bitcoin_hashes::sha512::Hash::to_byte_array(self) -> [u8; 64]
-impl bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::engine() -> bitcoin_hashes::sha512::HashEngine
 pub fn bitcoin_hashes::sha512::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::sha512::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::from_bytes_mut(bytes: &mut [u8; 64]) -> &mut Self
 pub const fn bitcoin_hashes::sha512::Hash::from_bytes_ref(bytes: &[u8; 64]) -> &Self
-impl bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::from_engine(e: bitcoin_hashes::sha512::HashEngine) -> Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::sha512::Hash
 pub type bitcoin_hashes::sha512::Hash::Bytes = [u8; 64]
@@ -1654,11 +1509,8 @@ pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::sha512::Hash
@@ -1760,14 +1612,11 @@ impl bitcoin_hashes::sha512_256::Hash
 pub const fn bitcoin_hashes::sha512_256::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha512_256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha512_256::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::engine() -> bitcoin_hashes::sha512_256::HashEngine
 pub fn bitcoin_hashes::sha512_256::Hash::hash(data: &[u8]) -> Self
 pub fn bitcoin_hashes::sha512_256::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
 pub const fn bitcoin_hashes::sha512_256::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::from_engine(e: bitcoin_hashes::sha512_256::HashEngine) -> Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::sha512_256::Hash
 pub type bitcoin_hashes::sha512_256::Hash::Bytes = [u8; 32]
@@ -1795,11 +1644,8 @@ pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::sha512_256::Hash
@@ -1901,7 +1747,6 @@ impl bitcoin_hashes::siphash24::Hash
 pub const fn bitcoin_hashes::siphash24::Hash::as_byte_array(&self) -> &[u8; 8]
 pub const fn bitcoin_hashes::siphash24::Hash::from_byte_array(bytes: [u8; 8]) -> Self
 pub const fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> [u8; 8]
-impl bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::engine(k0: u64, k1: u64) -> bitcoin_hashes::siphash24::HashEngine
 pub fn bitcoin_hashes::siphash24::Hash::from_engine(e: bitcoin_hashes::siphash24::HashEngine) -> Self
 pub fn bitcoin_hashes::siphash24::Hash::from_engine_to_u64(e: bitcoin_hashes::siphash24::HashEngine) -> u64
@@ -1909,7 +1754,6 @@ pub fn bitcoin_hashes::siphash24::Hash::from_u64(hash: u64) -> Self
 pub fn bitcoin_hashes::siphash24::Hash::hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64
 pub fn bitcoin_hashes::siphash24::Hash::hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Self
 pub fn bitcoin_hashes::siphash24::Hash::to_u64(self) -> u64
-impl bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::from_bytes_mut(bytes: &mut [u8; 8]) -> &mut Self
 pub const fn bitcoin_hashes::siphash24::Hash::from_bytes_ref(bytes: &[u8; 8]) -> &Self
 impl bitcoin_hashes::Hash for bitcoin_hashes::siphash24::Hash
@@ -1938,11 +1782,8 @@ pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8]
 impl core::fmt::Debug for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::LowerHex for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::UpperHex for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin_hashes::siphash24::Hash
@@ -2039,1143 +1880,19 @@ pub macro bitcoin_hashes::impl_hex_for_newtype!
 pub macro bitcoin_hashes::impl_serde_for_newtype!
 pub macro bitcoin_hashes::sha256t_tag!
 #[repr(transparent)] pub struct bitcoin_hashes::Hash160(_)
-impl bitcoin_hashes::hash160::Hash
-pub const fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &[u8; 20]
-pub const fn bitcoin_hashes::hash160::Hash::from_byte_array(bytes: [u8; 20]) -> Self
-pub const fn bitcoin_hashes::hash160::Hash::to_byte_array(self) -> [u8; 20]
-impl bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::engine() -> bitcoin_hashes::hash160::HashEngine
-pub fn bitcoin_hashes::hash160::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::hash160::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::from_bytes_mut(bytes: &mut [u8; 20]) -> &mut Self
-pub const fn bitcoin_hashes::hash160::Hash::from_bytes_ref(bytes: &[u8; 20]) -> &Self
-impl bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::from_engine(e: bitcoin_hashes::hash160::HashEngine) -> Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::hash160::Hash
-pub type bitcoin_hashes::hash160::Hash::Bytes = [u8; 20]
-pub const bitcoin_hashes::hash160::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::hash160::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::hash160::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 20]> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::borrow(&self) -> &[u8; 20]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::clone(&self) -> bitcoin_hashes::hash160::Hash
-impl core::cmp::Eq for bitcoin_hashes::hash160::Hash
-impl core::cmp::Ord for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::cmp(&self, other: &bitcoin_hashes::hash160::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::eq(&self, other: &bitcoin_hashes::hash160::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::partial_cmp(&self, other: &bitcoin_hashes::hash160::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8; 20]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::hash160::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::hash160::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::hash160::Hash
-pub type bitcoin_hashes::hash160::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::hash160::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::hash160::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::hash160::Hash
-impl core::marker::Send for bitcoin_hashes::hash160::Hash
-impl core::marker::Sync for bitcoin_hashes::hash160::Hash
-impl core::marker::Unpin for bitcoin_hashes::hash160::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::hash160::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hash160::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hash160::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::hash160::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::hash160::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::hash160::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::hash160::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::hash160::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::hash160::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::hash160::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::hash160::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::hash160::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::hash160::Hash::Owned = T
-pub fn bitcoin_hashes::hash160::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::hash160::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::hash160::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::hash160::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::hash160::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::hash160::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::hash160::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hash160::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::hash160::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hash160::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::hash160::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::hash160::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::hash160::Hash
-pub fn bitcoin_hashes::hash160::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::hash160::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::Hkdf<T: bitcoin_hashes::HashEngine>
-impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::hkdf::Hkdf<T>
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::non_secure_erase(&mut self)
-impl<T> bitcoin_hashes::hkdf::Hkdf<T> where T: core::default::Default + bitcoin_hashes::HashEngine
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::expand(&self, info: &[u8], okm: &mut [u8]) -> core::result::Result<(), bitcoin_hashes::hkdf::error::MaxLengthError>
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::expand_to_len(&self, info: &[u8], len: usize) -> core::result::Result<alloc::vec::Vec<u8>, bitcoin_hashes::hkdf::error::MaxLengthError>
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::new(salt: &[u8], ikm: &[u8]) -> Self
-impl<T: bitcoin_hashes::HashEngine> core::fmt::Debug for bitcoin_hashes::hkdf::Hkdf<T>
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<T: bitcoin_hashes::HashEngine> core::ops::drop::Drop for bitcoin_hashes::hkdf::Hkdf<T>
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::drop(&mut self)
-impl<T: core::clone::Clone + bitcoin_hashes::HashEngine> core::clone::Clone for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::clone::Clone
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::clone(&self) -> bitcoin_hashes::hkdf::Hkdf<T>
-impl<T> core::marker::Freeze for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::marker::Freeze
-impl<T> core::marker::Send for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::marker::Send
-impl<T> core::marker::Sync for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::marker::Sync
-impl<T> core::marker::Unpin for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::marker::Unpin
-impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::marker::UnsafeUnpin
-impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::HashEngine>::Hash: core::panic::unwind_safe::UnwindSafe
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::hkdf::Hkdf<T> where U: core::convert::From<T>
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::hkdf::Hkdf<T> where U: core::convert::Into<T>
-pub type bitcoin_hashes::hkdf::Hkdf<T>::Error = core::convert::Infallible
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::hkdf::Hkdf<T> where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::hkdf::Hkdf<T>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::hkdf::Hkdf<T> where T: core::clone::Clone
-pub type bitcoin_hashes::hkdf::Hkdf<T>::Owned = T
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::to_owned(&self) -> T
-impl<T> core::any::Any for bitcoin_hashes::hkdf::Hkdf<T> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::hkdf::Hkdf<T> where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::hkdf::Hkdf<T> where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::hkdf::Hkdf<T> where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::hkdf::Hkdf<T>::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::hkdf::Hkdf<T>
-pub fn bitcoin_hashes::hkdf::Hkdf<T>::from(t: T) -> T
 #[repr(transparent)] pub struct bitcoin_hashes::Hmac<T: bitcoin_hashes::Hash>(_)
-impl<'de, T: bitcoin_hashes::Hash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-impl<T: bitcoin_hashes::Hash + core::fmt::Debug> core::fmt::Debug for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
-pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
-pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl<T: bitcoin_hashes::Hash + serde::ser::Serialize> serde::ser::Serialize for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<T: bitcoin_hashes::Hash> bitcoin_hashes::Hash for bitcoin_hashes::hmac::Hmac<T>
-pub type bitcoin_hashes::hmac::Hmac<T>::Bytes = <T as bitcoin_hashes::Hash>::Bytes
-pub fn bitcoin_hashes::hmac::Hmac<T>::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::hmac::Hmac<T>::from_byte_array(bytes: <T as bitcoin_hashes::Hash>::Bytes) -> Self
-pub fn bitcoin_hashes::hmac::Hmac<T>::to_byte_array(self) -> Self::Bytes
-impl<T: bitcoin_hashes::Hash> core::cmp::Eq for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::eq(&self, other: &Self) -> bool
-impl<T: bitcoin_hashes::Hash> core::convert::AsRef<[u8]> for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::as_ref(&self) -> &[u8]
-impl<T: core::clone::Clone + bitcoin_hashes::Hash> core::clone::Clone for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::clone(&self) -> bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::cmp::Ord + bitcoin_hashes::Hash> core::cmp::Ord for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::cmp(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> core::cmp::Ordering
-impl<T: core::cmp::PartialOrd + bitcoin_hashes::Hash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::partial_cmp(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> core::option::Option<core::cmp::Ordering>
-impl<T: core::hash::Hash + bitcoin_hashes::Hash> core::hash::Hash for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl<T: core::marker::Copy + bitcoin_hashes::Hash> core::marker::Copy for bitcoin_hashes::hmac::Hmac<T>
-impl<T> core::marker::Freeze for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Freeze
-impl<T> core::marker::Send for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Send
-impl<T> core::marker::Sync for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Sync
-impl<T> core::marker::Unpin for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Unpin
-impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::UnsafeUnpin
-impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::Hmac<T> where T: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hmac::Hmac<T> where T: core::panic::unwind_safe::UnwindSafe
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::hmac::Hmac<T> where U: core::convert::From<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::hmac::Hmac<T> where U: core::convert::Into<T>
-pub type bitcoin_hashes::hmac::Hmac<T>::Error = core::convert::Infallible
-pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::hmac::Hmac<T> where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::hmac::Hmac<T>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::hmac::Hmac<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::hmac::Hmac<T> where T: core::clone::Clone
-pub type bitcoin_hashes::hmac::Hmac<T>::Owned = T
-pub fn bitcoin_hashes::hmac::Hmac<T>::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::hmac::Hmac<T>::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::hmac::Hmac<T> where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::hmac::Hmac<T>::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::hmac::Hmac<T> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::hmac::Hmac<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::hmac::Hmac<T> where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hmac::Hmac<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::hmac::Hmac<T> where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hmac::Hmac<T>::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::hmac::Hmac<T> where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::hmac::Hmac<T>::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::hmac::Hmac<T>
-pub fn bitcoin_hashes::hmac::Hmac<T>::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::hmac::Hmac<T> where T: for<'de> serde::de::Deserialize<'de>
 pub struct bitcoin_hashes::HmacEngine<T: bitcoin_hashes::HashEngine>
-impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::hmac::HmacEngine<T>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::from_inner_engines(iengine: T, oengine: T) -> Self
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::new(key: &[u8]) -> Self where T: core::default::Default
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::non_secure_erase(&mut self)
-impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>
-pub type bitcoin_hashes::hmac::HmacEngine<T>::Bytes = <T as bitcoin_hashes::HashEngine>::Bytes
-pub type bitcoin_hashes::hmac::HmacEngine<T>::Hash = bitcoin_hashes::hmac::Hmac<<T as bitcoin_hashes::HashEngine>::Hash>
-pub const bitcoin_hashes::hmac::HmacEngine<T>::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::input(&mut self, buf: &[u8])
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::n_bytes_hashed(&self) -> u64
-impl<T: bitcoin_hashes::HashEngine> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> std::io::error::Result<()>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
-impl<T: core::clone::Clone + bitcoin_hashes::HashEngine> core::clone::Clone for bitcoin_hashes::hmac::HmacEngine<T>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::clone(&self) -> bitcoin_hashes::hmac::HmacEngine<T>
-impl<T: core::fmt::Debug + bitcoin_hashes::HashEngine> core::fmt::Debug for bitcoin_hashes::hmac::HmacEngine<T>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<T> core::marker::Freeze for bitcoin_hashes::hmac::HmacEngine<T> where T: core::marker::Freeze
-impl<T> core::marker::Send for bitcoin_hashes::hmac::HmacEngine<T> where T: core::marker::Send
-impl<T> core::marker::Sync for bitcoin_hashes::hmac::HmacEngine<T> where T: core::marker::Sync
-impl<T> core::marker::Unpin for bitcoin_hashes::hmac::HmacEngine<T> where T: core::marker::Unpin
-impl<T> core::marker::UnsafeUnpin for bitcoin_hashes::hmac::HmacEngine<T> where T: core::marker::UnsafeUnpin
-impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::HmacEngine<T> where T: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hmac::HmacEngine<T> where T: core::panic::unwind_safe::UnwindSafe
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::hmac::HmacEngine<T> where U: core::convert::From<T>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::hmac::HmacEngine<T> where U: core::convert::Into<T>
-pub type bitcoin_hashes::hmac::HmacEngine<T>::Error = core::convert::Infallible
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::hmac::HmacEngine<T> where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::hmac::HmacEngine<T>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::hmac::HmacEngine<T> where T: core::clone::Clone
-pub type bitcoin_hashes::hmac::HmacEngine<T>::Owned = T
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::to_owned(&self) -> T
-impl<T> core::any::Any for bitcoin_hashes::hmac::HmacEngine<T> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::hmac::HmacEngine<T> where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::hmac::HmacEngine<T> where T: ?core::marker::Sized
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::hmac::HmacEngine<T> where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::hmac::HmacEngine<T>::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::hmac::HmacEngine<T>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::from(t: T) -> T
 #[repr(transparent)] pub struct bitcoin_hashes::MuHash(_)
-impl bitcoin_hashes::muhash::Hash
-pub const fn bitcoin_hashes::muhash::Hash::as_byte_array(&self) -> &[u8; 384]
-pub const fn bitcoin_hashes::muhash::Hash::from_byte_array(bytes: [u8; 384]) -> Self
-pub const fn bitcoin_hashes::muhash::Hash::to_byte_array(self) -> [u8; 384]
-impl bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::from_bytes_mut(bytes: &mut [u8; 384]) -> &mut Self
-pub const fn bitcoin_hashes::muhash::Hash::from_bytes_ref(bytes: &[u8; 384]) -> &Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::muhash::Hash
-pub type bitcoin_hashes::muhash::Hash::Bytes = [u8; 384]
-pub const bitcoin_hashes::muhash::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::muhash::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::muhash::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::muhash::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 384]> for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::borrow(&self) -> &[u8; 384]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::clone(&self) -> bitcoin_hashes::muhash::Hash
-impl core::cmp::Eq for bitcoin_hashes::muhash::Hash
-impl core::cmp::Ord for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::cmp(&self, other: &bitcoin_hashes::muhash::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::eq(&self, other: &bitcoin_hashes::muhash::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::partial_cmp(&self, other: &bitcoin_hashes::muhash::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 384]> for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::as_ref(&self) -> &[u8; 384]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::muhash::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::muhash::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::muhash::Hash
-pub type bitcoin_hashes::muhash::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::muhash::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::muhash::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::muhash::Hash
-impl core::marker::Send for bitcoin_hashes::muhash::Hash
-impl core::marker::Sync for bitcoin_hashes::muhash::Hash
-impl core::marker::Unpin for bitcoin_hashes::muhash::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::muhash::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::muhash::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::muhash::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::muhash::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::muhash::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::muhash::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::muhash::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::muhash::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::muhash::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::muhash::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::muhash::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::muhash::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::muhash::Hash::Owned = T
-pub fn bitcoin_hashes::muhash::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::muhash::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::muhash::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::muhash::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::muhash::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::muhash::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::muhash::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::muhash::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::muhash::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::muhash::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::muhash::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::muhash::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::muhash::Hash
-pub fn bitcoin_hashes::muhash::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::muhash::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Ripemd160(_)
-impl bitcoin_hashes::ripemd160::Hash
-pub const fn bitcoin_hashes::ripemd160::Hash::as_byte_array(&self) -> &[u8; 20]
-pub const fn bitcoin_hashes::ripemd160::Hash::from_byte_array(bytes: [u8; 20]) -> Self
-pub const fn bitcoin_hashes::ripemd160::Hash::to_byte_array(self) -> [u8; 20]
-impl bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::engine() -> bitcoin_hashes::ripemd160::HashEngine
-pub fn bitcoin_hashes::ripemd160::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::ripemd160::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::from_bytes_mut(bytes: &mut [u8; 20]) -> &mut Self
-pub const fn bitcoin_hashes::ripemd160::Hash::from_bytes_ref(bytes: &[u8; 20]) -> &Self
-impl bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::from_engine(e: bitcoin_hashes::ripemd160::HashEngine) -> Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::ripemd160::Hash
-pub type bitcoin_hashes::ripemd160::Hash::Bytes = [u8; 20]
-pub const bitcoin_hashes::ripemd160::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::ripemd160::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::ripemd160::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::ripemd160::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 20]> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::borrow(&self) -> &[u8; 20]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::clone(&self) -> bitcoin_hashes::ripemd160::Hash
-impl core::cmp::Eq for bitcoin_hashes::ripemd160::Hash
-impl core::cmp::Ord for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::cmp(&self, other: &bitcoin_hashes::ripemd160::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::eq(&self, other: &bitcoin_hashes::ripemd160::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::partial_cmp(&self, other: &bitcoin_hashes::ripemd160::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8; 20]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::ripemd160::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::ripemd160::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::ripemd160::Hash
-pub type bitcoin_hashes::ripemd160::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::ripemd160::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::ripemd160::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::ripemd160::Hash
-impl core::marker::Send for bitcoin_hashes::ripemd160::Hash
-impl core::marker::Sync for bitcoin_hashes::ripemd160::Hash
-impl core::marker::Unpin for bitcoin_hashes::ripemd160::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::ripemd160::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::ripemd160::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::ripemd160::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::ripemd160::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::ripemd160::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::ripemd160::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::ripemd160::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::ripemd160::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::ripemd160::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::ripemd160::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::ripemd160::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::ripemd160::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::ripemd160::Hash::Owned = T
-pub fn bitcoin_hashes::ripemd160::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::ripemd160::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::ripemd160::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::ripemd160::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::ripemd160::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::ripemd160::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::ripemd160::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::ripemd160::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::ripemd160::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::ripemd160::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::ripemd160::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::ripemd160::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::ripemd160::Hash
-pub fn bitcoin_hashes::ripemd160::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::ripemd160::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Sha1(_)
-impl bitcoin_hashes::sha1::Hash
-pub const fn bitcoin_hashes::sha1::Hash::as_byte_array(&self) -> &[u8; 20]
-pub const fn bitcoin_hashes::sha1::Hash::from_byte_array(bytes: [u8; 20]) -> Self
-pub const fn bitcoin_hashes::sha1::Hash::to_byte_array(self) -> [u8; 20]
-impl bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::engine() -> bitcoin_hashes::sha1::HashEngine
-pub fn bitcoin_hashes::sha1::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::sha1::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::from_bytes_mut(bytes: &mut [u8; 20]) -> &mut Self
-pub const fn bitcoin_hashes::sha1::Hash::from_bytes_ref(bytes: &[u8; 20]) -> &Self
-impl bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::from_engine(e: bitcoin_hashes::sha1::HashEngine) -> Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha1::Hash
-pub type bitcoin_hashes::sha1::Hash::Bytes = [u8; 20]
-pub const bitcoin_hashes::sha1::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha1::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha1::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha1::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 20]> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::borrow(&self) -> &[u8; 20]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::clone(&self) -> bitcoin_hashes::sha1::Hash
-impl core::cmp::Eq for bitcoin_hashes::sha1::Hash
-impl core::cmp::Ord for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::cmp(&self, other: &bitcoin_hashes::sha1::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::eq(&self, other: &bitcoin_hashes::sha1::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha1::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8; 20]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::sha1::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha1::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::sha1::Hash
-pub type bitcoin_hashes::sha1::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::sha1::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha1::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::sha1::Hash
-impl core::marker::Send for bitcoin_hashes::sha1::Hash
-impl core::marker::Sync for bitcoin_hashes::sha1::Hash
-impl core::marker::Unpin for bitcoin_hashes::sha1::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha1::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha1::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha1::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha1::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha1::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha1::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha1::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha1::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha1::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha1::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha1::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha1::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::sha1::Hash::Owned = T
-pub fn bitcoin_hashes::sha1::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha1::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha1::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha1::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha1::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha1::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha1::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha1::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha1::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha1::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha1::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha1::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha1::Hash
-pub fn bitcoin_hashes::sha1::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha1::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Sha256(_)
-impl bitcoin_hashes::sha256::Hash
-pub const fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &[u8; 32]
-pub const fn bitcoin_hashes::sha256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
-pub const fn bitcoin_hashes::sha256::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::engine() -> bitcoin_hashes::sha256::HashEngine
-pub fn bitcoin_hashes::sha256::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::sha256::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
-pub const fn bitcoin_hashes::sha256::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::from_engine(e: bitcoin_hashes::sha256::HashEngine) -> Self
-pub fn bitcoin_hashes::sha256::Hash::hash_again(&self) -> bitcoin_hashes::sha256d::Hash
-pub const fn bitcoin_hashes::sha256::Hash::hash_unoptimized(bytes: &[u8]) -> Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha256::Hash
-pub type bitcoin_hashes::sha256::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha256::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha256::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha256::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 32]> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::borrow(&self) -> &[u8; 32]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::clone(&self) -> bitcoin_hashes::sha256::Hash
-impl core::cmp::Eq for bitcoin_hashes::sha256::Hash
-impl core::cmp::Ord for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::cmp(&self, other: &bitcoin_hashes::sha256::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::eq(&self, other: &bitcoin_hashes::sha256::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha256::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8; 32]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::sha256::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha256::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::sha256::Hash
-pub type bitcoin_hashes::sha256::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::sha256::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::sha256::Hash
-impl core::marker::Send for bitcoin_hashes::sha256::Hash
-impl core::marker::Sync for bitcoin_hashes::sha256::Hash
-impl core::marker::Unpin for bitcoin_hashes::sha256::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha256::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha256::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha256::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha256::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha256::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha256::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha256::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha256::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha256::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::sha256::Hash::Owned = T
-pub fn bitcoin_hashes::sha256::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha256::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha256::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha256::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha256::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha256::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha256::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha256::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha256::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha256::Hash
-pub fn bitcoin_hashes::sha256::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha256::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Sha256d(_)
-impl bitcoin_hashes::sha256d::Hash
-pub const fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &[u8; 32]
-pub const fn bitcoin_hashes::sha256d::Hash::from_byte_array(bytes: [u8; 32]) -> Self
-pub const fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::engine() -> bitcoin_hashes::sha256d::HashEngine
-pub fn bitcoin_hashes::sha256d::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::sha256d::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
-pub const fn bitcoin_hashes::sha256d::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::from_engine(e: bitcoin_hashes::sha256d::HashEngine) -> Self
-pub fn bitcoin_hashes::sha256d::Hash::hash_64_many(outputs: &mut [[u8; 32]], inputs: &[[u8; 64]])
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha256d::Hash
-pub type bitcoin_hashes::sha256d::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha256d::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha256d::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 32]> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::borrow(&self) -> &[u8; 32]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::clone(&self) -> bitcoin_hashes::sha256d::Hash
-impl core::cmp::Eq for bitcoin_hashes::sha256d::Hash
-impl core::cmp::Ord for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::cmp(&self, other: &bitcoin_hashes::sha256d::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::eq(&self, other: &bitcoin_hashes::sha256d::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha256d::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8; 32]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::sha256d::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha256d::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::sha256d::Hash
-pub type bitcoin_hashes::sha256d::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::sha256d::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256d::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::sha256d::Hash
-impl core::marker::Send for bitcoin_hashes::sha256d::Hash
-impl core::marker::Sync for bitcoin_hashes::sha256d::Hash
-impl core::marker::Unpin for bitcoin_hashes::sha256d::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha256d::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256d::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256d::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha256d::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha256d::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha256d::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha256d::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha256d::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha256d::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha256d::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha256d::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha256d::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::sha256d::Hash::Owned = T
-pub fn bitcoin_hashes::sha256d::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha256d::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha256d::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha256d::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha256d::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha256d::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha256d::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha256d::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha256d::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha256d::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha256d::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha256d::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha256d::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Sha384(_)
-impl bitcoin_hashes::sha384::Hash
-pub const fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &[u8; 48]
-pub const fn bitcoin_hashes::sha384::Hash::from_byte_array(bytes: [u8; 48]) -> Self
-pub const fn bitcoin_hashes::sha384::Hash::to_byte_array(self) -> [u8; 48]
-impl bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::engine() -> bitcoin_hashes::sha384::HashEngine
-pub fn bitcoin_hashes::sha384::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::sha384::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::from_bytes_mut(bytes: &mut [u8; 48]) -> &mut Self
-pub const fn bitcoin_hashes::sha384::Hash::from_bytes_ref(bytes: &[u8; 48]) -> &Self
-impl bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::from_engine(e: bitcoin_hashes::sha384::HashEngine) -> Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha384::Hash
-pub type bitcoin_hashes::sha384::Hash::Bytes = [u8; 48]
-pub const bitcoin_hashes::sha384::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha384::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha384::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 48]> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::borrow(&self) -> &[u8; 48]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::clone(&self) -> bitcoin_hashes::sha384::Hash
-impl core::cmp::Eq for bitcoin_hashes::sha384::Hash
-impl core::cmp::Ord for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::cmp(&self, other: &bitcoin_hashes::sha384::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::eq(&self, other: &bitcoin_hashes::sha384::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha384::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 48]> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8; 48]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::sha384::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha384::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::sha384::Hash
-pub type bitcoin_hashes::sha384::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::sha384::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha384::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::sha384::Hash
-impl core::marker::Send for bitcoin_hashes::sha384::Hash
-impl core::marker::Sync for bitcoin_hashes::sha384::Hash
-impl core::marker::Unpin for bitcoin_hashes::sha384::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha384::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha384::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha384::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha384::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha384::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha384::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha384::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha384::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha384::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha384::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha384::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha384::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::sha384::Hash::Owned = T
-pub fn bitcoin_hashes::sha384::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha384::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha384::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha384::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha384::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha384::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha384::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha384::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha384::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha384::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha384::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha384::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha384::Hash
-pub fn bitcoin_hashes::sha384::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha384::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Sha3_256(_)
-impl bitcoin_hashes::sha3_256::Hash
-pub const fn bitcoin_hashes::sha3_256::Hash::as_byte_array(&self) -> &[u8; 32]
-pub const fn bitcoin_hashes::sha3_256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
-pub const fn bitcoin_hashes::sha3_256::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::engine() -> bitcoin_hashes::sha3_256::HashEngine
-pub fn bitcoin_hashes::sha3_256::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::sha3_256::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
-pub const fn bitcoin_hashes::sha3_256::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha3_256::Hash
-pub type bitcoin_hashes::sha3_256::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha3_256::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha3_256::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha3_256::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha3_256::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 32]> for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::borrow(&self) -> &[u8; 32]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::clone(&self) -> bitcoin_hashes::sha3_256::Hash
-impl core::cmp::Eq for bitcoin_hashes::sha3_256::Hash
-impl core::cmp::Ord for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::cmp(&self, other: &bitcoin_hashes::sha3_256::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::eq(&self, other: &bitcoin_hashes::sha3_256::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha3_256::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8; 32]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::sha3_256::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha3_256::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::sha3_256::Hash
-pub type bitcoin_hashes::sha3_256::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::sha3_256::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha3_256::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::sha3_256::Hash
-impl core::marker::Send for bitcoin_hashes::sha3_256::Hash
-impl core::marker::Sync for bitcoin_hashes::sha3_256::Hash
-impl core::marker::Unpin for bitcoin_hashes::sha3_256::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha3_256::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha3_256::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha3_256::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha3_256::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha3_256::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha3_256::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha3_256::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha3_256::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha3_256::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha3_256::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha3_256::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha3_256::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::sha3_256::Hash::Owned = T
-pub fn bitcoin_hashes::sha3_256::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha3_256::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha3_256::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha3_256::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha3_256::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha3_256::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha3_256::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha3_256::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha3_256::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha3_256::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha3_256::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha3_256::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha3_256::Hash
-pub fn bitcoin_hashes::sha3_256::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha3_256::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Sha512(_)
-impl bitcoin_hashes::sha512::Hash
-pub const fn bitcoin_hashes::sha512::Hash::as_byte_array(&self) -> &[u8; 64]
-pub const fn bitcoin_hashes::sha512::Hash::from_byte_array(bytes: [u8; 64]) -> Self
-pub const fn bitcoin_hashes::sha512::Hash::to_byte_array(self) -> [u8; 64]
-impl bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::engine() -> bitcoin_hashes::sha512::HashEngine
-pub fn bitcoin_hashes::sha512::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::sha512::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::from_bytes_mut(bytes: &mut [u8; 64]) -> &mut Self
-pub const fn bitcoin_hashes::sha512::Hash::from_bytes_ref(bytes: &[u8; 64]) -> &Self
-impl bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::from_engine(e: bitcoin_hashes::sha512::HashEngine) -> Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha512::Hash
-pub type bitcoin_hashes::sha512::Hash::Bytes = [u8; 64]
-pub const bitcoin_hashes::sha512::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha512::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha512::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha512::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 64]> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::borrow(&self) -> &[u8; 64]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::clone(&self) -> bitcoin_hashes::sha512::Hash
-impl core::cmp::Eq for bitcoin_hashes::sha512::Hash
-impl core::cmp::Ord for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::cmp(&self, other: &bitcoin_hashes::sha512::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::eq(&self, other: &bitcoin_hashes::sha512::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha512::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 64]> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8; 64]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::sha512::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha512::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::sha512::Hash
-pub type bitcoin_hashes::sha512::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::sha512::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha512::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::sha512::Hash
-impl core::marker::Send for bitcoin_hashes::sha512::Hash
-impl core::marker::Sync for bitcoin_hashes::sha512::Hash
-impl core::marker::Unpin for bitcoin_hashes::sha512::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha512::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha512::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha512::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha512::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha512::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha512::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha512::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha512::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha512::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha512::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha512::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha512::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::sha512::Hash::Owned = T
-pub fn bitcoin_hashes::sha512::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha512::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha512::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha512::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha512::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha512::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha512::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha512::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha512::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha512::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha512::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha512::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha512::Hash
-pub fn bitcoin_hashes::sha512::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha512::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Sha512_256(_)
-impl bitcoin_hashes::sha512_256::Hash
-pub const fn bitcoin_hashes::sha512_256::Hash::as_byte_array(&self) -> &[u8; 32]
-pub const fn bitcoin_hashes::sha512_256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
-pub const fn bitcoin_hashes::sha512_256::Hash::to_byte_array(self) -> [u8; 32]
-impl bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::engine() -> bitcoin_hashes::sha512_256::HashEngine
-pub fn bitcoin_hashes::sha512_256::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::sha512_256::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
-impl bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
-pub const fn bitcoin_hashes::sha512_256::Hash::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-impl bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::from_engine(e: bitcoin_hashes::sha512_256::HashEngine) -> Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha512_256::Hash
-pub type bitcoin_hashes::sha512_256::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha512_256::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha512_256::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha512_256::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha512_256::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 32]> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::borrow(&self) -> &[u8; 32]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::clone(&self) -> bitcoin_hashes::sha512_256::Hash
-impl core::cmp::Eq for bitcoin_hashes::sha512_256::Hash
-impl core::cmp::Ord for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::cmp(&self, other: &bitcoin_hashes::sha512_256::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::eq(&self, other: &bitcoin_hashes::sha512_256::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha512_256::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8; 32]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::sha512_256::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::sha512_256::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::sha512_256::Hash
-pub type bitcoin_hashes::sha512_256::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::sha512_256::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'a> arbitrary::Arbitrary<'a> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha512_256::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::sha512_256::Hash
-impl core::marker::Send for bitcoin_hashes::sha512_256::Hash
-impl core::marker::Sync for bitcoin_hashes::sha512_256::Hash
-impl core::marker::Unpin for bitcoin_hashes::sha512_256::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::sha512_256::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha512_256::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha512_256::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::sha512_256::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::sha512_256::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::sha512_256::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::sha512_256::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::sha512_256::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::sha512_256::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::sha512_256::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::sha512_256::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::sha512_256::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::sha512_256::Hash::Owned = T
-pub fn bitcoin_hashes::sha512_256::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::sha512_256::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::sha512_256::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::sha512_256::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::sha512_256::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::sha512_256::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::sha512_256::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha512_256::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::sha512_256::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::sha512_256::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::sha512_256::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::sha512_256::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::sha512_256::Hash
-pub fn bitcoin_hashes::sha512_256::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::sha512_256::Hash where T: for<'de> serde::de::Deserialize<'de>
 #[repr(transparent)] pub struct bitcoin_hashes::Siphash24(_)
-impl bitcoin_hashes::siphash24::Hash
-pub const fn bitcoin_hashes::siphash24::Hash::as_byte_array(&self) -> &[u8; 8]
-pub const fn bitcoin_hashes::siphash24::Hash::from_byte_array(bytes: [u8; 8]) -> Self
-pub const fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> [u8; 8]
-impl bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::engine(k0: u64, k1: u64) -> bitcoin_hashes::siphash24::HashEngine
-pub fn bitcoin_hashes::siphash24::Hash::from_engine(e: bitcoin_hashes::siphash24::HashEngine) -> Self
-pub fn bitcoin_hashes::siphash24::Hash::from_engine_to_u64(e: bitcoin_hashes::siphash24::HashEngine) -> u64
-pub fn bitcoin_hashes::siphash24::Hash::from_u64(hash: u64) -> Self
-pub fn bitcoin_hashes::siphash24::Hash::hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64
-pub fn bitcoin_hashes::siphash24::Hash::hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Self
-pub fn bitcoin_hashes::siphash24::Hash::to_u64(self) -> u64
-impl bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::from_bytes_mut(bytes: &mut [u8; 8]) -> &mut Self
-pub const fn bitcoin_hashes::siphash24::Hash::from_bytes_ref(bytes: &[u8; 8]) -> &Self
-impl bitcoin_hashes::Hash for bitcoin_hashes::siphash24::Hash
-pub type bitcoin_hashes::siphash24::Hash::Bytes = [u8; 8]
-pub const bitcoin_hashes::siphash24::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::siphash24::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::siphash24::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> Self::Bytes
-impl core::borrow::Borrow<[u8; 8]> for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::borrow(&self) -> &[u8; 8]
-impl core::borrow::Borrow<[u8]> for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::borrow(&self) -> &[u8]
-impl core::clone::Clone for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::clone(&self) -> bitcoin_hashes::siphash24::Hash
-impl core::cmp::Eq for bitcoin_hashes::siphash24::Hash
-impl core::cmp::Ord for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::cmp(&self, other: &bitcoin_hashes::siphash24::Hash) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::eq(&self, other: &bitcoin_hashes::siphash24::Hash) -> bool
-impl core::cmp::PartialOrd for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::partial_cmp(&self, other: &bitcoin_hashes::siphash24::Hash) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::AsRef<[u8; 8]> for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8; 8]
-impl core::convert::AsRef<[u8]> for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8]
-impl core::fmt::Debug for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::Copy for bitcoin_hashes::siphash24::Hash
-impl core::marker::StructuralPartialEq for bitcoin_hashes::siphash24::Hash
-impl core::str::traits::FromStr for bitcoin_hashes::siphash24::Hash
-pub type bitcoin_hashes::siphash24::Hash::Err = hex_conservative::error::DecodeFixedLengthBytesError
-pub fn bitcoin_hashes::siphash24::Hash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::siphash24::Hash, <D as serde::de::Deserializer>::Error>
-impl core::marker::Freeze for bitcoin_hashes::siphash24::Hash
-impl core::marker::Send for bitcoin_hashes::siphash24::Hash
-impl core::marker::Sync for bitcoin_hashes::siphash24::Hash
-impl core::marker::Unpin for bitcoin_hashes::siphash24::Hash
-impl core::marker::UnsafeUnpin for bitcoin_hashes::siphash24::Hash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::siphash24::Hash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::siphash24::Hash
-impl<T, U> core::convert::Into<U> for bitcoin_hashes::siphash24::Hash where U: core::convert::From<T>
-pub fn bitcoin_hashes::siphash24::Hash::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_hashes::siphash24::Hash where U: core::convert::Into<T>
-pub type bitcoin_hashes::siphash24::Hash::Error = core::convert::Infallible
-pub fn bitcoin_hashes::siphash24::Hash::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_hashes::siphash24::Hash where U: core::convert::TryFrom<T>
-pub type bitcoin_hashes::siphash24::Hash::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_hashes::siphash24::Hash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_hashes::siphash24::Hash where T: core::clone::Clone
-pub type bitcoin_hashes::siphash24::Hash::Owned = T
-pub fn bitcoin_hashes::siphash24::Hash::clone_into(&self, target: &mut T)
-pub fn bitcoin_hashes::siphash24::Hash::to_owned(&self) -> T
-impl<T> alloc::string::ToString for bitcoin_hashes::siphash24::Hash where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_hashes::siphash24::Hash::to_string(&self) -> alloc::string::String
-impl<T> core::any::Any for bitcoin_hashes::siphash24::Hash where T: 'static + ?core::marker::Sized
-pub fn bitcoin_hashes::siphash24::Hash::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_hashes::siphash24::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::siphash24::Hash::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_hashes::siphash24::Hash where T: ?core::marker::Sized
-pub fn bitcoin_hashes::siphash24::Hash::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_hashes::siphash24::Hash where T: core::clone::Clone
-pub unsafe fn bitcoin_hashes::siphash24::Hash::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_hashes::siphash24::Hash
-pub fn bitcoin_hashes::siphash24::Hash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin_hashes::siphash24::Hash where T: for<'de> serde::de::Deserialize<'de>
 pub trait bitcoin_hashes::Hash: core::marker::Copy + core::clone::Clone + core::cmp::PartialEq + core::cmp::Eq + core::cmp::PartialOrd + core::cmp::Ord + core::hash::Hash + core::convert::AsRef<[u8]>
 pub type bitcoin_hashes::Hash::Bytes: core::marker::Copy + bitcoin_hashes::IsByteArray
 pub const bitcoin_hashes::Hash::DISPLAY_BACKWARD: bool
@@ -3183,83 +1900,6 @@ pub const bitcoin_hashes::Hash::LEN: usize
 pub fn bitcoin_hashes::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::Hash::from_byte_array(bytes: Self::Bytes) -> Self
 pub fn bitcoin_hashes::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::hash160::Hash
-pub type bitcoin_hashes::hash160::Hash::Bytes = [u8; 20]
-pub const bitcoin_hashes::hash160::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::hash160::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::hash160::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::muhash::Hash
-pub type bitcoin_hashes::muhash::Hash::Bytes = [u8; 384]
-pub const bitcoin_hashes::muhash::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::muhash::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::muhash::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::muhash::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::ripemd160::Hash
-pub type bitcoin_hashes::ripemd160::Hash::Bytes = [u8; 20]
-pub const bitcoin_hashes::ripemd160::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::ripemd160::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::ripemd160::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::ripemd160::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha1::Hash
-pub type bitcoin_hashes::sha1::Hash::Bytes = [u8; 20]
-pub const bitcoin_hashes::sha1::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha1::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha1::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha1::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha256::Hash
-pub type bitcoin_hashes::sha256::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha256::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha256::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha256::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha256d::Hash
-pub type bitcoin_hashes::sha256d::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha256d::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha256d::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha384::Hash
-pub type bitcoin_hashes::sha384::Hash::Bytes = [u8; 48]
-pub const bitcoin_hashes::sha384::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha384::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha384::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha3_256::Hash
-pub type bitcoin_hashes::sha3_256::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha3_256::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha3_256::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha3_256::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha3_256::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha512::Hash
-pub type bitcoin_hashes::sha512::Hash::Bytes = [u8; 64]
-pub const bitcoin_hashes::sha512::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha512::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha512::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha512::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::sha512_256::Hash
-pub type bitcoin_hashes::sha512_256::Hash::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha512_256::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha512_256::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha512_256::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha512_256::Hash::to_byte_array(self) -> Self::Bytes
-impl bitcoin_hashes::Hash for bitcoin_hashes::siphash24::Hash
-pub type bitcoin_hashes::siphash24::Hash::Bytes = [u8; 8]
-pub const bitcoin_hashes::siphash24::Hash::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::siphash24::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::siphash24::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> Self::Bytes
-impl<T: bitcoin_hashes::Hash> bitcoin_hashes::Hash for bitcoin_hashes::hmac::Hmac<T>
-pub type bitcoin_hashes::hmac::Hmac<T>::Bytes = <T as bitcoin_hashes::Hash>::Bytes
-pub fn bitcoin_hashes::hmac::Hmac<T>::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::hmac::Hmac<T>::from_byte_array(bytes: <T as bitcoin_hashes::Hash>::Bytes) -> Self
-pub fn bitcoin_hashes::hmac::Hmac<T>::to_byte_array(self) -> Self::Bytes
-impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::Hash for bitcoin_hashes::sha256t::Hash<T>
-pub type bitcoin_hashes::sha256t::Hash<T>::Bytes = [u8; 32]
-pub const bitcoin_hashes::sha256t::Hash<T>::DISPLAY_BACKWARD: bool
-pub fn bitcoin_hashes::sha256t::Hash<T>::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha256t::Hash<T>::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> Self::Bytes
 pub trait bitcoin_hashes::HashEngine: core::clone::Clone
 pub type bitcoin_hashes::HashEngine::Bytes: core::marker::Copy + bitcoin_hashes::IsByteArray
 pub type bitcoin_hashes::HashEngine::Hash: bitcoin_hashes::Hash
@@ -3268,90 +1908,6 @@ pub const bitcoin_hashes::HashEngine::LEN: usize
 pub fn bitcoin_hashes::HashEngine::finalize(self) -> Self::Hash
 pub fn bitcoin_hashes::HashEngine::input(&mut self, data: &[u8])
 pub fn bitcoin_hashes::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::hash160::HashEngine
-pub type bitcoin_hashes::hash160::HashEngine::Bytes = [u8; 20]
-pub type bitcoin_hashes::hash160::HashEngine::Hash = bitcoin_hashes::hash160::Hash
-pub const bitcoin_hashes::hash160::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::hash160::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::hash160::HashEngine::input(&mut self, data: &[u8])
-pub fn bitcoin_hashes::hash160::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::ripemd160::HashEngine
-pub type bitcoin_hashes::ripemd160::HashEngine::Bytes = [u8; 20]
-pub type bitcoin_hashes::ripemd160::HashEngine::Hash = bitcoin_hashes::ripemd160::Hash
-pub const bitcoin_hashes::ripemd160::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::ripemd160::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::ripemd160::HashEngine::input(&mut self, inp: &[u8])
-pub fn bitcoin_hashes::ripemd160::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha1::HashEngine
-pub type bitcoin_hashes::sha1::HashEngine::Bytes = [u8; 20]
-pub type bitcoin_hashes::sha1::HashEngine::Hash = bitcoin_hashes::sha1::Hash
-pub const bitcoin_hashes::sha1::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha1::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha1::HashEngine::input(&mut self, inp: &[u8])
-pub fn bitcoin_hashes::sha1::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha256::HashEngine
-pub type bitcoin_hashes::sha256::HashEngine::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha256::HashEngine::Hash = bitcoin_hashes::sha256::Hash
-pub const bitcoin_hashes::sha256::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha256::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha256::HashEngine::input(&mut self, inp: &[u8])
-pub fn bitcoin_hashes::sha256::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha256d::HashEngine
-pub type bitcoin_hashes::sha256d::HashEngine::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha256d::HashEngine::Hash = bitcoin_hashes::sha256d::Hash
-pub const bitcoin_hashes::sha256d::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha256d::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha256d::HashEngine::input(&mut self, data: &[u8])
-pub fn bitcoin_hashes::sha256d::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha384::HashEngine
-pub type bitcoin_hashes::sha384::HashEngine::Bytes = [u8; 48]
-pub type bitcoin_hashes::sha384::HashEngine::Hash = bitcoin_hashes::sha384::Hash
-pub const bitcoin_hashes::sha384::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha384::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha384::HashEngine::input(&mut self, inp: &[u8])
-pub fn bitcoin_hashes::sha384::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha3_256::HashEngine
-pub type bitcoin_hashes::sha3_256::HashEngine::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha3_256::HashEngine::Hash = bitcoin_hashes::sha3_256::Hash
-pub const bitcoin_hashes::sha3_256::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha3_256::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha3_256::HashEngine::input(&mut self, inp: &[u8])
-pub fn bitcoin_hashes::sha3_256::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512::HashEngine
-pub type bitcoin_hashes::sha512::HashEngine::Bytes = [u8; 64]
-pub type bitcoin_hashes::sha512::HashEngine::Hash = bitcoin_hashes::sha512::Hash
-pub const bitcoin_hashes::sha512::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha512::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha512::HashEngine::input(&mut self, inp: &[u8])
-pub fn bitcoin_hashes::sha512::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512_256::HashEngine
-pub type bitcoin_hashes::sha512_256::HashEngine::Bytes = [u8; 64]
-pub type bitcoin_hashes::sha512_256::HashEngine::Hash = bitcoin_hashes::sha512_256::Hash
-pub const bitcoin_hashes::sha512_256::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha512_256::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha512_256::HashEngine::input(&mut self, inp: &[u8])
-pub fn bitcoin_hashes::sha512_256::HashEngine::n_bytes_hashed(&self) -> u64
-impl bitcoin_hashes::HashEngine for bitcoin_hashes::siphash24::HashEngine
-pub type bitcoin_hashes::siphash24::HashEngine::Bytes = [u8; 8]
-pub type bitcoin_hashes::siphash24::HashEngine::Hash = bitcoin_hashes::siphash24::Hash
-pub const bitcoin_hashes::siphash24::HashEngine::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::siphash24::HashEngine::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::siphash24::HashEngine::input(&mut self, msg: &[u8])
-pub fn bitcoin_hashes::siphash24::HashEngine::n_bytes_hashed(&self) -> u64
-impl<T: bitcoin_hashes::HashEngine> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>
-pub type bitcoin_hashes::hmac::HmacEngine<T>::Bytes = <T as bitcoin_hashes::HashEngine>::Bytes
-pub type bitcoin_hashes::hmac::HmacEngine<T>::Hash = bitcoin_hashes::hmac::Hmac<<T as bitcoin_hashes::HashEngine>::Hash>
-pub const bitcoin_hashes::hmac::HmacEngine<T>::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::input(&mut self, buf: &[u8])
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::n_bytes_hashed(&self) -> u64
-impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::HashEngine for bitcoin_hashes::sha256t::HashEngine<T>
-pub type bitcoin_hashes::sha256t::HashEngine<T>::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha256t::HashEngine<T>::Hash = bitcoin_hashes::sha256t::Hash<T>
-pub const bitcoin_hashes::sha256t::HashEngine<T>::BLOCK_SIZE: usize
-pub fn bitcoin_hashes::sha256t::HashEngine<T>::finalize(self) -> Self::Hash
-pub fn bitcoin_hashes::sha256t::HashEngine<T>::input(&mut self, data: &[u8])
-pub fn bitcoin_hashes::sha256t::HashEngine<T>::n_bytes_hashed(&self) -> u64
 pub trait bitcoin_hashes::IsByteArray: core::convert::AsRef<[u8]> + bitcoin_hashes::sealed::IsByteArray
 pub const bitcoin_hashes::IsByteArray::LEN: usize
 impl<const N: usize> bitcoin_hashes::IsByteArray for [u8; N]
