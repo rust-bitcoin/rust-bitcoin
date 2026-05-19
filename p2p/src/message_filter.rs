@@ -77,54 +77,34 @@ impl encoding::Encode for FilterHeader {
 
 type HashInnerDecoder = ArrayDecoder<32>;
 
-/// Decoder for the [`FilterHash`] type.
-#[derive(Debug, Default, Clone)]
-pub struct FilterHashDecoder(HashInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder for the [`FilterHash`] type.
+    #[derive(Debug, Default, Clone)]
+    pub struct FilterHashDecoder(HashInnerDecoder);
 
-impl encoding::Decoder for FilterHashDecoder {
-    type Output = FilterHash;
-    type Error = FilterHashDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(FilterHashDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let arr = self.0.end().map_err(FilterHashDecoderError)?;
+    fn end(
+        result: Result<[u8; 32], encoding::UnexpectedEofError>
+    ) -> Result<FilterHash, FilterHashDecoderError> {
+        let arr = result.map_err(FilterHashDecoderError)?;
         Ok(FilterHash::from_byte_array(arr))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for FilterHash {
     type Decoder = FilterHashDecoder;
 }
 
-/// Decoder for the [`FilterHeader`] type.
-#[derive(Debug, Default, Clone)]
-pub struct FilterHeaderDecoder(HashInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder for the [`FilterHeader`] type.
+    #[derive(Debug, Default, Clone)]
+    pub struct FilterHeaderDecoder(HashInnerDecoder);
 
-impl encoding::Decoder for FilterHeaderDecoder {
-    type Output = FilterHeader;
-    type Error = FilterHeaderDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(FilterHeaderDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let arr = self.0.end().map_err(FilterHeaderDecoderError)?;
+    fn end(
+        result: Result<[u8; 32], encoding::UnexpectedEofError>
+    ) -> Result<FilterHeader, FilterHeaderDecoderError> {
+        let arr = result.map_err(FilterHeaderDecoderError)?;
         Ok(FilterHeader::from_byte_array(arr))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for FilterHeader {
@@ -176,27 +156,17 @@ impl encoding::Encode for GetCFilters {
 
 type GetCFiltersInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHeightDecoder, BlockHashDecoder>;
 
-/// Decoder type for the [`GetCFilters`] message.
-#[derive(Debug, Default, Clone)]
-pub struct GetCFiltersDecoder(GetCFiltersInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for the [`GetCFilters`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct GetCFiltersDecoder(GetCFiltersInnerDecoder);
 
-impl encoding::Decoder for GetCFiltersDecoder {
-    type Output = GetCFilters;
-    type Error = GetCFiltersDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(GetCFiltersDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (ty, start_height, stop_hash) = self.0.end().map_err(GetCFiltersDecoderError)?;
+    fn end(
+        result: Result<([u8; 1], BlockHeight, BlockHash), <GetCFiltersInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<GetCFilters, GetCFiltersDecoderError> {
+        let (ty, start_height, stop_hash) = result.map_err(GetCFiltersDecoderError)?;
         Ok(GetCFilters { filter_type: u8::from_le_bytes(ty), start_height, stop_hash })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for GetCFilters {
@@ -246,27 +216,17 @@ impl encoding::Encode for CFilter {
 
 type CFilterInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHashDecoder, ByteVecDecoder>;
 
-/// Decoder type for a [`CFilter`] message.
-#[derive(Debug, Default, Clone)]
-pub struct CFilterDecoder(CFilterInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for a [`CFilter`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct CFilterDecoder(CFilterInnerDecoder);
 
-impl encoding::Decoder for CFilterDecoder {
-    type Output = CFilter;
-    type Error = CFilterDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(CFilterDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (ty, block_hash, filter) = self.0.end().map_err(CFilterDecoderError)?;
+    fn end(
+        result: Result<([u8; 1], BlockHash, Vec<u8>), <CFilterInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<CFilter, CFilterDecoderError> {
+        let (ty, block_hash, filter) = result.map_err(CFilterDecoderError)?;
         Ok(CFilter { filter_type: u8::from_le_bytes(ty), block_hash, filter })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for CFilter {
@@ -304,27 +264,17 @@ impl encoding::Encode for GetCFHeaders {
 
 type GetCFHeadersInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHeightDecoder, BlockHashDecoder>;
 
-/// Decoder type for the [`GetCFHeaders`] message.
-#[derive(Debug, Default, Clone)]
-pub struct GetCFHeadersDecoder(GetCFHeadersInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for the [`GetCFHeaders`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct GetCFHeadersDecoder(GetCFHeadersInnerDecoder);
 
-impl encoding::Decoder for GetCFHeadersDecoder {
-    type Output = GetCFHeaders;
-    type Error = GetCFHeadersDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(GetCFHeadersDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (ty, start_height, stop_hash) = self.0.end().map_err(GetCFHeadersDecoderError)?;
+    fn end(
+        result: Result<([u8; 1], BlockHeight, BlockHash), <GetCFHeadersInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<GetCFHeaders, GetCFHeadersDecoderError> {
+        let (ty, start_height, stop_hash) = result.map_err(GetCFHeadersDecoderError)?;
         Ok(GetCFHeaders { filter_type: u8::from_le_bytes(ty), start_height, stop_hash })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for GetCFHeaders {
@@ -376,23 +326,19 @@ impl encoding::Encode for CFHeaders {
 type CFHeadersInnerDecoder =
     Decoder4<ArrayDecoder<1>, BlockHashDecoder, FilterHeaderDecoder, VecDecoder<FilterHash>>;
 
-/// Decoder type for a [`CFHeaders`] message.
-#[derive(Debug, Default, Clone)]
-pub struct CFHeadersDecoder(CFHeadersInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for a [`CFHeaders`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct CFHeadersDecoder(CFHeadersInnerDecoder);
 
-impl encoding::Decoder for CFHeadersDecoder {
-    type Output = CFHeaders;
-    type Error = CFHeadersDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(CFHeadersDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
+    fn end(
+        result: Result<
+            <CFHeadersInnerDecoder as encoding::Decoder>::Output,
+            <CFHeadersInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<CFHeaders, CFHeadersDecoderError> {
         let (ty, stop_hash, previous_filter_header, filter_hashes) =
-            self.0.end().map_err(CFHeadersDecoderError)?;
+            result.map_err(CFHeadersDecoderError)?;
         Ok(CFHeaders {
             filter_type: u8::from_le_bytes(ty),
             stop_hash,
@@ -400,9 +346,6 @@ impl encoding::Decoder for CFHeadersDecoder {
             filter_hashes,
         })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for CFHeaders {
@@ -437,27 +380,17 @@ impl encoding::Encode for GetCFCheckpt {
 
 type GetCFCheckptInnerDecoder = Decoder2<ArrayDecoder<1>, BlockHashDecoder>;
 
-/// Decoder type for a [`GetCFCheckpt`] message.
-#[derive(Debug, Default, Clone)]
-pub struct GetCFCheckptDecoder(GetCFCheckptInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for a [`GetCFCheckpt`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct GetCFCheckptDecoder(GetCFCheckptInnerDecoder);
 
-impl encoding::Decoder for GetCFCheckptDecoder {
-    type Output = GetCFCheckpt;
-    type Error = GetCFCheckptDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(GetCFCheckptDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (ty, stop_hash) = self.0.end().map_err(GetCFCheckptDecoderError)?;
+    fn end(
+        result: Result<([u8; 1], BlockHash), <GetCFCheckptInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<GetCFCheckpt, GetCFCheckptDecoderError> {
+        let (ty, stop_hash) = result.map_err(GetCFCheckptDecoderError)?;
         Ok(GetCFCheckpt { filter_type: u8::from_le_bytes(ty), stop_hash })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for GetCFCheckpt {
@@ -507,27 +440,17 @@ impl encoding::Encode for CFCheckpt {
 
 type CFCheckptInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHashDecoder, VecDecoder<FilterHeader>>;
 
-/// Decoder type for a [`CFCheckpt`] message.
-#[derive(Debug, Default, Clone)]
-pub struct CFCheckptDecoder(CFCheckptInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for a [`CFCheckpt`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct CFCheckptDecoder(CFCheckptInnerDecoder);
 
-impl encoding::Decoder for CFCheckptDecoder {
-    type Output = CFCheckpt;
-    type Error = CFCheckptDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(CFCheckptDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (ty, stop_hash, filter_headers) = self.0.end().map_err(CFCheckptDecoderError)?;
+    fn end(
+        result: Result<([u8; 1], BlockHash, Vec<FilterHeader>), <CFCheckptInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<CFCheckpt, CFCheckptDecoderError> {
+        let (ty, stop_hash, filter_headers) = result.map_err(CFCheckptDecoderError)?;
         Ok(CFCheckpt { filter_type: u8::from_le_bytes(ty), stop_hash, filter_headers })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for CFCheckpt {

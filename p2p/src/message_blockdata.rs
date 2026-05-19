@@ -100,22 +100,15 @@ impl encoding::Encode for Inventory {
 
 type InventoryInnerDecoder = Decoder2<ArrayDecoder<4>, ArrayDecoder<32>>;
 
-/// The decoder for the [`Inventory`] type.
-#[derive(Debug, Default, Clone)]
-pub struct InventoryDecoder(InventoryInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`Inventory`] type.
+    #[derive(Debug, Default, Clone)]
+    pub struct InventoryDecoder(InventoryInnerDecoder);
 
-impl encoding::Decoder for InventoryDecoder {
-    type Output = Inventory;
-    type Error = InventoryDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(InventoryDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (ty, inv) = self.0.end().map_err(InventoryDecoderError)?;
+    fn end(
+        result: Result<([u8; 4], [u8; 32]), <InventoryInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Inventory, InventoryDecoderError> {
+        let (ty, inv) = result.map_err(InventoryDecoderError)?;
         let inv_type = u32::from_le_bytes(ty);
         Ok(match inv_type {
             0 => Self::Output::Error(inv),
@@ -128,9 +121,6 @@ impl encoding::Decoder for InventoryDecoder {
             tp => Self::Output::Unknown { inv_type: tp, hash: inv },
         })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for Inventory {
@@ -210,35 +200,19 @@ impl encoding::Encode for BlockLocator {
 
 type BlockLocatorInnerDecoder = VecDecoder<BlockHash>;
 
-/// The decoder for the [`BlockLocator`] type.
-#[derive(Debug, Clone)]
-pub struct BlockLocatorDecoder(BlockLocatorInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for the [`BlockLocator`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockLocatorDecoder(BlockLocatorInnerDecoder);
 
-impl BlockLocatorDecoder {
     /// Creates a new decoder.
     pub fn new() -> Self { Self(VecDecoder::<BlockHash>::new()) }
-}
 
-impl Default for BlockLocatorDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for BlockLocatorDecoder {
-    type Output = BlockLocator;
-    type Error = BlockLocatorDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(BlockLocatorDecoderError)
+    fn end(
+        result: Result<Vec<BlockHash>, <BlockLocatorInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<BlockLocator, BlockLocatorDecoderError> {
+        result.map(BlockLocator).map_err(BlockLocatorDecoderError)
     }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        Ok(BlockLocator(self.0.end().map_err(BlockLocatorDecoderError)?))
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for BlockLocator {
@@ -317,52 +291,32 @@ impl encoding::Encode for GetBlocksMessage {
 type GetBlocksOrHeadersInnerDecoder =
     Decoder3<ProtocolVersionDecoder, BlockLocatorDecoder, BlockHashDecoder>;
 
-/// Decoder type for [`GetBlocksMessage`].
-#[derive(Debug, Default, Clone)]
-pub struct GetBlocksMessageDecoder(GetBlocksOrHeadersInnerDecoder);
+crate::decoder_newtype! {
+    /// Decoder type for [`GetBlocksMessage`].
+    #[derive(Debug, Default, Clone)]
+    pub struct GetBlocksMessageDecoder(GetBlocksOrHeadersInnerDecoder);
 
-/// Decoder type for [`GetHeadersMessage`].
-#[derive(Debug, Default, Clone)]
-pub struct GetHeadersMessageDecoder(GetBlocksOrHeadersInnerDecoder);
-
-impl encoding::Decoder for GetHeadersMessageDecoder {
-    type Output = GetHeadersMessage;
-    type Error = GetHeadersMessageDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(GetHeadersMessageDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
+    fn end(
+        result: Result<(ProtocolVersion, BlockLocator, BlockHash), <GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<GetBlocksMessage, GetBlocksMessageDecoderError> {
         let (version, locator_hashes, stop_hash) =
-            self.0.end().map_err(GetHeadersMessageDecoderError)?;
-        Ok(GetHeadersMessage { version, locator_hashes, stop_hash })
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-impl encoding::Decoder for GetBlocksMessageDecoder {
-    type Output = GetBlocksMessage;
-    type Error = GetBlocksMessageDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(GetBlocksMessageDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (version, locator_hashes, stop_hash) =
-            self.0.end().map_err(GetBlocksMessageDecoderError)?;
+            result.map_err(GetBlocksMessageDecoderError)?;
         Ok(GetBlocksMessage { version, locator_hashes, stop_hash })
     }
+}
 
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
+crate::decoder_newtype! {
+    /// Decoder type for [`GetHeadersMessage`].
+    #[derive(Debug, Default, Clone)]
+    pub struct GetHeadersMessageDecoder(GetBlocksOrHeadersInnerDecoder);
+
+    fn end(
+        result: Result<(ProtocolVersion, BlockLocator, BlockHash), <GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<GetHeadersMessage, GetHeadersMessageDecoderError> {
+        let (version, locator_hashes, stop_hash) =
+            result.map_err(GetHeadersMessageDecoderError)?;
+        Ok(GetHeadersMessage { version, locator_hashes, stop_hash })
+    }
 }
 
 impl encoding::Decode for GetBlocksMessage {

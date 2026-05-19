@@ -158,28 +158,18 @@ type AddressInnerDecoder = encoding::Decoder3<
     encoding::ArrayDecoder<2>,
 >;
 
-/// The Decoder for [`Address`].
-#[derive(Debug, Default, Clone)]
-pub struct AddressDecoder(AddressInnerDecoder);
+crate::decoder_newtype! {
+    /// The Decoder for [`Address`].
+    #[derive(Debug, Default, Clone)]
+    pub struct AddressDecoder(AddressInnerDecoder);
 
-impl encoding::Decoder for AddressDecoder {
-    type Output = Address;
-    type Error = AddressDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AddressDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (services, raw_address, port) = self.0.end().map_err(AddressDecoderError)?;
+    fn end(
+        result: Result<(ServiceFlags, [u8; 16], [u8; 2]), <AddressInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Address, AddressDecoderError> {
+        let (services, raw_address, port) = result.map_err(AddressDecoderError)?;
         let address = address_from_u8(raw_address);
         Ok(Address { services, address, port: u16::from_be_bytes(port) })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for Address {
@@ -214,28 +204,18 @@ impl encoding::Encode for AddrV1Message {
 
 type AddrV1MessageInnerDecoder = Decoder2<ArrayDecoder<4>, AddressDecoder>;
 
-/// The decoder for an [`AddrV1Message`].
-#[derive(Debug, Default, Clone)]
-pub struct AddrV1MessageDecoder(AddrV1MessageInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for an [`AddrV1Message`].
+    #[derive(Debug, Default, Clone)]
+    pub struct AddrV1MessageDecoder(AddrV1MessageInnerDecoder);
 
-impl encoding::Decoder for AddrV1MessageDecoder {
-    type Output = AddrV1Message;
-    type Error = AddrV1MessageDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AddrV1MessageDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (time, address) = self.0.end().map_err(AddrV1MessageDecoderError)?;
+    fn end(
+        result: Result<([u8; 4], Address), <AddrV1MessageInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<AddrV1Message, AddrV1MessageDecoderError> {
+        let (time, address) = result.map_err(AddrV1MessageDecoderError)?;
         let time = u32::from_le_bytes(time);
         Ok(AddrV1Message { time, address })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for AddrV1Message {
@@ -479,62 +459,19 @@ impl encoding::Encode for AddrV2 {
 
 type AddrV2InnerDecoder = Decoder2<ArrayDecoder<1>, ByteVecDecoder>;
 
-/// The decoder type for an [`AddrV2`] type.
-#[derive(Debug, Default, Clone)]
-pub struct AddrV2Decoder(AddrV2InnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder type for an [`AddrV2`] type.
+    #[derive(Debug, Default, Clone)]
+    pub struct AddrV2Decoder(AddrV2InnerDecoder);
 
-impl AddrV2Decoder {
-    #[inline]
-    const fn be_bytes_to_segments(bytes: [u8; 16]) -> [u16; 8] {
-        [
-            u16::from_be_bytes([bytes[0], bytes[1]]),
-            u16::from_be_bytes([bytes[2], bytes[3]]),
-            u16::from_be_bytes([bytes[4], bytes[5]]),
-            u16::from_be_bytes([bytes[6], bytes[7]]),
-            u16::from_be_bytes([bytes[8], bytes[9]]),
-            u16::from_be_bytes([bytes[10], bytes[11]]),
-            u16::from_be_bytes([bytes[12], bytes[13]]),
-            u16::from_be_bytes([bytes[14], bytes[15]]),
-        ]
+    fn map_push_bytes_err(err: <AddrV2InnerDecoder as encoding::Decoder>::Error) -> AddrV2DecoderError {
+        AddrV2DecoderError::Decoder(err)
     }
 
-    #[inline]
-    const fn ipv6_from_segments(segments: [u16; 8]) -> Ipv6Addr {
-        Ipv6Addr::new(
-            segments[0],
-            segments[1],
-            segments[2],
-            segments[3],
-            segments[4],
-            segments[5],
-            segments[6],
-            segments[7],
-        )
-    }
-
-    #[inline]
-    fn to_fixed_size_slice<const N: usize>(
-        addr_bytes: Vec<u8>,
-    ) -> Result<[u8; N], AddrV2DecoderError> {
-        addr_bytes.try_into().map_err(|e: Vec<u8>| AddrV2DecoderError::InvalidAddressLength {
-            expected: N,
-            got: e.len(),
-        })
-    }
-}
-
-impl encoding::Decoder for AddrV2Decoder {
-    type Output = AddrV2;
-    type Error = AddrV2DecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AddrV2DecoderError::Decoder)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (net_type, addr_bytes) = self.0.end().map_err(AddrV2DecoderError::Decoder)?;
+    fn end(
+        result: Result<([u8; 1], Vec<u8>), <AddrV2InnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<AddrV2, AddrV2DecoderError> {
+        let (net_type, addr_bytes) = result.map_err(AddrV2DecoderError::Decoder)?;
         if addr_bytes.len() > 512 {
             return Err(AddrV2DecoderError::InvalidAddressLength {
                 expected: 512,
@@ -575,9 +512,46 @@ impl encoding::Decoder for AddrV2Decoder {
             any => Ok(AddrV2::Unknown(any, addr_bytes)),
         }
     }
+}
+
+impl AddrV2Decoder {
+    #[inline]
+    const fn be_bytes_to_segments(bytes: [u8; 16]) -> [u16; 8] {
+        [
+            u16::from_be_bytes([bytes[0], bytes[1]]),
+            u16::from_be_bytes([bytes[2], bytes[3]]),
+            u16::from_be_bytes([bytes[4], bytes[5]]),
+            u16::from_be_bytes([bytes[6], bytes[7]]),
+            u16::from_be_bytes([bytes[8], bytes[9]]),
+            u16::from_be_bytes([bytes[10], bytes[11]]),
+            u16::from_be_bytes([bytes[12], bytes[13]]),
+            u16::from_be_bytes([bytes[14], bytes[15]]),
+        ]
+    }
 
     #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
+    const fn ipv6_from_segments(segments: [u16; 8]) -> Ipv6Addr {
+        Ipv6Addr::new(
+            segments[0],
+            segments[1],
+            segments[2],
+            segments[3],
+            segments[4],
+            segments[5],
+            segments[6],
+            segments[7],
+        )
+    }
+
+    #[inline]
+    fn to_fixed_size_slice<const N: usize>(
+        addr_bytes: Vec<u8>,
+    ) -> Result<[u8; N], AddrV2DecoderError> {
+        addr_bytes.try_into().map_err(|e: Vec<u8>| AddrV2DecoderError::InvalidAddressLength {
+            expected: N,
+            got: e.len(),
+        })
+    }
 }
 
 impl encoding::Decode for AddrV2 {
@@ -647,30 +621,23 @@ impl encoding::Encode for AddrV2Message {
 type AddrV2MessageInnerDecoder =
     Decoder4<ArrayDecoder<4>, CompactSizeU64Decoder, AddrV2Decoder, ArrayDecoder<2>>;
 
-/// The decoder for an [`AddrV2Message`].
-#[derive(Debug, Default, Clone)]
-pub struct AddrV2MessageDecoder(AddrV2MessageInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for an [`AddrV2Message`].
+    #[derive(Debug, Default, Clone)]
+    pub struct AddrV2MessageDecoder(AddrV2MessageInnerDecoder);
 
-impl encoding::Decoder for AddrV2MessageDecoder {
-    type Output = AddrV2Message;
-    type Error = AddrV2MessageDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(AddrV2MessageDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (time, services, addr, port) = self.0.end().map_err(AddrV2MessageDecoderError)?;
+    fn end(
+        result: Result<
+            <AddrV2MessageInnerDecoder as encoding::Decoder>::Output,
+            <AddrV2MessageInnerDecoder as encoding::Decoder>::Error,
+        >
+    ) -> Result<AddrV2Message, AddrV2MessageDecoderError> {
+        let (time, services, addr, port) = result.map_err(AddrV2MessageDecoderError)?;
         let services = ServiceFlags(services);
         let time = u32::from_le_bytes(time);
         let port = u16::from_be_bytes(port);
         Ok(AddrV2Message { time, services, addr, port })
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for AddrV2Message {

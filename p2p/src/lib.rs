@@ -127,36 +127,20 @@ impl encoding::Encode for ProtocolVersion {
     }
 }
 
-/// The decoder for the [`ProtocolVersion`] type.
-#[derive(Debug, Clone)]
-pub struct ProtocolVersionDecoder(encoding::ArrayDecoder<4>);
+crate::decoder_newtype! {
+    /// The decoder for the [`ProtocolVersion`] type.
+    #[derive(Debug, Clone)]
+    pub struct ProtocolVersionDecoder(encoding::ArrayDecoder<4>);
 
-impl ProtocolVersionDecoder {
     /// Constructs a new [`ProtocolVersion`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for ProtocolVersionDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for ProtocolVersionDecoder {
-    type Output = ProtocolVersion;
-    type Error = ProtocolVersionDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(ProtocolVersionDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u32::from_le_bytes(self.0.end().map_err(ProtocolVersionDecoderError)?);
+    fn end(
+        result: Result<[u8; 4], encoding::UnexpectedEofError>
+    ) -> Result<ProtocolVersion, ProtocolVersionDecoderError> {
+        let n = u32::from_le_bytes(result.map_err(ProtocolVersionDecoderError)?);
         Ok(ProtocolVersion(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for ProtocolVersion {
@@ -321,36 +305,20 @@ impl encoding::Encode for ServiceFlags {
     }
 }
 
-/// The decoder for the [`ServiceFlags`] type.
-#[derive(Debug, Clone)]
-pub struct ServiceFlagsDecoder(encoding::ArrayDecoder<8>);
+crate::decoder_newtype! {
+    /// The decoder for the [`ServiceFlags`] type.
+    #[derive(Debug, Clone)]
+    pub struct ServiceFlagsDecoder(encoding::ArrayDecoder<8>);
 
-impl ServiceFlagsDecoder {
     /// Constructs a new [`ServiceFlags`] decoder.
     pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
-}
 
-impl Default for ServiceFlagsDecoder {
-    fn default() -> Self { Self::new() }
-}
-
-impl encoding::Decoder for ServiceFlagsDecoder {
-    type Output = ServiceFlags;
-    type Error = ServiceFlagsDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(ServiceFlagsDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let n = u64::from_le_bytes(self.0.end().map_err(ServiceFlagsDecoderError)?);
+    fn end(
+        result: Result<[u8; 8], encoding::UnexpectedEofError>
+    ) -> Result<ServiceFlags, ServiceFlagsDecoderError> {
+        let n = u64::from_le_bytes(result.map_err(ServiceFlagsDecoderError)?);
         Ok(ServiceFlags(n))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for ServiceFlags {
@@ -462,27 +430,17 @@ impl encoding::Encode for Magic {
 
 type MagicInnerDecoder = ArrayDecoder<4>;
 
-/// The decoder type for a network [`Magic`].
-#[derive(Debug, Default, Clone)]
-pub struct MagicDecoder(MagicInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder type for a network [`Magic`].
+    #[derive(Debug, Default, Clone)]
+    pub struct MagicDecoder(MagicInnerDecoder);
 
-impl encoding::Decoder for MagicDecoder {
-    type Output = Magic;
-    type Error = MagicDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
-        self.0.push_bytes(bytes).map_err(MagicDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let bytes = self.0.end().map_err(MagicDecoderError)?;
+    fn end(
+        result: Result<[u8; 4], <MagicInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Magic, MagicDecoderError> {
+        let bytes = result.map_err(MagicDecoderError)?;
         Ok(Magic::from_bytes(bytes))
     }
-
-    #[inline]
-    fn read_limit(&self) -> usize { self.0.read_limit() }
 }
 
 impl encoding::Decode for Magic {
@@ -535,6 +493,9 @@ impl<'a> Arbitrary<'a> for ServiceFlags {
 impl<'a> Arbitrary<'a> for Magic {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
 }
+
+// decoder_newtype! macro
+include!("../include/decoder_newtype.rs");
 
 #[cfg(test)]
 mod tests {
