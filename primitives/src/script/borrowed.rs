@@ -203,15 +203,6 @@ impl<T> Encode for Script<T> {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a, T> Arbitrary<'a> for &'a Script<T> {
-    #[inline]
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let v = <&'a [u8]>::arbitrary(u)?;
-        Ok(Script::from_bytes(v))
-    }
-}
-
 macro_rules! delegate_index {
     ($($type:ty),* $(,)?) => {
         $(
@@ -237,3 +228,12 @@ delegate_index!(
     RangeToInclusive<usize>,
     (Bound<usize>, Bound<usize>)
 );
+
+#[cfg(feature = "arbitrary")]
+impl<'a, T> Arbitrary<'a> for &'a Script<T> {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = <&'a [u8]>::arbitrary(u)?;
+        Ok(Script::from_bytes(v))
+    }
+}

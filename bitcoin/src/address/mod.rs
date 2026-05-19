@@ -46,6 +46,8 @@ use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
@@ -1022,6 +1024,49 @@ fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
     sha_engine.input(&[0, 20]);
     sha_engine.input(pubkey_hash.as_ref());
     hash160::Hash::from_engine(sha_engine)
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddressInner {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=2)? {
+            0 => Ok(Self::P2pkh { hash: u.arbitrary()?, network: u.arbitrary()? }),
+            1 => Ok(Self::P2sh { hash: u.arbitrary()?, network: u.arbitrary()? }),
+            _ => Ok(Self::Segwit { program: u.arbitrary()?, hrp: u.arbitrary()? })
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for KnownHrp {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=2)? {
+            0 => Ok(Self::Mainnet),
+            1 => Ok(Self::Regtest),
+            _ => Ok(Self::Testnets),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a, V: NetworkValidation> Arbitrary<'a> for Address<V> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(PhantomData, u.arbitrary()?))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AddressType {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=5)? {
+            0 => Ok(Self::P2pkh),
+            1 => Ok(Self::P2sh),
+            2 => Ok(Self::P2wpkh),
+            3 => Ok(Self::P2wsh),
+            4 => Ok(Self::P2tr),
+            _ => Ok(Self::P2a),
+        }
+    }
 }
 
 #[cfg(test)]

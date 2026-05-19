@@ -307,20 +307,6 @@ pub mod error {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for TapLeafHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::from_byte_array(u.arbitrary()?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for TapNodeHash {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::from_byte_array(u.arbitrary()?))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FutureLeafVersion {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         match u8::arbitrary(u)? {
