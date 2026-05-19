@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   zizmor:
     name: zizmor via PyPI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

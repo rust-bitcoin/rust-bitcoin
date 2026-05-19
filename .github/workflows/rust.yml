@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   Test:
     name: Test - ${{ matrix.toolchain }} toolchain, ${{ matrix.dep }} deps
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
@@ -32,7 +32,7 @@ jobs:
         run: cargo rbmt test --toolchain ${{ matrix.toolchain }} --lock-file ${{ matrix.dep }}
 
   Check:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
@@ -48,7 +48,7 @@ jobs:
         run: cargo rbmt ${{ matrix.task }}
 
   Prerelease:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
@@ -62,7 +62,7 @@ jobs:
 
   # Non cargo-rbmt jobs manage their toolchain version directly.
   Prepare:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     outputs:
@@ -78,7 +78,7 @@ jobs:
 
   Arch32bit:
     name: Test 32-bit version
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
@@ -107,7 +107,7 @@ jobs:
   Cross:
     name: Cross test - stable toolchain
     if: ${{ !github.event.act }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
@@ -133,7 +133,7 @@ jobs:
   Embedded:
     name: Embedded - nightly toolchain
     needs: Prepare
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     env:
@@ -165,7 +165,7 @@ jobs:
   ASAN:                         # hashes crate only.
     name: ASAN - nightly toolchain
     needs: Prepare
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
@@ -190,7 +190,7 @@ jobs:
 
   Kani:
     name: Kani codegen - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
@@ -205,7 +205,7 @@ jobs:
 
   Policy:
     name: Enforce repo policy - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
@@ -222,7 +222,7 @@ jobs:
 
   Re-exports:
     name: Check re-exports - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
@@ -243,7 +243,7 @@ jobs:
 
   Encodable-coverage:
     name: Check Encode fuzz coverage - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
@@ -258,7 +258,7 @@ jobs:
 
   DiffMutants:
     name: Check cargo mutants in diff - stable toolchain
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
