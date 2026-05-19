@@ -161,7 +161,7 @@ impl encoding::ExactSizeEncoder for CommandStringEncoder {
 /// Decoder for [`CommandString`].
 #[derive(Debug, Default, Clone)]
 pub struct CommandStringDecoder {
-    inner: encoding::ArrayDecoder<12>,
+    inner: ArrayDecoder<12>,
 }
 
 impl encoding::Decoder for CommandStringDecoder {
@@ -263,10 +263,10 @@ encoding::encoder_newtype_exact! {
 }
 
 type V1MessageHeaderInnerDecoder = encoding::Decoder4<
-    encoding::ArrayDecoder<4>,
+    ArrayDecoder<4>,
     CommandStringDecoder,
-    encoding::ArrayDecoder<4>,
-    encoding::ArrayDecoder<4>,
+    ArrayDecoder<4>,
+    ArrayDecoder<4>,
 >;
 
 /// The Decoder for `V1MessageHeader`
@@ -504,11 +504,11 @@ impl encoding::Encode for FeeFilter {
 
 /// Decoder for [`FeeFilter`] type.
 #[derive(Debug, Clone)]
-pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
+pub struct FeeFilterDecoder(ArrayDecoder<8>);
 
 impl FeeFilterDecoder {
     /// Constructs a new [`FeeFilter`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub fn new() -> Self { Self(ArrayDecoder::new()) }
 }
 
 impl Default for FeeFilterDecoder {
@@ -592,7 +592,7 @@ impl encoding::Encode for Ping {
 
 /// The Decoder for [`Ping`]
 #[derive(Debug, Default, Clone)]
-pub struct PingDecoder(encoding::ArrayDecoder<8>);
+pub struct PingDecoder(ArrayDecoder<8>);
 
 impl encoding::Decoder for PingDecoder {
     type Output = Ping;
@@ -648,7 +648,7 @@ impl encoding::Encode for Pong {
 
 /// The Decoder for [`Pong`]
 #[derive(Debug, Default, Clone)]
-pub struct PongDecoder(encoding::ArrayDecoder<8>);
+pub struct PongDecoder(ArrayDecoder<8>);
 
 impl encoding::Decoder for PongDecoder {
     type Output = Pong;
@@ -1752,7 +1752,7 @@ impl encoding::Decode for HeadersMessage {
 enum V2NetworkMessageDecoderState {
     // Decoding the short-id byte, with the command string and payload decoder
     // waiting.
-    ShortId(encoding::ArrayDecoder<1>),
+    ShortId(ArrayDecoder<1>),
     // Decoding the command string with the short-id byte stored, and payload
     // decoder waiting.
     CommandString(CommandStringDecoder),
@@ -1763,7 +1763,7 @@ enum V2NetworkMessageDecoderState {
 }
 
 impl Default for V2NetworkMessageDecoderState {
-    fn default() -> Self { Self::ShortId(<encoding::ArrayDecoder<1>>::default()) }
+    fn default() -> Self { Self::ShortId(<ArrayDecoder<1>>::default()) }
 }
 
 /// Decoder for [`V2NetworkMessage`].
@@ -1866,7 +1866,7 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                             if id == 0 {
                                 // Non-optimized: need to read 12-byte command string next.
                                 self.state = V2NetworkMessageDecoderState::CommandString(
-                                    CommandStringDecoder { inner: encoding::ArrayDecoder::new() },
+                                    CommandStringDecoder { inner: ArrayDecoder::new() },
                                 );
                             } else {
                                 // Optimized short ID (1-28): skip command, go straight to payload.
@@ -1958,6 +1958,7 @@ fn sha2_checksum(data: &impl encoding::Encode) -> (u64, [u8; 4]) {
 
 /// Error types for network messages.
 pub mod error {
+    use encoding::ArrayDecoder;
     use alloc::borrow::Cow;
     use core::convert::Infallible;
     use core::fmt;
@@ -2111,7 +2112,7 @@ pub mod error {
     ///
     /// [`Ping`]: super::Ping
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct PingDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
+    pub struct PingDecoderError(pub(super) <ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PingDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
@@ -2132,7 +2133,7 @@ pub mod error {
     ///
     /// [`Pong`]: super::Pong
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct PongDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
+    pub struct PongDecoderError(pub(super) <ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PongDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
