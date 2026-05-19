@@ -26,7 +26,6 @@ pub extern crate secp256k1;
 pub mod ecdsa;
 pub mod key;
 pub mod sighash;
-#[cfg(feature = "alloc")]
 pub mod taproot;
 
 #[doc(inline)]
