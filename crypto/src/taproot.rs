@@ -4,6 +4,7 @@
 //!
 //! This module provides Taproot signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::fmt;
@@ -13,6 +14,7 @@ use core::str::FromStr;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::array::ArrayExt;
+#[cfg(feature = "alloc")]
 use internals::impl_to_hex_from_lower_hex;
 
 pub use self::into_iter::IntoIter;
@@ -84,6 +86,7 @@ impl Signature {
     /// Serializes the signature.
     ///
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
+    #[cfg(feature = "alloc")]
     pub fn to_vec(self) -> Vec<u8> {
         let mut ser_sig = self.signature.as_ref().to_vec();
         // If default sighash type, don't add extra sighash byte
@@ -116,8 +119,20 @@ impl FromStr for Signature {
     type Err = ParseSignatureError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes = hex::decode_to_vec(s).map_err(ParseSignatureError::Hex)?;
-        Self::from_slice(&bytes).map_err(ParseSignatureError::Decode)
+        match hex::decode_to_array::<64>(s) {
+            Ok(bytes) => Self::from_slice(&bytes).map_err(ParseSignatureError::Decode),
+            Err(hex::DecodeFixedLengthBytesError::InvalidChar(error)) =>
+                Err(ParseSignatureError::InvalidChar(error)),
+            Err(hex::DecodeFixedLengthBytesError::InvalidLength(_)) => {
+                match hex::decode_to_array::<65>(s) {
+                    Ok(bytes) => Self::from_slice(&bytes).map_err(ParseSignatureError::Decode),
+                    Err(hex::DecodeFixedLengthBytesError::InvalidChar(error)) =>
+                        Err(ParseSignatureError::InvalidChar(error)),
+                    Err(hex::DecodeFixedLengthBytesError::InvalidLength(_)) =>
+                        Err(ParseSignatureError::InvalidLength(s.len())),
+                }
+            }
+        }
     }
 }
 
@@ -202,6 +217,7 @@ impl fmt::LowerHex for SerializedSignature {
         self.fmt_internal(f, hex::Case::Lower)
     }
 }
+#[cfg(feature = "alloc")]
 impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
     * 2);
 
@@ -457,8 +473,10 @@ pub mod error {
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum ParseSignatureError {
-        /// Hex string decoding error.
-        Hex(hex::DecodeVariableLengthBytesError),
+        /// Hex string invalid length error.
+        InvalidLength(usize),
+        /// Hex string invalid character error.
+        InvalidChar(hex::error::InvalidCharError),
         /// Signature byte slice decoding error.
         Decode(SigFromSliceError),
     }
@@ -470,7 +488,10 @@ pub mod error {
     impl fmt::Display for ParseSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+                Self::InvalidLength(len) =>
+                    write!(f, "signature must be 128 or 130 ASCII characters long but it had {} bytes", len),
+                Self::InvalidChar(ref e) =>
+                    write_err!(f, "invalid character in signature"; e),
                 Self::Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
             }
         }
@@ -480,7 +501,8 @@ pub mod error {
     impl std::error::Error for ParseSignatureError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::Hex(ref e) => Some(e),
+                Self::InvalidLength(_) => None,
+                Self::InvalidChar(ref e) => Some(e),
                 Self::Decode(ref e) => Some(e),
             }
         }
@@ -501,6 +523,7 @@ impl<'a> Arbitrary<'a> for Signature {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
     use alloc::string::ToString;
 
     use super::*;
@@ -536,6 +559,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "alloc")]
     const SIG_STRINGS: &[&str] = &[
         // default sighash type
         "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab",
@@ -547,6 +571,7 @@ mod tests {
     ];
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn signature_hex_roundtrip() {
         for &want in SIG_STRINGS {
             let sig = want.parse::<Signature>().unwrap();
@@ -566,6 +591,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn serialized_signature_hex() {
         for &want in SIG_STRINGS {
             let sig = want.parse::<Signature>().unwrap();
