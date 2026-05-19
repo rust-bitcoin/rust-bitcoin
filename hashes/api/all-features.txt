@@ -1850,7 +1850,7 @@ pub struct bitcoin_hashes::sha512_256::HashEngine(_)
 impl bitcoin_hashes::sha512_256::HashEngine
 pub const fn bitcoin_hashes::sha512_256::HashEngine::new() -> Self
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512_256::HashEngine
-pub type bitcoin_hashes::sha512_256::HashEngine::Bytes = [u8; 64]
+pub type bitcoin_hashes::sha512_256::HashEngine::Bytes = [u8; 32]
 pub type bitcoin_hashes::sha512_256::HashEngine::Hash = bitcoin_hashes::sha512_256::Hash
 pub const bitcoin_hashes::sha512_256::HashEngine::BLOCK_SIZE: usize
 pub fn bitcoin_hashes::sha512_256::HashEngine::finalize(self) -> Self::Hash
@@ -3326,7 +3326,7 @@ pub fn bitcoin_hashes::sha512::HashEngine::finalize(self) -> Self::Hash
 pub fn bitcoin_hashes::sha512::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::sha512::HashEngine::n_bytes_hashed(&self) -> u64
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512_256::HashEngine
-pub type bitcoin_hashes::sha512_256::HashEngine::Bytes = [u8; 64]
+pub type bitcoin_hashes::sha512_256::HashEngine::Bytes = [u8; 32]
 pub type bitcoin_hashes::sha512_256::HashEngine::Hash = bitcoin_hashes::sha512_256::Hash
 pub const bitcoin_hashes::sha512_256::HashEngine::BLOCK_SIZE: usize
 pub fn bitcoin_hashes::sha512_256::HashEngine::finalize(self) -> Self::Hash
