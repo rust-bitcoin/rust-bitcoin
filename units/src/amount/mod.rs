@@ -187,6 +187,8 @@ impl FromStr for Denomination {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(Denomination);
+
 /// Returns `Some(position)` if the precision is not supported.
 ///
 /// The position indicates the first digit that is too precise.

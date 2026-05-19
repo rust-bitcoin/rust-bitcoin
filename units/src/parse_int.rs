@@ -71,6 +71,24 @@ pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseI
 #[cfg(feature = "alloc")]
 pub fn int_from_box<T: Integer>(s: alloc::boxed::Box<str>) -> Result<T, ParseIntError> { int(s) }
 
+/// Parses the input string as an integer returning an error carrying rich context.
+///
+/// # Errors
+///
+/// On error the input string is copied into the error return.
+#[inline]
+#[cfg(feature = "alloc")]
+pub fn int_from_rc<T: Integer>(s: alloc::rc::Rc<str>) -> Result<T, ParseIntError> { int(s) }
+
+/// Parses the input string as an integer returning an error carrying rich context.
+///
+/// # Errors
+///
+/// On error the input string is copied into the error return.
+#[inline]
+#[cfg(feature = "alloc")]
+pub fn int_from_arc<T: Integer>(s: alloc::sync::Arc<str>) -> Result<T, ParseIntError> { int(s) }
+
 // This must be private because we do not want `InputString` to appear in the public API.
 fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
@@ -100,6 +118,8 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 ///
 /// * `TryFrom<Box<str>>`
 /// * `TryFrom<String>`
+/// * `TryFrom<Rc<str>>`
+/// * `TryFrom<Arc<str>>`
 ///
 /// # Parameters
 ///
@@ -153,6 +173,30 @@ macro_rules! impl_parse_str_from_int_infallible {
                 $crate::parse_int::int_from_box::<$inner>(s).map($to::$fn)
             }
         }
+
+        #[cfg(feature = "alloc")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::rc::Rc<str>> for $to {
+            type Error = $crate::parse_int::ParseIntError;
+
+            #[inline]
+            fn try_from(
+                s: alloc::rc::Rc<str>,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse_int::int_from_rc::<$inner>(s).map($to::$fn)
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::sync::Arc<str>> for $to {
+            type Error = $crate::parse_int::ParseIntError;
+
+            #[inline]
+            fn try_from(
+                s: alloc::sync::Arc<str>,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse_int::int_from_arc::<$inner>(s).map($to::$fn)
+            }
+        }
     };
 }
 pub(crate) use impl_parse_str_from_int_infallible;
@@ -168,6 +212,8 @@ pub(crate) use impl_parse_str_from_int_infallible;
 ///
 /// * `TryFrom<Box<str>>`
 /// * `TryFrom<String>`
+/// * `TryFrom<Rc<str>>`
+/// * `TryFrom<Arc<str>>`
 ///
 /// # Parameters
 ///
@@ -182,7 +228,12 @@ macro_rules! impl_parse_str {
     ($to:ty, $err:ty, $inner_fn:expr) => {
         $crate::parse_int::impl_tryfrom_str!(&str, $to, $err, $inner_fn);
         #[cfg(feature = "alloc")]
-        $crate::parse_int::impl_tryfrom_str!(alloc::string::String, $to, $err, $inner_fn; alloc::boxed::Box<str>, $to, $err, $inner_fn);
+        $crate::parse_int::impl_tryfrom_str!(
+            alloc::string::String, $to, $err, $inner_fn;
+            alloc::boxed::Box<str>, $to, $err, $inner_fn;
+            alloc::rc::Rc<str>, $to, $err, $inner_fn;
+            alloc::sync::Arc<str>, $to, $err, $inner_fn
+        );
 
         impl $crate::_export::_core::str::FromStr for $to {
             type Err = $err;

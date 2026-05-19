@@ -57,6 +57,9 @@ impl str::FromStr for HashType {
     }
 }
 
+#[cfg(feature = "hex")]
+internals::impl_try_from_string_for_from_str!(HashType);
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HashType {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {

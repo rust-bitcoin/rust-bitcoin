@@ -1089,6 +1089,9 @@ pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amoun
 impl core::cmp::Eq for bitcoin_units::amount::Denomination
 impl core::cmp::PartialEq for bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
+impl core::convert::TryFrom<&str> for bitcoin_units::amount::Denomination
+pub type bitcoin_units::amount::Denomination::Error = bitcoin_units::amount::error::ParseDenominationError
+pub fn bitcoin_units::amount::Denomination::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_units::amount::Denomination
@@ -1213,6 +1216,9 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::from(a: bitcoin_units::Amount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::ParseError
+pub fn bitcoin_units::Amount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
@@ -1864,6 +1870,9 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::from(a: bitcoin_units::SignedAmount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = bitcoin_units::amount::error::ParseError
+pub fn bitcoin_units::SignedAmount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
@@ -7493,6 +7502,9 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::from(a: bitcoin_units::Amount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::ParseError
+pub fn bitcoin_units::Amount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
@@ -8676,6 +8688,9 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::from(a: bitcoin_units::SignedAmount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = bitcoin_units::amount::error::ParseError
+pub fn bitcoin_units::SignedAmount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>

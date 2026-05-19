@@ -23,6 +23,8 @@ macro_rules! hash_trait_impls {
         $crate::impl_hex_string_traits!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
         #[cfg(not(feature = "hex"))]
         $crate::impl_debug_only!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
+        #[cfg(all(feature = "hex", feature = "alloc"))]
+        $crate::internal_macros::impl_hex_alloc_tryfrom!(Hash $(, $gen: $gent)*);
 
         #[cfg(feature = "serde")]
         $crate::serde_impl!(Hash, { $bits / 8} $(, $gen: $gent)*);
@@ -177,6 +179,51 @@ macro_rules! hash_type_no_default {
     };
 }
 pub(crate) use hash_type_no_default;
+
+/// Implements `TryFrom<alloc::string::String>`, `TryFrom<alloc::boxed::Box<str>>`,
+/// `TryFrom<alloc::rc::Rc<str>>`, and `TryFrom<alloc::sync::Arc<str>>` for hash types that
+/// implement `str::FromStr`.
+///
+#[cfg(feature = "hex")]
+#[cfg(feature = "alloc")]
+macro_rules! impl_hex_alloc_tryfrom {
+    ($ty:ident $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> core::convert::TryFrom<alloc::string::String> for $ty<$($gen),*> {
+            type Error = $crate::hex::DecodeFixedLengthBytesError;
+            #[inline]
+            fn try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error> {
+                core::str::FromStr::from_str(&s)
+            }
+        }
+
+        impl<$($gen: $gent),*> core::convert::TryFrom<alloc::boxed::Box<str>> for $ty<$($gen),*> {
+            type Error = $crate::hex::DecodeFixedLengthBytesError;
+            #[inline]
+            fn try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error> {
+                core::str::FromStr::from_str(&s)
+            }
+        }
+
+        impl<$($gen: $gent),*> core::convert::TryFrom<alloc::rc::Rc<str>> for $ty<$($gen),*> {
+            type Error = $crate::hex::DecodeFixedLengthBytesError;
+            #[inline]
+            fn try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error> {
+                core::str::FromStr::from_str(&s)
+            }
+        }
+
+        impl<$($gen: $gent),*> core::convert::TryFrom<alloc::sync::Arc<str>> for $ty<$($gen),*> {
+            type Error = $crate::hex::DecodeFixedLengthBytesError;
+            #[inline]
+            fn try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error> {
+                core::str::FromStr::from_str(&s)
+            }
+        }
+    }
+}
+#[cfg(feature = "hex")]
+#[cfg(feature = "alloc")]
+pub(crate) use impl_hex_alloc_tryfrom;
 
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {

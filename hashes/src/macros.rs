@@ -272,6 +272,14 @@ macro_rules! impl_hex_string_traits {
             }
         }
 
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::TryFrom<&str> for $ty<$($gen),*> {
+            type Error = $crate::hex::DecodeFixedLengthBytesError;
+            #[inline]
+            fn try_from(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::_export::_core::str::FromStr::from_str(s)
+            }
+        }
+
         /// Helper to prevent duplicating code for Upper/LowerHex.
         macro_rules! impl_case_hex {
             ($case:expr) => {

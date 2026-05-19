@@ -140,8 +140,12 @@ impl core::convert::From<alloc::borrow::Cow<'_, str>> for bitcoin_internals::err
 pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::borrow::Cow<'_, str>) -> Self
 impl core::convert::From<alloc::boxed::Box<str>> for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::boxed::Box<str>) -> Self
+impl core::convert::From<alloc::rc::Rc<str>> for bitcoin_internals::error::input_string::InputString
+pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::rc::Rc<str>) -> Self
 impl core::convert::From<alloc::string::String> for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::string::String) -> Self
+impl core::convert::From<alloc::sync::Arc<str>> for bitcoin_internals::error::input_string::InputString
+pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::sync::Arc<str>) -> Self
 impl core::fmt::Debug for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_internals::error::input_string::InputString
@@ -195,8 +199,12 @@ impl core::convert::From<alloc::borrow::Cow<'_, str>> for bitcoin_internals::err
 pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::borrow::Cow<'_, str>) -> Self
 impl core::convert::From<alloc::boxed::Box<str>> for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::boxed::Box<str>) -> Self
+impl core::convert::From<alloc::rc::Rc<str>> for bitcoin_internals::error::input_string::InputString
+pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::rc::Rc<str>) -> Self
 impl core::convert::From<alloc::string::String> for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::string::String) -> Self
+impl core::convert::From<alloc::sync::Arc<str>> for bitcoin_internals::error::input_string::InputString
+pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::sync::Arc<str>) -> Self
 impl core::fmt::Debug for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin_internals::error::input_string::InputString

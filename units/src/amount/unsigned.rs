@@ -604,6 +604,8 @@ impl FromStr for Amount {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(Amount);
+
 impl TryFrom<SignedAmount> for Amount {
     type Error = OutOfRangeError;
 

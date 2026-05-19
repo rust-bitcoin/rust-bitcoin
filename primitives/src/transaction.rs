@@ -398,6 +398,9 @@ impl core::str::FromStr for Transaction {
     }
 }
 
+#[cfg(all(feature = "alloc", feature = "hex"))]
+internals::impl_try_from_string_for_from_str!(Transaction);
+
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 impl fmt::Display for Transaction {
@@ -976,6 +979,9 @@ impl fmt::Display for OutPoint {
         write!(f, "{}:{}", self.txid, self.vout)
     }
 }
+
+#[cfg(all(feature = "alloc", feature = "hex"))]
+internals::impl_try_from_string_for_from_str!(OutPoint);
 
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]

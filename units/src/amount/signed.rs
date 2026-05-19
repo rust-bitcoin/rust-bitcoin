@@ -594,6 +594,8 @@ impl FromStr for SignedAmount {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(SignedAmount);
+
 impl From<Amount> for SignedAmount {
     #[inline]
     fn from(value: Amount) -> Self {

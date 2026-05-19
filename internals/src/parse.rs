@@ -26,8 +26,10 @@ macro_rules! impl_try_from_stringly {
 /// * `String`
 /// * `Box<str>`
 /// * `Cow<'_, str>`
+/// * `Rc<str>`
+/// * `Arc<str>`
 ///
-/// The last three are only available with `alloc` feature turned on.
+/// The last five are only available with `alloc` feature turned on.
 #[macro_export]
 macro_rules! impl_parse {
     ($type:ty, $descr:expr, $func:expr, $vis:vis $error:ident, $error_source:ty $(, $error_derive:path)*) => {
@@ -49,6 +51,10 @@ macro_rules! impl_parse {
         impl_try_from_stringly!(alloc::borrow::Cow<'_, str>, $type, $error, $func);
         #[cfg(feature = "alloc")]
         impl_try_from_stringly!(alloc::boxed::Box<str>, $type, $error, $func);
+        #[cfg(feature = "alloc")]
+        impl_try_from_stringly!(alloc::rc::Rc<str>, $type, $error, $func);
+        #[cfg(feature = "alloc")]
+        impl_try_from_stringly!(alloc::sync::Arc<str>, $type, $error, $func);
     }
 }
 

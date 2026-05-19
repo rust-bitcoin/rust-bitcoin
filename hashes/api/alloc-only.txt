@@ -260,6 +260,21 @@ impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoi
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<&str> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -1896,6 +1911,21 @@ impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoi
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<&str> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>

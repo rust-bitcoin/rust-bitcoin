@@ -121,6 +121,8 @@ impl FromStr for Signature {
     }
 }
 
+internals::impl_try_from_string_for_from_str!(Signature);
+
 /// A serialized Taproot Signature
 ///
 /// Serialized Taproot signatures have the issue that they can have different lengths.
