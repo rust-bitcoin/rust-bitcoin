@@ -55,7 +55,7 @@ pub trait Encode {
 /// ```no-compile
 /// loop {
 ///     process_current_chunk(encoder.current_chunk());
-///     if !encoder.advance() {
+///     if encoder.advance().is_finished() {
 ///         break
 ///     }
 /// }
@@ -66,8 +66,13 @@ pub trait Encode {
 ///
 /// It is crucial that the callers use the methods in that order: obtain the slice via
 /// `current_chunk`, write it somewhere and, once fully written, try to advance the encoder.
-/// Attempting to call any method after [`advance`](Self::advance) returned `false` or calling
-/// `advance` before fully processing the chunks will lead to unspecified buggy behavior.
+/// Attempting to call any method after [`advance`](Self::advance) returned
+/// `EncoderStatus::Finished` or calling `advance` before fully processing the chunks will lead to
+/// unspecified buggy behavior.
+///
+/// The callers MUST NOT assume that the encoder returns any particular size of the chunks. The
+/// implementors are allowed to change the sizes of the chunks as long as the concatenation of all
+/// the bytes returned stays the same.
 pub trait Encoder {
     /// Yields the current encoded byteslice.
     ///
@@ -83,16 +88,44 @@ pub trait Encoder {
     ///
     /// # Returns
     ///
-    /// - `true` if the encoder has advanced to a new state and [`Self::current_chunk`] will return new data.
-    /// - `false` if the encoder is exhausted and has no more states.
+    /// - `EncoderStatus::HasMore` if the encoder has advanced to a new state and [`Self::current_chunk`] will return new data.
+    /// - `EncoderStatus::Finished` if the encoder is exhausted and has no more states.
     ///
     /// # Important
     ///
-    /// After `false` was returned the encoder is in unspecified state. Calling any of its methods
-    /// in such state is a bug (but not UB) unless the specific encoder documents otherwise. While
-    /// usually the encoder simply stays in the last possible state this MUST NOT be relied upon by
-    /// the callers.
-    fn advance(&mut self) -> bool;
+    /// After `EncoderStatus::Finished` was returned the encoder is in unspecified state. Calling
+    /// any of its methods in such state is a bug (but not UB) unless the specific encoder documents
+    /// otherwise. While usually the encoder simply stays in the last possible state this MUST NOT
+    /// be relied upon by the callers.
+    fn advance(&mut self) -> EncoderStatus;
+}
+
+/// Indicates whether the encoder still has bytes available or it is finished.
+///
+/// This is returned from the [`Encoder::advance`] method to indicate whether encoding should stop
+/// or continue.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[must_use = "encoding has to stop when Finished is returned"]
+pub enum EncoderStatus {
+    /// The encoder has more bytes available (not yet finished).
+    ///
+    /// The [`current_chunk`](Encoder::current_chunk) method should be called to obtain them and
+    /// write them out after which [`advance`](Encoder::advance) should be called again to obtain
+    /// the next chunk (if any).
+    HasMore,
+
+    /// The encoding has ended, no more bytes are available.
+    ///
+    /// No encoder methods (other than drop) may be called after this variant is returned.
+    Finished,
+}
+
+impl EncoderStatus {
+    /// Returns `true` if `self` is `HasMore`, `false` otherwise.
+    pub fn has_more(&self) -> bool { matches!(self, Self::HasMore) }
+
+    /// Returns `true` if `self` is `Finished`, `false` otherwise.
+    pub fn has_finished(&self) -> bool { matches!(self, Self::Finished) }
 }
 
 /// Implements a newtype around an encoder.
@@ -133,7 +166,7 @@ macro_rules! encoder_newtype {
             fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
             #[inline]
-            fn advance(&mut self) -> bool { self.0.advance() }
+            fn advance(&mut self) -> $crate::EncoderStatus { self.0.advance() }
         }
     }
 }
@@ -201,7 +234,7 @@ impl<T: Encoder> EncoderByteIter<T> {
             &self.enc.current_chunk()[self.position..]
         } else {
             loop {
-                if !self.enc.advance() {
+                if self.enc.advance().has_finished() {
                     return &[];
                 }
                 if !self.enc.current_chunk().is_empty() {
@@ -223,7 +256,7 @@ impl<T: Encoder> Iterator for EncoderByteIter<T> {
                 // overflow.
                 self.position += 1;
                 return Some(*b);
-            } else if !self.enc.advance() {
+            } else if self.enc.advance().has_finished() {
                 return None;
             }
             self.position = 0;
@@ -242,7 +275,7 @@ impl<T: Encoder> Iterator for EncoderByteIter<T> {
             return Some(*b);
         }
         n -= self.enc.current_chunk().len() - self.position;
-        if !self.enc.advance() {
+        if self.enc.advance().has_finished() {
             return None;
         }
         loop {
@@ -251,7 +284,7 @@ impl<T: Encoder> Iterator for EncoderByteIter<T> {
                 return Some(*b);
             }
             n -= self.enc.current_chunk().len();
-            if !self.enc.advance() {
+            if self.enc.advance().has_finished() {
                 return None;
             }
         }
@@ -269,12 +302,14 @@ where
 pub trait ExactSizeEncoder: Encoder {
     /// The number of bytes remaining that the encoder will yield.
     ///
-    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned `false`.
+    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned
+    /// `EncoderStatus::Finished`.
     fn len(&self) -> usize;
 
     /// Returns whether the encoder would yield an empty response.
     ///
-    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned `false`.
+    /// **Important**: returns an unspecified value if [`Encoder::advance`] has returned
+    /// `EncoderStatus::Finished`.
     fn is_empty(&self) -> bool { self.len() == 0 }
 }
 
@@ -297,7 +332,7 @@ where
     let mut vec = Vec::new();
     loop {
         vec.extend_from_slice(encoder.current_chunk());
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }
@@ -340,11 +375,77 @@ where
 {
     loop {
         writer.write_all(encoder.current_chunk())?;
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }
     Ok(())
+}
+
+/// Checks that the given `value` encodes to `expected`, panicking if it doesn't.
+///
+/// Note that the function does not impose any requirements on chunking - whether the encoded bytes
+/// are returned as a few large chunks or they are many smaller chunks makes no difference (other
+/// than potentially performance difference), as long as the bytes yielded are what is expected, in
+/// the correct order.
+///
+/// This is intended for tests only.
+///
+/// # Panics
+///
+/// If the bytes yielded from the encoder of `value` don't match the bytes in `expected`.
+#[track_caller]
+pub fn check_encode<T: Encode + ?Sized>(value: &T, expected: &[u8]) {
+    check_encoder(&mut value.encoder(), expected);
+}
+
+/// Checks that the given `encoder` yields `expected`, panicking if it doesn't.
+///
+/// Note that the function does not impose any requirements on chunking - whether the encoded bytes
+/// are returned as a few large chunks or they are many smaller chunks makes no difference (other
+/// than potentially performance difference), as long as the bytes yielded are what is expected, in
+/// the correct order.
+///
+/// This is intended for tests only.
+///
+/// # Panics
+///
+/// If the bytes yielded from the encoder don't match the bytes in `expected`.
+#[track_caller]
+pub fn check_encoder<T: Encoder + ?Sized>(encoder: &mut T, mut expected: &[u8]) {
+    let orig_expected_len = expected.len();
+    let mut chunk_number = 0usize;
+    let mut bytes_processed = 0usize;
+
+    loop {
+        let chunk = encoder.current_chunk();
+        assert!(
+            chunk.len() <= expected.len(),
+            "encoder yielded more bytes ({}) than expected ({})",
+            bytes_processed + chunk.len(),
+            orig_expected_len
+        );
+        if let Some((i, _)) =
+            chunk.iter().zip(&expected[..chunk.len()]).enumerate().find(|&(_, (a, b))| a != b)
+        {
+            panic!(
+                "encoder did not yield expected bytes - difference in chunk #{}, after {} bytes",
+                chunk_number,
+                bytes_processed + i
+            );
+        }
+        bytes_processed += chunk.len();
+        expected = &expected[chunk.len()..];
+        chunk_number += 1;
+        if encoder.advance().has_finished() {
+            break;
+        }
+    }
+    assert!(
+        expected.is_empty(),
+        "encoder did not yield enough bytes - {} more expected",
+        expected.len()
+    );
 }
 
 impl<T: Encoder> Encoder for Option<T> {
@@ -355,5 +456,10 @@ impl<T: Encoder> Encoder for Option<T> {
         }
     }
 
-    fn advance(&mut self) -> bool { self.as_mut().is_some_and(Encoder::advance) }
+    fn advance(&mut self) -> EncoderStatus {
+        match self {
+            Some(encoder) => encoder.advance(),
+            None => EncoderStatus::Finished,
+        }
+    }
 }

@@ -75,7 +75,7 @@ impl encoding::Decoder for FilterLoadDecoder {
     type Error = FilterLoadDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(FilterLoadDecoderError)
     }
 
@@ -146,7 +146,7 @@ impl encoding::Decoder for BloomFlagsDecoder {
     type Error = BloomFlagsDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(Self::err_from_inner)
     }
 
@@ -205,7 +205,7 @@ impl encoding::Decoder for FilterAddDecoder {
     type Error = FilterAddDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(FilterAddDecoderError)
     }
 

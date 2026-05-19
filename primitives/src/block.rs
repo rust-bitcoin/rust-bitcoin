@@ -1012,7 +1012,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     use encoding::Decode as _;
-    use encoding::{Decoder as _, Encode as _, Encoder as _};
+    use encoding::{check_encode, Decoder as _};
     #[cfg(feature = "hex")]
     use hex::hex;
     #[cfg(feature = "alloc")]
@@ -1245,8 +1245,8 @@ mod tests {
 
         let mut decoder = Block::decoder();
         assert!(decoder.read_limit() > 0);
-        let needs_more = decoder.push_bytes(&mut view).unwrap();
-        assert!(!needs_more);
+        let status = decoder.push_bytes(&mut view).unwrap();
+        assert!(status.is_ready());
         assert_eq!(decoder.read_limit(), 0);
         assert_eq!(decoder.end().unwrap(), block);
     }
@@ -1274,8 +1274,8 @@ mod tests {
 
         let mut decoder = Header::decoder();
         assert!(decoder.read_limit() > 0);
-        let needs_more = decoder.push_bytes(&mut view).unwrap();
-        assert!(!needs_more);
+        let status = decoder.push_bytes(&mut view).unwrap();
+        assert!(status.is_ready());
         assert_eq!(decoder.read_limit(), 0);
         assert_eq!(decoder.end().unwrap(), header);
     }
@@ -1825,10 +1825,8 @@ mod tests {
     #[test]
     fn version_encoder_emits_consensus_bytes() {
         let version = Version::from_consensus(123_456_789);
-        let mut encoder = version.encoder();
 
-        assert_eq!(encoder.current_chunk(), &version.to_consensus().to_le_bytes());
-        assert!(!encoder.advance());
+        check_encode(&version, &version.to_consensus().to_le_bytes());
     }
 
     #[test]
@@ -1839,8 +1837,8 @@ mod tests {
 
         assert!(decoder.read_limit() > 0);
 
-        let needs_more = decoder.push_bytes(&mut bytes).unwrap();
-        assert!(!needs_more);
+        let status = decoder.push_bytes(&mut bytes).unwrap();
+        assert!(status.is_ready());
         assert!(bytes.is_empty());
 
         assert_eq!(decoder.read_limit(), 0);
@@ -1897,7 +1895,7 @@ mod tests {
         let mut view = bytes.as_slice();
 
         let mut decoder = Block::decoder();
-        assert!(decoder.push_bytes(&mut view).unwrap());
+        assert!(decoder.push_bytes(&mut view).unwrap().needs_more());
         assert!(view.is_empty());
 
         let err_second = decoder.end().unwrap_err();

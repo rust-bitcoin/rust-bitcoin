@@ -481,7 +481,7 @@ where
 {
     loop {
         writer.write_all(encoder.current_chunk())?;
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }
@@ -523,11 +523,11 @@ where
         }
 
         let original_len = buffer.len();
-        let need_more = decoder.push_bytes(&mut buffer).map_err(ReadError::Decode)?;
+        let status = decoder.push_bytes(&mut buffer).map_err(ReadError::Decode)?;
         let consumed = original_len - buffer.len();
         reader.consume(consumed);
 
-        if !need_more {
+        if status.is_ready() {
             return decoder.end().map_err(ReadError::Decode);
         }
     }
@@ -597,9 +597,10 @@ where
                 return decoder.end().map_err(ReadError::Decode);
             }
             Ok(bytes_read) => {
-                if !decoder
+                if decoder
                     .push_bytes(&mut &clamped_buffer[..bytes_read])
                     .map_err(ReadError::Decode)?
+                    .is_ready()
                 {
                     return decoder.end().map_err(ReadError::Decode);
                 }
@@ -817,7 +818,7 @@ mod tests {
         type Output = TestArray;
         type Error = UnexpectedEofError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error> {
+        fn push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<encoding::DecoderStatus, Self::Error> {
             self.inner.push_bytes(bytes)
         }
 

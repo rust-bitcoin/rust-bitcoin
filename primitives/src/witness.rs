@@ -12,7 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(doc)]
 use encoding::Decoder4;
 use encoding::{
-    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, Encoder2,
+    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, DecoderStatus, EncoderStatus, Encoder2,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
@@ -299,7 +299,7 @@ impl encoding::Encoder for WitnessEncoder<'_> {
     fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
 
     #[inline]
-    fn advance(&mut self) -> bool { self.0.advance() }
+    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
 }
 
 /// The decoder for the [`Witness`] type.
@@ -370,7 +370,7 @@ impl encoding::Decoder for WitnessDecoder {
     type Output = Witness;
     type Error = WitnessDecoderError;
 
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         use WitnessDecoderError as E;
         use WitnessDecoderErrorInner as Inner;
 
@@ -380,8 +380,9 @@ impl encoding::Decoder for WitnessDecoder {
                 .witness_count_decoder
                 .push_bytes(bytes)
                 .map_err(|e| E(Inner::LengthPrefixDecode(e)))?
+                .needs_more()
             {
-                return Ok(true);
+                return Ok(DecoderStatus::NeedsMore);
             }
             // Take ownership of the decoder in order to consume it.
             let decoder = core::mem::take(&mut self.witness_count_decoder);
@@ -390,7 +391,7 @@ impl encoding::Decoder for WitnessDecoder {
 
             // Short circuit for zero witness elements.
             if witness_elements == 0 {
-                return Ok(false);
+                return Ok(DecoderStatus::Ready);
             }
 
             // Allocate space for the index and buffer. The buffer
@@ -413,11 +414,11 @@ impl encoding::Decoder for WitnessDecoder {
         loop {
             // Check if we're done processing all elements.
             if self.element_idx >= witness_elements {
-                return Ok(false);
+                return Ok(DecoderStatus::Ready);
             }
 
             if bytes.is_empty() {
-                return Ok(true);
+                return Ok(DecoderStatus::NeedsMore);
             }
 
             // If we have some bytes to read, then reading element data.
@@ -447,8 +448,9 @@ impl encoding::Decoder for WitnessDecoder {
                     .element_length_decoder
                     .push_bytes(bytes)
                     .map_err(|e| E(Inner::LengthPrefixDecode(e)))?
+                    .needs_more()
                 {
-                    return Ok(true);
+                    return Ok(DecoderStatus::NeedsMore);
                 }
 
                 // Take ownership of the decoder so we can consume it.
@@ -1006,9 +1008,7 @@ mod test {
 
     #[cfg(feature = "alloc")]
     use encoding::Decode as _;
-    #[cfg(feature = "alloc")]
-    use encoding::Encode as _;
-    use encoding::Encoder as _;
+    use encoding::check_encode;
 
     use super::*;
 
@@ -1369,15 +1369,7 @@ mod test {
         // Use FromIterator directly
         let witness = Witness::from_iter(data);
 
-        // Should have length prefix chunk, then the content slice, then exhausted.
-        let mut encoder = witness.encoder();
-
-        assert_eq!(encoder.current_chunk(), &[2u8][..]);
-        assert!(encoder.advance());
-
-        // We don't encode one element at a time, rather we encode the whole content slice at once.
-        assert_eq!(encoder.current_chunk(), &[3u8, 1, 2, 3, 2, 4, 5][..]);
-        assert!(!encoder.advance());
+        check_encode(&witness, &[2u8, 3u8, 1, 2, 3, 2, 4, 5]);
     }
 
     #[test]
@@ -1495,7 +1487,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
 
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
         let witness = decoder.end().unwrap();
 
         assert_eq!(witness.len(), 0);
@@ -1510,7 +1502,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
 
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
         let witness = decoder.end().unwrap();
 
         assert_eq!(witness.len(), 1);
@@ -1525,7 +1517,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
 
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
         let witness = decoder.end().unwrap();
 
         assert_eq!(witness.len(), 1);
@@ -1540,7 +1532,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
 
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
         let witness = decoder.end().unwrap();
 
         assert_eq!(witness.len(), 3);
@@ -1557,7 +1549,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
 
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
@@ -1571,7 +1563,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
 
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
@@ -1585,7 +1577,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
 
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(matches!(err, WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(_))));
@@ -1641,7 +1633,7 @@ mod test {
     fn decoder_unexpected_eof_error() {
         let mut decoder = WitnessDecoder::new();
         let mut slice = [0x01].as_slice(); // witness element count = 1.
-        assert!(decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
         let inner = match decoder.end().unwrap_err() {
             WitnessDecoderError(WitnessDecoderErrorInner::UnexpectedEof(inner)) => inner,
@@ -1684,7 +1676,7 @@ mod test {
 
         let mut slice = encoded.as_slice();
         let mut decoder = WitnessDecoder::new();
-        assert!(!decoder.push_bytes(&mut slice).unwrap());
+        assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
 
         let witness = decoder.end().unwrap();
         assert_eq!(witness.len(), 2);
@@ -1808,7 +1800,7 @@ mod test {
         let mut slice = encoded.as_slice();
         let mut dec = WitnessDecoder::new();
 
-        assert!(dec.push_bytes(&mut slice).unwrap());
+        assert!(dec.push_bytes(&mut slice).unwrap().needs_more());
 
         let allocated = dec.content.len();
 

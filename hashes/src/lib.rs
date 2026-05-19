@@ -212,7 +212,7 @@ where
 {
     loop {
         engine.input(encoder.current_chunk());
-        if !encoder.advance() {
+        if encoder.advance().has_finished() {
             break;
         }
     }
