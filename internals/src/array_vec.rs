@@ -12,6 +12,8 @@ pub use safety_boundary::ArrayVec;
 mod safety_boundary {
     use core::mem::MaybeUninit;
 
+    use crate::array_vec::error::Error;
+
     /// A growable contiguous collection backed by array.
     #[derive(Copy)]
     pub struct ArrayVec<T: Copy, const CAP: usize> {
@@ -68,6 +70,20 @@ mod safety_boundary {
             assert!(self.len < CAP);
             self.data[self.len] = MaybeUninit::new(element);
             self.len += 1;
+        }
+
+        /// Adds an element into `self`.
+        ///
+        /// # Errors
+        ///
+        /// Returns `CAPSizeExceeded` if the `ArrayVec` is full.
+        pub fn try_push(&mut self, element: T) -> Result<(), Error> {
+            if self.len >= CAP {
+                return Err(Error::CapacityExceeded(CAP));
+            }
+            self.data[self.len] = MaybeUninit::new(element);
+            self.len += 1;
+            Ok(())
         }
 
         /// Removes the last element, returning it.
@@ -178,6 +194,35 @@ impl<T: Copy + core::hash::Hash, const CAP: usize> core::hash::Hash for ArrayVec
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state); }
 }
 
+/// Error types for `ArrayVec`.
+pub mod error {
+    use core::fmt;
+
+    /// Errors encountered when inserting or removing elements from an `ArrayVec`.
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub enum Error {
+        /// Attempting to push additional element beyond the `ArrayVec`'s capacity.
+        CapacityExceeded(usize),
+    }
+
+    impl fmt::Display for Error {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::CapacityExceeded(cap) => write!(f, "Capacity exceeded: {}", cap),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for Error {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::CapacityExceeded(_) => None,
+            }
+        }
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<T: Copy + crate::serde::Serialize, const CAP: usize> crate::serde::Serialize
     for ArrayVec<T, CAP>
@@ -229,11 +274,7 @@ where
 
                 let mut out = ArrayVec::<T, CAP>::new();
                 while let Some(elem) = seq.next_element::<T>()? {
-                    // The `push()` call below panics if array is full but we want to error.
-                    if out.len() >= CAP {
-                        return Err(Error::invalid_length(out.len() + 1, &self));
-                    }
-                    out.push(elem);
+                    out.try_push(elem).map_err(|_| Error::invalid_length(out.len() + 1, &self))?;
                 }
                 Ok(out)
             }
