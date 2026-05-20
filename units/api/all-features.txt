@@ -617,8 +617,6 @@ pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Output = bitcoin_un
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::read_limit(&self) -> usize
-impl core::clone::Clone for bitcoin_units::locktime::absolute::LockTimeDecoder
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone(&self) -> bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::default::Default for bitcoin_units::locktime::absolute::LockTimeDecoder
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::default() -> Self
 impl core::fmt::Debug for bitcoin_units::locktime::absolute::LockTimeDecoder
@@ -638,18 +636,12 @@ pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::try_from(value: U) ->
 impl<T, U> core::convert::TryInto<U> for bitcoin_units::locktime::absolute::LockTimeDecoder where U: core::convert::TryFrom<T>
 pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_units::locktime::absolute::LockTimeDecoder where T: core::clone::Clone
-pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Owned = T
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone_into(&self, target: &mut T)
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::to_owned(&self) -> T
 impl<T> core::any::Any for bitcoin_units::locktime::absolute::LockTimeDecoder where T: 'static + ?core::marker::Sized
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for bitcoin_units::locktime::absolute::LockTimeDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_units::locktime::absolute::LockTimeDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::LockTimeDecoder where T: core::clone::Clone
-pub unsafe fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::LockTimeDecoder
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::from(t: T) -> T
 pub struct bitcoin_units::absolute::LockTimeDecoderError(_)
@@ -1958,8 +1950,6 @@ pub type bitcoin_units::amount::AmountDecoder::Output = bitcoin_units::Amount
 pub fn bitcoin_units::amount::AmountDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::amount::AmountDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::amount::AmountDecoder::read_limit(&self) -> usize
-impl core::clone::Clone for bitcoin_units::amount::AmountDecoder
-pub fn bitcoin_units::amount::AmountDecoder::clone(&self) -> bitcoin_units::amount::AmountDecoder
 impl core::default::Default for bitcoin_units::amount::AmountDecoder
 pub fn bitcoin_units::amount::AmountDecoder::default() -> Self
 impl core::fmt::Debug for bitcoin_units::amount::AmountDecoder
@@ -1979,18 +1969,12 @@ pub fn bitcoin_units::amount::AmountDecoder::try_from(value: U) -> core::result:
 impl<T, U> core::convert::TryInto<U> for bitcoin_units::amount::AmountDecoder where U: core::convert::TryFrom<T>
 pub type bitcoin_units::amount::AmountDecoder::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn bitcoin_units::amount::AmountDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_units::amount::AmountDecoder where T: core::clone::Clone
-pub type bitcoin_units::amount::AmountDecoder::Owned = T
-pub fn bitcoin_units::amount::AmountDecoder::clone_into(&self, target: &mut T)
-pub fn bitcoin_units::amount::AmountDecoder::to_owned(&self) -> T
 impl<T> core::any::Any for bitcoin_units::amount::AmountDecoder where T: 'static + ?core::marker::Sized
 pub fn bitcoin_units::amount::AmountDecoder::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for bitcoin_units::amount::AmountDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::amount::AmountDecoder::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_units::amount::AmountDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::amount::AmountDecoder::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_units::amount::AmountDecoder where T: core::clone::Clone
-pub unsafe fn bitcoin_units::amount::AmountDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::amount::AmountDecoder
 pub fn bitcoin_units::amount::AmountDecoder::from(t: T) -> T
 pub struct bitcoin_units::amount::AmountDecoderError(_)
@@ -3110,8 +3094,6 @@ pub type bitcoin_units::block::BlockHeightDecoder::Output = bitcoin_units::block
 pub fn bitcoin_units::block::BlockHeightDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::block::BlockHeightDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::block::BlockHeightDecoder::read_limit(&self) -> usize
-impl core::clone::Clone for bitcoin_units::block::BlockHeightDecoder
-pub fn bitcoin_units::block::BlockHeightDecoder::clone(&self) -> bitcoin_units::block::BlockHeightDecoder
 impl core::default::Default for bitcoin_units::block::BlockHeightDecoder
 pub fn bitcoin_units::block::BlockHeightDecoder::default() -> Self
 impl core::fmt::Debug for bitcoin_units::block::BlockHeightDecoder
@@ -3131,18 +3113,12 @@ pub fn bitcoin_units::block::BlockHeightDecoder::try_from(value: U) -> core::res
 impl<T, U> core::convert::TryInto<U> for bitcoin_units::block::BlockHeightDecoder where U: core::convert::TryFrom<T>
 pub type bitcoin_units::block::BlockHeightDecoder::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn bitcoin_units::block::BlockHeightDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_units::block::BlockHeightDecoder where T: core::clone::Clone
-pub type bitcoin_units::block::BlockHeightDecoder::Owned = T
-pub fn bitcoin_units::block::BlockHeightDecoder::clone_into(&self, target: &mut T)
-pub fn bitcoin_units::block::BlockHeightDecoder::to_owned(&self) -> T
 impl<T> core::any::Any for bitcoin_units::block::BlockHeightDecoder where T: 'static + ?core::marker::Sized
 pub fn bitcoin_units::block::BlockHeightDecoder::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for bitcoin_units::block::BlockHeightDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::block::BlockHeightDecoder::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_units::block::BlockHeightDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::block::BlockHeightDecoder::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_units::block::BlockHeightDecoder where T: core::clone::Clone
-pub unsafe fn bitcoin_units::block::BlockHeightDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::block::BlockHeightDecoder
 pub fn bitcoin_units::block::BlockHeightDecoder::from(t: T) -> T
 pub struct bitcoin_units::block::BlockHeightDecoderError(_)
@@ -4608,8 +4584,6 @@ pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Output = bitcoin_un
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::read_limit(&self) -> usize
-impl core::clone::Clone for bitcoin_units::locktime::absolute::LockTimeDecoder
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone(&self) -> bitcoin_units::locktime::absolute::LockTimeDecoder
 impl core::default::Default for bitcoin_units::locktime::absolute::LockTimeDecoder
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::default() -> Self
 impl core::fmt::Debug for bitcoin_units::locktime::absolute::LockTimeDecoder
@@ -4629,18 +4603,12 @@ pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::try_from(value: U) ->
 impl<T, U> core::convert::TryInto<U> for bitcoin_units::locktime::absolute::LockTimeDecoder where U: core::convert::TryFrom<T>
 pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_units::locktime::absolute::LockTimeDecoder where T: core::clone::Clone
-pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Owned = T
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone_into(&self, target: &mut T)
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::to_owned(&self) -> T
 impl<T> core::any::Any for bitcoin_units::locktime::absolute::LockTimeDecoder where T: 'static + ?core::marker::Sized
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for bitcoin_units::locktime::absolute::LockTimeDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_units::locktime::absolute::LockTimeDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_units::locktime::absolute::LockTimeDecoder where T: core::clone::Clone
-pub unsafe fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::LockTimeDecoder
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::from(t: T) -> T
 pub struct bitcoin_units::locktime::absolute::LockTimeDecoderError(_)
@@ -6576,8 +6544,6 @@ pub type bitcoin_units::pow::CompactTargetDecoder::Output = bitcoin_units::pow::
 pub fn bitcoin_units::pow::CompactTargetDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::pow::CompactTargetDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::pow::CompactTargetDecoder::read_limit(&self) -> usize
-impl core::clone::Clone for bitcoin_units::pow::CompactTargetDecoder
-pub fn bitcoin_units::pow::CompactTargetDecoder::clone(&self) -> bitcoin_units::pow::CompactTargetDecoder
 impl core::default::Default for bitcoin_units::pow::CompactTargetDecoder
 pub fn bitcoin_units::pow::CompactTargetDecoder::default() -> Self
 impl core::fmt::Debug for bitcoin_units::pow::CompactTargetDecoder
@@ -6597,18 +6563,12 @@ pub fn bitcoin_units::pow::CompactTargetDecoder::try_from(value: U) -> core::res
 impl<T, U> core::convert::TryInto<U> for bitcoin_units::pow::CompactTargetDecoder where U: core::convert::TryFrom<T>
 pub type bitcoin_units::pow::CompactTargetDecoder::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn bitcoin_units::pow::CompactTargetDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_units::pow::CompactTargetDecoder where T: core::clone::Clone
-pub type bitcoin_units::pow::CompactTargetDecoder::Owned = T
-pub fn bitcoin_units::pow::CompactTargetDecoder::clone_into(&self, target: &mut T)
-pub fn bitcoin_units::pow::CompactTargetDecoder::to_owned(&self) -> T
 impl<T> core::any::Any for bitcoin_units::pow::CompactTargetDecoder where T: 'static + ?core::marker::Sized
 pub fn bitcoin_units::pow::CompactTargetDecoder::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for bitcoin_units::pow::CompactTargetDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::pow::CompactTargetDecoder::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_units::pow::CompactTargetDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::pow::CompactTargetDecoder::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_units::pow::CompactTargetDecoder where T: core::clone::Clone
-pub unsafe fn bitcoin_units::pow::CompactTargetDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::pow::CompactTargetDecoder
 pub fn bitcoin_units::pow::CompactTargetDecoder::from(t: T) -> T
 pub struct bitcoin_units::pow::CompactTargetDecoderError(_)
@@ -8843,8 +8803,6 @@ pub type bitcoin_units::sequence::SequenceDecoder::Output = bitcoin_units::seque
 pub fn bitcoin_units::sequence::SequenceDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::sequence::SequenceDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::sequence::SequenceDecoder::read_limit(&self) -> usize
-impl core::clone::Clone for bitcoin_units::sequence::SequenceDecoder
-pub fn bitcoin_units::sequence::SequenceDecoder::clone(&self) -> bitcoin_units::sequence::SequenceDecoder
 impl core::default::Default for bitcoin_units::sequence::SequenceDecoder
 pub fn bitcoin_units::sequence::SequenceDecoder::default() -> Self
 impl core::fmt::Debug for bitcoin_units::sequence::SequenceDecoder
@@ -8864,18 +8822,12 @@ pub fn bitcoin_units::sequence::SequenceDecoder::try_from(value: U) -> core::res
 impl<T, U> core::convert::TryInto<U> for bitcoin_units::sequence::SequenceDecoder where U: core::convert::TryFrom<T>
 pub type bitcoin_units::sequence::SequenceDecoder::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn bitcoin_units::sequence::SequenceDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_units::sequence::SequenceDecoder where T: core::clone::Clone
-pub type bitcoin_units::sequence::SequenceDecoder::Owned = T
-pub fn bitcoin_units::sequence::SequenceDecoder::clone_into(&self, target: &mut T)
-pub fn bitcoin_units::sequence::SequenceDecoder::to_owned(&self) -> T
 impl<T> core::any::Any for bitcoin_units::sequence::SequenceDecoder where T: 'static + ?core::marker::Sized
 pub fn bitcoin_units::sequence::SequenceDecoder::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for bitcoin_units::sequence::SequenceDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::sequence::SequenceDecoder::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_units::sequence::SequenceDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::sequence::SequenceDecoder::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_units::sequence::SequenceDecoder where T: core::clone::Clone
-pub unsafe fn bitcoin_units::sequence::SequenceDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::sequence::SequenceDecoder
 pub fn bitcoin_units::sequence::SequenceDecoder::from(t: T) -> T
 pub struct bitcoin_units::sequence::SequenceDecoderError(_)
@@ -9111,8 +9063,6 @@ pub type bitcoin_units::time::BlockTimeDecoder::Output = bitcoin_units::BlockTim
 pub fn bitcoin_units::time::BlockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
 pub fn bitcoin_units::time::BlockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::time::BlockTimeDecoder::read_limit(&self) -> usize
-impl core::clone::Clone for bitcoin_units::time::BlockTimeDecoder
-pub fn bitcoin_units::time::BlockTimeDecoder::clone(&self) -> bitcoin_units::time::BlockTimeDecoder
 impl core::default::Default for bitcoin_units::time::BlockTimeDecoder
 pub fn bitcoin_units::time::BlockTimeDecoder::default() -> Self
 impl core::fmt::Debug for bitcoin_units::time::BlockTimeDecoder
@@ -9132,18 +9082,12 @@ pub fn bitcoin_units::time::BlockTimeDecoder::try_from(value: U) -> core::result
 impl<T, U> core::convert::TryInto<U> for bitcoin_units::time::BlockTimeDecoder where U: core::convert::TryFrom<T>
 pub type bitcoin_units::time::BlockTimeDecoder::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn bitcoin_units::time::BlockTimeDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_units::time::BlockTimeDecoder where T: core::clone::Clone
-pub type bitcoin_units::time::BlockTimeDecoder::Owned = T
-pub fn bitcoin_units::time::BlockTimeDecoder::clone_into(&self, target: &mut T)
-pub fn bitcoin_units::time::BlockTimeDecoder::to_owned(&self) -> T
 impl<T> core::any::Any for bitcoin_units::time::BlockTimeDecoder where T: 'static + ?core::marker::Sized
 pub fn bitcoin_units::time::BlockTimeDecoder::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for bitcoin_units::time::BlockTimeDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::time::BlockTimeDecoder::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for bitcoin_units::time::BlockTimeDecoder where T: ?core::marker::Sized
 pub fn bitcoin_units::time::BlockTimeDecoder::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_units::time::BlockTimeDecoder where T: core::clone::Clone
-pub unsafe fn bitcoin_units::time::BlockTimeDecoder::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin_units::time::BlockTimeDecoder
 pub fn bitcoin_units::time::BlockTimeDecoder::from(t: T) -> T
 pub struct bitcoin_units::time::BlockTimeDecoderError(_)
