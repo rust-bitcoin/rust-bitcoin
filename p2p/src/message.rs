@@ -49,7 +49,7 @@ pub const MAX_INV_SIZE: usize = 50_000;
 pub const MAX_MSG_SIZE: usize = 5_000_000;
 
 /// Contains the message command.
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct CommandString([u8; 12]);
 
 impl CommandString {
@@ -725,7 +725,7 @@ impl NetworkMessage {
     /// Panics if the command string is invalid (should never happen for valid message types).
     pub fn command(&self) -> CommandString {
         match *self {
-            Self::Unknown { command: ref c, .. } => c.clone(),
+            Self::Unknown { command: ref c, .. } => *c,
             _ => CommandString::try_from(self.cmd()).expect("cmd returns valid commands"),
         }
     }
@@ -1789,8 +1789,7 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                             let command = command_string
                                 .end()
                                 .map_err(V2NetworkMessageDecoderError::Command)?;
-                            let payload_decoder =
-                                Self::payload_decoder_from_command(command.clone());
+                            let payload_decoder = Self::payload_decoder_from_command(command);
                             self.state = V2NetworkMessageDecoderState::Payload(payload_decoder);
                         }
                         _ => unreachable!("we know we're in the Second state"),
