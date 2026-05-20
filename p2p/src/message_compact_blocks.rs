@@ -22,7 +22,7 @@ pub struct SendCmpct {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for the [`SendCmpct`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct SendCmpctEncoder<'e>(Encoder2<ArrayEncoder<1>, ArrayEncoder<8>>);
 }
 
@@ -40,7 +40,7 @@ impl encoding::Encode for SendCmpct {
 type SendCmpctInnerDecoder = Decoder2<ArrayDecoder<1>, ArrayDecoder<8>>;
 
 /// Decoder type for the [`SendCmpct`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct SendCmpctDecoder(SendCmpctInnerDecoder);
 
 impl encoding::Decoder for SendCmpctDecoder {
@@ -77,7 +77,7 @@ pub mod error {
     /// Errors occuring when decoding a [`SendCmpct`] message.
     ///
     /// [`SendCmpct`]: super::SendCmpct
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct SendCmpctDecoderError(
         pub(super) <super::SendCmpctInnerDecoder as encoding::Decoder>::Error,
     );

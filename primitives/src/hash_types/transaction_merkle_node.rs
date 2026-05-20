@@ -72,7 +72,7 @@ encoding::encoder_newtype_exact! {
 
 crate::decoder_newtype! {
     /// The decoder for the [`TxMerkleNode`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct TxMerkleNodeDecoder(encoding::ArrayDecoder<32>);
 
     /// Constructs a new [`TxMerkleNode`] decoder.

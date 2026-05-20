@@ -50,6 +50,11 @@ pub trait Decode {
 }
 
 /// A push decoder for a consensus-decodable object.
+///
+/// Decoders are stateful machines that should not implement `Clone` or `Copy`. Duplicating a
+/// decoder copies its state, but what state that is depends entirely on what input has been fed
+/// to it, making it easy to accidentally duplicate at the wrong point in decoding. If you need to
+/// decode the same data multiple times, create new decoder instances instead.
 pub trait Decoder: Sized {
     /// The type that this decoder produces when decoding is complete.
     type Output;

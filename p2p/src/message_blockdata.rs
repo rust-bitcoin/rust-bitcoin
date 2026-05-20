@@ -73,7 +73,7 @@ impl Inventory {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Inventory`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct InventoryEncoder<'e>(Encoder2<ArrayEncoder<4>, ArrayEncoder<32>>);
 }
 
@@ -101,7 +101,7 @@ impl encoding::Encode for Inventory {
 type InventoryInnerDecoder = Decoder2<ArrayDecoder<4>, ArrayDecoder<32>>;
 
 /// The decoder for the [`Inventory`] type.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct InventoryDecoder(InventoryInnerDecoder);
 
 impl encoding::Decoder for InventoryDecoder {
@@ -193,7 +193,7 @@ type BlockLocatorInnerEncoder<'e> = Encoder2<CompactSizeEncoder, SliceEncoder<'e
 
 encoding::encoder_newtype! {
     /// The encoder for [`BlockLocator`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BlockLocatorEncoder<'e>(BlockLocatorInnerEncoder<'e>);
 }
 
@@ -211,7 +211,7 @@ impl encoding::Encode for BlockLocator {
 type BlockLocatorInnerDecoder = VecDecoder<BlockHash>;
 
 /// The decoder for the [`BlockLocator`] type.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BlockLocatorDecoder(BlockLocatorInnerDecoder);
 
 impl BlockLocatorDecoder {
@@ -274,13 +274,13 @@ type GetBlocksOrHeadersInnerEncoder<'e> =
 
 encoding::encoder_newtype! {
     /// The encoder for [`GetBlocksMessage`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct GetBlocksEncoder<'e>(GetBlocksOrHeadersInnerEncoder<'e>);
 }
 
 encoding::encoder_newtype! {
     /// The encoder for [`GetHeadersMessage`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct GetHeadersEncoder<'e>(GetBlocksOrHeadersInnerEncoder<'e>);
 }
 
@@ -318,11 +318,11 @@ type GetBlocksOrHeadersInnerDecoder =
     Decoder3<ProtocolVersionDecoder, BlockLocatorDecoder, BlockHashDecoder>;
 
 /// Decoder type for [`GetBlocksMessage`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct GetBlocksMessageDecoder(GetBlocksOrHeadersInnerDecoder);
 
 /// Decoder type for [`GetHeadersMessage`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct GetHeadersMessageDecoder(GetBlocksOrHeadersInnerDecoder);
 
 impl encoding::Decoder for GetHeadersMessageDecoder {
@@ -383,7 +383,7 @@ pub mod error {
     /// An error consensus decoding an [`Inventory`].
     ///
     /// [`Inventory`]: super::Inventory
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct InventoryDecoderError(
         pub(super) <super::InventoryInnerDecoder as encoding::Decoder>::Error,
     );
@@ -406,7 +406,7 @@ pub mod error {
     /// An error consensus decoding a [`BlockLocator`].
     ///
     /// [`BlockLocator`]: super::BlockLocator
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct BlockLocatorDecoderError(
         pub(super) <super::BlockLocatorInnerDecoder as encoding::Decoder>::Error,
     );
@@ -429,7 +429,7 @@ pub mod error {
     /// An error consensus decoding a [`GetBlocksMessage`].
     ///
     /// [`GetBlocksMessage`]: super::GetBlocksMessage
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GetBlocksMessageDecoderError(
         pub(super) <super::GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error,
     );
@@ -452,7 +452,7 @@ pub mod error {
     /// An error consensus decoding a [`GetHeadersMessage`].
     ///
     /// [`GetHeadersMessage`]: super::GetHeadersMessage
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GetHeadersMessageDecoderError(
         pub(super) <super::GetBlocksOrHeadersInnerDecoder as encoding::Decoder>::Error,
     );

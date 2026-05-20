@@ -638,7 +638,7 @@ encoding::encoder_newtype_exact! {
 #[cfg(feature = "encoding")]
 crate::decoder_newtype! {
     /// The decoder for the [`Amount`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct AmountDecoder(encoding::ArrayDecoder<8>);
 
     /// Constructs a new [`Amount`] decoder.

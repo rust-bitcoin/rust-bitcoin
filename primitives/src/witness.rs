@@ -304,7 +304,7 @@ impl encoding::Encoder for WitnessEncoder<'_> {
 
 /// The decoder for the [`Witness`] type.
 #[cfg(feature = "alloc")]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct WitnessDecoder {
     /// The single buffer that will become the Witness content.
     /// The index entries are written at the beginning, then rotated in [`Self::end`].

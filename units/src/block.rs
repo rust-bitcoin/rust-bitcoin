@@ -230,7 +230,7 @@ encoding::encoder_newtype_exact! {
 #[cfg(feature = "encoding")]
 crate::decoder_newtype! {
     /// The decoder for the [`BlockHeight`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BlockHeightDecoder(encoding::ArrayDecoder<4>);
 
     /// Constructs a new [`BlockHeight`] decoder.

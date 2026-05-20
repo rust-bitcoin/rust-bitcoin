@@ -115,7 +115,7 @@ impl From<ProtocolVersion> for u32 {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`ProtocolVersion`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct ProtocolVersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
@@ -129,7 +129,7 @@ impl encoding::Encode for ProtocolVersion {
 }
 
 /// The decoder for the [`ProtocolVersion`] type.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ProtocolVersionDecoder(encoding::ArrayDecoder<4>);
 
 impl ProtocolVersionDecoder {
@@ -309,7 +309,7 @@ impl ops::BitXorAssign for ServiceFlags {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`ServiceFlags`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct ServiceFlagsEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
@@ -323,7 +323,7 @@ impl encoding::Encode for ServiceFlags {
 }
 
 /// The decoder for the [`ServiceFlags`] type.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ServiceFlagsDecoder(encoding::ArrayDecoder<8>);
 
 impl ServiceFlagsDecoder {
@@ -447,7 +447,7 @@ impl fmt::UpperHex for Magic {
 
 encoding::encoder_newtype_exact! {
     /// The encoder type for network [`Magic`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct MagicEncoder<'e>(ArrayEncoder<4>);
 }
 
@@ -462,7 +462,7 @@ impl encoding::Encode for Magic {
 type MagicInnerDecoder = ArrayDecoder<4>;
 
 /// The decoder type for a network [`Magic`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct MagicDecoder(MagicInnerDecoder);
 
 impl encoding::Decoder for MagicDecoder {

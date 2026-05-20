@@ -424,7 +424,7 @@ impl fmt::UpperHex for Transaction {
 
 /// The decoder for the [`Transaction`] type.
 #[cfg(feature = "alloc")]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct TransactionDecoder {
     state: TransactionDecoderState,
 }
@@ -659,7 +659,7 @@ impl encoding::Decode for Transaction {
 
 /// The state of the transiting decoder.
 #[cfg(feature = "alloc")]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum TransactionDecoderState {
     /// Decoding the transaction version.
     Version(VersionDecoder),
@@ -834,7 +834,7 @@ type TxInInnerDecoder = Decoder3<OutPointDecoder, ScriptSigBufDecoder, SequenceD
 #[cfg(feature = "alloc")]
 crate::decoder_newtype! {
     /// The decoder for the [`TxIn`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct TxInDecoder(TxInInnerDecoder);
 
     /// Constructs a new [`TxIn`] decoder.
@@ -904,7 +904,7 @@ type TxOutInnerDecoder = Decoder2<AmountDecoder, ScriptPubKeyBufDecoder>;
 #[cfg(feature = "alloc")]
 crate::decoder_newtype! {
     /// The decoder for the [`TxOut`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct TxOutDecoder(TxOutInnerDecoder);
 
     /// Constructs a new [`TxOut`] decoder.
@@ -1020,7 +1020,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
 crate::decoder_newtype! {
     /// The decoder for the [`OutPoint`] type.
     // 32 for the txid + 4 for the vout
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
 
     /// Constructs a new [`OutPoint`] decoder.
@@ -1248,7 +1248,7 @@ impl encoding::Encode for Version {
 
 crate::decoder_newtype! {
     /// The decoder for the [`Version`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
     /// Constructs a new [`Version`] decoder.
@@ -1288,7 +1288,7 @@ pub mod error {
     /// An error that occurs during parsing of a [`Transaction`] from a hex string.
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct ParseTransactionError(pub(super) ParsePrimitiveError<Transaction>);
 
     #[cfg(feature = "alloc")]

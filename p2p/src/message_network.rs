@@ -91,7 +91,7 @@ impl VersionMessage {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`VersionMessage`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct VersionMessageEncoder<'e>(
         encoding::Encoder2<
             encoding::Encoder3<
@@ -191,7 +191,7 @@ type VersionMessageInnerDecoder = encoding::Decoder2<
 >;
 
 /// The Decoder for [`VersionMessage`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
 
 /// A bitcoin user agent defined by BIP-0014. The user agent is sent in the version message when a
@@ -199,14 +199,14 @@ pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
 /// well-defined format.
 ///
 /// ref: <https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki>
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct UserAgent {
     user_agent: String,
 }
 
 encoding::encoder_newtype_exact! {
     /// The encoder for a [`UserAgent`] string.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct UserAgentEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }
 
@@ -224,7 +224,7 @@ impl encoding::Encode for UserAgent {
 type UserAgentInnerDecoder = ByteVecDecoder;
 
 /// The decoder for the [`UserAgent`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct UserAgentDecoder(UserAgentInnerDecoder);
 
 impl encoding::Decoder for UserAgentDecoder {
@@ -318,7 +318,7 @@ impl From<UserAgent> for String {
 }
 
 /// A software version field for inclusion in a user agent specified by BIP-0014.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct UserAgentVersion {
     version: ClientSoftwareVersion,
     comments: Option<String>,
@@ -420,7 +420,7 @@ pub enum RejectReason {
 
 encoding::encoder_newtype_exact! {
     /// The encoder type for a [`RejectReason`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct RejectReasonEncoder<'e>(ArrayEncoder<1>);
 }
 
@@ -433,7 +433,7 @@ impl encoding::Encode for RejectReason {
 }
 
 /// The decoder type for a [`RejectReason`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct RejectReasonDecoder(ArrayDecoder<1>);
 
 impl encoding::Decoder for RejectReasonDecoder {
@@ -487,7 +487,7 @@ pub struct Reject {
 
 encoding::encoder_newtype_exact! {
     /// The encoder type for a [`Reject`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct RejectEncoder<'e>(
         Encoder4<
             Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
@@ -521,7 +521,7 @@ type RejectInnerDecoder =
     Decoder4<ByteVecDecoder, RejectReasonDecoder, ByteVecDecoder, ArrayDecoder<32>>;
 
 /// The decoder type for a [`Reject`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct RejectDecoder(RejectInnerDecoder);
 
 impl encoding::Decoder for RejectDecoder {
@@ -566,7 +566,7 @@ impl encoding::Decode for Reject {
 /// A deprecated message type that was used to notify users of system changes. Due to a number of
 /// vulnerabilities, alerts are no longer used. A final alert was sent as of Bitcoin Core 0.14.0,
 /// and is sent to any node that is advertising a potentially vulnerable protocol version.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Alert(Vec<u8>);
 
 impl Alert {
@@ -588,7 +588,7 @@ impl Alert {
 
 encoding::encoder_newtype_exact! {
     /// The encoder type for an [`Alert`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct AlertEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }
 
@@ -606,7 +606,7 @@ impl encoding::Encode for Alert {
 type AlertInnerDecoder = ByteVecDecoder;
 
 /// The decoder for the [`Alert`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct AlertDecoder(AlertInnerDecoder);
 
 impl encoding::Decoder for AlertDecoder {
@@ -643,7 +643,7 @@ pub mod error {
     /// An error consensus decoding a [`VersionMessage`].
     ///
     /// [`VersionMessage`]: super::VersionMessage
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct VersionMessageDecoderError(
         pub(super) <super::VersionMessageInnerDecoder as encoding::Decoder>::Error,
     );
@@ -666,7 +666,7 @@ pub mod error {
     /// An error decoding a [`UserAgent`] message.
     ///
     /// [`UserAgent`]: super::UserAgent
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum UserAgentDecoderError {
         /// Inner decoder error.
         Decoder(<super::UserAgentInnerDecoder as encoding::Decoder>::Error),
@@ -700,7 +700,7 @@ pub mod error {
     /// Errors occuring when decoding a [`RejectReason`].
     ///
     /// [`RejectReason`]: super::RejectReason
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum RejectReasonDecoderError {
         /// Inner decoder error.
         Decoder(<encoding::ArrayDecoder<1> as encoding::Decoder>::Error),
@@ -734,7 +734,7 @@ pub mod error {
     /// Errors occuring when decoding a [`Reject`].
     ///
     /// [`Reject`]: super::Reject
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum RejectDecoderError {
         /// Inner decoder error.
         Decoder(<super::RejectInnerDecoder as encoding::Decoder>::Error),
@@ -768,7 +768,7 @@ pub mod error {
     /// An error decoding an [`Alert`] message.
     ///
     /// [`Alert`]: super::Alert
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct AlertDecoderError(pub(super) <super::AlertInnerDecoder as encoding::Decoder>::Error);
 
     impl From<Infallible> for AlertDecoderError {

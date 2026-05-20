@@ -72,7 +72,7 @@ encoding::encoder_newtype_exact! {
 
 crate::decoder_newtype! {
     /// The decoder for the [`WitnessMerkleNode`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct WitnessMerkleNodeDecoder(encoding::ArrayDecoder<32>);
 
     /// Constructs a new [`WitnessMerkleNode`] decoder.

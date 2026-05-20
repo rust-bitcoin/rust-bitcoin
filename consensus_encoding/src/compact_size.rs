@@ -136,7 +136,7 @@ impl ExactSizeEncoder for CompactSizeEncoder {
 /// [`CompactSizeU64Decoder`] instead.
 ///
 /// For more information about decoders see the documentation of the [`Decoder`] trait.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct CompactSizeDecoder {
     buf: ArrayVec<u8, 9>,
     limit: usize,
@@ -210,7 +210,7 @@ impl Decoder for CompactSizeDecoder {
 /// configurable upper bound before returning the value.
 ///
 /// For more information about decoders see the documentation of the [`Decoder`] trait.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct CompactSizeU64Decoder {
     buf: ArrayVec<u8, 9>,
 }

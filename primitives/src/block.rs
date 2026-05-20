@@ -362,7 +362,7 @@ crate::decoder_newtype! {
     /// The decoder for the [`Block`] type.
     ///
     /// This decoder can only produce a `Block<Unchecked>`.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BlockDecoder(BlockInnerDecoder);
 
     /// Constructs a new [`Block`] decoder.
@@ -564,7 +564,7 @@ type HeaderInnerDecoder = Decoder6<
 
 crate::decoder_newtype! {
     /// The decoder for the [`Header`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct HeaderDecoder(HeaderInnerDecoder);
 
     /// Constructs a new [`Header`] decoder.
@@ -733,7 +733,7 @@ impl encoding::Encode for Version {
 
 crate::decoder_newtype! {
     /// The decoder for the [`Version`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct VersionDecoder(encoding::ArrayDecoder<4>);
 
     /// Constructs a new [`Version`] decoder.
@@ -776,7 +776,7 @@ pub mod error {
     /// An error that occurs during parsing of a [`Block`] from a hex string.
     #[cfg(feature = "alloc")]
     #[cfg(feature = "hex")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct ParseBlockError(pub(super) ParsePrimitiveError<Block>);
 
     #[cfg(feature = "alloc")]
@@ -872,7 +872,7 @@ pub mod error {
 
     /// An error that occurs during parsing of a [`Header`] from a hex string.
     #[cfg(feature = "hex")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct ParseHeaderError(pub(super) ParsePrimitiveError<Header>);
 
     #[cfg(feature = "hex")]

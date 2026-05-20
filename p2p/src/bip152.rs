@@ -54,7 +54,7 @@ impl convert::AsRef<Transaction> for PrefilledTransaction {
 
 encoding::encoder_newtype! {
     /// The encoder for a [`PrefilledTransaction`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct PrefilledTransactionEncoder<'e>(Encoder2<CompactSizeEncoder, TransactionEncoder<'e>>);
 }
 
@@ -75,7 +75,7 @@ impl encoding::Encode for PrefilledTransaction {
 type PrefilledTransactionInnerDecoder = Decoder2<CompactSizeDecoder, TransactionDecoder>;
 
 /// The decoder for a [`PrefilledTransaction`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct PrefilledTransactionDecoder(PrefilledTransactionInnerDecoder);
 
 impl PrefilledTransactionDecoder {
@@ -190,7 +190,7 @@ impl core::fmt::Debug for ShortId {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for a [`ShortId`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct ShortIdEncoder<'e>(ArrayEncoder<6>);
 }
 
@@ -205,7 +205,7 @@ impl encoding::Encode for ShortId {
 type ShortIdInnerDecoder = ArrayDecoder<6>;
 
 /// Decoder type for a [`ShortId`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct ShortIdDecoder(ShortIdInnerDecoder);
 
 impl encoding::Decoder for ShortIdDecoder {
@@ -259,7 +259,7 @@ type HeaderAndShortIdsInnerEncoder<'e> = Encoder4<
 
 encoding::encoder_newtype! {
     /// Encoder type for a [`HeaderAndShortIds`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct HeaderAndShortIdsEncoder<'e>(
         HeaderAndShortIdsInnerEncoder<'e>
     );
@@ -291,7 +291,7 @@ type HeaderAndShortIdsInnerDecoder =
     Decoder4<HeaderDecoder, ArrayDecoder<8>, VecDecoder<ShortId>, VecDecoder<PrefilledTransaction>>;
 
 /// Decoder type for the [`HeaderAndShortIds`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct HeaderAndShortIdsDecoder(HeaderAndShortIdsInnerDecoder);
 
 impl HeaderAndShortIdsDecoder {
@@ -427,7 +427,7 @@ impl encoding::Encode for Offset {
     fn encoder(&self) -> Self::Encoder<'_> { CompactSizeEncoder::new(self.0) }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 struct OffsetDecoder(CompactSizeDecoder);
 
 impl encoding::Decoder for OffsetDecoder {
@@ -512,7 +512,7 @@ impl BlockTransactionsRequest {
 
 encoding::encoder_newtype! {
     /// The encoder for [`BlockTransactionsRequest`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BlockTransactionsRequestEncoder<'e>(
         Encoder2<
             BlockHashEncoder<'e>,
@@ -538,7 +538,7 @@ impl encoding::Encode for BlockTransactionsRequest {
 type BlockTransactionsRequestInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Offset>>;
 
 /// The encoder type for a [`BlockTransactionsRequest`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct BlockTransactionsRequestDecoder(BlockTransactionsRequestInnerDecoder);
 
 impl encoding::Decoder for BlockTransactionsRequestDecoder {
@@ -576,7 +576,7 @@ pub struct BlockTransactions {
 
 encoding::encoder_newtype! {
     /// Encoder type for [`BlockTransactions`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BlockTransactionsEncoder<'e>(
         Encoder2<
             BlockHashEncoder<'e>,
@@ -605,7 +605,7 @@ impl encoding::Encode for BlockTransactions {
 type BlockTransactionsInnerDecoder = Decoder2<BlockHashDecoder, VecDecoder<Transaction>>;
 
 /// Decoder type for a [`BlockTransactions`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct BlockTransactionsDecoder(BlockTransactionsInnerDecoder);
 
 impl encoding::Decoder for BlockTransactionsDecoder {
@@ -667,7 +667,7 @@ pub mod error {
     use internals::write_err;
 
     /// A BIP-0152 error.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum Error {
         /// An unknown version number was used.
@@ -701,7 +701,7 @@ pub mod error {
     /// An error occuring when decoding a [`PrefilledTransaction`].
     ///
     /// [`PrefilledTransaction`]: super::PrefilledTransaction
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum PrefilledTransactionDecoderError {
         /// Inner decoder error.
         Decoder(<super::PrefilledTransactionInnerDecoder as encoding::Decoder>::Error),
@@ -735,7 +735,7 @@ pub mod error {
     /// An error decoding a [`ShortId`].
     ///
     /// [`ShortId`]: super::ShortId
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct ShortIdDecoderError(
         pub(super) <super::ShortIdInnerDecoder as encoding::Decoder>::Error,
     );
@@ -758,7 +758,7 @@ pub mod error {
     /// Errors occuring when decoding a [`HeaderAndShortIds`] message.
     ///
     /// [`HeaderAndShortIds`]: super::HeaderAndShortIds
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum HeaderAndShortIdsDecoderError {
         /// Inner decoder error.
         Decoder(<super::HeaderAndShortIdsInnerDecoder as encoding::Decoder>::Error),
@@ -792,7 +792,7 @@ pub mod error {
     /// An error decoding a [`BlockTransactionsRequest`] message.
     ///
     /// [`BlockTransactionsRequest`]: super::BlockTransactionsRequest
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct BlockTransactionsRequestDecoderError(
         pub(super) <super::BlockTransactionsRequestInnerDecoder as encoding::Decoder>::Error,
     );
@@ -813,7 +813,7 @@ pub mod error {
     }
 
     /// A transaction index is requested that is out of range from the corresponding block.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct TxIndexOutOfRangeError(pub(super) u64);
 
@@ -836,7 +836,7 @@ pub mod error {
     /// An error occuring decoding a [`BlockTransactions`] message.
     ///
     /// [`BlockTransactions`]: super::BlockTransactions
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct BlockTransactionsDecoderError(
         pub(super) <super::BlockTransactionsInnerDecoder as encoding::Decoder>::Error,
     );

@@ -328,7 +328,7 @@ encoding::encoder_newtype_exact! {
 #[cfg(feature = "encoding")]
 crate::decoder_newtype! {
     /// The decoder for the [`CompactTarget`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct CompactTargetDecoder(encoding::ArrayDecoder<4>);
 
     /// Constructs a new [`CompactTarget`] decoder.

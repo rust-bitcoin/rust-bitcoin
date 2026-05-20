@@ -76,7 +76,6 @@ fn hex_iter_cat_encoder() {
         assert_eq!(char::from(iter_chars[0]), hi);
         let lo = chars.next().unwrap();
         assert_eq!(char::from(iter_chars[1]), lo);
-
     }
     let none = iter.next();
     assert_eq!(none, None);

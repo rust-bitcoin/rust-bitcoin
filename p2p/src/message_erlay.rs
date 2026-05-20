@@ -35,7 +35,7 @@ impl SendTxRcnCl {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for a [`SendTxRcnCl`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct SendTxRcnClEncoder<'e>(Encoder2<ArrayEncoder<4>, ArrayEncoder<8>>);
 }
 
@@ -56,7 +56,7 @@ impl encoding::Encode for SendTxRcnCl {
 type SendTxRcnClInnerDecoder = Decoder2<ArrayDecoder<4>, ArrayDecoder<8>>;
 
 /// The decoder for a [`SendTxRcnCl`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct SendTxRcnClDecoder(SendTxRcnClInnerDecoder);
 
 impl encoding::Decoder for SendTxRcnClDecoder {
@@ -91,7 +91,7 @@ pub mod error {
     use internals::write_err;
 
     /// An error occurring when decoding a [`SendTxRcnCl`](super) message.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct SendTxRcnClDecoderError(
         pub(super) <super::SendTxRcnClInnerDecoder as encoding::Decoder>::Error,
     );

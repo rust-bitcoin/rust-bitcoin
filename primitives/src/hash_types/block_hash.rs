@@ -52,7 +52,7 @@ encoding::encoder_newtype_exact! {
 
 crate::decoder_newtype! {
     /// The decoder for the [`BlockHash`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
 
     /// Constructs a new [`BlockHash`] decoder.

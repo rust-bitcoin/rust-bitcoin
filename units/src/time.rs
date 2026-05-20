@@ -143,7 +143,7 @@ encoding::encoder_newtype_exact! {
 #[cfg(feature = "encoding")]
 crate::decoder_newtype! {
     /// The decoder for the [`BlockTime`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BlockTimeDecoder(encoding::ArrayDecoder<4>);
 
     /// Constructs a new [`BlockTime`] decoder.

@@ -75,7 +75,7 @@ impl Encode for Foo {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 struct FooDecoder(ArrayDecoder<4>);
 
 impl Decoder for FooDecoder {
@@ -99,25 +99,23 @@ impl Decode for Foo {
 /// A struct that includes all types that implement `Clone`.
 #[derive(Clone)] // C-COMMON-TRAITS: `Clone`
 struct Clone {
-    a: ArrayDecoder<4>,
-    b: ArrayEncoder<4>,
-    c: ArrayRefEncoder<'static, 4>,
-    d: BytesEncoder<'static>,
-    #[cfg(feature = "alloc")]
-    e: ByteVecDecoder,
-    f: CompactSizeDecoder,
-    g: CompactSizeEncoder,
-    h: CompactSizeU64Decoder,
-    // We don't implement Clone for the composite decoders.
+    a: ArrayEncoder<4>,
+    b: ArrayRefEncoder<'static, 4>,
+    c: BytesEncoder<'static>,
+    d: CompactSizeEncoder,
+    // We don't implement Clone for decoders, they are state machines.
     //
+    // e: CompactSizeDecoder,
+    // f: CompactSizeU64Decoder,
+    // g: ArrayDecoder<4>,
+    // h: ByteVecDecoder,
     // i: Decoder2<D, D>,
     // j: Decoder3<D, D, D>,
     // k: Decoder4<D, D, D, D>,
     // l: Decoder6<D, D, D, D, D, D>,
-    m: EncoderByteIter<FooEncoder<'static>>,
-    n: SliceEncoder<'static, Foo>,
-    #[cfg(feature = "alloc")]
-    o: VecDecoder<Foo>,
+    // m: VecDecoder<Foo>,
+    n: EncoderByteIter<FooEncoder<'static>>,
+    o: SliceEncoder<'static, Foo>,
 }
 
 /// A struct that includes all types that implement `Default` (implies decoders).

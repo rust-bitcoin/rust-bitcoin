@@ -33,7 +33,7 @@ const MAX_VEC_SIZE: usize = 4_000_000;
 ///
 /// The encoding is expected to start with the number of encoded bytes (length prefix).
 #[cfg(feature = "alloc")]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ByteVecDecoder {
     prefix_decoder: Option<CompactSizeDecoder>,
     buffer: Vec<u8>,
@@ -173,22 +173,6 @@ where
 }
 
 #[cfg(feature = "alloc")]
-impl<T: Decode> Clone for VecDecoder<T>
-where
-    T: Clone,
-    T::Decoder: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            prefix_decoder: self.prefix_decoder.clone(),
-            length: self.length,
-            buffer: self.buffer.clone(),
-            decoder: self.decoder.clone(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
 impl<T: Decode> VecDecoder<T> {
     /// Constructs a new typed vector decoder with the default limit of 4,000,000 elements.
     pub const fn new() -> Self { Self::new_with_limit(MAX_VEC_SIZE) }
@@ -314,7 +298,7 @@ impl<T: Decode> Decoder for VecDecoder<T> {
 }
 
 /// A decoder that expects exactly N bytes and returns them as an array.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ArrayDecoder<const N: usize> {
     buffer: [u8; N],
     bytes_written: usize,
@@ -412,22 +396,6 @@ where
             Decoder2State::Second(out, b) => f.debug_tuple("Second").field(out).field(b).finish(),
             Decoder2State::Errored => write!(f, "Errored"),
         }
-    }
-}
-
-impl<A, B> Clone for Decoder2<A, B>
-where
-    A: Decoder + Clone,
-    B: Decoder + Clone,
-    A::Output: Clone,
-{
-    fn clone(&self) -> Self {
-        let state = match &self.state {
-            Decoder2State::First(a, b) => Decoder2State::First(a.clone(), b.clone()),
-            Decoder2State::Second(out, b) => Decoder2State::Second(out.clone(), b.clone()),
-            Decoder2State::Errored => Decoder2State::Errored,
-        };
-        Self { state }
     }
 }
 
@@ -538,17 +506,6 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.inner.fmt(f) }
 }
 
-impl<A, B, C> Clone for Decoder3<A, B, C>
-where
-    A: Decoder + Clone,
-    B: Decoder + Clone,
-    C: Decoder + Clone,
-    A::Output: Clone,
-    B::Output: Clone,
-{
-    fn clone(&self) -> Self { Self { inner: self.inner.clone() } }
-}
-
 impl<A, B, C> Decoder for Decoder3<A, B, C>
 where
     A: Decoder,
@@ -619,19 +576,6 @@ where
     C::Output: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.inner.fmt(f) }
-}
-
-impl<A, B, C, D> Clone for Decoder4<A, B, C, D>
-where
-    A: Decoder + Clone,
-    B: Decoder + Clone,
-    C: Decoder + Clone,
-    D: Decoder + Clone,
-    A::Output: Clone,
-    B::Output: Clone,
-    C::Output: Clone,
-{
-    fn clone(&self) -> Self { Self { inner: self.inner.clone() } }
 }
 
 impl<A, B, C, D> Decoder for Decoder4<A, B, C, D>
@@ -721,23 +665,6 @@ where
     E::Output: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.inner.fmt(f) }
-}
-
-impl<A, B, C, D, E, F> Clone for Decoder6<A, B, C, D, E, F>
-where
-    A: Decoder + Clone,
-    B: Decoder + Clone,
-    C: Decoder + Clone,
-    D: Decoder + Clone,
-    E: Decoder + Clone,
-    F: Decoder + Clone,
-    A::Output: Clone,
-    B::Output: Clone,
-    C::Output: Clone,
-    D::Output: Clone,
-    E::Output: Clone,
-{
-    fn clone(&self) -> Self { Self { inner: self.inner.clone() } }
 }
 
 impl<A, B, C, D, E, F> Decoder for Decoder6<A, B, C, D, E, F>
@@ -905,7 +832,7 @@ mod tests {
 
     /// The decoder for the [`Inner`] type.
     #[cfg(feature = "alloc")]
-    #[derive(Clone, Default)]
+    #[derive(Default)]
     pub struct InnerDecoder(ArrayDecoder<4>);
 
     #[cfg(feature = "alloc")]
@@ -936,7 +863,7 @@ mod tests {
 
     /// The decoder for the [`Test`] type.
     #[cfg(feature = "alloc")]
-    #[derive(Clone, Default)]
+    #[derive(Default)]
     pub struct TestDecoder(VecDecoder<Inner>);
 
     #[cfg(feature = "alloc")]

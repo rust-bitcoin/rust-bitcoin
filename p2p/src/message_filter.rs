@@ -49,7 +49,7 @@ impl FilterHash {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for [`FilterHash`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct FilterHashEncoder<'e>(ArrayEncoder<32>);
 }
 
@@ -63,7 +63,7 @@ impl encoding::Encode for FilterHash {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for [`FilterHeader`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct FilterHeaderEncoder<'e>(ArrayEncoder<32>);
 }
 
@@ -78,7 +78,7 @@ impl encoding::Encode for FilterHeader {
 type HashInnerDecoder = ArrayDecoder<32>;
 
 /// Decoder for the [`FilterHash`] type.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct FilterHashDecoder(HashInnerDecoder);
 
 impl encoding::Decoder for FilterHashDecoder {
@@ -105,7 +105,7 @@ impl encoding::Decode for FilterHash {
 }
 
 /// Decoder for the [`FilterHeader`] type.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct FilterHeaderDecoder(HashInnerDecoder);
 
 impl encoding::Decoder for FilterHeaderDecoder {
@@ -158,7 +158,7 @@ pub struct GetCFilters {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for the [`GetCFilters`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct GetCFiltersEncoder<'e>(Encoder3<ArrayEncoder<1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
 }
 
@@ -177,7 +177,7 @@ impl encoding::Encode for GetCFilters {
 type GetCFiltersInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHeightDecoder, BlockHashDecoder>;
 
 /// Decoder type for the [`GetCFilters`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct GetCFiltersDecoder(GetCFiltersInnerDecoder);
 
 impl encoding::Decoder for GetCFiltersDecoder {
@@ -216,7 +216,7 @@ pub struct CFilter {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for a [`CFilter`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct CFilterEncoder<'e>(
         Encoder3<
             ArrayEncoder<1>,
@@ -247,7 +247,7 @@ impl encoding::Encode for CFilter {
 type CFilterInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHashDecoder, ByteVecDecoder>;
 
 /// Decoder type for a [`CFilter`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct CFilterDecoder(CFilterInnerDecoder);
 
 impl encoding::Decoder for CFilterDecoder {
@@ -286,7 +286,7 @@ pub struct GetCFHeaders {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for the [`GetCFHeaders`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct GetCFHeadersEncoder<'e>(Encoder3<ArrayEncoder<1>, BlockHeightEncoder<'e>, BlockHashEncoder<'e>>);
 }
 
@@ -305,7 +305,7 @@ impl encoding::Encode for GetCFHeaders {
 type GetCFHeadersInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHeightDecoder, BlockHashDecoder>;
 
 /// Decoder type for the [`GetCFHeaders`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct GetCFHeadersDecoder(GetCFHeadersInnerDecoder);
 
 impl encoding::Decoder for GetCFHeadersDecoder {
@@ -346,7 +346,7 @@ pub struct CFHeaders {
 
 encoding::encoder_newtype! {
     /// Encoder type for a [`CFHeaders`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct CFHeadersEncoder<'e>(
         Encoder4<
             ArrayEncoder<1>,
@@ -377,7 +377,7 @@ type CFHeadersInnerDecoder =
     Decoder4<ArrayDecoder<1>, BlockHashDecoder, FilterHeaderDecoder, VecDecoder<FilterHash>>;
 
 /// Decoder type for a [`CFHeaders`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct CFHeadersDecoder(CFHeadersInnerDecoder);
 
 impl encoding::Decoder for CFHeadersDecoder {
@@ -420,7 +420,7 @@ pub struct GetCFCheckpt {
 
 encoding::encoder_newtype_exact! {
     /// Encoder type for the [`GetCFCheckpt`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct GetCFCheckptEncoder<'e>(Encoder2<ArrayEncoder<1>, BlockHashEncoder<'e>>);
 }
 
@@ -438,7 +438,7 @@ impl encoding::Encode for GetCFCheckpt {
 type GetCFCheckptInnerDecoder = Decoder2<ArrayDecoder<1>, BlockHashDecoder>;
 
 /// Decoder type for a [`GetCFCheckpt`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct GetCFCheckptDecoder(GetCFCheckptInnerDecoder);
 
 impl encoding::Decoder for GetCFCheckptDecoder {
@@ -477,7 +477,7 @@ pub struct CFCheckpt {
 
 encoding::encoder_newtype! {
     /// Encoder type for a [`CFCheckpt`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct CFCheckptEncoder<'e>(
         Encoder3<
             ArrayEncoder<1>,
@@ -508,7 +508,7 @@ impl encoding::Encode for CFCheckpt {
 type CFCheckptInnerDecoder = Decoder3<ArrayDecoder<1>, BlockHashDecoder, VecDecoder<FilterHeader>>;
 
 /// Decoder type for a [`CFCheckpt`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct CFCheckptDecoder(CFCheckptInnerDecoder);
 
 impl encoding::Decoder for CFCheckptDecoder {
@@ -544,7 +544,7 @@ pub mod error {
     /// Errors occuring when decoding a [`FilterHash`] message.
     ///
     /// [`FilterHash`]: super::FilterHash
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct FilterHashDecoderError(
         pub(super) <super::HashInnerDecoder as encoding::Decoder>::Error,
     );
@@ -567,7 +567,7 @@ pub mod error {
     /// Errors occuring when decoding a [`FilterHeader`] message.
     ///
     /// [`FilterHeader`]: super::FilterHeader
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct FilterHeaderDecoderError(
         pub(super) <super::HashInnerDecoder as encoding::Decoder>::Error,
     );
@@ -590,7 +590,7 @@ pub mod error {
     /// Errors occuring when decoding a [`GetCFilters`] message.
     ///
     /// [`GetCFilters`]: super::GetCFilters
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GetCFiltersDecoderError(
         pub(super) <super::GetCFiltersInnerDecoder as encoding::Decoder>::Error,
     );
@@ -613,7 +613,7 @@ pub mod error {
     /// Errors occuring when decoding a [`CFilter`] message.
     ///
     /// [`CFilter`]: super::CFilter
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct CFilterDecoderError(
         pub(super) <super::CFilterInnerDecoder as encoding::Decoder>::Error,
     );
@@ -636,7 +636,7 @@ pub mod error {
     /// Errors occuring when decoding a [`GetCFHeaders`] message.
     ///
     /// [`GetCFHeaders`]: super::GetCFHeaders
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GetCFHeadersDecoderError(
         pub(super) <super::GetCFHeadersInnerDecoder as encoding::Decoder>::Error,
     );
@@ -659,7 +659,7 @@ pub mod error {
     /// Errors occuring when decoding a [`CFHeaders`] message.
     ///
     /// [`CFHeaders`]: super::CFHeaders
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct CFHeadersDecoderError(
         pub(super) <super::CFHeadersInnerDecoder as encoding::Decoder>::Error,
     );
@@ -682,7 +682,7 @@ pub mod error {
     /// Errors occuring when decoding a [`GetCFCheckpt`] message.
     ///
     /// [`GetCFCheckpt`]: super::GetCFCheckpt
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct GetCFCheckptDecoderError(
         pub(super) <super::GetCFCheckptInnerDecoder as encoding::Decoder>::Error,
     );
@@ -705,7 +705,7 @@ pub mod error {
     /// Errors occuring when decoding a [`CFCheckpt`] message.
     ///
     /// [`CFCheckpt`]: super::CFCheckpt
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct CFCheckptDecoderError(
         pub(super) <super::CFCheckptInnerDecoder as encoding::Decoder>::Error,
     );

@@ -284,7 +284,7 @@ encoding::encoder_newtype_exact! {
 #[cfg(feature = "encoding")]
 crate::decoder_newtype! {
     /// The decoder for the [`Sequence`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct SequenceDecoder(encoding::ArrayDecoder<4>);
 
     /// Constructs a new [`Sequence`] decoder.

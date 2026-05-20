@@ -129,7 +129,7 @@ impl MerkleBlock {
 
 encoding::encoder_newtype! {
     /// The encoder type for a [`MerkleBlock`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct MerkleBlockEncoder<'e>(Encoder2<HeaderEncoder<'e>, PartialMerkleTreeEncoder<'e>>);
 }
 
@@ -144,7 +144,7 @@ impl encoding::Encode for MerkleBlock {
 type MerkleBlockInnerDecoder = Decoder2<HeaderDecoder, PartialMerkleTreeDecoder>;
 
 /// The decoder for a [`MerkleBlock`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct MerkleBlockDecoder(MerkleBlockInnerDecoder);
 
 impl encoding::Decoder for MerkleBlockDecoder {
@@ -443,7 +443,7 @@ impl PartialMerkleTree {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct BitVecEncoder {
     buffer: Vec<u8>,
     exhausted: bool,
@@ -480,7 +480,7 @@ impl encoding::Encoder for BitVecEncoder {
 
 encoding::encoder_newtype! {
     /// The encoder for a [`PartialMerkleTree`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct PartialMerkleTreeEncoder<'e>(
         Encoder3<
             ArrayEncoder<4>,
@@ -512,7 +512,7 @@ type PartialMerkleTreeInnerDecoder =
     Decoder3<ArrayDecoder<4>, VecDecoder<TxMerkleNode>, ByteVecDecoder>;
 
 /// The decoder type for a [`PartialMerkleTree`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct PartialMerkleTreeDecoder(PartialMerkleTreeInnerDecoder);
 
 impl encoding::Decoder for PartialMerkleTreeDecoder {
@@ -556,7 +556,7 @@ pub mod error {
     /// An error occuring when decoding a [`MerkleBlock`].
     ///
     /// [`MerkleBlock`]: super::MerkleBlock
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct MerkleBlockDecoderError(
         pub(super) <super::MerkleBlockInnerDecoder as encoding::Decoder>::Error,
     );
@@ -579,7 +579,7 @@ pub mod error {
     /// An error occuring when decoding a [`PartialMerkleTree`].
     ///
     /// [`PartialMerkleTree`]: super::PartialMerkleTree
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct PartialMerkleTreeDecoderError(
         pub(super) <super::PartialMerkleTreeInnerDecoder as encoding::Decoder>::Error,
     );
@@ -600,7 +600,7 @@ pub mod error {
     }
 
     /// An error when verifying the Merkle block.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum MerkleBlockError {
         /// Merkle root in the header doesn't match to the root calculated from partial Merkle tree.

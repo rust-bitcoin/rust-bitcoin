@@ -32,7 +32,7 @@ pub struct FilterLoad {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`FilterLoad`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct FilterLoadEncoder<'e>(
         Encoder2<
             Encoder2<CompactSizeEncoder, BytesEncoder<'e>>,
@@ -67,7 +67,7 @@ type FilterLoadInnerDecoder =
     Decoder4<ByteVecDecoder, ArrayDecoder<4>, ArrayDecoder<4>, BloomFlagsDecoder>;
 
 /// The decoder for the [`FilterLoad`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct FilterLoadDecoder(FilterLoadInnerDecoder);
 
 impl encoding::Decoder for FilterLoadDecoder {
@@ -111,7 +111,7 @@ pub enum BloomFlags {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for [`BloomFlags`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct BloomFlagsEncoder<'e>(ArrayEncoder<1>);
 }
 
@@ -130,7 +130,7 @@ impl encoding::Encode for BloomFlags {
 type BloomFlagsInnerDecoder = ArrayDecoder<1>;
 
 /// The decoder for [`BloomFlags`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct BloomFlagsDecoder(BloomFlagsInnerDecoder);
 
 impl BloomFlagsDecoder {
@@ -179,7 +179,7 @@ pub struct FilterAdd {
 
 encoding::encoder_newtype_exact! {
     /// The encoder of the [`FilterAdd`] message.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct FilterAddEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }
 
@@ -197,7 +197,7 @@ impl encoding::Encode for FilterAdd {
 type FilterAddInnerDecoder = ByteVecDecoder;
 
 /// The decoder for the [`FilterAdd`] message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct FilterAddDecoder(FilterAddInnerDecoder);
 
 impl encoding::Decoder for FilterAddDecoder {
@@ -233,7 +233,7 @@ pub mod error {
     /// An error occuring when decoding a [`FilterLoad`] message.
     ///
     /// [`FilterLoad`]: super::FilterLoad
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct FilterLoadDecoderError(
         pub(super) <super::FilterLoadInnerDecoder as encoding::Decoder>::Error,
     );
@@ -256,7 +256,7 @@ pub mod error {
     /// An error occurring when decoding a [`BloomFlags`].
     ///
     /// [`BloomFlags`]: super::BloomFlags
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum BloomFlagsDecoderError {
         /// Inner decoder error.
         Decoder(<super::BloomFlagsInnerDecoder as encoding::Decoder>::Error),
@@ -290,7 +290,7 @@ pub mod error {
     /// An error decoding a [`FilterAdd`] message.
     ///
     /// [`FilterAdd`]: super::FilterAdd
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct FilterAddDecoderError(
         pub(super) <super::FilterAddInnerDecoder as encoding::Decoder>::Error,
     );

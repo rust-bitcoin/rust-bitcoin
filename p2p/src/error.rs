@@ -14,7 +14,7 @@ use crate::Magic;
 /// An error consensus decoding a [`ProtocolVersion`].
 ///
 /// [`ProtocolVersion`]: crate::ProtocolVersion
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ProtocolVersionDecoderError(
     pub(super) <encoding::ArrayDecoder<4> as encoding::Decoder>::Error,
 );
@@ -37,7 +37,7 @@ impl std::error::Error for ProtocolVersionDecoderError {
 /// An error consensus decoding a [`ServiceFlags`].
 ///
 /// [`ServiceFlags`]: crate::ServiceFlags
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ServiceFlagsDecoderError(
     pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error,
 );
@@ -58,7 +58,7 @@ impl std::error::Error for ServiceFlagsDecoderError {
 }
 
 /// Errors occuring when decoding a network [`Magic`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct MagicDecoderError(pub(super) <super::MagicInnerDecoder as encoding::Decoder>::Error);
 
 impl From<Infallible> for MagicDecoderError {
@@ -77,7 +77,7 @@ impl std::error::Error for MagicDecoderError {
 }
 
 /// An error in parsing magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ParseMagicError {
     /// The error that occurred when parsing the string.
@@ -98,7 +98,7 @@ impl std::error::Error for ParseMagicError {
 }
 
 /// Error in creating a Network from Magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct UnknownMagicError(pub(super) Magic);
 
@@ -114,7 +114,7 @@ impl std::error::Error for UnknownMagicError {
 }
 
 /// Error in creating a Magic from a Network.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct UnknownNetworkError(pub(super) Network);
 

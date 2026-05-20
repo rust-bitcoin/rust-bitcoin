@@ -135,7 +135,7 @@ impl encoding::Decode for CommandString {
 /// Encoder for the [`CommandString`] type
 // We can't use the [`encoder_newtype!`] macro due to the lifetime conflicting
 // when constructing the encoder in `V1NetworkMessage`.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct CommandStringEncoder(encoding::ArrayEncoder<12>);
 
 impl CommandStringEncoder {
@@ -159,7 +159,7 @@ impl encoding::ExactSizeEncoder for CommandStringEncoder {
 }
 
 /// Decoder for [`CommandString`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct CommandStringDecoder {
     inner: encoding::ArrayDecoder<12>,
 }
@@ -252,7 +252,7 @@ impl encoding::Encode for V1MessageHeader {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`V1MessageHeader`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct V1MessageHeaderEncoder<'e>(
         encoding::Encoder4<
             crate::MagicEncoder<'e>,
@@ -270,7 +270,7 @@ type V1MessageHeaderInnerDecoder = encoding::Decoder4<
 >;
 
 /// The Decoder for `V1MessageHeader`
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct V1MessageHeaderDecoder(V1MessageHeaderInnerDecoder);
 
 impl encoding::Decoder for V1MessageHeaderDecoder {
@@ -314,7 +314,7 @@ pub struct InventoryPayload(pub Vec<message_blockdata::Inventory>);
 
 encoding::encoder_newtype! {
     /// The encoder for an [`InventoryPayload`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct InventoryPayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, message_blockdata::Inventory>>);
 }
 
@@ -335,7 +335,7 @@ impl encoding::Encode for InventoryPayload {
 type InventoryInnerDecoder = VecDecoder<message_blockdata::Inventory>;
 
 /// Decoder type for [`InventoryPayload`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct InventoryPayloadDecoder(InventoryInnerDecoder);
 
 impl encoding::Decoder for InventoryPayloadDecoder {
@@ -366,7 +366,7 @@ pub struct AddrPayload(pub Vec<AddrV1Message>);
 
 encoding::encoder_newtype! {
     /// The encoder for an [`AddrPayload`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct AddrPayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV1Message>>);
 }
 
@@ -384,7 +384,7 @@ impl encoding::Encode for AddrPayload {
 type AddrPayloadInnerDecoder = VecDecoder<AddrV1Message>;
 
 /// Decoder type for [`AddrPayload`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct AddrPayloadDecoder(AddrPayloadInnerDecoder);
 
 impl encoding::Decoder for AddrPayloadDecoder {
@@ -415,7 +415,7 @@ pub struct AddrV2Payload(pub Vec<AddrV2Message>);
 
 encoding::encoder_newtype! {
     /// The encoder for an [`AddrV2Payload`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct AddrV2PayloadEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, AddrV2Message>>);
 }
 
@@ -436,7 +436,7 @@ impl encoding::Encode for AddrV2Payload {
 type AddrV2PayloadInnerDecoder = VecDecoder<AddrV2Message>;
 
 /// Decoder type for [`AddrV2Payload`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct AddrV2PayloadDecoder(AddrV2PayloadInnerDecoder);
 
 impl encoding::Decoder for AddrV2PayloadDecoder {
@@ -488,7 +488,7 @@ impl From<FeeFilter> for FeeRate {
 
 encoding::encoder_newtype_exact! {
     /// Encoder for [`FeeFilter`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct FeeFilterEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
@@ -503,7 +503,7 @@ impl encoding::Encode for FeeFilter {
 }
 
 /// Decoder for [`FeeFilter`] type.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
 
 impl FeeFilterDecoder {
@@ -575,7 +575,7 @@ impl Ping {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Ping`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct PingEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
@@ -591,7 +591,7 @@ impl encoding::Encode for Ping {
 }
 
 /// The Decoder for [`Ping`]
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct PingDecoder(encoding::ArrayDecoder<8>);
 
 impl encoding::Decoder for PingDecoder {
@@ -631,7 +631,7 @@ impl Pong {
 
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Pong`] type.
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct PongEncoder<'e>(encoding::ArrayEncoder<8>);
 }
 
@@ -647,7 +647,7 @@ impl encoding::Encode for Pong {
 }
 
 /// The Decoder for [`Pong`]
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct PongDecoder(encoding::ArrayDecoder<8>);
 
 impl encoding::Decoder for PongDecoder {
@@ -883,7 +883,7 @@ impl encoding::Encode for NetworkMessage {
 }
 
 /// Encoder for [`NetworkMessage`]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum NetworkMessageEncoder<'e> {
     /// Encodes [`NetworkMessage::Version`]
     Version(<message_network::VersionMessage as encoding::Encode>::Encoder<'e>),
@@ -1074,7 +1074,7 @@ impl encoding::Encoder for NetworkMessageEncoder<'_> {
 
 encoding::encoder_newtype! {
     /// Encoder for [`V1NetworkMessage`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct V1NetworkMessageEncoder<'e>(
         encoding::Encoder2<
             encoding::Encoder4<
@@ -1104,7 +1104,7 @@ impl encoding::Encode for V1NetworkMessage {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum NetworkMessageDecoderInner {
     Version(message_network::VersionMessageDecoder),
     Addr(AddrPayloadDecoder),
@@ -1331,7 +1331,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct NetworkMessageDecoder {
     inner: NetworkMessageDecoderInner,
     payload_len: Option<usize>,
@@ -1389,7 +1389,7 @@ impl encoding::Decoder for NetworkMessageDecoder {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum DecoderState {
     ReadingHeader {
         header_decoder: V1MessageHeaderDecoder,
@@ -1415,7 +1415,7 @@ impl Default for DecoderState {
 /// This decoder implements a two-phase decoding process for Bitcoin V1 P2P messages.
 /// It first decodes the fixed-sized header. It then uses the payload length information
 /// to decode the dynamically sized network message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct V1NetworkMessageDecoder {
     state: DecoderState,
 }
@@ -1530,7 +1530,7 @@ impl encoding::Decode for V1NetworkMessage {
 ///
 /// V2 messages encode a 1-byte short ID for optimized message types (IDs 1-28),
 /// or a 0-byte flag followed by a 12-byte command string for non-optimized types.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum V2NetworkMessageEncoder<'e> {
     /// Optimized message with a 1-byte short ID followed by the payload.
     ShortId(Encoder2<ArrayEncoder<1>, NetworkMessageEncoder<'e>>),
@@ -1622,7 +1622,7 @@ fn v2_command_byte(payload: &NetworkMessage) -> (u8, Option<CommandString>) {
 
 /// Network encoded [`Header`](primitives::block::Header) with associated byte for the length of
 /// transactions that follow, which is currently always zero.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NetworkHeader {
     /// Block header.
     pub header: block::Header,
@@ -1637,7 +1637,7 @@ impl NetworkHeader {
 
 encoding::encoder_newtype_exact! {
     /// The encoder type for a [`NetworkHeader`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct NetworkHeaderEncoder<'e>(Encoder2<HeaderEncoder<'e>, ArrayEncoder<1>>);
 }
 
@@ -1655,7 +1655,7 @@ impl encoding::Encode for NetworkHeader {
 type NetworkHeaderInnerDecoder = Decoder2<HeaderDecoder, ArrayDecoder<1>>;
 
 /// The decoder type for a [`NetworkHeader`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct NetworkHeaderDecoder(NetworkHeaderInnerDecoder);
 
 impl encoding::Decoder for NetworkHeaderDecoder {
@@ -1682,7 +1682,7 @@ impl encoding::Decode for NetworkHeader {
 }
 
 /// A list of bitcoin block headers.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct HeadersMessage(pub Vec<NetworkHeader>);
 
 impl HeadersMessage {
@@ -1702,7 +1702,7 @@ impl HeadersMessage {
 
 encoding::encoder_newtype! {
     /// The encoder type for a [`HeadersMessage`].
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct HeadersMessageEncoder<'e>(Encoder2<CompactSizeEncoder, SliceEncoder<'e, NetworkHeader>>);
 }
 
@@ -1720,7 +1720,7 @@ impl encoding::Encode for HeadersMessage {
 type HeadersMessageInnerDecoder = VecDecoder<NetworkHeader>;
 
 /// The decoder type for a [`HeadersMessage`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct HeadersMessageDecoder(HeadersMessageInnerDecoder);
 
 impl encoding::Decoder for HeadersMessageDecoder {
@@ -1747,7 +1747,7 @@ impl encoding::Decode for HeadersMessage {
 }
 
 // State machine for decoding a [`V2NetworkMessage`].
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 #[allow(clippy::large_enum_variant)]
 enum V2NetworkMessageDecoderState {
     // Decoding the short-id byte, with the command string and payload decoder
@@ -1969,7 +1969,7 @@ pub mod error {
     /// Error decoding a [`CommandString`].
     ///
     /// [`CommandString`]: super::CommandString
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum CommandStringDecoderError {
         /// Unexpected end of data.
@@ -2000,7 +2000,7 @@ pub mod error {
     /// Error returned when a command string is invalid.
     ///
     /// This is currently returned for command strings longer than 12.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct CommandStringError {
         pub(super) cow: Cow<'static, str>,
@@ -2024,7 +2024,7 @@ pub mod error {
     /// An error consensus decoding a [`V1MessageHeader`].
     ///
     /// [`V1MessageHeader`]: super::V1MessageHeader
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct V1MessageHeaderDecoderError(
         pub(super) <super::V1MessageHeaderInnerDecoder as encoding::Decoder>::Error,
     );
@@ -2043,7 +2043,7 @@ pub mod error {
     /// An error decoding a [`InventoryPayload`].
     ///
     /// [`InventoryPayload`]: super::InventoryPayload
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct InventoryPayloadDecoderError(
         pub(super) <super::InventoryInnerDecoder as encoding::Decoder>::Error,
     );
@@ -2066,7 +2066,7 @@ pub mod error {
     /// An error decoding a [`AddrPayload`].
     ///
     /// [`AddrPayload`]: super::AddrPayload
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct AddrPayloadDecoderError(
         pub(super) <super::AddrPayloadInnerDecoder as encoding::Decoder>::Error,
     );
@@ -2089,7 +2089,7 @@ pub mod error {
     /// An error decoding a [`AddrV2Payload`].
     ///
     /// [`AddrV2Payload`]: super::AddrV2Payload
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct AddrV2PayloadDecoderError(
         pub(super) <super::AddrV2PayloadInnerDecoder as encoding::Decoder>::Error,
     );
@@ -2112,7 +2112,7 @@ pub mod error {
     /// An error consensus decoding a [`Ping`].
     ///
     /// [`Ping`]: super::Ping
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct PingDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PingDecoderError {
@@ -2133,7 +2133,7 @@ pub mod error {
     /// An error consensus decoding a [`Pong`].
     ///
     /// [`Pong`]: super::Pong
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct PongDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PongDecoderError {
@@ -2154,7 +2154,7 @@ pub mod error {
     /// An error consensus decoding a [`FeeFilter`].
     ///
     /// [`FeeFilter`]: super::FeeFilter
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum FeeFilterDecoderError {
         /// Unexpected end of data.
@@ -2192,10 +2192,10 @@ pub mod error {
     }
 
     /// Error decoding a raw network message.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct V1NetworkMessageDecoderError(pub(super) V1NetworkMessageDecoderErrorInner);
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub(super) enum V1NetworkMessageDecoderErrorInner {
         /// Error decoding the message header.
         Header(V1MessageHeaderDecoderError),
@@ -2247,7 +2247,7 @@ pub mod error {
     }
 
     /// Error decoding a V2 network message.
-    #[derive(Clone, Debug, Eq, PartialEq)]
+    #[derive(Debug, Eq, PartialEq)]
     pub enum V2NetworkMessageDecoderError {
         /// Error decoding the short ID byte.
         ShortId,
@@ -2293,7 +2293,7 @@ pub mod error {
     /// An error decoding a [`NetworkHeader`] message.
     ///
     /// [`NetworkHeader`]: super::NetworkHeader
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct NetworkHeaderDecoderError(
         pub(super) <super::NetworkHeaderInnerDecoder as encoding::Decoder>::Error,
     );
@@ -2316,7 +2316,7 @@ pub mod error {
     /// An error decoding a [`HeadersMessage`] message.
     ///
     /// [`HeadersMessage`]: super::HeadersMessage
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct HeadersMessageDecoderError(
         pub(super) <super::HeadersMessageInnerDecoder as encoding::Decoder>::Error,
     );
