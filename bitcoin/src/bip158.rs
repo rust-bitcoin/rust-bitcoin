@@ -215,10 +215,8 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
             .flat_map(|t| t.input.iter().map(|i| &i.previous_output))
             .map(script_for_coin)
         {
-            match script {
-                Ok(script) => self.add_element(script.borrow().as_bytes()),
-                Err(e) => return Err(e),
-            }
+            let script = script?;
+            self.add_element(script.borrow().as_bytes())
         }
         Ok(())
     }
