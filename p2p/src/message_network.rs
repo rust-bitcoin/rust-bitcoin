@@ -146,7 +146,7 @@ impl encoding::Decoder for VersionMessageDecoder {
     type Error = VersionMessageDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(VersionMessageDecoderError)
     }
 
@@ -232,7 +232,7 @@ impl encoding::Decoder for UserAgentDecoder {
     type Error = UserAgentDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(UserAgentDecoderError::Decoder)
     }
 
@@ -441,7 +441,7 @@ impl encoding::Decoder for RejectReasonDecoder {
     type Error = RejectReasonDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(RejectReasonDecoderError::Decoder)
     }
 
@@ -529,7 +529,7 @@ impl encoding::Decoder for RejectDecoder {
     type Error = RejectDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(RejectDecoderError::Decoder)
     }
 
@@ -614,7 +614,7 @@ impl encoding::Decoder for AlertDecoder {
     type Error = AlertDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(AlertDecoderError)
     }
 

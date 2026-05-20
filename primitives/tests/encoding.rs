@@ -13,7 +13,7 @@ use bitcoin_primitives::{
     absolute, Amount, Block, BlockHash, BlockHeader, BlockTime, BlockVersion, CompactTarget,
     ScriptPubKeyBuf, ScriptSigBuf, Sequence, Witness,
 };
-use encoding::{Decode as _, Decoder as _, Encode as _, Encoder as _};
+use encoding::{check_encode, Decode as _, Decoder as _};
 use hex::hex;
 
 const TC_TXID_BYTES: [u8; 32] = [
@@ -27,6 +27,16 @@ const TC_LOCK_TIME_ZERO_BYTES: [u8; 4] = [0, 0, 0, 0];
 const TC_ONE_SAT_BYTES: [u8; 8] = [1, 0, 0, 0, 0, 0, 0, 0];
 const TC_SEGWIT_MARKER_AND_FLAG: [u8; 2] = [0, 1];
 const TC_WITNESS_ELEM_LEN_AND_DATA: [u8; 4] = [3, 1, 2, 3];
+
+macro_rules! concat_slices {
+    ($($chunk:expr),*) => {
+        {
+            let mut result = Vec::new();
+            $(result.extend_from_slice($chunk);)*
+            result
+        }
+    }
+}
 
 fn tc_out_point() -> OutPoint {
     let s = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1";
@@ -77,55 +87,19 @@ fn transaction_encode_decode_roundtrip() {
 #[test]
 fn encode_out_point() {
     let out_point = tc_out_point();
-    let mut encoder = out_point.encoder();
-
-    // The txid
-    assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
-    assert!(encoder.advance());
-
-    // The vout
-    assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
-    assert!(!encoder.advance());
+    check_encode(&out_point, &concat_slices!(&TC_TXID_BYTES, &TC_VOUT_BYTES));
 }
 
 #[test]
 fn encode_tx_out() {
     let out = tx_out();
-    let mut encoder = out.encoder();
-
-    // The amount.
-    assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
-    assert!(encoder.advance());
-
-    // The script pubkey length prefix.
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-
-    // The script pubkey data.
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(!encoder.advance());
+    check_encode(&out, &concat_slices!(&TC_ONE_SAT_BYTES, &[3u8], &TC_SCRIPT_BYTES));
 }
 
 #[test]
 fn encode_tx_in() {
     let txin = segwit_tx_in();
-    let mut encoder = txin.encoder();
-
-    // The outpoint (same as tested above).
-    assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
-    assert!(encoder.advance());
-
-    // The script sig
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(encoder.advance());
-
-    // The sequence
-    assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
-    assert!(!encoder.advance());
+    check_encode(&txin, &concat_slices!(&TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES));
 }
 
 #[test]
@@ -137,49 +111,7 @@ fn encode_segwit_transaction() {
         outputs: vec![tx_out()],
     };
 
-    let mut encoder = tx.encoder();
-
-    // The version
-    assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
-    assert!(encoder.advance());
-
-    // The segwit marker and flag
-    assert_eq!(encoder.current_chunk(), &TC_SEGWIT_MARKER_AND_FLAG[..]);
-    assert!(encoder.advance());
-
-    // The input (same as tested above) but with vec length prefix.
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
-    assert!(encoder.advance());
-
-    // The output (same as tested above) but with vec length prefix.
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(encoder.advance());
-
-    // The witness
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_WITNESS_ELEM_LEN_AND_DATA[..]);
-    assert!(encoder.advance());
-
-    // The lock time.
-    assert_eq!(encoder.current_chunk(), &TC_LOCK_TIME_ZERO_BYTES[..]);
-    assert!(!encoder.advance());
+    check_encode(&tx, &concat_slices!(&[2u8, 0, 0, 0], &TC_SEGWIT_MARKER_AND_FLAG, &[1u8], &TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES, &[1u8], &TC_ONE_SAT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &[1u8], &TC_WITNESS_ELEM_LEN_AND_DATA, &TC_LOCK_TIME_ZERO_BYTES));
 }
 
 #[test]
@@ -194,45 +126,7 @@ fn encode_non_segwit_transaction() {
         outputs: vec![tx_out()],
     };
 
-    let mut encoder = tx.encoder();
-
-    // The version
-    assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
-    assert!(encoder.advance());
-
-    // Advance past the optional segwit bytes encoder.
-    assert!(encoder.advance());
-
-    // The input (same as tested above) but with vec length prefix.
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
-    assert!(encoder.advance());
-
-    // The output (same as tested above) but with vec length prefix.
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(encoder.advance());
-
-    // Advance past the optional witnesses encoder.
-    assert!(encoder.advance());
-
-    // The lock time.
-    assert_eq!(encoder.current_chunk(), &TC_LOCK_TIME_ZERO_BYTES[..]);
-    assert!(!encoder.advance());
+    check_encode(&tx, &concat_slices!(&[2u8, 0, 0, 0], &[1u8], &TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES, &[1u8], &TC_ONE_SAT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_LOCK_TIME_ZERO_BYTES));
 }
 
 #[test]
@@ -256,83 +150,29 @@ fn encode_block() {
     };
 
     let block = Block::new_unchecked(header, vec![tx]);
-    let mut encoder = block.encoder();
-
-    // The block header, 6 encoders, 1 chunk per encoder.
-
-    // The block version.
-    assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
-    assert!(encoder.advance());
-    // The previous block's blockhash.
-    assert_eq!(
-        encoder.current_chunk(),
+    check_encode(&block, &concat_slices!(
+        // The block version.
+        &[2u8, 0, 0, 0],
+        // The previous block's blockhash.
         &[
             171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
             171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
-        ][..]
-    );
-    assert!(encoder.advance());
-    // The merkle root hash.
-    assert_eq!(
-        encoder.current_chunk(),
+        ],
         &[
             205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
             205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
-        ][..]
-    );
-    assert!(encoder.advance());
-    // The block time.
-    assert_eq!(encoder.current_chunk(), &[80, 195, 137, 98][..]);
-    assert!(encoder.advance());
-    // The target (bits).
-    assert_eq!(encoder.current_chunk(), &[239, 190, 0, 0][..]);
-    assert!(encoder.advance());
-    // The nonce.
-    assert_eq!(encoder.current_chunk(), &[254, 202, 0, 0][..]);
-    assert!(encoder.advance());
-
-    // The transaction list length prefix.
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-
-    // The transaction (same as tested above).
-
-    // The version
-    assert_eq!(encoder.current_chunk(), &[2u8, 0, 0, 0][..]);
-    assert!(encoder.advance());
-    // The segwit marker and flag
-    assert_eq!(encoder.current_chunk(), &TC_SEGWIT_MARKER_AND_FLAG[..]);
-    assert!(encoder.advance());
-    // The input (same as tested above) but with vec length prefix.
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_TXID_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_VOUT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SEQ_MAX_BYTES[..]);
-    assert!(encoder.advance());
-    // The output (same as tested above) but with vec length prefix.
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_ONE_SAT_BYTES[..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &[3u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_SCRIPT_BYTES[..]);
-    assert!(encoder.advance());
-    // The witness
-    assert_eq!(encoder.current_chunk(), &[1u8][..]);
-    assert!(encoder.advance());
-    assert_eq!(encoder.current_chunk(), &TC_WITNESS_ELEM_LEN_AND_DATA[..]);
-    assert!(encoder.advance());
-    // The lock time.
-    assert_eq!(encoder.current_chunk(), &TC_LOCK_TIME_ZERO_BYTES[..]);
-    assert!(!encoder.advance());
+        ],
+        // The block time.
+        &[80, 195, 137, 98],
+        // The target (bits).
+        &[239, 190, 0, 0],
+        // The nonce.
+        &[254, 202, 0, 0],
+        // The transaction list length prefix.
+        &[1u8],
+        // The transaction (same as tested above).
+        &[2u8, 0, 0, 0], &TC_SEGWIT_MARKER_AND_FLAG, &[1u8], &TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES, &[1u8], &TC_ONE_SAT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &[1u8], &TC_WITNESS_ELEM_LEN_AND_DATA, &TC_LOCK_TIME_ZERO_BYTES
+    ));
 }
 
 #[test]

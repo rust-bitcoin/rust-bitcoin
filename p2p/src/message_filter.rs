@@ -86,7 +86,7 @@ impl encoding::Decoder for FilterHashDecoder {
     type Error = FilterHashDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(FilterHashDecoderError)
     }
 
@@ -113,7 +113,7 @@ impl encoding::Decoder for FilterHeaderDecoder {
     type Error = FilterHeaderDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(FilterHeaderDecoderError)
     }
 
@@ -185,7 +185,7 @@ impl encoding::Decoder for GetCFiltersDecoder {
     type Error = GetCFiltersDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(GetCFiltersDecoderError)
     }
 
@@ -255,7 +255,7 @@ impl encoding::Decoder for CFilterDecoder {
     type Error = CFilterDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(CFilterDecoderError)
     }
 
@@ -313,7 +313,7 @@ impl encoding::Decoder for GetCFHeadersDecoder {
     type Error = GetCFHeadersDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(GetCFHeadersDecoderError)
     }
 
@@ -385,7 +385,7 @@ impl encoding::Decoder for CFHeadersDecoder {
     type Error = CFHeadersDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(CFHeadersDecoderError)
     }
 
@@ -446,7 +446,7 @@ impl encoding::Decoder for GetCFCheckptDecoder {
     type Error = GetCFCheckptDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(GetCFCheckptDecoderError)
     }
 
@@ -516,7 +516,7 @@ impl encoding::Decoder for CFCheckptDecoder {
     type Error = CFCheckptDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(CFCheckptDecoderError)
     }
 

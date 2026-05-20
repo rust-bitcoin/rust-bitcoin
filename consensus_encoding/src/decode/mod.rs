@@ -16,7 +16,7 @@ use crate::{DecodeError, UnconsumedError};
 /// # Examples
 ///
 /// ```
-/// use bitcoin_consensus_encoding::{decode_from_slice, Decode, Decoder, ArrayDecoder, UnexpectedEofError};
+/// use bitcoin_consensus_encoding::{decode_from_slice, Decode, Decoder, DecoderStatus, ArrayDecoder, UnexpectedEofError};
 ///
 /// struct Foo([u8; 4]);
 ///
@@ -27,7 +27,7 @@ use crate::{DecodeError, UnconsumedError};
 ///     type Output = Foo;
 ///     type Error = UnexpectedEofError;
 ///
-///     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+///     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
 ///         self.0.push_bytes(bytes)
 ///     }
 ///     fn end(self) -> Result<Self::Output, Self::Error> { self.0.end().map(Foo) }
@@ -58,23 +58,27 @@ pub trait Decoder: Sized {
 
     /// Pushes bytes into the decoder, consuming as much as possible.
     ///
-    /// The slice reference will be advanced to point to the unconsumed portion. Returns `Ok(true)`
-    /// if more bytes are needed to complete decoding, `Ok(false)` if the decoder is ready to
-    /// finalize with [`Self::end`], or `Err(error)` if parsing failed.
+    /// The slice reference will be advanced to point to the unconsumed portion. Returns
+    /// `Ok(DecoderStatus::NeedsMore)` if more bytes are needed to complete decoding,
+    /// `Ok(DecoderStatus::Ready)` if the decoder is ready to finalize with [`Self::end`], or
+    /// `Err(error)` if parsing failed.
+    ///
+    /// Once the decoder returns `Ok(DecoderStatus::Ready)`, subsequent calls to this method will
+    /// continue to return `Ok(DecoderStatus::Ready)` without consuming additional bytes.
     ///
     /// # Errors
     ///
     /// Returns an error if the provided bytes are invalid or malformed according to the decoder's
     /// validation rules. Insufficient data (needing more bytes) is *not* an error for this method,
-    /// the decoder will simply consume what it can and return `true` to indicate more data is
-    /// needed.
+    /// the decoder will simply consume what it can and return `DecoderStatus::NeedsMore` to
+    /// indicate more data is needed.
     ///
     /// # Panics
     ///
     /// May panic if called after a previous call to [`Self::push_bytes`] errored.
     #[must_use = "must check result to avoid panics on subsequent calls"]
     #[track_caller]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error>;
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error>;
 
     /// Completes the decoding process and return the final result.
     ///
@@ -98,6 +102,32 @@ pub trait Decoder: Sized {
     /// by [`decode_from_read_unbuffered`] to optimize read sizes, avoiding both inefficient
     /// under-reads and unnecessary over-reads.
     fn read_limit(&self) -> usize;
+}
+
+/// Indicates whether a decoder needs more data or is ready to finalize.
+///
+/// This is returned from the [`Decoder::push_bytes`] method to indicate whether the decoder
+/// should continue accumulating data or is ready to produce the decoded value with [`Decoder::end`].
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DecoderStatus {
+    /// The decoder needs more data to complete decoding.
+    ///
+    /// Continue pushing byte slices with [`Decoder::push_bytes`] until this status changes to
+    /// [`Ready`](DecoderStatus::Ready).
+    NeedsMore,
+
+    /// The decoder has accumulated sufficient data and is ready to finalize.
+    ///
+    /// Call [`Decoder::end`] to complete the decoding process and obtain the final result.
+    Ready,
+}
+
+impl DecoderStatus {
+    /// Returns `true` if the decoder needs more data to continue.
+    pub fn needs_more(&self) -> bool { matches!(self, Self::NeedsMore) }
+
+    /// Returns `true` if ready to produce decoded value with [`Decoder::end`].
+    pub fn is_ready(&self) -> bool { matches!(self, Self::Ready) }
 }
 
 /// Decodes an object from a byte slice.
@@ -139,7 +169,7 @@ where
     let mut decoder = T::decoder();
 
     while !bytes.is_empty() {
-        if !decoder.push_bytes(bytes)? {
+        if decoder.push_bytes(bytes)?.is_ready() {
             break;
         }
     }
@@ -181,11 +211,11 @@ where
         }
 
         let original_len = buffer.len();
-        let need_more = decoder.push_bytes(&mut buffer).map_err(ReadError::Decode)?;
+        let status = decoder.push_bytes(&mut buffer).map_err(ReadError::Decode)?;
         let consumed = original_len - buffer.len();
         reader.consume(consumed);
 
-        if !need_more {
+        if status.is_ready() {
             return decoder.end().map_err(ReadError::Decode);
         }
     }
@@ -255,9 +285,10 @@ where
                 return decoder.end().map_err(ReadError::Decode);
             }
             Ok(bytes_read) => {
-                if !decoder
+                if decoder
                     .push_bytes(&mut &clamped_buffer[..bytes_read])
                     .map_err(ReadError::Decode)?
+                    .is_ready()
                 {
                     return decoder.end().map_err(ReadError::Decode);
                 }

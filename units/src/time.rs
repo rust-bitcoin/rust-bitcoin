@@ -241,7 +241,7 @@ mod tests {
         let bytes = [0xb0, 0x52, 0x39]; // 3 bytes is an EOF error
 
         let mut decoder = BlockTimeDecoder::default();
-        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap());
+        assert!(decoder.push_bytes(&mut bytes.as_slice()).unwrap().needs_more());
 
         let error = decoder.end().unwrap_err();
         assert!(matches!(error, BlockTimeDecoderError(UnexpectedEofError { .. })));

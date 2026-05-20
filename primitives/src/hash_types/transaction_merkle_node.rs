@@ -125,7 +125,7 @@ mod tests {
 
         let mut decoder = TxMerkleNodeDecoder::new();
         let mut bytes = &[0u8; NODE_LEN - 1][..];
-        assert!(decoder.push_bytes(&mut bytes).unwrap());
+        assert!(decoder.push_bytes(&mut bytes).unwrap().needs_more());
 
         let err = decoder.end().unwrap_err();
         assert!(!err.to_string().is_empty());

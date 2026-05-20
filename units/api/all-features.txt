@@ -615,7 +615,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::locktime::ab
 pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Error = bitcoin_units::locktime::absolute::error::LockTimeDecoderError
 pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Output = bitcoin_units::locktime::absolute::LockTime
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::read_limit(&self) -> usize
 impl core::clone::Clone for bitcoin_units::locktime::absolute::LockTimeDecoder
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone(&self) -> bitcoin_units::locktime::absolute::LockTimeDecoder
@@ -700,7 +700,7 @@ impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::error::Loc
 pub fn bitcoin_units::locktime::absolute::error::LockTimeDecoderError::from(t: T) -> T
 pub struct bitcoin_units::absolute::LockTimeEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
-pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bool
+pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::current_chunk(&self) -> &[u8]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::len(&self) -> usize
@@ -1956,7 +1956,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::amount::Amou
 pub type bitcoin_units::amount::AmountDecoder::Error = bitcoin_units::amount::error::AmountDecoderError
 pub type bitcoin_units::amount::AmountDecoder::Output = bitcoin_units::Amount
 pub fn bitcoin_units::amount::AmountDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::amount::AmountDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_units::amount::AmountDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::amount::AmountDecoder::read_limit(&self) -> usize
 impl core::clone::Clone for bitcoin_units::amount::AmountDecoder
 pub fn bitcoin_units::amount::AmountDecoder::clone(&self) -> bitcoin_units::amount::AmountDecoder
@@ -2041,7 +2041,7 @@ impl<T> core::convert::From<T> for bitcoin_units::amount::error::AmountDecoderEr
 pub fn bitcoin_units::amount::error::AmountDecoderError::from(t: T) -> T
 pub struct bitcoin_units::amount::AmountEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder<'e>
-pub fn bitcoin_units::amount::AmountEncoder<'e>::advance(&mut self) -> bool
+pub fn bitcoin_units::amount::AmountEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
 pub fn bitcoin_units::amount::AmountEncoder<'e>::current_chunk(&self) -> &[u8]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::amount::AmountEncoder<'e>
 pub fn bitcoin_units::amount::AmountEncoder<'e>::len(&self) -> usize
@@ -3108,7 +3108,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::block::Block
 pub type bitcoin_units::block::BlockHeightDecoder::Error = bitcoin_units::block::error::BlockHeightDecoderError
 pub type bitcoin_units::block::BlockHeightDecoder::Output = bitcoin_units::block::BlockHeight
 pub fn bitcoin_units::block::BlockHeightDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::block::BlockHeightDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_units::block::BlockHeightDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::block::BlockHeightDecoder::read_limit(&self) -> usize
 impl core::clone::Clone for bitcoin_units::block::BlockHeightDecoder
 pub fn bitcoin_units::block::BlockHeightDecoder::clone(&self) -> bitcoin_units::block::BlockHeightDecoder
@@ -3193,7 +3193,7 @@ impl<T> core::convert::From<T> for bitcoin_units::block::error::BlockHeightDecod
 pub fn bitcoin_units::block::error::BlockHeightDecoderError::from(t: T) -> T
 pub struct bitcoin_units::block::BlockHeightEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::block::BlockHeightEncoder<'e>
-pub fn bitcoin_units::block::BlockHeightEncoder<'e>::advance(&mut self) -> bool
+pub fn bitcoin_units::block::BlockHeightEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
 pub fn bitcoin_units::block::BlockHeightEncoder<'e>::current_chunk(&self) -> &[u8]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::block::BlockHeightEncoder<'e>
 pub fn bitcoin_units::block::BlockHeightEncoder<'e>::len(&self) -> usize
@@ -4606,7 +4606,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::locktime::ab
 pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Error = bitcoin_units::locktime::absolute::error::LockTimeDecoderError
 pub type bitcoin_units::locktime::absolute::LockTimeDecoder::Output = bitcoin_units::locktime::absolute::LockTime
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::read_limit(&self) -> usize
 impl core::clone::Clone for bitcoin_units::locktime::absolute::LockTimeDecoder
 pub fn bitcoin_units::locktime::absolute::LockTimeDecoder::clone(&self) -> bitcoin_units::locktime::absolute::LockTimeDecoder
@@ -4691,7 +4691,7 @@ impl<T> core::convert::From<T> for bitcoin_units::locktime::absolute::error::Loc
 pub fn bitcoin_units::locktime::absolute::error::LockTimeDecoderError::from(t: T) -> T
 pub struct bitcoin_units::locktime::absolute::LockTimeEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
-pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bool
+pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::current_chunk(&self) -> &[u8]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::locktime::absolute::LockTimeEncoder<'e>
 pub fn bitcoin_units::locktime::absolute::LockTimeEncoder<'e>::len(&self) -> usize
@@ -6574,7 +6574,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::pow::Compact
 pub type bitcoin_units::pow::CompactTargetDecoder::Error = bitcoin_units::pow::error::CompactTargetDecoderError
 pub type bitcoin_units::pow::CompactTargetDecoder::Output = bitcoin_units::pow::CompactTarget
 pub fn bitcoin_units::pow::CompactTargetDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::pow::CompactTargetDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_units::pow::CompactTargetDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::pow::CompactTargetDecoder::read_limit(&self) -> usize
 impl core::clone::Clone for bitcoin_units::pow::CompactTargetDecoder
 pub fn bitcoin_units::pow::CompactTargetDecoder::clone(&self) -> bitcoin_units::pow::CompactTargetDecoder
@@ -6659,7 +6659,7 @@ impl<T> core::convert::From<T> for bitcoin_units::pow::error::CompactTargetDecod
 pub fn bitcoin_units::pow::error::CompactTargetDecoderError::from(t: T) -> T
 pub struct bitcoin_units::pow::CompactTargetEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::pow::CompactTargetEncoder<'e>
-pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::advance(&mut self) -> bool
+pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
 pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::current_chunk(&self) -> &[u8]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::pow::CompactTargetEncoder<'e>
 pub fn bitcoin_units::pow::CompactTargetEncoder<'e>::len(&self) -> usize
@@ -8841,7 +8841,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::sequence::Se
 pub type bitcoin_units::sequence::SequenceDecoder::Error = bitcoin_units::sequence::error::SequenceDecoderError
 pub type bitcoin_units::sequence::SequenceDecoder::Output = bitcoin_units::sequence::Sequence
 pub fn bitcoin_units::sequence::SequenceDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::sequence::SequenceDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_units::sequence::SequenceDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::sequence::SequenceDecoder::read_limit(&self) -> usize
 impl core::clone::Clone for bitcoin_units::sequence::SequenceDecoder
 pub fn bitcoin_units::sequence::SequenceDecoder::clone(&self) -> bitcoin_units::sequence::SequenceDecoder
@@ -8926,7 +8926,7 @@ impl<T> core::convert::From<T> for bitcoin_units::sequence::error::SequenceDecod
 pub fn bitcoin_units::sequence::error::SequenceDecoderError::from(t: T) -> T
 pub struct bitcoin_units::sequence::SequenceEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::sequence::SequenceEncoder<'e>
-pub fn bitcoin_units::sequence::SequenceEncoder<'e>::advance(&mut self) -> bool
+pub fn bitcoin_units::sequence::SequenceEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
 pub fn bitcoin_units::sequence::SequenceEncoder<'e>::current_chunk(&self) -> &[u8]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::sequence::SequenceEncoder<'e>
 pub fn bitcoin_units::sequence::SequenceEncoder<'e>::len(&self) -> usize
@@ -9109,7 +9109,7 @@ impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::time::BlockT
 pub type bitcoin_units::time::BlockTimeDecoder::Error = bitcoin_units::time::error::BlockTimeDecoderError
 pub type bitcoin_units::time::BlockTimeDecoder::Output = bitcoin_units::BlockTime
 pub fn bitcoin_units::time::BlockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
-pub fn bitcoin_units::time::BlockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bool, Self::Error>
+pub fn bitcoin_units::time::BlockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
 pub fn bitcoin_units::time::BlockTimeDecoder::read_limit(&self) -> usize
 impl core::clone::Clone for bitcoin_units::time::BlockTimeDecoder
 pub fn bitcoin_units::time::BlockTimeDecoder::clone(&self) -> bitcoin_units::time::BlockTimeDecoder
@@ -9194,7 +9194,7 @@ impl<T> core::convert::From<T> for bitcoin_units::time::error::BlockTimeDecoderE
 pub fn bitcoin_units::time::error::BlockTimeDecoderError::from(t: T) -> T
 pub struct bitcoin_units::time::BlockTimeEncoder<'e>(_, _)
 impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::time::BlockTimeEncoder<'e>
-pub fn bitcoin_units::time::BlockTimeEncoder<'e>::advance(&mut self) -> bool
+pub fn bitcoin_units::time::BlockTimeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
 pub fn bitcoin_units::time::BlockTimeEncoder<'e>::current_chunk(&self) -> &[u8]
 impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::time::BlockTimeEncoder<'e>
 pub fn bitcoin_units::time::BlockTimeEncoder<'e>::len(&self) -> usize

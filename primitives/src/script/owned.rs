@@ -5,7 +5,7 @@ use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use encoding::ByteVecDecoder;
+use encoding::{ByteVecDecoder, DecoderStatus};
 
 #[cfg(feature = "hex")]
 use super::error::FromHexError;
@@ -198,7 +198,7 @@ impl<T> encoding::Decoder for ScriptBufDecoder<T> {
     type Error = ScriptBufDecoderError;
 
     #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<bool, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes).map_err(ScriptBufDecoderError)
     }
 
