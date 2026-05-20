@@ -272,6 +272,70 @@ macro_rules! impl_hex_string_traits {
             }
         }
 
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::TryFrom<&str> for $ty<$($gen),*> {
+            type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+            #[inline]
+            fn try_from(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                <Self as $crate::_export::_core::str::FromStr>::from_str(s)
+            }
+        }
+
+        internals::_emit_alloc! {
+            impl<$($gen: $gent),*> $crate::_export::_core::convert::TryFrom<alloc::string::String>
+                for $ty<$($gen),*>
+            {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::string::String,
+                ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                    <Self as $crate::_export::_core::str::FromStr>::from_str(&s)
+                }
+            }
+
+            impl<$($gen: $gent),*> $crate::_export::_core::convert::TryFrom<alloc::boxed::Box<str>>
+                for $ty<$($gen),*>
+            {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::boxed::Box<str>,
+                ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                    <Self as $crate::_export::_core::str::FromStr>::from_str(&s)
+                }
+            }
+
+            impl<$($gen: $gent),*> $crate::_export::_core::convert::TryFrom<alloc::rc::Rc<str>>
+                for $ty<$($gen),*>
+            {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::rc::Rc<str>,
+                ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                    <Self as $crate::_export::_core::str::FromStr>::from_str(&s)
+                }
+            }
+
+            #[cfg(target_has_atomic = "ptr")]
+            impl<$($gen: $gent),*> $crate::_export::_core::convert::TryFrom<alloc::sync::Arc<str>>
+                for $ty<$($gen),*>
+            {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::sync::Arc<str>,
+                ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                    <Self as $crate::_export::_core::str::FromStr>::from_str(&s)
+                }
+            }
+        }
+
         /// Helper to prevent duplicating code for Upper/LowerHex.
         macro_rules! impl_case_hex {
             ($case:expr) => {

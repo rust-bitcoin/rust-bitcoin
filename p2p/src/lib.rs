@@ -42,6 +42,8 @@ use core::borrow::{Borrow, BorrowMut};
 use core::str::FromStr;
 use core::{fmt, ops};
 
+include!("../include/tryfrom_str.rs"); // impl_tryfrom_str_family! macro
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayDecoder, ArrayEncoder};
@@ -391,6 +393,7 @@ impl FromStr for Magic {
         }
     }
 }
+crate::impl_tryfrom_str_family!(Magic);
 
 impl TryFrom<Network> for Magic {
     type Error = UnknownNetworkError;

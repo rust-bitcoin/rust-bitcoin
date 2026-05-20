@@ -88,6 +88,8 @@ macro_rules! do_impl {
                 U256::from_str(s).map($ty).map_err($err_ty)
             }
         }
+
+        crate::impl_tryfrom_str_family!($ty);
     };
 }
 

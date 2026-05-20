@@ -232,6 +232,37 @@ fn midstate_error_resume_hashing() {
     assert_eq!(sha256::Hash::from_engine(engine1), sha256::Hash::from_engine(engine2));
 }
 
+#[test]
+#[cfg(feature = "hex")]
+fn try_from_str_family_agrees_with_from_str() {
+    use core::str::FromStr;
+
+    const GOOD: &str = "ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c";
+    const BAD: &str = "not_a_hash";
+
+    let want = sha256::Hash::from_str(GOOD).unwrap();
+    assert_eq!(sha256::Hash::try_from(GOOD).unwrap(), want);
+    assert!(sha256::Hash::try_from(BAD).is_err());
+
+    #[cfg(feature = "alloc")]
+    {
+        use alloc::borrow::ToOwned;
+        use alloc::boxed::Box;
+        use alloc::rc::Rc;
+        use alloc::string::String;
+        #[cfg(target_has_atomic = "ptr")]
+        use alloc::sync::Arc;
+
+        assert_eq!(sha256::Hash::try_from(String::from(GOOD)).unwrap(), want);
+        assert_eq!(sha256::Hash::try_from(Box::<str>::from(GOOD)).unwrap(), want);
+        assert_eq!(sha256::Hash::try_from(Rc::<str>::from(GOOD)).unwrap(), want);
+        #[cfg(target_has_atomic = "ptr")]
+        assert_eq!(sha256::Hash::try_from(Arc::<str>::from(GOOD)).unwrap(), want);
+
+        assert!(sha256::Hash::try_from(BAD.to_owned()).is_err());
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 mod wasm_tests {
     use super::*;

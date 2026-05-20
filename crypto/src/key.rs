@@ -430,6 +430,7 @@ impl FromStr for XOnlyPublicKey {
             .map_err(|_| ParseXOnlyPublicKeyError::InvalidXCoordinate)
     }
 }
+crate::impl_tryfrom_str_family!(XOnlyPublicKey);
 
 impl From<secp256k1::XOnlyPublicKey> for XOnlyPublicKey {
     #[inline]
@@ -565,6 +566,7 @@ impl FromStr for Keypair {
         secp256k1::Keypair::from_str(s).map(Self::from).map_err(ParseKeypairError)
     }
 }
+crate::impl_tryfrom_str_family!(Keypair);
 
 impl From<secp256k1::Keypair> for Keypair {
     #[inline]
@@ -806,6 +808,7 @@ impl FromStr for LegacyPublicKey {
         }
     }
 }
+crate::impl_tryfrom_str_family!(LegacyPublicKey);
 
 impl From<secp256k1::PublicKey> for LegacyPublicKey {
     #[inline]
@@ -946,6 +949,7 @@ impl FromStr for FullPublicKey {
             .map_err(ParseFullPublicKeyError::Secp256k1)
     }
 }
+crate::impl_tryfrom_str_family!(FullPublicKey);
 
 impl TryFrom<LegacyPublicKey> for FullPublicKey {
     type Error = UncompressedPublicKeyError;
@@ -1203,6 +1207,8 @@ impl FromStr for WifKey {
     #[inline]
     fn from_str(s: &str) -> Result<Self, FromWifError> { Self::from_wif(s) }
 }
+#[cfg(feature = "alloc")]
+crate::impl_tryfrom_str_family!(WifKey);
 
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]

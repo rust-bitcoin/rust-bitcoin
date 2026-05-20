@@ -86,3 +86,5 @@ pub type BlockInterval = BlockHeightInterval;
 // decoder_newtype! macro
 #[cfg(feature = "encoding")]
 include!("../include/decoder_newtype.rs");
+
+include!("../include/tryfrom_str.rs"); // impl_tryfrom_str_family! macro

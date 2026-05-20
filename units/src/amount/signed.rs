@@ -593,6 +593,7 @@ impl FromStr for SignedAmount {
         }
     }
 }
+crate::impl_tryfrom_str_family!(SignedAmount);
 
 impl From<Amount> for SignedAmount {
     #[inline]

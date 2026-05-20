@@ -186,6 +186,7 @@ impl FromStr for Denomination {
         form.ok_or_else(|| E::Unknown(UnknownDenominationError(s.into())))
     }
 }
+crate::impl_tryfrom_str_family!(Denomination);
 
 /// Returns `Some(position)` if the precision is not supported.
 ///

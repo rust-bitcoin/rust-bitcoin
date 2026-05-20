@@ -603,6 +603,7 @@ impl FromStr for Amount {
         }
     }
 }
+crate::impl_tryfrom_str_family!(Amount);
 
 impl TryFrom<SignedAmount> for Amount {
     type Error = OutOfRangeError;

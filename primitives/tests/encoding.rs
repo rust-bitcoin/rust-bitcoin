@@ -99,7 +99,16 @@ fn encode_tx_out() {
 #[test]
 fn encode_tx_in() {
     let txin = segwit_tx_in();
-    check_encode(&txin, &concat_slices!(&TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES));
+    check_encode(
+        &txin,
+        &concat_slices!(
+            &TC_TXID_BYTES,
+            &TC_VOUT_BYTES,
+            &[3u8],
+            &TC_SCRIPT_BYTES,
+            &TC_SEQ_MAX_BYTES
+        ),
+    );
 }
 
 #[test]
@@ -111,7 +120,26 @@ fn encode_segwit_transaction() {
         outputs: vec![tx_out()],
     };
 
-    check_encode(&tx, &concat_slices!(&[2u8, 0, 0, 0], &TC_SEGWIT_MARKER_AND_FLAG, &[1u8], &TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES, &[1u8], &TC_ONE_SAT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &[1u8], &TC_WITNESS_ELEM_LEN_AND_DATA, &TC_LOCK_TIME_ZERO_BYTES));
+    check_encode(
+        &tx,
+        &concat_slices!(
+            &[2u8, 0, 0, 0],
+            &TC_SEGWIT_MARKER_AND_FLAG,
+            &[1u8],
+            &TC_TXID_BYTES,
+            &TC_VOUT_BYTES,
+            &[3u8],
+            &TC_SCRIPT_BYTES,
+            &TC_SEQ_MAX_BYTES,
+            &[1u8],
+            &TC_ONE_SAT_BYTES,
+            &[3u8],
+            &TC_SCRIPT_BYTES,
+            &[1u8],
+            &TC_WITNESS_ELEM_LEN_AND_DATA,
+            &TC_LOCK_TIME_ZERO_BYTES
+        ),
+    );
 }
 
 #[test]
@@ -126,7 +154,23 @@ fn encode_non_segwit_transaction() {
         outputs: vec![tx_out()],
     };
 
-    check_encode(&tx, &concat_slices!(&[2u8, 0, 0, 0], &[1u8], &TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES, &[1u8], &TC_ONE_SAT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_LOCK_TIME_ZERO_BYTES));
+    check_encode(
+        &tx,
+        &concat_slices!(
+            &[2u8, 0, 0, 0],
+            &[1u8],
+            &TC_TXID_BYTES,
+            &TC_VOUT_BYTES,
+            &[3u8],
+            &TC_SCRIPT_BYTES,
+            &TC_SEQ_MAX_BYTES,
+            &[1u8],
+            &TC_ONE_SAT_BYTES,
+            &[3u8],
+            &TC_SCRIPT_BYTES,
+            &TC_LOCK_TIME_ZERO_BYTES
+        ),
+    );
 }
 
 #[test]
@@ -150,29 +194,46 @@ fn encode_block() {
     };
 
     let block = Block::new_unchecked(header, vec![tx]);
-    check_encode(&block, &concat_slices!(
-        // The block version.
-        &[2u8, 0, 0, 0],
-        // The previous block's blockhash.
-        &[
-            171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
-            171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
-        ],
-        &[
-            205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
-            205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
-        ],
-        // The block time.
-        &[80, 195, 137, 98],
-        // The target (bits).
-        &[239, 190, 0, 0],
-        // The nonce.
-        &[254, 202, 0, 0],
-        // The transaction list length prefix.
-        &[1u8],
-        // The transaction (same as tested above).
-        &[2u8, 0, 0, 0], &TC_SEGWIT_MARKER_AND_FLAG, &[1u8], &TC_TXID_BYTES, &TC_VOUT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &TC_SEQ_MAX_BYTES, &[1u8], &TC_ONE_SAT_BYTES, &[3u8], &TC_SCRIPT_BYTES, &[1u8], &TC_WITNESS_ELEM_LEN_AND_DATA, &TC_LOCK_TIME_ZERO_BYTES
-    ));
+    check_encode(
+        &block,
+        &concat_slices!(
+            // The block version.
+            &[2u8, 0, 0, 0],
+            // The previous block's blockhash.
+            &[
+                171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171,
+                171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171, 171
+            ],
+            &[
+                205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205,
+                205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205, 205
+            ],
+            // The block time.
+            &[80, 195, 137, 98],
+            // The target (bits).
+            &[239, 190, 0, 0],
+            // The nonce.
+            &[254, 202, 0, 0],
+            // The transaction list length prefix.
+            &[1u8],
+            // The transaction (same as tested above).
+            &[2u8, 0, 0, 0],
+            &TC_SEGWIT_MARKER_AND_FLAG,
+            &[1u8],
+            &TC_TXID_BYTES,
+            &TC_VOUT_BYTES,
+            &[3u8],
+            &TC_SCRIPT_BYTES,
+            &TC_SEQ_MAX_BYTES,
+            &[1u8],
+            &TC_ONE_SAT_BYTES,
+            &[3u8],
+            &TC_SCRIPT_BYTES,
+            &[1u8],
+            &TC_WITNESS_ELEM_LEN_AND_DATA,
+            &TC_LOCK_TIME_ZERO_BYTES
+        ),
+    );
 }
 
 #[test]

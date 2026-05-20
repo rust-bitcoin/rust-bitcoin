@@ -131,3 +131,4 @@ pub(crate) fn compact_size_encode(value: usize) -> ArrayVec<u8, 9> {
 #[cfg(feature = "alloc")]
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
 include!("../include/decoder_newtype.rs"); // decoder_newtype! macro
+include!("../include/tryfrom_str.rs"); // impl_tryfrom_str_family! macro

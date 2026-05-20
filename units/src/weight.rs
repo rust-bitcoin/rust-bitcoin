@@ -465,6 +465,26 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
+    fn try_from_rc() {
+        let weight_value: alloc::rc::Rc<str> = "10".into();
+        assert_eq!(Weight::try_from(weight_value).unwrap(), Weight::from_wu(10));
+
+        let bad: alloc::rc::Rc<str> = "not a number".into();
+        assert!(Weight::try_from(bad).is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn try_from_arc() {
+        let weight_value: alloc::sync::Arc<str> = "10".into();
+        assert_eq!(Weight::try_from(weight_value).unwrap(), Weight::from_wu(10));
+
+        let bad: alloc::sync::Arc<str> = "not a number".into();
+        assert!(Weight::try_from(bad).is_err());
+    }
+
+    #[test]
     fn to_kwu_floor() {
         assert_eq!(Weight::from_wu(5_000).to_kwu_floor(), 5);
         assert_eq!(Weight::from_wu(5_999).to_kwu_floor(), 5);

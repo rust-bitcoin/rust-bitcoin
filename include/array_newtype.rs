@@ -53,6 +53,60 @@ macro_rules! impl_array_newtype_stringify {
             fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { Self::from_hex(s) }
         }
 
+        impl core::convert::TryFrom<&str> for $t {
+            type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+            #[inline]
+            fn try_from(s: &str) -> core::result::Result<Self, Self::Error> { Self::from_hex(s) }
+        }
+
+        internals::_emit_alloc! {
+            impl core::convert::TryFrom<alloc::string::String> for $t {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::string::String,
+                ) -> core::result::Result<Self, Self::Error> {
+                    Self::from_hex(&s)
+                }
+            }
+
+            impl core::convert::TryFrom<alloc::boxed::Box<str>> for $t {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::boxed::Box<str>,
+                ) -> core::result::Result<Self, Self::Error> {
+                    Self::from_hex(&s)
+                }
+            }
+
+            impl core::convert::TryFrom<alloc::rc::Rc<str>> for $t {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::rc::Rc<str>,
+                ) -> core::result::Result<Self, Self::Error> {
+                    Self::from_hex(&s)
+                }
+            }
+
+            #[cfg(target_has_atomic = "ptr")]
+            impl core::convert::TryFrom<alloc::sync::Arc<str>> for $t {
+                type Error = $crate::hex::DecodeFixedLengthBytesError;
+
+                #[inline]
+                fn try_from(
+                    s: alloc::sync::Arc<str>,
+                ) -> core::result::Result<Self, Self::Error> {
+                    Self::from_hex(&s)
+                }
+            }
+        }
+
         #[cfg(feature = "serde")]
         impl $crate::serde::Serialize for $t {
             fn serialize<S: $crate::serde::Serializer>(

@@ -98,8 +98,10 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 ///
 /// And if `alloc` feature is enabled in calling crate:
 ///
-/// * `TryFrom<Box<str>>`
 /// * `TryFrom<String>`
+/// * `TryFrom<Box<str>>`
+/// * `TryFrom<Rc<str>>`
+/// * `TryFrom<Arc<str>>` (requires `target_has_atomic = "ptr"`)
 ///
 /// # Parameters
 ///
@@ -153,6 +155,31 @@ macro_rules! impl_parse_str_from_int_infallible {
                 $crate::parse_int::int_from_box::<$inner>(s).map($to::$fn)
             }
         }
+
+        #[cfg(feature = "alloc")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::rc::Rc<str>> for $to {
+            type Error = $crate::parse_int::ParseIntError;
+
+            #[inline]
+            fn try_from(
+                s: alloc::rc::Rc<str>,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse_int::int_from_str::<$inner>(&s).map($to::$fn)
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        #[cfg(target_has_atomic = "ptr")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::sync::Arc<str>> for $to {
+            type Error = $crate::parse_int::ParseIntError;
+
+            #[inline]
+            fn try_from(
+                s: alloc::sync::Arc<str>,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse_int::int_from_str::<$inner>(&s).map($to::$fn)
+            }
+        }
     };
 }
 pub(crate) use impl_parse_str_from_int_infallible;
@@ -166,8 +193,10 @@ pub(crate) use impl_parse_str_from_int_infallible;
 ///
 /// And if `alloc` feature is enabled in calling crate:
 ///
-/// * `TryFrom<Box<str>>`
 /// * `TryFrom<String>`
+/// * `TryFrom<Box<str>>`
+/// * `TryFrom<Rc<str>>`
+/// * `TryFrom<Arc<str>>` (additionally requires `target_has_atomic = "ptr"`)
 ///
 /// # Parameters
 ///
@@ -183,6 +212,31 @@ macro_rules! impl_parse_str {
         $crate::parse_int::impl_tryfrom_str!(&str, $to, $err, $inner_fn);
         #[cfg(feature = "alloc")]
         $crate::parse_int::impl_tryfrom_str!(alloc::string::String, $to, $err, $inner_fn; alloc::boxed::Box<str>, $to, $err, $inner_fn);
+
+        #[cfg(feature = "alloc")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::rc::Rc<str>> for $to {
+            type Error = $err;
+
+            #[inline]
+            fn try_from(
+                s: alloc::rc::Rc<str>,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                <$to as $crate::_export::_core::str::FromStr>::from_str(&s)
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        #[cfg(target_has_atomic = "ptr")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::sync::Arc<str>> for $to {
+            type Error = $err;
+
+            #[inline]
+            fn try_from(
+                s: alloc::sync::Arc<str>,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                <$to as $crate::_export::_core::str::FromStr>::from_str(&s)
+            }
+        }
 
         impl $crate::_export::_core::str::FromStr for $to {
             type Err = $err;

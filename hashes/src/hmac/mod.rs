@@ -25,6 +25,52 @@ impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
     fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Self(str::FromStr::from_str(s)?)) }
 }
 
+impl<T: Hash + str::FromStr> convert::TryFrom<&str> for Hmac<T> {
+    type Error = <T as str::FromStr>::Err;
+
+    #[inline]
+    fn try_from(s: &str) -> Result<Self, Self::Error> { str::FromStr::from_str(s) }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Hash + str::FromStr> convert::TryFrom<alloc::string::String> for Hmac<T> {
+    type Error = <T as str::FromStr>::Err;
+
+    #[inline]
+    fn try_from(s: alloc::string::String) -> Result<Self, Self::Error> {
+        str::FromStr::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Hash + str::FromStr> convert::TryFrom<alloc::boxed::Box<str>> for Hmac<T> {
+    type Error = <T as str::FromStr>::Err;
+
+    #[inline]
+    fn try_from(s: alloc::boxed::Box<str>) -> Result<Self, Self::Error> {
+        str::FromStr::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T: Hash + str::FromStr> convert::TryFrom<alloc::rc::Rc<str>> for Hmac<T> {
+    type Error = <T as str::FromStr>::Err;
+
+    #[inline]
+    fn try_from(s: alloc::rc::Rc<str>) -> Result<Self, Self::Error> { str::FromStr::from_str(&s) }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(target_has_atomic = "ptr")]
+impl<T: Hash + str::FromStr> convert::TryFrom<alloc::sync::Arc<str>> for Hmac<T> {
+    type Error = <T as str::FromStr>::Err;
+
+    #[inline]
+    fn try_from(s: alloc::sync::Arc<str>) -> Result<Self, Self::Error> {
+        str::FromStr::from_str(&s)
+    }
+}
+
 impl<T: Hash> PartialEq for Hmac<T> {
     fn eq(&self, other: &Self) -> bool { crate::cmp::fixed_time_eq(self.as_ref(), other.as_ref()) }
 }

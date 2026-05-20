@@ -31,5 +31,7 @@ extern crate serde;
 #[cfg(feature = "alloc")]
 include!("../include/array_newtype.rs");
 
+include!("../include/tryfrom_str.rs"); // impl_tryfrom_str_family! macro
+
 #[cfg(feature = "alloc")]
 pub mod bip32;

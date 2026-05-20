@@ -123,6 +123,7 @@ impl FromStr for AddressType {
         }
     }
 }
+crate::impl_tryfrom_str_family!(AddressType);
 
 mod sealed {
     pub trait NetworkValidation {}
@@ -1013,6 +1014,50 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
             };
             Err(UnknownHrpError(hrp.to_owned()).into())
         }
+    }
+}
+
+impl<U: NetworkValidationUnchecked> core::convert::TryFrom<&str> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: &str) -> Result<Self, Self::Error> { <Self as FromStr>::from_str(s) }
+}
+
+impl<U: NetworkValidationUnchecked> core::convert::TryFrom<alloc::string::String> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::string::String) -> Result<Self, Self::Error> {
+        <Self as FromStr>::from_str(&s)
+    }
+}
+
+impl<U: NetworkValidationUnchecked> core::convert::TryFrom<alloc::boxed::Box<str>> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::boxed::Box<str>) -> Result<Self, Self::Error> {
+        <Self as FromStr>::from_str(&s)
+    }
+}
+
+impl<U: NetworkValidationUnchecked> core::convert::TryFrom<alloc::rc::Rc<str>> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::rc::Rc<str>) -> Result<Self, Self::Error> {
+        <Self as FromStr>::from_str(&s)
+    }
+}
+
+#[cfg(target_has_atomic = "ptr")]
+impl<U: NetworkValidationUnchecked> core::convert::TryFrom<alloc::sync::Arc<str>> for Address<U> {
+    type Error = ParseError;
+
+    #[inline]
+    fn try_from(s: alloc::sync::Arc<str>) -> Result<Self, Self::Error> {
+        <Self as FromStr>::from_str(&s)
     }
 }
 

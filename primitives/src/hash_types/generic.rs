@@ -57,6 +57,61 @@ impl str::FromStr for HashType {
     }
 }
 
+#[cfg(feature = "hex")]
+impl core::convert::TryFrom<&str> for HashType {
+    type Error = hex::DecodeFixedLengthBytesError;
+
+    #[inline]
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        <Self as str::FromStr>::from_str(s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl core::convert::TryFrom<alloc::string::String> for HashType {
+    type Error = hex::DecodeFixedLengthBytesError;
+
+    #[inline]
+    fn try_from(s: alloc::string::String) -> Result<Self, Self::Error> {
+        <Self as str::FromStr>::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for HashType {
+    type Error = hex::DecodeFixedLengthBytesError;
+
+    #[inline]
+    fn try_from(s: alloc::boxed::Box<str>) -> Result<Self, Self::Error> {
+        <Self as str::FromStr>::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for HashType {
+    type Error = hex::DecodeFixedLengthBytesError;
+
+    #[inline]
+    fn try_from(s: alloc::rc::Rc<str>) -> Result<Self, Self::Error> {
+        <Self as str::FromStr>::from_str(&s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+#[cfg(target_has_atomic = "ptr")]
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for HashType {
+    type Error = hex::DecodeFixedLengthBytesError;
+
+    #[inline]
+    fn try_from(s: alloc::sync::Arc<str>) -> Result<Self, Self::Error> {
+        <Self as str::FromStr>::from_str(&s)
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HashType {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {

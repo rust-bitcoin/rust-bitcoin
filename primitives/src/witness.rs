@@ -12,7 +12,8 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(doc)]
 use encoding::Decoder4;
 use encoding::{
-    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, DecoderStatus, EncoderStatus, Encoder2,
+    self, BytesEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder as _, DecoderStatus,
+    Encoder2, EncoderStatus,
 };
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
@@ -1006,9 +1007,9 @@ mod test {
     #[cfg(feature = "std")]
     use std::error::Error as _;
 
+    use encoding::check_encode;
     #[cfg(feature = "alloc")]
     use encoding::Decode as _;
-    use encoding::check_encode;
 
     use super::*;
 

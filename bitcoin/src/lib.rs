@@ -80,6 +80,7 @@ pub extern crate serde;
 mod internal_macros;
 
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+include!("../include/tryfrom_str.rs"); // impl_tryfrom_str_family! macro
 
 pub mod ext {
     //! Re-export all the extension traits so downstream can use wildcard imports.

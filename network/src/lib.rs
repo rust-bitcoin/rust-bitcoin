@@ -12,6 +12,9 @@
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 #[cfg(feature = "std")]
 extern crate std;
 
@@ -20,6 +23,8 @@ pub extern crate serde;
 
 use core::fmt;
 use core::str::FromStr;
+
+include!("../include/tryfrom_str.rs"); // impl_tryfrom_str_family! macro
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -258,6 +263,7 @@ impl FromStr for Network {
         }
     }
 }
+crate::impl_tryfrom_str_family!(Network);
 
 impl AsRef<Self> for Network {
     fn as_ref(&self) -> &Self { self }

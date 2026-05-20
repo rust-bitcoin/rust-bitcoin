@@ -308,6 +308,7 @@ impl FromStr for ChildNumber {
         })
     }
 }
+crate::impl_tryfrom_str_family!(ChildNumber);
 
 impl AsRef<[Self]> for ChildNumber {
     fn as_ref(&self) -> &[Self] { slice::from_ref(self) }
@@ -429,6 +430,7 @@ impl FromStr for DerivationPath {
         Ok(Self(ret?))
     }
 }
+crate::impl_tryfrom_str_family!(DerivationPath);
 
 /// An iterator over children of a [`DerivationPath`].
 ///
@@ -932,6 +934,7 @@ impl FromStr for Xpriv {
         Self::decode(&data)
     }
 }
+crate::impl_tryfrom_str_family!(Xpriv);
 
 impl fmt::Display for Xpub {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -952,6 +955,7 @@ impl FromStr for Xpub {
         Self::decode(&data)
     }
 }
+crate::impl_tryfrom_str_family!(Xpub);
 
 impl From<Xpub> for XKeyIdentifier {
     fn from(key: Xpub) -> Self { key.identifier() }

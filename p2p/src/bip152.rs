@@ -11,7 +11,7 @@ use core::convert;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Decoder4,
-    Encoder2, Encoder4, SliceEncoder, VecDecoder, DecoderStatus,
+    DecoderStatus, Encoder2, Encoder4, SliceEncoder, VecDecoder,
 };
 use hashes::{sha256, siphash24, HashEngine};
 use internals::array::ArrayExt as _;

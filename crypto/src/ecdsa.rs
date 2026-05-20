@@ -105,6 +105,8 @@ impl FromStr for Signature {
         Self::from_slice(&bytes).map_err(ParseSignatureError::Decode)
     }
 }
+#[cfg(feature = "alloc")]
+crate::impl_tryfrom_str_family!(Signature);
 
 /// Holds signature serialized in-line (not in `Vec`).
 ///

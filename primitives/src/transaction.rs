@@ -19,8 +19,8 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
-    CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6, EncoderStatus, SliceEncoder,
-    VecDecoder,
+    CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6,
+    EncoderStatus, SliceEncoder, VecDecoder,
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
@@ -397,6 +397,9 @@ impl core::str::FromStr for Transaction {
         HexPrimitive::from_str(s).map_err(ParseTransactionError)
     }
 }
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+crate::impl_tryfrom_str_family!(Transaction);
 
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
@@ -1001,6 +1004,9 @@ impl core::str::FromStr for OutPoint {
         })
     }
 }
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+crate::impl_tryfrom_str_family!(OutPoint);
 
 /// Parses a string-encoded transaction index (vout).
 ///

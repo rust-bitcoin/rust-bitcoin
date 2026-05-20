@@ -74,6 +74,7 @@ impl str::FromStr for TapSighashType {
         }
     }
 }
+crate::impl_tryfrom_str_family!(TapSighashType);
 
 impl TapSighashType {
     /// Constructs a new [`TapSighashType`] from a raw `u8`.
@@ -149,6 +150,7 @@ impl str::FromStr for EcdsaSighashType {
         }
     }
 }
+crate::impl_tryfrom_str_family!(EcdsaSighashType);
 
 impl EcdsaSighashType {
     /// Checks if the sighash type is [`Self::Single`] or [`Self::SinglePlusAnyoneCanPay`].

@@ -87,6 +87,7 @@ impl FromStr for WitnessVersion {
         Ok(Self::try_from(version)?)
     }
 }
+crate::impl_tryfrom_str_family!(WitnessVersion);
 
 impl TryFrom<u8> for WitnessVersion {
     type Error = TryFromError;

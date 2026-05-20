@@ -15,8 +15,8 @@ use alloc::vec::Vec;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3,
-    EncoderStatus, Encoder2, Encoder3, SliceEncoder, VecDecoder,
+    ArrayDecoder, ArrayEncoder, ByteVecDecoder, CompactSizeEncoder, Decoder2, Decoder3, Encoder2,
+    Encoder3, EncoderStatus, SliceEncoder, VecDecoder,
 };
 use internals::ToU64 as _;
 use primitives::block::{self, Block, Checked, HeaderDecoder, HeaderEncoder};

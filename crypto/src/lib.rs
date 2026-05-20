@@ -33,3 +33,4 @@ pub mod taproot;
 pub use self::key::{FullPublicKey, Keypair, LegacyPublicKey, PrivateKey, XOnlyPublicKey};
 
 include!("../include/newtype.rs"); // Explained in `REPO_DIR/docs/README.md`.
+include!("../include/tryfrom_str.rs"); // impl_tryfrom_str_family! macro

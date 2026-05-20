@@ -818,7 +818,10 @@ mod tests {
         type Output = TestArray;
         type Error = UnexpectedEofError;
 
-        fn push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<encoding::DecoderStatus, Self::Error> {
+        fn push_bytes(
+            &mut self,
+            bytes: &mut &[u8],
+        ) -> core::result::Result<encoding::DecoderStatus, Self::Error> {
             self.inner.push_bytes(bytes)
         }
 

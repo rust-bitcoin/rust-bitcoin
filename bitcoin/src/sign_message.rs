@@ -155,6 +155,7 @@ mod message_signing {
             type Err = MessageSignatureError;
             fn from_str(s: &str) -> Result<Self, MessageSignatureError> { Self::from_base64(s) }
         }
+        crate::impl_tryfrom_str_family!(MessageSignature);
     }
 }
 

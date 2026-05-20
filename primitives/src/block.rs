@@ -295,6 +295,9 @@ where
         HexPrimitive::from_str(s).map_err(ParseBlockError)
     }
 }
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+crate::impl_tryfrom_str_family!(Block<Unchecked>);
 
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
@@ -487,6 +490,8 @@ impl core::str::FromStr for Header {
         HexPrimitive::from_str(s).map_err(ParseHeaderError)
     }
 }
+#[cfg(feature = "hex")]
+crate::impl_tryfrom_str_family!(Header);
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Header {
