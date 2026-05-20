@@ -1509,6 +1509,8 @@ impl<const N: usize> bitcoin_consensus_encoding::ExactSizeEncoder for bitcoin_co
 pub fn bitcoin_consensus_encoding::ArrayEncoder<N>::len(&self) -> usize
 impl<const N: usize> bitcoin_consensus_encoding::ExactSizeEncoder for bitcoin_consensus_encoding::ArrayRefEncoder<'_, N>
 pub fn bitcoin_consensus_encoding::ArrayRefEncoder<'_, N>::len(&self) -> usize
+pub fn bitcoin_consensus_encoding::check_decode<T: bitcoin_consensus_encoding::Decode + core::cmp::Eq + core::fmt::Debug>(bytes: &[u8], expected: &T) where <<T as bitcoin_consensus_encoding::Decode>::Decoder as bitcoin_consensus_encoding::Decoder>::Error: core::fmt::Debug
+pub fn bitcoin_consensus_encoding::check_decoder<D: bitcoin_consensus_encoding::Decoder>(decoder: D, bytes: &[u8], expected: &<D as bitcoin_consensus_encoding::Decoder>::Output) where <D as bitcoin_consensus_encoding::Decoder>::Output: core::cmp::Eq + core::fmt::Debug, <D as bitcoin_consensus_encoding::Decoder>::Error: core::fmt::Debug
 pub fn bitcoin_consensus_encoding::check_encode<T: bitcoin_consensus_encoding::Encode + ?core::marker::Sized>(value: &T, expected: &[u8])
 pub fn bitcoin_consensus_encoding::check_encoder<T: bitcoin_consensus_encoding::Encoder + ?core::marker::Sized>(encoder: &mut T, expected: &[u8])
 pub fn bitcoin_consensus_encoding::decode_from_slice<T: bitcoin_consensus_encoding::Decode>(bytes: &[u8]) -> core::result::Result<T, bitcoin_consensus_encoding::error::DecodeError<<<T as bitcoin_consensus_encoding::Decode>::Decoder as bitcoin_consensus_encoding::Decoder>::Error>>
