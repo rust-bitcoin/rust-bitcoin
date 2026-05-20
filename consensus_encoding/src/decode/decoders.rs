@@ -314,7 +314,7 @@ impl<T: Decode> Decoder for VecDecoder<T> {
 }
 
 /// A decoder that expects exactly N bytes and returns them as an array.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ArrayDecoder<const N: usize> {
     buffer: [u8; N],
     bytes_written: usize,
