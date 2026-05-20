@@ -55,28 +55,14 @@ impl encoding::Encode for SendTxRcnCl {
 
 type SendTxRcnClInnerDecoder = Decoder2<ArrayDecoder<4>, ArrayDecoder<8>>;
 
-/// The decoder for a [`SendTxRcnCl`] message.
-#[derive(Debug, Default, Clone)]
-pub struct SendTxRcnClDecoder(SendTxRcnClInnerDecoder);
+crate::decoder_newtype! {
+    /// The decoder for a [`SendTxRcnCl`] message.
+    #[derive(Debug, Default, Clone)]
+    pub struct SendTxRcnClDecoder(SendTxRcnClInnerDecoder);
 
-impl encoding::Decoder for SendTxRcnClDecoder {
-    type Output = SendTxRcnCl;
-    type Error = SendTxRcnClDecoderError;
-
-    #[inline]
-    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        self.0.push_bytes(bytes).map_err(SendTxRcnClDecoderError)
-    }
-
-    #[inline]
-    fn end(self) -> Result<Self::Output, Self::Error> {
-        let (version, salt) = self.0.end().map_err(SendTxRcnClDecoderError)?;
+    fn end(result: Result<([u8; 4], [u8; 8]), <SendTxRcnClInnerDecoder as encoding::Decoder>::Error>) -> Result<SendTxRcnCl, SendTxRcnClDecoderError> {
+        let (version, salt) = result.map_err(SendTxRcnClDecoderError)?;
         Ok(SendTxRcnCl { version: u32::from_le_bytes(version), salt: u64::from_le_bytes(salt) })
-    }
-
-    #[inline]
-    fn read_limit(&self) -> usize {
-        self.0.read_limit()
     }
 }
 
