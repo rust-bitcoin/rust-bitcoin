@@ -147,7 +147,8 @@ impl Decoder for ByteVecDecoder {
 
 /// A decoder that decodes a vector of `T`s.
 ///
-/// The decoding is expected to start with expected number of items in the vector.
+/// The vector encoding must start with the number of items in the vector, encoded as a compact
+/// size.
 #[cfg(feature = "alloc")]
 pub struct VecDecoder<T: Decode> {
     prefix_decoder: Option<CompactSizeDecoder>,

@@ -80,7 +80,7 @@ pub trait Decoder: Sized {
     #[track_caller]
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error>;
 
-    /// Completes the decoding process and return the final result.
+    /// Completes the decoding process and returns the final result.
     ///
     /// This consumes the decoder and should be called when no more input data is available.
     ///

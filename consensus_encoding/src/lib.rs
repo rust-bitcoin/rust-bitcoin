@@ -35,7 +35,7 @@
 //! This crate provides free functions which drive codecs for common I/O interfaces. On the decoding
 //! side we provide:
 //!
-//! * [`decode_from_read`]: Decode from a stblib buffered reader.
+//! * [`decode_from_read`]: Decode from a stdlib buffered reader.
 //! * [`decode_from_read_unbuffered`]: Decode from a stdlib unbuffered reader (4k buffer on stack).
 //! * [`decode_from_read_unbuffered_with`]: As above with custom sized stack-allocated buffer.
 //! * [`decode_from_slice`]: Decode from a byte slice (errors if slice is not completely consumed).
