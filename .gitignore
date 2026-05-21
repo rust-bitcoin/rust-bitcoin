@@ -7,10 +7,7 @@ bitcoin/Cargo.lock
 hashes/Cargo.lock
 
 # Build artifacts
-target
-internals/target
-bitcoin/target
-hashes/target
+target/
 
 # Test artifacts
 bitcoin/dep_test
