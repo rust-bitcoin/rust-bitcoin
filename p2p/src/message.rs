@@ -15,7 +15,7 @@ use core::{fmt, mem};
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     self, ArrayDecoder, ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Encoder2,
-    EncoderStatus, SliceEncoder, VecDecoder,
+    EncoderStatus, SliceEncoder, VecDecoder, VecDecoderError,
 };
 use hashes::{sha256d, HashEngine};
 use primitives::block::{self, Header, HeaderDecoder, HeaderEncoder};
@@ -109,11 +109,15 @@ impl core::str::FromStr for CommandString {
 }
 
 impl fmt::Display for CommandString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.0.as_ref()) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.0.as_ref())
+    }
 }
 
 impl AsRef<str> for CommandString {
-    fn as_ref(&self) -> &str { self.0.as_ref() }
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
 }
 
 impl encoding::Encode for CommandString {
@@ -147,15 +151,21 @@ impl CommandStringEncoder {
 
 impl encoding::Encoder for CommandStringEncoder {
     #[inline]
-    fn current_chunk(&self) -> &[u8] { self.0.current_chunk() }
+    fn current_chunk(&self) -> &[u8] {
+        self.0.current_chunk()
+    }
 
     #[inline]
-    fn advance(&mut self) -> EncoderStatus { self.0.advance() }
+    fn advance(&mut self) -> EncoderStatus {
+        self.0.advance()
+    }
 }
 
 impl encoding::ExactSizeEncoder for CommandStringEncoder {
     #[inline]
-    fn len(&self) -> usize { self.0.len() }
+    fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 crate::decoder_newtype! {
@@ -430,18 +440,26 @@ pub struct FeeFilter(FeeRate);
 
 impl FeeFilter {
     /// Constructs a new `FeeFilter` from a [`FeeRate`].
-    pub const fn new(fee_rate: FeeRate) -> Self { Self(fee_rate) }
+    pub const fn new(fee_rate: FeeRate) -> Self {
+        Self(fee_rate)
+    }
 
     /// Returns the inner [`FeeRate`].
-    pub const fn fee_rate(self) -> FeeRate { self.0 }
+    pub const fn fee_rate(self) -> FeeRate {
+        self.0
+    }
 }
 
 impl From<FeeRate> for FeeFilter {
-    fn from(fee_rate: FeeRate) -> Self { Self(fee_rate) }
+    fn from(fee_rate: FeeRate) -> Self {
+        Self(fee_rate)
+    }
 }
 
 impl From<FeeFilter> for FeeRate {
-    fn from(filter: FeeFilter) -> Self { filter.0 }
+    fn from(filter: FeeFilter) -> Self {
+        filter.0
+    }
 }
 
 encoding::encoder_newtype_exact! {
@@ -519,7 +537,9 @@ pub struct Ping(u64);
 
 impl Ping {
     /// Constructs a new [`Ping`] message from nonce.
-    pub fn new(nonce: u64) -> Self { Self(nonce) }
+    pub fn new(nonce: u64) -> Self {
+        Self(nonce)
+    }
 }
 
 encoding::encoder_newtype_exact! {
@@ -760,51 +780,73 @@ impl V1NetworkMessage {
     }
 
     /// Consumes the [`V1NetworkMessage`] instance and returns the inner payload.
-    pub fn into_payload(self) -> NetworkMessage { self.payload }
+    pub fn into_payload(self) -> NetworkMessage {
+        self.payload
+    }
 
     /// The actual message data
-    pub fn payload(&self) -> &NetworkMessage { &self.payload }
+    pub fn payload(&self) -> &NetworkMessage {
+        &self.payload
+    }
 
     /// Magic bytes to identify the network these messages are meant for
-    pub fn magic(&self) -> &Magic { &self.magic }
+    pub fn magic(&self) -> &Magic {
+        &self.magic
+    }
 
     /// Returns the message command as a static string reference.
     ///
     /// This returns `"unknown"` for [`NetworkMessage::Unknown`],
     /// regardless of the actual command in the unknown message.
     /// Use the [`Self::command`] method to get the command for unknown messages.
-    pub fn cmd(&self) -> &'static str { self.payload.cmd() }
+    pub fn cmd(&self) -> &'static str {
+        self.payload.cmd()
+    }
 
     /// Returns the `CommandString` for the message command.
-    pub fn command(&self) -> CommandString { self.payload.command() }
+    pub fn command(&self) -> CommandString {
+        self.payload.command()
+    }
 }
 
 impl V2NetworkMessage {
     /// Constructs a new [`V2NetworkMessage`].
-    pub fn new(payload: NetworkMessage) -> Self { Self { payload } }
+    pub fn new(payload: NetworkMessage) -> Self {
+        Self { payload }
+    }
 
     /// Consumes the [`V2NetworkMessage`] instance and returns the inner payload.
-    pub fn into_payload(self) -> NetworkMessage { self.payload }
+    pub fn into_payload(self) -> NetworkMessage {
+        self.payload
+    }
 
     /// The actual message data
-    pub fn payload(&self) -> &NetworkMessage { &self.payload }
+    pub fn payload(&self) -> &NetworkMessage {
+        &self.payload
+    }
 
     /// Returns the message command as a static string reference.
     ///
     /// This returns `"unknown"` for [`NetworkMessage::Unknown`],
     /// regardless of the actual command in the unknown message.
     /// Use the [`Self::command`] method to get the command for unknown messages.
-    pub fn cmd(&self) -> &'static str { self.payload.cmd() }
+    pub fn cmd(&self) -> &'static str {
+        self.payload.cmd()
+    }
 
     /// Returns the `CommandString` for the message command.
-    pub fn command(&self) -> CommandString { self.payload.command() }
+    pub fn command(&self) -> CommandString {
+        self.payload.command()
+    }
 }
 
 impl encoding::Encode for NetworkMessage {
     type Encoder<'e> = NetworkMessageEncoder<'e>;
 
     #[inline]
-    fn encoder(&self) -> Self::Encoder<'_> { NetworkMessageEncoder::new(self) }
+    fn encoder(&self) -> Self::Encoder<'_> {
+        NetworkMessageEncoder::new(self)
+    }
 }
 
 /// Encoder for [`NetworkMessage`]
@@ -919,8 +961,9 @@ impl<'e> NetworkMessageEncoder<'e> {
             | NetworkMessage::FilterClear
             | NetworkMessage::SendAddrV2 => Self::Empty,
             // Don't use encode_to_vec so as not to add a length prefix.
-            NetworkMessage::Unknown { payload, .. } =>
-                Self::Unknown(BytesEncoder::without_length_prefix(payload)),
+            NetworkMessage::Unknown { payload, .. } => {
+                Self::Unknown(BytesEncoder::without_length_prefix(payload))
+            }
         }
     }
 }
@@ -1127,8 +1170,9 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Addr(d) => d.push_bytes(bytes).map_err(|_| err),
-            Self::Inv(d) | Self::GetData(d) | Self::NotFound(d) =>
-                d.push_bytes(bytes).map_err(|_| err),
+            Self::Inv(d) | Self::GetData(d) | Self::NotFound(d) => {
+                d.push_bytes(bytes).map_err(|_| err)
+            }
             Self::GetBlocks(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::GetHeaders(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Tx(d) => d.push_bytes(bytes).map_err(|_| err),
@@ -1310,8 +1354,9 @@ impl encoding::Decoder for NetworkMessageDecoder {
     #[inline]
     fn read_limit(&self) -> usize {
         match self.payload_len {
-            Some(expected) =>
-                self.inner.read_limit().min(expected.saturating_sub(self.bytes_consumed)),
+            Some(expected) => {
+                self.inner.read_limit().min(expected.saturating_sub(self.bytes_consumed))
+            }
             None => self.inner.read_limit(),
         }
     }
@@ -1561,7 +1606,9 @@ pub struct NetworkHeader {
 
 impl NetworkHeader {
     /// Create a new [`NetworkHeader`] from underlying block header.
-    pub const fn from_header(header: block::Header) -> Self { Self { header, length: 0 } }
+    pub const fn from_header(header: block::Header) -> Self {
+        Self { header, length: 0 }
+    }
 }
 
 encoding::encoder_newtype_exact! {
@@ -1672,7 +1719,9 @@ enum V2NetworkMessageDecoderState {
 }
 
 impl Default for V2NetworkMessageDecoderState {
-    fn default() -> Self { Self::ShortId(<encoding::ArrayDecoder<1>>::default()) }
+    fn default() -> Self {
+        Self::ShortId(<encoding::ArrayDecoder<1>>::default())
+    }
 }
 
 /// Decoder for [`V2NetworkMessage`].
@@ -1841,10 +1890,12 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
 
     fn read_limit(&self) -> usize {
         match &self.state {
-            V2NetworkMessageDecoderState::ShortId(short_id_decoder) =>
-                short_id_decoder.read_limit(),
-            V2NetworkMessageDecoderState::CommandString(command_string_decoder) =>
-                command_string_decoder.read_limit(),
+            V2NetworkMessageDecoderState::ShortId(short_id_decoder) => {
+                short_id_decoder.read_limit()
+            }
+            V2NetworkMessageDecoderState::CommandString(command_string_decoder) => {
+                command_string_decoder.read_limit()
+            }
             V2NetworkMessageDecoderState::Payload(payload_decoder) => payload_decoder.read_limit(),
             V2NetworkMessageDecoderState::Errored => 0,
         }
@@ -1927,7 +1978,9 @@ pub mod error {
     }
 
     impl std::error::Error for CommandStringError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            None
+        }
     }
 
     /// An error consensus decoding a [`V1MessageHeader`].
@@ -1946,7 +1999,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for V1MessageHeaderDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// An error decoding a [`InventoryPayload`].
@@ -1958,7 +2013,9 @@ pub mod error {
     );
 
     impl From<Infallible> for InventoryPayloadDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for InventoryPayloadDecoderError {
@@ -1969,7 +2026,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InventoryPayloadDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// An error decoding a [`AddrPayload`].
@@ -1981,7 +2040,9 @@ pub mod error {
     );
 
     impl From<Infallible> for AddrPayloadDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for AddrPayloadDecoderError {
@@ -1992,7 +2053,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for AddrPayloadDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// An error decoding a [`AddrV2Payload`].
@@ -2004,7 +2067,9 @@ pub mod error {
     );
 
     impl From<Infallible> for AddrV2PayloadDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for AddrV2PayloadDecoderError {
@@ -2015,7 +2080,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for AddrV2PayloadDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// An error consensus decoding a [`Ping`].
@@ -2025,7 +2092,9 @@ pub mod error {
     pub struct PingDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PingDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for PingDecoderError {
@@ -2036,7 +2105,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for PingDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// An error consensus decoding a [`Pong`].
@@ -2046,7 +2117,9 @@ pub mod error {
     pub struct PongDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PongDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for PongDecoderError {
@@ -2057,7 +2130,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for PongDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// An error consensus decoding a [`FeeFilter`].
@@ -2078,7 +2153,9 @@ pub mod error {
     }
 
     impl From<Infallible> for FeeFilterDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for FeeFilterDecoderError {
@@ -2148,8 +2225,9 @@ pub mod error {
                 V1NetworkMessageDecoderErrorInner::Header(ref e) => Some(e),
                 V1NetworkMessageDecoderErrorInner::PayloadTooLarge => None,
                 V1NetworkMessageDecoderErrorInner::Payload => None,
-                V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: _, actual: _ } =>
-                    None,
+                V1NetworkMessageDecoderErrorInner::InvalidChecksum { expected: _, actual: _ } => {
+                    None
+                }
                 V1NetworkMessageDecoderErrorInner::PayloadLengthMismatch { .. } => None,
             }
         }
@@ -2208,7 +2286,9 @@ pub mod error {
     );
 
     impl From<Infallible> for NetworkHeaderDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for NetworkHeaderDecoderError {
@@ -2219,7 +2299,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for NetworkHeaderDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// An error decoding a [`HeadersMessage`] message.
@@ -2231,7 +2313,9 @@ pub mod error {
     );
 
     impl From<Infallible> for HeadersMessageDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for HeadersMessageDecoderError {
@@ -2242,7 +2326,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for HeadersMessageDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 }
 
@@ -2283,7 +2369,9 @@ impl<'a> Arbitrary<'a> for NetworkHeader {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for HeadersMessage {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -2362,7 +2450,9 @@ mod test {
     use crate::message_network::{Alert, Reject, RejectReason, VersionMessage};
     use crate::{ProtocolVersion, ServiceFlags};
 
-    fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
+    fn hash(array: [u8; 32]) -> sha256d::Hash {
+        sha256d::Hash::from_byte_array(array)
+    }
 
     #[test]
     fn v1_message_header() {

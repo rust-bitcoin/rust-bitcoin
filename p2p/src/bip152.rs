@@ -11,7 +11,7 @@ use core::convert;
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, CompactSizeDecoder, CompactSizeEncoder, Decoder2, Decoder4,
-    DecoderStatus, Encoder2, Encoder4, SliceEncoder, VecDecoder,
+    Encoder2, Encoder4, SliceEncoder, VecDecoder,
 };
 use hashes::{sha256, siphash24, HashEngine};
 use internals::array::ArrayExt as _;
@@ -49,7 +49,9 @@ pub struct PrefilledTransaction {
 }
 
 impl convert::AsRef<Transaction> for PrefilledTransaction {
-    fn as_ref(&self) -> &Transaction { &self.tx }
+    fn as_ref(&self) -> &Transaction {
+        &self.tx
+    }
 }
 
 encoding::encoder_newtype! {
@@ -356,8 +358,9 @@ impl HeaderAndShortIds {
                 });
             } else {
                 match version {
-                    1 =>
-                        short_ids.push(ShortId::with_siphash_keys(&tx.compute_txid(), siphash_keys)),
+                    1 => {
+                        short_ids.push(ShortId::with_siphash_keys(&tx.compute_txid(), siphash_keys))
+                    }
                     2 => short_ids
                         .push(ShortId::with_siphash_keys(&tx.compute_wtxid(), siphash_keys)),
                     _ => unreachable!(),
@@ -385,7 +388,9 @@ struct Offset(usize);
 impl encoding::Encode for Offset {
     type Encoder<'e> = CompactSizeEncoder;
 
-    fn encoder(&self) -> Self::Encoder<'_> { CompactSizeEncoder::new(self.0) }
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CompactSizeEncoder::new(self.0)
+    }
 }
 
 type OffsetDecoderError = encoding::CompactSizeDecoderError;
@@ -616,7 +621,9 @@ pub mod error {
     }
 
     impl From<Infallible> for Error {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for Error {
@@ -649,7 +656,9 @@ pub mod error {
     }
 
     impl From<Infallible> for PrefilledTransactionDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for PrefilledTransactionDecoderError {
@@ -680,7 +689,9 @@ pub mod error {
     );
 
     impl From<Infallible> for ShortIdDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for ShortIdDecoderError {
@@ -691,7 +702,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for ShortIdDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// Errors occuring when decoding a [`HeaderAndShortIds`] message.
@@ -706,7 +719,9 @@ pub mod error {
     }
 
     impl From<Infallible> for HeaderAndShortIdsDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for HeaderAndShortIdsDecoderError {
@@ -737,7 +752,9 @@ pub mod error {
     );
 
     impl From<Infallible> for BlockTransactionsRequestDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for BlockTransactionsRequestDecoderError {
@@ -748,7 +765,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for BlockTransactionsRequestDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 
     /// A transaction index is requested that is out of range from the corresponding block.
@@ -769,7 +788,9 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for TxIndexOutOfRangeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            None
+        }
     }
 
     /// An error occuring decoding a [`BlockTransactions`] message.
@@ -781,7 +802,9 @@ pub mod error {
     );
 
     impl From<Infallible> for BlockTransactionsDecoderError {
-        fn from(never: Infallible) -> Self { match never {} }
+        fn from(never: Infallible) -> Self {
+            match never {}
+        }
     }
 
     impl fmt::Display for BlockTransactionsDecoderError {
@@ -792,13 +815,17 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for BlockTransactionsDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ShortId {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -829,7 +856,9 @@ impl<'a> Arbitrary<'a> for BlockTransactions {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Offset {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> { Ok(Self(u.arbitrary()?)) }
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
 }
 
 #[cfg(feature = "arbitrary")]
