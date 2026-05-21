@@ -20,5 +20,3 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub mod array_vec;
-pub mod const_tools;

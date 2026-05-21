@@ -85,7 +85,7 @@ required-features = ["std", "rand-std", "bitcoinconsensus"]
 name = "sighash"
 
 [lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)', 'cfg(rust_v_1_61)'] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)', 'cfg(rust_v_1_61)', 'cfg(rust_v_1_64)'] }
 
 [package.metadata.rbmt.test]
 examples = [

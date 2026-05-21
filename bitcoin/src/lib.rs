@@ -86,6 +86,8 @@ pub extern crate secp256k1;
 #[macro_use]
 extern crate actual_serde as serde;
 
+mod array_vec;
+mod const_tools;
 #[cfg(test)]
 #[macro_use]
 mod test_macros;

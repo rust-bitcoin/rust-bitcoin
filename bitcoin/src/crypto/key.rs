@@ -12,9 +12,9 @@ use core::str::FromStr;
 
 use hashes::{hash160, Hash};
 use hex::{FromHex, HexToArrayError};
-use internals::array_vec::ArrayVec;
 use io::{Read, Write};
 
+use crate::array_vec::ArrayVec;
 use crate::blockdata::script::ScriptBuf;
 use crate::crypto::ecdsa;
 use crate::internal_macros::{impl_asref_push_bytes, write_err};
