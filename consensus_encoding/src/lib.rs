@@ -77,14 +77,15 @@ pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Dec
 #[cfg(feature = "alloc")]
 #[doc(inline)]
 pub use self::decode::decoders::{ByteVecDecoder, VecDecoder};
+#[doc(inline)]
+pub use self::decode::{
+    check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded, Decode, Decoder,
+    DecoderStatus,
+};
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with,
-};
-#[doc(inline)]
-pub use self::decode::{
-    decode_from_slice, decode_from_slice_unbounded, Decode, Decoder, DecoderStatus,
 };
 #[doc(inline)]
 pub use self::encode::encoders::{

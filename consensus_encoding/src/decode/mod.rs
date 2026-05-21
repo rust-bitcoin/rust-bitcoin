@@ -302,3 +302,52 @@ where
 
     decoder.end().map_err(ReadError::Decode)
 }
+
+/// Checks that the given bytes decode to the expected value, panicking if they don't.
+///
+/// This is intended for tests only.
+///
+/// # Panics
+///
+/// If the decoded value doesn't match the expected value, or if decoding fails.
+#[track_caller]
+pub fn check_decode<T: Decode + Eq + core::fmt::Debug>(bytes: &[u8], expected: &T)
+where
+    <T::Decoder as Decoder>::Error: core::fmt::Debug,
+{
+    let decoder = T::decoder();
+    check_decoder(decoder, bytes, expected);
+}
+
+/// Checks that the given `decoder` produces the expected value, panicking if it doesn't.
+///
+/// This is intended for tests only.
+///
+/// # Panics
+///
+/// If the decoder doesn't produce the expected value or if decoding fails.
+#[track_caller]
+pub fn check_decoder<D: Decoder>(mut decoder: D, mut bytes: &[u8], expected: &D::Output)
+where
+    D::Output: Eq + core::fmt::Debug,
+    D::Error: core::fmt::Debug,
+{
+    loop {
+        match decoder.push_bytes(&mut bytes) {
+            Ok(status) => {
+                if status.is_ready() {
+                    break;
+                }
+                assert!(!bytes.is_empty(), "decoder needs more data but no bytes remaining");
+            }
+            Err(e) => panic!("decoder failed with error: {e:?}"),
+        }
+    }
+
+    match decoder.end() {
+        Ok(result) => {
+            assert_eq!(&result, expected, "decoded value doesn't match expected value");
+        }
+        Err(e) => panic!("decoder finalization failed with error: {e:?}"),
+    }
+}

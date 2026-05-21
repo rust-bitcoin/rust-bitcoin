@@ -13,6 +13,51 @@ pub type [T; N]::Item = T
 pub fn [T; N]::split_array<const LEFT: usize, const RIGHT: usize>(&self) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT])
 pub fn [T; N]::sub_array<const OFFSET: usize, const LEN: usize>(&self) -> &[Self::Item; LEN]
 pub mod bitcoin_internals::array_vec
+pub mod bitcoin_internals::array_vec::error
+pub enum bitcoin_internals::array_vec::error::Error
+pub bitcoin_internals::array_vec::error::Error::CapacityExceeded(usize)
+impl core::clone::Clone for bitcoin_internals::array_vec::error::Error
+pub fn bitcoin_internals::array_vec::error::Error::clone(&self) -> bitcoin_internals::array_vec::error::Error
+impl core::cmp::Eq for bitcoin_internals::array_vec::error::Error
+impl core::cmp::PartialEq for bitcoin_internals::array_vec::error::Error
+pub fn bitcoin_internals::array_vec::error::Error::eq(&self, other: &bitcoin_internals::array_vec::error::Error) -> bool
+impl core::fmt::Debug for bitcoin_internals::array_vec::error::Error
+pub fn bitcoin_internals::array_vec::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin_internals::array_vec::error::Error
+pub fn bitcoin_internals::array_vec::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for bitcoin_internals::array_vec::error::Error
+impl core::marker::StructuralPartialEq for bitcoin_internals::array_vec::error::Error
+impl core::marker::Freeze for bitcoin_internals::array_vec::error::Error
+impl core::marker::Send for bitcoin_internals::array_vec::error::Error
+impl core::marker::Sync for bitcoin_internals::array_vec::error::Error
+impl core::marker::Unpin for bitcoin_internals::array_vec::error::Error
+impl core::marker::UnsafeUnpin for bitcoin_internals::array_vec::error::Error
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::array_vec::error::Error
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_internals::array_vec::error::Error
+impl<T, U> core::convert::Into<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::From<T>
+pub fn bitcoin_internals::array_vec::error::Error::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::Into<T>
+pub type bitcoin_internals::array_vec::error::Error::Error = core::convert::Infallible
+pub fn bitcoin_internals::array_vec::error::Error::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_internals::array_vec::error::Error where U: core::convert::TryFrom<T>
+pub type bitcoin_internals::array_vec::error::Error::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_internals::array_vec::error::Error::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone
+pub type bitcoin_internals::array_vec::error::Error::Owned = T
+pub fn bitcoin_internals::array_vec::error::Error::clone_into(&self, target: &mut T)
+pub fn bitcoin_internals::array_vec::error::Error::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin_internals::array_vec::error::Error where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_internals::array_vec::error::Error::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin_internals::array_vec::error::Error where T: 'static + ?core::marker::Sized
+pub fn bitcoin_internals::array_vec::error::Error::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_internals::array_vec::error::Error where T: ?core::marker::Sized
+pub fn bitcoin_internals::array_vec::error::Error::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::array_vec::error::Error where T: ?core::marker::Sized
+pub fn bitcoin_internals::array_vec::error::Error::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_internals::array_vec::error::Error where T: core::clone::Clone
+pub unsafe fn bitcoin_internals::array_vec::error::Error::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_internals::array_vec::error::Error
+pub fn bitcoin_internals::array_vec::error::Error::from(t: T) -> T
 pub struct bitcoin_internals::array_vec::ArrayVec<T: core::marker::Copy, const CAP: usize>
 impl<T: core::marker::Copy, const CAP: usize> bitcoin_internals::array_vec::ArrayVec<T, CAP>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::as_mut_slice(&mut self) -> &mut [T]
@@ -22,6 +67,7 @@ pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::from_slice(slice: &
 pub const fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::new() -> Self
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::pop(&mut self) -> core::option::Option<T>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::push(&mut self, element: T)
+pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::try_push(&mut self, element: T) -> core::result::Result<(), bitcoin_internals::array_vec::error::Error>
 impl<T: core::marker::Copy + core::cmp::Eq, const CAP: usize> core::cmp::Eq for bitcoin_internals::array_vec::ArrayVec<T, CAP>
 impl<T: core::marker::Copy + core::cmp::Ord, const CAP: usize> core::cmp::Ord for bitcoin_internals::array_vec::ArrayVec<T, CAP>
 pub fn bitcoin_internals::array_vec::ArrayVec<T, CAP>::cmp(&self, other: &Self) -> core::cmp::Ordering

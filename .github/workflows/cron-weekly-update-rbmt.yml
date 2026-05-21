@@ -1,0 +1,46 @@
+name: Update Rust Bitcoin Maintainer Tools
+on:
+  schedule:
+    - cron: "10 0 * * 6" # Saturday at 00:10
+  workflow_dispatch: # allows manual triggering
+permissions: {}
+jobs:
+  format:
+    name: Update cargo rbmt
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Update cargo-rbmt version to latest release
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout \
+            https://github.com/rust-bitcoin/rust-bitcoin-maintainer-tools.git /tmp/rbmt
+          LATEST_TAG=$(git -C /tmp/rbmt tag --sort=-version:refname | grep '^cargo-rbmt-' | head -1)
+          LATEST_HASH=$(git -C /tmp/rbmt rev-parse "${LATEST_TAG}^{}")
+          CURRENT_HASH=$(cat rbmt-version)
+          if [ -n "${LATEST_HASH}" ] && [ "${LATEST_HASH}" != "${CURRENT_HASH}" ]; then
+            echo "${LATEST_HASH}" > rbmt-version
+            echo "rbmt_hash=${LATEST_HASH}" >> "${GITHUB_ENV}"
+            echo "rbmt_semver=${LATEST_TAG#cargo-rbmt-}" >> "${GITHUB_ENV}"
+            echo "changes_made=true" >> "${GITHUB_ENV}"
+          else
+            echo "rbmt-version is already at the latest release. Not opening any PR."
+            echo "changes_made=false" >> "${GITHUB_ENV}"
+          fi
+      - name: Create Pull Request
+        if: env.changes_made == 'true'
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
+          author: Update RBMT Bot <bot@example.com>
+          committer: Update RBMT Bot <bot@example.com>
+          title: Automated weekly update to cargo-rbmt (to ${{ env.rbmt_semver }})
+          body: |
+            Automated update to rbmt-version by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+          commit-message: Automated update to cargo-rbmt-${{ env.rbmt_semver }}
+          branch: create-pull-request/weekly-rbmt-update

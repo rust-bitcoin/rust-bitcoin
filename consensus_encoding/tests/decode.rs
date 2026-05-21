@@ -5,6 +5,9 @@
 #[cfg(feature = "std")]
 use std::io::{Cursor, Read};
 
+#[cfg(feature = "alloc")]
+use bitcoin_consensus_encoding::check_decode;
+use bitcoin_consensus_encoding::check_decoder;
 #[cfg(feature = "std")]
 use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
 use bitcoin_consensus_encoding::{
@@ -520,46 +523,21 @@ check_decode_one_byte_at_a_time! {
 #[cfg(feature = "alloc")]
 fn vec_decoder_empty() {
     // Empty with a couple of arbitrary extra bytes.
-    let encoded = vec![0x00, 0xFF, 0xFF];
-
-    let mut slice = encoded.as_slice();
-    let mut decoder = Test::decoder();
-    assert!(decoder.push_bytes(&mut slice).unwrap().is_ready());
-
-    let got = decoder.end().unwrap();
-    let want = Test(vec![]);
-
-    assert_eq!(got, want);
+    check_decode(&[0x00], &Test(vec![]));
 }
 
 #[test]
 #[cfg(feature = "alloc")]
 fn vec_decoder_one_item() {
     let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE];
-
-    let mut slice = encoded.as_slice();
-    let mut decoder = Test::decoder();
-    decoder.push_bytes(&mut slice).unwrap();
-
-    let got = decoder.end().unwrap();
-    let want = Test(vec![Inner(0xDEAD_BEEF)]);
-
-    assert_eq!(got, want);
+    check_decode(&encoded, &Test(vec![Inner(0xDEAD_BEEF)]));
 }
 
 #[test]
 #[cfg(feature = "alloc")]
 fn vec_decoder_two_items() {
     let encoded = vec![0x02, 0xEF, 0xBE, 0xAD, 0xDE, 0xBE, 0xBA, 0xFE, 0xCA];
-
-    let mut slice = encoded.as_slice();
-    let mut decoder = Test::decoder();
-    decoder.push_bytes(&mut slice).unwrap();
-
-    let got = decoder.end().unwrap();
-    let want = Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]);
-
-    assert_eq!(got, want);
+    check_decode(&encoded, &Test(vec![Inner(0xDEAD_BEEF), Inner(0xCAFE_BABE)]));
 }
 
 #[test]
@@ -611,17 +589,7 @@ check_decode_one_byte_at_a_time! {
 #[cfg(feature = "alloc")]
 fn vec_decoder_one_item_plus_more_data() {
     // One u32 plus some other bytes.
-    let encoded = vec![0x01, 0xEF, 0xBE, 0xAD, 0xDE, 0xff, 0xff, 0xff, 0xff];
-
-    let mut slice = encoded.as_slice();
-
-    let mut decoder = Test::decoder();
-    decoder.push_bytes(&mut slice).unwrap();
-
-    let got = decoder.end().unwrap();
-    let want = Test(vec![Inner(0xDEAD_BEEF)]);
-
-    assert_eq!(got, want);
+    check_decode(&[0x01, 0xEF, 0xBE, 0xAD, 0xDE], &Test(vec![Inner(0xDEAD_BEEF)]));
 }
 
 #[cfg(feature = "std")]
@@ -686,4 +654,26 @@ fn decode_vec_decoder_end_incomplete_item() {
 
     let err = decoder.end().unwrap_err();
     assert!(matches!(err, bitcoin_consensus_encoding::VecDecoderError { .. }));
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn check_decode_panic_on_mismatched_value() {
+    let encoded = [0xEF, 0xBE, 0xAD, 0xDEu8];
+    let expected = Inner(0x1234_5678);
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        check_decode(&encoded, &expected);
+    }));
+    assert!(result.is_err());
+}
+
+#[test]
+fn check_decoder_panic_on_mismatched_value() {
+    let decoder = ArrayDecoder::<1>::new();
+    let bytes = &[0x42u8][..];
+    let expected = [0x99u8];
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        check_decoder(decoder, bytes, &expected);
+    }));
+    assert!(result.is_err());
 }
