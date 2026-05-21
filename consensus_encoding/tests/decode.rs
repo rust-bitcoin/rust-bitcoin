@@ -7,13 +7,12 @@ use std::io::{Cursor, Read};
 
 #[cfg(feature = "alloc")]
 use bitcoin_consensus_encoding::check_decode;
-use bitcoin_consensus_encoding::check_decoder;
+use bitcoin_consensus_encoding::{
+    check_decoder, decode_from_slice, decode_from_slice_unbounded, ArrayDecoder,
+    CompactSizeDecoder, Decode, DecodeError, Decoder, Decoder2, UnexpectedEofError,
+};
 #[cfg(feature = "std")]
 use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
-use bitcoin_consensus_encoding::{
-    decode_from_slice, decode_from_slice_unbounded, ArrayDecoder, CompactSizeDecoder, Decode,
-    DecodeError, Decoder, Decoder2, UnexpectedEofError,
-};
 #[cfg(feature = "alloc")]
 use bitcoin_consensus_encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
 
