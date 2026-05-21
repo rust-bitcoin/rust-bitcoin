@@ -3,11 +3,12 @@
 //! Round-trip integration tests for `CompactSize` codec.
 
 use bitcoin_consensus_encoding::{
-    check_encode, decode_from_slice, CompactSizeDecoder, CompactSizeDecoderError,
+    check_decode, check_encode, decode_from_slice, CompactSizeDecoder, CompactSizeDecoderError,
     CompactSizeEncoder, CompactSizeU64Decoder, Decode, Decoder, Encode, ExactSizeEncoder,
 };
 
 /// A `usize` value encoded and decoded as a compact size length prefix.
+#[derive(Debug, Eq, PartialEq)]
 struct CompactSizeUsize(usize);
 
 impl Encode for CompactSizeUsize {
@@ -43,6 +44,7 @@ impl Decode for CompactSizeUsize {
 }
 
 /// A `u64` value encoded and decoded as a compact size integer.
+#[derive(Debug, Eq, PartialEq)]
 struct CompactSizeU64(u64);
 
 impl Encode for CompactSizeU64 {
@@ -80,82 +82,73 @@ impl Decode for CompactSizeU64 {
 #[test]
 fn round_trip_usize_zero() {
     check_encode(&CompactSizeUsize(0x00), &[0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0x00]).unwrap().0, 0x00);
+    check_decode(&[0x00], &CompactSizeUsize(0x00));
 }
 
 #[test]
 fn round_trip_usize_one_byte_max() {
     // 0xFC is the largest value that fits in a single byte.
     check_encode(&CompactSizeUsize(0xFC), &[0xFC]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFC]).unwrap().0, 0xFC);
+    check_decode(&[0xFC], &CompactSizeUsize(0xFC));
 }
 
 #[test]
 fn round_trip_usize_three_byte_min() {
     // 0xFD is the smallest value that requires the 0xFD prefix.
     check_encode(&CompactSizeUsize(0xFD), &[0xFD, 0xFD, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFD, 0xFD, 0x00]).unwrap().0, 0xFD);
+    check_decode(&[0xFD, 0xFD, 0x00], &CompactSizeUsize(0xFD));
 }
 
 #[test]
 fn round_trip_usize_three_byte_max() {
     check_encode(&CompactSizeUsize(0xFFFF), &[0xFD, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeUsize>(&[0xFD, 0xFF, 0xFF]).unwrap().0, 0xFFFF);
+    check_decode(&[0xFD, 0xFF, 0xFF], &CompactSizeUsize(0xFFFF));
 }
 
 #[test]
 fn round_trip_usize_five_byte_min() {
     // 0x10000 is the smallest value that requires the 0xFE prefix.
     check_encode(&CompactSizeUsize(0x10000), &[0xFE, 0x00, 0x00, 0x01, 0x00]);
-    assert_eq!(
-        decode_from_slice::<CompactSizeUsize>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0,
-        0x10000
-    );
+    check_decode(&[0xFE, 0x00, 0x00, 0x01, 0x00], &CompactSizeUsize(0x10000));
 }
 
 #[test]
 fn round_trip_u64_zero() {
     check_encode(&CompactSizeU64(0x00), &[0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0x00]).unwrap().0, 0x00);
+    check_decode(&[0x00], &CompactSizeU64(0x00));
 }
 
 #[test]
 fn round_trip_u64_one_byte_max() {
     // 0xFC is the largest value that fits in a single byte.
     check_encode(&CompactSizeU64(0xFC), &[0xFC]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFC]).unwrap().0, 0xFC);
+    check_decode(&[0xFC], &CompactSizeU64(0xFC));
 }
 
 #[test]
 fn round_trip_u64_three_byte_min() {
     // 0xFD is the smallest value that requires the 0xFD prefix.
     check_encode(&CompactSizeU64(0xFD), &[0xFD, 0xFD, 0x00]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFD, 0xFD, 0x00]).unwrap().0, 0xFD);
+    check_decode(&[0xFD, 0xFD, 0x00], &CompactSizeU64(0xFD));
 }
 
 #[test]
 fn round_trip_u64_three_byte_max() {
     check_encode(&CompactSizeU64(0xFFFF), &[0xFD, 0xFF, 0xFF]);
-    assert_eq!(decode_from_slice::<CompactSizeU64>(&[0xFD, 0xFF, 0xFF]).unwrap().0, 0xFFFF);
+    check_decode(&[0xFD, 0xFF, 0xFF], &CompactSizeU64(0xFFFF));
 }
 
 #[test]
 fn round_trip_u64_five_byte_min() {
     // 0x10000 is the smallest value that requires the 0xFE prefix.
     check_encode(&CompactSizeU64(0x10000), &[0xFE, 0x00, 0x00, 0x01, 0x00]);
-    assert_eq!(
-        decode_from_slice::<CompactSizeU64>(&[0xFE, 0x00, 0x00, 0x01, 0x00]).unwrap().0,
-        0x10000
-    );
+    check_decode(&[0xFE, 0x00, 0x00, 0x01, 0x00], &CompactSizeU64(0x10000));
 }
 
 #[test]
 fn round_trip_u64_five_byte_max() {
     check_encode(&CompactSizeU64(0xFFFF_FFFF), &[0xFE, 0xFF, 0xFF, 0xFF, 0xFF]);
-    assert_eq!(
-        decode_from_slice::<CompactSizeU64>(&[0xFE, 0xFF, 0xFF, 0xFF, 0xFF]).unwrap().0,
-        0xFFFF_FFFF
-    );
+    check_decode(&[0xFE, 0xFF, 0xFF, 0xFF, 0xFF], &CompactSizeU64(0xFFFF_FFFF));
 }
 
 #[test]
@@ -164,13 +157,9 @@ fn round_trip_u64_nine_byte_min() {
         &CompactSizeU64(0x1_0000_0000),
         &[0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00],
     );
-    assert_eq!(
-        decode_from_slice::<CompactSizeU64>(&[
-            0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
-        ])
-        .unwrap()
-        .0,
-        0x1_0000_0000
+    check_decode(
+        &[0xFF, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00],
+        &CompactSizeU64(0x1_0000_0000),
     );
 }
 
@@ -180,13 +169,9 @@ fn round_trip_u64_max() {
         &CompactSizeU64(u64::MAX),
         &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
     );
-    assert_eq!(
-        decode_from_slice::<CompactSizeU64>(&[
-            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-        ])
-        .unwrap()
-        .0,
-        u64::MAX
+    check_decode(
+        &[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+        &CompactSizeU64(u64::MAX),
     );
 }
 

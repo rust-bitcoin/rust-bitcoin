@@ -2,13 +2,13 @@
 
 //! Test composition of encoders and decoders.
 
-use bitcoin_consensus_encoding::{
-    check_encoder, ArrayDecoder, BytesEncoder, Decoder, Decoder2, Decoder2Error, Decoder6,
-    DecoderStatus, Encoder3, UnexpectedEofError,
-};
 #[cfg(feature = "alloc")]
 use bitcoin_consensus_encoding::{
-    drain_to_vec, encode_to_vec, ArrayEncoder, Decode, Encode, Encoder2, Encoder6,
+    check_decode, check_encoder, drain_to_vec, encode_to_vec, ArrayEncoder, BytesEncoder, Decode,
+    Encode, Encoder2, Encoder3, Encoder6,
+};
+use bitcoin_consensus_encoding::{
+    ArrayDecoder, Decoder, Decoder2, Decoder2Error, Decoder6, DecoderStatus, UnexpectedEofError,
 };
 
 #[cfg(feature = "alloc")]
@@ -94,14 +94,7 @@ impl Decode for CompositeData {
 fn composition_chain() {
     let original = CompositeData { first: [0x01, 0x02, 0x03, 0x04], second: [0x05, 0x06] };
     let encoded_bytes = encode_to_vec(&original);
-    // Decode using the push decoder.
-    let mut decoder = CompositeData::decoder();
-    let mut bytes = &encoded_bytes[..];
-    let status = decoder.push_bytes(&mut bytes).unwrap();
-    assert!(status.is_ready(), "CompositeData decoder should be ready to end");
-    assert_eq!(bytes, EMPTY);
-    let decoded = decoder.end().unwrap();
-    assert_eq!(original, decoded);
+    check_decode(&encoded_bytes, &original);
 }
 
 #[cfg(feature = "alloc")]
@@ -320,6 +313,7 @@ fn composition_error_unification() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn empty_encoders() {
     let bytes = [0x01, 2, 3, 4];
     let mut encoder = Encoder3::new(
