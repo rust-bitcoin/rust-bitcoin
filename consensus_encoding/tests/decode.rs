@@ -658,22 +658,18 @@ fn decode_vec_decoder_end_incomplete_item() {
 
 #[test]
 #[cfg(feature = "alloc")]
+#[should_panic(expected = "decoded value doesn't match expected value")]
 fn check_decode_panic_on_mismatched_value() {
     let encoded = [0xEF, 0xBE, 0xAD, 0xDEu8];
     let expected = Inner(0x1234_5678);
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        check_decode(&encoded, &expected);
-    }));
-    assert!(result.is_err());
+    check_decode(&encoded, &expected);
 }
 
 #[test]
+#[should_panic(expected = "decoded value doesn't match expected value")]
 fn check_decoder_panic_on_mismatched_value() {
     let decoder = ArrayDecoder::<1>::new();
     let bytes = &[0x42u8][..];
     let expected = [0x99u8];
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        check_decoder(decoder, bytes, &expected);
-    }));
-    assert!(result.is_err());
+    check_decoder(decoder, bytes, &expected);
 }
