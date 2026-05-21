@@ -145,7 +145,6 @@ impl<T: HashEngine> HmacEngine<T> {
 
 impl<T: HashEngine> HashEngine for HmacEngine<T> {
     type Hash = Hmac<T::Hash>;
-    type Bytes = T::Bytes;
     const BLOCK_SIZE: usize = T::BLOCK_SIZE;
 
     fn n_bytes_hashed(&self) -> u64 { self.iengine.n_bytes_hashed() }
