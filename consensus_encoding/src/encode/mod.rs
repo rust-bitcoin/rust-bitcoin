@@ -49,7 +49,7 @@ pub trait Encode {
 
 /// An encoder for a consensus-encodable object.
 ///
-/// The consumers of type implementing this encoder trait should generally use it in a loop like
+/// The consumers of a type implementing this encoder trait should generally use it in a loop like
 /// this:
 ///
 /// ```no-compile
@@ -74,7 +74,7 @@ pub trait Encode {
 /// implementors are allowed to change the sizes of the chunks as long as the concatenation of all
 /// the bytes returned stays the same.
 pub trait Encoder {
-    /// Yields the current encoded byteslice.
+    /// Yields the current encoded byte slice.
     ///
     /// Will always return the same value until [`Self::advance`] is called.
     /// May return an empty slice, however implementors should avoid returning empty slices unless
