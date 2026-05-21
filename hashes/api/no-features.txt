@@ -235,6 +235,9 @@ impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoi
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<&str> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -1752,6 +1755,9 @@ impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoi
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<&str> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>

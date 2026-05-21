@@ -42,6 +42,21 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::hash160::Hash
@@ -289,6 +304,21 @@ impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoi
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<&str> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -426,6 +456,21 @@ impl core::convert::AsRef<[u8; 384]> for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::as_ref(&self) -> &[u8; 384]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::muhash::Hash
@@ -515,6 +560,21 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::ripemd160::Hash
@@ -656,6 +716,21 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha1::Hash
@@ -847,6 +922,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256::Hash
@@ -1094,6 +1184,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256d::Hash
@@ -1235,6 +1340,21 @@ impl<T: bitcoin_hashes::sha256t::Tag> core::convert::AsRef<[u8; 32]> for bitcoin
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_ref(&self) -> &[u8; 32]
 impl<T: bitcoin_hashes::sha256t::Tag> core::convert::AsRef<[u8]> for bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_ref(&self) -> &[u8]
+impl<T: bitcoin_hashes::sha256t::Tag> core::convert::TryFrom<&str> for bitcoin_hashes::sha256t::Hash<T>
+pub type bitcoin_hashes::sha256t::Hash<T>::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256t::Hash<T>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::sha256t::Tag> core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha256t::Hash<T>
+pub type bitcoin_hashes::sha256t::Hash<T>::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256t::Hash<T>::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::sha256t::Tag> core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha256t::Hash<T>
+pub type bitcoin_hashes::sha256t::Hash<T>::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256t::Hash<T>::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::sha256t::Tag> core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha256t::Hash<T>
+pub type bitcoin_hashes::sha256t::Hash<T>::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256t::Hash<T>::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::sha256t::Tag> core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha256t::Hash<T>
+pub type bitcoin_hashes::sha256t::Hash<T>::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256t::Hash<T>::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::Debug for bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::Display for bitcoin_hashes::sha256t::Hash<T>
@@ -1371,6 +1491,21 @@ impl core::convert::AsRef<[u8; 48]> for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8; 48]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha384::Hash
@@ -1510,6 +1645,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha3_256::Hash
@@ -1651,6 +1801,21 @@ impl core::convert::AsRef<[u8; 64]> for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8; 64]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha512::Hash
@@ -1792,6 +1957,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha512_256::Hash
@@ -1935,6 +2115,21 @@ impl core::convert::AsRef<[u8; 8]> for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8; 8]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::siphash24::Hash
@@ -2075,6 +2270,21 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::hash160::Hash
+pub type bitcoin_hashes::hash160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::hash160::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::hash160::Hash
 pub fn bitcoin_hashes::hash160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::hash160::Hash
@@ -2179,6 +2389,21 @@ impl<T: bitcoin_hashes::Hash + core::fmt::Display> core::fmt::Display for bitcoi
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T: bitcoin_hashes::Hash + core::fmt::LowerHex> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<&str> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::hmac::Hmac<T>
+pub type bitcoin_hashes::hmac::Hmac<T>::Error = <T as core::str::traits::FromStr>::Err
+pub fn bitcoin_hashes::hmac::Hmac<T>::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
 pub type bitcoin_hashes::hmac::Hmac<T>::Err = <T as core::str::traits::FromStr>::Err
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -2314,6 +2539,21 @@ impl core::convert::AsRef<[u8; 384]> for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::as_ref(&self) -> &[u8; 384]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::muhash::Hash
+pub type bitcoin_hashes::muhash::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::muhash::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::muhash::Hash
 pub fn bitcoin_hashes::muhash::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::muhash::Hash
@@ -2402,6 +2642,21 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::ripemd160::Hash
+pub type bitcoin_hashes::ripemd160::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::ripemd160::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::ripemd160::Hash
 pub fn bitcoin_hashes::ripemd160::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::ripemd160::Hash
@@ -2492,6 +2747,21 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha1::Hash
+pub type bitcoin_hashes::sha1::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha1::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha1::Hash
 pub fn bitcoin_hashes::sha1::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha1::Hash
@@ -2584,6 +2854,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha256::Hash
+pub type bitcoin_hashes::sha256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256::Hash
@@ -2675,6 +2960,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha256d::Hash
+pub type bitcoin_hashes::sha256d::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha256d::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256d::Hash
@@ -2765,6 +3065,21 @@ impl core::convert::AsRef<[u8; 48]> for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8; 48]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha384::Hash
+pub type bitcoin_hashes::sha384::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha384::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha384::Hash
 pub fn bitcoin_hashes::sha384::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha384::Hash
@@ -2853,6 +3168,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha3_256::Hash
+pub type bitcoin_hashes::sha3_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha3_256::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha3_256::Hash
 pub fn bitcoin_hashes::sha3_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha3_256::Hash
@@ -2943,6 +3273,21 @@ impl core::convert::AsRef<[u8; 64]> for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8; 64]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha512::Hash
+pub type bitcoin_hashes::sha512::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha512::Hash
 pub fn bitcoin_hashes::sha512::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha512::Hash
@@ -3033,6 +3378,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::sha512_256::Hash
+pub type bitcoin_hashes::sha512_256::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::sha512_256::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::sha512_256::Hash
 pub fn bitcoin_hashes::sha512_256::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha512_256::Hash
@@ -3125,6 +3485,21 @@ impl core::convert::AsRef<[u8; 8]> for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8; 8]
 impl core::convert::AsRef<[u8]> for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_hashes::siphash24::Hash
+pub type bitcoin_hashes::siphash24::Hash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_hashes::siphash24::Hash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::siphash24::Hash

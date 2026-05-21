@@ -588,6 +588,21 @@ impl core::convert::From<&bitcoin_primitives::block::Block> for bitcoin_primitiv
 pub fn bitcoin_primitives::BlockHash::from(block: &bitcoin_primitives::block::Block) -> Self
 impl core::convert::From<bitcoin_primitives::block::Block> for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::from(block: bitcoin_primitives::block::Block) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::str::traits::FromStr for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked> where Self: bitcoin_consensus_encoding::decode::Decode
 pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Err = bitcoin_primitives::block::error::ParseBlockError
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -805,6 +820,21 @@ impl core::convert::From<bitcoin_primitives::block::Block> for bitcoin_primitive
 pub fn bitcoin_primitives::BlockHash::from(block: bitcoin_primitives::block::Block) -> Self
 impl core::convert::From<bitcoin_primitives::block::Header> for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::from(header: bitcoin_primitives::block::Header) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::BlockHash
@@ -1015,6 +1045,21 @@ impl core::convert::From<&bitcoin_primitives::block::Header> for bitcoin_primiti
 pub fn bitcoin_primitives::BlockHash::from(header: &bitcoin_primitives::block::Header) -> Self
 impl core::convert::From<bitcoin_primitives::block::Header> for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::from(header: bitcoin_primitives::block::Header) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::block::Header
 pub fn bitcoin_primitives::block::Header::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::block::Header
@@ -1469,6 +1514,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::WitnessCommitment
 pub fn bitcoin_primitives::WitnessCommitment::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::WitnessCommitment
 pub fn bitcoin_primitives::WitnessCommitment::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::WitnessCommitment
 pub fn bitcoin_primitives::WitnessCommitment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::WitnessCommitment
@@ -1562,6 +1622,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::merkle_tree::TxMerkl
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::merkle_tree::TxMerkleNode
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_primitives::merkle_tree::TxMerkleNode
+pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::merkle_tree::TxMerkleNode
+pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::merkle_tree::TxMerkleNode
+pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::merkle_tree::TxMerkleNode
+pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::merkle_tree::TxMerkleNode
+pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::merkle_tree::TxMerkleNode
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::merkle_tree::TxMerkleNode
@@ -1775,6 +1850,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::merkle_tree::Witness
 pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 pub fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::merkle_tree::WitnessMerkleNode
@@ -2809,6 +2899,21 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_primitives::script::ScriptHash
 pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &[u8; 20]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::ScriptHash
 pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_primitives::script::ScriptHash
+pub type bitcoin_primitives::script::ScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::ScriptHash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::script::ScriptHash
+pub type bitcoin_primitives::script::ScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::ScriptHash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::script::ScriptHash
+pub type bitcoin_primitives::script::ScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::ScriptHash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::script::ScriptHash
+pub type bitcoin_primitives::script::ScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::ScriptHash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::script::ScriptHash
+pub type bitcoin_primitives::script::ScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::ScriptHash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptHash
 pub fn bitcoin_primitives::script::ScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::script::ScriptHash
@@ -2902,6 +3007,21 @@ pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: &bitcoi
 impl core::convert::TryFrom<&bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
 pub type bitcoin_primitives::script::WScriptHash::Error = bitcoin_primitives::script::WitnessScriptSizeError
 pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: &bitcoin_primitives::script::WitnessScriptBuf) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<&str> for bitcoin_primitives::script::WScriptHash
+pub type bitcoin_primitives::script::WScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::WScriptHash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::script::WScriptHash
+pub type bitcoin_primitives::script::WScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::WScriptHash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::script::WScriptHash
+pub type bitcoin_primitives::script::WScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::WScriptHash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::script::WScriptHash
+pub type bitcoin_primitives::script::WScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::WScriptHash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::script::WScriptHash
+pub type bitcoin_primitives::script::WScriptHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::script::WScriptHash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_primitives::script::ScriptBuf<bitcoin_primitives::script::WitnessScriptTag>> for bitcoin_primitives::script::WScriptHash
 pub type bitcoin_primitives::script::WScriptHash::Error = bitcoin_primitives::script::WitnessScriptSizeError
 pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: bitcoin_primitives::script::WitnessScriptBuf) -> core::result::Result<Self, Self::Error>
@@ -3533,6 +3653,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::transaction::Ntxid
 pub fn bitcoin_primitives::transaction::Ntxid::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::transaction::Ntxid
 pub fn bitcoin_primitives::transaction::Ntxid::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_primitives::transaction::Ntxid
+pub type bitcoin_primitives::transaction::Ntxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::transaction::Ntxid::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::transaction::Ntxid
+pub type bitcoin_primitives::transaction::Ntxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::transaction::Ntxid::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::transaction::Ntxid
+pub type bitcoin_primitives::transaction::Ntxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::transaction::Ntxid::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::transaction::Ntxid
+pub type bitcoin_primitives::transaction::Ntxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::transaction::Ntxid::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::transaction::Ntxid
+pub type bitcoin_primitives::transaction::Ntxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::transaction::Ntxid::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::transaction::Ntxid
 pub fn bitcoin_primitives::transaction::Ntxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::transaction::Ntxid
@@ -3606,6 +3741,21 @@ impl core::cmp::PartialEq for bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::eq(&self, other: &bitcoin_primitives::transaction::OutPoint) -> bool
 impl core::cmp::PartialOrd for bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::partial_cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::option::Option<core::cmp::Ordering>
+impl core::convert::TryFrom<&str> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::transaction::OutPoint
@@ -3863,6 +4013,21 @@ impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitco
 pub fn bitcoin_primitives::Txid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Wtxid
 pub fn bitcoin_primitives::Wtxid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::transaction::Transaction
 pub fn bitcoin_primitives::transaction::Transaction::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::transaction::Transaction
@@ -4433,6 +4598,21 @@ impl core::convert::From<&bitcoin_primitives::transaction::Transaction> for bitc
 pub fn bitcoin_primitives::Txid::from(tx: &bitcoin_primitives::transaction::Transaction) -> Self
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Txid
 pub fn bitcoin_primitives::Txid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::Txid
 pub fn bitcoin_primitives::Txid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::Txid
@@ -4760,6 +4940,21 @@ impl core::convert::From<&bitcoin_primitives::transaction::Transaction> for bitc
 pub fn bitcoin_primitives::Wtxid::from(tx: &bitcoin_primitives::transaction::Transaction) -> Self
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Wtxid
 pub fn bitcoin_primitives::Wtxid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::Wtxid
 pub fn bitcoin_primitives::Wtxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::Wtxid
@@ -5372,6 +5567,21 @@ impl core::convert::From<&bitcoin_primitives::block::Block> for bitcoin_primitiv
 pub fn bitcoin_primitives::BlockHash::from(block: &bitcoin_primitives::block::Block) -> Self
 impl core::convert::From<bitcoin_primitives::block::Block> for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::from(block: bitcoin_primitives::block::Block) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>
+pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Error = <bitcoin_primitives::block::Block as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::str::traits::FromStr for bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked> where Self: bitcoin_consensus_encoding::decode::Decode
 pub type bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::Err = bitcoin_primitives::block::error::ParseBlockError
 pub fn bitcoin_primitives::block::Block<bitcoin_primitives::block::Unchecked>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
@@ -5462,6 +5672,21 @@ impl core::convert::From<bitcoin_primitives::block::Block> for bitcoin_primitive
 pub fn bitcoin_primitives::BlockHash::from(block: bitcoin_primitives::block::Block) -> Self
 impl core::convert::From<bitcoin_primitives::block::Header> for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::from(header: bitcoin_primitives::block::Header) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::BlockHash
+pub type bitcoin_primitives::BlockHash::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::BlockHash::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::BlockHash
@@ -5543,6 +5768,21 @@ impl core::convert::From<&bitcoin_primitives::block::Header> for bitcoin_primiti
 pub fn bitcoin_primitives::BlockHash::from(header: &bitcoin_primitives::block::Header) -> Self
 impl core::convert::From<bitcoin_primitives::block::Header> for bitcoin_primitives::BlockHash
 pub fn bitcoin_primitives::BlockHash::from(header: bitcoin_primitives::block::Header) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::block::Header
+pub type bitcoin_primitives::block::Header::Error = <bitcoin_primitives::block::Header as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::block::Header::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::block::Header
 pub fn bitcoin_primitives::block::Header::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::block::Header
@@ -5689,6 +5929,21 @@ impl core::cmp::PartialEq for bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::eq(&self, other: &bitcoin_primitives::transaction::OutPoint) -> bool
 impl core::cmp::PartialOrd for bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::partial_cmp(&self, other: &bitcoin_primitives::transaction::OutPoint) -> core::option::Option<core::cmp::Ordering>
+impl core::convert::TryFrom<&str> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::transaction::OutPoint
+pub type bitcoin_primitives::transaction::OutPoint::Error = <bitcoin_primitives::transaction::OutPoint as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::OutPoint::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::transaction::OutPoint
 pub fn bitcoin_primitives::transaction::OutPoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::transaction::OutPoint
@@ -5771,6 +6026,21 @@ impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitco
 pub fn bitcoin_primitives::Txid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Wtxid
 pub fn bitcoin_primitives::Wtxid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::transaction::Transaction
+pub type bitcoin_primitives::transaction::Transaction::Error = <bitcoin_primitives::transaction::Transaction as core::str::traits::FromStr>::Err
+pub fn bitcoin_primitives::transaction::Transaction::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::transaction::Transaction
 pub fn bitcoin_primitives::transaction::Transaction::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::transaction::Transaction
@@ -6034,6 +6304,21 @@ impl core::convert::From<&bitcoin_primitives::transaction::Transaction> for bitc
 pub fn bitcoin_primitives::Txid::from(tx: &bitcoin_primitives::transaction::Transaction) -> Self
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Txid
 pub fn bitcoin_primitives::Txid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::Txid
+pub type bitcoin_primitives::Txid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Txid::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::Txid
 pub fn bitcoin_primitives::Txid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::Txid
@@ -6248,6 +6533,21 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::WitnessCommitment
 pub fn bitcoin_primitives::WitnessCommitment::as_ref(&self) -> &[u8; 32]
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::WitnessCommitment
 pub fn bitcoin_primitives::WitnessCommitment::as_ref(&self) -> &[u8]
+impl core::convert::TryFrom<&str> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::WitnessCommitment
+pub type bitcoin_primitives::WitnessCommitment::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::WitnessCommitment::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::WitnessCommitment
 pub fn bitcoin_primitives::WitnessCommitment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::WitnessCommitment
@@ -6329,6 +6629,21 @@ impl core::convert::From<&bitcoin_primitives::transaction::Transaction> for bitc
 pub fn bitcoin_primitives::Wtxid::from(tx: &bitcoin_primitives::transaction::Transaction) -> Self
 impl core::convert::From<bitcoin_primitives::transaction::Transaction> for bitcoin_primitives::Wtxid
 pub fn bitcoin_primitives::Wtxid::from(tx: bitcoin_primitives::transaction::Transaction) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_primitives::Wtxid
+pub type bitcoin_primitives::Wtxid::Error = hex_conservative::error::DecodeFixedLengthBytesError
+pub fn bitcoin_primitives::Wtxid::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_primitives::Wtxid
 pub fn bitcoin_primitives::Wtxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_primitives::Wtxid

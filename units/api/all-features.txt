@@ -325,9 +325,15 @@ pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: &str) -> core::r
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::LockTime
 pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::absolute::LockTime
+pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::LockTime
 pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::absolute::LockTime
+pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_units::locktime::absolute::LockTime
 pub fn bitcoin_units::locktime::absolute::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_units::locktime::absolute::LockTime
@@ -452,9 +458,15 @@ pub fn bitcoin_units::locktime::absolute::Height::try_from(s: &str) -> core::res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::absolute::Height
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
+pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::absolute::Height
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
+pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(h: bitcoin_units::block::BlockHeight) -> core::result::Result<Self, Self::Error>
@@ -766,9 +778,15 @@ pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: &str) -> c
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::absolute::MedianTimePast
+pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::absolute::MedianTimePast
+pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockMtp> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(h: bitcoin_units::block::BlockMtp) -> core::result::Result<Self, Self::Error>
@@ -1569,6 +1587,21 @@ pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amoun
 impl core::cmp::Eq for bitcoin_units::amount::Denomination
 impl core::cmp::PartialEq for bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
+impl core::convert::TryFrom<&str> for bitcoin_units::amount::Denomination
+pub type bitcoin_units::amount::Denomination::Error = <bitcoin_units::amount::Denomination as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::amount::Denomination::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::amount::Denomination
+pub type bitcoin_units::amount::Denomination::Error = <bitcoin_units::amount::Denomination as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::amount::Denomination::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::amount::Denomination
+pub type bitcoin_units::amount::Denomination::Error = <bitcoin_units::amount::Denomination as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::amount::Denomination::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::amount::Denomination
+pub type bitcoin_units::amount::Denomination::Error = <bitcoin_units::amount::Denomination as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::amount::Denomination::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::amount::Denomination
+pub type bitcoin_units::amount::Denomination::Error = <bitcoin_units::amount::Denomination as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::amount::Denomination::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_units::amount::Denomination
@@ -1720,6 +1753,21 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::from(a: bitcoin_units::Amount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
@@ -2592,6 +2640,21 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::from(a: bitcoin_units::SignedAmount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
@@ -3002,9 +3065,15 @@ pub fn bitcoin_units::block::BlockHeight::try_from(s: &str) -> core::result::Res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockHeight
 pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockHeight
+pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockHeight
 pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockHeight
+pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(h: bitcoin_units::block::BlockHeight) -> core::result::Result<Self, Self::Error>
@@ -3263,9 +3332,15 @@ pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: &str) -> core::res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockHeightInterval
 pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockHeightInterval
+pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockHeightInterval
 pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockHeightInterval
+pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeightInterval> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::block::error::TooBigForRelativeHeightError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(h: bitcoin_units::block::BlockHeightInterval) -> core::result::Result<Self, Self::Error>
@@ -3422,9 +3497,15 @@ pub fn bitcoin_units::block::BlockMtp::try_from(s: &str) -> core::result::Result
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockMtp
 pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockMtp
+pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockMtp
 pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockMtp
+pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockMtp> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(h: bitcoin_units::block::BlockMtp) -> core::result::Result<Self, Self::Error>
@@ -3556,9 +3637,15 @@ pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: &str) -> core::result
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockMtpInterval
 pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockMtpInterval
+pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockMtpInterval
 pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockMtpInterval
+pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::default::Default for bitcoin_units::block::BlockMtpInterval
 pub fn bitcoin_units::block::BlockMtpInterval::default() -> bitcoin_units::block::BlockMtpInterval
 impl core::fmt::Binary for bitcoin_units::block::BlockMtpInterval
@@ -4316,9 +4403,15 @@ pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: &str) -> core::r
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::LockTime
 pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::absolute::LockTime
+pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::LockTime
 pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::absolute::LockTime
+pub type bitcoin_units::locktime::absolute::LockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::absolute::LockTime::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for bitcoin_units::locktime::absolute::LockTime
 pub fn bitcoin_units::locktime::absolute::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_units::locktime::absolute::LockTime
@@ -4443,9 +4536,15 @@ pub fn bitcoin_units::locktime::absolute::Height::try_from(s: &str) -> core::res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::absolute::Height
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
+pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::absolute::Height
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ParseHeightError
+pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(h: bitcoin_units::block::BlockHeight) -> core::result::Result<Self, Self::Error>
@@ -4757,9 +4856,15 @@ pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: &str) -> c
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::absolute::MedianTimePast
+pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::absolute::MedianTimePast
+pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ParseTimeError
+pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockMtp> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(h: bitcoin_units::block::BlockMtp) -> core::result::Result<Self, Self::Error>
@@ -5825,9 +5930,15 @@ pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: &str) 
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::NumberOf512Seconds
 pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::relative::NumberOf512Seconds
+pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::NumberOf512Seconds
 pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::relative::NumberOf512Seconds
+pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::default::Default for bitcoin_units::locktime::relative::NumberOf512Seconds
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::default() -> bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::fmt::Binary for bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -5914,9 +6025,15 @@ pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: &str) -> c
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::relative::NumberOfBlocks
+pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::relative::NumberOfBlocks
+pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeightInterval> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::block::error::TooBigForRelativeHeightError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(h: bitcoin_units::block::BlockHeightInterval) -> core::result::Result<Self, Self::Error>
@@ -6507,9 +6624,15 @@ pub fn bitcoin_units::pow::CompactTarget::try_from(s: &str) -> core::result::Res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::pow::CompactTarget
 pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::pow::CompactTarget
+pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::pow::CompactTarget
 pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::pow::CompactTarget
+pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::pow::CompactTarget
 pub fn bitcoin_units::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::pow::CompactTarget
@@ -6817,6 +6940,21 @@ impl core::cmp::PartialOrd for bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::partial_cmp(&self, other: &bitcoin_units::pow::Target) -> core::option::Option<core::cmp::Ordering>
 impl core::convert::From<bitcoin_units::pow::CompactTarget> for bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::from(c: bitcoin_units::pow::CompactTarget) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::pow::Target
@@ -6891,6 +7029,21 @@ impl core::cmp::PartialEq for bitcoin_units::pow::Work
 pub fn bitcoin_units::pow::Work::eq(&self, other: &bitcoin_units::pow::Work) -> bool
 impl core::cmp::PartialOrd for bitcoin_units::pow::Work
 pub fn bitcoin_units::pow::Work::partial_cmp(&self, other: &bitcoin_units::pow::Work) -> core::option::Option<core::cmp::Ordering>
+impl core::convert::TryFrom<&str> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::pow::Work
 pub fn bitcoin_units::pow::Work::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::pow::Work
@@ -7867,9 +8020,15 @@ pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: &str) 
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::NumberOf512Seconds
 pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::relative::NumberOf512Seconds
+pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::NumberOf512Seconds
 pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::relative::NumberOf512Seconds
+pub type bitcoin_units::locktime::relative::NumberOf512Seconds::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::default::Default for bitcoin_units::locktime::relative::NumberOf512Seconds
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::default() -> bitcoin_units::locktime::relative::NumberOf512Seconds
 impl core::fmt::Binary for bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -7956,9 +8115,15 @@ pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: &str) -> c
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::locktime::relative::NumberOfBlocks
+pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::locktime::relative::NumberOfBlocks
+pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeightInterval> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::block::error::TooBigForRelativeHeightError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(h: bitcoin_units::block::BlockHeightInterval) -> core::result::Result<Self, Self::Error>
@@ -8769,9 +8934,15 @@ pub fn bitcoin_units::sequence::Sequence::try_from(s: &str) -> core::result::Res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::sequence::Sequence
 pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::sequence::Sequence
+pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::sequence::Sequence
 pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::sequence::Sequence
+pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::sequence::Sequence> for bitcoin_units::locktime::relative::LockTime
 pub type bitcoin_units::locktime::relative::LockTime::Error = bitcoin_units::locktime::relative::error::DisabledLockTimeError
 pub fn bitcoin_units::locktime::relative::LockTime::try_from(seq: bitcoin_units::sequence::Sequence) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
@@ -9042,9 +9213,15 @@ pub fn bitcoin_units::BlockTime::try_from(s: &str) -> core::result::Result<Self,
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::BlockTime
 pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::BlockTime::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::BlockTime
+pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::BlockTime::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::BlockTime
 pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::BlockTime::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::BlockTime
+pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::BlockTime::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::BlockTime
 pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::BlockTime
@@ -9277,9 +9454,15 @@ pub fn bitcoin_units::Weight::try_from(s: &str) -> core::result::Result<Self, Se
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::Weight
 pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::Weight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::Weight
+pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::Weight::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::Weight
 pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::Weight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::Weight
+pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::Weight::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::Weight
 pub fn bitcoin_units::Weight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::Weight
@@ -10043,6 +10226,21 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::Amount>::from(a: bitcoin_units::Amount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::Amount
+pub type bitcoin_units::Amount::Error = <bitcoin_units::Amount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::Amount::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
@@ -10312,9 +10510,15 @@ pub fn bitcoin_units::block::BlockHeight::try_from(s: &str) -> core::result::Res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockHeight
 pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockHeight
+pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockHeight
 pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockHeight
+pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
 pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::Height::try_from(h: bitcoin_units::block::BlockHeight) -> core::result::Result<Self, Self::Error>
@@ -10444,9 +10648,15 @@ pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: &str) -> core::res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockHeightInterval
 pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockHeightInterval
+pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockHeightInterval
 pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockHeightInterval
+pub type bitcoin_units::block::BlockHeightInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockHeightInterval::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeightInterval> for bitcoin_units::locktime::relative::NumberOfBlocks
 pub type bitcoin_units::locktime::relative::NumberOfBlocks::Error = bitcoin_units::block::error::TooBigForRelativeHeightError
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::try_from(h: bitcoin_units::block::BlockHeightInterval) -> core::result::Result<Self, Self::Error>
@@ -10603,9 +10813,15 @@ pub fn bitcoin_units::block::BlockMtp::try_from(s: &str) -> core::result::Result
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockMtp
 pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockMtp
+pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockMtp
 pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockMtp
+pub type bitcoin_units::block::BlockMtp::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtp::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::block::BlockMtp> for bitcoin_units::locktime::absolute::MedianTimePast
 pub type bitcoin_units::locktime::absolute::MedianTimePast::Error = bitcoin_units::locktime::absolute::error::ConversionError
 pub fn bitcoin_units::locktime::absolute::MedianTimePast::try_from(h: bitcoin_units::block::BlockMtp) -> core::result::Result<Self, Self::Error>
@@ -10737,9 +10953,15 @@ pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: &str) -> core::result
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockMtpInterval
 pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::block::BlockMtpInterval
+pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockMtpInterval
 pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::block::BlockMtpInterval
+pub type bitcoin_units::block::BlockMtpInterval::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::block::BlockMtpInterval::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::default::Default for bitcoin_units::block::BlockMtpInterval
 pub fn bitcoin_units::block::BlockMtpInterval::default() -> bitcoin_units::block::BlockMtpInterval
 impl core::fmt::Binary for bitcoin_units::block::BlockMtpInterval
@@ -10890,9 +11112,15 @@ pub fn bitcoin_units::BlockTime::try_from(s: &str) -> core::result::Result<Self,
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::BlockTime
 pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::BlockTime::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::BlockTime
+pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::BlockTime::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::BlockTime
 pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::BlockTime::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::BlockTime
+pub type bitcoin_units::BlockTime::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::BlockTime::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::BlockTime
 pub fn bitcoin_units::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::BlockTime
@@ -10979,9 +11207,15 @@ pub fn bitcoin_units::pow::CompactTarget::try_from(s: &str) -> core::result::Res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::pow::CompactTarget
 pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::pow::CompactTarget
+pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::pow::CompactTarget
 pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::pow::CompactTarget
+pub type bitcoin_units::pow::CompactTarget::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::pow::CompactTarget::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::pow::CompactTarget
 pub fn bitcoin_units::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::pow::CompactTarget
@@ -11281,9 +11515,15 @@ pub fn bitcoin_units::sequence::Sequence::try_from(s: &str) -> core::result::Res
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::sequence::Sequence
 pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::sequence::Sequence
+pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::sequence::Sequence
 pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::sequence::Sequence
+pub type bitcoin_units::sequence::Sequence::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::sequence::Sequence::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::sequence::Sequence> for bitcoin_units::locktime::relative::LockTime
 pub type bitcoin_units::locktime::relative::LockTime::Error = bitcoin_units::locktime::relative::error::DisabledLockTimeError
 pub fn bitcoin_units::locktime::relative::LockTime::try_from(seq: bitcoin_units::sequence::Sequence) -> core::result::Result<Self, bitcoin_units::locktime::relative::error::DisabledLockTimeError>
@@ -11401,6 +11641,21 @@ impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 impl core::convert::From<bitcoin_units::SignedAmount> for bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>
 pub fn bitcoin_units::result::NumOpResult<bitcoin_units::SignedAmount>::from(a: bitcoin_units::SignedAmount) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::SignedAmount
+pub type bitcoin_units::SignedAmount::Error = <bitcoin_units::SignedAmount as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::SignedAmount::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
@@ -11614,6 +11869,21 @@ impl core::cmp::PartialOrd for bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::partial_cmp(&self, other: &bitcoin_units::pow::Target) -> core::option::Option<core::cmp::Ordering>
 impl core::convert::From<bitcoin_units::pow::CompactTarget> for bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::from(c: bitcoin_units::pow::CompactTarget) -> Self
+impl core::convert::TryFrom<&str> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::pow::Target
+pub type bitcoin_units::pow::Target::Error = <bitcoin_units::pow::Target as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Target::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::pow::Target
 pub fn bitcoin_units::pow::Target::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::pow::Target
@@ -11714,9 +11984,15 @@ pub fn bitcoin_units::Weight::try_from(s: &str) -> core::result::Result<Self, Se
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::Weight
 pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::Weight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::Weight
+pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::Weight::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::Weight
 pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
 pub fn bitcoin_units::Weight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::Weight
+pub type bitcoin_units::Weight::Error = bitcoin_units::parse_int::error::ParseIntError
+pub fn bitcoin_units::Weight::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::Weight
 pub fn bitcoin_units::Weight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::Weight
@@ -11991,6 +12267,21 @@ impl core::cmp::PartialEq for bitcoin_units::pow::Work
 pub fn bitcoin_units::pow::Work::eq(&self, other: &bitcoin_units::pow::Work) -> bool
 impl core::cmp::PartialOrd for bitcoin_units::pow::Work
 pub fn bitcoin_units::pow::Work::partial_cmp(&self, other: &bitcoin_units::pow::Work) -> core::option::Option<core::cmp::Ordering>
+impl core::convert::TryFrom<&str> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::rc::Rc<str>> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::rc::Rc<str>) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<alloc::sync::Arc<str>> for bitcoin_units::pow::Work
+pub type bitcoin_units::pow::Work::Error = <bitcoin_units::pow::Work as core::str::traits::FromStr>::Err
+pub fn bitcoin_units::pow::Work::try_from(s: alloc::sync::Arc<str>) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Binary for bitcoin_units::pow::Work
 pub fn bitcoin_units::pow::Work::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Debug for bitcoin_units::pow::Work
