@@ -46,26 +46,6 @@ pub(crate) use impl_consensus_encoding;
 // Pull in shared impl_array_newtype_stringify macro from include
 include!("../include/array_newtype.rs");
 
-#[rustfmt::skip]
-macro_rules! impl_asref_push_bytes {
-    ($($hashtype:ty),* $(,)?) => {
-        $(
-            impl AsRef<$crate::script::PushBytes> for $hashtype {
-                fn as_ref(&self) -> &$crate::script::PushBytes {
-                    self.as_byte_array().into()
-                }
-            }
-
-            impl From<$hashtype> for $crate::script::PushBytesBuf {
-                fn from(hash: $hashtype) -> Self {
-                    hash.as_byte_array().into()
-                }
-            }
-        )*
-    };
-}
-pub(crate) use impl_asref_push_bytes;
-
 macro_rules! only_doc_attrs {
     ({}, {$($fun:tt)*}) => {
         $($fun)*

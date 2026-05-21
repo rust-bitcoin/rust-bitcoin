@@ -11,7 +11,7 @@ use core::str;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::hash160;
 
-use crate::script::{Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
+use crate::script::{PushBytes, PushBytesBuf, Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
 
 /// A 160-bit hash of Bitcoin Script bytecode.
 ///
@@ -22,6 +22,7 @@ use crate::script::{Script, ScriptHashableTag, MAX_REDEEM_SCRIPT_SIZE};
 pub struct ScriptHash(hash160::Hash);
 
 super::impl_debug!(ScriptHash);
+crate::impl_asref_push_bytes!(ScriptHash);
 
 impl ScriptHash {
     /// Constructs a new `ScriptHash` after first checking the script size.

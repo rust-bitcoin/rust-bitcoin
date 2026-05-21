@@ -2,7 +2,7 @@
 
 use internals::script::{self, PushDataLenLen};
 
-use super::{Error, PushBytes, Script, ScriptBufExtPriv as _};
+use super::{Error, PushBytes, PushBytesExt as _, Script, ScriptBufExtPriv as _};
 use crate::opcodes::{self, Opcode};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
