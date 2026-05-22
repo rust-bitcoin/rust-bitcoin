@@ -225,10 +225,8 @@ impl Deserialize for KeySource {
 
         let mut d = &bytes[4..];
         while !d.is_empty() {
-            match u32::consensus_decode(&mut d) {
-                Ok(index) => dpath.push(index.into()),
-                Err(e) => return Err(e.into()),
-            }
+            let index = u32::consensus_decode(&mut d)?;
+            dpath.push(index.into())
         }
 
         Ok((fprint, dpath.into()))

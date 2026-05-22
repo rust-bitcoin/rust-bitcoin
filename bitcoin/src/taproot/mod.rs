@@ -1256,7 +1256,7 @@ impl fmt::Display for LeafVersion {
         match (self, f.alternate()) {
             (LeafVersion::TapScript, true) => f.write_str("tapscript"),
             (LeafVersion::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (LeafVersion::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
+            (LeafVersion::Future(version), true) => write!(f, "future_script_{:#04x}", version.0),
             (LeafVersion::Future(version), false) => fmt::Display::fmt(version, f),
         }
     }
@@ -1870,5 +1870,11 @@ mod test {
     fn bip_341_read_json() -> serde_json::Value {
         let json_str = include_str!("../../tests/data/bip341_tests.json");
         serde_json::from_str(json_str).expect("JSON was not well-formatted")
+    }
+
+    #[test]
+    fn leaf_version_future_fmt() {
+        let v = LeafVersion::Future(FutureLeafVersion(1));
+        assert_eq!(format!("{:#}", v), "future_script_0x01");
     }
 }
