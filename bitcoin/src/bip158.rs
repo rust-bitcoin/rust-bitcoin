@@ -39,12 +39,12 @@
 //!
 
 use core::cmp::{self, Ordering};
+use core::convert::Infallible;
 use core::fmt::{self, Display, Formatter};
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{sha256d, siphash24, Hash};
-use internals::write_err;
 use io::{Read, Write};
 
 use crate::blockdata::block::{Block, BlockHash};
@@ -52,7 +52,7 @@ use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
-use crate::internal_macros::impl_hashencode;
+use crate::internal_macros::{impl_hashencode, write_err};
 use crate::prelude::*;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
@@ -79,7 +79,9 @@ pub enum Error {
     Io(io::Error),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {

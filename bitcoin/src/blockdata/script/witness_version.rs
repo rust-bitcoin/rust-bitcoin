@@ -7,16 +7,17 @@
 //!
 //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
 
 use bech32::Fe32;
-use internals::write_err;
 use units::{parse, ParseIntError};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::Opcode;
 use crate::blockdata::script::Instruction;
+use crate::internal_macros::write_err;
 
 /// Version of the segregated witness program.
 ///
@@ -175,7 +176,9 @@ pub enum FromStrError {
     Invalid(TryFromError),
 }
 
-internals::impl_from_infallible!(FromStrError);
+impl From<Infallible> for FromStrError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -218,7 +221,9 @@ pub enum TryFromInstructionError {
     DataPush,
 }
 
-internals::impl_from_infallible!(TryFromInstructionError);
+impl From<Infallible> for TryFromInstructionError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TryFromInstructionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
