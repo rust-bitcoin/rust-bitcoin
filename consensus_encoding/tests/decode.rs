@@ -7,13 +7,12 @@ use std::io::{Cursor, Read};
 
 #[cfg(feature = "alloc")]
 use bitcoin_consensus_encoding::check_decode;
-use bitcoin_consensus_encoding::check_decoder;
+use bitcoin_consensus_encoding::{
+    check_decoder, decode_from_slice, decode_from_slice_unbounded, ArrayDecoder,
+    CompactSizeDecoder, Decode, DecodeError, Decoder, Decoder2, UnexpectedEofError,
+};
 #[cfg(feature = "std")]
 use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
-use bitcoin_consensus_encoding::{
-    decode_from_slice, decode_from_slice_unbounded, ArrayDecoder, CompactSizeDecoder, Decode,
-    DecodeError, Decoder, Decoder2, UnexpectedEofError,
-};
 #[cfg(feature = "alloc")]
 use bitcoin_consensus_encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
 
@@ -658,22 +657,18 @@ fn decode_vec_decoder_end_incomplete_item() {
 
 #[test]
 #[cfg(feature = "alloc")]
+#[should_panic(expected = "decoded value doesn't match expected value")]
 fn check_decode_panic_on_mismatched_value() {
     let encoded = [0xEF, 0xBE, 0xAD, 0xDEu8];
     let expected = Inner(0x1234_5678);
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        check_decode(&encoded, &expected);
-    }));
-    assert!(result.is_err());
+    check_decode(&encoded, &expected);
 }
 
 #[test]
+#[should_panic(expected = "decoded value doesn't match expected value")]
 fn check_decoder_panic_on_mismatched_value() {
     let decoder = ArrayDecoder::<1>::new();
     let bytes = &[0x42u8][..];
     let expected = [0x99u8];
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        check_decoder(decoder, bytes, &expected);
-    }));
-    assert!(result.is_err());
+    check_decoder(decoder, bytes, &expected);
 }
