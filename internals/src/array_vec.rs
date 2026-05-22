@@ -76,7 +76,7 @@ mod safety_boundary {
         ///
         /// # Errors
         ///
-        /// Returns `CAPSizeExceeded` if the `ArrayVec` is full.
+        /// Returns `CapacityExceeded` if the `ArrayVec` is full.
         pub fn try_push(&mut self, element: T) -> Result<(), Error> {
             if self.len >= CAP {
                 return Err(Error::CapacityExceeded(CAP));
