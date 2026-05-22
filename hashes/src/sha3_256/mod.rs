@@ -212,7 +212,6 @@ impl HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
-    type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = RATE;
 
     crate::internal_macros::engine_input_impl!();
