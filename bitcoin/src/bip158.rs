@@ -698,6 +698,37 @@ mod test {
     }
 
     #[test]
+    fn malformed_filter_count_errors() {
+        use crate::consensus::Error::Parse as ConsensusParse;
+        use crate::consensus::ParseError::{MissingData, NonMinimalCompactSize};
+
+        let query = [hex!("000000")];
+        let reader = GcsFilterReader::new(0, 0, M, P);
+
+        let mut bytes = &[0xfd][..];
+        let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(result, Err(Error::InvalidCompactSize(ConsensusParse(MissingData)))));
+
+        let mut bytes = &[0xfd][..];
+        let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(result, Err(Error::InvalidCompactSize(ConsensusParse(MissingData)))));
+
+        let mut bytes = &[0xfd, 0xfc, 0x00][..];
+        let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(
+            result,
+            Err(Error::InvalidCompactSize(ConsensusParse(NonMinimalCompactSize)))
+        ));
+
+        let mut bytes = &[0xfd, 0xfc, 0x00][..];
+        let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(
+            result,
+            Err(Error::InvalidCompactSize(ConsensusParse(NonMinimalCompactSize)))
+        ));
+    }
+
+    #[test]
     fn bit_stream() {
         let mut out = Vec::new();
         {
