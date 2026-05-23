@@ -1357,19 +1357,8 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 })?;
 
                 if status.is_ready() {
-                    // Header complete, extract values and transition to payload state.
-                    let old_state = core::mem::replace(
-                        &mut self.state,
-                        DecoderState::ReadingHeader {
-                            header_decoder: <V1MessageHeader as encoding::Decode>::decoder(),
-                        },
-                    );
-
-                    let DecoderState::ReadingHeader { header_decoder } = old_state else {
-                        unreachable!("we are in ReadingHeader state")
-                    };
-
-                    let header = header_decoder.end().map_err(|e| {
+                    let decoder = core::mem::take(header_decoder);
+                    let header = decoder.end().map_err(|e| {
                         V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Header(e))
                     })?;
                     let payload_len = usize::try_from(header.length)
