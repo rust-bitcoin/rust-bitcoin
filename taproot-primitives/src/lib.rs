@@ -165,7 +165,7 @@ impl fmt::Display for LeafVersion {
         match (self, f.alternate()) {
             (Self::TapScript, true) => f.write_str("tapscript"),
             (Self::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (Self::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
+            (Self::Future(version), true) => write!(f, "future_script_{:#04x}", version.0),
             (Self::Future(version), false) => fmt::Display::fmt(version, f),
         }
     }
@@ -337,5 +337,17 @@ impl<'a> Arbitrary<'a> for LeafVersion {
             true => Ok(Self::TapScript),
             false => Ok(Self::Future(u.arbitrary()?)),
         }
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod test {
+    use super::*;
+
+    #[test]
+    fn leaf_version_future_fmt() {
+        let v = LeafVersion::Future(FutureLeafVersion(1));
+        assert_eq!(alloc::format!("{:#}", v), "future_script_0x01");
     }
 }
