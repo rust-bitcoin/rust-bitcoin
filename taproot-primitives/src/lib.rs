@@ -165,7 +165,7 @@ impl fmt::Display for LeafVersion {
         match (self, f.alternate()) {
             (Self::TapScript, true) => f.write_str("tapscript"),
             (Self::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (Self::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
+            (Self::Future(version), true) => write!(f, "future_script_{:#04x}", version.0),
             (Self::Future(version), false) => fmt::Display::fmt(version, f),
         }
     }
