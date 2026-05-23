@@ -222,7 +222,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = reader.read_compact_size().map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -265,7 +265,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = reader.read_compact_size().map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
