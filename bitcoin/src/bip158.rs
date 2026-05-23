@@ -503,6 +503,7 @@ pub mod error {
 
     use internals::write_err;
 
+    use crate::consensus;
     use crate::transaction::OutPoint;
 
     /// Errors for blockfilter.
@@ -511,6 +512,8 @@ pub mod error {
     pub enum Error {
         /// Missing UTXO, cannot calculate script filter.
         UtxoMissing(OutPoint),
+        /// Invalid CompactSize encoded element count in the filter.
+        InvalidCompactSize(consensus::Error),
         /// I/O error reading or writing binary serialization of the filter.
         Io(io::Error),
     }
@@ -523,6 +526,7 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
+                Self::InvalidCompactSize(ref e) => write_err!(f, "invalid CompactSize"; e),
                 Self::Io(ref e) => write_err!(f, "I/O error"; e),
             }
         }
@@ -533,6 +537,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::UtxoMissing(_) => None,
+                Self::InvalidCompactSize(ref e) => Some(e),
                 Self::Io(ref e) => Some(e),
             }
         }
