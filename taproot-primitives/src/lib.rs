@@ -339,3 +339,15 @@ impl<'a> Arbitrary<'a> for LeafVersion {
         }
     }
 }
+
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod test {
+    use super::*;
+
+    #[test]
+    fn leaf_version_future_fmt() {
+        let v = LeafVersion::Future(FutureLeafVersion(1));
+        assert_eq!(alloc::format!("{:#}", v), "future_script_0x01");
+    }
+}
