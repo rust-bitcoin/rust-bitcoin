@@ -222,7 +222,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = reader.read_compact_size().map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -265,7 +265,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements = reader.read_compact_size().unwrap_or(0);
+        let n_elements = reader.read_compact_size().map_err(Error::InvalidCompactSize)?;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements * self.m;
         let mut mapped =
@@ -503,6 +503,7 @@ pub mod error {
 
     use internals::write_err;
 
+    use crate::consensus;
     use crate::transaction::OutPoint;
 
     /// Errors for blockfilter.
@@ -511,6 +512,8 @@ pub mod error {
     pub enum Error {
         /// Missing UTXO, cannot calculate script filter.
         UtxoMissing(OutPoint),
+        /// Invalid CompactSize encoded element count in the filter.
+        InvalidCompactSize(consensus::Error),
         /// I/O error reading or writing binary serialization of the filter.
         Io(io::Error),
     }
@@ -523,6 +526,7 @@ pub mod error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
+                Self::InvalidCompactSize(ref e) => write_err!(f, "invalid CompactSize"; e),
                 Self::Io(ref e) => write_err!(f, "I/O error"; e),
             }
         }
@@ -533,6 +537,7 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::UtxoMissing(_) => None,
+                Self::InvalidCompactSize(ref e) => Some(e),
                 Self::Io(ref e) => Some(e),
             }
         }
@@ -690,6 +695,37 @@ mod test {
                 .match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
                 .unwrap());
         }
+    }
+
+    #[test]
+    fn malformed_filter_count_errors() {
+        use crate::consensus::Error::Parse as ConsensusParse;
+        use crate::consensus::ParseError::{MissingData, NonMinimalCompactSize};
+
+        let query = [hex!("000000")];
+        let reader = GcsFilterReader::new(0, 0, M, P);
+
+        let mut bytes = &[0xfd][..];
+        let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(result, Err(Error::InvalidCompactSize(ConsensusParse(MissingData)))));
+
+        let mut bytes = &[0xfd][..];
+        let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(result, Err(Error::InvalidCompactSize(ConsensusParse(MissingData)))));
+
+        let mut bytes = &[0xfd, 0xfc, 0x00][..];
+        let result = reader.match_any(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(
+            result,
+            Err(Error::InvalidCompactSize(ConsensusParse(NonMinimalCompactSize)))
+        ));
+
+        let mut bytes = &[0xfd, 0xfc, 0x00][..];
+        let result = reader.match_all(&mut bytes, query.iter().map(|v| v.as_slice()));
+        assert!(matches!(
+            result,
+            Err(Error::InvalidCompactSize(ConsensusParse(NonMinimalCompactSize)))
+        ));
     }
 
     #[test]
