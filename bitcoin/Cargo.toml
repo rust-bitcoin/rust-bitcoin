@@ -11,7 +11,7 @@ keywords = [ "crypto", "bitcoin" ]
 readme = "../README.md"
 edition = "2021"
 rust-version = "1.56.1"
-exclude = ["tests", "contrib"]
+exclude = ["api", "tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
@@ -85,6 +85,9 @@ name = "sighash"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)', 'cfg(rust_v_1_61)', 'cfg(rust_v_1_64)'] }
+
+[package.metadata.rbmt.api]
+enabled = true
 
 [package.metadata.rbmt.test]
 examples = [
