@@ -73,6 +73,13 @@ impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a, T: Hash + arbitrary::Arbitrary<'a>> arbitrary::Arbitrary<'a> for Hmac<T> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(u.arbitrary()?))
+    }
+}
+
 /// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
 #[derive(Debug, Clone)]
 pub struct HmacEngine<T: HashEngine> {
