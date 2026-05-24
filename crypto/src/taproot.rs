@@ -213,9 +213,7 @@ impl fmt::Display for SerializedSignature {
 
 impl fmt::LowerHex for SerializedSignature {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_internal(f, hex::Case::Lower)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(f, hex::Case::Lower) }
 }
 #[cfg(feature = "alloc")]
 impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
@@ -223,9 +221,7 @@ impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignatur
 
 impl fmt::UpperHex for SerializedSignature {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_internal(f, hex::Case::Upper)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(f, hex::Case::Upper) }
 }
 
 impl PartialEq for SerializedSignature {
@@ -488,10 +484,12 @@ pub mod error {
     impl fmt::Display for ParseSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::InvalidLength(len) =>
-                    write!(f, "signature must be 128 or 130 ASCII characters long but it had {} bytes", len),
-                Self::InvalidChar(ref e) =>
-                    write_err!(f, "invalid character in signature"; e),
+                Self::InvalidLength(len) => write!(
+                    f,
+                    "signature must be 128 or 130 ASCII characters long but it had {} bytes",
+                    len
+                ),
+                Self::InvalidChar(ref e) => write_err!(f, "invalid character in signature"; e),
                 Self::Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
             }
         }

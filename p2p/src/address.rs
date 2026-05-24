@@ -13,7 +13,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder,
-    CompactSizeU64Decoder, Decoder2, Decoder4, EncoderStatus, Encoder2, Encoder4,
+    CompactSizeU64Decoder, Decoder2, Decoder4, Encoder2, Encoder4, EncoderStatus,
 };
 use internals::array::ArrayExt;
 

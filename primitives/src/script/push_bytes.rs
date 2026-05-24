@@ -2,8 +2,8 @@
 
 //! Contains `PushBytes` & co
 
-use core::convert::Infallible;
 use core::borrow::{Borrow, BorrowMut};
+use core::convert::Infallible;
 use core::ops::{Deref, DerefMut};
 
 #[rustfmt::skip]                // Keep public re-exports separate.

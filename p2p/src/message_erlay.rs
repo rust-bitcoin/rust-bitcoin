@@ -23,14 +23,10 @@ impl SendTxRcnCl {
     pub const VERSION_ONE: u32 = 1;
 
     /// Build a new announcement for erlay with salt.
-    pub fn from_salt(salt: u64) -> Self {
-        Self { version: Self::VERSION_ONE, salt }
-    }
+    pub fn from_salt(salt: u64) -> Self { Self { version: Self::VERSION_ONE, salt } }
 
     /// Get the transaction reconciliation protocol version.
-    pub fn version(&self) -> u32 {
-        self.version
-    }
+    pub fn version(&self) -> u32 { self.version }
 }
 
 encoding::encoder_newtype_exact! {
@@ -74,6 +70,7 @@ impl encoding::Decode for SendTxRcnCl {
 pub mod error {
     use core::convert::Infallible;
     use core::fmt;
+
     use internals::write_err;
 
     /// An error occurring when decoding a [`SendTxRcnCl`](super) message.
@@ -83,9 +80,7 @@ pub mod error {
     );
 
     impl From<Infallible> for SendTxRcnClDecoderError {
-        fn from(never: Infallible) -> Self {
-            match never {}
-        }
+        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for SendTxRcnClDecoderError {
@@ -96,8 +91,6 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for SendTxRcnClDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            Some(&self.0)
-        }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
     }
 }
