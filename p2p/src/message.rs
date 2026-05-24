@@ -14,8 +14,8 @@ use core::{fmt, mem};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
-    self, ArrayDecoder, ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, EncoderStatus,
-    Encoder2, SliceEncoder, VecDecoder, VecDecoderError,
+    self, ArrayDecoder, ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Encoder2,
+    EncoderStatus, SliceEncoder, VecDecoder, VecDecoderError,
 };
 use hashes::{sha256d, HashEngine};
 use primitives::block::{self, Header, HeaderDecoder, HeaderEncoder};
@@ -1161,7 +1161,11 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
                 buffer.extend_from_slice(to_copy);
                 *bytes = rest;
                 *remaining -= copy_len;
-                Ok(if *remaining > 0 { encoding::DecoderStatus::NeedsMore } else { encoding::DecoderStatus::Ready })
+                Ok(if *remaining > 0 {
+                    encoding::DecoderStatus::NeedsMore
+                } else {
+                    encoding::DecoderStatus::Ready
+                })
             }
         }
     }

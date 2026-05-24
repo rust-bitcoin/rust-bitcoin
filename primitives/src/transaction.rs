@@ -19,8 +19,8 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 #[cfg(feature = "alloc")]
 use encoding::{
-    CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6, EncoderStatus, SliceEncoder,
-    VecDecoder,
+    CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _, Encoder3, Encoder6,
+    EncoderStatus, SliceEncoder, VecDecoder,
 };
 #[cfg(feature = "alloc")]
 use hashes::sha256d;
