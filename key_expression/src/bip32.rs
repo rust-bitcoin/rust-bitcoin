@@ -45,7 +45,7 @@ pub type ExtendedPrivKey = Xpriv;
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-internals::impl_array_newtype!(ChainCode, u8, 32);
+impl_array_newtype!(ChainCode, u8, 32);
 crate::impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
@@ -62,7 +62,7 @@ impl ChainCode {
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-internals::impl_array_newtype!(Fingerprint, u8, 4);
+impl_array_newtype!(Fingerprint, u8, 4);
 crate::impl_array_newtype_stringify!(Fingerprint, 4);
 
 hash_newtype! {

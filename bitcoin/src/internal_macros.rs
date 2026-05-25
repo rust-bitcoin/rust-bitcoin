@@ -43,9 +43,6 @@ macro_rules! impl_consensus_encoding {
 }
 pub(crate) use impl_consensus_encoding;
 
-// Pull in shared impl_array_newtype_stringify macro from include
-include!("../include/array_newtype.rs");
-
 macro_rules! only_doc_attrs {
     ({}, {$($fun:tt)*}) => {
         $($fun)*
