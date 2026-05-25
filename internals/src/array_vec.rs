@@ -66,6 +66,7 @@ mod safety_boundary {
         /// # Panics
         ///
         /// If the length would increase past CAP.
+        #[track_caller]
         pub fn push(&mut self, element: T) {
             self.try_push(element).expect("push past the capacity of the array");
         }
