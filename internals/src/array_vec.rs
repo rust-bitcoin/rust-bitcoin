@@ -93,11 +93,14 @@ mod safety_boundary {
         ///
         /// Returns `CapacityExceeded` if the `ArrayVec` is full.
         pub fn try_push(&mut self, element: T) -> Result<(), Error> {
-            if self.len >= CAP {
-                return Err(Error::CapacityExceeded(CAP));
-            }
-            self.data[self.len] = MaybeUninit::new(element);
-            self.len += 1;
+            let first = self.spare_capacity_mut().first_mut().ok_or(Error::CapacityExceeded(CAP))?;
+            *first = MaybeUninit::new(element);
+            let old_len = self.len();
+            // SOUNDNESS:
+            // * first being non-None implies the element exists therefore one-past the length <=
+            //   CAP
+            // * all elements up to old_len were already filled and we just added one
+            unsafe { self.set_len(old_len + 1); }
             Ok(())
         }
 
@@ -107,15 +110,13 @@ mod safety_boundary {
         ///
         /// None if the `ArrayVec` is empty.
         pub fn pop(&mut self) -> Option<T> {
-            if self.len > 0 {
-                self.len -= 1;
-                // SAFETY: All elements in 0..len are initialized
-                let res = self.data[self.len];
-                self.data[self.len] = MaybeUninit::uninit();
-                Some(unsafe { res.assume_init() })
-            } else {
-                None
-            }
+            let res = *self.last()?;
+            let old_len = self.len();
+            // SOUNDNESS:
+            // * decreasing the already-valid len keeps the len <= CAP invariant
+            // * decreasing the already-valid len does not mark any new elements as initialized
+            unsafe { self.set_len(old_len - 1) }
+            Some(res)
         }
 
         /// Copies and appends all elements from `slice` into `self`.
@@ -124,15 +125,17 @@ mod safety_boundary {
         ///
         /// If the length would increase past CAP.
         pub fn extend_from_slice(&mut self, slice: &[T]) {
-            let new_len = self.len.checked_add(slice.len()).expect("integer/buffer overflow");
-            assert!(new_len <= CAP, "buffer overflow");
             // SAFETY: MaybeUninit<T> has the same layout as T
             let slice = unsafe {
                 let ptr = slice.as_ptr();
                 core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
             };
-            self.data[self.len..new_len].copy_from_slice(slice);
-            self.len = new_len;
+            self.spare_capacity_mut()
+                .get_mut(..slice.len())
+                .expect("buffer overflow")
+                .copy_from_slice(slice);
+            let old_len = self.len();
+            unsafe { self.set_len(old_len + slice.len()) }
         }
     }
 }
