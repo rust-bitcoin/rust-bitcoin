@@ -745,7 +745,7 @@ impl serde::Serialize for Witness {
         // Note that the `Iter` strips the varints out when iterating.
         for elem in self {
             if human_readable {
-                seq.serialize_element(&internals::serde::SerializeBytesAsHex(elem))?;
+                seq.serialize_element(&SerializeBytesAsHex(elem))?;
             } else {
                 seq.serialize_element(&elem)?;
             }
@@ -953,6 +953,22 @@ struct WrapDebug<F: Fn(&mut fmt::Formatter) -> fmt::Result>(pub F);
 
 impl<F: Fn(&mut fmt::Formatter) -> fmt::Result> fmt::Debug for WrapDebug<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { (self.0)(f) }
+}
+
+/// Serializes a byte slice using the `hex` crate.
+#[cfg(feature = "serde")]
+struct SerializeBytesAsHex<'a>(pub &'a [u8]);
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for SerializeBytesAsHex<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use hex::DisplayHex;
+
+        serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
+    }
 }
 
 /// Error types for witness data.
