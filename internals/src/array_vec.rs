@@ -66,6 +66,17 @@ mod safety_boundary {
             &mut self.data[self.len..]
         }
 
+        /// Forces the length to `new_len`.
+        ///
+        /// # Safety
+        ///
+        /// * `new_len` must be less than or equal to `CAP`.
+        /// * All elements up to `new_len` must be initialized.
+        pub unsafe fn set_len(&mut self, new_len: usize) {
+            debug_assert!(new_len <= CAP);
+            self.len = new_len;
+        }
+
         /// Adds an element into `self`.
         ///
         /// # Panics
