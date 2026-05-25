@@ -21,8 +21,6 @@ use hex::DisplayHex;
 #[cfg(feature = "alloc")]
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
-#[cfg(feature = "alloc")]
-use internals::impl_to_hex_from_lower_hex;
 use network::NetworkKind;
 #[cfg(feature = "rand")]
 #[cfg(feature = "std")]
@@ -450,6 +448,11 @@ impl XOnlyPublicKey {
             Err(_) => Err(TweakXOnlyPublicKeyError::ResultKeyInvalid),
         }
     }
+
+    /// Gets the hex representation of this type.
+    #[cfg(feature = "alloc")]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl FromStr for XOnlyPublicKey {
@@ -494,9 +497,6 @@ impl fmt::LowerHex for XOnlyPublicKey {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.to_inner().fmt(f) }
 }
-// Allocate for serialized size
-#[cfg(feature = "alloc")]
-impl_to_hex_from_lower_hex!(XOnlyPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SIZE * 2);
 
 impl fmt::Display for XOnlyPublicKey {
     #[inline]
@@ -1495,15 +1495,17 @@ impl TweakedPublicKey {
     pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] {
         self.as_x_only_public_key().serialize().0
     }
+
+    /// Gets the hex representation of this type.
+    #[cfg(feature = "alloc")]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for TweakedPublicKey {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.as_x_only_public_key().fmt(f) }
 }
-// Allocate for serialized size
-#[cfg(feature = "alloc")]
-impl_to_hex_from_lower_hex!(TweakedPublicKey, |_| constants::SCHNORR_PUBLIC_KEY_SIZE * 2);
 
 impl fmt::Display for TweakedPublicKey {
     #[inline]

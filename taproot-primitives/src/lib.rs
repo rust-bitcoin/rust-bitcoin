@@ -32,6 +32,8 @@ pub extern crate serde;
 #[doc(no_inline)]
 pub use self::error::InvalidTaprootLeafVersionError;
 
+#[cfg(feature = "alloc")]
+use alloc::string::String;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -158,6 +160,11 @@ impl LeafVersion {
             Self::Future(version) => version.to_consensus(),
         }
     }
+
+    /// Gets the hex representation of this type.
+    #[cfg(feature = "alloc")]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::Display for LeafVersion {
@@ -176,8 +183,6 @@ impl fmt::LowerHex for LeafVersion {
         fmt::LowerHex::fmt(&self.to_consensus(), f)
     }
 }
-#[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(LeafVersion, |_| 2);
 
 impl fmt::UpperHex for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -257,6 +262,11 @@ impl FutureLeafVersion {
     /// Returns the consensus representation of this [`FutureLeafVersion`].
     #[inline]
     pub fn to_consensus(self) -> u8 { self.0 }
+
+    /// Gets the hex representation of this type.
+    #[cfg(feature = "alloc")]
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::Display for FutureLeafVersion {
@@ -268,8 +278,6 @@ impl fmt::LowerHex for FutureLeafVersion {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-#[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(FutureLeafVersion, |_| 2);
 
 impl fmt::UpperHex for FutureLeafVersion {
     #[inline]

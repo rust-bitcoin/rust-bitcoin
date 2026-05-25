@@ -40,6 +40,7 @@ pub extern crate arbitrary;
 pub extern crate hex;
 
 use alloc::borrow::ToOwned;
+use alloc::string::String;
 use core::borrow::{Borrow, BorrowMut};
 use core::str::FromStr;
 use core::{fmt, ops};
@@ -47,7 +48,6 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ArrayDecoder, ArrayEncoder};
-use internals::impl_to_hex_from_lower_hex;
 use network::{Network, TestnetVersion};
 
 #[rustfmt::skip]
@@ -215,13 +215,15 @@ impl ServiceFlags {
 
     /// Gets the integer representation of this [`ServiceFlags`].
     pub fn to_u64(self) -> u64 { self.0 }
+
+    /// Gets the hex representation of this type.
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl fmt::LowerHex for ServiceFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-impl_to_hex_from_lower_hex!(ServiceFlags, |service_flags: &ServiceFlags| 16
-    - service_flags.0.leading_zeros() as usize / 4);
 
 impl fmt::UpperHex for ServiceFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
@@ -349,6 +351,10 @@ impl Magic {
 
     /// Gets network magic bytes.
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
+
+    /// Gets the hex representation of this type.
+    #[deprecated(since = "TBD", note = "use `format!(\"{var:x}\")` instead")]
+    pub fn to_hex(&self) -> String { alloc::format!("{:x}", self) }
 }
 
 impl FromStr for Magic {
@@ -406,7 +412,6 @@ impl fmt::LowerHex for Magic {
         Ok(())
     }
 }
-impl_to_hex_from_lower_hex!(Magic, |_| 8);
 
 impl fmt::UpperHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
