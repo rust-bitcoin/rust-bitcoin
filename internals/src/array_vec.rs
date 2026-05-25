@@ -61,6 +61,11 @@ mod safety_boundary {
             unsafe { core::slice::from_raw_parts_mut(ptr, self.len) }
         }
 
+        /// Returns remaining spare capacity of the vector as a slice of `MaybeUninit<T>`.
+        pub fn spare_capacity_mut(&mut self) -> &mut [MaybeUninit<T>] {
+            &mut self.data[self.len..]
+        }
+
         /// Adds an element into `self`.
         ///
         /// # Panics
