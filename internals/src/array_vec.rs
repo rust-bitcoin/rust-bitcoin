@@ -67,9 +67,7 @@ mod safety_boundary {
         ///
         /// If the length would increase past CAP.
         pub fn push(&mut self, element: T) {
-            assert!(self.len < CAP);
-            self.data[self.len] = MaybeUninit::new(element);
-            self.len += 1;
+            self.try_push(element).expect("push past the capacity of the array");
         }
 
         /// Adds an element into `self`.
@@ -297,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
+    #[should_panic(expected = "push past the capacity of the array")]
     fn overflow_push() {
         let mut av = ArrayVec::<_, 0>::new();
         av.push(42);
