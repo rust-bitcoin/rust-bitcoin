@@ -13,7 +13,7 @@
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::CompactSizeEncoder;
-use internals::{const_casts, ToU64};
+use internals::const_casts;
 use io::{BufRead, Write};
 
 use super::Weight;
@@ -27,7 +27,7 @@ use crate::script::{
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount};
+use crate::{internal_macros, Amount, FeeRate, Sequence, SignedAmount, ToU64};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(no_inline)]

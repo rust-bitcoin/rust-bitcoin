@@ -41,7 +41,6 @@ use core::cmp::{self, Ordering};
 
 use hashes::{sha256d, siphash24};
 use internals::array::ArrayExt as _;
-use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
@@ -49,6 +48,7 @@ use crate::consensus::{ReadExt, WriteExt};
 use crate::prelude::{BTreeSet, Borrow, Vec};
 use crate::script::{ScriptPubKey, ScriptPubKeyExt as _};
 use crate::transaction::OutPoint;
+use crate::ToU64 as _;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]

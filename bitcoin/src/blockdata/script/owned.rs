@@ -3,13 +3,10 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use internals::ToU64 as _;
-
 use super::{
     opcode_to_verify, write_scriptint, Builder, Error, Instruction, PushBytes, ScriptBuf,
     ScriptExtPriv as _, ScriptPubKeyBuf, ScriptSigBuf, WitnessScript,
 };
-use crate::internal_macros;
 use crate::key::{
     FullPublicKey, LegacyPublicKey, PubkeyHash, TapTweak, TweakedPublicKey, UntweakedPublicKey,
     WPubkeyHash,
@@ -21,6 +18,7 @@ use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{self, ScriptHash, WScriptHash};
 use crate::taproot::TapNodeHash;
+use crate::{internal_macros, ToU64 as _};
 
 internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptBuf`] type.
