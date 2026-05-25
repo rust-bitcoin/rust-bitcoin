@@ -18,7 +18,6 @@ use encoding::{
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
 use internals::slice::SliceExt;
-use internals::wrap_debug::WrapDebug;
 
 #[cfg(feature = "hex")]
 use crate::hex_codec::HexPrimitive;
@@ -947,6 +946,13 @@ fn decode_unchecked(slice: &mut &[u8]) -> u64 {
             u64::from(n)
         }
     }
+}
+
+/// A wrapper for a function that implements `Debug`.
+struct WrapDebug<F: Fn(&mut fmt::Formatter) -> fmt::Result>(pub F);
+
+impl<F: Fn(&mut fmt::Formatter) -> fmt::Result> fmt::Debug for WrapDebug<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { (self.0)(f) }
 }
 
 /// Error types for witness data.
