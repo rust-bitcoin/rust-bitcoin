@@ -63,7 +63,8 @@ mod safety_boundary {
 
         /// Returns remaining spare capacity of the vector as a slice of `MaybeUninit<T>`.
         pub fn spare_capacity_mut(&mut self) -> &mut [MaybeUninit<T>] {
-            &mut self.data[self.len..]
+            // SOUNDNESS: self.len <= CAP is the invariant on the type
+            unsafe { self.data.get_unchecked_mut(self.len..) }
         }
 
         /// Forces the length to `new_len`.
