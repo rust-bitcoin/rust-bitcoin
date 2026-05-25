@@ -64,12 +64,9 @@ fn main() {
         .taproot_key_spend_signature_hash(input_index, &prevouts, sighash_type)
         .expect("failed to construct sighash");
 
-    // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
+    // Sign the sighash and update the witness stack.
     let tweaked: TweakedKeypair = keypair.tap_tweak(None);
-    let signature = tweaked.as_keypair().raw_bip340_sign(&sighash.to_byte_array());
-
-    // Update the witness stack.
-    let signature = bitcoin::taproot::Signature { signature, sighash_type };
+    let signature = sighash.sign_key_spend(&tweaked, sighash_type);
     *sighasher.witness_mut(input_index).unwrap() = Witness::p2tr_key_spend(&signature);
 
     // Get the signed transaction.
