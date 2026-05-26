@@ -71,7 +71,7 @@ mod encode;
 pub mod error;
 
 #[doc(inline)]
-pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};
+pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder};
 #[doc(inline)]
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
