@@ -511,9 +511,9 @@ impl AbsoluteDerivationPath {
     /// Returns `true` if the relative path below the master key contains a hardened child number.
     pub fn contains_hardened_child(&self) -> bool { self.0.contains_hardened_child() }
 
-    /// Concatenate `self` with `path` and return the resulting new path.
+    /// Joins `self` with `path` and returns the resulting new path.
     #[must_use]
-    pub fn extend<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self { Self(self.0.extend(path)) }
+    pub fn join<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self { Self(self.0.join(path)) }
 }
 
 impl Default for AbsoluteDerivationPath {
@@ -628,15 +628,15 @@ impl RelativeDerivationPath {
         RelativeDerivationPathIterator::start_from(self, ChildNumber::ZERO_HARDENED)
     }
 
-    /// Concatenate `self` with `path` and return the resulting new path.
+    /// Joins `self` with `path` and returns the resulting new path.
     ///
     /// ```
     /// use bitcoin_key_expression::bip32::{RelativeDerivationPath, ChildNumber};
     ///
     /// let base = "42".parse::<RelativeDerivationPath>().unwrap();
     ///
-    /// let deriv_1 = base.extend("0/1".parse::<RelativeDerivationPath>().unwrap());
-    /// let deriv_2 = base.extend(&[
+    /// let deriv_1 = base.join("0/1".parse::<RelativeDerivationPath>().unwrap());
+    /// let deriv_2 = base.join(&[
     ///     ChildNumber::ZERO_NORMAL,
     ///     ChildNumber::ONE_NORMAL
     /// ]);
@@ -644,7 +644,7 @@ impl RelativeDerivationPath {
     /// assert_eq!(deriv_1, deriv_2);
     /// ```
     #[must_use]
-    pub fn extend<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self {
+    pub fn join<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self {
         let mut new_path = self.clone();
         new_path.0.extend_from_slice(path.as_ref());
         new_path
