@@ -113,7 +113,7 @@ $(for name in $(cargo fuzz list); do echo "          $name,"; done)
             ~/.cargo/bin
             fuzz/target
             target
-          key: cache-\${{ matrix.target }}-\${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+          key: cache-\${{ matrix.fuzz_target }}-\${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
         with:
           toolchain: '1.74.0'
@@ -147,4 +147,3 @@ $(for name in $(cargo fuzz list); do echo "          $name,"; done)
       - run: find executed_* -type f -exec cat {} + | sort > executed
       - run: cargo fuzz list | sort | diff - executed
 EOF
-
