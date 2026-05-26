@@ -99,7 +99,7 @@ impl<T: HashEngine> HmacEngine<T> {
     where
         T: Default,
     {
-        debug_assert!(T::BLOCK_SIZE <= 128);
+        assert!(T::BLOCK_SIZE <= 128);
 
         let mut ipad = [0x36u8; 128];
         let mut opad = [0x5cu8; 128];
