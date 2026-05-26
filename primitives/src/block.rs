@@ -1320,6 +1320,31 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_rejects_empty_coinbase_witness_commitment() {
+        let mut script = Vec::from(WITNESS_COMMITMENT_MAGIC);
+        script.extend_from_slice(&[0; 32]);
+
+        let coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::ZERO,
+                script_pubkey: crate::script::ScriptBuf::from_bytes(script),
+            }],
+        };
+
+        let transactions = vec![coinbase];
+        let mut header = dummy_header();
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_block_hash() {
         let header = dummy_header();
         let transactions = vec![];
