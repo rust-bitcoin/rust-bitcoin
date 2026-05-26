@@ -331,7 +331,7 @@ impl encoding::Decode for ServiceFlags {
 }
 
 /// Network magic bytes to identify the cryptocurrency network the message was intended for.
-#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+#[derive(Copy, Default, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct Magic([u8; 4]);
 
 impl Magic {

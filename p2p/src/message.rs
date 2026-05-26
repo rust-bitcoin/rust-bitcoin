@@ -49,7 +49,7 @@ pub const MAX_INV_SIZE: usize = 50_000;
 pub const MAX_MSG_SIZE: usize = 5_000_000;
 
 /// Contains the message command.
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Default)]
 pub struct CommandString([u8; 12]);
 
 impl CommandString {
@@ -189,7 +189,7 @@ impl CommandStringDecoder {
 }
 
 /// A v1 message header used to describe the incoming payload.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct V1MessageHeader {
     /// The network magic, a unique 4 byte sequence.
     pub magic: Magic,
@@ -1005,7 +1005,7 @@ encoding::encoder_newtype! {
     pub struct V1NetworkMessageEncoder<'e>(
         encoding::Encoder2<
             V1MessageHeaderEncoder<'e>,
-            NetworkMessageEncoder<'e>,
+            NetworkMessageEncoder<'e>
         >
     );
 }
@@ -1019,6 +1019,10 @@ impl encoding::Encode for V1NetworkMessage {
             NetworkMessageEncoder::new(&self.payload),
         ))
     }
+}
+
+impl Default for NetworkMessageDecoderInner {
+    fn default() -> Self { Self::Empty(CommandString::try_from("").unwrap()) }
 }
 
 #[derive(Debug, Clone)]
@@ -1252,7 +1256,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 struct NetworkMessageDecoder {
     inner: NetworkMessageDecoderInner,
     payload_len: Option<usize>,
@@ -1309,35 +1313,39 @@ impl encoding::Decoder for NetworkMessageDecoder {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
-#[derive(Debug, Clone)]
-enum DecoderState {
-    ReadingHeader {
-        header_decoder: V1MessageHeaderDecoder,
-    },
-    ReadingPayload {
-        magic: Magic,
-        checksum: [u8; 4],
-        payload_decoder: NetworkMessageDecoder,
-        // Hash engine to compute checksum over raw payload bytes as they arrive.
-        checksum_engine: sha256d::HashEngine,
-    },
-}
-
-impl Default for DecoderState {
-    fn default() -> Self {
-        Self::ReadingHeader { header_decoder: V1MessageHeaderDecoder::default() }
-    }
-}
-
 /// Decoder for [`V1NetworkMessage`].
 ///
 /// This decoder implements a two-phase decoding process for Bitcoin V1 P2P messages.
 /// It first decodes the fixed-sized header. It then uses the payload length information
 /// to decode the dynamically sized network message.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct V1NetworkMessageDecoder {
-    state: DecoderState,
+    header_decoder: V1MessageHeaderDecoder,
+    header_status: encoding::DecoderStatus,
+    payload_decoder: NetworkMessageDecoder,
+    payload_status: encoding::DecoderStatus,
+    header: V1MessageHeader,
+    checksum_engine: sha256d::HashEngine,
+}
+
+impl Default for V1NetworkMessageDecoder {
+    fn default() -> Self {
+        let header_decoder = V1MessageHeaderDecoder::default();
+        let header_status = encoding::DecoderStatus::NeedsMore;
+        let payload_status = encoding::DecoderStatus::NeedsMore;
+        let payload_decoder = NetworkMessageDecoder::default();
+        let header = V1MessageHeader::default();
+        let checksum_engine = sha256d::HashEngine::default();
+
+        Self {
+            header_decoder,
+            header_status,
+            payload_decoder,
+            payload_status,
+            header,
+            checksum_engine,
+        }
+    }
 }
 
 impl encoding::Decoder for V1NetworkMessageDecoder {
@@ -1345,89 +1353,71 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
     type Error = V1NetworkMessageDecoderError;
 
     fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
-        match &mut self.state {
-            DecoderState::ReadingHeader { header_decoder } => {
-                let status = header_decoder.push_bytes(bytes).map_err(|e| {
+        match self.header_status {
+            encoding::DecoderStatus::NeedsMore => {
+                self.header_status = self.header_decoder.push_bytes(bytes).map_err(|e| {
                     V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Header(e))
                 })?;
 
-                if status.is_ready() {
-                    let decoder = core::mem::take(header_decoder);
-                    let header = decoder.end().map_err(|e| {
+                if self.header_status.is_ready() {
+                    let decoder = core::mem::take(&mut self.header_decoder);
+
+                    self.header = decoder.end().map_err(|e| {
                         V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Header(e))
                     })?;
-                    let payload_len = usize::try_from(header.length)
+
+                    let payload_len = usize::try_from(self.header.length)
                         .expect("u32 -> usize cast ok for >= 32-bit platforms");
                     if payload_len > MAX_MSG_SIZE {
                         return Err(V1NetworkMessageDecoderError(
                             V1NetworkMessageDecoderErrorInner::PayloadTooLarge,
                         ));
                     }
-
-                    let payload_decoder = NetworkMessageDecoder::new(header.command, payload_len);
-                    self.state = DecoderState::ReadingPayload {
-                        magic: header.magic,
-                        checksum: header.checksum,
-                        payload_decoder,
-                        checksum_engine: sha256d::HashEngine::new(),
-                    };
-
-                    // Continue with any remaining bytes.
-                    return self.push_bytes(bytes);
+                    self.payload_decoder =
+                        NetworkMessageDecoder::new(self.header.command, payload_len);
                 }
 
-                Ok(status)
+                Ok(encoding::DecoderStatus::NeedsMore)
             }
-            DecoderState::ReadingPayload { payload_decoder, checksum_engine, .. } => {
-                let original_bytes = *bytes;
-                let result = payload_decoder.push_bytes(bytes)?;
-                checksum_engine.input(&original_bytes[..original_bytes.len() - bytes.len()]);
-
-                Ok(result)
-            }
+            encoding::DecoderStatus::Ready => match self.payload_status {
+                encoding::DecoderStatus::NeedsMore => {
+                    let original_bytes = *bytes;
+                    let result = self.payload_decoder.push_bytes(bytes)?;
+                    self.checksum_engine
+                        .input(&original_bytes[..original_bytes.len() - bytes.len()]);
+                    Ok(result)
+                }
+                encoding::DecoderStatus::Ready => Ok(encoding::DecoderStatus::Ready),
+            },
         }
     }
 
     fn end(self) -> Result<Self::Output, Self::Error> {
-        match self.state {
-            DecoderState::ReadingHeader { header_decoder } => Err(header_decoder
-                .end()
-                .map_err(V1NetworkMessageDecoderErrorInner::Header)
-                .map_err(V1NetworkMessageDecoderError)
-                .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
-            DecoderState::ReadingPayload {
-                magic,
-                checksum,
-                payload_decoder,
-                checksum_engine,
-            } => {
-                let payload = payload_decoder.end()?;
+        let payload = self.payload_decoder.end();
 
-                let hash_bytes = checksum_engine.finalize().to_byte_array();
-                let expected_checksum =
-                    [hash_bytes[0], hash_bytes[1], hash_bytes[2], hash_bytes[3]];
+        let payload = payload?;
 
-                if checksum != expected_checksum {
-                    return Err(V1NetworkMessageDecoderError(
-                        V1NetworkMessageDecoderErrorInner::InvalidChecksum {
-                            expected: expected_checksum,
-                            actual: checksum,
-                        },
-                    ));
-                }
+        let hash_bytes = self.checksum_engine.finalize().to_byte_array();
+        let checksum = self.header.checksum;
+        let expected_checksum = [hash_bytes[0], hash_bytes[1], hash_bytes[2], hash_bytes[3]];
 
-                let cmd = payload.command();
-                let header = V1MessageHeader::new(magic, &payload, cmd);
-
-                Ok(V1NetworkMessage { header, payload })
-            }
+        if checksum != expected_checksum {
+            return Err(V1NetworkMessageDecoderError(
+                V1NetworkMessageDecoderErrorInner::InvalidChecksum {
+                    expected: expected_checksum,
+                    actual: checksum,
+                },
+            ));
         }
+
+        Ok(V1NetworkMessage { header: self.header, payload })
     }
 
     fn read_limit(&self) -> usize {
-        match &self.state {
-            DecoderState::ReadingHeader { header_decoder } => header_decoder.read_limit(),
-            DecoderState::ReadingPayload { payload_decoder, .. } => payload_decoder.read_limit(),
+        if self.header_status.needs_more() {
+            self.header_decoder.read_limit()
+        } else {
+            self.payload_decoder.read_limit()
         }
     }
 }
