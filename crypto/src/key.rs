@@ -34,12 +34,6 @@ use crate::hex::{self, DecodeFixedLengthBytesError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity, Verification};
-pub use encapsulate::{
-    FullPublicKey, Keypair, LegacyPublicKey, PrivateKey, SerializedXOnlyPublicKey, TweakedKeypair,
-    TweakedPublicKey, XOnlyPublicKey,
-};
-pub use serialized_legacy_public_key::SerializedLegacyPublicKey;
-
 #[doc(no_inline)]
 pub use self::error::{
     FromSliceError, InvalidAddressVersionError, InvalidBase58PayloadLengthError,
@@ -49,12 +43,18 @@ pub use self::error::{
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{FromWifError, InvalidWifCompressionFlagError};
+pub use self::full_public_key::FullPublicKey;
+pub use self::keypair::Keypair;
+pub use self::legacy_public_key::LegacyPublicKey;
+pub use self::private_key::PrivateKey;
+pub use self::serialized_legacy_public_key::SerializedLegacyPublicKey;
+pub use self::serialized_x_only_public_key::SerializedXOnlyPublicKey;
+pub use self::tweaked_keypair::TweakedKeypair;
+pub use self::tweaked_public_key::TweakedPublicKey;
+pub use self::x_only_public_key::XOnlyPublicKey;
 
-/// Encapsulation module to provide a clear barrier for construction/destruction of types.
-mod encapsulate {
+mod x_only_public_key {
     use secp256k1::Parity;
-    #[cfg(feature = "serde")]
-    use serde::{Deserialize, Serialize};
 
     /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
     ///
@@ -92,6 +92,11 @@ mod encapsulate {
         #[deprecated(since = "0.1.0", note = "use `to_inner()` instead")]
         pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.to_inner() }
     }
+}
+
+mod keypair {
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
 
     /// A Bitcoin secret and public key pair.
     #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -112,7 +117,9 @@ mod encapsulate {
         #[inline]
         fn drop(&mut self) { self.0.non_secure_erase(); }
     }
+}
 
+mod legacy_public_key {
     /// A Bitcoin ECDSA public key.
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct LegacyPublicKey {
@@ -153,7 +160,9 @@ mod encapsulate {
         #[inline]
         pub fn compressed(&self) -> bool { self.compressed }
     }
+}
 
+mod full_public_key {
     /// An always-compressed Bitcoin ECDSA public key.
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct FullPublicKey(secp256k1::PublicKey);
@@ -167,7 +176,9 @@ mod encapsulate {
         #[inline]
         pub(super) fn to_inner(self) -> secp256k1::PublicKey { self.0 }
     }
+}
 
+mod private_key {
     /// A Bitcoin ECDSA private key.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct PrivateKey {
@@ -204,6 +215,13 @@ mod encapsulate {
         #[inline]
         fn drop(&mut self) { self.inner.non_secure_erase(); }
     }
+}
+
+mod tweaked_public_key {
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
+
+    use super::{TweakedKeypair, XOnlyPublicKey};
 
     /// Tweaked BIP-0340 X-coord-only public key.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -236,6 +254,13 @@ mod encapsulate {
         #[inline]
         pub fn as_x_only_public_key(&self) -> &XOnlyPublicKey { &self.0 }
     }
+}
+
+mod tweaked_keypair {
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
+
+    use super::Keypair;
 
     /// Tweaked BIP-0340 key pair.
     ///
@@ -275,7 +300,9 @@ mod encapsulate {
         #[inline]
         pub fn as_keypair(&self) -> &Keypair { &self.0 }
     }
+}
 
+mod serialized_x_only_public_key {
     crate::transparent_newtype! {
         /// An array of bytes that's semantically an x-only public but was **not** validated.
         ///
