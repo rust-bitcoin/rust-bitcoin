@@ -192,11 +192,6 @@ impl Block<Unchecked> {
             return (false, None);
         }
 
-        // Witness commitment is optional if there are no transactions using SegWit in the block.
-        if self.transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
-            return (true, None);
-        }
-
         if self.transactions[0].is_coinbase() {
             let coinbase = self.transactions[0].clone();
             if let Some(commitment) = witness_commitment_from_coinbase(&coinbase) {
@@ -211,7 +206,14 @@ impl Block<Unchecked> {
                         }
                     }
                 }
+
+                return (false, None);
             }
+        }
+
+        // Witness commitment is optional if there are no transactions using SegWit in the block.
+        if self.transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
+            return (true, None);
         }
 
         (false, None)
