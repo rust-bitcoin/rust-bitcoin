@@ -47,14 +47,16 @@ impl CompactSizeEncoder {
     /// dominant use case for compact size encoding in the Bitcoin protocol. Prefer this constructor
     /// whenever you are encoding the length of a collection or a byte slice.
     ///
-    /// Compact size encodings are defined only over the `u64` range. On exotic platforms where
-    /// `usize` is wider than 64 bits the value will be saturated to [`u64::MAX`], but in practice
-    /// any in-memory length that could actually be passed here is well within the `u64` range.
+    /// Compact size encodings are defined only over the `u64` range. Hypothetical future platforms
+    /// that have `usize` greater than 64 bits are currently not supported.
     ///
     /// If you need to encode an arbitrary `u64` integer that is not a length prefix, use
     /// [`Self::new_u64`] instead.
     pub fn new(value: usize) -> Self {
-        Self { buf: Self::encode(u64::try_from(value).unwrap_or(u64::MAX)) }
+        const _WE_ONLY_SUPPORT_ARCHITECTURES_WITH_UP_TO_64_BIT_USIZE: () = {
+            assert!(core::mem::size_of::<usize>() <= 8);
+        };
+        Self { buf: Self::encode(value as u64) }
     }
 
     /// Constructs a new `CompactSizeEncoder` for an arbitrary `u64` integer.
