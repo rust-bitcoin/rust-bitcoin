@@ -628,30 +628,42 @@ impl LegacyPublicKey {
         Self::from_secp_uncompressed(key)
     }
 
+    /// Serializes the public key to bytes.
+    #[inline]
+    pub fn serialize(self) -> SerializedLegacyPublicKey {
+        if self.compressed() {
+            SerializedLegacyPublicKey::new_compressed(&self.serialize_compressed())
+        } else {
+            SerializedLegacyPublicKey::new_uncompressed(&self.serialize_uncompressed())
+        }
+    }
+
     /// Serializes the key as a byte-encoded pair of values.
     ///
     /// This function serializes the key in compressed form, where the y-coordinate is
     /// represented by only a single bit, as x determines it up to one bit.
     ///
     /// If you want to serialize while considering the compressedness of this key,
-    /// use [`to_bytes`] instead.
+    /// use [`serialize`] instead.
     ///
-    /// [`to_bytes`]: LegacyPublicKey::to_bytes
+    /// [`serialize`]: LegacyPublicKey::serialize
     #[inline]
     pub fn serialize_compressed(&self) -> [u8; 33] { self.to_inner().serialize() }
 
     /// Serializes the key as a byte-encoded pair of values, in uncompressed form.
     ///
     /// If you want to serialize while considering the compressedness of this key,
-    /// use [`to_bytes`] instead.
+    /// use [`serialize`] instead.
     ///
-    /// [`to_bytes`]: LegacyPublicKey::to_bytes
+    /// [`serialize`]: LegacyPublicKey::serialize
     #[inline]
     pub fn serialize_uncompressed(&self) -> [u8; 65] { self.to_inner().serialize_uncompressed() }
 
     /// Returns bitcoin 160-bit hash of the public key.
     #[inline]
-    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.to_bytes())) }
+    pub fn pubkey_hash(&self) -> PubkeyHash {
+        PubkeyHash(hash160::Hash::hash(&self.serialize()))
+    }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     ///
@@ -679,17 +691,13 @@ impl LegacyPublicKey {
     /// Serializes the public key to bytes.
     #[cfg(feature = "alloc")]
     #[inline]
-    pub fn to_vec(self) -> Vec<u8> { self.to_bytes().to_vec() }
+    pub fn to_vec(self) -> Vec<u8> { self.serialize().to_vec() }
 
     /// Serializes the public key to bytes.
+    #[cfg(feature = "alloc")]
     #[inline]
-    pub fn to_bytes(self) -> SerializedLegacyPublicKey {
-        if self.compressed() {
-            SerializedLegacyPublicKey::new_compressed(&self.serialize_compressed())
-        } else {
-            SerializedLegacyPublicKey::new_uncompressed(&self.serialize_uncompressed())
-        }
-    }
+    #[deprecated(since = "TBD", note = "use to_vec or serialize instead")]
+    pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
 
     /// Serializes the public key into a `SortKey`.
     ///
@@ -742,7 +750,7 @@ impl LegacyPublicKey {
     /// ```
     #[inline]
     pub fn to_sort_key(self) -> SortKey {
-        let buf = ArrayVec::from_slice(&self.to_bytes());
+        let buf = ArrayVec::from_slice(&self.serialize());
         SortKey(buf)
     }
 
@@ -844,7 +852,7 @@ impl From<FullPublicKey> for LegacyPublicKey {
 
 impl fmt::Display for LegacyPublicKey {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.to_bytes().as_hex().fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.serialize().as_hex().fmt(f) }
 }
 
 /// An opaque return type for [`LegacyPublicKey::to_sort_key`].
@@ -1309,7 +1317,7 @@ impl serde::Serialize for LegacyPublicKey {
         if s.is_human_readable() {
             s.collect_str(self)
         } else {
-            s.serialize_bytes(&self.to_bytes())
+            s.serialize_bytes(&(*self).serialize())
         }
     }
 }
@@ -2361,13 +2369,13 @@ mod tests {
     fn serialized_legacy_public_key_roundtrip() {
         let key = Keypair::generate().to_legacy_public_key();
         assert!(key.compressed());
-        let serialized = &key.to_bytes();
+        let serialized = &key.serialize();
         assert_eq!(serialized.len(), 33);
         let deser = LegacyPublicKey::from_slice(serialized).unwrap();
         assert_eq!(deser, key);
 
         let key = key.with_compressedness(false);
-        let serialized = &key.to_bytes();
+        let serialized = &key.serialize();
         assert_eq!(serialized.len(), 65);
         let deser = LegacyPublicKey::from_slice(serialized).unwrap();
         assert_eq!(deser, key);
