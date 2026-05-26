@@ -1,3 +1,14 @@
+# 0.32.10 - 2026-04-23
+
+
+- Fix bug in `LeafVerison::Future`'s `Display` output [#6208](https://github.com/rust-bitcoin/rust-bitcoin/pull/6208)
+- Manually revert `VarInt` range check [#6182](https://github.com/rust-bitcoin/rust-bitcoin/pull/6182)
+- Backport - p2p: Add a hash value to `Inventory`'s `Error` variant [#6147](https://github.com/rust-bitcoin/rust-bitcoin/pull/6147)
+- Backport - p2p: Error on `RawNetworkMessage` decode if payload partly consumed [#6140](https://github.com/rust-bitcoin/rust-bitcoin/pull/6140)
+- Backport - p2p: Error on invalid `FeeRate` in `FeeFilter` decode [#6142](https://github.com/rust-bitcoin/rust-bitcoin/pull/6142)
+- Backport - Validate ASCII and preserve embedded nulls in `CommandString` parsing [#6136](https://github.com/rust-bitcoin/rust-bitcoin/pull/6136)
+- Remove the `internals` dependency [#6200](https://github.com/rust-bitcoin/rust-bitcoin/pull/6200)
+
 # 0.32.9 - 2025-03-26
 
 - Backport - Fix `Unknown` `NetworkMessage` encoding [#6106](https://github.com/rust-bitcoin/rust-bitcoin/pull/6106)

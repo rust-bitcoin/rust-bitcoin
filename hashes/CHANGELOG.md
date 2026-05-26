@@ -1,3 +1,8 @@
+# 0.14.2 - 2026-05-23
+
+* Enable `alloc` feature from `schemars` feature and fix feature gating.
+* Remove the `internals` dependency [#6200](https://github.com/rust-bitcoin/rust-bitcoin/pull/6200)
+
 # 0.14.1 - 2025-12-03
 
 * remove `doc_auto_cfg`

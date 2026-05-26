@@ -1,3 +1,7 @@
+# 0.1.5 - 2026-05-26
+
+* Trivial docs fix.
+
 # 0.1.4 - 2025-10-30
 
 * Remove `doc_auto_cfg`
