@@ -136,12 +136,12 @@ impl encoding::Decode for CommandString {
 // We can't use the [`encoder_newtype!`] macro due to the lifetime conflicting
 // when constructing the encoder in `V1NetworkMessage`.
 #[derive(Debug, Clone)]
-pub struct CommandStringEncoder(encoding::ArrayEncoder<12>);
+pub struct CommandStringEncoder(ArrayEncoder<12>);
 
 impl CommandStringEncoder {
     /// Constructs an encoder which encodes the command string with no length prefix.
     pub const fn without_length_prefix(arr: [u8; 12]) -> Self {
-        Self(encoding::ArrayEncoder::without_length_prefix(arr))
+        Self(ArrayEncoder::without_length_prefix(arr))
     }
 }
 
@@ -161,7 +161,7 @@ impl encoding::ExactSizeEncoder for CommandStringEncoder {
 crate::decoder_newtype! {
     /// Decoder for [`CommandString`].
     #[derive(Debug, Default, Clone)]
-    pub struct CommandStringDecoder(encoding::ArrayDecoder<12>);
+    pub struct CommandStringDecoder(ArrayDecoder<12>);
 
     fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> CommandStringDecoderError {
         CommandStringDecoderError::UnexpectedEof(err)
@@ -237,8 +237,8 @@ impl encoding::Encode for V1MessageHeader {
         let enc = encoding::Encoder4::new(
             self.magic.encoder(),
             self.command.encoder(),
-            encoding::ArrayEncoder::without_length_prefix(self.length.to_le_bytes()),
-            encoding::ArrayEncoder::without_length_prefix(self.checksum),
+            ArrayEncoder::without_length_prefix(self.length.to_le_bytes()),
+            ArrayEncoder::without_length_prefix(self.checksum),
         );
 
         V1MessageHeaderEncoder::new(enc)
@@ -252,17 +252,13 @@ encoding::encoder_newtype_exact! {
         encoding::Encoder4<
             crate::MagicEncoder<'e>,
             CommandStringEncoder,
-            encoding::ArrayEncoder<4>,
-            encoding::ArrayEncoder<4>
+            ArrayEncoder<4>,
+            ArrayEncoder<4>
     >);
 }
 
-type V1MessageHeaderInnerDecoder = encoding::Decoder4<
-    encoding::ArrayDecoder<4>,
-    CommandStringDecoder,
-    encoding::ArrayDecoder<4>,
-    encoding::ArrayDecoder<4>,
->;
+type V1MessageHeaderInnerDecoder =
+    encoding::Decoder4<ArrayDecoder<4>, CommandStringDecoder, ArrayDecoder<4>, ArrayDecoder<4>>;
 
 crate::decoder_newtype! {
     /// The Decoder for `V1MessageHeader`
@@ -447,7 +443,7 @@ impl From<FeeFilter> for FeeRate {
 encoding::encoder_newtype_exact! {
     /// Encoder for [`FeeFilter`] type.
     #[derive(Debug, Clone)]
-    pub struct FeeFilterEncoder<'e>(encoding::ArrayEncoder<8>);
+    pub struct FeeFilterEncoder<'e>(ArrayEncoder<8>);
 }
 
 impl encoding::Encode for FeeFilter {
@@ -456,17 +452,17 @@ impl encoding::Encode for FeeFilter {
     fn encoder(&self) -> Self::Encoder<'_> {
         // Encode as sat/kvB in little-endian (BIP 133 wire format).
         let kvb = self.0.to_sat_per_kvb_ceil();
-        FeeFilterEncoder::new(encoding::ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
+        FeeFilterEncoder::new(ArrayEncoder::without_length_prefix(kvb.to_le_bytes()))
     }
 }
 
 crate::decoder_newtype! {
     /// Decoder for [`FeeFilter`] type.
     #[derive(Debug, Clone)]
-    pub struct FeeFilterDecoder(encoding::ArrayDecoder<8>);
+    pub struct FeeFilterDecoder(ArrayDecoder<8>);
 
     /// Constructs a new [`FeeFilter`] decoder.
-    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+    pub fn new() -> Self { Self(ArrayDecoder::new()) }
 
     fn map_push_bytes_err(err: encoding::UnexpectedEofError) -> FeeFilterDecoderError {
         FeeFilterDecoderError::UnexpectedEof(err)
@@ -525,7 +521,7 @@ impl Ping {
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Ping`] type.
     #[derive(Debug, Clone)]
-    pub struct PingEncoder<'e>(encoding::ArrayEncoder<8>);
+    pub struct PingEncoder<'e>(ArrayEncoder<8>);
 }
 
 impl encoding::Encode for Ping {
@@ -534,7 +530,7 @@ impl encoding::Encode for Ping {
     where
         Self: 'e;
     fn encoder(&self) -> Self::Encoder<'_> {
-        let nonce = encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes());
+        let nonce = ArrayEncoder::without_length_prefix(self.0.to_le_bytes());
         PingEncoder::new(nonce)
     }
 }
@@ -542,7 +538,7 @@ impl encoding::Encode for Ping {
 crate::decoder_newtype! {
     /// The Decoder for [`Ping`]
     #[derive(Debug, Default, Clone)]
-    pub struct PingDecoder(encoding::ArrayDecoder<8>);
+    pub struct PingDecoder(ArrayDecoder<8>);
 
     fn end(result: Result<[u8; 8], encoding::UnexpectedEofError>) -> Result<Ping, PingDecoderError> {
         let nonce = result.map_err(PingDecoderError)?;
@@ -569,7 +565,7 @@ impl Pong {
 encoding::encoder_newtype_exact! {
     /// The encoder for the [`Pong`] type.
     #[derive(Debug, Clone)]
-    pub struct PongEncoder<'e>(encoding::ArrayEncoder<8>);
+    pub struct PongEncoder<'e>(ArrayEncoder<8>);
 }
 
 impl encoding::Encode for Pong {
@@ -578,7 +574,7 @@ impl encoding::Encode for Pong {
     where
         Self: 'e;
     fn encoder(&self) -> Self::Encoder<'_> {
-        let nonce = encoding::ArrayEncoder::without_length_prefix(self.0.to_le_bytes());
+        let nonce = ArrayEncoder::without_length_prefix(self.0.to_le_bytes());
         PongEncoder::new(nonce)
     }
 }
@@ -586,7 +582,7 @@ impl encoding::Encode for Pong {
 crate::decoder_newtype! {
     /// The Decoder for [`Pong`]
     #[derive(Debug, Default, Clone)]
-    pub struct PongDecoder(encoding::ArrayDecoder<8>);
+    pub struct PongDecoder(ArrayDecoder<8>);
 
     fn end(result: Result<[u8; 8], encoding::UnexpectedEofError>) -> Result<Pong, PongDecoderError> {
         let nonce = result.map_err(PongDecoderError)?;
@@ -1003,10 +999,10 @@ encoding::encoder_newtype! {
     pub struct V1NetworkMessageEncoder<'e>(
         encoding::Encoder2<
             encoding::Encoder4<
-                encoding::ArrayEncoder<4>,
+                ArrayEncoder<4>,
                 CommandStringEncoder,
-                encoding::ArrayEncoder<4>,
-                encoding::ArrayEncoder<4>,
+                ArrayEncoder<4>,
+                ArrayEncoder<4>,
             >,
             NetworkMessageEncoder<'e>,
         >
@@ -1019,10 +1015,10 @@ impl encoding::Encode for V1NetworkMessage {
     fn encoder(&self) -> Self::Encoder<'_> {
         V1NetworkMessageEncoder::new(encoding::Encoder2::new(
             encoding::Encoder4::new(
-                encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
+                ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
                 self.command().encoder(),
-                encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
-                encoding::ArrayEncoder::without_length_prefix(self.checksum),
+                ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
+                ArrayEncoder::without_length_prefix(self.checksum),
             ),
             NetworkMessageEncoder::new(&self.payload),
         ))
@@ -1650,7 +1646,7 @@ impl encoding::Decode for HeadersMessage {
 enum V2NetworkMessageDecoderState {
     // Decoding the short-id byte, with the command string and payload decoder
     // waiting.
-    ShortId(encoding::ArrayDecoder<1>),
+    ShortId(ArrayDecoder<1>),
     // Decoding the command string with the short-id byte stored, and payload
     // decoder waiting.
     CommandString(CommandStringDecoder),
@@ -1661,7 +1657,7 @@ enum V2NetworkMessageDecoderState {
 }
 
 impl Default for V2NetworkMessageDecoderState {
-    fn default() -> Self { Self::ShortId(<encoding::ArrayDecoder<1>>::default()) }
+    fn default() -> Self { Self::ShortId(<ArrayDecoder<1>>::default()) }
 }
 
 /// Decoder for [`V2NetworkMessage`].
@@ -1765,7 +1761,7 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                             if id == 0 {
                                 // Non-optimized: need to read 12-byte command string next.
                                 self.state = V2NetworkMessageDecoderState::CommandString(
-                                    CommandStringDecoder(encoding::ArrayDecoder::new()),
+                                    CommandStringDecoder(ArrayDecoder::new()),
                                 );
                             } else {
                                 // Optimized short ID (1-28): skip command, go straight to payload.
@@ -1862,6 +1858,7 @@ pub mod error {
     use core::convert::Infallible;
     use core::fmt;
 
+    use encoding::ArrayDecoder;
     use internals::write_err;
 
     /// Error decoding a [`CommandString`].
@@ -2011,7 +2008,7 @@ pub mod error {
     ///
     /// [`Ping`]: super::Ping
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct PingDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
+    pub struct PingDecoderError(pub(super) <ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PingDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
@@ -2032,7 +2029,7 @@ pub mod error {
     ///
     /// [`Pong`]: super::Pong
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct PongDecoderError(pub(super) <encoding::ArrayDecoder<8> as encoding::Decoder>::Error);
+    pub struct PongDecoderError(pub(super) <ArrayDecoder<8> as encoding::Decoder>::Error);
 
     impl From<Infallible> for PongDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
