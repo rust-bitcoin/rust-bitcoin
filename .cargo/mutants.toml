@@ -74,6 +74,7 @@ exclude_re = [
     "consensus_encoding/.* decode_from_read", # Mutations cause an infinite loop
     "consensus_encoding/.* <impl Decoder for .*>::push_bytes", # Mutations cause an infinite loop
     "consensus_encoding/.* <impl Encoder for .*>::advance", # Replacing the return with true causes an infinite loop.
+    "consensus_encoding/.* ExactSizeEncoder::is_empty", # Default method is equivalent to len() == 0.
     "consensus_encoding/.* EncoderStatus::has_more", # Replacing with true causes an infinite loop
     "consensus_encoding/.* DecoderStatus::is_ready", # Replacing with true causes an infinite loop
     "consensus_encoding/.* delete ! in drain_to_vec", # Causes an infinite loop.
