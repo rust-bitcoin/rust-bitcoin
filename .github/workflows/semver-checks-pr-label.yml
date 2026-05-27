@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   Download:
     name: Download, Unzip and Add Labels/Comments
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       actions: read
       contents: read

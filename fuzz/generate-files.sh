@@ -91,7 +91,7 @@ permissions: {}
 jobs:
   fuzz:
     if: \${{ !github.event.act }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
@@ -133,7 +133,7 @@ $(for name in $(cargo fuzz list); do echo "          $name,"; done)
   verify-execution:
     if: \${{ !github.event.act }}
     needs: fuzz
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
