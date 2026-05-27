@@ -9,7 +9,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use core::fmt;
+use core::{convert::Infallible, fmt};
 
 use bitcoin_consensus_encoding::{
     self as encoding, encoder_newtype, ArrayDecoder, ArrayEncoder, ArrayRefEncoder, BytesEncoder,
@@ -227,6 +227,40 @@ fn all_types_implement_send_sync() {
     // Error types should implement the Send and Sync traits (C-GOOD-ERR).
     assert_send::<Errors>();
     assert_sync::<Errors>();
+}
+
+#[test]
+fn api_all_error_types_implement_display() {
+    fn assert_display<T: fmt::Display>() {}
+
+    #[cfg(feature = "std")]
+    assert_display::<ReadError<UnexpectedEofError>>();
+    assert_display::<DecodeError<UnexpectedEofError>>();
+    assert_display::<UnconsumedError>();
+    assert_display::<CompactSizeDecoderError>();
+    #[cfg(feature = "alloc")]
+    assert_display::<LengthPrefixExceedsMaxError>();
+    #[cfg(feature = "alloc")]
+    assert_display::<ByteVecDecoderError>();
+    #[cfg(feature = "alloc")]
+    assert_display::<VecDecoderError<UnexpectedEofError>>();
+    assert_display::<UnexpectedEofError>();
+}
+
+#[test]
+fn api_all_error_types_implement_from_infallible() {
+    fn assert_from_infallible<T: From<Infallible>>() {}
+
+    assert_from_infallible::<DecodeError<UnexpectedEofError>>();
+    assert_from_infallible::<UnconsumedError>();
+    assert_from_infallible::<CompactSizeDecoderError>();
+    #[cfg(feature = "alloc")]
+    assert_from_infallible::<LengthPrefixExceedsMaxError>();
+    #[cfg(feature = "alloc")]
+    assert_from_infallible::<ByteVecDecoderError>();
+    #[cfg(feature = "alloc")]
+    assert_from_infallible::<VecDecoderError<UnexpectedEofError>>();
+    assert_from_infallible::<UnexpectedEofError>();
 }
 
 #[test]
