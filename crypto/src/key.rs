@@ -26,8 +26,6 @@ use network::NetworkKind;
 #[cfg(feature = "rand")]
 #[cfg(feature = "std")]
 pub use secp256k1::rand;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::ecdsa;
 use crate::hex::{self, DecodeFixedLengthBytesError};
@@ -1282,22 +1280,22 @@ impl<'de> serde::Deserialize<'de> for WifKey {
 
 // XOnlyPublicKey should serialize/deserialize identically to the inner type.
 #[cfg(feature = "serde")]
-impl Serialize for XOnlyPublicKey {
+impl serde::Serialize for XOnlyPublicKey {
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer,
+        S: serde::Serializer,
     {
-        <secp256k1::XOnlyPublicKey as Serialize>::serialize(&self.to_inner(), serializer)
+        <secp256k1::XOnlyPublicKey as serde::Serialize>::serialize(&self.to_inner(), serializer)
     }
 }
 
 #[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for XOnlyPublicKey {
+impl<'de> serde::Deserialize<'de> for XOnlyPublicKey {
     #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>,
+        D: serde::Deserializer<'de>,
     {
         Ok(Self::from_secp(secp256k1::XOnlyPublicKey::deserialize(deserializer)?, Parity::Even))
     }
