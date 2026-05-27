@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Tests what a user can do when pattern matching on `Network` and associated types.
 
 use bitcoin_network_kind::{Network, NetworkKind, TestnetVersion};
