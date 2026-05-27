@@ -48,6 +48,7 @@ pub mod _export {
 mod hash_types;
 #[cfg(feature = "alloc")]
 mod opcodes;
+mod wrap_debug;
 
 pub mod block;
 pub mod merkle_tree;

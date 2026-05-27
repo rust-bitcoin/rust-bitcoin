@@ -18,9 +18,9 @@ use encoding::{
 #[cfg(feature = "hex")]
 use hex::DecodeVariableLengthBytesError;
 use internals::slice::SliceExt;
-use internals::wrap_debug::WrapDebug;
 
 use crate::prelude::{Box, Vec};
+use crate::wrap_debug::WrapDebug;
 #[cfg(doc)]
 use crate::TxIn;
 
