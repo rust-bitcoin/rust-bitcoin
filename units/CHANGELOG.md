@@ -1,4 +1,8 @@
-# 0.3.0 - 2026-02-17
+# Changelog
+
+## [Unreleased]
+
+## [0.3.0] - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
 of how `cargo` resolves version numbers that include a suffix. For
@@ -56,7 +60,7 @@ EDIT: This changelog is for `1.0.0-rc.0` through `1.0.0-rc.4` and may well be mi
 * Implement `Arbitrary` for `units` types [#3777](https://github.com/rust-bitcoin/rust-bitcoin/pull/3777)
 * Add `Arbitrary` to `Weight` [#3257](https://github.com/rust-bitcoin/rust-bitcoin/pull/3257)
 
-# 0.2.0 - 2024-09-18
+## 0.2.0 - 2024-09-18
 
 * Bump MSRV to 1.63.0 [#3100](https://github.com/rust-bitcoin/rust-bitcoin/pull/3100)
 * Remove re-export of `ParseIntError` [#3069](https://github.com/rust-bitcoin/rust-bitcoin/pull/3069)
@@ -118,3 +122,6 @@ The main types are:
 ## 0.0.0 - Placeholder release
 
 Empty crate to reserve the name on crates.io
+
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.3.0...HEAD
+[0.3.0]: https://github.com/rust-bitcoin/rust-bitcoin/releases/tag/bitcoin-units-0.3.0

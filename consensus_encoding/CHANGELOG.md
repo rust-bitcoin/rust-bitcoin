@@ -1,4 +1,8 @@
-# 1.0.0 - 2026-05-22
+# Changelog
+
+## [Unreleased]
+
+## [1.0.0] - 2026-05-22
 
 Props to the team, our first `1.0` release from this repository. That
 is no small feat. Extra props to Nick, he kicked this crate off and
@@ -18,7 +22,7 @@ Team Rust Bitcoin - LFG.
 Please note `Encodable` is now `Encode` and `Decodable` is now `Decode` but the old names are still
 used for the old consensus encoding code in `rust-bticoin`.
 
-# 0.2.0 - 2026-04-08
+## [0.2.0] - 2026-04-08
 
 This release is breaking and causes our whole stack to have to be re-released ...
 
@@ -33,7 +37,7 @@ This release is breaking and causes our whole stack to have to be re-released ..
 - Add `track_caller` to panic-able sites [#5713](https://github.com/rust-bitcoin/rust-bitcoin/pull/5713)
 - Add macros to define `EncoderN` and `DecoderNError` [#5635](https://github.com/rust-bitcoin/rust-bitcoin/pull/5635)
 
-# 0.1.0 - 2026-02-17
+## [0.1.0] - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
 of how `cargo` resolves version numbers that include a suffix. For
@@ -76,3 +80,8 @@ around but the work got done. Props to him for many of the ideas.
 ## 0.0.0 - Placeholder release
 
 Empty crate to reserve the name on crates.io
+
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.0.0...HEAD
+[1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.2.0...bitcoin-consensus-encoding-1.0.0
+[0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.1.0...bitcoin-consensus-encoding-0.2.0
+[0.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/releases/tag/bitcoin-consensus-encoding-0.1.0
