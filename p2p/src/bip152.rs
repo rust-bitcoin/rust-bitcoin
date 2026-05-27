@@ -930,24 +930,23 @@ mod test {
             vec![2, 255, 254, 255, 255, 255, 255, 255, 255, 255, 0], // .., 255, 254, .., 255] == CompactSize(u64::MAX-1)
             vec![1, 255, 255, 255, 255, 255, 255, 255, 255, 255], // .., 255, 255, .., 255] == CompactSize(u64::MAX)
         ];
-        for testcase in testcases {
+        for (encoded_offsets, indices) in testcases {
             {
                 // test deserialization
                 let mut raw: Vec<u8> = vec![0u8; 32];
-                raw.extend(testcase.0.clone());
-                let btr: BlockTransactionsRequest =
-                    encoding::decode_from_slice(&raw.clone()).unwrap();
-                assert_eq!(testcase.1, btr.indices().unwrap());
+                raw.extend_from_slice(&encoded_offsets);
+                let btr: BlockTransactionsRequest = encoding::decode_from_slice(&raw).unwrap();
+                assert_eq!(indices, btr.indices().unwrap());
             }
             {
                 // test serialization
                 let raw: Vec<u8> =
                     encoding::encode_to_vec(&BlockTransactionsRequest::from_indices_unchecked(
                         BlockHash::from_byte_array([0; 32]),
-                        testcase.1,
+                        indices,
                     ));
                 let mut expected_raw: Vec<u8> = [0u8; 32].to_vec();
-                expected_raw.extend(testcase.0);
+                expected_raw.extend(encoded_offsets);
                 assert_eq!(expected_raw, raw);
             }
         }
