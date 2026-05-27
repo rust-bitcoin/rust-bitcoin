@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-27
+
+No changes since last release - BOOM! 
+
 ## [0.7.0] - 2026-10-29
 
 The last last RC release.
@@ -211,7 +215,8 @@ The main types are:
 
 Empty crate to reserve the name on crates.io
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.7.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-1.0.0...HEAD
+[1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.7.0...bitcoin-units-1.0.0
 [0.7.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.6.0...bitcoin-units-0.7.0
 [0.6.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.5.0...bitcoin-units-0.6.0
 [0.5.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-units-0.4.0...bitcoin-units-0.5.0
