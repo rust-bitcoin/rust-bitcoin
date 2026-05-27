@@ -1,6 +1,9 @@
 [package]
 name = "bitcoin"
-version = "0.32.10"
+# We jumped to `v0.32.100` when doing the MSRV bump to Rust `1.74`
+# leaving room for a bunch of secuity releases upto this number if
+# needed.
+version = "0.32.100"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -10,7 +13,7 @@ categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
 readme = "../README.md"
 edition = "2021"
-rust-version = "1.56.1"
+rust-version = "1.74.0"
 exclude = ["api", "tests", "contrib"]
 
 [features]

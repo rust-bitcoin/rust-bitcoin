@@ -102,7 +102,7 @@ impl Weight {
 
     /// Converts to vB rounding up.
     pub const fn to_vbytes_ceil(self) -> u64 {
-        (self.0 + Self::WITNESS_SCALE_FACTOR - 1) / Self::WITNESS_SCALE_FACTOR
+        self.0.div_ceil(Self::WITNESS_SCALE_FACTOR)
     }
 
     /// Checked addition.

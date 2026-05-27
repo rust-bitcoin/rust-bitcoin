@@ -1,6 +1,9 @@
 [package]
 name = "bitcoin_hashes"
-version = "0.14.2"
+# We jumped to `v0.14.100` when doing the MSRV bump to Rust `1.74`
+# leaving room for a bunch of secuity releases upto this number if
+# needed.
+version = "0.14.100"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"
@@ -10,7 +13,7 @@ categories = ["algorithms"]
 keywords = [ "crypto", "bitcoin", "hash", "digest" ]
 readme = "README.md"
 edition = "2021"
-rust-version = "1.56.1"
+rust-version = "1.74.0"
 exclude = ["api", "tests", "contrib"]
 
 [features]
