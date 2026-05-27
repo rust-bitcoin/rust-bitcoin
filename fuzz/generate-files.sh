@@ -90,7 +90,6 @@ permissions: {}
 
 jobs:
   fuzz:
-    if: \${{ !github.event.act }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -131,7 +130,6 @@ $(for name in $(cargo fuzz list); do echo "          $name,"; done)
           path: executed_\${{ matrix.fuzz_target }}
 
   verify-execution:
-    if: \${{ !github.event.act }}
     needs: fuzz
     runs-on: ubuntu-24.04
     permissions:

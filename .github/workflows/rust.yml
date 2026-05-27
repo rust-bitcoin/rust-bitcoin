@@ -106,7 +106,6 @@ jobs:
 
   Cross:
     name: Cross test - stable toolchain
-    if: ${{ !github.event.act }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
