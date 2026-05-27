@@ -84,22 +84,22 @@ impl LegacySighash {
     fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 
-    /// Signs this sighash using `pk`.
+    /// Signs this sighash using `key`.
     ///
     /// `sighash_type` must be the same as that used to create the sighash.
-    pub fn sign(&self, pk: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
-        ecdsa::Signature { signature: pk.raw_ecdsa_sign(*self), sighash_type }
+    pub fn sign(&self, key: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
+        ecdsa::Signature { signature: key.raw_ecdsa_sign(*self), sighash_type }
     }
 }
 impl SegwitV0Sighash {
     fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 
-    /// Signs this sighash using `pk`.
+    /// Signs this sighash using `key`.
     ///
     /// `sighash_type` must be the same as that used to create the sighash.
-    pub fn sign(&self, pk: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
-        ecdsa::Signature { signature: pk.raw_ecdsa_sign(*self), sighash_type }
+    pub fn sign(&self, key: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
+        ecdsa::Signature { signature: key.raw_ecdsa_sign(*self), sighash_type }
     }
 }
 
