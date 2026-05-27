@@ -354,7 +354,7 @@ impl WitnessDecoder {
         let bytes_needed = required_len - self.content.len();
         let available_capacity = self.content.capacity() - self.content.len();
 
-        if available_capacity == 0 {
+        if available_capacity < MIN_VECTOR_ALLOCATE {
             let batch_size = bytes_needed.clamp(MIN_VECTOR_ALLOCATE, MAX_VECTOR_ALLOCATE);
             self.content.reserve_exact(batch_size);
         }
