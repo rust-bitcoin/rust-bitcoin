@@ -22,10 +22,10 @@ fn main() {
     println!("Seed: {seed_hex}");
     println!("Using mainnet network");
 
-    let seed = hex::decode_to_vec(seed_hex).unwrap();
+    let seed: [u8; 32] = hex::decode_to_array(seed_hex).unwrap();
 
     // calculate root key from seed
-    let root = Xpriv::new_master(NetworkKind::Main, &seed);
+    let root = Xpriv::new_master(NetworkKind::Main, seed);
     println!("Root key: {root}");
 
     // derive child xpub

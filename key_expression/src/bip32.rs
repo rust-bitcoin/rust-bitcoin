@@ -15,7 +15,7 @@ use core::{fmt, slice};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use crypto::key::{FullPublicKey, Keypair, PrivateKey, XOnlyPublicKey};
-use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, hash_newtype, sha256, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
 use network::NetworkKind;
 
@@ -23,7 +23,7 @@ use network::NetworkKind;
 #[doc(no_inline)]
 pub use self::error::{
     DerivationError, IndexOutOfRangeError, InvalidBase58PayloadLengthError,
-    ParseChildNumberError, ParseError,
+    InvalidSeedLengthError, ParseChildNumberError, ParseError,
 };
 
 /// Version bytes for extended public keys on the Bitcoin network.
@@ -74,6 +74,84 @@ hash_newtype! {
 hashes::impl_hex_for_newtype!(XKeyIdentifier);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(XKeyIdentifier);
+
+crate::transparent_newtype! {
+    /// A master seed validated according to BIP-0032 specifications.
+    ///
+    /// Construct from a fixed-size array reference via [`From`] when the byte length is known at
+    /// compile time, or from an arbitrary slice via [`TryFrom`] which performs the length check.
+    pub struct Bip32Seed([u8]);
+
+    impl Bip32Seed {
+        const fn from_slice_unchecked(bytes: &_) -> &Self;
+    }
+}
+
+impl Bip32Seed {
+    /// Minimum seed length in bytes (128 bits).
+    pub const MIN_LEN: usize = 16;
+    /// Maximum seed length in bytes (512 bits).
+    pub const MAX_LEN: usize = 64;
+
+    /// Returns the seed bytes.
+    pub fn as_bytes(&self) -> &[u8] { &self.0 }
+}
+
+impl AsRef<[u8]> for Bip32Seed {
+    fn as_ref(&self) -> &[u8] { &self.0 }
+}
+
+impl AsRef<Self> for Bip32Seed {
+    fn as_ref(&self) -> &Self { self }
+}
+
+impl<'a> TryFrom<&'a [u8]> for &'a Bip32Seed {
+    type Error = InvalidSeedLengthError;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
+        let len = bytes.len();
+        if len < Bip32Seed::MIN_LEN || len > Bip32Seed::MAX_LEN {
+            return Err(InvalidSeedLengthError { length: len });
+        }
+        Ok(Bip32Seed::from_slice_unchecked(bytes))
+    }
+}
+
+impl fmt::Debug for Bip32Seed {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let hash = sha256::Hash::hash(self.as_bytes());
+        let id = u32::from_be_bytes(*hash.as_byte_array().sub_array::<0, 4>());
+        write!(f, "Bip32Seed(sha256={:08x})", id)
+    }
+}
+
+impl PartialEq for Bip32Seed {
+    fn eq(&self, other: &Self) -> bool {
+        let a = self.as_bytes();
+        let b = other.as_bytes();
+        a.len() == b.len() && hashes::cmp::fixed_time_eq(a, b)
+    }
+}
+
+macro_rules! impl_bip32_seed_from_array {
+    ($($n:literal),+ $(,)?) => {
+        $(
+            impl<'a> From<&'a [u8; $n]> for &'a Bip32Seed {
+                fn from(arr: &'a [u8; $n]) -> Self { Bip32Seed::from_slice_unchecked(arr) }
+            }
+
+            impl AsRef<Bip32Seed> for [u8; $n] {
+                fn as_ref(&self) -> &Bip32Seed { self.into() }
+            }
+        )+
+    };
+}
+
+impl_bip32_seed_from_array!(
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+    40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+    64,
+);
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -572,11 +650,11 @@ impl fmt::Debug for DerivationPath {
 pub type KeySource = (Fingerprint, DerivationPath);
 
 impl Xpriv {
-    /// Constructs a new master key from a seed value
+    /// Constructs a new master key from a [`Bip32Seed`].
     #[allow(clippy::missing_panics_doc)]
-    pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Self {
+    pub fn new_master(network: impl Into<NetworkKind>, seed: impl AsRef<Bip32Seed>) -> Self {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
-        engine.input(seed);
+        engine.input(seed.as_ref().as_bytes());
         let hmac = engine.finalize();
 
         Self {
@@ -1197,6 +1275,26 @@ pub mod error {
     impl std::error::Error for InvalidBase58PayloadLengthError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
     }
+
+    /// Master seed had an invalid length.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct InvalidSeedLengthError {
+        pub(crate) length: usize,
+    }
+
+    impl InvalidSeedLengthError {
+        /// Returns the invalid seed length.
+        pub fn invalid_seed_length(&self) -> usize { self.length }
+    }
+
+    impl fmt::Display for InvalidSeedLengthError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "invalid BIP-0032 master seed length: {} (expected 16 to 64)", self.length)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidSeedLengthError {}
 }
 
 #[cfg(feature = "arbitrary")]
@@ -1469,6 +1567,7 @@ mod tests {
         expected_sk: &str,
         expected_pk: &str,
     ) {
+        let seed = <&Bip32Seed>::try_from(seed).unwrap();
         let mut sk = Xpriv::new_master(network, seed);
         let mut pk = Xpub::from_xpriv(&sk);
 
@@ -1781,5 +1880,39 @@ mod tests {
                 key.parse::<Xpriv>().unwrap_err();
             }
         }
+    }
+
+    #[test]
+    fn bip32_seed_rejects_out_of_range_length() {
+        for len in [0usize, 1, 15, 65, 128, 1024] {
+            let bytes = vec![0u8; len];
+            assert_eq!(
+                <&Bip32Seed>::try_from(bytes.as_slice()),
+                Err(InvalidSeedLengthError { length: len }),
+            );
+        }
+    }
+
+    #[test]
+    fn bip32_seed_accepts_in_range_length() {
+        for len in [16usize, 17, 32, 63, 64] {
+            let bytes = vec![0u8; len];
+            let seed = <&Bip32Seed>::try_from(bytes.as_slice()).unwrap();
+            assert_eq!(seed.as_bytes().len(), len);
+        }
+
+        let arr32 = [7u8; 32];
+        assert_eq!(<&Bip32Seed>::from(&arr32).as_bytes(), &arr32[..]);
+
+        let arr64 = [9u8; 64];
+        assert_eq!(<&Bip32Seed>::from(&arr64).as_bytes(), &arr64[..]);
+    }
+
+    #[test]
+    fn bip32_seed_debug_redacts_bytes() {
+        let arr = [0xABu8; 32];
+        let seed: &Bip32Seed = (&arr).into();
+        let rendered = alloc::format!("{:?}", seed);
+        assert_eq!(rendered, "Bip32Seed(sha256=9a2db2e2)");
     }
 }

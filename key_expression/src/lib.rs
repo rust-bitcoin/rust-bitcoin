@@ -32,4 +32,7 @@ extern crate serde;
 include!("../include/array_newtype.rs");
 
 #[cfg(feature = "alloc")]
+include!("../include/newtype.rs");
+
+#[cfg(feature = "alloc")]
 pub mod bip32;
