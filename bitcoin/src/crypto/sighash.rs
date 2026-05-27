@@ -120,11 +120,11 @@ hashes::impl_serde_for_newtype!(TapSighash);
 
 impl TapSighash {
     /// Signs the sighash for a P2TR key-path spending transaction with the
-    /// [`TweakedKeypair`] and creates a Taproot signature as defined in [BIP-340].
+    /// [`TweakedKeypair`] and creates a Taproot signature as defined in [BIP-0340].
     ///
     /// For P2TR script-path spend use [`TapSighash::sign_script_spend`].
     ///
-    /// [BIP-340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    /// [BIP-0340]: <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
     pub fn sign_key_spend(
         &self,
         keypair: &TweakedKeypair,
@@ -135,11 +135,11 @@ impl TapSighash {
     }
 
     /// Signs the sighash with an [`UntweakedKeypair`] without applying a tweak and creates a
-    /// taproot signature as defined in [BIP-340].
+    /// taproot signature as defined in [BIP-0340].
     ///
     /// For P2TR key spend use [`TapSighash::sign_key_spend`].
     ///
-    /// [BIP-340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    /// [BIP-0340]: <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
     pub fn sign_script_spend(
         &self,
         keypair: &UntweakedKeypair,
