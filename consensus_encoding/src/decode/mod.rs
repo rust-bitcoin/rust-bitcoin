@@ -108,12 +108,13 @@ pub trait Decoder: Sized {
 ///
 /// This is returned from the [`Decoder::push_bytes`] method to indicate whether the decoder
 /// should continue accumulating data or is ready to produce the decoded value with [`Decoder::end`].
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum DecoderStatus {
     /// The decoder needs more data to complete decoding.
     ///
     /// Continue pushing byte slices with [`Decoder::push_bytes`] until this status changes to
     /// [`Ready`](DecoderStatus::Ready).
+    #[default]
     NeedsMore,
 
     /// The decoder has accumulated sufficient data and is ready to finalize.
