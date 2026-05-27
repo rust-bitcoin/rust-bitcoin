@@ -1,12 +1,11 @@
----   # rust-bitcoin CI: If you edit this file please update README.md
-on:   # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - master
-      - 'test-ci/**'
-  pull_request:
-
 name: Miri
+on:   # yamllint disable-line rule:truthy
+  schedule:
+    # 10am every day UTC, this correlates to:
+    # - 3am PDT
+    # - 11am CET
+    # - 9pm AEDT
+    - cron: '00 10 * * *'
 
 permissions: {}
 

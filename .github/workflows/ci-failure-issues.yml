@@ -5,6 +5,7 @@ on:
     workflows:
       - Fuzz
       - Kani CI
+      - Miri
     types:
       - completed
     branches:
@@ -32,6 +33,7 @@ jobs:
             const workflowFiles = {
               "Fuzz": "cron-daily-fuzz.yml",
               "Kani CI": "cron-daily-kani.yml",
+              "Miri": "cron-daily-miri.yml",
             };
 
             const formatTs = iso => {
