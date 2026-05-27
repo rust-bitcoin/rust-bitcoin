@@ -54,6 +54,10 @@ pub use self::error::{
 #[doc(inline)]
 pub use crate::hash_types::{BlockHash, BlockHashDecoder, BlockHashEncoder, WitnessCommitment};
 
+// Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
+#[cfg(feature = "alloc")]
+const WITNESS_COMMITMENT_MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
+
 /// Marker for whether or not a block has been validated.
 ///
 /// We define valid as:
@@ -420,9 +424,6 @@ pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkl
 
 #[cfg(feature = "alloc")]
 fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCommitment> {
-    // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
-    const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
-
     if !coinbase.is_coinbase() {
         return None;
     }
@@ -431,7 +432,10 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
     if let Some(pos) = coinbase
         .outputs
         .iter()
-        .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
+        .rposition(|o| {
+            o.script_pubkey.len() >= 38
+                && o.script_pubkey.as_bytes()[0..6] == WITNESS_COMMITMENT_MAGIC
+        })
     {
         let bytes =
             <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
@@ -1595,9 +1599,8 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn witness_commitment_from_coinbase_simple() {
         // Add witness commitment to the coinbase
-        let magic = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
         let mut pubkey_bytes = [0; 38];
-        pubkey_bytes[0..6].copy_from_slice(&magic);
+        pubkey_bytes[0..6].copy_from_slice(&WITNESS_COMMITMENT_MAGIC);
         let witness_commitment =
             WitnessCommitment::from_byte_array(pubkey_bytes[6..38].try_into().unwrap());
         let commitment_script = crate::script::ScriptBuf::from_bytes(pubkey_bytes.to_vec());
