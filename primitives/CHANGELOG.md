@@ -1,4 +1,8 @@
-# 0.102.0 - 2026-02-17
+# Changelog
+
+## [Unreleased]
+
+## [0.102.0] - 2026-02-17
 
 It was found that the `1.0.0-rc.x` releases were troublesome because
 of how `cargo` resolves version numbers that include a suffix. For
@@ -82,7 +86,7 @@ we changed the format:
 
 The whole crate is mutation tested using `cargo-mutants` - BOOM!
 
-# 0.101.0 - 2024-11-15
+## 0.101.0 - 2024-11-15
 
 This is the first "real" release of the `primitives` crate, as such it
 includes a lot of work. Search GitHub with the following filter to see
@@ -108,7 +112,10 @@ matter how small so we can fix them for the stable release.
 
 Enjoy!
 
-# 0.100.0 - 2024-07-01
+## 0.100.0 - 2024-07-01
 
 * Initial release of the `github.com/rust-bitcoin/rust-bitcoin/primitives` crate as
   `bitcoin-primitives`. The name on crates.io was generously transferred to us.
+
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-primitives-0.102.0...HEAD
+[0.102.0]: https://github.com/rust-bitcoin/rust-bitcoin/releases/tag/bitcoin-primitives-0.102.0
