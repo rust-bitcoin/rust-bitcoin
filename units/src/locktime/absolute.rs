@@ -7,6 +7,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 
 use crate::internal_macros::write_err;
 use crate::parse::{self, ParseIntError};
@@ -73,6 +75,20 @@ impl Height {
     /// Converts this `Height` to its inner `u32` value.
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::absolute::Height {
+        stable::absolute::Height::from_u32(self.to_consensus_u32())
+            .expect("pre-1.0 Height guarantees a valid consensus value")
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::absolute::Height) -> Self {
+        Self::from_consensus(stable.to_u32())
+            .expect("stable Height guarantees a valid consensus value")
+    }
 }
 
 impl fmt::Display for Height {
@@ -168,6 +184,20 @@ impl Time {
     /// Converts this `Time` to its inner `u32` value.
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::absolute::MedianTimePast {
+        stable::absolute::MedianTimePast::from_u32(self.to_consensus_u32())
+            .expect("pre-1.0 Time guarantees a valid consensus value")
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::locktime::absolute::MedianTimePast) -> Self {
+        Self::from_consensus(stable.to_u32())
+            .expect("stable MedianTimePast guarantees a valid consensus value")
+    }
 }
 
 impl fmt::Display for Time {

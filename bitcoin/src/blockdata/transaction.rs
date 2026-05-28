@@ -17,6 +17,8 @@ use core::mem;
 use core::str::FromStr;
 use core::{cmp, fmt};
 
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 #[cfg(feature = "encoding")]
 use encoding::{
     ArrayEncoder, BytesEncoder, CompactSizeEncoder, Decoder2, Decoder3, DecoderStatus, Encode as _,
@@ -514,6 +516,18 @@ impl Sequence {
         } else {
             Some(LockTime::from(Height::from(lock_value)))
         }
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::Sequence {
+        stable::Sequence::from_consensus(self.to_consensus_u32())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Sequence) -> Self {
+        Self::from_consensus(stable.to_consensus_u32())
     }
 
     /// Returns the low 16 bits from sequence number.
