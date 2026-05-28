@@ -202,7 +202,6 @@ macro_rules! engine_input_impl(
     () => (
         #[cfg(not(hashes_fuzz))]
         fn input(&mut self, mut inp: &[u8]) {
-
             let buf_idx = $crate::incomplete_block_len(self);
             let block_size = <Self as crate::HashEngine>::BLOCK_SIZE;
             self.bytes_hashed += inp.len() as u64;
