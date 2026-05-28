@@ -1279,7 +1279,7 @@ pub mod error {
     }
 
     /// Master seed had an invalid length.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub struct InvalidSeedLengthError {
         pub(crate) length: usize,
     }
@@ -1289,14 +1289,20 @@ pub mod error {
         pub fn invalid_seed_length(&self) -> usize { self.length }
     }
 
+    impl From<Infallible> for InvalidSeedLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     impl fmt::Display for InvalidSeedLengthError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "invalid BIP-0032 master seed length: {} (expected 16 to 64)", self.length)
+            write!(f, "invalid BIP-0032 master seed length: {} (expected 16 to 64 inclusive)", self.length)
         }
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for InvalidSeedLengthError {}
+    impl std::error::Error for InvalidSeedLengthError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    }
 }
 
 #[cfg(feature = "arbitrary")]
