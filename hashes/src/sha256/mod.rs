@@ -266,6 +266,7 @@ impl convert::AsRef<[u8]> for Midstate {
 
 /// Error types for the SHA256 hash.
 pub mod error {
+    use core::convert::Infallible;
     use core::fmt;
 
     use super::{Midstate, BLOCK_SIZE};
@@ -290,6 +291,10 @@ pub mod error {
         pub fn unprocessed_bytes(&self) -> &[u8] {
             &self.unprocessed_bytes[..self.unprocessed_bytes_len]
         }
+    }
+
+    impl From<Infallible> for MidstateError {
+        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for MidstateError {

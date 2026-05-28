@@ -145,12 +145,17 @@ impl<T: HashEngine> fmt::Debug for Hkdf<T> {
 
 /// Error types for the HKDF hash.
 pub mod error {
+    use core::convert::Infallible;
     use core::fmt;
 
     /// Size of output exceeds maximum length allowed.
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
     pub struct MaxLengthError {
         pub(super) max: usize,
+    }
+
+    impl From<Infallible> for MaxLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for MaxLengthError {
