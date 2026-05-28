@@ -9,12 +9,13 @@ use alloc::borrow::Cow;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::mem;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{
     ArrayDecoder, ArrayEncoder, ByteVecDecoder, BytesEncoder, CompactSizeEncoder, Decoder4,
-    Encoder2, Encoder4,
+    DecoderStatus, Encoder2, Encoder4,
 };
 use hashes::sha256d;
 
@@ -141,48 +142,259 @@ impl encoding::Decode for VersionMessage {
     type Decoder = VersionMessageDecoder;
 }
 
-type VersionMessageInnerDecoder = encoding::Decoder2<
-    encoding::Decoder3<
-        crate::ProtocolVersionDecoder,
-        crate::ServiceFlagsDecoder,
-        encoding::ArrayDecoder<8>,
-    >,
-    encoding::Decoder6<
-        AddressDecoder,
-        AddressDecoder,
-        encoding::ArrayDecoder<8>,
-        UserAgentDecoder,
-        encoding::ArrayDecoder<4>,
-        encoding::ArrayDecoder<1>,
-    >,
+type VersionMessageRequiredDecoder = Decoder4<
+    crate::ProtocolVersionDecoder,
+    crate::ServiceFlagsDecoder,
+    encoding::ArrayDecoder<8>,
+    AddressDecoder,
 >;
 
-crate::decoder_newtype! {
-    /// The Decoder for [`VersionMessage`].
-    #[derive(Debug, Default, Clone)]
-    pub struct VersionMessageDecoder(VersionMessageInnerDecoder);
+/// The decoder for [`VersionMessage`].
+#[derive(Debug, Clone)]
+pub struct VersionMessageDecoder {
+    state: VersionMessageDecoderState,
+}
 
-    fn end(
-        result: Result<
-            <VersionMessageInnerDecoder as encoding::Decoder>::Output,
-            <VersionMessageInnerDecoder as encoding::Decoder>::Error,
-        >
-    ) -> Result<VersionMessage, VersionMessageDecoderError> {
-        let (
-            (version, services, timestamp),
-            (receiver, sender, nonce, user_agent, start_height, relay),
-        ) = result.map_err(VersionMessageDecoderError)?;
-        Ok(VersionMessage {
+#[derive(Debug, Clone)]
+enum VersionMessageDecoderState {
+    Required(VersionMessageRequiredDecoder),
+    Sender(VersionMessage, AddressDecoder),
+    Nonce(VersionMessage, ArrayDecoder<8>),
+    UserAgent(VersionMessage, UserAgentDecoder),
+    StartHeight(VersionMessage, ArrayDecoder<4>),
+    Relay(VersionMessage, ArrayDecoder<1>),
+    Done(VersionMessage),
+    Errored,
+}
+
+impl Default for VersionMessageDecoder {
+    fn default() -> Self {
+        let required = VersionMessageRequiredDecoder::new(
+            crate::ProtocolVersionDecoder::new(),
+            crate::ServiceFlagsDecoder::new(),
+            ArrayDecoder::new(),
+            AddressDecoder::default(),
+        );
+        Self { state: VersionMessageDecoderState::Required(required) }
+    }
+}
+
+impl VersionMessageDecoder {
+    fn from_required(
+        version: ProtocolVersion,
+        services: ServiceFlags,
+        timestamp: [u8; 8],
+        receiver: Address,
+    ) -> VersionMessage {
+        VersionMessage {
             version,
             services,
             timestamp: i64::from_le_bytes(timestamp),
             receiver,
-            sender,
-            nonce: u64::from_le_bytes(nonce),
-            user_agent,
-            start_height: i32::from_le_bytes(start_height),
-            relay: relay[0] != 0,
-        })
+            sender: Address::useless(),
+            nonce: 1,
+            user_agent: UserAgent { user_agent: String::new() },
+            start_height: -1,
+            relay: true,
+        }
+    }
+}
+
+impl encoding::Decoder for VersionMessageDecoder {
+    type Output = VersionMessage;
+    type Error = VersionMessageDecoderError;
+
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<DecoderStatus, Self::Error> {
+        loop {
+            match &mut self.state {
+                VersionMessageDecoderState::Required(decoder) => {
+                    if decoder
+                        .push_bytes(bytes)
+                        .map_err(VersionMessageDecoderError::Required)?
+                        .needs_more()
+                    {
+                        return Ok(DecoderStatus::NeedsMore);
+                    }
+
+                    let state = mem::replace(&mut self.state, VersionMessageDecoderState::Errored);
+                    let decoder = match state {
+                        VersionMessageDecoderState::Required(decoder) => decoder,
+                        _ => unreachable!("we know we're in Required state"),
+                    };
+                    let (version, services, timestamp, receiver) =
+                        decoder.end().map_err(VersionMessageDecoderError::Required)?;
+                    let message = Self::from_required(version, services, timestamp, receiver);
+                    if bytes.is_empty() {
+                        self.state = VersionMessageDecoderState::Done(message);
+                        return Ok(DecoderStatus::Ready);
+                    }
+                    self.state =
+                        VersionMessageDecoderState::Sender(message, AddressDecoder::default());
+                }
+                VersionMessageDecoderState::Sender(_, decoder) => {
+                    if decoder
+                        .push_bytes(bytes)
+                        .map_err(VersionMessageDecoderError::Sender)?
+                        .needs_more()
+                    {
+                        return Ok(DecoderStatus::NeedsMore);
+                    }
+
+                    let state = mem::replace(&mut self.state, VersionMessageDecoderState::Errored);
+                    let (mut message, decoder) = match state {
+                        VersionMessageDecoderState::Sender(message, decoder) => (message, decoder),
+                        _ => unreachable!("we know we're in Sender state"),
+                    };
+                    message.sender = decoder.end().map_err(VersionMessageDecoderError::Sender)?;
+                    if bytes.is_empty() {
+                        self.state = VersionMessageDecoderState::Done(message);
+                        return Ok(DecoderStatus::Ready);
+                    }
+                    self.state = VersionMessageDecoderState::Nonce(message, ArrayDecoder::new());
+                }
+                VersionMessageDecoderState::Nonce(_, decoder) => {
+                    if decoder
+                        .push_bytes(bytes)
+                        .map_err(VersionMessageDecoderError::Nonce)?
+                        .needs_more()
+                    {
+                        return Ok(DecoderStatus::NeedsMore);
+                    }
+
+                    let state = mem::replace(&mut self.state, VersionMessageDecoderState::Errored);
+                    let (mut message, decoder) = match state {
+                        VersionMessageDecoderState::Nonce(message, decoder) => (message, decoder),
+                        _ => unreachable!("we know we're in Nonce state"),
+                    };
+                    message.nonce = u64::from_le_bytes(
+                        decoder.end().map_err(VersionMessageDecoderError::Nonce)?,
+                    );
+                    if bytes.is_empty() {
+                        self.state = VersionMessageDecoderState::Done(message);
+                        return Ok(DecoderStatus::Ready);
+                    }
+                    self.state =
+                        VersionMessageDecoderState::UserAgent(message, UserAgentDecoder::default());
+                }
+                VersionMessageDecoderState::UserAgent(_, decoder) => {
+                    if decoder
+                        .push_bytes(bytes)
+                        .map_err(VersionMessageDecoderError::UserAgent)?
+                        .needs_more()
+                    {
+                        return Ok(DecoderStatus::NeedsMore);
+                    }
+
+                    let state = mem::replace(&mut self.state, VersionMessageDecoderState::Errored);
+                    let (mut message, decoder) = match state {
+                        VersionMessageDecoderState::UserAgent(message, decoder) =>
+                            (message, decoder),
+                        _ => unreachable!("we know we're in UserAgent state"),
+                    };
+                    message.user_agent =
+                        decoder.end().map_err(VersionMessageDecoderError::UserAgent)?;
+                    if bytes.is_empty() {
+                        self.state = VersionMessageDecoderState::Done(message);
+                        return Ok(DecoderStatus::Ready);
+                    }
+                    self.state =
+                        VersionMessageDecoderState::StartHeight(message, ArrayDecoder::new());
+                }
+                VersionMessageDecoderState::StartHeight(_, decoder) => {
+                    if decoder
+                        .push_bytes(bytes)
+                        .map_err(VersionMessageDecoderError::StartHeight)?
+                        .needs_more()
+                    {
+                        return Ok(DecoderStatus::NeedsMore);
+                    }
+
+                    let state = mem::replace(&mut self.state, VersionMessageDecoderState::Errored);
+                    let (mut message, decoder) = match state {
+                        VersionMessageDecoderState::StartHeight(message, decoder) =>
+                            (message, decoder),
+                        _ => unreachable!("we know we're in StartHeight state"),
+                    };
+                    message.start_height = i32::from_le_bytes(
+                        decoder.end().map_err(VersionMessageDecoderError::StartHeight)?,
+                    );
+                    if bytes.is_empty() {
+                        self.state = VersionMessageDecoderState::Done(message);
+                        return Ok(DecoderStatus::Ready);
+                    }
+                    self.state = VersionMessageDecoderState::Relay(message, ArrayDecoder::new());
+                }
+                VersionMessageDecoderState::Relay(_, decoder) => {
+                    if decoder
+                        .push_bytes(bytes)
+                        .map_err(VersionMessageDecoderError::Relay)?
+                        .needs_more()
+                    {
+                        return Ok(DecoderStatus::NeedsMore);
+                    }
+
+                    let state = mem::replace(&mut self.state, VersionMessageDecoderState::Errored);
+                    let (mut message, decoder) = match state {
+                        VersionMessageDecoderState::Relay(message, decoder) => (message, decoder),
+                        _ => unreachable!("we know we're in Relay state"),
+                    };
+                    message.relay =
+                        decoder.end().map_err(VersionMessageDecoderError::Relay)?[0] != 0;
+                    self.state = VersionMessageDecoderState::Done(message);
+                    return Ok(DecoderStatus::Ready);
+                }
+                VersionMessageDecoderState::Done(_) => return Ok(DecoderStatus::Ready),
+                VersionMessageDecoderState::Errored => panic!("use of failed decoder"),
+            }
+        }
+    }
+
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        match self.state {
+            VersionMessageDecoderState::Required(decoder) => {
+                let (version, services, timestamp, receiver) =
+                    decoder.end().map_err(VersionMessageDecoderError::Required)?;
+                Ok(Self::from_required(version, services, timestamp, receiver))
+            }
+            VersionMessageDecoderState::Sender(mut message, decoder) => {
+                message.sender = decoder.end().map_err(VersionMessageDecoderError::Sender)?;
+                Ok(message)
+            }
+            VersionMessageDecoderState::Nonce(mut message, decoder) => {
+                message.nonce =
+                    u64::from_le_bytes(decoder.end().map_err(VersionMessageDecoderError::Nonce)?);
+                Ok(message)
+            }
+            VersionMessageDecoderState::UserAgent(mut message, decoder) => {
+                message.user_agent = decoder.end().map_err(VersionMessageDecoderError::UserAgent)?;
+                Ok(message)
+            }
+            VersionMessageDecoderState::StartHeight(mut message, decoder) => {
+                message.start_height = i32::from_le_bytes(
+                    decoder.end().map_err(VersionMessageDecoderError::StartHeight)?,
+                );
+                Ok(message)
+            }
+            VersionMessageDecoderState::Relay(mut message, decoder) => {
+                message.relay =
+                    decoder.end().map_err(VersionMessageDecoderError::Relay)?[0] != 0;
+                Ok(message)
+            }
+            VersionMessageDecoderState::Done(message) => Ok(message),
+            VersionMessageDecoderState::Errored => panic!("use of failed decoder"),
+        }
+    }
+
+    fn read_limit(&self) -> usize {
+        match &self.state {
+            VersionMessageDecoderState::Required(decoder) => decoder.read_limit(),
+            VersionMessageDecoderState::Sender(_, decoder) => decoder.read_limit(),
+            VersionMessageDecoderState::Nonce(_, decoder) => decoder.read_limit(),
+            VersionMessageDecoderState::UserAgent(_, decoder) => decoder.read_limit(),
+            VersionMessageDecoderState::StartHeight(_, decoder) => decoder.read_limit(),
+            VersionMessageDecoderState::Relay(_, decoder) => decoder.read_limit(),
+            VersionMessageDecoderState::Done(_) | VersionMessageDecoderState::Errored => 0,
+        }
     }
 }
 
@@ -611,9 +823,20 @@ pub mod error {
     ///
     /// [`VersionMessage`]: super::VersionMessage
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct VersionMessageDecoderError(
-        pub(super) <super::VersionMessageInnerDecoder as encoding::Decoder>::Error,
-    );
+    pub enum VersionMessageDecoderError {
+        /// Error decoding the required fields.
+        Required(<super::VersionMessageRequiredDecoder as encoding::Decoder>::Error),
+        /// Error decoding the optional sender address.
+        Sender(crate::address::AddressDecoderError),
+        /// Error decoding the optional nonce.
+        Nonce(encoding::UnexpectedEofError),
+        /// Error decoding the optional user agent.
+        UserAgent(super::UserAgentDecoderError),
+        /// Error decoding the optional start height.
+        StartHeight(encoding::UnexpectedEofError),
+        /// Error decoding the optional relay flag.
+        Relay(encoding::UnexpectedEofError),
+    }
 
     impl From<Infallible> for VersionMessageDecoderError {
         fn from(never: Infallible) -> Self { match never {} }
@@ -621,13 +844,33 @@ pub mod error {
 
     impl fmt::Display for VersionMessageDecoderError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write_err!(f, "version message decoder error"; self.0)
+            use VersionMessageDecoderError as E;
+
+            match self {
+                E::Required(e) => write_err!(f, "version message required field error"; e),
+                E::Sender(e) => write_err!(f, "version message sender address error"; e),
+                E::Nonce(e) => write_err!(f, "version message nonce error"; e),
+                E::UserAgent(e) => write_err!(f, "version message user agent error"; e),
+                E::StartHeight(e) => write_err!(f, "version message start height error"; e),
+                E::Relay(e) => write_err!(f, "version message relay flag error"; e),
+            }
         }
     }
 
     #[cfg(feature = "std")]
     impl std::error::Error for VersionMessageDecoderError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            use VersionMessageDecoderError as E;
+
+            match self {
+                E::Required(e) => Some(e),
+                E::Sender(e) => Some(e),
+                E::Nonce(e) => Some(e),
+                E::UserAgent(e) => Some(e),
+                E::StartHeight(e) => Some(e),
+                E::Relay(e) => Some(e),
+            }
+        }
     }
 
     /// An error decoding a [`UserAgent`] message.
@@ -869,6 +1112,69 @@ mod tests {
         assert!(real_decode.relay);
 
         assert_eq!(encoding::encode_to_vec(&real_decode), from_sat);
+    }
+
+    #[test]
+    fn version_message_accepts_missing_optional_fields() {
+        let receiver = Address {
+            services: ServiceFlags::NETWORK,
+            address: [0, 0, 0, 0, 0, 0xffff, 0x7f00, 0x0001],
+            port: 8333,
+        };
+        let sender = Address {
+            services: ServiceFlags::NONE,
+            address: [0, 0, 0, 0, 0, 0xffff, 0xc000, 0x0201],
+            port: 18333,
+        };
+        let full = VersionMessage {
+            version: ProtocolVersion(70015),
+            services: ServiceFlags::NETWORK,
+            timestamp: 42,
+            receiver: receiver.clone(),
+            sender: sender.clone(),
+            nonce: 0x0807_0605_0403_0201,
+            user_agent: UserAgent::from_nonstandard(&"/rust-bitcoin:test/"),
+            start_height: 100,
+            relay: false,
+        };
+        let encoded = encoding::encode_to_vec(&full);
+
+        let required_only: VersionMessage = encoding::decode_from_slice(&encoded[..46]).unwrap();
+        assert_eq!(required_only.version, full.version);
+        assert_eq!(required_only.services, full.services);
+        assert_eq!(required_only.timestamp, full.timestamp);
+        assert_eq!(required_only.receiver, receiver);
+        assert_eq!(required_only.sender, Address::useless());
+        assert_eq!(required_only.nonce, 1);
+        assert_eq!(String::from(required_only.user_agent), "");
+        assert_eq!(required_only.start_height, -1);
+        assert!(required_only.relay);
+
+        let with_sender: VersionMessage = encoding::decode_from_slice(&encoded[..72]).unwrap();
+        assert_eq!(with_sender.sender, sender);
+        assert_eq!(with_sender.nonce, 1);
+        assert_eq!(String::from(with_sender.user_agent), "");
+        assert_eq!(with_sender.start_height, -1);
+        assert!(with_sender.relay);
+    }
+
+    #[test]
+    fn version_message_rejects_truncated_optional_fields() {
+        let message = VersionMessage {
+            version: ProtocolVersion(70015),
+            services: ServiceFlags::NETWORK,
+            timestamp: 42,
+            receiver: Address::useless(),
+            sender: Address::useless(),
+            nonce: 0x0807_0605_0403_0201,
+            user_agent: UserAgent::from_nonstandard(&"/rust-bitcoin:test/"),
+            start_height: 100,
+            relay: true,
+        };
+        let encoded = encoding::encode_to_vec(&message);
+
+        assert!(encoding::decode_from_slice::<VersionMessage>(&encoded[..47]).is_err());
+        assert!(encoding::decode_from_slice::<VersionMessage>(&encoded[..76]).is_err());
     }
 
     #[test]
