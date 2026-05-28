@@ -292,6 +292,27 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     fn into_iter(self) -> Self::IntoIter { (**self).iter() }
 }
 
+impl From<Signature> for SerializedSignature {
+    #[inline]
+    fn from(value: Signature) -> Self { Self::from_signature(value) }
+}
+
+impl TryFrom<SerializedSignature> for Signature {
+    type Error = DecodeError;
+
+    #[inline]
+    fn try_from(value: SerializedSignature) -> Result<Self, Self::Error> { value.to_signature() }
+}
+
+impl<'a> TryFrom<&'a SerializedSignature> for Signature {
+    type Error = DecodeError;
+
+    #[inline]
+    fn try_from(value: &'a SerializedSignature) -> Result<Self, Self::Error> {
+        value.to_signature()
+    }
+}
+
 /// Error types for ECDSA
 pub mod error {
     use core::convert::Infallible;
