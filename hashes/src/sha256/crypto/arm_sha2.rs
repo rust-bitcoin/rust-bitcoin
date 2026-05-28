@@ -533,10 +533,10 @@ pub(super) unsafe fn sha256d_64_2way(output: &mut [[u8; 32]; 2], input: &[[u8; 6
     state1_b = vsha256h2q_u32(state1_b, tmp2_b, tmp0_b);
 
     // Transform 1: Update state
-    tmp = vld1q_u32(&INIT[0]);
+    tmp = vld1q_u32(INIT.as_ptr());
     state0_a = vaddq_u32(state0_a, tmp);
     state0_b = vaddq_u32(state0_b, tmp);
-    tmp = vld1q_u32(&INIT[4]);
+    tmp = vld1q_u32(INIT.as_ptr().add(4));
     state1_a = vaddq_u32(state1_a, tmp);
     state1_b = vaddq_u32(state1_b, tmp);
 
