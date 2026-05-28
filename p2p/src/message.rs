@@ -5,7 +5,6 @@
 //! This module defines the `NetworkMessage` and `V1NetworkMessage` types that
 //! are used for (de)serializing Bitcoin objects for transmission on the network.
 
-use alloc::borrow::{Cow, ToOwned};
 use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -49,29 +48,33 @@ pub const MAX_INV_SIZE: usize = 50_000;
 /// This by necessity should be larger than `MAX_VEC_SIZE`
 pub const MAX_MSG_SIZE: usize = 5_000_000;
 
-/// Serializer for command string
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CommandString(Cow<'static, str>);
+/// Contains the message command.
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct CommandString([u8; 12]);
 
 impl CommandString {
-    /// Converts `&'static str` to `CommandString`
+    /// The maximum length a [`CommandString`] can be once padding characters are trimmed.
+    pub const MAX_LEN: usize = 12;
+
+    /// Create [`CommandString`].
     ///
-    /// This is more efficient for string literals than non-static conversions because it avoids
-    /// allocation.
+    /// # Parameters
+    ///
+    /// * `s` - that which implents the trait bounds `AsRef`<str> + Into<String>
     ///
     /// # Errors
     ///
-    /// Returns an error if, and only if, the string is
-    /// larger than 12 characters in length.
-    pub fn try_from_static(s: &'static str) -> Result<Self, CommandStringError> {
-        Self::try_from_static_cow(s.into())
-    }
+    /// - If `s` is more than 12 characters in length.
+    /// - If `s` has non-ascii characters.
+    fn try_from_stringly<S: AsRef<str> + Into<String>>(s: &S) -> Result<Self, CommandStringError> {
+        let s = s.as_ref();
 
-    fn try_from_static_cow(cow: Cow<'static, str>) -> Result<Self, CommandStringError> {
-        if cow.len() > 12 {
-            Err(CommandStringError { cow })
+        if !s.is_ascii() || s.len() > Self::MAX_LEN {
+            Err(CommandStringError(s.into()))
         } else {
-            Ok(Self(cow))
+            let mut buf = [0; Self::MAX_LEN];
+            buf[..s.len()].copy_from_slice(s.as_bytes());
+            Ok(Self(buf))
         }
     }
 }
@@ -79,53 +82,37 @@ impl CommandString {
 impl TryFrom<String> for CommandString {
     type Error = CommandStringError;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::try_from_static_cow(value.into())
-    }
+    fn try_from(s: String) -> Result<Self, Self::Error> { Self::try_from_stringly(&s) }
 }
 
 impl TryFrom<Box<str>> for CommandString {
     type Error = CommandStringError;
 
-    fn try_from(value: Box<str>) -> Result<Self, Self::Error> {
-        Self::try_from_static_cow(String::from(value).into())
-    }
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> { Self::try_from_stringly(&s) }
 }
 
 impl<'a> TryFrom<&'a str> for CommandString {
     type Error = CommandStringError;
 
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        Self::try_from_static_cow(value.to_owned().into())
-    }
+    fn try_from(s: &'a str) -> Result<Self, Self::Error> { Self::try_from_stringly(&s) }
 }
 
 impl core::str::FromStr for CommandString {
     type Err = CommandStringError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::try_from_static_cow(s.to_owned().into())
+    fn from_str(s: &str) -> Result<Self, Self::Err> { Self::try_from_stringly(&s) }
+}
+
+impl AsRef<str> for CommandString {
+    fn as_ref(&self) -> &str {
+        // CommandStringDecode upholds the invarient that only valid
+        // ASCII characters will be decoded.
+        unsafe { std::str::from_utf8_unchecked(&self.0).trim_end_matches(&['\0'][..]) }
     }
 }
 
 impl fmt::Display for CommandString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.0.as_ref()) }
-}
-
-impl AsRef<str> for CommandString {
-    fn as_ref(&self) -> &str { self.0.as_ref() }
-}
-
-impl encoding::Encode for CommandString {
-    type Encoder<'e> = CommandStringEncoder;
-
-    fn encoder(&self) -> Self::Encoder<'_> {
-        let mut rawbytes = [0u8; 12];
-        let strbytes = self.0.as_bytes();
-        debug_assert!(strbytes.len() <= 12);
-        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
-        CommandStringEncoder::without_length_prefix(rawbytes)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.as_ref()) }
 }
 
 impl encoding::Decode for CommandString {
@@ -139,10 +126,8 @@ impl encoding::Decode for CommandString {
 pub struct CommandStringEncoder(encoding::ArrayEncoder<12>);
 
 impl CommandStringEncoder {
-    /// Constructs an encoder which encodes the command string with no length prefix.
-    pub const fn without_length_prefix(arr: [u8; 12]) -> Self {
-        Self(encoding::ArrayEncoder::without_length_prefix(arr))
-    }
+    /// Constructs a new instance of the newtype encoder.
+    pub(crate) const fn new(encoder: ArrayEncoder<12>) -> Self { Self(encoder) }
 }
 
 impl encoding::Encoder for CommandStringEncoder {
@@ -167,29 +152,29 @@ crate::decoder_newtype! {
         CommandStringDecoderError::UnexpectedEof(err)
     }
 
-    fn end(
-        result: Result<[u8; 12], encoding::UnexpectedEofError>
-    ) -> Result<CommandString, CommandStringDecoderError> {
-        let rawbytes = result.map_err(CommandStringDecoderError::UnexpectedEof)?;
-        // Trim null padding from the end.
-        let trimmed =
-            rawbytes.iter().rposition(|&b| b != 0).map_or(&rawbytes[..0], |i| &rawbytes[..=i]);
-
-        if !trimmed.is_ascii() {
+    fn end(result: Result<[u8; 12], encoding::UnexpectedEofError>) -> Result<CommandString, CommandStringDecoderError>  {
+        let bytes = result.map_err(CommandStringDecoderError::UnexpectedEof)?;
+        if !bytes.is_ascii() {
             return Err(CommandStringDecoderError::NotAscii);
         }
-
-        Ok(CommandString(Cow::Owned(unsafe { String::from_utf8_unchecked(trimmed.to_vec()) })))
+        Ok(CommandString(bytes))
     }
 }
 
-/// A Network message using the v1 p2p protocol.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct V1NetworkMessage {
-    magic: Magic,
-    payload: NetworkMessage,
-    payload_len: u32,
-    checksum: [u8; 4],
+impl encoding::Encode for CommandString {
+    type Encoder<'e>
+        = CommandStringEncoder
+    where
+        Self: 'e;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        CommandStringEncoder::new(ArrayEncoder::without_length_prefix(self.0))
+    }
+}
+
+impl CommandStringDecoder {
+    /// Constructs a new [`CommandString`] decoder.
+    pub fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
 }
 
 /// A v1 message header used to describe the incoming payload.
@@ -217,10 +202,9 @@ impl V1MessageHeader {
     /// # Panics
     ///
     /// Panics if the payload length exceeds `u32::MAX`.
-    pub fn new<T: encoding::Encode>(magic: Magic, message: &T, command: &'static str) -> Self {
+    pub fn new<T: encoding::Encode>(magic: Magic, message: &T, command: CommandString) -> Self {
         let (bytes_hashed, checksum) = sha2_checksum(message);
         let payload_len = u32::try_from(bytes_hashed).expect("network message use u32 as length");
-        let command = CommandString::try_from_static(command).unwrap();
 
         Self { magic, command, length: payload_len, checksum }
     }
@@ -741,10 +725,19 @@ impl NetworkMessage {
     /// Panics if the command string is invalid (should never happen for valid message types).
     pub fn command(&self) -> CommandString {
         match *self {
-            Self::Unknown { command: ref c, .. } => c.clone(),
-            _ => CommandString::try_from_static(self.cmd()).expect("cmd returns valid commands"),
+            Self::Unknown { command: ref c, .. } => *c,
+            _ => CommandString::try_from(self.cmd()).expect("cmd returns valid commands"),
         }
     }
+}
+
+/// A Network message using the v1 p2p protocol.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct V1NetworkMessage {
+    magic: Magic,
+    payload: NetworkMessage,
+    payload_len: u32,
+    checksum: [u8; 4],
 }
 
 impl V1NetworkMessage {
@@ -1693,7 +1686,7 @@ impl V2NetworkMessageDecoder {
             4u8 => Ok(E::CmpctBlock(bip152::HeaderAndShortIds::decoder())),
             5u8 => Ok(E::FeeFilter(FeeFilter::decoder())),
             6u8 => Ok(E::FilterAdd(message_bloom::FilterAdd::decoder())),
-            7u8 => Ok(E::Empty(CommandString::try_from_static("filterclear").map_err(|_| err)?)),
+            7u8 => Ok(E::Empty(CommandString::try_from("filterclear").map_err(|_| err)?)),
             8u8 => Ok(E::FilterLoad(message_bloom::FilterLoad::decoder())),
             9u8 => Ok(E::GetBlocks(message_blockdata::GetBlocksMessage::decoder())),
             10u8 => Ok(E::GetBlockTxn(bip152::BlockTransactionsRequest::decoder())),
@@ -1701,7 +1694,7 @@ impl V2NetworkMessageDecoder {
             12u8 => Ok(E::GetHeaders(message_blockdata::GetHeadersMessage::decoder())),
             13u8 => Ok(E::Headers(HeadersMessage::decoder())),
             14u8 => Ok(E::Inv(InventoryPayload::decoder())),
-            15u8 => Ok(E::Empty(CommandString::try_from_static("mempool").map_err(|_| err)?)),
+            15u8 => Ok(E::Empty(CommandString::try_from("mempool").map_err(|_| err)?)),
             16u8 => Ok(E::MerkleBlock(MerkleBlock::decoder())),
             17u8 => Ok(E::NotFound(InventoryPayload::decoder())),
             18u8 => Ok(E::Ping(Ping::decoder())),
@@ -1765,7 +1758,7 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                             if id == 0 {
                                 // Non-optimized: need to read 12-byte command string next.
                                 self.state = V2NetworkMessageDecoderState::CommandString(
-                                    CommandStringDecoder(encoding::ArrayDecoder::new()),
+                                    CommandStringDecoder::new(),
                                 );
                             } else {
                                 // Optimized short ID (1-28): skip command, go straight to payload.
@@ -1789,8 +1782,7 @@ impl encoding::Decoder for V2NetworkMessageDecoder {
                             let command = command_string
                                 .end()
                                 .map_err(V2NetworkMessageDecoderError::Command)?;
-                            let payload_decoder =
-                                Self::payload_decoder_from_command(command.clone());
+                            let payload_decoder = Self::payload_decoder_from_command(command);
                             self.state = V2NetworkMessageDecoderState::Payload(payload_decoder);
                         }
                         _ => unreachable!("we know we're in the Second state"),
@@ -1858,7 +1850,6 @@ fn sha2_checksum(data: &impl encoding::Encode) -> (u64, [u8; 4]) {
 
 /// Error types for network messages.
 pub mod error {
-    use alloc::borrow::Cow;
     use core::convert::Infallible;
     use core::fmt;
 
@@ -1900,17 +1891,15 @@ pub mod error {
     /// This is currently returned for command strings longer than 12.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub struct CommandStringError {
-        pub(super) cow: Cow<'static, str>,
-    }
+    pub struct CommandStringError(pub alloc::string::String);
 
     impl fmt::Display for CommandStringError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(
                 f,
                 "the command string '{}' has length {} which is larger than 12",
-                self.cow,
-                self.cow.len()
+                self.0,
+                self.0.len()
             )
         }
     }
@@ -2259,7 +2248,8 @@ impl<'a> Arbitrary<'a> for InventoryPayload {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CommandString {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(u.arbitrary::<String>()?.into()))
+        let s = u.arbitrary::<String>()?;
+        Self::try_from(s).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
@@ -2329,6 +2319,7 @@ impl<'a> Arbitrary<'a> for V1NetworkMessage {
 
 #[cfg(test)]
 mod test {
+    use alloc::borrow::ToOwned;
     use alloc::string::ToString;
     use alloc::vec;
     use std::net::Ipv4Addr;
@@ -2358,11 +2349,12 @@ mod test {
         let magic = Magic::BITCOIN;
         let payload = Pong(314);
 
-        let header = V1MessageHeader::new(magic, &payload, "pong");
+        let cmd = CommandString::try_from("pong").unwrap();
+        let header = V1MessageHeader::new(magic, &payload, cmd);
 
         let target_header = V1MessageHeader {
             magic: Magic::BITCOIN,
-            command: CommandString::try_from_static("pong").unwrap(),
+            command: CommandString::try_from("pong").unwrap(),
             length: 8,
             checksum: [198, 34, 189, 120],
         };
@@ -2514,14 +2506,11 @@ mod test {
     #[test]
     fn commandstring() {
         // Test converting.
-        assert_eq!(
-            CommandString::try_from_static("AndrewAndrew").unwrap().as_ref(),
-            "AndrewAndrew"
-        );
-        assert!(CommandString::try_from_static("AndrewAndrewA").is_err());
+        assert_eq!(CommandString::try_from("AndrewAndrew").unwrap().as_ref(), "AndrewAndrew");
+        assert!(CommandString::try_from("AndrewAndrewA").is_err());
 
         // Test serializing.
-        let cs = CommandString("Andrew".into());
+        let cs = CommandString::try_from("Andrew").unwrap();
         assert_eq!(
             encoding::encode_to_vec(&cs),
             [0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]
@@ -2532,14 +2521,14 @@ mod test {
             encoding::decode_from_slice(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
         assert!(cs.is_ok());
         assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
-        assert_eq!(cs.unwrap(), CommandString::try_from_static("Andrew").unwrap());
+        assert_eq!(cs.unwrap(), CommandString::try_from("Andrew").unwrap());
 
         // Test that embedded null bytes are preserved while trailing nulls are trimmed
         let cs: Result<CommandString, _> =
             encoding::decode_from_slice(&[0, 0x41u8, 0x6e, 0x64, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]);
         assert!(cs.is_ok());
         assert_eq!(cs.as_ref().unwrap().to_string(), "\0And\0rew".to_owned());
-        assert_eq!(cs.unwrap(), CommandString::try_from_static("\0And\0rew").unwrap());
+        assert_eq!(cs.unwrap(), CommandString::try_from("\0And\0rew").unwrap());
 
         // Invalid CommandString, must be ASCII
         assert!(encoding::decode_from_slice::<CommandString>(&[
@@ -2552,6 +2541,9 @@ mod test {
             0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0
         ])
         .is_err());
+
+        let s = "\u{1F980}";
+        assert!(CommandString::try_from(s).is_err());
     }
 
     #[test]
@@ -2817,7 +2809,7 @@ mod test {
         let data = hex!("010101010101");
 
         let mut decoder =
-            NetworkMessageDecoder::new(CommandString::try_from_static("unknown").unwrap(), 6);
+            NetworkMessageDecoder::new(CommandString::try_from("unknown").unwrap(), 6);
         let _ = decoder.push_bytes(&mut data.as_slice());
         let decoded = decoder.end().unwrap();
 
@@ -2858,7 +2850,7 @@ mod test {
     fn command_string_encoder() {
         use encoding::{Encode as _, ExactSizeEncoder as _};
 
-        let cmd = CommandString::try_from_static("version").unwrap();
+        let cmd = CommandString::try_from("version").unwrap();
         let expected_bytes: [u8; 12] = [b'v', b'e', b'r', b's', b'i', b'o', b'n', 0, 0, 0, 0, 0];
 
         let mut encoder = cmd.encoder();
