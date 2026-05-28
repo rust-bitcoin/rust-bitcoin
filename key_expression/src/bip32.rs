@@ -133,6 +133,8 @@ impl PartialEq for Bip32Seed {
     }
 }
 
+impl Eq for Bip32Seed {}
+
 macro_rules! impl_bip32_seed_from_array {
     ($($n:literal),+ $(,)?) => {
         $(
