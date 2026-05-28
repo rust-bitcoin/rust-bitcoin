@@ -61,8 +61,7 @@ pub(crate) use hash_trait_impls;
 ///
 /// Restrictions on usage:
 ///
-/// * Requires a `HashEngine` type in this module implementing `Default`
-///   and `crate::HashEngine<Hash = Hash, Bytes = [u8; $len]>`.
+/// * Requires a `HashEngine` type in this module implementing `Default`.
 macro_rules! general_hash_type {
     (
         $(#[$type_attrs:meta])*
