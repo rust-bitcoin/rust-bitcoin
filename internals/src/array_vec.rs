@@ -3,7 +3,9 @@
 //! A simplified `Copy` version of `arrayvec::ArrayVec`.
 
 use core::fmt;
+use core::mem::MaybeUninit;
 
+use error::Error;
 pub use safety_boundary::ArrayVec;
 
 /// Limits the scope of `unsafe` auditing.
@@ -11,8 +13,6 @@ pub use safety_boundary::ArrayVec;
 // inside it!
 mod safety_boundary {
     use core::mem::MaybeUninit;
-
-    use crate::array_vec::error::Error;
 
     /// A growable contiguous collection backed by array.
     #[derive(Copy)]
@@ -61,64 +61,85 @@ mod safety_boundary {
             unsafe { core::slice::from_raw_parts_mut(ptr, self.len) }
         }
 
-        /// Adds an element into `self`.
-        ///
-        /// # Panics
-        ///
-        /// If the length would increase past CAP.
-        pub fn push(&mut self, element: T) {
-            assert!(self.len < CAP);
-            self.data[self.len] = MaybeUninit::new(element);
-            self.len += 1;
+        /// Returns remaining spare capacity of the vector as a slice of `MaybeUninit<T>`.
+        pub fn spare_capacity_mut(&mut self) -> &mut [MaybeUninit<T>] {
+            // SOUNDNESS: self.len <= CAP is the invariant on the type
+            unsafe { self.data.get_unchecked_mut(self.len..) }
         }
 
-        /// Adds an element into `self`.
+        /// Forces the length to `new_len`.
         ///
-        /// # Errors
+        /// # Safety
         ///
-        /// Returns `CapacityExceeded` if the `ArrayVec` is full.
-        pub fn try_push(&mut self, element: T) -> Result<(), Error> {
-            if self.len >= CAP {
-                return Err(Error::CapacityExceeded(CAP));
-            }
-            self.data[self.len] = MaybeUninit::new(element);
-            self.len += 1;
-            Ok(())
-        }
-
-        /// Removes the last element, returning it.
-        ///
-        /// # Returns
-        ///
-        /// None if the `ArrayVec` is empty.
-        pub fn pop(&mut self) -> Option<T> {
-            if self.len > 0 {
-                self.len -= 1;
-                // SAFETY: All elements in 0..len are initialized
-                let res = self.data[self.len];
-                self.data[self.len] = MaybeUninit::uninit();
-                Some(unsafe { res.assume_init() })
-            } else {
-                None
-            }
-        }
-
-        /// Copies and appends all elements from `slice` into `self`.
-        ///
-        /// # Panics
-        ///
-        /// If the length would increase past CAP.
-        pub fn extend_from_slice(&mut self, slice: &[T]) {
-            let new_len = self.len.checked_add(slice.len()).expect("integer/buffer overflow");
-            assert!(new_len <= CAP, "buffer overflow");
-            // SAFETY: MaybeUninit<T> has the same layout as T
-            let slice = unsafe {
-                let ptr = slice.as_ptr();
-                core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
-            };
-            self.data[self.len..new_len].copy_from_slice(slice);
+        /// * `new_len` must be less than or equal to `CAP`.
+        /// * All elements up to `new_len` must be initialized.
+        pub unsafe fn set_len(&mut self, new_len: usize) {
+            debug_assert!(new_len <= CAP);
             self.len = new_len;
         }
+    }
+}
+
+impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
+    /// Adds an element into `self`.
+    ///
+    /// # Panics
+    ///
+    /// If the length would increase past CAP.
+    #[track_caller]
+    pub fn push(&mut self, element: T) {
+        self.try_push(element).expect("push past the capacity of the array");
+    }
+
+    /// Adds an element into `self`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `CapacityExceeded` if the `ArrayVec` is full.
+    pub fn try_push(&mut self, element: T) -> Result<(), Error> {
+        let first = self.spare_capacity_mut().first_mut().ok_or(Error::CapacityExceeded(CAP))?;
+        *first = MaybeUninit::new(element);
+        let old_len = self.len();
+        // SOUNDNESS:
+        // * first being non-None implies the element exists therefore one-past the length <=
+        //   CAP
+        // * all elements up to old_len were already filled and we just added one
+        unsafe { self.set_len(old_len + 1); }
+        Ok(())
+    }
+
+    /// Removes the last element, returning it.
+    ///
+    /// # Returns
+    ///
+    /// None if the `ArrayVec` is empty.
+    pub fn pop(&mut self) -> Option<T> {
+        let res = *self.last()?;
+        let old_len = self.len();
+        // SOUNDNESS:
+        // * decreasing the already-valid len keeps the len <= CAP invariant
+        // * decreasing the already-valid len does not mark any new elements as initialized
+        unsafe { self.set_len(old_len - 1) }
+        Some(res)
+    }
+
+    /// Copies and appends all elements from `slice` into `self`.
+    ///
+    /// # Panics
+    ///
+    /// If the length would increase past CAP.
+    pub fn extend_from_slice(&mut self, slice: &[T]) {
+        // SAFETY: MaybeUninit<T> has the same layout as T
+        let slice = unsafe {
+            let ptr = slice.as_ptr();
+            core::slice::from_raw_parts(ptr.cast::<MaybeUninit<T>>(), slice.len())
+        };
+        self.spare_capacity_mut()
+            .get_mut(..slice.len())
+            .expect("buffer overflow")
+            .copy_from_slice(slice);
+        let old_len = self.len();
+        unsafe { self.set_len(old_len + slice.len()) }
     }
 }
 
@@ -297,7 +318,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
+    #[should_panic(expected = "push past the capacity of the array")]
     fn overflow_push() {
         let mut av = ArrayVec::<_, 0>::new();
         av.push(42);
