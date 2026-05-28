@@ -285,9 +285,11 @@ pub mod error {
 
     impl MidstateError {
         /// Returns block-aligned midstate.
+        #[inline]
         pub const fn midstate(&self) -> &Midstate { &self.block_aligned_midstate }
 
         /// returns the unprocessed bytes remaining in the buffer.
+        #[inline]
         pub fn unprocessed_bytes(&self) -> &[u8] {
             &self.unprocessed_bytes[..self.unprocessed_bytes_len]
         }
@@ -309,6 +311,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for MidstateError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
     }
 }
