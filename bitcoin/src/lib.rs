@@ -21,6 +21,7 @@
 //! * `rand` - (dependency), makes it more convenient to generate random values.
 //! * `serde` - (dependency), implements `serde`-based serialization and
 //!   deserialization.
+//! * `encoding` - enables consensus encoding support.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it to this
 //!   crate so it knows how to implement `std::error::Error`. At this time there's a hack to
@@ -73,6 +74,9 @@ pub extern crate hex;
 
 /// Re-export the `bitcoin-io` crate.
 pub extern crate io;
+
+#[cfg(feature = "encoding")]
+pub extern crate encoding;
 
 /// Re-export the `ordered` crate.
 #[cfg(feature = "ordered")]
@@ -168,6 +172,10 @@ mod prelude {
 
     pub use hex::DisplayHex;
 }
+
+// decoder_newtype! macro
+#[cfg(feature = "encoding")]
+include!("../include/decoder_newtype.rs");
 
 pub mod amount {
     //! Bitcoin amounts.
