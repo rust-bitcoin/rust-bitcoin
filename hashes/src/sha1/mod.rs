@@ -19,7 +19,7 @@ crate::internal_macros::general_hash_type! {
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     pub fn from_engine(mut e: HashEngine) -> Self {
         let n_bytes_hashed = e.bytes_hashed;
         let buf_idx = incomplete_block_len(&e);

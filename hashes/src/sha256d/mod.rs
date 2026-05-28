@@ -21,7 +21,7 @@ impl Hash {
         sha256::HashEngine::sha256d_64(outputs, inputs);
     }
 
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     pub fn from_engine(e: HashEngine) -> Self {
         let sha2 = sha256::Hash::from_engine(e.0);
         let sha2d = sha256::Hash::hash(sha2.as_byte_array());

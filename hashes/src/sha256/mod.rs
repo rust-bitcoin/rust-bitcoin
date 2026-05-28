@@ -28,7 +28,7 @@ crate::internal_macros::general_hash_type! {
 }
 
 impl Hash {
-    /// Finalize a hash engine to obtain a hash.
+    /// Finalizes a hash engine to obtain a hash.
     #[cfg(not(hashes_fuzz))]
     pub fn from_engine(mut e: HashEngine) -> Self {
         // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
@@ -50,7 +50,7 @@ impl Hash {
         Self(e.midstate_unchecked().bytes)
     }
 
-    /// Finalize a hash engine to obtain a hash.
+    /// Finalizes a hash engine to obtain a hash.
     #[cfg(hashes_fuzz)]
     pub fn from_engine(e: HashEngine) -> Self {
         let mut hash = e.midstate_unchecked().bytes;
@@ -62,7 +62,7 @@ impl Hash {
         Hash(hash)
     }
 
-    /// Iterate the SHA256 algorithm to turn a SHA256 hash into a `SHA256d` hash.
+    /// Iterates the SHA256 algorithm to turn a SHA256 hash into a `SHA256d` hash.
     #[must_use]
     pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
 

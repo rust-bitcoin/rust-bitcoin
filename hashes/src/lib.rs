@@ -192,7 +192,7 @@ where
     drain_to_engine(&mut encoder, engine);
 }
 
-/// Drain the output of an [`encoding::Encoder`] into a hash engine.
+/// Drains the output of an [`encoding::Encoder`] into a hash engine.
 pub fn drain_to_engine<T, H>(encoder: &mut T, engine: &mut H)
 where
     T: encoding::Encoder + ?Sized,
