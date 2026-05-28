@@ -102,7 +102,7 @@ impl TapSighashType {
 ///
 /// Fixed values so they can be cast as integer types for encoding (see also
 /// [`TapSighashType`]).
-#[derive(PartialEq, Eq, Debug, Copy, Clone, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum EcdsaSighashType {
     /// 0x1: Sign all outputs.
     All = 0x01,

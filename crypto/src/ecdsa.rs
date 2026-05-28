@@ -40,7 +40,7 @@ pub use self::error::ParseSignatureError;
 const MAX_SIG_LEN: usize = 73;
 
 /// An ECDSA signature with the corresponding hash type.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Signature {
     /// The underlying ECDSA Signature.
