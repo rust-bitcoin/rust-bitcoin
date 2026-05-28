@@ -26,20 +26,12 @@ use network::NetworkKind;
 #[cfg(feature = "rand")]
 #[cfg(feature = "std")]
 pub use secp256k1::rand;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::ecdsa;
 use crate::hex::{self, DecodeFixedLengthBytesError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity, Verification};
-pub use encapsulate::{
-    FullPublicKey, Keypair, LegacyPublicKey, PrivateKey, SerializedXOnlyPublicKey, TweakedKeypair,
-    TweakedPublicKey, XOnlyPublicKey,
-};
-pub use serialized_legacy_public_key::SerializedLegacyPublicKey;
-
 #[doc(no_inline)]
 pub use self::error::{
     FromSliceError, InvalidAddressVersionError, InvalidBase58PayloadLengthError,
@@ -49,12 +41,18 @@ pub use self::error::{
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::{FromWifError, InvalidWifCompressionFlagError};
+pub use self::full_public_key::FullPublicKey;
+pub use self::keypair::Keypair;
+pub use self::legacy_public_key::LegacyPublicKey;
+pub use self::private_key::PrivateKey;
+pub use self::serialized_legacy_public_key::SerializedLegacyPublicKey;
+pub use self::serialized_x_only_public_key::SerializedXOnlyPublicKey;
+pub use self::tweaked_keypair::TweakedKeypair;
+pub use self::tweaked_public_key::TweakedPublicKey;
+pub use self::x_only_public_key::XOnlyPublicKey;
 
-/// Encapsulation module to provide a clear barrier for construction/destruction of types.
-mod encapsulate {
+mod x_only_public_key {
     use secp256k1::Parity;
-    #[cfg(feature = "serde")]
-    use serde::{Deserialize, Serialize};
 
     /// A Bitcoin Schnorr X-only public key used for BIP-0340 signatures.
     ///
@@ -92,6 +90,11 @@ mod encapsulate {
         #[deprecated(since = "0.1.0", note = "use `to_inner()` instead")]
         pub fn into_inner(self) -> secp256k1::XOnlyPublicKey { self.to_inner() }
     }
+}
+
+mod keypair {
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
 
     /// A Bitcoin secret and public key pair.
     #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -112,7 +115,9 @@ mod encapsulate {
         #[inline]
         fn drop(&mut self) { self.0.non_secure_erase(); }
     }
+}
 
+mod legacy_public_key {
     /// A Bitcoin ECDSA public key.
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct LegacyPublicKey {
@@ -153,7 +158,9 @@ mod encapsulate {
         #[inline]
         pub fn compressed(&self) -> bool { self.compressed }
     }
+}
 
+mod full_public_key {
     /// An always-compressed Bitcoin ECDSA public key.
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct FullPublicKey(secp256k1::PublicKey);
@@ -167,7 +174,9 @@ mod encapsulate {
         #[inline]
         pub(super) fn to_inner(self) -> secp256k1::PublicKey { self.0 }
     }
+}
 
+mod private_key {
     /// A Bitcoin ECDSA private key.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct PrivateKey {
@@ -204,6 +213,13 @@ mod encapsulate {
         #[inline]
         fn drop(&mut self) { self.inner.non_secure_erase(); }
     }
+}
+
+mod tweaked_public_key {
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
+
+    use super::{TweakedKeypair, XOnlyPublicKey};
 
     /// Tweaked BIP-0340 X-coord-only public key.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -236,6 +252,13 @@ mod encapsulate {
         #[inline]
         pub fn as_x_only_public_key(&self) -> &XOnlyPublicKey { &self.0 }
     }
+}
+
+mod tweaked_keypair {
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
+
+    use super::Keypair;
 
     /// Tweaked BIP-0340 key pair.
     ///
@@ -275,7 +298,9 @@ mod encapsulate {
         #[inline]
         pub fn as_keypair(&self) -> &Keypair { &self.0 }
     }
+}
 
+mod serialized_x_only_public_key {
     crate::transparent_newtype! {
         /// An array of bytes that's semantically an x-only public but was **not** validated.
         ///
@@ -603,30 +628,42 @@ impl LegacyPublicKey {
         Self::from_secp_uncompressed(key)
     }
 
+    /// Serializes the public key to bytes.
+    #[inline]
+    pub fn serialize(self) -> SerializedLegacyPublicKey {
+        if self.compressed() {
+            SerializedLegacyPublicKey::new_compressed(&self.serialize_compressed())
+        } else {
+            SerializedLegacyPublicKey::new_uncompressed(&self.serialize_uncompressed())
+        }
+    }
+
     /// Serializes the key as a byte-encoded pair of values.
     ///
     /// This function serializes the key in compressed form, where the y-coordinate is
     /// represented by only a single bit, as x determines it up to one bit.
     ///
     /// If you want to serialize while considering the compressedness of this key,
-    /// use [`to_bytes`] instead.
+    /// use [`serialize`] instead.
     ///
-    /// [`to_bytes`]: LegacyPublicKey::to_bytes
+    /// [`serialize`]: LegacyPublicKey::serialize
     #[inline]
     pub fn serialize_compressed(&self) -> [u8; 33] { self.to_inner().serialize() }
 
     /// Serializes the key as a byte-encoded pair of values, in uncompressed form.
     ///
     /// If you want to serialize while considering the compressedness of this key,
-    /// use [`to_bytes`] instead.
+    /// use [`serialize`] instead.
     ///
-    /// [`to_bytes`]: LegacyPublicKey::to_bytes
+    /// [`serialize`]: LegacyPublicKey::serialize
     #[inline]
     pub fn serialize_uncompressed(&self) -> [u8; 65] { self.to_inner().serialize_uncompressed() }
 
     /// Returns bitcoin 160-bit hash of the public key.
     #[inline]
-    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.to_bytes())) }
+    pub fn pubkey_hash(&self) -> PubkeyHash {
+        PubkeyHash(hash160::Hash::hash(&self.serialize()))
+    }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     ///
@@ -654,17 +691,13 @@ impl LegacyPublicKey {
     /// Serializes the public key to bytes.
     #[cfg(feature = "alloc")]
     #[inline]
-    pub fn to_vec(self) -> Vec<u8> { self.to_bytes().to_vec() }
+    pub fn to_vec(self) -> Vec<u8> { self.serialize().to_vec() }
 
     /// Serializes the public key to bytes.
+    #[cfg(feature = "alloc")]
     #[inline]
-    pub fn to_bytes(self) -> SerializedLegacyPublicKey {
-        if self.compressed() {
-            SerializedLegacyPublicKey::new_compressed(&self.serialize_compressed())
-        } else {
-            SerializedLegacyPublicKey::new_uncompressed(&self.serialize_uncompressed())
-        }
-    }
+    #[deprecated(since = "TBD", note = "use to_vec or serialize instead")]
+    pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
 
     /// Serializes the public key into a `SortKey`.
     ///
@@ -717,7 +750,7 @@ impl LegacyPublicKey {
     /// ```
     #[inline]
     pub fn to_sort_key(self) -> SortKey {
-        let buf = ArrayVec::from_slice(&self.to_bytes());
+        let buf = ArrayVec::from_slice(&self.serialize());
         SortKey(buf)
     }
 
@@ -819,7 +852,7 @@ impl From<FullPublicKey> for LegacyPublicKey {
 
 impl fmt::Display for LegacyPublicKey {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.to_bytes().as_hex().fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.serialize().as_hex().fmt(f) }
 }
 
 /// An opaque return type for [`LegacyPublicKey::to_sort_key`].
@@ -1255,22 +1288,22 @@ impl<'de> serde::Deserialize<'de> for WifKey {
 
 // XOnlyPublicKey should serialize/deserialize identically to the inner type.
 #[cfg(feature = "serde")]
-impl Serialize for XOnlyPublicKey {
+impl serde::Serialize for XOnlyPublicKey {
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer,
+        S: serde::Serializer,
     {
-        <secp256k1::XOnlyPublicKey as Serialize>::serialize(&self.to_inner(), serializer)
+        <secp256k1::XOnlyPublicKey as serde::Serialize>::serialize(&self.to_inner(), serializer)
     }
 }
 
 #[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for XOnlyPublicKey {
+impl<'de> serde::Deserialize<'de> for XOnlyPublicKey {
     #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>,
+        D: serde::Deserializer<'de>,
     {
         Ok(Self::from_secp(secp256k1::XOnlyPublicKey::deserialize(deserializer)?, Parity::Even))
     }
@@ -1284,7 +1317,7 @@ impl serde::Serialize for LegacyPublicKey {
         if s.is_human_readable() {
             s.collect_str(self)
         } else {
-            s.serialize_bytes(&self.to_bytes())
+            s.serialize_bytes(&(*self).serialize())
         }
     }
 }
@@ -2336,13 +2369,13 @@ mod tests {
     fn serialized_legacy_public_key_roundtrip() {
         let key = Keypair::generate().to_legacy_public_key();
         assert!(key.compressed());
-        let serialized = &key.to_bytes();
+        let serialized = &key.serialize();
         assert_eq!(serialized.len(), 33);
         let deser = LegacyPublicKey::from_slice(serialized).unwrap();
         assert_eq!(deser, key);
 
         let key = key.with_compressedness(false);
-        let serialized = &key.to_bytes();
+        let serialized = &key.serialize();
         assert_eq!(serialized.len(), 65);
         let deser = LegacyPublicKey::from_slice(serialized).unwrap();
         assert_eq!(deser, key);
