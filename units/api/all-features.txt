@@ -305,6 +305,11 @@ pub fn bitcoin_units::amount::Amount::to_string_in(self, denom: bitcoin_units::a
 pub fn bitcoin_units::amount::Amount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::Amount::unchecked_add(self, rhs: bitcoin_units::amount::Amount) -> bitcoin_units::amount::Amount
 pub fn bitcoin_units::amount::Amount::unchecked_sub(self, rhs: bitcoin_units::amount::Amount) -> bitcoin_units::amount::Amount
+impl bitcoin_consensus_encoding::decode::Decode for bitcoin_units::amount::Amount
+pub type bitcoin_units::amount::Amount::Decoder = bitcoin_units::amount::AmountDecoder
+impl bitcoin_consensus_encoding::encode::Encode for bitcoin_units::amount::Amount
+pub type bitcoin_units::amount::Amount::Encoder<'e> = bitcoin_units::amount::AmountEncoder<'e>
+pub fn bitcoin_units::amount::Amount::encoder(&self) -> Self::Encoder
 impl core::clone::Clone for bitcoin_units::amount::Amount
 pub fn bitcoin_units::amount::Amount::clone(&self) -> bitcoin_units::amount::Amount
 impl core::cmp::Eq for bitcoin_units::amount::Amount
@@ -398,6 +403,134 @@ pub unsafe fn bitcoin_units::amount::Amount::clone_to_uninit(&self, dest: *mut u
 impl<T> core::convert::From<T> for bitcoin_units::amount::Amount
 pub fn bitcoin_units::amount::Amount::from(t: T) -> T
 impl<T> serde_core::de::DeserializeOwned for bitcoin_units::amount::Amount where T: for<'de> serde_core::de::Deserialize<'de>
+pub struct bitcoin_units::amount::AmountDecoder(_)
+impl bitcoin_units::amount::AmountDecoder
+pub const fn bitcoin_units::amount::AmountDecoder::new() -> Self
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin_units::amount::AmountDecoder
+pub type bitcoin_units::amount::AmountDecoder::Error = bitcoin_units::amount::AmountDecoderError
+pub type bitcoin_units::amount::AmountDecoder::Output = bitcoin_units::amount::Amount
+pub fn bitcoin_units::amount::AmountDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin_units::amount::AmountDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
+pub fn bitcoin_units::amount::AmountDecoder::read_limit(&self) -> usize
+impl core::clone::Clone for bitcoin_units::amount::AmountDecoder
+pub fn bitcoin_units::amount::AmountDecoder::clone(&self) -> bitcoin_units::amount::AmountDecoder
+impl core::default::Default for bitcoin_units::amount::AmountDecoder
+pub fn bitcoin_units::amount::AmountDecoder::default() -> Self
+impl core::fmt::Debug for bitcoin_units::amount::AmountDecoder
+pub fn bitcoin_units::amount::AmountDecoder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for bitcoin_units::amount::AmountDecoder
+impl core::marker::Send for bitcoin_units::amount::AmountDecoder
+impl core::marker::Sync for bitcoin_units::amount::AmountDecoder
+impl core::marker::Unpin for bitcoin_units::amount::AmountDecoder
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::AmountDecoder
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::AmountDecoder
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::AmountDecoder
+impl<T, U> core::convert::Into<U> for bitcoin_units::amount::AmountDecoder where U: core::convert::From<T>
+pub fn bitcoin_units::amount::AmountDecoder::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_units::amount::AmountDecoder where U: core::convert::Into<T>
+pub type bitcoin_units::amount::AmountDecoder::Error = core::convert::Infallible
+pub fn bitcoin_units::amount::AmountDecoder::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_units::amount::AmountDecoder where U: core::convert::TryFrom<T>
+pub type bitcoin_units::amount::AmountDecoder::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_units::amount::AmountDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_units::amount::AmountDecoder where T: core::clone::Clone
+pub type bitcoin_units::amount::AmountDecoder::Owned = T
+pub fn bitcoin_units::amount::AmountDecoder::clone_into(&self, target: &mut T)
+pub fn bitcoin_units::amount::AmountDecoder::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin_units::amount::AmountDecoder where T: 'static + ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountDecoder::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_units::amount::AmountDecoder where T: ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountDecoder::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_units::amount::AmountDecoder where T: ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountDecoder::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_units::amount::AmountDecoder where T: core::clone::Clone
+pub unsafe fn bitcoin_units::amount::AmountDecoder::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_units::amount::AmountDecoder
+pub fn bitcoin_units::amount::AmountDecoder::from(t: T) -> T
+pub struct bitcoin_units::amount::AmountDecoderError(_)
+impl core::clone::Clone for bitcoin_units::amount::AmountDecoderError
+pub fn bitcoin_units::amount::AmountDecoderError::clone(&self) -> bitcoin_units::amount::AmountDecoderError
+impl core::cmp::Eq for bitcoin_units::amount::AmountDecoderError
+impl core::cmp::PartialEq for bitcoin_units::amount::AmountDecoderError
+pub fn bitcoin_units::amount::AmountDecoderError::eq(&self, other: &bitcoin_units::amount::AmountDecoderError) -> bool
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::AmountDecoderError
+pub fn bitcoin_units::amount::AmountDecoderError::from(never: core::convert::Infallible) -> Self
+impl core::error::Error for bitcoin_units::amount::AmountDecoderError
+pub fn bitcoin_units::amount::AmountDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for bitcoin_units::amount::AmountDecoderError
+pub fn bitcoin_units::amount::AmountDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin_units::amount::AmountDecoderError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::AmountDecoderError
+impl core::marker::Freeze for bitcoin_units::amount::AmountDecoderError
+impl core::marker::Send for bitcoin_units::amount::AmountDecoderError
+impl core::marker::Sync for bitcoin_units::amount::AmountDecoderError
+impl core::marker::Unpin for bitcoin_units::amount::AmountDecoderError
+impl core::marker::UnsafeUnpin for bitcoin_units::amount::AmountDecoderError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::AmountDecoderError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::AmountDecoderError
+impl<T, U> core::convert::Into<U> for bitcoin_units::amount::AmountDecoderError where U: core::convert::From<T>
+pub fn bitcoin_units::amount::AmountDecoderError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_units::amount::AmountDecoderError where U: core::convert::Into<T>
+pub type bitcoin_units::amount::AmountDecoderError::Error = core::convert::Infallible
+pub fn bitcoin_units::amount::AmountDecoderError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_units::amount::AmountDecoderError where U: core::convert::TryFrom<T>
+pub type bitcoin_units::amount::AmountDecoderError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_units::amount::AmountDecoderError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_units::amount::AmountDecoderError where T: core::clone::Clone
+pub type bitcoin_units::amount::AmountDecoderError::Owned = T
+pub fn bitcoin_units::amount::AmountDecoderError::clone_into(&self, target: &mut T)
+pub fn bitcoin_units::amount::AmountDecoderError::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin_units::amount::AmountDecoderError where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountDecoderError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin_units::amount::AmountDecoderError where T: 'static + ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountDecoderError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_units::amount::AmountDecoderError where T: ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountDecoderError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_units::amount::AmountDecoderError where T: ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountDecoderError::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_units::amount::AmountDecoderError where T: core::clone::Clone
+pub unsafe fn bitcoin_units::amount::AmountDecoderError::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_units::amount::AmountDecoderError
+pub fn bitcoin_units::amount::AmountDecoderError::from(t: T) -> T
+pub struct bitcoin_units::amount::AmountEncoder<'e>(_, _)
+impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin_units::amount::AmountEncoder<'e>
+pub fn bitcoin_units::amount::AmountEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
+pub fn bitcoin_units::amount::AmountEncoder<'e>::current_chunk(&self) -> &[u8]
+impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin_units::amount::AmountEncoder<'e>
+pub fn bitcoin_units::amount::AmountEncoder<'e>::len(&self) -> usize
+impl<'e> core::clone::Clone for bitcoin_units::amount::AmountEncoder<'e>
+pub fn bitcoin_units::amount::AmountEncoder<'e>::clone(&self) -> bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::fmt::Debug for bitcoin_units::amount::AmountEncoder<'e>
+pub fn bitcoin_units::amount::AmountEncoder<'e>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'e> core::marker::Freeze for bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::marker::Send for bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::marker::Sync for bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::marker::Unpin for bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::AmountEncoder<'e>
+impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::AmountEncoder<'e>
+impl<T, U> core::convert::Into<U> for bitcoin_units::amount::AmountEncoder<'e> where U: core::convert::From<T>
+pub fn bitcoin_units::amount::AmountEncoder<'e>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin_units::amount::AmountEncoder<'e> where U: core::convert::Into<T>
+pub type bitcoin_units::amount::AmountEncoder<'e>::Error = core::convert::Infallible
+pub fn bitcoin_units::amount::AmountEncoder<'e>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin_units::amount::AmountEncoder<'e> where U: core::convert::TryFrom<T>
+pub type bitcoin_units::amount::AmountEncoder<'e>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin_units::amount::AmountEncoder<'e>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin_units::amount::AmountEncoder<'e> where T: core::clone::Clone
+pub type bitcoin_units::amount::AmountEncoder<'e>::Owned = T
+pub fn bitcoin_units::amount::AmountEncoder<'e>::clone_into(&self, target: &mut T)
+pub fn bitcoin_units::amount::AmountEncoder<'e>::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin_units::amount::AmountEncoder<'e> where T: 'static + ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountEncoder<'e>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin_units::amount::AmountEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountEncoder<'e>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin_units::amount::AmountEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin_units::amount::AmountEncoder<'e>::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin_units::amount::AmountEncoder<'e> where T: core::clone::Clone
+pub unsafe fn bitcoin_units::amount::AmountEncoder<'e>::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin_units::amount::AmountEncoder<'e>
+pub fn bitcoin_units::amount::AmountEncoder<'e>::from(t: T) -> T
 pub struct bitcoin_units::amount::Display
 impl bitcoin_units::amount::Display
 pub fn bitcoin_units::amount::Display::show_denomination(self) -> Self
