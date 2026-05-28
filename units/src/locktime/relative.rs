@@ -6,6 +6,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +38,18 @@ impl Height {
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     #[inline]
     pub fn to_consensus_u32(&self) -> u32 { self.0.into() }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::locktime::relative::NumberOfBlocks {
+        stable::locktime::relative::NumberOfBlocks::from_height(self.value())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::locktime::relative::NumberOfBlocks) -> Self {
+        Self::from_height(stable.to_height())
+    }
 }
 
 impl From<u16> for Height {
@@ -114,6 +128,18 @@ impl Time {
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     #[inline]
     pub fn to_consensus_u32(&self) -> u32 { (1u32 << 22) | u32::from(self.0) }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::locktime::relative::NumberOf512Seconds {
+        stable::locktime::relative::NumberOf512Seconds::from_512_second_intervals(self.value())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::locktime::relative::NumberOf512Seconds) -> Self {
+        Self::from_512_second_intervals(stable.to_512_second_intervals())
+    }
 }
 
 crate::impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
