@@ -562,7 +562,7 @@ macro_rules! serde_impl(
 #[macro_export]
 #[cfg(not(feature = "serde"))]
 macro_rules! serde_impl(
-        ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => ()
+    ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => ()
 );
 
 #[cfg(test)]
