@@ -198,8 +198,8 @@ macro_rules! impl_write {
 }
 pub(crate) use impl_write;
 
-macro_rules! engine_input_impl(
-    () => (
+macro_rules! impl_engine_input {
+    () => {
         #[cfg(not(hashes_fuzz))]
         fn input(&mut self, mut inp: &[u8]) {
             let buf_idx = $crate::incomplete_block_len(self);
@@ -237,6 +237,6 @@ macro_rules! engine_input_impl(
             }
             self.bytes_hashed += inp.len() as u64;
         }
-    )
-);
-pub(crate) use engine_input_impl;
+    }
+}
+pub(crate) use impl_engine_input;
