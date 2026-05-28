@@ -1,9 +1,9 @@
-//! Performs handshake and responds to all [`Ping`] requests with [`Pong`].
+//! Performs handshake and responds to all `Ping` requests with `Pong`.
 //!
 //! The protocol version used is 70015.
 //!
 //! To run, provide the required positional args, for example:
-//! cargo run --example ping-pong <remote-ip> <network>
+//! `cargo run --example ping-pong <remote-ip> <network>`
 use std::io::BufReader;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
