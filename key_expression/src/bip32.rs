@@ -655,12 +655,16 @@ impl Xpriv {
     /// Constructs a new master key from a [`Bip32Seed`].
     #[allow(clippy::missing_panics_doc)]
     pub fn new_master(network: impl Into<NetworkKind>, seed: impl AsRef<Bip32Seed>) -> Self {
+        Self::new_master_inner(network.into(), seed.as_ref())
+    }
+
+    fn new_master_inner(network: NetworkKind, seed: &Bip32Seed) -> Self {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
-        engine.input(seed.as_ref().as_bytes());
+        engine.input(seed.as_bytes());
         let hmac = engine.finalize();
 
         Self {
-            network: network.into(),
+            network,
             depth: 0,
             parent_fingerprint: Fingerprint::default(),
             child_number: ChildNumber::ZERO_NORMAL,
