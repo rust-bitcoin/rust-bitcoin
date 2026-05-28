@@ -28,7 +28,6 @@ pub fn bitcoin_internals::array_vec::error::Error::source(&self) -> core::option
 impl core::fmt::Debug for bitcoin_internals::array_vec::error::Error
 pub fn bitcoin_internals::array_vec::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_internals::array_vec::error::Error
-pub fn bitcoin_internals::array_vec::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for bitcoin_internals::array_vec::error::Error
 impl core::marker::StructuralPartialEq for bitcoin_internals::array_vec::error::Error
 impl core::marker::Freeze for bitcoin_internals::array_vec::error::Error
@@ -232,60 +231,6 @@ pub unsafe fn bitcoin_internals::error::input_string::InputString::clone_to_unin
 impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::InputString
 pub fn bitcoin_internals::error::input_string::InputString::from(t: T) -> T
 pub struct bitcoin_internals::error::InputString(_)
-impl bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::display_cannot_parse<'a, T>(&'a self, what: &'a T) -> bitcoin_internals::error::input_string::CannotParse<'a, T> where T: core::fmt::Display + ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::InputString::unknown_variant<T>(&self, what: &T, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result where T: core::fmt::Display + ?core::marker::Sized
-impl core::clone::Clone for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::clone(&self) -> bitcoin_internals::error::input_string::InputString
-impl core::cmp::Eq for bitcoin_internals::error::input_string::InputString
-impl core::cmp::Ord for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::cmp::Ordering
-impl core::cmp::PartialEq for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::eq(&self, other: &bitcoin_internals::error::input_string::InputString) -> bool
-impl core::cmp::PartialOrd for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::partial_cmp(&self, other: &bitcoin_internals::error::input_string::InputString) -> core::option::Option<core::cmp::Ordering>
-impl core::convert::From<&str> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: &str) -> Self
-impl core::convert::From<alloc::borrow::Cow<'_, str>> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::borrow::Cow<'_, str>) -> Self
-impl core::convert::From<alloc::boxed::Box<str>> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::boxed::Box<str>) -> Self
-impl core::convert::From<alloc::string::String> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(input: alloc::string::String) -> Self
-impl core::fmt::Debug for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-impl core::marker::StructuralPartialEq for bitcoin_internals::error::input_string::InputString
-impl core::marker::Freeze for bitcoin_internals::error::input_string::InputString
-impl core::marker::Send for bitcoin_internals::error::input_string::InputString
-impl core::marker::Sync for bitcoin_internals::error::input_string::InputString
-impl core::marker::Unpin for bitcoin_internals::error::input_string::InputString
-impl core::marker::UnsafeUnpin for bitcoin_internals::error::input_string::InputString
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::error::input_string::InputString
-impl core::panic::unwind_safe::UnwindSafe for bitcoin_internals::error::input_string::InputString
-impl<T, U> core::convert::Into<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::From<T>
-pub fn bitcoin_internals::error::input_string::InputString::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::Into<T>
-pub type bitcoin_internals::error::input_string::InputString::Error = core::convert::Infallible
-pub fn bitcoin_internals::error::input_string::InputString::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_internals::error::input_string::InputString where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::error::input_string::InputString::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::error::input_string::InputString::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone
-pub type bitcoin_internals::error::input_string::InputString::Owned = T
-pub fn bitcoin_internals::error::input_string::InputString::clone_into(&self, target: &mut T)
-pub fn bitcoin_internals::error::input_string::InputString::to_owned(&self) -> T
-impl<T> core::any::Any for bitcoin_internals::error::input_string::InputString where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::InputString::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::InputString::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::error::input_string::InputString where T: ?core::marker::Sized
-pub fn bitcoin_internals::error::input_string::InputString::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for bitcoin_internals::error::input_string::InputString where T: core::clone::Clone
-pub unsafe fn bitcoin_internals::error::input_string::InputString::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for bitcoin_internals::error::input_string::InputString
-pub fn bitcoin_internals::error::input_string::InputString::from(t: T) -> T
 pub mod bitcoin_internals::macros
 pub mod bitcoin_internals::script
 pub enum bitcoin_internals::script::PushDataLenLen
