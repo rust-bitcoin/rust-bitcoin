@@ -10,6 +10,9 @@
 use core::cmp::Ordering;
 use core::{cmp, convert, fmt};
 
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
+
 #[cfg(doc)]
 use crate::relative;
 use crate::Sequence;
@@ -292,6 +295,18 @@ impl LockTime {
             Time(ref t) => Ok(t.value() <= time.value()),
             Blocks(height) => Err(IncompatibleTimeError { time, height }),
         }
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::relative::LockTime {
+        stable::relative::LockTime::from_consensus(self.to_consensus_u32()).expect("self type is guaranteed valid")
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::relative::LockTime) -> Self {
+        Self::from_consensus(stable.to_consensus_u32()).expect("stable type is guaranteed valid")
     }
 }
 

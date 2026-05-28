@@ -7,6 +7,8 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "compat")]
+use bitcoin_units_stable as stable;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -130,6 +132,18 @@ impl Weight {
     /// Computes `self * WITNESS_SCALE_FACTOR` returning `None` if an overflow occurred.
     pub fn scale_by_witness_factor(self) -> Option<Self> {
         Self::checked_mul(self, Self::WITNESS_SCALE_FACTOR)
+    }
+
+    /// Converts pre-1.0 type to a stable type.
+    #[cfg(feature = "compat")]
+    pub fn to_stable(self) -> stable::Weight {
+        stable::Weight::from_wu(self.to_wu())
+    }
+
+    /// Converts a stable type to a pre-1.0 type.
+    #[cfg(feature = "compat")]
+    pub fn from_stable(stable: stable::Weight) -> Self {
+        Self::from_wu(stable.to_wu())
     }
 }
 
