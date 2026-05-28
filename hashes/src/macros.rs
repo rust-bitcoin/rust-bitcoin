@@ -5,6 +5,7 @@
 //! - [`sha256t_tag`](crate::sha256t_tag)
 //! - [`hash_newtype`](crate::hash_newtype)
 //! - [`impl_hex_for_newtype`](crate::impl_hex_for_newtype)
+//! - [`impl_debug_only_for_newtype`](crate::impl_debug_only_for_newtype)
 //! - [`impl_serde_for_newtype`](crate::impl_serde_for_newtype)
 
 /// Macro used to define a tag.
