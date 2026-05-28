@@ -1176,6 +1176,10 @@ pub mod error {
         MaximumDepthExceeded,
     }
 
+    impl From<Infallible> for DerivationError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     #[cfg(feature = "std")]
     impl std::error::Error for DerivationError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -1265,6 +1269,10 @@ pub mod error {
     impl InvalidBase58PayloadLengthError {
         /// Returns the invalid payload length.
         pub fn invalid_base58_payload_length(&self) -> usize { self.length }
+    }
+
+    impl From<Infallible> for InvalidBase58PayloadLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for InvalidBase58PayloadLengthError {
