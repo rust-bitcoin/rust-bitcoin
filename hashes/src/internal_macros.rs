@@ -9,13 +9,13 @@
 /// # Parameters
 ///
 /// * `$bits` - the number of bits this hash type has
-/// * `$reverse` - `bool`  - `true` if the hash type should be displayed backwards, `false`
-///   otherwise.
+/// * `$reverse` - `bool`, `true` if the hash type should be displayed backwards, `false` otherwise.
 /// * `$gen: $gent` - the generic type(s) and trait bound(s)
 ///
 /// Restrictions on usage:
 ///
-/// * The `Hash` type in scope must provide `from_byte_array`, `to_byte_array`, and `as_byte_array` (e.g., via `hash_type_no_default!`).
+/// * The `Hash` type in scope must provide `from_byte_array`, `to_byte_array`, and
+///   `as_byte_array` (e.g., via `hash_type_no_default!`).
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         $crate::impl_bytelike_traits!(Hash, { $bits / 8 } $(, $gen: $gent)*);
@@ -61,7 +61,8 @@ pub(crate) use hash_trait_impls;
 ///
 /// Restrictions on usage:
 ///
-/// * Requires a `HashEngine` type in this module implementing `Default` and `crate::HashEngine<Hash = Hash, Bytes = [u8; $len]>`.
+/// * Requires a `HashEngine` type in this module implementing `Default`
+///   and `crate::HashEngine<Hash = Hash, Bytes = [u8; $len]>`.
 macro_rules! general_hash_type {
     (
         $(#[$type_attrs:meta])*
