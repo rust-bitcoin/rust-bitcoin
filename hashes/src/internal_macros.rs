@@ -25,7 +25,7 @@ macro_rules! hash_trait_impls {
         $crate::impl_debug_only!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
 
         #[cfg(feature = "serde")]
-        $crate::serde_impl!(Hash, { $bits / 8} $(, $gen: $gent)*);
+        $crate::impl_serde_traits!(Hash, { $bits / 8} $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::Hash for Hash<$($gen),*> {
             type Bytes = [u8; $bits / 8];
