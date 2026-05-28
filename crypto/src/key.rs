@@ -27,9 +27,9 @@ use network::NetworkKind;
 pub use secp256k1::rand;
 
 use self::error::FromSecretBytesErrorInner;
-use crate::ecdsa;
 #[cfg(feature = "hex")]
 use crate::hex::{self, DecodeFixedLengthBytesError};
+use crate::{ecdsa, taproot};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Parity};
@@ -447,6 +447,16 @@ impl XOnlyPublicKey {
                 Err(TweakXOnlyPublicKeyError::ParityError),
             Err(_) => Err(TweakXOnlyPublicKeyError::ResultKeyInvalid),
         }
+    }
+
+    /// Checks that `sig` is a valid Schnorr signature for `msg` using this public key.
+    ///
+    /// # Errors
+    ///
+    /// [`VerifyError`] if the signature is not valid for the given message and key.
+    #[inline]
+    pub fn verify(&self, msg: &[u8], sig: taproot::Signature) -> Result<(), VerifyError> {
+        secp256k1::schnorr::verify(&sig.signature, msg, &self.to_inner()).map_err(|_| VerifyError)
     }
 
     /// Gets the hex representation of this type.
@@ -2523,5 +2533,22 @@ mod tests {
         assert_eq!(serialized.len(), 65);
         let deser = LegacyPublicKey::from_slice(serialized).unwrap();
         assert_eq!(deser, key);
+    }
+
+    #[test]
+    fn xonly_pubkey_verify() {
+        let keypair = "0101010101010101010101010101010101010101010101010101010101010101"
+            .parse::<Keypair>()
+            .unwrap();
+        let xonly = keypair.to_x_only_public_key();
+        let msg = b"test message for schnorr verification";
+        let secp_sig = keypair.raw_bip340_sign(msg);
+        let sig = taproot::Signature {
+            signature: secp_sig,
+            sighash_type: crate::sighash::TapSighashType::Default,
+        };
+
+        assert!(xonly.verify(msg, sig).is_ok());
+        assert!(matches!(xonly.verify(b"different message", sig).unwrap_err(), VerifyError));
     }
 }
