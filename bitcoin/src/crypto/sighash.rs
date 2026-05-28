@@ -22,8 +22,9 @@ use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use io::Write;
 
 use crate::consensus::{encode, Encodable};
+use crate::opcodes::all::OP_CODESEPARATOR;
 use crate::prelude::{Borrow, BorrowMut};
-use crate::script::{ScriptExt as _, ScriptHashableTag};
+use crate::script::{Instruction, ScriptExt as _, ScriptHashableTag};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
@@ -35,8 +36,8 @@ use crate::{
 #[doc(no_inline)]
 pub use self::error::{
     AnnexError, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
-    SigningDataError, SingleMissingOutputError, P2wpkhError, PrevoutsIndexError, PrevoutsKindError,
-    PrevoutsSizeError, TaprootError,
+    SigningDataError, SingleMissingOutputError, P2wpkhError, P2wshError, PrevoutsIndexError,
+    PrevoutsKindError, PrevoutsSizeError, TaprootError,
 };
 #[doc(inline)]
 pub use crypto::sighash::{EcdsaSighashType, TapSighashType};
@@ -641,13 +642,24 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// `witness_script` is the script that goes into the [`Witness`],
     /// not the one that goes into `script_pubkey` of a [`TxOut`].
+    ///
+    /// This helper cannot determine which `OP_CODESEPARATOR`, if any, was last executed before the
+    /// signature opcode. Use [`Self::segwit_v0_encode_signing_data_to`] with an already-trimmed
+    /// script code for those scripts.
     pub fn p2wsh_signature_hash(
         &mut self,
         input_index: usize,
         witness_script: &WitnessScript,
         amount: Amount,
         sighash_type: EcdsaSighashType,
-    ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
+    ) -> Result<SegwitV0Sighash, P2wshError> {
+        if witness_script
+            .instructions()
+            .any(|instruction| matches!(instruction, Ok(Instruction::Op(OP_CODESEPARATOR))))
+        {
+            return Err(P2wshError::CodeSeparator);
+        }
+
         let mut enc = SegwitV0Sighash::engine();
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
@@ -656,7 +668,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             amount,
             sighash_type,
         )
-        .map_err(SigningDataError::unwrap_sighash)?;
+        .map_err(|e| P2wshError::Sighash(e.unwrap_sighash()))?;
         Ok(SegwitV0Sighash::from_engine(enc))
     }
 
@@ -1214,6 +1226,42 @@ pub mod error {
         fn from(value: transaction::InputsIndexError) -> Self { Self::Sighash(value) }
     }
 
+    /// Error computing a P2WSH sighash.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum P2wshError {
+        /// Error computing the sighash.
+        Sighash(transaction::InputsIndexError),
+        /// The witness script contains an `OP_CODESEPARATOR`.
+        CodeSeparator,
+    }
+
+    impl From<Infallible> for P2wshError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for P2wshError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Sighash(ref e) => write_err!(f, "error encoding SegWit v0 signing data"; e),
+                Self::CodeSeparator => write!(
+                    f,
+                    "p2wsh helper cannot determine the executed OP_CODESEPARATOR position"
+                ),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for P2wshError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Sighash(ref e) => Some(e),
+                Self::CodeSeparator => None,
+            }
+        }
+    }
+
     /// Using `SIGHASH_SINGLE` requires an output at the same index as the input.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
@@ -1607,6 +1655,12 @@ mod tests {
                 index: 10,
                 length: 1
             }))
+        );
+
+        let witness_script = WitnessScriptBuf::from_hex_no_length_prefix("ab").unwrap();
+        assert_eq!(
+            c.p2wsh_signature_hash(0, &witness_script, Amount::ZERO, EcdsaSighashType::All),
+            Err(P2wshError::CodeSeparator)
         );
     }
 
