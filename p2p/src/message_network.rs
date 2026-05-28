@@ -87,6 +87,90 @@ impl VersionMessage {
             relay: false,
         }
     }
+
+    pub(crate) fn decode_payload(payload: &[u8]) -> Option<Self> {
+        const REQUIRED_LEN: usize = 46;
+        const SENDER_NONCE_LEN: usize = 34;
+
+        fn read_array<const N: usize>(payload: &[u8], offset: &mut usize) -> Option<[u8; N]> {
+            let end = offset.checked_add(N)?;
+            let bytes = payload.get(*offset..end)?;
+            *offset = end;
+            Some(bytes.try_into().expect("slice length checked"))
+        }
+
+        fn read_address(payload: &[u8], offset: &mut usize) -> Option<Address> {
+            let services = ServiceFlags::from(u64::from_le_bytes(read_array(payload, offset)?));
+            let raw_address: [u8; 16] = read_array(payload, offset)?;
+            let port = u16::from_be_bytes(read_array(payload, offset)?);
+
+            let mut address = [0u16; 8];
+            for (i, chunk) in raw_address.chunks_exact(2).enumerate() {
+                address[i] = u16::from_be_bytes(chunk.try_into().expect("chunk length checked"));
+            }
+
+            Some(Address { services, address, port })
+        }
+
+        if payload.len() < REQUIRED_LEN {
+            return None;
+        }
+
+        let mut offset = 0;
+        let version =
+            ProtocolVersion::from_nonstandard(u32::from_le_bytes(read_array(payload, &mut offset)?));
+        let services = ServiceFlags::from(u64::from_le_bytes(read_array(payload, &mut offset)?));
+        let timestamp = i64::from_le_bytes(read_array(payload, &mut offset)?);
+        let receiver = read_address(payload, &mut offset)?;
+
+        let mut message = VersionMessage {
+            version,
+            services,
+            timestamp,
+            receiver,
+            sender: Address::useless(),
+            nonce: 1,
+            user_agent: UserAgent { user_agent: String::new() },
+            start_height: -1,
+            relay: true,
+        };
+
+        if offset == payload.len() {
+            return Some(message);
+        }
+
+        if payload.len() - offset < SENDER_NONCE_LEN {
+            return None;
+        }
+        message.sender = read_address(payload, &mut offset)?;
+        message.nonce = u64::from_le_bytes(read_array(payload, &mut offset)?);
+
+        if offset == payload.len() {
+            return Some(message);
+        }
+
+        let mut remaining = &payload[offset..];
+        message.user_agent = encoding::decode_from_slice_unbounded::<UserAgent>(&mut remaining).ok()?;
+        offset = payload.len() - remaining.len();
+
+        if offset == payload.len() {
+            return Some(message);
+        }
+
+        if payload.len() - offset < 4 {
+            return None;
+        }
+        message.start_height = i32::from_le_bytes(read_array(payload, &mut offset)?);
+
+        match payload.len() - offset {
+            0 => Some(message),
+            1 => {
+                message.relay = read_array::<1>(payload, &mut offset)?[0] != 0;
+                Some(message)
+            }
+            _ => None,
+        }
+    }
 }
 
 encoding::encoder_newtype_exact! {

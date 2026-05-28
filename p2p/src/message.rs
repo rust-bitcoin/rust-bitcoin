@@ -1032,6 +1032,10 @@ impl encoding::Encode for V1NetworkMessage {
 #[derive(Debug, Clone)]
 enum NetworkMessageDecoderInner {
     Version(message_network::VersionMessageDecoder),
+    VersionPayload {
+        remaining: usize,
+        buffer: Vec<u8>,
+    },
     Addr(AddrPayloadDecoder),
     Inv(InventoryPayloadDecoder),
     GetData(InventoryPayloadDecoder),
@@ -1076,7 +1080,10 @@ impl NetworkMessageDecoderInner {
     fn new(command: CommandString, payload_len: usize) -> Self {
         use encoding::Decode as _;
         match command.as_ref() {
-            "version" => Self::Version(message_network::VersionMessage::decoder()),
+            "version" => Self::VersionPayload {
+                remaining: payload_len,
+                buffer: Vec::with_capacity(payload_len),
+            },
             "verack" | "sendheaders" | "mempool" | "getaddr" | "wtxidrelay" | "filterclear"
             | "sendaddrv2" => Self::Empty(command),
             "addr" => Self::Addr(AddrPayload::decoder()),
@@ -1126,6 +1133,18 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
         let err = V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload);
         match self {
             Self::Version(d) => d.push_bytes(bytes).map_err(|_| err),
+            Self::VersionPayload { remaining, buffer } => {
+                let copy_len = bytes.len().min(*remaining);
+                let (to_copy, rest) = bytes.split_at(copy_len);
+                buffer.extend_from_slice(to_copy);
+                *bytes = rest;
+                *remaining -= copy_len;
+                Ok(if *remaining > 0 {
+                    encoding::DecoderStatus::NeedsMore
+                } else {
+                    encoding::DecoderStatus::Ready
+                })
+            }
             Self::Addr(d) => d.push_bytes(bytes).map_err(|_| err),
             Self::Inv(d) | Self::GetData(d) | Self::NotFound(d) =>
                 d.push_bytes(bytes).map_err(|_| err),
@@ -1175,6 +1194,13 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
         let err = V1NetworkMessageDecoderError(V1NetworkMessageDecoderErrorInner::Payload);
         match self {
             Self::Version(d) => Ok(NetworkMessage::Version(d.end().map_err(|_| err)?)),
+            Self::VersionPayload { remaining, buffer } => {
+                if remaining != 0 {
+                    return Err(err);
+                }
+                let version = message_network::VersionMessage::decode_payload(&buffer).ok_or(err)?;
+                Ok(NetworkMessage::Version(version))
+            }
             Self::Addr(d) => Ok(NetworkMessage::Addr(d.end().map_err(|_| err)?)),
             Self::Inv(d) => Ok(NetworkMessage::Inv(d.end().map_err(|_| err)?)),
             Self::GetData(d) => Ok(NetworkMessage::GetData(d.end().map_err(|_| err)?)),
@@ -1227,6 +1253,7 @@ impl encoding::Decoder for NetworkMessageDecoderInner {
     fn read_limit(&self) -> usize {
         match self {
             Self::Version(d) => d.read_limit(),
+            Self::VersionPayload { remaining, .. } => *remaining,
             Self::Addr(d) => d.read_limit(),
             Self::Inv(d) | Self::GetData(d) | Self::NotFound(d) => d.read_limit(),
             Self::GetBlocks(d) => d.read_limit(),
@@ -2353,6 +2380,33 @@ mod test {
 
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
 
+    fn version_payload() -> Vec<u8> {
+        hex!(
+            "7f1101000d04000000000000f00f4d5c00000000\
+             000000000000000000000000000000000000ffff5bf08c80b4bd\
+             000000000000000000000000000000000000ffff000000000000\
+             faa99559cc68a1c1\
+             102f5361746f7368693a302e31372e312f\
+             938c080001"
+        )
+        .to_vec()
+    }
+
+    fn version_v1_frame(payload: &[u8]) -> Vec<u8> {
+        let hash = sha256d::Hash::hash(payload);
+        let hash = hash.to_byte_array();
+        let checksum = [hash[0], hash[1], hash[2], hash[3]];
+        let header = V1MessageHeader {
+            magic: Magic::BITCOIN,
+            command: CommandString::try_from_static("version").unwrap(),
+            length: u32::try_from(payload.len()).unwrap(),
+            checksum,
+        };
+        let mut frame = encoding::encode_to_vec(&header);
+        frame.extend_from_slice(payload);
+        frame
+    }
+
     #[test]
     fn v1_message_header() {
         let magic = Magic::BITCOIN;
@@ -2706,6 +2760,99 @@ mod test {
         } else {
             panic!("wrong message type");
         }
+    }
+
+    #[test]
+    fn deserialize_short_v1_version_payload() {
+        let payload = version_payload();
+        let frame = version_v1_frame(&payload[..46]);
+        let msg = encoding::decode_from_slice::<V1NetworkMessage>(&frame).unwrap();
+
+        assert_eq!(msg.magic, Magic::BITCOIN);
+        if let NetworkMessage::Version(version_msg) = msg.payload {
+            assert_eq!(version_msg.version, ProtocolVersion::INVALID_CB_NO_BAN_VERSION);
+            assert_eq!(
+                version_msg.services,
+                ServiceFlags::NETWORK
+                    | ServiceFlags::BLOOM
+                    | ServiceFlags::WITNESS
+                    | ServiceFlags::NETWORK_LIMITED
+            );
+            assert_eq!(version_msg.timestamp, 1_548_554_224);
+            assert_eq!(version_msg.sender, Address::useless());
+            assert_eq!(version_msg.nonce, 1);
+            assert_eq!(version_msg.user_agent.to_string(), "");
+            assert_eq!(version_msg.start_height, -1);
+            assert!(version_msg.relay);
+        } else {
+            panic!("wrong message type");
+        }
+    }
+
+    #[test]
+    fn deserialize_v1_version_payload_optional_boundaries() {
+        let payload = version_payload();
+        let mut empty_agent_payload = payload[..80].to_vec();
+        empty_agent_payload.push(0);
+        empty_agent_payload.extend_from_slice(&560_275i32.to_le_bytes());
+        empty_agent_payload.push(1);
+
+        for (payload, user_agent, start_height, relay) in [
+            (&payload[..80], "", -1, true),
+            (&empty_agent_payload[..81], "", -1, true),
+            (&empty_agent_payload[..85], "", 560_275, true),
+            (&empty_agent_payload[..86], "", 560_275, true),
+            (&payload[..], "/Satoshi:0.17.1/", 560_275, true),
+        ] {
+            let frame = version_v1_frame(payload);
+            let msg = encoding::decode_from_slice::<V1NetworkMessage>(&frame).unwrap();
+            let NetworkMessage::Version(version_msg) = msg.payload else {
+                panic!("wrong message type");
+            };
+
+            assert_eq!(version_msg.nonce, 13_952_548_347_456_104_954);
+            assert_eq!(version_msg.user_agent.to_string(), user_agent);
+            assert_eq!(version_msg.start_height, start_height);
+            assert_eq!(version_msg.relay, relay);
+        }
+    }
+
+    #[test]
+    fn short_v1_version_payload_does_not_consume_next_frame() {
+        let payload = version_payload();
+        let mut bytes = version_v1_frame(&payload[..46]);
+        let verack = encoding::encode_to_vec(&V1NetworkMessage::new(
+            Magic::BITCOIN,
+            NetworkMessage::Verack,
+        ));
+        bytes.extend_from_slice(&verack);
+
+        let mut remaining = bytes.as_slice();
+        let msg = encoding::decode_from_slice_unbounded::<V1NetworkMessage>(&mut remaining).unwrap();
+        assert!(matches!(msg.payload, NetworkMessage::Version(_)));
+        assert_eq!(remaining, verack.as_slice());
+
+        let verack_msg = encoding::decode_from_slice::<V1NetworkMessage>(remaining).unwrap();
+        assert_eq!(verack_msg.payload, NetworkMessage::Verack);
+    }
+
+    #[test]
+    fn v1_version_rejects_partial_optional_payload() {
+        let payload = version_payload();
+
+        for len in [47, 72, 79, 82, 83, 84] {
+            let frame = version_v1_frame(&payload[..len]);
+            assert!(
+                encoding::decode_from_slice::<V1NetworkMessage>(&frame).is_err(),
+                "payload length {len} should fail"
+            );
+        }
+    }
+
+    #[test]
+    fn standalone_short_version_payload_is_still_rejected() {
+        let payload = version_payload();
+        assert!(encoding::decode_from_slice::<VersionMessage>(&payload[..46]).is_err());
     }
 
     #[test]
