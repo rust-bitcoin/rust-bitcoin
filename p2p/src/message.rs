@@ -66,10 +66,11 @@ impl CommandString {
     ///
     /// - If `s` is more than 12 characters in length.
     /// - If `s` has non-ascii characters.
+    /// - If `s` contains a nul byte.
     fn try_from_stringly<S: AsRef<str> + Into<String>>(s: &S) -> Result<Self, CommandStringError> {
         let s = s.as_ref();
 
-        if !s.is_ascii() || s.len() > Self::MAX_LEN {
+        if !s.is_ascii() || s.len() > Self::MAX_LEN || s.as_bytes().contains(&0) {
             Err(CommandStringError(s.into()))
         } else {
             let mut buf = [0; Self::MAX_LEN];
@@ -157,6 +158,13 @@ crate::decoder_newtype! {
         if !bytes.is_ascii() {
             return Err(CommandStringDecoderError::NotAscii);
         }
+
+        let command_bytes =
+            bytes.iter().rposition(|&b| b != 0).map_or(&bytes[..0], |i| &bytes[..=i]);
+        if command_bytes.contains(&0) {
+            return Err(CommandStringDecoderError::InteriorNul);
+        }
+
         Ok(CommandString(bytes))
     }
 }
@@ -1865,6 +1873,8 @@ pub mod error {
         UnexpectedEof(encoding::UnexpectedEofError),
         /// Command string contains non-ASCII characters.
         NotAscii,
+        /// Command string contains a nul byte before the padding.
+        InteriorNul,
     }
 
     impl fmt::Display for CommandStringDecoderError {
@@ -1872,6 +1882,7 @@ pub mod error {
             match self {
                 Self::UnexpectedEof(e) => write!(f, "unexpected end of data: {}", e),
                 Self::NotAscii => write!(f, "command string must be ASCII"),
+                Self::InteriorNul => write!(f, "command string contains an interior nul byte"),
             }
         }
     }
@@ -1881,26 +1892,30 @@ pub mod error {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::UnexpectedEof(e) => Some(e),
-                Self::NotAscii => None,
+                Self::NotAscii | Self::InteriorNul => None,
             }
         }
     }
 
     /// Error returned when a command string is invalid.
     ///
-    /// This is currently returned for command strings longer than 12.
+    /// This is currently returned for command strings longer than 12 or containing nul bytes.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct CommandStringError(pub alloc::string::String);
 
     impl fmt::Display for CommandStringError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(
-                f,
-                "the command string '{}' has length {} which is larger than 12",
-                self.0,
-                self.0.len()
-            )
+            if self.0.len() > super::CommandString::MAX_LEN {
+                write!(
+                    f,
+                    "the command string '{}' has length {} which is larger than 12",
+                    self.0,
+                    self.0.len()
+                )
+            } else {
+                write!(f, "the command string contains a nul byte")
+            }
         }
     }
 
@@ -2523,12 +2538,19 @@ mod test {
         assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
         assert_eq!(cs.unwrap(), CommandString::try_from("Andrew").unwrap());
 
-        // Test that embedded null bytes are preserved while trailing nulls are trimmed
+        // Test that trailing nulls are trimmed.
         let cs: Result<CommandString, _> =
-            encoding::decode_from_slice(&[0, 0x41u8, 0x6e, 0x64, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]);
+            encoding::decode_from_slice(&[0x41u8, 0x6e, 0x64, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
         assert!(cs.is_ok());
-        assert_eq!(cs.as_ref().unwrap().to_string(), "\0And\0rew".to_owned());
-        assert_eq!(cs.unwrap(), CommandString::try_from("\0And\0rew").unwrap());
+        assert_eq!(cs.as_ref().unwrap().to_string(), "And".to_owned());
+        assert_eq!(cs.unwrap(), CommandString::try_from("And").unwrap());
+
+        // Invalid CommandString, non-null bytes cannot appear after the first null byte.
+        assert!(encoding::decode_from_slice::<CommandString>(&[
+            0x41u8, 0x6e, 0x64, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0
+        ])
+        .is_err());
+        assert!(CommandString::try_from("And\0rew").is_err());
 
         // Invalid CommandString, must be ASCII
         assert!(encoding::decode_from_slice::<CommandString>(&[
