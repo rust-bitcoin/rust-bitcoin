@@ -133,6 +133,8 @@ impl PartialEq for Bip32Seed {
     }
 }
 
+impl Eq for Bip32Seed {}
+
 macro_rules! impl_bip32_seed_from_array {
     ($($n:literal),+ $(,)?) => {
         $(
@@ -653,12 +655,16 @@ impl Xpriv {
     /// Constructs a new master key from a [`Bip32Seed`].
     #[allow(clippy::missing_panics_doc)]
     pub fn new_master(network: impl Into<NetworkKind>, seed: impl AsRef<Bip32Seed>) -> Self {
+        Self::new_master_inner(network.into(), seed.as_ref())
+    }
+
+    fn new_master_inner(network: NetworkKind, seed: &Bip32Seed) -> Self {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
-        engine.input(seed.as_ref().as_bytes());
+        engine.input(seed.as_bytes());
         let hmac = engine.finalize();
 
         Self {
-            network: network.into(),
+            network,
             depth: 0,
             parent_fingerprint: Fingerprint::default(),
             child_number: ChildNumber::ZERO_NORMAL,
@@ -1170,6 +1176,10 @@ pub mod error {
         MaximumDepthExceeded,
     }
 
+    impl From<Infallible> for DerivationError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     #[cfg(feature = "std")]
     impl std::error::Error for DerivationError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -1261,6 +1271,10 @@ pub mod error {
         pub fn invalid_base58_payload_length(&self) -> usize { self.length }
     }
 
+    impl From<Infallible> for InvalidBase58PayloadLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     impl fmt::Display for InvalidBase58PayloadLengthError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(
@@ -1277,7 +1291,7 @@ pub mod error {
     }
 
     /// Master seed had an invalid length.
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub struct InvalidSeedLengthError {
         pub(crate) length: usize,
     }
@@ -1287,14 +1301,20 @@ pub mod error {
         pub fn invalid_seed_length(&self) -> usize { self.length }
     }
 
+    impl From<Infallible> for InvalidSeedLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     impl fmt::Display for InvalidSeedLengthError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "invalid BIP-0032 master seed length: {} (expected 16 to 64)", self.length)
+            write!(f, "invalid BIP-0032 master seed length: {} (expected 16 to 64 inclusive)", self.length)
         }
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for InvalidSeedLengthError {}
+    impl std::error::Error for InvalidSeedLengthError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    }
 }
 
 #[cfg(feature = "arbitrary")]
