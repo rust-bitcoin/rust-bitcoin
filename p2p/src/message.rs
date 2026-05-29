@@ -107,7 +107,7 @@ impl AsRef<str> for CommandString {
     fn as_ref(&self) -> &str {
         // CommandStringDecode upholds the invarient that only valid
         // ASCII characters will be decoded.
-        unsafe { std::str::from_utf8_unchecked(&self.0).trim_end_matches(&['\0'][..]) }
+        unsafe { std::str::from_utf8_unchecked(&self.0).trim_end_matches('\0') }
     }
 }
 
