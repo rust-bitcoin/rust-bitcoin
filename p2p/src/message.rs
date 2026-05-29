@@ -70,7 +70,7 @@ impl CommandString {
         let s = s.as_ref();
 
         if !s.is_ascii() || s.len() > Self::MAX_LEN {
-            Err(CommandStringError(s.into()))
+            Err(CommandStringError::new(s))
         } else {
             let mut buf = [0; Self::MAX_LEN];
             buf[..s.len()].copy_from_slice(s.as_bytes());
@@ -1891,7 +1891,15 @@ pub mod error {
     /// This is currently returned for command strings longer than 12.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub struct CommandStringError(pub alloc::string::String);
+    pub struct CommandStringError(alloc::string::String);
+
+    /// Implement a [`CommandStringError`]
+    impl CommandStringError {
+        /// Create a new [`CommandStringError`]
+        pub(super) fn new<S: AsRef<str> + Into<alloc::string::String>>(s: S) -> Self {
+            Self(s.into())
+        }
+    }
 
     impl fmt::Display for CommandStringError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
