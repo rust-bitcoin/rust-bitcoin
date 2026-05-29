@@ -78,4 +78,5 @@ exclude_re = [
     "consensus_encoding/.* DecoderStatus::is_ready", # Replacing with true causes an infinite loop
     "consensus_encoding/.* delete ! in drain_to_vec", # Causes an infinite loop.
     "consensus_encoding/.* delete ! in drain_to_writer", # Causes an infinite loop.
+    "consensus_encoding/.* ExactSizeEncoder::is_empty", # Too trivial to test.
 ]
