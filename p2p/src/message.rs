@@ -66,14 +66,12 @@ impl CommandString {
     ///
     /// - If `s` is more than 12 characters in length.
     /// - If `s` has non-ascii characters.
-    fn try_from_stringly<S: AsRef<str> + Into<String>>(s: &S) -> Result<Self, CommandStringError> {
-        let s = s.as_ref();
-
-        if !s.is_ascii() || s.len() > Self::MAX_LEN {
+    fn try_from_stringly<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, CommandStringError> {
+        if !s.as_ref().is_ascii() || s.as_ref().len() > Self::MAX_LEN {
             Err(CommandStringError(s.into()))
         } else {
             let mut buf = [0; Self::MAX_LEN];
-            buf[..s.len()].copy_from_slice(s.as_bytes());
+            buf[..s.as_ref().len()].copy_from_slice(s.as_ref().as_bytes());
             Ok(Self(buf))
         }
     }
@@ -82,25 +80,25 @@ impl CommandString {
 impl TryFrom<String> for CommandString {
     type Error = CommandStringError;
 
-    fn try_from(s: String) -> Result<Self, Self::Error> { Self::try_from_stringly(&s) }
+    fn try_from(s: String) -> Result<Self, Self::Error> { Self::try_from_stringly(s) }
 }
 
 impl TryFrom<Box<str>> for CommandString {
     type Error = CommandStringError;
 
-    fn try_from(s: Box<str>) -> Result<Self, Self::Error> { Self::try_from_stringly(&s) }
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> { Self::try_from_stringly(s) }
 }
 
 impl<'a> TryFrom<&'a str> for CommandString {
     type Error = CommandStringError;
 
-    fn try_from(s: &'a str) -> Result<Self, Self::Error> { Self::try_from_stringly(&s) }
+    fn try_from(s: &'a str) -> Result<Self, Self::Error> { Self::try_from_stringly(s) }
 }
 
 impl core::str::FromStr for CommandString {
     type Err = CommandStringError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> { Self::try_from_stringly(&s) }
+    fn from_str(s: &str) -> Result<Self, Self::Err> { Self::try_from_stringly(s) }
 }
 
 impl AsRef<str> for CommandString {
