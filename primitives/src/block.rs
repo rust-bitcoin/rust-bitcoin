@@ -54,6 +54,10 @@ pub use self::error::{
 #[doc(inline)]
 pub use crate::hash_types::{BlockHash, BlockHashDecoder, BlockHashEncoder, WitnessCommitment};
 
+// Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
+#[cfg(feature = "alloc")]
+const WITNESS_COMMITMENT_MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
+
 /// Marker for whether or not a block has been validated.
 ///
 /// We define valid as:
@@ -192,11 +196,6 @@ impl Block<Unchecked> {
             return (false, None);
         }
 
-        // Witness commitment is optional if there are no transactions using SegWit in the block.
-        if self.transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
-            return (true, None);
-        }
-
         if self.transactions[0].is_coinbase() {
             let coinbase = self.transactions[0].clone();
             if let Some(commitment) = witness_commitment_from_coinbase(&coinbase) {
@@ -211,7 +210,14 @@ impl Block<Unchecked> {
                         }
                     }
                 }
+
+                return (false, None);
             }
+        }
+
+        // Witness commitment is optional if there are no transactions using SegWit in the block.
+        if self.transactions.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
+            return (true, None);
         }
 
         (false, None)
@@ -418,9 +424,6 @@ pub fn compute_witness_root(transactions: &[Transaction]) -> Option<WitnessMerkl
 
 #[cfg(feature = "alloc")]
 fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCommitment> {
-    // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
-    const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
-
     if !coinbase.is_coinbase() {
         return None;
     }
@@ -429,7 +432,10 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
     if let Some(pos) = coinbase
         .outputs
         .iter()
-        .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
+        .rposition(|o| {
+            o.script_pubkey.len() >= 38
+                && o.script_pubkey.as_bytes()[0..6] == WITNESS_COMMITMENT_MAGIC
+        })
     {
         let bytes =
             <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
@@ -1314,6 +1320,31 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    fn block_rejects_empty_coinbase_witness_commitment() {
+        let mut script = Vec::from(WITNESS_COMMITMENT_MAGIC);
+        script.extend_from_slice(&[0; 32]);
+
+        let coinbase = Transaction {
+            version: crate::transaction::Version::ONE,
+            lock_time: crate::absolute::LockTime::ZERO,
+            inputs: vec![crate::TxIn::EMPTY_COINBASE],
+            outputs: vec![crate::TxOut {
+                amount: units::Amount::ZERO,
+                script_pubkey: crate::script::ScriptBuf::from_bytes(script),
+            }],
+        };
+
+        let transactions = vec![coinbase];
+        let mut header = dummy_header();
+        header.merkle_root = compute_merkle_root(&transactions).unwrap();
+
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.check_witness_commitment(), (false, None));
+        assert!(matches!(block.validate(), Err(InvalidBlockError::InvalidWitnessCommitment)));
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
     fn block_block_hash() {
         let header = dummy_header();
         let transactions = vec![];
@@ -1593,9 +1624,8 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn witness_commitment_from_coinbase_simple() {
         // Add witness commitment to the coinbase
-        let magic = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
         let mut pubkey_bytes = [0; 38];
-        pubkey_bytes[0..6].copy_from_slice(&magic);
+        pubkey_bytes[0..6].copy_from_slice(&WITNESS_COMMITMENT_MAGIC);
         let witness_commitment =
             WitnessCommitment::from_byte_array(pubkey_bytes[6..38].try_into().unwrap());
         let commitment_script = crate::script::ScriptBuf::from_bytes(pubkey_bytes.to_vec());
