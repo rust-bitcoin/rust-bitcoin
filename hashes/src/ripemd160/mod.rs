@@ -19,7 +19,7 @@ crate::internal_macros::general_hash_type! {
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     #[cfg(not(hashes_fuzz))]
     pub fn from_engine(mut e: HashEngine) -> Self {
         let n_bytes_hashed = e.bytes_hashed;
@@ -39,7 +39,7 @@ impl Hash {
         Self(e.midstate())
     }
 
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     #[cfg(hashes_fuzz)]
     pub fn from_engine(e: HashEngine) -> Self {
         let mut res = e.midstate();
@@ -94,6 +94,6 @@ impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
-    crate::internal_macros::engine_input_impl!();
+    crate::internal_macros::impl_engine_input!();
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }

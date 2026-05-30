@@ -28,7 +28,7 @@ crate::internal_macros::general_hash_type! {
 }
 
 impl Hash {
-    /// Finalize a hash engine to obtain a hash.
+    /// Finalizes a hash engine to obtain a hash.
     #[cfg(not(hashes_fuzz))]
     pub fn from_engine(mut e: HashEngine) -> Self {
         // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
@@ -50,7 +50,7 @@ impl Hash {
         Self(e.midstate_unchecked().bytes)
     }
 
-    /// Finalize a hash engine to obtain a hash.
+    /// Finalizes a hash engine to obtain a hash.
     #[cfg(hashes_fuzz)]
     pub fn from_engine(e: HashEngine) -> Self {
         let mut hash = e.midstate_unchecked().bytes;
@@ -62,7 +62,7 @@ impl Hash {
         Hash(hash)
     }
 
-    /// Iterate the SHA256 algorithm to turn a SHA256 hash into a `SHA256d` hash.
+    /// Iterates the SHA256 algorithm to turn a SHA256 hash into a `SHA256d` hash.
     #[must_use]
     pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
 
@@ -169,7 +169,7 @@ impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
-    crate::internal_macros::engine_input_impl!();
+    crate::internal_macros::impl_engine_input!();
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
 
@@ -266,6 +266,7 @@ impl convert::AsRef<[u8]> for Midstate {
 
 /// Error types for the SHA256 hash.
 pub mod error {
+    use core::convert::Infallible;
     use core::fmt;
 
     use super::{Midstate, BLOCK_SIZE};
@@ -284,12 +285,18 @@ pub mod error {
 
     impl MidstateError {
         /// Returns block-aligned midstate.
+        #[inline]
         pub const fn midstate(&self) -> &Midstate { &self.block_aligned_midstate }
 
         /// returns the unprocessed bytes remaining in the buffer.
+        #[inline]
         pub fn unprocessed_bytes(&self) -> &[u8] {
             &self.unprocessed_bytes[..self.unprocessed_bytes_len]
         }
+    }
+
+    impl From<Infallible> for MidstateError {
+        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for MidstateError {
@@ -304,6 +311,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for MidstateError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
     }
 }

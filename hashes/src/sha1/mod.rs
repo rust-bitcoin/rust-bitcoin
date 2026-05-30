@@ -19,7 +19,7 @@ crate::internal_macros::general_hash_type! {
 }
 
 impl Hash {
-    /// Finalize a hash engine to produce a hash.
+    /// Finalizes a hash engine to produce a hash.
     pub fn from_engine(mut e: HashEngine) -> Self {
         let n_bytes_hashed = e.bytes_hashed;
         let buf_idx = incomplete_block_len(&e);
@@ -86,7 +86,7 @@ impl crate::HashEngine for HashEngine {
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
-    crate::internal_macros::engine_input_impl!();
+    crate::internal_macros::impl_engine_input!();
 
     fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }

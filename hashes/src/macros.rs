@@ -5,6 +5,7 @@
 //! - [`sha256t_tag`](crate::sha256t_tag)
 //! - [`hash_newtype`](crate::hash_newtype)
 //! - [`impl_hex_for_newtype`](crate::impl_hex_for_newtype)
+//! - [`impl_debug_only_for_newtype`](crate::impl_debug_only_for_newtype)
 //! - [`impl_serde_for_newtype`](crate::impl_serde_for_newtype)
 
 /// Macro used to define a tag.
@@ -521,7 +522,7 @@ pub mod serde_details {
 macro_rules! impl_serde_for_newtype {
     ($($newtype:ident),*) => {
         $(
-            $crate::serde_impl!($newtype, { <$newtype as $crate::Hash>::LEN });
+            $crate::impl_serde_traits!($newtype, { <$newtype as $crate::Hash>::LEN });
         )*
     }
 }
@@ -531,7 +532,7 @@ macro_rules! impl_serde_for_newtype {
 #[doc(hidden)]
 #[macro_export]
 #[cfg(feature = "serde")]
-macro_rules! serde_impl(
+macro_rules! impl_serde_traits(
     ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => (
         impl<$($gen: $gent),*> $crate::serde::Serialize for $t<$($gen),*> {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
@@ -560,8 +561,8 @@ macro_rules! serde_impl(
 #[doc(hidden)]
 #[macro_export]
 #[cfg(not(feature = "serde"))]
-macro_rules! serde_impl(
-        ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => ()
+macro_rules! impl_serde_traits(
+    ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => ()
 );
 
 #[cfg(test)]

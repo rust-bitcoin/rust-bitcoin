@@ -126,6 +126,8 @@ pub fn bitcoin_hashes::hkdf::error::MaxLengthError::clone(&self) -> bitcoin_hash
 impl core::cmp::Eq for bitcoin_hashes::hkdf::error::MaxLengthError
 impl core::cmp::PartialEq for bitcoin_hashes::hkdf::error::MaxLengthError
 pub fn bitcoin_hashes::hkdf::error::MaxLengthError::eq(&self, other: &bitcoin_hashes::hkdf::error::MaxLengthError) -> bool
+impl core::convert::From<core::convert::Infallible> for bitcoin_hashes::hkdf::error::MaxLengthError
+pub fn bitcoin_hashes::hkdf::error::MaxLengthError::from(never: core::convert::Infallible) -> Self
 impl core::fmt::Debug for bitcoin_hashes::hkdf::error::MaxLengthError
 pub fn bitcoin_hashes::hkdf::error::MaxLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::hkdf::error::MaxLengthError
@@ -618,6 +620,8 @@ pub fn bitcoin_hashes::sha256::error::MidstateError::clone(&self) -> bitcoin_has
 impl core::cmp::Eq for bitcoin_hashes::sha256::error::MidstateError
 impl core::cmp::PartialEq for bitcoin_hashes::sha256::error::MidstateError
 pub fn bitcoin_hashes::sha256::error::MidstateError::eq(&self, other: &bitcoin_hashes::sha256::error::MidstateError) -> bool
+impl core::convert::From<core::convert::Infallible> for bitcoin_hashes::sha256::error::MidstateError
+pub fn bitcoin_hashes::sha256::error::MidstateError::from(never: core::convert::Infallible) -> Self
 impl core::fmt::Debug for bitcoin_hashes::sha256::error::MidstateError
 pub fn bitcoin_hashes::sha256::error::MidstateError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_hashes::sha256::error::MidstateError

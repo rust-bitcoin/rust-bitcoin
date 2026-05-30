@@ -55,14 +55,8 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
-// Pedantic lints that we enforce.
-#![warn(clippy::return_self_not_must_use)]
 // Instead of littering the codebase for non-fuzzing and bench code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
-// Exclude lints we don't think are valuable.
-#![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
-#![allow(clippy::manual_range_contains)] // More readable than clippy's format.
-#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)` instead of enforcing `format!("{x}")`
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -198,7 +192,7 @@ where
     drain_to_engine(&mut encoder, engine);
 }
 
-/// Drain the output of an [`encoding::Encoder`] into a hash engine.
+/// Drains the output of an [`encoding::Encoder`] into a hash engine.
 pub fn drain_to_engine<T, H>(encoder: &mut T, engine: &mut H)
 where
     T: encoding::Encoder + ?Sized,

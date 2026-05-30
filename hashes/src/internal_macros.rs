@@ -9,13 +9,13 @@
 /// # Parameters
 ///
 /// * `$bits` - the number of bits this hash type has
-/// * `$reverse` - `bool`  - `true` if the hash type should be displayed backwards, `false`
-///   otherwise.
+/// * `$reverse` - `bool`, `true` if the hash type should be displayed backwards, `false` otherwise.
 /// * `$gen: $gent` - the generic type(s) and trait bound(s)
 ///
 /// Restrictions on usage:
 ///
-/// * The `Hash` type in scope must provide `from_byte_array`, `to_byte_array`, and `as_byte_array` (e.g., via `hash_type_no_default!`).
+/// * The `Hash` type in scope must provide `from_byte_array`, `to_byte_array`, and
+///   `as_byte_array` (e.g., via `hash_type_no_default!`).
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         $crate::impl_bytelike_traits!(Hash, { $bits / 8 } $(, $gen: $gent)*);
@@ -25,7 +25,7 @@ macro_rules! hash_trait_impls {
         $crate::impl_debug_only!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
 
         #[cfg(feature = "serde")]
-        $crate::serde_impl!(Hash, { $bits / 8} $(, $gen: $gent)*);
+        $crate::impl_serde_traits!(Hash, { $bits / 8} $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::Hash for Hash<$($gen),*> {
             type Bytes = [u8; $bits / 8];
@@ -61,7 +61,7 @@ pub(crate) use hash_trait_impls;
 ///
 /// Restrictions on usage:
 ///
-/// * Requires a `HashEngine` type in this module implementing `Default` and `crate::HashEngine<Hash = Hash, Bytes = [u8; $len]>`.
+/// * Requires a `HashEngine` type in this module implementing `Default`.
 macro_rules! general_hash_type {
     (
         $(#[$type_attrs:meta])*
@@ -197,11 +197,10 @@ macro_rules! impl_write {
 }
 pub(crate) use impl_write;
 
-macro_rules! engine_input_impl(
-    () => (
+macro_rules! impl_engine_input {
+    () => {
         #[cfg(not(hashes_fuzz))]
         fn input(&mut self, mut inp: &[u8]) {
-
             let buf_idx = $crate::incomplete_block_len(self);
             let block_size = <Self as crate::HashEngine>::BLOCK_SIZE;
             self.bytes_hashed += inp.len() as u64;
@@ -237,6 +236,6 @@ macro_rules! engine_input_impl(
             }
             self.bytes_hashed += inp.len() as u64;
         }
-    )
-);
-pub(crate) use engine_input_impl;
+    }
+}
+pub(crate) use impl_engine_input;
