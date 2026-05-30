@@ -1,7 +1,7 @@
 use std::env;
 
 use bitcoin::address::{Address, KnownHrp};
-use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
+use bitcoin::bip32::{ChildNumber, RelativeDerivationPath, Xpriv, Xpub};
 use bitcoin::{hex, FullPublicKey, NetworkKind};
 
 fn main() {
@@ -29,7 +29,7 @@ fn main() {
     println!("Root key: {root}");
 
     // derive child xpub
-    let path = "84h/0h/0h".parse::<DerivationPath>().unwrap();
+    let path = "84h/0h/0h".parse::<RelativeDerivationPath>().unwrap();
     let child = root.derive_xpriv(&path).expect("only deriving three steps");
     println!("Child at {path}: {child}");
     let xpub = Xpub::from_xpriv(&child);

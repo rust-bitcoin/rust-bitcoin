@@ -5,7 +5,6 @@
 //! Implementation of BIP-0032 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
-use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::ops::Index;
@@ -23,7 +22,7 @@ use network::NetworkKind;
 #[doc(no_inline)]
 pub use self::error::{
     DerivationError, IndexOutOfRangeError, InvalidBase58PayloadLengthError,
-    InvalidSeedLengthError, ParseChildNumberError, ParseError,
+    ParseChildNumberError, ParseDerivationPathError, ParseError, InvalidSeedLengthError
 };
 
 /// Version bytes for extended public keys on the Bitcoin network.
@@ -403,25 +402,14 @@ impl serde::Serialize for ChildNumber {
     }
 }
 
-/// Trait that allows possibly failable conversion from a type into a
-/// derivation path
-pub trait IntoDerivationPath {
-    /// Converts a given type into a [`DerivationPath`] with possible error
-    ///
-    /// # Errors
-    ///
-    /// Errors if the child numbers in the derivation path cannot be parsed to a complete path.
-    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError>;
-}
-
-/// A BIP-0032 derivation path.
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct DerivationPath(Vec<ChildNumber>);
+/// A relative BIP-0032 derivation path.
+#[derive(Default, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub struct RelativeDerivationPath(Vec<ChildNumber>);
 
 #[cfg(feature = "serde")]
-internals::serde_string_impl!(DerivationPath, "a BIP-0032 derivation path");
+internals::serde_string_impl!(RelativeDerivationPath, "a relative BIP-0032 derivation path");
 
-impl<I> Index<I> for DerivationPath
+impl<I> Index<I> for RelativeDerivationPath
 where
     Vec<ChildNumber>: Index<I>,
 {
@@ -431,40 +419,19 @@ where
     fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 
-impl Default for DerivationPath {
-    fn default() -> Self { Self::master() }
-}
-
-impl<T> IntoDerivationPath for T
-where
-    T: Into<DerivationPath>,
-{
-    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError> {
-        Ok(self.into())
-    }
-}
-
-impl IntoDerivationPath for String {
-    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError> { self.parse() }
-}
-
-impl IntoDerivationPath for &'_ str {
-    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError> { self.parse() }
-}
-
-impl From<Vec<ChildNumber>> for DerivationPath {
+impl From<Vec<ChildNumber>> for RelativeDerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self { Self(numbers) }
 }
 
-impl From<DerivationPath> for Vec<ChildNumber> {
-    fn from(path: DerivationPath) -> Self { path.0 }
+impl From<RelativeDerivationPath> for Vec<ChildNumber> {
+    fn from(path: RelativeDerivationPath) -> Self { path.0 }
 }
 
-impl<'a> From<&'a [ChildNumber]> for DerivationPath {
+impl<'a> From<&'a [ChildNumber]> for RelativeDerivationPath {
     fn from(numbers: &'a [ChildNumber]) -> Self { Self(numbers.to_vec()) }
 }
 
-impl core::iter::FromIterator<ChildNumber> for DerivationPath {
+impl core::iter::FromIterator<ChildNumber> for RelativeDerivationPath {
     fn from_iter<T>(iter: T) -> Self
     where
         T: IntoIterator<Item = ChildNumber>,
@@ -474,50 +441,145 @@ impl core::iter::FromIterator<ChildNumber> for DerivationPath {
 }
 
 #[allow(clippy::into_iter_without_iter)]
-impl<'a> core::iter::IntoIterator for &'a DerivationPath {
+impl<'a> core::iter::IntoIterator for &'a RelativeDerivationPath {
     type Item = &'a ChildNumber;
     type IntoIter = slice::Iter<'a, ChildNumber>;
     fn into_iter(self) -> Self::IntoIter { self.0.iter() }
 }
 
-impl AsRef<[ChildNumber]> for DerivationPath {
+impl AsRef<[ChildNumber]> for RelativeDerivationPath {
     fn as_ref(&self) -> &[ChildNumber] { &self.0 }
 }
 
-impl FromStr for DerivationPath {
-    type Err = ParseChildNumberError;
+impl FromStr for RelativeDerivationPath {
+    type Err = ParseDerivationPathError;
 
     fn from_str(path: &str) -> Result<Self, Self::Err> {
-        if path.is_empty() || path == "m" || path == "m/" {
+        if path.is_empty() {
             return Ok(vec![].into());
         }
 
-        let path = path.strip_prefix("m/").unwrap_or(path);
+        if path == "m" || path.starts_with("m/") {
+            return Err(ParseDerivationPathError::UnexpectedMasterPrefix);
+        }
 
-        let parts = path.split('/');
-        let ret: Result<Vec<ChildNumber>, _> = parts.map(str::parse).collect();
-        Ok(Self(ret?))
+        let mut ret = Vec::new();
+        for part in path.split('/') {
+            if part.is_empty() {
+                return Err(ParseDerivationPathError::EmptyChild);
+            }
+            ret.push(part.parse()?);
+        }
+        Ok(Self(ret))
     }
 }
 
-/// An iterator over children of a [`DerivationPath`].
+/// An absolute BIP-0032 derivation path, starting at the master key.
 ///
-/// It is returned by the methods [`DerivationPath::children_from`],
-/// [`DerivationPath::normal_children`] and [`DerivationPath::hardened_children`].
-pub struct DerivationPathIterator<'a> {
-    base: &'a DerivationPath,
+/// Conversion to [`RelativeDerivationPath`] is available through
+/// [`AbsoluteDerivationPath::as_relative`] or
+/// [`AbsoluteDerivationPath::into_relative`].
+///
+/// The leading `m` in BIP-0032 notation has historically been subtle in this crate:
+/// See [PR #2451] and [PR #2677] for prior discussion on the "m/" notation.
+///
+/// [PR #2451]: https://github.com/rust-bitcoin/rust-bitcoin/pull/2451
+/// [PR #2677]: https://github.com/rust-bitcoin/rust-bitcoin/pull/2677
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub struct AbsoluteDerivationPath(RelativeDerivationPath);
+
+#[cfg(feature = "serde")]
+internals::serde_string_impl!(AbsoluteDerivationPath, "an absolute BIP-0032 derivation path");
+
+impl AbsoluteDerivationPath {
+    /// Returns the absolute derivation path for a master key.
+    pub fn master() -> Self { Self(RelativeDerivationPath::default()) }
+
+    /// Returns `true` if this is the master path.
+    pub fn is_master(&self) -> bool { self.0.is_empty() }
+
+    /// Returns the relative path below the master key.
+    pub fn as_relative(&self) -> &RelativeDerivationPath { &self.0 }
+
+    /// Converts this absolute path into the relative path below the master key.
+    pub fn into_relative(self) -> RelativeDerivationPath { self.0 }
+
+    /// Returns length of the relative derivation path below the master key.
+    pub fn len(&self) -> usize { self.0.len() }
+
+    /// Returns `true` if this is the master path.
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+
+    /// Returns `true` if the relative path below the master key contains a hardened child number.
+    pub fn contains_hardened_child(&self) -> bool { self.0.contains_hardened_child() }
+
+    /// Joins `self` with `path` and returns the resulting new path.
+    #[must_use]
+    pub fn join<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self { Self(self.0.join(path)) }
+}
+
+impl Default for AbsoluteDerivationPath {
+    fn default() -> Self { Self::master() }
+}
+
+impl FromStr for AbsoluteDerivationPath {
+    type Err = ParseDerivationPathError;
+
+    fn from_str(path: &str) -> Result<Self, Self::Err> {
+        if path == "m" {
+            return Ok(Self::master());
+        }
+
+        let path = path.strip_prefix("m/").ok_or(ParseDerivationPathError::MissingMasterPrefix)?;
+        if path.is_empty() {
+            return Err(ParseDerivationPathError::EmptyChild);
+        }
+
+        Ok(Self(path.parse()?))
+    }
+}
+
+impl fmt::Display for AbsoluteDerivationPath {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("m")?;
+        if !self.0.is_empty() {
+            f.write_str("/")?;
+            if f.alternate() {
+                write!(f, "{:#}", self.0)?;
+            } else {
+                write!(f, "{}", self.0)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl From<RelativeDerivationPath> for AbsoluteDerivationPath {
+    fn from(path: RelativeDerivationPath) -> Self { Self(path) }
+}
+
+impl From<AbsoluteDerivationPath> for RelativeDerivationPath {
+    fn from(path: AbsoluteDerivationPath) -> Self { path.0 }
+}
+
+/// An iterator over children of a [`RelativeDerivationPath`].
+///
+/// It is returned by the methods [`RelativeDerivationPath::children_from`],
+/// [`RelativeDerivationPath::normal_children`] and [`RelativeDerivationPath::hardened_children`].
+pub struct RelativeDerivationPathIterator<'a> {
+    base: &'a RelativeDerivationPath,
     next_child: Option<ChildNumber>,
 }
 
-impl<'a> DerivationPathIterator<'a> {
-    /// Starts a new [`DerivationPathIterator`] at the given child.
-    pub fn start_from(path: &'a DerivationPath, start: ChildNumber) -> Self {
-        DerivationPathIterator { base: path, next_child: Some(start) }
+impl<'a> RelativeDerivationPathIterator<'a> {
+    /// Starts a new [`RelativeDerivationPathIterator`] at the given child.
+    pub fn start_from(path: &'a RelativeDerivationPath, start: ChildNumber) -> Self {
+        RelativeDerivationPathIterator { base: path, next_child: Some(start) }
     }
 }
 
-impl Iterator for DerivationPathIterator<'_> {
-    type Item = DerivationPath;
+impl Iterator for RelativeDerivationPathIterator<'_> {
+    type Item = RelativeDerivationPath;
 
     fn next(&mut self) -> Option<Self::Item> {
         let ret = self.next_child?;
@@ -526,21 +588,17 @@ impl Iterator for DerivationPathIterator<'_> {
     }
 }
 
-impl DerivationPath {
+impl RelativeDerivationPath {
     /// Returns length of the derivation path
     pub fn len(&self) -> usize { self.0.len() }
 
     /// Returns `true` if the derivation path is empty
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
-    /// Returns derivation path for a master key (i.e. empty derivation path)
-    pub fn master() -> Self { Self(vec![]) }
+    /// Returns `true` if the derivation path contains a hardened child number.
+    pub fn contains_hardened_child(&self) -> bool { self.0.iter().any(ChildNumber::is_hardened) }
 
-    /// Returns whether derivation path represents master key (i.e. it's length
-    /// is empty). True for `m` path.
-    pub fn is_master(&self) -> bool { self.0.is_empty() }
-
-    /// Constructs a new [`DerivationPath`] that is a child of this one.
+    /// Constructs a new [`RelativeDerivationPath`] that is a child of this one.
     #[must_use]
     pub fn child(&self, cn: ChildNumber) -> Self {
         let mut path = self.0.clone();
@@ -548,7 +606,7 @@ impl DerivationPath {
         Self(path)
     }
 
-    /// Converts into a [`DerivationPath`] that is a child of this one.
+    /// Converts into a [`RelativeDerivationPath`] that is a child of this one.
     #[must_use]
     pub fn into_child(self, cn: ChildNumber) -> Self {
         let mut path = self.0;
@@ -556,31 +614,31 @@ impl DerivationPath {
         Self(path)
     }
 
-    /// Gets an [Iterator] over the children of this [`DerivationPath`]
+    /// Gets an [Iterator] over the children of this [`RelativeDerivationPath`]
     /// starting with the given [`ChildNumber`].
-    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(self, cn)
+    pub fn children_from(&self, cn: ChildNumber) -> RelativeDerivationPathIterator<'_> {
+        RelativeDerivationPathIterator::start_from(self, cn)
     }
 
-    /// Gets an [Iterator] over the unhardened children of this [`DerivationPath`].
-    pub fn normal_children(&self) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(self, ChildNumber::ZERO_NORMAL)
+    /// Gets an [Iterator] over the unhardened children of this [`RelativeDerivationPath`].
+    pub fn normal_children(&self) -> RelativeDerivationPathIterator<'_> {
+        RelativeDerivationPathIterator::start_from(self, ChildNumber::ZERO_NORMAL)
     }
 
-    /// Gets an [Iterator] over the hardened children of this [`DerivationPath`].
-    pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(self, ChildNumber::ZERO_HARDENED)
+    /// Gets an [Iterator] over the hardened children of this [`RelativeDerivationPath`].
+    pub fn hardened_children(&self) -> RelativeDerivationPathIterator<'_> {
+        RelativeDerivationPathIterator::start_from(self, ChildNumber::ZERO_HARDENED)
     }
 
-    /// Concatenate `self` with `path` and return the resulting new path.
+    /// Joins `self` with `path` and returns the resulting new path.
     ///
     /// ```
-    /// use bitcoin_key_expression::bip32::{DerivationPath, ChildNumber};
+    /// use bitcoin_key_expression::bip32::{RelativeDerivationPath, ChildNumber};
     ///
-    /// let base = "m/42".parse::<DerivationPath>().unwrap();
+    /// let base = "42".parse::<RelativeDerivationPath>().unwrap();
     ///
-    /// let deriv_1 = base.extend("0/1".parse::<DerivationPath>().unwrap());
-    /// let deriv_2 = base.extend(&[
+    /// let deriv_1 = base.join("0/1".parse::<RelativeDerivationPath>().unwrap());
+    /// let deriv_2 = base.join(&[
     ///     ChildNumber::ZERO_NORMAL,
     ///     ChildNumber::ONE_NORMAL
     /// ]);
@@ -588,7 +646,7 @@ impl DerivationPath {
     /// assert_eq!(deriv_1, deriv_2);
     /// ```
     #[must_use]
-    pub fn extend<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self {
+    pub fn join<T: AsRef<[ChildNumber]>>(&self, path: T) -> Self {
         let mut new_path = self.clone();
         new_path.0.extend_from_slice(path.as_ref());
         new_path
@@ -599,9 +657,9 @@ impl DerivationPath {
     /// 0x80000000 is added to the hardened elements.
     ///
     /// ```
-    /// use bitcoin_key_expression::bip32::DerivationPath;
+    /// use bitcoin_key_expression::bip32::RelativeDerivationPath;
     ///
-    /// let path = "m/84'/0'/0'/0/1".parse::<DerivationPath>().unwrap();
+    /// let path = "84'/0'/0'/0/1".parse::<RelativeDerivationPath>().unwrap();
     /// const HARDENED: u32 = 0x80000000;
     /// assert_eq!(path.to_u32_vec(), vec![84 + HARDENED, HARDENED, HARDENED, 0, 1]);
     /// ```
@@ -609,11 +667,11 @@ impl DerivationPath {
 
     /// Constructs a new derivation path from a slice of raw BIP-0032 u32 child numbers.
     /// ```
-    /// use bitcoin_key_expression::bip32::DerivationPath;
+    /// use bitcoin_key_expression::bip32::RelativeDerivationPath;
     ///
     /// const HARDENED: u32 = 0x80000000;
     /// let expected = vec![84 + HARDENED, HARDENED, HARDENED, 0, 1];
-    /// let path = DerivationPath::from_u32_slice(expected.as_slice());
+    /// let path = RelativeDerivationPath::from_u32_slice(expected.as_slice());
     /// assert_eq!(path.to_u32_vec(), expected);
     /// ```
     pub fn from_u32_slice(numbers: &[u32]) -> Self {
@@ -621,7 +679,7 @@ impl DerivationPath {
     }
 }
 
-impl fmt::Display for DerivationPath {
+impl fmt::Display for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut iter = self.0.iter();
         if let Some(first_element) = iter.next() {
@@ -643,13 +701,13 @@ impl fmt::Display for DerivationPath {
     }
 }
 
-impl fmt::Debug for DerivationPath {
+impl fmt::Debug for RelativeDerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self, f) }
 }
 
 /// Full information on the used extended public key: fingerprint of the
 /// master extended public key and a derivation path from it.
-pub type KeySource = (Fingerprint, DerivationPath);
+pub type KeySource = (Fingerprint, RelativeDerivationPath);
 
 impl Xpriv {
     /// Constructs a new master key from a [`Bip32Seed`].
@@ -692,7 +750,7 @@ impl Xpriv {
 
     /// Derives an extended private key from a path.
     ///
-    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    /// The `path` argument can be both of type `RelativeDerivationPath` or `Vec<ChildNumber>`.
     ///
     /// # Errors
     ///
@@ -706,7 +764,7 @@ impl Xpriv {
 
     /// Derives an extended private key from a path.
     ///
-    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    /// The `path` argument can be both of type `RelativeDerivationPath` or `Vec<ChildNumber>`.
     ///
     /// # Errors
     ///
@@ -847,7 +905,7 @@ impl Xpub {
 
     /// Attempts to derive an extended public key from a path.
     ///
-    /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
+    /// The `path` argument can be any type implementing `AsRef<[ChildNumber]>`, such as `RelativeDerivationPath`, for instance.
     ///
     /// # Errors
     ///
@@ -861,8 +919,8 @@ impl Xpub {
 
     /// Attempts to derive an extended public key from a path.
     ///
-    /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as
-    /// `DerivationPath`, for instance.
+    /// The `path` argument can be any type implementing `AsRef<[ChildNumber]>`, such as
+    /// `RelativeDerivationPath`, for instance.
     ///
     /// # Errors
     ///
@@ -1259,6 +1317,50 @@ pub mod error {
         }
     }
 
+    /// Error parsing a derivation path.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum ParseDerivationPathError {
+        /// Failed to parse a child number.
+        Child(ParseChildNumberError),
+        /// The path contained an empty child number.
+        EmptyChild,
+        /// The absolute path was missing the `m` master prefix.
+        MissingMasterPrefix,
+        /// The relative path unexpectedly contained the `m` master prefix.
+        UnexpectedMasterPrefix,
+    }
+
+    impl From<Infallible> for ParseDerivationPathError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    impl fmt::Display for ParseDerivationPathError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                Self::Child(ref e) => write_err!(f, "failed to parse child number"; e),
+                Self::EmptyChild => f.write_str("derivation path contains an empty child number"),
+                Self::MissingMasterPrefix =>
+                    f.write_str("absolute derivation path is missing master prefix `m`"),
+                Self::UnexpectedMasterPrefix =>
+                    f.write_str("relative derivation path contains unexpected master prefix `m`"),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseDerivationPathError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match *self {
+                Self::Child(ref e) => Some(e),
+                Self::EmptyChild | Self::MissingMasterPrefix | Self::UnexpectedMasterPrefix => None,
+            }
+        }
+    }
+
+    impl From<ParseChildNumberError> for ParseDerivationPathError {
+        fn from(e: ParseChildNumberError) -> Self { Self::Child(e) }
+    }
+
     /// Decoded base58 data was an invalid length.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct InvalidBase58PayloadLengthError {
@@ -1318,10 +1420,17 @@ pub mod error {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for DerivationPath {
+impl<'a> Arbitrary<'a> for RelativeDerivationPath {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let bytes = Vec::<u32>::arbitrary(u)?;
         Ok(Self::from_u32_slice(bytes.as_slice()))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for AbsoluteDerivationPath {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(RelativeDerivationPath::arbitrary(u)?))
     }
 }
 
@@ -1393,18 +1502,21 @@ mod tests {
 
     #[test]
     fn parse_derivation_path_invalid_format() {
-        let invalid_paths = ["n/0'/0", "4/m/5", "//3/0'", "0h/0x"];
-        for path in &invalid_paths {
+        for path in ["n/0'/0", "4/m/5", "0h/0x"] {
             assert!(matches!(
-                path.parse::<DerivationPath>(),
-                Err(ParseChildNumberError::ParseInt(..)),
+                path.parse::<RelativeDerivationPath>(),
+                Err(ParseDerivationPathError::Child(ParseChildNumberError::ParseInt(..))),
             ));
         }
+        assert_eq!(
+            "//3/0'".parse::<RelativeDerivationPath>(),
+            Err(ParseDerivationPathError::EmptyChild)
+        );
     }
 
     #[test]
     fn test_derivation_path_display() {
-        let path = DerivationPath::from_str("m/84'/0'/0'/0/0").unwrap();
+        let path = RelativeDerivationPath::from_str("84'/0'/0'/0/0").unwrap();
         assert_eq!(format!("{}", path), "84'/0'/0'/0/0");
         assert_eq!(format!("{:#}", path), "84h/0h/0h/0/0");
     }
@@ -1461,24 +1573,32 @@ mod tests {
     fn parse_derivation_path_out_of_range() {
         let invalid_path = "2147483648";
         assert_eq!(
-            invalid_path.parse::<DerivationPath>(),
-            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError {
-                index: 2_147_483_648
-            })),
+            invalid_path.parse::<RelativeDerivationPath>(),
+            Err(ParseDerivationPathError::Child(ParseChildNumberError::IndexOutOfRange(
+                IndexOutOfRangeError { index: 2_147_483_648 }
+            ))),
         );
     }
 
     #[test]
-    fn parse_derivation_path_valid_empty_master() {
+    fn parse_derivation_path_valid_empty() {
         // Sanity checks.
-        assert_eq!(DerivationPath::master(), DerivationPath(vec![]));
-        assert_eq!(DerivationPath::master(), "".parse::<DerivationPath>().unwrap());
-        assert_eq!(DerivationPath::master(), DerivationPath::default());
+        assert_eq!(RelativeDerivationPath::default(), RelativeDerivationPath(vec![]));
+        assert_eq!(
+            RelativeDerivationPath::default(),
+            "".parse::<RelativeDerivationPath>().unwrap()
+        );
 
-        // Empty is the same as with an `m`.
-        assert_eq!("".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
-        assert_eq!("m".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
-        assert_eq!("m/".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
+        // A relative path is empty without an `m`.
+        assert_eq!("".parse::<RelativeDerivationPath>().unwrap(), RelativeDerivationPath(vec![]));
+        assert_eq!(
+            "m".parse::<RelativeDerivationPath>(),
+            Err(ParseDerivationPathError::UnexpectedMasterPrefix)
+        );
+        assert_eq!(
+            "m/".parse::<RelativeDerivationPath>(),
+            Err(ParseDerivationPathError::UnexpectedMasterPrefix)
+        );
     }
 
     #[test]
@@ -1516,33 +1636,53 @@ mod tests {
         ];
         for (path, expected) in valid_paths {
             // Access the inner private field so we don't have to clone expected.
-            assert_eq!(path.parse::<DerivationPath>().unwrap().0, expected);
-            // Test with the leading `m` for good measure.
-            let prefixed = format!("m/{}", path);
-            assert_eq!(prefixed.parse::<DerivationPath>().unwrap().0, expected);
+            assert_eq!(path.parse::<RelativeDerivationPath>().unwrap().0, expected);
         }
     }
 
     #[test]
-    fn parse_derivation_path_same_as_into_derivation_path() {
-        let s = "0'/50/3'/5/545456";
-        assert_eq!(s.parse::<DerivationPath>(), s.into_derivation_path());
-        assert_eq!(s.parse::<DerivationPath>(), s.to_string().into_derivation_path());
+    fn parse_absolute_derivation_path() {
+        let master = "m".parse::<AbsoluteDerivationPath>().unwrap();
+        assert_eq!(master, AbsoluteDerivationPath::master());
+        assert_eq!(master.to_string(), "m");
+        assert!(!master.contains_hardened_child());
 
-        let s = "m/0'/50/3'/5/545456";
-        assert_eq!(s.parse::<DerivationPath>(), s.into_derivation_path());
-        assert_eq!(s.parse::<DerivationPath>(), s.to_string().into_derivation_path());
+        let path = "m/0'/1".parse::<AbsoluteDerivationPath>().unwrap();
+        assert_eq!(path.as_relative(), &"0'/1".parse::<RelativeDerivationPath>().unwrap());
+        assert_eq!(path.to_string(), "m/0'/1");
+        assert_eq!(format!("{:#}", path), "m/0h/1");
+        assert!(path.contains_hardened_child());
+
+        assert_eq!(
+            "".parse::<AbsoluteDerivationPath>(),
+            Err(ParseDerivationPathError::MissingMasterPrefix)
+        );
+        assert_eq!(
+            "0/1".parse::<AbsoluteDerivationPath>(),
+            Err(ParseDerivationPathError::MissingMasterPrefix)
+        );
+        assert_eq!(
+            "m/".parse::<AbsoluteDerivationPath>(),
+            Err(ParseDerivationPathError::EmptyChild)
+        );
+    }
+
+    #[test]
+    fn derivation_path_contains_hardened_child() {
+        assert!(!"".parse::<RelativeDerivationPath>().unwrap().contains_hardened_child());
+        assert!(!"0/1".parse::<RelativeDerivationPath>().unwrap().contains_hardened_child());
+        assert!("0'/1".parse::<RelativeDerivationPath>().unwrap().contains_hardened_child());
     }
 
     #[test]
     fn derivation_path_conversion_index() {
-        let path = "0h/1/2'".parse::<DerivationPath>().unwrap();
+        let path = "0h/1/2'".parse::<RelativeDerivationPath>().unwrap();
         let numbers: Vec<ChildNumber> = path.clone().into();
-        let path2: DerivationPath = numbers.into();
+        let path2: RelativeDerivationPath = numbers.into();
         assert_eq!(path, path2);
         assert_eq!(&path[..2], &[ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL]);
-        let indexed: DerivationPath = path[..2].into();
-        assert_eq!(indexed, "0h/1".parse::<DerivationPath>().unwrap());
+        let indexed: RelativeDerivationPath = path[..2].into();
+        assert_eq!(indexed, "0h/1".parse::<RelativeDerivationPath>().unwrap());
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
     }
 
@@ -1583,20 +1723,21 @@ mod tests {
     fn test_path(
         network: NetworkKind,
         seed: &[u8],
-        path: &DerivationPath,
+        path: &AbsoluteDerivationPath,
         expected_sk: &str,
         expected_pk: &str,
     ) {
         let seed = <&Bip32Seed>::try_from(seed).unwrap();
         let mut sk = Xpriv::new_master(network, seed);
         let mut pk = Xpub::from_xpriv(&sk);
+        let path = path.as_relative();
 
         // Check derivation convenience method for Xpriv
         assert_eq!(&sk.derive_xpriv(path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
-        if path.0.iter().any(super::ChildNumber::is_hardened) {
+        if path.contains_hardened_child() {
             assert_eq!(pk.derive_xpub(path), Err(DerivationError::CannotDeriveHardenedChild));
         } else {
             assert_eq!(&pk.derive_xpub(path).unwrap().to_string()[..], expected_pk);
@@ -1640,29 +1781,29 @@ mod tests {
         assert_eq!(cn.increment(), Err(IndexOutOfRangeError { index: 1 << 31 }),);
 
         let cn = ChildNumber::from_normal_idx(350).unwrap();
-        let path = "42'".parse::<DerivationPath>().unwrap();
+        let path = "42'".parse::<RelativeDerivationPath>().unwrap();
         let mut iter = path.children_from(cn);
         assert_eq!(iter.next(), Some("42'/350".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/351".parse().unwrap()));
 
-        let path = "42'/350'".parse::<DerivationPath>().unwrap();
+        let path = "42'/350'".parse::<RelativeDerivationPath>().unwrap();
         let mut iter = path.normal_children();
         assert_eq!(iter.next(), Some("42'/350'/0".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/350'/1".parse().unwrap()));
 
-        let path = "42'/350'".parse::<DerivationPath>().unwrap();
+        let path = "42'/350'".parse::<RelativeDerivationPath>().unwrap();
         let mut iter = path.hardened_children();
         assert_eq!(iter.next(), Some("42'/350'/0'".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/350'/1'".parse().unwrap()));
 
         let cn = ChildNumber::from_hardened_idx(42350).unwrap();
-        let path = "42'".parse::<DerivationPath>().unwrap();
+        let path = "42'".parse::<RelativeDerivationPath>().unwrap();
         let mut iter = path.children_from(cn);
         assert_eq!(iter.next(), Some("42'/42350'".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/42351'".parse().unwrap()));
 
         let cn = ChildNumber::from_hardened_idx(max).unwrap();
-        let path = "42'".parse::<DerivationPath>().unwrap();
+        let path = "42'".parse::<RelativeDerivationPath>().unwrap();
         let mut iter = path.children_from(cn);
         assert!(iter.next().is_some());
         assert!(iter.next().is_none());
@@ -1800,6 +1941,13 @@ mod tests {
         serde_round_trip!(ChildNumber::ZERO_HARDENED);
         serde_round_trip!(ChildNumber::ONE_HARDENED);
         serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    pub fn encode_decode_derivation_paths() {
+        serde_round_trip!("0'/1".parse::<RelativeDerivationPath>().unwrap());
+        serde_round_trip!("m/0'/1".parse::<AbsoluteDerivationPath>().unwrap());
     }
 
     #[test]
