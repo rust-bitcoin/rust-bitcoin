@@ -82,37 +82,10 @@ impl Weight {
         }
     }
 
-    /// Constructs a new [`Weight`] from virtual bytes panicking if an overflow occurred.
-    ///
-    /// # Panics
-    ///
-    /// If the conversion from virtual bytes overflows.
-    #[deprecated(since = "1.0.0-rc.0", note = "use `from_vb_unchecked` instead")]
-    pub const fn from_vb_unwrap(vb: u64) -> Self {
-        match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
-            Some(weight) => Self::from_wu(weight),
-            None => panic!("checked_mul overflowed"),
-        }
-    }
-
     /// Constructs a new [`Weight`] from virtual bytes without an overflow check.
     #[inline]
     pub const fn from_vb_unchecked(vb: u64) -> Self {
         Self::from_wu(vb * Self::WITNESS_SCALE_FACTOR)
-    }
-
-    /// Constructs a new [`Weight`] from witness size.
-    #[deprecated(since = "1.0.0-rc.1", note = "use `from_wu` instead")]
-    pub const fn from_witness_data_size(witness_size: u64) -> Self { Self::from_wu(witness_size) }
-
-    /// Constructs a new [`Weight`] from non-witness size.
-    ///
-    /// # Panics
-    ///
-    /// If the conversion from virtual bytes overflows.
-    #[deprecated(since = "1.0.0-rc.1", note = "use `from_vb` or `from_vb_unchecked` instead")]
-    pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
-        Self::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }
 
     /// Constructs a new `Weight` from a prefixed hex string.

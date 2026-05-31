@@ -252,12 +252,6 @@ impl CompactTarget {
     #[inline]
     pub const fn to_consensus(self) -> u32 { self.0 }
 
-    /// Gets the hex representation of this [`CompactTarget`].
-    #[cfg(feature = "alloc")]
-    #[inline]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
-    pub fn to_hex(self) -> alloc::string::String { alloc::format!("{:x}", self) }
-
     /// Constructs a new `CompactTarget` from a prefixed hex string.
     ///
     /// # Errors

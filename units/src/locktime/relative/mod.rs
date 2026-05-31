@@ -389,10 +389,6 @@ impl<'de> serde::Deserialize<'de> for LockTime {
     }
 }
 
-#[deprecated(since = "1.0.0-rc.0", note = "use `NumberOfBlocks` instead")]
-#[doc(hidden)]
-pub type Height = NumberOfBlocks;
-
 /// A relative lock time lock-by-height value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NumberOfBlocks(u16);
@@ -415,23 +411,6 @@ impl NumberOfBlocks {
     #[inline]
     #[must_use]
     pub const fn to_height(self) -> u16 { self.0 }
-
-    /// Returns the inner `u16` value.
-    #[inline]
-    #[must_use]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `to_height` instead")]
-    #[doc(hidden)]
-    pub const fn value(self) -> u16 { self.0 }
-
-    /// Returns the `u32` value used to encode this locktime in an nSequence field or
-    /// argument to `OP_CHECKSEQUENCEVERIFY`.
-    #[deprecated(
-        since = "1.0.0-rc.0",
-        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
-    )]
-    pub const fn to_consensus_u32(self) -> u32 {
-        self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
-    }
 
     /// Constructs a new `NumberOfBlocks` from a prefixed hex string.
     ///
@@ -494,10 +473,6 @@ impl fmt::Display for NumberOfBlocks {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
-
-#[deprecated(since = "1.0.0-rc.0", note = "use `NumberOf512Seconds` instead")]
-#[doc(hidden)]
-pub type Time = NumberOf512Seconds;
 
 /// A relative lock time lock-by-time value.
 ///
@@ -564,23 +539,6 @@ impl NumberOf512Seconds {
     /// Represents the [`NumberOf512Seconds`] as an integer number of seconds.
     #[inline]
     pub const fn to_seconds(self) -> u32 { const_casts::u16_to_u32(self.0) * 512 }
-
-    /// Returns the inner `u16` value.
-    #[inline]
-    #[must_use]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `to_512_second_intervals` instead")]
-    #[doc(hidden)]
-    pub const fn value(self) -> u16 { self.0 }
-
-    /// Returns the `u32` value used to encode this locktime in an nSequence field or
-    /// argument to `OP_CHECKSEQUENCEVERIFY`.
-    #[deprecated(
-        since = "1.0.0-rc.0",
-        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
-    )]
-    pub const fn to_consensus_u32(self) -> u32 {
-        (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
-    }
 
     /// Constructs a new `NumberOf512Seconds` from a prefixed hex string.
     ///
@@ -947,7 +905,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(deprecated_in_future)]
     fn sanity_check() {
         assert_eq!(LockTime::from(NumberOfBlocks::MAX).to_consensus_u32(), u32::from(u16::MAX));
         assert_eq!(

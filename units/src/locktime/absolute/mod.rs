@@ -207,11 +207,6 @@ impl LockTime {
         Ok(Self::Blocks(height))
     }
 
-    #[inline]
-    #[deprecated(since = "1.0.0-rc.0", note = "use `from_mtp` instead")]
-    #[doc(hidden)]
-    pub fn from_time(n: u32) -> Result<Self, ConversionError> { Self::from_mtp(n) }
-
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a median-time-past (MTP)
     /// which is in range for a locktime.
     ///
@@ -532,14 +527,6 @@ impl Height {
         Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
 
-    #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
-    #[doc(hidden)]
-    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
-
-    #[deprecated(since = "1.0.0-rc.0", note = "use `to_u32` instead")]
-    #[doc(hidden)]
-    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
-
     /// Constructs a new block height directly from a `u32` value.
     ///
     /// # Errors
@@ -598,10 +585,6 @@ impl fmt::Display for Height {
 }
 
 parse_int::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
-
-#[deprecated(since = "1.0.0-rc.0", note = "use `MedianTimePast` instead")]
-#[doc(hidden)]
-pub type Time = MedianTimePast;
 
 /// The median timestamp of 11 consecutive blocks, representing "the timestamp" of the
 /// final block for locktime-checking purposes.
@@ -662,14 +645,6 @@ impl MedianTimePast {
         let height = parse_int::hex_u32_unprefixed(s).map_err(ParseError::UnprefixedHex)?;
         Ok(Self::from_u32(height).map_err(|_| ParseError::Conversion(height.into()))?)
     }
-
-    #[deprecated(since = "1.0.0-rc.0", note = "use `from_u32` instead")]
-    #[doc(hidden)]
-    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
-
-    #[deprecated(since = "1.0.0-rc.0", note = "use `to_u32` instead")]
-    #[doc(hidden)]
-    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
 
     /// Constructs a new MTP directly from a `u32` value.
     ///
