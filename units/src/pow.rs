@@ -548,8 +548,6 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[cfg(feature = "encoding")]
     use alloc::string::ToString;
-    #[cfg(feature = "std")]
-    use std::error::Error as _;
 
     #[cfg(feature = "encoding")]
     use encoding::Decoder as _;
@@ -1537,16 +1535,19 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    #[allow(deprecated)]
     fn compact_target_to_hex() {
         let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
-        assert_eq!(compact_target.to_hex(), "1d00ffff");
+        let got = alloc::format!("{:x}", compact_target);
+        assert_eq!(got, "1d00ffff");
     }
 
     #[test]
     #[cfg(feature = "encoding")]
     #[cfg(feature = "alloc")]
     fn compact_target_decoder_error_display_and_source() {
+        #[cfg(feature = "std")]
+        use std::error::Error as _;
+
         let mut slice = [0u8; 3].as_slice();
         let mut decoder = CompactTargetDecoder::new();
 
