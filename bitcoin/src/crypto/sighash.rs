@@ -84,22 +84,22 @@ impl LegacySighash {
     fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 
-    /// Signs this sighash using `pk`.
+    /// Signs this sighash using `key`.
     ///
     /// `sighash_type` must be the same as that used to create the sighash.
-    pub fn sign(&self, pk: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
-        ecdsa::Signature { signature: pk.raw_ecdsa_sign(*self), sighash_type }
+    pub fn sign(&self, key: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
+        ecdsa::Signature { signature: key.raw_ecdsa_sign(*self), sighash_type }
     }
 }
 impl SegwitV0Sighash {
     fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 
-    /// Signs this sighash using `pk`.
+    /// Signs this sighash using `key`.
     ///
     /// `sighash_type` must be the same as that used to create the sighash.
-    pub fn sign(&self, pk: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
-        ecdsa::Signature { signature: pk.raw_ecdsa_sign(*self), sighash_type }
+    pub fn sign(&self, key: &PrivateKey, sighash_type: EcdsaSighashType) -> ecdsa::Signature {
+        ecdsa::Signature { signature: key.raw_ecdsa_sign(*self), sighash_type }
     }
 }
 
@@ -120,11 +120,11 @@ hashes::impl_serde_for_newtype!(TapSighash);
 
 impl TapSighash {
     /// Signs the sighash for a P2TR key-path spending transaction with the
-    /// [`TweakedKeypair`] and creates a Taproot signature as defined in [BIP-340].
+    /// [`TweakedKeypair`] and creates a Taproot signature as defined in [BIP-0340].
     ///
     /// For P2TR script-path spend use [`TapSighash::sign_script_spend`].
     ///
-    /// [BIP-340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    /// [BIP-0340]: <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
     pub fn sign_key_spend(
         &self,
         keypair: &TweakedKeypair,
@@ -135,11 +135,11 @@ impl TapSighash {
     }
 
     /// Signs the sighash with an [`UntweakedKeypair`] without applying a tweak and creates a
-    /// taproot signature as defined in [BIP-340].
+    /// taproot signature as defined in [BIP-0340].
     ///
     /// For P2TR key spend use [`TapSighash::sign_key_spend`].
     ///
-    /// [BIP-340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    /// [BIP-0340]: <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
     pub fn sign_script_spend(
         &self,
         keypair: &UntweakedKeypair,
