@@ -23,7 +23,8 @@ use network::NetworkKind;
 pub use self::error::{
     CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
     InvalidBase58PayloadLengthError, InvalidSeedLengthError, MaximumDepthExceededError,
-    ParseChildNumberError, ParseDerivationPathError, ParseError
+    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseError,
+    ParseRelativeDerivationPathError
 };
 #[doc(no_inline)]
 #[allow(deprecated_in_future)]
@@ -456,7 +457,7 @@ impl AsRef<[ChildNumber]> for RelativeDerivationPath {
 }
 
 impl FromStr for RelativeDerivationPath {
-    type Err = ParseDerivationPathError;
+    type Err = ParseRelativeDerivationPathError;
 
     fn from_str(path: &str) -> Result<Self, Self::Err> {
         if path.is_empty() {
@@ -464,15 +465,15 @@ impl FromStr for RelativeDerivationPath {
         }
 
         if path == "m" || path.starts_with("m/") {
-            return Err(ParseDerivationPathError::UnexpectedMasterPrefix);
+            return Err(ParseRelativeDerivationPathError::UnexpectedMasterPrefix);
         }
 
         let mut ret = Vec::new();
         for part in path.split('/') {
             if part.is_empty() {
-                return Err(ParseDerivationPathError::EmptyChild);
+                return Err(ParseRelativeDerivationPathError::EmptyChild);
             }
-            ret.push(part.parse()?);
+            ret.push(part.parse().map_err(ParseRelativeDerivationPathError::Child)?);
         }
         Ok(Self(ret))
     }
@@ -527,19 +528,27 @@ impl Default for AbsoluteDerivationPath {
 }
 
 impl FromStr for AbsoluteDerivationPath {
-    type Err = ParseDerivationPathError;
+    type Err = ParseAbsoluteDerivationPathError;
 
     fn from_str(path: &str) -> Result<Self, Self::Err> {
         if path == "m" {
             return Ok(Self::master());
         }
 
-        let path = path.strip_prefix("m/").ok_or(ParseDerivationPathError::MissingMasterPrefix)?;
+        let path =
+            path.strip_prefix("m/").ok_or(ParseAbsoluteDerivationPathError::MissingMasterPrefix)?;
         if path.is_empty() {
-            return Err(ParseDerivationPathError::EmptyChild);
+            return Err(ParseAbsoluteDerivationPathError::EmptyChild);
         }
 
-        Ok(Self(path.parse()?))
+        let mut ret = Vec::new();
+        for part in path.split('/') {
+            if part.is_empty() {
+                return Err(ParseAbsoluteDerivationPathError::EmptyChild);
+            }
+            ret.push(part.parse().map_err(ParseAbsoluteDerivationPathError::Child)?);
+        }
+        Ok(Self(RelativeDerivationPath(ret)))
     }
 }
 
@@ -1372,48 +1381,78 @@ pub mod error {
         }
     }
 
-    /// Error parsing a derivation path.
+    /// Error parsing a relative derivation path.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum ParseDerivationPathError {
+    #[non_exhaustive]
+    pub enum ParseRelativeDerivationPathError {
         /// Failed to parse a child number.
         Child(ParseChildNumberError),
         /// The path contained an empty child number.
         EmptyChild,
-        /// The absolute path was missing the `m` master prefix.
-        MissingMasterPrefix,
         /// The relative path unexpectedly contained the `m` master prefix.
         UnexpectedMasterPrefix,
     }
 
-    impl From<Infallible> for ParseDerivationPathError {
+    impl From<Infallible> for ParseRelativeDerivationPathError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for ParseDerivationPathError {
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseRelativeDerivationPathError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match *self {
+                Self::Child(ref e) => Some(e),
+                Self::EmptyChild | Self::UnexpectedMasterPrefix => None,
+            }
+        }
+    }
+
+    impl fmt::Display for ParseRelativeDerivationPathError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 Self::Child(ref e) => write_err!(f, "failed to parse child number"; e),
                 Self::EmptyChild => f.write_str("derivation path contains an empty child number"),
-                Self::MissingMasterPrefix =>
-                    f.write_str("absolute derivation path is missing master prefix `m`"),
                 Self::UnexpectedMasterPrefix =>
                     f.write_str("relative derivation path contains unexpected master prefix `m`"),
             }
         }
     }
 
+    /// Error parsing an absolute derivation path.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum ParseAbsoluteDerivationPathError {
+        /// Failed to parse a child number.
+        Child(ParseChildNumberError),
+        /// The path contained an empty child number.
+        EmptyChild,
+        /// The absolute path was missing the `m` master prefix.
+        MissingMasterPrefix,
+    }
+
+    impl From<Infallible> for ParseAbsoluteDerivationPathError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     #[cfg(feature = "std")]
-    impl std::error::Error for ParseDerivationPathError {
+    impl std::error::Error for ParseAbsoluteDerivationPathError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match *self {
                 Self::Child(ref e) => Some(e),
-                Self::EmptyChild | Self::MissingMasterPrefix | Self::UnexpectedMasterPrefix => None,
+                Self::EmptyChild | Self::MissingMasterPrefix => None,
             }
         }
     }
 
-    impl From<ParseChildNumberError> for ParseDerivationPathError {
-        fn from(e: ParseChildNumberError) -> Self { Self::Child(e) }
+    impl fmt::Display for ParseAbsoluteDerivationPathError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                Self::Child(ref e) => write_err!(f, "failed to parse child number"; e),
+                Self::EmptyChild => f.write_str("derivation path contains an empty child number"),
+                Self::MissingMasterPrefix =>
+                    f.write_str("absolute derivation path is missing master prefix `m`"),
+            }
+        }
     }
 
     /// Decoded base58 data was an invalid length.
@@ -1568,12 +1607,12 @@ mod tests {
         for path in ["n/0'/0", "4/m/5", "0h/0x"] {
             assert!(matches!(
                 path.parse::<RelativeDerivationPath>(),
-                Err(ParseDerivationPathError::Child(ParseChildNumberError::ParseInt(..))),
+                Err(ParseRelativeDerivationPathError::Child(ParseChildNumberError::ParseInt(..))),
             ));
         }
         assert_eq!(
             "//3/0'".parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::EmptyChild)
+            Err(ParseRelativeDerivationPathError::EmptyChild)
         );
     }
 
@@ -1637,7 +1676,7 @@ mod tests {
         let invalid_path = "2147483648";
         assert_eq!(
             invalid_path.parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::Child(ParseChildNumberError::IndexOutOfRange(
+            Err(ParseRelativeDerivationPathError::Child(ParseChildNumberError::IndexOutOfRange(
                 IndexOutOfRangeError { index: 2_147_483_648 }
             ))),
         );
@@ -1656,11 +1695,11 @@ mod tests {
         assert_eq!("".parse::<RelativeDerivationPath>().unwrap(), RelativeDerivationPath(vec![]));
         assert_eq!(
             "m".parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::UnexpectedMasterPrefix)
+            Err(ParseRelativeDerivationPathError::UnexpectedMasterPrefix)
         );
         assert_eq!(
             "m/".parse::<RelativeDerivationPath>(),
-            Err(ParseDerivationPathError::UnexpectedMasterPrefix)
+            Err(ParseRelativeDerivationPathError::UnexpectedMasterPrefix)
         );
     }
 
@@ -1718,15 +1757,15 @@ mod tests {
 
         assert_eq!(
             "".parse::<AbsoluteDerivationPath>(),
-            Err(ParseDerivationPathError::MissingMasterPrefix)
+            Err(ParseAbsoluteDerivationPathError::MissingMasterPrefix)
         );
         assert_eq!(
             "0/1".parse::<AbsoluteDerivationPath>(),
-            Err(ParseDerivationPathError::MissingMasterPrefix)
+            Err(ParseAbsoluteDerivationPathError::MissingMasterPrefix)
         );
         assert_eq!(
             "m/".parse::<AbsoluteDerivationPath>(),
-            Err(ParseDerivationPathError::EmptyChild)
+            Err(ParseAbsoluteDerivationPathError::EmptyChild)
         );
     }
 
