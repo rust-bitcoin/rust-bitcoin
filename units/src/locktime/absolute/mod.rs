@@ -25,6 +25,7 @@ pub use self::error::{
     ConversionError, IncompatibleHeightError, IncompatibleTimeError, ParseHeightError, ParseTimeError,
 };
 #[cfg(feature = "encoding")]
+#[doc(no_inline)]
 pub use self::error::LockTimeDecoderError;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
