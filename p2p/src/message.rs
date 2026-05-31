@@ -1889,7 +1889,7 @@ pub mod error {
     /// This is currently returned for command strings longer than 12.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub struct CommandStringError(pub alloc::string::String);
+    pub struct CommandStringError(pub(super) alloc::string::String);
 
     impl fmt::Display for CommandStringError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
