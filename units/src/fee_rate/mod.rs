@@ -63,14 +63,14 @@ impl FeeRate {
     /// The fee rate used to compute dust amount.
     pub const DUST: Self = Self::from_sat_per_vb(3);
 
-    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
+    /// Constructs a new [`FeeRate`] from satoshis per 1,000 weight units.
     #[inline]
     pub const fn from_sat_per_kwu(sat_kwu: u32) -> Self {
         let fee_rate = (const_casts::u32_to_u64(sat_kwu)) * 4_000;
         Self::from_sat_per_mvb(fee_rate)
     }
 
-    /// Constructs a new [`FeeRate`] from amount per 1000 weight units.
+    /// Constructs a new [`FeeRate`] from amount per 1,000 weight units.
     #[inline]
     pub const fn from_per_kwu(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
