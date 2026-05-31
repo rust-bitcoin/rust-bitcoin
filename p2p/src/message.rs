@@ -2246,8 +2246,15 @@ impl<'a> Arbitrary<'a> for InventoryPayload {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for CommandString {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let s = u.arbitrary::<String>()?;
-        Self::try_from(s).map_err(|_| arbitrary::Error::IncorrectFormat)
+        let mut buf = [0; Self::MAX_LEN];
+        let mut buf_iter = buf.iter_mut();
+
+        // ascii `0` pads end of command.
+        while let (Some(dest), ascii @ 1..) = (buf_iter.next(), u8::arbitrary(u)? % 128) {
+            *dest = ascii;
+        }
+
+        Ok(Self(buf))
     }
 }
 
