@@ -1409,7 +1409,11 @@ pub mod error {
 
     impl fmt::Display for InvalidSeedLengthError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "invalid BIP-0032 master seed length: {} (expected 16 to 64 inclusive)", self.length)
+            write!(
+                f,
+                "invalid BIP-0032 master seed length: {} (expected 16 to 64 inclusive)",
+                self.length
+            )
         }
     }
 

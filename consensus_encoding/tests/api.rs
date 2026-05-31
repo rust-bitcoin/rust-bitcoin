@@ -9,7 +9,8 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use core::{convert::Infallible, fmt};
+use core::convert::Infallible;
+use core::fmt;
 
 use bitcoin_consensus_encoding::{
     self as encoding, encoder_newtype, ArrayDecoder, ArrayEncoder, ArrayRefEncoder, BytesEncoder,

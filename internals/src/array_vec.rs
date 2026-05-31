@@ -104,7 +104,9 @@ impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
         // * first being non-None implies the element exists therefore one-past the length <=
         //   CAP
         // * all elements up to old_len were already filled and we just added one
-        unsafe { self.set_len(old_len + 1); }
+        unsafe {
+            self.set_len(old_len + 1);
+        }
         Ok(())
     }
 

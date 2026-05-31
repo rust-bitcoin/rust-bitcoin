@@ -661,9 +661,7 @@ impl LegacyPublicKey {
 
     /// Returns bitcoin 160-bit hash of the public key.
     #[inline]
-    pub fn pubkey_hash(&self) -> PubkeyHash {
-        PubkeyHash(hash160::Hash::hash(&self.serialize()))
-    }
+    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.serialize())) }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     ///
