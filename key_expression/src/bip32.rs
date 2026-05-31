@@ -1468,17 +1468,17 @@ pub mod error {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for IndexOutOfRangeError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "index {} out of range [0, 2^31 - 1] (do you have a hardened child number, rather than an index?)", self.index)
-        }
-    }
-
     #[cfg(feature = "std")]
     impl std::error::Error for IndexOutOfRangeError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self { index: _ } = self;
             None
+        }
+    }
+
+    impl fmt::Display for IndexOutOfRangeError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "index {} out of range [0, 2^31 - 1] (do you have a hardened child number, rather than an index?)", self.index)
         }
     }
 
@@ -1495,21 +1495,21 @@ pub mod error {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for ParseChildNumberError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match *self {
-                Self::IndexOutOfRange(ref e) => e.fmt(f),
-                Self::ParseInt(ref e) => e.fmt(f),
-            }
-        }
-    }
-
     #[cfg(feature = "std")]
     impl std::error::Error for ParseChildNumberError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match *self {
                 Self::IndexOutOfRange(ref e) => Some(e),
                 Self::ParseInt(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl fmt::Display for ParseChildNumberError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                Self::IndexOutOfRange(ref e) => e.fmt(f),
+                Self::ParseInt(ref e) => e.fmt(f),
             }
         }
     }
@@ -1595,13 +1595,21 @@ pub mod error {
         pub(crate) length: usize,
     }
 
+    impl From<Infallible> for InvalidBase58PayloadLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidBase58PayloadLengthError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { length: _ } = self;
+            None
+        }
+    }
+
     impl InvalidBase58PayloadLengthError {
         /// Returns the invalid payload length.
         pub fn invalid_base58_payload_length(&self) -> usize { self.length }
-    }
-
-    impl From<Infallible> for InvalidBase58PayloadLengthError {
-        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for InvalidBase58PayloadLengthError {
@@ -1614,27 +1622,27 @@ pub mod error {
         }
     }
 
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidBase58PayloadLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { length: _ } = self;
-            None
-        }
-    }
-
     /// Master seed had an invalid length.
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub struct InvalidSeedLengthError {
         pub(crate) length: usize,
     }
 
+    impl From<Infallible> for InvalidSeedLengthError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for InvalidSeedLengthError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { length: _ } = self;
+            None
+        }
+    }
+
     impl InvalidSeedLengthError {
         /// Returns the invalid seed length.
         pub fn invalid_seed_length(&self) -> usize { self.length }
-    }
-
-    impl From<Infallible> for InvalidSeedLengthError {
-        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for InvalidSeedLengthError {
@@ -1644,14 +1652,6 @@ pub mod error {
                 "invalid BIP-0032 master seed length: {} (expected 16 to 64 inclusive)",
                 self.length
             )
-        }
-    }
-
-    #[cfg(feature = "std")]
-    impl std::error::Error for InvalidSeedLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            let Self { length: _ } = self;
-            None
         }
     }
 }
