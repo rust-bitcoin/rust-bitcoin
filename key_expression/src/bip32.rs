@@ -21,9 +21,13 @@ use network::NetworkKind;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(no_inline)]
 pub use self::error::{
-    DerivationError, IndexOutOfRangeError, InvalidBase58PayloadLengthError,
-    ParseChildNumberError, ParseDerivationPathError, ParseError, InvalidSeedLengthError
+    CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
+    InvalidBase58PayloadLengthError, InvalidSeedLengthError, MaximumDepthExceededError,
+    ParseChildNumberError, ParseDerivationPathError, ParseError
 };
+#[doc(no_inline)]
+#[allow(deprecated_in_future)]
+pub use self::error::DerivationError;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -758,7 +762,10 @@ impl Xpriv {
     ///
     /// [`derive_xpriv`]: Xpriv::derive_xpriv
     #[deprecated(since = "TBD", note = "use `derive_xpriv()` instead")]
-    pub fn derive_priv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_priv<P: AsRef<[ChildNumber]>>(
+        &self,
+        path: P,
+    ) -> Result<Self, MaximumDepthExceededError> {
         self.derive_xpriv(path)
     }
 
@@ -769,7 +776,10 @@ impl Xpriv {
     /// # Errors
     ///
     /// Returns an error if the derived key exceeds the maximum key depth.
-    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_xpriv<P: AsRef<[ChildNumber]>>(
+        &self,
+        path: P,
+    ) -> Result<Self, MaximumDepthExceededError> {
         let mut sk: Self = *self;
         for cnum in path.as_ref() {
             sk = sk.ckd_priv(*cnum)?;
@@ -778,7 +788,7 @@ impl Xpriv {
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv(&self, i: ChildNumber) -> Result<Self, DerivationError> {
+    fn ckd_priv(&self, i: ChildNumber) -> Result<Self, MaximumDepthExceededError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
         if i.is_normal() {
             // Non-hardened key: compute public data and use that.
@@ -800,7 +810,7 @@ impl Xpriv {
 
         Ok(Self {
             network: self.network,
-            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
+            depth: self.depth.checked_add(1).ok_or(MaximumDepthExceededError {})?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             private_key: tweaked,
@@ -913,7 +923,7 @@ impl Xpub {
     ///
     /// [`derive_xpub`]: Xpub::derive_xpub
     #[deprecated(since = "TBD", note = "use `derive_xpub()` instead")]
-    pub fn derive_pub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_pub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DeriveXpubError> {
         self.derive_xpub(path)
     }
 
@@ -925,7 +935,7 @@ impl Xpub {
     /// # Errors
     ///
     /// Returns an error if any of the [`ChildNumber`]s are hardened.
-    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DerivationError> {
+    pub fn derive_xpub<P: AsRef<[ChildNumber]>>(&self, path: P) -> Result<Self, DeriveXpubError> {
         let mut pk: Self = *self;
         for cnum in path.as_ref() {
             pk = pk.ckd_pub(*cnum)?;
@@ -942,9 +952,9 @@ impl Xpub {
     pub fn ckd_pub_tweak(
         &self,
         i: ChildNumber,
-    ) -> Result<(secp256k1::SecretKey, ChainCode), DerivationError> {
+    ) -> Result<(secp256k1::SecretKey, ChainCode), CannotDeriveHardenedChildError> {
         if i.is_hardened() {
-            return Err(DerivationError::CannotDeriveHardenedChild);
+            return Err(CannotDeriveHardenedChildError {});
         }
 
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
@@ -967,14 +977,18 @@ impl Xpub {
     /// Returns an error if the given [`ChildNumber`] is hardened, or if next key exceeds
     /// the maximum derivation depth.
     #[allow(clippy::missing_panics_doc)]
-    pub fn ckd_pub(&self, i: ChildNumber) -> Result<Self, DerivationError> {
-        let (sk, chain_code) = self.ckd_pub_tweak(i)?;
+    pub fn ckd_pub(&self, i: ChildNumber) -> Result<Self, DeriveXpubError> {
+        let (sk, chain_code) =
+            self.ckd_pub_tweak(i).map_err(DeriveXpubError::CannotDeriveHardenedChild)?;
         let tweaked =
             self.public_key.add_exp_tweak(&sk.into()).expect("cryptographically unreachable");
 
         Ok(Self {
             network: self.network,
-            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
+            depth: self
+                .depth
+                .checked_add(1)
+                .ok_or(DeriveXpubError::MaximumDepthExceeded(MaximumDepthExceededError {}))?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: tweaked,
@@ -1220,44 +1234,82 @@ pub mod error {
         fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
     }
 
-    /// A BIP-0032 error
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    /// Attempted to derive a child of depth 256 or higher.
+    ///
+    /// There is no way to encode such xkeys.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub enum DerivationError {
-        /// Attempted to derive a hardened child from an xpub.
-        ///
-        /// You can only derive hardened children from xprivs.
-        CannotDeriveHardenedChild,
-        /// Attempted to derive a child of depth 256 or higher.
-        ///
-        /// There is no way to encode such xkeys.
-        MaximumDepthExceeded,
-    }
+    pub struct MaximumDepthExceededError {}
 
-    impl From<Infallible> for DerivationError {
+    impl From<Infallible> for MaximumDepthExceededError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "std")]
-    impl std::error::Error for DerivationError {
+    impl std::error::Error for MaximumDepthExceededError {}
+
+    impl fmt::Display for MaximumDepthExceededError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("cannot derive child of depth 256 or higher")
+        }
+    }
+
+    /// Attempted to derive a hardened child from an xpub.
+    ///
+    /// You can only derive hardened children from xprivs.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub struct CannotDeriveHardenedChildError {}
+
+    impl From<Infallible> for CannotDeriveHardenedChildError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for CannotDeriveHardenedChildError {}
+
+    impl fmt::Display for CannotDeriveHardenedChildError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("cannot derive hardened child of public key")
+        }
+    }
+
+    /// Error deriving an extended public key.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum DeriveXpubError {
+        /// Attempted to derive a hardened child from an xpub.
+        CannotDeriveHardenedChild(CannotDeriveHardenedChildError),
+        /// Attempted to derive a child of depth 256 or higher.
+        MaximumDepthExceeded(MaximumDepthExceededError),
+    }
+
+    impl From<Infallible> for DeriveXpubError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for DeriveXpubError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
-                Self::CannotDeriveHardenedChild => None,
-                Self::MaximumDepthExceeded => None,
+                Self::CannotDeriveHardenedChild(ref e) => Some(e),
+                Self::MaximumDepthExceeded(ref e) => Some(e),
             }
         }
     }
 
-    impl fmt::Display for DerivationError {
+    impl fmt::Display for DeriveXpubError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
-                Self::CannotDeriveHardenedChild =>
-                    f.write_str("cannot derive hardened child of public key"),
-                Self::MaximumDepthExceeded =>
-                    f.write_str("cannot derive child of depth 256 or higher"),
+                Self::CannotDeriveHardenedChild(ref e) => e.fmt(f),
+                Self::MaximumDepthExceeded(ref e) => e.fmt(f),
             }
         }
     }
+
+    /// Deprecated name for errors deriving an extended public key.
+    #[deprecated(since = "TBD", note = "use `DeriveXpubError` instead")]
+    pub type DerivationError = DeriveXpubError;
 
     /// Out-of-range index when constructing a child number.
     ///
@@ -1749,7 +1801,10 @@ mod tests {
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.contains_hardened_child() {
-            assert_eq!(pk.derive_xpub(path), Err(DerivationError::CannotDeriveHardenedChild));
+            assert_eq!(
+                pk.derive_xpub(path),
+                Err(DeriveXpubError::CannotDeriveHardenedChild(CannotDeriveHardenedChildError {}))
+            );
         } else {
             assert_eq!(&pk.derive_xpub(path).unwrap().to_string()[..], expected_pk);
         }
@@ -1762,7 +1817,12 @@ mod tests {
                 pk = Xpub::from_xpriv(&sk);
                 assert_eq!(pk, pk2);
             } else {
-                assert_eq!(pk.ckd_pub(num), Err(DerivationError::CannotDeriveHardenedChild));
+                assert_eq!(
+                    pk.ckd_pub(num),
+                    Err(DeriveXpubError::CannotDeriveHardenedChild(
+                        CannotDeriveHardenedChildError {}
+                    ))
+                );
                 pk = Xpub::from_xpriv(&sk);
             }
         }
