@@ -23,8 +23,8 @@ use network::NetworkKind;
 pub use self::error::{
     CannotDeriveHardenedChildError, DeriveXpubError, IndexOutOfRangeError,
     InvalidBase58PayloadLengthError, InvalidSeedLengthError, MaximumDepthExceededError,
-    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseError,
-    ParseRelativeDerivationPathError
+    ParseAbsoluteDerivationPathError, ParseChildNumberError, ParseRelativeDerivationPathError,
+    ParseXprivError, ParseXpubError, XkeyDecodeError, XprivDecodeError, XpubDecodeError
 };
 #[doc(no_inline)]
 #[allow(deprecated_in_future)]
@@ -827,31 +827,27 @@ impl Xpriv {
         })
     }
 
-    /// Decoding extended private key from binary data according to BIP-0032
+    /// Decodes an extended private key from binary data according to BIP-0032.
     ///
     /// # Errors
     ///
-    /// * [`ParseError::UnknownVersion`] if the decoded network value is not main or testnet.
-    /// * [`ParseError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
-    /// * [`ParseError::Secp256k1`] if the private key bytes are not a valid secp secret key.
-    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
-    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
-    ///   fingerprint is non-zero.
-    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
-    ///   non-zero.
-    pub fn decode(data: &[u8]) -> Result<Self, ParseError> {
+    /// * [`XprivDecodeError::Xkey`] if the common xkey fields are invalid.
+    /// * [`XprivDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
+    /// * [`XprivDecodeError::InvalidPrivateKeyPrefix`] if the private key bytes don't start with zero.
+    /// * [`XprivDecodeError::Secp256k1`] if the private key bytes are not a valid secp secret key.
+    pub fn decode(data: &[u8]) -> Result<Self, XprivDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
-            Common::decode(data)?;
+            Common::decode(data).map_err(XprivDecodeError::Xkey)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PRIVATE => NetworkKind::Test,
-            unknown => return Err(ParseError::UnknownVersion(unknown)),
+            unknown => return Err(XprivDecodeError::UnknownVersion(unknown)),
         };
 
         let (&zero, private_key) = key.split_first();
         if zero != 0 {
-            return Err(ParseError::InvalidPrivateKeyPrefix);
+            return Err(XprivDecodeError::InvalidPrivateKeyPrefix);
         }
 
         Ok(Self {
@@ -1005,25 +1001,21 @@ impl Xpub {
         })
     }
 
-    /// Decoding extended public key from binary data according to BIP-0032
+    /// Decodes an extended public key from binary data according to BIP-0032.
     ///
     /// # Errors
     ///
-    /// * [`ParseError::UnknownVersion`] if the decoded network value is not main or testnet.
-    /// * [`ParseError::Secp256k1`] if the public key bytes are not a valid secp public key.
-    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
-    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
-    ///   fingerprint is non-zero.
-    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
-    ///   non-zero.
-    pub fn decode(data: &[u8]) -> Result<Self, ParseError> {
+    /// * [`XpubDecodeError::Xkey`] if the common xkey fields are invalid.
+    /// * [`XpubDecodeError::UnknownVersion`] if the decoded network value is not main or testnet.
+    /// * [`XpubDecodeError::Secp256k1`] if the public key bytes are not a valid secp public key.
+    pub fn decode(data: &[u8]) -> Result<Self, XpubDecodeError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
-            Common::decode(data)?;
+            Common::decode(data).map_err(XpubDecodeError::Xkey)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PUBLIC => NetworkKind::Test,
-            unknown => return Err(ParseError::UnknownVersion(unknown)),
+            unknown => return Err(XpubDecodeError::UnknownVersion(unknown)),
         };
 
         Ok(Self {
@@ -1069,16 +1061,18 @@ impl fmt::Display for Xpriv {
 }
 
 impl FromStr for Xpriv {
-    type Err = ParseError;
+    type Err = ParseXprivError;
 
-    fn from_str(inp: &str) -> Result<Self, ParseError> {
+    fn from_str(inp: &str) -> Result<Self, ParseXprivError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() }.into());
+            return Err(ParseXprivError::InvalidBase58PayloadLength(
+                InvalidBase58PayloadLengthError { length: data.len() },
+            ));
         }
 
-        Self::decode(&data)
+        Self::decode(&data).map_err(ParseXprivError::Decode)
     }
 }
 
@@ -1089,16 +1083,18 @@ impl fmt::Display for Xpub {
 }
 
 impl FromStr for Xpub {
-    type Err = ParseError;
+    type Err = ParseXpubError;
 
-    fn from_str(inp: &str) -> Result<Self, ParseError> {
+    fn from_str(inp: &str) -> Result<Self, ParseXpubError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(InvalidBase58PayloadLengthError { length: data.len() }.into());
+            return Err(ParseXpubError::InvalidBase58PayloadLength(
+                InvalidBase58PayloadLengthError { length: data.len() },
+            ));
         }
 
-        Self::decode(&data)
+        Self::decode(&data).map_err(ParseXpubError::Decode)
     }
 }
 
@@ -1126,14 +1122,14 @@ impl Common {
     ///
     /// # Errors
     ///
-    /// * [`ParseError::WrongExtendedKeyLength`] if the data is not the correct length.
-    /// * [`ParseError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
+    /// * [`XkeyDecodeError::WrongExtendedKeyLength`] if the data is not the correct length.
+    /// * [`XkeyDecodeError::NonZeroParentFingerprintForMasterKey`] if the depth is 0 and the master key
     ///   fingerprint is non-zero.
-    /// * [`ParseError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
+    /// * [`XkeyDecodeError::NonZeroChildNumberForMasterKey`] if the depth is 0 and the child number is
     ///   non-zero.
-    fn decode(data: &[u8]) -> Result<Self, ParseError> {
+    fn decode(data: &[u8]) -> Result<Self, XkeyDecodeError> {
         let data: &[u8; 78] =
-            data.try_into().map_err(|_| ParseError::WrongExtendedKeyLength(data.len()))?;
+            data.try_into().map_err(|_| XkeyDecodeError::WrongExtendedKeyLength(data.len()))?;
 
         let (&network, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
@@ -1143,11 +1139,11 @@ impl Common {
 
         if depth == 0 {
             if parent_fingerprint != [0u8; 4] {
-                return Err(ParseError::NonZeroParentFingerprintForMasterKey);
+                return Err(XkeyDecodeError::NonZeroParentFingerprintForMasterKey);
             }
 
             if child_number != [0u8; 4] {
-                return Err(ParseError::NonZeroChildNumberForMasterKey);
+                return Err(XkeyDecodeError::NonZeroChildNumberForMasterKey);
             }
         }
 
@@ -1169,45 +1165,38 @@ pub mod error {
 
     use internals::write_err;
 
-    /// A BIP-0032 error
+    /// Error decoding common fields of a BIP-0032 extended key.
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
-    pub enum ParseError {
-        /// A secp256k1 error occurred
-        Secp256k1(secp256k1::Error),
-        /// Unknown version magic bytes
-        UnknownVersion([u8; 4]),
+    pub enum XkeyDecodeError {
         /// Encoded extended key data has wrong length
         WrongExtendedKeyLength(usize),
-        /// Base58 encoding error
-        Base58(base58::Error),
-        /// Base58 decoded data was an invalid length.
-        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
-        /// Invalid private key prefix (byte 45 must be 0)
-        InvalidPrivateKeyPrefix,
         /// Non-zero parent fingerprint for a master key (depth 0)
         NonZeroParentFingerprintForMasterKey,
         /// Non-zero child number for a master key (depth 0)
         NonZeroChildNumberForMasterKey,
     }
 
-    impl From<Infallible> for ParseError {
+    impl From<Infallible> for XkeyDecodeError {
         fn from(never: Infallible) -> Self { match never {} }
     }
 
-    impl fmt::Display for ParseError {
+    #[cfg(feature = "std")]
+    impl std::error::Error for XkeyDecodeError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::WrongExtendedKeyLength(_) => None,
+                Self::NonZeroParentFingerprintForMasterKey => None,
+                Self::NonZeroChildNumberForMasterKey => None,
+            }
+        }
+    }
+
+    impl fmt::Display for XkeyDecodeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
-                Self::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
-                Self::UnknownVersion(ref bytes) =>
-                    write!(f, "unknown version magic bytes: {:?}", bytes),
                 Self::WrongExtendedKeyLength(ref len) =>
                     write!(f, "encoded extended key data has wrong length {}", len),
-                Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
-                Self::InvalidPrivateKeyPrefix => f.write_str(
-                    "invalid private key prefix, byte 45 must be 0 as required by BIP-0032",
-                ),
                 Self::NonZeroParentFingerprintForMasterKey =>
                     f.write_str("non-zero parent fingerprint in master key"),
                 Self::NonZeroChildNumberForMasterKey =>
@@ -1216,31 +1205,175 @@ pub mod error {
         }
     }
 
+    /// Error decoding binary BIP-0032 xpriv data.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum XprivDecodeError {
+        /// A common xkey decode error.
+        Xkey(XkeyDecodeError),
+        /// A secp256k1 error occurred.
+        Secp256k1(secp256k1::Error),
+        /// Unknown private version magic bytes.
+        UnknownVersion([u8; 4]),
+        /// Invalid private key prefix (byte 45 must be 0).
+        InvalidPrivateKeyPrefix,
+    }
+
+    impl From<Infallible> for XprivDecodeError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
     #[cfg(feature = "std")]
-    impl std::error::Error for ParseError {
+    impl std::error::Error for XprivDecodeError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
+                Self::Xkey(ref e) => Some(e),
                 Self::Secp256k1(ref e) => Some(e),
-                Self::Base58(ref e) => Some(e),
-                Self::InvalidBase58PayloadLength(ref e) => Some(e),
-                Self::UnknownVersion(_) | Self::WrongExtendedKeyLength(_) => None,
-                Self::InvalidPrivateKeyPrefix => None,
-                Self::NonZeroParentFingerprintForMasterKey => None,
-                Self::NonZeroChildNumberForMasterKey => None,
+                Self::UnknownVersion(_) | Self::InvalidPrivateKeyPrefix => None,
             }
         }
     }
 
-    impl From<secp256k1::Error> for ParseError {
+    impl fmt::Display for XprivDecodeError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Xkey(ref e) => e.fmt(f),
+                Self::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+                Self::UnknownVersion(ref bytes) =>
+                    write!(f, "unknown private version magic bytes: {:?}", bytes),
+                Self::InvalidPrivateKeyPrefix => f.write_str(
+                    "invalid private key prefix, byte 45 must be 0 as required by BIP-0032",
+                ),
+            }
+        }
+    }
+
+    impl From<secp256k1::Error> for XprivDecodeError {
         fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
     }
 
-    impl From<base58::Error> for ParseError {
-        fn from(err: base58::Error) -> Self { Self::Base58(err) }
+    /// Error decoding binary BIP-0032 xpub data.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum XpubDecodeError {
+        /// A common xkey decode error.
+        Xkey(XkeyDecodeError),
+        /// A secp256k1 error occurred.
+        Secp256k1(secp256k1::Error),
+        /// Unknown public version magic bytes.
+        UnknownVersion([u8; 4]),
     }
 
-    impl From<InvalidBase58PayloadLengthError> for ParseError {
-        fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
+    impl From<Infallible> for XpubDecodeError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for XpubDecodeError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Xkey(ref e) => Some(e),
+                Self::Secp256k1(ref e) => Some(e),
+                Self::UnknownVersion(_) => None,
+            }
+        }
+    }
+
+    impl fmt::Display for XpubDecodeError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Xkey(ref e) => e.fmt(f),
+                Self::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+                Self::UnknownVersion(ref bytes) =>
+                    write!(f, "unknown public version magic bytes: {:?}", bytes),
+            }
+        }
+    }
+
+    impl From<secp256k1::Error> for XpubDecodeError {
+        fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
+    }
+
+    /// Error parsing a base58check BIP-0032 xpriv string.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum ParseXprivError {
+        /// Base58 encoding error.
+        Base58(base58::Error),
+        /// Base58 decoded data was an invalid length.
+        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+        /// Binary xpriv decode error.
+        Decode(XprivDecodeError),
+    }
+
+    impl From<Infallible> for ParseXprivError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseXprivError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Base58(ref e) => Some(e),
+                Self::InvalidBase58PayloadLength(ref e) => Some(e),
+                Self::Decode(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl fmt::Display for ParseXprivError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
+                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
+                Self::Decode(ref e) => e.fmt(f),
+            }
+        }
+    }
+
+    impl From<base58::Error> for ParseXprivError {
+        fn from(e: base58::Error) -> Self { Self::Base58(e) }
+    }
+
+    /// Error parsing a base58check BIP-0032 xpub string.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[non_exhaustive]
+    pub enum ParseXpubError {
+        /// Base58 encoding error.
+        Base58(base58::Error),
+        /// Base58 decoded data was an invalid length.
+        InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+        /// Binary xpub decode error.
+        Decode(XpubDecodeError),
+    }
+
+    impl From<Infallible> for ParseXpubError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for ParseXpubError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Base58(ref e) => Some(e),
+                Self::InvalidBase58PayloadLength(ref e) => Some(e),
+                Self::Decode(ref e) => Some(e),
+            }
+        }
+    }
+
+    impl fmt::Display for ParseXpubError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match self {
+                Self::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
+                Self::InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
+                Self::Decode(ref e) => e.fmt(f),
+            }
+        }
+    }
+
+    impl From<base58::Error> for ParseXpubError {
+        fn from(e: base58::Error) -> Self { Self::Base58(e) }
     }
 
     /// Attempted to derive a child of depth 256 or higher.
@@ -2015,7 +2148,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(ParseError::InvalidPrivateKeyPrefix) => {}
+            Err(XprivDecodeError::InvalidPrivateKeyPrefix) => {}
             _ => panic!("Expected InvalidPrivateKeyPrefix error, got {:?}", result),
         }
     }
@@ -2026,7 +2159,9 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(ParseError::NonZeroChildNumberForMasterKey) => {}
+            Err(ParseXprivError::Decode(XprivDecodeError::Xkey(
+                XkeyDecodeError::NonZeroChildNumberForMasterKey,
+            ))) => {}
             _ => panic!("Expected NonZeroChildNumberForMasterKey error, got {:?}", result),
         }
     }
@@ -2037,7 +2172,9 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(ParseError::NonZeroParentFingerprintForMasterKey) => {}
+            Err(ParseXprivError::Decode(XprivDecodeError::Xkey(
+                XkeyDecodeError::NonZeroParentFingerprintForMasterKey,
+            ))) => {}
             _ => panic!("Expected NonZeroParentFingerprintForMasterKey error, got {:?}", result),
         }
     }
