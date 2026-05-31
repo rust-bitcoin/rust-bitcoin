@@ -14,10 +14,7 @@ struct Hmacs {
 
 impl<'a> Arbitrary<'a> for Hmacs {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            sha1: u.arbitrary()?,
-            sha512: u.arbitrary()?,
-        })
+        Ok(Self { sha1: u.arbitrary()?, sha512: u.arbitrary()? })
     }
 }
 
@@ -30,11 +27,7 @@ struct Main {
 
 impl<'a> Arbitrary<'a> for Main {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self {
-            hmacs: u.arbitrary()?,
-            ripemd: u.arbitrary()?,
-            sha2d: u.arbitrary()?,
-        })
+        Ok(Self { hmacs: u.arbitrary()?, ripemd: u.arbitrary()?, sha2d: u.arbitrary()? })
     }
 }
 

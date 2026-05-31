@@ -429,14 +429,9 @@ fn witness_commitment_from_coinbase(coinbase: &Transaction) -> Option<WitnessCom
     }
 
     // Commitment is in the last output that starts with magic bytes.
-    if let Some(pos) = coinbase
-        .outputs
-        .iter()
-        .rposition(|o| {
-            o.script_pubkey.len() >= 38
-                && o.script_pubkey.as_bytes()[0..6] == WITNESS_COMMITMENT_MAGIC
-        })
-    {
+    if let Some(pos) = coinbase.outputs.iter().rposition(|o| {
+        o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == WITNESS_COMMITMENT_MAGIC
+    }) {
         let bytes =
             <[u8; 32]>::try_from(&coinbase.outputs[pos].script_pubkey.as_bytes()[6..38]).unwrap();
         Some(WitnessCommitment::from_byte_array(bytes))
