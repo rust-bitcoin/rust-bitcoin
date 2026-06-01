@@ -104,7 +104,7 @@ impl FeeRate {
         Self::from_sat_per_mvb(fee_rate)
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
+    /// Constructs a new [`FeeRate`] from amount per kilo virtual bytes (1,000 vbytes).
     #[inline]
     pub const fn from_per_kvb(rate: Amount) -> NumOpResult<Self> {
         // No `map()` in const context.
