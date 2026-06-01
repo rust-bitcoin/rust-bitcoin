@@ -90,6 +90,8 @@ impl Weight {
 
     /// Constructs a new `Weight` from a prefixed hex string.
     ///
+    /// The hex string once parsed is assumed to represent weight units.
+    ///
     /// # Errors
     ///
     /// If the input string is not a valid hex representation of a weight in weight units or it
@@ -101,6 +103,8 @@ impl Weight {
     }
 
     /// Constructs a new `Weight` from an unprefixed hex string.
+    ///
+    /// The hex string once parsed is assumed to represent weight units.
     ///
     /// # Errors
     ///
