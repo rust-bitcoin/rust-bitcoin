@@ -108,7 +108,7 @@ mod sha1 {
 
 mod sha256 {
     use super::stable;
-    use crate::sha256::Hash;
+    use crate::sha256::{Hash, HashEngine, Midstate};
     use crate::Hash as _;
 
     impl Hash {
@@ -120,6 +120,62 @@ mod sha256 {
         /// Converts a stable type to a pre-1.0 type.
         pub fn from_stable(stable: stable::sha256::Hash) -> Self {
             Self::from_byte_array(stable.to_byte_array())
+        }
+    }
+
+    impl Midstate {
+        /// Converts pre-1.0 type to a stable type.
+        ///
+        /// The stable [`sha256::Midstate`] includes the number of bytes hashed alongside the
+        /// midstate bytes but the pre-1.0 type does not — callers must supply this value.
+        pub fn to_stable(self, bytes_hashed: u64) -> stable::sha256::Midstate {
+            stable::sha256::Midstate::new(self.to_byte_array(), bytes_hashed)
+        }
+
+        /// Converts a stable type to a pre-1.0 type.
+        ///
+        /// Note: the number of bytes hashed is discarded during this conversion.
+        pub fn from_stable(stable: stable::sha256::Midstate) -> Self {
+            let (bytes, _) = stable.to_parts();
+            Self::from_byte_array(bytes)
+        }
+    }
+
+    impl HashEngine {
+        /// Converts pre-1.0 type to a stable type.
+        ///
+        /// Only engines where the number of bytes hashed so far is a multiple of the block size
+        /// (64) can be converted, because the pre-1.0 midstate does not carry the partial block
+        /// buffer. This matches the constraint already imposed by the pre-1.0
+        /// [`HashEngine::from_midstate`].
+        ///
+        /// # Panics
+        ///
+        /// Panics if `self.n_bytes_hashed() % 64 != 0`.
+        pub fn to_stable(self) -> stable::sha256::HashEngine {
+            use crate::HashEngine as _;
+
+            let n = self.n_bytes_hashed();
+            assert!(n % 64 == 0, "cannot convert sha256::HashEngine: {n} bytes hashed is not a multiple of 64");
+            let stable_midstate = self.midstate().to_stable(n as u64);
+            stable::sha256::HashEngine::from_midstate(stable_midstate)
+        }
+
+        /// Converts a stable type to a pre-1.0 type.
+        ///
+        /// Only engines where the number of bytes hashed so far is a multiple of the block size
+        /// (64) can be converted.
+        ///
+        /// # Panics
+        ///
+        /// Panics if the stable engine's bytes hashed is not a multiple of 64.
+        pub fn from_stable(stable_engine: stable::sha256::HashEngine) -> Self {
+            let stable_midstate = stable_engine
+                .midstate()
+                .expect("cannot convert sha256::HashEngine: bytes hashed is not a multiple of 64");
+            let (bytes, bytes_hashed) = stable_midstate.to_parts();
+            let midstate = Midstate::from_byte_array(bytes);
+            Self::from_midstate(midstate, bytes_hashed as usize)
         }
     }
 }
