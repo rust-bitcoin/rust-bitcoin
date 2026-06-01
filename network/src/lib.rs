@@ -151,6 +151,34 @@ impl Network {
     }
 }
 
+impl fmt::Display for Network {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", self.as_display_str())
+    }
+}
+
+impl FromStr for Network {
+    type Err = ParseNetworkError;
+
+    /// Parses a network identifier string into a `Network`.
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bitcoin" => Ok(Self::Bitcoin),
+            // For user-side compatibility, testnet3 is retained as testnet
+            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
+            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
+            "signet" => Ok(Self::Signet),
+            "regtest" => Ok(Self::Regtest),
+            _ => Err(ParseNetworkError(InputString::from(s))),
+        }
+    }
+}
+
+impl AsRef<Self> for Network {
+    fn as_ref(&self) -> &Self { self }
+}
+
 #[cfg(feature = "serde")]
 impl Serialize for Network {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -185,12 +213,6 @@ impl<'de> Deserialize<'de> for Network {
         }
 
         deserializer.deserialize_str(NetworkVisitor)
-    }
-}
-
-impl fmt::Display for Network {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", self.as_display_str())
     }
 }
 
@@ -257,28 +279,6 @@ pub mod as_core_arg {
 
         deserializer.deserialize_str(NetworkVisitor)
     }
-}
-
-impl FromStr for Network {
-    type Err = ParseNetworkError;
-
-    /// Parses a network identifier string into a `Network`.
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "bitcoin" => Ok(Self::Bitcoin),
-            // For user-side compatibility, testnet3 is retained as testnet
-            "testnet" => Ok(Self::Testnet(TestnetVersion::V3)),
-            "testnet4" => Ok(Self::Testnet(TestnetVersion::V4)),
-            "signet" => Ok(Self::Signet),
-            "regtest" => Ok(Self::Regtest),
-            _ => Err(ParseNetworkError(InputString::from(s))),
-        }
-    }
-}
-
-impl AsRef<Self> for Network {
-    fn as_ref(&self) -> &Self { self }
 }
 
 #[cfg(feature = "arbitrary")]
