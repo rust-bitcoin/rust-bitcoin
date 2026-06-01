@@ -194,7 +194,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-network-kind"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "arbitrary",
  "bitcoin-internals 0.5.0",
