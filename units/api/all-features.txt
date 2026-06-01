@@ -303,12 +303,14 @@ pub fn bitcoin_units::amount::Amount::from_btc(btc: f64) -> core::result::Result
 pub fn bitcoin_units::amount::Amount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseAmountError>
 pub const fn bitcoin_units::amount::Amount::from_int_btc(btc: u64) -> bitcoin_units::amount::Amount
 pub const fn bitcoin_units::amount::Amount::from_sat(satoshi: u64) -> bitcoin_units::amount::Amount
+pub fn bitcoin_units::amount::Amount::from_stable(stable: bitcoin_units::amount::unsigned::encapsulate::Amount) -> Self
 pub fn bitcoin_units::amount::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::amount::Amount::from_str_with_denomination(s: &str) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseError>
 pub fn bitcoin_units::amount::Amount::to_btc(self) -> f64
 pub fn bitcoin_units::amount::Amount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
 pub fn bitcoin_units::amount::Amount::to_sat(self) -> u64
 pub fn bitcoin_units::amount::Amount::to_signed(self) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::OutOfRangeError>
+pub fn bitcoin_units::amount::Amount::to_stable(self) -> core::result::Result<bitcoin_units::amount::unsigned::encapsulate::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::amount::Amount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::Amount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::Amount::unchecked_add(self, rhs: bitcoin_units::amount::Amount) -> bitcoin_units::amount::Amount
@@ -890,6 +892,7 @@ pub fn bitcoin_units::amount::SignedAmount::fmt_value_in(self, f: &mut dyn core:
 pub fn bitcoin_units::amount::SignedAmount::from_btc(btc: f64) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::amount::SignedAmount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub const fn bitcoin_units::amount::SignedAmount::from_sat(satoshi: i64) -> bitcoin_units::amount::SignedAmount
+pub fn bitcoin_units::amount::SignedAmount::from_stable(stable: bitcoin_units::amount::signed::encapsulate::SignedAmount) -> Self
 pub fn bitcoin_units::amount::SignedAmount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::amount::SignedAmount::from_str_with_denomination(s: &str) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseError>
 pub fn bitcoin_units::amount::SignedAmount::is_negative(self) -> bool
@@ -899,6 +902,7 @@ pub fn bitcoin_units::amount::SignedAmount::signum(self) -> i64
 pub fn bitcoin_units::amount::SignedAmount::to_btc(self) -> f64
 pub fn bitcoin_units::amount::SignedAmount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
 pub fn bitcoin_units::amount::SignedAmount::to_sat(self) -> i64
+pub fn bitcoin_units::amount::SignedAmount::to_stable(self) -> core::result::Result<bitcoin_units::amount::signed::encapsulate::SignedAmount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::amount::SignedAmount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::SignedAmount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::OutOfRangeError>
@@ -1121,9 +1125,11 @@ pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_kwu(sat_kwu: u64) ->
 pub fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb(sat_vb: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb_u32(sat_vb: u32) -> Self
 pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb_unchecked(sat_vb: u64) -> Self
+pub fn bitcoin_units::fee_rate::FeeRate::from_stable(stable: bitcoin_units::fee_rate::encapsulate::FeeRate) -> Self
 pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_kwu(self) -> u64
 pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_vb_ceil(self) -> u64
 pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_vb_floor(self) -> u64
+pub fn bitcoin_units::fee_rate::FeeRate::to_stable(self) -> bitcoin_units::fee_rate::encapsulate::FeeRate
 impl core::clone::Clone for bitcoin_units::fee_rate::FeeRate
   pub fn bitcoin_units::fee_rate::FeeRate::clone(&self) -> bitcoin_units::fee_rate::FeeRate [impl: impl core::clone::Clone for bitcoin_units::fee_rate::FeeRate]
 impl core::cmp::Eq for bitcoin_units::fee_rate::FeeRate
@@ -1252,7 +1258,9 @@ pub const bitcoin_units::locktime::absolute::Height::MIN: Self
 pub const bitcoin_units::locktime::absolute::Height::ZERO: Self
 pub fn bitcoin_units::locktime::absolute::Height::from_consensus(n: u32) -> core::result::Result<bitcoin_units::locktime::absolute::Height, bitcoin_units::locktime::absolute::ConversionError>
 pub fn bitcoin_units::locktime::absolute::Height::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ParseHeightError>
+pub fn bitcoin_units::locktime::absolute::Height::from_stable(stable: bitcoin_units::locktime::absolute::Height) -> Self
 pub fn bitcoin_units::locktime::absolute::Height::to_consensus_u32(self) -> u32
+pub fn bitcoin_units::locktime::absolute::Height::to_stable(self) -> bitcoin_units::locktime::absolute::Height
 impl core::clone::Clone for bitcoin_units::locktime::absolute::Height
   pub fn bitcoin_units::locktime::absolute::Height::clone(&self) -> bitcoin_units::locktime::absolute::Height [impl: impl core::clone::Clone for bitcoin_units::locktime::absolute::Height]
 impl core::cmp::Eq for bitcoin_units::locktime::absolute::Height
@@ -1414,7 +1422,9 @@ pub const bitcoin_units::locktime::absolute::Time::MAX: Self
 pub const bitcoin_units::locktime::absolute::Time::MIN: Self
 pub fn bitcoin_units::locktime::absolute::Time::from_consensus(n: u32) -> core::result::Result<bitcoin_units::locktime::absolute::Time, bitcoin_units::locktime::absolute::ConversionError>
 pub fn bitcoin_units::locktime::absolute::Time::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ParseTimeError>
+pub fn bitcoin_units::locktime::absolute::Time::from_stable(stable: bitcoin_units::locktime::absolute::MedianTimePast) -> Self
 pub fn bitcoin_units::locktime::absolute::Time::to_consensus_u32(self) -> u32
+pub fn bitcoin_units::locktime::absolute::Time::to_stable(self) -> bitcoin_units::locktime::absolute::MedianTimePast
 impl core::clone::Clone for bitcoin_units::locktime::absolute::Time
   pub fn bitcoin_units::locktime::absolute::Time::clone(&self) -> bitcoin_units::locktime::absolute::Time [impl: impl core::clone::Clone for bitcoin_units::locktime::absolute::Time]
 impl core::cmp::Eq for bitcoin_units::locktime::absolute::Time
@@ -1492,7 +1502,9 @@ pub const bitcoin_units::locktime::relative::Height::MAX: Self
 pub const bitcoin_units::locktime::relative::Height::MIN: Self
 pub const bitcoin_units::locktime::relative::Height::ZERO: Self
 pub const fn bitcoin_units::locktime::relative::Height::from_height(blocks: u16) -> Self
+pub fn bitcoin_units::locktime::relative::Height::from_stable(stable: bitcoin_units::locktime::relative::NumberOfBlocks) -> Self
 pub fn bitcoin_units::locktime::relative::Height::to_consensus_u32(&self) -> u32
+pub fn bitcoin_units::locktime::relative::Height::to_stable(self) -> bitcoin_units::locktime::relative::NumberOfBlocks
 pub fn bitcoin_units::locktime::relative::Height::value(self) -> u16
 impl core::clone::Clone for bitcoin_units::locktime::relative::Height
   pub fn bitcoin_units::locktime::relative::Height::clone(&self) -> bitcoin_units::locktime::relative::Height [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::Height]
@@ -1573,7 +1585,9 @@ pub const bitcoin_units::locktime::relative::Time::ZERO: Self
 pub const fn bitcoin_units::locktime::relative::Time::from_512_second_intervals(intervals: u16) -> Self
 pub const fn bitcoin_units::locktime::relative::Time::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::Time::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub fn bitcoin_units::locktime::relative::Time::from_stable(stable: bitcoin_units::locktime::relative::NumberOf512Seconds) -> Self
 pub fn bitcoin_units::locktime::relative::Time::to_consensus_u32(&self) -> u32
+pub fn bitcoin_units::locktime::relative::Time::to_stable(self) -> bitcoin_units::locktime::relative::NumberOf512Seconds
 pub fn bitcoin_units::locktime::relative::Time::value(self) -> u16
 impl core::clone::Clone for bitcoin_units::locktime::relative::Time
   pub fn bitcoin_units::locktime::relative::Time::clone(&self) -> bitcoin_units::locktime::relative::Time [impl: impl core::clone::Clone for bitcoin_units::locktime::relative::Time]
@@ -1769,6 +1783,7 @@ pub fn bitcoin_units::weight::Weight::checked_mul(self, rhs: u64) -> core::optio
 pub fn bitcoin_units::weight::Weight::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::weight::Weight::from_kwu(wu: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::from_non_witness_data_size(non_witness_size: u64) -> Self
+pub fn bitcoin_units::weight::Weight::from_stable(stable: bitcoin_units::weight::encapsulate::Weight) -> Self
 pub fn bitcoin_units::weight::Weight::from_vb(vb: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::from_vb_unchecked(vb: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_vb_unwrap(vb: u64) -> bitcoin_units::weight::Weight
@@ -1777,6 +1792,7 @@ pub const fn bitcoin_units::weight::Weight::from_wu(wu: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_wu_usize(wu: usize) -> Self
 pub fn bitcoin_units::weight::Weight::scale_by_witness_factor(self) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::to_kwu_floor(self) -> u64
+pub fn bitcoin_units::weight::Weight::to_stable(self) -> bitcoin_units::weight::encapsulate::Weight
 pub const fn bitcoin_units::weight::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_floor(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_wu(self) -> u64
@@ -1979,12 +1995,14 @@ pub fn bitcoin_units::amount::Amount::from_btc(btc: f64) -> core::result::Result
 pub fn bitcoin_units::amount::Amount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseAmountError>
 pub const fn bitcoin_units::amount::Amount::from_int_btc(btc: u64) -> bitcoin_units::amount::Amount
 pub const fn bitcoin_units::amount::Amount::from_sat(satoshi: u64) -> bitcoin_units::amount::Amount
+pub fn bitcoin_units::amount::Amount::from_stable(stable: bitcoin_units::amount::unsigned::encapsulate::Amount) -> Self
 pub fn bitcoin_units::amount::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::amount::Amount::from_str_with_denomination(s: &str) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseError>
 pub fn bitcoin_units::amount::Amount::to_btc(self) -> f64
 pub fn bitcoin_units::amount::Amount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
 pub fn bitcoin_units::amount::Amount::to_sat(self) -> u64
 pub fn bitcoin_units::amount::Amount::to_signed(self) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::OutOfRangeError>
+pub fn bitcoin_units::amount::Amount::to_stable(self) -> core::result::Result<bitcoin_units::amount::unsigned::encapsulate::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::amount::Amount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::Amount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::Amount::unchecked_add(self, rhs: bitcoin_units::amount::Amount) -> bitcoin_units::amount::Amount
@@ -2117,9 +2135,11 @@ pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_kwu(sat_kwu: u64) ->
 pub fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb(sat_vb: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb_u32(sat_vb: u32) -> Self
 pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb_unchecked(sat_vb: u64) -> Self
+pub fn bitcoin_units::fee_rate::FeeRate::from_stable(stable: bitcoin_units::fee_rate::encapsulate::FeeRate) -> Self
 pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_kwu(self) -> u64
 pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_vb_ceil(self) -> u64
 pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_vb_floor(self) -> u64
+pub fn bitcoin_units::fee_rate::FeeRate::to_stable(self) -> bitcoin_units::fee_rate::encapsulate::FeeRate
 impl core::clone::Clone for bitcoin_units::fee_rate::FeeRate
   pub fn bitcoin_units::fee_rate::FeeRate::clone(&self) -> bitcoin_units::fee_rate::FeeRate [impl: impl core::clone::Clone for bitcoin_units::fee_rate::FeeRate]
 impl core::cmp::Eq for bitcoin_units::fee_rate::FeeRate
@@ -2266,6 +2286,7 @@ pub fn bitcoin_units::amount::SignedAmount::fmt_value_in(self, f: &mut dyn core:
 pub fn bitcoin_units::amount::SignedAmount::from_btc(btc: f64) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::amount::SignedAmount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub const fn bitcoin_units::amount::SignedAmount::from_sat(satoshi: i64) -> bitcoin_units::amount::SignedAmount
+pub fn bitcoin_units::amount::SignedAmount::from_stable(stable: bitcoin_units::amount::signed::encapsulate::SignedAmount) -> Self
 pub fn bitcoin_units::amount::SignedAmount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::amount::SignedAmount::from_str_with_denomination(s: &str) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseError>
 pub fn bitcoin_units::amount::SignedAmount::is_negative(self) -> bool
@@ -2275,6 +2296,7 @@ pub fn bitcoin_units::amount::SignedAmount::signum(self) -> i64
 pub fn bitcoin_units::amount::SignedAmount::to_btc(self) -> f64
 pub fn bitcoin_units::amount::SignedAmount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
 pub fn bitcoin_units::amount::SignedAmount::to_sat(self) -> i64
+pub fn bitcoin_units::amount::SignedAmount::to_stable(self) -> core::result::Result<bitcoin_units::amount::signed::encapsulate::SignedAmount, bitcoin_units::amount::error::OutOfRangeError>
 pub fn bitcoin_units::amount::SignedAmount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::SignedAmount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::amount::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::OutOfRangeError>
@@ -2397,6 +2419,7 @@ pub fn bitcoin_units::weight::Weight::checked_mul(self, rhs: u64) -> core::optio
 pub fn bitcoin_units::weight::Weight::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::weight::Weight::from_kwu(wu: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::from_non_witness_data_size(non_witness_size: u64) -> Self
+pub fn bitcoin_units::weight::Weight::from_stable(stable: bitcoin_units::weight::encapsulate::Weight) -> Self
 pub fn bitcoin_units::weight::Weight::from_vb(vb: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::from_vb_unchecked(vb: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_vb_unwrap(vb: u64) -> bitcoin_units::weight::Weight
@@ -2405,6 +2428,7 @@ pub const fn bitcoin_units::weight::Weight::from_wu(wu: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_wu_usize(wu: usize) -> Self
 pub fn bitcoin_units::weight::Weight::scale_by_witness_factor(self) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::to_kwu_floor(self) -> u64
+pub fn bitcoin_units::weight::Weight::to_stable(self) -> bitcoin_units::weight::encapsulate::Weight
 pub const fn bitcoin_units::weight::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_floor(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_wu(self) -> u64
