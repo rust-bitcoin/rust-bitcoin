@@ -1351,7 +1351,6 @@ pub const bitcoin_units::SignedAmount::ONE_BTC: Self
 pub const bitcoin_units::SignedAmount::ONE_SAT: Self
 pub const bitcoin_units::SignedAmount::ZERO: Self
 pub const fn bitcoin_units::SignedAmount::abs(self) -> Self
-pub const fn bitcoin_units::SignedAmount::checked_abs(self) -> core::option::Option<Self>
 pub const fn bitcoin_units::SignedAmount::checked_add(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::SignedAmount::checked_div(self, rhs: i64) -> core::option::Option<Self>
 pub const fn bitcoin_units::SignedAmount::checked_mul(self, rhs: i64) -> core::option::Option<Self>
@@ -2062,8 +2061,6 @@ pub const fn bitcoin_units::FeeRate::checked_add(self, rhs: Self) -> core::optio
 pub const fn bitcoin_units::FeeRate::checked_div(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::FeeRate::checked_mul(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::FeeRate::checked_sub(self, rhs: Self) -> core::option::Option<Self>
-pub fn bitcoin_units::FeeRate::fee_vb(self, vb: u64) -> core::option::Option<bitcoin_units::Amount>
-pub fn bitcoin_units::FeeRate::fee_wu(self, weight: bitcoin_units::Weight) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::FeeRate::from_per_kvb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_per_kwu(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
 pub const fn bitcoin_units::FeeRate::from_per_vb(rate: bitcoin_units::Amount) -> bitcoin_units::result::NumOpResult<Self>
@@ -2737,7 +2734,6 @@ pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_seconds
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockMtp, utxo_mined_at: bitcoin_units::block::BlockMtp) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidTimeError>
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_512_second_intervals(self) -> u16
-pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::NumberOf512Seconds::to_seconds(self) -> u32
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOf512Seconds
 pub fn bitcoin_units::locktime::relative::NumberOf512Seconds::clone(&self) -> bitcoin_units::locktime::relative::NumberOf512Seconds
@@ -2811,7 +2807,6 @@ pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::from_height(bloc
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::is_satisfied_by(self, chain_tip: bitcoin_units::block::BlockHeight, utxo_mined_at: bitcoin_units::block::BlockHeight) -> core::result::Result<bool, bitcoin_units::locktime::relative::error::InvalidHeightError>
-pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::NumberOfBlocks::to_height(self) -> u16
 impl core::clone::Clone for bitcoin_units::locktime::relative::NumberOfBlocks
 pub fn bitcoin_units::locktime::relative::NumberOfBlocks::clone(&self) -> bitcoin_units::locktime::relative::NumberOfBlocks
@@ -3143,7 +3138,6 @@ pub fn bitcoin_units::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin_units::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError> where Self: core::marker::Sized
 pub fn bitcoin_units::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError> where Self: core::marker::Sized
 pub const fn bitcoin_units::pow::CompactTarget::to_consensus(self) -> u32
-pub fn bitcoin_units::pow::CompactTarget::to_hex(self) -> alloc::string::String
 impl core::clone::Clone for bitcoin_units::pow::CompactTarget
 pub fn bitcoin_units::pow::CompactTarget::clone(&self) -> bitcoin_units::pow::CompactTarget
 impl core::cmp::Eq for bitcoin_units::pow::CompactTarget
@@ -3786,7 +3780,6 @@ pub struct bitcoin_units::sequence::Sequence(pub u32)
 impl bitcoin_units::sequence::Sequence
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_AND_RBF: Self
 pub const bitcoin_units::sequence::Sequence::ENABLE_LOCKTIME_NO_RBF: Self
-pub const bitcoin_units::sequence::Sequence::ENABLE_RBF_NO_LOCKTIME: Self
 pub const bitcoin_units::sequence::Sequence::FINAL: Self
 pub const bitcoin_units::sequence::Sequence::MAX: Self
 pub const bitcoin_units::sequence::Sequence::SIZE: usize
@@ -3805,7 +3798,6 @@ pub fn bitcoin_units::sequence::Sequence::is_rbf(self) -> bool
 pub fn bitcoin_units::sequence::Sequence::is_relative_lock_time(self) -> bool
 pub fn bitcoin_units::sequence::Sequence::is_time_locked(self) -> bool
 pub const fn bitcoin_units::sequence::Sequence::to_consensus_u32(self) -> u32
-pub fn bitcoin_units::sequence::Sequence::to_hex(self) -> alloc::string::String
 pub fn bitcoin_units::sequence::Sequence::to_relative_lock_time(self) -> core::option::Option<bitcoin_units::locktime::relative::LockTime>
 impl core::clone::Clone for bitcoin_units::sequence::Sequence
 pub fn bitcoin_units::sequence::Sequence::clone(&self) -> bitcoin_units::sequence::Sequence
@@ -3960,12 +3952,9 @@ pub const fn bitcoin_units::Weight::checked_mul(self, rhs: u64) -> core::option:
 pub const fn bitcoin_units::Weight::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub fn bitcoin_units::Weight::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::PrefixedHexError>
 pub const fn bitcoin_units::Weight::from_kwu(wu: u64) -> core::option::Option<Self>
-pub const fn bitcoin_units::Weight::from_non_witness_data_size(non_witness_size: u64) -> Self
 pub fn bitcoin_units::Weight::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse_int::error::UnprefixedHexError>
 pub const fn bitcoin_units::Weight::from_vb(vb: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::Weight::from_vb_unchecked(vb: u64) -> Self
-pub const fn bitcoin_units::Weight::from_vb_unwrap(vb: u64) -> Self
-pub const fn bitcoin_units::Weight::from_witness_data_size(witness_size: u64) -> Self
 pub const fn bitcoin_units::Weight::mul_by_fee_rate(self, fee_rate: bitcoin_units::FeeRate) -> bitcoin_units::result::NumOpResult<bitcoin_units::Amount>
 pub const fn bitcoin_units::Weight::to_kwu_ceil(self) -> u64
 pub const fn bitcoin_units::Weight::to_kwu_floor(self) -> u64
