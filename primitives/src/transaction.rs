@@ -443,7 +443,7 @@ impl Default for TransactionDecoder {
 }
 
 #[cfg(feature = "alloc")]
-#[allow(clippy::too_many_lines)] // TODO: Can we clean this up?
+#[allow(clippy::too_many_lines)] // State machine, kind of to be expected.
 impl encoding::Decoder for TransactionDecoder {
     type Output = Transaction;
     type Error = TransactionDecoderError;
