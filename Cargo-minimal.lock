@@ -29,7 +29,7 @@ name = "base58ck"
 version = "0.4.0"
 dependencies = [
  "bitcoin-internals 0.5.0",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
 ]
 
@@ -90,7 +90,7 @@ dependencies = [
  "bitcoin-primitives",
  "bitcoin-taproot-primitives",
  "bitcoin-units 0.4.0",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
  "bitcoinconsensus",
  "hex-conservative 1.1.0",
  "secp256k1 0.32.0-beta.2",
@@ -124,7 +124,7 @@ dependencies = [
  "bitcoin-internals 0.5.0",
  "bitcoin-network-kind",
  "bitcoin-primitives",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
  "secp256k1 0.32.0-beta.2",
  "serde",
@@ -174,7 +174,7 @@ version = "0.5.0"
 dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals 0.5.0",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
 ]
 
 [[package]]
@@ -186,7 +186,7 @@ dependencies = [
  "bitcoin-crypto",
  "bitcoin-internals 0.5.0",
  "bitcoin-network-kind",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
  "secp256k1 0.32.0-beta.2",
  "serde",
@@ -214,7 +214,7 @@ dependencies = [
  "bitcoin-network-kind",
  "bitcoin-primitives",
  "bitcoin-units 0.4.0",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
  "serde",
 ]
@@ -228,7 +228,7 @@ dependencies = [
  "bitcoin-consensus-encoding",
  "bitcoin-internals 0.5.0",
  "bitcoin-units 0.4.0",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
  "hex-conservative 1.1.0",
  "serde",
  "serde_json",
@@ -246,7 +246,7 @@ version = "0.1.0"
 dependencies = [
  "arbitrary",
  "bitcoin-internals 0.5.0",
- "bitcoin_hashes 0.21.0",
+ "bitcoin_hashes 1.0.0",
  "secp256k1 0.32.0-beta.2",
  "serde",
 ]
@@ -294,7 +294,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.21.0"
+version = "1.0.0"
 dependencies = [
  "arbitrary",
  "bitcoin-consensus-encoding",

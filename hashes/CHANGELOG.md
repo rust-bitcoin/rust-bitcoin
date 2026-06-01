@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+# 1.0.0 - 2026-06-01
+
+* No changes since `v0.21.0`.
+
 ## [0.21.0] - 2026-05-12
 
 This is intended to be the last release prior to `bitcoin_hashes 1.0.0`.
@@ -347,7 +351,8 @@ Note that we have stopped re-exporting the `core` crate when compiling without `
 
 * Initial release
 
-[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.21.0...HEAD
+[Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-1.0.0...HEAD
+[1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.21.0...bitcoin_hashes-1.0.0
 [0.21.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.20.0...bitcoin_hashes-0.21.0
 [0.20.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.19.0...bitcoin_hashes-0.20.0
 [0.19.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.18.0...bitcoin_hashes-0.19.0

@@ -23,7 +23,7 @@ arbitrary = ["crypto/arbitrary", "dep:arbitrary", "hashes/arbitrary", "secp256k1
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-features = false }
 crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.2.0", default-features = false }
-hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.21.0", default-features = false, features = ["hex"] }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.0.0", default-features = false, features = ["hex"] }
 hex = { package = "hex-conservative", version = "1.1.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0", features = ["hex"] }
 network = { package = "bitcoin-network-kind", path = "../network", version = "0.1.0", default-features = false }

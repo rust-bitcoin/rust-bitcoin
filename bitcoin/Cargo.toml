@@ -29,7 +29,7 @@ arbitrary = ["crypto/arbitrary", "dep:arbitrary", "units/arbitrary", "primitives
 base58 = { package = "base58ck", path = "../base58", version = "0.4.0", default-features = false, features = ["alloc"] }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 crypto = { package = "bitcoin-crypto", path = "../crypto", version = "0.2.0", default-features = false, features = ["alloc"] }
-hashes = { package = "bitcoin_hashes", path = "../hashes", version = "0.21.0", default-features = false, features = ["alloc", "hex"] }
+hashes = { package = "bitcoin_hashes", path = "../hashes", version = "1.0.0", default-features = false, features = ["alloc", "hex"] }
 key-expression = { package = "bitcoin-key-expression", path = "../key_expression", version = "0.0.0", default-features = false, features = ["alloc"] }
 encoding = { package = "bitcoin-consensus-encoding", path = "../consensus_encoding", version = "1.0.0", default-features = false, features = ["alloc"] }
 hex = { package = "hex-conservative", version = "1.1.0", default-features = false, features = ["alloc"] }
