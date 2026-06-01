@@ -71,12 +71,12 @@ pub type bitcoin::blockdata::locktime::absolute::LockTime::Err = bitcoin_units::
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 impl ordered::ArbitraryOrd for bitcoin::blockdata::locktime::absolute::LockTime
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::arbitrary_cmp(&self, other: &Self) -> core::cmp::Ordering
-impl serde::ser::Serialize for bitcoin::blockdata::locktime::absolute::LockTime
-pub fn bitcoin::blockdata::locktime::absolute::LockTime::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::locktime::absolute::LockTime
+pub fn bitcoin::blockdata::locktime::absolute::LockTime::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::locktime::absolute::LockTime
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::locktime::absolute::LockTime
-pub fn bitcoin::blockdata::locktime::absolute::LockTime::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::locktime::absolute::LockTime
+pub fn bitcoin::blockdata::locktime::absolute::LockTime::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::Send for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::Sync for bitcoin::blockdata::locktime::absolute::LockTime
@@ -108,7 +108,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::locktime::absolute::L
 pub unsafe fn bitcoin::blockdata::locktime::absolute::LockTime::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::locktime::absolute::LockTime
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::locktime::absolute::LockTime where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::locktime::absolute::LockTime where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::locktime::absolute::LockTime where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::vzip(self) -> V
 pub mod bitcoin::address
@@ -875,10 +875,10 @@ pub fn bitcoin::address::Address::fmt(&self, fmt: &mut core::fmt::Formatter<'_>)
 impl core::str::traits::FromStr for bitcoin::address::Address<bitcoin::address::NetworkUnchecked>
 pub type bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::Err = bitcoin::address::error::ParseError
 pub fn bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::from_str(s: &str) -> core::result::Result<bitcoin::address::Address<bitcoin::address::NetworkUnchecked>, bitcoin::address::error::ParseError>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::address::Address<bitcoin::address::NetworkUnchecked>
-pub fn bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::address::Address<bitcoin::address::NetworkUnchecked>, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
-impl<N: bitcoin::address::NetworkValidation> serde::ser::Serialize for bitcoin::address::Address<N>
-pub fn bitcoin::address::Address<N>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::address::Address<bitcoin::address::NetworkUnchecked>
+pub fn bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::address::Address<bitcoin::address::NetworkUnchecked>, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
+impl<N: bitcoin::address::NetworkValidation> serde_core::ser::Serialize for bitcoin::address::Address<N>
+pub fn bitcoin::address::Address<N>::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<V: bitcoin::address::NetworkValidation> core::fmt::Debug for bitcoin::address::Address<V>
 pub fn bitcoin::address::Address<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<V> core::clone::Clone for bitcoin::address::Address<V> where V: bitcoin::address::NetworkValidation + core::clone::Clone
@@ -924,7 +924,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::address::Address<V> where T: cor
 pub unsafe fn bitcoin::address::Address<V>::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::address::Address<V>
 pub fn bitcoin::address::Address<V>::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::address::Address<V> where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::address::Address<V> where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::address::Address<V> where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::address::Address<V>::vzip(self) -> V
 pub struct bitcoin::address::InvalidBase58PayloadLengthError
@@ -1273,8 +1273,8 @@ impl core::marker::StructuralPartialEq for bitcoin::bip152::ShortId
 impl core::str::traits::FromStr for bitcoin::bip152::ShortId
 pub type bitcoin::bip152::ShortId::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::bip152::ShortId::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::bip152::ShortId
-pub fn bitcoin::bip152::ShortId::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::bip152::ShortId
+pub fn bitcoin::bip152::ShortId::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::bip152::ShortId
 pub fn bitcoin::bip152::ShortId::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 impl<'a> core::convert::From<&'a [u8; 6]> for bitcoin::bip152::ShortId
@@ -1284,8 +1284,8 @@ pub fn bitcoin::bip152::ShortId::from(data: [u8; 6]) -> Self
 impl<'a> core::convert::TryFrom<&'a [u8]> for bitcoin::bip152::ShortId
 pub type bitcoin::bip152::ShortId::Error = core::array::TryFromSliceError
 pub fn bitcoin::bip152::ShortId::try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip152::ShortId
-pub fn bitcoin::bip152::ShortId::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip152::ShortId, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip152::ShortId
+pub fn bitcoin::bip152::ShortId::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip152::ShortId, <D as serde_core::de::Deserializer>::Error>
 impl<I> core::ops::index::Index<I> for bitcoin::bip152::ShortId where [u8]: core::ops::index::Index<I>
 pub type bitcoin::bip152::ShortId::Output = <[u8] as core::ops::index::Index<I>>::Output
 pub fn bitcoin::bip152::ShortId::index(&self, index: I) -> &Self::Output
@@ -1320,7 +1320,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip152::ShortId where T: core::c
 pub unsafe fn bitcoin::bip152::ShortId::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip152::ShortId
 pub fn bitcoin::bip152::ShortId::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip152::ShortId where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip152::ShortId where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip152::ShortId where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip152::ShortId::vzip(self) -> V
 #[non_exhaustive] pub struct bitcoin::bip152::TxIndexOutOfRangeError(_)
@@ -1633,12 +1633,12 @@ impl core::marker::StructuralPartialEq for bitcoin::bip158::FilterHash
 impl core::str::traits::FromStr for bitcoin::bip158::FilterHash
 pub type bitcoin::bip158::FilterHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::bip158::FilterHash::from_str(s: &str) -> core::result::Result<bitcoin::bip158::FilterHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::bip158::FilterHash
-pub fn bitcoin::bip158::FilterHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::bip158::FilterHash
+pub fn bitcoin::bip158::FilterHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::bip158::FilterHash
 pub fn bitcoin::bip158::FilterHash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip158::FilterHash
-pub fn bitcoin::bip158::FilterHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip158::FilterHash, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip158::FilterHash
+pub fn bitcoin::bip158::FilterHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip158::FilterHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::bip158::FilterHash
 pub type bitcoin::bip158::FilterHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::bip158::FilterHash::index(&self, index: I) -> &Self::Output
@@ -1673,7 +1673,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip158::FilterHash where T: core
 pub unsafe fn bitcoin::bip158::FilterHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip158::FilterHash
 pub fn bitcoin::bip158::FilterHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip158::FilterHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip158::FilterHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip158::FilterHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip158::FilterHash::vzip(self) -> V
 pub struct bitcoin::bip158::FilterHeader(_)
@@ -1731,12 +1731,12 @@ impl core::marker::StructuralPartialEq for bitcoin::bip158::FilterHeader
 impl core::str::traits::FromStr for bitcoin::bip158::FilterHeader
 pub type bitcoin::bip158::FilterHeader::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::bip158::FilterHeader::from_str(s: &str) -> core::result::Result<bitcoin::bip158::FilterHeader, Self::Err>
-impl serde::ser::Serialize for bitcoin::bip158::FilterHeader
-pub fn bitcoin::bip158::FilterHeader::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::bip158::FilterHeader
+pub fn bitcoin::bip158::FilterHeader::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHeader::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip158::FilterHeader
-pub fn bitcoin::bip158::FilterHeader::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip158::FilterHeader, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip158::FilterHeader
+pub fn bitcoin::bip158::FilterHeader::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip158::FilterHeader, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::bip158::FilterHeader
 pub type bitcoin::bip158::FilterHeader::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::bip158::FilterHeader::index(&self, index: I) -> &Self::Output
@@ -1771,7 +1771,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip158::FilterHeader where T: co
 pub unsafe fn bitcoin::bip158::FilterHeader::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHeader::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip158::FilterHeader where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip158::FilterHeader where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip158::FilterHeader where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip158::FilterHeader::vzip(self) -> V
 pub struct bitcoin::bip158::GcsFilterReader
@@ -1873,10 +1873,10 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::ChildNumber
 impl core::str::traits::FromStr for bitcoin::bip32::ChildNumber
 pub type bitcoin::bip32::ChildNumber::Err = bitcoin::bip32::Error
 pub fn bitcoin::bip32::ChildNumber::from_str(inp: &str) -> core::result::Result<bitcoin::bip32::ChildNumber, bitcoin::bip32::Error>
-impl serde::ser::Serialize for bitcoin::bip32::ChildNumber
-pub fn bitcoin::bip32::ChildNumber::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::ChildNumber
-pub fn bitcoin::bip32::ChildNumber::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::bip32::ChildNumber
+pub fn bitcoin::bip32::ChildNumber::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip32::ChildNumber
+pub fn bitcoin::bip32::ChildNumber::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::bip32::ChildNumber
 impl core::marker::Send for bitcoin::bip32::ChildNumber
 impl core::marker::Sync for bitcoin::bip32::ChildNumber
@@ -1908,7 +1908,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip32::ChildNumber where T: core
 pub unsafe fn bitcoin::bip32::ChildNumber::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip32::ChildNumber
 pub fn bitcoin::bip32::ChildNumber::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip32::ChildNumber where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip32::ChildNumber where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip32::ChildNumber where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip32::ChildNumber::vzip(self) -> V
 #[non_exhaustive] pub enum bitcoin::bip32::Error
@@ -2024,8 +2024,8 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::ChainCode
 impl core::str::traits::FromStr for bitcoin::bip32::ChainCode
 pub type bitcoin::bip32::ChainCode::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::bip32::ChainCode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::bip32::ChainCode
-pub fn bitcoin::bip32::ChainCode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::bip32::ChainCode
+pub fn bitcoin::bip32::ChainCode::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> core::convert::From<&'a [u8; 32]> for bitcoin::bip32::ChainCode
 pub fn bitcoin::bip32::ChainCode::from(data: &'a [u8; 32]) -> Self
 impl<'a> core::convert::From<[u8; 32]> for bitcoin::bip32::ChainCode
@@ -2033,8 +2033,8 @@ pub fn bitcoin::bip32::ChainCode::from(data: [u8; 32]) -> Self
 impl<'a> core::convert::TryFrom<&'a [u8]> for bitcoin::bip32::ChainCode
 pub type bitcoin::bip32::ChainCode::Error = core::array::TryFromSliceError
 pub fn bitcoin::bip32::ChainCode::try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::ChainCode
-pub fn bitcoin::bip32::ChainCode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip32::ChainCode, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip32::ChainCode
+pub fn bitcoin::bip32::ChainCode::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip32::ChainCode, <D as serde_core::de::Deserializer>::Error>
 impl<I> core::ops::index::Index<I> for bitcoin::bip32::ChainCode where [u8]: core::ops::index::Index<I>
 pub type bitcoin::bip32::ChainCode::Output = <[u8] as core::ops::index::Index<I>>::Output
 pub fn bitcoin::bip32::ChainCode::index(&self, index: I) -> &Self::Output
@@ -2069,7 +2069,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip32::ChainCode where T: core::
 pub unsafe fn bitcoin::bip32::ChainCode::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip32::ChainCode
 pub fn bitcoin::bip32::ChainCode::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip32::ChainCode where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip32::ChainCode where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip32::ChainCode where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip32::ChainCode::vzip(self) -> V
 pub struct bitcoin::bip32::DerivationPath(_)
@@ -2111,16 +2111,16 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::DerivationPath
 impl core::str::traits::FromStr for bitcoin::bip32::DerivationPath
 pub type bitcoin::bip32::DerivationPath::Err = bitcoin::bip32::Error
 pub fn bitcoin::bip32::DerivationPath::from_str(path: &str) -> core::result::Result<bitcoin::bip32::DerivationPath, bitcoin::bip32::Error>
-impl serde::ser::Serialize for bitcoin::bip32::DerivationPath
-pub fn bitcoin::bip32::DerivationPath::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::bip32::DerivationPath
+pub fn bitcoin::bip32::DerivationPath::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> core::convert::From<&'a [bitcoin::bip32::ChildNumber]> for bitcoin::bip32::DerivationPath
 pub fn bitcoin::bip32::DerivationPath::from(numbers: &'a [bitcoin::bip32::ChildNumber]) -> Self
 impl<'a> core::iter::traits::collect::IntoIterator for &'a bitcoin::bip32::DerivationPath
 pub type &'a bitcoin::bip32::DerivationPath::IntoIter = core::slice::iter::Iter<'a, bitcoin::bip32::ChildNumber>
 pub type &'a bitcoin::bip32::DerivationPath::Item = &'a bitcoin::bip32::ChildNumber
 pub fn &'a bitcoin::bip32::DerivationPath::into_iter(self) -> Self::IntoIter
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::DerivationPath
-pub fn bitcoin::bip32::DerivationPath::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::bip32::DerivationPath, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip32::DerivationPath
+pub fn bitcoin::bip32::DerivationPath::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::bip32::DerivationPath, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl<I> core::ops::index::Index<I> for bitcoin::bip32::DerivationPath where alloc::vec::Vec<bitcoin::bip32::ChildNumber>: core::ops::index::Index<I>
 pub type bitcoin::bip32::DerivationPath::Output = <alloc::vec::Vec<bitcoin::bip32::ChildNumber> as core::ops::index::Index<I>>::Output
 pub fn bitcoin::bip32::DerivationPath::index(&self, index: I) -> &Self::Output
@@ -2157,7 +2157,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip32::DerivationPath where T: c
 pub unsafe fn bitcoin::bip32::DerivationPath::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip32::DerivationPath
 pub fn bitcoin::bip32::DerivationPath::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip32::DerivationPath where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip32::DerivationPath where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip32::DerivationPath where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip32::DerivationPath::vzip(self) -> V
 pub struct bitcoin::bip32::DerivationPathIterator<'a>
@@ -2244,8 +2244,8 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::Fingerprint
 impl core::str::traits::FromStr for bitcoin::bip32::Fingerprint
 pub type bitcoin::bip32::Fingerprint::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::bip32::Fingerprint::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::bip32::Fingerprint
-pub fn bitcoin::bip32::Fingerprint::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::bip32::Fingerprint
+pub fn bitcoin::bip32::Fingerprint::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> core::convert::From<&'a [u8; 4]> for bitcoin::bip32::Fingerprint
 pub fn bitcoin::bip32::Fingerprint::from(data: &'a [u8; 4]) -> Self
 impl<'a> core::convert::From<[u8; 4]> for bitcoin::bip32::Fingerprint
@@ -2253,8 +2253,8 @@ pub fn bitcoin::bip32::Fingerprint::from(data: [u8; 4]) -> Self
 impl<'a> core::convert::TryFrom<&'a [u8]> for bitcoin::bip32::Fingerprint
 pub type bitcoin::bip32::Fingerprint::Error = core::array::TryFromSliceError
 pub fn bitcoin::bip32::Fingerprint::try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::Fingerprint
-pub fn bitcoin::bip32::Fingerprint::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip32::Fingerprint, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip32::Fingerprint
+pub fn bitcoin::bip32::Fingerprint::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip32::Fingerprint, <D as serde_core::de::Deserializer>::Error>
 impl<I> core::ops::index::Index<I> for bitcoin::bip32::Fingerprint where [u8]: core::ops::index::Index<I>
 pub type bitcoin::bip32::Fingerprint::Output = <[u8] as core::ops::index::Index<I>>::Output
 pub fn bitcoin::bip32::Fingerprint::index(&self, index: I) -> &Self::Output
@@ -2289,7 +2289,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip32::Fingerprint where T: core
 pub unsafe fn bitcoin::bip32::Fingerprint::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip32::Fingerprint
 pub fn bitcoin::bip32::Fingerprint::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip32::Fingerprint where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip32::Fingerprint where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip32::Fingerprint where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip32::Fingerprint::vzip(self) -> V
 pub struct bitcoin::bip32::InvalidBase58PayloadLengthError
@@ -2393,10 +2393,10 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::XKeyIdentifier
 impl core::str::traits::FromStr for bitcoin::bip32::XKeyIdentifier
 pub type bitcoin::bip32::XKeyIdentifier::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::bip32::XKeyIdentifier::from_str(s: &str) -> core::result::Result<bitcoin::bip32::XKeyIdentifier, Self::Err>
-impl serde::ser::Serialize for bitcoin::bip32::XKeyIdentifier
-pub fn bitcoin::bip32::XKeyIdentifier::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::XKeyIdentifier
-pub fn bitcoin::bip32::XKeyIdentifier::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip32::XKeyIdentifier, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::bip32::XKeyIdentifier
+pub fn bitcoin::bip32::XKeyIdentifier::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip32::XKeyIdentifier
+pub fn bitcoin::bip32::XKeyIdentifier::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::bip32::XKeyIdentifier, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::bip32::XKeyIdentifier
 pub type bitcoin::bip32::XKeyIdentifier::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::bip32::XKeyIdentifier::index(&self, index: I) -> &Self::Output
@@ -2431,7 +2431,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip32::XKeyIdentifier where T: c
 pub unsafe fn bitcoin::bip32::XKeyIdentifier::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip32::XKeyIdentifier where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip32::XKeyIdentifier where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip32::XKeyIdentifier where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip32::XKeyIdentifier::vzip(self) -> V
 pub struct bitcoin::bip32::Xpriv
@@ -2467,10 +2467,10 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::Xpriv
 impl core::str::traits::FromStr for bitcoin::bip32::Xpriv
 pub type bitcoin::bip32::Xpriv::Err = bitcoin::bip32::Error
 pub fn bitcoin::bip32::Xpriv::from_str(inp: &str) -> core::result::Result<bitcoin::bip32::Xpriv, bitcoin::bip32::Error>
-impl serde::ser::Serialize for bitcoin::bip32::Xpriv
-pub fn bitcoin::bip32::Xpriv::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::Xpriv
-pub fn bitcoin::bip32::Xpriv::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::bip32::Xpriv, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::bip32::Xpriv
+pub fn bitcoin::bip32::Xpriv::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip32::Xpriv
+pub fn bitcoin::bip32::Xpriv::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::bip32::Xpriv, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::bip32::Xpriv
 impl core::marker::Send for bitcoin::bip32::Xpriv
 impl core::marker::Sync for bitcoin::bip32::Xpriv
@@ -2502,7 +2502,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip32::Xpriv where T: core::clon
 pub unsafe fn bitcoin::bip32::Xpriv::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip32::Xpriv
 pub fn bitcoin::bip32::Xpriv::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip32::Xpriv where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip32::Xpriv where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip32::Xpriv where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip32::Xpriv::vzip(self) -> V
 pub struct bitcoin::bip32::Xpub
@@ -2543,10 +2543,10 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::Xpub
 impl core::str::traits::FromStr for bitcoin::bip32::Xpub
 pub type bitcoin::bip32::Xpub::Err = bitcoin::bip32::Error
 pub fn bitcoin::bip32::Xpub::from_str(inp: &str) -> core::result::Result<bitcoin::bip32::Xpub, bitcoin::bip32::Error>
-impl serde::ser::Serialize for bitcoin::bip32::Xpub
-pub fn bitcoin::bip32::Xpub::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::Xpub
-pub fn bitcoin::bip32::Xpub::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::bip32::Xpub, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::bip32::Xpub
+pub fn bitcoin::bip32::Xpub::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::bip32::Xpub
+pub fn bitcoin::bip32::Xpub::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::bip32::Xpub, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::bip32::Xpub
 impl core::marker::Send for bitcoin::bip32::Xpub
 impl core::marker::Sync for bitcoin::bip32::Xpub
@@ -2578,7 +2578,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::bip32::Xpub where T: core::clone
 pub unsafe fn bitcoin::bip32::Xpub::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::bip32::Xpub
 pub fn bitcoin::bip32::Xpub::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::bip32::Xpub where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::bip32::Xpub where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::bip32::Xpub where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::bip32::Xpub::vzip(self) -> V
 pub trait bitcoin::bip32::IntoDerivationPath
@@ -2726,12 +2726,12 @@ pub fn bitcoin::blockdata::block::BlockHash::from(block: bitcoin::blockdata::blo
 impl core::fmt::Debug for bitcoin::blockdata::block::Block
 pub fn bitcoin::blockdata::block::Block::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::Block
-impl serde::ser::Serialize for bitcoin::blockdata::block::Block
-pub fn bitcoin::blockdata::block::Block::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::block::Block
+pub fn bitcoin::blockdata::block::Block::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::block::Block
 pub fn bitcoin::blockdata::block::Block::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::Block
-pub fn bitcoin::blockdata::block::Block::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::block::Block
+pub fn bitcoin::blockdata::block::Block::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::block::Block
 impl core::marker::Send for bitcoin::blockdata::block::Block
 impl core::marker::Sync for bitcoin::blockdata::block::Block
@@ -2761,7 +2761,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::block::Block where T:
 pub unsafe fn bitcoin::blockdata::block::Block::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::block::Block
 pub fn bitcoin::blockdata::block::Block::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::block::Block where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::block::Block where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::block::Block where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::block::Block::vzip(self) -> V
 pub struct bitcoin::block::BlockHash(_)
@@ -2823,12 +2823,12 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::BlockHash
 impl core::str::traits::FromStr for bitcoin::blockdata::block::BlockHash
 pub type bitcoin::blockdata::block::BlockHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::block::BlockHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::BlockHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::block::BlockHash
-pub fn bitcoin::blockdata::block::BlockHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::block::BlockHash
+pub fn bitcoin::blockdata::block::BlockHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::BlockHash
-pub fn bitcoin::blockdata::block::BlockHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::BlockHash, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::block::BlockHash
+pub fn bitcoin::blockdata::block::BlockHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::BlockHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::BlockHash
 pub type bitcoin::blockdata::block::BlockHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::block::BlockHash::index(&self, index: I) -> &Self::Output
@@ -2863,7 +2863,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::block::BlockHash wher
 pub unsafe fn bitcoin::blockdata::block::BlockHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::block::BlockHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::block::BlockHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::block::BlockHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::block::BlockHash::vzip(self) -> V
 pub struct bitcoin::block::Header
@@ -2901,12 +2901,12 @@ impl core::hash::Hash for bitcoin::blockdata::block::Header
 pub fn bitcoin::blockdata::block::Header::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::blockdata::block::Header
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::Header
-impl serde::ser::Serialize for bitcoin::blockdata::block::Header
-pub fn bitcoin::blockdata::block::Header::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::block::Header
+pub fn bitcoin::blockdata::block::Header::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::block::Header
 pub fn bitcoin::blockdata::block::Header::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::Header
-pub fn bitcoin::blockdata::block::Header::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::block::Header
+pub fn bitcoin::blockdata::block::Header::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::block::Header
 impl core::marker::Send for bitcoin::blockdata::block::Header
 impl core::marker::Sync for bitcoin::blockdata::block::Header
@@ -2936,7 +2936,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::block::Header where T
 pub unsafe fn bitcoin::blockdata::block::Header::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::block::Header
 pub fn bitcoin::blockdata::block::Header::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::block::Header where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::block::Header where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::block::Header where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::block::Header::vzip(self) -> V
 pub struct bitcoin::block::TxMerkleNode(_)
@@ -2996,12 +2996,12 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::TxMerkleNo
 impl core::str::traits::FromStr for bitcoin::blockdata::block::TxMerkleNode
 pub type bitcoin::blockdata::block::TxMerkleNode::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::block::TxMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::block::TxMerkleNode
-pub fn bitcoin::blockdata::block::TxMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::block::TxMerkleNode
+pub fn bitcoin::blockdata::block::TxMerkleNode::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::block::TxMerkleNode
 pub fn bitcoin::blockdata::block::TxMerkleNode::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::TxMerkleNode
-pub fn bitcoin::blockdata::block::TxMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::block::TxMerkleNode
+pub fn bitcoin::blockdata::block::TxMerkleNode::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::TxMerkleNode
 pub type bitcoin::blockdata::block::TxMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::block::TxMerkleNode::index(&self, index: I) -> &Self::Output
@@ -3036,7 +3036,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::block::TxMerkleNode w
 pub unsafe fn bitcoin::blockdata::block::TxMerkleNode::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::block::TxMerkleNode
 pub fn bitcoin::blockdata::block::TxMerkleNode::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::block::TxMerkleNode where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::block::TxMerkleNode where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::block::TxMerkleNode where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::block::TxMerkleNode::vzip(self) -> V
 pub struct bitcoin::block::Version(_)
@@ -3068,12 +3068,12 @@ impl core::hash::Hash for bitcoin::blockdata::block::Version
 pub fn bitcoin::blockdata::block::Version::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::blockdata::block::Version
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::Version
-impl serde::ser::Serialize for bitcoin::blockdata::block::Version
-pub fn bitcoin::blockdata::block::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::block::Version
+pub fn bitcoin::blockdata::block::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::block::Version
 pub fn bitcoin::blockdata::block::Version::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::Version
-pub fn bitcoin::blockdata::block::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::block::Version
+pub fn bitcoin::blockdata::block::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::block::Version
 impl core::marker::Send for bitcoin::blockdata::block::Version
 impl core::marker::Sync for bitcoin::blockdata::block::Version
@@ -3103,7 +3103,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::block::Version where 
 pub unsafe fn bitcoin::blockdata::block::Version::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::block::Version
 pub fn bitcoin::blockdata::block::Version::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::block::Version where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::block::Version where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::block::Version where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::block::Version::vzip(self) -> V
 pub struct bitcoin::block::WitnessCommitment(_)
@@ -3157,10 +3157,10 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::WitnessCom
 impl core::str::traits::FromStr for bitcoin::blockdata::block::WitnessCommitment
 pub type bitcoin::blockdata::block::WitnessCommitment::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::block::WitnessCommitment::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::WitnessCommitment, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::block::WitnessCommitment
-pub fn bitcoin::blockdata::block::WitnessCommitment::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::WitnessCommitment
-pub fn bitcoin::blockdata::block::WitnessCommitment::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::WitnessCommitment, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::block::WitnessCommitment
+pub fn bitcoin::blockdata::block::WitnessCommitment::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::block::WitnessCommitment
+pub fn bitcoin::blockdata::block::WitnessCommitment::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::WitnessCommitment, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::WitnessCommitment
 pub type bitcoin::blockdata::block::WitnessCommitment::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::block::WitnessCommitment::index(&self, index: I) -> &Self::Output
@@ -3195,7 +3195,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::block::WitnessCommitm
 pub unsafe fn bitcoin::blockdata::block::WitnessCommitment::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::block::WitnessCommitment
 pub fn bitcoin::blockdata::block::WitnessCommitment::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::block::WitnessCommitment where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::block::WitnessCommitment where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::block::WitnessCommitment where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::block::WitnessCommitment::vzip(self) -> V
 pub struct bitcoin::block::WitnessMerkleNode(_)
@@ -3255,10 +3255,10 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::WitnessMer
 impl core::str::traits::FromStr for bitcoin::blockdata::block::WitnessMerkleNode
 pub type bitcoin::blockdata::block::WitnessMerkleNode::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::WitnessMerkleNode, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::block::WitnessMerkleNode
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::WitnessMerkleNode
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::WitnessMerkleNode, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::block::WitnessMerkleNode
+pub fn bitcoin::blockdata::block::WitnessMerkleNode::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::block::WitnessMerkleNode
+pub fn bitcoin::blockdata::block::WitnessMerkleNode::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::WitnessMerkleNode, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::WitnessMerkleNode
 pub type bitcoin::blockdata::block::WitnessMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::index(&self, index: I) -> &Self::Output
@@ -3293,7 +3293,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::block::WitnessMerkleN
 pub unsafe fn bitcoin::blockdata::block::WitnessMerkleNode::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::block::WitnessMerkleNode
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::block::WitnessMerkleNode where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::block::WitnessMerkleNode where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::block::WitnessMerkleNode where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::vzip(self) -> V
 pub mod bitcoin::blockdata
@@ -3382,8 +3382,8 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::constants::ChainH
 impl core::str::traits::FromStr for bitcoin::blockdata::constants::ChainHash
 pub type bitcoin::blockdata::constants::ChainHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::constants::ChainHash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::constants::ChainHash
-pub fn bitcoin::blockdata::constants::ChainHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::constants::ChainHash
+pub fn bitcoin::blockdata::constants::ChainHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> core::convert::From<&'a [u8; 32]> for bitcoin::blockdata::constants::ChainHash
 pub fn bitcoin::blockdata::constants::ChainHash::from(data: &'a [u8; 32]) -> Self
 impl<'a> core::convert::From<[u8; 32]> for bitcoin::blockdata::constants::ChainHash
@@ -3391,8 +3391,8 @@ pub fn bitcoin::blockdata::constants::ChainHash::from(data: [u8; 32]) -> Self
 impl<'a> core::convert::TryFrom<&'a [u8]> for bitcoin::blockdata::constants::ChainHash
 pub type bitcoin::blockdata::constants::ChainHash::Error = core::array::TryFromSliceError
 pub fn bitcoin::blockdata::constants::ChainHash::try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::constants::ChainHash
-pub fn bitcoin::blockdata::constants::ChainHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::constants::ChainHash, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::constants::ChainHash
+pub fn bitcoin::blockdata::constants::ChainHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::constants::ChainHash, <D as serde_core::de::Deserializer>::Error>
 impl<I> core::ops::index::Index<I> for bitcoin::blockdata::constants::ChainHash where [u8]: core::ops::index::Index<I>
 pub type bitcoin::blockdata::constants::ChainHash::Output = <[u8] as core::ops::index::Index<I>>::Output
 pub fn bitcoin::blockdata::constants::ChainHash::index(&self, index: I) -> &Self::Output
@@ -3427,7 +3427,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::constants::ChainHash 
 pub unsafe fn bitcoin::blockdata::constants::ChainHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::constants::ChainHash
 pub fn bitcoin::blockdata::constants::ChainHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::constants::ChainHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::constants::ChainHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::constants::ChainHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::constants::ChainHash::vzip(self) -> V
 pub const bitcoin::blockdata::constants::COINBASE_MATURITY: u32
@@ -3508,10 +3508,10 @@ impl core::marker::Copy for bitcoin::blockdata::locktime::relative::LockTime
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::locktime::relative::LockTime
 impl ordered::ArbitraryOrd for bitcoin::blockdata::locktime::relative::LockTime
 pub fn bitcoin::blockdata::locktime::relative::LockTime::arbitrary_cmp(&self, other: &Self) -> core::cmp::Ordering
-impl serde::ser::Serialize for bitcoin::blockdata::locktime::relative::LockTime
-pub fn bitcoin::blockdata::locktime::relative::LockTime::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::locktime::relative::LockTime
-pub fn bitcoin::blockdata::locktime::relative::LockTime::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::blockdata::locktime::relative::LockTime
+pub fn bitcoin::blockdata::locktime::relative::LockTime::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::locktime::relative::LockTime
+pub fn bitcoin::blockdata::locktime::relative::LockTime::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::locktime::relative::LockTime
 impl core::marker::Send for bitcoin::blockdata::locktime::relative::LockTime
 impl core::marker::Sync for bitcoin::blockdata::locktime::relative::LockTime
@@ -3543,7 +3543,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::locktime::relative::L
 pub unsafe fn bitcoin::blockdata::locktime::relative::LockTime::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::locktime::relative::LockTime
 pub fn bitcoin::blockdata::locktime::relative::LockTime::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::locktime::relative::LockTime where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::locktime::relative::LockTime where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::locktime::relative::LockTime where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::locktime::relative::LockTime::vzip(self) -> V
 pub struct bitcoin::blockdata::locktime::relative::DisabledLockTimeError(_)
@@ -4061,8 +4061,8 @@ impl core::fmt::Display for bitcoin::blockdata::opcodes::Opcode
 pub fn bitcoin::blockdata::opcodes::Opcode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for bitcoin::blockdata::opcodes::Opcode
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::opcodes::Opcode
-impl serde::ser::Serialize for bitcoin::blockdata::opcodes::Opcode
-pub fn bitcoin::blockdata::opcodes::Opcode::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::opcodes::Opcode
+pub fn bitcoin::blockdata::opcodes::Opcode::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl core::marker::Freeze for bitcoin::blockdata::opcodes::Opcode
 impl core::marker::Send for bitcoin::blockdata::opcodes::Opcode
 impl core::marker::Sync for bitcoin::blockdata::opcodes::Opcode
@@ -6008,8 +6008,8 @@ impl core::ops::index::Index<core::ops::range::RangeTo<usize>> for bitcoin::bloc
 pub fn bitcoin::blockdata::script::Script::index(&self, index: core::ops::range::RangeTo<usize>) -> &Self::Output
 impl core::ops::index::Index<core::ops::range::RangeToInclusive<usize>> for bitcoin::blockdata::script::Script
 pub fn bitcoin::blockdata::script::Script::index(&self, index: core::ops::range::RangeToInclusive<usize>) -> &Self::Output
-impl serde::ser::Serialize for bitcoin::blockdata::script::Script
-pub fn bitcoin::blockdata::script::Script::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::script::Script
+pub fn bitcoin::blockdata::script::Script::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> core::convert::From<&'a bitcoin::blockdata::script::Script> for alloc::borrow::Cow<'a, bitcoin::blockdata::script::Script>
 pub fn alloc::borrow::Cow<'a, bitcoin::blockdata::script::Script>::from(value: &'a bitcoin::blockdata::script::Script) -> Self
 impl<'a> core::convert::From<&'a bitcoin::blockdata::script::Script> for alloc::boxed::Box<bitcoin::blockdata::script::Script>
@@ -6022,8 +6022,8 @@ impl<'a> core::convert::From<&'a bitcoin::blockdata::script::Script> for bitcoin
 pub fn bitcoin::blockdata::script::ScriptBuf::from(value: &'a bitcoin::blockdata::script::Script) -> Self
 impl<'a> core::convert::From<alloc::borrow::Cow<'a, bitcoin::blockdata::script::Script>> for alloc::boxed::Box<bitcoin::blockdata::script::Script>
 pub fn alloc::boxed::Box<bitcoin::blockdata::script::Script>::from(value: alloc::borrow::Cow<'a, bitcoin::blockdata::script::Script>) -> Self
-impl<'de> serde::de::Deserialize<'de> for &'de bitcoin::blockdata::script::Script
-pub fn &'de bitcoin::blockdata::script::Script::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for &'de bitcoin::blockdata::script::Script
+pub fn &'de bitcoin::blockdata::script::Script::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::script::Script
 impl core::marker::Send for bitcoin::blockdata::script::Script
 impl !core::marker::Sized for bitcoin::blockdata::script::Script
@@ -6115,14 +6115,14 @@ pub type bitcoin::blockdata::script::ScriptBuf::Target = bitcoin::blockdata::scr
 pub fn bitcoin::blockdata::script::ScriptBuf::deref(&self) -> &Self::Target
 impl core::ops::deref::DerefMut for bitcoin::blockdata::script::ScriptBuf
 pub fn bitcoin::blockdata::script::ScriptBuf::deref_mut(&mut self) -> &mut Self::Target
-impl serde::ser::Serialize for bitcoin::blockdata::script::ScriptBuf
-pub fn bitcoin::blockdata::script::ScriptBuf::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::script::ScriptBuf
+pub fn bitcoin::blockdata::script::ScriptBuf::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::script::ScriptBuf
 pub fn bitcoin::blockdata::script::ScriptBuf::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 impl<'a> core::convert::From<alloc::borrow::Cow<'a, bitcoin::blockdata::script::Script>> for bitcoin::blockdata::script::ScriptBuf
 pub fn bitcoin::blockdata::script::ScriptBuf::from(value: alloc::borrow::Cow<'a, bitcoin::blockdata::script::Script>) -> Self
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::script::ScriptBuf
-pub fn bitcoin::blockdata::script::ScriptBuf::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::script::ScriptBuf
+pub fn bitcoin::blockdata::script::ScriptBuf::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::script::ScriptBuf
 impl core::marker::Send for bitcoin::blockdata::script::ScriptBuf
 impl core::marker::Sync for bitcoin::blockdata::script::ScriptBuf
@@ -6156,7 +6156,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::script::ScriptBuf whe
 pub unsafe fn bitcoin::blockdata::script::ScriptBuf::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::script::ScriptBuf
 pub fn bitcoin::blockdata::script::ScriptBuf::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::script::ScriptBuf where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::script::ScriptBuf where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::script::ScriptBuf where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::script::ScriptBuf::vzip(self) -> V
 pub struct bitcoin::blockdata::script::ScriptHash(_)
@@ -6210,10 +6210,10 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::ScriptHas
 impl core::str::traits::FromStr for bitcoin::blockdata::script::ScriptHash
 pub type bitcoin::blockdata::script::ScriptHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::script::ScriptHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::script::ScriptHash
-pub fn bitcoin::blockdata::script::ScriptHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::script::ScriptHash
-pub fn bitcoin::blockdata::script::ScriptHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::script::ScriptHash
+pub fn bitcoin::blockdata::script::ScriptHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::script::ScriptHash
+pub fn bitcoin::blockdata::script::ScriptHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::script::ScriptHash
 pub type bitcoin::blockdata::script::ScriptHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::script::ScriptHash::index(&self, index: I) -> &Self::Output
@@ -6248,7 +6248,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::script::ScriptHash wh
 pub unsafe fn bitcoin::blockdata::script::ScriptHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::script::ScriptHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::script::ScriptHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::script::ScriptHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::script::ScriptHash::vzip(self) -> V
 pub struct bitcoin::blockdata::script::WScriptHash(_)
@@ -6302,10 +6302,10 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::WScriptHa
 impl core::str::traits::FromStr for bitcoin::blockdata::script::WScriptHash
 pub type bitcoin::blockdata::script::WScriptHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::script::WScriptHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::script::WScriptHash
-pub fn bitcoin::blockdata::script::WScriptHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::script::WScriptHash
-pub fn bitcoin::blockdata::script::WScriptHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::script::WScriptHash
+pub fn bitcoin::blockdata::script::WScriptHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::script::WScriptHash
+pub fn bitcoin::blockdata::script::WScriptHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::script::WScriptHash
 pub type bitcoin::blockdata::script::WScriptHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::script::WScriptHash::index(&self, index: I) -> &Self::Output
@@ -6340,7 +6340,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::script::WScriptHash w
 pub unsafe fn bitcoin::blockdata::script::WScriptHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::script::WScriptHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::script::WScriptHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::script::WScriptHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::script::WScriptHash::vzip(self) -> V
 pub trait bitcoin::blockdata::script::PushBytesErrorReport
@@ -6637,12 +6637,12 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::OutP
 impl core::str::traits::FromStr for bitcoin::blockdata::transaction::OutPoint
 pub type bitcoin::blockdata::transaction::OutPoint::Err = bitcoin::blockdata::transaction::ParseOutPointError
 pub fn bitcoin::blockdata::transaction::OutPoint::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::OutPoint
-pub fn bitcoin::blockdata::transaction::OutPoint::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::OutPoint
+pub fn bitcoin::blockdata::transaction::OutPoint::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::OutPoint
 pub fn bitcoin::blockdata::transaction::OutPoint::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::OutPoint
-pub fn bitcoin::blockdata::transaction::OutPoint::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::blockdata::transaction::OutPoint, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::OutPoint
+pub fn bitcoin::blockdata::transaction::OutPoint::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::blockdata::transaction::OutPoint, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::transaction::OutPoint
 impl core::marker::Send for bitcoin::blockdata::transaction::OutPoint
 impl core::marker::Sync for bitcoin::blockdata::transaction::OutPoint
@@ -6674,7 +6674,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::OutPoint
 pub unsafe fn bitcoin::blockdata::transaction::OutPoint::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::OutPoint
 pub fn bitcoin::blockdata::transaction::OutPoint::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::OutPoint where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::OutPoint where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::OutPoint where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::OutPoint::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::OutputsIndexError(pub bitcoin::blockdata::transaction::IndexOutOfBoundsError)
@@ -6779,12 +6779,12 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::Sequ
 impl core::str::traits::FromStr for bitcoin::blockdata::transaction::Sequence
 pub type bitcoin::blockdata::transaction::Sequence::Err = bitcoin_units::parse::ParseIntError
 pub fn bitcoin::blockdata::transaction::Sequence::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::Sequence
-pub fn bitcoin::blockdata::transaction::Sequence::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::Sequence
+pub fn bitcoin::blockdata::transaction::Sequence::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::Sequence
 pub fn bitcoin::blockdata::transaction::Sequence::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::Sequence
-pub fn bitcoin::blockdata::transaction::Sequence::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::Sequence
+pub fn bitcoin::blockdata::transaction::Sequence::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::transaction::Sequence
 impl core::marker::Send for bitcoin::blockdata::transaction::Sequence
 impl core::marker::Sync for bitcoin::blockdata::transaction::Sequence
@@ -6816,7 +6816,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::Sequence
 pub unsafe fn bitcoin::blockdata::transaction::Sequence::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::Sequence
 pub fn bitcoin::blockdata::transaction::Sequence::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::Sequence where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::Sequence where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::Sequence where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::Sequence::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::Transaction
@@ -6872,12 +6872,12 @@ pub fn bitcoin::blockdata::transaction::Transaction::fmt(&self, f: &mut core::fm
 impl core::hash::Hash for bitcoin::blockdata::transaction::Transaction
 pub fn bitcoin::blockdata::transaction::Transaction::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::Transaction
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::Transaction
-pub fn bitcoin::blockdata::transaction::Transaction::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::Transaction
+pub fn bitcoin::blockdata::transaction::Transaction::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::Transaction
 pub fn bitcoin::blockdata::transaction::Transaction::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::Transaction
-pub fn bitcoin::blockdata::transaction::Transaction::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::Transaction
+pub fn bitcoin::blockdata::transaction::Transaction::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::transaction::Transaction
 impl core::marker::Send for bitcoin::blockdata::transaction::Transaction
 impl core::marker::Sync for bitcoin::blockdata::transaction::Transaction
@@ -6907,7 +6907,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::Transact
 pub unsafe fn bitcoin::blockdata::transaction::Transaction::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::Transaction
 pub fn bitcoin::blockdata::transaction::Transaction::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::Transaction where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::Transaction where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::Transaction where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::Transaction::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::TxIn
@@ -6941,12 +6941,12 @@ pub fn bitcoin::blockdata::transaction::TxIn::fmt(&self, f: &mut core::fmt::Form
 impl core::hash::Hash for bitcoin::blockdata::transaction::TxIn
 pub fn bitcoin::blockdata::transaction::TxIn::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::TxIn
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::TxIn
-pub fn bitcoin::blockdata::transaction::TxIn::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::TxIn
+pub fn bitcoin::blockdata::transaction::TxIn::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::TxIn
 pub fn bitcoin::blockdata::transaction::TxIn::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::TxIn
-pub fn bitcoin::blockdata::transaction::TxIn::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::TxIn
+pub fn bitcoin::blockdata::transaction::TxIn::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::transaction::TxIn
 impl core::marker::Send for bitcoin::blockdata::transaction::TxIn
 impl core::marker::Sync for bitcoin::blockdata::transaction::TxIn
@@ -6976,7 +6976,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::TxIn whe
 pub unsafe fn bitcoin::blockdata::transaction::TxIn::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::TxIn
 pub fn bitcoin::blockdata::transaction::TxIn::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::TxIn where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::TxIn where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::TxIn where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::TxIn::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::TxOut
@@ -7007,12 +7007,12 @@ pub fn bitcoin::blockdata::transaction::TxOut::fmt(&self, f: &mut core::fmt::For
 impl core::hash::Hash for bitcoin::blockdata::transaction::TxOut
 pub fn bitcoin::blockdata::transaction::TxOut::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::TxOut
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::TxOut
-pub fn bitcoin::blockdata::transaction::TxOut::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::TxOut
+pub fn bitcoin::blockdata::transaction::TxOut::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::TxOut
 pub fn bitcoin::blockdata::transaction::TxOut::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::TxOut
-pub fn bitcoin::blockdata::transaction::TxOut::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::TxOut
+pub fn bitcoin::blockdata::transaction::TxOut::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::transaction::TxOut
 impl core::marker::Send for bitcoin::blockdata::transaction::TxOut
 impl core::marker::Sync for bitcoin::blockdata::transaction::TxOut
@@ -7042,7 +7042,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::TxOut wh
 pub unsafe fn bitcoin::blockdata::transaction::TxOut::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::TxOut
 pub fn bitcoin::blockdata::transaction::TxOut::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::TxOut where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::TxOut where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::TxOut where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::TxOut::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::Txid(_)
@@ -7100,12 +7100,12 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::Txid
 impl core::str::traits::FromStr for bitcoin::blockdata::transaction::Txid
 pub type bitcoin::blockdata::transaction::Txid::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::transaction::Txid::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::transaction::Txid, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::Txid
-pub fn bitcoin::blockdata::transaction::Txid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::Txid
+pub fn bitcoin::blockdata::transaction::Txid::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::Txid
-pub fn bitcoin::blockdata::transaction::Txid::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::transaction::Txid, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::Txid
+pub fn bitcoin::blockdata::transaction::Txid::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::transaction::Txid, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::transaction::Txid
 pub type bitcoin::blockdata::transaction::Txid::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::transaction::Txid::index(&self, index: I) -> &Self::Output
@@ -7140,7 +7140,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::Txid whe
 pub unsafe fn bitcoin::blockdata::transaction::Txid::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::Txid where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::Txid where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::Txid where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::Txid::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::Version(pub i32)
@@ -7169,12 +7169,12 @@ impl core::hash::Hash for bitcoin::blockdata::transaction::Version
 pub fn bitcoin::blockdata::transaction::Version::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::blockdata::transaction::Version
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::Version
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::Version
-pub fn bitcoin::blockdata::transaction::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::Version
+pub fn bitcoin::blockdata::transaction::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::Version
 pub fn bitcoin::blockdata::transaction::Version::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::Version
-pub fn bitcoin::blockdata::transaction::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::Version
+pub fn bitcoin::blockdata::transaction::Version::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::transaction::Version
 impl core::marker::Send for bitcoin::blockdata::transaction::Version
 impl core::marker::Sync for bitcoin::blockdata::transaction::Version
@@ -7206,7 +7206,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::Version 
 pub unsafe fn bitcoin::blockdata::transaction::Version::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::Version
 pub fn bitcoin::blockdata::transaction::Version::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::Version where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::Version where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::Version where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::Version::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::Wtxid(_)
@@ -7264,12 +7264,12 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::Wtxi
 impl core::str::traits::FromStr for bitcoin::blockdata::transaction::Wtxid
 pub type bitcoin::blockdata::transaction::Wtxid::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::blockdata::transaction::Wtxid::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::transaction::Wtxid, Self::Err>
-impl serde::ser::Serialize for bitcoin::blockdata::transaction::Wtxid
-pub fn bitcoin::blockdata::transaction::Wtxid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::blockdata::transaction::Wtxid
+pub fn bitcoin::blockdata::transaction::Wtxid::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::transaction::Wtxid
-pub fn bitcoin::blockdata::transaction::Wtxid::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::transaction::Wtxid, <D as serde::de::Deserializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::transaction::Wtxid
+pub fn bitcoin::blockdata::transaction::Wtxid::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::transaction::Wtxid, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::transaction::Wtxid
 pub type bitcoin::blockdata::transaction::Wtxid::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::blockdata::transaction::Wtxid::index(&self, index: I) -> &Self::Output
@@ -7304,7 +7304,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::Wtxid wh
 pub unsafe fn bitcoin::blockdata::transaction::Wtxid::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::transaction::Wtxid where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::Wtxid where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::Wtxid where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::Wtxid::vzip(self) -> V
 pub fn bitcoin::blockdata::transaction::effective_value(fee_rate: bitcoin_units::fee_rate::FeeRate, satisfaction_weight: bitcoin_units::weight::Weight, value: bitcoin_units::amount::Amount) -> core::option::Option<bitcoin_units::amount::SignedAmount>
@@ -7403,16 +7403,16 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::witness::Witness
 impl core::ops::index::Index<usize> for bitcoin::blockdata::witness::Witness
 pub type bitcoin::blockdata::witness::Witness::Output = [u8]
 pub fn bitcoin::blockdata::witness::Witness::index(&self, index: usize) -> &Self::Output
-impl serde::ser::Serialize for bitcoin::blockdata::witness::Witness
-pub fn bitcoin::blockdata::witness::Witness::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::blockdata::witness::Witness
+pub fn bitcoin::blockdata::witness::Witness::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::blockdata::witness::Witness
 pub fn bitcoin::blockdata::witness::Witness::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 impl<'a> core::iter::traits::collect::IntoIterator for &'a bitcoin::blockdata::witness::Witness
 pub type &'a bitcoin::blockdata::witness::Witness::IntoIter = bitcoin::blockdata::witness::Iter<'a>
 pub type &'a bitcoin::blockdata::witness::Witness::Item = &'a [u8]
 pub fn &'a bitcoin::blockdata::witness::Witness::into_iter(self) -> Self::IntoIter
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::witness::Witness
-pub fn bitcoin::blockdata::witness::Witness::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::blockdata::witness::Witness
+pub fn bitcoin::blockdata::witness::Witness::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::blockdata::witness::Witness
 impl core::marker::Send for bitcoin::blockdata::witness::Witness
 impl core::marker::Sync for bitcoin::blockdata::witness::Witness
@@ -7442,7 +7442,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::blockdata::witness::Witness wher
 pub unsafe fn bitcoin::blockdata::witness::Witness::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::blockdata::witness::Witness
 pub fn bitcoin::blockdata::witness::Witness::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::blockdata::witness::Witness where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::witness::Witness where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::witness::Witness where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::witness::Witness::vzip(self) -> V
 pub mod bitcoin::consensus
@@ -8188,7 +8188,7 @@ impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::consensus::serde::hex::Upper 
 pub fn bitcoin::consensus::serde::hex::Upper::vzip(self) -> V
 pub struct bitcoin::consensus::serde::hex::DecodeError(_)
 impl bitcoin::consensus::serde::IntoDeError for bitcoin::consensus::serde::hex::DecodeError
-pub fn bitcoin::consensus::serde::hex::DecodeError::into_de_error<E: serde::de::Error>(self) -> E
+pub fn bitcoin::consensus::serde::hex::DecodeError::into_de_error<E: serde_core::de::Error>(self) -> E
 impl core::clone::Clone for bitcoin::consensus::serde::hex::DecodeError
 pub fn bitcoin::consensus::serde::hex::DecodeError::clone(&self) -> bitcoin::consensus::serde::hex::DecodeError
 impl core::cmp::Eq for bitcoin::consensus::serde::hex::DecodeError
@@ -8230,7 +8230,7 @@ impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::consensus::serde::hex::Decode
 pub fn bitcoin::consensus::serde::hex::DecodeError::vzip(self) -> V
 pub struct bitcoin::consensus::serde::hex::DecodeInitError(_)
 impl bitcoin::consensus::serde::IntoDeError for bitcoin::consensus::serde::hex::DecodeInitError
-pub fn bitcoin::consensus::serde::hex::DecodeInitError::into_de_error<E: serde::de::Error>(self) -> E
+pub fn bitcoin::consensus::serde::hex::DecodeInitError::into_de_error<E: serde_core::de::Error>(self) -> E
 impl core::clone::Clone for bitcoin::consensus::serde::hex::DecodeInitError
 pub fn bitcoin::consensus::serde::hex::DecodeInitError::clone(&self) -> bitcoin::consensus::serde::hex::DecodeInitError
 impl core::cmp::Eq for bitcoin::consensus::serde::hex::DecodeInitError
@@ -8374,8 +8374,8 @@ impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::consensus::serde::Hex<Case> w
 pub fn bitcoin::consensus::serde::Hex<Case>::vzip(self) -> V
 pub struct bitcoin::consensus::serde::With<E>(_)
 impl<E> bitcoin::consensus::serde::With<E>
-pub fn bitcoin::consensus::serde::With<E>::deserialize<'d, T: bitcoin::consensus::encode::Decodable, D: serde::de::Deserializer<'d>>(deserializer: D) -> core::result::Result<T, <D as serde::de::Deserializer>::Error> where for<'a> E: bitcoin::consensus::serde::ByteDecoder<'a>
-pub fn bitcoin::consensus::serde::With<E>::serialize<T: bitcoin::consensus::encode::Encodable, S: serde::ser::Serializer>(value: &T, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where E: bitcoin::consensus::serde::ByteEncoder
+pub fn bitcoin::consensus::serde::With<E>::deserialize<'d, T: bitcoin::consensus::encode::Decodable, D: serde_core::de::Deserializer<'d>>(deserializer: D) -> core::result::Result<T, <D as serde_core::de::Deserializer>::Error> where for<'a> E: bitcoin::consensus::serde::ByteDecoder<'a>
+pub fn bitcoin::consensus::serde::With<E>::serialize<T: bitcoin::consensus::encode::Encodable, S: serde_core::ser::Serializer>(value: &T, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where E: bitcoin::consensus::serde::ByteEncoder
 impl<E> core::marker::Freeze for bitcoin::consensus::serde::With<E>
 impl<E> core::marker::Send for bitcoin::consensus::serde::With<E> where E: core::marker::Send
 impl<E> core::marker::Sync for bitcoin::consensus::serde::With<E> where E: core::marker::Sync
@@ -8412,9 +8412,9 @@ pub trait bitcoin::consensus::serde::EncodeBytes
 pub fn bitcoin::consensus::serde::EncodeBytes::encode_chunk<W: core::fmt::Write>(&mut self, writer: &mut W, bytes: &[u8]) -> core::fmt::Result
 pub fn bitcoin::consensus::serde::EncodeBytes::flush<W: core::fmt::Write>(&mut self, writer: &mut W) -> core::fmt::Result
 pub trait bitcoin::consensus::serde::IntoDeError
-pub fn bitcoin::consensus::serde::IntoDeError::into_de_error<E: serde::de::Error>(self) -> E
+pub fn bitcoin::consensus::serde::IntoDeError::into_de_error<E: serde_core::de::Error>(self) -> E
 impl<E> bitcoin::consensus::serde::IntoDeError for bitcoin::consensus::DecodeError<E> where E: bitcoin::consensus::serde::IntoDeError
-pub fn bitcoin::consensus::DecodeError<E>::into_de_error<DE: serde::de::Error>(self) -> DE
+pub fn bitcoin::consensus::DecodeError<E>::into_de_error<DE: serde_core::de::Error>(self) -> DE
 pub mod bitcoin::consensus::validation
 #[non_exhaustive] pub enum bitcoin::consensus::validation::TxVerifyError
 pub bitcoin::consensus::validation::TxVerifyError::ScriptVerification(bitcoin::consensus::validation::BitcoinconsensusError)
@@ -8721,12 +8721,12 @@ impl core::marker::StructuralPartialEq for bitcoin::ecdsa::Signature
 impl core::str::traits::FromStr for bitcoin::ecdsa::Signature
 pub type bitcoin::ecdsa::Signature::Err = bitcoin::ecdsa::Error
 pub fn bitcoin::ecdsa::Signature::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::ecdsa::Signature
-pub fn bitcoin::ecdsa::Signature::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::ecdsa::Signature
+pub fn bitcoin::ecdsa::Signature::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::ecdsa::Signature
 pub fn bitcoin::ecdsa::Signature::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::ecdsa::Signature
-pub fn bitcoin::ecdsa::Signature::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::ecdsa::Signature
+pub fn bitcoin::ecdsa::Signature::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::ecdsa::Signature
 impl core::marker::Send for bitcoin::ecdsa::Signature
 impl core::marker::Sync for bitcoin::ecdsa::Signature
@@ -8758,7 +8758,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::ecdsa::Signature where T: core::
 pub unsafe fn bitcoin::ecdsa::Signature::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::ecdsa::Signature
 pub fn bitcoin::ecdsa::Signature::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::ecdsa::Signature where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::ecdsa::Signature where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::ecdsa::Signature where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::ecdsa::Signature::vzip(self) -> V
 pub mod bitcoin::error
@@ -9231,10 +9231,10 @@ impl core::marker::StructuralPartialEq for bitcoin::CompressedPublicKey
 impl core::str::traits::FromStr for bitcoin::CompressedPublicKey
 pub type bitcoin::CompressedPublicKey::Err = bitcoin::key::ParseCompressedPublicKeyError
 pub fn bitcoin::CompressedPublicKey::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::CompressedPublicKey
-pub fn bitcoin::CompressedPublicKey::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::CompressedPublicKey
-pub fn bitcoin::CompressedPublicKey::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::CompressedPublicKey
+pub fn bitcoin::CompressedPublicKey::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::CompressedPublicKey
+pub fn bitcoin::CompressedPublicKey::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
 impl core::marker::Freeze for bitcoin::CompressedPublicKey
 impl core::marker::Send for bitcoin::CompressedPublicKey
 impl core::marker::Sync for bitcoin::CompressedPublicKey
@@ -9266,7 +9266,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::CompressedPublicKey where T: cor
 pub unsafe fn bitcoin::CompressedPublicKey::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::CompressedPublicKey
 pub fn bitcoin::CompressedPublicKey::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::CompressedPublicKey where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::CompressedPublicKey where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::CompressedPublicKey where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::CompressedPublicKey::vzip(self) -> V
 pub struct bitcoin::key::InvalidAddressVersionError
@@ -9392,10 +9392,10 @@ pub fn bitcoin::PrivateKey::index(&self, _: core::ops::range::RangeFull) -> &[u8
 impl core::str::traits::FromStr for bitcoin::PrivateKey
 pub type bitcoin::PrivateKey::Err = bitcoin::key::FromWifError
 pub fn bitcoin::PrivateKey::from_str(s: &str) -> core::result::Result<bitcoin::PrivateKey, bitcoin::key::FromWifError>
-impl serde::ser::Serialize for bitcoin::PrivateKey
-pub fn bitcoin::PrivateKey::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::PrivateKey
-pub fn bitcoin::PrivateKey::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::PrivateKey, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::PrivateKey
+pub fn bitcoin::PrivateKey::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::PrivateKey
+pub fn bitcoin::PrivateKey::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::PrivateKey, <D as serde_core::de::Deserializer>::Error>
 impl core::marker::Freeze for bitcoin::PrivateKey
 impl core::marker::Send for bitcoin::PrivateKey
 impl core::marker::Sync for bitcoin::PrivateKey
@@ -9427,7 +9427,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::PrivateKey where T: core::clone:
 pub unsafe fn bitcoin::PrivateKey::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::PrivateKey
 pub fn bitcoin::PrivateKey::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::PrivateKey where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::PrivateKey where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::PrivateKey where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::PrivateKey::vzip(self) -> V
 pub struct bitcoin::key::PubkeyHash(_)
@@ -9485,10 +9485,10 @@ impl core::marker::StructuralPartialEq for bitcoin::PubkeyHash
 impl core::str::traits::FromStr for bitcoin::PubkeyHash
 pub type bitcoin::PubkeyHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::PubkeyHash::from_str(s: &str) -> core::result::Result<bitcoin::PubkeyHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::PubkeyHash
-pub fn bitcoin::PubkeyHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::PubkeyHash
-pub fn bitcoin::PubkeyHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::PubkeyHash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::PubkeyHash
+pub fn bitcoin::PubkeyHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::PubkeyHash
+pub fn bitcoin::PubkeyHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::PubkeyHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::PubkeyHash
 pub type bitcoin::PubkeyHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::PubkeyHash::index(&self, index: I) -> &Self::Output
@@ -9523,7 +9523,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::PubkeyHash where T: core::clone:
 pub unsafe fn bitcoin::PubkeyHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::PubkeyHash
 pub fn bitcoin::PubkeyHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::PubkeyHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::PubkeyHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::PubkeyHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::PubkeyHash::vzip(self) -> V
 pub struct bitcoin::key::PublicKey
@@ -9565,10 +9565,10 @@ impl core::marker::StructuralPartialEq for bitcoin::PublicKey
 impl core::str::traits::FromStr for bitcoin::PublicKey
 pub type bitcoin::PublicKey::Err = bitcoin::key::ParsePublicKeyError
 pub fn bitcoin::PublicKey::from_str(s: &str) -> core::result::Result<bitcoin::PublicKey, bitcoin::key::ParsePublicKeyError>
-impl serde::ser::Serialize for bitcoin::PublicKey
-pub fn bitcoin::PublicKey::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::PublicKey
-pub fn bitcoin::PublicKey::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::PublicKey, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::PublicKey
+pub fn bitcoin::PublicKey::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::PublicKey
+pub fn bitcoin::PublicKey::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::PublicKey, <D as serde_core::de::Deserializer>::Error>
 impl core::marker::Freeze for bitcoin::PublicKey
 impl core::marker::Send for bitcoin::PublicKey
 impl core::marker::Sync for bitcoin::PublicKey
@@ -9600,7 +9600,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::PublicKey where T: core::clone::
 pub unsafe fn bitcoin::PublicKey::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::PublicKey
 pub fn bitcoin::PublicKey::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::PublicKey where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::PublicKey where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::PublicKey where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::PublicKey::vzip(self) -> V
 pub struct bitcoin::key::SortKey(_)
@@ -9675,10 +9675,10 @@ impl core::hash::Hash for bitcoin::key::TweakedKeypair
 pub fn bitcoin::key::TweakedKeypair::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::key::TweakedKeypair
 impl core::marker::StructuralPartialEq for bitcoin::key::TweakedKeypair
-impl serde::ser::Serialize for bitcoin::key::TweakedKeypair
-pub fn bitcoin::key::TweakedKeypair::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::key::TweakedKeypair
-pub fn bitcoin::key::TweakedKeypair::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::key::TweakedKeypair
+pub fn bitcoin::key::TweakedKeypair::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::key::TweakedKeypair
+pub fn bitcoin::key::TweakedKeypair::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::key::TweakedKeypair
 impl core::marker::Send for bitcoin::key::TweakedKeypair
 impl core::marker::Sync for bitcoin::key::TweakedKeypair
@@ -9708,7 +9708,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::key::TweakedKeypair where T: cor
 pub unsafe fn bitcoin::key::TweakedKeypair::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::key::TweakedKeypair
 pub fn bitcoin::key::TweakedKeypair::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::key::TweakedKeypair where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::key::TweakedKeypair where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::key::TweakedKeypair where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::key::TweakedKeypair::vzip(self) -> V
 pub struct bitcoin::key::TweakedPublicKey(_)
@@ -9737,10 +9737,10 @@ impl core::hash::Hash for bitcoin::key::TweakedPublicKey
 pub fn bitcoin::key::TweakedPublicKey::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::key::TweakedPublicKey
 impl core::marker::StructuralPartialEq for bitcoin::key::TweakedPublicKey
-impl serde::ser::Serialize for bitcoin::key::TweakedPublicKey
-pub fn bitcoin::key::TweakedPublicKey::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::key::TweakedPublicKey
-pub fn bitcoin::key::TweakedPublicKey::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::key::TweakedPublicKey
+pub fn bitcoin::key::TweakedPublicKey::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::key::TweakedPublicKey
+pub fn bitcoin::key::TweakedPublicKey::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::key::TweakedPublicKey
 impl core::marker::Send for bitcoin::key::TweakedPublicKey
 impl core::marker::Sync for bitcoin::key::TweakedPublicKey
@@ -9772,7 +9772,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::key::TweakedPublicKey where T: c
 pub unsafe fn bitcoin::key::TweakedPublicKey::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::key::TweakedPublicKey
 pub fn bitcoin::key::TweakedPublicKey::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::key::TweakedPublicKey where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::key::TweakedPublicKey where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::key::TweakedPublicKey where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::key::TweakedPublicKey::vzip(self) -> V
 #[non_exhaustive] pub struct bitcoin::key::UncompressedPublicKeyError
@@ -9871,10 +9871,10 @@ impl core::marker::StructuralPartialEq for bitcoin::WPubkeyHash
 impl core::str::traits::FromStr for bitcoin::WPubkeyHash
 pub type bitcoin::WPubkeyHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::WPubkeyHash::from_str(s: &str) -> core::result::Result<bitcoin::WPubkeyHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::WPubkeyHash
-pub fn bitcoin::WPubkeyHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::WPubkeyHash
-pub fn bitcoin::WPubkeyHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::WPubkeyHash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::WPubkeyHash
+pub fn bitcoin::WPubkeyHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::WPubkeyHash
+pub fn bitcoin::WPubkeyHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::WPubkeyHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::WPubkeyHash
 pub type bitcoin::WPubkeyHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::WPubkeyHash::index(&self, index: I) -> &Self::Output
@@ -9909,7 +9909,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::WPubkeyHash where T: core::clone
 pub unsafe fn bitcoin::WPubkeyHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::WPubkeyHash
 pub fn bitcoin::WPubkeyHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::WPubkeyHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::WPubkeyHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::WPubkeyHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::WPubkeyHash::vzip(self) -> V
 pub trait bitcoin::key::TapTweak
@@ -10112,8 +10112,8 @@ pub fn bitcoin::merkle_tree::calculate_root<T, I>(hashes: I) -> core::option::Op
 pub fn bitcoin::merkle_tree::calculate_root_inline<T>(hashes: &mut [T]) -> core::option::Option<T> where T: bitcoin_hashes::Hash + bitcoin::consensus::encode::Encodable, <T as bitcoin_hashes::Hash>::Engine: bitcoin_io::Write
 pub mod bitcoin::network
 pub mod bitcoin::network::as_core_arg
-pub fn bitcoin::network::as_core_arg::deserialize<'de, D>(deserializer: D) -> core::result::Result<bitcoin::network::Network, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
-pub fn bitcoin::network::as_core_arg::serialize<S>(network: &bitcoin::network::Network, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin::network::as_core_arg::deserialize<'de, D>(deserializer: D) -> core::result::Result<bitcoin::network::Network, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
+pub fn bitcoin::network::as_core_arg::serialize<S>(network: &bitcoin::network::Network, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 pub enum bitcoin::network::Network
 pub bitcoin::network::Network::Bitcoin
 pub bitcoin::network::Network::Regtest
@@ -10154,10 +10154,10 @@ impl core::marker::StructuralPartialEq for bitcoin::network::Network
 impl core::str::traits::FromStr for bitcoin::network::Network
 pub type bitcoin::network::Network::Err = bitcoin::network::ParseNetworkError
 pub fn bitcoin::network::Network::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::network::Network
-pub fn bitcoin::network::Network::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::network::Network
-pub fn bitcoin::network::Network::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::network::Network
+pub fn bitcoin::network::Network::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::network::Network
+pub fn bitcoin::network::Network::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::network::Network
 impl core::marker::Send for bitcoin::network::Network
 impl core::marker::Sync for bitcoin::network::Network
@@ -10189,7 +10189,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::network::Network where T: core::
 pub unsafe fn bitcoin::network::Network::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::network::Network
 pub fn bitcoin::network::Network::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::network::Network where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::network::Network where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::network::Network where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::network::Network::vzip(self) -> V
 pub enum bitcoin::network::NetworkKind
@@ -12193,10 +12193,10 @@ impl core::hash::Hash for bitcoin::pow::CompactTarget
 pub fn bitcoin::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::pow::CompactTarget
 impl core::marker::StructuralPartialEq for bitcoin::pow::CompactTarget
-impl serde::ser::Serialize for bitcoin::pow::CompactTarget
-pub fn bitcoin::pow::CompactTarget::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::pow::CompactTarget
-pub fn bitcoin::pow::CompactTarget::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::pow::CompactTarget
+pub fn bitcoin::pow::CompactTarget::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::pow::CompactTarget
+pub fn bitcoin::pow::CompactTarget::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::pow::CompactTarget
 impl core::marker::Send for bitcoin::pow::CompactTarget
 impl core::marker::Sync for bitcoin::pow::CompactTarget
@@ -12226,7 +12226,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::pow::CompactTarget where T: core
 pub unsafe fn bitcoin::pow::CompactTarget::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::pow::CompactTarget
 pub fn bitcoin::pow::CompactTarget::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::pow::CompactTarget where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::pow::CompactTarget where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::pow::CompactTarget where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::pow::CompactTarget::vzip(self) -> V
 pub struct bitcoin::pow::Target(_)
@@ -12272,10 +12272,10 @@ impl core::hash::Hash for bitcoin::pow::Target
 pub fn bitcoin::pow::Target::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::pow::Target
 impl core::marker::StructuralPartialEq for bitcoin::pow::Target
-impl serde::ser::Serialize for bitcoin::pow::Target
-pub fn bitcoin::pow::Target::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::pow::Target
-pub fn bitcoin::pow::Target::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::pow::Target
+pub fn bitcoin::pow::Target::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::pow::Target
+pub fn bitcoin::pow::Target::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::pow::Target
 impl core::marker::Send for bitcoin::pow::Target
 impl core::marker::Sync for bitcoin::pow::Target
@@ -12307,7 +12307,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::pow::Target where T: core::clone
 pub unsafe fn bitcoin::pow::Target::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::pow::Target
 pub fn bitcoin::pow::Target::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::pow::Target where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::pow::Target where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::pow::Target where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::pow::Target::vzip(self) -> V
 pub struct bitcoin::pow::Work(_)
@@ -12343,10 +12343,10 @@ pub type bitcoin::pow::Work::Output = bitcoin::pow::Work
 pub fn bitcoin::pow::Work::add(self, rhs: Self) -> Self
 impl core::ops::arith::Sub for bitcoin::pow::Work
 pub fn bitcoin::pow::Work::sub(self, rhs: Self) -> Self
-impl serde::ser::Serialize for bitcoin::pow::Work
-pub fn bitcoin::pow::Work::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::pow::Work
-pub fn bitcoin::pow::Work::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::pow::Work
+pub fn bitcoin::pow::Work::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::pow::Work
+pub fn bitcoin::pow::Work::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::pow::Work
 impl core::marker::Send for bitcoin::pow::Work
 impl core::marker::Sync for bitcoin::pow::Work
@@ -12378,7 +12378,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::pow::Work where T: core::clone::
 pub unsafe fn bitcoin::pow::Work::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::pow::Work
 pub fn bitcoin::pow::Work::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::pow::Work where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::pow::Work where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::pow::Work where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::pow::Work::vzip(self) -> V
 pub mod bitcoin::psbt
@@ -12401,12 +12401,12 @@ impl core::fmt::Display for bitcoin::psbt::raw::Key
 impl core::hash::Hash for bitcoin::psbt::raw::Key
 pub fn bitcoin::psbt::raw::Key::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::psbt::raw::Key
-impl serde::ser::Serialize for bitcoin::psbt::raw::Key
-pub fn bitcoin::psbt::raw::Key::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::psbt::raw::Key
+pub fn bitcoin::psbt::raw::Key::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::psbt::raw::Key
 pub fn bitcoin::psbt::raw::Key::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::psbt::raw::Key
-pub fn bitcoin::psbt::raw::Key::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::psbt::raw::Key
+pub fn bitcoin::psbt::raw::Key::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl<Subtype> core::convert::TryFrom<bitcoin::psbt::raw::Key> for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
 pub type bitcoin::psbt::raw::ProprietaryKey<Subtype>::Error = bitcoin::psbt::Error
 pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::try_from(key: bitcoin::psbt::raw::Key) -> core::result::Result<Self, Self::Error>
@@ -12441,7 +12441,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::psbt::raw::Key where T: core::cl
 pub unsafe fn bitcoin::psbt::raw::Key::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::psbt::raw::Key
 pub fn bitcoin::psbt::raw::Key::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::psbt::raw::Key where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::psbt::raw::Key where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::psbt::raw::Key where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::psbt::raw::Key::vzip(self) -> V
 pub struct bitcoin::psbt::raw::Pair
@@ -12453,10 +12453,10 @@ pub fn bitcoin::psbt::raw::Pair::eq(&self, other: &bitcoin::psbt::raw::Pair) -> 
 impl core::fmt::Debug for bitcoin::psbt::raw::Pair
 pub fn bitcoin::psbt::raw::Pair::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for bitcoin::psbt::raw::Pair
-impl serde::ser::Serialize for bitcoin::psbt::raw::Pair
-pub fn bitcoin::psbt::raw::Pair::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::psbt::raw::Pair
-pub fn bitcoin::psbt::raw::Pair::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::psbt::raw::Pair
+pub fn bitcoin::psbt::raw::Pair::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::psbt::raw::Pair
+pub fn bitcoin::psbt::raw::Pair::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::psbt::raw::Pair
 impl core::marker::Send for bitcoin::psbt::raw::Pair
 impl core::marker::Sync for bitcoin::psbt::raw::Pair
@@ -12480,7 +12480,7 @@ impl<T> core::borrow::BorrowMut<T> for bitcoin::psbt::raw::Pair where T: ?core::
 pub fn bitcoin::psbt::raw::Pair::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for bitcoin::psbt::raw::Pair
 pub fn bitcoin::psbt::raw::Pair::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::psbt::raw::Pair where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::psbt::raw::Pair where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::psbt::raw::Pair where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::psbt::raw::Pair::vzip(self) -> V
 pub struct bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
@@ -12491,8 +12491,8 @@ impl<Subtype> bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::m
 pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::to_key(&self) -> bitcoin::psbt::raw::Key
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::psbt::raw::ProprietaryKey
 pub fn bitcoin::psbt::raw::ProprietaryKey::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de, Subtype> serde::de::Deserialize<'de> for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + serde::de::Deserialize<'de>
-pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de, Subtype> serde_core::de::Deserialize<'de> for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + serde_core::de::Deserialize<'de>
+pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl<Subtype> core::clone::Clone for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::clone::Clone
 pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::clone(&self) -> bitcoin::psbt::raw::ProprietaryKey<Subtype>
 impl<Subtype> core::cmp::Eq for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::cmp::Eq
@@ -12507,8 +12507,8 @@ pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::fmt(&self, f: &mut core::fmt
 impl<Subtype> core::hash::Hash for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::hash::Hash
 pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl<Subtype> core::marker::StructuralPartialEq for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
-impl<Subtype> serde::ser::Serialize for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + serde::ser::Serialize
-pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl<Subtype> serde_core::ser::Serialize for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + serde_core::ser::Serialize
+pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<Subtype> core::marker::Freeze for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Freeze
 impl<Subtype> core::marker::Send for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Send
 impl<Subtype> core::marker::Sync for bitcoin::psbt::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Sync
@@ -12538,7 +12538,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::psbt::raw::ProprietaryKey<Subtyp
 pub unsafe fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::psbt::raw::ProprietaryKey<Subtype>
 pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::psbt::raw::ProprietaryKey<Subtype> where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::psbt::raw::ProprietaryKey<Subtype> where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::psbt::raw::ProprietaryKey<Subtype> where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::vzip(self) -> V
 pub type bitcoin::psbt::raw::ProprietaryType = u8
@@ -13113,10 +13113,10 @@ pub fn bitcoin::psbt::Input::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> cor
 impl core::hash::Hash for bitcoin::psbt::Input
 pub fn bitcoin::psbt::Input::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::psbt::Input
-impl serde::ser::Serialize for bitcoin::psbt::Input
-pub fn bitcoin::psbt::Input::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::psbt::Input
-pub fn bitcoin::psbt::Input::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::psbt::Input
+pub fn bitcoin::psbt::Input::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::psbt::Input
+pub fn bitcoin::psbt::Input::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::psbt::Input
 impl core::marker::Send for bitcoin::psbt::Input
 impl core::marker::Sync for bitcoin::psbt::Input
@@ -13146,7 +13146,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::psbt::Input where T: core::clone
 pub unsafe fn bitcoin::psbt::Input::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::psbt::Input
 pub fn bitcoin::psbt::Input::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::psbt::Input where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::psbt::Input where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::psbt::Input where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::psbt::Input::vzip(self) -> V
 pub struct bitcoin::psbt::Output
@@ -13172,10 +13172,10 @@ pub fn bitcoin::psbt::Output::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> co
 impl core::hash::Hash for bitcoin::psbt::Output
 pub fn bitcoin::psbt::Output::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::psbt::Output
-impl serde::ser::Serialize for bitcoin::psbt::Output
-pub fn bitcoin::psbt::Output::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::psbt::Output
-pub fn bitcoin::psbt::Output::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::psbt::Output
+pub fn bitcoin::psbt::Output::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::psbt::Output
+pub fn bitcoin::psbt::Output::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::psbt::Output
 impl core::marker::Send for bitcoin::psbt::Output
 impl core::marker::Sync for bitcoin::psbt::Output
@@ -13205,7 +13205,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::psbt::Output where T: core::clon
 pub unsafe fn bitcoin::psbt::Output::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::psbt::Output
 pub fn bitcoin::psbt::Output::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::psbt::Output where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::psbt::Output where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::psbt::Output where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::psbt::Output::vzip(self) -> V
 pub struct bitcoin::psbt::Psbt
@@ -13248,10 +13248,10 @@ impl core::marker::StructuralPartialEq for bitcoin::psbt::Psbt
 impl core::str::traits::FromStr for bitcoin::psbt::Psbt
 pub type bitcoin::psbt::Psbt::Err = bitcoin::psbt::PsbtParseError
 pub fn bitcoin::psbt::Psbt::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::psbt::Psbt
-pub fn bitcoin::psbt::Psbt::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::psbt::Psbt
-pub fn bitcoin::psbt::Psbt::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::psbt::Psbt
+pub fn bitcoin::psbt::Psbt::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::psbt::Psbt
+pub fn bitcoin::psbt::Psbt::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::psbt::Psbt
 impl core::marker::Send for bitcoin::psbt::Psbt
 impl core::marker::Sync for bitcoin::psbt::Psbt
@@ -13283,7 +13283,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::psbt::Psbt where T: core::clone:
 pub unsafe fn bitcoin::psbt::Psbt::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::psbt::Psbt
 pub fn bitcoin::psbt::Psbt::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::psbt::Psbt where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::psbt::Psbt where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::psbt::Psbt where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::psbt::Psbt::vzip(self) -> V
 pub struct bitcoin::psbt::PsbtSighashType
@@ -13315,10 +13315,10 @@ impl core::marker::StructuralPartialEq for bitcoin::psbt::PsbtSighashType
 impl core::str::traits::FromStr for bitcoin::psbt::PsbtSighashType
 pub type bitcoin::psbt::PsbtSighashType::Err = bitcoin::sighash::SighashTypeParseError
 pub fn bitcoin::psbt::PsbtSighashType::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::psbt::PsbtSighashType
-pub fn bitcoin::psbt::PsbtSighashType::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::psbt::PsbtSighashType
-pub fn bitcoin::psbt::PsbtSighashType::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::psbt::PsbtSighashType
+pub fn bitcoin::psbt::PsbtSighashType::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::psbt::PsbtSighashType
+pub fn bitcoin::psbt::PsbtSighashType::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::psbt::PsbtSighashType
 impl core::marker::Send for bitcoin::psbt::PsbtSighashType
 impl core::marker::Sync for bitcoin::psbt::PsbtSighashType
@@ -13350,7 +13350,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::psbt::PsbtSighashType where T: c
 pub unsafe fn bitcoin::psbt::PsbtSighashType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::psbt::PsbtSighashType
 pub fn bitcoin::psbt::PsbtSighashType::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::psbt::PsbtSighashType where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::psbt::PsbtSighashType where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::psbt::PsbtSighashType where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::psbt::PsbtSighashType::vzip(self) -> V
 pub trait bitcoin::psbt::GetKey
@@ -13529,12 +13529,12 @@ impl core::marker::StructuralPartialEq for bitcoin::EcdsaSighashType
 impl core::str::traits::FromStr for bitcoin::EcdsaSighashType
 pub type bitcoin::EcdsaSighashType::Err = bitcoin::sighash::SighashTypeParseError
 pub fn bitcoin::EcdsaSighashType::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::EcdsaSighashType
-pub fn bitcoin::EcdsaSighashType::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::EcdsaSighashType
+pub fn bitcoin::EcdsaSighashType::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::EcdsaSighashType
 pub fn bitcoin::EcdsaSighashType::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::EcdsaSighashType
-pub fn bitcoin::EcdsaSighashType::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::EcdsaSighashType, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::EcdsaSighashType
+pub fn bitcoin::EcdsaSighashType::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::EcdsaSighashType, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::EcdsaSighashType
 impl core::marker::Send for bitcoin::EcdsaSighashType
 impl core::marker::Sync for bitcoin::EcdsaSighashType
@@ -13566,7 +13566,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::EcdsaSighashType where T: core::
 pub unsafe fn bitcoin::EcdsaSighashType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::EcdsaSighashType
 pub fn bitcoin::EcdsaSighashType::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::EcdsaSighashType where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::EcdsaSighashType where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::EcdsaSighashType where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::EcdsaSighashType::vzip(self) -> V
 pub enum bitcoin::sighash::EncodeSigningDataResult<E>
@@ -13816,12 +13816,12 @@ impl core::marker::StructuralPartialEq for bitcoin::TapSighashType
 impl core::str::traits::FromStr for bitcoin::TapSighashType
 pub type bitcoin::TapSighashType::Err = bitcoin::sighash::SighashTypeParseError
 pub fn bitcoin::TapSighashType::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-impl serde::ser::Serialize for bitcoin::TapSighashType
-pub fn bitcoin::TapSighashType::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::TapSighashType
+pub fn bitcoin::TapSighashType::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::TapSighashType
 pub fn bitcoin::TapSighashType::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::TapSighashType
-pub fn bitcoin::TapSighashType::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::TapSighashType, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::TapSighashType
+pub fn bitcoin::TapSighashType::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::TapSighashType, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::TapSighashType
 impl core::marker::Send for bitcoin::TapSighashType
 impl core::marker::Sync for bitcoin::TapSighashType
@@ -13853,7 +13853,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::TapSighashType where T: core::cl
 pub unsafe fn bitcoin::TapSighashType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::TapSighashType
 pub fn bitcoin::TapSighashType::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::TapSighashType where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::TapSighashType where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::TapSighashType where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::TapSighashType::vzip(self) -> V
 #[non_exhaustive] pub enum bitcoin::sighash::TaprootError
@@ -14058,10 +14058,10 @@ impl core::marker::StructuralPartialEq for bitcoin::LegacySighash
 impl core::str::traits::FromStr for bitcoin::LegacySighash
 pub type bitcoin::LegacySighash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::LegacySighash::from_str(s: &str) -> core::result::Result<bitcoin::LegacySighash, Self::Err>
-impl serde::ser::Serialize for bitcoin::LegacySighash
-pub fn bitcoin::LegacySighash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::LegacySighash
-pub fn bitcoin::LegacySighash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::LegacySighash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::LegacySighash
+pub fn bitcoin::LegacySighash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::LegacySighash
+pub fn bitcoin::LegacySighash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::LegacySighash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::LegacySighash
 pub type bitcoin::LegacySighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::LegacySighash::index(&self, index: I) -> &Self::Output
@@ -14096,7 +14096,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::LegacySighash where T: core::clo
 pub unsafe fn bitcoin::LegacySighash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::LegacySighash
 pub fn bitcoin::LegacySighash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::LegacySighash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::LegacySighash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::LegacySighash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::LegacySighash::vzip(self) -> V
 pub struct bitcoin::sighash::NonStandardSighashTypeError(pub u32)
@@ -14339,10 +14339,10 @@ impl core::marker::StructuralPartialEq for bitcoin::SegwitV0Sighash
 impl core::str::traits::FromStr for bitcoin::SegwitV0Sighash
 pub type bitcoin::SegwitV0Sighash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::SegwitV0Sighash::from_str(s: &str) -> core::result::Result<bitcoin::SegwitV0Sighash, Self::Err>
-impl serde::ser::Serialize for bitcoin::SegwitV0Sighash
-pub fn bitcoin::SegwitV0Sighash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::SegwitV0Sighash
-pub fn bitcoin::SegwitV0Sighash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::SegwitV0Sighash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::SegwitV0Sighash
+pub fn bitcoin::SegwitV0Sighash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::SegwitV0Sighash
+pub fn bitcoin::SegwitV0Sighash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::SegwitV0Sighash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::SegwitV0Sighash
 pub type bitcoin::SegwitV0Sighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::SegwitV0Sighash::index(&self, index: I) -> &Self::Output
@@ -14377,7 +14377,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::SegwitV0Sighash where T: core::c
 pub unsafe fn bitcoin::SegwitV0Sighash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::SegwitV0Sighash
 pub fn bitcoin::SegwitV0Sighash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::SegwitV0Sighash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::SegwitV0Sighash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::SegwitV0Sighash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::SegwitV0Sighash::vzip(self) -> V
 pub struct bitcoin::sighash::SighashCache<T: core::borrow::Borrow<bitcoin::blockdata::transaction::Transaction>>
@@ -14569,10 +14569,10 @@ impl core::marker::StructuralPartialEq for bitcoin::TapSighash
 impl core::str::traits::FromStr for bitcoin::TapSighash
 pub type bitcoin::TapSighash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::TapSighash::from_str(s: &str) -> core::result::Result<bitcoin::TapSighash, Self::Err>
-impl serde::ser::Serialize for bitcoin::TapSighash
-pub fn bitcoin::TapSighash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::TapSighash
-pub fn bitcoin::TapSighash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::TapSighash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::TapSighash
+pub fn bitcoin::TapSighash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::TapSighash
+pub fn bitcoin::TapSighash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::TapSighash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::TapSighash
 pub type bitcoin::TapSighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::TapSighash::index(&self, index: I) -> &Self::Output
@@ -14607,7 +14607,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::TapSighash where T: core::clone:
 pub unsafe fn bitcoin::TapSighash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::TapSighash
 pub fn bitcoin::TapSighash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::TapSighash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::TapSighash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::TapSighash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::TapSighash::vzip(self) -> V
 pub struct bitcoin::sighash::TapSighashTag
@@ -15141,8 +15141,8 @@ pub type bitcoin::taproot::merkle_branch::TaprootMerkleBranch::Target = [bitcoin
 pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::deref(&self) -> &Self::Target
 impl core::ops::deref::DerefMut for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::deref_mut(&mut self) -> &mut Self::Target
-impl serde::ser::Serialize for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
-pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
+pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> core::iter::traits::collect::IntoIterator for &'a bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 pub type &'a bitcoin::taproot::merkle_branch::TaprootMerkleBranch::IntoIter = core::slice::iter::Iter<'a, bitcoin::taproot::TapNodeHash>
 pub type &'a bitcoin::taproot::merkle_branch::TaprootMerkleBranch::Item = &'a bitcoin::taproot::TapNodeHash
@@ -15151,8 +15151,8 @@ impl<'a> core::iter::traits::collect::IntoIterator for &'a mut bitcoin::taproot:
 pub type &'a mut bitcoin::taproot::merkle_branch::TaprootMerkleBranch::IntoIter = core::slice::iter::IterMut<'a, bitcoin::taproot::TapNodeHash>
 pub type &'a mut bitcoin::taproot::merkle_branch::TaprootMerkleBranch::Item = &'a mut bitcoin::taproot::TapNodeHash
 pub fn &'a mut bitcoin::taproot::merkle_branch::TaprootMerkleBranch::into_iter(self) -> Self::IntoIter
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
-pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
+pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl core::marker::Send for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl core::marker::Sync for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
@@ -15184,7 +15184,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::merkle_branch::TaprootM
 pub unsafe fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::merkle_branch::TaprootMerkleBranch where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::merkle_branch::TaprootMerkleBranch where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::merkle_branch::TaprootMerkleBranch::vzip(self) -> V
 pub mod bitcoin::taproot::serialized_signature
@@ -15454,10 +15454,10 @@ impl core::hash::Hash for bitcoin::taproot::LeafVersion
 pub fn bitcoin::taproot::LeafVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::taproot::LeafVersion
 impl core::marker::StructuralPartialEq for bitcoin::taproot::LeafVersion
-impl serde::ser::Serialize for bitcoin::taproot::LeafVersion
-pub fn bitcoin::taproot::LeafVersion::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::LeafVersion
-pub fn bitcoin::taproot::LeafVersion::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::taproot::LeafVersion
+pub fn bitcoin::taproot::LeafVersion::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::LeafVersion
+pub fn bitcoin::taproot::LeafVersion::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::taproot::LeafVersion
 impl core::marker::Send for bitcoin::taproot::LeafVersion
 impl core::marker::Sync for bitcoin::taproot::LeafVersion
@@ -15489,7 +15489,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::LeafVersion where T: co
 pub unsafe fn bitcoin::taproot::LeafVersion::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::LeafVersion
 pub fn bitcoin::taproot::LeafVersion::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::LeafVersion where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::LeafVersion where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::LeafVersion where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::LeafVersion::vzip(self) -> V
 #[non_exhaustive] pub enum bitcoin::taproot::SigFromSliceError
@@ -15564,10 +15564,10 @@ pub fn bitcoin::taproot::TapLeaf::fmt(&self, f: &mut core::fmt::Formatter<'_>) -
 impl core::hash::Hash for bitcoin::taproot::TapLeaf
 pub fn bitcoin::taproot::TapLeaf::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TapLeaf
-impl serde::ser::Serialize for bitcoin::taproot::TapLeaf
-pub fn bitcoin::taproot::TapLeaf::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::TapLeaf
-pub fn bitcoin::taproot::TapLeaf::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::taproot::TapLeaf
+pub fn bitcoin::taproot::TapLeaf::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::TapLeaf
+pub fn bitcoin::taproot::TapLeaf::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::taproot::TapLeaf
 impl core::marker::Send for bitcoin::taproot::TapLeaf
 impl core::marker::Sync for bitcoin::taproot::TapLeaf
@@ -15597,7 +15597,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::TapLeaf where T: core::
 pub unsafe fn bitcoin::taproot::TapLeaf::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::TapLeaf
 pub fn bitcoin::taproot::TapLeaf::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::TapLeaf where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::TapLeaf where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::TapLeaf where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::TapLeaf::vzip(self) -> V
 #[non_exhaustive] pub enum bitcoin::taproot::TaprootBuilderError
@@ -15730,10 +15730,10 @@ pub fn bitcoin::taproot::ControlBlock::fmt(&self, f: &mut core::fmt::Formatter<'
 impl core::hash::Hash for bitcoin::taproot::ControlBlock
 pub fn bitcoin::taproot::ControlBlock::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::taproot::ControlBlock
-impl serde::ser::Serialize for bitcoin::taproot::ControlBlock
-pub fn bitcoin::taproot::ControlBlock::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::ControlBlock
-pub fn bitcoin::taproot::ControlBlock::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::taproot::ControlBlock
+pub fn bitcoin::taproot::ControlBlock::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::ControlBlock
+pub fn bitcoin::taproot::ControlBlock::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::taproot::ControlBlock
 impl core::marker::Send for bitcoin::taproot::ControlBlock
 impl core::marker::Sync for bitcoin::taproot::ControlBlock
@@ -15763,7 +15763,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::ControlBlock where T: c
 pub unsafe fn bitcoin::taproot::ControlBlock::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::ControlBlock
 pub fn bitcoin::taproot::ControlBlock::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::ControlBlock where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::ControlBlock where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::ControlBlock where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::ControlBlock::vzip(self) -> V
 pub struct bitcoin::taproot::FutureLeafVersion(_)
@@ -15992,10 +15992,10 @@ impl core::fmt::Debug for bitcoin::taproot::NodeInfo
 pub fn bitcoin::taproot::NodeInfo::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for bitcoin::taproot::NodeInfo
 pub fn bitcoin::taproot::NodeInfo::hash<H: core::hash::Hasher>(&self, state: &mut H)
-impl serde::ser::Serialize for bitcoin::taproot::NodeInfo
-pub fn bitcoin::taproot::NodeInfo::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::NodeInfo
-pub fn bitcoin::taproot::NodeInfo::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::taproot::NodeInfo
+pub fn bitcoin::taproot::NodeInfo::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::NodeInfo
+pub fn bitcoin::taproot::NodeInfo::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error> where D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::taproot::NodeInfo
 impl core::marker::Send for bitcoin::taproot::NodeInfo
 impl core::marker::Sync for bitcoin::taproot::NodeInfo
@@ -16025,7 +16025,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::NodeInfo where T: core:
 pub unsafe fn bitcoin::taproot::NodeInfo::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::NodeInfo
 pub fn bitcoin::taproot::NodeInfo::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::NodeInfo where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::NodeInfo where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::NodeInfo where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::NodeInfo::vzip(self) -> V
 pub struct bitcoin::taproot::ScriptLeaf<'leaf>
@@ -16141,12 +16141,12 @@ impl core::hash::Hash for bitcoin::taproot::Signature
 pub fn bitcoin::taproot::Signature::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for bitcoin::taproot::Signature
 impl core::marker::StructuralPartialEq for bitcoin::taproot::Signature
-impl serde::ser::Serialize for bitcoin::taproot::Signature
-pub fn bitcoin::taproot::Signature::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+impl serde_core::ser::Serialize for bitcoin::taproot::Signature
+pub fn bitcoin::taproot::Signature::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin::taproot::Signature
 pub fn bitcoin::taproot::Signature::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::Signature
-pub fn bitcoin::taproot::Signature::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::Signature
+pub fn bitcoin::taproot::Signature::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::taproot::Signature
 impl core::marker::Send for bitcoin::taproot::Signature
 impl core::marker::Sync for bitcoin::taproot::Signature
@@ -16176,7 +16176,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::Signature where T: core
 pub unsafe fn bitcoin::taproot::Signature::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::Signature
 pub fn bitcoin::taproot::Signature::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::Signature where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::Signature where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::Signature where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::Signature::vzip(self) -> V
 pub struct bitcoin::taproot::TapBranchTag
@@ -16282,10 +16282,10 @@ impl core::marker::StructuralPartialEq for bitcoin::taproot::TapLeafHash
 impl core::str::traits::FromStr for bitcoin::taproot::TapLeafHash
 pub type bitcoin::taproot::TapLeafHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::taproot::TapLeafHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapLeafHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::taproot::TapLeafHash
-pub fn bitcoin::taproot::TapLeafHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::TapLeafHash
-pub fn bitcoin::taproot::TapLeafHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapLeafHash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::taproot::TapLeafHash
+pub fn bitcoin::taproot::TapLeafHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::TapLeafHash
+pub fn bitcoin::taproot::TapLeafHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapLeafHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::taproot::TapLeafHash
 pub type bitcoin::taproot::TapLeafHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::taproot::TapLeafHash::index(&self, index: I) -> &Self::Output
@@ -16320,7 +16320,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::TapLeafHash where T: co
 pub unsafe fn bitcoin::taproot::TapLeafHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::TapLeafHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::TapLeafHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::TapLeafHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::TapLeafHash::vzip(self) -> V
 pub struct bitcoin::taproot::TapLeafTag
@@ -16426,10 +16426,10 @@ impl core::marker::StructuralPartialEq for bitcoin::taproot::TapNodeHash
 impl core::str::traits::FromStr for bitcoin::taproot::TapNodeHash
 pub type bitcoin::taproot::TapNodeHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::taproot::TapNodeHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapNodeHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::taproot::TapNodeHash
-pub fn bitcoin::taproot::TapNodeHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::TapNodeHash
-pub fn bitcoin::taproot::TapNodeHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapNodeHash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::taproot::TapNodeHash
+pub fn bitcoin::taproot::TapNodeHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::TapNodeHash
+pub fn bitcoin::taproot::TapNodeHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapNodeHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::taproot::TapNodeHash
 pub type bitcoin::taproot::TapNodeHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::taproot::TapNodeHash::index(&self, index: I) -> &Self::Output
@@ -16464,7 +16464,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::TapNodeHash where T: co
 pub unsafe fn bitcoin::taproot::TapNodeHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::TapNodeHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::TapNodeHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::TapNodeHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::TapNodeHash::vzip(self) -> V
 pub struct bitcoin::taproot::TapTree(_)
@@ -16486,10 +16486,10 @@ pub fn bitcoin::taproot::TapTree::fmt(&self, f: &mut core::fmt::Formatter<'_>) -
 impl core::hash::Hash for bitcoin::taproot::TapTree
 pub fn bitcoin::taproot::TapTree::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TapTree
-impl serde::ser::Serialize for bitcoin::taproot::TapTree
-pub fn bitcoin::taproot::TapTree::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::TapTree
-pub fn bitcoin::taproot::TapTree::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+impl serde_core::ser::Serialize for bitcoin::taproot::TapTree
+pub fn bitcoin::taproot::TapTree::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::TapTree
+pub fn bitcoin::taproot::TapTree::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
 impl core::marker::Freeze for bitcoin::taproot::TapTree
 impl core::marker::Send for bitcoin::taproot::TapTree
 impl core::marker::Sync for bitcoin::taproot::TapTree
@@ -16519,7 +16519,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::TapTree where T: core::
 pub unsafe fn bitcoin::taproot::TapTree::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::TapTree
 pub fn bitcoin::taproot::TapTree::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::TapTree where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::TapTree where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::TapTree where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::TapTree::vzip(self) -> V
 pub struct bitcoin::taproot::TapTweakHash(_)
@@ -16579,10 +16579,10 @@ impl core::marker::StructuralPartialEq for bitcoin::taproot::TapTweakHash
 impl core::str::traits::FromStr for bitcoin::taproot::TapTweakHash
 pub type bitcoin::taproot::TapTweakHash::Err = hex_conservative::error::HexToArrayError
 pub fn bitcoin::taproot::TapTweakHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapTweakHash, Self::Err>
-impl serde::ser::Serialize for bitcoin::taproot::TapTweakHash
-pub fn bitcoin::taproot::TapTweakHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-impl<'de> serde::de::Deserialize<'de> for bitcoin::taproot::TapTweakHash
-pub fn bitcoin::taproot::TapTweakHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapTweakHash, <D as serde::de::Deserializer>::Error>
+impl serde_core::ser::Serialize for bitcoin::taproot::TapTweakHash
+pub fn bitcoin::taproot::TapTweakHash::serialize<S: serde_core::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for bitcoin::taproot::TapTweakHash
+pub fn bitcoin::taproot::TapTweakHash::deserialize<D: serde_core::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapTweakHash, <D as serde_core::de::Deserializer>::Error>
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::taproot::TapTweakHash
 pub type bitcoin::taproot::TapTweakHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub fn bitcoin::taproot::TapTweakHash::index(&self, index: I) -> &Self::Output
@@ -16617,7 +16617,7 @@ impl<T> core::clone::CloneToUninit for bitcoin::taproot::TapTweakHash where T: c
 pub unsafe fn bitcoin::taproot::TapTweakHash::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from(t: T) -> T
-impl<T> serde::de::DeserializeOwned for bitcoin::taproot::TapTweakHash where T: for<'de> serde::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for bitcoin::taproot::TapTweakHash where T: for<'de> serde_core::de::Deserialize<'de>
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::taproot::TapTweakHash where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::taproot::TapTweakHash::vzip(self) -> V
 pub struct bitcoin::taproot::TapTweakTag
