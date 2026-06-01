@@ -26,7 +26,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 arbitrary = { version = "1.0.1", optional = true }
-serde = { version = "1.0.130", default-features = false, features = ["derive"], optional = true }
+serde = { version = "1.0.195", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.19"
