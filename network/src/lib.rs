@@ -99,43 +99,6 @@ pub enum TestnetVersion {
     V4,
 }
 
-#[cfg(feature = "serde")]
-impl Serialize for Network {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.as_display_str())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for Network {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct NetworkVisitor;
-
-        impl Visitor<'_> for NetworkVisitor {
-            type Value = Network;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a valid network identifier")
-            }
-
-            fn visit_str<E>(self, value: &str) -> Result<Network, E>
-            where
-                E: serde::de::Error,
-            {
-                Network::from_str(value).map_err(E::custom)
-            }
-        }
-
-        deserializer.deserialize_str(NetworkVisitor)
-    }
-}
-
 impl Network {
     /// Converts to the equivalent Bitcoin Core `-chain` argument string.
     ///
@@ -185,6 +148,43 @@ impl Network {
             Self::Signet => "signet",
             Self::Regtest => "regtest",
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for Network {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.as_display_str())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Network {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct NetworkVisitor;
+
+        impl Visitor<'_> for NetworkVisitor {
+            type Value = Network;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a valid network identifier")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Network, E>
+            where
+                E: serde::de::Error,
+            {
+                Network::from_str(value).map_err(E::custom)
+            }
+        }
+
+        deserializer.deserialize_str(NetworkVisitor)
     }
 }
 
