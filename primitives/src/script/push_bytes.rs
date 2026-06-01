@@ -379,7 +379,7 @@ mod error {
     #[allow(unused)]
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct PushBytesError {
-        never: core::convert::Infallible,
+        pub(super) never: core::convert::Infallible,
     }
 
     impl super::PushBytesErrorReport for PushBytesError {
@@ -427,7 +427,13 @@ impl From<Infallible> for PushBytesError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for PushBytesError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
+        let Self { never: _ } = self;
+        #[cfg(not(any(target_pointer_width = "16", target_pointer_width = "32")))]
+        let Self { len: _ } = self;
+        None
+    }
 }
 
 #[cfg(test)]

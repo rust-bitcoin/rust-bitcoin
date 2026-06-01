@@ -1051,7 +1051,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for PrevoutsSizeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
     }
 
     /// A single prevout was provided but all prevouts are needed without `ANYONECANPAY`.
@@ -1067,7 +1070,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for PrevoutsKindError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
     }
 
     /// [`Prevouts`] index related errors.
@@ -1237,7 +1243,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for SingleMissingOutputError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { input_index: _, outputs_length: _ } = self;
+            None
+        }
     }
 
     /// Annex must be at least one byte long and the first bytes must be `0x50`.

@@ -68,7 +68,10 @@ impl fmt::Display for UnknownAddressTypeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnknownAddressTypeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Address parsing error.
@@ -135,7 +138,10 @@ impl fmt::Display for UnknownHrpError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnknownHrpError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Address's network differs from required one.
@@ -157,7 +163,10 @@ impl fmt::Display for NetworkValidationError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for NetworkValidationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { required: _, address: _ } = self;
+        None
+    }
 }
 
 /// Bech32 related error.
@@ -312,7 +321,10 @@ impl fmt::Display for InvalidBase58PayloadLengthError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidBase58PayloadLengthError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { length: _ } = self;
+        None
+    }
 }
 
 /// Legacy base58 address was too long, max 50 characters.
@@ -339,7 +351,10 @@ impl fmt::Display for LegacyAddressTooLongError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for LegacyAddressTooLongError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { length: _ } = self;
+        None
+    }
 }
 
 /// Invalid legacy address prefix in decoded base58 data.
@@ -362,5 +377,8 @@ impl fmt::Display for InvalidLegacyPrefixError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidLegacyPrefixError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { invalid: _ } = self;
+        None
+    }
 }

@@ -90,7 +90,10 @@ impl fmt::Display for RedeemScriptSizeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for RedeemScriptSizeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { size: _ } = self;
+        None
+    }
 }
 
 // The new hash wrapper type.

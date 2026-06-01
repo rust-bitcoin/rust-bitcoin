@@ -99,7 +99,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for UnknownChainHashError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 
     impl TryFrom<ChainHash> for Network {

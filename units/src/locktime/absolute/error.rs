@@ -73,7 +73,10 @@ impl fmt::Display for IncompatibleHeightError {
 #[cfg(feature = "std")]
 impl std::error::Error for IncompatibleHeightError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { lock: _, incompatible: _ } = self;
+        None
+    }
 }
 
 /// Tried to satisfy a lock-by-height lock using a height value.
@@ -113,7 +116,10 @@ impl fmt::Display for IncompatibleTimeError {
 #[cfg(feature = "std")]
 impl std::error::Error for IncompatibleTimeError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { lock: _, incompatible: _ } = self;
+        None
+    }
 }
 
 /// Error returned when parsing block height fails.
@@ -324,7 +330,10 @@ impl fmt::Display for ConversionError {
 #[cfg(feature = "std")]
 impl std::error::Error for ConversionError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { unit: _, input: _ } = self;
+        None
+    }
 }
 
 /// Describes the two types of locking, lock-by-height and lock-by-time.

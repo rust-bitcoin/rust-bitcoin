@@ -312,6 +312,14 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for MidstateError {
         #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {
+                invalid_n_bytes_hashed: _,
+                block_aligned_midstate: _,
+                unprocessed_bytes: _,
+                unprocessed_bytes_len: _,
+            } = self;
+            None
+        }
     }
 }

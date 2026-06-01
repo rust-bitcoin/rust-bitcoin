@@ -110,7 +110,10 @@ impl fmt::Display for UnknownMagicError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnknownMagicError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Error in creating a Magic from a Network.
@@ -124,5 +127,8 @@ impl fmt::Display for UnknownNetworkError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnknownNetworkError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }

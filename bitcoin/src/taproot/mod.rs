@@ -1408,7 +1408,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidMerkleBranchSizeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 
     /// Merkle tree depth must not be more than 128.
@@ -1436,7 +1439,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidMerkleTreeDepthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 
     /// Invalid control block size.
@@ -1464,7 +1470,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidControlBlockSizeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 }
 
