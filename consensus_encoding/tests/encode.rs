@@ -91,6 +91,24 @@ fn encode_vec_empty_data() {
 }
 
 #[test]
+#[cfg(all(feature = "alloc", feature = "hex"))]
+fn encode_hex() {
+    let data = TestData(0xDEAD_BEEF);
+    let hex = bitcoin_consensus_encoding::encode_to_hex(&data, hex::Case::Lower);
+    assert_eq!(hex, "efbeadde");
+    let hex = bitcoin_consensus_encoding::encode_to_hex(&data, hex::Case::Upper);
+    assert_eq!(hex, "EFBEADDE");
+}
+
+#[test]
+#[cfg(all(feature = "alloc", feature = "hex"))]
+fn encode_hex_empty_data() {
+    let data = EmptyData;
+    let hex = bitcoin_consensus_encoding::encode_to_hex(&data, hex::Case::Lower);
+    assert!(hex.is_empty());
+}
+
+#[test]
 #[cfg(feature = "std")]
 fn encode_std_writer_empty_data() {
     let data = EmptyData;
@@ -474,4 +492,14 @@ fn check_encoder_detects_error_byte_offset() {
         BytesEncoder::without_length_prefix(&[0xFF, 0x03]),
     );
     check_encoder(&mut encoder, &[0x01, 0x02, 0x03]);
+}
+
+#[test]
+#[cfg(all(feature = "alloc", feature = "hex"))]
+fn drain_hex_multi_chunk() {
+    let enc1 = ArrayEncoder::without_length_prefix([0xDE_u8, 0xAD]);
+    let enc2 = ArrayEncoder::without_length_prefix([0xBE_u8, 0xEF]);
+    let encoder = Encoder2::new(enc1, enc2);
+    let hex = bitcoin_consensus_encoding::drain_to_hex(encoder, hex::Case::Lower);
+    assert_eq!(hex, "deadbeef");
 }

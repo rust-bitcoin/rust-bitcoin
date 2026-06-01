@@ -3,6 +3,9 @@
 //! Consensus Encoding Traits
 
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+use alloc::string::String;
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
 pub mod encoders;
@@ -337,6 +340,28 @@ where
         }
     }
     vec
+}
+
+/// Encodes an object into a hex string.
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+pub fn encode_to_hex<T>(object: &T, case: hex::Case) -> String
+where
+    T: Encode + ?Sized,
+{
+    drain_to_hex(object.encoder(), case)
+}
+
+/// Drains the output of an [`Encoder`] into a hex string.
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+pub fn drain_to_hex<T>(encoder: T, case: hex::Case) -> String
+where
+    T: Encoder,
+{
+    let iter = EncoderByteIter::new(encoder);
+    let hex_iter = hex::BytesToHexIter::new(iter, case);
+    hex_iter.flatten().map(char::from).collect()
 }
 
 /// Encodes an object to a standard I/O writer.
