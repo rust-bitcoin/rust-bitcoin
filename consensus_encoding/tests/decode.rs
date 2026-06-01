@@ -11,6 +11,8 @@ use bitcoin_consensus_encoding::{
     check_decoder, decode_from_slice, decode_from_slice_unbounded, ArrayDecoder,
     CompactSizeDecoder, Decode, DecodeError, Decoder, Decoder2, UnexpectedEofError,
 };
+#[cfg(feature = "hex")]
+use bitcoin_consensus_encoding::{decode_from_hex, FromHexError};
 #[cfg(feature = "std")]
 use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
 #[cfg(feature = "alloc")]
@@ -295,6 +297,48 @@ fn decode_from_slice_unbounded_extra_data() {
     let decoded = result.unwrap();
     assert_eq!(decoded.0, [1, 2, 3, 4]);
     assert_eq!(bytes.len(), 1);
+}
+
+#[test]
+#[cfg(feature = "hex")]
+fn decode_from_hex_test() {
+    let result: Result<TestArray, _> = decode_from_hex("01020304");
+    assert_eq!(result.unwrap().0, [0x01, 0x02, 0x03, 0x04]);
+    let result: Result<TestArray, _> = decode_from_hex("DEADBEEF");
+    assert_eq!(result.unwrap().0, [0xDE, 0xAD, 0xBE, 0xEF]);
+}
+
+#[test]
+#[cfg(all(feature = "hex", feature = "alloc"))]
+fn decode_from_hex_larger_than_internal_buffer() {
+    const COUNT: usize = 1100;
+
+    let mut encoded = vec![0xFD, 0x4C, 0x04];
+    encoded.extend(core::iter::repeat(0xDEAD_BEEF_u32.to_le_bytes()).take(COUNT).flatten());
+    assert!(encoded.len() > 4096);
+
+    let mut hex = String::with_capacity(encoded.len() * 2);
+    for byte in &encoded {
+        hex.push_str(&format!("{:02x}", byte));
+    }
+
+    let result: Result<Test, _> = decode_from_hex(&hex);
+    assert_eq!(result.unwrap(), Test(vec![Inner(0xDEAD_BEEF); COUNT]));
+}
+
+#[test]
+#[cfg(feature = "hex")]
+fn decode_from_hex_error() {
+    let result: Result<TestArray, _> = decode_from_hex("0102030");
+    assert!(matches!(result, Err(FromHexError::OddLength(_))));
+    let result: Result<TestArray, _> = decode_from_hex("0102GG04");
+    assert!(matches!(result, Err(FromHexError::InvalidChar(_))));
+    let result: Result<TestArray, _> = decode_from_hex("0102");
+    assert!(matches!(result, Err(FromHexError::Decode(DecodeError::Parse(_)))));
+    let result: Result<TestArray, _> = decode_from_hex("");
+    assert!(matches!(result, Err(FromHexError::Decode(DecodeError::Parse(_)))));
+    let result: Result<TestArray, _> = decode_from_hex("0102030405060708");
+    assert!(matches!(result, Err(FromHexError::Decode(DecodeError::Unconsumed(_)))));
 }
 
 #[test]

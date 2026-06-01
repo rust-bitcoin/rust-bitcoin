@@ -54,7 +54,8 @@
 //!
 //! * `std` - Enables std lib I/O driver functions and `std::error::Error` impls (implies `alloc`).
 //! * `alloc` - Enables [`encode_to_vec`], `Vec`-based decoders, and allocation-based helpers.
-//! * `hex` - Enables [`encode_to_hex`] and [`drain_to_hex`] (also requires `alloc`).
+//! * `hex` - Enables [`decode_from_hex`], [`encode_to_hex`] and [`drain_to_hex`]. Encoding also
+//!   requires `alloc`.
 
 #![no_std]
 // Coding conventions.
@@ -75,6 +76,9 @@ pub mod error;
 
 #[doc(inline)]
 pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};
+#[cfg(feature = "hex")]
+#[doc(inline)]
+pub use self::decode::decode_from_hex;
 #[doc(inline)]
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
@@ -109,6 +113,9 @@ pub use self::encode::{drain_to_vec, encode_to_vec};
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use self::encode::{drain_to_writer, encode_to_writer};
+#[cfg(feature = "hex")]
+#[doc(no_inline)]
+pub use self::error::FromHexError;
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::LengthPrefixExceedsMaxError;

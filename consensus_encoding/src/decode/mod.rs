@@ -4,6 +4,8 @@
 
 pub mod decoders;
 
+#[cfg(feature = "hex")]
+use crate::FromHexError;
 #[cfg(feature = "std")]
 use crate::ReadError;
 use crate::{DecodeError, UnconsumedError};
@@ -128,6 +130,64 @@ impl DecoderStatus {
 
     /// Returns `true` if ready to produce decoded value with [`Decoder::end`].
     pub fn is_ready(&self) -> bool { matches!(self, Self::Ready) }
+}
+
+/// Decodes an object from a hex string without heap allocations.
+///
+/// # Errors
+///
+/// - [`FromHexError::OddLength`] if the string has an odd number of characters.
+/// - [`FromHexError::InvalidChar`] if any character is not a valid hex digit.
+/// - [`FromHexError::Decode`] if decoding the type fails, including if bytes remain unconsumed
+///   after the decoder completes.
+#[cfg(feature = "hex")]
+pub fn decode_from_hex<T: Decode>(
+    hex: &str,
+) -> Result<T, FromHexError<<T::Decoder as Decoder>::Error>> {
+    let iter = hex::HexSliceToBytesIter::new(hex).map_err(FromHexError::OddLength)?;
+
+    let mut decoder = T::decoder();
+    let mut buffer = [0u8; 4096];
+    let mut index = 0;
+
+    for item in iter {
+        let byte = item.map_err(FromHexError::InvalidChar)?;
+
+        if index == buffer.len() {
+            let mut to_flush = buffer.as_slice();
+            // There is at least a single byte left after flushing the buffer. Error if the decoder
+            // is ready after flush.
+            while !to_flush.is_empty() {
+                if decoder
+                    .push_bytes(&mut to_flush)
+                    .map_err(|e| FromHexError::Decode(DecodeError::Parse(e)))?
+                    .is_ready()
+                {
+                    return Err(FromHexError::Decode(DecodeError::Unconsumed(UnconsumedError())));
+                }
+            }
+            index = 0;
+        }
+        buffer[index] = byte;
+        index += 1;
+    }
+
+    let mut to_flush = &buffer[..index];
+    while !to_flush.is_empty() {
+        if decoder
+            .push_bytes(&mut to_flush)
+            .map_err(|e| FromHexError::Decode(DecodeError::Parse(e)))?
+            .is_ready()
+        {
+            break;
+        }
+    }
+
+    if to_flush.is_empty() {
+        decoder.end().map_err(|e| FromHexError::Decode(DecodeError::Parse(e)))
+    } else {
+        Err(FromHexError::Decode(DecodeError::Unconsumed(UnconsumedError())))
+    }
 }
 
 /// Decodes an object from a byte slice.
