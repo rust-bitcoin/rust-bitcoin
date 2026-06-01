@@ -6,6 +6,8 @@ pub fn bitcoin_network_kind::error::ParseNetworkError::clone(&self) -> bitcoin_n
 impl core::cmp::Eq for bitcoin_network_kind::error::ParseNetworkError
 impl core::cmp::PartialEq for bitcoin_network_kind::error::ParseNetworkError
 pub fn bitcoin_network_kind::error::ParseNetworkError::eq(&self, other: &bitcoin_network_kind::error::ParseNetworkError) -> bool
+impl core::convert::From<core::convert::Infallible> for bitcoin_network_kind::error::ParseNetworkError
+pub fn bitcoin_network_kind::error::ParseNetworkError::from(never: core::convert::Infallible) -> Self
 impl core::fmt::Debug for bitcoin_network_kind::error::ParseNetworkError
 pub fn bitcoin_network_kind::error::ParseNetworkError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for bitcoin_network_kind::error::ParseNetworkError
