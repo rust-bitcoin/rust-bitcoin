@@ -310,7 +310,7 @@ macro_rules! parse_hex_for {
         #[doc = stringify!($int_type)]
         #[doc = "`."]
         #[inline]
-        pub fn $uncheck_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
+        fn $uncheck_hex_fn(s: &str) -> Result<$int_type, ParseIntError> {
             <$int_type>::from_str_radix(s, 16).map_err(|error| ParseIntError {
                 input: s.into(),
                 bits: $bits,
