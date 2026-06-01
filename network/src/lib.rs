@@ -293,6 +293,7 @@ impl<'a> Arbitrary<'a> for NetworkKind {
 
 /// Error types for the network.
 pub mod error {
+    use core::convert::Infallible;
     use core::fmt;
 
     use internals::error::InputString;
@@ -301,6 +302,10 @@ pub mod error {
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub struct ParseNetworkError(pub(super) InputString);
+
+    impl From<Infallible> for ParseNetworkError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
     impl fmt::Display for ParseNetworkError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
