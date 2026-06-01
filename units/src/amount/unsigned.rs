@@ -60,6 +60,7 @@ mod encapsulate {
     impl Amount {
         /// The maximum value of an amount.
         pub const MAX: Self = Self(21_000_000 * 100_000_000);
+
         /// The minimum value of an amount.
         pub const MIN: Self = Self(0);
 
@@ -105,14 +106,19 @@ pub use encapsulate::Amount;
 impl Amount {
     /// The zero amount.
     pub const ZERO: Self = Self::from_sat_u32(0);
+
     /// Exactly one satoshi.
     pub const ONE_SAT: Self = Self::from_sat_u32(1);
+
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = Self::from_btc_u16(1);
+
     /// Exactly fifty bitcoin.
     pub const FIFTY_BTC: Self = Self::from_btc_u16(50);
+
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = Self::MAX;
+
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 

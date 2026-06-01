@@ -134,6 +134,7 @@ pub struct Target(U256);
 impl Target {
     /// When parsing nBits, Bitcoin Core converts a negative target threshold into a target of zero.
     pub const ZERO: Self = Self(U256::ZERO);
+
     /// The maximum possible target.
     ///
     /// This value is used to calculate difficulty, which is defined as how difficult the current

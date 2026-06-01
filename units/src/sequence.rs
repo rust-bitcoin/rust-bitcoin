@@ -40,15 +40,19 @@ impl Sequence {
     ///
     /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
     pub const MAX: Self = Self(0xFFFF_FFFF);
+
     /// Zero value sequence.
     ///
     /// This sequence number enables replace-by-fee and absolute lock time.
     pub const ZERO: Self = Self(0);
+
     /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
     pub const FINAL: Self = Self::MAX;
+
     /// The sequence number that enables absolute lock time but disables replace-by-fee
     /// and relative lock time.
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Self::MIN_NO_RBF;
+
     /// The maximum sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
     ///
@@ -66,8 +70,10 @@ impl Sequence {
     ///
     /// [BIP-0125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
     const MIN_NO_RBF: Self = Self(0xFFFF_FFFE);
+
     /// BIP-0068 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x8000_0000;
+
     /// BIP-0068 relative lock time type flag mask.
     pub(super) const LOCK_TYPE_MASK: u32 = 0x0040_0000;
 

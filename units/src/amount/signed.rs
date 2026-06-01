@@ -55,6 +55,7 @@ mod encapsulate {
     impl SignedAmount {
         /// The maximum value of an amount.
         pub const MAX: Self = Self(21_000_000 * 100_000_000);
+
         /// The minimum value of an amount.
         pub const MIN: Self = Self(-21_000_000 * 100_000_000);
 
@@ -103,12 +104,16 @@ use internals::const_casts;
 impl SignedAmount {
     /// The zero amount.
     pub const ZERO: Self = Self::from_sat_i32(0);
+
     /// Exactly one satoshi.
     pub const ONE_SAT: Self = Self::from_sat_i32(1);
+
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = Self::from_btc_i16(1);
+
     /// Exactly fifty bitcoin.
     pub const FIFTY_BTC: Self = Self::from_btc_i16(50);
+
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = Self::MAX;
 
