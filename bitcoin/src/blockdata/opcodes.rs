@@ -45,27 +45,12 @@ macro_rules! all_opcodes {
                 pub const $op: Opcode = Opcode { code: $val};
             )*
 
-            impl Opcode {
-                /// Returns the string representation of the opcode.
-                ///
-                /// This function maps the `Opcode`'s `code` value (a `u8`) to its corresponding
-                /// Bitcoin Script opcode name.
-                ///
-                /// # Example
-                /// ```
-                /// use bitcoin::opcodes::all::*;
-                ///
-                /// assert_eq!(OP_1.as_str(), "OP_1");
-                /// assert_eq!(OP_1NEGATE.as_str(), "OP_1NEGATE");
-                /// assert_eq!(OP_CHECKMULTISIG.as_str(), "OP_CHECKMULTISIG");
-                /// ```
-                #[inline]
-                pub fn as_str(&self) -> &'static str {
-                    match *self {
-                        $(
-                            $op => stringify!($op),
-                        )+
-                    }
+            /// Helper function for as_str in OpcodeExt.
+            pub(super) fn opcode_to_str(opcode: Opcode) -> &'static str {
+                match opcode {
+                    $(
+                        $op => stringify!($op),
+                    )+
                 }
             }
 
@@ -501,6 +486,21 @@ impl Opcode {
             _ => None,
         }
     }
+    /// Returns the string representation of the opcode.
+    ///
+    /// This function maps the `Opcode`'s `code` value (a `u8`) to its corresponding
+    /// Bitcoin Script opcode name.
+    ///
+    /// # Example
+    /// ```
+    /// use bitcoin::opcodes::all::*;
+    ///
+    /// assert_eq!(OP_1.as_str(), "OP_1");
+    /// assert_eq!(OP_1NEGATE.as_str(), "OP_1NEGATE");
+    /// assert_eq!(OP_CHECKMULTISIG.as_str(), "OP_CHECKMULTISIG");
+    /// ```
+    #[inline]
+    pub fn as_str(&self) -> &'static str { all::opcode_to_str(*self) }
 }
 
 impl From<u8> for Opcode {
