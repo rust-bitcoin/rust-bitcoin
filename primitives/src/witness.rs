@@ -998,7 +998,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for UnexpectedEofError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { missing_elements: _ } = self;
+            None
+        }
     }
 }
 

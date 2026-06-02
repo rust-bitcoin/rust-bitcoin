@@ -1282,7 +1282,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for IndexOutOfRangeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { index: _ } = self;
+            None
+        }
     }
 
     /// Error parsing a child number.
@@ -1389,7 +1392,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidBase58PayloadLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { length: _ } = self;
+            None
+        }
     }
 
     /// Master seed had an invalid length.
@@ -1419,7 +1425,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidSeedLengthError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { length: _ } = self;
+            None
+        }
     }
 }
 

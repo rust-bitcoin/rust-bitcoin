@@ -424,5 +424,8 @@ impl fmt::Display for OverflowError {
 #[cfg(feature = "std")]
 impl std::error::Error for OverflowError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self {} = self;
+        None
+    }
 }

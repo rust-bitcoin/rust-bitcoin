@@ -1270,7 +1270,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for IndexOutOfBoundsError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { index: _, length: _ } = self;
+            None
+        }
     }
 }
 

@@ -117,7 +117,10 @@ impl fmt::Display for IncorrectChecksumError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for IncorrectChecksumError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { incorrect: _, expected: _ } = self;
+        None
+    }
 }
 
 /// The decoded base58 data was too short (require at least 4 bytes for checksum).
@@ -143,7 +146,10 @@ impl fmt::Display for TooShortError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for TooShortError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { length: _ } = self;
+        None
+    }
 }
 
 /// Found an invalid ASCII byte while decoding base58 string.
@@ -178,5 +184,8 @@ impl fmt::Display for InvalidCharacterError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidCharacterError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }

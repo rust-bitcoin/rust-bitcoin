@@ -110,7 +110,10 @@ impl fmt::Display for UnconsumedError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnconsumedError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self() = self;
+        None
+    }
 }
 
 /// An error consensus decoding a compact size encoded integer.
@@ -194,7 +197,10 @@ impl core::fmt::Display for LengthPrefixExceedsMaxError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for LengthPrefixExceedsMaxError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { limit: _, value: _ } = self;
+        None
+    }
 }
 
 /// The error returned by the [`ByteVecDecoder`].
@@ -313,7 +319,10 @@ impl fmt::Display for UnexpectedEofError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for UnexpectedEofError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { missing: _ } = self;
+        None
+    }
 }
 
 /// Helper macro to define an error type for a `DecoderN`.

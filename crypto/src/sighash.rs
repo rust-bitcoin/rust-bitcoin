@@ -243,7 +243,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidSighashTypeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 
     /// This type is consensus valid but an input including it would prevent the transaction from
@@ -259,7 +262,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for NonStandardSighashTypeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 
     /// Error returned for failure during parsing one of the sighash types.
@@ -280,7 +286,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for SighashTypeParseError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { unrecognized: _ } = self;
+            None
+        }
     }
 }
 

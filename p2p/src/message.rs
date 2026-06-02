@@ -1903,7 +1903,10 @@ pub mod error {
     }
 
     impl std::error::Error for CommandStringError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 
     /// An error consensus decoding a [`V1MessageHeader`].

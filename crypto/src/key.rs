@@ -1765,7 +1765,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for UncompressedPublicKeyError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self {} = self;
+            None
+        }
     }
 
     /// Decoded base58 data was an invalid length.
@@ -1800,7 +1803,10 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidBase58PayloadLengthError {
         #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { length: _ } = self;
+            None
+        }
     }
 
     /// Invalid address version in decoded base58 data.
@@ -1831,7 +1837,10 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidAddressVersionError {
         #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { invalid: _ } = self;
+            None
+        }
     }
 
     /// Invalid compression flag for a WIF key
@@ -1867,7 +1876,10 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidWifCompressionFlagError {
         #[inline]
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self { invalid: _ } = self;
+            None
+        }
     }
 
     /// Error that can occur when parsing an [`XOnlyPublicKey`] from bytes.

@@ -85,7 +85,10 @@ impl fmt::Display for WitnessScriptSizeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessScriptSizeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { size: _ } = self;
+        None
+    }
 }
 
 include!("./generic.rs");

@@ -194,7 +194,10 @@ impl fmt::Display for OutOfRangeError {
 #[cfg(feature = "std")]
 impl std::error::Error for OutOfRangeError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { is_signed: _, is_greater_than_max: _ } = self;
+        None
+    }
 }
 
 /// Error returned when the input string has higher precision than satoshis.
@@ -223,7 +226,10 @@ impl fmt::Display for TooPreciseError {
 #[cfg(feature = "std")]
 impl std::error::Error for TooPreciseError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { position: _ } = self;
+        None
+    }
 }
 
 /// Error returned when the input string is too large.
@@ -256,7 +262,10 @@ impl fmt::Display for InputTooLargeError {
 #[cfg(feature = "std")]
 impl std::error::Error for InputTooLargeError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { len: _ } = self;
+        None
+    }
 }
 
 /// Error returned when digits were expected in the input but there were none.
@@ -285,7 +294,10 @@ impl fmt::Display for MissingDigitsError {
 #[cfg(feature = "std")]
 impl std::error::Error for MissingDigitsError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { kind: _ } = self;
+        None
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -322,7 +334,10 @@ impl fmt::Display for InvalidCharacterError {
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidCharacterError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { invalid_char: _, position: _ } = self;
+        None
+    }
 }
 
 /// Error returned when a valid character (e.g. '_') is in an invalid/bad position.
@@ -355,7 +370,10 @@ impl fmt::Display for BadPositionError {
 #[cfg(feature = "std")]
 impl std::error::Error for BadPositionError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { char: _, position: _ } = self;
+        None
+    }
 }
 
 /// An error during amount parsing.
@@ -410,7 +428,10 @@ impl fmt::Display for MissingDenominationError {
 #[cfg(feature = "std")]
 impl std::error::Error for MissingDenominationError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self {} = self;
+        None
+    }
 }
 
 /// Error returned when parsing an unknown denomination.
@@ -432,7 +453,10 @@ impl fmt::Display for UnknownDenominationError {
 #[cfg(feature = "std")]
 impl std::error::Error for UnknownDenominationError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Error returned when parsing a possibly confusing denomination.
@@ -453,7 +477,10 @@ impl fmt::Display for PossiblyConfusingDenominationError {
 #[cfg(feature = "std")]
 impl std::error::Error for PossiblyConfusingDenominationError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// An error consensus decoding an `Amount`.

@@ -35,7 +35,10 @@ impl fmt::Display for DisabledLockTimeError {
 #[cfg(feature = "std")]
 impl std::error::Error for DisabledLockTimeError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Error returned when attempting to satisfy lock fails.
@@ -123,7 +126,10 @@ impl fmt::Display for IncompatibleHeightError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for IncompatibleHeightError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Error returned when `is_satisfied_by_time` fails.
@@ -177,7 +183,10 @@ impl fmt::Display for IncompatibleTimeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for IncompatibleTimeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self(_) = self;
+        None
+    }
 }
 
 /// Error returned when the input time in seconds was too large to be encoded to a 16 bit 512 second interval.
@@ -205,7 +214,10 @@ impl fmt::Display for TimeOverflowError {
 #[cfg(feature = "std")]
 impl std::error::Error for TimeOverflowError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { seconds: _ } = self;
+        None
+    }
 }
 
 /// Error returned when `NumberOfBlocks::is_satisfied_by` is incorrectly called.
@@ -231,7 +243,10 @@ impl fmt::Display for InvalidHeightError {
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidHeightError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { chain_tip: _, utxo_mined_at: _ } = self;
+        None
+    }
 }
 
 /// Error returned when `NumberOf512Seconds::is_satisfied_by` is incorrectly called.
@@ -257,7 +272,10 @@ impl fmt::Display for InvalidTimeError {
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidTimeError {
     #[inline]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        let Self { chain_tip: _, utxo_mined_at: _ } = self;
+        None
+    }
 }
 
 #[cfg(test)]

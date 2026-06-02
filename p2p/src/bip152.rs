@@ -769,7 +769,10 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for TxIndexOutOfRangeError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            let Self(_) = self;
+            None
+        }
     }
 
     /// An error occuring decoding a [`BlockTransactions`] message.
