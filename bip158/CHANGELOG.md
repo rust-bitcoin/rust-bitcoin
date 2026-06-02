@@ -2,6 +2,6 @@
 
 ## [Unreleased]
 
-## 0.1.0 - 2025-12-09
+## 0.0.0 - 2025-12-09
 
-* Initial release of the `github.com/rust-bitcoin/rust-bitcoin/bip158` crate as `bip158`.
+* Empty crate to reserve the name on crates.io.
