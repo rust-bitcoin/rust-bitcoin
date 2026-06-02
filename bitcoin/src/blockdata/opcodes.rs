@@ -401,106 +401,9 @@ pub enum ClassifyContext {
 }
 
 impl Opcode {
-    /// Classifies an Opcode into a broad class.
-    #[inline]
-    #[must_use]
-    pub fn classify(self, ctx: ClassifyContext) -> Class {
-        match (self, ctx) {
-            // 3 opcodes illegal in all contexts
-            (OP_VERIF, _) | (OP_VERNOTIF, _) | (OP_INVALIDOPCODE, _) => Class::IllegalOp,
-
-            // 15 opcodes illegal in Legacy context
-            #[rustfmt::skip]
-            (OP_CAT, ctx) | (OP_SUBSTR, ctx)
-            | (OP_LEFT, ctx) | (OP_RIGHT, ctx)
-            | (OP_INVERT, ctx)
-            | (OP_AND, ctx) | (OP_OR, ctx) | (OP_XOR, ctx)
-            | (OP_2MUL, ctx) | (OP_2DIV, ctx)
-            | (OP_MUL, ctx) | (OP_DIV, ctx) | (OP_MOD, ctx)
-            | (OP_LSHIFT, ctx) | (OP_RSHIFT, ctx) if ctx == ClassifyContext::Legacy => Class::IllegalOp,
-
-            // 87 opcodes of SuccessOp class only in TapScript context
-            (op, ClassifyContext::TapScript)
-                if op.code == 80
-                    || op.code == 98
-                    || (op.code >= 126 && op.code <= 129)
-                    || (op.code >= 131 && op.code <= 134)
-                    || (op.code >= 137 && op.code <= 138)
-                    || (op.code >= 141 && op.code <= 142)
-                    || (op.code >= 149 && op.code <= 153)
-                    || (op.code >= 187 && op.code <= 254) =>
-                Class::SuccessOp,
-
-            // 11 opcodes of NoOp class
-            (OP_NOP, _) => Class::NoOp,
-            (op, _) if op.code >= OP_NOP1.code && op.code <= OP_NOP10.code => Class::NoOp,
-
-            // 1 opcode for `OP_RETURN`
-            (OP_RETURN, _) => Class::ReturnOp,
-
-            // 4 opcodes operating equally to `OP_RETURN` only in Legacy context
-            (OP_RESERVED, ctx) | (OP_RESERVED1, ctx) | (OP_RESERVED2, ctx) | (OP_VER, ctx)
-                if ctx == ClassifyContext::Legacy =>
-                Class::ReturnOp,
-
-            // 71 opcodes operating equally to `OP_RETURN` only in Legacy context
-            (op, ClassifyContext::Legacy) if op.code >= OP_CHECKSIGADD.code => Class::ReturnOp,
-
-            // 2 opcodes operating equally to `OP_RETURN` only in TapScript context
-            (OP_CHECKMULTISIG, ClassifyContext::TapScript)
-            | (OP_CHECKMULTISIGVERIFY, ClassifyContext::TapScript) => Class::ReturnOp,
-
-            // 1 opcode of PushNum class
-            (OP_1NEGATE, _) => Class::PushNum(-1),
-
-            // 16 opcodes of PushNum class
-            (op, _) if op.code >= OP_1.code && op.code <= OP_16.code =>
-                Class::PushNum(1 + self.code as i32 - OP_1.code as i32),
-
-            // 76 opcodes of PushBytes class
-            (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
-
-            // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
-            (_, _) => Class::Ordinary(Ordinary::with(self)),
-        }
-    }
-
     /// Encodes [`Opcode`] as a byte.
     #[inline]
     pub const fn to_u8(self) -> u8 { self.code }
-
-    /// Decodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
-    ///
-    /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
-    ///
-    /// # Returns
-    ///
-    /// Returns `None` if `self` is not a PUSHNUM.
-    #[inline]
-    #[must_use]
-    pub const fn decode_pushnum(self) -> Option<u8> {
-        const START: u8 = OP_1.code;
-        const END: u8 = OP_16.code;
-        match self.code {
-            START..=END => Some(self.code - START + 1),
-            _ => None,
-        }
-    }
-    /// Returns the string representation of the opcode.
-    ///
-    /// This function maps the `Opcode`'s `code` value (a `u8`) to its corresponding
-    /// Bitcoin Script opcode name.
-    ///
-    /// # Example
-    /// ```
-    /// use bitcoin::opcodes::all::*;
-    ///
-    /// assert_eq!(OP_1.as_str(), "OP_1");
-    /// assert_eq!(OP_1NEGATE.as_str(), "OP_1NEGATE");
-    /// assert_eq!(OP_CHECKMULTISIG.as_str(), "OP_CHECKMULTISIG");
-    /// ```
-    #[inline]
-    pub fn as_str(&self) -> &'static str { all::opcode_to_str(*self) }
 }
 
 impl From<u8> for Opcode {
@@ -519,6 +422,115 @@ impl serde::Serialize for Opcode {
         S: serde::Serializer,
     {
         serializer.serialize_str(self.as_str())
+    }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Opcode {}
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Opcode`] type.
+    pub trait OpcodeExt impl for Opcode {
+        /// Classifies an Opcode into a broad class.
+        #[inline]
+        #[must_use]
+        fn classify(self, ctx: ClassifyContext) -> Class {
+            match (self, ctx) {
+                // 3 opcodes illegal in all contexts
+                (OP_VERIF, _) | (OP_VERNOTIF, _) | (OP_INVALIDOPCODE, _) => Class::IllegalOp,
+
+                // 15 opcodes illegal in Legacy context
+                #[rustfmt::skip]
+                (OP_CAT, ctx) | (OP_SUBSTR, ctx)
+                | (OP_LEFT, ctx) | (OP_RIGHT, ctx)
+                | (OP_INVERT, ctx)
+                | (OP_AND, ctx) | (OP_OR, ctx) | (OP_XOR, ctx)
+                | (OP_2MUL, ctx) | (OP_2DIV, ctx)
+                | (OP_MUL, ctx) | (OP_DIV, ctx) | (OP_MOD, ctx)
+                | (OP_LSHIFT, ctx) | (OP_RSHIFT, ctx) if ctx == ClassifyContext::Legacy => Class::IllegalOp,
+
+                // 87 opcodes of SuccessOp class only in TapScript context
+                (op, ClassifyContext::TapScript)
+                    if op.code == 80
+                        || op.code == 98
+                        || (op.code >= 126 && op.code <= 129)
+                        || (op.code >= 131 && op.code <= 134)
+                        || (op.code >= 137 && op.code <= 138)
+                        || (op.code >= 141 && op.code <= 142)
+                        || (op.code >= 149 && op.code <= 153)
+                        || (op.code >= 187 && op.code <= 254) =>
+                    Class::SuccessOp,
+
+                // 11 opcodes of NoOp class
+                (OP_NOP, _) => Class::NoOp,
+                (op, _) if op.code >= OP_NOP1.code && op.code <= OP_NOP10.code => Class::NoOp,
+
+                // 1 opcode for `OP_RETURN`
+                (OP_RETURN, _) => Class::ReturnOp,
+
+                // 4 opcodes operating equally to `OP_RETURN` only in Legacy context
+                (OP_RESERVED, ctx) | (OP_RESERVED1, ctx) | (OP_RESERVED2, ctx) | (OP_VER, ctx)
+                    if ctx == ClassifyContext::Legacy =>
+                    Class::ReturnOp,
+
+                // 71 opcodes operating equally to `OP_RETURN` only in Legacy context
+                (op, ClassifyContext::Legacy) if op.code >= OP_CHECKSIGADD.code => Class::ReturnOp,
+
+                // 2 opcodes operating equally to `OP_RETURN` only in TapScript context
+                (OP_CHECKMULTISIG, ClassifyContext::TapScript)
+                | (OP_CHECKMULTISIGVERIFY, ClassifyContext::TapScript) => Class::ReturnOp,
+
+                // 1 opcode of PushNum class
+                (OP_1NEGATE, _) => Class::PushNum(-1),
+
+                // 16 opcodes of PushNum class
+                (op, _) if op.code >= OP_1.code && op.code <= OP_16.code =>
+                    Class::PushNum(1 + self.code as i32 - OP_1.code as i32),
+
+                // 76 opcodes of PushBytes class
+                (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
+
+                // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
+                (_, _) => Class::Ordinary(Ordinary::with(self)),
+            }
+        }
+
+        /// Decodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
+        ///
+        /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
+        ///
+        /// # Returns
+        ///
+        /// Returns `None` if `self` is not a PUSHNUM.
+        #[inline]
+        #[must_use]
+        fn decode_pushnum(self) -> Option<u8> {
+            const START: u8 = OP_1.code;
+            const END: u8 = OP_16.code;
+            match self.code {
+                START..=END => Some(self.code - START + 1),
+                _ => None,
+            }
+        }
+
+        /// Returns the string representation of the opcode.
+        ///
+        /// This function maps the `Opcode`'s `code` value (a `u8`) to its corresponding
+        /// Bitcoin Script opcode name.
+        ///
+        /// # Example
+        /// ```
+        /// use bitcoin::opcodes::all::*;
+        /// use bitcoin::opcodes::OpcodeExt as _;
+        ///
+        /// assert_eq!(OP_1.as_str(), "OP_1");
+        /// assert_eq!(OP_1NEGATE.as_str(), "OP_1NEGATE");
+        /// assert_eq!(OP_CHECKMULTISIG.as_str(), "OP_CHECKMULTISIG");
+        /// ```
+        #[inline]
+        fn as_str(&self) -> &'static str { all::opcode_to_str(*self) }
     }
 }
 

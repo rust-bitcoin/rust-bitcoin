@@ -103,6 +103,7 @@ pub mod ext {
         block::{BlockCheckedExt as _, HeaderExt as _},
         key::{FullPublicKeyExt as _, LegacyPublicKeyExt as _},
         network::NetworkExt as _,
+        opcodes::OpcodeExt as _,
         pow::{CompactTargetExt as _, TargetExt as _, WorkExt as _},
         script::{PushBytesExt as _, ScriptExt as _, ScriptBufExt as _, TapScriptExt as _, ScriptPubKeyExt as _, ScriptPubKeyBufExt as _, WitnessScriptExt as _, ScriptSigExt as _},
         taproot::{TapLeafHashExt as _, TapNodeHashExt as _},
