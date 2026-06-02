@@ -437,19 +437,19 @@ crate::internal_macros::define_extension_trait! {
 
                 // 87 opcodes of SuccessOp class only in TapScript context
                 (op, ClassifyContext::TapScript)
-                    if op.code == 80
-                        || op.code == 98
-                        || (op.code >= 126 && op.code <= 129)
-                        || (op.code >= 131 && op.code <= 134)
-                        || (op.code >= 137 && op.code <= 138)
-                        || (op.code >= 141 && op.code <= 142)
-                        || (op.code >= 149 && op.code <= 153)
-                        || (op.code >= 187 && op.code <= 254) =>
+                    if op.to_u8() == 80
+                        || op.to_u8() == 98
+                        || (op.to_u8() >= 126 && op.to_u8() <= 129)
+                        || (op.to_u8() >= 131 && op.to_u8() <= 134)
+                        || (op.to_u8() >= 137 && op.to_u8() <= 138)
+                        || (op.to_u8() >= 141 && op.to_u8() <= 142)
+                        || (op.to_u8() >= 149 && op.to_u8() <= 153)
+                        || (op.to_u8() >= 187 && op.to_u8() <= 254) =>
                     Class::SuccessOp,
 
                 // 11 opcodes of NoOp class
                 (OP_NOP, _) => Class::NoOp,
-                (op, _) if op.code >= OP_NOP1.code && op.code <= OP_NOP10.code => Class::NoOp,
+                (op, _) if op.to_u8() >= OP_NOP1.to_u8() && op.to_u8() <= OP_NOP10.to_u8() => Class::NoOp,
 
                 // 1 opcode for `OP_RETURN`
                 (OP_RETURN, _) => Class::ReturnOp,
@@ -460,7 +460,7 @@ crate::internal_macros::define_extension_trait! {
                     Class::ReturnOp,
 
                 // 71 opcodes operating equally to `OP_RETURN` only in Legacy context
-                (op, ClassifyContext::Legacy) if op.code >= OP_CHECKSIGADD.code => Class::ReturnOp,
+                (op, ClassifyContext::Legacy) if op.to_u8() >= OP_CHECKSIGADD.to_u8() => Class::ReturnOp,
 
                 // 2 opcodes operating equally to `OP_RETURN` only in TapScript context
                 (OP_CHECKMULTISIG, ClassifyContext::TapScript)
@@ -470,11 +470,11 @@ crate::internal_macros::define_extension_trait! {
                 (OP_1NEGATE, _) => Class::PushNum(-1),
 
                 // 16 opcodes of PushNum class
-                (op, _) if op.code >= OP_1.code && op.code <= OP_16.code =>
-                    Class::PushNum(1 + self.code as i32 - OP_1.code as i32),
+                (op, _) if op.to_u8() >= OP_1.to_u8() && op.to_u8() <= OP_16.to_u8() =>
+                    Class::PushNum(1 + self.to_u8() as i32 - OP_1.to_u8() as i32),
 
                 // 76 opcodes of PushBytes class
-                (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
+                (op, _) if op.to_u8() <= OP_PUSHBYTES_75.to_u8() => Class::PushBytes(self.to_u8() as u32),
 
                 // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
                 (_, _) => Class::Ordinary(Ordinary::with(self)),
@@ -491,10 +491,10 @@ crate::internal_macros::define_extension_trait! {
         #[inline]
         #[must_use]
         fn decode_pushnum(self) -> Option<u8> {
-            const START: u8 = OP_1.code;
-            const END: u8 = OP_16.code;
-            match self.code {
-                START..=END => Some(self.code - START + 1),
+            const START: u8 = OP_1.to_u8();
+            const END: u8 = OP_16.to_u8();
+            match self.to_u8() {
+                START..=END => Some(self.to_u8() - START + 1),
                 _ => None,
             }
         }
@@ -543,7 +543,7 @@ macro_rules! ordinary_opcode {
         #[doc(hidden)]
         #[derive(Copy, Clone, PartialEq, Eq, Debug)]
         pub enum Ordinary {
-            $( $op = $op.code ),*
+            $( $op = $op.to_u8() ),*
         }
 
         impl fmt::Display for Ordinary {
@@ -640,8 +640,8 @@ mod tests {
     fn decode_pushnum() {
         // Test all possible opcodes
         // - Sanity check
-        assert_eq!(OP_1.code, 0x51_u8);
-        assert_eq!(OP_16.code, 0x60_u8);
+        assert_eq!(OP_1.to_u8(), 0x51_u8);
+        assert_eq!(OP_16.to_u8(), 0x60_u8);
         for i in 0x00..=0xff_u8 {
             let expected = match i {
                 // OP_1 ..= OP_16
