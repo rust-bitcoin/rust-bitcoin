@@ -36,8 +36,3 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true
-
-[package.metadata.rbmt.lint]
-allowed_duplicates = [
-    "hex-conservative",
-]

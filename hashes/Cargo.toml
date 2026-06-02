@@ -56,10 +56,5 @@ exact_features = [
     ["std", "serde", "small-hash"],
 ]
 
-[package.metadata.rbmt.lint]
-allowed_duplicates = [
-    "hex-conservative",
-]
-
 [package.metadata.rbmt.prerelease]
 enabled = true
