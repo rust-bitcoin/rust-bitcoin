@@ -734,21 +734,11 @@ impl NetworkMessage {
 pub struct V1NetworkMessage {
     magic: Magic,
     payload: NetworkMessage,
-    payload_len: u32,
-    checksum: [u8; 4],
 }
 
 impl V1NetworkMessage {
-    /// Constructs a new [`V1NetworkMessage`]
-    ///
-    /// # Panics
-    ///
-    /// Panics if the payload length exceeds `u32::MAX`.
-    pub fn new(magic: Magic, payload: NetworkMessage) -> Self {
-        let (bytes_hashed, checksum) = sha2_checksum(&payload);
-        let payload_len = u32::try_from(bytes_hashed).expect("network message use u32 as length");
-        Self { magic, payload, payload_len, checksum }
-    }
+    /// Constructs a new [`V1NetworkMessage`].
+    pub const fn new(magic: Magic, payload: NetworkMessage) -> Self { Self { magic, payload } }
 
     /// Consumes the [`V1NetworkMessage`] instance and returns the inner payload.
     pub fn into_payload(self) -> NetworkMessage { self.payload }
@@ -1007,13 +997,23 @@ encoding::encoder_newtype! {
 impl encoding::Encode for V1NetworkMessage {
     type Encoder<'e> = V1NetworkMessageEncoder<'e>;
 
+    /// Builds an encoder that emits a self-consistent v1 message.
+    ///
+    /// The header's `length` and `checksum` are derived from the encoded payload bytes here,
+    /// rather than being read from stored fields.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the encoded payload length exceeds `u32::MAX`.
     fn encoder(&self) -> Self::Encoder<'_> {
+        let (bytes_hashed, checksum) = sha2_checksum(&self.payload);
+        let payload_len = u32::try_from(bytes_hashed).expect("network message use u32 as length");
         V1NetworkMessageEncoder::new(encoding::Encoder2::new(
             encoding::Encoder4::new(
                 encoding::ArrayEncoder::without_length_prefix(self.magic.to_bytes()),
                 self.command().encoder(),
-                encoding::ArrayEncoder::without_length_prefix(self.payload_len.to_le_bytes()),
-                encoding::ArrayEncoder::without_length_prefix(self.checksum),
+                encoding::ArrayEncoder::without_length_prefix(payload_len.to_le_bytes()),
+                encoding::ArrayEncoder::without_length_prefix(checksum),
             ),
             NetworkMessageEncoder::new(&self.payload),
         ))
@@ -1316,7 +1316,6 @@ enum DecoderState {
     },
     ReadingPayload {
         magic: Magic,
-        length: u32,
         checksum: [u8; 4],
         payload_decoder: NetworkMessageDecoder,
         // Hash engine to compute checksum over raw payload bytes as they arrive.
@@ -1367,7 +1366,6 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                     let payload_decoder = NetworkMessageDecoder::new(header.command, payload_len);
                     self.state = DecoderState::ReadingPayload {
                         magic: header.magic,
-                        length: header.length,
                         checksum: header.checksum,
                         payload_decoder,
                         checksum_engine: sha256d::HashEngine::new(),
@@ -1396,13 +1394,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                 .map_err(V1NetworkMessageDecoderErrorInner::Header)
                 .map_err(V1NetworkMessageDecoderError)
                 .expect_err("push_bytes() moves to ReadingPayload on header_decoder completion")),
-            DecoderState::ReadingPayload {
-                magic,
-                length,
-                checksum,
-                payload_decoder,
-                checksum_engine,
-            } => {
+            DecoderState::ReadingPayload { magic, checksum, payload_decoder, checksum_engine } => {
                 let payload = payload_decoder.end()?;
 
                 let hash_bytes = checksum_engine.finalize().to_byte_array();
@@ -1418,7 +1410,7 @@ impl encoding::Decoder for V1NetworkMessageDecoder {
                     ));
                 }
 
-                Ok(V1NetworkMessage { magic, payload, payload_len: length, checksum })
+                Ok(V1NetworkMessage { magic, payload })
             }
         }
     }
