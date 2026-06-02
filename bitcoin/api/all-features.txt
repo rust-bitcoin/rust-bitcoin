@@ -7006,6 +7006,11 @@ impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::transaction::
 pub fn bitcoin::blockdata::transaction::Sequence::consensus_decode<R: bitcoin_io::Read + ?core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::transaction::Sequence
 pub fn bitcoin::blockdata::transaction::Sequence::consensus_encode<W: bitcoin_io::Write + ?core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+impl bitcoin_consensus_encoding::decode::Decode for bitcoin::blockdata::transaction::Sequence
+pub type bitcoin::blockdata::transaction::Sequence::Decoder = bitcoin::blockdata::transaction::SequenceDecoder
+impl bitcoin_consensus_encoding::encode::Encode for bitcoin::blockdata::transaction::Sequence
+pub type bitcoin::blockdata::transaction::Sequence::Encoder<'e> = bitcoin::blockdata::transaction::SequenceEncoder<'e>
+pub fn bitcoin::blockdata::transaction::Sequence::encoder(&self) -> Self::Encoder
 impl core::clone::Clone for bitcoin::blockdata::transaction::Sequence
 pub fn bitcoin::blockdata::transaction::Sequence::clone(&self) -> bitcoin::blockdata::transaction::Sequence
 impl core::cmp::Eq for bitcoin::blockdata::transaction::Sequence
@@ -7081,6 +7086,149 @@ impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::transaction::Se
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::transaction::Sequence where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::Sequence where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::transaction::Sequence::vzip(self) -> V
+pub struct bitcoin::blockdata::transaction::SequenceDecoder(_)
+impl bitcoin::blockdata::transaction::SequenceDecoder
+pub const fn bitcoin::blockdata::transaction::SequenceDecoder::new() -> Self
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin::blockdata::transaction::SequenceDecoder
+pub type bitcoin::blockdata::transaction::SequenceDecoder::Error = bitcoin::blockdata::transaction::SequenceDecoderError
+pub type bitcoin::blockdata::transaction::SequenceDecoder::Output = bitcoin::blockdata::transaction::Sequence
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::read_limit(&self) -> usize
+impl core::clone::Clone for bitcoin::blockdata::transaction::SequenceDecoder
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::clone(&self) -> bitcoin::blockdata::transaction::SequenceDecoder
+impl core::default::Default for bitcoin::blockdata::transaction::SequenceDecoder
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::default() -> Self
+impl core::fmt::Debug for bitcoin::blockdata::transaction::SequenceDecoder
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for bitcoin::blockdata::transaction::SequenceDecoder
+impl core::marker::Send for bitcoin::blockdata::transaction::SequenceDecoder
+impl core::marker::Sync for bitcoin::blockdata::transaction::SequenceDecoder
+impl core::marker::Unpin for bitcoin::blockdata::transaction::SequenceDecoder
+impl core::marker::UnsafeUnpin for bitcoin::blockdata::transaction::SequenceDecoder
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::transaction::SequenceDecoder
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::transaction::SequenceDecoder
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::blockdata::transaction::SequenceDecoder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::blockdata::transaction::SequenceDecoder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::blockdata::transaction::SequenceDecoder where U: core::convert::From<T>
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::blockdata::transaction::SequenceDecoder where U: core::convert::Into<T>
+pub type bitcoin::blockdata::transaction::SequenceDecoder::Error = core::convert::Infallible
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::blockdata::transaction::SequenceDecoder where U: core::convert::TryFrom<T>
+pub type bitcoin::blockdata::transaction::SequenceDecoder::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::blockdata::transaction::SequenceDecoder where T: core::clone::Clone
+pub type bitcoin::blockdata::transaction::SequenceDecoder::Owned = T
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::clone_into(&self, target: &mut T)
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin::blockdata::transaction::SequenceDecoder where T: 'static + ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::blockdata::transaction::SequenceDecoder where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::blockdata::transaction::SequenceDecoder where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::SequenceDecoder where T: core::clone::Clone
+pub unsafe fn bitcoin::blockdata::transaction::SequenceDecoder::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::SequenceDecoder
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::transaction::SequenceDecoder where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::SequenceDecoder where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::blockdata::transaction::SequenceDecoder::vzip(self) -> V
+pub struct bitcoin::blockdata::transaction::SequenceDecoderError(_)
+impl core::clone::Clone for bitcoin::blockdata::transaction::SequenceDecoderError
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::clone(&self) -> bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::cmp::Eq for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::cmp::PartialEq for bitcoin::blockdata::transaction::SequenceDecoderError
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::eq(&self, other: &bitcoin::blockdata::transaction::SequenceDecoderError) -> bool
+impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::transaction::SequenceDecoderError
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::from(never: core::convert::Infallible) -> Self
+impl core::error::Error for bitcoin::blockdata::transaction::SequenceDecoderError
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for bitcoin::blockdata::transaction::SequenceDecoderError
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::marker::Freeze for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::marker::Send for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::marker::Sync for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::marker::Unpin for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::marker::UnsafeUnpin for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::transaction::SequenceDecoderError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::transaction::SequenceDecoderError
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::blockdata::transaction::SequenceDecoderError where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::blockdata::transaction::SequenceDecoderError where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::blockdata::transaction::SequenceDecoderError where U: core::convert::From<T>
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::blockdata::transaction::SequenceDecoderError where U: core::convert::Into<T>
+pub type bitcoin::blockdata::transaction::SequenceDecoderError::Error = core::convert::Infallible
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::blockdata::transaction::SequenceDecoderError where U: core::convert::TryFrom<T>
+pub type bitcoin::blockdata::transaction::SequenceDecoderError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::blockdata::transaction::SequenceDecoderError where T: core::clone::Clone
+pub type bitcoin::blockdata::transaction::SequenceDecoderError::Owned = T
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::clone_into(&self, target: &mut T)
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin::blockdata::transaction::SequenceDecoderError where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin::blockdata::transaction::SequenceDecoderError where T: 'static + ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::blockdata::transaction::SequenceDecoderError where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::blockdata::transaction::SequenceDecoderError where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::SequenceDecoderError where T: core::clone::Clone
+pub unsafe fn bitcoin::blockdata::transaction::SequenceDecoderError::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::SequenceDecoderError
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::transaction::SequenceDecoderError where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::SequenceDecoderError where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::blockdata::transaction::SequenceDecoderError::vzip(self) -> V
+pub struct bitcoin::blockdata::transaction::SequenceEncoder<'e>(_, _)
+impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::current_chunk(&self) -> &[u8]
+impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::len(&self) -> usize
+impl<'e> core::clone::Clone for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::clone(&self) -> bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<'e> core::fmt::Debug for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'e> core::marker::Freeze for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<'e> core::marker::Send for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<'e> core::marker::Sync for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<'e> core::marker::Unpin for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where U: core::convert::From<T>
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where U: core::convert::Into<T>
+pub type bitcoin::blockdata::transaction::SequenceEncoder<'e>::Error = core::convert::Infallible
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where U: core::convert::TryFrom<T>
+pub type bitcoin::blockdata::transaction::SequenceEncoder<'e>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::blockdata::transaction::SequenceEncoder<'e> where T: core::clone::Clone
+pub type bitcoin::blockdata::transaction::SequenceEncoder<'e>::Owned = T
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::clone_into(&self, target: &mut T)
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin::blockdata::transaction::SequenceEncoder<'e> where T: 'static + ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::blockdata::transaction::SequenceEncoder<'e> where T: core::clone::Clone
+pub unsafe fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::blockdata::transaction::SequenceEncoder<'e>
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::transaction::SequenceEncoder<'e> where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::blockdata::transaction::SequenceEncoder<'e>::vzip(self) -> V
 pub struct bitcoin::blockdata::transaction::Transaction
 pub bitcoin::blockdata::transaction::Transaction::input: alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>
 pub bitcoin::blockdata::transaction::Transaction::lock_time: bitcoin::blockdata::locktime::absolute::LockTime
@@ -17541,6 +17689,9 @@ pub bitcoin::transaction::OutPoint::txid: bitcoin::blockdata::transaction::Txid
 pub bitcoin::transaction::OutPoint::vout: u32
 pub struct bitcoin::transaction::OutputsIndexError(pub bitcoin::blockdata::transaction::IndexOutOfBoundsError)
 pub struct bitcoin::transaction::Sequence(pub u32)
+pub struct bitcoin::transaction::SequenceDecoder(_)
+pub struct bitcoin::transaction::SequenceDecoderError(_)
+pub struct bitcoin::transaction::SequenceEncoder<'e>(_, _)
 pub struct bitcoin::transaction::Transaction
 pub bitcoin::transaction::Transaction::input: alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>
 pub bitcoin::transaction::Transaction::lock_time: bitcoin::blockdata::locktime::absolute::LockTime
