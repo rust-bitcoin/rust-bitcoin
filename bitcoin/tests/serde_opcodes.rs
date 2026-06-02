@@ -6,12 +6,14 @@
 extern crate bitcoin;
 extern crate serde_json;
 
+use bitcoin::opcodes::OpcodeExt as _;
+
 macro_rules! test_opcodes {
     ($($op:ident),* $(,)+) => {
         $(
             let op = bitcoin::opcodes::all::$op;
             let want = concat!("\"", stringify!($op), "\"");
-            let got = ::serde_json::to_string(&op).unwrap();
+            let got = ::serde_json::to_string(&op.as_str()).unwrap();
             assert_eq!(got, want);
         )*
     }

@@ -22,7 +22,7 @@ use core::fmt;
 ///   Bitcoin Core's `IsPushOnly` considers `OP_RESERVED` to be a "push code", allowing this opcode
 ///   in contexts where only pushes are supposed to be allowed.
 /// </details>
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Opcode {
     code: u8,
 }
@@ -116,12 +116,6 @@ macro_rules! all_opcodes {
             /// Push the array `0x10` onto the stack.
             #[deprecated(since = "TBD", note = "use OP_16 instead")]
             pub const OP_PUSHNUM_16: Opcode = OP_16;
-        }
-
-        impl fmt::Display for Opcode {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                core::fmt::Display::fmt(self.as_str(), f)
-            }
         }
     }
 }
@@ -415,20 +409,6 @@ impl From<u8> for Opcode {
     fn from(b: u8) -> Self { Self::from_u8(b) }
 }
 
-impl fmt::Debug for Opcode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Opcode {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(self.as_str())
-    }
-}
-
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::Opcode {}
@@ -578,7 +558,7 @@ macro_rules! ordinary_opcode {
             fn with(b: Opcode) -> Self {
                 match b {
                     $( $op => { Ordinary::$op } ),*
-                    _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {}", b),
+                    _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {}", b.as_str()),
                 }
             }
 
@@ -637,9 +617,7 @@ mod tests {
         ($unique:expr, $op:ident) => {
             assert_eq!($op, Opcode::from($op.to_u8()));
 
-            let s1 = format!("{}", $op);
-            let s2 = format!("{:?}", $op);
-            assert_eq!(s1, s2);
+            let s1 = format!("{}", $op.as_str());
             assert_eq!(s1, stringify!($op));
             assert!($unique.insert(s1));
         };
@@ -648,7 +626,7 @@ mod tests {
     #[test]
     fn formatting_works() {
         let op = all::OP_NOP;
-        let s = format!("{:>10}", op);
+        let s = format!("{:>10}", op.as_str());
         assert_eq!(s, "    OP_NOP");
     }
 
