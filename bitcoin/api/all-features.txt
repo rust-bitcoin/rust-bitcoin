@@ -12828,6 +12828,11 @@ pub fn bitcoin::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Se
 pub fn bitcoin::pow::CompactTarget::from_next_work_required(last: bitcoin::pow::CompactTarget, timespan: u64, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> bitcoin::pow::CompactTarget
 pub fn bitcoin::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin::error::UnprefixedHexError>
 pub fn bitcoin::pow::CompactTarget::to_consensus(self) -> u32
+impl bitcoin_consensus_encoding::decode::Decode for bitcoin::pow::CompactTarget
+pub type bitcoin::pow::CompactTarget::Decoder = bitcoin::pow::CompactTargetDecoder
+impl bitcoin_consensus_encoding::encode::Encode for bitcoin::pow::CompactTarget
+pub type bitcoin::pow::CompactTarget::Encoder<'e> = bitcoin::pow::CompactTargetEncoder<'e>
+pub fn bitcoin::pow::CompactTarget::encoder(&self) -> Self::Encoder
 impl core::clone::Clone for bitcoin::pow::CompactTarget
 pub fn bitcoin::pow::CompactTarget::clone(&self) -> bitcoin::pow::CompactTarget
 impl core::cmp::Eq for bitcoin::pow::CompactTarget
@@ -12888,6 +12893,149 @@ impl<T> serde_core::de::DeserializeOwned for bitcoin::pow::CompactTarget where T
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::pow::CompactTarget where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::pow::CompactTarget where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::pow::CompactTarget::vzip(self) -> V
+pub struct bitcoin::pow::CompactTargetDecoder(_)
+impl bitcoin::pow::CompactTargetDecoder
+pub const fn bitcoin::pow::CompactTargetDecoder::new() -> Self
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin::pow::CompactTargetDecoder
+pub type bitcoin::pow::CompactTargetDecoder::Error = bitcoin::pow::CompactTargetDecoderError
+pub type bitcoin::pow::CompactTargetDecoder::Output = bitcoin::pow::CompactTarget
+pub fn bitcoin::pow::CompactTargetDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin::pow::CompactTargetDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
+pub fn bitcoin::pow::CompactTargetDecoder::read_limit(&self) -> usize
+impl core::clone::Clone for bitcoin::pow::CompactTargetDecoder
+pub fn bitcoin::pow::CompactTargetDecoder::clone(&self) -> bitcoin::pow::CompactTargetDecoder
+impl core::default::Default for bitcoin::pow::CompactTargetDecoder
+pub fn bitcoin::pow::CompactTargetDecoder::default() -> Self
+impl core::fmt::Debug for bitcoin::pow::CompactTargetDecoder
+pub fn bitcoin::pow::CompactTargetDecoder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for bitcoin::pow::CompactTargetDecoder
+impl core::marker::Send for bitcoin::pow::CompactTargetDecoder
+impl core::marker::Sync for bitcoin::pow::CompactTargetDecoder
+impl core::marker::Unpin for bitcoin::pow::CompactTargetDecoder
+impl core::marker::UnsafeUnpin for bitcoin::pow::CompactTargetDecoder
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::pow::CompactTargetDecoder
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::pow::CompactTargetDecoder
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::pow::CompactTargetDecoder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::pow::CompactTargetDecoder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::pow::CompactTargetDecoder where U: core::convert::From<T>
+pub fn bitcoin::pow::CompactTargetDecoder::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::pow::CompactTargetDecoder where U: core::convert::Into<T>
+pub type bitcoin::pow::CompactTargetDecoder::Error = core::convert::Infallible
+pub fn bitcoin::pow::CompactTargetDecoder::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::pow::CompactTargetDecoder where U: core::convert::TryFrom<T>
+pub type bitcoin::pow::CompactTargetDecoder::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::pow::CompactTargetDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::pow::CompactTargetDecoder where T: core::clone::Clone
+pub type bitcoin::pow::CompactTargetDecoder::Owned = T
+pub fn bitcoin::pow::CompactTargetDecoder::clone_into(&self, target: &mut T)
+pub fn bitcoin::pow::CompactTargetDecoder::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin::pow::CompactTargetDecoder where T: 'static + ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetDecoder::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::pow::CompactTargetDecoder where T: ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetDecoder::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::pow::CompactTargetDecoder where T: ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetDecoder::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::pow::CompactTargetDecoder where T: core::clone::Clone
+pub unsafe fn bitcoin::pow::CompactTargetDecoder::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::pow::CompactTargetDecoder
+pub fn bitcoin::pow::CompactTargetDecoder::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::pow::CompactTargetDecoder where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::pow::CompactTargetDecoder where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::pow::CompactTargetDecoder::vzip(self) -> V
+pub struct bitcoin::pow::CompactTargetDecoderError(_)
+impl core::clone::Clone for bitcoin::pow::CompactTargetDecoderError
+pub fn bitcoin::pow::CompactTargetDecoderError::clone(&self) -> bitcoin::pow::CompactTargetDecoderError
+impl core::cmp::Eq for bitcoin::pow::CompactTargetDecoderError
+impl core::cmp::PartialEq for bitcoin::pow::CompactTargetDecoderError
+pub fn bitcoin::pow::CompactTargetDecoderError::eq(&self, other: &bitcoin::pow::CompactTargetDecoderError) -> bool
+impl core::convert::From<core::convert::Infallible> for bitcoin::pow::CompactTargetDecoderError
+pub fn bitcoin::pow::CompactTargetDecoderError::from(never: core::convert::Infallible) -> Self
+impl core::error::Error for bitcoin::pow::CompactTargetDecoderError
+pub fn bitcoin::pow::CompactTargetDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for bitcoin::pow::CompactTargetDecoderError
+pub fn bitcoin::pow::CompactTargetDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin::pow::CompactTargetDecoderError
+impl core::marker::StructuralPartialEq for bitcoin::pow::CompactTargetDecoderError
+impl core::marker::Freeze for bitcoin::pow::CompactTargetDecoderError
+impl core::marker::Send for bitcoin::pow::CompactTargetDecoderError
+impl core::marker::Sync for bitcoin::pow::CompactTargetDecoderError
+impl core::marker::Unpin for bitcoin::pow::CompactTargetDecoderError
+impl core::marker::UnsafeUnpin for bitcoin::pow::CompactTargetDecoderError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::pow::CompactTargetDecoderError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::pow::CompactTargetDecoderError
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::pow::CompactTargetDecoderError where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::pow::CompactTargetDecoderError where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::pow::CompactTargetDecoderError where U: core::convert::From<T>
+pub fn bitcoin::pow::CompactTargetDecoderError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::pow::CompactTargetDecoderError where U: core::convert::Into<T>
+pub type bitcoin::pow::CompactTargetDecoderError::Error = core::convert::Infallible
+pub fn bitcoin::pow::CompactTargetDecoderError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::pow::CompactTargetDecoderError where U: core::convert::TryFrom<T>
+pub type bitcoin::pow::CompactTargetDecoderError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::pow::CompactTargetDecoderError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::pow::CompactTargetDecoderError where T: core::clone::Clone
+pub type bitcoin::pow::CompactTargetDecoderError::Owned = T
+pub fn bitcoin::pow::CompactTargetDecoderError::clone_into(&self, target: &mut T)
+pub fn bitcoin::pow::CompactTargetDecoderError::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin::pow::CompactTargetDecoderError where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetDecoderError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin::pow::CompactTargetDecoderError where T: 'static + ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetDecoderError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::pow::CompactTargetDecoderError where T: ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetDecoderError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::pow::CompactTargetDecoderError where T: ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetDecoderError::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::pow::CompactTargetDecoderError where T: core::clone::Clone
+pub unsafe fn bitcoin::pow::CompactTargetDecoderError::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::pow::CompactTargetDecoderError
+pub fn bitcoin::pow::CompactTargetDecoderError::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::pow::CompactTargetDecoderError where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::pow::CompactTargetDecoderError where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::pow::CompactTargetDecoderError::vzip(self) -> V
+pub struct bitcoin::pow::CompactTargetEncoder<'e>(_, _)
+impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin::pow::CompactTargetEncoder<'e>
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::current_chunk(&self) -> &[u8]
+impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin::pow::CompactTargetEncoder<'e>
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::len(&self) -> usize
+impl<'e> core::clone::Clone for bitcoin::pow::CompactTargetEncoder<'e>
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::clone(&self) -> bitcoin::pow::CompactTargetEncoder<'e>
+impl<'e> core::fmt::Debug for bitcoin::pow::CompactTargetEncoder<'e>
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'e> core::marker::Freeze for bitcoin::pow::CompactTargetEncoder<'e>
+impl<'e> core::marker::Send for bitcoin::pow::CompactTargetEncoder<'e>
+impl<'e> core::marker::Sync for bitcoin::pow::CompactTargetEncoder<'e>
+impl<'e> core::marker::Unpin for bitcoin::pow::CompactTargetEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin::pow::CompactTargetEncoder<'e>
+impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin::pow::CompactTargetEncoder<'e>
+impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin::pow::CompactTargetEncoder<'e>
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::pow::CompactTargetEncoder<'e> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::pow::CompactTargetEncoder<'e> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::pow::CompactTargetEncoder<'e> where U: core::convert::From<T>
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::pow::CompactTargetEncoder<'e> where U: core::convert::Into<T>
+pub type bitcoin::pow::CompactTargetEncoder<'e>::Error = core::convert::Infallible
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::pow::CompactTargetEncoder<'e> where U: core::convert::TryFrom<T>
+pub type bitcoin::pow::CompactTargetEncoder<'e>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::pow::CompactTargetEncoder<'e> where T: core::clone::Clone
+pub type bitcoin::pow::CompactTargetEncoder<'e>::Owned = T
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::clone_into(&self, target: &mut T)
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin::pow::CompactTargetEncoder<'e> where T: 'static + ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::pow::CompactTargetEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::pow::CompactTargetEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::pow::CompactTargetEncoder<'e> where T: core::clone::Clone
+pub unsafe fn bitcoin::pow::CompactTargetEncoder<'e>::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::pow::CompactTargetEncoder<'e>
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::pow::CompactTargetEncoder<'e> where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::pow::CompactTargetEncoder<'e> where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::pow::CompactTargetEncoder<'e>::vzip(self) -> V
 pub struct bitcoin::pow::Target(_)
 impl bitcoin::pow::Target
 pub const bitcoin::pow::Target::MAX: Self
