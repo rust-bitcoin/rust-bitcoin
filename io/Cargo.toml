@@ -40,8 +40,3 @@ exact_features = [
     ["alloc", "hashes"],
     ["std", "hashes"],
 ]
-
-[package.metadata.rbmt.lint]
-allowed_duplicates = [
-    "hex-conservative",
-]
