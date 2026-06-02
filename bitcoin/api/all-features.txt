@@ -42,6 +42,11 @@ impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::locktime::abs
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::consensus_decode<R: bitcoin_io::Read + ?core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::locktime::absolute::LockTime
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::consensus_encode<W: bitcoin_io::Write + ?core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+impl bitcoin_consensus_encoding::decode::Decode for bitcoin::blockdata::locktime::absolute::LockTime
+pub type bitcoin::blockdata::locktime::absolute::LockTime::Decoder = bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl bitcoin_consensus_encoding::encode::Encode for bitcoin::blockdata::locktime::absolute::LockTime
+pub type bitcoin::blockdata::locktime::absolute::LockTime::Encoder<'e> = bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+pub fn bitcoin::blockdata::locktime::absolute::LockTime::encoder(&self) -> Self::Encoder
 impl core::clone::Clone for bitcoin::blockdata::locktime::absolute::LockTime
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::clone(&self) -> bitcoin::blockdata::locktime::absolute::LockTime
 impl core::cmp::Eq for bitcoin::blockdata::locktime::absolute::LockTime
@@ -115,6 +120,149 @@ impl<T> serde_core::de::DeserializeOwned for bitcoin::blockdata::locktime::absol
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::locktime::absolute::LockTime where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::locktime::absolute::LockTime where V: ppv_lite86::types::MultiLane<T>
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::vzip(self) -> V
+pub struct bitcoin::absolute::LockTimeDecoder(_)
+impl bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+pub const fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::new() -> Self
+impl bitcoin_consensus_encoding::decode::Decoder for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoder::Error = bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoder::Output = bitcoin::blockdata::locktime::absolute::LockTime
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::end(self) -> core::result::Result<Self::Output, Self::Error>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::push_bytes(&mut self, bytes: &mut &[u8]) -> core::result::Result<bitcoin_consensus_encoding::decode::DecoderStatus, Self::Error>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::read_limit(&self) -> usize
+impl core::clone::Clone for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::clone(&self) -> bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl core::default::Default for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::default() -> Self
+impl core::fmt::Debug for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl core::marker::Send for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl core::marker::Sync for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl core::marker::Unpin for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl core::marker::UnsafeUnpin for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where U: core::convert::From<T>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where U: core::convert::Into<T>
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoder::Error = core::convert::Infallible
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where U: core::convert::TryFrom<T>
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoder::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where T: core::clone::Clone
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoder::Owned = T
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::clone_into(&self, target: &mut T)
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where T: 'static + ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where T: core::clone::Clone
+pub unsafe fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::locktime::absolute::LockTimeDecoder where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoder::vzip(self) -> V
+pub struct bitcoin::absolute::LockTimeDecoderError(_)
+impl core::clone::Clone for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::clone(&self) -> bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::cmp::Eq for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::cmp::PartialEq for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::eq(&self, other: &bitcoin::blockdata::locktime::absolute::LockTimeDecoderError) -> bool
+impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::from(never: core::convert::Infallible) -> Self
+impl core::error::Error for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::marker::StructuralPartialEq for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::marker::Freeze for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::marker::Send for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::marker::Sync for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::marker::Unpin for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::marker::UnsafeUnpin for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where U: core::convert::From<T>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where U: core::convert::Into<T>
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::Error = core::convert::Infallible
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where U: core::convert::TryFrom<T>
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where T: core::clone::Clone
+pub type bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::Owned = T
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::clone_into(&self, target: &mut T)
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::to_owned(&self) -> T
+impl<T> alloc::string::ToString for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where T: core::fmt::Display + ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where T: 'static + ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where T: core::clone::Clone
+pub unsafe fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::locktime::absolute::LockTimeDecoderError where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeDecoderError::vzip(self) -> V
+pub struct bitcoin::absolute::LockTimeEncoder<'e>(_, _)
+impl<'e> bitcoin_consensus_encoding::encode::Encoder for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::advance(&mut self) -> bitcoin_consensus_encoding::encode::EncoderStatus
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::current_chunk(&self) -> &[u8]
+impl<'e> bitcoin_consensus_encoding::encode::ExactSizeEncoder for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::len(&self) -> usize
+impl<'e> core::clone::Clone for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::clone(&self) -> bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::fmt::Debug for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'e> core::marker::Freeze for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::marker::Send for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::marker::Sync for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::marker::Unpin for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::marker::UnsafeUnpin for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<'e> core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where U: core::convert::From<T>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where U: core::convert::Into<T>
+pub type bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::Error = core::convert::Infallible
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where U: core::convert::TryFrom<T>
+pub type bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where T: core::clone::Clone
+pub type bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::Owned = T
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::clone_into(&self, target: &mut T)
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::to_owned(&self) -> T
+impl<T> core::any::Any for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where T: 'static + ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where T: ?core::marker::Sized
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where T: core::clone::Clone
+pub unsafe fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::from(t: T) -> T
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e> where V: ppv_lite86::types::MultiLane<T>
+pub fn bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>::vzip(self) -> V
 pub mod bitcoin::address
 pub mod bitcoin::address::error
 #[non_exhaustive] pub enum bitcoin::address::error::FromScriptError
@@ -3617,6 +3765,9 @@ pub use bitcoin::blockdata::locktime::absolute::Time
 pub enum bitcoin::blockdata::locktime::absolute::LockTime
 pub bitcoin::blockdata::locktime::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
 pub bitcoin::blockdata::locktime::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::Time)
+pub struct bitcoin::blockdata::locktime::absolute::LockTimeDecoder(_)
+pub struct bitcoin::blockdata::locktime::absolute::LockTimeDecoderError(_)
+pub struct bitcoin::blockdata::locktime::absolute::LockTimeEncoder<'e>(_, _)
 pub mod bitcoin::blockdata::locktime::relative
 pub use bitcoin::blockdata::locktime::relative::Height
 pub use bitcoin::blockdata::locktime::relative::Time
@@ -10485,6 +10636,9 @@ pub use bitcoin::locktime::absolute::Time
 pub enum bitcoin::locktime::absolute::LockTime
 pub bitcoin::locktime::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
 pub bitcoin::locktime::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::Time)
+pub struct bitcoin::locktime::absolute::LockTimeDecoder(_)
+pub struct bitcoin::locktime::absolute::LockTimeDecoderError(_)
+pub struct bitcoin::locktime::absolute::LockTimeEncoder<'e>(_, _)
 pub mod bitcoin::locktime::relative
 pub use bitcoin::locktime::relative::Height
 pub use bitcoin::locktime::relative::Time
