@@ -2858,6 +2858,32 @@ mod test {
     }
 
     #[test]
+    #[rustfmt::skip]
+    fn v1_message_with_noncanonical_encoding_roundtrips() {
+        // Wire data has a non-canonical `send_compact` (0x0c instead of 0x01).
+        let raw_msg = [
+            0xf9, 0xbe, 0xb4, 0xd9,                                                 // Network Magic
+            0x73, 0x65, 0x6e, 0x64, 0x63, 0x6d, 0x70, 0x63, 0x74, 0x00, 0x00, 0x00, // "sendcmpct"
+            0x09, 0x00, 0x00, 0x00,                                                 // Length
+            0xf9, 0x9c, 0x95, 0x43,                                                 // Checksum (for 0x0c)
+            0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x0c,                   // Payload (0x0c)
+        ];
+
+        // 1. Decode raw bytes (succeeds; checksum matches non-canonical 0x0c payload).
+        let msg = encoding::decode_from_slice::<V1NetworkMessage>(&raw_msg)
+            .expect("valid checksum against raw payload");
+
+        // 2. Re-encode normalizes payload to 0x01; computes checksum for the new payload.
+        let re_encoded = encoding::encode_to_vec(&msg);
+
+        // 3. Decode again (succeeds; checksum matches canonical 0x01 payload).
+        let decoded_again = encoding::decode_from_slice::<V1NetworkMessage>(&re_encoded)
+            .expect("re-encoded message must be self-consistent");
+
+        assert_eq!(msg.into_payload(), decoded_again.into_payload());
+    }
+
+    #[test]
     #[rustfmt::skip] // Keep readable byte layout with comments.
     fn v1_message_rejects_invalid_checksum_with_noncanonical_encoding() {
         // Derived from a fuzzer crash case, a SendCmpct message with a non-canonical
