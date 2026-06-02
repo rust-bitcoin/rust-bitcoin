@@ -42,7 +42,7 @@ macro_rules! all_opcodes {
             use super::Opcode;
             $(
                 #[doc = $doc]
-                pub const $op: Opcode = Opcode { code: $val};
+                pub const $op: Opcode = Opcode::from_u8($val);
             )*
 
             /// Helper function for as_str in OpcodeExt.
@@ -404,11 +404,15 @@ impl Opcode {
     /// Encodes [`Opcode`] as a byte.
     #[inline]
     pub const fn to_u8(self) -> u8 { self.code }
+
+    /// Constructs an [`Opcode`] from a byte.
+    #[inline]
+    pub const fn from_u8(b: u8) -> Self { Self { code: b } }
 }
 
 impl From<u8> for Opcode {
     #[inline]
-    fn from(b: u8) -> Self { Self { code: b } }
+    fn from(b: u8) -> Self { Self::from_u8(b) }
 }
 
 impl fmt::Debug for Opcode {
