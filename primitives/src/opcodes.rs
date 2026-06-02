@@ -7,22 +7,27 @@
 
 #![allow(non_camel_case_types)]
 
+#[cfg(feature = "alloc")]
 use core::fmt;
 
 /// Read the following byte as a length, and read the following
 /// bytes as a push of that length.
-pub const OP_PUSHDATA1: u8 = 0x4c;
+#[cfg(feature = "alloc")]
+pub(crate) const OP_PUSHDATA1: u8 = 0x4c;
 
 /// Read the following 2 bytes as a little-endian length, and read the following
 /// bytes as a push of that length.
-pub const OP_PUSHDATA2: u8 = 0x4d;
+#[cfg(feature = "alloc")]
+pub(crate) const OP_PUSHDATA2: u8 = 0x4d;
 
 /// Read the following 4 bytes as a little-endian length, and read the following
 /// bytes as a push of that length.
-pub const OP_PUSHDATA4: u8 = 0x4e;
+#[cfg(feature = "alloc")]
+pub(crate) const OP_PUSHDATA4: u8 = 0x4e;
 
 /// Format a byte as a script opcode.
-pub fn fmt_opcode(op: u8, f: &mut fmt::Formatter) -> fmt::Result {
+#[cfg(feature = "alloc")]
+pub(crate) fn fmt_opcode(op: u8, f: &mut fmt::Formatter) -> fmt::Result {
     match op {
         0x00 => f.write_str("OP_0"),
         0x01..=0x4b => write!(f, "OP_PUSHBYTES_{}", op),
