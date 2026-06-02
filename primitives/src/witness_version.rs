@@ -218,3 +218,62 @@ pub mod error {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+
+    use super::*;
+    use crate::opcodes::OP_PUSHDATA4;
+
+    #[test]
+    fn witness_version_to_num() {
+        assert_eq!(WitnessVersion::V0.to_num(), 0);
+        assert_eq!(WitnessVersion::V1.to_num(), 1);
+        assert_eq!(WitnessVersion::V2.to_num(), 2);
+        assert_eq!(WitnessVersion::V16.to_num(), 16);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn witness_version_display() {
+        assert_eq!(WitnessVersion::V0.to_string(), "0");
+        assert_eq!(WitnessVersion::V1.to_string(), "1");
+        assert_eq!(WitnessVersion::V10.to_string(), "10");
+        assert_eq!(WitnessVersion::V16.to_string(), "16");
+    }
+
+    #[test]
+    fn witness_version_try_from_opcode() {
+        assert_eq!(WitnessVersion::try_from(OP_PUSHBYTES_0).unwrap(), WitnessVersion::V0);
+        assert_eq!(WitnessVersion::try_from(OP_1).unwrap(), WitnessVersion::V1);
+        assert_eq!(WitnessVersion::try_from(OP_16).unwrap(), WitnessVersion::V16);
+
+        // Only Opcodes in range OP_1 to OP_16, or 0, are valid.
+        let op = Opcode::from(OP_1.to_u8() - 1);
+        assert_eq!(WitnessVersion::try_from(op).unwrap_err().invalid_version(), OP_1.to_u8() - 1);
+        let op = Opcode::from(0xff);
+        assert_eq!(WitnessVersion::try_from(op).unwrap_err().invalid_version(), 0xff);
+        assert_eq!(
+            WitnessVersion::try_from(Opcode::from(OP_PUSHDATA4)).unwrap_err().invalid_version(),
+            OP_PUSHDATA4
+        );
+    }
+
+    #[test]
+    fn witness_version_into_opcode() {
+        assert_eq!(Opcode::from(WitnessVersion::V0), OP_PUSHBYTES_0);
+        assert_eq!(Opcode::from(WitnessVersion::V1), OP_1);
+        assert_eq!(Opcode::from(WitnessVersion::V16), OP_16);
+    }
+
+    #[test]
+    fn witness_version_opcode_round_trip() {
+        for version in 0u8..=16 {
+            let wv = WitnessVersion::try_from(version).unwrap();
+            let opcode = Opcode::from(wv);
+            assert_eq!(WitnessVersion::try_from(opcode).unwrap(), wv);
+        }
+    }
+}

@@ -160,7 +160,7 @@ pub(crate) const OP_PUSHDATA2: u8 = 0x4d;
 
 /// Read the following 4 bytes as a little-endian length, and read the following
 /// bytes as a push of that length.
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "alloc", test))]
 pub(crate) const OP_PUSHDATA4: u8 = 0x4e;
 
 /// Push an empty array onto the stack.
