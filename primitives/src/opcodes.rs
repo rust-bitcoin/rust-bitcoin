@@ -10,6 +10,38 @@
 #[cfg(feature = "alloc")]
 use core::fmt;
 
+/// A script opcode.
+///
+/// We do not implement `Ord` on this type because there is no natural ordering on opcodes, but there
+/// may appear to be one (e.g. because all the push opcodes appear in a consecutive block) and we
+/// don't want to encourage subtly buggy code.
+///
+/// <details>
+///   <summary>Example of Core bug caused by assuming ordering</summary>
+///
+///   Bitcoin Core's `IsPushOnly` considers `OP_RESERVED` to be a "push code", allowing this opcode
+///   in contexts where only pushes are supposed to be allowed.
+/// </details>
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Opcode {
+    code: u8,
+}
+
+impl Opcode {
+    /// Encodes [`Opcode`] as a byte.
+    #[inline]
+    pub const fn to_u8(self) -> u8 { self.code }
+
+    /// Constructs an [`Opcode`] from a byte.
+    #[inline]
+    pub const fn from_u8(b: u8) -> Self { Self { code: b } }
+}
+
+impl From<u8> for Opcode {
+    #[inline]
+    fn from(b: u8) -> Self { Self::from_u8(b) }
+}
+
 /// Read the following byte as a length, and read the following
 /// bytes as a push of that length.
 #[cfg(feature = "alloc")]

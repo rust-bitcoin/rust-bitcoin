@@ -9,23 +9,7 @@
 
 use core::fmt;
 
-/// A script Opcode.
-///
-/// We do not implement Ord on this type because there is no natural ordering on opcodes, but there
-/// may appear to be one (e.g. because all the push opcodes appear in a consecutive block) and we
-/// don't want to encourage subtly buggy code. Please use [`Opcode::classify`] to distinguish different
-/// types of opcodes.
-///
-/// <details>
-///   <summary>Example of Core bug caused by assuming ordering</summary>
-///
-///   Bitcoin Core's `IsPushOnly` considers `OP_RESERVED` to be a "push code", allowing this opcode
-///   in contexts where only pushes are supposed to be allowed.
-/// </details>
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Opcode {
-    code: u8,
-}
+pub use primitives::opcodes::Opcode;
 
 use self::all::*;
 
@@ -392,21 +376,6 @@ pub enum ClassifyContext {
     TapScript,
     /// Opcode used in legacy context.
     Legacy,
-}
-
-impl Opcode {
-    /// Encodes [`Opcode`] as a byte.
-    #[inline]
-    pub const fn to_u8(self) -> u8 { self.code }
-
-    /// Constructs an [`Opcode`] from a byte.
-    #[inline]
-    pub const fn from_u8(b: u8) -> Self { Self { code: b } }
-}
-
-impl From<u8> for Opcode {
-    #[inline]
-    fn from(b: u8) -> Self { Self::from_u8(b) }
 }
 
 mod sealed {
