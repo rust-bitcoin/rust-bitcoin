@@ -250,7 +250,7 @@ impl<T> ScriptBuf<T> {
                 this.push((n % 0x100) as u8);
                 this.push(((n / 0x100) % 0x100) as u8);
                 this.push(((n / 0x10000) % 0x100) as u8);
-                this.push((n / 0x1000000) as u8);
+                this.push((n / 0x0100_0000) as u8);
             }
         }
         // Then push the raw bytes

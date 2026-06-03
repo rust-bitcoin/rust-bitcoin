@@ -31,6 +31,7 @@ impl<T> Builder<T> {
     /// If your pushes should be interpreted as numbers, ensure your input does
     /// not have any leading zeros. In particular, the number 0 should be encoded
     /// as an empty string rather than as a single 0 byte.
+    #[must_use]
     pub fn push_slice<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice(data);
         self
@@ -41,12 +42,14 @@ impl<T> Builder<T> {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+    #[must_use]
     pub fn push_slice_non_minimal<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice_non_minimal(data);
         self
     }
 
     /// Adds a single opcode to the script.
+    #[must_use]
     pub fn push_opcode(mut self, data: Opcode) -> Self {
         self.0.push_opcode(data);
         self
