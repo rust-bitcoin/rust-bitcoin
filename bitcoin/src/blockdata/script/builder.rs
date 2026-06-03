@@ -18,16 +18,16 @@ use crate::{relative, Sequence};
 /// `Builder` is backed by [`ScriptBuf`] and inherits its panic behavior. This means that
 /// attempting to construct scripts larger than `isize::MAX` bytes will panic.
 #[derive(PartialEq, Eq, Clone)]
-pub struct Builder<T>(ScriptBuf<T>, Option<Opcode>);
+pub struct Builder<T>(ScriptBuf<T>);
 
 impl<T> Builder<T> {
     /// Constructs a new empty script.
     #[inline]
-    pub const fn new() -> Self { Self(ScriptBuf::new(), None) }
+    pub const fn new() -> Self { Self(ScriptBuf::new()) }
 
     /// Constructs a new empty script builder with at least the specified capacity.
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self { Self(ScriptBuf::with_capacity(capacity), None) }
+    pub fn with_capacity(capacity: usize) -> Self { Self(ScriptBuf::with_capacity(capacity)) }
 
     /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }
@@ -45,7 +45,6 @@ impl<T> Builder<T> {
     /// Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
     pub fn push_int(mut self, n: i32) -> Result<Self, Error> {
         self.0.push_int(n)?;
-        self.1 = None;
         Ok(self)
     }
 
@@ -66,7 +65,6 @@ impl<T> Builder<T> {
     /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
     pub fn push_int_unchecked(mut self, n: i64) -> Self {
         self.0.push_int_unchecked(n);
-        self.1 = None;
         self
     }
 
@@ -75,7 +73,6 @@ impl<T> Builder<T> {
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
     pub(in crate::blockdata) fn push_int_non_minimal(mut self, data: i64) -> Self {
         self.0.push_int_non_minimal(data);
-        self.1 = None;
         self
     }
 
@@ -92,7 +89,6 @@ impl<T> Builder<T> {
     /// as an empty string rather than as a single 0 byte.
     pub fn push_slice<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice(data);
-        self.1 = None;
         self
     }
 
@@ -103,14 +99,12 @@ impl<T> Builder<T> {
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
     pub fn push_slice_non_minimal<D: AsRef<PushBytes>>(mut self, data: D) -> Self {
         self.0.push_slice_non_minimal(data);
-        self.1 = None;
         self
     }
 
     /// Adds a single opcode to the script.
     pub fn push_opcode(mut self, data: Opcode) -> Self {
         self.0.push_opcode(data);
-        self.1 = Some(data);
         self
     }
 
@@ -126,7 +120,7 @@ impl<T> Builder<T> {
     /// semantics.
     pub fn push_verify(mut self) -> Self {
         // "duplicated code" because we need to update `1` field
-        match opcode_to_verify(self.1) {
+        match opcode_to_verify(self.0.last_opcode()) {
             Some(opcode) => {
                 (self.0).as_byte_vec().pop();
                 self.push_opcode(opcode)
@@ -199,8 +193,7 @@ impl<T> Default for Builder<T> {
 impl<T> From<Vec<u8>> for Builder<T> {
     fn from(v: Vec<u8>) -> Self {
         let script = ScriptBuf::from(v);
-        let last_op = script.last_opcode();
-        Self(script, last_op)
+        Self(script)
     }
 }
 
