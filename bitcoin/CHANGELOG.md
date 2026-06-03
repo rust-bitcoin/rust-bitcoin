@@ -47,6 +47,35 @@ The `serde` serialization for `Psbt` has changed.
 
 - BREAKING: Change `Psbt` serde implementations [#4496](https://github.com/rust-bitcoin/rust-bitcoin/pull/4496)
 
+## [0.32.100] - 2026-05-26
+
+**Bump the MSRV to Rust 1.74.0**
+
+Note the version number jump. We jumped to `v0.32.100` when doing the MSRV bump so as to
+leave room for a bunch of secuity releases up to this number if needed.
+
+- Our primary users (BDK and LDK) are at 1.85 already well ahead of `1.74`.
+- We would like to deliver the new sans-IO `consensus_encoding` crate in a point release.
+- The would like to later support ergonomic conversion to other 1.0 types (from `bitcoin-units`, and
+  and `bitcoin-primitives`) without forcing the whole ecosystem to upgrade.
+- Opens the door to the possibility of doing releases and then using the semver trick.
+
+## [0.32.10] - 2026-04-23
+
+- Fix bug in `LeafVerison::Future`'s `Display` output [#6208](https://github.com/rust-bitcoin/rust-bitcoin/pull/6208)
+- Manually revert `VarInt` range check [#6182](https://github.com/rust-bitcoin/rust-bitcoin/pull/6182)
+- Backport - p2p: Add a hash value to `Inventory`'s `Error` variant [#6147](https://github.com/rust-bitcoin/rust-bitcoin/pull/6147)
+- Backport - p2p: Error on `RawNetworkMessage` decode if payload partly consumed [#6140](https://github.com/rust-bitcoin/rust-bitcoin/pull/6140)
+- Backport - p2p: Error on invalid `FeeRate` in `FeeFilter` decode [#6142](https://github.com/rust-bitcoin/rust-bitcoin/pull/6142)
+- Backport - Validate ASCII and preserve embedded nulls in `CommandString` parsing [#6136](https://github.com/rust-bitcoin/rust-bitcoin/pull/6136)
+- Remove the `internals` dependency [#6200](https://github.com/rust-bitcoin/rust-bitcoin/pull/6200)
+
+## [0.32.9] - 2025-03-26
+
+- Backport - Fix `Unknown` `NetworkMessage` encoding [#6106](https://github.com/rust-bitcoin/rust-bitcoin/pull/6106)
+- Backport - `Arbitrary` [#5085](https://github.com/rust-bitcoin/rust-bitcoin/pull/5085)
+- Backport - Add `CompactSize` range check to deserialization [#5921](https://github.com/rust-bitcoin/rust-bitcoin/pull/5921)
+
 ### Changes
 
 - Bump MSRV from 1.63.0 to 1.74.0 for all crates in the repo [#4926](https://github.com/rust-bitcoin/rust-bitcoin/pull/4926)
@@ -863,7 +892,10 @@ See `Transaction::verify` and `Script::verify` methods.
 downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
 
 [Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.33.0-beta...HEAD
-[0.33.0-beta]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.8...bitcoin-0.33.0-beta
+[0.33.0-beta]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.100...bitcoin-0.33.0-beta
+[0.32.100]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.10...bitcoin-0.32.100
+[0.32.10]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.9...bitcoin-0.32.10
+[0.32.9]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.8...bitcoin-0.32.9
 [0.32.8]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.7...bitcoin-0.32.8
 [0.32.7]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.6...bitcoin-0.32.7
 [0.32.6]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-0.32.5...bitcoin-0.32.6
