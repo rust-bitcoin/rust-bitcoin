@@ -27,13 +27,13 @@ impl<T> Builder<T> {
 
     /// Constructs a new empty script builder with at least the specified capacity.
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self { Self(ScriptBuf::with_capacity(capacity)) }
+    pub fn with_capacity(capacity: usize) -> Self { Self::from(Vec::with_capacity(capacity)) }
 
     /// Returns the length in bytes of the script.
-    pub fn len(&self) -> usize { self.0.len() }
+    pub fn len(&self) -> usize { self.as_script().len() }
 
     /// Checks whether the script is the empty script.
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+    pub fn is_empty(&self) -> bool { self.as_script().is_empty() }
 
     /// Adds instructions to push an integer onto the stack.
     ///
@@ -43,9 +43,10 @@ impl<T> Builder<T> {
     /// # Errors
     ///
     /// Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
-    pub fn push_int(mut self, n: i32) -> Result<Self, Error> {
-        self.0.push_int(n)?;
-        Ok(self)
+    pub fn push_int(self, n: i32) -> Result<Self, Error> {
+        let mut script = self.into_script();
+        script.push_int(n)?;
+        Ok(Self::from(script.into_bytes()))
     }
 
     /// Adds instructions to push an unchecked integer onto the stack.
@@ -63,17 +64,19 @@ impl<T> Builder<T> {
     /// > throwing an exception if arithmetic is done or the result is interpreted as an integer.
     ///
     /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
-    pub fn push_int_unchecked(mut self, n: i64) -> Self {
-        self.0.push_int_unchecked(n);
-        self
+    pub fn push_int_unchecked(self, n: i64) -> Self {
+        let mut script = self.into_script();
+        script.push_int_unchecked(n);
+        Self::from(script.into_bytes())
     }
 
     /// Adds instructions to push an integer onto the stack without optimization.
     ///
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
-    pub(in crate::blockdata) fn push_int_non_minimal(mut self, data: i64) -> Self {
-        self.0.push_int_non_minimal(data);
-        self
+    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Self {
+        let mut script = self.into_script();
+        script.push_int_non_minimal(data);
+        Self::from(script.into_bytes())
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
@@ -118,12 +121,14 @@ impl<T> Builder<T> {
     /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
     /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
     /// semantics.
-    pub fn push_verify(mut self) -> Self {
+    pub fn push_verify(self) -> Self {
         // "duplicated code" because we need to update `1` field
-        match opcode_to_verify(self.0.last_opcode()) {
+        match opcode_to_verify(self.as_script().last_opcode()) {
             Some(opcode) => {
-                (self.0).as_byte_vec().pop();
-                self.push_opcode(opcode)
+                let mut script = self.into_script();
+                script.as_byte_vec().pop();
+                let result = Self::from(script.into_bytes());
+                result.push_opcode(opcode)
             }
             None => self.push_opcode(OP_VERIFY),
         }
@@ -176,13 +181,13 @@ impl<T> Builder<T> {
     pub fn into_script(self) -> ScriptBuf<T> { self.0 }
 
     /// Converts the `Builder` into script bytes
-    pub fn into_bytes(self) -> Vec<u8> { self.0.into() }
+    pub fn into_bytes(self) -> Vec<u8> { self.into_script().into() }
 
     /// Returns the internal script
     pub fn as_script(&self) -> &Script<T> { &self.0 }
 
     /// Returns script bytes
-    pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
+    pub fn as_bytes(&self) -> &[u8] { self.as_script().as_bytes() }
 }
 
 impl<T> Default for Builder<T> {
