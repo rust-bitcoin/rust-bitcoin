@@ -85,8 +85,8 @@ impl FromStr for WitnessVersion {
     type Err = FromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = parse_int::int_from_str(s)?;
-        Ok(Self::try_from(version)?)
+        let version: u8 = parse_int::int_from_str(s).map_err(FromStrError::Unparsable)?;
+        Self::try_from(version).map_err(FromStrError::Invalid)
     }
 }
 
@@ -181,15 +181,6 @@ pub mod error {
             }
         }
     }
-
-    impl From<ParseIntError> for FromStrError {
-        fn from(e: ParseIntError) -> Self { Self::Unparsable(e) }
-    }
-
-    impl From<TryFromError> for FromStrError {
-        fn from(e: TryFromError) -> Self { Self::Invalid(e) }
-    }
-
     /// Error attempting to create a [`WitnessVersion`] from an integer.
     ///
     /// [`WitnessVersion`]: super::WitnessVersion
