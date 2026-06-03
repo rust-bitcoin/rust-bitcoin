@@ -81,3 +81,113 @@ impl<T> fmt::Display for Builder<T> {
 impl<T> fmt::Debug for Builder<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloc::{format, vec};
+
+    use super::Builder;
+    use crate::script::{PushBytes, ScriptSigTag as Tag};
+
+    #[test]
+    fn push_slice_minimal() {
+        let script = Builder::<Tag>::new().push_slice([0x81]).into_script();
+        assert_eq!(script.as_bytes(), &[0x4f]);
+
+        for n in 1u8..=16 {
+            let script = Builder::<Tag>::new().push_slice([n]).into_script();
+            assert_eq!(script.as_bytes(), &[0x50 + n]);
+        }
+
+        let script = Builder::<Tag>::new().push_slice([0u8]).into_script();
+        assert_eq!(script.as_bytes(), &[1, 0]);
+        let script = Builder::<Tag>::new().push_slice([17u8]).into_script();
+        assert_eq!(script.as_bytes(), &[1, 17]);
+        let script = Builder::<Tag>::new().push_slice(b"NRA4VR").into_script();
+        assert_eq!(script.as_bytes(), &[6, b'N', b'R', b'A', b'4', b'V', b'R']);
+    }
+
+    #[test]
+    fn push_slice_non_minimal() {
+        let script = Builder::<Tag>::new().push_slice_non_minimal([0x81]).into_script();
+        assert_eq!(script.as_bytes(), &[1, 0x81]);
+
+        let script = Builder::<Tag>::new().push_slice_non_minimal([1u8]).into_script();
+        assert_eq!(script.as_bytes(), &[1, 1]);
+    }
+
+    #[test]
+    fn push_slice_pushdata1_and_pushdata2() {
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from([0xab; 0x4b].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(script.as_bytes()[0], 0x4b);
+        assert_eq!(script.len(), 1 + 0x4b);
+
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from([0xab; 0x4c].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(&script.as_bytes()[..2], &[0x4c, 0x4c]);
+        assert_eq!(script.len(), 2 + 0x4c);
+
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from([0xab; 0xff].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(&script.as_bytes()[..2], &[0x4c, 0xff]);
+        assert_eq!(script.len(), 2 + 0xff);
+
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from([0xab; 0x100].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(&script.as_bytes()[..3], &[0x4d, 0x00, 0x01]);
+        assert_eq!(script.len(), 3 + 0x100);
+
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from([0xab; 0x102].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(&script.as_bytes()[..3], &[0x4d, 0x02, 0x01]);
+        assert_eq!(script.len(), 3 + 0x102);
+
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from(vec![0xab; 0xffff].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(&script.as_bytes()[..3], &[0x4d, 0xff, 0xff]);
+        assert_eq!(script.len(), 3 + 0xffff);
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore)]
+    fn push_slice_pushdata4_boundary() {
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from(vec![0u8; 0x10000].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(&script.as_bytes()[..5], &[0x4e, 0x00, 0x00, 0x01, 0x00]);
+        assert_eq!(script.len(), 5 + 0x10000);
+    }
+
+    #[test]
+    #[cfg(target_pointer_width = "64")]
+    #[cfg_attr(miri, ignore)]
+    fn push_slice_pushdata4_length_bytes() {
+        let len = 0x0102_0304;
+        let script = Builder::<Tag>::new()
+            .push_slice(<&PushBytes>::try_from(vec![0u8; len].as_slice()).unwrap())
+            .into_script();
+        assert_eq!(&script.as_bytes()[..5], &[0x4e, 0x04, 0x03, 0x02, 0x01]);
+        assert_eq!(script.len(), 5 + len);
+    }
+
+    #[test]
+    fn from_vec() {
+        let script = Builder::<Tag>::from(vec![0xac, 0x51]).into_script();
+        assert_eq!(script.as_bytes(), &[0xac, 0x51]);
+    }
+
+    #[test]
+    fn display_delegates_to_script() {
+        let builder = Builder::<Tag>::from(vec![0x51, 0x52]);
+        let displayed = format!("{}", builder);
+        assert!(!displayed.is_empty());
+        assert_eq!(displayed, format!("{}", builder.as_script()));
+    }
+}

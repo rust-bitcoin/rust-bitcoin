@@ -342,3 +342,34 @@ impl<'a, T> Arbitrary<'a> for ScriptBuf<T> {
         Ok(Self::from_bytes(v))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloc::vec;
+
+    use super::ScriptBuf;
+    use crate::script::ScriptSigTag as Tag;
+
+    #[test]
+    fn reserved_len_for_slice() {
+        // Length plus the size of the push opcode that prefixes it.
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0), 1);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x4b), 0x4b + 1);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x4c), 0x4c + 2);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0xff), 0xff + 2);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x100), 0x100 + 3);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0xffff), 0xffff + 3);
+        assert_eq!(ScriptBuf::<Tag>::reserved_len_for_slice(0x10000), 0x10000 + 5);
+    }
+
+    #[test]
+    fn as_byte_vec_deref_restores() {
+        let mut script = ScriptBuf::<Tag>::from_bytes(vec![1, 2, 3]);
+        {
+            let vec = script.as_byte_vec();
+            assert_eq!(vec.len(), 3);
+            assert_eq!(vec.as_slice(), &[1, 2, 3]);
+        }
+        assert_eq!(script.as_bytes(), &[1, 2, 3]);
+    }
+}
