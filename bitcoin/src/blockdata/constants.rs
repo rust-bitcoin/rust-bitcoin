@@ -12,7 +12,7 @@ use crate::locktime::absolute;
 use crate::network::{Network, Params};
 use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
-use crate::script::{self, BuilderExtPriv as _};
+use crate::script::{self, BuilderExt as _, BuilderExtPriv as _};
 use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
 use crate::{Amount, BlockHash, BlockTime, Sequence, TestnetVersion};

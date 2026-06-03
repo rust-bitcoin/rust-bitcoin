@@ -68,7 +68,7 @@ use crate::prelude::Vec;
 #[doc(inline)]
 pub use self::{
     borrowed::{ScriptExt, TapScriptExt, ScriptPubKeyExt, WitnessScriptExt, ScriptSigExt},
-    builder::Builder,
+    builder::{Builder, BuilderExt},
     instruction::{Instruction, Instructions, InstructionIndices},
     owned::{ScriptBufExt, ScriptPubKeyBufExt, ScriptSigBufExt},
     push_bytes::{PushBytes, PushBytesBuf, PushBytesExt, PushBytesErrorReport},
