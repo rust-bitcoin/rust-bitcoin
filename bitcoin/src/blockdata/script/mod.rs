@@ -85,6 +85,7 @@ pub use primitives::script::{
 };
 
 pub(crate) use self::borrowed::ScriptExtPriv;
+pub(in crate::blockdata) use self::builder::BuilderExtPriv;
 #[doc(no_inline)]
 pub use self::error::{
     Error, PushBytesError, RedeemScriptSizeError, ScriptIntError, WitnessScriptSizeError,

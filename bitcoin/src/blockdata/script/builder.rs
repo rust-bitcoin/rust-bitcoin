@@ -70,15 +70,6 @@ impl<T> Builder<T> {
         Self::from(script.into_bytes())
     }
 
-    /// Adds instructions to push an integer onto the stack without optimization.
-    ///
-    /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
-    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Self {
-        let mut script = self.into_script();
-        script.push_int_non_minimal(data);
-        Self::from(script.into_bytes())
-    }
-
     /// Adds instructions to push some arbitrary data onto the stack.
     ///
     /// If the data can be exactly produced by a numeric opcode, that opcode
@@ -188,6 +179,25 @@ impl<T> Builder<T> {
 
     /// Returns script bytes
     pub fn as_bytes(&self) -> &[u8] { self.as_script().as_bytes() }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl<T> Sealed for super::Builder<T> {}
+}
+
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for [`Builder`] that should be private.
+    pub(in crate::blockdata) trait BuilderExtPriv<T> impl<T> for Builder<T> {
+        /// Adds instructions to push an integer onto the stack without optimization.
+        ///
+        /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
+        fn push_int_non_minimal(self, data: i64) -> Self {
+            let mut script = self.into_script();
+            script.push_int_non_minimal(data);
+            Self::from(script.into_bytes())
+        }
+    }
 }
 
 impl<T> Default for Builder<T> {
