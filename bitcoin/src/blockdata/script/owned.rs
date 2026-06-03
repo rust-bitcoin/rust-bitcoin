@@ -68,44 +68,6 @@ internal_macros::define_extension_trait! {
             }
         }
 
-        /// Adds a single opcode to the script.
-        fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
-
-        /// Adds instructions to push some arbitrary data onto the stack.
-        ///
-        /// If the data can be exactly produced by a numeric opcode, that opcode
-        /// will be used, since its behavior is equivalent but will not violate minimality
-        /// rules. To avoid this, use [`ScriptBuf::push_slice_non_minimal`] which will always
-        /// use a push opcode.
-        ///
-        /// However, this method does *not* enforce any numeric minimality rules.
-        /// If your pushes should be interpreted as numbers, ensure your input does
-        /// not have any leading zeros. In particular, the number 0 should be encoded
-        /// as an empty string rather than as a single 0 byte.
-        fn push_slice<D: AsRef<PushBytes>>(&mut self, data: D) {
-            let bytes = data.as_ref().as_bytes();
-            if bytes.len() == 1 {
-                match bytes[0] {
-                    0x81 => { self.push_opcode(OP_1NEGATE); },
-                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_1.to_u8() - 1))); },
-                    _ => { self.push_slice_non_minimal(data); },
-                }
-            } else {
-                self.push_slice_non_minimal(data);
-            }
-        }
-
-        /// Adds instructions to push some arbitrary data onto the stack without minimality.
-        ///
-        /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
-        ///
-        /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-        fn push_slice_non_minimal<D: AsRef<PushBytes>>(&mut self, data: D) {
-            let data = data.as_ref();
-            self.reserve(Self::reserved_len_for_slice(data.len()));
-            self.push_slice_no_opt(data);
-        }
-
         /// Add a single instruction to the script.
         ///
         /// # Panics
