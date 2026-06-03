@@ -165,7 +165,7 @@ pub mod error {
 
     impl fmt::Display for FromStrError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match self {
+            match *self {
                 Self::Unparsable(ref e) => write_err!(f, "integer parse error"; e),
                 Self::Invalid(ref e) => write_err!(f, "invalid version number"; e),
             }
@@ -175,7 +175,7 @@ pub mod error {
     #[cfg(feature = "std")]
     impl std::error::Error for FromStrError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            match self {
+            match *self {
                 Self::Unparsable(ref e) => Some(e),
                 Self::Invalid(ref e) => Some(e),
             }
