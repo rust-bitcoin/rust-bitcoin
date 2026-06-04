@@ -19,7 +19,7 @@ cargo --version
 rustc --version
 
 # Testing
-cargo install --force honggfuzz --no-default-features
+cargo install --force honggfuzz --version 0.5.60 --no-default-features
 for targetFile in $targetFiles; do
   targetName=$(targetFileToName "$targetFile")
   echo "Fuzzing target $targetName ($targetFile)"
