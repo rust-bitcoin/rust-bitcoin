@@ -3,9 +3,9 @@
 //! SHA256 implementation.
 //!
 
-#[cfg(target_arch = "x86")]
+#[cfg(all(feature = "std", target_arch = "x86"))]
 use core::arch::x86::*;
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
 use core::convert::TryInto;
 use core::ops::Index;
@@ -1018,10 +1018,10 @@ mod tests {
 
     #[cfg(target_arch = "wasm32")]
     mod wasm_tests {
-        extern crate wasm_bindgen_test;
-        use self::wasm_bindgen_test::*;
         use super::*;
-        #[wasm_bindgen_test]
+        use wasm_bindgen_test::wasm_bindgen_test;
+
+        #[wasm_bindgen_test(unsupported = test)]
         fn sha256_tests() {
             test();
             midstate();
