@@ -28,4 +28,4 @@ serde = { version = "1.0.103", default-features = false, optional = true }
 [dev-dependencies]
 
 [lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_55)' ] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_55)', 'cfg(kani)' ] }

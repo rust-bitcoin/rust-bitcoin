@@ -20,6 +20,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(kani)]
+extern crate kani;
+
 pub mod error;
 pub mod macros;
 mod parse;
