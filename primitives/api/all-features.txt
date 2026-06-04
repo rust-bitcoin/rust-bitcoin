@@ -5094,6 +5094,8 @@ impl core::default::Default for bitcoin_primitives::witness::Witness
 pub fn bitcoin_primitives::witness::Witness::default() -> Self
 impl core::fmt::Debug for bitcoin_primitives::witness::Witness
 pub fn bitcoin_primitives::witness::Witness::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::LowerHex for bitcoin_primitives::witness::Witness
+impl core::fmt::UpperHex for bitcoin_primitives::witness::Witness
 impl core::hash::Hash for bitcoin_primitives::witness::Witness
 pub fn bitcoin_primitives::witness::Witness::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for bitcoin_primitives::witness::Witness
