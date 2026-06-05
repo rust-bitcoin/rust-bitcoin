@@ -76,6 +76,7 @@ impl Signature {
     ///
     /// This returns a type with an API very similar to that of `Box<[u8]>`.
     /// You can get a slice from it using deref coercions or turn it into an iterator.
+    #[inline]
     pub fn serialize(self) -> SerializedSignature {
         let mut buf = [0; MAX_LEN];
         let ser_sig = self.signature.to_byte_array();
@@ -94,6 +95,7 @@ impl Signature {
     ///
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
     #[cfg(feature = "alloc")]
+    #[inline]
     pub fn to_vec(self) -> Vec<u8> {
         let mut ser_sig = self.signature.as_ref().to_vec();
         // If default sighash type, don't add extra sighash byte
@@ -106,6 +108,7 @@ impl Signature {
 
 #[cfg(feature = "hex")]
 impl fmt::Display for Signature {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.serialize(), f)
     }
@@ -113,6 +116,7 @@ impl fmt::Display for Signature {
 
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Signature {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::LowerHex::fmt(&self.serialize(), f)
     }
@@ -120,6 +124,7 @@ impl fmt::LowerHex for Signature {
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Signature {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::UpperHex::fmt(&self.serialize(), f)
     }
@@ -129,6 +134,7 @@ impl fmt::UpperHex for Signature {
 impl FromStr for Signature {
     type Err = ParseSignatureError;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match hex::decode_to_array::<64>(s) {
             Ok(bytes) => Self::from_slice(&bytes).map_err(ParseSignatureError::Decode),
@@ -217,6 +223,7 @@ impl SerializedSignature {
 }
 
 impl fmt::Debug for SerializedSignature {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         #[cfg(feature = "hex")]
         {
@@ -234,6 +241,7 @@ impl fmt::Debug for SerializedSignature {
 
 #[cfg(feature = "hex")]
 impl fmt::Display for SerializedSignature {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
@@ -269,20 +277,24 @@ impl PartialEq<SerializedSignature> for [u8] {
 }
 
 impl PartialOrd for SerializedSignature {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> { Some(self.cmp(other)) }
 }
 
 impl Ord for SerializedSignature {
+    #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering { (**self).cmp(&**other) }
 }
 
 impl PartialOrd<[u8]> for SerializedSignature {
+    #[inline]
     fn partial_cmp(&self, other: &[u8]) -> Option<core::cmp::Ordering> {
         (**self).partial_cmp(other)
     }
 }
 
 impl PartialOrd<SerializedSignature> for [u8] {
+    #[inline]
     fn partial_cmp(&self, other: &SerializedSignature) -> Option<core::cmp::Ordering> {
         self.partial_cmp(&**other)
     }
@@ -291,6 +303,7 @@ impl PartialOrd<SerializedSignature> for [u8] {
 impl Eq for SerializedSignature {}
 
 impl core::hash::Hash for SerializedSignature {
+    #[inline]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) { (**self).hash(state) }
 }
 
@@ -328,18 +341,21 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 }
 
 impl From<Signature> for SerializedSignature {
+    #[inline]
     fn from(value: Signature) -> Self { Self::from_signature(value) }
 }
 
 impl TryFrom<SerializedSignature> for Signature {
     type Error = SigFromSliceError;
 
+    #[inline]
     fn try_from(value: SerializedSignature) -> Result<Self, Self::Error> { value.to_signature() }
 }
 
 impl<'a> TryFrom<&'a SerializedSignature> for Signature {
     type Error = SigFromSliceError;
 
+    #[inline]
     fn try_from(value: &'a SerializedSignature) -> Result<Self, Self::Error> {
         value.to_signature()
     }
@@ -455,10 +471,12 @@ pub mod error {
     }
 
     impl From<Infallible> for SigFromSliceError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for SigFromSliceError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::SighashType(ref e) => write_err!(f, "sighash"; e),
@@ -470,6 +488,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for SigFromSliceError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::SighashType(ref e) => Some(e),
@@ -493,11 +512,13 @@ pub mod error {
 
     #[cfg(feature = "hex")]
     impl From<Infallible> for ParseSignatureError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     #[cfg(feature = "hex")]
     impl fmt::Display for ParseSignatureError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match self {
                 Self::InvalidLength(len) => write!(
@@ -514,6 +535,7 @@ pub mod error {
     #[cfg(feature = "hex")]
     #[cfg(feature = "std")]
     impl std::error::Error for ParseSignatureError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Self::InvalidLength(_) => None,
@@ -526,6 +548,7 @@ pub mod error {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Signature {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let arbitrary_bytes: [u8; secp256k1::constants::SCHNORR_SIGNATURE_SIZE] = u.arbitrary()?;
 

@@ -44,6 +44,7 @@ pub enum TapSighashType {
 internals::serde_string_impl!(TapSighashType, "a TapSighashType data");
 
 impl fmt::Display for TapSighashType {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             Self::Default => "SIGHASH_DEFAULT",
@@ -61,6 +62,7 @@ impl fmt::Display for TapSighashType {
 impl str::FromStr for TapSighashType {
     type Err = SighashTypeParseError;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "SIGHASH_DEFAULT" => Ok(Self::Default),
@@ -81,6 +83,7 @@ impl TapSighashType {
     /// # Errors
     ///
     /// This method fails if the provided sighash type is not valid.
+    #[inline]
     pub fn from_consensus_u8(sighash_type: u8) -> Result<Self, InvalidSighashTypeError> {
         Ok(match sighash_type {
             0x00 => Self::Default,
@@ -121,6 +124,7 @@ pub enum EcdsaSighashType {
 internals::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
 
 impl fmt::Display for EcdsaSighashType {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             Self::All => "SIGHASH_ALL",
@@ -137,6 +141,7 @@ impl fmt::Display for EcdsaSighashType {
 impl str::FromStr for EcdsaSighashType {
     type Err = SighashTypeParseError;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "SIGHASH_ALL" => Ok(Self::All),
@@ -157,6 +162,7 @@ impl EcdsaSighashType {
     /// type (after masking with 0x1f), regardless of the ANYONECANPAY flag.
     ///
     /// See: <https://github.com/bitcoin/bitcoin/blob/e486597/src/script/interpreter.cpp#L1618-L1619>
+    #[inline]
     pub fn is_single(&self) -> bool { matches!(self, Self::Single | Self::SinglePlusAnyoneCanPay) }
 
     /// Constructs a new [`EcdsaSighashType`] from a raw `u32`.
@@ -168,6 +174,7 @@ impl EcdsaSighashType {
     /// `EcdsaSighashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
     /// verifying signatures, the user should retain the `n` and use it to compute the signature hash
     /// message.
+    #[inline]
     pub fn from_consensus(n: u32) -> Self {
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
@@ -193,6 +200,7 @@ impl EcdsaSighashType {
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
+    #[inline]
     pub fn from_standard(n: u32) -> Result<Self, NonStandardSighashTypeError> {
         match n {
             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
@@ -209,10 +217,12 @@ impl EcdsaSighashType {
     /// Converts [`EcdsaSighashType`] to a `u32` sighash flag.
     ///
     /// The returned value is guaranteed to be a valid according to standardness rules.
+    #[inline]
     pub fn to_u32(self) -> u32 { self as u32 }
 }
 
 impl From<EcdsaSighashType> for TapSighashType {
+    #[inline]
     fn from(s: EcdsaSighashType) -> Self {
         match s {
             EcdsaSighashType::All => Self::All,
@@ -237,10 +247,12 @@ pub mod error {
     pub struct InvalidSighashTypeError(pub(crate) u32);
 
     impl From<Infallible> for InvalidSighashTypeError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for InvalidSighashTypeError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "invalid sighash type {}", self.0)
         }
@@ -248,6 +260,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for InvalidSighashTypeError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self(_) = self;
             None
@@ -260,10 +273,12 @@ pub mod error {
     pub struct NonStandardSighashTypeError(pub(crate) u32);
 
     impl From<Infallible> for NonStandardSighashTypeError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for NonStandardSighashTypeError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "non-standard sighash type {}", self.0)
         }
@@ -271,6 +286,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for NonStandardSighashTypeError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self(_) = self;
             None
@@ -288,10 +304,12 @@ pub mod error {
     }
 
     impl From<Infallible> for SighashTypeParseError {
+        #[inline]
         fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for SighashTypeParseError {
+        #[inline]
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "{}", self.unrecognized.display_cannot_parse("SIGHASH string"))
         }
@@ -299,6 +317,7 @@ pub mod error {
 
     #[cfg(feature = "std")]
     impl std::error::Error for SighashTypeParseError {
+        #[inline]
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             let Self { unrecognized: _ } = self;
             None
@@ -308,6 +327,7 @@ pub mod error {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for EcdsaSighashType {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=5)?;
         match choice {
@@ -323,6 +343,7 @@ impl<'a> Arbitrary<'a> for EcdsaSighashType {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TapSighashType {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=6)?;
         match choice {
