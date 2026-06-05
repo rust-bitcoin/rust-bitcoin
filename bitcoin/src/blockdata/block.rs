@@ -20,6 +20,8 @@ use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::{Transaction, Txid, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable, Params};
+#[cfg(feature = "encoding")]
+use crate::internal_macros::write_err;
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
@@ -38,6 +40,66 @@ hashes::hash_newtype! {
 impl_hashencode!(BlockHash);
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for BlockHash {
+    type Encoder<'e> = BlockHashEncoder<'e>;
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        BlockHashEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
+            self.as_byte_array(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for BlockHash {
+    type Decoder = BlockHashDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`BlockHash`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockHashEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`BlockHash`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockHashDecoder(encoding::ArrayDecoder<32>);
+
+    /// Constructs a new [`BlockHash`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<BlockHash, BlockHashDecoderError> {
+        let bytes = result.map_err(BlockHashDecoderError)?;
+        Ok(BlockHash::from_byte_array(bytes))
+    }
+}
+
+/// An error consensus decoding a `BlockHash`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockHashDecoderError(pub(crate) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for BlockHashDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for BlockHashDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "block hash decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for BlockHashDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 impl From<Txid> for TxMerkleNode {
     fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }
