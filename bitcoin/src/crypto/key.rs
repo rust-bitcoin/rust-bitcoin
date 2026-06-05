@@ -12,7 +12,7 @@ use crate::sign_message::MessageSignature;
 use crate::taproot::{TapNodeHash, TapTweakHash, TapTweakHashExt as _};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use secp256k1::{constants, Parity, Verification};
+pub use secp256k1::{constants, Parity};
 #[doc(no_inline)]
 pub use crypto::key::{
     FromSliceError, FromWifError, InvalidAddressVersionError, InvalidBase58PayloadLengthError,

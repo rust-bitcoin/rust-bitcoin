@@ -33,7 +33,7 @@ use crate::ecdsa;
 use crate::hex::{self, DecodeFixedLengthBytesError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use secp256k1::{constants, Parity, Verification};
+pub use secp256k1::{constants, Parity};
 #[doc(no_inline)]
 pub use self::error::{
     FromSliceError, InvalidAddressVersionError, InvalidBase58PayloadLengthError, ParseKeypairError,
