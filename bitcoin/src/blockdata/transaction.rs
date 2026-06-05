@@ -16,7 +16,7 @@ use core::str::FromStr;
 use core::{cmp, fmt};
 
 #[cfg(feature = "encoding")]
-use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
+use encoding::{ArrayEncoder, BytesEncoder, Decoder3, Encoder2, Encoder3};
 use hashes::{sha256d, Hash};
 use io::{Read, Write};
 use units::parse::{self, ParseIntError};
@@ -25,6 +25,8 @@ use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative::{self, TimeOverflowError};
 use crate::blockdata::script::{Script, ScriptBuf};
+#[cfg(feature = "encoding")]
+use crate::blockdata::script::{ScriptBufDecoder, ScriptEncoder};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -1414,6 +1416,81 @@ impl Decodable for TxIn {
             witness: Witness::default(),
         })
     }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TxIn`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxInEncoder<'e>(
+        Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>
+    );
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for TxIn {
+    type Encoder<'e> = Encoder3<OutPointEncoder<'e>, ScriptEncoder<'e>, SequenceEncoder<'e>>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder3::new(
+            self.previous_output.encoder(),
+            self.script_sig.encoder(),
+            self.sequence.encoder(),
+        )
+    }
+}
+
+#[cfg(feature = "encoding")]
+type TxInInnerDecoder = Decoder3<OutPointDecoder, ScriptBufDecoder, SequenceDecoder>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`TxIn`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxInDecoder(TxInInnerDecoder);
+
+    /// Constructs a new [`TxIn`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder3::new(
+            OutPointDecoder::new(),
+            ScriptBufDecoder::new(),
+            SequenceDecoder::new(),
+        ))
+    }
+
+    fn end(
+        result: Result<<TxInInnerDecoder as encoding::Decoder>::Output, <TxInInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<TxIn, TxInDecoderError> {
+        let (previous_output, script_sig, sequence) = result.map_err(TxInDecoderError)?;
+        Ok(TxIn { previous_output, script_sig, sequence, witness: Witness::default() })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for TxIn {
+    type Decoder = TxInDecoder;
+}
+
+/// An error consensus decoding a `TxIn`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxInDecoderError(pub(super) <TxInInnerDecoder as encoding::Decoder>::Error);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TxInDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TxInDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "txin decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for TxInDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Encodable for Sequence {
