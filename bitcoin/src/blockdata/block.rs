@@ -13,6 +13,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
+#[cfg(feature = "encoding")]
+use encoding::{ArrayDecoder, Decoder6};
 use hashes::{sha256d, Hash, HashEngine};
 use io::{Read, Write};
 
@@ -24,6 +26,8 @@ use crate::consensus::{encode, Decodable, Encodable, Params};
 use crate::internal_macros::write_err;
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::pow::{CompactTarget, Target, Work};
+#[cfg(feature = "encoding")]
+use crate::pow::{CompactTargetDecoder, CompactTargetDecoderError};
 use crate::prelude::*;
 use crate::{merkle_tree, VarInt};
 
@@ -314,6 +318,151 @@ impl fmt::Debug for Header {
             .field("bits", &self.bits)
             .field("nonce", &self.nonce)
             .finish()
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Header {
+    type Encoder<'e> = HeaderEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        HeaderEncoder::new(encoding::Encoder6::new(
+            self.version.encoder(),
+            self.prev_blockhash.encoder(),
+            self.merkle_root.encoder(),
+            encoding::ArrayEncoder::without_length_prefix(self.time.to_le_bytes()),
+            self.bits.encoder(),
+            encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for Header {
+    type Decoder = HeaderDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Header`] type.
+    #[derive(Debug, Clone)]
+    pub struct HeaderEncoder<'e>(
+        encoding::Encoder6<
+            VersionEncoder<'e>,
+            BlockHashEncoder<'e>,
+            TxMerkleNodeEncoder<'e>,
+            encoding::ArrayEncoder<4>,
+            crate::pow::CompactTargetEncoder<'e>,
+            encoding::ArrayEncoder<4>,
+        >
+    );
+}
+
+#[cfg(feature = "encoding")]
+type HeaderInnerDecoder = Decoder6<
+    VersionDecoder,
+    BlockHashDecoder,
+    TxMerkleNodeDecoder,
+    encoding::ArrayDecoder<4>, // Time
+    CompactTargetDecoder,
+    encoding::ArrayDecoder<4>, // Nonce
+>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`Header`] type.
+    #[derive(Debug, Clone)]
+    pub struct HeaderDecoder(HeaderInnerDecoder);
+
+    /// Constructs a new [`Header`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder6::new(
+            VersionDecoder::new(),
+            BlockHashDecoder::new(),
+            TxMerkleNodeDecoder::new(),
+            ArrayDecoder::new(),
+            CompactTargetDecoder::new(),
+            ArrayDecoder::new(),
+        ))
+    }
+
+    fn map_push_bytes_err(err: <HeaderInnerDecoder as encoding::Decoder>::Error) -> HeaderDecoderError {
+        Self::from_inner(err)
+    }
+
+    fn end(
+        result: Result<<HeaderInnerDecoder as encoding::Decoder>::Output, <HeaderInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<Header, HeaderDecoderError> {
+        let (version, prev_blockhash, merkle_root, time, bits, nonce) = result.map_err(Self::from_inner)?;
+        let time = u32::from_le_bytes(time);
+        let nonce = u32::from_le_bytes(nonce);
+        Ok(Header { version, prev_blockhash, merkle_root, time, bits, nonce })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl HeaderDecoder {
+    fn from_inner(e: <HeaderInnerDecoder as encoding::Decoder>::Error) -> HeaderDecoderError {
+        match e {
+            encoding::Decoder6Error::First(e) => HeaderDecoderError::Version(e),
+            encoding::Decoder6Error::Second(e) => HeaderDecoderError::PrevBlockhash(e),
+            encoding::Decoder6Error::Third(e) => HeaderDecoderError::MerkleRoot(e),
+            encoding::Decoder6Error::Fourth(e) => HeaderDecoderError::Time(e),
+            encoding::Decoder6Error::Fifth(e) => HeaderDecoderError::Bits(e),
+            encoding::Decoder6Error::Sixth(e) => HeaderDecoderError::Nonce(e),
+        }
+    }
+}
+
+/// An error consensus decoding a `Header`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum HeaderDecoderError {
+    /// Error while decoding the `version`.
+    Version(VersionDecoderError),
+    /// Error while decoding the `prev_blockhash`.
+    PrevBlockhash(BlockHashDecoderError),
+    /// Error while decoding the `merkle_root`.
+    MerkleRoot(TxMerkleNodeDecoderError),
+    /// Error while decoding the `time`.
+    Time(encoding::UnexpectedEofError),
+    /// Error while decoding the `bits`.
+    Bits(CompactTargetDecoderError),
+    /// Error while decoding the `nonce`.
+    Nonce(encoding::UnexpectedEofError),
+}
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for HeaderDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for HeaderDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::Version(ref e) => write_err!(f, "header decoder error"; e),
+            Self::PrevBlockhash(ref e) => write_err!(f, "header decoder error"; e),
+            Self::MerkleRoot(ref e) => write_err!(f, "header decoder error"; e),
+            Self::Time(ref e) => write_err!(f, "header decoder error"; e),
+            Self::Bits(ref e) => write_err!(f, "header decoder error"; e),
+            Self::Nonce(ref e) => write_err!(f, "header decoder error"; e),
+        }
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for HeaderDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            Self::Version(ref e) => Some(e),
+            Self::PrevBlockhash(ref e) => Some(e),
+            Self::MerkleRoot(ref e) => Some(e),
+            Self::Time(ref e) => Some(e),
+            Self::Bits(ref e) => Some(e),
+            Self::Nonce(ref e) => Some(e),
+        }
     }
 }
 
