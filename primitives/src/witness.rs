@@ -32,14 +32,6 @@ pub use self::error::{UnexpectedEofError, WitnessDecoderError};
 
 use self::error::WitnessDecoderErrorInner;
 
-/// Maximum amount of memory (in bytes) to allocate at once when deserializing vectors.
-#[cfg(feature = "alloc")]
-const MAX_VECTOR_ALLOCATE: usize = 1_000_000;
-
-/// Minimum amount of memory (in bytes) to allocate at once when deserializing vectors.
-#[cfg(feature = "alloc")]
-const MIN_VECTOR_ALLOCATE: usize = 1_000;
-
 /// Maximum number of items in a witness stack.
 ///
 /// This is an anti-DoS limit based on Bitcoin's 4MB block weight limit.
@@ -314,10 +306,8 @@ impl encoding::Encoder for WitnessEncoder<'_> {
 #[derive(Debug, Clone)]
 pub struct WitnessDecoder {
     /// The single buffer that will become the Witness content.
-    /// The index entries are written at the beginning, then rotated in [`Self::end`].
+    /// The index entries are written in [`Self::end`].
     content: Vec<u8>,
-    /// Current write position in the content buffer.
-    cursor: usize,
     /// Decoder for the initial witness element count.
     witness_count_decoder: CompactSizeDecoder,
     /// Total number of witness elements to decode (None until initial count is read).
@@ -337,35 +327,12 @@ impl WitnessDecoder {
     pub const fn new() -> Self {
         Self {
             content: Vec::new(),
-            cursor: 0,
             witness_elements: None,
             witness_count_decoder: CompactSizeDecoder::new_with_limit(MAX_WITNESS_STACK_ITEMS),
             element_idx: 0,
             element_length_decoder: CompactSizeDecoder::new_with_limit(MAX_WITNESS_ITEM_SIZE),
             element_bytes_remaining: None,
         }
-    }
-
-    /// Allocates buffer space in ~1MB batches
-    /// Returns buffer length (may be less than `required_len` !!)
-    fn reserve_batch(&mut self, required_len: usize) -> usize {
-        if required_len <= self.content.len() {
-            return self.content.len();
-        }
-
-        let bytes_needed = required_len - self.content.len();
-        let available_capacity = self.content.capacity() - self.content.len();
-
-        if available_capacity < MIN_VECTOR_ALLOCATE {
-            let batch_size = bytes_needed.clamp(MIN_VECTOR_ALLOCATE, MAX_VECTOR_ALLOCATE);
-            self.content.reserve_exact(batch_size);
-        }
-
-        // Only extend up to current capacity to limit batch allocation
-        let can_extend = (self.content.capacity() - self.content.len()).min(bytes_needed);
-        let new_len = self.content.len() + can_extend;
-        self.content.resize(new_len, 0);
-        new_len
     }
 }
 
@@ -401,21 +368,17 @@ impl encoding::Decoder for WitnessDecoder {
                 return Ok(DecoderStatus::Ready);
             }
 
-            // Allocate space for the index and buffer. The buffer
+            // Allocate space for the buffer. The buffer
             // is initialized to 128 bytes which should be large enough
             // to cover most witnesses, the typical pubkey + signature
             // and some overhead (e.g. P2WPKH witness is ~100 bytes),
             // without reallocating.
-            let witness_index_space = witness_elements * 4;
-            // Initially the index space is at the front of the buffer then we rotate left in `end`.
-            self.cursor = witness_index_space;
-            self.content = alloc::vec![0u8; self.cursor + 128];
+            self.content.reserve(128);
         }
 
         let Some(witness_elements) = self.witness_elements else {
             unreachable!("witness_elements must be Some after initial read")
         };
-        let witness_index_space = witness_elements * 4;
 
         // Read witness elements.
         loop {
@@ -431,15 +394,8 @@ impl encoding::Decoder for WitnessDecoder {
             // If we have some bytes to read, then reading element data.
             // Else we are reading the element's length.
             if let Some(bytes_to_read) = self.element_bytes_remaining {
-                let required_len = self.cursor.saturating_add(bytes.len().min(bytes_to_read));
-                let actual_len = self.reserve_batch(required_len);
-
-                let available_space = actual_len.saturating_sub(self.cursor);
-                let can_copy = available_space.min(bytes.len()).min(bytes_to_read);
-
-                self.content[self.cursor..self.cursor + can_copy]
-                    .copy_from_slice(&bytes[..can_copy]);
-                self.cursor += can_copy;
+                let can_copy = bytes.len().min(bytes_to_read);
+                self.content.extend_from_slice(&bytes[..can_copy]);
                 *bytes = &bytes[can_copy..];
                 let remaining = bytes_to_read - can_copy;
 
@@ -464,21 +420,9 @@ impl encoding::Decoder for WitnessDecoder {
                 let decoder = core::mem::take(&mut self.element_length_decoder);
                 let element_length = decoder.end().map_err(|e| E(Inner::LengthPrefixDecode(e)))?;
 
-                // Store the element position in the index.
-                let position_after_rotation = self.cursor - witness_index_space;
-                encode_cursor(&mut self.content, 0, self.element_idx, position_after_rotation);
-
-                // Re-encode the length back into the buffer.
-                let encoded_size = CompactSizeEncoder::encoded_size(element_length);
-                let required_len = self
-                    .cursor
-                    .saturating_add(encoded_size)
-                    .saturating_add(element_length.min(MIN_VECTOR_ALLOCATE));
-                self.reserve_batch(required_len);
+                // keep the element length prefix in the content area.
                 let encoded_compact_size = crate::compact_size_encode(element_length);
-                self.content[self.cursor..self.cursor + encoded_size]
-                    .copy_from_slice(&encoded_compact_size);
-                self.cursor += encoded_size;
+                self.content.extend_from_slice(encoded_compact_size.as_slice());
 
                 if element_length == 0 {
                     // Complete immediately for zero-length element to
@@ -504,18 +448,28 @@ impl encoding::Decoder for WitnessDecoder {
         let remaining = witness_elements - self.element_idx;
 
         if remaining == 0 {
-            // Truncate to actual content length (remove unused allocated space).
-            self.content.truncate(self.cursor);
+            // `content` now holds the complete content area (all element bytes have been already received)
+            // The index area begins at its current end.
+            let indices_start = self.content.len();
 
-            // Rotate the index area from beginning to end.
-            let witness_index_space = witness_elements * 4;
-            self.content.rotate_left(witness_index_space);
+            // Build the index area by walking the content area
+            // This is the only allocation sized by the element count, and it happens only here
+            self.content.reserve(witness_elements * 4);
+            let mut read_pos = 0;
+            for _ in 0..witness_elements {
+                let offset = u32::try_from(read_pos).expect("larger than u32");
+                let (element_length, prefix_size) = {
+                    let mut slice = &self.content[read_pos..indices_start];
+                    let before = slice.len();
+                    let element_length = decode_unchecked(&mut slice);
+                    (element_length, before - slice.len())
+                };
+                let data_len = usize::try_from(element_length).expect("element data is present");
+                read_pos += prefix_size + data_len;
+                self.content.extend_from_slice(&offset.to_ne_bytes());
+            }
 
-            Ok(Witness {
-                content: self.content,
-                witness_elements,
-                indices_start: self.cursor - witness_index_space,
-            })
+            Ok(Witness { content: self.content, witness_elements, indices_start })
         } else {
             Err(E(Inner::UnexpectedEof(UnexpectedEofError { missing_elements: remaining })))
         }
@@ -1696,27 +1650,6 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn reserve_batch_returns_existing_len() {
-        let mut decoder = WitnessDecoder::new();
-        decoder.content = vec![0u8; 4];
-        assert_eq!(decoder.reserve_batch(4), 4);
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn reserve_batch_reserves_when_full() {
-        let mut decoder = WitnessDecoder::new();
-        let content = vec![0; 1];
-        decoder.content = content;
-        assert_eq!(decoder.content.capacity(), decoder.content.len());
-
-        let new_len = decoder.reserve_batch(2);
-        assert_eq!(decoder.content.len(), new_len);
-        assert!(decoder.content.len() >= 2);
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
     fn decode_buffer_resizing() {
         // Create a witness with elements larger than initial 128-byte allocation.
         let large_element = vec![0xFF; 500];
@@ -1854,8 +1787,9 @@ mod test {
 
         assert!(dec.push_bytes(&mut slice).unwrap().needs_more());
 
-        let allocated = dec.content.len();
-
-        assert!(allocated >= 16_000_000 && allocated < 17_500_000);
+        // Only the 1st element length prefix has been written to the content area.
+        // No massive allocation occurred.
+        assert_eq!(dec.content.len(), 5);
+        assert!(dec.content.capacity() < 100_000);
     }
 }
