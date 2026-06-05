@@ -14,7 +14,9 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 #[cfg(feature = "encoding")]
-use encoding::{ArrayDecoder, Decoder6};
+use encoding::{
+    ArrayDecoder, CompactSizeEncoder, Decoder2, Decoder6, Encoder2, SliceEncoder, VecDecoder,
+};
 use hashes::{sha256d, Hash, HashEngine};
 use io::{Read, Write};
 
@@ -784,6 +786,78 @@ impl Block {
             _ => Err(Bip34Error::NotPresent),
         }
     }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Block {
+    type Encoder<'e> =
+        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(
+            self.header.encoder(),
+            Encoder2::new(
+                CompactSizeEncoder::new(self.txdata.len()),
+                SliceEncoder::without_length_prefix(&self.txdata),
+            ),
+        )
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for Block {
+    type Decoder = BlockDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Block`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockEncoder<'e>(
+        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+    );
+}
+
+#[cfg(feature = "encoding")]
+type BlockInnerDecoder = Decoder2<HeaderDecoder, VecDecoder<Transaction>>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`Block`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockDecoder(BlockInnerDecoder);
+
+    /// Constructs a new [`Block`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder2::new(HeaderDecoder::new(), VecDecoder::new()))
+    }
+
+    fn end(result: Result<(Header, Vec<Transaction>), <BlockInnerDecoder as encoding::Decoder>::Error>) -> Result<Block, BlockDecoderError> {
+        let (header, txdata) = result.map_err(BlockDecoderError)?;
+        Ok(Block { header, txdata })
+    }
+}
+
+/// An error consensus decoding a `Block`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockDecoderError(pub(crate) <BlockInnerDecoder as encoding::Decoder>::Error);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for BlockDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for BlockDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "block decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for BlockDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl From<Header> for BlockHash {
