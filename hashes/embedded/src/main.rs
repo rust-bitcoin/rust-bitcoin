@@ -10,7 +10,6 @@ extern crate bitcoin_hashes;
 #[cfg(feature = "alloc")] use alloc::string::ToString;
 
 use bitcoin_hashes::{sha256, Hash, HashEngine};
-use core2::io::Write;
 use core::str::FromStr;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::{debug, hprintln};
@@ -32,10 +31,6 @@ const HEAP_SIZE: usize = 1024; // in bytes
 fn main() -> ! {
     #[cfg(feature = "alloc")]
     unsafe { ALLOCATOR.init(cortex_m_rt::heap_start() as usize, HEAP_SIZE) }
-
-    let mut engine = TestType::engine();
-    engine.write_all(b"abc").unwrap();
-    check_result(engine);
 
     let mut engine = TestType::engine();
     engine.input(b"abc");

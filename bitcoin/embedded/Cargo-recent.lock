@@ -55,7 +55,6 @@ dependencies = [
  "bech32",
  "bitcoin-internals",
  "bitcoin_hashes",
- "core2",
  "hex-conservative",
  "hex_lit",
  "secp256k1",
@@ -69,7 +68,6 @@ version = "0.2.1"
 name = "bitcoin_hashes"
 version = "0.13.1"
 dependencies = [
- "core2",
  "hex-conservative",
 ]
 
@@ -87,15 +85,6 @@ checksum = "556e016178bb5662a08681bbe0f00f8e17631781a4dfc8c45e466e4b185ec27f"
 dependencies = [
  "find-msvc-tools",
  "shlex",
-]
-
-[[package]]
-name = "core2"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "239fa3ae9b63c2dc74bd3fa852d4792b8b305ae64eeede946265b6af62f1fff3"
-dependencies = [
- "memchr",
 ]
 
 [[package]]
@@ -214,9 +203,6 @@ name = "hex-conservative"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212ab92002354b4819390025006c897e8140934349e8635c9b077f47b4dcbd20"
-dependencies = [
- "core2",
-]
 
 [[package]]
 name = "hex_lit"
@@ -229,12 +215,6 @@ name = "linked_list_allocator"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b23ac50abb8261cb38c6e2a7192d3302e0836dac1628f6a93b82b4fad185897"
-
-[[package]]
-name = "memchr"
-version = "2.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b947ae49db0d222b1dbc6b113ce7248a3fc3a6ca21b696717bfc000ba4484d8"
 
 [[package]]
 name = "nb"

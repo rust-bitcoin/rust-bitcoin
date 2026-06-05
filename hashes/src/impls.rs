@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! `std` / `core2` Impls.
+//! `std` Impls.
 //!
-//! Implementations of traits defined in `std` / `core2` and not in `core`.
+//! Implementations of traits defined in `std` and not in `core`.
 //!
 
 use crate::{hmac, io, ripemd160, sha1, sha256, sha512, siphash24, HashEngine};

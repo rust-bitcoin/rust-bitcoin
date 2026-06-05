@@ -46,7 +46,6 @@ dependencies = [
 name = "bitcoin_hashes"
 version = "0.13.1"
 dependencies = [
- "core2",
  "hex-conservative",
 ]
 
@@ -55,15 +54,6 @@ name = "bitfield"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46afbd2983a5d5a7bd740ccb198caf5b82f45c40c09c0eed36052d91cb92e719"
-
-[[package]]
-name = "core2"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "239fa3ae9b63c2dc74bd3fa852d4792b8b305ae64eeede946265b6af62f1fff3"
-dependencies = [
- "memchr",
-]
 
 [[package]]
 name = "cortex-m"
@@ -126,7 +116,6 @@ version = "0.1.0"
 dependencies = [
  "alloc-cortex-m",
  "bitcoin_hashes",
- "core2",
  "cortex-m 0.6.7",
  "cortex-m-rt",
  "cortex-m-semihosting",
@@ -176,21 +165,12 @@ name = "hex-conservative"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212ab92002354b4819390025006c897e8140934349e8635c9b077f47b4dcbd20"
-dependencies = [
- "core2",
-]
 
 [[package]]
 name = "linked_list_allocator"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b23ac50abb8261cb38c6e2a7192d3302e0836dac1628f6a93b82b4fad185897"
-
-[[package]]
-name = "memchr"
-version = "2.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b947ae49db0d222b1dbc6b113ce7248a3fc3a6ca21b696717bfc000ba4484d8"
 
 [[package]]
 name = "nb"

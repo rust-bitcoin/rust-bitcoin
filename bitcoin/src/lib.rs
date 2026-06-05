@@ -21,8 +21,8 @@
 //! * `rand` - (dependency), makes it more convenient to generate random values.
 //! * `serde` - (dependency), implements `serde`-based serialization and deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
-//! * `no-std` - enables additional features required for this crate to be usable without std. Does
-//!   **not** disable `std`. Depends on `core2`.
+//! * `no-std` - kept for backwards compatibility, now a no-op. To build without std disable the
+//!   default features; the crate then uses its own minimal `io` module instead of `std::io`.
 //! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it to this crate
 //!   so it knows how to implement `std::error::Error`. At this time there's a hack to achieve the
 //!   same without this feature but it could happen the implementations diverge one day.
@@ -37,9 +37,6 @@
 #![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
 // Exclude clippy lints we don't think are valuable
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
-
-#[cfg(not(any(feature = "std", feature = "no-std")))]
-compile_error!("at least one of the `std` or `no-std` features must be enabled");
 
 // Disable 16-bit support at least for now as we can't guarantee it yet.
 #[cfg(target_pointer_width = "16")]
@@ -64,9 +61,6 @@ pub extern crate bech32;
 #[cfg(feature = "bitcoinconsensus")]
 /// Bitcoin's libbitcoinconsensus with Rust binding.
 pub extern crate bitcoinconsensus;
-
-#[cfg(not(feature = "std"))]
-extern crate core2;
 
 /// Rust implementation of cryptographic hash function algorithems.
 pub extern crate hashes;
@@ -104,6 +98,9 @@ pub mod consensus;
 pub(crate) mod crypto;
 pub mod error;
 pub mod hash_types;
+// Minimal `std::io` replacement for no-std
+#[cfg(not(feature = "std"))]
+mod io;
 pub mod merkle_tree;
 pub mod network;
 pub mod policy;
@@ -122,9 +119,7 @@ use std::io;
 
 #[allow(unused)]
 #[cfg(not(feature = "std"))]
-use core2::error::Error as StdError;
-#[cfg(not(feature = "std"))]
-use core2::io;
+use crate::io::StdError;
 
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
@@ -158,25 +153,6 @@ pub use crate::taproot::{
     TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
 };
 
-#[cfg(not(feature = "std"))]
-mod io_extras {
-    /// A writer which will move data into the void.
-    pub struct Sink {
-        _priv: (),
-    }
-
-    /// Creates an instance of a writer which will successfully consume all data.
-    pub const fn sink() -> Sink { Sink { _priv: () } }
-
-    impl core2::io::Write for Sink {
-        #[inline]
-        fn write(&mut self, buf: &[u8]) -> core2::io::Result<usize> { Ok(buf.len()) }
-
-        #[inline]
-        fn flush(&mut self) -> core2::io::Result<()> { Ok(()) }
-    }
-}
-
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {
@@ -199,7 +175,7 @@ mod prelude {
     pub use std::io::sink;
 
     #[cfg(not(feature = "std"))]
-    pub use crate::io_extras::sink;
+    pub use crate::io::sink;
 
     pub use hex::DisplayHex;
 }

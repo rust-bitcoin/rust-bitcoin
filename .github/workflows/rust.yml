@@ -200,7 +200,7 @@ jobs:
       - name: "Run address and memory sanitizers"
         working-directory: hashes
         env:
-          FEATURES: "serde serde-std std core2 alloc"
+          FEATURES: "serde serde-std std alloc"
         run: |
           set -euxo pipefail
           cargo clean
