@@ -233,7 +233,7 @@ pub mod error {
 
     /// Integer is not a consensus valid sighash type.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct InvalidSighashTypeError(pub u32);
+    pub struct InvalidSighashTypeError(pub(crate) u32);
 
     impl fmt::Display for InvalidSighashTypeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -252,7 +252,7 @@ pub mod error {
     /// This type is consensus valid but an input including it would prevent the transaction from
     /// being relayed on today's Bitcoin network.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct NonStandardSighashTypeError(pub u32);
+    pub struct NonStandardSighashTypeError(pub(crate) u32);
 
     impl fmt::Display for NonStandardSighashTypeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -275,7 +275,7 @@ pub mod error {
     #[non_exhaustive]
     pub struct SighashTypeParseError {
         /// The unrecognized string we attempted to parse.
-        pub unrecognized: InputString,
+        pub(super) unrecognized: InputString,
     }
 
     impl fmt::Display for SighashTypeParseError {
