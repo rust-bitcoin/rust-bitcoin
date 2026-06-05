@@ -1,0 +1,24 @@
+name: 'Setup RBMT'
+description: 'Install cargo-rbmt, toolchains, and a no_std env for testing.'
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Install cargo-rbmt"
+      shell: bash
+      run: |
+        cargo install \
+          --git https://git.rust-bitcoin.org/rust-bitcoin/rust-bitcoin-maintainer-tools \
+          --rev "$(cat rbmt-version)" \
+          cargo-rbmt \
+          --locked
+
+    - name: "Install Rust toolchains via cargo-rbmt"
+      shell: bash
+      run: cargo rbmt toolchains
+
+    - name: "Install ARM cross-compiler"
+      shell: bash
+      run: |
+        sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi
+        echo "CC_thumbv7m_none_eabi=arm-none-eabi-gcc" >> $GITHUB_ENV

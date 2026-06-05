@@ -1,6 +1,10 @@
 [workspace]
 members = ["bitcoin", "hashes", "internals", "fuzz"]
 
+[workspace.metadata.rbmt.toolchains]
+nightly = "nightly-2026-03-27"
+stable = "1.91.1"
+
 [patch.crates-io.bitcoin]
 path = "bitcoin"
 

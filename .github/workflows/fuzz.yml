@@ -39,6 +39,8 @@ jobs:
       - name: Install test dependencies
         run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
       - uses: actions/checkout@v4
+      - name: "Set dependencies"
+        run: cp Cargo-recent.lock Cargo.lock
       - uses: actions/cache@v3
         id: cache-fuzz
         with:
