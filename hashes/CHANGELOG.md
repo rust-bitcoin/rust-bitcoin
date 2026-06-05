@@ -30,7 +30,7 @@ Props to jrakibi for all the SIMD work in this release.
 * Use Rust-like syntax in hash type macros [#5853](https://github.com/rust-bitcoin/rust-bitcoin/pull/5853)
 * Remove the unstable `hex-conservative` dependency [#6148](https://github.com/rust-bitcoin/rust-bitcoin/pull/6148)
 
-SIMD optimizaions: 
+SIMD optimizaions:
 
 * https://github.com/rust-bitcoin/rust-bitcoin/pull/6060
 * https://github.com/rust-bitcoin/rust-bitcoin/pull/6069
@@ -171,7 +171,7 @@ bumped the Minimum Supported Rust Version across the `rust-bitcoin` ecosystem to
 * Add simd sha256 intrinsics for x86 machines [#1962](https://github.com/rust-bitcoin/rust-bitcoin/pull/1962).
 * Introduce the "small-hash" feature for `bitcoin_hashes` [#1990](https://github.com/rust-bitcoin/rust-bitcoin/pull/1990).
 
-## [0.12.0] - 2023-03-05
+## 0.12.0 - 2023-03-05
 
 0.12 is a significant release. We pulled the repository into the rust-bitcoin
 repo to improve our integration testing and to get more eyes on this crate. We
@@ -365,4 +365,3 @@ Note that we have stopped re-exporting the `core` crate when compiling without `
 [0.14.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.13.1...bitcoin_hashes-0.14.0
 [0.13.1]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.13.0...bitcoin_hashes-0.13.1
 [0.13.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin_hashes-0.12.0...bitcoin_hashes-0.13.0
-[0.12.0]: https://github.com/rust-bitcoin/rust-bitcoin/releases/tag/bitcoin_hashes-0.12.0

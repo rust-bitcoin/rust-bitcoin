@@ -14,7 +14,7 @@ Team Rust Bitcoin - LFG.
 
 - Replace `bool` on `Decoder` trait with the `DecoderStatus` type (includes Encoder side too) [#6189](https://github.com/rust-bitcoin/rust-bitcoin/pull/6189)
 - Add checked decode functions [#6195](https://github.com/rust-bitcoin/rust-bitcoin/pull/6195)
-- Re-name main traits [#6028](https://github.com/rust-bitcoin/rust-bitcoin/pull/60428)
+- Re-name main traits [#6028](https://github.com/rust-bitcoin/rust-bitcoin/pull/6028)
 - Change `EncodableByteIter` to `EncoderByteIter` [#6044](https://github.com/rust-bitcoin/rust-bitcoin/pull/6044)
 - Encoder/decoder improvements [#6004](https://github.com/rust-bitcoin/rust-bitcoin/pull/6004)
 - Re-name `flush_to` functions to `drain_to` [#6064](https://github.com/rust-bitcoin/rust-bitcoin/pull/6064)
@@ -84,4 +84,3 @@ Empty crate to reserve the name on crates.io
 [Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-1.0.0...HEAD
 [1.0.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.2.0...bitcoin-consensus-encoding-1.0.0
 [0.2.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-consensus-encoding-0.1.0...bitcoin-consensus-encoding-0.2.0
-[0.1.0]: https://github.com/rust-bitcoin/rust-bitcoin/releases/tag/bitcoin-consensus-encoding-0.1.0

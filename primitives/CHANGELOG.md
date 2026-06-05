@@ -18,7 +18,7 @@ release is still explicitly a 1.0 release candidate.
 - Reject txs with output sum > MAX_MONEY [#5443](https://github.com/rust-bitcoin/rust-bitcoin/pull/5443)
 - Reject transactions with invalid coinbase `scriptSig` length [#5430](https://github.com/rust-bitcoin/rust-bitcoin/pull/5430)
 
-# 1.0.0 Release Candidates - 2025-10-18
+## 1.0.0 Release Candidates - 2025-10-18
 
 This changelog is a rolling description of everything that will eventually end up in `v1.0`.
 EDIT: This changelog is for `1.0.0-rc.0` through `1.0.0-rc.2` and may well be missing stuff.
@@ -63,7 +63,7 @@ And also we did:
 - Re-export `block::Header` as `BlockHeader` [#3562](https://github.com/rust-bitcoin/rust-bitcoin/pull/3562)
 - Favour `to_vec` over `to_bytes` [#3544](https://github.com/rust-bitcoin/rust-bitcoin/pull/3544)
 
-## Locktimes
+### Locktimes
 
 Lock times got a bit of work. A big win was:
 
@@ -77,16 +77,16 @@ we changed the format:
 
 - Modify locktime serde implementations #4511
 
-## Arbitrary
+### Arbitrary
 
 - Add Arbitrary impl for BlockHash, TxMerkleNode, and Wtxid #4720
 - Add Arbitrary impl for relative::LockTime #4689
 
-## Mutation testing
+### Mutation testing
 
 The whole crate is mutation tested using `cargo-mutants` - BOOM!
 
-## 0.101.0 - 2024-11-15
+## [0.101.0] - 2024-11-15
 
 This is the first "real" release of the `primitives` crate, as such it
 includes a lot of work. Search GitHub with the following filter to see
@@ -118,4 +118,5 @@ Enjoy!
   `bitcoin-primitives`. The name on crates.io was generously transferred to us.
 
 [Unreleased]: https://github.com/rust-bitcoin/rust-bitcoin/compare/bitcoin-primitives-0.102.0...HEAD
-[0.102.0]: https://github.com/rust-bitcoin/rust-bitcoin/releases/tag/bitcoin-primitives-0.102.0
+[0.102.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.101.0...bitcoin-primitives-0.102.0
+[0.101.0]: https://github.com/rust-bitcoin/rust-bitcoin/compare/primitives-0.100.0...primitives-0.101.0
