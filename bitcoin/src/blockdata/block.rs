@@ -169,6 +169,66 @@ impl std::error::Error for TxMerkleNodeDecoderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
+#[cfg(feature = "encoding")]
+impl encoding::Encode for WitnessMerkleNode {
+    type Encoder<'e> = WitnessMerkleNodeEncoder<'e>;
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        WitnessMerkleNodeEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
+            self.as_byte_array(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for WitnessMerkleNode {
+    type Decoder = WitnessMerkleNodeDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`WitnessMerkleNode`] type.
+    #[derive(Debug, Clone)]
+    pub struct WitnessMerkleNodeEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`WitnessMerkleNode`] type.
+    #[derive(Debug, Clone)]
+    pub struct WitnessMerkleNodeDecoder(encoding::ArrayDecoder<32>);
+
+    /// Constructs a new [`WitnessMerkleNode`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<WitnessMerkleNode, WitnessMerkleNodeDecoderError> {
+        let bytes = result.map_err(WitnessMerkleNodeDecoderError)?;
+        Ok(WitnessMerkleNode::from_byte_array(bytes))
+    }
+}
+
+/// An error consensus decoding an `WitnessMerkleNode`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WitnessMerkleNodeDecoderError(pub(crate) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for WitnessMerkleNodeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for WitnessMerkleNodeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "witness merkle node decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for WitnessMerkleNodeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// Bitcoin block header.
 ///
 /// Contains all the block's information except the actual transactions, but
