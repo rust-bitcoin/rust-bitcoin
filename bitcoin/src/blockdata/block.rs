@@ -109,6 +109,66 @@ impl From<Wtxid> for WitnessMerkleNode {
     fn from(wtxid: Wtxid) -> Self { Self::from_byte_array(wtxid.to_byte_array()) }
 }
 
+#[cfg(feature = "encoding")]
+impl encoding::Encode for TxMerkleNode {
+    type Encoder<'e> = TxMerkleNodeEncoder<'e>;
+    #[inline]
+    fn encoder(&self) -> Self::Encoder<'_> {
+        TxMerkleNodeEncoder::new(encoding::ArrayRefEncoder::without_length_prefix(
+            self.as_byte_array(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for TxMerkleNode {
+    type Decoder = TxMerkleNodeDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TxMerkleNode`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxMerkleNodeEncoder<'e>(encoding::ArrayRefEncoder<'e, 32>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`TxMerkleNode`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxMerkleNodeDecoder(encoding::ArrayDecoder<32>);
+
+    /// Constructs a new [`TxMerkleNode`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 32], encoding::UnexpectedEofError>) -> Result<TxMerkleNode, TxMerkleNodeDecoderError> {
+        let bytes = result.map_err(TxMerkleNodeDecoderError)?;
+        Ok(TxMerkleNode::from_byte_array(bytes))
+    }
+}
+
+/// An error consensus decoding an `TxMerkleNode`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxMerkleNodeDecoderError(pub(crate) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TxMerkleNodeDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TxMerkleNodeDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "tx merkle node decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for TxMerkleNodeDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// Bitcoin block header.
 ///
 /// Contains all the block's information except the actual transactions, but
