@@ -16,9 +16,11 @@ use core::str::FromStr;
 use core::{cmp, fmt};
 
 #[cfg(feature = "encoding")]
-use encoding::{ArrayEncoder, BytesEncoder, Decoder3, Encoder2, Encoder3};
+use encoding::{ArrayEncoder, BytesEncoder, Decoder2, Decoder3, Encoder2, Encoder3};
 use hashes::{sha256d, Hash};
 use io::{Read, Write};
+#[cfg(feature = "encoding")]
+use units::amount::{AmountDecoder, AmountEncoder};
 use units::parse::{self, ParseIntError};
 
 use super::Weight;
@@ -1311,6 +1313,71 @@ impl std::error::Error for VersionDecoderError {
 }
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`TxOut`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxOutEncoder<'e>(Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for TxOut {
+    type Encoder<'e> = Encoder2<AmountEncoder<'e>, ScriptEncoder<'e>>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        Encoder2::new(self.value.encoder(), self.script_pubkey.encoder())
+    }
+}
+
+#[cfg(feature = "encoding")]
+type TxOutInnerDecoder = Decoder2<AmountDecoder, ScriptBufDecoder>;
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`TxOut`] type.
+    #[derive(Debug, Clone)]
+    pub struct TxOutDecoder(TxOutInnerDecoder);
+
+    /// Constructs a new [`TxOut`] decoder.
+    pub const fn new() -> Self {
+        Self(Decoder2::new(AmountDecoder::new(), ScriptBufDecoder::new()))
+    }
+
+    fn end(
+        result: Result<<TxOutInnerDecoder as encoding::Decoder>::Output, <TxOutInnerDecoder as encoding::Decoder>::Error>
+    ) -> Result<TxOut, TxOutDecoderError> {
+        let (value, script_pubkey) = result.map_err(TxOutDecoderError)?;
+        Ok(TxOut { value, script_pubkey })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for TxOut {
+    type Decoder = TxOutDecoder;
+}
+
+/// An error consensus decoding a `TxOut`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TxOutDecoderError(pub(super) <TxOutInnerDecoder as encoding::Decoder>::Error);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for TxOutDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for TxOutDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "txout decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for TxOutDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
 
 impl Encodable for OutPoint {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
