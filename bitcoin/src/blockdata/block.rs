@@ -400,6 +400,66 @@ impl Decodable for Version {
     }
 }
 
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Version {
+    type Encoder<'e> = VersionEncoder<'e>;
+    fn encoder(&self) -> Self::Encoder<'_> {
+        VersionEncoder::new(encoding::ArrayEncoder::without_length_prefix(
+            self.to_consensus().to_le_bytes(),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for Version {
+    type Decoder = VersionDecoder;
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionDecoder(encoding::ArrayDecoder<4>);
+
+    /// Constructs a new [`Version`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 4], encoding::UnexpectedEofError>) -> Result<Version, VersionDecoderError> {
+        let value = result.map_err(VersionDecoderError)?;
+        let n = i32::from_le_bytes(value);
+        Ok(Version::from_consensus(n))
+    }
+}
+
+/// An error consensus decoding an `Version`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VersionDecoderError(pub(crate) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for VersionDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for VersionDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "version decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for VersionDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
 /// Bitcoin block.
 ///
 /// A collection of transactions with an attached proof of work.
