@@ -15,6 +15,8 @@ use core::convert::Infallible;
 use core::str::FromStr;
 use core::{cmp, fmt};
 
+#[cfg(feature = "encoding")]
+use encoding::{ArrayEncoder, BytesEncoder, Encoder2};
 use hashes::{sha256d, Hash};
 use io::{Read, Write};
 use units::parse::{self, ParseIntError};
@@ -1321,6 +1323,74 @@ impl Decodable for OutPoint {
             vout: Decodable::consensus_decode(r)?,
         })
     }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`OutPoint`] type.
+    #[derive(Debug, Clone)]
+    pub struct OutPointEncoder<'e>(Encoder2<BytesEncoder<'e>, ArrayEncoder<4>>);
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Encode for OutPoint {
+    type Encoder<'e> = OutPointEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        OutPointEncoder::new(Encoder2::new(
+            BytesEncoder::without_length_prefix(self.txid.as_byte_array()),
+            ArrayEncoder::without_length_prefix(self.vout.to_le_bytes()),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+crate::decoder_newtype! {
+    /// The decoder for the [`OutPoint`] type.
+    // 32 for the txid + 4 for the vout
+    #[derive(Debug, Clone)]
+    pub struct OutPointDecoder(encoding::ArrayDecoder<36>);
+
+    /// Constructs a new [`OutPoint`] decoder.
+    pub const fn new() -> Self { Self(encoding::ArrayDecoder::new()) }
+
+    fn end(result: Result<[u8; 36], encoding::UnexpectedEofError>) -> Result<OutPoint, OutPointDecoderError> {
+        let encoded = result.map_err(OutPointDecoderError)?;
+        let txid_buf: [u8; 32] = encoded[..32].try_into().expect("32 bytes");
+        let vout_buf: [u8; 4] = encoded[32..].try_into().expect("4 bytes");
+
+        let txid = Txid::from_byte_array(txid_buf);
+        let vout = u32::from_le_bytes(vout_buf);
+
+        Ok(OutPoint { txid, vout })
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for OutPoint {
+    type Decoder = OutPointDecoder;
+}
+
+/// Error while decoding an `OutPoint`.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutPointDecoderError(pub(crate) encoding::UnexpectedEofError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for OutPointDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl core::fmt::Display for OutPointDecoderError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write_err!(f, "out point decoder error"; self.0)
+    }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for OutPointDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 impl Encodable for TxIn {
