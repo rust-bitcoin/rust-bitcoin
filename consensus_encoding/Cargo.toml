@@ -16,11 +16,13 @@ exclude = ["api", "tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std"]
-alloc = ["internals/alloc"]
+std = ["alloc", "internals/std", "hex?/std"]
+alloc = ["internals/alloc", "hex?/alloc"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", version = "0.5.0" }
+
+hex = { package = "hex-conservative", version = "1.1.0", default-features = false, features = [], optional = true }
 
 [dev-dependencies]
 hex = { package = "hex-conservative", version = "1.1.0" }

@@ -325,6 +325,49 @@ impl std::error::Error for UnexpectedEofError {
     }
 }
 
+/// An error that can occur when decoding from a hex string.
+#[cfg(feature = "hex")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FromHexError<ParseErr> {
+    /// The hex string had an odd number of characters.
+    OddLength(hex::OddLengthStringError),
+    /// A character in the hex string was not a valid hex digit.
+    InvalidChar(hex::InvalidCharError),
+    /// The decoder rejected the decoded bytes, or bytes remained unconsumed after decoding.
+    Decode(DecodeError<ParseErr>),
+}
+
+#[cfg(feature = "hex")]
+impl<ParseErr> From<Infallible> for FromHexError<ParseErr> {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "hex")]
+impl<ParseErr: fmt::Display> fmt::Display for FromHexError<ParseErr> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::OddLength(ref e) => write_err!(f, "odd length string"; e),
+            Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
+            Self::Decode(ref e) => write_err!(f, "decode error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "hex")]
+#[cfg(feature = "std")]
+impl<ParseErr> std::error::Error for FromHexError<ParseErr>
+where
+    ParseErr: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            Self::OddLength(ref e) => Some(e),
+            Self::InvalidChar(ref e) => Some(e),
+            Self::Decode(ref e) => Some(e),
+        }
+    }
+}
+
 /// Helper macro to define an error type for a `DecoderN`.
 macro_rules! define_decoder_n_error {
     (

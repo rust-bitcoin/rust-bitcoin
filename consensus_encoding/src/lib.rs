@@ -47,11 +47,15 @@
 //! * [`drain_to_writer`]: Drain an encoder to a stdlib writer.
 //! * [`encode_to_vec`]: Encode to the heap.
 //! * [`drain_to_vec`]: Drain an encoder to the heap.
+//! * [`encode_to_hex`]: Encode to a hex string.
+//! * [`drain_to_hex`]: Drain an encoder to a hex string.
 //!
 //! # Feature Flags
 //!
 //! * `std` - Enables std lib I/O driver functions and `std::error::Error` impls (implies `alloc`).
 //! * `alloc` - Enables [`encode_to_vec`], `Vec`-based decoders, and allocation-based helpers.
+//! * `hex` - Enables [`decode_from_hex`], [`encode_to_hex`] and [`drain_to_hex`]. Encoding also
+//!   requires `alloc`.
 
 #![no_std]
 // Coding conventions.
@@ -72,6 +76,9 @@ pub mod error;
 
 #[doc(inline)]
 pub use self::compact_size::{CompactSizeDecoder, CompactSizeEncoder, CompactSizeU64Decoder};
+#[cfg(feature = "hex")]
+#[doc(inline)]
+pub use self::decode::decode_from_hex;
 #[doc(inline)]
 pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Decoder6};
 #[cfg(feature = "alloc")]
@@ -97,11 +104,18 @@ pub use self::encode::{
     check_encode, check_encoder, Encode, Encoder, EncoderByteIter, EncoderStatus, ExactSizeEncoder,
 };
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+#[doc(inline)]
+pub use self::encode::{drain_to_hex, encode_to_hex};
+#[cfg(feature = "alloc")]
 #[doc(inline)]
 pub use self::encode::{drain_to_vec, encode_to_vec};
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use self::encode::{drain_to_writer, encode_to_writer};
+#[cfg(feature = "hex")]
+#[doc(no_inline)]
+pub use self::error::FromHexError;
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
 pub use self::error::LengthPrefixExceedsMaxError;
