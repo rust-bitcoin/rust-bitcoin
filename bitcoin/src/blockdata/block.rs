@@ -411,7 +411,6 @@ mod tests {
     use alloc::string::ToString;
 
     use hex::hex;
-    use internals::ToU64 as _;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
