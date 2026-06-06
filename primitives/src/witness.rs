@@ -20,6 +20,8 @@ use hex::DecodeVariableLengthBytesError;
 use internals::slice::SliceExt;
 use internals::wrap_debug::WrapDebug;
 
+#[cfg(feature = "hex")]
+use crate::hex_codec::HexPrimitive;
 use crate::prelude::{Box, Vec};
 #[cfg(doc)]
 use crate::TxIn;
@@ -633,6 +635,24 @@ impl fmt::Debug for Witness {
                 }),
             )
             .finish()
+    }
+}
+
+/// Formats the witness as a hex string using its consensus encoding.
+///
+/// This is the compact size encoded number of elements followed by each element
+/// prefixed with its compact size encoded length.
+#[cfg(feature = "hex")]
+impl fmt::LowerHex for Witness {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(feature = "hex")]
+impl fmt::UpperHex for Witness {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
     }
 }
 
@@ -1349,6 +1369,28 @@ mod test {
 
         let witness = Witness::from_hex(hex_strings).unwrap();
         assert_eq!(witness.len(), 2);
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn empty_witness_lower_hex() {
+        let empty = Witness::new();
+        assert_eq!(format!("{:x}", empty), "00");
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn witness_lower_hex() {
+        let witness = Witness::from_iter([[1u8, 2, 3].as_slice(), [4u8, 5].as_slice()]);
+        // count (0x02), then len-prefixed elements: 03 010203, 02 0405.
+        assert_eq!(format!("{:x}", witness), "0203010203020405");
+    }
+
+    #[test]
+    #[cfg(feature = "hex")]
+    fn witness_upper_hex() {
+        let witness = Witness::from_iter([[0xABu8, 0xCD].as_slice()]);
+        assert_eq!(format!("{:X}", witness), "0102ABCD");
     }
 
     #[test]
