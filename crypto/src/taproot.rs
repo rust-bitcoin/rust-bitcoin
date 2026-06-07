@@ -302,10 +302,6 @@ impl From<Signature> for SerializedSignature {
     fn from(value: Signature) -> Self { Self::from_signature(value) }
 }
 
-impl<'a> From<&'a Signature> for SerializedSignature {
-    fn from(value: &'a Signature) -> Self { Self::from_signature(*value) }
-}
-
 impl TryFrom<SerializedSignature> for Signature {
     type Error = SigFromSliceError;
 
