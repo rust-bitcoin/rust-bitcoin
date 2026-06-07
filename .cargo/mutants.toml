@@ -60,6 +60,12 @@ exclude_re = [
     "primitives/.* == with != in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # Replacing == with != causes an infinite loop
     "primitives/.* replace \\+ with \\* in MerkleNode::calculate_root", # Replacing + with * causes an infinite loop
     "primitives/.* replace == with != in MerkleNode::calculate_root", # Replacing == with != isn't caught unless alloc is disabled.
+    "primitives/.* replace \\* with \\+ in <impl encoding::Decoder for WitnessDecoder>::end", # reserve(witness_elements * 4) only reserves capacity
+    "primitives/.* replace \\* with / in <impl encoding::Decoder for WitnessDecoder>::end", # reserve(witness_elements * 4) only reserves capacity
+    "primitives/.* replace && with \\|\\| in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
+    "primitives/.* replace \\+ with \\* in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
+    "primitives/.* replace \\* with \\+ in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
+    "primitives/.* replace \\* with / in <impl encoding::Decoder for WitnessDecoder>::push_bytes", # reserve_exact only reserves capacity
     # TODO: remove after x86 SIMD support lands (https://github.com/rust-bitcoin/rust-bitcoin/issues/5540)
     "primitives/.* calculate_root_batched", # Behind cfg(target_arch = "aarch64"), not compiled on x86_64 CI runner
     "primitives/.* <impl MerkleNode for TxMerkleNode>::calculate_root", # Behind cfg(target_arch = "aarch64"), not compiled on x86_64 CI runner
