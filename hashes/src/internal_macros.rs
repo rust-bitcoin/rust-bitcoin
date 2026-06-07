@@ -207,14 +207,14 @@ macro_rules! impl_engine_input {
 
             // we know we won't complete a block, so just copy into the buffer and return
             if buf_idx + inp.len() < block_size {
-                return self.buffer[buf_idx..buf_idx + inp.len()].copy_from_slice(&inp)
+                return self.buffer[buf_idx..buf_idx + inp.len()].copy_from_slice(&inp);
             }
 
             // we'll process at least one block.
             // if there's a partial buffer, complete it and process it
             if buf_idx > 0 {
                 let needed = block_size - buf_idx;
-                self.buffer[buf_idx..buf_idx+needed].copy_from_slice(&inp[..needed]);
+                self.buffer[buf_idx..buf_idx + needed].copy_from_slice(&inp[..needed]);
                 Self::process_blocks(&mut self.h, &self.buffer);
                 inp = &inp[needed..]
             }
@@ -236,6 +236,6 @@ macro_rules! impl_engine_input {
             }
             self.bytes_hashed += inp.len() as u64;
         }
-    }
+    };
 }
 pub(crate) use impl_engine_input;
