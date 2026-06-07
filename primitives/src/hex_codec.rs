@@ -2,74 +2,21 @@
 
 //! Hex encoding utilities.
 //!
-//! Various types in primitives need to be rendered and parsed from
-//! hexadecimal encodings. Since `consensus_encoding` doesn't provide
-//! a convenient way to do this, this module provides utilities and
-//! associated errors for encoding and decoding `Encodable` types
-//! within the primitives crate.
+//! Various types in primitives need to be rendered in hexadecimal.
+//! Since `consensus_encoding` only provides a method using `alloc`
+//! to do this, this module provides utilities for alloc-less encoding
+//! of `Encodable` types within the primitives crate.
 
-use core::convert::Infallible;
 use core::fmt;
 use core::fmt::Write as _;
 
-use encoding::{Decode, Decoder, Encode, EncoderByteIter};
+use encoding::{Encode, EncoderByteIter};
 use hex::{BytesToHexIter, Case};
-use internals::write_err;
 
-/// Hex encoding wrapper type for `Encode` + `Decode` types.
+/// Hex encoding wrapper type for `Encode` types.
 ///
-/// Implements `Display`, `Debug`, `LowerHex`, and `UpperHex` as well as an inherent `from_str`
-/// method that returns `T`.
+/// Implements `Display`, `Debug`, `LowerHex`, and `UpperHex`.
 pub(crate) struct HexPrimitive<'a, T>(pub(crate) &'a T);
-
-impl<'a, T: Encode + Decode> IntoIterator for &HexPrimitive<'a, T> {
-    type Item = u8;
-    type IntoIter = EncoderByteIter<T::Encoder<'a>>;
-
-    fn into_iter(self) -> Self::IntoIter { EncoderByteIter::new(self.0.encoder()) }
-}
-
-impl<T: Decode> HexPrimitive<'_, T> {
-    /// Parses a given string into an instance of the type `T`.
-    ///
-    /// Since `FromStr` would return an instance of `Self` and thus a &T, this function
-    /// is implemented directly on the struct to return the owned instance of T.
-    /// Other `FromStr` implementations can directly return the result of
-    /// [`HexPrimitive::from_str`].
-    ///
-    /// # Errors
-    ///
-    /// * `OddLength` or `InvalidChar` if decode the hex string to bytes fails.
-    /// * `Decode` if consensus decoding the hex-decoded bytes fails.
-    pub(crate) fn from_str(s: &str) -> Result<T, ParsePrimitiveError<T>> {
-        let iter = hex::HexSliceToBytesIter::new(s)?;
-
-        let mut decoder = T::decoder();
-        let mut buffer = [0u8; 4096]; // 4MB is bigger than most decodables, reducing push_bytes calls.
-        let mut index = 0;
-
-        for result in iter {
-            if index == buffer.len() {
-                // Flush buffer to decoder
-                decoder
-                    .push_bytes(&mut (buffer.as_slice()))
-                    .map_err(encoding::DecodeError::Parse)
-                    .map_err(ParsePrimitiveError::Decode)?;
-                index = 0;
-            }
-            buffer[index] = result?;
-            index += 1;
-        }
-
-        // Flush remaining buffer to decoder
-        decoder
-            .push_bytes(&mut (&buffer[..index]))
-            .map_err(encoding::DecodeError::Parse)
-            .map_err(ParsePrimitiveError::Decode)?;
-
-        decoder.end().map_err(encoding::DecodeError::Parse).map_err(ParsePrimitiveError::Decode)
-    }
-}
 
 impl<T: Encode> HexPrimitive<'_, T> {
     /// Writes an encodable object to the given formatter in the requested case.
@@ -156,92 +103,10 @@ impl<T: Encode> fmt::UpperHex for HexPrimitive<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_hex(f, Case::Upper) }
 }
 
-/// An error type for errors that can occur during parsing of a `Decode` type from hex.
-pub(crate) enum ParsePrimitiveError<T: Decode> {
-    /// Tried to decode an odd length string
-    OddLengthString(hex::OddLengthStringError),
-    /// Encountered an invalid hex character
-    InvalidChar(hex::InvalidCharError),
-    /// A decode error from `consensus_encoding`
-    Decode(encoding::DecodeError<<T::Decoder as encoding::Decoder>::Error>),
-}
-
-impl<T: Decode> From<Infallible> for ParsePrimitiveError<T> {
-    fn from(never: Infallible) -> Self { match never {} }
-}
-
-// Manual impls for Debug, Clone, PartialEq and Eq so that errors which wrap
-// `ParsePrimitiveError` can properly derive the defaults.
-impl<T: Decode> fmt::Debug for ParsePrimitiveError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::OddLengthString(ref e) => write_err!(f, "odd length string"; e),
-            Self::InvalidChar(ref e) => write_err!(f, "invalid character"; e),
-            Self::Decode(_) =>
-                write!(f, "failure decoding hex string into {}", core::any::type_name::<T>()),
-        }
-    }
-}
-
-impl<T: Decode> Clone for ParsePrimitiveError<T>
-where
-    <<T as Decode>::Decoder as Decoder>::Error: Clone,
-{
-    fn clone(&self) -> Self {
-        match self {
-            Self::OddLengthString(ref e) => Self::OddLengthString(e.clone()),
-            Self::InvalidChar(ref e) => Self::InvalidChar(e.clone()),
-            Self::Decode(ref e) => Self::Decode(e.clone()),
-        }
-    }
-}
-
-impl<T: Decode> PartialEq for ParsePrimitiveError<T>
-where
-    <<T as Decode>::Decoder as Decoder>::Error: PartialEq,
-{
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::OddLengthString(ref e1), Self::OddLengthString(ref e2)) => e1 == e2,
-            (Self::InvalidChar(ref e1), Self::InvalidChar(ref e2)) => e1 == e2,
-            (Self::Decode(ref e1), Self::Decode(ref e2)) => e1 == e2,
-            _ => false,
-        }
-    }
-}
-
-impl<T: Decode> Eq for ParsePrimitiveError<T> where
-    <<T as Decode>::Decoder as Decoder>::Error: PartialEq
-{
-}
-
-impl<T: Decode> fmt::Display for ParsePrimitiveError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Debug::fmt(&self, f) }
-}
-
-impl<T: Decode> From<hex::OddLengthStringError> for ParsePrimitiveError<T> {
-    fn from(err: hex::OddLengthStringError) -> Self { Self::OddLengthString(err) }
-}
-
-impl<T: Decode> From<hex::InvalidCharError> for ParsePrimitiveError<T> {
-    fn from(err: hex::InvalidCharError) -> Self { Self::InvalidChar(err) }
-}
-
-#[cfg(feature = "std")]
-impl<T: Decode> std::error::Error for ParsePrimitiveError<T> {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::OddLengthString(ref e) => Some(e),
-            Self::InvalidChar(ref e) => Some(e),
-            Self::Decode(_) => None,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
-    use alloc::{format, string::ToString, vec};
+    use alloc::format;
 
     #[cfg(feature = "alloc")]
     use super::*;
@@ -250,54 +115,12 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn parse_primitive_error_display() {
-        let odd: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("0").unwrap_err();
-        let invalid: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("zz").unwrap_err();
-        let decode: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("00").unwrap_err();
-
-        assert!(!odd.to_string().is_empty());
-        assert!(!invalid.to_string().is_empty());
-        assert!(!decode.to_string().is_empty());
-    }
-
-    #[test]
-    #[cfg(feature = "std")]
-    fn parse_primitive_error_source() {
-        use std::error::Error as _;
-
-        let odd: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("0").unwrap_err();
-        let invalid: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("zz").unwrap_err();
-        let decode: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("00").unwrap_err();
-
-        assert!(odd.source().is_some());
-        assert!(invalid.source().is_some());
-        assert!(decode.source().is_none());
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn hex_primitive_iter_and_debug() {
+    fn hex_primitive_debug() {
         let header: block::Header =
             encoding::decode_from_slice(&[0u8; block::Header::SIZE]).expect("valid header");
         let hex = HexPrimitive(&header);
 
-        assert_eq!((&hex).into_iter().next(), Some(0u8));
         assert!(!format!("{hex:?}").is_empty());
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn hex_primitive_from_str_flushes_full_buffer() {
-        use hex::DisplayHex as _;
-
-        // 300 headers force multiple full 4096-byte decoder flushes plus a final remainder flush.
-        let bytes = vec![0u8; block::Header::SIZE * 300];
-        let encoded = bytes.as_hex().to_string();
-
-        let parsed = HexPrimitive::<block::Header>::from_str(&encoded).unwrap();
-
-        assert_eq!(parsed.version.to_consensus(), 0);
-        assert_eq!(parsed.prev_blockhash, crate::hash_types::BlockHash::from_byte_array([0; 32]));
     }
 
     #[test]
@@ -307,26 +130,5 @@ mod tests {
             encoding::decode_from_slice(&[0u8; block::Header::SIZE]).expect("valid header");
 
         assert!(format!("{:#X}", HexPrimitive(&header)).starts_with("0X"));
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn parse_primitive_error_clone() {
-        let odd: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("0").unwrap_err();
-        let invalid: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("zz").unwrap_err();
-        let decode: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("00").unwrap_err();
-
-        assert_eq!(odd.clone(), odd);
-        assert_eq!(invalid.clone(), invalid);
-        assert_eq!(decode.clone(), decode);
-    }
-
-    #[test]
-    #[cfg(feature = "alloc")]
-    fn parse_primitive_error_partial_eq_false_for_different_variants() {
-        let odd: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("0").unwrap_err();
-        let invalid: ParsePrimitiveError<block::Header> = HexPrimitive::from_str("zz").unwrap_err();
-
-        assert_ne!(odd, invalid);
     }
 }
