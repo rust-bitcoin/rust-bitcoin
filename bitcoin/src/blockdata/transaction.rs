@@ -42,8 +42,8 @@ pub use primitives::transaction::{
 #[doc(no_inline)]
 pub use self::error::{
     IndexOutOfBoundsError, InputsIndexError, OutPointDecoderError, OutputsIndexError,
-    ParseOutPointError, ParseTransactionError, TransactionDecoderError, TxInDecoderError,
-    TxOutDecoderError, VersionDecoderError,
+    ParseOutPointError, TransactionDecoderError, TxInDecoderError, TxOutDecoderError,
+    VersionDecoderError,
 };
 
 impl Encodable for Txid {
@@ -1206,7 +1206,7 @@ pub mod error {
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(no_inline)]
     pub use primitives::transaction::error::{
-        ParseTransactionError, TransactionDecoderError, TxInDecoderError,
+        TransactionDecoderError, TxInDecoderError,
         TxOutDecoderError, OutPointDecoderError, ParseOutPointError, VersionDecoderError,
     };
 

@@ -39,8 +39,6 @@ use core::marker::PhantomData;
 use encoding::{Decode, Encode};
 use serde::{de, Deserializer, Serializer};
 
-use crate::hex_codec::HexPrimitive;
-
 /// Serializes a type as a consensus-encoded hex string.
 ///
 /// # Type Parameters
@@ -79,7 +77,8 @@ where
         use serde::Deserialize;
 
         let hex_str = String::deserialize(d)?;
-        HexPrimitive::<T>::from_str(&hex_str).map_err(de::Error::custom)
+        encoding::decode_from_hex(&hex_str)
+            .map_err(|_| de::Error::custom("failed to decode hex string"))
     } else {
         // For non-human-readable formats, deserialize from bytes
         struct BytesVisitor<T>(PhantomData<T>);
