@@ -239,6 +239,40 @@ impl cmp::Ord for Transaction {
 }
 
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl core::str::FromStr for Transaction {
+    type Err = ParseTransactionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        HexPrimitive::from_str(s).map_err(ParseTransactionError)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl fmt::LowerHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
+impl fmt::UpperHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&HexPrimitive(self), f)
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl From<Transaction> for Txid {
     #[inline]
     fn from(tx: Transaction) -> Self { tx.compute_txid() }
@@ -336,23 +370,6 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 }
 
 #[cfg(feature = "alloc")]
-type TransactionEncoderInner<'e> = Encoder6<
-    VersionEncoder<'e>,
-    Option<ArrayEncoder<2>>,
-    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
-    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
-    Option<WitnessesEncoder<'e>>,
-    LockTimeEncoder<'e>,
->;
-
-#[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
-    /// The encoder for the [`Transaction`] type.
-    #[derive(Debug, Clone)]
-    pub struct TransactionEncoder<'e>(TransactionEncoderInner<'e>);
-}
-
-#[cfg(feature = "alloc")]
 impl encoding::Encode for Transaction {
     type Encoder<'e>
         = TransactionEncoder<'e>
@@ -389,37 +406,25 @@ impl encoding::Encode for Transaction {
 }
 
 #[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-impl core::str::FromStr for Transaction {
-    type Err = ParseTransactionError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        HexPrimitive::from_str(s).map_err(ParseTransactionError)
-    }
+impl encoding::Decode for Transaction {
+    type Decoder = TransactionDecoder;
 }
 
 #[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-impl fmt::Display for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&HexPrimitive(self), f)
-    }
-}
+type TransactionEncoderInner<'e> = Encoder6<
+    VersionEncoder<'e>,
+    Option<ArrayEncoder<2>>,
+    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxIn>>,
+    Encoder2<CompactSizeEncoder, SliceEncoder<'e, TxOut>>,
+    Option<WitnessesEncoder<'e>>,
+    LockTimeEncoder<'e>,
+>;
 
 #[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-impl fmt::LowerHex for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&HexPrimitive(self), f)
-    }
-}
-
-#[cfg(feature = "alloc")]
-#[cfg(feature = "hex")]
-impl fmt::UpperHex for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::UpperHex::fmt(&HexPrimitive(self), f)
-    }
+encoding::encoder_newtype! {
+    /// The encoder for the [`Transaction`] type.
+    #[derive(Debug, Clone)]
+    pub struct TransactionEncoder<'e>(TransactionEncoderInner<'e>);
 }
 
 /// The decoder for the [`Transaction`] type.
@@ -650,11 +655,6 @@ impl encoding::Decoder for TransactionDecoder {
             State::Errored => 0,
         }
     }
-}
-
-#[cfg(feature = "alloc")]
-impl encoding::Decode for Transaction {
-    type Decoder = TransactionDecoder;
 }
 
 /// The state of the transiting decoder.
