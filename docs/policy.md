@@ -332,13 +332,14 @@ enum Foo {
 ```
 
 For types that should not form a total or partial order, or that technically do but it does not
-make sense to compare them, we use the `Ordered` trait from the
-[`ordered`](https://crates.io/crates/ordered) crate. See `absolute::LockTime` for an example.
+make sense to compare them semantically, consider carefully before deriving `PartialOrd` or `Ord`.
+While deterministic sorting is useful for use with collections (e.g. `BTreeMap`), it bakes the
+enum variant order into the public API. Adding enum variants in the middle changes discriminants
+and breaks compatibility.
 
 For error types you likely want to use `#[derive(Debug, Clone, PartialEq, Eq)]`.
 
 See [Errors](#errors) section.
-
 
 ## Attributes
 
