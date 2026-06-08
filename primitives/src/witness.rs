@@ -280,10 +280,6 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
     usize::try_from(pos).ok()
 }
 
-/// The encoder for the [`Witness`] type.
-#[derive(Debug, Clone)]
-pub struct WitnessEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
-
 impl encoding::Encode for Witness {
     type Encoder<'e>
         = WitnessEncoder<'e>
@@ -298,6 +294,14 @@ impl encoding::Encode for Witness {
         WitnessEncoder(Encoder2::new(num_elements, witness_elements))
     }
 }
+
+impl encoding::Decode for Witness {
+    type Decoder = WitnessDecoder;
+}
+
+/// The encoder for the [`Witness`] type.
+#[derive(Debug, Clone)]
+pub struct WitnessEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 
 impl encoding::Encoder for WitnessEncoder<'_> {
     #[inline]
@@ -529,10 +533,6 @@ impl encoding::Decoder for WitnessDecoder {
             }
         }
     }
-}
-
-impl encoding::Decode for Witness {
-    type Decoder = WitnessDecoder;
 }
 
 // Note: we use `Borrow` in the following `PartialEq` impls specifically because of its additional

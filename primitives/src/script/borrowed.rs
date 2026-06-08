@@ -183,12 +183,6 @@ impl<T> Script<T> {
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
 }
 
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Script<T>`] type.
-    #[derive(Debug, Clone)]
-    pub struct ScriptEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
-}
-
 impl<T> Encode for Script<T> {
     type Encoder<'e>
         = ScriptEncoder<'e>
@@ -201,6 +195,12 @@ impl<T> Encode for Script<T> {
             BytesEncoder::without_length_prefix(self.as_bytes()),
         ))
     }
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Script<T>`] type.
+    #[derive(Debug, Clone)]
+    pub struct ScriptEncoder<'e>(Encoder2<CompactSizeEncoder, BytesEncoder<'e>>);
 }
 
 #[cfg(feature = "arbitrary")]

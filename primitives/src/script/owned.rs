@@ -180,6 +180,10 @@ impl<T> DerefMut for ScriptBuf<T> {
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
+impl<T> encoding::Decode for ScriptBuf<T> {
+    type Decoder = ScriptBufDecoder<T>;
+}
+
 /// The decoder for the [`ScriptBuf`] type.
 #[derive(Debug, Clone)]
 pub struct ScriptBufDecoder<T>(ByteVecDecoder, PhantomData<T>);
@@ -209,10 +213,6 @@ impl<T> encoding::Decoder for ScriptBufDecoder<T> {
 
     #[inline]
     fn read_limit(&self) -> usize { self.0.read_limit() }
-}
-
-impl<T> encoding::Decode for ScriptBuf<T> {
-    type Decoder = ScriptBufDecoder<T>;
 }
 
 #[cfg(feature = "arbitrary")]
