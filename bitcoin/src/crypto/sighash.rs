@@ -263,7 +263,13 @@ impl<'s> ScriptPath<'s> {
         ScriptPath { script, leaf_version }
     }
     /// Constructs a new `ScriptPath` structure using default leaf version value.
+    #[deprecated(since = "TBD", note = "use `tapscript` instead")]
     pub fn with_defaults(script: &'s TapScript) -> Self {
+        Self::tapscript(script)
+    }
+
+    /// Constructs a new `ScriptPath` structure using the tapscript leaf version value.
+    pub fn tapscript(script: &'s TapScript) -> Self {
         Self::new(script, LeafVersion::TapScript)
     }
     /// Computes the leaf hash for this `ScriptPath`.
@@ -1653,7 +1659,7 @@ mod tests {
         let leaf_hash = match (script_hex, script_leaf_hash) {
             (Some(script_hex), _) => {
                 let script_inner = TapScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
-                Some(ScriptPath::with_defaults(&script_inner).leaf_hash())
+                Some(ScriptPath::tapscript(&script_inner).leaf_hash())
             }
             (_, Some(script_leaf_hash)) => Some(script_leaf_hash.parse::<TapLeafHash>().unwrap()),
             _ => None,
