@@ -140,7 +140,6 @@ Unit and integration tests are available for those interested, along with benchm
 developers, especially new contributors looking for something to work on, we do:
 
 - Fuzz testing with [`Hongfuzz`](https://github.com/rust-fuzz/honggfuzz-rs)
-- Mutation testing with [`Mutagen`](https://github.com/llogiq/mutagen)
 - Code verification with [`Kani`](https://github.com/model-checking/kani)
 
 There are always more tests to write and more bugs to find, contributions to our testing efforts
@@ -155,12 +154,6 @@ Run as for any other Rust project `cargo test --all-features`.
 
 We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
 bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
-
-### Mutation tests
-
-We have started doing mutation testing with [mutagen](https://github.com/llogiq/mutagen). To run
-these tests first install the latest dev version with `cargo +nightly install --git https://github.com/llogiq/mutagen`
-then run with `RUSTFLAGS='--cfg=mutate' cargo +nightly mutagen`.
 
 ### Code verification
 

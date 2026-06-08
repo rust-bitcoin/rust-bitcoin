@@ -1,3 +1,7 @@
+# unreleased
+
+- Remove mutagen
+
 # 0.32.100 - 2025-05-26
 
 **Bump the MSRV to Rust 1.74.0**
