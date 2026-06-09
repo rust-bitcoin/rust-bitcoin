@@ -134,10 +134,6 @@ pub const fn bitcoin_internals::const_casts::i16_to_i64(value: i16) -> i64
 pub const fn bitcoin_internals::const_casts::u16_to_u32(value: u16) -> u32
 pub const fn bitcoin_internals::const_casts::u16_to_u64(value: u16) -> u64
 pub const fn bitcoin_internals::const_casts::u32_to_u64(value: u32) -> u64
-pub mod bitcoin_internals::const_tools
-pub macro bitcoin_internals::const_tools::concat_bytes_to_arr!
-pub macro bitcoin_internals::const_tools::cond_const!
-pub macro bitcoin_internals::const_tools::copy_byte_array_from_slice!
 pub mod bitcoin_internals::error
 pub mod bitcoin_internals::error::input_string
 pub struct bitcoin_internals::error::input_string::CannotParse<'a, T: core::fmt::Display + ?core::marker::Sized>
@@ -316,40 +312,8 @@ pub fn [T]::bitcoin_as_chunks_mut<const N: usize>(&mut self) -> (&mut [[Self::It
 pub fn [T]::get_array<const ARRAY_LEN: usize>(&self, offset: usize) -> core::option::Option<&[Self::Item; ARRAY_LEN]>
 pub fn [T]::split_first_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item; ARRAY_LEN], &[Self::Item])>
 pub fn [T]::split_last_chunk<const ARRAY_LEN: usize>(&self) -> core::option::Option<(&[Self::Item], &[Self::Item; ARRAY_LEN])>
-pub mod bitcoin_internals::wrap_debug
-pub struct bitcoin_internals::wrap_debug::WrapDebug<F: core::ops::function::Fn(&mut core::fmt::Formatter<'_>) -> core::fmt::Result>(pub F)
-impl<F: core::ops::function::Fn(&mut core::fmt::Formatter<'_>) -> core::fmt::Result> core::fmt::Debug for bitcoin_internals::wrap_debug::WrapDebug<F>
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<F> core::marker::Freeze for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Freeze
-impl<F> core::marker::Send for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Send
-impl<F> core::marker::Sync for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Sync
-impl<F> core::marker::Unpin for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::Unpin
-impl<F> core::marker::UnsafeUnpin for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::marker::UnsafeUnpin
-impl<F> core::panic::unwind_safe::RefUnwindSafe for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::panic::unwind_safe::RefUnwindSafe
-impl<F> core::panic::unwind_safe::UnwindSafe for bitcoin_internals::wrap_debug::WrapDebug<F> where F: core::panic::unwind_safe::UnwindSafe
-impl<T, U> core::convert::Into<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::From<T>
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::Into<T>
-pub type bitcoin_internals::wrap_debug::WrapDebug<F>::Error = core::convert::Infallible
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for bitcoin_internals::wrap_debug::WrapDebug<F> where U: core::convert::TryFrom<T>
-pub type bitcoin_internals::wrap_debug::WrapDebug<F>::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for bitcoin_internals::wrap_debug::WrapDebug<F> where T: 'static + ?core::marker::Sized
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for bitcoin_internals::wrap_debug::WrapDebug<F> where T: ?core::marker::Sized
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for bitcoin_internals::wrap_debug::WrapDebug<F> where T: ?core::marker::Sized
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for bitcoin_internals::wrap_debug::WrapDebug<F>
-pub fn bitcoin_internals::wrap_debug::WrapDebug<F>::from(t: T) -> T
-pub macro bitcoin_internals::concat_bytes_to_arr!
-pub macro bitcoin_internals::cond_const!
 pub macro bitcoin_internals::const_assert!
-pub macro bitcoin_internals::copy_byte_array_from_slice!
 pub macro bitcoin_internals::impl_array_newtype!
-pub macro bitcoin_internals::impl_parse!
-pub macro bitcoin_internals::impl_parse_and_serde!
 pub macro bitcoin_internals::impl_to_hex_from_lower_hex!
 pub macro bitcoin_internals::parse_error_type!
 pub macro bitcoin_internals::rust_version!
