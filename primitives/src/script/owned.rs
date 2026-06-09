@@ -60,8 +60,13 @@ impl<T> ScriptBuf<T> {
     /// * If the parsed bytes cannot be decoded as a valid script (incl.the length prefix).
     #[cfg(feature = "hex")]
     pub fn from_hex_prefixed(s: &str) -> Result<Self, FromHexError> {
-        let v = hex::decode_to_vec(s)?;
-        Ok(encoding::decode_from_slice(&v)?)
+        use crate::hex_codec::{HexPrimitive, ParsePrimitiveError as P};
+
+        HexPrimitive::<Self>::from_str(s).map_err(|err| match err {
+            P::OddLengthString(e) => FromHexError::Hex(e.into()),
+            P::InvalidChar(e) => FromHexError::Hex(e.into()),
+            P::Decode(e) => e.into(),
+        })
     }
 
     /// Constructs a new [`ScriptBuf`] from a hex string.
