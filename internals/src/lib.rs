@@ -39,10 +39,22 @@ pub mod _export {
 pub mod array;
 pub mod array_vec;
 pub mod error;
-pub mod macros;
 pub mod script;
 pub mod slice;
 #[cfg(feature = "serde")]
 #[macro_use]
 pub mod serde;
 pub mod const_casts;
+
+/// Asserts a boolean expression at compile time.
+#[macro_export]
+macro_rules! const_assert {
+    ($x:expr $(; $message:expr)?) => {
+        const _: () = {
+            if !$x {
+                // We can't use formatting in const, only concatenating literals.
+                panic!(concat!("assertion ", stringify!($x), " failed" $(, ": ", $message)?))
+            }
+        };
+    }
+}
