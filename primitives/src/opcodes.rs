@@ -42,6 +42,11 @@ impl From<u8> for Opcode {
     fn from(b: u8) -> Self { Self::from_u8(b) }
 }
 
+impl From<Opcode> for u8 {
+    #[inline]
+    fn from(op: Opcode) -> Self { op.to_u8() }
+}
+
 macro_rules! all_opcodes {
     ($($op:ident => $val:expr, $doc:expr);* $(;)?) => {
         /// Enables wildcard imports to bring into scope all opcodes and nothing else.
@@ -255,5 +260,21 @@ pub(crate) fn fmt_opcode(op: u8, f: &mut fmt::Formatter) -> fmt::Result {
         0xba => f.write_str("OP_CHECKSIGADD"),
         0xbb..=0xfe => write!(f, "OP_RETURN_{}", op),
         0xff => f.write_str("OP_INVALIDOPCODE"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn opcode_to_u8_from_u8_roundtrip() {
+        for b in 0..=u8::MAX {
+            let op = Opcode::from_u8(b);
+            assert_eq!(op.to_u8(), b);
+
+            let op = Opcode::from(b);
+            assert_eq!(u8::from(op), b);
+        }
     }
 }
