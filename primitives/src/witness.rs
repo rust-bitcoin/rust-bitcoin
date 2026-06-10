@@ -395,6 +395,11 @@ impl encoding::Decoder for WitnessDecoder {
             // Else we are reading the element's length.
             if let Some(bytes_to_read) = self.element_bytes_remaining {
                 let can_copy = bytes.len().min(bytes_to_read);
+                // To avoid reallocating the index space in `end()` we reserve it here, the moment
+                // the final element's data is copied.
+                if can_copy == bytes_to_read && self.element_idx + 1 == witness_elements {
+                    self.content.reserve_exact(can_copy + witness_elements * 4);
+                }
                 self.content.extend_from_slice(&bytes[..can_copy]);
                 *bytes = &bytes[can_copy..];
                 let remaining = bytes_to_read - can_copy;
