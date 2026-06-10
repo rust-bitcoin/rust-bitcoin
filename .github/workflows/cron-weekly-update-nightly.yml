@@ -28,8 +28,8 @@ jobs:
           token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
           author: Update Nightly Rustc Bot <bot@example.com>
           committer: Update Nightly Rustc Bot <bot@example.com>
-          title: Automated daily update to rustc (to ${{ env.nightly_version }})
+          title: Automated weekly update to rustc (to ${{ env.nightly_version }})
           body: |
            Automated update to Cargo.toml workspace metadata by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
           commit-message: Automated update to rustc ${{ env.nightly_version }}
-          branch: create-pull-request/daily-nightly-update
+          branch: create-pull-request/weekly-nightly-update
