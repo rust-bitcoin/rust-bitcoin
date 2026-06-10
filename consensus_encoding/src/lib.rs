@@ -41,6 +41,14 @@
 //! * [`decode_from_slice`]: Decode from a byte slice (errors if slice is not completely consumed).
 //! * [`decode_from_slice_unbounded`]: Slice can contain additional data after decoding completes.
 //!
+//! Each function above takes a type parameter `T: Decode` to select the output type and its
+//! associated decoder. The following variants instead accept a [`Decoder`] type directly,
+//! instantiated with [`Default`], and can be used when the output type does not implement [`Decode`]:
+//!
+//! * [`decode_from_read_with`]: Counterpart to [`decode_from_read`].
+//! * [`decode_from_slice_with`]: Counterpart to [`decode_from_slice`].
+//! * [`decode_from_slice_unbounded_with`]: Counterpart to [`decode_from_slice_unbounded`].
+//!
 //! And on the encoding side we provide:
 //!
 //! * [`encode_to_writer`]: Encode to a stdlib writer.
@@ -86,13 +94,14 @@ pub use self::decode::decoders::{ArrayDecoder, Decoder2, Decoder3, Decoder4, Dec
 pub use self::decode::decoders::{ByteVecDecoder, VecDecoder};
 #[doc(inline)]
 pub use self::decode::{
-    check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded, Decode, Decoder,
-    DecoderStatus,
+    check_decode, check_decoder, decode_from_slice, decode_from_slice_unbounded,
+    decode_from_slice_unbounded_with, decode_from_slice_with, Decode, Decoder, DecoderStatus,
 };
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use self::decode::{
     decode_from_read, decode_from_read_unbuffered, decode_from_read_unbuffered_with,
+    decode_from_read_with,
 };
 #[doc(inline)]
 pub use self::encode::encoders::{

@@ -200,8 +200,34 @@ pub fn decode_from_hex<T: Decode>(
 pub fn decode_from_slice<T: Decode>(
     bytes: &[u8],
 ) -> Result<T, DecodeError<<T::Decoder as Decoder>::Error>> {
+    decode_from_slice_internal(bytes, T::decoder())
+}
+
+/// Decodes an object from a byte slice using a [`Decoder`] type.
+///
+/// Unlike [`decode_from_slice`], this takes a generic [`Decoder`] parameter, allowing use with
+/// decoders which don't have a dedicated [`Decode`] implementer (e.g. [`CompactSizeDecoder`]).
+///
+/// # Errors
+///
+/// Returns an error if the decoder encounters an error while parsing the data, including
+/// insufficient data. This function also errors if the provided slice is not completely consumed
+/// during decode.
+///
+/// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
+pub fn decode_from_slice_with<D: Decoder + Default>(
+    bytes: &[u8],
+) -> Result<D::Output, DecodeError<D::Error>> {
+    decode_from_slice_internal(bytes, D::default())
+}
+
+fn decode_from_slice_internal<D: Decoder>(
+    bytes: &[u8],
+    decoder: D,
+) -> Result<D::Output, DecodeError<D::Error>> {
     let mut remaining = bytes;
-    let data = decode_from_slice_unbounded::<T>(&mut remaining).map_err(DecodeError::Parse)?;
+    let data = decode_from_slice_unbounded_internal(&mut remaining, decoder)
+        .map_err(DecodeError::Parse)?;
 
     if remaining.is_empty() {
         Ok(data)
@@ -226,8 +252,35 @@ pub fn decode_from_slice_unbounded<T>(
 where
     T: Decode,
 {
-    let mut decoder = T::decoder();
+    decode_from_slice_unbounded_internal(bytes, T::decoder())
+}
 
+/// Decodes an object from an unbounded byte slice using a [`Decoder`] type.
+///
+/// Unlike [`decode_from_slice_unbounded`], this takes a generic [`Decoder`] parameter, allowing
+/// use with decoders which don't have a dedicated [`Decode`] implementer
+/// (e.g. [`CompactSizeDecoder`]).
+///
+/// Unlike [`decode_from_slice_with`], this function will not error if the slice contains
+/// additional bytes that are not required to decode. Furthermore, the byte slice reference provided
+/// to this function will be updated based on the consumed data, returning the unconsumed bytes.
+///
+/// # Errors
+///
+/// Returns an error if the decoder encounters an error while parsing the data, including
+/// insufficient data.
+///
+/// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
+pub fn decode_from_slice_unbounded_with<D: Decoder + Default>(
+    bytes: &mut &[u8],
+) -> Result<D::Output, D::Error> {
+    decode_from_slice_unbounded_internal(bytes, D::default())
+}
+
+fn decode_from_slice_unbounded_internal<D: Decoder>(
+    bytes: &mut &[u8],
+    mut decoder: D,
+) -> Result<D::Output, D::Error> {
     while !bytes.is_empty() {
         if decoder.push_bytes(bytes)?.is_ready() {
             break;
@@ -250,13 +303,49 @@ where
 /// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing the data, or
 /// [`ReadError::Io`] if an I/O error occurs while reading.
 #[cfg(feature = "std")]
-pub fn decode_from_read<T, R>(mut reader: R) -> Result<T, ReadError<<T::Decoder as Decoder>::Error>>
+pub fn decode_from_read<T, R>(reader: R) -> Result<T, ReadError<<T::Decoder as Decoder>::Error>>
 where
     T: Decode,
     R: std::io::BufRead,
 {
-    let mut decoder = T::decoder();
+    decode_from_read_internal::<T::Decoder, R>(reader, T::decoder())
+}
 
+/// Decodes an object from a buffered reader using a [`Decoder`] type.
+///
+/// Unlike [`decode_from_read`], this takes a generic [`Decoder`] parameter, allowing use with
+/// decoders which don't have a dedicated [`Decode`] implementer (e.g. [`CompactSizeDecoder`]).
+///
+/// # Performance
+///
+/// For unbuffered readers (like [`std::fs::File`] or [`std::net::TcpStream`]), consider wrapping
+/// your reader with [`std::io::BufReader`] in order to use this function. This avoids frequent
+/// small reads, which can significantly impact performance.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing the data, or
+/// [`ReadError::Io`] if an I/O error occurs while reading.
+///
+/// [`CompactSizeDecoder`]: crate::CompactSizeDecoder
+#[cfg(feature = "std")]
+pub fn decode_from_read_with<D, R>(reader: R) -> Result<D::Output, ReadError<D::Error>>
+where
+    D: Decoder + Default,
+    R: std::io::BufRead,
+{
+    decode_from_read_internal(reader, D::default())
+}
+
+#[cfg(feature = "std")]
+fn decode_from_read_internal<D, R>(
+    mut reader: R,
+    mut decoder: D,
+) -> Result<D::Output, ReadError<D::Error>>
+where
+    D: Decoder,
+    R: std::io::BufRead,
+{
     loop {
         let mut buffer = match reader.fill_buf() {
             Ok(buffer) => buffer,

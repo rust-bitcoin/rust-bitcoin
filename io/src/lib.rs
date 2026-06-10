@@ -501,14 +501,48 @@ where
 /// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
 /// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
 pub fn decode_from_read<T, R>(
-    mut reader: R,
+    reader: R,
 ) -> core::result::Result<T, ReadError<<T::Decoder as Decoder>::Error>>
 where
     T: Decode,
     R: BufRead,
 {
-    let mut decoder = T::decoder();
+    decode_from_read_internal(reader, T::decoder())
+}
 
+/// Decodes an object from a buffered reader using a [`Decoder`] type.
+///
+/// Unlike [`decode_from_read`], this takes a generic [`Decoder`] parameter, allowing use with
+/// decoders which don't have a dedicated [`Decode`] implementer.
+///
+/// # Performance
+///
+/// For unbuffered readers (like [`std::fs::File`] or [`std::net::TcpStream`]), consider wrapping
+/// your reader with [`std::io::BufReader`] in order to use this function. This avoids frequent
+/// small reads, which can significantly impact performance.
+///
+/// # Errors
+///
+/// Returns [`ReadError::Decode`] if the decoder encounters an error while parsing
+/// the data, or [`ReadError::Io`] if an I/O error occurs while reading.
+pub fn decode_from_read_with<D, R>(
+    reader: R,
+) -> core::result::Result<D::Output, ReadError<D::Error>>
+where
+    D: Decoder + Default,
+    R: BufRead,
+{
+    decode_from_read_internal(reader, D::default())
+}
+
+fn decode_from_read_internal<D, R>(
+    mut reader: R,
+    mut decoder: D,
+) -> core::result::Result<D::Output, ReadError<D::Error>>
+where
+    D: Decoder + Default,
+    R: BufRead,
+{
     loop {
         let mut buffer = match reader.fill_buf() {
             Ok(buffer) => buffer,
