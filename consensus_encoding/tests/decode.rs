@@ -5,18 +5,19 @@
 #[cfg(feature = "std")]
 use std::io::{Cursor, Read};
 
+use bitcoin_consensus_encoding as encoding;
 #[cfg(feature = "alloc")]
-use bitcoin_consensus_encoding::check_decode;
-use bitcoin_consensus_encoding::{
+use encoding::check_decode;
+use encoding::{
     check_decoder, decode_from_slice, decode_from_slice_unbounded, ArrayDecoder,
     CompactSizeDecoder, Decode, DecodeError, Decoder, Decoder2, UnexpectedEofError,
 };
 #[cfg(feature = "hex")]
 use bitcoin_consensus_encoding::{decode_from_hex, FromHexError};
 #[cfg(feature = "std")]
-use bitcoin_consensus_encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
+use encoding::{decode_from_read, decode_from_read_unbuffered, ReadError};
 #[cfg(feature = "alloc")]
-use bitcoin_consensus_encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
+use encoding::{ByteVecDecoder, VecDecoder, VecDecoderError};
 
 const EMPTY: &[u8] = &[];
 
@@ -148,10 +149,7 @@ fn decode_decoder2_end_with_first_decoder_incomplete() {
     let _ = decoder.push_bytes(&mut data);
     let err = decoder.end().unwrap_err();
 
-    assert!(matches!(
-        err,
-        bitcoin_consensus_encoding::Decoder2Error::First(UnexpectedEofError { .. })
-    ));
+    assert!(matches!(err, encoding::Decoder2Error::First(UnexpectedEofError { .. })));
 }
 
 #[test]
@@ -163,10 +161,7 @@ fn decode_decoder2_end_with_second_decoder_incomplete() {
     let _ = decoder.push_bytes(&mut data);
     let err = decoder.end().unwrap_err();
 
-    assert!(matches!(
-        err,
-        bitcoin_consensus_encoding::Decoder2Error::Second(UnexpectedEofError { .. })
-    ));
+    assert!(matches!(err, encoding::Decoder2Error::Second(UnexpectedEofError { .. })));
 }
 
 #[test]
@@ -178,17 +173,14 @@ fn decode_decoder2_with_zero_sized_first_decoder_end() {
     let _ = decoder.push_bytes(&mut data);
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(
-        err,
-        bitcoin_consensus_encoding::Decoder2Error::Second(UnexpectedEofError { .. })
-    ));
+    assert!(matches!(err, encoding::Decoder2Error::Second(UnexpectedEofError { .. })));
 }
 
 #[test]
 #[cfg(feature = "alloc")]
 fn decode_byte_vec_decoder_empty() {
     // Test decoding empty byte vector, with length prefix of 0.
-    use bitcoin_consensus_encoding::{ByteVecDecoder, Decoder};
+    use encoding::{ByteVecDecoder, Decoder};
 
     let mut decoder = ByteVecDecoder::new();
     let mut data = &[0x00][..];
@@ -203,7 +195,7 @@ fn decode_byte_vec_decoder_empty() {
 #[test]
 #[cfg(feature = "alloc")]
 fn decode_byte_vec_decoder_does_not_overconsume() {
-    use bitcoin_consensus_encoding::ByteVecDecoder;
+    use encoding::ByteVecDecoder;
 
     let mut decoder = ByteVecDecoder::new();
     let mut data = &[0x02, 0xAA, 0xBB, 0xCC, 0xDD][..];
@@ -215,7 +207,7 @@ fn decode_byte_vec_decoder_does_not_overconsume() {
 #[test]
 #[cfg(feature = "alloc")]
 fn decode_byte_vec_decoder_does_not_overconsume_on_second_chunk() {
-    use bitcoin_consensus_encoding::ByteVecDecoder;
+    use encoding::ByteVecDecoder;
 
     // First chunk prefix declares 4 payload bytes and provides the first one.
     let mut first_chunk: &[u8] = &[0x04, 0xAA];
@@ -251,10 +243,7 @@ impl Decoder for TestArrayDecoder {
     type Output = TestArray;
     type Error = UnexpectedEofError;
 
-    fn push_bytes(
-        &mut self,
-        bytes: &mut &[u8],
-    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.inner.push_bytes(bytes)
     }
 
@@ -453,10 +442,7 @@ impl Decoder for InnerDecoder {
     type Output = Inner;
     type Error = UnexpectedEofError;
 
-    fn push_bytes(
-        &mut self,
-        bytes: &mut &[u8],
-    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -486,10 +472,7 @@ impl Decoder for TestDecoder {
     type Output = Test;
     type Error = VecDecoderError<UnexpectedEofError>;
 
-    fn push_bytes(
-        &mut self,
-        bytes: &mut &[u8],
-    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -641,8 +624,7 @@ fn decode_vec_from_read_unbuffered_success() {
     let encoded = [0x01, 0xEF, 0xBE, 0xAD, 0xDE, 0xff, 0xff, 0xff, 0xff];
     let mut cursor = Cursor::new(&encoded);
 
-    let got =
-        bitcoin_consensus_encoding::decode_from_read_unbuffered::<Test, _>(&mut cursor).unwrap();
+    let got = encoding::decode_from_read_unbuffered::<Test, _>(&mut cursor).unwrap();
     assert_eq!(cursor.position(), 5);
 
     let want = Test(vec![Inner(0xDEAD_BEEF)]);
@@ -658,7 +640,7 @@ fn decode_byte_vec_decoder_end_incomplete_length_prefix() {
     assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::ByteVecDecoderError { .. }));
+    assert!(matches!(err, encoding::ByteVecDecoderError { .. }));
 }
 
 #[test]
@@ -671,7 +653,7 @@ fn decode_byte_vec_decoder_end_incomplete_data() {
     assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::ByteVecDecoderError { .. }));
+    assert!(matches!(err, encoding::ByteVecDecoderError { .. }));
 }
 
 #[test]
@@ -683,7 +665,7 @@ fn decode_vec_decoder_end_incomplete_length_prefix() {
     assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::VecDecoderError { .. }));
+    assert!(matches!(err, encoding::VecDecoderError { .. }));
 }
 
 #[test]
@@ -696,7 +678,7 @@ fn decode_vec_decoder_end_incomplete_item() {
     assert!(status.needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::VecDecoderError { .. }));
+    assert!(matches!(err, encoding::VecDecoderError { .. }));
 }
 
 #[test]

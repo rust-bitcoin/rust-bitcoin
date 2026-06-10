@@ -3,8 +3,9 @@
 //! Round-trip integration tests for `CompactSize` codec.
 
 use bitcoin_consensus_encoding::{
-    check_decode, check_encode, decode_from_slice, CompactSizeDecoder, CompactSizeDecoderError,
-    CompactSizeEncoder, CompactSizeU64Decoder, Decode, Decoder, Encode, ExactSizeEncoder,
+    self as encoding, check_decode, check_encode, decode_from_slice, CompactSizeDecoder,
+    CompactSizeDecoderError, CompactSizeEncoder, CompactSizeU64Decoder, Decode, Decoder, Encode,
+    ExactSizeEncoder,
 };
 
 /// A `usize` value encoded and decoded as a compact size length prefix.
@@ -27,10 +28,7 @@ impl Decoder for CompactSizeUsizeDecoderWrapper {
     type Output = CompactSizeUsize;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(
-        &mut self,
-        bytes: &mut &[u8],
-    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -63,10 +61,7 @@ impl Decoder for CompactSizeU64DecoderWrapper {
     type Output = CompactSizeU64;
     type Error = CompactSizeDecoderError;
 
-    fn push_bytes(
-        &mut self,
-        bytes: &mut &[u8],
-    ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
         self.0.push_bytes(bytes)
     }
 
@@ -288,7 +283,7 @@ fn decoder_compact_size_end_incomplete_one_byte() {
     assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
+    assert!(matches!(err, encoding::CompactSizeDecoderError { .. }));
 }
 
 #[test]
@@ -300,7 +295,7 @@ fn decoder_compact_size_end_incomplete_three_byte() {
     assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
+    assert!(matches!(err, encoding::CompactSizeDecoderError { .. }));
 }
 
 #[test]
@@ -312,7 +307,7 @@ fn decoder_compact_size_end_incomplete_five_byte() {
     assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
+    assert!(matches!(err, encoding::CompactSizeDecoderError { .. }));
 }
 
 #[test]
@@ -324,7 +319,7 @@ fn decoder_compact_size_end_incomplete_nine_byte() {
     assert!(decoder.push_bytes(&mut slice).unwrap().needs_more());
 
     let err = decoder.end().unwrap_err();
-    assert!(matches!(err, bitcoin_consensus_encoding::CompactSizeDecoderError { .. }));
+    assert!(matches!(err, encoding::CompactSizeDecoderError { .. }));
 }
 
 #[test]

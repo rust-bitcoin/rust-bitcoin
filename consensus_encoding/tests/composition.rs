@@ -2,12 +2,13 @@
 
 //! Test composition of encoders and decoders.
 
+use bitcoin_consensus_encoding as encoding;
 #[cfg(feature = "alloc")]
-use bitcoin_consensus_encoding::{
+use encoding::{
     check_decode, check_encoder, drain_to_vec, encode_to_vec, ArrayEncoder, BytesEncoder, Decode,
     Encode, Encoder2, Encoder3, Encoder6,
 };
-use bitcoin_consensus_encoding::{
+use encoding::{
     ArrayDecoder, Decoder, Decoder2, Decoder2Error, Decoder6, DecoderStatus, UnexpectedEofError,
 };
 
@@ -266,7 +267,7 @@ fn composition_error_unification() {
         fn push_bytes(
             &mut self,
             bytes: &mut &[u8],
-        ) -> Result<bitcoin_consensus_encoding::DecoderStatus, Self::Error> {
+        ) -> Result<encoding::DecoderStatus, Self::Error> {
             self.inner.push_bytes(bytes).map_err(NestedError::from)
         }
 
