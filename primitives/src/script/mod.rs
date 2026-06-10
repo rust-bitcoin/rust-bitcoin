@@ -34,9 +34,6 @@ pub use self::{
     tag::{Tag, RedeemScriptTag, ScriptPubKeyTag, ScriptSigTag, SignetBlockScriptTag, TapScriptTag, WitnessScriptTag},
 };
 #[doc(no_inline)]
-#[cfg(feature = "hex")]
-pub use self::error::FromHexError;
-#[doc(no_inline)]
 pub use self::error::{
     PushBytesError, RedeemScriptSizeError, ScriptBufDecoderError, WitnessScriptSizeError,
 };

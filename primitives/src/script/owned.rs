@@ -7,8 +7,6 @@ use core::ops::{Deref, DerefMut};
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ByteVecDecoder, DecoderStatus};
 
-#[cfg(feature = "hex")]
-use super::error::FromHexError;
 use super::{Script, ScriptBufDecoderError};
 use crate::prelude::{Box, Vec};
 
@@ -59,14 +57,10 @@ impl<T> ScriptBuf<T> {
     /// * If `s` cannot be parsed into a vector.
     /// * If the parsed bytes cannot be decoded as a valid script (incl.the length prefix).
     #[cfg(feature = "hex")]
-    pub fn from_hex_prefixed(s: &str) -> Result<Self, FromHexError> {
-        use crate::hex_codec::{HexPrimitive, ParsePrimitiveError as P};
-
-        HexPrimitive::<Self>::from_str(s).map_err(|err| match err {
-            P::OddLengthString(e) => FromHexError::Hex(e.into()),
-            P::InvalidChar(e) => FromHexError::Hex(e.into()),
-            P::Decode(e) => e.into(),
-        })
+    pub fn from_hex_prefixed(
+        s: &str,
+    ) -> Result<Self, encoding::FromHexError<ScriptBufDecoderError>> {
+        encoding::decode_from_hex(s)
     }
 
     /// Constructs a new [`ScriptBuf`] from a hex string.
