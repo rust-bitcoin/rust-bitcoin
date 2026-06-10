@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
+#[cfg(feature = "encoding")]
+use core::convert::Infallible;
+#[cfg(feature = "encoding")]
+use core::fmt;
 #[cfg(doc)]
 use core::ops::Deref;
 
@@ -15,6 +19,8 @@ use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
 };
+#[cfg(feature = "encoding")]
+use crate::internal_macros::write_err;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
@@ -366,4 +372,64 @@ impl<'a> Arbitrary<'a> for ScriptBuf {
         let v = Vec::<u8>::arbitrary(u)?;
         Ok(ScriptBuf(v))
     }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decode for ScriptBuf {
+    type Decoder = ScriptBufDecoder;
+}
+
+/// The decoder for the [`ScriptBuf`] type.
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone)]
+pub struct ScriptBufDecoder(encoding::ByteVecDecoder);
+
+#[cfg(feature = "encoding")]
+impl ScriptBufDecoder {
+    /// Constructs a new [`ScriptBuf`] decoder.
+    pub const fn new() -> Self { Self(encoding::ByteVecDecoder::new()) }
+}
+
+#[cfg(feature = "encoding")]
+impl Default for ScriptBufDecoder {
+    fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "encoding")]
+impl encoding::Decoder for ScriptBufDecoder {
+    type Output = ScriptBuf;
+    type Error = ScriptBufDecoderError;
+
+    #[inline]
+    fn push_bytes(&mut self, bytes: &mut &[u8]) -> Result<encoding::DecoderStatus, Self::Error> {
+        self.0.push_bytes(bytes).map_err(ScriptBufDecoderError)
+    }
+
+    #[inline]
+    fn end(self) -> Result<Self::Output, Self::Error> {
+        Ok(ScriptBuf::from_bytes(self.0.end().map_err(ScriptBufDecoderError)?))
+    }
+
+    #[inline]
+    fn read_limit(&self) -> usize { self.0.read_limit() }
+}
+
+/// An error consensus decoding a [`ScriptBuf`].
+#[cfg(feature = "encoding")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScriptBufDecoderError(pub(super) encoding::ByteVecDecoderError);
+
+#[cfg(feature = "encoding")]
+impl From<Infallible> for ScriptBufDecoderError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "encoding")]
+impl fmt::Display for ScriptBufDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write_err!(f, "decoder error"; self.0) }
+}
+
+#[cfg(all(feature = "encoding", feature = "std"))]
+impl std::error::Error for ScriptBufDecoderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }

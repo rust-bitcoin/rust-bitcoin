@@ -641,6 +641,25 @@ impl Script {
     }
 }
 
+#[cfg(feature = "encoding")]
+impl encoding::Encode for Script {
+    type Encoder<'e> = ScriptEncoder<'e>;
+
+    fn encoder(&self) -> Self::Encoder<'_> {
+        ScriptEncoder::new(encoding::Encoder2::new(
+            encoding::CompactSizeEncoder::new(self.as_bytes().len()),
+            encoding::BytesEncoder::without_length_prefix(self.as_bytes()),
+        ))
+    }
+}
+
+#[cfg(feature = "encoding")]
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Script`] type.
+    #[derive(Debug, Clone)]
+    pub struct ScriptEncoder<'e>(encoding::Encoder2<encoding::CompactSizeEncoder, encoding::BytesEncoder<'e>>);
+}
+
 /// Iterator over bytes of a script
 pub struct Bytes<'a>(core::iter::Copied<core::slice::Iter<'a, u8>>);
 
