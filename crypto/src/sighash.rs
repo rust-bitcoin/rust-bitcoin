@@ -227,13 +227,18 @@ impl From<EcdsaSighashType> for TapSighashType {
 
 /// Error types for signature hashing.
 pub mod error {
+    use core::convert::Infallible;
     use core::fmt;
 
     use internals::error::InputString;
 
     /// Integer is not a consensus valid sighash type.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct InvalidSighashTypeError(pub u32);
+    pub struct InvalidSighashTypeError(pub(crate) u32);
+
+    impl From<Infallible> for InvalidSighashTypeError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
     impl fmt::Display for InvalidSighashTypeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -252,7 +257,11 @@ pub mod error {
     /// This type is consensus valid but an input including it would prevent the transaction from
     /// being relayed on today's Bitcoin network.
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct NonStandardSighashTypeError(pub u32);
+    pub struct NonStandardSighashTypeError(pub(crate) u32);
+
+    impl From<Infallible> for NonStandardSighashTypeError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
     impl fmt::Display for NonStandardSighashTypeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -275,7 +284,11 @@ pub mod error {
     #[non_exhaustive]
     pub struct SighashTypeParseError {
         /// The unrecognized string we attempted to parse.
-        pub unrecognized: InputString,
+        pub(super) unrecognized: InputString,
+    }
+
+    impl From<Infallible> for SighashTypeParseError {
+        fn from(never: Infallible) -> Self { match never {} }
     }
 
     impl fmt::Display for SighashTypeParseError {
