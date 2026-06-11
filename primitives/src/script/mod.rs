@@ -25,6 +25,7 @@ use crate::prelude::rc::Rc;
 #[cfg(target_has_atomic = "ptr")]
 use crate::prelude::sync::Arc;
 use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
+use crate::witness_version::WitnessVersion;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -88,6 +89,22 @@ pub type WitnessScript = Script<WitnessScriptTag>;
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
 /// The maximum allowed redeem script size of the witness script.
 pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
+
+/// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
+/// Does not do any checks on version or program length.
+///
+/// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
+#[allow(dead_code)]
+pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>, Tg>(
+    version: WitnessVersion,
+    program: T,
+) -> ScriptBuf<Tg> {
+    let program = program.as_ref();
+    debug_assert!(program.len() >= 2 && program.len() <= 40);
+    // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.
+    debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
+    Builder::new().push_opcode(version.into()).push_slice(program).into_script()
+}
 
 /// Either a redeem script or a Segwit version 0 scriptpubkey.
 ///
