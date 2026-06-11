@@ -180,39 +180,6 @@ internal_macros::define_extension_trait! {
             }
         }
 
-        /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
-        ///
-        /// # Returns
-        ///
-        /// The witness version if this script is found to conform to the SegWit rules:
-        ///
-        /// > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte
-        /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
-        /// > special meaning. The value of the first push is called the "version byte". The following
-        /// > byte vector pushed is called the "witness program".
-        #[inline]
-        fn witness_version(&self) -> Option<WitnessVersion>
-        where T: ScriptHashableTag
-        {
-            let script_len = self.len();
-            if !(4..=42).contains(&script_len) {
-                return None;
-            }
-
-            let ver_opcode = Opcode::from(self.as_bytes()[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
-            let push_opbyte = self.as_bytes()[1]; // Second byte push opcode 2-40 bytes
-
-            if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
-                return None;
-            }
-            // Check that the rest of the script has the correct size
-            if script_len - 2 != push_opbyte as usize {
-                return None;
-            }
-
-            WitnessVersion::try_from(ver_opcode).ok()
-        }
-
         /// Checks whether a script pubkey is a P2WSH output.
         #[inline]
         fn is_p2wsh(&self) -> bool

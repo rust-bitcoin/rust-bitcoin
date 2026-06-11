@@ -13,7 +13,10 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{BytesEncoder, CompactSizeEncoder, Encode, Encoder2};
 
 use super::ScriptBuf;
+use crate::opcodes::Opcode;
 use crate::prelude::{Box, ToOwned, Vec};
+use crate::script::ScriptHashableTag;
+use crate::witness_version::WitnessVersion;
 
 // Defined in `REPO_DIR/include/newtype.rs`.
 crate::transparent_newtype! {
@@ -181,6 +184,41 @@ impl<T> Script<T> {
     #[inline]
     #[deprecated(since = "1.0.0-rc.0", note = "use `format!(\"{var:x}\")` instead")]
     pub fn to_hex(&self) -> alloc::string::String { alloc::format!("{:x}", self) }
+
+    /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
+    ///
+    /// # Returns
+    ///
+    /// The witness version if this script is found to conform to the SegWit rules:
+    ///
+    /// > A scriptPubKey (or redeemScript as defined in BIP-0016/P2SH) that consists of a 1-byte
+    /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
+    /// > special meaning. The value of the first push is called the "version byte". The following
+    /// > byte vector pushed is called the "witness program".
+    #[inline]
+    pub fn witness_version(&self) -> Option<WitnessVersion>
+    where
+        T: ScriptHashableTag,
+    {
+        let script_len = self.len();
+        if !(4..=42).contains(&script_len) {
+            return None;
+        }
+
+        let ver_opcode = Opcode::from(self.as_bytes()[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+        let push_opbyte = self.as_bytes()[1]; // Second byte push opcode 2-40 bytes
+
+        // If push_opbyte < OP_PUSHBYTES_2 || push_opbyte > OP_PUSHBYTES_40
+        if push_opbyte < 0x02 || push_opbyte > 0x28 {
+            return None;
+        }
+        // Check that the rest of the script has the correct size
+        if script_len - 2 != push_opbyte as usize {
+            return None;
+        }
+
+        WitnessVersion::try_from(ver_opcode).ok()
+    }
 }
 
 impl<T> Encode for Script<T> {
