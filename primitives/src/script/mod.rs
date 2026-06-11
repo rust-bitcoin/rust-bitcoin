@@ -90,6 +90,9 @@ pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
 /// The maximum allowed redeem script size of the witness script.
 pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
 
+/// The P2A program which is given by 0x4e73.
+pub(crate) const P2A_PROGRAM: [u8; 2] = [78, 115];
+
 /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
 /// Does not do any checks on version or program length.
 ///
