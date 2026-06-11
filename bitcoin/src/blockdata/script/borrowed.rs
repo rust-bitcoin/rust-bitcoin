@@ -287,15 +287,6 @@ internal_macros::define_extension_trait! {
                 && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
         }
 
-        /// Check if this is a consensus-valid OP_RETURN output.
-        ///
-        /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
-        /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
-        #[inline]
-        fn is_op_return(&self) -> bool {
-            self.as_bytes().first().is_some_and(|&b| b == OP_RETURN.to_u8())
-        }
-
         /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
         ///
         /// What this function considers to be standard may change without warning pending Bitcoin Core

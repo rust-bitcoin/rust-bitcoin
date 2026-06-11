@@ -13,7 +13,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{BytesEncoder, CompactSizeEncoder, Encode, Encoder2};
 
 use super::{ScriptBuf, P2A_PROGRAM};
-use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH160};
+use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH160, OP_RETURN};
 use crate::opcodes::{Opcode, OP_PUSHBYTES_2, OP_PUSHBYTES_20, OP_PUSHBYTES_32};
 use crate::prelude::{Box, ToOwned, Vec};
 use crate::script::ScriptHashableTag;
@@ -277,6 +277,15 @@ impl ScriptPubKey {
             && self.witness_version() == Some(WitnessVersion::V1)
             && self.as_bytes()[1] == OP_PUSHBYTES_2.to_u8()
             && self.as_bytes()[2..] == P2A_PROGRAM
+    }
+
+    /// Check if this is a consensus-valid `OP_RETURN` output.
+    ///
+    /// To validate if the `OP_RETURN` obeys Bitcoin Core's current standardness policy, use
+    /// `bitcoin::ScriptPubKeyExt::is_standard_op_return()` instead.
+    #[inline]
+    pub fn is_op_return(&self) -> bool {
+        self.as_bytes().first().is_some_and(|&b| b == OP_RETURN.to_u8())
     }
 }
 

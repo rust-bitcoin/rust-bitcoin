@@ -126,11 +126,6 @@ internal_macros::define_extension_trait! {
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`ScriptPubKeyBuf`] type.
     pub trait ScriptPubKeyBufExt impl for ScriptPubKeyBuf {
-        /// Generates OP_RETURN-type of scriptPubkey for the given data.
-        fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
-            Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
-        }
-
         /// Generates P2PK-type of scriptPubkey.
         fn new_p2pk(pubkey: LegacyPublicKey) -> Self {
             Builder::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()

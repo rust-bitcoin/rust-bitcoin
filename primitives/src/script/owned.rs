@@ -8,7 +8,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use encoding::{ByteVecDecoder, DecoderStatus};
 
 use super::{Script, ScriptBufDecoderError, P2A_PROGRAM};
-use crate::opcodes::all::{OP_1, OP_1NEGATE, OP_EQUAL, OP_HASH160};
+use crate::opcodes::all::{OP_1, OP_1NEGATE, OP_EQUAL, OP_HASH160, OP_RETURN};
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
 use crate::script::{Builder, PushBytes, ScriptHash, WScriptHash};
@@ -261,6 +261,11 @@ impl<T> ScriptBuf<T> {
 }
 
 impl ScriptPubKeyBuf {
+    /// Generates OP_RETURN-type of scriptPubkey for the given data.
+    pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
+        Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
+    }
+
     /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_p2sh(script_hash: ScriptHash) -> Self {
         Builder::new()

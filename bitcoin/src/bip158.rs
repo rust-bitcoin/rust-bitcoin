@@ -46,7 +46,7 @@ use io::{BufRead, Write};
 use crate::block::{Block, BlockHash, Checked};
 use crate::encoding::{CompactSizeEncoder, CompactSizeU64Decoder, ExactSizeEncoder as _};
 use crate::prelude::{BTreeSet, Borrow, Vec};
-use crate::script::{ScriptPubKey, ScriptPubKeyExt as _};
+use crate::script::ScriptPubKey;
 use crate::transaction::OutPoint;
 use crate::ToU64 as _;
 
