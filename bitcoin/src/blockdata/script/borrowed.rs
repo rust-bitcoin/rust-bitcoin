@@ -18,7 +18,6 @@ use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{String, ToString};
 use crate::script::{self, ScriptPubKeyBufExt as _};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _, TapNodeHash};
-use crate::witness_program::P2A_PROGRAM;
 use crate::{internal_macros, Amount, FeeRate, ScriptPubKeyBuf, ToU64 as _, WitnessScriptBuf};
 
 internal_macros::define_extension_trait! {
@@ -179,26 +178,6 @@ internal_macros::define_extension_trait! {
                 None
             }
         }
-
-        /// Checks whether a script pubkey is a P2WSH output.
-        #[inline]
-        fn is_p2wsh(&self) -> bool
-        where T: ScriptHashableTag
-        {
-            self.len() == 34
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2WPKH output.
-        #[inline]
-        fn is_p2wpkh(&self) -> bool
-        where T: ScriptHashableTag
-        {
-            self.len() == 22
-                && self.witness_version() == Some(WitnessVersion::V0)
-                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
-        }
     }
 }
 
@@ -260,26 +239,6 @@ internal_macros::define_extension_trait! {
             LegacyPublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
         }
 
-        /// Checks whether a script pubkey is a P2SH output.
-        #[inline]
-        fn is_p2sh(&self) -> bool {
-            self.len() == 23
-                && self.as_bytes()[0] == OP_HASH160.to_u8()
-                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
-                && self.as_bytes()[22] == OP_EQUAL.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2PKH output.
-        #[inline]
-        fn is_p2pkh(&self) -> bool {
-            self.len() == 25
-                && self.as_bytes()[0] == OP_DUP.to_u8()
-                && self.as_bytes()[1] == OP_HASH160.to_u8()
-                && self.as_bytes()[2] == OP_PUSHBYTES_20.to_u8()
-                && self.as_bytes()[23] == OP_EQUALVERIFY.to_u8()
-                && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
-        }
-
         /// Checks whether a script pubkey is a bare multisig output.
         ///
         /// In a bare multisig pubkey script the keys are not hashed, the script
@@ -320,25 +279,12 @@ internal_macros::define_extension_trait! {
             instructions.next().is_none()
         }
 
-        /// Checks whether a script pubkey is a Segregated Witness (SegWit) program.
-        #[inline]
-        fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
-
         /// Checks whether a script pubkey is a P2TR output.
         #[inline]
         fn is_p2tr(&self) -> bool {
             self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V1)
                 && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
-        }
-
-        /// Checks whether a script pubkey is a P2A output.
-        #[inline]
-        fn is_p2a(&self) -> bool {
-            self.len() == 4
-                && self.witness_version() == Some(WitnessVersion::V1)
-                && self.as_bytes()[1] == OP_PUSHBYTES_2.to_u8()
-                && self.as_bytes()[2..] == P2A_PROGRAM
         }
 
         /// Check if this is a consensus-valid OP_RETURN output.

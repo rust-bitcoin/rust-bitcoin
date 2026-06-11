@@ -12,11 +12,13 @@ use core::ops::{
 use arbitrary::{Arbitrary, Unstructured};
 use encoding::{BytesEncoder, CompactSizeEncoder, Encode, Encoder2};
 
-use super::ScriptBuf;
-use crate::opcodes::Opcode;
+use super::{ScriptBuf, P2A_PROGRAM};
+use crate::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH160};
+use crate::opcodes::{Opcode, OP_PUSHBYTES_2, OP_PUSHBYTES_20, OP_PUSHBYTES_32};
 use crate::prelude::{Box, ToOwned, Vec};
 use crate::script::ScriptHashableTag;
 use crate::witness_version::WitnessVersion;
+use crate::ScriptPubKey;
 
 // Defined in `REPO_DIR/include/newtype.rs`.
 crate::transparent_newtype! {
@@ -218,6 +220,63 @@ impl<T> Script<T> {
         }
 
         WitnessVersion::try_from(ver_opcode).ok()
+    }
+
+    /// Checks whether a script pubkey is a P2WSH output.
+    #[inline]
+    pub fn is_p2wsh(&self) -> bool
+    where
+        T: ScriptHashableTag,
+    {
+        self.len() == 34
+            && self.witness_version() == Some(WitnessVersion::V0)
+            && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
+    }
+
+    /// Checks whether a script pubkey is a P2WPKH output.
+    #[inline]
+    pub fn is_p2wpkh(&self) -> bool
+    where
+        T: ScriptHashableTag,
+    {
+        self.len() == 22
+            && self.witness_version() == Some(WitnessVersion::V0)
+            && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
+    }
+}
+
+impl ScriptPubKey {
+    /// Checks whether a script pubkey is a Segregated Witness (SegWit) program.
+    #[inline]
+    pub fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
+
+    /// Checks whether a script pubkey is a P2SH output.
+    #[inline]
+    pub fn is_p2sh(&self) -> bool {
+        self.len() == 23
+            && self.as_bytes()[0] == OP_HASH160.to_u8()
+            && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
+            && self.as_bytes()[22] == OP_EQUAL.to_u8()
+    }
+
+    /// Checks whether a script pubkey is a P2PKH output.
+    #[inline]
+    pub fn is_p2pkh(&self) -> bool {
+        self.len() == 25
+            && self.as_bytes()[0] == OP_DUP.to_u8()
+            && self.as_bytes()[1] == OP_HASH160.to_u8()
+            && self.as_bytes()[2] == OP_PUSHBYTES_20.to_u8()
+            && self.as_bytes()[23] == OP_EQUALVERIFY.to_u8()
+            && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
+    }
+
+    /// Checks whether a script pubkey is a P2A output.
+    #[inline]
+    pub fn is_p2a(&self) -> bool {
+        self.len() == 4
+            && self.witness_version() == Some(WitnessVersion::V1)
+            && self.as_bytes()[1] == OP_PUSHBYTES_2.to_u8()
+            && self.as_bytes()[2..] == P2A_PROGRAM
     }
 }
 

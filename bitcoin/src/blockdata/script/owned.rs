@@ -14,9 +14,9 @@ use crate::key::{
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
-use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
+use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
-use crate::script::{self, BuilderExt as _, ScriptHash, WScriptHash};
+use crate::script::{self, BuilderExt as _};
 use crate::taproot::TapNodeHash;
 use crate::{internal_macros, ToU64 as _};
 
@@ -147,21 +147,6 @@ crate::internal_macros::define_extension_trait! {
                 .into_script()
         }
 
-        /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
-        fn new_p2sh(script_hash: ScriptHash) -> Self {
-            Builder::new()
-                .push_opcode(OP_HASH160)
-                .push_slice(script_hash)
-                .push_opcode(OP_EQUAL)
-                .into_script()
-        }
-
-        /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-        fn new_p2wsh(script_hash: WScriptHash) -> Self {
-            // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-            script::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
-        }
-
         /// Generates P2TR for script spending path using an internal public key and some optional
         /// script tree Merkle root.
         fn new_p2tr<K: Into<UntweakedPublicKey>>(
@@ -178,11 +163,6 @@ crate::internal_macros::define_extension_trait! {
         fn new_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
             // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
             script::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
-        }
-
-        /// Generates pay to anchor output.
-        fn new_p2a() -> Self {
-            script::new_witness_program_unchecked(WitnessVersion::V1, P2A_PROGRAM)
         }
 
         /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
