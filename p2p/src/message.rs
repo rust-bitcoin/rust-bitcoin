@@ -56,6 +56,11 @@ impl CommandString {
     /// The maximum length a [`CommandString`] can be once padding characters are trimmed.
     pub const MAX_LEN: usize = 12;
 
+    // An interior null byte is a null the precedes a non-null char.
+    fn contains_interior_null(buf: [u8; 12]) -> bool {
+        buf.iter().skip_while(|&c| *c != 0).any(|c| *c != 0)
+    }
+
     /// Create [`CommandString`].
     ///
     /// # Parameters
@@ -66,13 +71,19 @@ impl CommandString {
     ///
     /// - If `s` is more than 12 characters in length.
     /// - If `s` has non-ascii characters.
+    /// - If `s` contains a null byte which preceeds a non null byte.
     fn try_from_stringly<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, CommandStringError> {
         if !s.as_ref().is_ascii() || s.as_ref().len() > Self::MAX_LEN {
             Err(CommandStringError(s.into()))
         } else {
             let mut buf = [0; Self::MAX_LEN];
             buf[..s.as_ref().len()].copy_from_slice(s.as_ref().as_bytes());
-            Ok(Self(buf))
+
+            if Self::contains_interior_null(buf) {
+                Err(CommandStringError(s.into()))
+            } else {
+                Ok(Self(buf))
+            }
         }
     }
 }
@@ -152,7 +163,9 @@ crate::decoder_newtype! {
 
     fn end(result: Result<[u8; 12], encoding::UnexpectedEofError>) -> Result<CommandString, CommandStringDecoderError>  {
         let bytes = result.map_err(CommandStringDecoderError::UnexpectedEof)?;
-        if !bytes.is_ascii() {
+
+        let contains_interior_null = CommandString::contains_interior_null(bytes);
+        if !bytes.is_ascii() || contains_interior_null {
             return Err(CommandStringDecoderError::NotAscii);
         }
         Ok(CommandString(bytes))
@@ -2531,12 +2544,11 @@ mod test {
         assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
         assert_eq!(cs.unwrap(), CommandString::try_from("Andrew").unwrap());
 
-        // Test that embedded null bytes are preserved while trailing nulls are trimmed
+        // Test that a null ascii char cannot precede a non-null char.
         let cs: Result<CommandString, _> =
             encoding::decode_from_slice(&[0, 0x41u8, 0x6e, 0x64, 0, 0x72, 0x65, 0x77, 0, 0, 0, 0]);
-        assert!(cs.is_ok());
-        assert_eq!(cs.as_ref().unwrap().to_string(), "\0And\0rew".to_owned());
-        assert_eq!(cs.unwrap(), CommandString::try_from("\0And\0rew").unwrap());
+        assert!(cs.is_err());
+        assert!(CommandString::try_from("And\0rew").is_err());
 
         // Invalid CommandString, must be ASCII
         assert!(encoding::decode_from_slice::<CommandString>(&[
@@ -2552,6 +2564,12 @@ mod test {
 
         let s = "\u{1F980}";
         assert!(CommandString::try_from(s).is_err());
+
+        let empty_buf = [0; 12];
+        assert!(!CommandString::contains_interior_null(empty_buf));
+
+        let full_buf = [1; 12];
+        assert!(!CommandString::contains_interior_null(full_buf));
     }
 
     #[test]
