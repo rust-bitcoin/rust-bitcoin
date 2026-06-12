@@ -331,15 +331,6 @@ impl<V: Validation> fmt::UpperHex for Block<V> {
 }
 
 #[cfg(feature = "alloc")]
-encoding::encoder_newtype! {
-    /// The encoder for the [`Block`] type.
-    #[derive(Debug, Clone)]
-    pub struct BlockEncoder<'e>(
-        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
-    );
-}
-
-#[cfg(feature = "alloc")]
 impl<V> encoding::Encode for Block<V>
 where
     V: Validation,
@@ -361,6 +352,20 @@ where
 }
 
 #[cfg(feature = "alloc")]
+impl encoding::Decode for Block<Unchecked> {
+    type Decoder = BlockDecoder;
+}
+
+#[cfg(feature = "alloc")]
+encoding::encoder_newtype! {
+    /// The encoder for the [`Block`] type.
+    #[derive(Debug, Clone)]
+    pub struct BlockEncoder<'e>(
+        Encoder2<HeaderEncoder<'e>, Encoder2<CompactSizeEncoder, SliceEncoder<'e, Transaction>>>
+    );
+}
+
+#[cfg(feature = "alloc")]
 type BlockInnerDecoder = Decoder2<HeaderDecoder, VecDecoder<Transaction>>;
 
 #[cfg(feature = "alloc")]
@@ -378,11 +383,6 @@ crate::decoder_newtype! {
         let (header, transactions) = result.map_err(BlockDecoderError)?;
         Ok(Self::Output::new_unchecked(header, transactions))
     }
-}
-
-#[cfg(feature = "alloc")]
-impl encoding::Decode for Block<Unchecked> {
-    type Decoder = BlockDecoder;
 }
 
 /// Computes the Merkle root for a list of transactions.
@@ -524,21 +524,6 @@ impl fmt::Debug for Header {
     }
 }
 
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Header`] type.
-    #[derive(Debug, Clone)]
-    pub struct HeaderEncoder<'e>(
-        encoding::Encoder6<
-            VersionEncoder<'e>,
-            BlockHashEncoder<'e>,
-            crate::merkle_tree::TxMerkleNodeEncoder<'e>,
-            crate::time::BlockTimeEncoder<'e>,
-            crate::pow::CompactTargetEncoder<'e>,
-            encoding::ArrayEncoder<4>,
-        >
-    );
-}
-
 impl encoding::Encode for Header {
     type Encoder<'e> = HeaderEncoder<'e>;
 
@@ -552,6 +537,25 @@ impl encoding::Encode for Header {
             encoding::ArrayEncoder::without_length_prefix(self.nonce.to_le_bytes()),
         ))
     }
+}
+
+impl encoding::Decode for Header {
+    type Decoder = HeaderDecoder;
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Header`] type.
+    #[derive(Debug, Clone)]
+    pub struct HeaderEncoder<'e>(
+        encoding::Encoder6<
+            VersionEncoder<'e>,
+            BlockHashEncoder<'e>,
+            crate::merkle_tree::TxMerkleNodeEncoder<'e>,
+            crate::time::BlockTimeEncoder<'e>,
+            crate::pow::CompactTargetEncoder<'e>,
+            encoding::ArrayEncoder<4>,
+        >
+    );
 }
 
 type HeaderInnerDecoder = Decoder6<
@@ -604,10 +608,6 @@ impl HeaderDecoder {
             encoding::Decoder6Error::Sixth(e) => HeaderDecoderError::Nonce(e),
         }
     }
-}
-
-impl encoding::Decode for Header {
-    type Decoder = HeaderDecoder;
 }
 
 impl From<Header> for BlockHash {
@@ -717,12 +717,6 @@ impl Default for Version {
     fn default() -> Self { Self::NO_SOFT_FORK_SIGNALLING }
 }
 
-encoding::encoder_newtype_exact! {
-    /// The encoder for the [`Version`] type.
-    #[derive(Debug, Clone)]
-    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
-}
-
 impl encoding::Encode for Version {
     type Encoder<'e> = VersionEncoder<'e>;
     fn encoder(&self) -> Self::Encoder<'_> {
@@ -730,6 +724,16 @@ impl encoding::Encode for Version {
             self.to_consensus().to_le_bytes(),
         ))
     }
+}
+
+impl encoding::Decode for Version {
+    type Decoder = VersionDecoder;
+}
+
+encoding::encoder_newtype_exact! {
+    /// The encoder for the [`Version`] type.
+    #[derive(Debug, Clone)]
+    pub struct VersionEncoder<'e>(encoding::ArrayEncoder<4>);
 }
 
 crate::decoder_newtype! {
@@ -745,10 +749,6 @@ crate::decoder_newtype! {
         let n = i32::from_le_bytes(value);
         Ok(Version::from_consensus(n))
     }
-}
-
-impl encoding::Decode for Version {
-    type Decoder = VersionDecoder;
 }
 
 /// Error types for Bitcoin blocks.
