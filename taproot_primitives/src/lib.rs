@@ -430,7 +430,17 @@ impl TapTweak for UntweakedKeypair {
     fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
         let pubkey = XOnlyPublicKey::from_keypair(self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
-        let tweaked = self.as_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
+
+        let secp_sk = secp256k1::SecretKey::from_secret_bytes(self.to_secret_bytes())
+            .expect("secret key parsed from serialized secret key");
+        let (xonly, parity) = self.to_x_only_public_key().serialize();
+        let secp_pk = secp256k1::XOnlyPublicKey::from_byte_array(xonly)
+            .expect("x-only public key parsed from serialized point");
+        let secp_sk = if parity == secp256k1::Parity::Odd { secp_sk.negate() } else { secp_sk };
+        // SAFETY: secp_pk and secp_sk are derived from an existing valid keypair, and parity is checked above.
+        let secp_keypair = unsafe { secp256k1::Keypair::from_key_parts(secp_pk, &secp_sk) };
+
+        let tweaked = secp_keypair.add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
     }
 
