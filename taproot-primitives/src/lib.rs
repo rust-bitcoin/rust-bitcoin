@@ -384,7 +384,9 @@ impl TapTweak for UntweakedKeypair {
     fn tap_tweak(&self, merkle_root: Option<TapNodeHash>) -> TweakedKeypair {
         let pubkey = XOnlyPublicKey::from_keypair(self);
         let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
-        let tweaked = self.as_inner().add_xonly_tweak(&tweak).expect("Tap tweak failed");
+        let secp_keypair = secp256k1::Keypair::from_seckey_byte_array(self.to_secret_bytes())
+            .expect("to_secret_bytes yields valid secp secret key");
+        let tweaked = secp_keypair.add_xonly_tweak(&tweak).expect("Tap tweak failed");
         TweakedKeypair::dangerous_assume_tweaked(Self::from(tweaked))
     }
 
