@@ -12,6 +12,9 @@
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
+use core::fmt;
+use core::str::FromStr;
+
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::LockTime`.
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse_int, pow, result, sequence, time, weight, Amount,
@@ -20,7 +23,8 @@ use bitcoin_units::{
 };
 
 /// A struct that includes all public non-error enums.
-#[derive(Debug)] // All public types implement Debug (C-DEBUG).
+/// C-COMMON-TRAITS: `Copy`, `Clone`, `Debug`, `PartialEq`, `Eq`
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 struct Enums {
     a: amount::Denomination,
     b: absolute::LockTime,
@@ -39,6 +43,15 @@ impl Enums {
             e: result::NumOpResult::Valid(Amount::MAX),
         }
     }
+}
+
+/// A struct that includes all public non-error enums that implement `Hash`.
+/// C-COMMON-TRAITS: `Hash`
+#[derive(Hash)]
+struct EnumsHash {
+    a: amount::Denomination,
+    b: absolute::LockTime,
+    c: relative::LockTime,
 }
 
 /// A struct that includes all public non-error structs.
@@ -116,8 +129,9 @@ struct CommonTraits {
     k: locktime::relative::NumberOf512Seconds,
     l: locktime::relative::NumberOfBlocks,
     m: pow::CompactTarget,
-    n: time::BlockTime,
-    o: weight::Weight,
+    n: sequence::Sequence,
+    o: time::BlockTime,
+    p: weight::Weight,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -306,7 +320,7 @@ fn api_can_use_all_types_from_module_weight() {
     use bitcoin_units::weight::Weight;
 }
 
-// `Debug` representation is never empty (C-DEBUG-NONEMPTY).
+/// C-DEBUG-NONEMPTY: Tests that all public types have non-empty Debug.
 #[test]
 fn api_all_non_error_types_have_non_empty_debug() {
     let t = Types::new();
@@ -412,18 +426,106 @@ fn api_all_wrapper_types_fmt_as_inner() {
     }
 }
 
+/// C-SEND-SYNC: Tests that all public types implement `Send` + `Sync`.
 #[test]
-fn all_types_implement_send_sync() {
-    fn assert_send<T: Send>() {}
-    fn assert_sync<T: Sync>() {}
+fn api_all_types_implement_send_sync() {
+    fn is_send_sync<T: Send + Sync>() {}
 
-    //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
-    assert_send::<Types>();
-    assert_sync::<Types>();
+    is_send_sync::<Enums>();
+    is_send_sync::<EnumsHash>();
+    is_send_sync::<Structs>();
+    is_send_sync::<CommonTraits>();
+    is_send_sync::<Default>();
+    is_send_sync::<Errors>();
+    #[cfg(feature = "encoding")]
+    is_send_sync::<Decoders>();
+    #[cfg(feature = "encoding")]
+    is_send_sync::<DecoderErrors>();
+}
 
-    // Error types should implement the Send and Sync traits (C-GOOD-ERR).
-    assert_send::<Errors>();
-    assert_sync::<Errors>();
+/// C-GOOD-ERR: Tests that all public error types implement Display.
+#[test]
+fn api_all_error_types_implement_display() {
+    fn assert_display<T: fmt::Display>() {}
+
+    assert_display::<amount::error::InputTooLargeError>();
+    assert_display::<amount::error::InvalidCharacterError>();
+    assert_display::<amount::error::MissingDenominationError>();
+    assert_display::<amount::error::MissingDigitsError>();
+    assert_display::<amount::error::OutOfRangeError>();
+    assert_display::<amount::error::ParseAmountError>();
+    assert_display::<amount::error::ParseDenominationError>();
+    assert_display::<amount::error::ParseError>();
+    assert_display::<amount::error::PossiblyConfusingDenominationError>();
+    assert_display::<amount::error::TooPreciseError>();
+    assert_display::<amount::error::UnknownDenominationError>();
+    assert_display::<block::TooBigForRelativeHeightError>();
+    #[cfg(feature = "serde")]
+    assert_display::<fee_rate::serde::OverflowError>();
+    assert_display::<locktime::absolute::ConversionError>();
+    assert_display::<locktime::absolute::ParseHeightError>();
+    assert_display::<locktime::absolute::ParseTimeError>();
+    assert_display::<locktime::relative::InvalidHeightError>();
+    assert_display::<locktime::relative::InvalidTimeError>();
+    assert_display::<locktime::relative::TimeOverflowError>();
+    assert_display::<parse_int::ParseIntError>();
+    assert_display::<parse_int::PrefixedHexError>();
+    assert_display::<parse_int::UnprefixedHexError>();
+    #[cfg(feature = "encoding")]
+    assert_display::<pow::CompactTargetDecoderError>();
+    assert_display::<result::NumOpError>();
+
+    #[cfg(feature = "encoding")]
+    {
+        assert_display::<amount::error::AmountDecoderError>();
+        assert_display::<block::BlockHeightDecoderError>();
+        assert_display::<locktime::absolute::LockTimeDecoderError>();
+        assert_display::<sequence::SequenceDecoderError>();
+        assert_display::<time::BlockTimeDecoderError>();
+    }
+}
+
+/// C-GOOD-ERR: Tests that all public error types implement [`std::error::Error`].
+#[test]
+#[cfg(feature = "std")]
+fn api_all_error_types_implement_error() {
+    fn assert_error<T: std::error::Error>() {}
+
+    assert_error::<amount::error::InputTooLargeError>();
+    assert_error::<amount::error::InvalidCharacterError>();
+    assert_error::<amount::error::MissingDenominationError>();
+    assert_error::<amount::error::MissingDigitsError>();
+    assert_error::<amount::error::OutOfRangeError>();
+    assert_error::<amount::error::ParseAmountError>();
+    assert_error::<amount::error::ParseDenominationError>();
+    assert_error::<amount::error::ParseError>();
+    assert_error::<amount::error::PossiblyConfusingDenominationError>();
+    assert_error::<amount::error::TooPreciseError>();
+    assert_error::<amount::error::UnknownDenominationError>();
+    assert_error::<block::TooBigForRelativeHeightError>();
+    #[cfg(feature = "serde")]
+    assert_error::<fee_rate::serde::OverflowError>();
+    assert_error::<locktime::absolute::ConversionError>();
+    assert_error::<locktime::absolute::ParseHeightError>();
+    assert_error::<locktime::absolute::ParseTimeError>();
+    assert_error::<locktime::relative::InvalidHeightError>();
+    assert_error::<locktime::relative::InvalidTimeError>();
+    assert_error::<locktime::relative::TimeOverflowError>();
+    assert_error::<parse_int::ParseIntError>();
+    assert_error::<parse_int::PrefixedHexError>();
+    assert_error::<parse_int::UnprefixedHexError>();
+    #[cfg(feature = "encoding")]
+    assert_error::<pow::CompactTargetDecoderError>();
+    assert_error::<result::NumOpError>();
+
+    #[cfg(feature = "encoding")]
+    {
+        assert_error::<amount::error::AmountDecoderError>();
+        assert_error::<block::BlockHeightDecoderError>();
+        assert_error::<locktime::absolute::LockTimeDecoderError>();
+        assert_error::<sequence::SequenceDecoderError>();
+        assert_error::<time::BlockTimeDecoderError>();
+    }
 }
 
 #[test]
